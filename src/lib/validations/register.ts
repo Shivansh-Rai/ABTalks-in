@@ -39,10 +39,7 @@ const professionalFields = z.object({
   organization: z.string().min(1, "Organization is required").max(200),
   role: z.string().min(1, "Role is required").max(200),
   yearsExperience: z
-    .number({
-      required_error: "Years of experience is required",
-      invalid_type_error: "Years of experience is required",
-    })
+    .number({ error: "Years of experience is required" })
     .int()
     .min(0)
     .max(60),
