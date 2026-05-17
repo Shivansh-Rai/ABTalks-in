@@ -24,6 +24,9 @@ import { ProfileForm } from "./profile-form";
 import type { ProfileFormValues } from "@/lib/validations/profile";
 import { userTypeLabel } from "@/lib/profile-display";
 import { UserType } from "@prisma/client";
+import { isClaudeEnabled } from "@/lib/feature-flags";
+import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
+import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 
 function domainDisplayName(domain: Domain) {
   switch (domain) {
@@ -70,9 +73,13 @@ export default async function ProfilePage() {
   }
 
   const userId = session.user.id;
-  const [bundle, referralStats] = await Promise.all([
+  const claudeEnabled = isClaudeEnabled();
+  const [bundle, referralStats, claudeBanner] = await Promise.all([
     getProfile(userId),
     getReferralStats(userId),
+    claudeEnabled
+      ? shouldShowClaudeBanner(userId)
+      : Promise.resolve({ show: false, startsAt: null as Date | null }),
   ]);
 
   const headerUser = {
@@ -87,6 +94,9 @@ export default async function ProfilePage() {
     return (
       <div className="flex min-h-svh flex-col">
         <AppHeader user={headerUser} />
+        {claudeBanner.show && claudeBanner.startsAt ? (
+          <ClaudeEnrollmentBanner claudeStartsAt={claudeBanner.startsAt} />
+        ) : null}
         <main className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-4 py-12 text-center">
           <h1 className="font-display text-lg font-semibold">
             Complete your registration first
@@ -149,6 +159,9 @@ export default async function ProfilePage() {
   return (
     <div className="flex min-h-svh flex-col bg-muted/30">
       <AppHeader user={headerUser} domain={profile.domain} />
+      {claudeBanner.show && claudeBanner.startsAt ? (
+        <ClaudeEnrollmentBanner claudeStartsAt={claudeBanner.startsAt} />
+      ) : null}
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-8 px-4 py-8">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Profile</h1>
 

@@ -46,6 +46,8 @@ import { Domain } from "@prisma/client";
 import { ClaudeChallengeModal } from "@/components/dashboard/claude-challenge-modal";
 import { getUserActiveEnrollments } from "@/features/enrollment/get-user-enrollments";
 import { isClaudeEnabled } from "@/lib/feature-flags";
+import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
+import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -162,6 +164,10 @@ export default async function DashboardPage({
 
   const isPreStart = isChallengePreStart(dashboardData.enrollment.challenge);
 
+  const claudeBanner = claudeEnabled
+    ? await shouldShowClaudeBanner(session.user.id)
+    : { show: false, startsAt: null as Date | null };
+
   if (dashboardData.enrollment.status === "ABANDONED") {
     const endedAction = await prisma.adminAction.findFirst({
       where: {
@@ -196,6 +202,12 @@ export default async function DashboardPage({
           headerDomain={dashboardData.enrollment.domain}
           domain={dashboardData.profile.domain as Domain}
         />
+        {claudeBanner.show && claudeBanner.startsAt ? (
+          <ClaudeEnrollmentBanner
+            claudeStartsAt={claudeBanner.startsAt}
+            useSharedModal
+          />
+        ) : null}
         <main className="mx-auto flex w-full max-w-6xl flex-1">
           <EnrollmentEndedScreen
             studentName={dashboardData.profile.fullName}
@@ -208,29 +220,8 @@ export default async function DashboardPage({
     );
   }
 
-  let showClaudeModal = false;
-  let claudeModalStartsAt: Date | null = null;
-
-  if (claudeEnabled) {
-    const claudeEnrollmentCheck = await prisma.enrollment.findFirst({
-      where: {
-        userId: session.user.id,
-        domain: Domain.CLAUDE,
-      },
-      select: { id: true },
-    });
-
-    if (!claudeEnrollmentCheck) {
-      const claudeChallengeRow = await prisma.challenge.findUnique({
-        where: { domain: Domain.CLAUDE },
-        select: { startsAt: true },
-      });
-      if (claudeChallengeRow?.startsAt) {
-        showClaudeModal = true;
-        claudeModalStartsAt = claudeChallengeRow.startsAt;
-      }
-    }
-  }
+  const showClaudeModal = claudeBanner.show && !!claudeBanner.startsAt;
+  const claudeModalStartsAt = claudeBanner.startsAt;
 
   if (isPreStart) {
     return (
@@ -242,6 +233,12 @@ export default async function DashboardPage({
           headerDomain={dashboardData.enrollment.domain}
           domain={dashboardData.profile.domain as Domain}
         />
+        {claudeBanner.show && claudeBanner.startsAt ? (
+          <ClaudeEnrollmentBanner
+            claudeStartsAt={claudeBanner.startsAt}
+            useSharedModal
+          />
+        ) : null}
         {showPastMissedToast ? (
           <PastMissedChallengeToast
             trigger={showPastMissedToast}
@@ -294,6 +291,12 @@ export default async function DashboardPage({
         headerDomain={dashboardData.enrollment.domain}
         domain={dashboardData.profile.domain as Domain}
       />
+      {claudeBanner.show && claudeBanner.startsAt ? (
+        <ClaudeEnrollmentBanner
+          claudeStartsAt={claudeBanner.startsAt}
+          useSharedModal
+        />
+      ) : null}
       {showClaudeModal && claudeModalStartsAt ? (
         <ClaudeChallengeModal startsAt={claudeModalStartsAt} />
       ) : null}

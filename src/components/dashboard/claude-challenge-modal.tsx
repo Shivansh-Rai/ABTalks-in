@@ -17,6 +17,14 @@ import { Button } from "@/components/ui/button";
 
 const SESSION_DISMISS_KEY = "claude-modal-dismissed-session";
 
+export const OPEN_CLAUDE_MODAL_EVENT = "claude-challenge-modal-open";
+
+interface ClaudeChallengeModalProps {
+  startsAt: Date | string;
+  forceOpen?: boolean;
+  onClose?: () => void;
+}
+
 const CHALLENGE_CARDS = [
   {
     title: "Prompt Engineering",
@@ -84,9 +92,9 @@ function useCountdown(targetDate: Date) {
 
 export function ClaudeChallengeModal({
   startsAt,
-}: {
-  startsAt: Date | string;
-}) {
+  forceOpen,
+  onClose,
+}: ClaudeChallengeModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
@@ -96,16 +104,32 @@ export function ClaudeChallengeModal({
   const time = useCountdown(targetDate);
 
   useEffect(() => {
+    if (forceOpen) {
+      setOpen(true);
+      return;
+    }
+
     const dismissed = sessionStorage.getItem(SESSION_DISMISS_KEY);
     if (!dismissed) {
       const timer = setTimeout(() => setOpen(true), 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [forceOpen]);
+
+  useEffect(() => {
+    if (forceOpen) return;
+
+    const handleOpen = () => setOpen(true);
+    window.addEventListener(OPEN_CLAUDE_MODAL_EVENT, handleOpen);
+    return () => window.removeEventListener(OPEN_CLAUDE_MODAL_EVENT, handleOpen);
+  }, [forceOpen]);
 
   const handleDismiss = () => {
     setOpen(false);
-    sessionStorage.setItem(SESSION_DISMISS_KEY, "true");
+    if (!forceOpen) {
+      sessionStorage.setItem(SESSION_DISMISS_KEY, "true");
+    }
+    onClose?.();
   };
 
   const handleRegister = async () => {
@@ -115,6 +139,7 @@ export function ClaudeChallengeModal({
       if (result.ok) {
         toast.success("Welcome to the Claude Challenge! 🚀");
         setOpen(false);
+        onClose?.();
         router.refresh();
       } else {
         toast.error(result.message);
@@ -191,7 +216,7 @@ export function ClaudeChallengeModal({
                   <div>
                     <div className="font-display text-2xl font-bold">324</div>
                     <div className="text-xs text-muted-foreground">
-                      completed today (placeholder)
+                      completed today.
                     </div>
                   </div>
                 </div>

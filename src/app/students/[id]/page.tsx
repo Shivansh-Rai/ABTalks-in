@@ -18,6 +18,9 @@ import {
   getPublicProfile,
 } from "@/features/profile/get-public-profile";
 import { formatExperienceBucket } from "@/lib/profile-display";
+import { isClaudeEnabled } from "@/lib/feature-flags";
+import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
+import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -46,10 +49,14 @@ export default async function PublicStudentProfilePage({
     redirect("/profile");
   }
 
-  const [publicProfile, enrollmentId, image] = await Promise.all([
+  const claudeEnabled = isClaudeEnabled();
+  const [publicProfile, enrollmentId, image, claudeBanner] = await Promise.all([
     getPublicProfile(id),
     getPublicEnrollmentId(id),
     prisma.user.findUnique({ where: { id }, select: { image: true } }),
+    claudeEnabled
+      ? shouldShowClaudeBanner(session.user.id)
+      : Promise.resolve({ show: false, startsAt: null as Date | null }),
   ]);
   if (!publicProfile) {
     notFound();
@@ -70,6 +77,9 @@ export default async function PublicStudentProfilePage({
   return (
     <div className="flex min-h-svh flex-col bg-muted/30">
       <AppHeader user={headerUser} />
+      {claudeBanner.show && claudeBanner.startsAt ? (
+        <ClaudeEnrollmentBanner claudeStartsAt={claudeBanner.startsAt} />
+      ) : null}
       <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6">
         <Link
           href="/dashboard"
