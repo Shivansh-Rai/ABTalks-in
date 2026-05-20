@@ -135,7 +135,7 @@ export function AppHeader({
               <DropdownMenuItem
                 onClick={() => {
                   window.location.href =
-                    "mailto:sksohail.swaraj@gmail.com?subject=ABTalks Issue Report&body=Please describe the issue you're experiencing:%0D%0A%0D%0A";
+                    "mailto:team@abtalks.in?subject=ABTalks Issue Report&body=Please describe the issue you're experiencing:%0D%0A%0D%0A";
                 }}
               >
                 <AlertCircle className="mr-2 h-4 w-4" />

@@ -1,7 +1,7 @@
 import { Mail } from "lucide-react";
 
 export function AppFooter() {
-  const supportEmail = "sksohail.swaraj@gmail.com";
+  const supportEmail = "team@abtalks.in";
 
   return (
     <footer className="mt-auto border-t bg-card/50 backdrop-blur-sm">

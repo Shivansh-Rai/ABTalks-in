@@ -41,8 +41,8 @@ export function EnrollmentEndedScreen({
           </p>
           <p className="text-sm">
             If you believe this is an error, please contact support:{" "}
-            <a className="text-primary underline" href="mailto:sksohail.swaraj@gmail.com">
-              sksohail.swaraj@gmail.com
+            <a className="text-primary underline" href="mailto:team@abtalks.in">
+              team@abtalks.in
             </a>
           </p>
           <form action={signOutAction}>
