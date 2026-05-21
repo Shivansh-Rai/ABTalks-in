@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { isClaudeEnabled } from "@/lib/feature-flags";
 import { OnboardingClient } from "@/components/landing/onboarding-client";
 
 export default async function HomePage() {
@@ -17,6 +18,10 @@ export default async function HomePage() {
     } else {
       redirect("/register");
     }
+  }
+
+  if (isClaudeEnabled()) {
+    redirect("/claude-signup");
   }
 
   return <OnboardingClient />;
