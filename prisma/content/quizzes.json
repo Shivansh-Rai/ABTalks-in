@@ -107,6 +107,541 @@
     ]
   },
   {
+    "weekNumber": 5,
+    "domain": "SE",
+    "title": "Week 5 Quiz: The Algorithm Olympics",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Which data structure is most useful for retrieving Top K frequent elements efficiently?",
+        "optionA": "Queue",
+        "optionB": "Heap",
+        "optionC": "Stack",
+        "optionD": "Linked List",
+        "correctAnswer": "B",
+        "explanation": "Heaps efficiently retrieve highest-priority elements."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What is the time complexity of binary search?",
+        "optionA": "O(n)",
+        "optionB": "O(log n)",
+        "optionC": "O(n²)",
+        "optionD": "O(1)",
+        "correctAnswer": "B",
+        "explanation": "Binary search repeatedly halves the search space."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Why is binary search faster than linear search?",
+        "optionA": "It sorts automatically",
+        "optionB": "It checks every element",
+        "optionC": "It reduces the search space exponentially",
+        "optionD": "It uses recursion only",
+        "correctAnswer": "C",
+        "explanation": "Binary search eliminates half the remaining elements each step."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What is the key benefit of sliding window optimization?",
+        "optionA": "Avoid repeated recalculations",
+        "optionB": "Automatically sorts arrays",
+        "optionC": "Uses recursion",
+        "optionD": "Removes duplicates",
+        "correctAnswer": "A",
+        "explanation": "Sliding windows maintain rolling computations efficiently."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "Which technique is best for substring problems with dynamic constraints?",
+        "optionA": "Sorting",
+        "optionB": "Variable Sliding Window",
+        "optionC": "Heap",
+        "optionD": "Binary Search",
+        "correctAnswer": "B",
+        "explanation": "Variable windows adapt dynamically as constraints change."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why are heaps commonly used in trending systems?",
+        "optionA": "They reduce memory usage",
+        "optionB": "They retrieve top-ranked elements efficiently",
+        "optionC": "They avoid loops",
+        "optionD": "They sort instantly",
+        "correctAnswer": "B",
+        "explanation": "Heaps are ideal for efficiently tracking top-ranked values."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What is the biggest challenge in binary search variants like First Bad Version?",
+        "optionA": "Sorting data",
+        "optionB": "Handling edge conditions correctly",
+        "optionC": "Reducing recursion",
+        "optionD": "Using arrays",
+        "correctAnswer": "B",
+        "explanation": "Most binary search bugs come from incorrect boundary updates."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why are sliding windows important in streaming systems?",
+        "optionA": "They store all data permanently",
+        "optionB": "They efficiently process moving subsets of data",
+        "optionC": "They avoid optimization",
+        "optionD": "They only work for strings",
+        "correctAnswer": "B",
+        "explanation": "Streaming systems analyze continuously changing windows of data."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What engineering mindset is reinforced by Week 5?",
+        "optionA": "Memorization",
+        "optionB": "Optimization and scalability",
+        "optionC": "Writing longer code",
+        "optionD": "Avoiding edge cases",
+        "correctAnswer": "B",
+        "explanation": "Week 5 focuses heavily on efficient systems thinking."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the most important lesson from the Hacker Tournament Finals?",
+        "optionA": "Fast typing wins interviews",
+        "optionB": "Optimization explanations matter as much as code",
+        "optionC": "Brute force always works",
+        "optionD": "Longer code is better",
+        "correctAnswer": "B",
+        "explanation": "Engineering interviews evaluate communication and reasoning, not just coding."
+      }
+    ]
+  },
+  {
+    "weekNumber": 6,
+    "domain": "SE",
+    "title": "Week 6 Quiz: The Data Structures Adventure Realm",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Why does the two-pointer solution for Container With Most Water work efficiently?",
+        "optionA": "It sorts the array first",
+        "optionB": "It removes impossible solutions strategically",
+        "optionC": "It uses recursion",
+        "optionD": "It checks every pair",
+        "correctAnswer": "B",
+        "explanation": "Moving the smaller pointer eliminates impossible larger-area combinations."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What is the core idea behind greedy algorithms?",
+        "optionA": "Explore every possibility",
+        "optionB": "Use recursion only",
+        "optionC": "Make the best local decision at each step",
+        "optionD": "Always sort data",
+        "correctAnswer": "C",
+        "explanation": "Greedy algorithms optimize locally in hopes of achieving a global optimum."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Which real-world system commonly behaves like a tree structure?",
+        "optionA": "Calculator",
+        "optionB": "File System",
+        "optionC": "Queue",
+        "optionD": "HashMap",
+        "correctAnswer": "B",
+        "explanation": "File systems naturally form hierarchical tree structures."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What traversal order does inorder traversal follow?",
+        "optionA": "Root → Left → Right",
+        "optionB": "Left → Root → Right",
+        "optionC": "Right → Left → Root",
+        "optionD": "Root → Right → Left",
+        "correctAnswer": "B",
+        "explanation": "Inorder traversal visits left subtree, root, then right subtree."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "Why is recursion commonly used in tree problems?",
+        "optionA": "Trees are linear",
+        "optionB": "Trees naturally contain recursive substructures",
+        "optionC": "Recursion avoids loops",
+        "optionD": "Recursion is always faster",
+        "correctAnswer": "B",
+        "explanation": "Each subtree is itself another tree, making recursion intuitive."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "What is the main purpose of BST validation?",
+        "optionA": "Sort the tree",
+        "optionB": "Ensure nodes follow ordering constraints",
+        "optionC": "Reduce recursion depth",
+        "optionD": "Balance the tree automatically",
+        "correctAnswer": "B",
+        "explanation": "BST validation checks whether node values satisfy BST rules."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "Why are Lowest Common Ancestor queries useful?",
+        "optionA": "They compress trees",
+        "optionB": "They identify shared hierarchical relationships",
+        "optionC": "They sort graph nodes",
+        "optionD": "They remove duplicates",
+        "correctAnswer": "B",
+        "explanation": "LCA helps identify the nearest shared parent relationship."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "What is the key idea behind DFS traversal?",
+        "optionA": "Explore neighbors level-by-level",
+        "optionB": "Explore deeply before backtracking",
+        "optionC": "Sort graph nodes",
+        "optionD": "Always use heaps",
+        "correctAnswer": "B",
+        "explanation": "DFS explores paths deeply before returning."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "In the Number of Islands problem, what does each island represent?",
+        "optionA": "A stack",
+        "optionB": "A connected component",
+        "optionC": "A sorted array",
+        "optionD": "A recursion limit",
+        "correctAnswer": "B",
+        "explanation": "Each island is a connected region of land cells."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the biggest engineering lesson from Week 6?",
+        "optionA": "Trees and graphs model real-world relationships",
+        "optionB": "Recursion should always be avoided",
+        "optionC": "Optimization is unnecessary",
+        "optionD": "Brute force scales well",
+        "correctAnswer": "A",
+        "explanation": "Hierarchical and connected systems appear everywhere in software engineering."
+      }
+    ]
+  },
+  {
+    "weekNumber": 7,
+    "domain": "SE",
+    "title": "Week 7 Quiz: The Ultimate Systems Tournament",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Why is BFS ideal for shortest path problems in unweighted graphs?",
+        "optionA": "It uses recursion",
+        "optionB": "It explores nodes level-by-level",
+        "optionC": "It sorts edges",
+        "optionD": "It minimizes memory",
+        "correctAnswer": "B",
+        "explanation": "BFS guarantees the shortest path in unweighted graphs by exploring levels progressively."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What does a cycle in a course prerequisite graph represent?",
+        "optionA": "Balanced schedule",
+        "optionB": "Impossible dependency chain",
+        "optionC": "Optimized traversal",
+        "optionD": "Shortest path",
+        "correctAnswer": "B",
+        "explanation": "Cycles mean courses depend on each other infinitely, making completion impossible."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Why are priority queues useful in scheduling systems?",
+        "optionA": "They automatically sort databases",
+        "optionB": "They process highest-priority tasks first",
+        "optionC": "They avoid recursion",
+        "optionD": "They reduce storage usage",
+        "correctAnswer": "B",
+        "explanation": "Priority queues ensure critical tasks are handled before lower-priority ones."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What is the key idea behind Dynamic Programming?",
+        "optionA": "Always use recursion",
+        "optionB": "Store and reuse repeated computations",
+        "optionC": "Avoid optimization",
+        "optionD": "Sort inputs first",
+        "correctAnswer": "B",
+        "explanation": "Dynamic Programming avoids repeated work by storing subproblem results."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "What are overlapping subproblems?",
+        "optionA": "Independent computations",
+        "optionB": "Repeated smaller computations inside larger problems",
+        "optionC": "Graph edges",
+        "optionD": "Invalid recursion",
+        "correctAnswer": "B",
+        "explanation": "DP problems repeatedly solve the same smaller problems."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why does the House Robber problem require DP instead of greedy logic?",
+        "optionA": "Greedy decisions can produce non-optimal results",
+        "optionB": "DP is always faster",
+        "optionC": "Greedy algorithms cannot use arrays",
+        "optionD": "The problem is recursive only",
+        "correctAnswer": "A",
+        "explanation": "Choosing the locally largest house can block globally optimal solutions."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What does Edit Distance measure?",
+        "optionA": "Memory usage",
+        "optionB": "Minimum operations required to transform one string into another",
+        "optionC": "String sorting complexity",
+        "optionD": "Graph connectivity",
+        "correctAnswer": "B",
+        "explanation": "Edit Distance counts insertions, deletions, and replacements needed for transformation."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why is DP often visualized using tables?",
+        "optionA": "To reduce recursion depth",
+        "optionB": "To track computed states systematically",
+        "optionC": "To sort data automatically",
+        "optionD": "To compress memory",
+        "correctAnswer": "B",
+        "explanation": "DP tables help organize and reuse subproblem results efficiently."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What engineering skill does the Ultimate Engineering Gauntlet mainly reinforce?",
+        "optionA": "Typing speed",
+        "optionB": "Systematic reasoning and communication",
+        "optionC": "Code memorization",
+        "optionD": "Avoiding edge cases",
+        "correctAnswer": "B",
+        "explanation": "Senior engineering requires explaining tradeoffs and reasoning clearly."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the biggest lesson from Week 7?",
+        "optionA": "Complex systems become manageable when broken into states and relationships",
+        "optionB": "Graphs should be avoided",
+        "optionC": "Recursion is always inefficient",
+        "optionD": "Brute force is enough for scaling",
+        "correctAnswer": "A",
+        "explanation": "Graphs and DP teach how large systems can be decomposed into manageable structures."
+      }
+    ]
+  },
+  {
+    "weekNumber": 8,
+    "domain": "SE",
+    "title": "Week 8 Quiz: The Engineering Multiverse",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "What is the main benefit of Object-Oriented Programming?",
+        "optionA": "It avoids functions",
+        "optionB": "It structures scalable and reusable systems",
+        "optionC": "It removes debugging",
+        "optionD": "It automatically optimizes code",
+        "correctAnswer": "B",
+        "explanation": "OOP organizes software into reusable and maintainable components."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "Why is inheritance useful in OOP systems?",
+        "optionA": "It duplicates code",
+        "optionB": "It enables code reuse and hierarchy modeling",
+        "optionC": "It removes classes",
+        "optionD": "It speeds up databases",
+        "correctAnswer": "B",
+        "explanation": "Inheritance allows child classes to reuse parent functionality."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "What is the purpose of APIs in modern applications?",
+        "optionA": "Store passwords",
+        "optionB": "Enable communication between systems",
+        "optionC": "Replace databases",
+        "optionD": "Avoid networking",
+        "correctAnswer": "B",
+        "explanation": "APIs allow independent systems to exchange information."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "Which format is most commonly used for API responses?",
+        "optionA": "PDF",
+        "optionB": "CSV",
+        "optionC": "JSON",
+        "optionD": "TXT",
+        "correctAnswer": "C",
+        "explanation": "JSON is lightweight and widely used for structured API communication."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "What does CRUD stand for in databases?",
+        "optionA": "Create, Read, Update, Delete",
+        "optionB": "Connect, Run, Upload, Download",
+        "optionC": "Compile, Run, Undo, Deploy",
+        "optionD": "Copy, Replace, Undo, Delete",
+        "correctAnswer": "A",
+        "explanation": "CRUD represents the four fundamental database operations."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why is preprocessing important in NLP systems?",
+        "optionA": "It reduces dataset quality",
+        "optionB": "It cleans and standardizes text data",
+        "optionC": "It trains the model automatically",
+        "optionD": "It replaces machine learning",
+        "correctAnswer": "B",
+        "explanation": "Preprocessing improves the quality and consistency of text data."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What is the role of TF-IDF or Bag-of-Words in NLP?",
+        "optionA": "Store images",
+        "optionB": "Convert text into numerical representations",
+        "optionC": "Deploy applications",
+        "optionD": "Train databases",
+        "correctAnswer": "B",
+        "explanation": "ML models require numerical vectors instead of raw text."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why is model evaluation important in machine learning?",
+        "optionA": "To reduce code size",
+        "optionB": "To measure prediction quality and reliability",
+        "optionC": "To avoid datasets",
+        "optionD": "To replace preprocessing",
+        "correctAnswer": "B",
+        "explanation": "Evaluation helps determine how well a model performs."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What transforms an ML experiment into a usable product?",
+        "optionA": "Sorting data",
+        "optionB": "Deployment and user interaction",
+        "optionC": "Removing datasets",
+        "optionD": "Adding more loops",
+        "correctAnswer": "B",
+        "explanation": "Deployment allows real users to interact with the ML system."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the biggest engineering lesson from Week 8?",
+        "optionA": "Engineering combines systems, data, and user experience",
+        "optionB": "Machine learning replaces software engineering",
+        "optionC": "Databases are optional",
+        "optionD": "APIs are only for large companies",
+        "correctAnswer": "A",
+        "explanation": "Modern engineering integrates backend systems, data pipelines, APIs, and user-facing products."
+      }
+    ]
+  },
+  {
+    "weekNumber": 9,
+    "domain": "SE",
+    "title": "Week 9 Quiz: The Final Engineering Championship",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Why is optimization important in production systems?",
+        "optionA": "To make code longer",
+        "optionB": "To improve speed, scalability, and user experience",
+        "optionC": "To avoid deployment",
+        "optionD": "To remove documentation",
+        "correctAnswer": "B",
+        "explanation": "Production systems must scale efficiently while maintaining strong user experience."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What is one major difference between solving coding problems and succeeding in interviews?",
+        "optionA": "Interviews only test syntax",
+        "optionB": "Interviews heavily evaluate communication and reasoning",
+        "optionC": "Coding problems are never asked",
+        "optionD": "Interviews avoid debugging",
+        "correctAnswer": "B",
+        "explanation": "Interviewers care deeply about how candidates explain their decisions and thought process."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Why are GitHub repositories important for engineers?",
+        "optionA": "They replace resumes completely",
+        "optionB": "They publicly demonstrate technical work and consistency",
+        "optionC": "They remove the need for interviews",
+        "optionD": "They automatically generate jobs",
+        "correctAnswer": "B",
+        "explanation": "GitHub repositories provide visible proof of engineering ability and growth."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What transforms a coding project into a portfolio-worthy project?",
+        "optionA": "Long variable names",
+        "optionB": "Good presentation, documentation, and usability",
+        "optionC": "More print statements",
+        "optionD": "Avoiding explanations",
+        "correctAnswer": "B",
+        "explanation": "Presentation and clarity dramatically improve project quality."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "What is the role of preprocessing in NLP systems?",
+        "optionA": "To store databases",
+        "optionB": "To clean and standardize text before training",
+        "optionC": "To deploy websites",
+        "optionD": "To replace ML models",
+        "correctAnswer": "B",
+        "explanation": "Preprocessing improves text quality and model performance."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why is deployment an important engineering skill?",
+        "optionA": "Because models are useful only when users can interact with them",
+        "optionB": "Because deployment removes bugs",
+        "optionC": "Because deployment avoids APIs",
+        "optionD": "Because deployment replaces databases",
+        "correctAnswer": "A",
+        "explanation": "Deployment converts prototypes into usable products."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What engineering mindset was reinforced throughout the challenge?",
+        "optionA": "Memorization over understanding",
+        "optionB": "Systems thinking, optimization, and communication",
+        "optionC": "Avoiding debugging",
+        "optionD": "Using brute force everywhere",
+        "correctAnswer": "B",
+        "explanation": "The challenge emphasized structured engineering thinking across multiple domains."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why do recruiters value project-based learning?",
+        "optionA": "Projects show real implementation ability",
+        "optionB": "Projects avoid coding",
+        "optionC": "Projects automatically guarantee jobs",
+        "optionD": "Projects replace algorithms",
+        "correctAnswer": "A",
+        "explanation": "Projects demonstrate practical engineering and implementation skills."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What is the biggest benefit of learning publicly through LinkedIn and GitHub?",
+        "optionA": "It eliminates failure",
+        "optionB": "It creates accountability, visibility, and confidence",
+        "optionC": "It removes the need for practice",
+        "optionD": "It guarantees followers",
+        "correctAnswer": "B",
+        "explanation": "Public learning builds credibility and consistency over time."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the most important lesson from the full 60-day challenge?",
+        "optionA": "Consistency and systems thinking create massive long-term growth",
+        "optionB": "Only advanced AI matters",
+        "optionC": "DSA is enough for engineering",
+        "optionD": "Projects are less important than syntax",
+        "correctAnswer": "A",
+        "explanation": "Small daily improvements compounded into major engineering growth over time."
+      }
+    ]
+  },
+  {
     "weekNumber": 1,
     "domain": "DS",
     "title": "Week 1: Python Foundations + Data Science Basics",
@@ -210,6 +745,541 @@
         "optionD": "Store data in databases",
         "correctAnswer": "C",
         "explanation": "EDA helps uncover patterns, anomalies, and insights before modeling."
+      }
+    ]
+  },
+  {
+    "weekNumber": 5,
+    "domain": "DS",
+    "title": "Week 5 Quiz: Customer Segmentation, Recommendations & Dashboards",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "What type of learning does K-Means Clustering use?",
+        "optionA": "Supervised Learning",
+        "optionB": "Reinforcement Learning",
+        "optionC": "Unsupervised Learning",
+        "optionD": "Deep Learning",
+        "correctAnswer": "C",
+        "explanation": "K-Means is an unsupervised learning algorithm because it works without labeled target values."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What is the purpose of customer segmentation?",
+        "optionA": "Increase dataset size",
+        "optionB": "Group customers based on similar behavior",
+        "optionC": "Remove anomalies",
+        "optionD": "Train neural networks",
+        "correctAnswer": "B",
+        "explanation": "Customer segmentation helps businesses understand different customer groups and personalize strategies."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Which method helps determine the optimal number of clusters in K-Means?",
+        "optionA": "Confusion Matrix",
+        "optionB": "ROC Curve",
+        "optionC": "Elbow Method",
+        "optionD": "Gradient Descent",
+        "correctAnswer": "C",
+        "explanation": "The Elbow Method helps identify the ideal number of clusters by analyzing inertia values."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What does the Silhouette Score measure?",
+        "optionA": "Prediction accuracy",
+        "optionB": "Cluster quality and separation",
+        "optionC": "Training speed",
+        "optionD": "Feature importance",
+        "correctAnswer": "B",
+        "explanation": "Silhouette Score measures how well-separated and cohesive clusters are."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "Why are customer personas important in business analytics?",
+        "optionA": "They increase dataset size",
+        "optionB": "They help businesses personalize strategies and communication",
+        "optionC": "They reduce model training time",
+        "optionD": "They remove missing values",
+        "correctAnswer": "B",
+        "explanation": "Customer personas translate analytics insights into actionable business strategies."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "What is the primary goal of a recommendation system?",
+        "optionA": "Reduce storage space",
+        "optionB": "Personalize suggestions for users",
+        "optionC": "Remove duplicate records",
+        "optionD": "Scale numerical features",
+        "correctAnswer": "B",
+        "explanation": "Recommendation systems personalize user experiences by suggesting relevant products or content."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "Which similarity metric is commonly used in recommendation systems?",
+        "optionA": "Cosine Similarity",
+        "optionB": "Mean Squared Error",
+        "optionC": "Entropy",
+        "optionD": "Accuracy Score",
+        "correctAnswer": "A",
+        "explanation": "Cosine Similarity measures how similar two users or products are."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "What is anomaly detection primarily used for?",
+        "optionA": "Generating random clusters",
+        "optionB": "Identifying unusual or suspicious behavior",
+        "optionC": "Scaling features",
+        "optionD": "Building dashboards",
+        "correctAnswer": "B",
+        "explanation": "Anomaly detection identifies rare or suspicious patterns in data."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "Why are business dashboards important?",
+        "optionA": "They replace Machine Learning models",
+        "optionB": "They help stakeholders monitor KPIs and trends visually",
+        "optionC": "They remove outliers",
+        "optionD": "They generate synthetic data",
+        "correctAnswer": "B",
+        "explanation": "Dashboards provide clear visual insights for business decision-making."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the main benefit of integrating multiple analytics modules into one platform?",
+        "optionA": "Lower internet speed",
+        "optionB": "Disconnected workflows",
+        "optionC": "Unified business intelligence and decision support",
+        "optionD": "Eliminating preprocessing",
+        "correctAnswer": "C",
+        "explanation": "Integrated systems combine multiple analytical capabilities into one scalable workflow."
+      }
+    ]
+  },
+  {
+    "weekNumber": 6,
+    "domain": "DS",
+    "title": "Week 6 Quiz: Forecasting, KPI Analytics & Predictive Business Intelligence",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "What is the primary goal of time series forecasting?",
+        "optionA": "Remove missing values",
+        "optionB": "Predict future values using historical patterns",
+        "optionC": "Cluster customer groups",
+        "optionD": "Encode categorical features",
+        "correctAnswer": "B",
+        "explanation": "Time series forecasting predicts future behavior based on historical trends and patterns."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What does seasonality mean in time series analysis?",
+        "optionA": "Random data noise",
+        "optionB": "Repeating patterns over regular intervals",
+        "optionC": "Data duplication",
+        "optionD": "Feature scaling",
+        "correctAnswer": "B",
+        "explanation": "Seasonality refers to repeating patterns that occur over fixed time intervals."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Which model is commonly used for advanced forecasting tasks?",
+        "optionA": "K-Means",
+        "optionB": "Decision Tree",
+        "optionC": "ARIMA",
+        "optionD": "KNN",
+        "correctAnswer": "C",
+        "explanation": "ARIMA is a widely used statistical forecasting model for time series data."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What does Customer Lifetime Value (CLV) estimate?",
+        "optionA": "Customer age",
+        "optionB": "Long-term business value generated by a customer",
+        "optionC": "Internet traffic",
+        "optionD": "Feature importance",
+        "correctAnswer": "B",
+        "explanation": "CLV measures the total expected revenue generated by a customer over time."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "Why are KPI dashboards important for executives?",
+        "optionA": "They replace Machine Learning models",
+        "optionB": "They provide visual monitoring of business performance",
+        "optionC": "They remove outliers automatically",
+        "optionD": "They reduce dataset size",
+        "correctAnswer": "B",
+        "explanation": "KPI dashboards help decision-makers monitor trends and business health quickly."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "What is the purpose of A/B testing?",
+        "optionA": "Forecast future revenue",
+        "optionB": "Compare two variations to measure performance differences",
+        "optionC": "Cluster customers",
+        "optionD": "Encode categorical data",
+        "correctAnswer": "B",
+        "explanation": "A/B testing evaluates whether one variation performs better than another."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What does statistical significance help determine in A/B testing?",
+        "optionA": "Whether observed differences are likely due to chance",
+        "optionB": "Customer segmentation quality",
+        "optionC": "Forecasting speed",
+        "optionD": "Feature scaling accuracy",
+        "correctAnswer": "A",
+        "explanation": "Statistical significance indicates whether experiment results are meaningful or random."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why is predictive customer risk scoring valuable for businesses?",
+        "optionA": "It increases storage capacity",
+        "optionB": "It helps proactively identify customers likely to churn",
+        "optionC": "It removes duplicate records",
+        "optionD": "It visualizes feature importance",
+        "correctAnswer": "B",
+        "explanation": "Risk scoring systems help businesses take action before customers leave."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What is the main benefit of integrating forecasting, KPI tracking, and retention analytics?",
+        "optionA": "Lower internet costs",
+        "optionB": "Centralized business intelligence and decision support",
+        "optionC": "Automatic data labeling",
+        "optionD": "Removing customer data",
+        "correctAnswer": "B",
+        "explanation": "Integrated analytics systems improve strategic business decision-making."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "Which tool is commonly used to build interactive business dashboards in Python?",
+        "optionA": "NumPy",
+        "optionB": "Matplotlib only",
+        "optionC": "Streamlit",
+        "optionD": "OpenCV",
+        "correctAnswer": "C",
+        "explanation": "Streamlit is widely used for building interactive analytics dashboards and data apps."
+      }
+    ]
+  },
+  {
+    "weekNumber": 7,
+    "domain": "DS",
+    "title": "Week 7 Quiz: Deployment, Monitoring & Capstone Engineering",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Why are APIs important in Machine Learning deployment?",
+        "optionA": "They remove missing values",
+        "optionB": "They allow applications to communicate with ML models",
+        "optionC": "They replace dashboards",
+        "optionD": "They reduce feature count",
+        "correctAnswer": "B",
+        "explanation": "APIs expose prediction systems so applications and users can interact with ML models."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "Which framework is commonly used for building lightweight ML APIs in Python?",
+        "optionA": "NumPy",
+        "optionB": "OpenCV",
+        "optionC": "FastAPI",
+        "optionD": "Matplotlib",
+        "correctAnswer": "C",
+        "explanation": "FastAPI is widely used for building high-performance ML APIs."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "What is the main purpose of a Streamlit dashboard?",
+        "optionA": "Train neural networks",
+        "optionB": "Create interactive analytics applications",
+        "optionC": "Scale numerical features",
+        "optionD": "Cluster customer groups",
+        "correctAnswer": "B",
+        "explanation": "Streamlit helps build interactive dashboards and analytics interfaces."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "Why is cloud deployment important for analytics systems?",
+        "optionA": "It decreases model accuracy",
+        "optionB": "It allows public access and scalability",
+        "optionC": "It removes preprocessing requirements",
+        "optionD": "It eliminates dashboards",
+        "correctAnswer": "B",
+        "explanation": "Cloud deployment makes systems accessible online and scalable for users."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "What is the purpose of logging in production systems?",
+        "optionA": "To increase dataset size",
+        "optionB": "To monitor application behavior and detect issues",
+        "optionC": "To remove features",
+        "optionD": "To visualize clusters",
+        "correctAnswer": "B",
+        "explanation": "Logging helps monitor system activity, errors, and prediction workflows."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why is input validation important in deployed ML systems?",
+        "optionA": "It improves internet speed",
+        "optionB": "It prevents invalid or harmful inputs from breaking the system",
+        "optionC": "It reduces model complexity",
+        "optionD": "It removes customer segmentation",
+        "correctAnswer": "B",
+        "explanation": "Validation ensures prediction systems receive safe and properly formatted data."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What is the first step in starting a capstone analytics project?",
+        "optionA": "Deploying the final model",
+        "optionB": "Defining the business problem and system architecture",
+        "optionC": "Creating dashboards immediately",
+        "optionD": "Building APIs first",
+        "correctAnswer": "B",
+        "explanation": "Successful projects begin with clear business objectives and architecture planning."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why are preprocessing pipelines important in production ML systems?",
+        "optionA": "They increase internet usage",
+        "optionB": "They ensure consistent and reusable data transformations",
+        "optionC": "They replace forecasting models",
+        "optionD": "They remove APIs",
+        "correctAnswer": "B",
+        "explanation": "Pipelines standardize preprocessing workflows and improve consistency."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What is the purpose of building a baseline prototype during a capstone project?",
+        "optionA": "To finalize deployment immediately",
+        "optionB": "To test core workflows and identify system issues early",
+        "optionC": "To avoid preprocessing",
+        "optionD": "To eliminate analytics modules",
+        "correctAnswer": "B",
+        "explanation": "Baseline prototypes help teams validate ideas and identify weaknesses before scaling."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the biggest advantage of integrating dashboards, APIs, and ML models into one platform?",
+        "optionA": "Reduced prediction quality",
+        "optionB": "Disconnected workflows",
+        "optionC": "Unified analytics and decision-making systems",
+        "optionD": "Removing business KPIs",
+        "correctAnswer": "C",
+        "explanation": "Integrated systems create centralized, scalable analytics platforms for business decision-making."
+      }
+    ]
+  },
+  {
+    "weekNumber": 8,
+    "domain": "DS",
+    "title": "Week 8 Quiz: Optimization, Explainability & Production Analytics",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "What is the main purpose of hyperparameter tuning?",
+        "optionA": "Increase dataset size",
+        "optionB": "Optimize model performance",
+        "optionC": "Remove customer records",
+        "optionD": "Deploy dashboards",
+        "correctAnswer": "B",
+        "explanation": "Hyperparameter tuning improves prediction quality and model performance."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What problem does Explainable AI primarily solve?",
+        "optionA": "Reducing internet usage",
+        "optionB": "Making ML predictions understandable and transparent",
+        "optionC": "Scaling databases",
+        "optionD": "Removing dashboards",
+        "correctAnswer": "B",
+        "explanation": "Explainable AI helps users and businesses understand how models make decisions."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Which library is commonly used for Explainable AI visualizations?",
+        "optionA": "TensorFlow",
+        "optionB": "SHAP",
+        "optionC": "BeautifulSoup",
+        "optionD": "OpenCV",
+        "correctAnswer": "B",
+        "explanation": "SHAP is widely used for interpreting feature importance and ML predictions."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "Why is UI/UX important in analytics platforms?",
+        "optionA": "It improves user interaction and understanding",
+        "optionB": "It reduces training data",
+        "optionC": "It removes APIs",
+        "optionD": "It replaces ML models",
+        "correctAnswer": "A",
+        "explanation": "Good UI/UX improves usability, adoption, and clarity of analytics systems."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "What is the primary benefit of real-time prediction systems?",
+        "optionA": "Delayed analytics processing",
+        "optionB": "Immediate business insights and actions",
+        "optionC": "Removing customer segmentation",
+        "optionD": "Reducing dashboard quality",
+        "correctAnswer": "B",
+        "explanation": "Real-time systems allow businesses to react immediately to changing conditions."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "Why is business storytelling important in Data Science?",
+        "optionA": "To make dashboards colorful",
+        "optionB": "To communicate insights clearly to stakeholders",
+        "optionC": "To increase dataset size",
+        "optionD": "To reduce prediction accuracy",
+        "correctAnswer": "B",
+        "explanation": "Business storytelling helps decision-makers understand and act on analytics insights."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "What is scalability in production analytics systems?",
+        "optionA": "The ability to handle increasing usage and workload efficiently",
+        "optionB": "Reducing customer data",
+        "optionC": "Removing ML models",
+        "optionD": "Avoiding preprocessing",
+        "correctAnswer": "A",
+        "explanation": "Scalable systems can support more users, requests, and data efficiently."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "Why is error handling important in production systems?",
+        "optionA": "To increase prediction randomness",
+        "optionB": "To prevent crashes and improve reliability",
+        "optionC": "To remove dashboards",
+        "optionD": "To avoid APIs",
+        "correctAnswer": "B",
+        "explanation": "Error handling improves application stability and user trust."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "What is the purpose of a capstone project review phase?",
+        "optionA": "Delete unfinished modules",
+        "optionB": "Identify weaknesses and improve system quality",
+        "optionC": "Stop development completely",
+        "optionD": "Avoid feedback collection",
+        "correctAnswer": "B",
+        "explanation": "Review phases help teams refine systems before final launch."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "Which skill becomes most important during the final stages of a capstone project?",
+        "optionA": "Only writing algorithms",
+        "optionB": "Integrating engineering, analytics, communication, and product thinking",
+        "optionC": "Memorizing syntax",
+        "optionD": "Removing visualizations",
+        "correctAnswer": "B",
+        "explanation": "Final-stage projects require technical integration, communication, optimization, and product-focused thinking."
+      }
+    ]
+  },
+  {
+    "weekNumber": 9,
+    "domain": "DS",
+    "title": "Week 9 Quiz: Documentation, Presentation & Production Launch",
+    "questions": [
+      {
+        "questionOrder": 1,
+        "questionText": "Why is technical documentation important in production systems?",
+        "optionA": "It reduces prediction accuracy",
+        "optionB": "It helps developers and users understand, maintain, and use the system",
+        "optionC": "It removes preprocessing requirements",
+        "optionD": "It replaces deployment",
+        "correctAnswer": "B",
+        "explanation": "Documentation improves maintainability, collaboration, onboarding, and usability."
+      },
+      {
+        "questionOrder": 2,
+        "questionText": "What is the purpose of a professional README file?",
+        "optionA": "Increase model size",
+        "optionB": "Explain the project, setup process, and workflows clearly",
+        "optionC": "Replace dashboards",
+        "optionD": "Reduce deployment quality",
+        "correctAnswer": "B",
+        "explanation": "A strong README helps users and recruiters quickly understand the project."
+      },
+      {
+        "questionOrder": 3,
+        "questionText": "Why are demo presentations important in Data Science projects?",
+        "optionA": "They improve GPU performance",
+        "optionB": "They help communicate technical systems and business value clearly",
+        "optionC": "They remove APIs",
+        "optionD": "They eliminate preprocessing",
+        "correctAnswer": "B",
+        "explanation": "Presentations improve communication and help stakeholders understand project impact."
+      },
+      {
+        "questionOrder": 4,
+        "questionText": "What should a strong analytics project presentation include?",
+        "optionA": "Only source code",
+        "optionB": "Problem statement, workflow, insights, architecture, and outcomes",
+        "optionC": "Only deployment screenshots",
+        "optionD": "Random datasets",
+        "correctAnswer": "B",
+        "explanation": "A strong presentation explains both the technical and business aspects of the system."
+      },
+      {
+        "questionOrder": 5,
+        "questionText": "Why is final testing important before launching a production system?",
+        "optionA": "To increase bugs intentionally",
+        "optionB": "To identify reliability and usability issues before release",
+        "optionC": "To remove customer analytics",
+        "optionD": "To avoid deployment",
+        "correctAnswer": "B",
+        "explanation": "Final testing improves stability, usability, and user trust."
+      },
+      {
+        "questionOrder": 6,
+        "questionText": "What does system optimization primarily improve?",
+        "optionA": "Application performance and reliability",
+        "optionB": "Dataset duplication",
+        "optionC": "Removing dashboards",
+        "optionD": "Reducing user interaction",
+        "correctAnswer": "A",
+        "explanation": "Optimization improves responsiveness, stability, and scalability."
+      },
+      {
+        "questionOrder": 7,
+        "questionText": "Why are public project showcases valuable for learners?",
+        "optionA": "They decrease visibility",
+        "optionB": "They strengthen portfolios and improve professional credibility",
+        "optionC": "They reduce GitHub usage",
+        "optionD": "They remove deployment requirements",
+        "correctAnswer": "B",
+        "explanation": "Public showcases improve networking, credibility, and portfolio strength."
+      },
+      {
+        "questionOrder": 8,
+        "questionText": "What is one major benefit of building projects publicly during a challenge?",
+        "optionA": "Reduced consistency",
+        "optionB": "Improved accountability and motivation",
+        "optionC": "Lower project quality",
+        "optionD": "Avoiding feedback",
+        "correctAnswer": "B",
+        "explanation": "Public progress sharing improves consistency, accountability, and engagement."
+      },
+      {
+        "questionOrder": 9,
+        "questionText": "Which skill becomes especially important during final project launches?",
+        "optionA": "Only memorizing syntax",
+        "optionB": "Communication and presentation skills",
+        "optionC": "Ignoring user feedback",
+        "optionD": "Avoiding documentation",
+        "correctAnswer": "B",
+        "explanation": "Communication helps explain technical work effectively to recruiters and stakeholders."
+      },
+      {
+        "questionOrder": 10,
+        "questionText": "What is the biggest outcome of completing an end-to-end capstone project?",
+        "optionA": "Learning isolated syntax only",
+        "optionB": "Building a production-ready portfolio project and practical engineering experience",
+        "optionC": "Reducing teamwork skills",
+        "optionD": "Avoiding deployment workflows",
+        "correctAnswer": "B",
+        "explanation": "Capstone projects demonstrate practical engineering, analytics, deployment, and communication skills."
       }
     ]
   },

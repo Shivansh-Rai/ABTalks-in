@@ -11,6 +11,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:content": "tsx prisma/seed-content.ts",
     "db:seed:test-users": "tsx prisma/seed-test-users.ts",
+    "db:seed:claude-test": "tsx prisma/seed-claude-test-users.ts",
     "db:cleanup": "tsx prisma/cleanup.ts test",
     "db:cleanup:test": "tsx prisma/cleanup.ts test",
     "db:cleanup:real": "tsx prisma/cleanup.ts real",

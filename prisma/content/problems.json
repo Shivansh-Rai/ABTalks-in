@@ -627,6 +627,767 @@
     ]
   },
   {
+    "dayNumber": 29,
+    "domain": "SE",
+    "title": "The Viral Hashtag Tracker",
+    "problemStatement": "**Phase:** Frequency Analysis\n\nA social media company wants to discover which hashtags are going viral in real time.\n\nYour mission is to build a system that finds the Top K most frequently used hashtags before trends disappear.\n\nThe faster your system works, the more accurate the trending page becomes.\n\n**Real-World Impact:** Frequency analysis powers trending systems on platforms like Twitter, YouTube, Spotify, and Instagram.\n\n**What to do:**\n- Analyze hashtag frequency\n- Find Top K most frequent elements\n- Compare sorting vs heap-based approaches\n- Visualize trending outputs\n\n**Submission:**\n- Working implementation\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand heaps and frequency counting",
+      "Optimize large-scale ranking systems",
+      "Apply hashing with priority queues"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/top-k-frequent-elements/",
+      "https://www.geeksforgeeks.org/heap-data-structure/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 65,
+    "linkedinTemplate": "Day 29/60 🚀 | Viral Hashtag Tracker\n\n📈 Built a real-time trending system using heaps + hashing.\n\n💻 What I explored:\n• Frequency analysis\n• Ranking systems\n• Efficient Top-K retrieval\n\n🧠 Biggest realization:\nTrending systems are basically optimized frequency engines.\n\nGitHub Repo: {{github_link}}\n\n#SoftwareEngineering #Heaps #Algorithms",
+    "solutionApproach": "Count frequencies using hashmap and retrieve top K using heap.",
+    "tags": [
+      "heap",
+      "frequency-analysis",
+      "hashmap"
+    ]
+  },
+  {
+    "dayNumber": 30,
+    "domain": "SE",
+    "title": "The Hacker Tournament Finals",
+    "problemStatement": "**Phase:** Sprint Challenge\n\nWelcome to the Week 5 challenge arena.\n\nYou must solve TWO medium-level algorithm battles under strict time constraints.\n\nEvery wrong optimization costs you leaderboard points.\n\nBonus twist:\nYou must explain WHY your solution scales.\n\n**Real-World Impact:** Engineering interviews test optimization, communication, and reasoning — not just coding speed.\n\n**What to do:**\n- Solve 2 medium problems\n- Analyze time complexity\n- Record optimization decisions\n- Explain tradeoffs in README\n\n**Submission:**\n- Solutions\n- Complexity explanations\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Strengthen medium-level problem solving",
+      "Practice optimization thinking",
+      "Communicate engineering decisions"
+    ],
+    "resources": [
+      "https://leetcode.com/problemset/"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 30/60 🚀 | Hacker Tournament Finals\n\n⚔️ Solved medium-level engineering battles under pressure.\n\n🧠 Biggest realization:\nGood engineers explain WHY systems scale — not just HOW they work.\n\nGitHub Repo: {{github_link}}\n\n#SoftwareEngineering #DSA #InterviewPrep",
+    "solutionApproach": "Focus on optimized solutions and explain tradeoffs clearly.",
+    "tags": [
+      "challenge",
+      "optimization",
+      "interview-prep"
+    ]
+  },
+  {
+    "dayNumber": 31,
+    "domain": "SE",
+    "title": "The Dutch Flag Sorting Machine",
+    "problemStatement": "**Phase:** Sorting Systems\n\nA robotics factory sorts colored capsules moving through conveyor belts.\n\nYour mission is to organize red, white, and blue capsules using the fewest operations possible.\n\nThe factory loses money for every unnecessary swap.\n\n**Real-World Impact:** Sorting algorithms power logistics systems, databases, search engines, and inventory management.\n\n**What to do:**\n- Solve the Sort Colors problem\n- Avoid built-in sorting\n- Optimize swaps\n- Visualize pointer movement\n\n**Submission:**\n- Optimized solution\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand in-place sorting",
+      "Master pointer manipulation",
+      "Reduce unnecessary operations"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/sort-colors/",
+      "https://visualgo.net/en/sorting"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 31/60 🚀 | Dutch Flag Sorting Machine\n\n🏭 Built an optimized sorting system for robotic conveyors.\n\n💡 Key learning:\nThe smartest sorting systems minimize unnecessary movement.\n\nGitHub Repo: {{github_link}}\n\n#Sorting #Algorithms #SoftwareEngineering",
+    "solutionApproach": "Use three pointers to partition values efficiently.",
+    "tags": [
+      "sorting",
+      "two-pointers",
+      "optimization"
+    ]
+  },
+  {
+    "dayNumber": 32,
+    "domain": "SE",
+    "title": "The Hidden Number Vault",
+    "problemStatement": "**Phase:** Binary Search\n\nA hacker buried secret access codes inside a giant sorted vault.\n\nSearching one-by-one would take forever.\n\nYour mission is to crack the vault using divide-and-conquer logic before the timer runs out.\n\n**Real-World Impact:** Binary search powers databases, search engines, recommendation systems, and large-scale indexing.\n\n**What to do:**\n- Implement iterative binary search\n- Visualize search space shrinking\n- Compare linear vs binary search\n- Document performance differences\n\n**Submission:**\n- Working search system\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand divide-and-conquer",
+      "Optimize search operations",
+      "Think logarithmically"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/binary-search/",
+      "https://visualgo.net/en/bst"
+    ],
+    "difficulty": "Easy-Medium",
+    "estimatedMinutes": 50,
+    "linkedinTemplate": "Day 32/60 🚀 | Hidden Number Vault\n\n🔍 Cracked giant search spaces using binary search.\n\n🧠 Biggest realization:\nHalving the problem repeatedly changes everything.\n\nGitHub Repo: {{github_link}}\n\n#BinarySearch #Algorithms #SoftwareEngineering",
+    "solutionApproach": "Repeatedly divide search space into halves until target is found.",
+    "tags": [
+      "binary-search",
+      "divide-and-conquer",
+      "search"
+    ]
+  },
+  {
+    "dayNumber": 33,
+    "domain": "SE",
+    "title": "The Defective Robot Factory",
+    "problemStatement": "**Phase:** Binary Search Variants\n\nA robot factory accidentally released defective robots.\n\nYour mission is to identify the FIRST defective robot version before production collapses.\n\nYou can only test robots through an expensive API call, so minimize checks.\n\n**Real-World Impact:** Binary search variants are used in debugging, deployment systems, CI/CD pipelines, and failure detection.\n\n**What to do:**\n- Solve First Bad Version\n- Minimize API calls\n- Track search boundaries carefully\n- Explain edge-case handling\n\n**Submission:**\n- Working implementation\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Master binary search edge cases",
+      "Reduce expensive operations",
+      "Handle search boundaries safely"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/first-bad-version/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 55,
+    "linkedinTemplate": "Day 33/60 🚀 | Defective Robot Factory\n\n🤖 Built a failure detection system using binary search.\n\n💡 Key learning:\nEfficient debugging is critical in production systems.\n\nGitHub Repo: {{github_link}}\n\n#BinarySearch #Debugging #SoftwareEngineering",
+    "solutionApproach": "Use binary search to minimize expensive API checks.",
+    "tags": [
+      "binary-search",
+      "debugging",
+      "optimization"
+    ]
+  },
+  {
+    "dayNumber": 34,
+    "domain": "SE",
+    "title": "The Energy Drink Analyzer",
+    "problemStatement": "**Phase:** Sliding Window\n\nA gaming company wants to analyze player energy spikes during tournaments.\n\nYour mission is to find the maximum average energy boost within a fixed time window.\n\nThe system must process thousands of readings efficiently.\n\n**Real-World Impact:** Sliding window techniques power streaming analytics, financial monitoring, and real-time dashboards.\n\n**What to do:**\n- Solve Maximum Average Subarray\n- Implement fixed-size sliding window\n- Compare naive vs optimized solutions\n- Visualize window movement\n\n**Submission:**\n- Working implementation\n- Performance comparison\n- GitHub repository",
+    "learningObjectives": [
+      "Understand sliding windows",
+      "Optimize repeated computations",
+      "Analyze streaming data efficiently"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/maximum-average-subarray-i/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 34/60 🚀 | Energy Drink Analyzer\n\n⚡ Built a streaming analytics system using sliding windows.\n\n🧠 Biggest realization:\nMoving windows are perfect for real-time analytics.\n\nGitHub Repo: {{github_link}}\n\n#SlidingWindow #Analytics #SoftwareEngineering",
+    "solutionApproach": "Maintain rolling window sum instead of recalculating repeatedly.",
+    "tags": [
+      "sliding-window",
+      "analytics",
+      "optimization"
+    ]
+  },
+  {
+    "dayNumber": 35,
+    "domain": "SE",
+    "title": "The Hacker Signal Decoder",
+    "problemStatement": "**Phase:** Advanced Sliding Window\n\nA cybersecurity team intercepted a mysterious hacker signal.\n\nYour mission is to identify the longest unique signal pattern before repetition occurs.\n\nRepeated characters corrupt the decoding process.\n\n**Real-World Impact:** Variable sliding windows are used in cybersecurity, network analysis, compression systems, and NLP pipelines.\n\n**What to do:**\n- Solve Longest Substring Without Repeating Characters\n- Track character frequencies dynamically\n- Optimize window expansion and shrinking\n- Visualize pointer movement\n\n**Submission:**\n- Optimized implementation\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Master variable sliding windows",
+      "Track dynamic constraints",
+      "Optimize substring problems"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/longest-substring-without-repeating-characters/"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 70,
+    "linkedinTemplate": "Day 35/60 🚀 | Hacker Signal Decoder\n\n🔐 Built a system to detect the longest unique signal pattern.\n\n💡 Key realization:\nEfficient systems constantly adapt to changing constraints.\n\nGitHub Repo: {{github_link}}\n\n#SlidingWindow #CyberSecurity #SoftwareEngineering",
+    "solutionApproach": "Expand/shrink window dynamically while tracking character indices.",
+    "tags": [
+      "sliding-window",
+      "strings",
+      "hashmap"
+    ]
+  },
+  {
+    "dayNumber": 36,
+    "domain": "SE",
+    "title": "The Water Reservoir Architect",
+    "problemStatement": "**Phase:** Two Pointer Optimization\n\nA futuristic city is running out of water.\n\nYour mission is to design the most efficient reservoir system using two giant walls that can store the maximum amount of water.\n\nThe city engineers want maximum capacity with minimum wasted space.\n\n**Real-World Impact:** Optimization problems like this appear in infrastructure planning, memory allocation, and resource balancing systems.\n\n**What to do:**\n- Solve Container With Most Water\n- Compare brute-force vs optimized two-pointer solution\n- Visualize pointer movement\n- Explain why moving the smaller wall works\n\n**Submission:**\n- Optimized implementation\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Master two-pointer optimization",
+      "Reduce unnecessary comparisons",
+      "Understand greedy movement strategies"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/container-with-most-water/",
+      "https://www.geeksforgeeks.org/two-pointers-technique/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 65,
+    "linkedinTemplate": "Day 36/60 🚀 | Water Reservoir Architect\n\n💧 Designed an optimized reservoir system using two pointers.\n\n💻 What I explored:\n• Brute-force vs optimized thinking\n• Pointer movement strategies\n• Area optimization\n\n🧠 Biggest realization:\nThe smartest systems eliminate impossible paths early.\n\nGitHub Repo: {{github_link}}\n\n#TwoPointers #Optimization #SoftwareEngineering",
+    "solutionApproach": "Use two pointers and move the smaller wall inward strategically.",
+    "tags": [
+      "two-pointers",
+      "optimization",
+      "greedy"
+    ]
+  },
+  {
+    "dayNumber": 37,
+    "domain": "SE",
+    "title": "The Cookie Distribution Crisis",
+    "problemStatement": "**Phase:** Greedy Algorithms\n\nA festival organizer must distribute cookies to children.\n\nEach child has a happiness requirement, and each cookie has a size.\n\nYour mission is to maximize the number of happy children using limited resources.\n\n**Real-World Impact:** Greedy algorithms are used in scheduling, resource allocation, networking, and logistics systems.\n\n**What to do:**\n- Solve Assign Cookies\n- Sort greed factors and cookie sizes\n- Maximize satisfied children\n- Explain greedy decisions\n\n**Submission:**\n- Working implementation\n- Greedy strategy explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand greedy algorithms",
+      "Make locally optimal decisions",
+      "Optimize resource allocation"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/assign-cookies/",
+      "https://www.geeksforgeeks.org/greedy-algorithms/"
+    ],
+    "difficulty": "Easy-Medium",
+    "estimatedMinutes": 50,
+    "linkedinTemplate": "Day 37/60 🚀 | Cookie Distribution Crisis\n\n🍪 Built a greedy allocation system for maximizing happiness.\n\n🧠 Key learning:\nSometimes the best global outcome comes from smart local decisions.\n\nGitHub Repo: {{github_link}}\n\n#GreedyAlgorithms #SoftwareEngineering #Optimization",
+    "solutionApproach": "Sort both arrays and greedily assign smallest valid cookie.",
+    "tags": [
+      "greedy",
+      "sorting",
+      "resource-allocation"
+    ]
+  },
+  {
+    "dayNumber": 38,
+    "domain": "SE",
+    "title": "The Ancient Kingdom Family Tree",
+    "problemStatement": "**Phase:** Trees\n\nAn ancient kingdom preserved royal family records inside a giant hierarchical tree.\n\nYour mission is to traverse the royal lineage in the correct order to unlock hidden secrets.\n\n**Real-World Impact:** Tree traversals are used in file systems, databases, compilers, and DOM structures.\n\n**What to do:**\n- Build a binary tree\n- Perform inorder traversal\n- Visualize traversal order\n- Compare recursive vs iterative approaches\n\n**Submission:**\n- Tree traversal implementation\n- Visualization diagram\n- GitHub repository",
+    "learningObjectives": [
+      "Understand binary trees",
+      "Learn tree traversal patterns",
+      "Visualize recursive structures"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/binary-tree-inorder-traversal/",
+      "https://visualgo.net/en/bst"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 70,
+    "linkedinTemplate": "Day 38/60 🚀 | Ancient Kingdom Family Tree\n\n🌳 Explored hierarchical systems using tree traversal.\n\n🧠 Biggest realization:\nTrees are everywhere once you start noticing system hierarchies.\n\nGitHub Repo: {{github_link}}\n\n#Trees #DataStructures #SoftwareEngineering",
+    "solutionApproach": "Use recursion or stack-based traversal to visit nodes in order.",
+    "tags": [
+      "trees",
+      "traversal",
+      "recursion"
+    ]
+  },
+  {
+    "dayNumber": 39,
+    "domain": "SE",
+    "title": "The Dungeon Depth Scanner",
+    "problemStatement": "**Phase:** Tree Depth Analysis\n\nA game engine generates massive underground dungeons.\n\nYour mission is to calculate the deepest possible level before players get trapped.\n\nThe dungeon structure behaves exactly like a binary tree.\n\n**Real-World Impact:** Depth calculations are used in AI search systems, recursive analysis, and hierarchical infrastructure monitoring.\n\n**What to do:**\n- Solve Maximum Depth of Binary Tree\n- Visualize recursive depth calculation\n- Compare DFS approaches\n- Handle edge cases\n\n**Submission:**\n- Depth calculator implementation\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand recursive depth traversal",
+      "Calculate tree height efficiently",
+      "Strengthen DFS intuition"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/maximum-depth-of-binary-tree/",
+      "https://visualgo.net/en/dfs"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 39/60 🚀 | Dungeon Depth Scanner\n\n🕳️ Built a recursive scanner to explore dungeon depth.\n\n💡 Key realization:\nRecursion becomes intuitive once you visualize the tree structure.\n\nGitHub Repo: {{github_link}}\n\n#Trees #DFS #SoftwareEngineering",
+    "solutionApproach": "Use DFS recursion to calculate maximum subtree depth.",
+    "tags": [
+      "trees",
+      "dfs",
+      "recursion"
+    ]
+  },
+  {
+    "dayNumber": 40,
+    "domain": "SE",
+    "title": "The Corrupted Kingdom Records",
+    "problemStatement": "**Phase:** Tree Validation\n\nA digital kingdom archive stores records using Binary Search Trees.\n\nUnfortunately, corrupted entries have broken the structure.\n\nYour mission is to validate whether the kingdom records still follow BST rules.\n\n**Real-World Impact:** Validation systems are critical in databases, indexing systems, and distributed architectures.\n\n**What to do:**\n- Solve Validate Binary Search Tree\n- Track valid ranges during traversal\n- Test invalid tree structures\n- Document validation logic\n\n**Submission:**\n- Validation implementation\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand BST properties",
+      "Validate hierarchical constraints",
+      "Track recursion boundaries safely"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/validate-binary-search-tree/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 70,
+    "linkedinTemplate": "Day 40/60 🚀 | Corrupted Kingdom Records\n\n📜 Built a validation engine for corrupted BST archives.\n\n🧠 Biggest realization:\nValidation systems are the backbone of reliable software.\n\nGitHub Repo: {{github_link}}\n\n#BST #Validation #SoftwareEngineering",
+    "solutionApproach": "Recursively validate node ranges using min/max constraints.",
+    "tags": [
+      "bst",
+      "validation",
+      "trees"
+    ]
+  },
+  {
+    "dayNumber": 41,
+    "domain": "SE",
+    "title": "The Family Reunion Locator",
+    "problemStatement": "**Phase:** Lowest Common Ancestor\n\nA genealogy company is trying to reconnect lost family members.\n\nYour mission is to identify the closest common ancestor between two people inside a massive family tree.\n\n**Real-World Impact:** Ancestor queries are used in file systems, network routing, organizational hierarchies, and version control systems.\n\n**What to do:**\n- Solve Lowest Common Ancestor of BST\n- Visualize ancestor traversal\n- Compare node values strategically\n- Explain BST traversal decisions\n\n**Submission:**\n- LCA implementation\n- Visualization diagram\n- GitHub repository",
+    "learningObjectives": [
+      "Understand ancestor relationships",
+      "Traverse BSTs efficiently",
+      "Use tree properties strategically"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 65,
+    "linkedinTemplate": "Day 41/60 🚀 | Family Reunion Locator\n\n🌳 Built an ancestor-finding system inside family trees.\n\n💡 Key learning:\nBST properties drastically simplify complex searches.\n\nGitHub Repo: {{github_link}}\n\n#Trees #BST #SoftwareEngineering",
+    "solutionApproach": "Use BST ordering rules to move toward the common ancestor.",
+    "tags": [
+      "bst",
+      "trees",
+      "lca"
+    ]
+  },
+  {
+    "dayNumber": 42,
+    "domain": "SE",
+    "title": "The Island Survival Simulator",
+    "problemStatement": "**Phase:** Graphs\n\nA satellite system discovered hundreds of disconnected islands after a massive flood.\n\nYour mission is to calculate how many separate islands still exist before rescue missions begin.\n\n**Real-World Impact:** Graph traversal powers mapping systems, social networks, recommendation engines, and distributed infrastructure analysis.\n\n**What to do:**\n- Solve Number of Islands\n- Traverse grid using DFS or BFS\n- Mark visited land cells\n- Visualize graph traversal\n\n**Submission:**\n- Island counter implementation\n- Traversal explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand graph traversal",
+      "Apply DFS/BFS on grids",
+      "Track visited states efficiently"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/number-of-islands/",
+      "https://visualgo.net/en/graphds"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 80,
+    "linkedinTemplate": "Day 42/60 🚀 | Island Survival Simulator\n\n🏝️ Built a rescue mapping system using graph traversal.\n\n🧠 Biggest realization:\nGraphs model the hidden connections behind many real-world systems.\n\nGitHub Repo: {{github_link}}\n\n#Graphs #DFS #BFS #SoftwareEngineering",
+    "solutionApproach": "Use DFS/BFS to explore connected components in the grid.",
+    "tags": [
+      "graphs",
+      "dfs",
+      "bfs"
+    ]
+  },
+  {
+    "dayNumber": 43,
+    "domain": "SE",
+    "title": "The Zombie City Escape Map",
+    "problemStatement": "**Phase:** Graph Traversal\n\nA zombie outbreak has trapped survivors inside a giant city grid.\n\nYour mission is to calculate the shortest escape route before the zombies spread.\n\nEvery move matters. A wrong traversal strategy could cost lives.\n\n**Real-World Impact:** Shortest-path systems are used in GPS navigation, robotics, delivery systems, and emergency response software.\n\n**What to do:**\n- Solve Shortest Path in Binary Matrix\n- Implement BFS traversal\n- Track visited locations carefully\n- Visualize level-by-level exploration\n\n**Submission:**\n- Working pathfinding system\n- Traversal explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand BFS traversal",
+      "Find shortest paths efficiently",
+      "Explore graph levels systematically"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/shortest-path-in-binary-matrix/",
+      "https://visualgo.net/en/graphds"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 85,
+    "linkedinTemplate": "Day 43/60 🚀 | Zombie City Escape Map\n\n🧟 Built a shortest-path survival system using BFS traversal.\n\n💻 What I explored:\n• Graph traversal strategies\n• Queue-based exploration\n• Path optimization\n\n🧠 Biggest realization:\nBFS feels like controlled wave expansion through a graph.\n\nGitHub Repo: {{github_link}}\n\n#Graphs #BFS #SoftwareEngineering",
+    "solutionApproach": "Use BFS to explore neighboring cells level-by-level while tracking visited nodes.",
+    "tags": [
+      "graphs",
+      "bfs",
+      "shortest-path"
+    ]
+  },
+  {
+    "dayNumber": 44,
+    "domain": "SE",
+    "title": "The University Course Planner",
+    "problemStatement": "**Phase:** Topological Sorting\n\nA university accidentally created impossible degree schedules.\n\nSome courses depend on others, creating a giant prerequisite maze.\n\nYour mission is to determine whether students can actually graduate.\n\n**Real-World Impact:** Dependency graphs power package managers, CI/CD systems, build pipelines, and scheduling systems.\n\n**What to do:**\n- Solve Course Schedule\n- Detect cycles in dependency graph\n- Implement BFS or DFS solution\n- Visualize prerequisite relationships\n\n**Submission:**\n- Dependency checker\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand dependency graphs",
+      "Detect cycles in directed graphs",
+      "Learn topological ordering concepts"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/course-schedule/",
+      "https://visualgo.net/en/graphds"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 44/60 🚀 | University Course Planner\n\n🎓 Built a prerequisite validation system using graph traversal.\n\n🧠 Key realization:\nModern systems are basically giant dependency graphs.\n\nGitHub Repo: {{github_link}}\n\n#Graphs #TopologicalSort #SoftwareEngineering",
+    "solutionApproach": "Use graph traversal with indegree tracking or DFS cycle detection.",
+    "tags": [
+      "graphs",
+      "topological-sort",
+      "cycle-detection"
+    ]
+  },
+  {
+    "dayNumber": 45,
+    "domain": "SE",
+    "title": "The Emergency Room Simulator",
+    "problemStatement": "**Phase:** Priority Queues\n\nA hospital emergency room must prioritize patients based on severity.\n\nYour mission is to build the patient scheduling engine before the waiting room collapses into chaos.\n\n**Real-World Impact:** Priority queues power operating systems, network routing, cloud scheduling, and real-time systems.\n\n**What to do:**\n- Build a patient priority system\n- Use heaps or priority queues\n- Process highest-priority patients first\n- Simulate incoming emergency requests\n\n**Submission:**\n- Priority scheduling system\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand priority queues",
+      "Manage dynamically changing priorities",
+      "Design scheduling systems"
+    ],
+    "resources": [
+      "https://docs.python.org/3/library/heapq.html",
+      "https://www.geeksforgeeks.org/priority-queue-set-1-introduction/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 45/60 🚀 | Emergency Room Simulator\n\n🏥 Built a hospital scheduling engine using priority queues.\n\n💡 Biggest realization:\nNot all tasks should be treated equally in real systems.\n\nGitHub Repo: {{github_link}}\n\n#PriorityQueue #Heaps #SoftwareEngineering",
+    "solutionApproach": "Use heap-based priority queues to process highest-priority tasks first.",
+    "tags": [
+      "priority-queue",
+      "heap",
+      "scheduling"
+    ]
+  },
+  {
+    "dayNumber": 46,
+    "domain": "SE",
+    "title": "The Robot Energy Saver",
+    "problemStatement": "**Phase:** Dynamic Programming\n\nA robot must travel across dangerous rooftops while conserving battery.\n\nEach jump drains energy.\n\nYour mission is to calculate the minimum energy path before the robot shuts down.\n\n**Real-World Impact:** Dynamic programming powers optimization systems in finance, AI planning, robotics, and logistics.\n\n**What to do:**\n- Solve Min Cost Climbing Stairs\n- Compare recursion vs DP\n- Store intermediate results\n- Visualize state transitions\n\n**Submission:**\n- Optimized implementation\n- DP explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand overlapping subproblems",
+      "Optimize recursive solutions",
+      "Learn bottom-up thinking"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/min-cost-climbing-stairs/",
+      "https://www.geeksforgeeks.org/dynamic-programming/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 80,
+    "linkedinTemplate": "Day 46/60 🚀 | Robot Energy Saver\n\n🤖 Built an energy optimization system using Dynamic Programming.\n\n🧠 Biggest realization:\nDP is basically intelligent memory for repeated decisions.\n\nGitHub Repo: {{github_link}}\n\n#DynamicProgramming #Optimization #SoftwareEngineering",
+    "solutionApproach": "Store minimum cost results for previous states and build solution iteratively.",
+    "tags": [
+      "dynamic-programming",
+      "optimization",
+      "memoization"
+    ]
+  },
+  {
+    "dayNumber": 47,
+    "domain": "SE",
+    "title": "The Treasure Dungeon Collector",
+    "problemStatement": "**Phase:** Dynamic Programming\n\nA treasure hunter explores a dungeon filled with gold rooms.\n\nSome rooms contain traps, so collecting treasure greedily could lead to disaster.\n\nYour mission is to maximize collected treasure without triggering alarms in adjacent rooms.\n\n**Real-World Impact:** Constraint optimization problems appear in resource planning, investment systems, and scheduling engines.\n\n**What to do:**\n- Solve House Robber\n- Compare greedy vs DP approaches\n- Track optimal substructure\n- Visualize decision choices\n\n**Submission:**\n- Optimized DP solution\n- README explanation\n- GitHub repository",
+    "learningObjectives": [
+      "Recognize optimal substructure",
+      "Avoid greedy traps",
+      "Build DP intuition"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/house-robber/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 47/60 🚀 | Treasure Dungeon Collector\n\n💰 Built a treasure optimization system using Dynamic Programming.\n\n💡 Key realization:\nThe locally best choice is not always globally optimal.\n\nGitHub Repo: {{github_link}}\n\n#DynamicProgramming #Algorithms #SoftwareEngineering",
+    "solutionApproach": "Track maximum loot choices dynamically while avoiding adjacent conflicts.",
+    "tags": [
+      "dynamic-programming",
+      "optimization",
+      "decision-making"
+    ]
+  },
+  {
+    "dayNumber": 48,
+    "domain": "SE",
+    "title": "The Alien Language Translator",
+    "problemStatement": "**Phase:** String Dynamic Programming\n\nScientists intercepted messages from an alien civilization.\n\nYour mission is to determine whether one message can be transformed into another using minimum edits.\n\nEvery edit costs precious translation energy.\n\n**Real-World Impact:** Edit distance algorithms power autocorrect, spell checkers, DNA analysis, and NLP systems.\n\n**What to do:**\n- Solve Edit Distance\n- Build DP table visualization\n- Track insertion/deletion/replacement costs\n- Compare recursive vs DP solutions\n\n**Submission:**\n- Working implementation\n- DP visualization\n- GitHub repository",
+    "learningObjectives": [
+      "Understand 2D dynamic programming",
+      "Track transformation costs",
+      "Optimize string operations"
+    ],
+    "resources": [
+      "https://leetcode.com/problems/edit-distance/",
+      "https://visualgo.net/en/dp"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 48/60 🚀 | Alien Language Translator\n\n👽 Built a message transformation engine using Dynamic Programming.\n\n🧠 Biggest realization:\nComplex systems become manageable once you break them into smaller states.\n\nGitHub Repo: {{github_link}}\n\n#DynamicProgramming #Strings #SoftwareEngineering",
+    "solutionApproach": "Build a DP matrix tracking minimum transformation operations.",
+    "tags": [
+      "dynamic-programming",
+      "strings",
+      "edit-distance"
+    ]
+  },
+  {
+    "dayNumber": 49,
+    "domain": "SE",
+    "title": "The Ultimate Engineering Gauntlet",
+    "problemStatement": "**Phase:** Sprint Challenge\n\nWelcome to the hardest engineering tournament so far.\n\nYou must solve:\n• 1 Graph problem\n• 1 Dynamic Programming problem\n• 1 Optimization challenge\n\nBUT there’s a twist:\nYou must explain your entire thought process like an engineer presenting to a team.\n\n**Real-World Impact:** Senior engineers are evaluated not just on solutions, but on communication, scalability reasoning, and tradeoff analysis.\n\n**What to do:**\n- Solve 3 advanced problems\n- Record optimization decisions\n- Explain tradeoffs and edge cases\n- Create engineering-style documentation\n\n**Submission:**\n- Solutions\n- Engineering notes\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Combine multiple advanced concepts",
+      "Strengthen communication skills",
+      "Think like a senior engineer"
+    ],
+    "resources": [
+      "https://leetcode.com/problemset/",
+      "https://www.bigocheatsheet.com/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 49/60 🚀 | Ultimate Engineering Gauntlet\n\n⚔️ Solved advanced graph + DP + optimization challenges.\n\n🧠 Biggest realization:\nStrong engineers explain decisions clearly — not just code solutions.\n\nGitHub Repo: {{github_link}}\n\n#SoftwareEngineering #DynamicProgramming #Graphs #InterviewPrep",
+    "solutionApproach": "Combine efficient algorithms with strong explanation and documentation.",
+    "tags": [
+      "graphs",
+      "dynamic-programming",
+      "optimization"
+    ]
+  },
+  {
+    "dayNumber": 50,
+    "domain": "SE",
+    "title": "The Superhero Academy Simulator",
+    "problemStatement": "**Phase:** Object-Oriented Design\n\nA futuristic academy trains superheroes with different powers, energy levels, and combat styles.\n\nYour mission is to design a flexible simulator where heroes can inherit abilities, override attacks, and interact dynamically.\n\nThe academy wants a scalable system because hundreds of heroes will join later.\n\n**Real-World Impact:** Object-Oriented Programming powers game engines, enterprise software, banking systems, and large-scale applications.\n\n**What to do:**\n- Create a Hero base class\n- Implement inheritance for different hero types\n- Use method overriding for special attacks\n- Simulate hero battles\n\n**Submission:**\n- Working OOP simulation\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand inheritance and polymorphism",
+      "Design reusable systems",
+      "Structure scalable codebases"
+    ],
+    "resources": [
+      "https://realpython.com/python3-object-oriented-programming/",
+      "https://docs.python.org/3/tutorial/classes.html"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 50/60 🚀 | Superhero Academy Simulator\n\n🦸 Built a scalable hero battle system using Object-Oriented Programming.\n\n💻 What I explored:\n• Inheritance\n• Polymorphism\n• Reusable system design\n\n🧠 Biggest realization:\nOOP helps engineers design systems that scale naturally.\n\nGitHub Repo: {{github_link}}\n\n#OOP #SoftwareEngineering #Python",
+    "solutionApproach": "Use base classes, inheritance, and overridden methods to simulate hero behavior.",
+    "tags": [
+      "oop",
+      "inheritance",
+      "polymorphism"
+    ]
+  },
+  {
+    "dayNumber": 51,
+    "domain": "SE",
+    "title": "The Food Delivery Empire",
+    "problemStatement": "**Phase:** System Design\n\nA startup is launching a food delivery platform.\n\nOrders are exploding rapidly, and restaurants are struggling to manage requests.\n\nYour mission is to design a mini backend system that handles:\n• users\n• restaurants\n• orders\n• delivery tracking\n\n**Real-World Impact:** System design powers scalable platforms like Swiggy, Zomato, Uber, and Amazon.\n\n**What to do:**\n- Design core entities and relationships\n- Build simple order flow classes\n- Simulate order placement\n- Document architecture decisions\n\n**Submission:**\n- Mini backend simulation\n- Architecture notes\n- GitHub repository",
+    "learningObjectives": [
+      "Think in systems instead of isolated functions",
+      "Model relationships between entities",
+      "Understand backend architecture basics"
+    ],
+    "resources": [
+      "https://roadmap.sh/system-design",
+      "https://refactoring.guru/design-patterns"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 51/60 🚀 | Food Delivery Empire\n\n🍔 Designed a mini backend system for a food delivery platform.\n\n🧠 Biggest realization:\nSoftware engineering is really about designing interactions between systems.\n\nGitHub Repo: {{github_link}}\n\n#SystemDesign #Backend #SoftwareEngineering",
+    "solutionApproach": "Model users, restaurants, and orders using structured classes and interactions.",
+    "tags": [
+      "system-design",
+      "backend",
+      "architecture"
+    ]
+  },
+  {
+    "dayNumber": 52,
+    "domain": "SE",
+    "title": "The Weather Intelligence Network",
+    "problemStatement": "**Phase:** APIs\n\nA global weather agency wants a smart dashboard that fetches live weather reports from different cities.\n\nYour mission is to build a weather intelligence client that communicates with APIs and displays useful insights.\n\n**Real-World Impact:** APIs power modern applications by enabling communication between independent systems.\n\n**What to do:**\n- Fetch weather data from a public API\n- Parse JSON responses\n- Display formatted weather summaries\n- Handle API failures gracefully\n\n**Submission:**\n- Working API integration\n- README explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand APIs and HTTP requests",
+      "Parse JSON data",
+      "Handle real-world system failures"
+    ],
+    "resources": [
+      "https://openweathermap.org/api",
+      "https://realpython.com/api-integration-in-python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 80,
+    "linkedinTemplate": "Day 52/60 🚀 | Weather Intelligence Network\n\n🌦️ Built a live weather dashboard using APIs.\n\n💡 Key realization:\nModern applications are connected ecosystems communicating through APIs.\n\nGitHub Repo: {{github_link}}\n\n#APIs #Python #SoftwareEngineering",
+    "solutionApproach": "Send HTTP requests, parse JSON responses, and display structured information.",
+    "tags": [
+      "api",
+      "json",
+      "http"
+    ]
+  },
+  {
+    "dayNumber": 53,
+    "domain": "SE",
+    "title": "The Secret Vault Database",
+    "problemStatement": "**Phase:** Databases\n\nA cybersecurity company stores sensitive vault records inside a secret database.\n\nYour mission is to build a secure storage system that can:\n• add records\n• search records\n• update records\n• delete records\n\n**Real-World Impact:** Databases power almost every modern application including banking, healthcare, e-commerce, and social media.\n\n**What to do:**\n- Create a SQLite database\n- Implement CRUD operations\n- Store secret vault records\n- Write efficient queries\n\n**Submission:**\n- Working database system\n- SQL query examples\n- GitHub repository",
+    "learningObjectives": [
+      "Understand relational databases",
+      "Perform CRUD operations",
+      "Connect Python with SQL"
+    ],
+    "resources": [
+      "https://www.sqlitetutorial.net/",
+      "https://realpython.com/python-sql-libraries/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 53/60 🚀 | Secret Vault Database\n\n🗄️ Built a secure record management system using SQLite.\n\n🧠 Biggest realization:\nData becomes powerful only when organized efficiently.\n\nGitHub Repo: {{github_link}}\n\n#Databases #SQL #SoftwareEngineering",
+    "solutionApproach": "Use SQLite with Python to create and manage structured records.",
+    "tags": [
+      "database",
+      "sql",
+      "crud"
+    ]
+  },
+  {
+    "dayNumber": 54,
+    "domain": "SE",
+    "title": "The Smart Spam Detector — Part 1",
+    "problemStatement": "**Phase:** Mini Project\n\nA messaging company is losing millions because spam messages keep bypassing filters.\n\nYour mission is to start building an AI-powered spam detection engine.\n\nToday’s focus:\n• collect and clean message data\n• preprocess text\n• understand spam patterns\n\n**Real-World Impact:** Spam detection systems power cybersecurity, email filtering, and online platform moderation.\n\n**What to do:**\n- Load SMS spam dataset\n- Clean and preprocess text\n- Remove stopwords and punctuation\n- Explore spam vs non-spam patterns\n\n**Submission:**\n- Preprocessing notebook/script\n- Data observations\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand NLP preprocessing",
+      "Clean real-world text data",
+      "Prepare datasets for ML systems"
+    ],
+    "resources": [
+      "https://www.kaggle.com/datasets/uciml/sms-spam-collection-dataset",
+      "https://www.nltk.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 54/60 🚀 | Smart Spam Detector — Part 1\n\n📩 Started building an AI-powered spam detection system.\n\n💻 What I explored:\n• Text preprocessing\n• NLP cleaning pipelines\n• Spam pattern analysis\n\n🧠 Biggest realization:\nAI systems are only as good as the quality of their data.\n\nGitHub Repo: {{github_link}}\n\n#MachineLearning #NLP #SoftwareEngineering",
+    "solutionApproach": "Load and preprocess text data using NLP cleaning techniques.",
+    "tags": [
+      "nlp",
+      "preprocessing",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 55,
+    "domain": "SE",
+    "title": "The Smart Spam Detector — Part 2",
+    "problemStatement": "**Phase:** Mini Project\n\nThe spam company now needs a working AI prediction engine.\n\nYour mission is to train a machine learning model that classifies spam messages automatically.\n\n**Real-World Impact:** Text classification systems power recommendation engines, moderation systems, and fraud detection tools.\n\n**What to do:**\n- Convert text into numerical vectors\n- Train a classification model\n- Evaluate model accuracy\n- Test predictions on custom messages\n\n**Submission:**\n- Working ML classifier\n- Accuracy evaluation\n- GitHub repository",
+    "learningObjectives": [
+      "Understand ML classification pipelines",
+      "Train NLP models",
+      "Evaluate prediction quality"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/tutorial/basic/tutorial.html",
+      "https://scikit-learn.org/stable/modules/feature_extraction.html"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 55/60 🚀 | Smart Spam Detector — Part 2\n\n🤖 Trained an AI model to classify spam messages automatically.\n\n🧠 Biggest realization:\nMachine learning is basically pattern recognition powered by data.\n\nGitHub Repo: {{github_link}}\n\n#MachineLearning #NLP #AI",
+    "solutionApproach": "Use TF-IDF or Bag-of-Words with a simple classifier like Naive Bayes.",
+    "tags": [
+      "machine-learning",
+      "classification",
+      "nlp"
+    ]
+  },
+  {
+    "dayNumber": 56,
+    "domain": "SE",
+    "title": "The Smart Spam Detector — Part 3",
+    "problemStatement": "**Phase:** Mini Project Deployment\n\nThe messaging company wants a real product instead of just a notebook.\n\nYour mission is to deploy the spam detector into a simple interactive application where users can test messages live.\n\n**Real-World Impact:** Deployment transforms ML experiments into usable products for real users.\n\n**What to do:**\n- Build a simple Streamlit or Flask UI\n- Allow users to input custom messages\n- Display spam predictions live\n- Polish project documentation\n\n**Submission:**\n- Working deployed app\n- README documentation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Deploy AI systems",
+      "Build interactive user interfaces",
+      "Transform prototypes into products"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://docs.streamlit.io/"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 56/60 🚀 | Smart Spam Detector — Final Deployment\n\n🚀 Turned an AI spam classifier into a real interactive application.\n\n💡 Biggest realization:\nBuilding models is only half the journey — deployment creates real impact.\n\nGitHub Repo: {{github_link}}\n\n#MachineLearning #Deployment #SoftwareEngineering #AI",
+    "solutionApproach": "Integrate trained model with a lightweight frontend for real-time predictions.",
+    "tags": [
+      "deployment",
+      "streamlit",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 57,
+    "domain": "SE",
+    "title": "The Spam Detector Performance Crisis",
+    "problemStatement": "**Phase:** Final Product Optimization\n\nYour AI-powered spam detector has gone viral.\n\nThousands of users are testing messages every minute, but the system is slowing down.\n\nYour mission is to optimize the spam detection engine before the servers crash.\n\nThe company wants:\n• faster predictions\n• cleaner UI\n• better user experience\n• performance insights\n\n**Real-World Impact:** Optimization and scalability are critical in production AI systems used by millions of users.\n\n**What to do:**\n- Improve prediction speed\n- Refactor messy code\n- Enhance UI and user experience\n- Add prediction confidence scores\n- Document performance improvements\n\n**Submission:**\n- Optimized application\n- Performance comparison report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Optimize production-ready systems",
+      "Improve maintainability",
+      "Think about scalability and UX"
+    ],
+    "resources": [
+      "https://docs.streamlit.io/",
+      "https://scikit-learn.org/stable/"
+    ],
+    "difficulty": "Medium-Hard",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 57/60 🚀 | Spam Detector Performance Crisis\n\n⚡ Optimized my AI spam detection system for speed and usability.\n\n💻 What I improved:\n• Faster predictions\n• Cleaner architecture\n• Better user experience\n• Confidence scoring\n\n🧠 Biggest realization:\nBuilding a model is only the beginning — optimization creates real products.\n\nGitHub Repo: {{github_link}}\n\n#SoftwareEngineering #MachineLearning #Optimization #AI",
+    "solutionApproach": "Refactor repeated logic, optimize preprocessing, and improve application responsiveness.",
+    "tags": [
+      "optimization",
+      "deployment",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 58,
+    "domain": "SE",
+    "title": "The Ultimate Coding Arena",
+    "problemStatement": "**Phase:** Mock Interview Arena\n\nYou have entered the final engineering tournament.\n\nYour mission is to survive a mock technical interview containing:\n• one DSA challenge\n• one debugging challenge\n• one system-design discussion\n\nThe catch:\nYou must explain your thinking clearly like a real engineer.\n\n**Real-World Impact:** Technical interviews evaluate communication, tradeoff analysis, and structured thinking — not just code.\n\n**What to do:**\n- Solve 1 timed DSA problem\n- Debug a broken implementation\n- Explain one system-design scenario\n- Record your reasoning process\n\n**Submission:**\n- Problem solutions\n- Debugging explanation\n- System design notes\n- GitHub repository",
+    "learningObjectives": [
+      "Simulate real interview pressure",
+      "Communicate engineering decisions",
+      "Strengthen debugging skills"
+    ],
+    "resources": [
+      "https://leetcode.com/problemset/",
+      "https://interviewing.io/guides/system-design-interview"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 58/60 🚀 | Ultimate Coding Arena\n\n⚔️ Simulated a real technical interview with DSA, debugging, and system design challenges.\n\n🧠 Biggest realization:\nInterview success depends heavily on communication and structured thinking.\n\nGitHub Repo: {{github_link}}\n\n#InterviewPrep #SoftwareEngineering #DSA",
+    "solutionApproach": "Focus on clear reasoning, edge-case analysis, and tradeoff communication.",
+    "tags": [
+      "mock-interview",
+      "debugging",
+      "system-design"
+    ]
+  },
+  {
+    "dayNumber": 59,
+    "domain": "SE",
+    "title": "The Engineer Portfolio Showcase",
+    "problemStatement": "**Phase:** Portfolio Engineering\n\nA recruiter is reviewing your profile in under 60 seconds.\n\nYour mission is to transform everything you built during the challenge into a polished engineering portfolio.\n\nYou must organize:\n• GitHub repositories\n• project READMEs\n• LinkedIn highlights\n• resume project descriptions\n\n**Real-World Impact:** Strong portfolios dramatically improve internship and job opportunities.\n\n**What to do:**\n- Polish GitHub repositories\n- Improve project documentation\n- Write resume-ready project descriptions\n- Create a portfolio README or website\n- Highlight best engineering projects\n\n**Submission:**\n- Portfolio repository\n- Updated READMEs\n- Resume project descriptions\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Present technical work professionally",
+      "Communicate impact clearly",
+      "Build recruiter-friendly portfolios"
+    ],
+    "resources": [
+      "https://github.com/abhisheknaiidu/awesome-github-profile-readme",
+      "https://roadmap.sh/projects"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 59/60 🚀 | Engineer Portfolio Showcase\n\n🖥️ Turned my projects into a polished engineering portfolio.\n\n💡 Biggest realization:\nProjects become powerful only when you can communicate their impact clearly.\n\nGitHub Repo: {{github_link}}\n\n#Portfolio #SoftwareEngineering #GitHub #CareerGrowth",
+    "solutionApproach": "Organize repositories professionally with strong explanations and clean presentation.",
+    "tags": [
+      "portfolio",
+      "github",
+      "career"
+    ]
+  },
+  {
+    "dayNumber": 60,
+    "domain": "SE",
+    "title": "The Final Engineering Boss Battle",
+    "problemStatement": "**Phase:** Grand Finale\n\nWelcome to the final day.\n\nYou started this journey learning basic Python.\nNow you’ve built:\n• algorithms\n• system designs\n• APIs\n• databases\n• AI-powered applications\n\nToday’s mission is simple:\nReflect, rebuild confidence, and prove your growth.\n\nYour final challenge:\nCreate a complete showcase presentation explaining:\n• your best project\n• biggest struggles\n• engineering lessons learned\n• how your thinking evolved over 60 days\n\n**Real-World Impact:** Reflection and communication are critical traits of high-level engineers and technical leaders.\n\n**What to do:**\n- Prepare a final project showcase\n- Explain engineering decisions clearly\n- Reflect on growth and consistency\n- Share your journey publicly\n\n**Submission:**\n- Final presentation or document\n- Project showcase\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Develop engineering confidence",
+      "Communicate technical growth",
+      "Reflect on long-term consistency"
+    ],
+    "resources": [
+      "https://www.canva.com/",
+      "https://docs.github.com/en/get-started"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 60/60 🚀 | Final Engineering Boss Battle\n\n🎉 Completed the 60 Days Coding Challenge.\n\nOver the last 60 days, I explored:\n• DSA and problem solving\n• System design\n• APIs and databases\n• Machine Learning and NLP\n• Deployment and portfolio building\n\n🧠 Biggest realization:\nConsistency compounds.\nSmall improvements every day completely changed the way I think as an engineer.\n\nGrateful to @Anil Bajpai Sir and the ABTalks community for building such an incredible learning environment.\n\nGitHub Repo: {{github_link}}\n\nDay 60/60 ✅\n\n#SoftwareEngineering #MachineLearning #AI #LearningInPublic #ABTalks #60DaysOfCode",
+    "solutionApproach": "Focus on storytelling, technical clarity, and demonstrating growth across the challenge.",
+    "tags": [
+      "reflection",
+      "portfolio",
+      "career-growth"
+    ]
+  },
+  {
     "dayNumber": 1,
     "domain": "DS",
     "title": "Python Fundamentals Bootcamp (Core Syntax)",
@@ -1283,6 +2044,805 @@
       "ml-pipeline",
       "optimization",
       "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 29,
+    "domain": "DS",
+    "title": "Understanding Customer Types with K-Means Clustering",
+    "problemStatement": "**Phase:** Customer Segmentation\nDay 29 focuses on customer segmentation using unsupervised learning techniques to identify hidden customer groups.\n\n**Real-World Impact:** Businesses use customer segmentation to personalize marketing campaigns, improve retention, and optimize business strategies.\n\n**What to do:**\n- Load customer behavior dataset\n- Select relevant numerical features\n- Apply K-Means clustering\n- Experiment with different cluster counts\n- Visualize customer segments\n- Describe the business characteristics of each cluster\n\n**Submission:**\n- Customer segmentation notebook\n- Cluster visualization plots\n- Business insight report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand unsupervised learning",
+      "Build customer segmentation systems",
+      "Interpret clustering behavior",
+      "Generate business insights from clusters"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/clustering.html",
+      "https://seaborn.pydata.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 29/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Understanding Customer Types with K-Means Clustering\n\n🧠 What I explored:\n• How businesses group customers using data\n• Understanding unsupervised learning systems\n• Visualizing customer segments\n• Extracting business insights from clustering\n\n⚙️ What I worked on:\n• Built a customer segmentation model\n• Applied K-Means clustering\n• Visualized customer groups\n• Analyzed business behavior patterns\n\n📌 Key Learnings:\n• Similar customers naturally form hidden groups.\n• Segmentation helps businesses personalize experiences.\n• Unsupervised learning reveals patterns without labels.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of customer segmentation and unsupervised learning workflows.\n\nGitHub Repo: {{github_link}}\n\n#Clustering #MachineLearning #DataScience #Python #ABTalks",
+    "solutionApproach": "Use sklearn KMeans with scaled numerical features and visualize customer clusters using scatter plots.",
+    "tags": [
+      "kmeans",
+      "clustering",
+      "customer-segmentation"
+    ]
+  },
+  {
+    "dayNumber": 30,
+    "domain": "DS",
+    "title": "Finding the Ideal Number of Customer Segments",
+    "problemStatement": "**Phase:** Clustering Optimization\nDay 30 focuses on optimizing clustering systems using the Elbow Method and Silhouette Score.\n\n**Real-World Impact:** Poor segmentation strategies can lead to ineffective marketing campaigns and weak customer targeting.\n\n**What to do:**\n- Apply Elbow Method to determine optimal K\n- Calculate Silhouette Scores\n- Compare clustering quality across multiple K values\n- Visualize clustering improvements\n- Document final business segmentation strategy\n\n**Submission:**\n- Clustering optimization notebook\n- Elbow and Silhouette visualizations\n- Segmentation strategy report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Optimize clustering models",
+      "Evaluate cluster quality",
+      "Interpret segmentation strategies",
+      "Improve unsupervised learning systems"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/clustering.html"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 30/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Finding the Ideal Number of Customer Segments\n\n🧠 What I explored:\n• Why choosing the right number of clusters matters\n• Understanding clustering quality metrics\n• Optimizing customer segmentation systems\n• Improving business targeting strategies\n\n⚙️ What I worked on:\n• Applied the Elbow Method\n• Calculated Silhouette Scores\n• Compared clustering strategies\n• Improved customer segmentation quality\n\n📌 Key Learnings:\n• Clustering quality impacts business insights.\n• Optimization improves segmentation reliability.\n• Data-driven decisions improve targeting strategies.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to optimize and evaluate unsupervised learning systems.\n\nGitHub Repo: {{github_link}}\n\n#CustomerSegmentation #Clustering #DataScience #ABTalks",
+    "solutionApproach": "Apply Elbow Method and Silhouette analysis to identify the optimal number of customer segments.",
+    "tags": [
+      "clustering",
+      "optimization",
+      "unsupervised-learning"
+    ]
+  },
+  {
+    "dayNumber": 31,
+    "domain": "DS",
+    "title": "Building Customer Personas from Behavioral Data",
+    "problemStatement": "**Phase:** Advanced Customer Insights\nDay 31 focuses on transforming clustering outputs into meaningful customer personas for business decision-making.\n\n**Real-World Impact:** Businesses use customer personas to improve retention, target promotions, and personalize user experiences.\n\n**What to do:**\n- Analyze customer clusters in detail\n- Assign business-friendly persona names\n- Create a persona summary table\n- Visualize spending and engagement patterns\n- Recommend strategies for each customer persona\n\n**Submission:**\n- Persona analysis notebook\n- Customer persona report\n- Business strategy recommendations\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Translate data into business insights",
+      "Interpret customer behavior",
+      "Improve analytical storytelling",
+      "Connect ML outputs to business strategy"
+    ],
+    "resources": [
+      "https://plotly.com/python/",
+      "https://matplotlib.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 31/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building Customer Personas from Behavioral Data\n\n🧠 What I explored:\n• Turning ML outputs into business decisions\n• Understanding customer behavior patterns\n• Creating actionable customer personas\n• Connecting analytics with strategy\n\n⚙️ What I worked on:\n• Built customer personas from clustering outputs\n• Visualized customer behavior patterns\n• Generated retention and engagement recommendations\n• Documented business insights\n\n📌 Key Learnings:\n• Data becomes valuable when translated into business action.\n• Customer personas improve personalization.\n• Analytical storytelling is a core Data Science skill.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to transform ML outputs into business intelligence.\n\nGitHub Repo: {{github_link}}\n\n#CustomerAnalytics #BusinessIntelligence #DataScience #ABTalks",
+    "solutionApproach": "Analyze cluster distributions and summarize each customer group into meaningful business personas.",
+    "tags": [
+      "customer-personas",
+      "analytics",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 32,
+    "domain": "DS",
+    "title": "Building a Personalized Product Recommendation Engine",
+    "problemStatement": "**Phase:** Recommendation Systems\nDay 32 focuses on recommendation systems that personalize product suggestions based on customer similarity.\n\n**Real-World Impact:** Platforms like Amazon, Netflix, and Spotify use recommendation systems to increase engagement and revenue.\n\n**What to do:**\n- Build a similarity-based recommendation system\n- Calculate customer similarity scores\n- Recommend products or services\n- Evaluate recommendation relevance\n- Document personalization strategies\n\n**Submission:**\n- Recommendation engine notebook\n- Similarity analysis\n- Recommendation outputs\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand recommendation systems",
+      "Calculate similarity metrics",
+      "Personalize customer experiences",
+      "Build engagement-focused ML systems"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/metrics.html"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 32/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building a Personalized Product Recommendation Engine\n\n🧠 What I explored:\n• How recommendation systems personalize experiences\n• Similarity-based Machine Learning workflows\n• Improving customer engagement through recommendations\n• Building user-focused predictive systems\n\n⚙️ What I worked on:\n• Built a recommendation engine\n• Calculated customer similarity scores\n• Generated personalized suggestions\n• Evaluated recommendation quality\n\n📌 Key Learnings:\n• Recommendation systems drive modern digital platforms.\n• Similarity metrics improve personalization.\n• Engagement increases when systems feel personalized.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of recommendation systems and personalization workflows.\n\nGitHub Repo: {{github_link}}\n\n#RecommendationSystem #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Use cosine similarity or nearest neighbors to recommend products based on customer behavior patterns.",
+    "tags": [
+      "recommendation-system",
+      "personalization",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 33,
+    "domain": "DS",
+    "title": "Detecting Unusual Customer Behavior",
+    "problemStatement": "**Phase:** Anomaly Detection\nDay 33 focuses on anomaly detection systems that identify unusual customer behavior patterns.\n\n**Real-World Impact:** Businesses use anomaly detection to identify fraud, suspicious activity, unusual spending, and operational risks.\n\n**What to do:**\n- Identify abnormal customer patterns\n- Apply anomaly detection techniques\n- Visualize anomalies in the dataset\n- Compare normal vs suspicious behavior\n- Document possible business risks\n\n**Submission:**\n- Anomaly detection notebook\n- Visualization report\n- Business risk analysis\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand anomaly detection workflows",
+      "Identify unusual behavior patterns",
+      "Analyze business risks",
+      "Build risk-focused analytics systems"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/outlier_detection.html"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 33/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Detecting Unusual Customer Behavior\n\n🧠 What I explored:\n• How businesses detect suspicious behavior\n• Understanding anomaly detection systems\n• Identifying hidden risks in datasets\n• Comparing normal vs abnormal patterns\n\n⚙️ What I worked on:\n• Built an anomaly detection workflow\n• Visualized suspicious customer activity\n• Compared behavioral patterns\n• Documented business risks and insights\n\n📌 Key Learnings:\n• Anomaly detection improves business security and monitoring.\n• Hidden risks often appear as unusual patterns.\n• Data Science systems help businesses react proactively.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to identify unusual behavior and build risk-focused analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#AnomalyDetection #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Use Isolation Forest or statistical anomaly detection methods to identify unusual customer behavior.",
+    "tags": [
+      "anomaly-detection",
+      "risk-analysis",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 34,
+    "domain": "DS",
+    "title": "Designing Executive-Level Customer Dashboards",
+    "problemStatement": "**Phase:** Business Intelligence Dashboards\nDay 34 focuses on building interactive business dashboards for executives and decision-makers.\n\n**Real-World Impact:** Business dashboards help leadership teams monitor customer trends, churn risks, and performance metrics in real time.\n\n**What to do:**\n- Create interactive customer analytics dashboards\n- Visualize churn and segmentation insights\n- Add KPI cards and trend charts\n- Design business-friendly layouts\n- Document dashboard storytelling decisions\n\n**Submission:**\n- Dashboard notebook or app\n- Visualization screenshots\n- Business insight summary\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Build business dashboards",
+      "Improve data storytelling",
+      "Visualize business KPIs",
+      "Design executive-friendly analytics systems"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 34/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Designing Executive-Level Customer Dashboards\n\n🧠 What I explored:\n• How executives consume analytics insights\n• Building business dashboards for decision-making\n• Visual storytelling and KPI design\n• Translating data into strategic insights\n\n⚙️ What I worked on:\n• Built an interactive analytics dashboard\n• Visualized churn and customer insights\n• Designed KPI cards and trend charts\n• Improved dashboard storytelling\n\n📌 Key Learnings:\n• Dashboards help businesses make faster decisions.\n• Good visualization improves communication.\n• Data storytelling is critical in analytics.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to build executive-friendly analytics dashboards.\n\nGitHub Repo: {{github_link}}\n\n#BusinessIntelligence #Dashboard #DataScience #ABTalks",
+    "solutionApproach": "Use Streamlit or Plotly Dash to build an interactive customer analytics dashboard.",
+    "tags": [
+      "dashboard",
+      "business-intelligence",
+      "visualization"
+    ]
+  },
+  {
+    "dayNumber": 35,
+    "domain": "DS",
+    "title": "Combining Customer Intelligence Modules into One Analytics System",
+    "problemStatement": "**Phase:** Sprint Review & System Integration\nDay 35 focuses on integrating customer segmentation, recommendations, anomaly detection, and dashboards into a unified analytics workflow.\n\n**Real-World Impact:** Production business intelligence systems combine multiple analytical components into one integrated decision-support platform.\n\n**What to do:**\n- Combine all Week 5 modules into one workflow\n- Integrate segmentation, recommendations, and dashboards\n- Create a unified analytics presentation\n- Document engineering tradeoffs\n- Write a Week 5 reflection\n\n**Submission:**\n- Integrated analytics notebook/app\n- Workflow architecture diagram\n- Sprint reflection\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Integrate multiple DS systems",
+      "Improve system thinking",
+      "Build scalable analytics workflows",
+      "Develop production-oriented thinking"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://scikit-learn.org/stable/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Week 5 Complete 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Combining Customer Intelligence Modules into One Analytics System\n\n🧠 What I explored:\n• Integrating multiple analytics systems together\n• Connecting segmentation, recommendations, and dashboards\n• Designing scalable customer intelligence workflows\n• Thinking like a production Data Scientist\n\n⚙️ What I worked on:\n• Combined Week 5 systems into one workflow\n• Integrated dashboards and ML modules\n• Documented architecture decisions\n• Created a unified analytics presentation\n\n📌 Key Learnings:\n• Real systems combine multiple ML components.\n• Integration is as important as modeling.\n• Production analytics requires systems thinking.\n\n🚀 Outcome:\nBy the end of this sprint, I improved my ability to design integrated customer intelligence systems.\n\nGitHub Repo: {{github_link}}\n\n#BusinessIntelligence #DataScience #MachineLearning #ABTalks",
+    "solutionApproach": "Combine customer segmentation, recommendations, anomaly detection, and dashboard modules into one analytics workflow.",
+    "tags": [
+      "system-integration",
+      "analytics-platform",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 36,
+    "domain": "DS",
+    "title": "Forecasting Customer Growth Trends",
+    "problemStatement": "**Phase:** Time Series Analytics\nDay 36 focuses on Time Series Forecasting to predict future customer growth trends using historical business data.\n\n**Real-World Impact:** Businesses rely on forecasting systems to predict growth, allocate resources, plan marketing campaigns, and make strategic decisions.\n\n**What to do:**\n- Load historical customer or revenue data\n- Visualize time-based trends\n- Identify seasonality and growth patterns\n- Build a baseline forecasting model\n- Predict future customer growth for the next 30 days\n- Document forecasting observations and risks\n\n**Submission:**\n- Forecasting notebook\n- Trend visualizations\n- Prediction outputs\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand time series forecasting",
+      "Analyze trend and seasonality patterns",
+      "Build forecasting systems",
+      "Interpret future business projections"
+    ],
+    "resources": [
+      "https://pandas.pydata.org/docs/user_guide/timeseries.html",
+      "https://www.statsmodels.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 36/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Forecasting Customer Growth Trends\n\n🧠 What I explored:\n• Understanding business growth through historical data\n• Identifying seasonality and customer trends\n• Building forecasting workflows\n• Predicting future business behavior\n\n⚙️ What I worked on:\n• Built a time series forecasting model\n• Visualized growth patterns and seasonality\n• Predicted future customer growth\n• Documented forecasting insights and risks\n\n📌 Key Learnings:\n• Historical patterns help predict future business behavior.\n• Forecasting supports strategic business planning.\n• Trend analysis is critical in analytics systems.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of time series analytics and business forecasting workflows.\n\nGitHub Repo: {{github_link}}\n\n#TimeSeries #Forecasting #DataScience #ABTalks",
+    "solutionApproach": "Use pandas datetime handling and forecasting models like moving averages or ARIMA to predict future trends.",
+    "tags": [
+      "time-series",
+      "forecasting",
+      "business-analytics"
+    ]
+  },
+  {
+    "dayNumber": 37,
+    "domain": "DS",
+    "title": "Predicting Future Revenue with Time Series Models",
+    "problemStatement": "**Phase:** Business Forecasting\nDay 37 focuses on forecasting future business revenue using time series modeling techniques.\n\n**Real-World Impact:** Revenue forecasting helps companies estimate future profits, optimize investments, and improve financial planning.\n\n**What to do:**\n- Prepare revenue time series data\n- Build forecasting models using ARIMA or Prophet\n- Compare predictions against historical patterns\n- Visualize future revenue forecasts\n- Document business implications of forecasting accuracy\n\n**Submission:**\n- Revenue forecasting notebook\n- Forecast visualizations\n- Business forecasting report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand business forecasting systems",
+      "Apply advanced time series models",
+      "Interpret forecasting outputs",
+      "Connect predictions with business strategy"
+    ],
+    "resources": [
+      "https://facebook.github.io/prophet/",
+      "https://www.statsmodels.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 37/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Predicting Future Revenue with Time Series Models\n\n🧠 What I explored:\n• How businesses forecast future revenue\n• Understanding ARIMA and Prophet models\n• Predicting financial growth patterns\n• Connecting analytics with strategic planning\n\n⚙️ What I worked on:\n• Built a revenue forecasting model\n• Compared historical vs predicted growth trends\n• Visualized forecasting outputs\n• Documented business forecasting insights\n\n📌 Key Learnings:\n• Forecasting helps businesses plan proactively.\n• Revenue prediction systems require strong historical analysis.\n• Accurate forecasting improves strategic decision-making.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of financial forecasting systems and predictive analytics.\n\nGitHub Repo: {{github_link}}\n\n#Forecasting #TimeSeries #DataScience #ABTalks",
+    "solutionApproach": "Use ARIMA or Prophet to build and evaluate forecasting systems using historical revenue data.",
+    "tags": [
+      "forecasting",
+      "arima",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 38,
+    "domain": "DS",
+    "title": "Analyzing Customer Retention and Lifetime Value",
+    "problemStatement": "**Phase:** Customer Retention Analytics\nDay 38 focuses on Customer Lifetime Value (CLV) and retention analytics to measure long-term business impact.\n\n**Real-World Impact:** Businesses use CLV systems to identify valuable customers, improve retention strategies, and maximize long-term revenue.\n\n**What to do:**\n- Calculate customer retention metrics\n- Estimate Customer Lifetime Value\n- Identify high-value customer groups\n- Visualize retention trends\n- Recommend business retention strategies\n\n**Submission:**\n- Retention analytics notebook\n- CLV calculations\n- Visualization report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand customer retention analytics",
+      "Calculate lifetime value metrics",
+      "Identify valuable customer groups",
+      "Connect analytics with business decisions"
+    ],
+    "resources": [
+      "https://pandas.pydata.org/docs/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 38/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Analyzing Customer Retention and Lifetime Value\n\n🧠 What I explored:\n• Why customer retention matters in business analytics\n• Calculating Customer Lifetime Value (CLV)\n• Identifying high-value customer groups\n• Understanding long-term business impact\n\n⚙️ What I worked on:\n• Calculated retention and CLV metrics\n• Visualized customer retention patterns\n• Identified valuable customer segments\n• Recommended retention strategies\n\n📌 Key Learnings:\n• Retention is often more valuable than acquisition.\n• High-value customers drive long-term growth.\n• Business analytics helps optimize customer strategy.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to analyze long-term customer behavior and business value.\n\nGitHub Repo: {{github_link}}\n\n#CustomerAnalytics #CLV #DataScience #ABTalks",
+    "solutionApproach": "Use customer transaction and engagement data to calculate retention metrics and Customer Lifetime Value.",
+    "tags": [
+      "customer-retention",
+      "clv",
+      "business-analytics"
+    ]
+  },
+  {
+    "dayNumber": 39,
+    "domain": "DS",
+    "title": "Designing a KPI Monitoring System for Executives",
+    "problemStatement": "**Phase:** Business KPI Analytics\nDay 39 focuses on building KPI monitoring systems that track customer, revenue, and retention performance metrics.\n\n**Real-World Impact:** Executives use KPI systems to monitor business health and make strategic decisions using real-time analytics.\n\n**What to do:**\n- Define business KPIs for customer intelligence\n- Calculate KPI metrics from datasets\n- Create interactive KPI visualizations\n- Track performance trends over time\n- Document executive-level business insights\n\n**Submission:**\n- KPI dashboard notebook/app\n- Business KPI report\n- Visualization screenshots\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand business KPI systems",
+      "Track operational performance metrics",
+      "Build executive-level dashboards",
+      "Improve analytics storytelling"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 39/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Designing a KPI Monitoring System for Executives\n\n🧠 What I explored:\n• How businesses track customer and revenue performance\n• Understanding KPI monitoring systems\n• Designing executive-friendly dashboards\n• Translating data into strategic insights\n\n⚙️ What I worked on:\n• Built KPI monitoring dashboards\n• Visualized business performance trends\n• Created customer and revenue metrics\n• Documented executive-level insights\n\n📌 Key Learnings:\n• KPIs help businesses monitor performance in real time.\n• Visualization improves decision-making speed.\n• Business dashboards must communicate clearly.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to design analytics systems for business stakeholders.\n\nGitHub Repo: {{github_link}}\n\n#BusinessIntelligence #KPI #DataScience #ABTalks",
+    "solutionApproach": "Use Streamlit or Plotly to create KPI dashboards with business-focused metrics and trend analysis.",
+    "tags": [
+      "kpi-dashboard",
+      "business-intelligence",
+      "analytics"
+    ]
+  },
+  {
+    "dayNumber": 40,
+    "domain": "DS",
+    "title": "Evaluating Business Decisions with A/B Testing",
+    "problemStatement": "**Phase:** A/B Testing Analytics\nDay 40 focuses on A/B Testing and experimentation systems used to evaluate business decisions scientifically.\n\n**Real-World Impact:** Tech companies use A/B testing to improve products, optimize marketing, and increase customer engagement.\n\n**What to do:**\n- Simulate or analyze an A/B testing dataset\n- Compare control vs experiment groups\n- Calculate statistical significance\n- Visualize experiment outcomes\n- Recommend business actions based on results\n\n**Submission:**\n- A/B testing notebook\n- Experiment analysis report\n- Statistical significance calculations\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand experimentation workflows",
+      "Analyze statistical significance",
+      "Compare business experiments",
+      "Make evidence-based recommendations"
+    ],
+    "resources": [
+      "https://docs.scipy.org/doc/scipy/reference/stats.html",
+      "https://www.statsmodels.org/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 40/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Evaluating Business Decisions with A/B Testing\n\n🧠 What I explored:\n• How companies test product and marketing decisions\n• Understanding control vs experiment groups\n• Measuring statistical significance\n• Making evidence-based business recommendations\n\n⚙️ What I worked on:\n• Analyzed an A/B testing experiment\n• Compared experimental group performance\n• Calculated statistical significance\n• Recommended business actions based on data\n\n📌 Key Learnings:\n• Data-driven experimentation improves business decisions.\n• Statistical significance helps validate results.\n• A/B testing reduces guesswork in product strategy.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of experimentation systems and business analytics workflows.\n\nGitHub Repo: {{github_link}}\n\n#ABTesting #DataScience #BusinessAnalytics #ABTalks",
+    "solutionApproach": "Use t-tests or statistical testing methods to compare experimental groups and analyze significance.",
+    "tags": [
+      "ab-testing",
+      "statistics",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 41,
+    "domain": "DS",
+    "title": "Predicting High-Risk Customers Before They Churn",
+    "problemStatement": "**Phase:** Predictive Business Analytics\nDay 41 focuses on combining segmentation, forecasting, and classification into a predictive customer risk system.\n\n**Real-World Impact:** Businesses proactively identify high-risk customers to reduce churn and improve retention strategies.\n\n**What to do:**\n- Combine customer behavior, segmentation, and churn signals\n- Build a predictive risk scoring model\n- Rank customers by churn probability\n- Visualize high-risk customer groups\n- Recommend retention strategies\n\n**Submission:**\n- Risk prediction notebook\n- Risk ranking dashboard\n- Business recommendation report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Combine multiple analytics workflows",
+      "Build predictive business systems",
+      "Analyze churn risks proactively",
+      "Develop strategic business recommendations"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 41/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Predicting High-Risk Customers Before They Churn\n\n🧠 What I explored:\n• How businesses proactively reduce churn\n• Combining segmentation and predictive analytics\n• Ranking customer risk levels\n• Building retention-focused analytics systems\n\n⚙️ What I worked on:\n• Built a predictive customer risk model\n• Ranked customers by churn probability\n• Visualized high-risk customer groups\n• Recommended retention strategies\n\n📌 Key Learnings:\n• Predictive analytics improves proactive decision-making.\n• Customer retention requires multiple analytical signals.\n• Business intelligence systems combine multiple workflows.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to build integrated predictive analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#PredictiveAnalytics #CustomerRetention #DataScience #ABTalks",
+    "solutionApproach": "Combine customer segmentation and churn prediction features into a unified predictive risk scoring workflow.",
+    "tags": [
+      "predictive-analytics",
+      "customer-risk",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 42,
+    "domain": "DS",
+    "title": "Building a Unified Customer Intelligence Decision System",
+    "problemStatement": "**Phase:** Sprint Review & Business Intelligence Integration\nDay 42 focuses on integrating forecasting, KPI tracking, retention analytics, and predictive risk scoring into a unified business intelligence platform.\n\n**Real-World Impact:** Modern organizations combine forecasting, customer analytics, experimentation, and dashboards into centralized decision-support systems.\n\n**What to do:**\n- Integrate forecasting, KPI, and retention modules\n- Build a unified customer intelligence workflow\n- Design executive-level visualizations\n- Document architecture and business tradeoffs\n- Write a Week 6 reflection\n\n**Submission:**\n- Integrated BI notebook/app\n- Architecture workflow diagram\n- Business intelligence report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Integrate advanced analytics systems",
+      "Build scalable business intelligence workflows",
+      "Improve systems thinking",
+      "Develop production-oriented analytics skills"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://plotly.com/python/",
+      "https://scikit-learn.org/stable/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Week 6 Complete 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building a Unified Customer Intelligence Decision System\n\n🧠 What I explored:\n• Integrating forecasting, KPI tracking, and predictive analytics\n• Building centralized business intelligence workflows\n• Designing executive-level decision systems\n• Thinking like a production Data Scientist\n\n⚙️ What I worked on:\n• Combined forecasting and analytics modules\n• Built executive dashboards and workflows\n• Integrated retention and KPI systems\n• Documented architecture decisions and tradeoffs\n\n📌 Key Learnings:\n• Modern BI systems combine multiple analytical components.\n• Integration improves decision-making quality.\n• Scalable analytics systems require strong architecture thinking.\n\n🚀 Outcome:\nBy the end of this sprint, I improved my ability to design integrated business intelligence platforms.\n\nGitHub Repo: {{github_link}}\n\n#BusinessIntelligence #DataScience #Analytics #ABTalks",
+    "solutionApproach": "Combine forecasting, KPI monitoring, retention analytics, and predictive risk scoring into a unified business intelligence workflow.",
+    "tags": [
+      "business-intelligence",
+      "system-integration",
+      "analytics-platform"
+    ]
+  },
+  {
+    "dayNumber": 43,
+    "domain": "DS",
+    "title": "Turning Your Customer Intelligence Model into an API",
+    "problemStatement": "**Phase:** Data Science Deployment\nDay 43 focuses on deploying Machine Learning models as APIs so business systems can generate real-time predictions.\n\n**Real-World Impact:** Modern companies deploy ML models as APIs to power customer analytics, fraud detection, recommendation systems, and forecasting platforms.\n\n**What to do:**\n- Select your best-performing customer prediction model\n- Build a FastAPI or Flask API endpoint\n- Create prediction request and response workflows\n- Test the API using sample customer data\n- Document API architecture and usage instructions\n\n**Submission:**\n- Working API code\n- API documentation\n- Prediction demo screenshots\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand ML deployment workflows",
+      "Build production-ready prediction APIs",
+      "Connect ML systems with applications",
+      "Improve backend engineering skills"
+    ],
+    "resources": [
+      "https://fastapi.tiangolo.com/",
+      "https://flask.palletsprojects.com/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 43/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Turning Your Customer Intelligence Model into an API\n\n🧠 What I explored:\n• How Machine Learning models are deployed in production\n• Building prediction APIs using FastAPI/Flask\n• Connecting analytics systems with applications\n• Designing scalable ML workflows\n\n⚙️ What I worked on:\n• Converted my ML model into an API\n• Built prediction request/response endpoints\n• Tested real-time predictions\n• Documented API architecture and workflows\n\n📌 Key Learnings:\n• Production ML systems require deployment workflows.\n• APIs connect models with real applications.\n• Deployment is a critical Data Science skill.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of ML deployment and backend integration workflows.\n\nGitHub Repo: {{github_link}}\n\n#FastAPI #MachineLearning #Deployment #DataScience #ABTalks",
+    "solutionApproach": "Serialize the trained model using joblib or pickle and expose prediction endpoints using FastAPI or Flask.",
+    "tags": [
+      "deployment",
+      "fastapi",
+      "ml-api"
+    ]
+  },
+  {
+    "dayNumber": 44,
+    "domain": "DS",
+    "title": "Building an Interactive Customer Intelligence Dashboard",
+    "problemStatement": "**Phase:** Interactive Analytics Systems\nDay 44 focuses on creating an interactive business intelligence dashboard for customer analytics and predictive insights.\n\n**Real-World Impact:** Organizations rely on dashboards to monitor KPIs, customer retention, churn risk, and business performance in real time.\n\n**What to do:**\n- Build a Streamlit dashboard for customer intelligence\n- Integrate KPI cards and visualizations\n- Display customer segmentation and churn analytics\n- Allow users to upload or filter customer data\n- Design a business-friendly user interface\n\n**Submission:**\n- Interactive dashboard application\n- Visualization screenshots\n- Dashboard architecture explanation\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Build interactive analytics dashboards",
+      "Improve data storytelling",
+      "Design executive-level interfaces",
+      "Integrate ML outputs into business systems"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 44/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building an Interactive Customer Intelligence Dashboard\n\n🧠 What I explored:\n• Designing business intelligence dashboards\n• Integrating predictive analytics into visual systems\n• Improving user interaction and storytelling\n• Building executive-friendly analytics tools\n\n⚙️ What I worked on:\n• Built a Streamlit customer intelligence dashboard\n• Added KPI cards and customer insights\n• Integrated segmentation and churn analytics\n• Designed an interactive user experience\n\n📌 Key Learnings:\n• Dashboards transform raw analytics into actionable insights.\n• User experience matters in analytics systems.\n• Interactive systems improve decision-making.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to build interactive analytics applications.\n\nGitHub Repo: {{github_link}}\n\n#Streamlit #Dashboard #DataScience #ABTalks",
+    "solutionApproach": "Use Streamlit and Plotly to build an interactive dashboard integrating customer insights and predictive analytics.",
+    "tags": [
+      "dashboard",
+      "streamlit",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 45,
+    "domain": "DS",
+    "title": "Deploying Your Customer Intelligence Platform to the Cloud",
+    "problemStatement": "**Phase:** Cloud Deployment\nDay 45 focuses on deploying customer intelligence systems to cloud platforms for public access and real-world usability.\n\n**Real-World Impact:** Production analytics systems must be accessible online so businesses and users can interact with them anywhere.\n\n**What to do:**\n- Deploy your dashboard or API to a cloud platform\n- Choose a deployment provider (Render, Railway, Streamlit Cloud, Hugging Face Spaces)\n- Configure deployment settings\n- Test live prediction workflows\n- Document deployment architecture and challenges\n\n**Submission:**\n- Live deployment link\n- Deployment screenshots\n- Deployment architecture report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand cloud deployment workflows",
+      "Deploy analytics applications publicly",
+      "Handle deployment configurations",
+      "Improve production engineering skills"
+    ],
+    "resources": [
+      "https://render.com/",
+      "https://streamlit.io/cloud",
+      "https://railway.app/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 45/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Deploying Your Customer Intelligence Platform to the Cloud\n\n🧠 What I explored:\n• How production analytics systems are deployed online\n• Understanding cloud deployment workflows\n• Configuring public-facing analytics applications\n• Improving production engineering skills\n\n⚙️ What I worked on:\n• Deployed my analytics system to the cloud\n• Tested live prediction workflows\n• Configured deployment settings\n• Documented deployment challenges and solutions\n\n📌 Key Learnings:\n• Deployment transforms projects into real products.\n• Cloud systems improve accessibility and scalability.\n• Production workflows require strong engineering practices.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of deploying ML systems for real-world usage.\n\nGitHub Repo: {{github_link}}\n\n#CloudDeployment #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Deploy the Streamlit app or FastAPI backend to a cloud platform and verify prediction workflows online.",
+    "tags": [
+      "deployment",
+      "cloud",
+      "streamlit"
+    ]
+  },
+  {
+    "dayNumber": 46,
+    "domain": "DS",
+    "title": "Monitoring Customer Intelligence Systems in Production",
+    "problemStatement": "**Phase:** Production Monitoring\nDay 46 focuses on improving production reliability using logging, validation, and monitoring systems.\n\n**Real-World Impact:** Production analytics systems require monitoring and validation to detect failures, bad predictions, and system instability.\n\n**What to do:**\n- Add logging to your analytics application\n- Validate API input data\n- Handle invalid predictions and exceptions\n- Track prediction requests and outputs\n- Document monitoring and reliability improvements\n\n**Submission:**\n- Improved production application\n- Logging and validation report\n- Monitoring screenshots\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand production monitoring systems",
+      "Improve application reliability",
+      "Handle real-world deployment issues",
+      "Develop production engineering intuition"
+    ],
+    "resources": [
+      "https://docs.python.org/3/library/logging.html",
+      "https://fastapi.tiangolo.com/tutorial/handling-errors/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 46/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Monitoring Customer Intelligence Systems in Production\n\n🧠 What I explored:\n• Why production systems require monitoring and validation\n• Handling prediction errors and invalid inputs\n• Improving reliability in analytics systems\n• Building safer and more stable workflows\n\n⚙️ What I worked on:\n• Added logging and validation systems\n• Handled API exceptions and prediction failures\n• Tracked prediction requests and outputs\n• Improved system reliability\n\n📌 Key Learnings:\n• Reliable systems require monitoring and safeguards.\n• Error handling improves production stability.\n• Engineering quality matters beyond modeling.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of production-grade analytics engineering.\n\nGitHub Repo: {{github_link}}\n\n#ProductionAI #Monitoring #DataScience #ABTalks",
+    "solutionApproach": "Implement logging, exception handling, and validation layers in the deployed analytics application.",
+    "tags": [
+      "monitoring",
+      "production-systems",
+      "deployment"
+    ]
+  },
+  {
+    "dayNumber": 47,
+    "domain": "DS",
+    "title": "Defining Your Customer Intelligence Capstone System",
+    "problemStatement": "**Phase:** Capstone Project Kickoff\nDay 47 officially begins the Capstone Project phase where students design a complete Customer Intelligence Platform from scratch.\n\n**Real-World Impact:** Real Data Science projects start with business problem definition, system architecture planning, and strategic thinking before implementation begins.\n\n**What to do:**\n- Define your capstone business problem\n- Select datasets and business objectives\n- Design the architecture of your Customer Intelligence Platform\n- Choose key modules (forecasting, churn prediction, segmentation, dashboards)\n- Create a project roadmap for Day 47–60\n\n**Submission:**\n- Capstone proposal document\n- Architecture diagram\n- Project roadmap\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Plan end-to-end analytics systems",
+      "Understand project architecture workflows",
+      "Translate business problems into technical systems",
+      "Develop product-oriented thinking"
+    ],
+    "resources": [
+      "https://miro.com/",
+      "https://draw.io/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 47/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Defining Your Customer Intelligence Capstone System\n\n🧠 What I explored:\n• Planning production-grade analytics systems\n• Translating business problems into technical workflows\n• Designing scalable customer intelligence platforms\n• Structuring long-term engineering projects\n\n⚙️ What I worked on:\n• Defined my capstone business problem\n• Designed system architecture and workflows\n• Planned forecasting, segmentation, and analytics modules\n• Created a complete project roadmap\n\n📌 Key Learnings:\n• Great systems start with clear planning.\n• Architecture decisions impact scalability.\n• Data Science projects require product thinking.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to architect end-to-end analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#CapstoneProject #DataScience #BusinessIntelligence #ABTalks",
+    "solutionApproach": "Design a modular Customer Intelligence Platform architecture and define project milestones for the capstone phase.",
+    "tags": [
+      "capstone",
+      "system-design",
+      "business-intelligence"
+    ]
+  },
+  {
+    "dayNumber": 48,
+    "domain": "DS",
+    "title": "Building the Data Pipeline for Your Customer Intelligence Platform",
+    "problemStatement": "**Phase:** Capstone Data Pipeline\nDay 48 focuses on designing preprocessing and data pipeline workflows for the capstone system.\n\n**Real-World Impact:** Production analytics platforms rely on reliable preprocessing pipelines to maintain data consistency and prediction quality.\n\n**What to do:**\n- Prepare datasets for the capstone project\n- Build preprocessing workflows\n- Handle missing values and feature engineering\n- Design reusable data transformation pipelines\n- Document pipeline architecture and decisions\n\n**Submission:**\n- Preprocessing pipeline notebook\n- Pipeline architecture report\n- Cleaned datasets\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Build reusable preprocessing pipelines",
+      "Improve data engineering workflows",
+      "Prepare production-ready datasets",
+      "Improve ML system consistency"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html",
+      "https://pandas.pydata.org/docs/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 48/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building the Data Pipeline for Your Customer Intelligence Platform\n\n🧠 What I explored:\n• Designing reliable preprocessing workflows\n• Building reusable data pipelines\n• Improving consistency in analytics systems\n• Preparing production-grade datasets\n\n⚙️ What I worked on:\n• Built preprocessing pipelines for my capstone system\n• Handled missing values and feature engineering\n• Structured reusable data workflows\n• Documented pipeline architecture decisions\n\n📌 Key Learnings:\n• Data pipelines are critical in production systems.\n• Reusability improves scalability and maintenance.\n• Reliable preprocessing improves prediction quality.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of production-oriented data engineering workflows.\n\nGitHub Repo: {{github_link}}\n\n#DataEngineering #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Build reusable preprocessing pipelines using sklearn Pipeline and modular preprocessing functions.",
+    "tags": [
+      "data-pipeline",
+      "preprocessing",
+      "capstone"
+    ]
+  },
+  {
+    "dayNumber": 49,
+    "domain": "DS",
+    "title": "Building the First Working Version of Your Customer Intelligence Platform",
+    "problemStatement": "**Phase:** Capstone Baseline System\nDay 49 focuses on integrating preprocessing, analytics, and prediction modules into the first working capstone prototype.\n\n**Real-World Impact:** Engineering teams build iterative prototypes before optimizing and scaling production systems.\n\n**What to do:**\n- Integrate preprocessing and ML workflows\n- Build baseline prediction systems\n- Test forecasting, churn, or segmentation modules\n- Generate first working outputs\n- Document prototype strengths and weaknesses\n\n**Submission:**\n- Baseline capstone prototype\n- Prediction outputs\n- Prototype analysis report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Integrate multiple analytics components",
+      "Build iterative ML prototypes",
+      "Test production workflows",
+      "Improve engineering problem-solving"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/",
+      "https://streamlit.io/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 49/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Building the First Working Version of Your Customer Intelligence Platform\n\n🧠 What I explored:\n• Integrating preprocessing and prediction workflows\n• Building iterative ML prototypes\n• Testing production-style analytics systems\n• Improving engineering problem-solving skills\n\n⚙️ What I worked on:\n• Built the first working version of my capstone platform\n• Integrated analytics and ML workflows\n• Tested prediction outputs and modules\n• Documented strengths, limitations, and next improvements\n\n📌 Key Learnings:\n• Strong systems evolve through iteration.\n• Integration is a major engineering challenge.\n• Early prototypes reveal hidden issues quickly.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to build integrated production-style analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#CapstoneProject #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Combine preprocessing, ML models, dashboards, and analytics modules into the first integrated working prototype.",
+    "tags": [
+      "capstone",
+      "prototype",
+      "system-integration"
+    ]
+  },
+  {
+    "dayNumber": 50,
+    "domain": "DS",
+    "title": "Improving Your Customer Intelligence System with Model Optimization",
+    "problemStatement": "**Phase:** Capstone Model Optimization\nDay 50 focuses on optimizing the core Machine Learning models inside your Customer Intelligence Platform to improve prediction quality and business reliability.\n\n**Real-World Impact:** Production analytics systems require continuous optimization to improve customer retention predictions, forecasting accuracy, and business decision-making.\n\n**What to do:**\n- Evaluate baseline capstone model performance\n- Apply hyperparameter tuning techniques\n- Compare multiple ML algorithms\n- Analyze overfitting and underfitting behavior\n- Document performance improvements and engineering tradeoffs\n\n**Submission:**\n- Optimized ML notebook\n- Model comparison report\n- Performance visualizations\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Optimize Machine Learning systems",
+      "Compare multiple predictive models",
+      "Improve model generalization",
+      "Analyze engineering tradeoffs"
+    ],
+    "resources": [
+      "https://scikit-learn.org/stable/modules/grid_search.html",
+      "https://scikit-learn.org/stable/model_selection.html"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 50/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Improving Your Customer Intelligence System with Model Optimization\n\n🧠 What I explored:\n• Optimizing predictive analytics systems\n• Comparing multiple Machine Learning models\n• Understanding overfitting and underfitting\n• Improving business prediction reliability\n\n⚙️ What I worked on:\n• Tuned model hyperparameters\n• Compared model performances\n• Improved customer prediction accuracy\n• Documented optimization tradeoffs and engineering decisions\n\n📌 Key Learnings:\n• Production ML systems require continuous optimization.\n• Better models improve business decision quality.\n• Small tuning changes can significantly impact performance.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of optimizing production-grade analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#MachineLearning #Optimization #DataScience #ABTalks",
+    "solutionApproach": "Use GridSearchCV or RandomizedSearchCV to optimize models and compare evaluation metrics.",
+    "tags": [
+      "model-optimization",
+      "hyperparameter-tuning",
+      "capstone"
+    ]
+  },
+  {
+    "dayNumber": 51,
+    "domain": "DS",
+    "title": "Explaining Customer Predictions with Explainable AI",
+    "problemStatement": "**Phase:** Capstone Explainable AI\nDay 51 focuses on Explainable AI techniques that help businesses understand why predictions are made by Machine Learning systems.\n\n**Real-World Impact:** Businesses need transparent analytics systems to trust customer churn predictions, risk scores, and forecasting decisions.\n\n**What to do:**\n- Analyze feature importance in your capstone model\n- Apply SHAP or feature importance visualizations\n- Identify key drivers behind customer predictions\n- Visualize model explainability insights\n- Document business interpretation of predictions\n\n**Submission:**\n- Explainable AI notebook\n- Feature importance visualizations\n- Business interpretation report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Understand Explainable AI concepts",
+      "Interpret ML model decisions",
+      "Build trustworthy analytics systems",
+      "Improve business communication skills"
+    ],
+    "resources": [
+      "https://shap.readthedocs.io/en/latest/",
+      "https://scikit-learn.org/stable/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 51/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Explaining Customer Predictions with Explainable AI\n\n🧠 What I explored:\n• Why businesses need interpretable ML systems\n• Understanding feature importance and prediction drivers\n• Building transparent analytics workflows\n• Improving trust in predictive systems\n\n⚙️ What I worked on:\n• Applied Explainable AI techniques\n• Visualized feature importance insights\n• Interpreted customer prediction behavior\n• Documented business implications of model outputs\n\n📌 Key Learnings:\n• Explainability improves trust in AI systems.\n• Business stakeholders need understandable predictions.\n• Transparency is critical in production analytics.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of Explainable AI and interpretable analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#ExplainableAI #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Use SHAP values or feature importance methods to explain predictions and visualize influential variables.",
+    "tags": [
+      "explainable-ai",
+      "shap",
+      "machine-learning"
+    ]
+  },
+  {
+    "dayNumber": 52,
+    "domain": "DS",
+    "title": "Designing a Professional User Interface for Your Analytics Platform",
+    "problemStatement": "**Phase:** Capstone Frontend Integration\nDay 52 focuses on improving the usability and visual quality of your Customer Intelligence Platform.\n\n**Real-World Impact:** A powerful analytics system is ineffective if business users cannot interact with it clearly and efficiently.\n\n**What to do:**\n- Improve dashboard UI and layout\n- Add navigation sections and filters\n- Enhance visualization readability\n- Improve customer interaction workflows\n- Document UI/UX design decisions\n\n**Submission:**\n- Improved dashboard application\n- UI screenshots\n- UX improvement report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve analytics UI/UX design",
+      "Build business-friendly applications",
+      "Enhance dashboard usability",
+      "Improve product thinking"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 52/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Designing a Professional User Interface for Your Analytics Platform\n\n🧠 What I explored:\n• Why user experience matters in analytics systems\n• Designing business-friendly interfaces\n• Improving dashboard usability and readability\n• Creating interactive customer workflows\n\n⚙️ What I worked on:\n• Improved dashboard layouts and navigation\n• Enhanced visualization quality\n• Added filtering and interaction features\n• Documented UI and UX design decisions\n\n📌 Key Learnings:\n• User experience improves analytics adoption.\n• Good interfaces improve business communication.\n• Analytics products require product-thinking skills.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to design professional analytics interfaces.\n\nGitHub Repo: {{github_link}}\n\n#DashboardDesign #DataScience #Streamlit #ABTalks",
+    "solutionApproach": "Refactor the dashboard layout using Streamlit containers, sidebars, and improved visualization design.",
+    "tags": [
+      "ui-ux",
+      "dashboard",
+      "streamlit"
+    ]
+  },
+  {
+    "dayNumber": 53,
+    "domain": "DS",
+    "title": "Adding Real-Time Customer Prediction Workflows",
+    "problemStatement": "**Phase:** Capstone Real-Time Analytics\nDay 53 focuses on enabling real-time customer predictions inside the Customer Intelligence Platform.\n\n**Real-World Impact:** Modern business systems rely on real-time predictions to react instantly to customer behavior and operational risks.\n\n**What to do:**\n- Create real-time prediction forms\n- Allow users to submit live customer inputs\n- Display instant churn or risk predictions\n- Integrate prediction outputs into dashboards\n- Document real-time analytics workflows\n\n**Submission:**\n- Real-time analytics application\n- Prediction demo screenshots\n- Workflow explanation report\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Build real-time analytics systems",
+      "Connect user inputs with ML predictions",
+      "Improve system responsiveness",
+      "Design interactive business workflows"
+    ],
+    "resources": [
+      "https://streamlit.io/",
+      "https://fastapi.tiangolo.com/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 53/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Adding Real-Time Customer Prediction Workflows\n\n🧠 What I explored:\n• Building real-time analytics systems\n• Connecting live user inputs with ML predictions\n• Designing responsive customer intelligence workflows\n• Improving analytics interactivity\n\n⚙️ What I worked on:\n• Added real-time prediction features\n• Built interactive customer input forms\n• Displayed live churn/risk predictions\n• Integrated real-time outputs into dashboards\n\n📌 Key Learnings:\n• Real-time systems improve business responsiveness.\n• Interactive workflows improve analytics usability.\n• ML systems become more valuable when actionable instantly.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of real-time predictive analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#RealTimeAnalytics #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Connect frontend forms to backend ML prediction endpoints and display real-time outputs dynamically.",
+    "tags": [
+      "real-time-analytics",
+      "prediction-system",
+      "deployment"
+    ]
+  },
+  {
+    "dayNumber": 54,
+    "domain": "DS",
+    "title": "Turning Analytics into Executive Business Insights",
+    "problemStatement": "**Phase:** Capstone Business Storytelling\nDay 54 focuses on translating technical analytics outputs into executive-level business recommendations and storytelling.\n\n**Real-World Impact:** Data Scientists create the most impact when they communicate technical insights clearly to business stakeholders.\n\n**What to do:**\n- Summarize key analytics findings\n- Create executive-level insight reports\n- Highlight customer risks and opportunities\n- Design business-focused visual storytelling\n- Document actionable business recommendations\n\n**Submission:**\n- Business insight presentation\n- Executive analytics report\n- Visualization summary\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve business storytelling skills",
+      "Translate analytics into business language",
+      "Communicate strategic recommendations",
+      "Improve executive reporting"
+    ],
+    "resources": [
+      "https://www.tableau.com/learn/articles/data-storytelling",
+      "https://plotly.com/python/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 54/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Turning Analytics into Executive Business Insights\n\n🧠 What I explored:\n• Translating analytics into business decisions\n• Improving executive communication skills\n• Designing business-focused storytelling workflows\n• Creating actionable strategic recommendations\n\n⚙️ What I worked on:\n• Summarized key customer intelligence insights\n• Built executive-level visual reports\n• Highlighted churn risks and growth opportunities\n• Documented business recommendations and actions\n\n📌 Key Learnings:\n• Analytics is valuable only when understood clearly.\n• Storytelling improves business impact.\n• Strong communication is a critical Data Science skill.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to communicate analytics insights to business stakeholders.\n\nGitHub Repo: {{github_link}}\n\n#BusinessAnalytics #DataStorytelling #DataScience #ABTalks",
+    "solutionApproach": "Convert technical outputs into business-focused reports using dashboards, summaries, and strategic recommendations.",
+    "tags": [
+      "data-storytelling",
+      "business-intelligence",
+      "analytics"
+    ]
+  },
+  {
+    "dayNumber": 55,
+    "domain": "DS",
+    "title": "Improving the Scalability and Reliability of Your Analytics Platform",
+    "problemStatement": "**Phase:** Capstone Scalability & Reliability\nDay 55 focuses on improving performance, reliability, and scalability in the Customer Intelligence Platform.\n\n**Real-World Impact:** Production systems must remain reliable under heavy usage, unexpected inputs, and business scaling challenges.\n\n**What to do:**\n- Optimize dashboard and API performance\n- Reduce unnecessary computations\n- Improve application responsiveness\n- Add better error handling and validation\n- Document scalability and engineering improvements\n\n**Submission:**\n- Optimized analytics platform\n- Performance improvement report\n- System reliability analysis\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve analytics scalability",
+      "Optimize application performance",
+      "Handle production reliability challenges",
+      "Develop production engineering thinking"
+    ],
+    "resources": [
+      "https://docs.streamlit.io/",
+      "https://fastapi.tiangolo.com/"
+    ],
+    "difficulty": "Hard",
+    "estimatedMinutes": 110,
+    "linkedinTemplate": "Day 55/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Improving the Scalability and Reliability of Your Analytics Platform\n\n🧠 What I explored:\n• Optimizing production analytics systems\n• Improving dashboard and API responsiveness\n• Handling reliability and scalability challenges\n• Designing stable customer intelligence workflows\n\n⚙️ What I worked on:\n• Optimized dashboard and prediction performance\n• Improved error handling and validations\n• Reduced unnecessary computations\n• Documented scalability improvements\n\n📌 Key Learnings:\n• Production systems require performance optimization.\n• Reliability improves user trust.\n• Scalability is critical for real-world analytics products.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my understanding of scalable and reliable analytics engineering.\n\nGitHub Repo: {{github_link}}\n\n#ScalableAI #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Optimize prediction workflows, improve frontend responsiveness, and strengthen validation/error handling layers.",
+    "tags": [
+      "scalability",
+      "production-ai",
+      "optimization"
+    ]
+  },
+  {
+    "dayNumber": 56,
+    "domain": "DS",
+    "title": "Presenting the Mid-Stage Version of Your Customer Intelligence Platform",
+    "problemStatement": "**Phase:** Capstone Mid-Review\nDay 56 focuses on reviewing the current state of the capstone project and identifying final improvements before launch week.\n\n**Real-World Impact:** Engineering teams regularly conduct internal reviews before production launches to improve reliability and user experience.\n\n**What to do:**\n- Prepare a walkthrough of your platform\n- Review forecasting, segmentation, and prediction modules\n- Identify weak points and missing features\n- Collect feedback from peers or mentors\n- Create a final improvement roadmap for Days 57–60\n\n**Submission:**\n- Mid-stage project demo\n- Feature review report\n- Improvement roadmap\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Evaluate production systems critically",
+      "Improve product review workflows",
+      "Prepare systems for final launch",
+      "Develop iterative engineering skills"
+    ],
+    "resources": [
+      "https://github.com/",
+      "https://streamlit.io/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 56/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Presenting the Mid-Stage Version of Your Customer Intelligence Platform\n\n🧠 What I explored:\n• Reviewing production analytics systems critically\n• Identifying scalability and usability improvements\n• Improving engineering workflows through iteration\n• Preparing for final product launch\n\n⚙️ What I worked on:\n• Presented the current version of my platform\n• Reviewed forecasting and prediction modules\n• Identified weaknesses and missing features\n• Created a final improvement roadmap\n\n📌 Key Learnings:\n• Great systems improve through iteration and review.\n• Feedback helps uncover hidden issues.\n• Product reviews improve engineering quality.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to review and refine production-grade analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#CapstoneProject #BusinessIntelligence #DataScience #ABTalks",
+    "solutionApproach": "Conduct a structured review of the platform, identify gaps, and create an improvement roadmap for final deployment.",
+    "tags": [
+      "capstone-review",
+      "analytics-platform",
+      "production-systems"
+    ]
+  },
+  {
+    "dayNumber": 57,
+    "domain": "DS",
+    "title": "Documenting Your Customer Intelligence Platform Like a Professional Engineer",
+    "problemStatement": "**Phase:** Capstone Documentation\nDay 57 focuses on creating professional documentation for your Customer Intelligence Platform so other developers, recruiters, and stakeholders can understand and use your system effectively.\n\n**Real-World Impact:** Production-grade systems require clear documentation for onboarding, collaboration, maintenance, deployment, and scalability.\n\n**What to do:**\n- Write a professional README for your capstone project\n- Document system architecture and workflows\n- Add setup and deployment instructions\n- Explain business objectives and analytics modules\n- Include screenshots, diagrams, and API usage examples\n\n**Submission:**\n- Professional README\n- Architecture documentation\n- API usage guide\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve technical documentation skills",
+      "Communicate system architecture clearly",
+      "Create recruiter-friendly GitHub projects",
+      "Develop professional engineering habits"
+    ],
+    "resources": [
+      "https://www.markdownguide.org/",
+      "https://github.com/othneildrew/Best-README-Template"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 57/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Documenting Your Customer Intelligence Platform Like a Professional Engineer\n\n🧠 What I explored:\n• Why documentation matters in production systems\n• Structuring professional GitHub repositories\n• Explaining analytics workflows clearly\n• Improving collaboration and maintainability\n\n⚙️ What I worked on:\n• Wrote a professional README and setup guide\n• Documented architecture and analytics modules\n• Added screenshots and API examples\n• Improved project presentation quality\n\n📌 Key Learnings:\n• Great engineering includes clear documentation.\n• Professional GitHub projects improve portfolio quality.\n• Strong communication improves project usability.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to document production-grade analytics systems professionally.\n\nGitHub Repo: {{github_link}}\n\n#Documentation #GitHub #DataScience #ABTalks",
+    "solutionApproach": "Create a structured README covering project overview, architecture, setup, usage, deployment, and analytics modules.",
+    "tags": [
+      "documentation",
+      "github",
+      "capstone"
+    ]
+  },
+  {
+    "dayNumber": 58,
+    "domain": "DS",
+    "title": "Creating a Professional Demo Presentation for Your Analytics Platform",
+    "problemStatement": "**Phase:** Capstone Demo & Presentation\nDay 58 focuses on presenting your Customer Intelligence Platform like a real Data Science product to recruiters, mentors, and business stakeholders.\n\n**Real-World Impact:** Strong presentation and demo skills help engineers communicate value, explain technical systems, and succeed in interviews and product showcases.\n\n**What to do:**\n- Create a short presentation deck for your platform\n- Record a demo walkthrough video\n- Explain the business problem and analytics workflow\n- Highlight forecasting, segmentation, and prediction modules\n- Present business insights and final outcomes clearly\n\n**Submission:**\n- Presentation deck\n- Demo walkthrough video\n- Project showcase summary\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve technical presentation skills",
+      "Communicate analytics workflows clearly",
+      "Build recruiter-ready project showcases",
+      "Develop confidence explaining systems"
+    ],
+    "resources": [
+      "https://www.canva.com/",
+      "https://gamma.app/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 58/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Creating a Professional Demo Presentation for Your Analytics Platform\n\n🧠 What I explored:\n• Presenting analytics systems professionally\n• Explaining business problems and technical workflows clearly\n• Structuring recruiter-friendly project demos\n• Improving technical communication skills\n\n⚙️ What I worked on:\n• Created a presentation deck and demo video\n• Explained forecasting and customer intelligence modules\n• Showcased business insights and analytics workflows\n• Improved overall project storytelling\n\n📌 Key Learnings:\n• Great projects need great communication.\n• Presentation skills improve interview confidence.\n• Strong demos increase portfolio impact.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to present production-grade analytics systems professionally.\n\nGitHub Repo: {{github_link}}\n\n#ProjectDemo #DataScience #PortfolioProject #ABTalks",
+    "solutionApproach": "Create a concise project presentation covering the problem, architecture, analytics workflow, business insights, and deployment demo.",
+    "tags": [
+      "presentation",
+      "demo",
+      "portfolio"
+    ]
+  },
+  {
+    "dayNumber": 59,
+    "domain": "DS",
+    "title": "Polishing and Finalizing Your Customer Intelligence Platform",
+    "problemStatement": "**Phase:** Capstone Final Optimization\nDay 59 focuses on polishing the final version of the Customer Intelligence Platform before official showcase and submission.\n\n**Real-World Impact:** Production systems require final optimization, bug fixing, and usability improvements before public release or stakeholder delivery.\n\n**What to do:**\n- Fix bugs and inconsistencies in the platform\n- Improve dashboard responsiveness and usability\n- Optimize visualizations and workflows\n- Review deployment stability and prediction reliability\n- Perform final project cleanup and testing\n\n**Submission:**\n- Final optimized platform\n- Bug-fix and optimization report\n- Deployment screenshots\n- GitHub repository\n- LinkedIn reflection",
+    "learningObjectives": [
+      "Improve system refinement skills",
+      "Optimize production workflows",
+      "Strengthen deployment stability",
+      "Develop quality assurance thinking"
+    ],
+    "resources": [
+      "https://docs.streamlit.io/",
+      "https://fastapi.tiangolo.com/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 59/60 🚀 | ABTalks Data Science Challenge\n\nToday’s focus was: Polishing and Finalizing Your Customer Intelligence Platform\n\n🧠 What I explored:\n• Improving production-grade analytics systems\n• Optimizing usability and deployment stability\n• Fixing bugs and refining workflows\n• Preparing systems for final release\n\n⚙️ What I worked on:\n• Optimized dashboard and prediction workflows\n• Fixed bugs and UI inconsistencies\n• Improved responsiveness and deployment stability\n• Conducted final testing and cleanup\n\n📌 Key Learnings:\n• Great products require refinement and iteration.\n• Final optimization improves user trust and reliability.\n• Attention to detail matters in engineering.\n\n🚀 Outcome:\nBy the end of today’s task, I improved my ability to refine and stabilize production analytics systems.\n\nGitHub Repo: {{github_link}}\n\n#ProductionAI #MachineLearning #DataScience #ABTalks",
+    "solutionApproach": "Review the entire analytics platform, optimize workflows, fix bugs, and improve system usability before final launch.",
+    "tags": [
+      "optimization",
+      "production-systems",
+      "capstone"
+    ]
+  },
+  {
+    "dayNumber": 60,
+    "domain": "DS",
+    "title": "Launching Your Customer Intelligence Platform to the World",
+    "problemStatement": "**Phase:** Capstone Showcase & Graduation\nDay 60 is the final showcase and graduation milestone where students officially launch and present their complete Customer Intelligence Platform.\n\n**Real-World Impact:** Professional engineers publicly showcase products, communicate outcomes, and demonstrate business impact through production-ready systems.\n\n**What to do:**\n- Publish your final deployed platform\n- Share your GitHub repository and demo publicly\n- Present the business problem, analytics workflow, and outcomes\n- Reflect on your 60-day learning journey\n- Create a final LinkedIn showcase post\n\n**Submission:**\n- Final deployed platform\n- Complete GitHub repository\n- Demo video and presentation\n- Final reflection report\n- LinkedIn showcase post",
+    "learningObjectives": [
+      "Showcase production-grade analytics systems",
+      "Build confidence presenting technical work",
+      "Reflect on long-term learning growth",
+      "Develop a strong public portfolio"
+    ],
+    "resources": [
+      "https://github.com/",
+      "https://www.linkedin.com/"
+    ],
+    "difficulty": "Medium",
+    "estimatedMinutes": 120,
+    "linkedinTemplate": "Day 60/60 🎉 | ABTalks Data Science Challenge Complete\n\n🚀 Final Showcase: Launching My Customer Intelligence Platform\n\nOver the past 60 days, I built a complete production-style Customer Intelligence Platform focused on:\n• Customer churn prediction\n• Segmentation and business analytics\n• Forecasting and KPI dashboards\n• Real-time predictive workflows\n• Deployment and production engineering\n\n🧠 What this journey taught me:\n• Data Science is more than models — it’s systems thinking, communication, deployment, and problem-solving.\n• Building publicly improves consistency and confidence.\n• Production-grade projects require engineering discipline and iteration.\n\n⚙️ Final Deliverables:\n• Deployed analytics platform\n• Interactive dashboards\n• Prediction APIs\n• Executive-level business insights\n• Complete GitHub documentation\n\n🙏 Huge gratitude to @Anil Bajpai Sir and the ABTalks community for creating such a practical, growth-focused learning environment.\n\nGitHub Repo: {{github_link}}\nDeployment Link: {{deployment_link}}\n\n#ABTalks #DataScience #MachineLearning #BusinessIntelligence #LearningInPublic #PortfolioProject #AI",
+    "solutionApproach": "Finalize and publicly showcase the complete Customer Intelligence Platform including deployment, documentation, dashboards, APIs, and analytics workflows.",
+    "tags": [
+      "capstone-showcase",
+      "portfolio",
+      "business-intelligence"
     ]
   },
   {
