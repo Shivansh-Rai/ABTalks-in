@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BookOpen, MessageCircle, Rocket, Sparkles } from "lucide-react";
+import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDateIST } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
@@ -242,6 +243,14 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
           </div>
         </div>
       </motion.section>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <ClaudeFAQ />
+      </motion.div>
     </main>
   );
 }

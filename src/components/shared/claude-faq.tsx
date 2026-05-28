@@ -1,0 +1,137 @@
+"use client";
+
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, HelpCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const FAQS = [
+  {
+    question: "Is purchasing a Claude subscription mandatory for this challenge?",
+    answer:
+      "No, purchasing a Claude subscription is not mandatory. Throughout the 60-day journey, we'll guide you on continuing your learning even if free-tier token limits are exhausted. We'll also help you explore alternative AI platforms so you can progress without interruptions. A subscription may improve workflow efficiency but is entirely optional.",
+  },
+  {
+    question: "Do I need to create a Claude account?",
+    answer:
+      "Yes, we strongly recommend creating a Claude account for the best experience. We also encourage creating accounts on ChatGPT, Google Gemini, and other AI productivity tools. Using multiple platforms helps you compare outputs, explore different capabilities, and build broader AI tool familiarity.",
+  },
+  {
+    question: "Are Claude subscription charges compulsory after 10 days?",
+    answer:
+      "No. You can continue using the free version of Claude throughout the challenge. The free plan has limited usage and token restrictions, but learning continues effectively. A Claude subscription is optional for those wanting a smoother experience with advanced features.",
+  },
+  {
+    question: "Will I receive daily tasks or teaching sessions?",
+    answer:
+      "Starting June 1, 2026, you'll receive daily AI-based tasks through the ABTalks platform — Claude AI implementation, prompt engineering, AI productivity, and real-world workflows. You're expected to complete tasks consistently, share learnings on LinkedIn daily, and maintain discipline. Detailed walkthroughs are available on the ABTalks on AI YouTube channel.",
+  },
+  {
+    question: "I already created a Claude account from the official website. Is that okay?",
+    answer:
+      "Yes, creating a Claude account directly from claude.ai is completely acceptable. In some cases, you may be advised to create another account using a different email for community access and challenge tracking, but your existing account works fine for participation.",
+  },
+  {
+    question: "Will I receive goodies after completing the challenge?",
+    answer:
+      "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the ABTalks team. The challenge is designed to reward commitment and continuous learning.",
+  },
+  {
+    question: "What is the duration of the course?",
+    answer:
+      "60 days. During this period you'll gain hands-on exposure to 12+ high-demand domains including Data Analytics, Business Analytics, AI Tools, Prompt Engineering, Automation, AI Productivity Systems, and Practical AI Workflows. Focus is on practical implementation, real-world learning, and career-oriented AI skills.",
+  },
+  {
+    question: "What if I can't complete a task?",
+    answer:
+      "Don't feel discouraged. The ABTalks on AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
+  },
+] as const;
+
+export function ClaudeFAQ() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="rounded-2xl border bg-card p-6">
+      <div className="mb-6 flex items-center gap-2">
+        <div className="rounded-lg bg-primary/10 p-2">
+          <HelpCircle className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Everything you need to know
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {FAQS.map((faq, i) => (
+          <div
+            key={faq.question}
+            className={cn(
+              "overflow-hidden rounded-xl border bg-background/50 transition-colors",
+              openIndex === i && "bg-background",
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+              className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/30"
+            >
+              <span className="flex-1 text-sm font-medium">{faq.question}</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                  openIndex === i && "rotate-180",
+                )}
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {openIndex === i ? (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 rounded-xl border bg-muted/30 p-4">
+        <p className="text-xs text-muted-foreground">
+          Still have questions? Reach out via the{" "}
+          <a
+            href="https://chat.whatsapp.com/LA5CQJbMczH3QGhSyJDPGK"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            WhatsApp community
+          </a>{" "}
+          or check the{" "}
+          <a
+            href="https://www.youtube.com/@ABTalksonAI"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            ABTalks on AI YouTube channel
+          </a>
+          .
+        </p>
+      </div>
+    </section>
+  );
+}
