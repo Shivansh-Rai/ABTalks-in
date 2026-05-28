@@ -113,7 +113,7 @@ export function ClaudeFAQ() {
         <p className="text-xs text-muted-foreground">
           Still have questions? Reach out via the{" "}
           <a
-            href="https://chat.whatsapp.com/LA5CQJbMczH3QGhSyJDPGK"
+            href="https://chat.whatsapp.com/Fqx07wwZhiq0lA6Z7d5uad"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"
