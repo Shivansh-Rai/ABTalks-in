@@ -36,6 +36,7 @@ export type DashboardDataWithEnrollment = {
   enrollment: {
     id: string;
     domain: Domain;
+    startedAt: Date;
     currentDay: number;
     totalDays: number;
     daysCompleted: number;
@@ -273,6 +274,7 @@ export async function getDashboardData(
     enrollment: {
       id: enrollment.id,
       domain: enrollment.domain,
+      startedAt: enrollment.startedAt,
       currentDay,
       totalDays,
       daysCompleted: enrollment.daysCompleted,

@@ -39,7 +39,7 @@ import {
   ProgressTrack,
 } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { formatDateIST, isChallengePreStart } from "@/lib/date-utils";
+import { formatDateIST, isEnrollmentPreStart } from "@/lib/date-utils";
 import { PreStartDashboard } from "@/components/dashboard/pre-start-dashboard";
 import { prisma } from "@/lib/db";
 import { Domain } from "@prisma/client";
@@ -162,7 +162,10 @@ export default async function DashboardPage({
   };
   const { enrollment, profile, todayTask, isTodayCompleted } = dashboardData;
 
-  const isPreStart = isChallengePreStart(dashboardData.enrollment.challenge);
+  const isPreStart = isEnrollmentPreStart(
+    dashboardData.enrollment,
+    dashboardData.enrollment.challenge,
+  );
 
   const claudeBanner = claudeEnabled
     ? await shouldShowClaudeBanner(session.user.id)

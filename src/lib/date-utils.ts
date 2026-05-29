@@ -21,14 +21,20 @@ function referenceStartDate(
   startedAt: Date,
   challenge?: ChallengeSyncStart,
 ): Date {
-  return challenge?.startsAt != null ? challenge.startsAt : startedAt;
+  // No synchronized start (SE/DS/AI): rolling from enrollment date
+  if (challenge?.startsAt == null) return startedAt;
+  // Synchronized challenge (CLAUDE): cohort start is a floor.
+  // Enrolled before the start → wait for the start date (cohort kickoff).
+  // Enrolled on/after the start → start immediately from enrollment date.
+  return challenge.startsAt > startedAt ? challenge.startsAt : startedAt;
 }
 
 /**
  * Challenge day 1 = IST calendar day of the reference start
- * (`challenge.startsAt` when set, otherwise `enrollment.startedAt`).
+ * (max of `challenge.startsAt` and `enrollment.startedAt` when synchronized,
+ * otherwise `enrollment.startedAt`).
  * Each subsequent IST calendar day increments by 1. Capped at 60.
- * Before a synchronized `startsAt` (IST), returns 0 so callers treat all days as locked.
+ * Before the effective start (IST), returns 0 so callers treat all days as locked.
  */
 /** IST calendar date string for challenge day `dayNumber` (1 = first IST day of the reference start). */
 export function getIstDateKeyForChallengeDay(
@@ -53,6 +59,28 @@ export function isChallengePreStart(challenge?: ChallengeSyncStart): boolean {
   const startUtc = parseCalendarKeyToUtcDate(startKey);
   const nowUtc = parseCalendarKeyToUtcDate(nowKey);
   return nowUtc < startUtc;
+}
+
+/**
+ * True when this specific enrollment hasn't started yet.
+ * For synchronized challenges: pre-start until the effective start
+ * (max of challenge.startsAt and enrollment.startedAt) is reached in IST.
+ * For rolling challenges: never pre-start (starts on enrollment).
+ */
+export function isEnrollmentPreStart(
+  enrollment: EnrollmentDayAnchor | Date,
+  challenge?: ChallengeSyncStart,
+): boolean {
+  if (challenge?.startsAt == null) return false;
+
+  const startedAt =
+    enrollment instanceof Date ? enrollment : enrollment.startedAt;
+  const ref = referenceStartDate(startedAt, challenge);
+  const refKey = formatInTimeZone(ref, IST, "yyyy-MM-dd");
+  const nowKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+  const refUtc = parseCalendarKeyToUtcDate(refKey);
+  const nowUtc = parseCalendarKeyToUtcDate(nowKey);
+  return nowUtc < refUtc;
 }
 
 export function getCurrentDayNumber(
