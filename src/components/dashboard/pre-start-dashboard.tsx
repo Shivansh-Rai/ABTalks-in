@@ -145,9 +145,7 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
                 >
                   claude.ai
                 </a>
-                . You can complete the first 10 days of this challenge on
-                Claude&apos;s free plan. From day 11 onward, you&apos;ll need a
-                paid Claude subscription to keep up with the daily tasks.
+                . You can complete the challenge on Claude's free plan.
               </p>
             </div>
           </li>

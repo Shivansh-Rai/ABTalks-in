@@ -95,11 +95,11 @@ export async function getStudents(
 
   const referralCounts = await prisma.referral.groupBy({
     by: ["referrerId"],
-    _count: true,
+    _count: { _all: true },
   });
 
   const countMap = new Map(
-    referralCounts.map((r) => [r.referrerId, r._count]),
+    referralCounts.map((r) => [r.referrerId, r._count._all]),
   );
 
   const students = rows.map((row) => ({
