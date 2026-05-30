@@ -20,7 +20,7 @@ const BENEFITS = [
     icon: Network,
     title: "Build your network",
     description:
-      "Connect directly with Anil Bajpai and the ABTalks recruiter community. Open doors that wouldn't open otherwise.",
+      "Connect directly with ABTalks team and community. Open doors that wouldn't open otherwise.",
     color: "amber",
   },
   {
