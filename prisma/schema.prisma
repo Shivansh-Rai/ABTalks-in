@@ -96,6 +96,7 @@ model Enrollment {
 
   @@unique([userId, challengeId])
   @@index([domain, daysCompleted, currentStreak])
+  @@index([userId, status])
 }
 
 model Quiz {
@@ -190,6 +191,7 @@ model StudentProfile {
   user                          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([isCampusAmbassadorCandidate])
+  @@index([domain, createdAt(sort: Desc)])
 }
 
 model Submission {
@@ -209,6 +211,7 @@ model Submission {
   @@unique([enrollmentId, dayNumber])
   @@index([dayNumber])
   @@index([userId])
+  @@index([submittedAt(sort: Desc)])
 }
 
 model User {
@@ -231,6 +234,8 @@ model User {
   sessions                           Session[]
   studentProfile                     StudentProfile?
   submissions                        Submission[]
+
+  @@index([createdAt(sort: Desc)])
 }
 
 model AdminAction {
