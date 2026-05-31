@@ -171,7 +171,7 @@ export function SubmissionHeatmap({
           role="grid"
           aria-label="60-day submission heatmap"
         >
-          {data.map((cell, index) => {
+          {data.map((cell) => {
             const clickable = interactive && isClickable(cell);
             const isFuture = cell.status === "future";
             return (
@@ -182,9 +182,8 @@ export function SubmissionHeatmap({
                 title={tooltipLabel(cell)}
                 disabled={!clickable}
                 onClick={() => openCell(cell)}
-                style={{ animationDelay: `${index * 22}ms` }}
                 className={cn(
-                  "size-7 shrink-0 rounded-md opacity-0 animate-heatmap-cell sm:size-9",
+                  "size-7 shrink-0 rounded-md sm:size-9",
                   STATUS_CLASS[cell.status],
                   clickable &&
                     "cursor-pointer transition-[box-shadow,transform] hover:z-10 hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
