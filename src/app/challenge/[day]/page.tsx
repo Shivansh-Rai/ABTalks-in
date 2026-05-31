@@ -271,7 +271,7 @@ export default async function ChallengeDayPage({ params, searchParams }: PagePro
               ← Dashboard
             </Link>
             <p className="text-sm text-muted-foreground">
-              Today (IST): day {data.currentDayNumber}
+              
             </p>
           </div>
           <DayPage

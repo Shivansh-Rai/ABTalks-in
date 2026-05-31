@@ -27,7 +27,7 @@
     "dayContent": {
       "title": "Claude Setup & AI Personality Profile",
       "tagline": "Set up your workspace and meet your AI self",
-      "module": "Module 1 — Claude Fundamentals & Prompt Engineering",
+      "module": "",
       "difficulty": "Beginner",
       "estimatedMinutes": 40,
       "deliverableFormat": "GitHub commit URL",
@@ -35,20 +35,20 @@
         "summary": "",
         "bullets": [
           {
-            "label": "Desktop access",
-            "text": "install Claude on desktop and pin it to your dock/taskbar for daily use."
+            "label": "Desktop vs browser",
+            "text": "the native app removes friction one click from dock/taskbar beats opening a new tab every time. Daily use is the whole game in a 60-day challenge."
           },
           {
-            "label": "Web access",
-            "text": "sign in to claude.ai in your browser and explore the chat, Projects, and Artifacts."
+            "label": "Projects as your lab",
+            "text": "Claude Projects keep related chats, files, and context in one place. Treat “60 Days of AI” as your running notebook every day’s work lives here, not scattered across random chats."
           },
           {
-            "label": "Workspace hygiene",
-            "text": "create your first Project (“60 Days of AI”) so all your challenge chats stay organized."
+            "label": "AI Personality Profile",
+            "text": "this isn’t a gimmick it’s your first lesson in context-rich prompting. The more Claude knows about how you think, work, and learn, the more tailored every future answer becomes."
           },
           {
-            "label": "First prompt",
-            "text": "use the AI Personality Profile prompt to generate a personalized profile + cinematic portrait."
+            "label": "Build in public",
+            "text": "a public GitHub repo turns daily practice into a portfolio. One README today, one commit per day by Day 60 you have proof of work recruiters and peers can actually see."
           }
         ]
       },
@@ -56,20 +56,20 @@
         "title": "Your Task",
         "steps": [
           "Install Claude on your desktop (link above) and sign in.",
-          "Create a Claude Project named “60 Days of AI” — you’ll save every challenge chat here.",
+          "Create a Claude Project named “60 Days of AI” you’ll save every challenge chat here.",
           "Open a new chat and paste the AI Personality Profile prompt below. Replace the brackets with details that fit you.",
           "Let Claude generate your profile AND the cinematic AI portrait in the same response.",
           "Save the result to your portfolio and share it on LinkedIn to mark Day 1.",
-          "Create a public GitHub repository — you can name it anything (e.g., '60-day-claude-challenge', 'my-claude-journey', whatever you like)",
+          "Create a public GitHub repository you can name it anything (e.g., '60-day-claude-challenge', 'my-claude-journey', whatever you like)",
           "On Day 1, push a README.md to your repo introducing yourself and your goals for the next 60 days",
           "Each day going forward: take a screenshot of your Claude work, save it to your repo, and push a new commit"
         ],
-        "solutionVideoUrl": "https://www.youtube.com/watch?v=jGg_1h0qzaM&t=9043s"
+        "solutionVideoUrl": "https://youtu.be/mi2hrPS_GcM"
       },
       "promptTemplate": "Based on:\n* how I use AI\n* the prompts I ask\n* my work, goals, mindset, and personality\n* my strengths, weaknesses, curiosity, and communication style\n\nCreate a deeply personalized “AI Personality Profile” for me.\n\nMake it accurate, modern, cinematic, internet-native, realistic but fun.\n\nInclude:\n1. My AI working style\n2. My strengths & weaknesses\n3. What type of AI user I am\n4. Best future career paths for me\n5. My learning & decision-making style\n6. What makes me different from most AI users\n7. What I need to improve to become elite with AI\n8. A fun AI title for me\n9. A short cinematic AI character description\n\nThen, generate a hyper-realistic cinematic AI portrait of me based on everything above.\n\nThe image should capture: startup founder / AI engineer energy, futuristic workspace & AI screens, coding + research vibe, dark cinematic lighting, modern Gen-Z builder aesthetic, realistic details with subtle cyberpunk accents.\n\nIMPORTANT: don’t just write the image prompt — generate the actual image directly in chat. Make it professional, futuristic, cinematic, and LinkedIn-shareable.",
       "engagement": {
         "type": "Kickoff Post",
-        "description": "Share your AI Personality Profile + cinematic portrait on LinkedIn. Tag @ABtalks and use #60DayClaudeChallenge to mark Day 1. Mention @AnilBajpai @ABTalksonAI @Anthropic in your post.",
+        "description": "Share your AI Personality Profile + cinematic portrait on LinkedIn. Mention @AnilBajpai @ABTalksonAI @Anthropic in your post.",
         "hashtag": "#60DayClaudeChallenge",
         "mentions": ["@AnilBajpai", "@ABTalksonAI", "@Anthropic"]
       },
@@ -122,7 +122,7 @@
     "dayContent": {
       "title": "What Is Prompt Engineering",
       "tagline": "The skill of talking to AI effectively",
-      "module": "Module 1 — Claude Fundamentals & Prompt Engineering",
+      "module": "",
       "difficulty": "Beginner",
       "estimatedMinutes": 30,
       "deliverableFormat": "GitHub commit URL",
@@ -155,7 +155,7 @@
           "Run both versions in Claude and compare the outputs side by side.",
           "Optional: use MetaPrompt to optimize it one more level and note what changed."
         ],
-        "solutionVideoUrl": "https://youtube.com/REPLACE_WITH_DAY_VIDEO"
+        "solutionVideoUrl": "https://youtu.be/hHbgODDQmoc"
       },
       "promptTemplate": "Compare these two prompts on the same task:\n\nNORMAL PROMPT:\n[paste your lazy one-liner]\n\nENGINEERED PROMPT:\nRole: You are a [profession] with strong experience.\nContext: I need this for [audience] because [goal]. Constraints: [tone, length, must-include].\nInstruction: [the single task].\nOutput Format: [bullets / table / 150-word paragraph].\n\nGenerate both outputs and label them clearly so I can compare.",
       "engagement": {
@@ -213,7 +213,7 @@
     "dayContent": {
       "title": "Role-Based Prompting",
       "tagline": "Turn Claude into any expert you need",
-      "module": "Module 1 — Claude Fundamentals & Prompt Engineering",
+      "module": "",
       "difficulty": "Beginner",
       "estimatedMinutes": 35,
       "deliverableFormat": "GitHub commit URL",
@@ -246,7 +246,7 @@
           "Solve it again with the Tech template if it’s a technical problem (senior software developer persona).",
           "Compare both answers — note what changed: tone, depth, risks called out."
         ],
-        "solutionVideoUrl": "https://youtube.com/REPLACE_WITH_DAY_VIDEO"
+        "solutionVideoUrl": "https://youtu.be/7yW50t-7TOo"
       },
       "promptTemplate": "=== NON-TECH (general expert) ===\nAct as a [senior role] with deep experience in [industry].\nYour communication style is [direct / supportive / analytical].\nYour audience is [who will read this].\n\nTask: [what you need].\nGive me your expert recommendation, then list the 3 risks a less experienced person would miss.\n\n=== TECH (software/engineering) ===\nAct as a senior software developer at a top tech company with experience building scalable, production-ready systems.\nCommunication style: professional, analytical, concise. Audience: a manager, tech lead, or stakeholder.\n\nTask: [insert task]\n\nProvide:\n1. Your recommended solution or approach\n2. Technical reasoning and implementation strategy\n3. Key trade-offs, risks, or bottlenecks the team should consider\n4. Three critical mistakes less experienced developers commonly miss\n\nFocus on clean architecture, scalability, maintainability, performance, and real-world execution.",
       "engagement": {
@@ -289,7 +289,7 @@
     "dayContent": {
       "title": "Chain-of-Thought Prompting",
       "tagline": "Make Claude reason step-by-step for hard problems",
-      "module": "Module 1 — Claude Fundamentals & Prompt Engineering",
+      "module": "",
       "difficulty": "Intermediate",
       "estimatedMinutes": 40,
       "deliverableFormat": "GitHub commit URL",
@@ -379,7 +379,7 @@
     "dayContent": {
       "title": "Context Management",
       "tagline": "Use Claude as your personal mentor to build a real roadmap",
-      "module": "Module 1 — Claude Fundamentals & Prompt Engineering",
+      "module": "",
       "difficulty": "Intermediate",
       "estimatedMinutes": 40,
       "deliverableFormat": "GitHub commit URL",

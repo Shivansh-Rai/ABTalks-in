@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Lightbulb,
   Wrench,
@@ -18,15 +18,92 @@ import {
   Tag,
   PlayCircle,
   BookOpen,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   submitGithubStepAction,
   submitLinkedinStepAction,
 } from "@/app/actions/submission-actions";
+
+interface CollapsibleSectionProps {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  animationDelay?: number;
+  extraClassName?: string;
+  children: React.ReactNode;
+}
+
+function CollapsibleSection({
+  icon,
+  iconBg,
+  title,
+  subtitle,
+  defaultOpen = false,
+  animationDelay = 0.1,
+  extraClassName,
+  children,
+}: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: animationDelay, duration: 0.4 }}
+      className={cn(
+        "rounded-2xl border bg-card overflow-hidden",
+        extraClassName,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-muted/30 transition-colors text-left"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={`rounded-lg p-2 shrink-0 ${iconBg}`}>{icon}</div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display font-semibold text-base md:text-lg">
+              {title}
+            </h2>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        <ChevronDown
+          className={cn(
+            "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
+            isOpen && "rotate-180",
+          )}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 md:px-6 md:pb-6">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.section>
+  );
+}
 
 export interface LearningBullet {
   label: string;
@@ -197,21 +274,12 @@ export function DayPage({
           </div>
         </motion.div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="rounded-2xl border bg-card p-6"
+        <CollapsibleSection
+          icon={<Lightbulb className="h-5 w-5 text-amber-500" />}
+          iconBg="bg-amber-500/10"
+          title="What You'll Learn"
+          animationDelay={0.1}
         >
-          <div className="mb-4 flex items-center gap-2">
-            <div className="rounded-lg bg-amber-500/10 p-2">
-              <Lightbulb className="h-5 w-5 text-amber-500" />
-            </div>
-            <h2 className="font-display text-lg font-semibold">
-              What You&apos;ll Learn
-            </h2>
-          </div>
-
           <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
             {content.learning.summary}
           </p>
@@ -229,27 +297,17 @@ export function DayPage({
               </li>
             ))}
           </ol>
-        </motion.section>
+        </CollapsibleSection>
 
         {content.tool ? (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-            className="rounded-2xl border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-pink-500/5 p-6"
+          <CollapsibleSection
+            icon={<Wrench className="h-5 w-5 text-orange-500" />}
+            iconBg="bg-orange-500/10"
+            title="Tool of the Day"
+            subtitle={content.tool.name}
+            animationDelay={0.15}
+            extraClassName="border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-pink-500/5"
           >
-            <div className="mb-2 flex items-center gap-2">
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Wrench className="h-5 w-5 text-orange-500" />
-              </div>
-              <span className="text-xs font-semibold tracking-wider text-orange-600 uppercase dark:text-orange-400">
-                Tool of the Day
-              </span>
-            </div>
-
-            <h2 className="font-display mb-1 text-2xl font-bold">
-              {content.tool.name}
-            </h2>
             <p className="mb-3 text-xs text-muted-foreground">
               {content.tool.type}
             </p>
@@ -284,24 +342,15 @@ export function DayPage({
               {content.tool.linkLabel}
               <ExternalLink className="h-3 w-3" />
             </a>
-          </motion.section>
+          </CollapsibleSection>
         ) : null}
 
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="rounded-2xl border bg-card p-6"
+        <CollapsibleSection
+          icon={<ListChecks className="h-5 w-5 text-emerald-500" />}
+          iconBg="bg-emerald-500/10"
+          title={content.task.title}
+          animationDelay={0.2}
         >
-          <div className="mb-4 flex items-center gap-2">
-            <div className="rounded-lg bg-emerald-500/10 p-2">
-              <ListChecks className="h-5 w-5 text-emerald-500" />
-            </div>
-            <h2 className="font-display text-lg font-semibold">
-              {content.task.title}
-            </h2>
-          </div>
-
           <ol className="space-y-3">
             {content.task.steps.map((step, i) => (
               <li key={i} className="flex items-start gap-3">
@@ -312,126 +361,16 @@ export function DayPage({
               </li>
             ))}
           </ol>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, duration: 0.4 }}
-          className="rounded-2xl border bg-card p-6"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-violet-500/10 p-2">
-                <FileCode className="h-5 w-5 text-violet-500" />
-              </div>
-              <h2 className="font-display text-lg font-semibold">
-                Prompt Template
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleCopyPrompt()}
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
-            >
-              {copiedPrompt ? (
-                <>
-                  <Check className="h-4 w-4 text-emerald-500" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </>
-              )}
-            </button>
-          </div>
-
-          <p className="mb-3 text-xs text-muted-foreground">
-            Customize the bracketed parts for your situation
-          </p>
-
-          <pre className="overflow-x-auto rounded-xl border bg-muted/50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap md:text-sm">
-            {content.promptTemplate}
-          </pre>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.32, duration: 0.4 }}
-          className="rounded-2xl border bg-card p-6"
-        >
-          <div className="mb-4 flex items-center gap-2">
-            <div className="rounded-lg bg-pink-500/10 p-2">
-              <Share2 className="h-5 w-5 text-pink-500" />
-            </div>
-            <div>
-              <h2 className="font-display text-lg font-semibold">
-                Engagement Activity
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {content.engagement.type}
-              </p>
-            </div>
-          </div>
-
-          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-            {content.engagement.description}
-          </p>
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-pink-500/10 px-3 py-1 font-mono text-xs font-semibold text-pink-600 dark:text-pink-400">
-            <Tag className="h-3 w-3" />
-            {content.engagement.hashtag}
-          </div>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36, duration: 0.4 }}
-          className="rounded-2xl border-2 border-dashed border-muted-foreground/20 bg-muted/20 p-5"
-        >
-          <div className="flex items-start gap-3">
-            <div className="shrink-0 rounded-lg bg-blue-500/10 p-2">
-              <FileOutput className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <h3 className="font-display text-base font-semibold">
-                Your Deliverable
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {content.deliverable.description}
-              </p>
-              <span className="mt-2 inline-block font-mono text-xs font-semibold text-muted-foreground">
-                Format: {content.deliverable.format}
-              </span>
-            </div>
-          </div>
-        </motion.section>
+        </CollapsibleSection>
 
         {solutionVideoUrl ? (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.22, duration: 0.4 }}
-            className="rounded-2xl border bg-card p-6"
+          <CollapsibleSection
+            icon={<PlayCircle className="h-5 w-5 text-red-500" />}
+            iconBg="bg-red-500/10"
+            title="Solution Walkthrough"
+            subtitle="Step-by-step video guide"
+            animationDelay={0.22}
           >
-            <div className="mb-4 flex items-center gap-2">
-              <div className="rounded-lg bg-red-500/10 p-2">
-                <PlayCircle className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <h2 className="font-display text-lg font-semibold">
-                  Solution Walkthrough
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Step-by-step video guide
-                </p>
-              </div>
-            </div>
-
             {solutionVideoUrl.includes("REPLACE_WITH") ? (
               <p className="text-sm text-muted-foreground">
                 Solution walkthrough video coming soon — check back shortly.
@@ -448,23 +387,16 @@ export function DayPage({
                 <ExternalLink className="h-3 w-3" />
               </a>
             )}
-          </motion.section>
+          </CollapsibleSection>
         ) : null}
 
         {resources.length > 0 ? (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.24, duration: 0.4 }}
-            className="rounded-2xl border bg-card p-6"
+          <CollapsibleSection
+            icon={<BookOpen className="h-5 w-5 text-sky-500" />}
+            iconBg="bg-sky-500/10"
+            title="Resources"
+            animationDelay={0.24}
           >
-            <div className="mb-4 flex items-center gap-2">
-              <div className="rounded-lg bg-sky-500/10 p-2">
-                <BookOpen className="h-5 w-5 text-sky-500" />
-              </div>
-              <h2 className="font-display text-lg font-semibold">Resources</h2>
-            </div>
-
             <ul className="space-y-2">
               {resources.map((url, i) => {
                 let label = url;
@@ -491,13 +423,77 @@ export function DayPage({
                 );
               })}
             </ul>
-          </motion.section>
+          </CollapsibleSection>
         ) : null}
+
+        <CollapsibleSection
+          icon={<FileCode className="h-5 w-5 text-violet-500" />}
+          iconBg="bg-violet-500/10"
+          title="Prompt Template"
+          animationDelay={0.28}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Customize the bracketed parts for your situation
+            </span>
+            <button
+              type="button"
+              onClick={() => void handleCopyPrompt()}
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              {copiedPrompt ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-500" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+
+          <pre className="overflow-x-auto rounded-xl border bg-muted/50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap md:text-sm">
+            {content.promptTemplate}
+          </pre>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          icon={<Share2 className="h-5 w-5 text-pink-500" />}
+          iconBg="bg-pink-500/10"
+          title="LinkedIn Post Guidelines"
+          subtitle={content.engagement.type}
+          animationDelay={0.32}
+        >
+          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+            {content.engagement.description}
+          </p>
+
+          <div className="inline-flex items-center gap-2 rounded-full bg-pink-500/10 px-3 py-1 font-mono text-xs font-semibold text-pink-600 dark:text-pink-400">
+            <Tag className="h-3 w-3" />
+            {content.engagement.hashtag}
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          icon={<FileOutput className="h-5 w-5 text-blue-500" />}
+          iconBg="bg-blue-500/10"
+          title="Your Deliverable"
+          animationDelay={0.36}
+        >
+          <p className="text-sm text-muted-foreground">
+            {content.deliverable.description}
+          </p>
+          <span className="mt-2 inline-block font-mono text-xs font-semibold text-muted-foreground">
+            Format: {content.deliverable.format}
+          </span>
+        </CollapsibleSection>
 
         <div className="rounded-2xl border bg-card p-6">
           <p className="mb-2 text-xs text-muted-foreground">
-            Push your day&apos;s work to your GitHub repo, then paste the commit
-            URL here. Each day needs a new commit — same URL can&apos;t be reused.
+            
           </p>
           <div className="flex flex-col gap-2 md:flex-row md:gap-3">
             <div className="min-w-0 flex-1">
@@ -513,7 +509,7 @@ export function DayPage({
             <div className="min-w-0 flex-1">
               <Input
                 type="url"
-                placeholder="https://github.com/your-username/your-repo/commit/abc123..."
+                placeholder="Github Commit URL"
                 aria-label="GitHub commit URL"
                 value={artifactUrl}
                 onChange={(e) => setArtifactUrl(e.target.value)}
