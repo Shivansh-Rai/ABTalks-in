@@ -5,7 +5,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { normalizeGithubUrl } from "@/features/submission/validate-github-url";
-import { validateSubmissionUrl } from "@/lib/validations/submission";
+import {
+  checkClaudeCommitDuplicate,
+  getGithubUrlType,
+  validateSubmissionUrl,
+} from "@/lib/validations/submission";
 import {
   assertPastDaySubmittable,
   submitDay,
@@ -92,6 +96,21 @@ export async function submitGithubStepAction(
 
   if (!task) {
     return { ok: false, message: "Day not found" };
+  }
+
+  if (enrollment.domain === "CLAUDE") {
+    const urlType = getGithubUrlType(githubUrl.trim());
+
+    if (urlType === "commit") {
+      const duplicate = await checkClaudeCommitDuplicate(
+        githubUrl.trim(),
+        enrollment.id,
+        dayNumber,
+      );
+      if (!duplicate.ok) {
+        return { ok: false, message: duplicate.message };
+      }
+    }
   }
 
   const ghCheck = await validateSubmissionUrl(
