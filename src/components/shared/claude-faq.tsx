@@ -7,6 +7,11 @@ import { cn } from "@/lib/utils";
 
 const FAQS = [
   {
+    question: "Why is my submission link not getting accepted?",
+    answer:
+      "Make sure you're submitting a valid GitHub URL. Either format works: a repo URL like https://github.com/your-username/your-repo/day1, or a commit URL like https://github.com/your-username/your-repo/commit/abc1234. Commit URLs work best because each day requires a unique commit you can't reuse the same commit URL twice. Make sure your repository is public so we can verify your work.",
+  },
+  {
     question: "Is purchasing a Claude subscription mandatory for this challenge?",
     answer:
       "No, purchasing a Claude subscription is not mandatory. Throughout the 60-day journey, we'll guide you on continuing your learning even if free-tier token limits are exhausted. We'll also help you explore alternative AI platforms so you can progress without interruptions. A subscription may improve workflow efficiency but is entirely optional.",
@@ -37,7 +42,7 @@ const FAQS = [
       "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the ABTalks team. The challenge is designed to reward commitment and continuous learning.",
   },
   {
-    question: "What is the duration of the course?",
+    question: "What is the duration of the challenge?",
     answer:
       "60 days. During this period you'll gain hands-on exposure to 12+ high-demand domains including Data Analytics, Business Analytics, AI Tools, Prompt Engineering, Automation, AI Productivity Systems, and Practical AI Workflows. Focus is on practical implementation, real-world learning, and career-oriented AI skills.",
   },
@@ -45,11 +50,6 @@ const FAQS = [
     question: "What if I can't complete a task?",
     answer:
       "Don't feel discouraged. The ABTalks on AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
-  },
-  {
-    question: "Why is my submission link not getting accepted?",
-    answer:
-      "Make sure you're submitting a valid GitHub URL. Either format works: a repo URL like https://github.com/your-username/your-repo, or a commit URL like https://github.com/your-username/your-repo/commit/abc1234. Commit URLs work best because each day requires a unique commit — you can't reuse the same commit URL twice. Repo URLs can be reused across days. Make sure your repository is public so we can verify your work. GitLab, Bitbucket, and other platforms aren't supported — only GitHub.",
   },
 ] as const;
 
