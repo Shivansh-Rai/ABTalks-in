@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FAQS = [
+  {
+    question: "Why is my submission link not getting accepted?",
+    answer:
+      "Make sure you're submitting a valid GitHub URL. Either format works: a repo URL like https://github.com/your-username/your-repo/day1, or a commit URL like https://github.com/your-username/your-repo/commit/abc1234. Commit URLs work best because each day requires a unique commit you can't reuse the same commit URL twice. Make sure your repository is public so we can verify your work.",
+  },
   {
     question: "Is purchasing a Claude subscription mandatory for this challenge?",
     answer:
@@ -37,7 +42,7 @@ const FAQS = [
       "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the ABTalks team. The challenge is designed to reward commitment and continuous learning.",
   },
   {
-    question: "What is the duration of the course?",
+    question: "What is the duration of the challenge?",
     answer:
       "60 days. During this period you'll gain hands-on exposure to 12+ high-demand domains including Data Analytics, Business Analytics, AI Tools, Prompt Engineering, Automation, AI Productivity Systems, and Practical AI Workflows. Focus is on practical implementation, real-world learning, and career-oriented AI skills.",
   },
@@ -47,6 +52,31 @@ const FAQS = [
       "Don't feel discouraged. The ABTalks on AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
   },
 ] as const;
+
+function renderAnswerWithInlineUrls(text: string) {
+  const urlPattern = /https?:\/\/[^\s,]+/g;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(urlPattern)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      parts.push(text.slice(lastIndex, index));
+    }
+    parts.push(
+      <code
+        key={index}
+        className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground"
+      >
+        {match[0]}
+      </code>,
+    );
+    lastIndex = index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts.length > 0 ? parts : text;
+}
 
 export function ClaudeFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -100,7 +130,7 @@ export function ClaudeFAQ() {
                   className="overflow-hidden"
                 >
                   <div className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground">
-                    {faq.answer}
+                    {renderAnswerWithInlineUrls(faq.answer)}
                   </div>
                 </motion.div>
               ) : null}
