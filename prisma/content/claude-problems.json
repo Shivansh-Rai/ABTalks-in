@@ -151,7 +151,7 @@
         "title": "Your Task",
         "steps": [
           "Open Claude and start a new chat.",
-          "Paste the Lazy Prompt and generate the response.",
+          "Paste the Lazy Prompt(e.g Create an image explaining Prompt Engineering) and generate the response.",
           "Save or screenshot the generated image/output.",
           "Start a new Claude chat.",
           "Paste the Engineered Prompt(see below in prompt template section) and generate the response.",
