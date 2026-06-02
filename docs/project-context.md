@@ -59,14 +59,15 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 
 ### Domain enums
 - `Role`: STUDENT, ADMIN
-- `Domain`: SE, DS, AI (was ML, renamed)
+- `UserType`: STUDENT, PROFESSIONAL — a `StudentProfile` row can represent either an Indian college student OR a working professional (different required fields). Distinct from `Role`.
+- `Domain`: SE, DS, AI, **CLAUDE** (Claude AI Mastery track — synchronized cohort, see `Challenge.startsAt`). Was ML originally, renamed to DS.
 - `EnrollmentStatus`: ACTIVE, COMPLETED, ABANDONED
 - `SubmissionStatus`: ON_TIME, LATE
 
 ### Core domain tables
-- `StudentProfile` (1:1 with User) — fullName, college, graduationYear, domain, skills (string[]), resumeUrl, linkedinUrl, githubUsername, referralCode (unique), isReadyForInterview
-- `Challenge` — one per Domain, has totalDays = 60
-- `DailyTask` — 1-60 per Challenge, contains problemStatement, learningObjectives, resources, difficulty, estimatedMinutes, linkedinTemplate (with `{{github_link}}` placeholder), solutionApproach (admin-only), tags
+- `StudentProfile` (1:1 with User) — `userType` (STUDENT | PROFESSIONAL), `fullName`, `domain`, `skills` (string[]), `phone` (admin-only visibility), `resumeUrl` (admin-only visibility), `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`. Student-only fields: `college`, `graduationYear`. Professional-only fields: `organization`, `role`, `yearsExperience`. Campus-ambassador fields: `isCampusAmbassadorCandidate`, `ambassadorAppliedAt`, `ambassadorDismissedAt`.
+- `Challenge` — one per Domain (SE / DS / AI / CLAUDE), has `totalDays = 60`. Optional `startsAt: DateTime?` — when set, all enrolled students share the same IST calendar day boundary anchored at `startsAt` (cohort mode, used for CLAUDE). Null = rolling start from `Enrollment.startedAt`.
+- `DailyTask` — 1-60 per Challenge, contains `problemStatement`, `learningObjectives`, `resources`, `difficulty`, `estimatedMinutes`, `linkedinTemplate` (with `{{github_link}}` placeholder), `solutionApproach` (admin-only), `tags`, and `dayContent` (Json?) — optional structured day content (e.g. rich CLAUDE day pages) consumed by the challenge UI alongside the legacy text fields.
 - `Enrollment` (unique on userId+challengeId) — daysCompleted, currentStreak, longestStreak, lastSubmittedDay, status, startedAt, completedAt
 - `Submission` (unique on enrollmentId+dayNumber, githubUrl globally unique) — dayNumber, githubUrl, linkedinUrl, status (ON_TIME/LATE), submittedAt
 - `Quiz` (unique on challengeId+weekNumber) — Week 1-8 quizzes per domain
@@ -170,14 +171,16 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 ## 7. Routing structure
 
 ### Public routes
-- `/` — landing page (currently placeholder, NOT YET BUILT for production)
+- `/` — landing page (real marketing landing in `components/landing/`, no longer a placeholder)
 - `/login` — Server Component, redirects logged-in users to dashboard or register based on profile state
+- `/students/[id]` — public profile page for a finished/active student (basic info only — no email, phone, resume)
+- `/claude-signup` — public Claude track signup / interest page (Claude cohort entry)
 
 ### Protected routes (require session via middleware)
-- `/register` — Server Component, redirects to dashboard if profile + enrollment exist; auto-cleans orphaned profiles (profile without enrollment)
+- `/register` — Server Component, redirects to dashboard if profile + enrollment exist; auto-cleans orphaned profiles (profile without enrollment). Supports both STUDENT and PROFESSIONAL `userType`, and a CLAUDE-only forced-domain mode via `?domain=CLAUDE`.
 - `/dashboard` — student home with stats, today's task, leaderboard, heatmap, quiz card, recent activity
 - `/challenge/today` — redirects to `/challenge/{currentDay}`
-- `/challenge/[day]` — Server Component shows problem; renders submission flow client component
+- `/challenge/[day]` — Server Component shows problem; renders submission flow client component. Uses `dailyTask.dayContent` (Json) when present (CLAUDE), otherwise legacy text fields.
 - `/profile` — view + edit profile
 - `/quiz/[quizId]` — take quiz or view results
 
@@ -188,6 +191,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `/admin/submissions` — recent submissions feed, filterable
 - `/admin/content` — read-only viewer for problems and quizzes
 - `/admin/analytics` — Recharts dashboards (registrations, domain distribution, drop-off, hourly submissions, top performers)
+- `/admin/campus-ambassadors` — review students who flagged interest in the campus ambassador program (`isCampusAmbassadorCandidate`); accept / dismiss actions
 
 ### API routes (sparse — most logic via Server Actions)
 - `/api/auth/[...nextauth]` — Auth.js handler
@@ -198,11 +202,14 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 
 - `auth-actions.ts` — signOutAction
 - `submission-actions.ts` — submitGithubStepAction (validate GitHub, return template), submitLinkedinStepAction (full submission with streak update)
-- `registration-actions.ts` — completeRegistrationAction
+- `registration-actions.ts` — completeRegistrationAction (handles STUDENT and PROFESSIONAL `userType`, plus CLAUDE-domain forced flow)
+- `enrollment-actions.ts` — enroll/upgrade flows decoupled from initial registration (e.g. opt-in to a new Challenge after profile already exists)
 - `profile-actions.ts` — updateProfileAction
 - `quiz-actions.ts` — submitQuizAction
 - `referral-actions.ts` — setReferralCookie, getReferralCookie, clearReferralCookie
 - `admin-actions.ts` — 5 admin actions (markDayComplete, resetProgress, toggleReadyForInterview, removeFromChallenge, rejectSubmission)
+- `admin-export-actions.ts` — CSV export server actions (uses `lib/csv.ts`); admin-gated
+- `campus-ambassador-actions.ts` — student-side opt-in / dismiss + admin-side accept / reject for the campus ambassador program
 
 All return discriminated union: `{ ok: true, data } | { ok: false, message }`
 
@@ -212,12 +219,14 @@ All return discriminated union: `{ ok: true, data } | { ok: false, message }`
 
 - `auth/` — login, register, logout
 - `registration/` — completeRegistration, generateUniqueReferralCode
+- `enrollment/` — post-registration enrollment helpers (separate from initial registration; e.g. Claude track signup, additional challenge enrollment)
 - `submission/` — validateGithubUrl, validateLinkedinUrl, submitDay
 - `challenge/` — getTodaysTask, getDayData
 - `dashboard/` — getDashboardData, getLeaderboard, getHeatmapData
-- `profile/` — getProfile, updateProfile, getReferralStats
+- `profile/` — getProfile, getPublicProfile (for `/students/[id]`), updateProfile, getReferralStats
 - `quiz/` — getAvailableQuiz, getQuizWithQuestions, submitQuiz
-- `admin/` — getOverviewStats, getStudents, getStudentDetail, getSubmissionsFeed, getContent, getAnalyticsData
+- `user/` — cross-cutting user lookups, including `checkClaudeEnrollment` / `shouldShowClaudeBanner` used by header / profile / dashboard
+- `admin/` — getOverviewStats, getStudents, getStudentDetail, getSubmissionsFeed, getContent, getAnalyticsData (campus-ambassador admin views included)
 
 ---
 
@@ -345,13 +354,21 @@ Each prompts a 5-second pause before deletion. Cascades handle related rows.
 - Foreign key violation when User deleted but session still valid → user must clear cookies
 - `<Button render={<Link>}>` triggers Base UI nativeButton warning → use `buttonVariants` directly
 
+### Shipped since the original doc snapshot (no longer pending)
+- Phone number on registration + profile, admin-only visibility (`StudentProfile.phone`, `optionalPhoneSchema` in `lib/validations/phone.ts`)
+- Clickable student names → public profile at `/students/[id]` (basic info only — see `features/profile/get-public-profile.ts`)
+- Resume link field on `StudentProfile.resumeUrl` (paste-a-URL flavour; Vercel Blob upload still deferred)
+- Real landing page at `/` (see `components/landing/`)
+- Campus ambassador program (student opt-in chip + admin review screen)
+- Professional `userType` track on `StudentProfile` (organization / role / yearsExperience)
+- CLAUDE 4th domain with synchronized cohort start via `Challenge.startsAt`, structured day content via `DailyTask.dayContent`, and the `/claude-signup` + Claude enrollment banner UX
+- CSV admin exports (`admin-export-actions.ts` + `lib/csv.ts`)
+- Confetti on celebration (`canvas-confetti` is in deps)
+
 ### Pending tester feedback (planned but not built)
 - Leaderboard filters: college, domain, search by name; cross-domain view; scrolling
-- Clickable student names → public profile (basic info only)
-- Phone number on registration (admin-only visibility)
-- Resume upload (admin-only visibility, Vercel Blob)
+- Resume **upload** (binary, Vercel Blob) — only the URL field exists today
 - More polish on celebration screen after day completion
-- Confetti animation
 - Heatmap cells clickable to view past day's problem
 - Logo scroll animation (ABTalks → AB collapse on scroll)
 

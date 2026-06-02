@@ -43,6 +43,7 @@ export async function updateProfile(
 
   if (savedType === UserType.STUDENT) {
     const parsed = updateStudentProfileSchema.safeParse({
+      userType: "STUDENT",
       fullName: input.fullName,
       college: input.college ?? "",
       graduationYear: input.graduationYear,
@@ -54,9 +55,12 @@ export async function updateProfile(
     });
 
     if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const field = issue?.path?.[0];
+      const message = issue?.message ?? "Invalid input";
       return {
         ok: false,
-        message: parsed.error.issues[0]?.message ?? "Invalid input",
+        message: field ? `${String(field)}: ${message}` : message,
       };
     }
 
@@ -80,6 +84,7 @@ export async function updateProfile(
   }
 
   const parsed = updateProfessionalProfileSchema.safeParse({
+    userType: "PROFESSIONAL",
     fullName: input.fullName,
     organization: input.organization ?? "",
     role: input.role ?? "",
@@ -92,9 +97,12 @@ export async function updateProfile(
   });
 
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const field = issue?.path?.[0];
+    const message = issue?.message ?? "Invalid input";
     return {
       ok: false,
-      message: parsed.error.issues[0]?.message ?? "Invalid input",
+      message: field ? `${String(field)}: ${message}` : message,
     };
   }
 

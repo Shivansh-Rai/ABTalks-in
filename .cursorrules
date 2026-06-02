@@ -1,6 +1,17 @@
 Implementation plans for this project live in docs/plans/. When I give you a plan:
 - Follow it exactly. Do not add features, files, or abstractions it doesn't specify.
-- Treat the "Guardrails for Cursor (DO NOT list)" section as hard constraints.
+- Treat the "Guardrails for Cursor (DO NOT)" section as hard constraints.
 - Keep middleware.ts edge-safe (no @/lib/* imports).
-- When you're done, report the exact files you changed and confirm the build/typecheck passes.
-If something in the plan seems wrong or a build error contradicts it, stop and tell me with the exact error — do not improvise a workaround.
+- When you're done, report the exact files you changed and confirm build/typecheck passes.
+If something in the plan seems wrong, or a build error contradicts it, stop and tell me
+the exact error — do not improvise a workaround.
+
+Never edit CLAUDE.md or docs/project-context.md. Those are maintained elsewhere — leave them alone.
+
+After any architecturally significant change — a Prisma/schema change, a new or changed
+business rule, a new env var, or a new convention — append ONE dated line to
+docs/CHANGELOG.md under the "## Pending reconcile" heading (create the file and heading
+if missing):
+- YYYY-MM-DD [schema|rule|env|convention] what changed and why, in one line
+Do NOT append for cosmetic changes or bug fixes. One line only — never prose,
+never edit existing entries, never touch any other doc.

@@ -81,13 +81,18 @@ export function ProfileForm({ initialProfile }: Props) {
     fd.append("phone", values.phone ?? "");
     fd.append("githubUsername", values.githubUsername ?? "");
 
-    if (userType === "STUDENT" && values.userType === "STUDENT") {
-      fd.append("college", values.college);
-      fd.append("graduationYear", String(values.graduationYear));
-    } else if (values.userType === "PROFESSIONAL") {
-      fd.append("organization", values.organization);
-      fd.append("role", values.role);
-      fd.append("yearsExperience", String(values.yearsExperience));
+    if (userType === "STUDENT") {
+      const v = values as Extract<ProfileFormValues, { userType: "STUDENT" }>;
+      fd.append("college", v.college);
+      fd.append("graduationYear", String(v.graduationYear));
+    } else {
+      const v = values as Extract<
+        ProfileFormValues,
+        { userType: "PROFESSIONAL" }
+      >;
+      fd.append("organization", v.organization);
+      fd.append("role", v.role);
+      fd.append("yearsExperience", String(v.yearsExperience));
     }
 
     const result = await updateProfileAction(fd);

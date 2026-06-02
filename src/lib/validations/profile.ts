@@ -8,9 +8,9 @@ function trimEmptyToUndefined(s: string | undefined): string | undefined {
 }
 
 const profileCommonFields = {
-  fullName: z.string().trim().min(1).max(200),
+  fullName: z.string().trim().min(1, "Full name is required").max(200),
   skills: z
-    .array(z.string().trim().min(1).max(80))
+    .array(z.string().trim().min(1, "Skills cannot be blank").max(80))
     .max(10, "At most 10 skills"),
   linkedinUrl: z
     .string()
@@ -37,15 +37,21 @@ const profileCommonFields = {
 };
 
 export const updateStudentProfileSchema = z.object({
+  userType: z.literal("STUDENT"),
   ...profileCommonFields,
-  college: z.string().trim().min(1).max(200),
+  college: z.string().trim().min(1, "College is required").max(200),
   graduationYear: z.coerce.number().int().min(2020).max(2035),
 });
 
 export const updateProfessionalProfileSchema = z.object({
+  userType: z.literal("PROFESSIONAL"),
   ...profileCommonFields,
-  organization: z.string().trim().min(1).max(200),
-  role: z.string().trim().min(1).max(200),
+  organization: z
+    .string()
+    .trim()
+    .min(1, "Organization is required")
+    .max(200),
+  role: z.string().trim().min(1, "Role is required").max(200),
   yearsExperience: z.coerce.number().int().min(0).max(60),
 });
 
@@ -60,8 +66,8 @@ export type ProfessionalProfileFormValues = z.input<
 >;
 
 export type ProfileFormValues =
-  | (StudentProfileFormValues & { userType: "STUDENT" })
-  | (ProfessionalProfileFormValues & { userType: "PROFESSIONAL" });
+  | StudentProfileFormValues
+  | ProfessionalProfileFormValues;
 
 /** @deprecated Use discriminated ProfileFormValues */
 export type UpdateProfileInput = UpdateStudentProfileInput;
