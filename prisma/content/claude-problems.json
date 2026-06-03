@@ -312,95 +312,117 @@
    
   ,
   {
-    "dayNumber": 4,
-    "domain": "CLAUDE",
-    "title": "Day 4: Chain-of-Thought Prompting",
-    "problemStatement": "Welcome to **Day 4** of the 60-Day Claude AI Mastery Challenge.\n\n**Theme:** Phase 1 — Foundation & Prompt Engineering\n\n**Today's focus:** Chain-of-Thought — make Claude reason step-by-step on hard problems.\n\n**Tasks:**\n1. Pick a genuinely complex problem.\n2. Solve it with a normal prompt, then again with the chain-of-thought template.\n3. Compare reasoning quality and post your findings.\n\n**Submission:** Share a Claude conversation link, artifact, or short doc that shows your work.\n\n**Note:** Real content from our team launches before June 1, 2026.",
-    "learningObjectives": [
-      "Apply Day 4 concepts to your real role or studies",
-      "Build repeatable prompts you can reuse after the challenge",
-      "Practice safe, reviewable AI workflows"
-    ],
-    "resources": [
-      "https://claude.ai",
-      "https://docs.anthropic.com",
-      "https://www.anthropic.com/claude"
-    ],
-    "difficulty": "Intermediate",
+  "dayNumber": 4,
+  "domain": "CLAUDE",
+  "title": "Day 4: Chain-of-Thought Prompting",
+  "problemStatement": "Welcome to Day 4 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 1 — Foundation & Prompt Engineering\n\nToday's focus: Learn how Chain-of-Thought Prompting helps Claude reason step-by-step and generate significantly better outputs for complex tasks.\n\nTasks:\n1. Understand what Chain-of-Thought Prompting is.\n2. Use Claude to build a personalized career roadmap.\n3. Compare the output quality with a normal prompt.\n4. Install and explore Capsule Hub.\n5. Share your learning publicly.\n\nSubmission: Share your GitHub commit URL containing your Day 4 work and learning notes.",
+  "learningObjectives": [
+    "Understand the fundamentals of Chain-of-Thought Prompting",
+    "Learn how structured reasoning improves output quality",
+    "Generate personalized roadmaps using step-by-step thinking",
+    "Explore Capsule Hub for managing AI workflows",
+    "Apply Chain-of-Thought prompting to real-world planning problems"
+  ],
+  "resources": [
+    "https://www.geeksforgeeks.org/artificial-intelligence/what-is-chain-of-thought-prompting/",
+    "https://www.promptingguide.ai/techniques/cot",
+    "https://docs.anthropic.com"
+  ],
+  "difficulty": "Beginner",
+  "estimatedMinutes": 40,
+  "linkedinTemplate": "Day 4/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I learned Chain-of-Thought Prompting.\n\nInstead of asking Claude for an answer, I made it think step-by-step.\n\nThe result was a personalized roadmap and far better reasoning than a normal prompt.\n\nHave you ever asked AI to think before answering? 👇\n\n#ChainOfThought #ClaudeAI #ABTalksOnAI",
+  "solutionApproach": "Submit a GitHub commit URL containing your personalized roadmap, prompt screenshots, learnings, and observations.",
+  "tags": [
+    "claude",
+    "day-4",
+    "chain-of-thought",
+    "reasoning",
+    "beginner"
+  ],
+  "dayContent": {
+    "title": "Chain-of-Thought Prompting",
+    "tagline": "Make Claude think before it answers",
+    "module": "Prompt Engineering",
+    "difficulty": "Beginner",
     "estimatedMinutes": 40,
-    "linkedinTemplate": "Day 4/60 of #60DayClaudeChallenge with @ABtalks 🚀\n\nToday (Chain-of-Thought): asked Claude to *think* before it answered. The difference on complex problems is huge.\n\nWhat’s the hardest problem you’d let an AI reason through? 👇\n\n#60DayClaudeChallenge #ABtalks",
-    "solutionApproach": "Submit a valid Claude share or artifact URL, plus your LinkedIn post URL when prompted.",
-    "tags": [
-      "claude",
-      "day-4",
-      "chain-of-thought",
-      "intermediate"
-    ],
-    "dayContent": {
-      "title": "Chain-of-Thought Prompting",
-      "tagline": "Make Claude reason step-by-step for hard problems",
-      "module": "",
-      "difficulty": "Intermediate",
-      "estimatedMinutes": 40,
-      "deliverableFormat": "GitHub commit URL",
-      "learning": {
-        "summary": "Multi-step reasoning prompts. Instead of asking for an answer, you ask Claude to think through a problem in stages — understand, decompose, solve, verify, conclude. Dramatically better accuracy on anything complex.",
-        "bullets": [
-          {
-            "label": "Why it works",
-            "text": "step-by-step structure forces the model to slow down and check itself."
-          },
-          {
-            "label": "Decompose",
-            "text": "break a big problem into small named parts before solving any of them."
-          },
-          {
-            "label": "Verify",
-            "text": "ask Claude to double-check its own logic before giving the final answer."
-          },
-          {
-            "label": "Final answer",
-            "text": "always require a clearly labelled FINAL ANSWER so the takeaway is unmissable."
-          }
-        ]
-      },
-      "task": {
-        "title": "Your Task",
-        "steps": [
-          "Pick a complex problem (a budget plan, a tricky decision, a multi-step calculation, an architecture choice).",
-          "Solve it once with a normal one-line prompt. Save the answer.",
-          "Solve it again using the chain-of-thought template below. Save the answer.",
-          "Compare both: which one would you actually trust to act on?"
-        ],
-        "solutionVideoUrl": "https://youtube.com/REPLACE_WITH_DAY_VIDEO"
-      },
-      "promptTemplate": "I need help solving this complex problem:\n\n[Insert problem/task]\n\nThink through it step by step:\n\n1. Understand the problem\n   * What do we know?\n   * What needs to be solved?\n\n2. Break it into smaller parts\n   * Explain each part briefly.\n\n3. Solve systematically\n   * Show your reasoning clearly.\n   * Consider edge cases or alternatives if needed.\n\n4. Verify the solution\n   * Double-check the logic/calculations.\n\n5. FINAL ANSWER\n   * Give a concise, clearly labeled final answer with key takeaways.\n\nImportant:\n* Don’t skip reasoning steps.\n* Prioritize accuracy over speed.\n* Mention uncertainties if any.",
-      "engagement": {
-        "type": "Reasoning Comparison",
-        "description": "Share the normal answer vs the step-by-step answer to the same problem. Which one would you trust more, and why? Mention @AnilBajpai @ABTalksonAI @Anthropic in your post.",
-        "hashtag": "#60DayClaudeChallenge",
-        "mentions": ["@AnilBajpai", "@ABTalksonAI", "@Anthropic"]
-      },
-      "deliverable": {
-        "description": "Push your reasoning comparison to your repo as a markdown file. Submit the commit URL.",
-        "format": "GitHub commit URL"
-      },
-      "tool": {
-        "name": "Claude Usage Tracker",
-        "type": "Chrome Extension",
-        "description": "A free Chrome extension that shows live token usage on claude.ai. Helpful here because chain-of-thought reasoning uses more tokens — you can see exactly how much “thinking” costs.",
-        "setupTitle": "How to set up the token counter in Claude",
-        "setupSteps": [
-          "Open the Chrome Web Store link below and click \"Add to Chrome.\"",
-          "Go to claude.ai and open any conversation.",
-          "The extension injects a live token count directly into the Claude interface — no setup or API key needed.",
-          "Watch the counter as you send messages; compare the count before and after a chain-of-thought prompt."
-        ],
-        "linkUrl": "https://chromewebstore.google.com/detail/claude-usage-tracker/knemcdpkggnbhpoaaagmjiigenifejfo",
-        "linkLabel": "Get Claude Usage Tracker"
-      }
+    "deliverableFormat": "GitHub commit URL",
+
+    "learning": {
+      "summary": "Chain-of-Thought Prompting improves AI output by forcing the model to reason through a problem step-by-step before generating a final answer. Instead of jumping directly to a solution, Claude breaks down the problem, analyzes it, and verifies its reasoning.",
+      "bullets": [
+        {
+          "label": "Better reasoning",
+          "text": "Breaking problems into steps improves accuracy and depth."
+        },
+        {
+          "label": "More reliable outputs",
+          "text": "Claude evaluates assumptions before providing recommendations."
+        },
+        {
+          "label": "Personalized solutions",
+          "text": "Structured thinking creates highly customized outputs."
+        },
+        {
+          "label": "Real-world applications",
+          "text": "Career planning, business strategy, decision-making, and project planning become significantly better."
+        }
+      ]
+    },
+
+    "task": {
+      "title": "Your Task",
+      "steps": [
+        "Read the provided resources on Chain-of-Thought Prompting.",
+        "Open Claude and start a new conversation.",
+        "Use the provided Chain-of-Thought prompt template.",
+        "Answer the four questions Claude asks.",
+        "Generate your personalized career roadmap.",
+        "Review the roadmap and identify your biggest insight.",
+        "Create a Day4 folder in your GitHub repository.",
+        "Create a day4.md file.",
+        "Document your roadmap, screenshots, learnings, and observations.",
+        "Commit and push the changes.",
+        "Submit the GitHub commit URL."
+      ],
+      "solutionVideoUrl": "https://youtu.be/6CDB3Yn_6Lc"
+    },
+
+    "promptTemplate": "You are an Elite AI Career Strategist.\n\nYour goal is to build a personalized roadmap for me.\n\nBefore creating the roadmap, ask me ONLY these 4 questions:\n\nQuestion 1\nWhat is your current situation?\nExamples:\n• Student\n• Working Professional\n• Freelancer\n• Founder\n• Career Switcher\n\nQuestion 2\nWhat skills do you currently have?\nExamples:\n• Python\n• Marketing\n• Sales\n• Design\n• Web Development\n• Data Analysis\n\nQuestion 3\nWhat is your target goal?\nExamples:\n• Get a job\n• Land an internship\n• Become a Data Scientist\n• Become an AI Engineer\n• Start a business\n• Grow on LinkedIn\n\nQuestion 4\nWhat is your target timeline?\nExamples:\n• 3 months\n• 6 months\n• 1 year\n• 2 years\n\nAfter collecting all answers:\n\nThink step by step.\n\n1. Analyze my current position.\n2. Identify strengths.\n3. Identify skill gaps.\n4. Identify the fastest path to the goal.\n5. Recommend learning priorities.\n6. Recommend projects.\n7. Recommend networking strategy.\n8. Create milestones.\n\nFinally generate a visually structured ONE-PAGE roadmap.\n\nThe roadmap must contain:\n\n🚀 Current Position\n🎯 Target Goal\n📈 Skill Gap Analysis\n🛠 Recommended Learning Plan\n💼 Suggested Projects\n🌐 Networking Strategy\n📅 Monthly Milestones\n⚡ Immediate Next Actions\n\nPDF DESIGN REQUIREMENTS:\n\n• A4 Portrait Layout\n• Professional consulting-report style\n• Clean sections with visual hierarchy\n• Tables wherever appropriate\n• No overlapping text\n• Use concise content\n• Use visual dividers\n• Maximum one page\n• Export-ready PDF format\n• Easy to screenshot and share on LinkedIn\n\nEnd with:\n\nGenerated using Chain-of-Thought Reasoning",
+
+    "engagement": {
+      "type": "Roadmap Showcase",
+      "description": "Share your personalized roadmap on LinkedIn. Explain what surprised you most about Claude's reasoning process. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+      "hashtag": "#60DayClaudeChallenge",
+      "mentions": [
+        "@AnilBajpai",
+        "@ABTalksOnAI",
+        "@Anthropic"
+      ]
+    },
+
+    "deliverable": {
+      "description": "Upload a markdown file containing your generated roadmap, screenshots, learnings, and Capsule Hub observations.",
+      "format": "GitHub commit URL"
+    },
+
+    "tool": {
+      "name": "Capsule Hub",
+      "type": "Chrome Extension",
+      "description": "Capsule Hub helps organize prompts, workflows, reusable instructions, and AI context in one place, making it easier to manage advanced Claude workflows.",
+      "setupTitle": "How to set up Capsule Hub",
+      "setupSteps": [
+        "Open the Chrome Web Store link.",
+        "Click 'Add to Chrome'.",
+        "Pin the extension to your browser toolbar.",
+        "Open Claude.ai.",
+        "Explore prompt storage and organization features.",
+        "Create your first reusable prompt capsule."
+      ],
+      "linkUrl": "https://chromewebstore.google.com/detail/capsule-hub-by-tilantra/ngeoeefidomejcdhiecidpaalfoekjbh",
+      "linkLabel": "Get Capsule Hub"
     }
-  },
+  }
+},
   {
     "dayNumber": 5,
     "domain": "CLAUDE",
