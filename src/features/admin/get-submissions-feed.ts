@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 export async function getSubmissionsFeed(input: {
   domain?: string;
   status?: "ALL" | "ON_TIME" | "LATE";
+  minDay?: number;
+  maxDay?: number;
+  take?: number;
 }): Promise<
   Array<{
     id: string;
@@ -24,9 +27,20 @@ export async function getSubmissionsFeed(input: {
       ? (input.status as SubmissionStatus)
       : undefined;
 
+  const dayNumberFilter =
+    input.minDay != null || input.maxDay != null
+      ? {
+          dayNumber: {
+            ...(input.minDay != null ? { gte: input.minDay } : {}),
+            ...(input.maxDay != null ? { lte: input.maxDay } : {}),
+          },
+        }
+      : {};
+
   const rows = await prisma.submission.findMany({
     where: {
       ...(statusFilter ? { status: statusFilter } : {}),
+      ...dayNumberFilter,
       ...(domainFilter
         ? {
             enrollment: {
@@ -36,8 +50,14 @@ export async function getSubmissionsFeed(input: {
         : {}),
     },
     orderBy: { submittedAt: "desc" },
-    take: 100,
-    include: {
+    take: input.take ?? 100,
+    select: {
+      id: true,
+      dayNumber: true,
+      status: true,
+      githubUrl: true,
+      linkedinUrl: true,
+      submittedAt: true,
       enrollment: { select: { domain: true } },
       user: {
         select: {

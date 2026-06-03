@@ -36,7 +36,7 @@ export function AdminSidebar({ navItems }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex gap-2 overflow-x-auto md:block md:space-y-1">
+    <aside className="hidden space-y-1 md:block">
       {navItems.map((item) => {
         const Icon = iconMap[item.icon];
         const isActive =
@@ -47,7 +47,7 @@ export function AdminSidebar({ navItems }: AdminSidebarProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex min-w-fit items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors md:flex",
+              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
               isActive ? "bg-accent font-medium" : "hover:bg-accent/70",
             )}
           >

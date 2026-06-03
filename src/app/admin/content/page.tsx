@@ -7,7 +7,7 @@ export default async function AdminContentPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-display text-3xl font-bold">Content Viewer</h1>
+        <h1 className="font-display text-2xl font-bold md:text-3xl">Content Viewer</h1>
         <p className="text-sm text-muted-foreground">
           Read-only content from seeded challenge problems and quizzes.
         </p>

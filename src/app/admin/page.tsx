@@ -15,13 +15,13 @@ export default async function AdminHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold">Admin Overview</h1>
+        <h1 className="font-display text-2xl font-bold md:text-3xl">Admin Overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Daily quick check for platform health.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Total Students</CardTitle>

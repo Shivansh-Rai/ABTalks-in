@@ -7,6 +7,10 @@ import {
   getAnalyticsData,
   type TimeRange,
 } from "@/features/admin/get-analytics-data";
+import { getMissingStudentsForDay } from "@/features/admin/get-missing-by-day";
+import { getSubmissionsFeed } from "@/features/admin/get-submissions-feed";
+
+const SUBMISSIONS_EXPORT_CAP = 10_000;
 
 export async function getStudentsForExport(filters: {
   domain?: Domain | "ALL";
@@ -165,4 +169,52 @@ export async function getAnalyticsForExport(range: TimeRange = "daily") {
   }
 
   return rows;
+}
+
+export async function getSubmissionsForExport(filters: {
+  domain?: Domain | "ALL";
+  status?: "ALL" | "ON_TIME" | "LATE";
+  minDay?: number;
+  maxDay?: number;
+}) {
+  await requireAdmin();
+
+  const rows = await getSubmissionsFeed({
+    domain: filters.domain ?? "ALL",
+    status: filters.status ?? "ALL",
+    minDay: filters.minDay,
+    maxDay: filters.maxDay,
+    take: SUBMISSIONS_EXPORT_CAP,
+  });
+
+  return rows.map((r) => ({
+    "Submitted At (UTC)": r.submittedAt.toISOString(),
+    Student: r.studentName,
+    Day: r.dayNumber,
+    Domain: r.domain,
+    Status: r.status,
+    "GitHub URL": r.githubUrl,
+    "LinkedIn URL": r.linkedinUrl,
+  }));
+}
+
+export async function getMissingStudentsForExport(
+  day: number,
+  filters: { domain?: Domain | "ALL" },
+) {
+  await requireAdmin();
+
+  const rows = await getMissingStudentsForDay(day, {
+    domain: filters.domain,
+  });
+
+  return rows.map((r) => ({
+    "Day Missing": day,
+    Student: r.studentName,
+    Email: r.email,
+    Domain: r.domain,
+    "Enrollment Status": r.status,
+    "Days Completed": r.daysCompleted,
+    "Last Submitted Day": r.lastSubmittedDay ?? "",
+  }));
 }

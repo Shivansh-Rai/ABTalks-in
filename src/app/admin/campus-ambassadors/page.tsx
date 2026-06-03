@@ -34,9 +34,9 @@ export default async function CampusAmbassadorsPage() {
   });
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-6">
-        <h1 className="font-display text-2xl md:text-3xl font-bold">
+    <div className="space-y-4">
+      <div>
+        <h1 className="font-display text-2xl font-bold md:text-3xl">
           Campus Ambassador Candidates
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -119,6 +119,6 @@ export default async function CampusAmbassadorsPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

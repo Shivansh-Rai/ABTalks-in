@@ -24,7 +24,7 @@ export default async function AdminAnalyticsPage({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-display text-3xl font-bold">Analytics</h1>
+        <h1 className="font-display text-2xl font-bold md:text-3xl">Analytics</h1>
         <p className="text-muted-foreground">
           Registration, engagement, drop-off, and performance metrics.
         </p>

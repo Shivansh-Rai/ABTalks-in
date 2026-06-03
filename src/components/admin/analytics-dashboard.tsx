@@ -172,6 +172,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           <CardTitle>Top Performers</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -192,6 +193,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

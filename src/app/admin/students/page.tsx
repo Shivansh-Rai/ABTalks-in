@@ -70,7 +70,7 @@ export default async function AdminStudentsPage({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-display text-3xl font-bold">Students</h1>
+        <h1 className="font-display text-2xl font-bold md:text-3xl">Students</h1>
         <p className="text-sm text-muted-foreground">
           Showing {Math.min(students.length, 100)} of {filteredCount} matching enrollments
           {students.length >= 100 ? " (max 100)" : ""}
@@ -88,7 +88,45 @@ export default async function AdminStudentsPage({
         ) : null}
       </div>
 
-      <div className="rounded-xl border">
+      <div className="space-y-2 md:hidden">
+        {students.map((student) => (
+          <article
+            key={student.enrollmentId}
+            className="rounded-xl border bg-card p-3 text-sm"
+          >
+            <header className="flex items-start justify-between gap-2">
+              <Link
+                href={`/admin/students/${student.userId}`}
+                className="font-medium underline"
+              >
+                {student.fullName}
+              </Link>
+              <Badge variant="outline" className={domainBadgeClass(student.domain)}>
+                {student.domain}
+              </Badge>
+            </header>
+            <p className="mt-1 text-xs text-muted-foreground">{student.email}</p>
+            <p className="mt-2 text-xs">
+              Days {student.daysCompleted}/60 · {student.currentStreak}d streak
+            </p>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              {student.affiliation}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{student.userType}</Badge>
+              <Badge className={cn("border-0", statusBadgeClass(student.status))}>
+                {student.status}
+              </Badge>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Users className="h-3 w-3" aria-hidden />
+                {student.referralCount} referrals
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-xl border md:block">
         <Table>
           <TableHeader>
             <TableRow>
