@@ -426,91 +426,109 @@
   {
     "dayNumber": 5,
     "domain": "CLAUDE",
-    "title": "Day 5: Context Management — Build Your AI Engineer Roadmap",
-    "problemStatement": "Welcome to **Day 5** of the 60-Day Claude AI Mastery Challenge.\n\n**Theme:** Phase 1 — Foundation & Prompt Engineering\n\n**Today's focus:** Use Claude as your personal mentor and generate a roadmap to become an AI Engineer (or any role you want).\n\n**Tasks:**\n1. Run the mentor/coach prompt with your real goal filled in.\n2. Get back a structured roadmap with phases, projects, and a weekly plan.\n3. Pick the first 3 actions and share your roadmap on LinkedIn.\n\n**Submission:** Share a Claude conversation link, artifact, or short doc that shows your work.\n\n**Note:** Real content from our team launches before June 1, 2026.",
+    "title": "Day 5: Context Engineering",
+    "problemStatement": "Welcome to Day 5 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 1 — Foundation & Prompt Engineering\n\nToday's focus: Learn why Context Engineering is becoming more important than Prompt Engineering.\n\nA great prompt without context often produces generic outputs. A good prompt with the right context produces personalized, highly relevant, and actionable outputs.\n\nTasks:\n1. Understand what Context Engineering is.\n2. Compare outputs generated with and without context.\n3. Observe how context dramatically improves response quality.\n4. Install and explore Sider AI.\n5. Share your learning publicly.\n\nSubmission: Share your GitHub commit URL containing your Day 5 work and learning notes.",
     "learningObjectives": [
-      "Apply Day 5 concepts to your real role or studies",
-      "Build repeatable prompts you can reuse after the challenge",
-      "Practice safe, reviewable AI workflows"
+      "Understand the fundamentals of Context Engineering",
+      "Learn why context improves AI outputs",
+      "Compare generic vs personalized AI responses",
+      "Explore Sider AI as a productivity assistant",
+      "Apply Context Engineering to real-world planning tasks"
     ],
     "resources": [
-      "https://claude.ai",
-      "https://docs.anthropic.com",
-      "https://www.anthropic.com/claude"
+      "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+      "https://www.promptingguide.ai/guides/context-engineering-guide",
+      "https://www.langchain.com/blog/context-engineering-for-agents"
     ],
-    "difficulty": "Intermediate",
-    "estimatedMinutes": 40,
-    "linkedinTemplate": "Day 5/60 of #60DayClaudeChallenge with @ABtalks 🚀\n\nToday (Context Management): asked Claude to build me a phase-by-phase roadmap to become an AI Engineer. Realistic, weekly, and tailored to my level.\n\nWhat’s the role you’d ask AI to map a path to? 👇\n\n#60DayClaudeChallenge #ABtalks",
-    "solutionApproach": "Submit a valid Claude share or artifact URL, plus your LinkedIn post URL when prompted.",
+    "difficulty": "Beginner",
+    "estimatedMinutes": 35,
+    "linkedinTemplate": "Day 5/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I learned Context Engineering.\n\nI used the same prompt twice.\n\nThe first time without context.\nThe second time with context.\n\nThe difference in quality was massive.\n\nTurns out AI isn't just about asking better questions.\nIt's about providing better context.\n\n#ContextEngineering #ClaudeAI #ABTalksOnAI",
+    "solutionApproach": "Submit a GitHub commit URL containing screenshots of both outputs, your observations, and key learnings.",
     "tags": [
       "claude",
       "day-5",
-      "context-management",
-      "intermediate"
+      "context-engineering",
+      "prompt-engineering",
+      "beginner"
     ],
     "dayContent": {
-      "title": "Context Management",
-      "tagline": "Use Claude as your personal mentor to build a real roadmap",
-      "module": "",
-      "difficulty": "Intermediate",
-      "estimatedMinutes": 40,
+      "title": "Context Engineering",
+      "tagline": "Better context. Better outputs.",
+      "module": "Prompt Engineering",
+      "difficulty": "Beginner",
+      "estimatedMinutes": 35,
       "deliverableFormat": "GitHub commit URL",
       "learning": {
-        "summary": "Strong context = strong output. By telling Claude exactly who you are, what you want, and what your constraints are (time, current level, daily life), you get a realistic plan — not a generic listicle.",
+        "summary": "Context Engineering is the practice of providing relevant information, constraints, background, goals, and user-specific details to AI before asking it to perform a task. The quality of context often matters more than the prompt itself.",
         "bullets": [
           {
-            "label": "Frame the goal",
-            "text": "give Claude your goal AND your constraints (time available, skill level, responsibilities)."
+            "label": "Personalized Outputs",
+            "text": "Context allows Claude to generate recommendations tailored to your situation."
           },
           {
-            "label": "Ask for phases",
-            "text": "phases + milestones beat a flat 50-item to-do list."
+            "label": "Higher Accuracy",
+            "text": "Claude makes fewer assumptions when it understands the full picture."
           },
           {
-            "label": "Demand realism",
-            "text": "instruct Claude to consider workload and avoid burnout — not just theory."
+            "label": "Better Planning",
+            "text": "Context enables more realistic and actionable roadmaps."
           },
           {
-            "label": "Make it actionable",
-            "text": "always ask for the top 3 actions to start tomorrow."
+            "label": "Real-world AI Systems",
+            "text": "Modern AI agents rely heavily on context engineering, memory, and retrieval."
           }
         ]
       },
       "task": {
         "title": "Your Task",
         "steps": [
-          "Pick a real career goal (e.g. “become an AI Engineer”, “become a data scientist”).",
-          "Fill the mentor prompt below with your goal, your current level, and your weekly time budget.",
-          "Read the roadmap Claude returns — highlight the top 3 actions you’ll start this week.",
-          "Save the roadmap as a doc and share the headline phases on LinkedIn."
+          "Read the provided resources on Context Engineering.",
+          "Open Claude and start a new conversation.",
+          "Paste Prompt A exactly as given and generate the output.",
+          "Save or screenshot the output.",
+          "Start a new conversation.",
+          "Paste Prompt B and replace the information inside the brackets with your own details.",
+          "Generate the output.",
+          "Save or screenshot the output.",
+          "Compare both outputs and observe the differences.",
+          "Create a Day5 folder in your GitHub repository.",
+          "Create a day5.md file.",
+          "Document both outputs, screenshots, and your key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
         ],
-        "solutionVideoUrl": "https://youtube.com/REPLACE_WITH_DAY_VIDEO"
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=X7H-vYVuf10&feature=youtu.be"
       },
-      "promptTemplate": "Act as an expert mentor, strategist, and coach for a [student / working professional] who wants to achieve [goal].\nCreate a practical and realistic step-by-step plan while considering limited time, workload, current skill level, and daily responsibilities.\n\nInclude:\n* Clear roadmap with phases and milestones\n* Top priority actions to start immediately\n* Weekly and monthly execution plan\n* Important skills / tools / resources to learn\n* Beginner-to-advanced project or practice ideas\n* Productivity and time-management strategies\n* Common mistakes to avoid\n* Tips for consistency, growth, and avoiding burnout\n* Career, portfolio, networking, and personal branding advice where relevant\n\nKeep the response structured, actionable, beginner-friendly, and focused on real-world results rather than just theory.",
+      "promptTemplate": "PROMPT A (WITHOUT CONTEXT)\n\nCreate a 30-day learning roadmap.\n\nInclude:\n- Weekly milestones\n- Daily tasks\n- Resources\n- Projects\n- Final outcome\n\nMake it practical and beginner-friendly.\n\n━━━━━━━━━━━━━━━━━━━━━━\n\nPROMPT B (WITH CONTEXT)\n\nCreate a 30-day learning roadmap.\n\nContext:\n- Current Situation: [Student/Professional/Freelancer]\n- Current Skills: [Add Skills]\n- Goal: [Target Goal]\n- Available Time: [Hours per Day]\n- Experience Level: [Beginner/Intermediate]\n- Preferred Learning Style: [Videos/Projects/Reading]\n\nInclude:\n- Weekly milestones\n- Daily tasks\n- Resources\n- Projects\n- Final outcome\n\nMake it practical and beginner-friendly.\n\nCompare both outputs and identify:\n1. Which roadmap feels more personalized?\n2. Which roadmap would you actually follow?\n3. What role did context play in improving the result?",
       "engagement": {
-        "type": "Roadmap Share",
-        "description": "Share the phase titles + the first 3 actions from your roadmap. Tag the role you’re building toward. Mention @AnilBajpai @ABTalksonAI @Anthropic in your post.",
+        "type": "Before vs After Comparison",
+        "description": "Share screenshots of both outputs on LinkedIn. Explain the biggest difference you observed between the generic roadmap and the personalized roadmap. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
         "hashtag": "#60DayClaudeChallenge",
-        "mentions": ["@AnilBajpai", "@ABTalksonAI", "@Anthropic"]
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
       },
       "deliverable": {
-        "description": "Push your personalized career roadmap to your repo as a markdown file. Submit the commit URL.",
+        "description": "Upload a markdown file containing Prompt A output, Prompt B output, screenshots, comparison, and key learnings.",
         "format": "GitHub commit URL"
       },
       "tool": {
-        "name": "Caveman Skill",
-        "type": "Technique + Claude Code Skill",
-        "description": "Compress context into ultra-short, keyword-style notes and ask Claude to reply the same way — cuts tokens dramatically. Works in plain claude.ai chats; there’s also a one-click skill for Claude Code users.",
-        "setupTitle": "How to use the caveman technique",
+        "name": "Sider AI",
+        "type": "Browser Extension",
+        "description": "Sider AI is an AI-powered browser assistant that provides access to multiple AI models, writing assistance, summarization, translation, and productivity features directly inside your browser.",
+        "setupTitle": "How to set up Sider AI",
         "setupSteps": [
-          "For everyone (no install): in any claude.ai chat, write your context in terse caveman style and add “reply in caveman style — keep all technical detail, cut filler words.”",
-          "Why it works: filler like “Sure, I’d be happy to help…” wastes tokens. Caveman keeps the facts and removes the fluff (often ~75% shorter).",
-          "For Claude Code users only: install as a one-line skill — run  claude install-skill JuliusBrussee/caveman  then trigger with  /caveman  or “caveman mode.”",
-          "Turn it off any time with “normal mode.”",
-          "Note: this is a free community skill, not an official Anthropic tool — the technique is what matters."
+          "Open the Sider AI website.",
+          "Install the browser extension.",
+          "Pin the extension to your browser toolbar.",
+          "Open any webpage.",
+          "Use Sider AI to summarize, explain, or interact with content.",
+          "Explore the available AI productivity features."
         ],
-        "linkUrl": "https://github.com/JuliusBrussee/caveman",
-        "linkLabel": "View the caveman skill on GitHub"
+        "linkUrl": "https://sider.ai/apps/lp-chatgpt",
+        "linkLabel": "Get Sider AI"
       }
     }
   },
