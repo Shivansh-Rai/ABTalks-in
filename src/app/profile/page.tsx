@@ -146,13 +146,13 @@ export default async function ProfilePage() {
       {claudeBanner.show && claudeBanner.startsAt ? (
         <ClaudeEnrollmentBanner claudeStartsAt={claudeBanner.startsAt} />
       ) : null}
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-5 sm:space-y-8 sm:py-8">
+      <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 space-y-5 px-4 py-5 sm:space-y-8 sm:py-8">
         <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">Profile</h1>
 
         <SoundPreferences />
 
-        <div className="grid gap-5 sm:gap-8 lg:grid-cols-2 lg:items-start">
-          <Card>
+        <div className="grid min-w-0 gap-5 sm:gap-8 lg:grid-cols-2 lg:items-start">
+          <Card className="min-w-0">
             <CardContent className="flex flex-row items-center gap-3 p-4 text-left sm:items-start sm:gap-4 sm:p-6">
               <Avatar size="lg" className="size-14 text-base sm:size-20 sm:text-lg">
                 {user.image ? (
@@ -198,8 +198,8 @@ export default async function ProfilePage() {
             </CardContent>
           </Card>
 
-          <div className="space-y-4 sm:space-y-6">
-            <Card>
+          <div className="min-w-0 space-y-4 sm:space-y-6">
+            <Card className="min-w-0">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle>Your information</CardTitle>
                 <CardDescription>
@@ -211,7 +211,7 @@ export default async function ProfilePage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="min-w-0">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle>Resume</CardTitle>
                 <CardDescription>Visible to you and admins only.</CardDescription>
@@ -234,7 +234,7 @@ export default async function ProfilePage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="min-w-0">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle>Refer &amp; Earn</CardTitle>
                 <CardDescription>
@@ -243,7 +243,7 @@ export default async function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 p-4 sm:p-6">
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+                <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/30 p-3">
                   <code className="min-w-0 flex-1 truncate font-mono text-xs md:text-sm">
                     {referralLink}
                   </code>
