@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   BookOpen,
+  Briefcase,
   FileText,
   LayoutDashboard,
   Megaphone,
@@ -19,6 +20,7 @@ type IconName =
   | "overview"
   | "students"
   | "submissions"
+  | "jobs"
   | "content"
   | "analytics"
   | "ambassadors";
@@ -27,6 +29,7 @@ const iconMap = {
   overview: LayoutDashboard,
   students: Users,
   submissions: FileText,
+  jobs: Briefcase,
   content: BookOpen,
   analytics: BarChart3,
   ambassadors: Megaphone,
