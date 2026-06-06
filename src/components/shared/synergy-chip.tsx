@@ -48,15 +48,15 @@ export function SynergyChip() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           showCloseButton={false}
-          className="max-w-md gap-0 overflow-hidden p-0 sm:max-w-md"
+          className="flex max-h-[min(90dvh,720px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
         >
-          <div className="rounded-t-lg bg-gradient-to-br from-primary to-violet-500 px-6 py-8 text-primary-foreground">
+          <div className="shrink-0 rounded-t-lg bg-gradient-to-br from-primary to-violet-500 px-4 py-5 text-primary-foreground sm:px-6 sm:py-6">
             <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-full bg-white/20">
+              <div className="flex size-10 items-center justify-center rounded-full bg-white/20 sm:size-12">
                 <Flame className="size-6" aria-hidden />
               </div>
               <div>
-                <p className="font-display text-4xl font-bold tabular-nums leading-none">
+                <p className="font-display text-3xl font-bold tabular-nums leading-none sm:text-4xl">
                   {points ?? "…"}
                 </p>
                 <p className="mt-1 text-sm text-primary-foreground/90">
@@ -67,12 +67,12 @@ export function SynergyChip() {
             </div>
           </div>
 
-          <div className="space-y-4 p-6">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 sm:space-y-4 sm:p-6">
             <p className="text-sm font-semibold text-foreground">
               How you earn
             </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border bg-card p-3">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+              <div className="rounded-xl border bg-card p-2.5 sm:p-3">
                 <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-indigo-500/10">
                   <Clock className="size-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
@@ -82,7 +82,7 @@ export function SynergyChip() {
                   the first members each day earn the most.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-3">
+              <div className="rounded-xl border bg-card p-2.5 sm:p-3">
                 <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-emerald-500/10">
                   <GitCommit className="size-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -92,7 +92,7 @@ export function SynergyChip() {
                   that day.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-3">
+              <div className="rounded-xl border bg-card p-2.5 sm:p-3">
                 <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-sky-500/10">
                   <Share2 className="size-4 text-sky-600 dark:text-sky-400" />
                 </div>
@@ -102,7 +102,7 @@ export function SynergyChip() {
                   synergy.
                 </p>
               </div>
-              <div className="rounded-xl border bg-card p-3">
+              <div className="rounded-xl border bg-card p-2.5 sm:p-3">
                 <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-violet-500/10">
                   <Users className="size-4 text-violet-600 dark:text-violet-400" />
                 </div>
@@ -121,7 +121,9 @@ export function SynergyChip() {
                 and early access to job opportunities.
               </p>
             </div>
+          </div>
 
+          <div className="shrink-0 border-t border-border/60 p-4 pt-3 sm:p-6 sm:pt-4">
             <DialogClose
               className={cn(
                 buttonVariants({ variant: "default" }),
