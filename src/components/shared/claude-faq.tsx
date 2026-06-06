@@ -7,11 +7,6 @@ import { cn } from "@/lib/utils";
 
 const FAQS = [
   {
-    question: "Why is my submission link not getting accepted?",
-    answer:
-      "Make sure you're submitting a valid GitHub URL. Either format works: a repo URL like https://github.com/your-username/your-repo/day1, or a commit URL like https://github.com/your-username/your-repo/commit/abc1234. Commit URLs work best because each day requires a unique commit you can't reuse the same commit URL twice. Make sure your repository is public so we can verify your work.",
-  },
-  {
     question: "Is purchasing a Claude subscription mandatory for this challenge?",
     answer:
       "No, purchasing a Claude subscription is not mandatory. Throughout the 60-day journey, we'll guide you on continuing your learning even if free-tier token limits are exhausted. We'll also help you explore alternative AI platforms so you can progress without interruptions. A subscription may improve workflow efficiency but is entirely optional.",
@@ -22,9 +17,9 @@ const FAQS = [
       "Yes, we strongly recommend creating a Claude account for the best experience. We also encourage creating accounts on ChatGPT, Google Gemini, and other AI productivity tools. Using multiple platforms helps you compare outputs, explore different capabilities, and build broader AI tool familiarity.",
   },
   {
-    question: "Are Claude subscription charges compulsory after 10 days?",
+    question: "Where can I find the daily task?",
     answer:
-      "No. You can continue using the free version of Claude throughout the challenge. The free plan has limited usage and token restrictions, but learning continues effectively. A Claude subscription is optional for those wanting a smoother experience with advanced features.",
+      "Daily tasks are available on the challenge dashboard.",
   },
   {
     question: "Will I receive daily tasks or teaching sessions?",
@@ -32,9 +27,9 @@ const FAQS = [
       "Starting June 1, 2026, you'll receive daily AI-based tasks through the ABTalks platform — Claude AI implementation, prompt engineering, AI productivity, and real-world workflows. You're expected to complete tasks consistently, share learnings on LinkedIn daily, and maintain discipline. Detailed walkthroughs are available on the ABTalks on AI YouTube channel.",
   },
   {
-    question: "I already created a Claude account from the official website. Is that okay?",
+    question: "What if I miss a day's task?",
     answer:
-      "Yes, creating a Claude account directly from claude.ai is completely acceptable. In some cases, you may be advised to create another account using a different email for community access and challenge tracking, but your existing account works fine for participation.",
+      "If you miss a task, don't worry. ABTalks provides a 5-day submission window, allowing you to complete and submit any missed tasks from the previous five days through the challenge dashboard.",
   },
   {
     question: "Will I receive goodies after completing the challenge?",
@@ -42,16 +37,27 @@ const FAQS = [
       "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the ABTalks team. The challenge is designed to reward commitment and continuous learning.",
   },
   {
-    question: "What is the duration of the challenge?",
+    question: "Who should I contact if I have an issue with a task?",
     answer:
-      "60 days. During this period you'll gain hands-on exposure to 12+ high-demand domains including Data Analytics, Business Analytics, AI Tools, Prompt Engineering, Automation, AI Productivity Systems, and Practical AI Workflows. Focus is on practical implementation, real-world learning, and career-oriented AI skills.",
+      "Reach out to the ABTalks support team(Admins) through the official WhatsApp group. You can also share your query on Discord dicussion group in the 60 Days Claude Challenge Category.",
   },
   {
-    question: "What if I can't complete a task?",
+    question: "Is there any YouTube channel for the Claude Challenge?",
     answer:
-      "Don't feel discouraged. The ABTalks on AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
+      "The ABTalks On AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
   },
+  {
+    question: "Will we explore different AI tools during the challenge?",
+    answer:
+      "Yes, participants will be introduced to various AI tools, resources, and opportunities throughout the challenge.",
+  },
+  {
+    question: "Can I use tools other than Claude for the challenge?",
+    answer: 
+    "Unless a task specifically requires a particular tool, you are encouraged to explore and learn from different AI tools. Always check the task instructions for any tool-specific requirements"
+  }
 ] as const;
+
 
 function renderAnswerWithInlineUrls(text: string) {
   const urlPattern = /https?:\/\/[^\s,]+/g;
