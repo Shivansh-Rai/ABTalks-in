@@ -13,8 +13,7 @@ import { AppHeader } from "@/components/shared/app-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// TODO: wire up the real Discord invite URL when available in the codebase
-const DISCORD_URL = "#";
+const DISCORD_URL = "https://discord.gg/REts227w9";
 
 export default async function MissionPage() {
   const session = await auth();
@@ -192,6 +191,8 @@ export default async function MissionPage() {
           </p>
           <Link
             href={DISCORD_URL}
+            target="_blank"
+            rel="noreferrer"
             className={cn(
               buttonVariants({ variant: "default" }),
               "mt-6 inline-flex gap-2",
