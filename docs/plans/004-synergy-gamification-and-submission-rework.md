@@ -461,7 +461,7 @@ This is a **designed** surface — visual, not textual.
   each tile a rounded card with a colored icon chip, a short bold title, and
   one line of copy. Four tiles:
   1. `Clock` (indigo) — **"Finish early"** — "The earlier you submit each day,
-     the bigger your rank bonus — the first members each day earn the most."
+     the bigger your rank bonus."
   2. `Github` (emerald) — **"Attach your GitHub"** — "Link your commit or repo
      for +5 synergy on that day."  *(use the lucide `Github` icon)*
   3. `Linkedin` (sky) — **"Share on LinkedIn"** — "Post your progress and add

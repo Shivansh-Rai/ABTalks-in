@@ -95,8 +95,7 @@ export default async function MissionPage() {
               How it works
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Pick your track: AI, Data Science, or Software Engineering, and
-              commit to 60 days. Every day you build, push your work to GitHub,
+              Every day you build, push your work to GitHub,
               and share your progress in public, tagging us so the community can
               follow along and verify it&apos;s real. Working in the open is the
               whole point: it forces you to actually grow, and it leaves behind
@@ -112,9 +111,9 @@ export default async function MissionPage() {
               <div className="mb-4 flex size-9 items-center justify-center rounded-full bg-domains-se-bg font-display text-sm font-bold text-domains-se">
                 1
               </div>
-              <h3 className="font-display font-semibold">Pick your track</h3>
+              <h3 className="font-display font-semibold">Enroll in a challenge</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                AI, Data Science, or Software Engineering. Commit to 60 days.
+                start by enrolling in a challenge.
               </p>
             </article>
             <article className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm">
