@@ -1,4 +1,4 @@
-export const SYNERGY_BASE_SUBMISSION = 5;
+export const SYNERGY_BASE_SUBMISSION = 10;
 export const SYNERGY_PROOF_GITHUB = 5;
 export const SYNERGY_PROOF_LINKEDIN = 5;
 export const SYNERGY_REFERRAL = 3;
