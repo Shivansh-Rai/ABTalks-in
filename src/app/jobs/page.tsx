@@ -75,8 +75,7 @@ export default async function JobsPage() {
                     <Badge variant="outline">{jobTypeLabel(job.type)}</Badge>
                   </div>
                   <p className="mt-3 text-xs text-muted-foreground">
-                    Posted {formatDateIST(job.createdAt)} ·{" "}
-                    {job._count.applications} applied
+                    Posted {formatDateIST(job.createdAt)}
                   </p>
                 </Link>
               </li>

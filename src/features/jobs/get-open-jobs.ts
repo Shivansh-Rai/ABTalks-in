@@ -11,7 +11,6 @@ export async function getOpenJobs() {
       location: true,
       type: true,
       createdAt: true,
-      _count: { select: { applications: true } },
     },
   });
 }
