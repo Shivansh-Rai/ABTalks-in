@@ -863,76 +863,96 @@
   {
     "dayNumber": 9,
     "domain": "CLAUDE",
-    "title": "Day 9: LinkedIn Profile Optimization",
-    "problemStatement": "Welcome to **Day 9** of the 60-Day Claude AI Mastery Challenge.\n\n**Theme:** Phase 2 — Career & Communication\n\n**Today's focus:** Rebuild your LinkedIn profile so recruiters and peers actually find you.\n\n**Tasks:**\n1. Use the LinkedIn optimization prompt to rewrite your headline, About section, and top 3 experience bullets.\n2. Add the keywords for the role you actually want.\n3. Update LinkedIn and post a short note announcing the refresh.\n\n**Submission:** Share a Claude conversation link, artifact, or short doc that shows your work.\n\n**Note:** Real content from our team launches before June 1, 2026.",
+    "title": "Day 9: Build & Enhance an AI Nutrition Analytics App",
+    "problemStatement": "Welcome to Day 9 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 2 — Building with Claude\n\nToday's focus: Learn one of the most important AI engineering principles — Build the MVP first, then enhance it.\n\nInstead of asking Claude to build a massive application in a single prompt, you'll learn how experienced AI builders break large projects into multiple stages.\n\nToday you'll build NutriScope, an AI-powered nutrition analytics application.\n\nIn Stage 1, you'll create a working MVP.\nIn Stage 2, you'll enhance the application with advanced features.\n\nTasks:\n1. Build the first version of NutriScope.\n2. Generate a complete downloadable HTML application.\n3. Enhance the application using a second prompt.\n4. Compare MVP vs Enhanced versions.\n5. Share your learning publicly.\n\nImportant:\nIf your Claude usage limit is reached, wait for the reset period and continue from where you left off.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML files, and learning notes.",
     "learningObjectives": [
-      "Apply Day 9 concepts to your real role or studies",
-      "Build repeatable prompts you can reuse after the challenge",
-      "Practice safe, reviewable AI workflows"
+      "Learn the MVP-first development approach",
+      "Build AI-powered applications using Claude Artifacts",
+      "Generate downloadable HTML applications",
+      "Understand iterative prompting",
+      "Enhance applications using follow-up prompts"
     ],
     "resources": [
       "https://claude.ai",
-      "https://docs.anthropic.com",
-      "https://www.anthropic.com/claude"
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/"
     ],
     "difficulty": "Intermediate",
-    "estimatedMinutes": 45,
-    "linkedinTemplate": "Day 9/60 of #60DayClaudeChallenge with @ABtalks 🚀\n\nToday (LinkedIn Optimization): rebuilt my headline + About section so the right people can actually find me.\n\nWhat’s the keyword you want to be found for? 👇\n\n#60DayClaudeChallenge #ABtalks",
-    "solutionApproach": "Submit a valid Claude share or artifact URL, plus your LinkedIn post URL when prompted.",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 9/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I learned a powerful AI engineering principle:\n\nBuild first.\nEnhance later.\n\nInstead of asking Claude to generate a huge application in one shot, I built an MVP first and then upgraded it using a second prompt.\n\nI created NutriScope, an AI-powered Nutrition Analytics App.\n\n🥗 Nutrition Tracking\n📊 Interactive Dashboard\n📈 Macro Analysis\n🍎 Food Recommendations\n📋 Meal Planning\n💡 Personalized Insights\n\nBiggest takeaway:\nThe best AI builders don't start with perfection.\nThey start with a working version and improve it iteratively.\n\n#ClaudeAI #ClaudeArtifacts #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing screenshots of both versions, generated HTML files, comparisons, and learnings.",
     "tags": [
       "claude",
       "day-9",
-      "linkedin",
-      "personal-branding",
+      "artifacts",
+      "nutrition",
+      "html",
+      "ai-apps",
       "intermediate"
     ],
     "dayContent": {
-      "title": "LinkedIn Profile Optimization",
-      "tagline": "Get found by the right people",
-      "module": "Module 2 — Career & Communication",
+      "title": "Build & Enhance an AI Nutrition Analytics App",
+      "tagline": "Learn iterative AI application development",
+      "module": "Claude Artifacts",
       "difficulty": "Intermediate",
-      "estimatedMinutes": 45,
+      "estimatedMinutes": 75,
       "deliverableFormat": "GitHub commit URL",
       "learning": {
-        "summary": "Your LinkedIn profile is a search engine result. Today you’ll rewrite the three sections that matter most — headline, About, and top experience bullets — with the keywords for the role you actually want.",
+        "summary": "One of the biggest mistakes beginners make is asking AI to build extremely large applications in a single prompt. Professional AI builders use iterative development: first build a working MVP, then progressively enhance it. This improves reliability, quality, and output consistency.",
         "bullets": [
           {
-            "label": "Headline",
-            "text": "not your job title — a sentence that says what you do, who for, and the outcome."
+            "label": "MVP First",
+            "text": "Generate a working version before adding complexity."
           },
           {
-            "label": "About section",
-            "text": "lead with the role you want, not your full history."
+            "label": "Iterative Development",
+            "text": "Improve outputs through multiple focused prompts."
           },
           {
-            "label": "Experience bullets",
-            "text": "rewrite the top 3 with measurable impact + ATS keywords."
+            "label": "Claude Artifacts",
+            "text": "Generate real interactive applications."
           },
           {
-            "label": "Skills section",
-            "text": "match the top skills in your target job postings, exactly."
+            "label": "AI Product Building",
+            "text": "Build products the same way experienced builders do."
           }
         ]
       },
       "task": {
         "title": "Your Task",
         "steps": [
-          "Find 3 job postings for the role you want and list the repeated keywords.",
-          "Use the prompt below with those keywords + your current bio.",
-          "Update LinkedIn with the new headline, About, and top experience section.",
-          "Share a short post announcing the refresh and what you’re focused on next."
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Start a new conversation.",
+          "Paste Prompt 1 and generate the MVP version of NutriScope.",
+          "Generate the downloadable HTML application.",
+          "Save the generated HTML.",
+          "Paste Prompt 2 to enhance the application.",
+          "Generate the enhanced version.",
+          "Compare both versions.",
+          "Take screenshots of both applications.",
+          "If Claude usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day9 folder in your GitHub repository.",
+          "Create a day9.md file.",
+          "Upload screenshots, HTML files, comparison notes, and learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
         ],
-        "solutionVideoUrl": "https://youtube.com/REPLACE_WITH_DAY_VIDEO"
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=coRBOlIy0cA&feature=youtu.be"
       },
-      "promptTemplate": "Act as an expert LinkedIn profile strategist and personal branding coach.\n\nMy current LinkedIn:\n* Headline: [paste current]\n* About section: [paste current]\n* Top role + 3 experience bullets: [paste current]\n\nThe role I want: [target role]\nKeywords from 3 job postings: [paste keywords]\nMy biggest wins / proof points: [list 3-5 measurable wins]\n\nRewrite my profile to be ATS-friendly AND human-friendly:\n1. A scroll-stopping headline (under 220 chars)\n2. An About section that opens with the role I want and earns trust by line 3\n3. Top 3 experience bullets rewritten with measurable impact and the right keywords\n4. A list of 10 skills I should add and 5 I should remove\n\nMake every line specific. No buzzwords.",
+      "promptTemplate": "PROMPT 1 — Build MVP\n\nBuild a complete single-file HTML application called NutriScope.\n\nRequirements:\n\nProfile Inputs:\nAge, gender, Height, Weight, Activity Level, Dietary Preference (Vegetarian, Non-Vegetarian, Eggetarian).\n\nFood Logging:\nAdd Food, Quantity, Unit, Editable Table, Remove Entry.\n\nFood Database:\nInclude 20 common foods only:\nRice, Roti, Dal, Paneer, Curd, Chana, Rajma, Banana, Apple, Milk, Oats, Bread, Egg, Chicken, Fish, Potato, Poha, Idli, Dosa, Spinach.\n\nTrack:\nCalories, Protein, Carbs, Fat, Fiber, Iron, Calcium, Vitamin C, Vitamin D, Vitamin B12.\n\nCalculations:\nEnergy, Macro Targets, Micronutrient Targets, Percentage Completion.\n\nDashboard:\nEnergy Progress, Macro Chart, Top Deficiencies, Top Excesses, Nutrient Table.\n\nRecommendations:\nFood additions, food swaps, portion adjustments based on dietary preference.\n\nDesign:\nPremium SaaS UI, Mobile Responsive, Chart.js, Dark Theme, Modern Cards, No Backend, Single HTML File.\n\nReturn only the complete HTML code.\n\nPROMPT 2 — Enhance Application\n\nEnhance the existing NutriScope application.\n\nAdd:\nCSV Upload, 40 more foods, Additional micronutrients, 2-day meal planner, Risk Analysis, Educational Disclaimer, Nutrition Sources, Better Charts, Advanced Recommendations.\n\nReturn the updated HTML only.",
       "engagement": {
-        "type": "Profile Refresh Announcement",
-        "description": "Post a short note announcing your refreshed LinkedIn and what you’re focused on for the next 60 days. Mention @AnilBajpai @ABTalksonAI @Anthropic in your post.",
+        "type": "AI App Development Showcase",
+        "description": "Share screenshots of both versions and explain what changed between your MVP and enhanced application. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
         "hashtag": "#60DayClaudeChallenge",
-        "mentions": ["@AnilBajpai", "@ABTalksonAI", "@Anthropic"]
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
       },
       "deliverable": {
-        "description": "Push your LinkedIn rewrite document (headline, About, top experience, skills) to your repo as a markdown file. Submit the commit URL.",
+        "description": "Upload a markdown file containing screenshots of both versions, generated HTML files, comparison notes, and key learnings.",
         "format": "GitHub commit URL"
       }
     }

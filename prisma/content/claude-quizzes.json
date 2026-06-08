@@ -1,8 +1,7 @@
 [
-  [
   {
     "weekNumber": 1,
-    "domain": "Claude AI",
+    "domain": "CLAUDE",
     "title": "Week 1 Challenge Quiz: Think Like a Claude Power User",
     "questions": [
       {
@@ -106,8 +105,7 @@
         "explanation": "Great AI results come from combining all the techniques learned so far."
       }
     ]
-  }
-],
+  },
   {
     "weekNumber": 2,
     "domain": "CLAUDE",
