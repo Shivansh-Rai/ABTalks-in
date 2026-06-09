@@ -51,6 +51,7 @@ export async function getStudentsForExport(filters: {
       longestStreak: true,
       user: {
         select: {
+          id: true,
           email: true,
           name: true,
           studentProfile: {
@@ -75,6 +76,15 @@ export async function getStudentsForExport(filters: {
     orderBy: [{ lastSubmittedDay: "desc" }, { createdAt: "desc" }],
   });
 
+  const referralCountRows = await prisma.referral.groupBy({
+    by: ["referrerId"],
+    where: { referrerId: { in: enrollments.map((e) => e.user.id) } },
+    _count: { id: true },
+  });
+  const referralCountMap = new Map(
+    referralCountRows.map((r) => [r.referrerId, r._count.id]),
+  );
+
   return enrollments.map((e) => ({
     "Full Name": e.user.studentProfile?.fullName ?? e.user.name ?? "",
     Email: e.user.email,
@@ -95,6 +105,7 @@ export async function getStudentsForExport(filters: {
     GitHub: e.user.studentProfile?.githubUsername ?? "",
     "Ready For Interview": e.user.studentProfile?.isReadyForInterview ?? false,
     "Referral Code": e.user.studentProfile?.referralCode ?? "",
+    "Referral Count": referralCountMap.get(e.user.id) ?? 0,
   }));
 }
 
