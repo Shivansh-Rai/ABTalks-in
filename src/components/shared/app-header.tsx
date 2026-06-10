@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Domain } from "@prisma/client";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Briefcase } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth-actions";
@@ -113,10 +113,16 @@ export function AppHeader({
           <Link
             href="/jobs"
             className={cn(
-              "focus-spark hidden rounded-md text-sm font-medium transition-colors hover:text-foreground md:inline-flex",
-              jobsActive ? "text-foreground" : "text-muted-foreground",
+              "focus-spark group hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm font-medium transition-colors md:inline-flex",
+              jobsActive
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/60 hover:text-foreground",
             )}
           >
+            <Briefcase
+              className="size-3.5 transition-transform group-hover:scale-110"
+              aria-hidden
+            />
             Jobs
           </Link>
           {user.isAdmin ? (
