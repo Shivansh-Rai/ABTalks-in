@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { SYNERGY_REFERRAL } from "./scoring";
-
+//synergy event for referral
 export async function awardReferralSynergy(
   tx: Prisma.TransactionClient,
   args: {

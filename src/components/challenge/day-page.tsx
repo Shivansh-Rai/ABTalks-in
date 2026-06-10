@@ -528,7 +528,7 @@ export function DayPage({
                 className="text-sm"
                 disabled={submitting}
               />
-              <p className="text-xs text-muted-foreground">Optional · +5 synergy</p>
+              <p className="text-xs text-muted-foreground">Optional · +8 synergy</p>
             </div>
           </div>
 
