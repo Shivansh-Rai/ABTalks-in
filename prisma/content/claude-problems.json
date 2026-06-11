@@ -1055,5 +1055,207 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 11,
+    "domain": "CLAUDE",
+    "title": "Day 11: Build an ATS-Optimized Resume with Claude",
+    "problemStatement": "Welcome to Day 11 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 2 — Building with Claude\n\nToday's focus: Learn how to use Claude as an ATS Expert, Recruiter, Resume Writer, and Career Consultant.\n\nMost resumes get rejected before a recruiter even reads them. Applicant Tracking Systems (ATS) scan resumes for relevant keywords, skills, and formatting before deciding whether a candidate moves forward.\n\nToday you'll learn how to use Claude to analyze a resume, compare it against a target job description, identify gaps, and generate an ATS-optimized version while maintaining 100% factual accuracy.\n\nTasks:\n1. Upload your resume.\n2. Upload or paste a target job description.\n3. Use Claude to perform ATS analysis.\n4. Generate an ATS-optimized resume.\n5. Review keyword gaps and improvement opportunities.\n6. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low before generating the output.\n\nIf Claude does not generate the complete output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing ATS analysis, optimized resume, screenshots, and learning notes.",
+    "learningObjectives": [
+      "Understand how ATS systems evaluate resumes",
+      "Optimize resumes using AI",
+      "Identify missing keywords and skills",
+      "Improve recruiter relevance without fabricating information",
+      "Create job-specific resume versions"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/",
+      "https://drive.google.com/drive/folders/1wXfeJALkrzzah7ZAoUNQDok0y8TDWFFv"
+    ],
+    "difficulty": "Beginner",
+    "estimatedMinutes": 45,
+    "linkedinTemplate": "Day 11/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I learned how ATS systems evaluate resumes.\n\nI uploaded my resume and a target job description into Claude.\n\nClaude helped me identify:\n\n✅ Missing Keywords\n✅ ATS Gaps\n✅ Recruiter Expectations\n✅ Resume Improvements\n\nIt then generated an ATS-optimized version while keeping everything 100% truthful.\n\nBiggest takeaway:\n\nA great resume isn't just about experience.\nIt's about presenting that experience in a way recruiters and ATS systems can understand.\n\n#ClaudeAI #ATSResume #ResumeOptimization #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing your ATS analysis, optimized resume, screenshots, and learnings.",
+    "tags": [
+      "claude",
+      "day-11",
+      "resume",
+      "ats",
+      "career",
+      "job-search",
+      "beginner"
+    ],
+    "dayContent": {
+      "title": "ATS Resume Optimizer & Resume Generator",
+      "tagline": "Transform your resume into an ATS-friendly document",
+      "module": "Career Applications with Claude",
+      "difficulty": "Beginner",
+      "estimatedMinutes": 45,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "ATS systems act as the first screening layer for many companies. Understanding how resumes are evaluated helps candidates improve visibility, keyword alignment, and recruiter readability without exaggerating or inventing information.",
+        "bullets": [
+          {
+            "label": "ATS Optimization",
+            "text": "Improve compatibility with Applicant Tracking Systems."
+          },
+          {
+            "label": "Keyword Alignment",
+            "text": "Match relevant job description keywords naturally."
+          },
+          {
+            "label": "Gap Analysis",
+            "text": "Identify missing skills and improvement opportunities."
+          },
+          {
+            "label": "Career Readiness",
+            "text": "Create stronger job application materials."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Upload your resume.",
+          "Visit the JD repository drive folder and copy a relevant Job Description for your target role if needed.",
+          "Alternatively, copy and paste any target job description from LinkedIn, Naukri, Indeed, company career pages, or other job portals.",
+          "Paste the provided ATS Resume Optimizer prompt.",
+          "Generate the ATS analysis.",
+          "Review the ATS Match Score and Gap Analysis.",
+          "Generate the optimized resume.",
+          "Save the generated resume.",
+          "Take screenshots of the ATS analysis and optimized resume.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day11 folder in your GitHub repository.",
+          "Create a day11.md file.",
+          "Upload screenshots, ATS analysis, optimized resume, and your learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=meLLgf2oE4E&feature=youtu.be"
+      },
+      "promptTemplate": "# ATS Resume Optimizer & Resume Generator\n\nInput:\n\n* Existing Resume\n* Target Job Description\n\nTask:\nRewrite the resume for maximum ATS alignment and recruiter relevance while maintaining 100% factual accuracy.\n\nRules:\n\n* Never invent experience, projects, employers, certifications, dates, metrics, or skills.\n* Only optimize, reorganize, and rephrase existing content.\n* Use relevant JD keywords naturally.\n* Keep ATS-friendly formatting.\n\nOutput:\n\n1. ATS Match Score\n\n2. Gap Analysis\n\n   * Missing Keywords\n   * Missing Skills\n   * Improvement Opportunities\n\n3. Updated Resume\n\nReturn the complete rewritten resume as a professional resume document using the following structure:\n\n# FULL NAME\n\nPhone | Email | LinkedIn | GitHub\n\n## PROFESSIONAL SUMMARY\n\n## SKILLS\n\n## EXPERIENCE\n\n## PROJECTS\n\n## EDUCATION\n\n## CERTIFICATIONS\n\n## ACHIEVEMENTS\n\nThe resume should be fully formatted, ready to copy into Word, Google Docs, FlowCV, Overleaf, or Canva without additional editing.",
+      "engagement": {
+        "type": "Resume Transformation",
+        "description": "Share one ATS improvement or keyword insight you discovered while optimizing your resume. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing ATS analysis, optimized resume, screenshots, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
+  },
+  {
+    "dayNumber": 12,
+    "domain": "CLAUDE",
+    "title": "Day 12: Build Your Complete Job Search & Personal Branding Toolkit with Claude",
+    "problemStatement": "Welcome to Day 12 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 2 — Building with Claude\n\nToday's focus: Learn how to use Claude as a Technical Recruiter, Hiring Manager, Career Coach, Executive Resume Writer, and Personal Branding Consultant.\n\nMost job seekers focus only on their resume. However, recruiters evaluate candidates through multiple touchpoints including cover letters, LinkedIn messages, recruiter outreach, referral requests, personal branding, interview communication, and overall professional positioning.\n\nToday you'll use Claude to generate a complete Job Search & Personal Branding Toolkit tailored specifically to your resume, target role, target companies, and professional profile.\n\nTasks:\n1. Upload your resume.\n2. Add your target role.\n3. Add a target job description.\n4. Generate a complete job search toolkit.\n5. Generate personal branding assets.\n6. Identify skill gaps and career growth opportunities.\n7. Improve the generated content using a second prompt.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low before generating the output.\n\nYou may use the Job Description repository provided in the resources section or paste a job description from LinkedIn, Naukri, Indeed, company career pages, or any job portal.\n\nIf Claude does not generate the complete output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing generated outputs, screenshots, and learning notes.",
+    "learningObjectives": [
+      "Understand recruiter and hiring manager expectations",
+      "Generate ATS-friendly career assets",
+      "Create personalized outreach messages",
+      "Build a complete personal branding toolkit",
+      "Identify skill gaps and career growth opportunities"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/",
+      "https://drive.google.com/drive/folders/1wXfeJALkrzzah7ZAoUNQDok0y8TDWFFv"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 12/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I used Claude as my personal recruiter, career coach, and branding consultant.\n\nI generated:\n\n📄 ATS-Friendly Cover Letter\n📧 Recruiter Outreach Emails\n💼 Hiring Manager Emails\n🤝 Referral Requests\n🔗 LinkedIn Messages\n🎤 Professional Introduction\n📊 Skill Gap Analysis\n🚀 Personal Branding Assets\n\nBiggest takeaway:\n\nGetting interviews is not only about having a strong resume.\n\nIt's about presenting your value effectively across every professional touchpoint.\n\n#ClaudeAI #CareerGrowth #PersonalBranding #JobSearch #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing generated outputs, screenshots, skill gap analysis, personal branding assets, and learnings.",
+    "tags": [
+      "claude",
+      "day-12",
+      "career",
+      "resume",
+      "personal-branding",
+      "job-search",
+      "ats"
+    ],
+    "dayContent": {
+      "title": "Build Your Complete Job Search & Personal Branding Toolkit",
+      "tagline": "Go beyond resumes and build a complete career growth system",
+      "module": "Career Applications with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 60,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Modern hiring goes far beyond resumes. Recruiters evaluate communication, personal branding, outreach quality, positioning, and overall professional presence. Claude can help generate a complete toolkit that improves visibility, networking effectiveness, and interview opportunities.",
+        "bullets": [
+          {
+            "label": "ATS Optimization",
+            "text": "Create recruiter-friendly and ATS-compatible career assets."
+          },
+          {
+            "label": "Recruiter Outreach",
+            "text": "Generate professional outreach messages that increase response rates."
+          },
+          {
+            "label": "Personal Branding",
+            "text": "Build a strong professional identity and positioning statement."
+          },
+          {
+            "label": "Career Strategy",
+            "text": "Identify strengths, gaps, and growth opportunities."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Upload your latest resume.",
+          "Select your target role.",
+          "Visit the Job Description repository and copy a relevant JD if required.",
+          "Alternatively paste a JD from LinkedIn, Naukri, Indeed, company career pages, or any job portal.",
+          "Optionally add target companies.",
+          "Paste the provided Job Search & Personal Branding prompt.",
+          "Generate the complete toolkit.",
+          "Review ATS recommendations and skill gap analysis.",
+          "Run the second improvement prompt.",
+          "Save all generated outputs.",
+          "Take screenshots of important sections.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day12 folder in your GitHub repository.",
+          "Create a day12.md file.",
+          "Upload screenshots, generated outputs, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=XxObXM7DEXo&feature=youtu.be"
+      },
+      "promptTemplate": "You are an expert Technical Recruiter, Hiring Manager, Career Coach, Executive Resume Writer, and Personal Branding Consultant.\n\nCarefully analyze my resume, LinkedIn profile, portfolio, and professional background.\n\nYour objective is to create a complete job search and personal branding toolkit tailored to my profile.\n\nRequirements:\n\n* Use only information available in my resume/profile.\n* Identify and highlight my most relevant skills, achievements, certifications, projects, leadership experience, and measurable business impact.\n* Emphasize strengths that are most valuable for recruiters and hiring managers in my target industry.\n* Adapt the messaging to my experience level (student, fresher, experienced professional, manager, or executive).\n* Use a professional, modern, recruiter-focused, and results-oriented writing style.\n* Avoid generic AI-generated language.\n* Quantify achievements whenever possible.\n* Ensure all content is ATS-friendly and ready to use immediately.\n\nGenerate the following:\n\nSECTION 1:\nATS-Friendly Cover Letter\n(350–450 words)\n\nSECTION 2:\nRecruiter Outreach Email\n\nSECTION 3:\nHiring Manager Email\n\nSECTION 4:\nLinkedIn Connection Request\n(Maximum 300 characters)\n\nSECTION 5:\nReferral Request Message\n\nSECTION 6:\nFollow-Up Email\n(Send after 5 days if no response)\n\nSECTION 7:\n30-Second Professional Introduction\n(Self-introduction for interviews, networking, and career events)\n\nSECTION 8:\nTop 10 Job Titles Best Suited for My Profile\n\nSECTION 9:\nKey Strengths Recruiters Will Notice\n\nSECTION 10:\nSkill Gap Analysis\n\n* Current strengths\n* Missing skills\n* Recommended learning roadmap\n\nSECTION 11:\nPersonal Brand Summary\n\n* Unique value proposition\n* Professional positioning statement\n* Recruiter headline\n\nSECTION 12:\nInterview Talking Points\n\n* Most impressive achievements\n* Key stories to discuss\n* Areas recruiters are likely to ask about\n\nMake every section highly personalized based on my profile and generate content that is ready to send or use immediately without requiring edits.",
+      "engagement": {
+        "type": "Career Growth Showcase",
+        "description": "Share one insight you discovered about your resume, personal brand, or recruiter expectations. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing generated job application assets, personal branding outputs, screenshots, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
