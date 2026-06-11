@@ -1055,5 +1055,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 11,
+    "domain": "CLAUDE",
+    "title": "Day 11: Build an ATS-Optimized Resume with Claude",
+    "problemStatement": "Welcome to Day 11 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 2 — Building with Claude\n\nToday's focus: Learn how to use Claude as an ATS Expert, Recruiter, Resume Writer, and Career Consultant.\n\nMost resumes get rejected before a recruiter even reads them. Applicant Tracking Systems (ATS) scan resumes for relevant keywords, skills, and formatting before deciding whether a candidate moves forward.\n\nToday you'll learn how to use Claude to analyze a resume, compare it against a target job description, identify gaps, and generate an ATS-optimized version while maintaining 100% factual accuracy.\n\nTasks:\n1. Upload your resume.\n2. Upload or paste a target job description.\n3. Use Claude to perform ATS analysis.\n4. Generate an ATS-optimized resume.\n5. Review keyword gaps and improvement opportunities.\n6. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low before generating the output.\n\nIf Claude does not generate the complete output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing ATS analysis, optimized resume, screenshots, and learning notes.",
+    "learningObjectives": [
+      "Understand how ATS systems evaluate resumes",
+      "Optimize resumes using AI",
+      "Identify missing keywords and skills",
+      "Improve recruiter relevance without fabricating information",
+      "Create job-specific resume versions"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/",
+      "https://drive.google.com/drive/folders/1wXfeJALkrzzah7ZAoUNQDok0y8TDWFFv"
+    ],
+    "difficulty": "Beginner",
+    "estimatedMinutes": 45,
+    "linkedinTemplate": "Day 11/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I learned how ATS systems evaluate resumes.\n\nI uploaded my resume and a target job description into Claude.\n\nClaude helped me identify:\n\n✅ Missing Keywords\n✅ ATS Gaps\n✅ Recruiter Expectations\n✅ Resume Improvements\n\nIt then generated an ATS-optimized version while keeping everything 100% truthful.\n\nBiggest takeaway:\n\nA great resume isn't just about experience.\nIt's about presenting that experience in a way recruiters and ATS systems can understand.\n\n#ClaudeAI #ATSResume #ResumeOptimization #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing your ATS analysis, optimized resume, screenshots, and learnings.",
+    "tags": [
+      "claude",
+      "day-11",
+      "resume",
+      "ats",
+      "career",
+      "job-search",
+      "beginner"
+    ],
+    "dayContent": {
+      "title": "ATS Resume Optimizer & Resume Generator",
+      "tagline": "Transform your resume into an ATS-friendly document",
+      "module": "Career Applications with Claude",
+      "difficulty": "Beginner",
+      "estimatedMinutes": 45,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "ATS systems act as the first screening layer for many companies. Understanding how resumes are evaluated helps candidates improve visibility, keyword alignment, and recruiter readability without exaggerating or inventing information.",
+        "bullets": [
+          {
+            "label": "ATS Optimization",
+            "text": "Improve compatibility with Applicant Tracking Systems."
+          },
+          {
+            "label": "Keyword Alignment",
+            "text": "Match relevant job description keywords naturally."
+          },
+          {
+            "label": "Gap Analysis",
+            "text": "Identify missing skills and improvement opportunities."
+          },
+          {
+            "label": "Career Readiness",
+            "text": "Create stronger job application materials."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Upload your resume.",
+          "Visit the JD repository drive folder and copy a relevant Job Description for your target role if needed.",
+          "Alternatively, copy and paste any target job description from LinkedIn, Naukri, Indeed, company career pages, or other job portals.",
+          "Paste the provided ATS Resume Optimizer prompt.",
+          "Generate the ATS analysis.",
+          "Review the ATS Match Score and Gap Analysis.",
+          "Generate the optimized resume.",
+          "Save the generated resume.",
+          "Take screenshots of the ATS analysis and optimized resume.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day11 folder in your GitHub repository.",
+          "Create a day11.md file.",
+          "Upload screenshots, ATS analysis, optimized resume, and your learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=meLLgf2oE4E&feature=youtu.be"
+      },
+      "promptTemplate": "# ATS Resume Optimizer & Resume Generator\n\nInput:\n\n* Existing Resume\n* Target Job Description\n\nTask:\nRewrite the resume for maximum ATS alignment and recruiter relevance while maintaining 100% factual accuracy.\n\nRules:\n\n* Never invent experience, projects, employers, certifications, dates, metrics, or skills.\n* Only optimize, reorganize, and rephrase existing content.\n* Use relevant JD keywords naturally.\n* Keep ATS-friendly formatting.\n\nOutput:\n\n1. ATS Match Score\n\n2. Gap Analysis\n\n   * Missing Keywords\n   * Missing Skills\n   * Improvement Opportunities\n\n3. Updated Resume\n\nReturn the complete rewritten resume as a professional resume document using the following structure:\n\n# FULL NAME\n\nPhone | Email | LinkedIn | GitHub\n\n## PROFESSIONAL SUMMARY\n\n## SKILLS\n\n## EXPERIENCE\n\n## PROJECTS\n\n## EDUCATION\n\n## CERTIFICATIONS\n\n## ACHIEVEMENTS\n\nThe resume should be fully formatted, ready to copy into Word, Google Docs, FlowCV, Overleaf, or Canva without additional editing.",
+      "engagement": {
+        "type": "Resume Transformation",
+        "description": "Share one ATS improvement or keyword insight you discovered while optimizing your resume. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing ATS analysis, optimized resume, screenshots, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
