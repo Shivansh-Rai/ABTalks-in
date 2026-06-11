@@ -237,11 +237,38 @@ model User {
   referralsMade                      Referral[]      @relation("Referral_referrerIdToUser")
   sessions                           Session[]
   studentProfile                     StudentProfile?
+  recruiterReview                    RecruiterReview?
   submissions                        Submission[]
   synergyEvents                      SynergyEvent[]
   jobApplications                    JobApplication[]
 
   @@index([createdAt(sort: Desc)])
+}
+
+model RecruiterReview {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  confidenceRating    Int?
+  codingRating        Int?
+  communicationRating Int?
+  headline            String?
+  summary             String?
+  strengths           String[]  @default([])
+  recommendedRoles    String[]  @default([])
+  projects            Json?
+  education           Json?
+  achievements        String[]  @default([])
+  certifications      String[]  @default([])
+  adminNote           String?
+  isPublished         Boolean   @default(false)
+  shareToken          String?   @unique
+  reviewedByAdminId   String?
+  reviewedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([shareToken])
 }
 
 enum JobType {

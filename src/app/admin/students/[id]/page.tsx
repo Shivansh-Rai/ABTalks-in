@@ -17,7 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RejectSubmissionButton } from "@/components/admin/reject-submission-button";
 import { StudentActionPanel } from "@/components/admin/student-action-panel";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
+import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
 import { getStudentDetail } from "@/features/admin/get-student-detail";
+import { getRecruiterReview } from "@/features/recruiter/get-recruiter-review";
 import { userTypeLabel } from "@/lib/profile-display";
 import { cn } from "@/lib/utils";
 import { UserType } from "@prisma/client";
@@ -40,7 +42,10 @@ export default async function AdminStudentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getStudentDetail(id);
+  const [data, review] = await Promise.all([
+    getStudentDetail(id),
+    getRecruiterReview(id),
+  ]);
   if (!data) notFound();
 
   return (
@@ -198,6 +203,7 @@ export default async function AdminStudentDetailPage({
           <TabsTrigger value="submissions">Submissions</TabsTrigger>
           <TabsTrigger value="quizzes">Quiz Attempts</TabsTrigger>
           <TabsTrigger value="admin-actions">Admin Actions</TabsTrigger>
+          <TabsTrigger value="recruiter">Recruiter Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="submissions">
@@ -304,6 +310,14 @@ export default async function AdminStudentDetailPage({
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="recruiter">
+          <RecruiterReviewPanel
+            studentId={data.student.userId}
+            studentName={data.student.fullName}
+            review={review}
+          />
         </TabsContent>
       </Tabs>
 

@@ -71,7 +71,7 @@ export function BottomNav() {
 
   if (
     pathname === "/" ||
-    /^\/(login|register|claude-signup|students)(\/|$)/.test(pathname)
+    /^\/(login|register|claude-signup|students|r)(\/|$)/.test(pathname)
   ) {
     return null;
   }
