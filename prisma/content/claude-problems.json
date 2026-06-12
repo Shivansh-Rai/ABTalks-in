@@ -1257,5 +1257,115 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 13,
+    "domain": "CLAUDE",
+    "title": "Day 13: Connect Indeed with Claude & Build Your AI Job Search Assistant",
+    "problemStatement": "Welcome to Day 13 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 2 — Building with Claude\n\nToday's focus: Learn how to connect external data sources with Claude and transform it into a personalized AI-powered job search assistant.\n\nMost job seekers spend hours manually searching through job boards, filtering opportunities, comparing roles, and identifying which jobs are actually worth applying to.\n\nToday you'll connect Indeed with Claude using Claude Connectors and let Claude perform job discovery, role analysis, skill-gap analysis, and opportunity prioritization for you.\n\nInstead of manually searching hundreds of jobs, Claude will analyze your profile and help identify the highest-fit opportunities.\n\nTasks:\n1. Connect Indeed with Claude.\n2. Create your professional profile.\n3. Define your job search criteria.\n4. Let Claude discover matching opportunities.\n5. Analyze market demand and skill gaps.\n6. Build your personalized job search strategy.\n7. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low before running the prompts.\n\nIf Claude does not generate the complete output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, discovered opportunities, analysis, and learning notes.",
+    "learningObjectives": [
+      "Learn how Claude Connectors work",
+      "Connect Indeed with Claude",
+      "Perform AI-powered job discovery",
+      "Analyze job market demand",
+      "Identify skill gaps and career opportunities"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/",
+      "https://claude.ai/directory/connectors/indeed"
+    ],
+    "difficulty": "Beginner",
+    "estimatedMinutes": 45,
+    "linkedinTemplate": "Day 13/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I transformed Claude into my personal AI Job Search Assistant.\n\nI connected Indeed with Claude and used AI to:\n\n🔍 Discover matching job opportunities\n📊 Analyze market demand\n🎯 Calculate role fit scores\n📈 Identify skill gaps\n💼 Prioritize high-value opportunities\n\nBiggest takeaway:\n\nThe future of job search isn't manually scrolling through job boards.\n\nIt's using AI to find the best opportunities faster and smarter.\n\n#ClaudeAI #Indeed #JobSearch #CareerGrowth #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing screenshots of your job search workflow, discovered opportunities, skill-gap analysis, and key learnings.",
+    "tags": [
+      "claude",
+      "day-13",
+      "connectors",
+      "indeed",
+      "job-search",
+      "career",
+      "ai-assistant"
+    ],
+    "dayContent": {
+      "title": "Build Your AI Job Search Assistant",
+      "tagline": "Let Claude find your next opportunity",
+      "module": "Claude Connectors",
+      "difficulty": "Beginner",
+      "estimatedMinutes": 45,
+      "deliverableFormat": "GitHub commit URL",
+
+      "learning": {
+        "summary": "Claude Connectors allow Claude to access external information sources and use them for personalized analysis. By connecting Indeed, Claude can help automate job discovery, role matching, opportunity prioritization, and career planning.",
+        "bullets": [
+          {
+            "label": "Claude Connectors",
+            "text": "Connect external platforms directly to Claude."
+          },
+          {
+            "label": "AI Job Discovery",
+            "text": "Automatically find matching opportunities."
+          },
+          {
+            "label": "Market Analysis",
+            "text": "Identify in-demand skills and hiring trends."
+          },
+          {
+            "label": "Career Planning",
+            "text": "Build a smarter job search strategy."
+          }
+        ]
+      },
+
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Open Claude Connectors",
+          "The link for Indeed Connector is provided in Resources, connect it.",
+          "Connect your Indeed account.",
+          "Start a new conversation.",
+          "Paste Prompt 1 and create your professional profile.",
+          "Paste Prompt 2 and define your job search criteria.",
+          "Paste Prompt 3 and allow Claude to discover matching jobs.",
+          "Review the opportunities and match scores.",
+          "Analyze the skill-gap recommendations.",
+          "Review market demand insights.",
+          "Save the generated results.",
+          "Take screenshots of the opportunities and analysis.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day13 folder in your GitHub repository.",
+          "Create a day13.md file.",
+          "Upload screenshots in GitHub folder (if required), and mention discovered opportunities, analysis, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=8DTqXPzVfT0"
+      },
+
+      "promptTemplate": "PROMPT 1: Professional Profile\n\nDescribe your professional background, including:\n\nCurrent role\nYears of experience\nKey skills and technologies\nIndustry/domain expertise\nCurrent company type\nCurrent location\nNotable achievements, certifications, or accomplishments\n\nPROMPT 2: Job Search Criteria\n\nSpecify your target job requirements, including:\n\nDesired job titles\nPreferred company types\nPreferred locations (Remote/Hybrid/Onsite)\nSalary expectations\nIndustries or companies to exclude\nJob posting recency requirements\nAny additional preferences or constraints\n\nPROMPT 3: Job Discovery & Analysis\n\nUsing my professional profile and job search criteria:\n\nSearch for matching job opportunities using the available job connector(s)\nPrioritize the highest-fit roles\nExclude jobs that do not meet my requirements\nReturn the top opportunities in a table containing:\n\nCompany\nRole\nLocation\nPosted Date\nDirect Application Link\nMatch Score\nWhy It Fits My Profile\nCTC\n\nAlso provide:\n\nMost commonly required skills across the jobs\nSkill gap analysis\nMarket demand insights\nRecommendations to improve my chances of getting interviews\nOverall fit assessment for my target roles and compensation goals.",
+
+      "engagement": {
+        "type": "AI Job Search Showcase",
+        "description": "Share one surprising insight you discovered from Claude's job search analysis. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots, discovered opportunities, skill-gap analysis, market insights, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
+
+
 ]
