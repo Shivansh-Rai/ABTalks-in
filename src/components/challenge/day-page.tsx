@@ -356,33 +356,6 @@ export function DayPage({
           </ol>
         </CollapsibleSection>
 
-        {solutionVideoUrl ? (
-          <CollapsibleSection
-            icon={<PlayCircle className="h-5 w-5 text-red-500" />}
-            iconBg="bg-red-500/10"
-            title="Solution Walkthrough"
-            subtitle="Step-by-step video guide"
-            animationDelay={0.22}
-          >
-            {solutionVideoUrl.includes("REPLACE_WITH") ? (
-              <p className="text-sm text-muted-foreground">
-                Solution walkthrough video coming soon. Check back shortly.
-              </p>
-            ) : (
-              <a
-                href={solutionVideoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
-              >
-                <PlayCircle className="h-4 w-4" />
-                Watch on YouTube
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </CollapsibleSection>
-        ) : null}
-
         {resources.length > 0 ? (
           <CollapsibleSection
             icon={<BookOpen className="h-5 w-5 text-sky-500" />}
@@ -480,6 +453,33 @@ export function DayPage({
             Format: {content.deliverable.format}
           </span>
         </CollapsibleSection>
+
+        {solutionVideoUrl ? (
+          <CollapsibleSection
+            icon={<PlayCircle className="h-5 w-5 text-red-500" />}
+            iconBg="bg-red-500/10"
+            title="Solution Walkthrough"
+            subtitle="Step-by-step video guide"
+            animationDelay={0.38}
+          >
+            {solutionVideoUrl.includes("REPLACE_WITH") ? (
+              <p className="text-sm text-muted-foreground">
+                Solution walkthrough video coming soon. Check back shortly.
+              </p>
+            ) : (
+              <a
+                href={solutionVideoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+              >
+                <PlayCircle className="h-4 w-4" />
+                Watch on YouTube
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </CollapsibleSection>
+        ) : null}
 
         <div className="rounded-2xl border bg-card p-6 space-y-5">
           <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">

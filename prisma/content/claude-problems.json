@@ -1797,6 +1797,113 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 18,
+    "domain": "CLAUDE",
+    "title": "Day 18: Build a Brain Dump Action Planner Skill with Claude",
+    "problemStatement": "Welcome to Day 18 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 3 — Custom Skills & Automation\n\nToday's focus: Learn how to create a Custom Skill that transforms messy information into structured action plans.\n\nMost meetings, brainstorming sessions, voice notes, transcripts, and personal notes contain valuable information hidden inside unstructured text.\n\nToday you'll build a reusable Claude Skill called Brain Dump Action Planner that automatically converts messy notes into organized summaries, action items, decisions, risks, blockers, open questions, and project dashboards.\n\nInstead of manually organizing information every time, you'll create a skill that can be reused across meetings, classes, projects, startups, interviews, and personal planning.\n\nTasks:\n1. Learn how Custom Skills work.\n2. Create a Brain Dump Action Planner Skill.\n3. Configure reusable instructions.\n4. Test the skill using meeting notes or transcripts.\n5. Generate interactive project dashboards.\n6. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low before creating the skill.\n\nOnce the skill is created, you can reuse it indefinitely without pasting the full instructions again.\n\nIf Claude does not complete the output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots of the skill, generated dashboards, and learning notes.",
+    "learningObjectives": [
+      "Understand Claude Custom Skills",
+      "Create reusable productivity workflows",
+      "Convert messy notes into structured outputs",
+      "Generate project dashboards automatically",
+      "Reduce repetitive prompting using skills"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1-TZ51FRnAMLDSyV_tH0oR25XZkFHMJHS/view?usp=drivesdk"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 40,
+    "linkedinTemplate": "Day 18/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I created a reusable Claude Skill that turns messy notes into structured action plans.\n\nThe skill automatically generates:\n\n📝 Summaries\n✅ Action Items\n📋 Project Dashboards\n❓ Open Questions\n⚠️ Risks & Blockers\n📅 Task Tracking\n👥 Ownership Mapping\n\nBiggest takeaway:\n\nAI becomes truly powerful when you create reusable workflows instead of repeating prompts.\n\n#ClaudeAI #CustomSkills #Productivity #ProjectManagement #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing screenshots of the skill, generated dashboards, structured outputs, and learnings.",
+    "tags": [
+      "claude",
+      "day-18",
+      "custom-skills",
+      "productivity",
+      "project-management",
+      "automation",
+      "intermediate"
+    ],
+    "dayContent": {
+      "title": "Build a Brain Dump Action Planner Skill",
+      "tagline": "Transform chaos into clarity using Claude Skills",
+      "module": "Claude Custom Skills",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 40,
+      "deliverableFormat": "GitHub commit URL",
+
+      "learning": {
+        "summary": "Custom Skills allow Claude to remember complex workflows. Instead of manually organizing notes every time, you can create a reusable skill that automatically transforms unstructured information into project dashboards, action plans, and decision logs.",
+        "bullets": [
+          {
+            "label": "Reusable Workflows",
+            "text": "Create once and use forever."
+          },
+          {
+            "label": "Information Management",
+            "text": "Convert messy notes into structured outputs."
+          },
+          {
+            "label": "Project Planning",
+            "text": "Generate action plans, risks, and decisions automatically."
+          },
+          {
+            "label": "Productivity",
+            "text": "Reduce manual organization work significantly."
+          }
+        ]
+      },
+
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Open Claude.",
+          "Set Claude effort level to Low or Medium.",
+          "Navigate to the Skills section in Claude.",
+          "Create a new Custom Skill.",
+          "Set the Skill Name as brain-dump-action-planner.",
+          "Add the provided description.",
+          "Paste the provided instructions.",
+          "Save the Custom Skill.",
+          "Test the skill using meeting notes, brainstorming notes, class notes, voice memo transcripts, or project discussions.",
+          "Optionally you can use the meeting notes from resources.",
+          "Generate an interactive dashboard.",
+          "Review summaries, action items, risks, blockers, and open questions.",
+          "Test the skill with multiple note formats.",
+          "Take screenshots of the created skill and generated dashboards.",
+          "Observe how the skill can be reused without re-entering the instructions.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day18 folder in your GitHub repository.",
+          "Create a day18.md file.",
+          "Upload screenshots, generated dashboards, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=b9szfjvW0Xw&feature=youtu.be"
+      },
+
+      "promptTemplate": "Skill Name: brain-dump-action-planner\n\nDescription: Transform messy notes, meeting transcripts, voice memos, brainstorming sessions, and stream-of-consciousness thoughts into structured summaries, action plans, decisions, open questions, and task lists. Organize information clearly without inventing, assuming, or filling gaps. Preserve all names, dates, numbers, and terminology exactly as provided.\n\nInstructions:\n\n## Output Requirement\n\nFor Full Breakdown, Transcript Mode, and Merge Mode, generate the output as a complete interactive HTML artifact.\n\nRequirements:\n\n* Output a self-contained HTML artifact starting with <style>.\n* Use a modern dashboard layout.\n* Mobile responsive.\n* Use cards, sections, badges, tables, and visual indicators.\n* Do not use markdown.\n* Use clean typography and strong visual hierarchy.\n* Highlight important items using colored status badges.\n* Make action items visually prominent.\n* Use collapsible sections for long notes.\n* Output only the HTML artifact.\n\n### Required Sections\n\n1. Summary\n\n* Short overview of the note, meeting, transcript, or brain dump.\n\n2. Key Takeaways\n\n* Display as cards or structured highlights.\n\n3. Action Items\n\n* Interactive table containing:\n* Task\n* Owner\n* Deadline\n* Status\n\n4. Open Questions\n\n* Display unresolved topics and pending decisions.\n\n5. Risks / Blockers\n\n* Display dependencies, blockers, risks, and concerns.\n\n6. Conflicts\n\n* Display conflicting deadlines, owners, decisions, or information.\n\n7. Additional Notes\n\n* Supporting context that does not fit elsewhere.\n\n8. Source Information (Merge Mode only)\n\n* Display merged sources.\n\n### Status Badges\n\nUse:\n\n* 🔴 High Priority\n* 🟠 Medium Priority\n* 🟢 Low Priority\n* ⚠️ Conflict\n* ❓ Open Question\n* ✅ Completed\n* ⏳ Pending\n\n### Missing Information\n\nIf information is missing display:\n\n'Not specified'\n\nNever invent values.\n\n### Transcript Mode\n\nInclude:\n\n* Speaker Summary\n* Decisions by Speaker\n* Action Items by Speaker\n* Attribution Notes when ownership is unclear\n\nUse speaker labels exactly as provided.\n\n### Merge Mode\n\nInclude:\n\n* Duplicate Items Section\n* Conflict Resolution Review Section\n* Source Note\n\nNever automatically resolve conflicts.\n\n### Design Goals\n\nThe final artifact should feel like:\n\n* Notion\n* ClickUp\n* Linear\n* Asana\n* Airtable\n* Modern Project Dashboard\n\nUse responsive cards, clean tables, section headers, badges, hover effects, soft shadows, and dashboard-style layouts.\n\nEverything displayed must come directly from the provided notes.\n\nNever add, infer, assume, predict, estimate, or complete missing information.\n\nGenerate the complete HTML directly starting with <style>.",
+
+      "engagement": {
+        "type": "Custom Skill Showcase",
+        "description": "Share one workflow where your Brain Dump Action Planner saved time or helped organize information more effectively. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the custom skill, generated dashboards, structured outputs, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 
 
