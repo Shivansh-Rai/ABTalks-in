@@ -2568,5 +2568,227 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 25,
+    "domain": "CLAUDE",
+    "title": "Day 25: Build an AI Shark Tank Startup Simulator",
+    "problemStatement": "Welcome to Day 25 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 4 — Entrepreneurship, Startups & Business Building\n\nToday's focus: Learn how to use Claude as a Full-Stack Developer, Product Designer, Venture Capitalist, Founder, Customer, and Angel Investor.\n\nEvery startup founder eventually faces one critical challenge:\n\nCan they convincingly pitch their startup and survive tough investor questions?\n\nToday you'll use Claude to build a complete AI Shark Tank Simulator that evaluates startup ideas, asks challenging questions, scores business potential, and generates realistic investment decisions.\n\nThe simulator acts like a virtual Shark Tank where multiple AI investors analyze your startup from different perspectives including scalability, execution, customer value, and profitability.\n\nTasks:\n1. Build a complete AI Shark Tank Simulator.\n2. Create startup pitch input forms.\n3. Simulate multiple investor personalities.\n4. Answer investor questions.\n5. Generate startup scores.\n6. Receive investment decisions.\n7. Create downloadable pitch reports.\n8. Track startup rankings with leaderboards.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nYou may use your startup from Days 22–24 or create a completely new startup idea.\n\nIf Claude does not generate the complete output or usage limits are reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, startup evaluation results, and learning notes.",
+    "learningObjectives": [
+      "Build complete startup-focused web applications",
+      "Simulate investor decision-making",
+      "Learn startup pitching fundamentals",
+      "Understand investment evaluation criteria",
+      "Generate interactive business simulations"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 25/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I used Claude to build an AI Shark Tank Simulator.\n\nThe application included:\n\n🦈 AI Venture Capitalist\n🦈 AI Founder\n🦈 AI Customer\n🦈 AI Angel Investor\n\nPlus:\n\n💡 Startup Pitch Evaluation\n❓ Dynamic Investor Questions\n📊 Startup Scoring System\n💰 Investment Decisions\n📈 Suggested Valuations\n🏆 Startup Leaderboards\n📄 Pitch Report Export\n🎉 Funding Celebration Effects\n\nBiggest takeaway:\n\nBuilding a startup isn't just about creating a product.\n\nYou must clearly explain the problem, market opportunity, business model, and why customers will pay.\n\nInvestors don't fund ideas.\n\nThey fund opportunities with strong execution potential.\n\n#ClaudeAI #Startup #SharkTank #Entrepreneurship #StartupFounder #Business #AIApps #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the Shark Tank simulation, startup evaluation reports, and key learnings.",
+    "tags": [
+      "claude",
+      "day-25",
+      "startup",
+      "entrepreneurship",
+      "shark-tank",
+      "html",
+      "web-development",
+      "business"
+    ],
+    "dayContent": {
+      "title": "Build an AI Shark Tank Simulator",
+      "tagline": "Pitch your startup to AI investors",
+      "module": "Entrepreneurship Applications with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 60,
+      "deliverableFormat": "GitHub commit URL",
+
+      "learning": {
+        "summary": "Claude can generate complete business simulation applications that combine startup evaluation, investor psychology, scoring systems, interactive workflows, and modern user interfaces. This exercise demonstrates how AI can be used to create startup education tools and interactive business experiences.",
+        "bullets": [
+          {
+            "label": "Investor Thinking",
+            "text": "Understand how investors evaluate startup opportunities."
+          },
+          {
+            "label": "Startup Pitching",
+            "text": "Learn how to communicate startup value effectively."
+          },
+          {
+            "label": "Business Evaluation",
+            "text": "Analyze market, execution, and revenue potential."
+          },
+          {
+            "label": "Application Development",
+            "text": "Build complete business-focused web applications."
+          }
+        ]
+      },
+
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the provided AI Shark Tank Simulator prompt.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application in your browser.",
+          "Enter a startup idea.",
+          "Complete all startup input fields.",
+          "Start the Shark Tank simulation.",
+          "Review questions from each AI judge.",
+          "Answer investor questions.",
+          "Analyze the startup scorecard.",
+          "Review the investment decision.",
+          "Analyze the valuation and funding recommendations.",
+          "Test leaderboard functionality.",
+          "Download the generated pitch report.",
+          "Take screenshots of the simulation and results.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day25 folder in your GitHub repository.",
+          "Create a day25.md file.",
+          "Upload screenshots, generated HTML file, startup results, and learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=NaziKpp4HAE&feature=youtu.be"
+      },
+
+      "promptTemplate": "You are an expert full-stack developer and product designer.\n\nBuild a complete, production-quality AI Shark Tank Simulator as a single self-contained HTML file.\n\nRequirements:\n\n1. USER IDEA INPUT\n- Startup Name\n- Problem Statement\n- Solution\n- Revenue Model\n- Target Audience\n- Funding Ask\n\n2. AI JUDGES\nCreate 4 distinct AI judges:\n\n🦈 Venture Capitalist\n- Focus on market size and scalability\n\n🦈 Founder\n- Focus on execution\n\n🦈 Customer\n- Focus on usefulness\n\n🦈 Angel Investor\n- Focus on profitability\n\n3. PITCH ROUND\n- Display startup pitch\n- Each judge asks 2 questions\n- User can answer\n- Judges react dynamically\n\n4. SCORING SYSTEM\nScore out of 100:\n\n- Market Potential\n- Innovation\n- Business Model\n- Execution\n- Investment Worthiness\n\n5. INVESTMENT DECISION\nGenerate:\n- Invest\n- Reject\n- Acquire\n- Come Back Later\n\nShow:\n- Suggested Valuation\n- Funding Amount\n- Reasoning\n\n6. UI\n- Modern dark theme\n- Shark Tank style\n- Animated cards\n- Responsive design\n\n7. BONUS\n- Confetti on funding success\n- Download Pitch Report PDF\n- Leaderboard\n- Share Result button\n\nDeliver as a single HTML file with no backend required.",
+
+      "engagement": {
+        "type": "Startup Pitch Showcase",
+        "description": "Share your startup idea, investment decision, and the most challenging question asked by the AI investors. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+
+      "deliverable": {
+        "description": "Upload a markdown file containing Shark Tank screenshots, generated HTML application, startup evaluation results, investment decisions, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
+  },
+  {
+    "dayNumber": 26,
+    "domain": "CLAUDE",
+    "title": "Day 26: Build an Interactive Prior Authorization Workflow Simulator",
+    "problemStatement": "Welcome to Day 26 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 4 — Entrepreneurship, Business Applications & Industry Simulations\n\nToday's focus: Learn how to use Claude as a Product Designer, Full-Stack Developer, UX Designer, and Healthcare Workflow Simulator.\n\nHealthcare systems involve complex workflows that are difficult to understand through static diagrams alone. Prior Authorization (PA) is one of the most important processes connecting patients, providers, and insurance companies before certain treatments, medications, imaging procedures, or hospital admissions can proceed.\n\nToday you'll use Claude to build a fully interactive Prior Authorization Workflow Simulator where users learn the complete PA journey by playing through a drag-and-drop simulation.\n\nThe application demonstrates how requests move between patients, providers, and payers while teaching real-world healthcare concepts through gamification instead of lengthy documentation.\n\nTasks:\n1. Build a complete Prior Authorization Workflow Simulator.\n2. Create drag-and-drop workflow interactions.\n3. Simulate patient, provider, and payer communication.\n4. Handle approvals, pends, denials, and appeals.\n5. Generate educational tooltips and explanations.\n6. Track progress, score, and elapsed days.\n7. Complete the workflow and review the summary.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction works correctly including drag-and-drop, animations, buttons, workflow logic, and educational explanations.\n\nIf Claude does not generate the complete output or usage limits are reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, completed workflow, and learning notes.",
+    "learningObjectives": [
+      "Understand the Prior Authorization workflow",
+      "Build interactive drag-and-drop applications",
+      "Simulate real-world business workflows",
+      "Design educational user experiences",
+      "Create complete HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 26/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I used Claude to build an interactive Prior Authorization Workflow Simulator.\n\nThe simulator included:\n\n🏥 Patient → Provider → Payer Workflow\n🖱️ Drag-and-Drop Interactions\n📄 Prior Authorization Documentation\n⏳ Approval, Pend & Appeal Simulation\n📊 Progress Tracker & Journey Map\n🎮 Gamified Learning Experience\n📈 Efficiency Score & Time Tracking\n💡 Educational Tooltips & Workflow Explanations\n\nBiggest takeaway:\n\nAI isn't just generating code.\n\nIt's helping create interactive educational applications that simplify complex real-world business and healthcare workflows.\n\nLearning by interacting is far more engaging than reading documentation.\n\n#ClaudeAI #Healthcare #HealthTech #WorkflowAutomation #WebDevelopment #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, workflow screenshots, completed simulation, and key learnings.",
+    "tags": [
+      "claude",
+      "day-26",
+      "healthcare",
+      "workflow",
+      "simulation",
+      "html",
+      "drag-and-drop",
+      "javascript"
+    ],
+    "dayContent": {
+      "title": "Build a Prior Authorization Workflow Simulator",
+      "tagline": "Learn healthcare workflows through interactive gameplay",
+      "module": "Business Workflow Simulation with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 60,
+      "deliverableFormat": "GitHub commit URL",
+
+      "learning": {
+        "summary": "Claude can build complete interactive simulations that teach complex business workflows through visual storytelling and gamification. This project demonstrates how AI can transform complicated healthcare processes into engaging educational experiences.",
+        "bullets": [
+          {
+            "label": "Workflow Simulation",
+            "text": "Model real-world healthcare processes interactively."
+          },
+          {
+            "label": "Gamification",
+            "text": "Improve learning through drag-and-drop interactions and progress tracking."
+          },
+          {
+            "label": "Healthcare Operations",
+            "text": "Understand how Prior Authorization works between patients, providers, and insurers."
+          },
+          {
+            "label": "Interactive Development",
+            "text": "Generate fully functional browser applications using Claude."
+          }
+        ]
+      },
+
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the provided Prior Authorization Workflow Simulator prompt.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application in your browser.",
+          "Start a new patient scenario.",
+          "Drag the patient through the workflow stages.",
+          "Assemble the Prior Authorization request by adding all required documents.",
+          "Submit the request to the payer.",
+          "Complete approval, pend, denial, or appeal scenarios.",
+          "Track progress using the journey tracker and elapsed days.",
+          "Review the educational explanations and workflow summary.",
+          "Restart the simulator with a different patient scenario.",
+          "Take screenshots of the completed workflow and dashboard.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day26 folder in your GitHub repository.",
+          "Create a day26.md file.",
+          "Upload screenshots, generated HTML file, and learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=enIc3jH4gDw&feature=youtu.be"
+      },
+
+      "promptTemplate": "Prior Authorization Workflow Simulator (gamified, drag-and-drop)\n\nBuild a single-file, self-contained HTML application (HTML + CSS + vanilla JavaScript, no external dependencies, no build step) that visually simulates the US healthcare Prior Authorization (PA) workflow as an interactive, gamified, drag-and-drop experience.\n\nThe simulator should include:\n\n• Three workflow lanes: Patient, Provider, and Payer.\n• Interactive drag-and-drop movement of cases between stages.\n• Multiple patient scenarios (elective surgery, MRI, specialty medication, inpatient admission).\n• Medical necessity evaluation.\n• Prior Authorization document collection.\n• Submission to payer.\n• Review outcomes including Approval, Pend, Denial, Appeal, and Peer-to-Peer Review.\n• Educational explanations after every step.\n• Progress tracker across the top.\n• Days elapsed counter.\n• Efficiency score.\n• Celebration animation on approval.\n• Workflow summary on completion.\n• Responsive modern UI using shades of blue with black text.\n• Working Restart / New Patient button.\n• Fully functional buttons and interactions.\n\nTechnical Requirements:\n- Single HTML file.\n- HTML, CSS and Vanilla JavaScript only.\n- No frameworks.\n- No CDNs.\n- No localStorage.\n- All workflow state managed in JavaScript memory.\n- Well-commented code.\n- Scenario data stored in an editable array near the top.\n- Output only the complete HTML file without truncation.",
+
+      "engagement": {
+        "type": "Healthcare Workflow Showcase",
+        "description": "Share one thing you learned about the Prior Authorization process or workflow design while building this simulator. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the simulator, generated HTML file, completed workflow summary, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
