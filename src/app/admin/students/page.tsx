@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StudentsFilters } from "@/components/admin/students-filters";
-import { StudentsSortSelect } from "@/components/admin/students-sort-select";
 import { formatDateIST } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { getStudentDomainCounts, getStudents } from "@/features/admin/get-students";
@@ -35,8 +34,10 @@ function domainBadgeClass(domain: string): string {
 }
 
 function statusBadgeClass(status: string): string {
-  if (status === "ACTIVE") return "bg-emerald-100 text-emerald-700";
-  if (status === "COMPLETED") return "bg-violet-100 text-violet-700";
+  if (status === "ACTIVE")
+    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400";
+  if (status === "COMPLETED")
+    return "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400";
   return "bg-muted text-muted-foreground";
 }
 
@@ -68,10 +69,10 @@ export default async function AdminStudentsPage({
       : domainCounts.ALL;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold md:text-3xl">Students</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Showing {Math.min(students.length, 100)} of {filteredCount} matching enrollments
           {students.length >= 100 ? " (max 100)" : ""}
         </p>
@@ -79,20 +80,17 @@ export default async function AdminStudentsPage({
 
       <StudentsFilters domainCounts={domainCounts} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <StudentsSortSelect />
-        {sortBy === "referrals" ? (
-          <Badge variant="secondary" className="text-xs">
-            Ranked by referrals
-          </Badge>
-        ) : null}
-      </div>
+      {sortBy === "referrals" ? (
+        <Badge variant="secondary" className="text-xs">
+          Ranked by referrals
+        </Badge>
+      ) : null}
 
       <div className="space-y-2 md:hidden">
         {students.map((student) => (
           <article
             key={student.enrollmentId}
-            className="rounded-xl border bg-card p-3 text-sm"
+            className="rounded-xl border bg-card p-3 text-sm shadow-[var(--shadow-card)]"
           >
             <header className="flex items-start justify-between gap-2">
               <Link
@@ -126,24 +124,42 @@ export default async function AdminStudentsPage({
         ))}
       </div>
 
-      <div className="hidden overflow-x-auto rounded-xl border md:block">
+      <div className="hidden overflow-hidden rounded-xl border bg-card shadow-[var(--shadow-card)] md:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Affiliation</TableHead>
-              <TableHead>Domain</TableHead>
-              <TableHead>Day</TableHead>
-              <TableHead>Streak</TableHead>
-              <TableHead>Referrals</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Name
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Type
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Affiliation
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Domain
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Day
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Streak
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Referrals
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Status
+              </TableHead>
+              <TableHead className="text-xs uppercase tracking-wide text-muted-foreground">
+                Joined
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {students.map((student) => (
-              <TableRow key={student.enrollmentId}>
+              <TableRow key={student.enrollmentId} className="hover:bg-accent/40">
                 <TableCell>
                   <Link href={`/admin/students/${student.userId}`} className="font-medium underline">
                     {student.fullName}

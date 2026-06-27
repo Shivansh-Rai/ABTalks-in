@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { AppHeader } from "@/components/shared/app-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
@@ -37,23 +36,12 @@ export default async function AdminLayout({
           isAdmin: true,
         }}
       />
-      <div className="container mx-auto grid grid-cols-1 gap-4 px-4 py-4 md:grid-cols-[220px_1fr] md:gap-6 md:px-6 md:py-6">
-        <div className="md:sticky md:top-20 md:h-fit">
+      <div className="flex">
+        <div className="sticky top-14 hidden min-h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col border-r bg-card px-4 py-6 md:flex">
           <AdminSidebar navItems={navItems} />
-          <div className="mt-3 hidden text-xs text-muted-foreground md:block">
-            Admin area is read-only for now.
-          </div>
-          <Link
-            href="/dashboard"
-            className="mt-2 hidden text-xs text-primary underline md:block"
-          >
-            Back to student dashboard
-          </Link>
         </div>
-        <main className="space-y-4 md:space-y-6">
-          <div className="md:hidden">
-            <AdminMobileNav navItems={navItems} />
-          </div>
+        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+          <AdminMobileNav navItems={navItems} />
           {children}
         </main>
       </div>

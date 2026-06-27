@@ -1,9 +1,12 @@
 import { formatDistanceToNow } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
+
+const IST = "Asia/Kolkata";
 
 function getIstDayBounds(now: Date = new Date()) {
   const istDay = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
+    timeZone: IST,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -12,6 +15,28 @@ function getIstDayBounds(now: Date = new Date()) {
   const start = new Date(`${istDay}T00:00:00+05:30`);
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
   return { start, end };
+}
+
+function getIstRollingWeekBounds(now: Date = new Date()) {
+  const { start: todayStart } = getIstDayBounds(now);
+  const thisWeekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+  return {
+    thisWeekStart,
+    thisWeekEnd: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000),
+    lastWeekStart,
+    lastWeekEnd: thisWeekStart,
+  };
+}
+
+function getLast14IstDayKeys(now: Date = new Date()): string[] {
+  const { start: todayStart } = getIstDayBounds(now);
+  const keys: string[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const dayStart = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000);
+    keys.push(formatInTimeZone(dayStart, IST, "yyyy-MM-dd"));
+  }
+  return keys;
 }
 
 export function formatAdminActionType(actionType: string): string {
@@ -27,12 +52,21 @@ export function formatAdminActionType(actionType: string): string {
 
 export async function getOverviewStats() {
   const { start, end } = getIstDayBounds();
+  const { thisWeekStart, thisWeekEnd, lastWeekStart, lastWeekEnd } =
+    getIstRollingWeekBounds();
+  const last14Keys = getLast14IstDayKeys();
+  const seriesStart = new Date(`${last14Keys[0]}T00:00:00+05:30`);
 
   const [
     totalStudents,
     activeToday,
-    day7Reached,
     day30Reached,
+    day60Reached,
+    newStudentsThisWeek,
+    newStudentsLastWeek,
+    activeThisWeek,
+    activeLastWeek,
+    newStudentsForSeries,
     liveSubmissionsRaw,
     recentAdminActionsRaw,
   ] = await Promise.all([
@@ -42,8 +76,28 @@ export async function getOverviewStats() {
       distinct: ["userId"],
       select: { userId: true },
     }),
-    prisma.enrollment.count({ where: { daysCompleted: { gte: 7 } } }),
     prisma.enrollment.count({ where: { daysCompleted: { gte: 30 } } }),
+    prisma.enrollment.count({ where: { daysCompleted: { gte: 60 } } }),
+    prisma.studentProfile.count({
+      where: { createdAt: { gte: thisWeekStart, lt: thisWeekEnd } },
+    }),
+    prisma.studentProfile.count({
+      where: { createdAt: { gte: lastWeekStart, lt: lastWeekEnd } },
+    }),
+    prisma.submission.findMany({
+      where: { submittedAt: { gte: thisWeekStart, lt: thisWeekEnd } },
+      distinct: ["userId"],
+      select: { userId: true },
+    }),
+    prisma.submission.findMany({
+      where: { submittedAt: { gte: lastWeekStart, lt: lastWeekEnd } },
+      distinct: ["userId"],
+      select: { userId: true },
+    }),
+    prisma.studentProfile.findMany({
+      where: { createdAt: { gte: seriesStart } },
+      select: { createdAt: true },
+    }),
     prisma.submission.findMany({
       orderBy: { submittedAt: "desc" },
       take: 10,
@@ -79,12 +133,29 @@ export async function getOverviewStats() {
     }),
   ]);
 
+  const seriesBuckets = new Map<string, number>();
+  for (const key of last14Keys) {
+    seriesBuckets.set(key, 0);
+  }
+  for (const row of newStudentsForSeries) {
+    const key = formatInTimeZone(row.createdAt, IST, "yyyy-MM-dd");
+    if (seriesBuckets.has(key)) {
+      seriesBuckets.set(key, (seriesBuckets.get(key) ?? 0) + 1);
+    }
+  }
+  const totalStudentsSeries = last14Keys.map((key) => seriesBuckets.get(key) ?? 0);
+
   return {
     stats: {
       totalStudents,
       activeToday: activeToday.length,
-      day7Reached,
       day30Reached,
+      day60Reached,
+      totalStudentsDelta: newStudentsThisWeek - newStudentsLastWeek,
+      activeTodayDelta: activeThisWeek.length - activeLastWeek.length,
+      day30ReachedDelta: null as number | null,
+      day60ReachedDelta: null as number | null,
+      totalStudentsSeries,
     },
     liveSubmissions: liveSubmissionsRaw.map((row) => ({
       id: row.id,
