@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Menu,
+  Package,
   Users,
   X,
 } from "lucide-react";
@@ -25,7 +26,8 @@ type IconName =
   | "content"
   | "analytics"
   | "ambassadors"
-  | "referrals";
+  | "referrals"
+  | "redemptions";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -36,6 +38,7 @@ const iconMap = {
   analytics: BarChart3,
   ambassadors: Megaphone,
   referrals: Gift,
+  redemptions: Package,
 } as const;
 
 type NavItem = {

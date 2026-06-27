@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Domain } from "@prisma/client";
-import { AlertCircle, Briefcase } from "lucide-react";
+import { AlertCircle, ArrowRight, Briefcase } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth-actions";
@@ -133,6 +133,13 @@ export function AppHeader({
               Admin
             </Link>
           ) : null}
+          <Link
+            href="/marketplace"
+            className="hidden text-sm font-medium text-muted-foreground hover:text-foreground md:inline-flex md:items-center md:gap-1"
+          >
+            Refer and Redeem
+            <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
           <SynergyChip />
           <ThemeToggle />
           <span className="hidden h-6 w-px shrink-0 bg-border sm:block" aria-hidden />

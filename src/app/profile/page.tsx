@@ -26,6 +26,7 @@ import { userTypeLabel } from "@/lib/profile-display";
 import { UserType } from "@prisma/client";
 import { isClaudeEnabled } from "@/lib/feature-flags";
 import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
+import { getMyRedemptions } from "@/features/marketplace/get-my-redemptions";
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 
 function domainDisplayName(domain: Domain) {
@@ -66,11 +67,12 @@ export default async function ProfilePage() {
 
   const userId = session.user.id;
   const claudeEnabled = isClaudeEnabled();
-  const [bundle, claudeBanner] = await Promise.all([
+  const [bundle, claudeBanner, myRedemptions] = await Promise.all([
     getProfile(userId),
     claudeEnabled
       ? shouldShowClaudeBanner(userId)
       : Promise.resolve({ show: false, startsAt: null as Date | null }),
+    getMyRedemptions(userId),
   ]);
 
   const headerUser = {
@@ -230,6 +232,43 @@ export default async function ProfilePage() {
                   <p className="text-sm text-muted-foreground">
                     No resume link added yet
                   </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="min-w-0">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle>My Redemptions</CardTitle>
+                <CardDescription>
+                  Items you&apos;ve redeemed with synergy points.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                {myRedemptions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No redemptions yet. Visit the{" "}
+                    <Link href="/marketplace" className="text-primary underline">
+                      marketplace
+                    </Link>{" "}
+                    to spend your points.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {myRedemptions.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center justify-between rounded-lg border p-3 text-sm"
+                      >
+                        <div>
+                          <p className="font-medium">{r.itemTitle}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {r.dateIso.split("T")[0]} · {r.costSP} SP
+                          </p>
+                        </div>
+                        <Badge>{r.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </CardContent>
             </Card>

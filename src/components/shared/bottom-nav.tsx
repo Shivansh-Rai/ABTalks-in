@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { Briefcase, Compass, Home, User } from "lucide-react";
+import { Briefcase, Compass, Gift, Home, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/dashboard", label: "Home", Icon: Home },
   { href: "/jobs", label: "Jobs", Icon: Briefcase },
-  { href: "/mission", label: "Our Mission", Icon: Compass },
+  { href: "/marketplace", label: "Rewards", Icon: Gift },
+  { href: "/mission", label: "Mission", Icon: Compass },
   { href: "/profile", label: "Profile", Icon: User },
 ] as const;
 

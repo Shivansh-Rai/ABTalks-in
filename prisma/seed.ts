@@ -408,6 +408,45 @@ export async function seedContent() {
       );
     }
   }
+
+  await seedMarketplaceItems();
+}
+
+type MarketplaceItemJson = {
+  slug: string;
+  title: string;
+  description: string;
+  costSP: number;
+  imagePath?: string;
+  sortOrder: number;
+};
+
+async function seedMarketplaceItems() {
+  const raw = loadJsonFile<MarketplaceItemJson[]>("marketplace.json");
+  if (!Array.isArray(raw)) return;
+
+  for (const entry of raw) {
+    await prisma.marketplaceItem.upsert({
+      where: { slug: entry.slug },
+      create: {
+        slug: entry.slug,
+        title: entry.title,
+        description: entry.description,
+        costSP: entry.costSP,
+        imagePath: entry.imagePath ?? null,
+        sortOrder: entry.sortOrder,
+        active: true,
+      },
+      update: {
+        title: entry.title,
+        description: entry.description,
+        costSP: entry.costSP,
+        imagePath: entry.imagePath ?? null,
+        sortOrder: entry.sortOrder,
+        active: true,
+      },
+    });
+  }
 }
 
 async function loadChallengeIdByDomain(): Promise<Map<Domain, { id: string }>> {
