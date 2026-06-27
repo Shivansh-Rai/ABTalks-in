@@ -2900,5 +2900,118 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 28,
+    "domain": "CLAUDE",
+    "title": "Day 28: Build a Hospital Admission Readiness Simulator",
+    "problemStatement": "Welcome to Day 28 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 4 — Entrepreneurship, Business Applications & Healthcare Operations\n\nToday's focus: Learn how to use Claude as a Healthcare Operations Designer, Product Developer, and Workflow Simulation Expert.\n\nHospital admissions involve multiple operational, clinical, insurance, and documentation checks before a patient can be admitted. Admission coordinators must ensure insurance verification, prior authorization, physician orders, documentation, consent, and bed availability are completed while minimizing delays and denial risks.\n\nToday you'll use Claude to build a complete Hospital Admission Readiness Simulator that allows users to play the role of a Hospital Admission Coordinator and determine whether a patient is ready for admission.\n\nThe simulator calculates readiness scores, tracks risks, manages prior authorization workflows, simulates insurance verification, and provides a realistic healthcare operations experience.\n\nTasks:\n1. Build a Hospital Admission Readiness Simulator.\n2. Collect patient admission information.\n3. Analyze admission readiness.\n4. Manage Prior Authorization workflows.\n5. Complete hospital workflow actions.\n6. Reduce operational and clinical risks.\n7. Track readiness score and admission timeline.\n8. Review the final admission decision.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure all workflow actions, buttons, scoring, and simulations are fully functional.\n\nIf Claude does not generate the complete output or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, completed admission simulation, and learning notes.",
+    "learningObjectives": [
+      "Understand hospital admission workflows",
+      "Build healthcare operations simulators",
+      "Model Prior Authorization scenarios",
+      "Implement weighted scoring systems",
+      "Create interactive HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://drive.google.com/file/d/1B4I9rSPFA7b3JxEoBkhXdVa6YUzCb5jA/"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 28/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built a Hospital Admission Readiness Simulator using Claude.\n\nThe simulator included:\n\n🏥 Admission Readiness Analysis\n📋 Prior Authorization Workflow\n🛏️ Bed Assignment\n📄 Documentation Validation\n🩺 Clinical Risk Assessment\n📊 Readiness Score Calculation\n⏳ Timeline Tracking\n✅ Final Admission Decision\n\nBiggest takeaway:\n\nHealthcare operations involve far more than clinical care.\n\nInsurance verification, documentation, physician orders, and operational readiness all determine whether a patient can be admitted efficiently.\n\nClaude can generate complete workflow simulators that make these complex processes interactive and easy to understand.\n\n#ClaudeAI #HealthTech #HealthcareOperations #HospitalManagement #WorkflowAutomation #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the simulator, completed admission scenarios, and key learnings.",
+    "tags": [
+      "claude",
+      "day-28",
+      "healthcare",
+      "hospital",
+      "admission",
+      "workflow",
+      "simulation",
+      "html",
+      "javascript"
+    ],
+    "dayContent": {
+      "title": "Build a Hospital Admission Readiness Simulator",
+      "tagline": "Experience hospital admissions through an interactive healthcare workflow",
+      "module": "Healthcare Operations with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 60,
+      "deliverableFormat": "GitHub commit URL",
+
+      "learning": {
+        "summary": "Hospital admissions require coordination between providers, insurance companies, utilization review teams, nursing staff, and administrative personnel. Claude can generate complete workflow simulations that teach healthcare operations through interactive decision-making.",
+        "bullets": [
+          {
+            "label": "Admission Readiness",
+            "text": "Understand the operational steps before hospital admission."
+          },
+          {
+            "label": "Healthcare Operations",
+            "text": "Learn how documentation, insurance, and prior authorization impact admissions."
+          },
+          {
+            "label": "Risk Management",
+            "text": "Identify and reduce administrative and clinical risks."
+          },
+          {
+            "label": "Interactive Simulation",
+            "text": "Build complete browser-based workflow applications using Claude."
+          }
+        ]
+      },
+
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the provided Hospital Admission Readiness Simulator prompt.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the simulator in your browser.",
+          "Enter provider and physician details.",
+          "Select a diagnosis and admission type.",
+          "Configure Prior Authorization status and admission date.",
+          "Analyze the initial admission readiness score.",
+          "Complete workflow actions to improve readiness.",
+          "Resolve Prior Authorization scenarios including approvals, pending requests, or appeals.",
+          "Reduce documentation, insurance, bed, and clinical risks.",
+          "Review the Governance Snapshot when available.",
+          "Analyze the final admission decision.",
+          "Restart and test multiple diagnosis scenarios.",
+          "Take screenshots of the simulator and results.",
+          "If Claude does not complete the output or usage limits are reached, wait for the reset period and continue later.",
+          "Create a Day28 folder in your GitHub repository.",
+          "Create a day28.md file.",
+          "Upload screenshots, generated HTML file, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=uvLKwVdonrI&feature=youtu.be"
+      },
+
+      "promptTemplate": "Hospital Admission Readiness Simulator\n\nSingle-file HTML app. HTML, Tailwind CSS CDN, Vanilla JavaScript.\nstyle: same as previously established\nHealthcare simulation design system. Task-first — no dashboard on load.\nUser plays Hospital Admission Coordinator.\n\nSetup — collect:\n- Provider, Attending Physician\n- Diagnosis: Acute MI / CHF / Pneumonia / Elective Surgery / Hip Fracture\n- Admission Type: Inpatient / Observation / Emergency / ICU / Same-Day Surgery\n- PA Status, Admission Date\n\nObservation Status must always show: 'CMS 2-Midnight Rule applies — different cost-sharing, SNF eligibility, and billing than inpatient. Medicare patients require written MOON notification.'\nLabel all provider/payer names as illustrative training data.\n\nButton: 🏥 Analyze Admission Readiness\n\nInitial Analysis\nGenerate status for: PA, Insurance, Bed, Documentation, Physician Orders, Consent.\nReadiness Score 30–60%. Do not reveal final decision yet.\n\nScore Weighting:\nPA Status 25% · Clinical Documentation 20% · Physician Orders 20% · Insurance 15% · Consent 10% · Bed 10%\nDenied PA + ICU admission cannot reach 70% from admin tasks alone.\n\nPA Branches:\nApproved → continue.\nPending → Follow Up, Upload Docs, Contact Physician.\nDenied → Review Reason, Contact Insurance, Submit Appeal.\nSuccessful appeal converts to Approved.\n\nWorkflow Actions:\nAssign Bed / Verify Insurance / Upload Documentation / Complete Consent / Contact Physician / Notify Nursing / Prepare Patient Arrival\n\nAcute MI and CHF trigger a criteria note:\n'InterQual/Milliman thresholds apply — ensure documentation meets medical necessity standards before UR review.'\n\nTimeline milestones:\nPA Review → Insurance Verification → Bed Assignment → Documentation → Consent → Patient Arrival → Registration → Clinical Assessment → Admission Complete\n\nCare Coordination Cards:\nAttending / Case Manager / Nursing / Utilization Review / Discharge Planner\nUR card must name: concurrent review, denial risk identification, InterQual, Milliman.\n\nRisk Tracking:\nDocumentation Risk / Insurance Risk / Bed Risk / Clinical Risk\nClinical Risk weighted higher for Acute MI, CHF, ICU.\n\nAt Readiness ≥ 75% show Governance Snapshot:\n'Industry benchmarks (estimates only): PA turnaround 3–5 days · Inpatient denial rate ~8–10% (CMS) · PA rework cost ~$11/transaction (CAQH)'\n\nFinal Decision:\n≥ 90% → ✅ Admit — full summary.\n< 90% → ⚠ Not Ready — missing items, required actions, remaining risks.",
+
+      "engagement": {
+        "type": "Healthcare Operations Showcase",
+        "description": "Share one operational insight you learned about hospital admissions or Prior Authorization while using the simulator. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+
+      "deliverable": {
+        "description": "Upload a markdown file containing simulator screenshots, generated HTML file, completed admission scenarios, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
