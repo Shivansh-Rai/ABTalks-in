@@ -7,6 +7,7 @@ import type {
 import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { resolveDashboardEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
+import { computeStreakStats } from "@/features/submission/streak-utils";
 
 export type DashboardDataNoEnrollment = {
   hasEnrollment: false;
@@ -185,6 +186,20 @@ export async function getDashboardData(
 
   const currentDay = getCurrentDayNumber(enrollment, enrollment.challenge);
 
+  const { currentStreak, longestStreak } = await computeStreakStats(prisma, {
+    enrollmentId: enrollment.id,
+    endDay: currentDay,
+  });
+  if (
+    currentStreak !== enrollment.currentStreak ||
+    longestStreak !== enrollment.longestStreak
+  ) {
+    await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: { currentStreak, longestStreak },
+    });
+  }
+
   const todaySubmission =
     currentDay >= 1
       ? await prisma.submission.findUnique({
@@ -279,8 +294,8 @@ export async function getDashboardData(
       currentDay,
       totalDays,
       daysCompleted: enrollment.daysCompleted,
-      currentStreak: enrollment.currentStreak,
-      longestStreak: enrollment.longestStreak,
+      currentStreak,
+      longestStreak,
       status: enrollment.status,
       challenge: {
         title: enrollment.challenge.title,
