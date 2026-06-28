@@ -280,6 +280,10 @@
     max-width: none;
     object-fit: cover;
     object-position: left center;
+    filter: invert(1);
+  }
+  .dark .logo-image {
+    filter: none;
   }
 }
 
