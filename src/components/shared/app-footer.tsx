@@ -8,7 +8,11 @@ export function AppFooter() {
   const pathname = usePathname();
   const isMarketplace =
     pathname === "/marketplace" || pathname.startsWith("/marketplace/");
+  const isWorkshop =
+    pathname === "/ai-workshop" || pathname.startsWith("/ai-workshop/");
   const supportEmail = "team@abtalks.in";
+
+  if (isWorkshop) return null;
 
   return (
     <footer
