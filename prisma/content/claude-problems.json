@@ -3335,5 +3335,111 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 32,
+    "domain": "CLAUDE",
+    "title": "Day 32: Think Like a Marketing Strategist – Grow This Brand",
+    "problemStatement": "Welcome to Day 32 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 5 — Marketing, Branding & Growth Strategy\n\nToday's focus: Learn how to use Claude as a Marketing Strategist, Brand Consultant, UX Designer, Product Designer, and Frontend Developer.\n\nMarketing isn't just about creating posts or running ads.\n\nGreat marketers first understand the customer, identify the right channels, develop messaging, build content strategies, and respond to changing market conditions.\n\nToday you'll build an interactive Marketing Strategy Simulator that teaches you how marketers think.\n\nWhether you have a business, want to build a personal brand, or receive a fictional client, you'll learn how to analyze audiences, choose the right platforms, develop content pillars, build a 30-day strategy, and respond to unexpected marketing events.\n\nEven better, after every major section you'll learn how to ask Claude better questions by receiving reusable prompt templates.\n\nTasks:\n1. Build the Marketing Strategy Simulator.\n2. Choose a business, personal brand, or random client.\n3. Understand your audience.\n4. Select marketing platforms.\n5. Build content pillars.\n6. Generate a 30-day marketing roadmap.\n7. Respond to an unexpected marketing challenge.\n8. Review your Growth Report.\n9. Learn reusable Claude prompts.\n10. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nGenerate the complete application as a single HTML file using React via CDN, HTML, CSS, and JavaScript only.\n\nIf Claude does not complete the application or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, Growth Report, and key learnings.",
+    "learningObjectives": [
+      "Understand marketing strategy fundamentals",
+      "Learn audience-first thinking",
+      "Build platform-specific marketing strategies",
+      "Practice personal branding concepts",
+      "Create interactive React applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/sPEFM7SQIT8"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 32/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built an interactive Marketing Strategy Simulator using Claude.\n\nThe application helped me think like a real marketer instead of simply generating content.\n\n✨ Features included:\n\n🏢 Business & Personal Brand Modes\n🎯 Audience Research\n📱 Platform Selection Strategy\n📚 Content Pillars\n🗓️ 30-Day Growth Roadmap\n⚡ Marketing Crisis Simulation\n📈 Growth Report\n🤖 Prompt Engineering Cards\n\nBiggest takeaway:\n\nMarketing isn't about posting more.\n\nIt's about deeply understanding your audience, choosing the right channels, creating the right message, and making strategic decisions that compound over time.\n\nClaude can generate complete learning experiences that teach both marketing and prompt engineering simultaneously.\n\n#ClaudeAI #Marketing #PersonalBranding #GrowthMarketing #ContentStrategy #ReactJS #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of your Growth Report, marketing decisions, and key learnings.",
+    "tags": [
+      "claude",
+      "day-32",
+      "marketing",
+      "branding",
+      "personal-brand",
+      "react",
+      "simulation",
+      "growth-strategy"
+    ],
+    "dayContent": {
+      "title": "Think Like a Marketing Strategist",
+      "tagline": "Learn how great marketers think before they create",
+      "module": "Marketing Strategy with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 75,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Successful marketing begins with understanding people—not creating content. Claude can help users think strategically by analyzing audiences, selecting platforms, building messaging frameworks, and creating growth plans through interactive simulations.",
+        "bullets": [
+          {
+            "label": "Audience First",
+            "text": "Understand customers before choosing marketing tactics."
+          },
+          {
+            "label": "Platform Strategy",
+            "text": "Learn why different platforms suit different goals."
+          },
+          {
+            "label": "Content Strategy",
+            "text": "Develop content pillars that support long-term growth."
+          },
+          {
+            "label": "Prompt Engineering",
+            "text": "Learn reusable Claude prompts after every major activity."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the provided Marketing Strategy Simulator prompt.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application in your browser.",
+          "Choose Business, Personal Brand, or Random Client mode.",
+          "Understand the target audience.",
+          "Select the best marketing platforms.",
+          "Choose three content pillars.",
+          "Generate the 30-day marketing roadmap.",
+          "Respond to the randomized marketing event.",
+          "Review the final Growth Report.",
+          "Study the reusable Claude prompts after every section.",
+          "Replay using different businesses or personal brands.",
+          "Take screenshots of your results.",
+          "If Claude reaches its usage limit, wait for the reset period before continuing.",
+          "Create a Day32 folder in your GitHub repository.",
+          "Create a day32.md file.",
+          "Upload screenshots, the generated HTML file, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/sPEFM7SQIT8"
+      },
+      "promptTemplate": "Think Like a Marketing Strategist: Grow This Brand:\n\nYou are an expert frontend developer, UX designer, marketing strategist, and instructional designer.\n\nBuild a complete single-file HTML app called: \"Think Like a Marketing Strategist: Grow This Brand\"\n\nThe goal is to teach beginners how marketers think, not just generate marketing content. Every section should explain \"What is this?\" and \"Why does it matter?\" in simple language.\n\nRequirements\n\nOutput ONLY one HTML file\n\nReact via CDN + Babel JSX\n\nHTML, CSS and JavaScript only\n\nNo Tailwind, npm, backend or APIs\n\nRuns offline\n\nResponsive\n\nDark modern UI\n\nReplayable with randomized businesses\n\nFlow\n\nWelcome screen introducing marketing strategy.\n\nLet the user choose:\n\n🏢 Use My Own Business\n\n🙋 Build My Personal Brand ← if someone doesn't have a business, this lets them use their own name, expertise, and story as the brand\n\n🎲 A New Client Has Arrived (randomly generate a business with industry, audience, budget, competitors and marketing challenge)\n\nTeach the user to understand the business/brand and its audience. For personal brands, the \"product\" is the person's expertise and story. Replace \"competitors\" with \"people in your space you admire.\"\n\nAsk the user to choose the best social media platforms. Explain why each platform is or isn't suitable. For personal brands, weight LinkedIn, X/Twitter, YouTube, and newsletters more heavily.\n\nGenerate multiple content pillars. The user must choose only three. For personal brands, include pillars like Thought Leadership, Personal Story, Behind the Scenes, and Audience Education. Explain how each supports different goals.\n\nBuild a simple 30-day content roadmap showing weekly goals and strategy (not individual posts). For personal brands, Week 1 should focus on defining POV and optimizing bio/profile.\n\nGenerate one unexpected marketing event. For personal brands this could be: a viral post, a podcast invite, a public disagreement, someone copying your content, or a sudden follower spike. Let the user respond and explain consequences.\n\nEnd with a Growth Report containing:\n\nAudience Understanding\n\nPlatform Strategy\n\nContent Strategy\n\nGrowth Potential\n\nBest Decision\n\nBiggest Mistake\n\nThree Marketing Lessons\n\nFor personal brands, lessons should reference personal branding principles like authenticity, consistency, and niche clarity.\n\nAfter every major section, include a \"How to ask Claude\" card with a reusable prompt so users learn prompt engineering while learning marketing. For personal brand mode, the prompts should reference the person's name and niche instead of a company.\n\nUse reusable React components with useState. Add smooth transitions, cards, progress indicators and ensure every button works.",
+      "engagement": {
+        "type": "Marketing Strategy Showcase",
+        "description": "Share your Growth Report, the marketing strategy you built, and the biggest lesson you learned about audience-first marketing. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the Marketing Strategy Simulator, generated HTML file, Growth Report, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
