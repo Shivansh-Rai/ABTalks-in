@@ -1,4 +1,4 @@
-import { EnrollmentStatus } from "@prisma/client";
+import type { Domain } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 export type QuizHistoryRow = {
@@ -11,21 +11,8 @@ export type QuizHistoryRow = {
 
 export async function getQuizAttemptHistory(
   userId: string,
-  enrollmentId: string,
+  enrollment: { challengeId: string; domain: Domain },
 ): Promise<QuizHistoryRow[]> {
-  const enrollment = await prisma.enrollment.findFirst({
-    where: {
-      id: enrollmentId,
-      userId,
-      status: { not: EnrollmentStatus.ABANDONED },
-    },
-    select: { challengeId: true, domain: true },
-  });
-
-  if (!enrollment) {
-    return [];
-  }
-
   const attempts = await prisma.quizAttempt.findMany({
     where: {
       userId,
@@ -34,7 +21,9 @@ export async function getQuizAttemptHistory(
         domain: enrollment.domain,
       },
     },
-    include: {
+    select: {
+      id: true,
+      score: true,
       quiz: { select: { id: true, weekNumber: true, title: true } },
     },
     orderBy: { attemptedAt: "desc" },

@@ -6,6 +6,24 @@ import {
   getIstDateKeyForChallengeDay,
 } from "@/lib/date-utils";
 import { isWithinRelaxationWindow } from "@/features/submission/submit-day";
+import { getDailyTasksCached } from "@/features/challenge/get-daily-tasks-cached";
+
+/** Pre-resolved enrollment the dashboard can thread in to avoid a re-query. */
+type ResolvedHeatmapEnrollment = {
+  startedAt: Date;
+  challengeId: string;
+  userId: string;
+  challenge: { startsAt: Date | null };
+};
+
+/** Pre-fetched submissions the dashboard can thread in (one query, reused). */
+type HeatmapSubmission = {
+  dayNumber: number;
+  status: SubmissionStatus;
+  githubUrl: string | null;
+  linkedinUrl: string | null;
+  submittedAt: Date;
+};
 
 export type HeatmapCellStatus =
   | "on_time"
@@ -40,62 +58,60 @@ export type HeatmapCell = {
 
 export async function getHeatmapData(
   enrollmentId: string,
-  options?: { includeSubmissionDetails?: boolean; viewerUserId?: string },
+  options?: {
+    includeSubmissionDetails?: boolean;
+    viewerUserId?: string;
+    /** Pre-resolved enrollment (dashboard); skips the enrollment query when provided. */
+    enrollment?: ResolvedHeatmapEnrollment;
+    /** Pre-fetched submissions (dashboard); skips the submissions query when provided. */
+    submissions?: HeatmapSubmission[];
+  },
 ): Promise<HeatmapCell[]> {
   const includeSubmissionDetails = options?.includeSubmissionDetails ?? true;
   const viewerUserId = options?.viewerUserId;
 
-  const enrollment = viewerUserId
-    ? await prisma.enrollment.findFirst({
-        where: { id: enrollmentId, userId: viewerUserId },
-        select: {
-          startedAt: true,
-          challengeId: true,
-          userId: true,
-          challenge: { select: { startsAt: true } },
-        },
-      })
-    : await prisma.enrollment.findUnique({
-        where: { id: enrollmentId },
-        select: {
-          startedAt: true,
-          challengeId: true,
-          userId: true,
-          challenge: { select: { startsAt: true } },
-        },
-      });
+  const enrollment =
+    options?.enrollment ??
+    (viewerUserId
+      ? await prisma.enrollment.findFirst({
+          where: { id: enrollmentId, userId: viewerUserId },
+          select: {
+            startedAt: true,
+            challengeId: true,
+            userId: true,
+            challenge: { select: { startsAt: true } },
+          },
+        })
+      : await prisma.enrollment.findUnique({
+          where: { id: enrollmentId },
+          select: {
+            startedAt: true,
+            challengeId: true,
+            userId: true,
+            challenge: { select: { startsAt: true } },
+          },
+        }));
 
   if (!enrollment) {
     return [];
   }
 
+  const submissionsPromise: Promise<HeatmapSubmission[]> = options?.submissions
+    ? Promise.resolve(options.submissions)
+    : prisma.submission.findMany({
+        where: { enrollmentId },
+        select: {
+          dayNumber: true,
+          status: true,
+          githubUrl: includeSubmissionDetails,
+          linkedinUrl: includeSubmissionDetails,
+          submittedAt: true,
+        },
+      });
+
   const [submissions, tasks, adminActions] = await Promise.all([
-    prisma.submission.findMany({
-      where: { enrollmentId },
-      select: {
-        dayNumber: true,
-        status: true,
-        githubUrl: includeSubmissionDetails,
-        linkedinUrl: includeSubmissionDetails,
-        submittedAt: true,
-      },
-    }),
-    prisma.dailyTask.findMany({
-      where: {
-        challengeId: enrollment.challengeId,
-        dayNumber: { gte: 1, lte: 60 },
-      },
-      select: {
-        dayNumber: true,
-        title: true,
-        problemStatement: true,
-        learningObjectives: true,
-        resources: true,
-        tags: true,
-        difficulty: true,
-        estimatedMinutes: true,
-      },
-    }),
+    submissionsPromise,
+    getDailyTasksCached(enrollment.challengeId),
     prisma.adminAction.findMany({
       where: {
         targetUserId: enrollment.userId,

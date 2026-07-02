@@ -4,18 +4,26 @@ import type {
   Role,
   SubmissionStatus,
 } from "@prisma/client";
-import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { resolveDashboardEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
-import { computeStreakStats } from "@/features/submission/streak-utils";
+import { getUserWithProfile } from "@/features/user/get-user-with-profile";
+import { getDailyTasksCached } from "@/features/challenge/get-daily-tasks-cached";
+import { prisma } from "@/lib/db";
+
+/** User row missing (deleted) — the page should sign the session out. */
+export type DashboardDataNoUser = {
+  hasUser: false;
+};
 
 export type DashboardDataNoEnrollment = {
+  hasUser: true;
   hasEnrollment: false;
   profile: DashboardDataWithEnrollment["profile"] | null;
   enrollment: DashboardDataWithEnrollment["enrollment"] | null;
 };
 
 export type DashboardDataWithEnrollment = {
+  hasUser: true;
   hasEnrollment: true;
   user: {
     id: string;
@@ -37,6 +45,8 @@ export type DashboardDataWithEnrollment = {
   };
   enrollment: {
     id: string;
+    userId: string;
+    challengeId: string;
     domain: Domain;
     startedAt: Date;
     currentDay: number;
@@ -65,96 +75,34 @@ export type DashboardDataWithEnrollment = {
     submittedAt: Date;
   }>;
   referralCount: number;
-  /** Week quiz available to take (highest unlocked week with a seeded quiz and no attempt yet). */
-  availableQuiz: {
-    quizId: string;
-    weekNumber: number;
-    title: string;
-    questionCount: number;
-  } | null;
+  /** All submissions for the resolved enrollment (single fetch, threaded into the heatmap). */
+  submissions: Array<{
+    id: string;
+    dayNumber: number;
+    status: SubmissionStatus;
+    submittedAt: Date;
+    githubUrl: string | null;
+    linkedinUrl: string | null;
+  }>;
 };
 
-export type DashboardData = DashboardDataNoEnrollment | DashboardDataWithEnrollment;
-
-const MAX_QUIZ_WEEK = 8;
-
-/**
- * Highest week ≤ floor(daysCompleted/7) that has a DB quiz and no attempt yet;
- * falls back to earlier weeks if a higher week has no quiz row (e.g. only Week 1 seeded).
- */
-async function resolveAvailableQuizForBanner(
-  userId: string,
-  challengeId: string,
-  domain: Domain,
-  daysCompleted: number,
-): Promise<DashboardDataWithEnrollment["availableQuiz"]> {
-  const unlockedWeek = Math.floor(daysCompleted / 7);
-  if (unlockedWeek < 1) return null;
-
-  const maxWeek = Math.min(unlockedWeek, MAX_QUIZ_WEEK);
-
-  for (let weekNumber = maxWeek; weekNumber >= 1; weekNumber--) {
-    const quiz = await prisma.quiz.findFirst({
-      where: { challengeId, domain, weekNumber },
-      select: { id: true, weekNumber: true, title: true },
-    });
-    if (!quiz) continue;
-
-    const attempt = await prisma.quizAttempt.findUnique({
-      where: { userId_quizId: { userId, quizId: quiz.id } },
-      select: { id: true },
-    });
-    if (attempt) continue;
-
-    const questionCount = await prisma.quizQuestion.count({
-      where: { quizId: quiz.id },
-    });
-
-    return {
-      quizId: quiz.id,
-      weekNumber: quiz.weekNumber,
-      title: quiz.title,
-      questionCount,
-    };
-  }
-
-  return null;
-}
+export type DashboardData =
+  | DashboardDataNoUser
+  | DashboardDataNoEnrollment
+  | DashboardDataWithEnrollment;
 
 export async function getDashboardData(
   userId: string,
   enrollmentId?: string | null,
 ): Promise<DashboardData> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      studentProfile: {
-        select: {
-          fullName: true,
-          domain: true,
-          userType: true,
-          college: true,
-          organization: true,
-          role: true,
-          referralCode: true,
-          isReadyForInterview: true,
-          isCampusAmbassadorCandidate: true,
-          ambassadorDismissedAt: true,
-        },
-      },
-    },
-  });
+  const user = await getUserWithProfile(userId);
 
   if (!user) {
-    return { hasEnrollment: false, profile: null, enrollment: null };
+    return { hasUser: false };
   }
 
   if (!user.studentProfile) {
-    return { hasEnrollment: false, profile: null, enrollment: null };
+    return { hasUser: true, hasEnrollment: false, profile: null, enrollment: null };
   }
 
   const profileSnapshot: DashboardDataWithEnrollment["profile"] = {
@@ -178,6 +126,7 @@ export async function getDashboardData(
 
   if (!enrollment) {
     return {
+      hasUser: true,
       hasEnrollment: false,
       profile: profileSnapshot,
       enrollment: null,
@@ -185,89 +134,56 @@ export async function getDashboardData(
   }
 
   const currentDay = getCurrentDayNumber(enrollment, enrollment.challenge);
-
-  const { currentStreak, longestStreak } = await computeStreakStats(prisma, {
-    enrollmentId: enrollment.id,
-    endDay: currentDay,
-  });
-  if (
-    currentStreak !== enrollment.currentStreak ||
-    longestStreak !== enrollment.longestStreak
-  ) {
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: { currentStreak, longestStreak },
-    });
-  }
-
-  const todaySubmission =
-    currentDay >= 1
-      ? await prisma.submission.findUnique({
-          where: {
-            enrollmentId_dayNumber: {
-              enrollmentId: enrollment.id,
-              dayNumber: currentDay,
-            },
-          },
-          select: { id: true },
-        })
-      : null;
-
-  const isTodayCompleted = todaySubmission !== null;
   const totalDays = enrollment.challenge.totalDays;
+
+  // Single submissions fetch — derives today-completed, recent-7, and the heatmap day map.
+  const allSubmissions = await prisma.submission.findMany({
+    where: { enrollmentId: enrollment.id },
+    orderBy: { submittedAt: "desc" },
+    select: {
+      id: true,
+      dayNumber: true,
+      status: true,
+      submittedAt: true,
+      githubUrl: true,
+      linkedinUrl: true,
+    },
+  });
+
+  const isTodayCompleted =
+    currentDay >= 1 && allSubmissions.some((s) => s.dayNumber === currentDay);
+
+  const recentSubmissions = allSubmissions.slice(0, 7).map((s) => ({
+    id: s.id,
+    dayNumber: s.dayNumber,
+    status: s.status,
+    submittedAt: s.submittedAt,
+  }));
 
   let todayTask: DashboardDataWithEnrollment["todayTask"] = null;
   const isChallengeComplete =
     enrollment.status === "COMPLETED" || enrollment.daysCompleted >= totalDays;
 
   if (!isChallengeComplete && !isTodayCompleted) {
-    const task = await prisma.dailyTask.findUnique({
-      where: {
-        challengeId_dayNumber: {
-          challengeId: enrollment.challengeId,
-          dayNumber: currentDay,
-        },
-      },
-      select: {
-        id: true,
-        dayNumber: true,
-        title: true,
-        difficulty: true,
-        estimatedMinutes: true,
-      },
-    });
+    const tasks = await getDailyTasksCached(enrollment.challengeId);
+    const task = tasks.find((t) => t.dayNumber === currentDay);
     if (task) {
-      todayTask = task;
+      todayTask = {
+        id: task.id,
+        dayNumber: task.dayNumber,
+        title: task.title,
+        difficulty: task.difficulty,
+        estimatedMinutes: task.estimatedMinutes,
+      };
     }
   }
-
-  const recentSubmissions = await prisma.submission.findMany({
-    where: { userId, enrollmentId: enrollment.id },
-    orderBy: { submittedAt: "desc" },
-    take: 7,
-    select: {
-      id: true,
-      dayNumber: true,
-      status: true,
-      submittedAt: true,
-    },
-  });
 
   const referralCount = await prisma.referral.count({
     where: { referrerId: userId },
   });
 
-  const availableQuiz =
-    enrollment.status === "ABANDONED"
-      ? null
-      : await resolveAvailableQuizForBanner(
-          userId,
-          enrollment.challengeId,
-          enrollment.domain,
-          enrollment.daysCompleted,
-        );
-
   return {
+    hasUser: true,
     hasEnrollment: true,
     user: {
       id: user.id,
@@ -275,27 +191,18 @@ export async function getDashboardData(
       email: user.email,
       role: user.role,
     },
-    profile: {
-      fullName: user.studentProfile.fullName,
-      domain: user.studentProfile.domain,
-      userType: user.studentProfile.userType,
-      college: user.studentProfile.college,
-      organization: user.studentProfile.organization,
-      role: user.studentProfile.role,
-      referralCode: user.studentProfile.referralCode,
-      isReadyForInterview: user.studentProfile.isReadyForInterview,
-      isCampusAmbassadorCandidate: user.studentProfile.isCampusAmbassadorCandidate,
-      ambassadorDismissedAt: user.studentProfile.ambassadorDismissedAt,
-    },
+    profile: profileSnapshot,
     enrollment: {
       id: enrollment.id,
+      userId: enrollment.userId,
+      challengeId: enrollment.challengeId,
       domain: enrollment.domain,
       startedAt: enrollment.startedAt,
       currentDay,
       totalDays,
       daysCompleted: enrollment.daysCompleted,
-      currentStreak,
-      longestStreak,
+      currentStreak: enrollment.currentStreak,
+      longestStreak: enrollment.longestStreak,
       status: enrollment.status,
       challenge: {
         title: enrollment.challenge.title,
@@ -306,6 +213,6 @@ export async function getDashboardData(
     isTodayCompleted,
     recentSubmissions,
     referralCount,
-    availableQuiz,
+    submissions: allSubmissions,
   };
 }

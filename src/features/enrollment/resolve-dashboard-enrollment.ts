@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Domain } from "@prisma/client";
 import { EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
@@ -29,8 +30,11 @@ export const sessionEnrollmentSelect = {
  * Resolves the enrollment shown on the dashboard.
  * - Optional `enrollmentId` must belong to the user and be ACTIVE, or it is ignored.
  * - Default: oldest ACTIVE enrollment, then legacy profile-domain match, then any enrollment.
+ *
+ * Wrapped in React `cache()` so repeat calls within one render dedupe to a
+ * single DB hit (defense-in-depth; the dashboard resolves once and threads it down).
  */
-export async function resolveDashboardEnrollment(
+export const resolveDashboardEnrollment = cache(async function resolveDashboardEnrollment(
   userId: string,
   enrollmentId: string | undefined,
   profileDomain: Domain | null,
@@ -69,7 +73,7 @@ export async function resolveDashboardEnrollment(
     orderBy: { startedAt: "desc" },
     select: sessionEnrollmentSelect,
   });
-}
+});
 
 /**
  * Challenge / submission flows: allow ACTIVE or other non-ABANDONED statuses

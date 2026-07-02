@@ -275,6 +275,11 @@ const challengeSpecs: { domain: Domain; title: string; description: string }[] =
   },
 ];
 
+// Cache invalidation (manual): daily-task content and the CLAUDE start date are
+// cached server-side via `unstable_cache` (tags `daily-tasks:<challengeId>` and
+// `challenge:CLAUDE`). This script runs outside the Next.js runtime, so it cannot
+// call `revalidateTag`. After reseeding content, bust those caches by redeploying
+// (a fresh deployment starts with an empty cache) so the new content is served.
 export async function seedContent() {
   const problemsRaw = loadJsonFile<ProblemJson[]>("problems.json");
   const problemLookup = buildProblemLookup(

@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-06-28 [convention] Dashboard read paths must not write; streaks/daysCompleted stay write-time-only (submitDay). Immutable content (daily tasks, Challenge.startsAt) cached via unstable_cache tags daily-tasks:<challengeId> / challenge:CLAUDE, busted on reseed/redeploy.
 - 2026-06-28 [rule] Marketplace item costSP raised from 250 to 1800 SP for all catalog products in marketplace.json.
 - 2026-06-17 [env] RESEND_API_KEY for welcome email on registration via Resend (team@abtalks.in).
 - 2026-06-12 [schema] Added RecruiterReview model for admin-curated anonymized recruiter profiles with share tokens.

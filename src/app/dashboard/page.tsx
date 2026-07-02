@@ -119,15 +119,6 @@ export default async function DashboardPage({
     redirect("/login");
   }
 
-  const userExists = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true },
-  });
-
-  if (!userExists) {
-    redirect("/api/auth/signout?callbackUrl=/login");
-  }
-
   const query = await searchParams;
   const showPastMissedToast =
     readQueryParam(query, "toast") === "past-missed";
@@ -149,6 +140,10 @@ export default async function DashboardPage({
     getUserActiveEnrollments(session.user.id),
     getDashboardData(session.user.id, selectedEnrollmentId),
   ]);
+
+  if (!data.hasUser) {
+    redirect("/api/auth/signout?callbackUrl=/login");
+  }
 
   if (!data.profile || !data.enrollment) {
     redirect("/register");
@@ -177,7 +172,7 @@ export default async function DashboardPage({
   );
 
   const claudeBanner = claudeEnabled
-    ? await shouldShowClaudeBanner(session.user.id)
+    ? await shouldShowClaudeBanner(session.user.id, hasClaudeEnrollment)
     : { show: false, startsAt: null as Date | null };
 
   if (dashboardData.enrollment.status === "ABANDONED") {
@@ -289,11 +284,12 @@ export default async function DashboardPage({
 
   const [heatmapData, quizAvailability, quizHistory] = await Promise.all([
     getHeatmapData(dashboardData.enrollment.id, {
-      viewerUserId: session.user.id,
+      enrollment: dashboardData.enrollment,
+      submissions: dashboardData.submissions,
     }),
     // getLeaderboard({ ... }), // disabled with leaderboard section
-    getAvailableQuiz(session.user.id, dashboardData.enrollment.id),
-    getQuizAttemptHistory(session.user.id, dashboardData.enrollment.id),
+    getAvailableQuiz(session.user.id, dashboardData.enrollment),
+    getQuizAttemptHistory(session.user.id, dashboardData.enrollment),
   ]);
 
   const progressPct = Math.min(
@@ -336,13 +332,13 @@ export default async function DashboardPage({
         />
       ) : null}
       <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
-        {dashboardData.availableQuiz ? (
+        {quizAvailability.banner ? (
           <div className="mb-6">
             <QuizUnlockBanner
-              weekNumber={dashboardData.availableQuiz.weekNumber}
-              quizId={dashboardData.availableQuiz.quizId}
-              title={dashboardData.availableQuiz.title}
-              questionCount={dashboardData.availableQuiz.questionCount}
+              weekNumber={quizAvailability.banner.weekNumber}
+              quizId={quizAvailability.banner.quizId}
+              title={quizAvailability.banner.title}
+              questionCount={quizAvailability.banner.questionCount}
             />
           </div>
         ) : null}
@@ -559,7 +555,7 @@ export default async function DashboardPage({
 
         {quizAvailability.reason === "ready" &&
         quizAvailability.quiz &&
-        !dashboardData.availableQuiz ? (
+        !quizAvailability.banner ? (
           <Card>
             <CardHeader>
               <CardTitle>
