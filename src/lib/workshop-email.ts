@@ -44,7 +44,7 @@ export async function sendWorkshopConfirmationEmail(
                   <p style="color:#333;font-size:14px;line-height:2;margin:0;">
                     📅 <strong>Date:</strong> ${webinarDate}<br>
                     🕒 <strong>Time:</strong> ${webinarTime}<br>
-                    📍 <strong>Platform:</strong> Zoom
+                    📍 <strong>Platform:</strong> Google Meet
                   </p>
                 </td></tr>
               </table>
@@ -52,7 +52,7 @@ export async function sendWorkshopConfirmationEmail(
                 <tr>
                   <td align="center" style="padding:8px 0 24px;">
                     <a href="${zoomLink}" style="display:inline-block;background:linear-gradient(135deg,#e16213,#e84393);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:50px;font-size:15px;font-weight:600;">
-                      🔗 Join Zoom Meeting
+                      🔗 Join Google Meet
                     </a>
                   </td>
                 </tr>
