@@ -460,13 +460,13 @@ export function DayPage({
           <CollapsibleSection
             icon={<PlayCircle className="h-5 w-5 text-red-500" />}
             iconBg="bg-red-500/10"
-            title="Solution Walkthrough"
+            title="Tutorial Video"
             subtitle="Step-by-step video guide"
             animationDelay={0.38}
           >
             {solutionVideoUrl.includes("REPLACE_WITH") ? (
               <p className="text-sm text-muted-foreground">
-                Solution walkthrough video coming soon. Check back shortly.
+                Tutorial Video video coming soon. Check back shortly.
               </p>
             ) : (
               <a
