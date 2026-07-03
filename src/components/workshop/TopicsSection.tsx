@@ -168,7 +168,7 @@ export default function TopicsSection() {
         {(["⏱️", "📍", "💰"] as const).map((icon, i) => {
           const data = [
             { icon: "⏱️", label: "Duration", value: "1 Hour",  subtext: "Live Interactive", highlight: false },
-            { icon: "📍", label: "Platform", value: "Zoom",    subtext: "Secure link sent", highlight: false },
+            { icon: "📍", label: "Platform", value: "Google Meet", subtext: "Secure link sent", highlight: false },
             { icon: "💰", label: "Price",    value: "FREE",    subtext: "100% Sponsored",   highlight: true  },
           ][i];
           return (
