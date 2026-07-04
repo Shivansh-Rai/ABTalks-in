@@ -67,7 +67,7 @@ export function WhatYouWillBuild({ compact = false }: Props) {
           What You Will Build
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-muted-foreground">
-          Four core modules — each culminating in a live project you can showcase
+          Four core modules - each culminating in a live project you can showcase
           to employers.
         </p>
 

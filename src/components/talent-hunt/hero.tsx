@@ -26,25 +26,27 @@ export function Hero({ compact = false }: Props) {
         </p>
         <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
           A 30-day intensive cohort designed for USA-based working professionals
-          who want to transition into high-impact AI roles — with live projects,
+          who want to transition into high-impact AI roles with live projects,
           mentorship, and enterprise-grade skills.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Badge
-            variant="outline"
-            className="gap-1.5 px-3 py-1.5 text-sm font-normal"
-          >
-            <CalendarDays className="size-4 text-primary" aria-hidden />
-            Launch: 15 Jul 2026
-          </Badge>
-          <Badge
-            variant="outline"
-            className="gap-1.5 px-3 py-1.5 text-sm font-normal"
-          >
-            <CalendarDays className="size-4 text-primary" aria-hidden />
-            Completion: 30 Aug 2026
-          </Badge>
+          <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-[var(--shadow-card)]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <CalendarDays className="size-4 text-primary" aria-hidden />
+            </div>
+            <span className="text-sm font-medium text-foreground">
+              Launch: 15 Jul 2026
+            </span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-[var(--shadow-card)]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <CalendarDays className="size-4 text-primary" aria-hidden />
+            </div>
+            <span className="text-sm font-medium text-foreground">
+              Completion: 30 Aug 2026
+            </span>
+          </div>
         </div>
 
         <p className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2 text-sm text-muted-foreground">
