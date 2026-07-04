@@ -3546,5 +3546,110 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 34,
+    "domain": "CLAUDE",
+    "title": "Day 34: Become a Marketing Detective",
+    "problemStatement": "Welcome to Day 34 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 5 — Marketing, Consumer Psychology & Critical Thinking\n\nToday's focus: Learn how to use Claude as a Frontend Developer, UX Designer, Instructional Designer, and Marketing Strategist.\n\nGreat marketers don't just create campaigns—they investigate why campaigns succeed or fail.\n\nEvery advertisement, product launch, or social media campaign leaves behind clues hidden inside customer feedback, engagement metrics, audience behavior, budgets, and sales performance.\n\nToday you'll build an interactive Marketing Detective experience where you investigate fictional marketing campaigns, gather evidence, identify mistakes, and discover the real reasons behind campaign success or failure.\n\nRather than simply reading case studies, you'll think like a marketing consultant by collecting clues, testing hypotheses, and solving each case through interactive gameplay.\n\nTasks:\n1. Build the complete Marketing Detective application.\n2. Choose your preferred color theme.\n3. Investigate fictional marketing campaigns.\n4. Analyze campaign evidence.\n5. Identify the root marketing mistake.\n6. Review expert explanations.\n7. Complete the Marketing Learning Report.\n8. Replay using randomized marketing cases.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction, animation, draggable element, and investigation workflow is fully functional with zero syntax or runtime errors.\n\nIf Claude does not complete the application or your usage limit is reached, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, completed investigation report, and key learnings.",
+    "learningObjectives": [
+      "Analyze real-world marketing campaigns",
+      "Identify marketing mistakes using evidence",
+      "Understand customer behavior and campaign performance",
+      "Learn investigative marketing thinking",
+      "Build interactive React applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://www.youtube.com/watch?v=n4Fn5Q3P1Jw"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 75,
+    "linkedinTemplate": "Day 34/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built an interactive Marketing Detective game using Claude.\n\nInstead of generating marketing campaigns, I investigated why campaigns succeeded or failed.\n\n🕵️ Features included:\n\n🗂️ Random Marketing Cases\n📊 Campaign Performance Analysis\n📌 Interactive Detective Board\n📝 Draggable Evidence Cards\n📈 Marketing Metrics Investigation\n🎯 Root Cause Identification\n📚 Marketing Learning Report\n🔁 Replayable Case Studies\n\nBiggest takeaway:\n\nGreat marketers don't guess.\n\nThey investigate customer behavior, analyze data, connect clues, and identify the real reasons behind campaign performance.\n\nClaude transformed marketing education into an interactive detective experience that teaches strategic thinking instead of memorization.\n\n#ClaudeAI #Marketing #MarketingStrategy #MarketingAnalytics #ReactJS #PromptEngineering #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the investigation board, solved marketing cases, and key learnings.",
+    "tags": [
+      "claude",
+      "day-34",
+      "marketing",
+      "marketing-analytics",
+      "react",
+      "education",
+      "simulation",
+      "critical-thinking"
+    ],
+    "dayContent": {
+      "title": "Become a Marketing Detective",
+      "tagline": "Solve marketing mysteries through interactive investigation",
+      "module": "Marketing Analytics with Claude",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 75,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Successful marketing isn't based on intuition alone. Great marketers gather evidence, analyze customer behavior, identify patterns, and continuously improve campaigns. Claude can generate immersive detective-style simulations that teach marketing through investigation and discovery.",
+        "bullets": [
+          {
+            "label": "Campaign Analysis",
+            "text": "Learn how marketers evaluate campaign performance using real business metrics."
+          },
+          {
+            "label": "Evidence-Based Thinking",
+            "text": "Develop analytical skills by connecting clues before drawing conclusions."
+          },
+          {
+            "label": "Customer Insights",
+            "text": "Understand how audience behavior influences marketing success."
+          },
+          {
+            "label": "Interactive Learning",
+            "text": "Build engaging educational React applications using Claude."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the provided Marketing Detective prompt.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application in your browser.",
+          "Choose your preferred color theme.",
+          "Accept your first marketing investigation.",
+          "Analyze campaign evidence using the investigation board.",
+          "Drag and organize evidence cards.",
+          "Identify the primary marketing mistake.",
+          "Review the expert explanation and verdict.",
+          "Study the Marketing Learning Report.",
+          "Replay using multiple randomized marketing cases.",
+          "Take screenshots of your completed investigation.",
+          "If Claude reaches its usage limit, wait for the reset period before continuing.",
+          "Create a Day34 folder in your GitHub repository.",
+          "Create a day34.md file.",
+          "Upload screenshots, the generated HTML file, and your key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/S0TyCaHyZU0"
+      },
+      "promptTemplate": "You are an expert frontend developer, UX designer, instructional designer, and marketing strategist.\n\nAsk the user to choose a color theme from a few presets (including Claude Orange).\n\nCreate a beautiful single-file HTML application called 'Marketing Detective'.\n\nUse React via CDN + Babel. However, if React/Babel would prevent the app from running reliably as a standalone local HTML file, automatically switch to an equivalent implementation using pure HTML, CSS and vanilla JavaScript. Do not use Tailwind, npm, backend, APIs, databases, images or external assets.\n\nThe application should feel like a polished detective game, not a business dashboard. Every interaction should create curiosity before revealing the next clue.\n\nGenerate 10 detailed fictional marketing cases. If output quota allows, expand to 15–20 cases. Store them inside a JavaScript array and randomly load a new case each replay.\n\nEach case must contain:\n• Company Name\n• Industry\n• Campaign Objective\n• Target Audience\n• Marketing Channels\n• Budget Allocation\n• Campaign Metrics (Reach, CTR, Engagement, Conversions, Sales)\n• Customer Comments\n• Social Media Performance\n• One Primary Marketing Mistake\n• Three Supporting Clues\n• Correct Explanation\n• Suggested Improvements\n\nUser Flow:\n1. Case Assignment\n2. Investigation Board\n3. Interactive Investigation with draggable evidence\n4. Solve the Case\n5. Case Closed animation\n6. Learning Report\n\nDesign a premium dark detective aesthetic using corkboards, folders, sticky notes, push pins, paper textures, glowing accents, smooth transitions, hover effects, progress indicators, animated charts, and responsive layout.\n\nReuse React components wherever possible.\n\nBefore returning the final HTML, internally verify there are no syntax or runtime errors and that the application runs correctly as a standalone HTML file.\n\nReturn ONLY the complete HTML file.",
+      "engagement": {
+        "type": "Marketing Detective Showcase",
+        "description": "Share the biggest marketing mistake you uncovered during your investigation and the lesson it taught you. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the Marketing Detective application, generated HTML file, solved case reports, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
