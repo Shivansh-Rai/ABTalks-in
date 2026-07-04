@@ -175,6 +175,9 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `/login` — Server Component, redirects logged-in users to dashboard or register based on profile state
 - `/students/[id]` — public profile page for a finished/active student (basic info only — no email, phone, resume)
 - `/claude-signup` — public Claude track signup / interest page (Claude cohort entry)
+- `/ai-workshop` — standalone workshop registration microsite (isolated Supabase `registrations` table)
+- `/ai-cohort-register` — guided 4-screen onboarding for the AI Cohort Training Program (landing → program overview → curriculum → audience CTA)
+- `/ai-cohort-register/apply` — 5-step application form (gated: requires completing onboarding; stored in workshop Supabase `cohort_applications`; confirmation email deferred)
 
 ### Protected routes (require session via middleware)
 - `/register` — Server Component, redirects to dashboard if profile + enrollment exist; auto-cleans orphaned profiles (profile without enrollment). Supports both STUDENT and PROFESSIONAL `userType`, and a CLAUDE-only forced-domain mode via `?domain=CLAUDE`.
@@ -210,6 +213,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `admin-actions.ts` — 5 admin actions (markDayComplete, resetProgress, toggleReadyForInterview, removeFromChallenge, rejectSubmission)
 - `admin-export-actions.ts` — CSV export server actions (uses `lib/csv.ts`); admin-gated
 - `campus-ambassador-actions.ts` — student-side opt-in / dismiss + admin-side accept / reject for the campus ambassador program
+- `cohort-application-actions.ts` — `submitCohortApplicationAction` (public; inserts into workshop Supabase `cohort_applications`)
 
 All return discriminated union: `{ ok: true, data } | { ok: false, message }`
 

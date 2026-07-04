@@ -10,9 +10,12 @@ export function AppFooter() {
     pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   const isWorkshop =
     pathname === "/ai-workshop" || pathname.startsWith("/ai-workshop/");
+  const isCohortRegister =
+    pathname === "/ai-cohort-register" ||
+    pathname.startsWith("/ai-cohort-register/");
   const supportEmail = "team@abtalks.in";
 
-  if (isWorkshop) return null;
+  if (isWorkshop || isCohortRegister) return null;
 
   return (
     <footer
