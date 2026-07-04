@@ -149,6 +149,7 @@ export function AppHeader({
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
+              aria-label="Open profile menu"
               className={cn(
                 "focus-spark inline-flex shrink-0 items-center gap-2 rounded-lg px-1.5 py-1.5 text-sm outline-none transition-colors sm:gap-3 sm:px-2",
                 "hover:bg-muted aria-expanded:bg-muted",

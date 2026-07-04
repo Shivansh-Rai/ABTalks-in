@@ -50,6 +50,7 @@ import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment"
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador-banner";
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
+import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -671,6 +672,7 @@ export default async function DashboardPage({
 
         {enrollment.domain === "CLAUDE" ? <ClaudeFAQ /> : null}
       </main>
+      <DashboardWalkthrough />
     </div>
   );
 }
