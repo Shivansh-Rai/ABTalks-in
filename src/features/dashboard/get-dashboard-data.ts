@@ -168,13 +168,24 @@ export async function getDashboardData(
     const tasks = await getDailyTasksCached(enrollment.challengeId);
     const task = tasks.find((t) => t.dayNumber === currentDay);
     if (task) {
-      todayTask = {
-        id: task.id,
-        dayNumber: task.dayNumber,
-        title: task.title,
-        difficulty: task.difficulty,
-        estimatedMinutes: task.estimatedMinutes,
-      };
+      const titleRow = await prisma.dailyTask.findUnique({
+        where: {
+          challengeId_dayNumber: {
+            challengeId: enrollment.challengeId,
+            dayNumber: currentDay,
+          },
+        },
+        select: { title: true },
+      });
+      if (titleRow) {
+        todayTask = {
+          id: task.id,
+          dayNumber: task.dayNumber,
+          title: titleRow.title,
+          difficulty: task.difficulty,
+          estimatedMinutes: task.estimatedMinutes,
+        };
+      }
     }
   }
 

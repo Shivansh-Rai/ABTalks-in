@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 export type CachedDailyTask = {
   id: string;
   dayNumber: number;
-  title: string;
   problemStatement: string;
   learningObjectives: string[];
   resources: string[];
@@ -14,9 +13,10 @@ export type CachedDailyTask = {
 };
 
 /**
- * All 60 days of immutable task content for a challenge, cached indefinitely
- * (seeded content; only changes on reseed). Keyed + tagged by challengeId so a
- * content reseed can bust it via `revalidateTag('daily-tasks:<challengeId>')`.
+ * All 60 days of immutable task body content for a challenge, cached indefinitely
+ * (seeded content; only changes on reseed). Titles are fetched live via
+ * `getDailyTaskTitlesLive`. Keyed + tagged by challengeId so a content reseed can
+ * bust it via `revalidateTag('daily-tasks:<challengeId>')`.
  */
 export function getDailyTasksCached(
   challengeId: string,
@@ -29,7 +29,6 @@ export function getDailyTasksCached(
         select: {
           id: true,
           dayNumber: true,
-          title: true,
           problemStatement: true,
           learningObjectives: true,
           resources: true,
@@ -42,4 +41,14 @@ export function getDailyTasksCached(
     ["daily-tasks", challengeId],
     { tags: [`daily-tasks:${challengeId}`], revalidate: false },
   )();
+}
+
+export async function getDailyTaskTitlesLive(
+  challengeId: string,
+): Promise<Map<number, string>> {
+  const rows = await prisma.dailyTask.findMany({
+    where: { challengeId, dayNumber: { gte: 1, lte: 60 } },
+    select: { dayNumber: true, title: true },
+  });
+  return new Map(rows.map((r) => [r.dayNumber, r.title]));
 }

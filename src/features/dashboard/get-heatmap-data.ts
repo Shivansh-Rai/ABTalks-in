@@ -6,7 +6,10 @@ import {
   getIstDateKeyForChallengeDay,
 } from "@/lib/date-utils";
 import { isWithinRelaxationWindow } from "@/features/submission/submit-day";
-import { getDailyTasksCached } from "@/features/challenge/get-daily-tasks-cached";
+import {
+  getDailyTaskTitlesLive,
+  getDailyTasksCached,
+} from "@/features/challenge/get-daily-tasks-cached";
 
 /** Pre-resolved enrollment the dashboard can thread in to avoid a re-query. */
 type ResolvedHeatmapEnrollment = {
@@ -109,9 +112,10 @@ export async function getHeatmapData(
         },
       });
 
-  const [submissions, tasks, adminActions] = await Promise.all([
+  const [submissions, tasks, titleByDay, adminActions] = await Promise.all([
     submissionsPromise,
     getDailyTasksCached(enrollment.challengeId),
+    getDailyTaskTitlesLive(enrollment.challengeId),
     prisma.adminAction.findMany({
       where: {
         targetUserId: enrollment.userId,
@@ -166,7 +170,7 @@ export async function getHeatmapData(
   >();
   for (const t of tasks) {
     taskByDay.set(t.dayNumber, {
-      title: t.title,
+      title: titleByDay.get(t.dayNumber) ?? "",
       problemStatement: t.problemStatement,
       learningObjectives: t.learningObjectives ?? [],
       resources: t.resources ?? [],
