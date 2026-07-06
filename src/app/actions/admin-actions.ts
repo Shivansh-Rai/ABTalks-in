@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { computeStreakStats } from "@/features/submission/streak-utils";
+import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
 
 const baseInput = z.object({
   targetUserId: z.string().min(1),
@@ -35,12 +37,15 @@ export async function resetProgressAction(input: {
 
   const { targetUserId, reason } = parsed.data;
 
+  let resetDomain: string | null = null;
+
   try {
     await prisma.$transaction(async (tx) => {
       const enrollment = await tx.enrollment.findFirst({
         where: { userId: targetUserId },
       });
       if (!enrollment) throw new Error("No enrollment");
+      resetDomain = enrollment.domain;
 
       await tx.submission.deleteMany({
         where: { enrollmentId: enrollment.id },
@@ -78,6 +83,34 @@ export async function resetProgressAction(input: {
     });
 
     revalidateAdminViews(targetUserId);
+
+    // Best-effort: notify the participant that their Claude challenge was reset.
+    // Runs after the response and outside the transaction — a mail failure must
+    // never fail the reset.
+    if (resetDomain === "CLAUDE") {
+      const target = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: {
+          email: true,
+          studentProfile: { select: { fullName: true } },
+        },
+      });
+      const to = target?.email;
+      if (to) {
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in";
+        const firstName =
+          target?.studentProfile?.fullName?.trim().split(/\s+/)[0] || "there";
+        after(async () => {
+          await sendChallengeResetEmail({
+            to,
+            firstName,
+            dashboardUrl: `${appUrl}/dashboard`,
+          });
+        });
+      }
+    }
+
     return { ok: true as const };
   } catch (e) {
     return {
