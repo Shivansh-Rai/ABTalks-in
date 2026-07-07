@@ -28,15 +28,47 @@ import { cn } from "@/lib/utils";
 import { submitDayAction } from "@/app/actions/submission-actions";
 import { useSynergy } from "@/components/shared/synergy-provider";
 
+// Matches CollapsibleSection's expand/collapse transition duration. When one
+// section closes right before another opens, we wait for the close to finish
+// before scrolling — otherwise the closing section's shrinking height keeps
+// shifting the next section's position mid-scroll, so the browser lands on a
+// moving target and the heading ends up scrolled past (over-scroll).
+const SECTION_TRANSITION_MS = 400;
+
 interface CollapsibleSectionProps {
   icon: React.ReactNode;
   iconBg: string;
   title: string;
   subtitle?: string;
   defaultOpen?: boolean;
+  /** Controlled open state. Omit to let the section manage its own state. */
+  open?: boolean;
+  /** Fires with the next open state whenever the header is clicked. */
+  onOpenChange?: (open: boolean) => void;
   animationDelay?: number;
   extraClassName?: string;
   children: React.ReactNode;
+}
+
+function getYoutubeVideoId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtu.be")) {
+      return parsed.pathname.slice(1) || null;
+    }
+    if (parsed.hostname.includes("youtube.com")) {
+      if (parsed.pathname === "/watch") return parsed.searchParams.get("v");
+      if (parsed.pathname.startsWith("/embed/")) {
+        return parsed.pathname.split("/embed/")[1] || null;
+      }
+      if (parsed.pathname.startsWith("/shorts/")) {
+        return parsed.pathname.split("/shorts/")[1] || null;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function CollapsibleSection({
@@ -45,11 +77,21 @@ function CollapsibleSection({
   title,
   subtitle,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
   animationDelay = 0.1,
   extraClassName,
   children,
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const isControlled = openProp !== undefined;
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = isControlled ? openProp : internalOpen;
+
+  function handleToggle() {
+    const next = !isOpen;
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
 
   return (
     <motion.section
@@ -63,7 +105,7 @@ function CollapsibleSection({
     >
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-muted/30 transition-colors text-left"
         aria-expanded={isOpen}
       >
@@ -80,7 +122,7 @@ function CollapsibleSection({
         </div>
         <ChevronDown
           className={cn(
-            "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
+            "h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out",
             isOpen && "rotate-180",
           )}
         />
@@ -92,7 +134,10 @@ function CollapsibleSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{
+              duration: SECTION_TRANSITION_MS / 1000,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 md:px-6 md:pb-6">{children}</div>
@@ -176,20 +221,65 @@ export function DayPage({
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(true);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
 
   const solutionVideoUrl =
     content.solutionVideoUrl ?? content.task.solutionVideoUrl;
   const resources = resourcesProp ?? content.resources ?? [];
+
+  const scrollToSection = (id: string) => {
+    // Two frames gives React/Framer Motion time to paint the section's open
+    // state before we measure and scroll to it.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document
+          .getElementById(id)
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  };
+
+  function handlePromptOpenChange(next: boolean) {
+    setPromptOpen(next);
+    if (!next) {
+      // Wait for Prompt Template to finish closing — otherwise its shrinking
+      // height keeps shifting "Tutorial Video" upward while we're mid-scroll.
+      setTimeout(() => {
+        setVideoOpen(true);
+        scrollToSection("tutorial-video-section");
+      }, SECTION_TRANSITION_MS);
+    }
+  }
+
+  function handleVideoOpenChange(next: boolean) {
+    setVideoOpen(next);
+    if (!next) {
+      // Same reasoning: let "Tutorial Video" finish closing before opening/
+      // scrolling to "Your Task".
+      setTimeout(() => {
+        setTaskOpen(true);
+        scrollToSection("your-task-section");
+      }, SECTION_TRANSITION_MS);
+    }
+  }
 
   const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(content.promptTemplate);
       setCopiedPrompt(true);
       setTimeout(() => setCopiedPrompt(false), 2000);
+      handlePromptOpenChange(false);
     } catch {
       toast.error("Could not copy. Select the text manually");
     }
   };
+
+  function handleMoreClick() {
+    setTaskOpen(true);
+    scrollToSection("your-task-section");
+  }
 
   const handleSubmit = async () => {
     if (!confirmed) {
@@ -253,6 +343,15 @@ export function DayPage({
             {content.tagline}
           </p>
 
+          <button
+            type="button"
+            onClick={handleMoreClick}
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            More
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
               <Award className="h-3 w-3" />
@@ -270,29 +369,87 @@ export function DayPage({
         </motion.div>
 
         <CollapsibleSection
-          icon={<Lightbulb className="h-5 w-5 text-amber-500" />}
-          iconBg="bg-amber-500/10"
-          title="What You'll Learn"
-          animationDelay={0.1}
+          icon={<FileCode className="h-5 w-5 text-violet-500" />}
+          iconBg="bg-violet-500/10"
+          title="Prompt Template"
+          open={promptOpen}
+          onOpenChange={handlePromptOpenChange}
+          animationDelay={0.05}
         >
-          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-            {content.learning.summary}
-          </p>
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => void handleCopyPrompt()}
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              {copiedPrompt ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-500" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
 
-          <ol className="space-y-2.5">
-            {content.learning.bullets.map((bullet, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-xs font-bold text-amber-600 dark:text-amber-400">
-                  {i + 1}
-                </div>
-                <div className="flex-1 text-sm">
-                  <span className="font-semibold">{bullet.label}:</span>
-                  <span className="text-muted-foreground"> {bullet.text}</span>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <pre className="overflow-x-auto rounded-xl border bg-muted/50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap md:text-sm">
+            {content.promptTemplate}
+          </pre>
         </CollapsibleSection>
+
+        {solutionVideoUrl ? (
+          <div id="tutorial-video-section" className="scroll-mt-20">
+          <CollapsibleSection
+            icon={<PlayCircle className="h-5 w-5 text-red-500" />}
+            iconBg="bg-red-500/10"
+            title="Tutorial Video"
+            subtitle="Step-by-step video guide"
+            open={videoOpen}
+            onOpenChange={handleVideoOpenChange}
+            animationDelay={0.15}
+          >
+            {solutionVideoUrl.includes("REPLACE_WITH") ? (
+              <p className="text-sm text-muted-foreground">
+                Tutorial Video video coming soon. Check back shortly.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {(() => {
+                  const videoId = getYoutubeVideoId(solutionVideoUrl);
+                  if (!videoId) return null;
+                  return (
+                    <div className="w-full overflow-hidden rounded-xl border bg-black shadow-sm">
+                      <div className="relative aspect-video">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                          title="Tutorial video player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 h-full w-full"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+                <a
+                  href={solutionVideoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  Watch on YouTube
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
+          </CollapsibleSection>
+          </div>
+        ) : null}
 
         {content.tool ? (
           <CollapsibleSection
@@ -300,7 +457,7 @@ export function DayPage({
             iconBg="bg-orange-500/10"
             title="Tool of the Day"
             subtitle={content.tool.name}
-            animationDelay={0.15}
+            animationDelay={0.2}
             extraClassName="border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-pink-500/5"
           >
             <p className="mb-3 text-xs text-muted-foreground">
@@ -340,11 +497,14 @@ export function DayPage({
           </CollapsibleSection>
         ) : null}
 
+        <div id="your-task-section" className="scroll-mt-20">
         <CollapsibleSection
           icon={<ListChecks className="h-5 w-5 text-emerald-500" />}
           iconBg="bg-emerald-500/10"
           title={content.task.title}
-          animationDelay={0.2}
+          open={taskOpen}
+          onOpenChange={setTaskOpen}
+          animationDelay={0.24}
         >
           <ol className="space-y-3">
             {content.task.steps.map((step, i) => (
@@ -357,13 +517,39 @@ export function DayPage({
             ))}
           </ol>
         </CollapsibleSection>
+        </div>
+
+        <CollapsibleSection
+          icon={<Lightbulb className="h-5 w-5 text-amber-500" />}
+          iconBg="bg-amber-500/10"
+          title="What You'll Learn"
+          animationDelay={0.28}
+        >
+          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+            {content.learning.summary}
+          </p>
+
+          <ol className="space-y-2.5">
+            {content.learning.bullets.map((bullet, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-xs font-bold text-amber-600 dark:text-amber-400">
+                  {i + 1}
+                </div>
+                <div className="flex-1 text-sm">
+                  <span className="font-semibold">{bullet.label}:</span>
+                  <span className="text-muted-foreground"> {bullet.text}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </CollapsibleSection>
 
         {resources.length > 0 ? (
           <CollapsibleSection
             icon={<BookOpen className="h-5 w-5 text-sky-500" />}
             iconBg="bg-sky-500/10"
             title="Resources"
-            animationDelay={0.24}
+            animationDelay={0.32}
           >
             <ul className="space-y-2">
               {resources.map((url, i) => {
@@ -395,42 +581,11 @@ export function DayPage({
         ) : null}
 
         <CollapsibleSection
-          icon={<FileCode className="h-5 w-5 text-violet-500" />}
-          iconBg="bg-violet-500/10"
-          title="Prompt Template"
-          animationDelay={0.28}
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => void handleCopyPrompt()}
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
-            >
-              {copiedPrompt ? (
-                <>
-                  <Check className="h-4 w-4 text-emerald-500" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </>
-              )}
-            </button>
-          </div>
-
-          <pre className="overflow-x-auto rounded-xl border bg-muted/50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap md:text-sm">
-            {content.promptTemplate}
-          </pre>
-        </CollapsibleSection>
-
-        <CollapsibleSection
           icon={<Share2 className="h-5 w-5 text-pink-500" />}
           iconBg="bg-pink-500/10"
           title="LinkedIn Post Guidelines"
           subtitle={content.engagement.type}
-          animationDelay={0.32}
+          animationDelay={0.36}
         >
           <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
             {content.engagement.description}
@@ -446,7 +601,7 @@ export function DayPage({
           icon={<FileOutput className="h-5 w-5 text-blue-500" />}
           iconBg="bg-blue-500/10"
           title="Your Deliverable"
-          animationDelay={0.36}
+          animationDelay={0.4}
         >
           <p className="text-sm text-muted-foreground">
             {content.deliverable.description}
@@ -455,33 +610,6 @@ export function DayPage({
             Format: {content.deliverable.format}
           </span>
         </CollapsibleSection>
-
-        {solutionVideoUrl ? (
-          <CollapsibleSection
-            icon={<PlayCircle className="h-5 w-5 text-red-500" />}
-            iconBg="bg-red-500/10"
-            title="Tutorial Video"
-            subtitle="Step-by-step video guide"
-            animationDelay={0.38}
-          >
-            {solutionVideoUrl.includes("REPLACE_WITH") ? (
-              <p className="text-sm text-muted-foreground">
-                Tutorial Video video coming soon. Check back shortly.
-              </p>
-            ) : (
-              <a
-                href={solutionVideoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
-              >
-                <PlayCircle className="h-4 w-4" />
-                Watch on YouTube
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </CollapsibleSection>
-        ) : null}
 
         {canSubmit ? (
           <div className="rounded-2xl border bg-card p-6 space-y-5">
