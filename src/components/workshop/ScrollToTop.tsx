@@ -3,20 +3,18 @@
 export default function ScrollToTop() {
   return (
     <button
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => {
+        document
+          .getElementById("register")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }}
+      className="cursor-pointer rounded-full px-9 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
       style={{
-        padding: "14px 40px",
-        borderRadius: "50px",
-        border: "none",
-        color: "#fff",
-        fontWeight: 600,
-        fontSize: "15px",
-        cursor: "pointer",
-        background: "linear-gradient(to right, #e16213, #e84393)",
-        boxShadow: "0 4px 14px rgba(225,98,19,0.25)",
+        background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
+        boxShadow: "0 10px 30px -8px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
       }}
     >
-      Register Now
+      Reserve Your Free Seat →
     </button>
   );
 }

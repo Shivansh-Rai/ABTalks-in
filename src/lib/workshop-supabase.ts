@@ -35,3 +35,28 @@ export async function getWorkshopConfig(): Promise<WorkshopConfig> {
     webinarTargetUtc: data.webinar_target_utc,
   };
 }
+
+export interface RecentRegistrant {
+  name: string;
+  org: string | null;
+}
+
+/**
+ * Recent workshop registrations for the "just joined" social-proof ticker.
+ * First name + organization only (no email/phone). Returns [] on any error so
+ * the ticker can fall back to sample data.
+ */
+export async function getRecentRegistrations(): Promise<RecentRegistrant[]> {
+  const { data, error } = await workshopSupabase
+    .from("registrations")
+    .select("name, organization, created_at")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error || !data) return [];
+  return data
+    .filter((r) => r.name)
+    .map((r) => ({
+      name: String(r.name).trim().split(/\s+/)[0],
+      org: r.organization ? String(r.organization).trim() : null,
+    }));
+}

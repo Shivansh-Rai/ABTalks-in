@@ -21,49 +21,67 @@ export default function CountdownTimer({ targetUtc }: { targetUtc: string }) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [targetUtc]);
 
   const pad = (n: number) => n.toString().padStart(2, "0");
 
   return (
-    <div className="inline-flex items-center gap-2.5 sm:gap-3.5 bg-white border border-orange-200 rounded-[16px] md:rounded-[20px] px-3.5 md:px-5 py-2 md:py-2.5 select-none" style={{ boxShadow: "0 0 0 1px rgba(255,106,0,0.15), 0 0 16px 2px rgba(255,106,0,0.18), 0 0 32px 4px rgba(232,67,147,0.10)" }}>
-      <span className="text-[10px] md:text-xs text-gray-400 font-semibold uppercase tracking-wider mr-1 md:mr-1.5">
-        Starts in
-      </span>
+    <div className="inline-flex items-center gap-2 sm:gap-3">
       {mounted ? (
-        <div className="flex items-center gap-2 md:gap-3">
-          <Unit val={pad(time.d)} label="DAYS" />
+        <>
+          <Unit val={pad(time.d)} label="Days" />
           <Sep />
-          <Unit val={pad(time.h)} label="HRS" />
+          <Unit val={pad(time.h)} label="Hrs" />
           <Sep />
-          <Unit val={pad(time.m)} label="MIN" />
+          <Unit val={pad(time.m)} label="Min" />
           <Sep />
-          <Unit val={pad(time.s)} label="SEC" orange />
-        </div>
+          <Unit val={pad(time.s)} label="Sec" live />
+        </>
       ) : (
-        <span className="text-xs text-gray-400">Loading...</span>
+        <>
+          <Unit val="--" label="Days" />
+          <Sep />
+          <Unit val="--" label="Hrs" />
+          <Sep />
+          <Unit val="--" label="Min" />
+          <Sep />
+          <Unit val="--" label="Sec" live />
+        </>
       )}
     </div>
   );
 }
 
-interface UnitProps {
-  val: string;
-  label: string;
-  orange?: boolean;
-}
-
-function Unit({ val, label, orange }: UnitProps) {
+function Unit({ val, label, live }: { val: string; label: string; live?: boolean }) {
   return (
-    <div className="flex flex-col items-center min-w-6.5 md:min-w-8">
-      <span
-        className={`text-base md:text-[20px] font-extrabold leading-none tracking-tight ${
-          orange ? "text-[#ff6a00]" : "text-gray-900"
-        }`}
+    <div className="flex flex-col items-center gap-1.5">
+      <div
+        className="relative flex min-w-[52px] items-center justify-center rounded-xl px-2.5 py-2 sm:min-w-[64px] sm:px-3 sm:py-2.5"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          boxShadow: live
+            ? "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 20px -4px rgba(255,77,148,0.4)"
+            : "inset 0 1px 0 rgba(255,255,255,0.06)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
       >
-        {val}
-      </span>
-      <span className="text-[6.5px] md:text-[8px] text-gray-400 font-extrabold tracking-wider mt-1.5">
+        <span
+          className="font-mono text-lg font-bold tabular-nums tracking-tight sm:text-2xl"
+          style={{
+            background: live
+              ? "linear-gradient(135deg, #ff9a3c, #ff4d94)"
+              : "linear-gradient(180deg, #ffffff, #cfc8d8)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          {val}
+        </span>
+      </div>
+      <span className="text-[8px] font-semibold uppercase tracking-[0.18em] text-white/40 sm:text-[9px]">
         {label}
       </span>
     </div>
@@ -72,8 +90,6 @@ function Unit({ val, label, orange }: UnitProps) {
 
 function Sep() {
   return (
-    <span className="text-gray-300 text-xs md:text-sm font-light self-center -translate-y-0.5 md:-translate-y-0.75">
-      :
-    </span>
+    <span className="-mt-4 text-lg font-light text-white/20 sm:text-xl">:</span>
   );
 }

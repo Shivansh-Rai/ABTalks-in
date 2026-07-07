@@ -1,6 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+const CONFETTI_COLORS = ["#ff7a1a", "#ff4d94", "#a855f7", "#6366f1", "#2dd4bf", "#ffd23f"];
+
+function buildConfetti() {
+  return Array.from({ length: 44 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    bg: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    size: 6 + Math.random() * 7,
+    delay: Math.random() * 0.5,
+    duration: 2.2 + Math.random() * 1.8,
+    drift: (Math.random() - 0.5) * 220,
+    rotate: Math.random() * 720,
+    round: Math.random() > 0.6,
+  }));
+}
 
 interface FormData {
   name: string;
@@ -32,6 +48,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
   const [apiError, setApiError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const confetti = useMemo(buildConfetti, []);
 
   const set = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -92,188 +109,172 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
     }
   };
 
-  const getInputClass = (hasError?: boolean) => {
-    const base =
-      "w-full px-4 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold text-gray-900 placeholder-gray-500 focus:outline-none transition-all duration-200 shadow-sm";
-    return hasError
-      ? `${base} border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10`
-      : `${base} border-gray-400 focus:border-[#e16213] focus:ring-4 focus:ring-orange-500/10`;
-  };
-
-  const getRoleSelectClass = (hasError?: boolean, hasValue?: boolean) => {
-    const base = `w-full px-4 py-3 bg-white border rounded-xl text-base sm:text-sm font-semibold focus:outline-none transition-all duration-200 cursor-pointer shadow-sm ${
-      hasValue ? "text-gray-900" : "text-gray-500"
-    }`;
-    return hasError
-      ? `${base} border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10`
-      : `${base} border-gray-400 focus:border-[#e16213] focus:ring-4 focus:ring-orange-500/10`;
-  };
-
-  const getPhoneContainerClass = (hasError?: boolean) => {
-    const base =
-      "relative flex items-center bg-white border rounded-xl overflow-hidden transition-all duration-200 shadow-sm w-full";
-    return hasError
-      ? `${base} border-red-400 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10`
-      : `${base} border-gray-400 focus-within:border-[#e16213] focus-within:ring-4 focus-within:ring-orange-500/10`;
-  };
-
   return (
     <>
       <style>{`
-        @keyframes form-glow {
-          0%, 100% {
-            box-shadow:
-              0 0 0 1px rgba(225,98,19,0.12),
-              0 0 18px 4px rgba(225,98,19,0.10),
-              0 0 40px 8px rgba(232,67,147,0.07),
-              0 8px 32px rgba(0,0,0,0.04);
-          }
-          50% {
-            box-shadow:
-              0 0 0 1px rgba(232,67,147,0.15),
-              0 0 24px 6px rgba(232,67,147,0.12),
-              0 0 48px 12px rgba(225,98,19,0.08),
-              0 8px 32px rgba(0,0,0,0.04);
-          }
+        .wk-input {
+          width: 100%;
+          padding: 13px 16px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.09);
+          color: #f4f2f7;
+          font-size: 15px;
+          font-weight: 500;
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
-
-        /* Button: very light border glow cycling orange ↔ pink */
-        @keyframes btn-border-glow {
-          0%, 100% {
-            box-shadow:
-              0 0 0 1.5px rgba(225,98,19,0.45),
-              0 0 7px 1px rgba(225,98,19,0.14);
-          }
-          50% {
-            box-shadow:
-              0 0 0 1.5px rgba(232,67,147,0.45),
-              0 0 7px 1px rgba(232,67,147,0.14);
-          }
+        .wk-input::placeholder { color: rgba(255,255,255,0.32); font-weight: 400; }
+        .wk-input:focus {
+          border-color: rgba(255,122,26,0.55);
+          background: rgba(255,255,255,0.05);
+          box-shadow: 0 0 0 3px rgba(255,122,26,0.12), 0 0 20px -6px rgba(255,77,148,0.4);
         }
+        .wk-input.err { border-color: rgba(248,113,113,0.6); }
+        .wk-input.err:focus { box-shadow: 0 0 0 3px rgba(248,113,113,0.14); }
+        .wk-select option { background: #16121d; color: #f4f2f7; }
 
         .register-btn {
-          background: linear-gradient(to right, #e16213, #e84393);
-          animation: btn-border-glow 2.8s ease-in-out infinite;
-          transition: transform 0.18s ease, filter 0.18s ease;
+          background: linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%);
+          box-shadow: 0 8px 28px -8px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
+          transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
         }
         .register-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          filter: brightness(1.06);
+          filter: brightness(1.07);
+          box-shadow: 0 14px 36px -8px rgba(255,77,148,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
         }
-        .register-btn:active:not(:disabled) {
-          transform: translateY(0);
-        }
-        .register-btn:disabled {
-          animation: none;
-          opacity: 0.65;
-          cursor: not-allowed;
-        }
+        .register-btn:active:not(:disabled) { transform: translateY(0); }
+        .register-btn:disabled { opacity: 0.6; cursor: not-allowed; }
       `}</style>
-      <form onSubmit={handleSubmit} className="w-full max-w-170 mx-auto px-4">
+
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-xl px-4">
         <div
-          className="bg-white rounded-2xl p-5 sm:p-10"
+          className="relative overflow-hidden rounded-3xl p-6 sm:p-9"
           style={{
-            border: "1px solid rgba(225,98,19,0.15)",
-            animation: "form-glow 3s ease-in-out infinite",
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow:
+              "0 30px 80px -30px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <Row label="Full Name" required error={errors.name}>
-            <input
-              type="text"
-              placeholder="Enter your full name"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              className={getInputClass(!!errors.name)}
-            />
-          </Row>
+          {/* top accent line */}
+          <div
+            className="absolute inset-x-0 top-0 h-px"
+            style={{
+              background:
+                "linear-gradient(to right, transparent, rgba(255,122,26,0.7), rgba(255,77,148,0.7), transparent)",
+            }}
+          />
 
-          <Row label="Email Address" required error={errors.email}>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-              className={getInputClass(!!errors.email)}
-            />
-          </Row>
+          <div className="mb-6 text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-white/60">
+              🎟️ Free Registration
+            </span>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-[26px]">
+              Reserve your seat
+            </h2>
+            <p className="mt-1.5 text-sm text-white/45">
+              Limited spots · takes less than 30 seconds
+            </p>
+          </div>
 
-          <Row label="Phone No." required error={errors.phone}>
-            <div className={getPhoneContainerClass(!!errors.phone)}>
-              <select
-                value={form.countryCode}
-                onChange={(e) => set("countryCode", e.target.value)}
-                className="bg-transparent border-0 pl-3 pr-7 py-3 text-base sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer shrink-0 appearance-none"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%234b5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
-                  backgroundPosition: "right 6px center",
-                  backgroundSize: "16px",
-                  backgroundRepeat: "no-repeat",
-                }}
-              >
-                <option value="+91" className="font-semibold text-gray-900">🇮🇳 +91</option>
-                <option value="+1" className="font-semibold text-gray-900">🇺🇸 +1</option>
-                <option value="+44" className="font-semibold text-gray-900">🇬🇧 +44</option>
-                <option value="+971" className="font-semibold text-gray-900">🇦🇪 +971</option>
-                <option value="+966" className="font-semibold text-gray-900">🇸🇦 +966</option>
-                <option value="+65" className="font-semibold text-gray-900">🇸🇬 +65</option>
-                <option value="+60" className="font-semibold text-gray-900">🇲🇾 +60</option>
-                <option value="+92" className="font-semibold text-gray-900">🇵🇰 +92</option>
-                <option value="+880" className="font-semibold text-gray-900">🇧🇩 +880</option>
-                <option value="+977" className="font-semibold text-gray-900">🇳🇵 +977</option>
-                <option value="+94" className="font-semibold text-gray-900">🇱🇰 +94</option>
-                <option value="+61" className="font-semibold text-gray-900">🇦🇺 +61</option>
-                <option value="+64" className="font-semibold text-gray-900">🇳🇿 +64</option>
-                <option value="+33" className="font-semibold text-gray-900">🇫🇷 +33</option>
-                <option value="+49" className="font-semibold text-gray-900">🇩🇪 +49</option>
-                <option value="+27" className="font-semibold text-gray-900">🇿🇦 +27</option>
-                <option value="+234" className="font-semibold text-gray-900">🇳🇬 +234</option>
-                <option value="+55" className="font-semibold text-gray-900">🇧🇷 +55</option>
-                <option value="+353" className="font-semibold text-gray-900">🇮🇪 +353</option>
-                <option value="+86" className="font-semibold text-gray-900">🇨🇳 +86</option>
-                <option value="+82" className="font-semibold text-gray-900">🇰🇷 +82</option>
-                <option value="+62" className="font-semibold text-gray-900">🇮🇩 +62</option>
-                <option value="+66" className="font-semibold text-gray-900">🇹🇭 +66</option>
-                <option value="+63" className="font-semibold text-gray-900">🇵🇭 +63</option>
-                <option value="+84" className="font-semibold text-gray-900">🇻🇳 +84</option>
-                <option value="+90" className="font-semibold text-gray-900">🇹🇷 +90</option>
-                <option value="+20" className="font-semibold text-gray-900">🇪🇬 +20</option>
-              </select>
-              <div className="w-px h-6 bg-gray-300 shrink-0" />
+          <div className="space-y-4">
+            <Field label="Full Name" required error={errors.name}>
               <input
-                type="tel"
-                placeholder="Enter your phone number"
-                value={form.phone}
-                onChange={(e) => set("phone", e.target.value.replace(/[^0-9]/g, ""))}
-                className="bg-transparent border-0 w-full pl-3.5 pr-4 py-3 text-base sm:text-sm font-semibold text-gray-900 placeholder-gray-500 focus:outline-none"
+                type="text"
+                placeholder="Enter your full name"
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                className={`wk-input ${errors.name ? "err" : ""}`}
               />
-            </div>
-          </Row>
+            </Field>
 
-          <Row label="I am:" required error={errors.role}>
-            <select
-              value={form.role}
-              onChange={(e) => set("role", e.target.value)}
-              className={getRoleSelectClass(!!errors.role, !!form.role)}
-            >
-              <option value="" disabled className="font-semibold text-gray-500">Select an option</option>
-              <option value="Student" className="font-semibold text-gray-950">Student</option>
-              <option value="Professional" className="font-semibold text-gray-950">Professional</option>
-            </select>
-          </Row>
+            <Field label="Email Address" required error={errors.email}>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                className={`wk-input ${errors.email ? "err" : ""}`}
+              />
+            </Field>
 
-          <Row label="College / Company">
-            <input
-              type="text"
-              placeholder="Enter your college or company name (optional)"
-              value={form.organization}
-              onChange={(e) => set("organization", e.target.value)}
-              className={getInputClass()}
-            />
-          </Row>
+            <Field label="Phone Number" required error={errors.phone}>
+              <div className="flex gap-2">
+                <select
+                  value={form.countryCode}
+                  onChange={(e) => set("countryCode", e.target.value)}
+                  className="wk-input wk-select shrink-0 cursor-pointer"
+                  style={{ width: "104px", paddingRight: "8px" }}
+                >
+                  <option value="+91">🇮🇳 +91</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+971">🇦🇪 +971</option>
+                  <option value="+966">🇸🇦 +966</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+60">🇲🇾 +60</option>
+                  <option value="+92">🇵🇰 +92</option>
+                  <option value="+880">🇧🇩 +880</option>
+                  <option value="+977">🇳🇵 +977</option>
+                  <option value="+94">🇱🇰 +94</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+64">🇳🇿 +64</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+49">🇩🇪 +49</option>
+                  <option value="+27">🇿🇦 +27</option>
+                  <option value="+234">🇳🇬 +234</option>
+                  <option value="+55">🇧🇷 +55</option>
+                  <option value="+353">🇮🇪 +353</option>
+                  <option value="+86">🇨🇳 +86</option>
+                  <option value="+82">🇰🇷 +82</option>
+                  <option value="+62">🇮🇩 +62</option>
+                  <option value="+66">🇹🇭 +66</option>
+                  <option value="+63">🇵🇭 +63</option>
+                  <option value="+84">🇻🇳 +84</option>
+                  <option value="+90">🇹🇷 +90</option>
+                  <option value="+20">🇪🇬 +20</option>
+                </select>
+                <input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={form.phone}
+                  onChange={(e) => set("phone", e.target.value.replace(/[^0-9]/g, ""))}
+                  className={`wk-input ${errors.phone ? "err" : ""}`}
+                />
+              </div>
+            </Field>
+
+            <Field label="I am a" required error={errors.role}>
+              <select
+                value={form.role}
+                onChange={(e) => set("role", e.target.value)}
+                className={`wk-input wk-select cursor-pointer ${errors.role ? "err" : ""}`}
+                style={{ color: form.role ? "#f4f2f7" : "rgba(255,255,255,0.32)" }}
+              >
+                <option value="" disabled>Select an option</option>
+                <option value="Student">Student</option>
+                <option value="Professional">Professional</option>
+              </select>
+            </Field>
+
+            <Field label="College / Company">
+              <input
+                type="text"
+                placeholder="Your college or company (optional)"
+                value={form.organization}
+                onChange={(e) => set("organization", e.target.value)}
+                className="wk-input"
+              />
+            </Field>
+          </div>
 
           {apiError && (
-            <div className="mt-5 p-3.5 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-red-600 text-sm text-center font-medium leading-relaxed">
+            <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3.5">
+              <p className="text-center text-sm font-medium leading-relaxed text-red-300">
                 {apiError}
               </p>
             </div>
@@ -282,38 +283,139 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
           <button
             type="submit"
             disabled={loading}
-            className="register-btn w-full mt-5 sm:mt-7 py-3.5 text-white text-base font-semibold rounded-full cursor-pointer"
+            className="register-btn mt-6 w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
           >
-            {loading ? "Registering..." : "Register Now"}
+            {loading ? "Registering..." : "Register Now — It's Free"}
           </button>
+
+          <p className="mt-3.5 text-center text-xs text-white/35">
+            No spam. We&apos;ll only send your webinar details.
+          </p>
         </div>
       </form>
 
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm px-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
           <style>{`
             @keyframes modal-pop {
-              0% { transform: scale(0.95) translateY(10px); opacity: 0; }
+              0% { transform: scale(0.9) translateY(14px); opacity: 0; }
               100% { transform: scale(1) translateY(0); opacity: 1; }
             }
-            .animate-pop { animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-pop { animation: modal-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+            @keyframes confetti-fall {
+              0%   { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(110vh) translateX(var(--drift)) rotate(var(--rot)); opacity: 1; }
+            }
+            .confetti-piece { position: absolute; top: -6vh; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(0.2,0.6,0.4,1); animation-fill-mode: forwards; }
+
+            @keyframes check-ring { to { stroke-dashoffset: 0; } }
+            @keyframes check-mark { to { stroke-dashoffset: 0; } }
+            @keyframes check-pop {
+              0%   { transform: scale(0.5); opacity: 0; }
+              55%  { transform: scale(1.12); }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes ring-pulse {
+              0%   { transform: scale(0.8); opacity: 0.5; }
+              100% { transform: scale(1.9); opacity: 0; }
+            }
+            .check-wrap { animation: check-pop 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
+            .check-ring-circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: check-ring 0.6s ease-out 0.2s forwards; }
+            .check-mark-path  { stroke-dasharray: 48; stroke-dashoffset: 48; animation: check-mark 0.35s ease-out 0.7s forwards; }
           `}</style>
-          <div className="bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 shadow-2xl max-w-105 w-full text-center relative animate-pop">
-            <span className="text-6xl block mb-5 select-none">🎉</span>
-            <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-3">
-              Registration Successful!
+
+          {/* confetti burst */}
+          <div className="pointer-events-none fixed inset-0 z-[101] overflow-hidden">
+            {confetti.map((c) => (
+              <span
+                key={c.id}
+                className="confetti-piece"
+                style={{
+                  left: `${c.left}%`,
+                  width: c.size,
+                  height: c.round ? c.size : c.size * 0.5,
+                  borderRadius: c.round ? "9999px" : "2px",
+                  background: c.bg,
+                  animationDelay: `${c.delay}s`,
+                  animationDuration: `${c.duration}s`,
+                  // custom props consumed by the keyframe
+                  ["--drift" as string]: `${c.drift}px`,
+                  ["--rot" as string]: `${c.rotate}deg`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div
+            className="animate-pop relative z-[102] w-full max-w-md overflow-hidden rounded-3xl p-8 text-center sm:p-10"
+            style={{
+              background: "rgba(20,16,27,0.92)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              boxShadow: "0 40px 100px -20px rgba(0,0,0,0.9)",
+            }}
+          >
+            <div
+              className="absolute inset-x-0 top-0 h-px"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent, rgba(74,222,128,0.7), transparent)",
+              }}
+            />
+
+            {/* animated check */}
+            <div className="relative mx-auto mb-6 h-20 w-20">
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: "2px solid rgba(74,222,128,0.5)",
+                  animation: "ring-pulse 1.4s ease-out 0.4s infinite",
+                }}
+              />
+              <div
+                className="check-wrap absolute inset-0 flex items-center justify-center rounded-full"
+                style={{
+                  background: "rgba(74,222,128,0.12)",
+                  border: "1px solid rgba(74,222,128,0.35)",
+                }}
+              >
+                <svg width="46" height="46" viewBox="0 0 52 52" fill="none">
+                  <circle
+                    className="check-ring-circle"
+                    cx="26"
+                    cy="26"
+                    r="24"
+                    stroke="#4ade80"
+                    strokeWidth="2.5"
+                  />
+                  <path
+                    className="check-mark-path"
+                    d="M15 27 L23 34 L38 18"
+                    stroke="#4ade80"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <h3 className="mb-3 text-2xl font-extrabold tracking-tight text-white">
+              You&apos;re Registered!
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed mb-1.5">
+            <p className="mb-1.5 text-sm leading-relaxed text-white/60">
               Thank you for registering.
             </p>
-            <p className="text-gray-500 text-[12.5px] leading-relaxed mb-6 font-medium">
+            <p className="mb-6 text-[12.5px] font-medium leading-relaxed text-white/40">
               We&apos;ve sent your webinar details to your email. (Please check your Spam or Promotions folders if you don&apos;t see it).
             </p>
-            <div className="mt-4 py-2.5 px-4 bg-green-50 border border-green-200/60 rounded-xl inline-flex items-center gap-2 select-none">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
-              <span className="text-xs text-green-700 font-semibold tracking-wide">
+            <div className="inline-flex select-none items-center gap-2 rounded-xl border border-green-400/25 bg-green-400/10 px-4 py-2.5">
+              <span className="h-2 w-2 animate-ping rounded-full bg-green-400" />
+              <span className="text-xs font-semibold tracking-wide text-green-300">
                 Redirecting to WhatsApp in{" "}
-                <strong className="text-green-800 text-sm font-bold">{redirectCountdown}s</strong>...
+                <strong className="text-sm font-bold text-green-200">{redirectCountdown}s</strong>...
               </span>
             </div>
           </div>
@@ -323,26 +425,24 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
   );
 }
 
-interface RowProps {
+interface FieldProps {
   label: string;
   required?: boolean;
   error?: string;
   children: React.ReactNode;
 }
 
-function Row({ label, required, error, children }: RowProps) {
+function Field({ label, required, error, children }: FieldProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-6 mb-4.5 sm:mb-5.5 w-full">
-      <label className="text-[13.5px] font-semibold text-gray-800 w-full sm:w-35 shrink-0 sm:whitespace-nowrap text-left mb-0.5 sm:mb-0">
+    <div className="w-full">
+      <label className="mb-1.5 block text-[13px] font-semibold text-white/70">
         {label}
-        {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+        {required && <span className="ml-1 text-[#ff4d94]">*</span>}
       </label>
-      <div className="w-full sm:flex-1 min-w-0">
-        {children}
-        {error && (
-          <p className="text-red-500 text-xs mt-1.5 font-semibold tracking-wide">{error}</p>
-        )}
-      </div>
+      {children}
+      {error && (
+        <p className="mt-1.5 text-xs font-medium tracking-wide text-red-400">{error}</p>
+      )}
     </div>
   );
 }

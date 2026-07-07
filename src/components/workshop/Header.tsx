@@ -1,55 +1,54 @@
-"use client";
+import Link from "next/link";
+import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import CountdownTimer from "./CountdownTimer";
-
-export default function WorkshopHeader({ targetUtc }: { targetUtc: string }) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    let ticking = false;
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        setCollapsed((prev) => {
-          if (!prev && y > 24) return true;
-          if (prev && y < 8) return false;
-          return prev;
-        });
-        ticking = false;
-      });
-    }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
+export default function WorkshopHeader() {
   return (
-    <header className="w-full bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm px-4">
-      <div className="max-w-3xl md:max-w-287.5 mx-auto w-full py-1.5 md:py-2 flex flex-col md:flex-row items-center justify-between gap-3.5 md:gap-6">
+    <header
+      className="sticky top-0 z-50 w-full px-4"
+      style={{
+        background: "rgba(10,7,16,0.7)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 py-3">
         <div className="flex items-center gap-3">
-          <span data-collapsed={collapsed} className="logo-link focus-spark shrink-0">
-            <Image
-              src="/abtalks-logo.png"
-              alt="ABTalks"
-              width={300}
-              height={84}
-              priority
-              className="block h-7 w-auto max-w-none object-cover object-left invert -translate-y-1 translate-x-1"
-            />
-          </span>
-          <div className="h-5 w-px bg-gray-200 shrink-0" />
+          <WorkshopLogo />
+          <div className="hidden h-4 w-px bg-white/15 sm:block" />
           <span
-            className="text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest border border-[#ff6a00]/20 select-none leading-none"
-            style={{ background: "#fff0e6", color: "#ff6a00", borderRadius: "6px" }}
+            className="hidden rounded-md px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-widest sm:inline-block"
+            style={{
+              background: "rgba(255,122,26,0.12)",
+              color: "#ff9a3c",
+              border: "1px solid rgba(255,122,26,0.25)",
+            }}
           >
             AI Workshop
           </span>
         </div>
-        <CountdownTimer targetUtc={targetUtc} />
+
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <Link
+            href="/ai-workshop/events"
+            className="group inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-white/60 transition-colors hover:text-white sm:px-3.5"
+          >
+            <span className="text-[15px] leading-none">🗓️</span>
+            <span className="hidden sm:inline">Discover events</span>
+            <span className="sm:hidden">Events</span>
+          </Link>
+
+          <a
+            href="#register"
+            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
+              boxShadow: "0 6px 20px -6px rgba(255,77,148,0.6)",
+            }}
+          >
+            Reserve seat
+          </a>
+        </div>
       </div>
     </header>
   );

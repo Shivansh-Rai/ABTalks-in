@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { RecentRegistrant } from "@/lib/workshop-supabase";
 
-const USERS = [
+// Shown only before there are real registrations, so the ticker is never empty.
+const FALLBACK: RecentRegistrant[] = [
   { name: "Ayushi", org: "ABES Engineering College" },
   { name: "Rahul", org: "IIT Delhi" },
   { name: "Priya", org: "TCS" },
@@ -13,7 +15,8 @@ const USERS = [
   { name: "Karan", org: "DTU" },
 ];
 
-export default function SocialProof() {
+export default function SocialProof({ users }: { users?: RecentRegistrant[] }) {
+  const list = users && users.length > 0 ? users : FALLBACK;
   const [idx, setIdx] = useState(0);
   const [show, setShow] = useState(true);
 
@@ -21,47 +24,45 @@ export default function SocialProof() {
     const id = setInterval(() => {
       setShow(false);
       setTimeout(() => {
-        setIdx((p) => (p + 1) % USERS.length);
+        setIdx((p) => (p + 1) % list.length);
         setShow(true);
       }, 400);
     }, 4000);
     return () => clearInterval(id);
-  }, []);
+  }, [list.length]);
 
-  const u = USERS[idx];
+  const u = list[idx % list.length];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        padding: "12px 0",
-        transition: "opacity 0.4s",
-        opacity: show ? 1 : 0,
-        fontSize: "15px",
-      }}
-    >
-      <span style={{ fontSize: "18px" }}>👋</span>
-      <span>
-        <span style={{ fontWeight: 600, color: "#1f2937" }}>{u.name}</span>
-        <span style={{ color: "#9ca3af", margin: "0 6px" }}>from</span>
-        <span style={{ fontWeight: 700, color: "#111827" }}>{u.org}</span>
-        <span style={{ color: "#9ca3af", fontStyle: "italic", marginLeft: "6px" }}>just joined</span>
-      </span>
-      <span
+    <div className="flex justify-center">
+      <div
+        className="inline-flex items-center gap-2.5 rounded-full px-4 py-2"
         style={{
-          width: "10px",
-          height: "10px",
-          background: "#4ade80",
-          borderRadius: "50%",
-          display: "inline-block",
-          marginLeft: "4px",
-          animation: "pulse 2s infinite",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
-      />
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+      >
+        <span
+          className="h-2 w-2 shrink-0 rounded-full bg-green-400"
+          style={{ boxShadow: "0 0 8px 1px rgba(74,222,128,0.7)", animation: "sp-pulse 2s infinite" }}
+        />
+        <span
+          className="text-[13px] leading-none transition-opacity duration-400"
+          style={{ opacity: show ? 1 : 0 }}
+        >
+          <span className="font-semibold text-white/90">{u.name}</span>
+          {u.org ? (
+            <>
+              <span className="mx-1.5 text-white/35">from</span>
+              <span className="font-semibold text-white/90">{u.org}</span>
+            </>
+          ) : null}
+          <span className="ml-1.5 italic text-white/40">just joined</span>
+        </span>
+        <style>{`@keyframes sp-pulse{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
+      </div>
     </div>
   );
 }

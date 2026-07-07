@@ -3,6 +3,8 @@ import { BrevoClient } from "@getbrevo/brevo";
 const brevoApiKey = process.env.BREVO_API_KEY!;
 const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
 const fromName = process.env.FROM_NAME || "ABTalks";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const logoUrl = `${appUrl}/abtalks-logo.png`;
 
 const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
 
@@ -27,8 +29,8 @@ export async function sendWorkshopConfirmationEmail(
         <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.05);">
           <tr>
             <td style="background:linear-gradient(135deg,#e16213,#e84393);padding:32px;text-align:center;">
-              <h1 style="color:#ffffff;font-size:24px;margin:0;font-weight:700;letter-spacing:1px;">AB TALKS</h1>
-              <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:8px 0 0;">AI Workshop</p>
+              <img src="${logoUrl}" alt="ABTalks" width="150" style="display:block;margin:0 auto;height:auto;max-width:150px;border:0;outline:none;text-decoration:none;" />
+              <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:10px 0 0;">AI Workshop</p>
             </td>
           </tr>
           <tr>
