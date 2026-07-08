@@ -38,7 +38,7 @@ export async function sendWorkshopConfirmationEmail(
               <h2 style="color:#1a1a1a;font-size:22px;margin:0 0 8px;">🎉 You're Registered!</h2>
               <p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 24px;">
                 Hi <strong>${name}</strong>,<br><br>
-                Thank you for registering for the <strong>ABTalks AI Bootcamp</strong>. Your registration has been confirmed.
+                Thank you for registering for the <strong>ABTalks AI Workshop</strong>. Your registration has been confirmed.
               </p>
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef7f0;border-radius:12px;margin-bottom:24px;">
                 <tr><td style="padding:24px;">
@@ -83,7 +83,7 @@ export async function sendWorkshopConfirmationEmail(
   await brevoClient.transactionalEmails.sendTransacEmail({
     sender: { name: fromName, email: fromEmail },
     to: [{ email, name }],
-    subject: "🎉 You're Registered for the FREE AI Bootcamp!",
+    subject: "🎉 You're Registered for the FREE AI Workshop!",
     htmlContent: html,
   });
 }
