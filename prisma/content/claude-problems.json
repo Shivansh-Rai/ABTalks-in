@@ -4056,5 +4056,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 39,
+    "domain": "CLAUDE",
+    "title": "Day 39: Build PDF Splitter & Merger – A Professional PDF Utility",
+    "problemStatement": "Welcome to Day 39 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 5 — AI-Powered Productivity Applications\n\nToday's focus: Learn how to build a professional PDF utility using Claude by creating a premium PDF Splitter & Merger application.\n\nYou'll build a commercial-grade PDF utility that allows users to split PDF documents in multiple ways, merge multiple PDFs with drag-and-drop reordering, preview pages before processing, and perform all operations entirely within the browser.\n\nInstead of creating a basic document tool, you'll build an application comparable to professional online PDF utilities.\n\nTasks:\n1. Build the PDF Splitter & Merger application.\n2. Configure the desired features.\n3. Test PDF splitting using multiple methods.\n4. Merge multiple PDF documents.\n5. Preview and validate outputs.\n6. Experience the premium UI.\n7. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, processed PDFs, and key learnings.",
+    "learningObjectives": [
+      "Build professional browser-based PDF tools",
+      "Create advanced drag-and-drop interfaces",
+      "Learn client-side document processing",
+      "Design polished productivity applications",
+      "Build premium HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/yE1KRC9PhPk"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 39/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built a professional PDF Splitter & Merger using Claude.\n\nInstead of relying on online PDF tools, I created my own application that processes PDFs directly inside the browser.\n\n📄 PDF Splitter\n📑 PDF Merger\n🖼 Page Preview\n🎯 Drag & Drop Reordering\n⚡ Client-side Processing\n🌙 Premium Modern UI\n\nBiggest takeaway:\nClaude isn't just writing code—it can help build production-quality productivity software with an amazing user experience.\n\n#ClaudeAI #PDFTools #HTML #JavaScript #BuildWithClaude #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots, processed PDF outputs, and key learnings.",
+    "tags": [
+      "claude",
+      "day-39",
+      "pdf",
+      "productivity",
+      "html",
+      "javascript",
+      "document-processing",
+      "ui-ux"
+    ],
+    "dayContent": {
+      "title": "Build PDF Splitter & Merger",
+      "tagline": "Create a Premium Browser-Based PDF Utility",
+      "module": "Interactive Productivity Applications",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 90,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how Claude can generate commercial-quality productivity software by building a browser-based PDF Splitter & Merger with professional UI, drag-and-drop interactions, previews, and client-side processing.",
+        "bullets": [
+          {
+            "label": "Client-side Processing",
+            "text": "Process PDF documents securely without uploading files to servers."
+          },
+          {
+            "label": "Modern UI",
+            "text": "Build beautiful commercial-grade productivity software."
+          },
+          {
+            "label": "Interactive Workflows",
+            "text": "Create intuitive drag-and-drop document management interfaces."
+          },
+          {
+            "label": "Offline Applications",
+            "text": "Generate fully functional HTML applications that work locally."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the PDF Splitter & Merger prompt.",
+          "Answer Claude's interview question.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application locally in your browser.",
+          "Test the PDF Splitter.",
+          "Test the PDF Merger.",
+          "Preview and download processed PDFs.",
+          "Take screenshots.",
+          "Create a Day39 folder in your GitHub repository.",
+          "Create a day39.md file.",
+          "Upload screenshots, generated HTML file, processed PDFs, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/yE1KRC9PhPk"
+      },
+      "promptTemplate": "You are an expert UI/UX designer, frontend developer, document processing specialist, and JavaScript engineer.\n\nBefore generating anything, ask the user the following question.\n\n1. Would you like Claude to automatically design the application, or would you like to customize its features?\n\nIf the user chooses customization, ask which additional PDF features they would like included.\n\nAfter collecting the response, generate a premium single-page interactive HTML application called 'PDF Splitter & Merger'.\n\nThe application should provide two primary tools:\n\nPDF Splitter:\nAllow users to upload a PDF and automatically detect the total number of pages. Display visual page thumbnails for every page and allow users to preview the document before splitting. Users should be able to split the PDF by entering page numbers, selecting custom page ranges, splitting after specific pages, splitting every N pages, or extracting selected pages into one or more new PDF files. Allow users to create multiple split ranges in a single operation, validate all page ranges, preview the resulting document structure before processing, and clearly highlight invalid inputs.\n\nPDF Merger:\nAllow users to upload multiple PDF files using drag-and-drop or file selection. Display all uploaded files in a sortable list with page counts and visual previews. Users should be able to reorder the PDFs using drag-and-drop before merging. Display the total number of files, total page count, and estimated output before generating the merged document. Generate the merged PDF and provide an easy download option.\n\nPerform all PDF processing entirely within the browser using client-side JavaScript. Do not upload files to external servers or rely on backend services. Use reliable browser-compatible libraries where necessary and ensure the application continues to work offline after the initial page load.\n\nInclude drag-and-drop uploads, processing indicators, loading animations, responsive layouts, dark mode, accessibility features, intuitive error handling, keyboard shortcuts where appropriate, and smooth micro-interactions throughout the application.\n\nGenerate everything as a single self-contained HTML file using HTML, CSS, and JavaScript only.\n\nDesign the interface as a polished commercial application comparable to professional PDF utilities, with exceptional UI/UX, beautiful typography, modern layouts, smooth animations, intuitive navigation, and an experience users would genuinely choose over existing online PDF tools.",
+      "engagement": {
+        "type": "PDF Utility Showcase",
+        "description": "Share screenshots of your PDF Splitter & Merger and explain which feature impressed you the most while building it. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the PDF Splitter & Merger, generated HTML file, processed PDF examples, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
