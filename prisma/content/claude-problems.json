@@ -3956,5 +3956,205 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 38,
+    "domain": "CLAUDE",
+    "title": "Day 38: Build Typing Speed Studio – A Premium Typing Practice Platform",
+    "problemStatement": "Welcome to Day 38 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 5 — Interactive AI Learning & Productivity Apps\n\nToday's focus: Learn how to build a premium productivity application using Claude by creating a fully interactive typing practice platform.\n\nYou'll build Typing Speed Studio, a commercial-grade typing application featuring multiple practice modes, real-time analytics, adaptive difficulty, session history, and beautiful visualizations.\n\nInstead of building a simple typing test, you'll create an experience comparable to the best typing platforms available today.\n\nTasks:\n1. Build the Typing Speed Studio application.\n2. Choose your preferred typing category.\n3. Configure the desired features.\n4. Complete multiple typing sessions.\n5. Review your analytics dashboard.\n6. Track your progress through session history.\n7. Replay using different typing modes.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, analytics dashboard, and key learnings.",
+    "learningObjectives": [
+      "Build premium productivity applications using Claude",
+      "Create interactive HTML applications without frameworks",
+      "Implement real-time analytics and visual feedback",
+      "Learn adaptive UI and gamification principles",
+      "Design commercial-grade user experiences"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtube.com/watch?v=c6DOZCztz0o&feature=youtu.be"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 38/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built Typing Speed Studio using Claude.\n\nInstead of creating a basic typing test, I built a premium typing platform with analytics, adaptive practice modes, beautiful dashboards, and personalized performance insights.\n\n⌨️ Multiple Typing Modes\n📊 Live Performance Analytics\n📈 Progress Tracking\n🏆 Achievement Badges\n📚 Session History\n⚡ Adaptive Difficulty\n\nBiggest takeaway:\n\nClaude isn't just generating code—it's helping build polished applications that feel production-ready.\n\n#ClaudeAI #TypingSpeedStudio #HTML #JavaScript #BuildWithClaude #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, analytics dashboard screenshots, and key learnings.",
+    "tags": [
+      "claude",
+      "day-38",
+      "typing",
+      "productivity",
+      "html",
+      "javascript",
+      "ui-ux",
+      "interactive-learning"
+    ],
+    "dayContent": {
+      "title": "Build Typing Speed Studio",
+      "tagline": "Create a Premium Commercial Typing Platform",
+      "module": "Interactive Productivity Applications",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 90,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how Claude can generate polished productivity applications by building a premium typing practice platform with adaptive learning, analytics, gamification, and commercial-quality UI/UX.",
+        "bullets": [
+          {
+            "label": "Interactive Applications",
+            "text": "Build complete browser applications using only prompts."
+          },
+          {
+            "label": "Real-Time Analytics",
+            "text": "Generate live performance statistics and beautiful dashboards."
+          },
+          {
+            "label": "Adaptive Learning",
+            "text": "Create intelligent practice modes that adjust to user performance."
+          },
+          {
+            "label": "Commercial UI/UX",
+            "text": "Design interfaces comparable to premium productivity software."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the Typing Speed Studio prompt.",
+          "Answer Claude's interview questions.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application locally in your browser.",
+          "Try multiple typing modes.",
+          "Complete several typing sessions.",
+          "Review the analytics dashboard.",
+          "Take screenshots.",
+          "Create a Day38 folder in your GitHub repository.",
+          "Create a day38.md file.",
+          "Upload screenshots, generated HTML file, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtube.com/watch?v=c6DOZCztz0o&feature=youtu.be"
+      },
+      "promptTemplate": "# Typing Speed Studio\n\nYou are an expert UI/UX designer, frontend developer, educational game designer, performance engineer, and JavaScript developer.\n\nBefore generating anything, ask the user the following questions ONE AT A TIME. Wait for each response before continuing.\n\n1. What kind of typing experience would you like to build?\n\nExamples include General English, Programming, Academic, Business, Medical, Legal, Creative Writing, or an Adaptive version that supports all categories.\n\nIf the user chooses the Adaptive version, the generated application should allow users to switch between categories.\n\n2. Would you like Claude to automatically decide the features, or would you like to customize them?\n\nIf the user chooses customization, ask which features they would like included.\n\nAfter collecting the responses, generate a premium single-page interactive HTML application called 'Typing Speed Studio'.\n\nThe application should feel like a polished commercial typing platform rather than a basic typing test.\n\nInclude multiple typing modes such as Time Mode (15, 30, 60 and 120 seconds), Word Count Mode (25, 50, 100 and 250 words), Quote Mode, Programming Mode (HTML, CSS, JavaScript, Python, Java, C++, SQL and other languages where appropriate), Custom Text Mode, Adaptive Mode that adjusts difficulty based on performance, Focus Mode where only the current line is visible, and Zen Mode for distraction-free untimed practice.\n\nGenerate practice passages dynamically according to the selected category. Programming mode should use realistic code snippets, business mode should use professional communication, medical mode should use medical terminology, legal mode should use legal text, creative writing mode should use literature-style passages, and so on. Do not hardcode the same practice paragraph for every mode.\n\nDisplay live typing statistics including WPM, Raw WPM, CPM, Accuracy, Elapsed Time, Mistake Count, Current Streak, Completion Percentage, Remaining Time or Words, and a real-time progress indicator. Highlight correct characters, incorrect characters, the active cursor position, and completed text with smooth visual feedback.\n\nAfter every completed session, generate a beautiful analytics dashboard inspired by modern typing platforms such as Monkeytype. Include WPM, Raw WPM, Accuracy, Consistency, Completion Percentage, Characters Typed (Correct, Incorrect, Extra and Missed), Mistake Count, Typing Rhythm, Error Heatmap, WPM Progress Graph, Accuracy Graph, Session Duration, Personal Bests, Percentile Estimate, Achievement Badges, and a detailed performance summary highlighting strengths, weaknesses, commonly mistyped keys, and personalized suggestions for improvement.\n\nEnsure the calculations are accurate and never generate unrealistic values such as 20,000 WPM.\n\nStore session history locally so users can review previous attempts, compare scores, monitor improvement over time, maintain streaks, and track personal records without requiring an account.\n\nInclude optional sound effects, keyboard shortcuts, pause and resume functionality, restart options, theme customization, font size controls, dark mode, responsive design, smooth animations, and accessibility features.\n\nGenerate everything as a single self-contained HTML file using only HTML, CSS, and JavaScript without external libraries or frameworks.\n\nDesign the interface as a premium commercial application with exceptional UI/UX, beautiful typography, modern layouts, polished micro-interactions, smooth transitions, and an experience that feels comparable to the best typing platforms available today.",
+      "engagement": {
+        "type": "Typing Speed Studio Showcase",
+        "description": "Share your analytics dashboard and explain which feature impressed you the most while building Typing Speed Studio. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of Typing Speed Studio, the generated HTML file, analytics dashboard, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
+  },
+  {
+    "dayNumber": 39,
+    "domain": "CLAUDE",
+    "title": "Day 39: Build PDF Splitter & Merger – A Professional PDF Utility",
+    "problemStatement": "Welcome to Day 39 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 5 — AI-Powered Productivity Applications\n\nToday's focus: Learn how to build a professional PDF utility using Claude by creating a premium PDF Splitter & Merger application.\n\nYou'll build a commercial-grade PDF utility that allows users to split PDF documents in multiple ways, merge multiple PDFs with drag-and-drop reordering, preview pages before processing, and perform all operations entirely within the browser.\n\nInstead of creating a basic document tool, you'll build an application comparable to professional online PDF utilities.\n\nTasks:\n1. Build the PDF Splitter & Merger application.\n2. Configure the desired features.\n3. Test PDF splitting using multiple methods.\n4. Merge multiple PDF documents.\n5. Preview and validate outputs.\n6. Experience the premium UI.\n7. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, processed PDFs, and key learnings.",
+    "learningObjectives": [
+      "Build professional browser-based PDF tools",
+      "Create advanced drag-and-drop interfaces",
+      "Learn client-side document processing",
+      "Design polished productivity applications",
+      "Build premium HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/yE1KRC9PhPk"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 39/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built a professional PDF Splitter & Merger using Claude.\n\nInstead of relying on online PDF tools, I created my own application that processes PDFs directly inside the browser.\n\n📄 PDF Splitter\n📑 PDF Merger\n🖼 Page Preview\n🎯 Drag & Drop Reordering\n⚡ Client-side Processing\n🌙 Premium Modern UI\n\nBiggest takeaway:\nClaude isn't just writing code—it can help build production-quality productivity software with an amazing user experience.\n\n#ClaudeAI #PDFTools #HTML #JavaScript #BuildWithClaude #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots, processed PDF outputs, and key learnings.",
+    "tags": [
+      "claude",
+      "day-39",
+      "pdf",
+      "productivity",
+      "html",
+      "javascript",
+      "document-processing",
+      "ui-ux"
+    ],
+    "dayContent": {
+      "title": "Build PDF Splitter & Merger",
+      "tagline": "Create a Premium Browser-Based PDF Utility",
+      "module": "Interactive Productivity Applications",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 90,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how Claude can generate commercial-quality productivity software by building a browser-based PDF Splitter & Merger with professional UI, drag-and-drop interactions, previews, and client-side processing.",
+        "bullets": [
+          {
+            "label": "Client-side Processing",
+            "text": "Process PDF documents securely without uploading files to servers."
+          },
+          {
+            "label": "Modern UI",
+            "text": "Build beautiful commercial-grade productivity software."
+          },
+          {
+            "label": "Interactive Workflows",
+            "text": "Create intuitive drag-and-drop document management interfaces."
+          },
+          {
+            "label": "Offline Applications",
+            "text": "Generate fully functional HTML applications that work locally."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the PDF Splitter & Merger prompt.",
+          "Answer Claude's interview question.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open the application locally in your browser.",
+          "Test the PDF Splitter.",
+          "Test the PDF Merger.",
+          "Preview and download processed PDFs.",
+          "Take screenshots.",
+          "Create a Day39 folder in your GitHub repository.",
+          "Create a day39.md file.",
+          "Upload screenshots, generated HTML file, processed PDFs, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/yE1KRC9PhPk"
+      },
+      "promptTemplate": "You are an expert UI/UX designer, frontend developer, document processing specialist, and JavaScript engineer.\n\nBefore generating anything, ask the user the following question.\n\n1. Would you like Claude to automatically design the application, or would you like to customize its features?\n\nIf the user chooses customization, ask which additional PDF features they would like included.\n\nAfter collecting the response, generate a premium single-page interactive HTML application called 'PDF Splitter & Merger'.\n\nThe application should provide two primary tools:\n\nPDF Splitter:\nAllow users to upload a PDF and automatically detect the total number of pages. Display visual page thumbnails for every page and allow users to preview the document before splitting. Users should be able to split the PDF by entering page numbers, selecting custom page ranges, splitting after specific pages, splitting every N pages, or extracting selected pages into one or more new PDF files. Allow users to create multiple split ranges in a single operation, validate all page ranges, preview the resulting document structure before processing, and clearly highlight invalid inputs.\n\nPDF Merger:\nAllow users to upload multiple PDF files using drag-and-drop or file selection. Display all uploaded files in a sortable list with page counts and visual previews. Users should be able to reorder the PDFs using drag-and-drop before merging. Display the total number of files, total page count, and estimated output before generating the merged document. Generate the merged PDF and provide an easy download option.\n\nPerform all PDF processing entirely within the browser using client-side JavaScript. Do not upload files to external servers or rely on backend services. Use reliable browser-compatible libraries where necessary and ensure the application continues to work offline after the initial page load.\n\nInclude drag-and-drop uploads, processing indicators, loading animations, responsive layouts, dark mode, accessibility features, intuitive error handling, keyboard shortcuts where appropriate, and smooth micro-interactions throughout the application.\n\nGenerate everything as a single self-contained HTML file using HTML, CSS, and JavaScript only.\n\nDesign the interface as a polished commercial application comparable to professional PDF utilities, with exceptional UI/UX, beautiful typography, modern layouts, smooth animations, intuitive navigation, and an experience users would genuinely choose over existing online PDF tools.",
+      "engagement": {
+        "type": "PDF Utility Showcase",
+        "description": "Share screenshots of your PDF Splitter & Merger and explain which feature impressed you the most while building it. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of the PDF Splitter & Merger, generated HTML file, processed PDF examples, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
