@@ -6,7 +6,6 @@ import ScrollToTop from "@/components/workshop/ScrollToTop";
 import CountdownTimer from "@/components/workshop/CountdownTimer";
 import CursorGlow from "@/components/workshop/CursorGlow";
 import AutoScrollToForm from "@/components/workshop/AutoScrollToForm";
-import ExitIntentPopup from "@/components/workshop/ExitIntentPopup";
 import CommunityStats from "@/components/workshop/CommunityStats";
 import UpcomingEvents from "@/components/workshop/UpcomingEvents";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
@@ -182,7 +181,6 @@ export default async function AIWorkshopPage() {
 
       <CursorGlow />
       <AutoScrollToForm />
-      <ExitIntentPopup />
 
       {/* ---------- Content ---------- */}
       <div className="relative z-10">
