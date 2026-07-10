@@ -13,6 +13,7 @@ export default async function AdminLayout({
   const navItems = [
     { href: "/admin", label: "Overview", icon: "overview" as const },
     { href: "/admin/students", label: "Students", icon: "students" as const },
+    { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" as const },
     { href: "/admin/submissions", label: "Submissions", icon: "submissions" as const },
     { href: "/admin/jobs", label: "Jobs", icon: "jobs" as const },
     { href: "/admin/content", label: "Content", icon: "content" as const },

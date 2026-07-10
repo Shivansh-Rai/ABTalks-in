@@ -60,3 +60,52 @@ export async function getRecentRegistrations(): Promise<RecentRegistrant[]> {
       org: r.organization ? String(r.organization).trim() : null,
     }));
 }
+
+export type CohortRegion = "us" | "india";
+
+export interface CohortApplicationRow {
+  id: string;
+  created_at: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  linkedin_url: string;
+  education_level: string;
+  total_experience: string;
+  ai_ml_experience: string;
+  current_title_company: string;
+  industry: string;
+  primary_languages_tools: string;
+  why_interested: string;
+  what_to_achieve: string;
+  target_role: string;
+  commit_hours: boolean;
+  attend_sessions: boolean;
+  understand_pre_call: boolean;
+  ready_for_challenge: boolean;
+  preferred_start_window: string;
+  status: string;
+  // region-specific
+  visa_category?: string | null; // US table
+  based_in_usa?: boolean | null; // US table
+  originated_in_india?: boolean | null; // India table
+}
+
+/**
+ * All AI Cohort applications for a region (admin view).
+ * US → `cohort_applications`, India → `cohort_applications_india`.
+ * Returns [] on any error.
+ */
+export async function getCohortApplications(
+  region: CohortRegion,
+): Promise<CohortApplicationRow[]> {
+  const table =
+    region === "india" ? "cohort_applications_india" : "cohort_applications";
+  const { data, error } = await workshopSupabase
+    .from(table)
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1000);
+  if (error || !data) return [];
+  return data as CohortApplicationRow[];
+}

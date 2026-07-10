@@ -9,6 +9,7 @@ import {
   Briefcase,
   FileText,
   Gift,
+  GraduationCap,
   LayoutDashboard,
   Megaphone,
   Menu,
@@ -27,7 +28,8 @@ type IconName =
   | "analytics"
   | "ambassadors"
   | "referrals"
-  | "redemptions";
+  | "redemptions"
+  | "cohort";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -39,6 +41,7 @@ const iconMap = {
   ambassadors: Megaphone,
   referrals: Gift,
   redemptions: Package,
+  cohort: GraduationCap,
 } as const;
 
 type NavItem = {
