@@ -4156,5 +4156,106 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 40,
+    "domain": "CLAUDE",
+    "title": "Day 40: Build Your Own AI Assistant Builder",
+    "problemStatement": "Welcome to Day 40 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 6 — AI Products & Agent Design\n\nToday's focus: Learn how to design and build purpose-built AI assistants instead of generic chatbots.\n\nYou'll use Claude to create a fully customized AI Assistant Builder that interviews users, generates a production-ready system prompt, designs a premium interface, and creates a working HTML application connected to the Claude API.\n\nInstead of simply chatting with AI, you'll learn how AI products are architected—from defining the assistant's purpose to designing the user experience and underlying prompt.\n\nTasks:\n1. Design your AI assistant.\n2. Choose your domain and niche.\n3. Define the assistant's users and desired outcomes.\n4. Generate a production-ready system prompt.\n5. Build a premium HTML interface.\n6. Review the documentation panel.\n7. Instead of downloading the html file, go to the dropdown and publish the claude artifact.\n8. Test the generated assistant.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nEnsure that you publish the claude artifact in order to deploy your assistant.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, system prompt, and key learnings.",
+    "learningObjectives": [
+      "Design purpose-built AI assistants",
+      "Learn production-quality system prompt engineering",
+      "Build AI-powered HTML applications",
+      "Understand AI product architecture",
+      "Create polished user experiences for AI products",
+  "Learn about claude artifacts."
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://www.youtube.com/watch?v=OoOCi3pga_E"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 90,
+    "linkedinTemplate": "Day 40/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I stopped building AI apps...\n\n...and started building AI Assistants.\n\nUsing Claude, I created a complete AI Assistant Builder that generates production-ready assistants with custom system prompts, premium interfaces, and live Claude integration.\n\n🤖 AI Assistant Designer\n🧠 Production System Prompt\n🎨 Purpose-built UI\n⚡ Claude API Integration\n📖 Documentation Panel\n\nBiggest takeaway:\n\nThe best AI products aren't generic chatbots—they're assistants designed for one specific job and one specific user.\n\n#ClaudeAI #AIAssistant #PromptEngineering #BuildWithClaude #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, system prompt, screenshots, and key learnings.",
+    "tags": [
+      "claude",
+      "day-40",
+      "ai-assistant",
+      "prompt-engineering",
+      "html",
+      "javascript",
+      "product-design",
+      "agent-design"
+    ],
+    "dayContent": {
+      "title": "Build Your Own AI Assistant",
+      "tagline": "From Idea to Production-Ready AI Assistant",
+      "module": "AI Product Design",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 30,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how professional AI products are designed by building an assistant from scratch—including user interviews, system prompt engineering, UI design, documentation, and live Claude integration.",
+        "bullets": [
+          {
+            "label": "Assistant Design",
+            "text": "Design AI assistants around specific users and problems."
+          },
+          {
+            "label": "System Prompt Engineering",
+            "text": "Create production-quality prompts that define the assistant's behavior."
+          },
+          {
+            "label": "AI Product Thinking",
+            "text": "Understand how successful AI products combine UX with prompt engineering."
+          },
+          {
+            "label": "Production Interfaces",
+            "text": "Build premium interfaces tailored to each assistant instead of generic chat windows."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the AI Assistant Builder prompt.",
+          "Answer Claude's interview questions (MCQ quiz form, do not type free-form answers).",
+          "Generate the complete HTML application.",
+          "Prefer publishing the Claude artifact from the dropdown so you can run the assistant inside Claude.ai / the Claude apps no Anthropic API key is required there; the fetch call to api.anthropic.com is handled automatically.",
+          "If you download the HTML and open it in a browser or host it on your own website, you will need a real Anthropic API key for the live Claude API calls to work.",
+          "Test your assistant.",
+          "Review the generated system prompt.",
+          "Explore the documentation panel.",
+          "Take screenshots.",
+          "Create a Day40 folder in your GitHub repository.",
+          "Create a day40.md file.",
+          "Upload screenshots, generated HTML file, system prompt, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=OoOCi3pga_E"
+      },
+      "promptTemplate": "AI Assistant Builder\n\nYou are an expert product manager, conversation designer, prompt engineer, UX designer, and frontend developer.\n\nBefore generating anything, interview the user ONE QUESTION AT A TIME in the quiz form (MCQ, do not make user do the work of typing).\n\n1. What kind of assistant do you want to build? (Ask their domain and then niche, then give 4 suitable options.)\n2. Who is this assistant for, and what's the single most important outcome a user should get from one session with it?\n3. What inputs will people give it? (free text, pasted document, form fields, uploaded file, multi-turn conversation)\n4. What should the output look like? (a score/verdict, a structured report, a conversational chat, a generated document, recommendations with reasoning)\n5. Any tone or personality preference? (professional, friendly, blunt/expert, playful)\n\nThen design and build:\n\n1. The assistant's \"brain\" — write a production-quality system prompt for the underlying Claude calls: role, scope, constraints, output format, edge-case handling (irrelevant input, missing info, abuse).\n\n2. The interface — a single self-contained HTML file (HTML/CSS/JS only, no external libraries) that:\n- Has a premium, purpose-built UI matching the assistant's domain (not a generic chatbot box) — e.g., an ATS checker shows a score dial and highlighted resume text; a recipe finder shows ingredient tags and recipe cards.\n- Calls the Claude API live via fetch to https://api.anthropic.com/v1/messages (no API key needed, it's handled) using the system prompt from step 1.\n- Handles loading states, errors, and empty states gracefully.\n- Is fully responsive with smooth animations and polished micro-interactions.\n\n3. Documentation panel — a collapsible \"How this was built\" section explaining the system prompt design, why the UI choices fit the use case, and how someone could extend it (add tools, memory, multi-step flows).\n\nGenerate the complete file only after all interview answers are collected.",
+      "engagement": {
+        "type": "AI Assistant Showcase",
+        "description": "Share your custom AI Assistant and explain what problem it solves. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your AI Assistant, generated HTML application, system prompt, and key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
