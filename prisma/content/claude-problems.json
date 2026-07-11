@@ -4257,5 +4257,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 41,
+    "domain": "CLAUDE",
+    "title": "Day 41: Build Interactive Learning Studio – Create AI-Powered Interactive Courses",
+    "problemStatement": "Welcome to Day 41 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 6 — AI Education & Knowledge Systems\n\nToday's focus: Learn how to build complete interactive learning experiences using Claude.\n\nYou'll create Interactive Learning Studio, an AI-powered educational platform that teaches an entire topic through interactive lessons, quizzes, diagrams, exercises, and practical challenges.\n\nInstead of generating summaries or learning roadmaps, you'll build a complete interactive course capable of teaching a focused topic from beginner to mastery.\n\nTasks:\n1. Choose a learning domain.\n2. Narrow the subject into a teachable topic.\n3. Configure the learning experience.\n4. Generate a complete Interactive Learning Studio.\n5. Complete all learning modules.\n6. Solve quizzes and the final challenge.\n7. Review your progress.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, and key learnings.",
+    "learningObjectives": [
+      "Build AI-powered educational applications",
+      "Create interactive tutorials using Claude",
+      "Design engaging learning experiences",
+      "Generate complete HTML learning platforms",
+      "Apply instructional design principles"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://www.youtube.com/watch?v=OHYgNZTAqxk"
+    ],
+    "difficulty": "Intermediate",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 41/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built an Interactive Learning Studio using Claude.\n\nInstead of creating a simple tutorial, I generated a complete interactive learning platform with lessons, quizzes, exercises, diagrams, progress tracking, and a final practical challenge.\n\n📚 Four Interactive Learning Modules\n📝 Auto-Graded Quizzes\n🎯 Practical Exercises\n📊 Progress Tracking\n🏆 Final Challenge\n📖 Cheat Sheets & Learning Resources\n\nBiggest takeaway:\n\nAI can now generate complete educational experiences—not just explanations.\n\n#ClaudeAI #InteractiveLearning #BuildWithClaude #HTML #JavaScript #EdTech #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing screenshots of your Interactive Learning Studio, generated HTML file, and key learnings.",
+    "tags": [
+      "claude",
+      "day-41",
+      "education",
+      "interactive-learning",
+      "html",
+      "javascript",
+      "edtech",
+      "instructional-design"
+    ],
+    "dayContent": {
+      "title": "Build Interactive Learning Studio",
+      "tagline": "Generate Complete Interactive Courses with AI",
+      "module": "AI Education Systems",
+      "difficulty": "Intermediate",
+      "estimatedMinutes": 90,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how Claude can generate complete interactive educational experiences by combining instructional design, quizzes, diagrams, exercises, and practical projects into a single learning platform.",
+        "bullets": [
+          {
+            "label": "Instructional Design",
+            "text": "Structure complete tutorials that progressively teach complex topics."
+          },
+          {
+            "label": "Interactive Learning",
+            "text": "Combine explanations, quizzes, exercises, and projects into engaging experiences."
+          },
+          {
+            "label": "Educational UI",
+            "text": "Design learning platforms with progress tracking and interactive elements."
+          },
+          {
+            "label": "AI Course Generation",
+            "text": "Generate production-quality educational content using Claude."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the Interactive Learning Studio prompt.",
+          "Answer Claude's interview questions.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open it locally in your browser.",
+          "Complete all four learning modules.",
+          "Attempt every quiz.",
+          "Complete the final practical challenge.",
+          "Take screenshots.",
+          "Create a Day41 folder in your GitHub repository.",
+          "Create a day41.md file.",
+          "Upload screenshots, generated HTML file, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://www.youtube.com/watch?v=OHYgNZTAqxk"
+      },
+      "promptTemplate": "# Interactive Learning Studio\n\nYou are an expert educator, curriculum designer, instructional designer, subject matter expert, UI/UX designer, and senior frontend developer.\n\nBefore generating anything, ask the user the following questions ONE AT A TIME, in MCQ format only, no user typed input (keep that as last option).\n\n1. What kind of Interactive Learning Studio would you like to build?\n(Offer domains and subjects.)\n\n2. Continue asking follow-up questions until the requested subject has been narrowed to a topic that can realistically be taught in a single comprehensive interactive tutorial.\nDo not stop after identifying only a domain or subject. Use your own judgment to determine when the scope is appropriate.\nExample:\nProgramming → Python → Object-Oriented Programming.\n\nThe topic should be broad enough to include multiple related concepts but focused enough to be completely taught within one tutorial.\n\n3. Would you like Claude to automatically structure the tutorial, or would you like to customize its sections?\nIf the user chooses customization, ask which sections they want included.\n\nAfter collecting all responses, generate a premium single-page interactive HTML application called 'Interactive Learning Studio'.\n\nThe application should teach the selected topic completely rather than creating a learning roadmap or summary. The chosen topic should already be known and must not be requested again inside the HTML.\n\nBegin with an introduction containing learning objectives, estimated completion time, prerequisites (if any), expected outcomes, and a reward system.\n\nDivide the tutorial into four progressively difficult modules, moving from foundational understanding to practical application and mastery.\n\nEach module should include:\n- Detailed explanations\n- Topic-specific examples\n- Analogies\n- HTML/CSS/SVG diagrams where appropriate\n- Comparisons\n- Practical exercises\n- Common misconceptions\n- Key takeaways\n- Interactive elements\n\nAfter each module, include a 4-question interactive quiz with automatic scoring, instant feedback, explanations for every answer, and a short performance summary before unlocking the next module.\n\nConclude with:\n- Final practical challenge\n- Cheat sheet\n- Summary notes\n- Continue Learning section\n- Books\n- Documentation\n- Research papers (where appropriate)\n- Communities\n- Practice platforms\n- Search keywords\n- Additional AI prompts for further learning.\n\nEvery lesson, example, analogy, diagram, exercise, quiz, and challenge must be generated specifically for the selected topic.\n\nGenerate everything as a single self-contained HTML file using only HTML, CSS, and JavaScript only, without external libraries or frameworks.\n\nDesign the interface as a polished commercial learning platform with responsive design, dark mode, smooth animations, progress tracking, quiz scoring, completion tracking, printable notes, and an intuitive user experience.",
+      "engagement": {
+        "type": "Interactive Learning Studio Showcase",
+        "description": "Share your Interactive Learning Studio and explain which topic you transformed into a complete interactive course. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your Interactive Learning Studio, generated HTML file, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
