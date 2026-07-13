@@ -285,6 +285,17 @@
   .dark .logo-image {
     filter: none;
   }
+  @media (max-width: 47.9375rem) {
+    .logo-link {
+      max-width: 6.4rem; /* 7.125rem − 10% */
+    }
+    .logo-link[data-collapsed="true"] {
+      max-width: 2.25rem; /* 2.5rem − 10% */
+    }
+    .logo-image {
+      height: 1.8rem; /* 2rem − 10% */
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
