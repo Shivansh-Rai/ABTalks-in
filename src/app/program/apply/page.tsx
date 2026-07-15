@@ -77,7 +77,7 @@ export default async function ProgramApplyPage() {
           <CardHeader>
             <CardTitle>You&apos;re enrolled</CardTitle>
             <CardDescription>
-              Welcome to the AI Mastery Program. Head to your dashboard to begin.
+              Welcome to AI Cohort. Head to your dashboard to begin.
             </CardDescription>
           </CardHeader>
           <CardContent>

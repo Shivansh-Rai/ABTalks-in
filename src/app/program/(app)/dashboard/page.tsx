@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { AlertTriangle, Award, Flame, GitCommit, Mic, Target, Trophy } from "lucide-react";
 import { requireProgramMember } from "@/lib/program-auth";
+import {
+  PROGRAM_MAX_COMMIT_POINTS,
+  PROGRAM_MAX_CONCEPT_POINTS,
+  PROGRAM_MAX_MISSION_POINTS,
+  PROGRAM_MAX_PROJECT_POINTS,
+  PROGRAM_MAX_TOTAL_POINTS,
+  PROGRAM_TOTAL_DAYS,
+} from "@/features/program/constants";
 import { getMemberDashboard } from "@/features/program/dashboard";
 import {
   getCommitHeatmap,
@@ -36,8 +44,6 @@ export default async function ProgramDashboardPage() {
     );
   }
 
-  const maxComponent = 360;
-
   return (
     <div className="space-y-8">
       <header className="space-y-2">
@@ -45,7 +51,7 @@ export default async function ProgramDashboardPage() {
           Mission control
         </h1>
         <p className="text-sm text-muted-foreground">
-          Day {data.memberDay}/30
+          Day {data.memberDay}/{PROGRAM_TOTAL_DAYS}
           {data.behindBy > 0 ? ` · ${data.behindBy} behind cohort pace` : ""}
         </p>
         {atRisk.atRisk && (
@@ -73,12 +79,12 @@ export default async function ProgramDashboardPage() {
         <StatCard
           icon={<GitCommit className="size-4 text-emerald-500" />}
           label="Commit pts"
-          value={`${data.scoreBreakdown.commitPoints}/150`}
+          value={`${data.scoreBreakdown.commitPoints}/${PROGRAM_MAX_COMMIT_POINTS}`}
         />
         <StatCard
           icon={<Target className="size-4 text-sky-500" />}
           label="Cohort day"
-          value={`${data.cohortDay}/30`}
+          value={`${data.cohortDay}/${PROGRAM_TOTAL_DAYS}`}
         />
         <StatCard
           icon={<Flame className="size-4 text-orange-500" />}
@@ -90,7 +96,8 @@ export default async function ProgramDashboardPage() {
       <section className="space-y-3 rounded-xl border p-4">
         <h2 className="text-sm font-semibold">Commit activity</h2>
         <p className="text-xs text-muted-foreground">
-          One commit in your program repo earns 5 pts for that IST day (max 150).
+          One commit in your program repo earns 5 pts for that IST day (max{" "}
+          {PROGRAM_MAX_COMMIT_POINTS}).
         </p>
         <CommitHeatmap cells={heatmap} />
       </section>
@@ -183,25 +190,25 @@ export default async function ProgramDashboardPage() {
         <ScoreBar
           label="Missions"
           value={data.scoreBreakdown.missionPoints}
-          max={360}
+          max={PROGRAM_MAX_MISSION_POINTS}
         />
         <ScoreBar
           label="Concept checks"
           value={data.scoreBreakdown.conceptPoints}
-          max={90}
+          max={PROGRAM_MAX_CONCEPT_POINTS}
         />
         <ScoreBar
           label="Commits"
           value={data.scoreBreakdown.commitPoints}
-          max={150}
+          max={PROGRAM_MAX_COMMIT_POINTS}
         />
         <ScoreBar
           label="Projects"
           value={data.scoreBreakdown.projectPoints}
-          max={400}
+          max={PROGRAM_MAX_PROJECT_POINTS}
         />
         <p className="text-xs text-muted-foreground">
-          Max {maxComponent + 90 + 150 + 400} pts across all components
+          Max {PROGRAM_MAX_TOTAL_POINTS} pts across all components
         </p>
       </section>
 

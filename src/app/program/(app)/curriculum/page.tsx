@@ -13,7 +13,7 @@ export default async function ProgramCurriculumPage() {
           Curriculum
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Your 30-day path. Pass each mission to unlock the next day.
+          Your 31-day path. Pass each mission to unlock the next day.
         </p>
       </header>
 

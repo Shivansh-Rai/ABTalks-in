@@ -28,7 +28,7 @@ function cellColor(count: number): string {
 export function CommitHeatmap({ cells }: { cells: Cell[] }) {
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1" aria-label="30-day commit heatmap">
+      <div className="flex flex-wrap gap-1" aria-label="31-day commit heatmap">
         {cells.map((cell) => (
           <div
             key={cell.dateIso}

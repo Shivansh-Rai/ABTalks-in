@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { getMemberAtRiskStatus } from "@/features/program/commits";
 
@@ -86,7 +87,7 @@ export async function generateRecommendations(cohortId: string): Promise<{
         `Name: ${member.fullName}`,
         `Role: ${member.jobRole} @ ${member.company}`,
         `Scores — missions:${member.missionPoints} concept:${member.conceptPoints} commits:${member.commitPoints} projects:${member.projectPoints} total:${member.totalScore}`,
-        `Progress: day ${member.highestUnlockedDay}/30, cohort day ${calendarDay}, behind by ${behindBy}`,
+        `Progress: day ${member.highestUnlockedDay}/${PROGRAM_TOTAL_DAYS}, cohort day ${calendarDay}, behind by ${behindBy}`,
         `Clean pass rate: ${cleanPassPct}%, skip tokens used: ${member.skipTokensUsed}`,
         `Project grades: ${projectSummary || "none yet"}`,
         `At-risk flags: ${atRisk.reasons.join(", ") || "none"}`,

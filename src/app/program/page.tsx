@@ -3,8 +3,12 @@ import {
   ArrowRight,
   Boxes,
   BrainCircuit,
+  Cpu,
   Database,
   Network,
+  Scale,
+  Server,
+  Sparkles,
 } from "lucide-react";
 import { auth } from "@/auth";
 import {
@@ -19,49 +23,73 @@ import { getEntryState } from "@/features/program/entry";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
-  title: "AI Mastery Program — ABTalks",
+  title: "AI Cohort — ABTalks",
   description:
-    "A 30-day, hands-on AI engineering program for working professionals. Build real systems, get AI-graded, and become discoverable to recruiters.",
+    "Build and deploy a production-grade enterprise AI chatbot in 31 days — RAG, agents, MCP, guardrails, Docker, Kubernetes — and get in front of recruiters.",
 };
 
-const modules = [
+const phases = [
+  {
+    number: 0,
+    title: "Env & Tooling",
+    subtitle: "Days 1–3 · Local AI stack, Git, Ollama",
+    Icon: Cpu,
+  },
   {
     number: 1,
-    title: "Data & Knowledge Engineering",
-    subtitle: "Kafka · Vector DBs · Neo4j · RAG",
+    title: "Data",
+    subtitle: "Days 4–6 · Coverage data & structured queries",
     Icon: Database,
   },
   {
     number: 2,
-    title: "APIs & Microservices",
-    subtitle: "FastAPI · GraphQL · gRPC · Docker · Kubernetes",
-    Icon: Boxes,
+    title: "Embeddings & Vector",
+    subtitle: "Days 7–10 · Knowledge base + retrieval",
+    Icon: Sparkles,
   },
   {
     number: 3,
-    title: "LLM & Agentic Development",
-    subtitle: "OpenAI · Anthropic · LangGraph · CrewAI",
+    title: "LLM & Prompting",
+    subtitle: "Days 11–15 · Prompting, fine-tune basics",
     Icon: BrainCircuit,
   },
   {
     number: 4,
-    title: "MCP & Enterprise Adoption",
-    subtitle: "Model Context Protocol · Capstone build",
+    title: "App Build",
+    subtitle: "Days 16–20 · Streamlit chatbot + FastAPI",
+    Icon: Boxes,
+  },
+  {
+    number: 5,
+    title: "Agentic + MCP",
+    subtitle: "Days 21–24 · Tools, agents, MCP servers",
     Icon: Network,
+  },
+  {
+    number: 6,
+    title: "Governance & Eval",
+    subtitle: "Days 25–27 · Guardrails, evals, safety",
+    Icon: Scale,
+  },
+  {
+    number: 7,
+    title: "Docker / K8s / Prod",
+    subtitle: "Days 28–31 · Ship to production",
+    Icon: Server,
   },
 ];
 
 const steps = [
-  { n: 1, label: "Apply", detail: "Share your professional profile." },
+  { n: 1, label: "Apply", detail: "Confirm your laptop and GitHub setup." },
   {
     n: 2,
     label: "Entry assessment",
-    detail: "A timed aptitude + technical check.",
+    detail: "A timed aptitude + basic programming check.",
   },
   {
     n: 3,
-    label: "30 days of missions",
-    detail: "Hands-on builds verified like CI.",
+    label: "31 days of missions",
+    detail: "Build locally; we verify your GitHub artifacts.",
   },
   {
     n: 4,
@@ -102,15 +130,15 @@ export default async function ProgramLandingPage() {
     <main className="flex min-h-svh flex-col bg-gradient-to-br from-primary/5 via-background to-background">
       <section className="container mx-auto flex flex-col items-center px-6 pt-20 pb-12 text-center md:pt-28">
         <span className="mb-4 inline-flex items-center rounded-full border border-border/60 bg-card/50 px-3 py-1 text-xs font-medium text-muted-foreground">
-          For professionals · 2–7 years experience
+          For students & recent grads · ~2–4 hrs/day
         </span>
         <h1 className="font-display max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
-          AI Mastery Program
+          AI Cohort
         </h1>
         <p className="mt-5 max-w-2xl text-balance text-lg text-muted-foreground">
-          A 30-day, hands-on AI engineering program. Ship real systems across
-          four modules, get your work verified like CI and graded by AI, then
-          become discoverable to recruiters.
+          Build and deploy a production-grade enterprise AI chatbot in 31 days —
+          RAG, agents, MCP, guardrails, Docker, Kubernetes — and get in front of
+          recruiters.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
           <Link
@@ -132,12 +160,29 @@ export default async function ProgramLandingPage() {
         </div>
       </section>
 
+      <section className="container mx-auto px-6 py-8">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-border/60 bg-card/50 p-6 text-left">
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            Requirements
+          </h2>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>Laptop with at least 8 GB RAM</li>
+            <li>~2–4 hours per day for 31 days</li>
+            <li>GitHub account</li>
+            <li>
+              Everything else is free (Ollama / Groq / Chroma — no paid API keys
+              needed)
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <section className="container mx-auto px-6 py-12">
         <h2 className="font-display mb-8 text-center text-2xl font-semibold tracking-tight md:text-3xl">
-          Four modules, thirty days
+          Eight phases, thirty-one days
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {modules.map((m) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {phases.map((m) => (
             <Card key={m.number} className="border-border/60">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -146,7 +191,7 @@ export default async function ProgramLandingPage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">
-                      Module {m.number}
+                      Phase {m.number}
                     </p>
                     <CardTitle className="text-lg">{m.title}</CardTitle>
                   </div>

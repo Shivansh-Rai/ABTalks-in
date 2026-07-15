@@ -8,9 +8,9 @@ type Props = {
 };
 
 const MAX = {
-  mission: 360,
-  concept: 90,
-  commit: 150,
+  mission: 372,
+  concept: 93,
+  commit: 155,
   project: 400,
 };
 

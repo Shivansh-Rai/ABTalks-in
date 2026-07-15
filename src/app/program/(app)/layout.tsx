@@ -5,7 +5,6 @@ import { ProgramNav } from "@/components/program/program-nav";
 const navItems = [
   { href: "/program/dashboard", label: "Dashboard" },
   { href: "/program/curriculum", label: "Curriculum" },
-  { href: "/program/arena", label: "Arena" },
   { href: "/program/videos", label: "Videos" },
   { href: "/program/leaderboard", label: "Leaderboard" },
 ];
@@ -25,7 +24,7 @@ export default async function ProgramAppLayout({
             href="/program/dashboard"
             className="font-display shrink-0 text-base font-semibold tracking-tight"
           >
-            <span className="text-primary">AI</span> Mastery
+            <span className="text-primary">AI</span> Cohort
           </Link>
           <ProgramNav items={navItems} />
         </div>

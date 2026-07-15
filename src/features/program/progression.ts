@@ -5,6 +5,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 
 export type DayState = "LOCKED" | "AVAILABLE" | "PASSED" | "SKIPPED";
 
@@ -47,14 +48,14 @@ export function deriveDayState(
   return "LOCKED";
 }
 
-/** IST calendar days since cohort `startsAt`, clamped 1..30. */
+/** IST calendar days since cohort `startsAt`, clamped 1..PROGRAM_TOTAL_DAYS. */
 export function getCohortCalendarDay(cohort: { startsAt: Date }): number {
   const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
   const nowKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
   const startUtc = parseCalendarKeyToUtcDate(startKey);
   const nowUtc = parseCalendarKeyToUtcDate(nowKey);
   const diff = differenceInCalendarDays(nowUtc, startUtc);
-  return Math.min(30, Math.max(1, diff + 1));
+  return Math.min(PROGRAM_TOTAL_DAYS, Math.max(1, diff + 1));
 }
 
 export function isCohortFrozen(cohort: { endsAt: Date }): boolean {

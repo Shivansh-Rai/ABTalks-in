@@ -227,11 +227,27 @@ export function ApplyForm() {
           <Label htmlFor="githubRepoUrl">Program repo URL</Label>
           <Input
             id="githubRepoUrl"
-            placeholder="https://github.com/you/ai-mastery"
+            placeholder="https://github.com/you/ai-cohort"
             {...register("githubRepoUrl")}
           />
           <FieldError message={errors.githubRepoUrl?.message} />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-start gap-3 text-sm leading-snug">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 rounded border"
+            {...register("hasLaptop8Gb", {
+              setValueAs: (v) => v === true || v === "on",
+            })}
+          />
+          <span>
+            I have a laptop with at least 8 GB RAM available for this program
+          </span>
+        </label>
+        <FieldError message={errors.hasLaptop8Gb?.message} />
       </div>
 
       <Button type="submit" disabled={submitting} className="w-full sm:w-auto">

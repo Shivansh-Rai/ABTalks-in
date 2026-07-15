@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { getMemberDayStates } from "@/features/program/progression";
 
 export const INTERVIEW_DURATION_SEC = 900;
@@ -167,9 +168,11 @@ export function buildInterviewInstructions(member: MemberContext): string {
     .join("\n");
 }
 
-async function isDay30QuizDone(memberId: string): Promise<boolean> {
+async function isFinalDayQuizDone(memberId: string): Promise<boolean> {
   const attempt = await prisma.programConceptAttempt.findUnique({
-    where: { memberId_dayNumber: { memberId, dayNumber: 30 } },
+    where: {
+      memberId_dayNumber: { memberId, dayNumber: PROGRAM_TOTAL_DAYS },
+    },
     select: { answers: true },
   });
   return attempt?.answers !== null && attempt?.answers !== undefined;
@@ -194,20 +197,21 @@ export async function getInterviewEligibility(
   });
   if (!member) return { state: "locked", reason: "Member not found." };
 
-  const day30Done = await isDay30QuizDone(memberId);
-  const programComplete = member.highestUnlockedDay >= 30 && day30Done;
+  const finalDayDone = await isFinalDayQuizDone(memberId);
+  const programComplete =
+    member.highestUnlockedDay >= PROGRAM_TOTAL_DAYS && finalDayDone;
   const cohortEnded = new Date() > member.cohort.endsAt;
 
   if (!programComplete && !cohortEnded) {
-    if (member.highestUnlockedDay < 30) {
+    if (member.highestUnlockedDay < PROGRAM_TOTAL_DAYS) {
       return {
         state: "locked",
-        reason: "Reach Day 30 and complete the Day 30 concept check to unlock your exit interview.",
+        reason: `Reach Day ${PROGRAM_TOTAL_DAYS} and complete the Day ${PROGRAM_TOTAL_DAYS} concept check to unlock your exit interview.`,
       };
     }
     return {
       state: "locked",
-      reason: "Complete the Day 30 concept check to unlock your exit interview.",
+      reason: `Complete the Day ${PROGRAM_TOTAL_DAYS} concept check to unlock your exit interview.`,
     };
   }
 

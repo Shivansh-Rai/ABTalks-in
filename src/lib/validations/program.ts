@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { optionalPhoneSchema } from "./phone";
 
 const githubUsernameRegex = /^[a-zA-Z0-9-]{1,39}$/;
@@ -47,6 +48,9 @@ export const applyProfileSchema = z
         githubRepoRegex,
         "Enter a public repo URL like https://github.com/owner/repo",
       ),
+    hasLaptop8Gb: z.literal(true, {
+      error: "Confirm you have a laptop with at least 8 GB RAM",
+    }),
   })
   .refine(
     (data) => {
@@ -72,7 +76,7 @@ export const entrySubmitSchema = z.object({
 export type EntrySubmitInput = z.infer<typeof entrySubmitSchema>;
 
 export const missionDaySchema = z.object({
-  dayNumber: z.number().int().min(1).max(30),
+  dayNumber: z.number().int().min(1).max(PROGRAM_TOTAL_DAYS),
 });
 
 export const codeSprintPayloadSchema = z.object({
@@ -96,7 +100,7 @@ export const bossBuildPayloadSchema = z.object({
 });
 
 export const submitMissionSchema = z.object({
-  dayNumber: z.number().int().min(1).max(30),
+  dayNumber: z.number().int().min(1).max(PROGRAM_TOTAL_DAYS),
   payload: z.union([
     codeSprintPayloadSchema,
     dataRoomPayloadSchema,
@@ -107,7 +111,7 @@ export const submitMissionSchema = z.object({
 });
 
 export const conceptStartSchema = z.object({
-  dayNumber: z.number().int().min(1).max(30),
+  dayNumber: z.number().int().min(1).max(PROGRAM_TOTAL_DAYS),
 });
 
 export const conceptSubmitSchema = z.object({
@@ -115,14 +119,8 @@ export const conceptSubmitSchema = z.object({
   answers: z.array(z.number().int().min(0).max(3).nullable()).length(3),
 });
 
-export const arenaCompleteSchema = z.object({
-  exerciseId: z.string().cuid(),
-  code: z.string().max(20_000),
-  output: z.string().max(20_000),
-});
-
 export const mentorReviewSchema = z.object({
-  dayNumber: z.number().int().min(1).max(30),
+  dayNumber: z.number().int().min(1).max(PROGRAM_TOTAL_DAYS),
 });
 
 export const gradeProjectSchema = z.object({
@@ -188,7 +186,7 @@ export const adminMemberActionSchema = z.object({
 
 export const adminUnlockDaySchema = z.object({
   memberId: z.string().cuid(),
-  day: z.number().int().min(1).max(30),
+  day: z.number().int().min(1).max(PROGRAM_TOTAL_DAYS),
   reason: z.string().trim().min(1).max(500),
 });
 

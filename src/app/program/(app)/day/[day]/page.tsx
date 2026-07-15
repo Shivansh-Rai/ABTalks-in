@@ -8,15 +8,10 @@ import { getDayShell } from "@/features/program/days";
 import { getMissionState } from "@/features/program/missions";
 import { getConceptCheckStatus } from "@/features/program/concept-check";
 import { getMissionMentorFeedback } from "@/features/program/mentor";
-import {
-  buildGitSubmitSnippet,
-  buildLauncherUrls,
-} from "@/features/program/launchers";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { LiteYoutube } from "@/components/program/lite-youtube";
 import { MissionPanel } from "@/components/program/mission-panel";
 import { ConceptCheckPanel } from "@/components/program/concept-check-panel";
-import type { WorkbenchLanguage } from "@/components/program/workbench/workbench";
-import type { WorkbenchAsset } from "@/components/program/workbench/asset-viewer";
 
 type Props = { params: Promise<{ day: string }> };
 
@@ -28,69 +23,15 @@ const MISSION_LABEL: Record<ProgramMissionType, string> = {
   BOSS_BUILD: "Boss Build",
 };
 
-function isAsset(value: unknown): value is WorkbenchAsset {
-  if (!value || typeof value !== "object") return false;
-  const v = value as { type?: unknown; content?: unknown };
-  return (
-    (v.type === "csv" || v.type === "file" || v.type === "markdown") &&
-    typeof v.content === "string"
-  );
-}
-
-function parseAssets(assetsJson: unknown): {
-  assets: WorkbenchAsset[];
-  setupSql: string | null;
-  visibleChecks: string[];
-  workbenchMode: string | null;
-  notebookPath: string | null;
-  iframeNotebookPath: string | null;
-} {
-  if (!assetsJson || typeof assetsJson !== "object") {
-    return {
-      assets: [],
-      setupSql: null,
-      visibleChecks: [],
-      workbenchMode: null,
-      notebookPath: null,
-      iframeNotebookPath: null,
-    };
-  }
-  const obj = assetsJson as Record<string, unknown>;
-  const rawAssets = Array.isArray(obj.assets)
-    ? obj.assets
-    : Array.isArray(assetsJson)
-      ? (assetsJson as unknown[])
-      : [];
-  const assets = rawAssets.filter(isAsset);
-  const setupSql = typeof obj.setupSql === "string" ? obj.setupSql : null;
-  const visibleChecks = Array.isArray(obj.visibleChecks)
-    ? obj.visibleChecks.filter((c): c is string => typeof c === "string")
-    : [];
-  const workbenchMode =
-    typeof obj.workbenchMode === "string" ? obj.workbenchMode : null;
-  const notebookPath =
-    typeof obj.notebookPath === "string" ? obj.notebookPath : null;
-  const iframeNotebookPath =
-    typeof obj.iframeNotebookPath === "string"
-      ? obj.iframeNotebookPath
-      : notebookPath
-        ? notebookPath.split("/").pop() ?? null
-        : null;
-  return {
-    assets,
-    setupSql,
-    visibleChecks,
-    workbenchMode,
-    notebookPath,
-    iframeNotebookPath,
-  };
-}
-
 export default async function ProgramDayPage({ params }: Props) {
   const { member } = await requireProgramMember();
   const { day: dayParam } = await params;
   const dayNumber = Number.parseInt(dayParam, 10);
-  if (!Number.isFinite(dayNumber) || dayNumber < 1 || dayNumber > 30) {
+  if (
+    !Number.isFinite(dayNumber) ||
+    dayNumber < 1 ||
+    dayNumber > PROGRAM_TOTAL_DAYS
+  ) {
     redirect("/program/curriculum");
   }
 
@@ -100,14 +41,6 @@ export default async function ProgramDayPage({ params }: Props) {
   }
 
   const { day, state } = result;
-  const {
-    assets,
-    setupSql,
-    visibleChecks,
-    workbenchMode,
-    notebookPath,
-    iframeNotebookPath,
-  } = parseAssets(day.assetsJson);
 
   const [missionState, conceptStatus, memberProfile] = await Promise.all([
     getMissionState(member.id, dayNumber),
@@ -125,26 +58,6 @@ export default async function ProgramDayPage({ params }: Props) {
       ? await getMissionMentorFeedback(member.id, dayNumber)
       : null;
 
-  const showWorkbenchHeader =
-    day.missionType === "CODE_SPRINT" ||
-    day.missionType === "DATA_ROOM" ||
-    workbenchMode === "notebook";
-
-  const launcherUrls = buildLauncherUrls(
-    memberProfile.githubRepoUrl,
-    notebookPath,
-  );
-  const gitSubmitSnippet = buildGitSubmitSnippet(
-    memberProfile.githubRepoUrl,
-    notebookPath,
-  );
-  const colabUrl = launcherUrls?.colabUrl ?? memberProfile.githubRepoUrl;
-  const codespacesUrl =
-    launcherUrls?.codespacesUrl ?? memberProfile.githubRepoUrl;
-  const githubFileUrl =
-    launcherUrls?.githubFileUrl ?? memberProfile.githubRepoUrl;
-  const colabHint = launcherUrls?.colabHint ?? null;
-
   return (
     <div className="space-y-6">
       <header className="space-y-3">
@@ -155,7 +68,7 @@ export default async function ProgramDayPage({ params }: Props) {
             aria-hidden
           />
           <span>
-            Module {day.module.number} · {day.module.title}
+            Phase {day.module.number} · {day.module.title}
           </span>
         </div>
         <div className="flex items-baseline gap-3">
@@ -234,29 +147,14 @@ export default async function ProgramDayPage({ params }: Props) {
       )}
 
       <section className="space-y-3">
-        {showWorkbenchHeader && (
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {workbenchMode === "notebook" ? "Notebook Lab" : "Workbench"}
-          </h2>
-        )}
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Mission
+        </h2>
         <MissionPanel
           dayNumber={dayNumber}
           dayTitle={day.title}
           missionType={day.missionType}
-          language={day.language as WorkbenchLanguage | null}
-          starterCode={day.starterCode}
-          setupSql={setupSql}
-          assets={assets}
-          visibleChecks={visibleChecks}
           githubRepoUrl={memberProfile.githubRepoUrl}
-          workbenchMode={workbenchMode}
-          notebookPath={notebookPath}
-          iframeNotebookPath={iframeNotebookPath}
-          gitSubmitSnippet={gitSubmitSnippet}
-          colabUrl={colabUrl}
-          codespacesUrl={codespacesUrl}
-          githubFileUrl={githubFileUrl}
-          colabHint={colabHint}
           missionState={missionState}
           initialMentorFeedback={initialMentorFeedback}
         />

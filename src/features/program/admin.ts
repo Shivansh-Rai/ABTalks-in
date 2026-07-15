@@ -3,6 +3,7 @@ import type { ProgramCohortStatus, ProgramMemberStatus } from "@prisma/client";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { IST, formatDateTimeIST } from "@/lib/date-utils";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { getAtRiskMembers } from "@/features/program/commits";
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { askClaudeJson } from "@/lib/anthropic";
@@ -343,7 +344,7 @@ export async function getCohortOverview(
 
   const calendarDay = getCohortCalendarDay(cohort);
   const dailyEngagement: CohortOverview["dailyEngagement"] = [];
-  for (let d = 1; d <= Math.min(30, calendarDay); d++) {
+  for (let d = 1; d <= Math.min(PROGRAM_TOTAL_DAYS, calendarDay); d++) {
     const missionRuns = submissions.filter((s) => {
       const key = formatInTimeZone(s.createdAt, IST, "yyyy-MM-dd");
       const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
@@ -367,14 +368,14 @@ export async function getCohortOverview(
       Math.floor(
         (new Date(key).getTime() - new Date(startKey).getTime()) / 86_400_000,
       ) + 1;
-    if (dayOffset >= 1 && dayOffset <= 30) {
+    if (dayOffset >= 1 && dayOffset <= PROGRAM_TOTAL_DAYS) {
       const cell = dailyEngagement.find((e) => e.day === dayOffset);
       if (cell) cell.commitDays += 1;
     }
   }
 
   const missionFunnel: CohortOverview["missionFunnel"] = [];
-  for (let dayNumber = 1; dayNumber <= 30; dayNumber++) {
+  for (let dayNumber = 1; dayNumber <= PROGRAM_TOTAL_DAYS; dayNumber++) {
     const daySubs = submissions.filter((s) => s.dayNumber === dayNumber);
     const membersAttempted = new Set(daySubs.map((s) => s.memberId));
     const membersPassed = new Set(
@@ -605,8 +606,8 @@ export async function adminUnlockDay(
   day: number,
   reason: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  if (day < 1 || day > 30) {
-    return { ok: false, message: "Day must be 1–30." };
+  if (day < 1 || day > PROGRAM_TOTAL_DAYS) {
+    return { ok: false, message: `Day must be 1–${PROGRAM_TOTAL_DAYS}.` };
   }
 
   const member = await prisma.programMember.findUnique({
@@ -615,7 +616,10 @@ export async function adminUnlockDay(
   });
   if (!member) return { ok: false, message: "Member not found." };
 
-  const next = Math.min(30, Math.max(member.highestUnlockedDay, day));
+  const next = Math.min(
+    PROGRAM_TOTAL_DAYS,
+    Math.max(member.highestUnlockedDay, day),
+  );
   if (next === member.highestUnlockedDay) {
     return { ok: false, message: "Day already unlocked." };
   }

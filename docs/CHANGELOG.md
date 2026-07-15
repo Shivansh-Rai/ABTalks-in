@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-15 [convention] AI Cohort migration: PROGRAM_TOTAL_DAYS=31 / max score 1020; BOSS_BUILD ProgramProject.moduleNumber from missionSpec.checkpointNumber; dropped in-browser lab/arena/Workbench runners (git-artifact verification only); display name AI Cohort; apply requires 8GB RAM attestation (not persisted).
 - 2026-07-11 [env] BYPASS_DAY_LOCKS=true bypasses program day lock gating server-side (view, submit, concept check); PASSED/SKIPPED unchanged; mirrors existing challenge bypass.
 - 2026-07-11 [convention] Project Lab: JupyterLite static build at public/lab (client-side WASM notebooks), Colab/Codespaces launchers, git-native notebookParses/notebookMinCells SHIP_IT checks, notebook-aware Boss Build grading (≤150 KB × 2, outputs stripped); workbenchMode: notebook content convention.
 - 2026-07-09 [env] SKIP_PRE_ASSESSMENT=true bypasses program entry pass thresholds server-side (scores still stored; ENROLLED/WAITLISTED capacity rules unchanged).

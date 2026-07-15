@@ -96,7 +96,7 @@ export function CurriculumMap({
                 aria-hidden
               />
               <h2 className="font-display text-lg font-semibold">
-                Module {module.number} · {module.title}
+                Phase {module.number} · {module.title}
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">{module.subtitle}</p>

@@ -10,10 +10,14 @@ import {
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { recomputeMemberScore } from "@/features/program/missions";
 import { parseRepo } from "@/features/program/verify-mission";
+import {
+  COMMIT_POINTS_PER_DAY,
+  PROGRAM_MAX_COMMIT_POINTS,
+  PROGRAM_TOTAL_DAYS,
+} from "@/features/program/constants";
 import { logger } from "@/lib/logger";
 
-const COMMIT_POINTS_PER_DAY = 5;
-const MAX_COMMIT_POINTS = 150;
+const MAX_COMMIT_POINTS = PROGRAM_MAX_COMMIT_POINTS;
 const CHUNK_SIZE = 10;
 
 export type HeatmapCell = { dateIso: string; count: number };
@@ -296,7 +300,7 @@ export async function getCommitHeatmap(
   );
 
   const cells: HeatmapCell[] = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < PROGRAM_TOTAL_DAYS; i++) {
     const dateKey = formatInTimeZone(addDays(base, i), IST, "yyyy-MM-dd");
     cells.push({
       dateIso: dateKey,

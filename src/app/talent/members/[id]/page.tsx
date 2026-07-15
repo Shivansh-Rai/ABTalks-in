@@ -243,7 +243,7 @@ export default async function TalentMemberPage({ params }: Props) {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Mission portfolio</h2>
         <p className="text-xs text-muted-foreground">
-          What they built and verified across 30 days — mentor notes included.
+          What they built and verified across 31 days — mentor notes included.
         </p>
         <ul className="space-y-2">
           {portfolioDays.map((day) => (

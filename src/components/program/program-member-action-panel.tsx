@@ -133,12 +133,12 @@ export function ProgramMemberActionPanel({
             <DialogTitle>Unlock day for {memberName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="unlock-day">Day (1–30)</Label>
+            <Label htmlFor="unlock-day">Day (1–31)</Label>
             <Input
               id="unlock-day"
               type="number"
               min={1}
-              max={30}
+              max={31}
               value={unlockDay}
               onChange={(e) => setUnlockDay(e.target.value)}
             />

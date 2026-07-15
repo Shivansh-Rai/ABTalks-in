@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { deriveDayState } from "@/features/program/progression";
 import { isCohortFrozen } from "@/features/program/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
@@ -12,6 +13,19 @@ import {
 } from "@/features/program/verify-mission";
 
 const MAX_RUNS_PER_DAY = 30;
+
+function checkpointModuleNumber(
+  missionSpec: unknown,
+  fallbackModuleNumber: number,
+): number {
+  if (missionSpec && typeof missionSpec === "object") {
+    const n = (missionSpec as { checkpointNumber?: unknown }).checkpointNumber;
+    if (typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= 4) {
+      return n;
+    }
+  }
+  return fallbackModuleNumber;
+}
 const MIN_RUN_INTERVAL_MS = 15_000;
 
 export type MissionState = {
@@ -323,7 +337,7 @@ export async function submitMissionRun(
     });
 
     if (verifyResult.passed && isFirstPass) {
-      const nextDay = Math.min(30, dayNumber + 1);
+      const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
       await tx.programMember.update({
         where: { id: memberId },
         data: {
@@ -338,16 +352,20 @@ export async function submitMissionRun(
 
     if (verifyResult.passed && day.missionType === "BOSS_BUILD") {
       const bossPayload = payload as { repoUrl: string; writeup: string };
+      const moduleNumber = checkpointModuleNumber(
+        day.missionSpec,
+        day.module.number,
+      );
       await tx.programProject.upsert({
         where: {
           memberId_moduleNumber: {
             memberId,
-            moduleNumber: day.module.number,
+            moduleNumber,
           },
         },
         create: {
           memberId,
-          moduleNumber: day.module.number,
+          moduleNumber,
           repoUrl: bossPayload.repoUrl,
           writeup: bossPayload.writeup,
           status: "SUBMITTED",
@@ -401,7 +419,7 @@ export async function useSkipToken(
   const attemptCount = await prisma.programMissionSubmission.count({
     where: { memberId, dayNumber },
   });
-  const nextDay = Math.min(30, dayNumber + 1);
+  const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
 
   await prisma.$transaction(async (tx) => {
     await tx.programMissionSubmission.create({

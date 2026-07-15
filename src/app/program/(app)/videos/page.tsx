@@ -47,7 +47,7 @@ export default async function ProgramVideosPage() {
       <header>
         <h1 className="font-display text-2xl font-bold tracking-tight">Videos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Content unlocks with the cohort calendar (day {cohortDay}/30).
+          Content unlocks with the cohort calendar (day {cohortDay}/31).
         </p>
       </header>
 

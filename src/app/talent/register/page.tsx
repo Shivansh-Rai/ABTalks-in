@@ -18,8 +18,8 @@ export default async function TalentRegisterPage() {
           Recruiter registration
         </h1>
         <p className="text-sm text-muted-foreground">
-          Sign up to browse AI Mastery Program graduates after cohort results
-          are published. Access is free during the launch period.
+          Sign up to browse AI Cohort graduates after cohort results are
+          published. Access is free during the launch period.
         </p>
       </header>
       <RecruiterRegisterForm />
