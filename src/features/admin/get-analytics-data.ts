@@ -6,13 +6,16 @@ import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 export type TimeRange = "daily" | "weekly" | "monthly";
 
 function getIstHour(date: Date): number {
-  return Number(
+  // hourCycle "h23" yields 0–23 (avoids the en-US "hour12:false" quirk that
+  // formats midnight as "24", which would index past the 24-hour buckets).
+  const hour = Number(
     new Intl.DateTimeFormat("en-US", {
       timeZone: "Asia/Kolkata",
-      hour: "numeric",
-      hour12: false,
+      hour: "2-digit",
+      hourCycle: "h23",
     }).format(date),
   );
+  return Number.isFinite(hour) ? hour % 24 : 0;
 }
 
 function toIstDayKey(date: Date): string {

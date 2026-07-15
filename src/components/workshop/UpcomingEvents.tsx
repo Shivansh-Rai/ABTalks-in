@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { EVENTS, monthAbbr, dayNum } from "@/components/workshop/events-data";
+import ComingSoonCard from "@/components/workshop/ComingSoonCard";
+
+const TOTAL_SLIDES = EVENTS.length + 1; // events + the "coming soon" teaser
 
 export default function UpcomingEvents() {
   const [perView, setPerView] = useState(3);
@@ -19,7 +22,7 @@ export default function UpcomingEvents() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  const maxIndex = Math.max(0, EVENTS.length - perView);
+  const maxIndex = Math.max(0, TOTAL_SLIDES - perView);
 
   // Keep index valid when the viewport (perView) changes.
   useEffect(() => {
@@ -107,74 +110,112 @@ export default function UpcomingEvents() {
                 className="shrink-0 px-2"
                 style={{ width: `${100 / perView}%` }}
               >
-                <div
-                  className="relative flex h-full flex-col overflow-hidden rounded-2xl p-5"
-                  style={{
+                {(() => {
+                  const cardCommon = "relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-transform";
+                  const cardStyle: React.CSSProperties = {
                     background: "rgba(255,255,255,0.025)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: `1px solid ${ev.register ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
-                  }}
-                >
-                  <div
-                    className="absolute inset-x-0 top-0 h-px"
-                    style={{
-                      background: `linear-gradient(to right, transparent, ${ev.accent}, transparent)`,
-                      opacity: 0.4,
-                    }}
-                  />
-                  <div className="flex items-start justify-between gap-3">
-                    <div
-                      className="flex flex-col items-center rounded-xl px-3 py-2 text-center"
-                      style={{
-                        background: `${ev.accent}18`,
-                        border: `1px solid ${ev.accent}30`,
-                      }}
+                  };
+                  const body = (
+                    <>
+                      <div
+                        className="absolute inset-x-0 top-0 h-px"
+                        style={{
+                          background: `linear-gradient(to right, transparent, ${ev.accent}, transparent)`,
+                          opacity: 0.4,
+                        }}
+                      />
+                      <div className="flex items-start justify-between gap-3">
+                        <div
+                          className="flex flex-col items-center rounded-xl px-3 py-2 text-center"
+                          style={{
+                            background: `${ev.accent}18`,
+                            border: `1px solid ${ev.accent}30`,
+                          }}
+                        >
+                          <span
+                            className="text-[11px] font-extrabold uppercase tracking-widest"
+                            style={{ color: ev.accent }}
+                          >
+                            {monthAbbr(ev.date)}
+                          </span>
+                          <span className="text-[13px] font-extrabold text-white/70">
+                            {dayNum(ev.date)}
+                          </span>
+                        </div>
+                        <span
+                          className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                          style={{ background: `${ev.accent}18`, color: ev.accent }}
+                        >
+                          {ev.tag}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-4 text-[16px] font-bold leading-snug tracking-tight text-white">
+                        {ev.title}
+                      </h4>
+                      <p className="mt-2 flex-1 text-[12.5px] font-medium leading-relaxed text-white/45">
+                        {ev.desc}
+                      </p>
+
+                      <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3.5">
+                        <span className="text-[11.5px] font-medium text-white/40">
+                          {ev.location}
+                        </span>
+                        {ev.register ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                            style={{
+                              background: `${ev.accent}20`,
+                              color: ev.accent,
+                              border: `1px solid ${ev.accent}55`,
+                            }}
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
+                            />
+                            Register →
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                            style={{
+                              background: "rgba(255,255,255,0.04)",
+                              color: "rgba(255,255,255,0.6)",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                            }}
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                            Coming soon
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                  return ev.register ? (
+                    <Link
+                      href="/ai-workshop#register"
+                      className={`${cardCommon} cursor-pointer hover:-translate-y-1`}
+                      style={cardStyle}
                     >
-                      <span
-                        className="text-[11px] font-extrabold uppercase tracking-widest"
-                        style={{ color: ev.accent }}
-                      >
-                        {monthAbbr(ev.date)}
-                      </span>
-                      <span className="text-[13px] font-extrabold text-white/70">
-                        {dayNum(ev.date)}
-                      </span>
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className={cardCommon} style={cardStyle}>
+                      {body}
                     </div>
-                    <span
-                      className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-                      style={{ background: `${ev.accent}18`, color: ev.accent }}
-                    >
-                      {ev.tag}
-                    </span>
-                  </div>
-
-                  <h4 className="mt-4 text-[16px] font-bold leading-snug tracking-tight text-white">
-                    {ev.title}
-                  </h4>
-                  <p className="mt-2 flex-1 text-[12.5px] font-medium leading-relaxed text-white/45">
-                    {ev.desc}
-                  </p>
-
-                  <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3.5">
-                    <span className="text-[11.5px] font-medium text-white/40">
-                      {ev.location}
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        color: "rgba(255,255,255,0.6)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                      Coming soon
-                    </span>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             ))}
+
+            {/* coming-soon teaser slide */}
+            <div className="shrink-0 px-2" style={{ width: `${100 / perView}%` }}>
+              <ComingSoonCard />
+            </div>
           </div>
         </div>
       </div>

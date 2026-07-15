@@ -30,8 +30,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
 
-  if (pathname === "/ai-workshop" || pathname.startsWith("/ai-workshop/")) return null;
-
   const navRef = useRef<HTMLElement | null>(null);
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [rect, setRect] = useState<IndicatorRect | null>(null);
@@ -76,6 +74,8 @@ export function BottomNav() {
 
   if (
     pathname === "/" ||
+    pathname === "/ai-workshop" ||
+    pathname.startsWith("/ai-workshop/") ||
     /^\/(login|register|claude-signup|students|r|program|talent)(\/|$)/.test(
       pathname,
     )

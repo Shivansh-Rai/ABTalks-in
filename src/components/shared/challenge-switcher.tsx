@@ -35,8 +35,11 @@ const DOMAIN_COLORS: Record<string, string> = {
   DS: "border-domains-ds/50 bg-domains-ds-bg text-domains-ds",
   AI: "border-domains-ai/50 bg-domains-ai-bg text-domains-ai",
   CLAUDE:
-    "border-violet-500/40 bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-200",
+    "border-violet-500/50 bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-200",
 };
+
+const BADGE_BASE =
+  "inline-flex h-6 w-16 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-bold leading-none tracking-wide";
 
 export function ChallengeSwitcher({ enrollments, activeEnrollmentId }: Props) {
   const router = useRouter();
@@ -68,7 +71,7 @@ export function ChallengeSwitcher({ enrollments, activeEnrollmentId }: Props) {
       >
         <span
           className={cn(
-            "shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-bold",
+            BADGE_BASE,
             DOMAIN_COLORS[active.domain] ?? "bg-muted text-muted-foreground",
           )}
         >
@@ -79,39 +82,70 @@ export function ChallengeSwitcher({ enrollments, activeEnrollmentId }: Props) {
         </span>
         <ChevronDown className="size-4 shrink-0 opacity-50" aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
-        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+      <DropdownMenuContent
+        align="end"
+        className="flex w-80 flex-col gap-1.5 p-2"
+      >
+        <div className="px-2 pb-1.5 pt-0.5 text-xs font-semibold text-muted-foreground">
           Your challenges
         </div>
         {enrollments.map((enrollment) => {
           const isActive = enrollment.id === activeEnrollmentId;
+          const progressPct = Math.min(
+            100,
+            Math.round((enrollment.daysCompleted / 60) * 100),
+          );
           return (
             <DropdownMenuItem
               key={enrollment.id}
               onClick={() => handleSwitch(enrollment.id)}
-              className="flex cursor-pointer items-start gap-3 py-2.5"
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-lg border border-transparent px-3 py-3",
+                "transition-colors hover:bg-accent/60 focus:bg-accent/60",
+                isActive && "border-border/60 bg-accent/40",
+              )}
             >
-              <div
+              <span
                 className={cn(
-                  "shrink-0 rounded border px-2 py-1 text-xs font-bold",
+                  BADGE_BASE,
                   DOMAIN_COLORS[enrollment.domain] ??
                     "bg-muted text-muted-foreground",
                 )}
               >
                 {enrollment.domain}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">
+              </span>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="truncate text-sm font-semibold leading-snug tracking-tight">
                   {DOMAIN_LABELS[enrollment.domain] ?? enrollment.domain}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Day {enrollment.daysCompleted} / 60 ·{" "}
+                <div className="space-y-1">
+                  <div className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                    Day {enrollment.daysCompleted} / 60
+                  </div>
+                  <div
+                    className="h-1 w-full overflow-hidden rounded-full bg-muted"
+                    aria-hidden
+                  >
+                    <div
+                      className="h-full rounded-full bg-primary/70 transition-[width]"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="truncate text-[11px] font-normal text-muted-foreground/70">
                   {enrollment.challengeTitle}
                 </div>
               </div>
               {isActive ? (
-                <Check className="size-4 shrink-0 text-primary" aria-hidden />
-              ) : null}
+                <span
+                  className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10"
+                  aria-hidden
+                >
+                  <Check className="size-3 text-primary" />
+                </span>
+              ) : (
+                <span className="size-5 shrink-0" aria-hidden />
+              )}
             </DropdownMenuItem>
           );
         })}

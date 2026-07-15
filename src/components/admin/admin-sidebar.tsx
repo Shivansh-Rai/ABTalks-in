@@ -26,7 +26,8 @@ type IconName =
   | "ambassadors"
   | "referrals"
   | "redemptions"
-  | "program";
+  | "program"
+  | "cohort";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -39,6 +40,7 @@ const iconMap = {
   referrals: Gift,
   redemptions: Package,
   program: GraduationCap,
+  cohort: GraduationCap,
 } as const;
 
 type NavItem = {

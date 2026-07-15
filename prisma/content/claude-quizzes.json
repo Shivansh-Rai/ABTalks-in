@@ -537,107 +537,107 @@
   {
     "weekNumber": 6,
     "domain": "CLAUDE",
-    "title": "Week 6: Artifacts, Projects & Automation",
+    "title": "Week 6 Challenge Quiz: AI Applications, Productivity & Workflow Design with Claude",
     "questions": [
       {
         "questionOrder": 1,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 1: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "What is the biggest lesson from building your own AI Assistant (Day 40)?",
+        "optionA": "Every AI assistant should answer every question",
+        "optionB": "The best AI assistants are designed for a specific user and purpose",
+        "optionC": "AI assistants only need a good UI",
+        "optionD": "System prompts are optional",
+        "correctAnswer": "B",
+        "explanation": "Purpose-built AI assistants deliver better experiences than generic chatbots because they focus on solving one specific problem well."
       },
       {
         "questionOrder": 2,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 2: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "Why does the AI Assistant Builder first interview the user before generating the application?",
+        "optionA": "To make the application longer",
+        "optionB": "To personalize the assistant's behavior, interface, and system prompt",
+        "optionC": "To collect unnecessary information",
+        "optionD": "To reduce HTML size",
+        "correctAnswer": "B",
+        "explanation": "Understanding the user's needs allows Claude to generate an assistant that is tailored to the intended audience and use case."
       },
       {
         "questionOrder": 3,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 3: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "What is the primary purpose of Interactive Learning Studio (Day 41)?",
+        "optionA": "Generate learning roadmaps only",
+        "optionB": "Teach an entire topic through interactive lessons, quizzes, exercises, and challenges",
+        "optionC": "Create PDF notes",
+        "optionD": "Generate flashcards only",
+        "correctAnswer": "B",
+        "explanation": "Interactive Learning Studio focuses on complete learning experiences instead of summaries or roadmaps."
       },
       {
         "questionOrder": 4,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 4: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "Why does Interactive Learning Studio narrow a subject into a specific topic before building the application?",
+        "optionA": "To reduce the HTML file size",
+        "optionB": "To make the tutorial comprehensive yet achievable within one learning experience",
+        "optionC": "To generate fewer quizzes",
+        "optionD": "To simplify the UI",
+        "correctAnswer": "B",
+        "explanation": "A focused topic allows Claude to teach concepts thoroughly instead of creating shallow content."
       },
       {
         "questionOrder": 5,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 5: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "What is the main objective of AI Workflow Architect (Day 42)?",
+        "optionA": "Generate random productivity tips",
+        "optionB": "Create complete end-to-end workflows with AI tools, prompts, and automation opportunities",
+        "optionC": "Build project management software",
+        "optionD": "Replace human decision making",
+        "correctAnswer": "B",
+        "explanation": "The application maps complete workflows from planning to execution while recommending AI tools and automation strategies."
       },
       {
         "questionOrder": 6,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 6: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "Why are workflow stages broken into planning, execution, and optimization?",
+        "optionA": "To increase application complexity",
+        "optionB": "To help users understand each step, expected outputs, and improvement opportunities",
+        "optionC": "Because HTML requires multiple sections",
+        "optionD": "To reduce processing time",
+        "correctAnswer": "B",
+        "explanation": "Breaking workflows into logical stages makes complex processes easier to understand and improve."
       },
       {
         "questionOrder": 7,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 7: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "What makes the Personal Financial Command Center (Day 43) different from a traditional expense tracker?",
+        "optionA": "It only records daily expenses",
+        "optionB": "It combines financial health analysis, insights, simulations, planning tools, and recommendations",
+        "optionC": "It stores receipts only",
+        "optionD": "It focuses only on investments",
+        "correctAnswer": "B",
+        "explanation": "The dashboard helps users understand and improve their financial health through analytics and personalized insights."
       },
       {
         "questionOrder": 8,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 8: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "Why does the Personal Financial Command Center personalize the dashboard based on the user's financial profile?",
+        "optionA": "Every user has identical financial goals",
+        "optionB": "Students, professionals, families, and investors require different financial insights",
+        "optionC": "To make the interface colorful",
+        "optionD": "To reduce the amount of data displayed",
+        "correctAnswer": "B",
+        "explanation": "Financial recommendations become much more useful when tailored to the user's situation and goals."
       },
       {
         "questionOrder": 9,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 9: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "Across Week 6, what common AI product design principle was emphasized?",
+        "optionA": "Build one generic application for everyone",
+        "optionB": "Start with the user's needs, then design the experience around them",
+        "optionC": "Focus only on attractive UI",
+        "optionD": "Generate as much content as possible",
+        "correctAnswer": "B",
+        "explanation": "Every application in Week 6 begins by understanding the user before generating a personalized experience."
       },
       {
         "questionOrder": 10,
-        "questionText": "Week 6: Artifacts, Projects & Automation - Question 10: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 6 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
+        "questionText": "What is the biggest mindset shift from Week 6?",
+        "optionA": "Claude is mainly a chatbot for answering questions",
+        "optionB": "Claude can be used to build complete AI-powered products, educational platforms, workflow systems, financial dashboards, and specialized assistants",
+        "optionC": "Claude should only generate HTML code",
+        "optionD": "Claude replaces all software developers",
+        "correctAnswer": "B",
+        "explanation": "Week 6 demonstrated that Claude is not just an AI assistant—it can act as a product builder capable of generating complete interactive applications across multiple domains."
       }
     ]
   },
