@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 
 export async function getStudentDetail(userId: string) {
-  const [user, submissions, quizAttempts, adminActions] = await Promise.all([
+  const [user, submissions, quizAttempts, adminActions, remarks] =
+    await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -44,6 +45,22 @@ export async function getStudentDetail(userId: string) {
       where: { targetUserId: userId },
       orderBy: { createdAt: "desc" },
       include: {
+        admin: {
+          select: {
+            email: true,
+            studentProfile: { select: { fullName: true } },
+          },
+        },
+      },
+    }),
+    prisma.adminRemark.findMany({
+      where: { studentUserId: userId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        updatedAt: true,
         admin: {
           select: {
             email: true,
@@ -107,6 +124,14 @@ export async function getStudentDetail(userId: string) {
         action.admin.studentProfile?.fullName?.trim() ||
         action.admin.email ||
         "Admin",
+    })),
+    remarks: remarks.map((r) => ({
+      id: r.id,
+      body: r.body,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      adminName:
+        r.admin.studentProfile?.fullName?.trim() || r.admin.email || "Admin",
     })),
   };
 }

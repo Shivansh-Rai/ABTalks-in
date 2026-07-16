@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RejectSubmissionButton } from "@/components/admin/reject-submission-button";
 import { StudentActionPanel } from "@/components/admin/student-action-panel";
+import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
 import { getStudentDetail } from "@/features/admin/get-student-detail";
@@ -204,6 +205,7 @@ export default async function AdminStudentDetailPage({
           <TabsTrigger value="quizzes">Quiz Attempts</TabsTrigger>
           <TabsTrigger value="admin-actions">Admin Actions</TabsTrigger>
           <TabsTrigger value="recruiter">Recruiter Profile</TabsTrigger>
+          <TabsTrigger value="remarks">Remarks</TabsTrigger>
         </TabsList>
 
         <TabsContent value="submissions">
@@ -317,6 +319,14 @@ export default async function AdminStudentDetailPage({
             studentId={data.student.userId}
             studentName={data.student.fullName}
             review={review}
+          />
+        </TabsContent>
+
+        <TabsContent value="remarks">
+          <StudentRemarksPanel
+            studentId={data.student.userId}
+            studentName={data.student.fullName}
+            remarks={data.remarks}
           />
         </TabsContent>
       </Tabs>

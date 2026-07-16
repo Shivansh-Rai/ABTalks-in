@@ -242,6 +242,8 @@ model User {
   synergyEvents                      SynergyEvent[]
   jobApplications                    JobApplication[]
   redemptions                        Redemption[]
+  remarksReceived                    AdminRemark[]   @relation("RemarkStudent")
+  remarksAuthored                    AdminRemark[]   @relation("RemarkAdmin")
 
   @@index([createdAt(sort: Desc)])
 }
@@ -406,6 +408,19 @@ model AdminAction {
 
   @@index([targetUserId])
   @@index([createdAt])
+}
+
+model AdminRemark {
+  id            String   @id @default(cuid())
+  studentUserId String
+  adminUserId   String
+  body          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  student       User     @relation("RemarkStudent", fields: [studentUserId], references: [id], onDelete: Cascade)
+  admin         User     @relation("RemarkAdmin", fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([studentUserId, createdAt(sort: Desc)])
 }
 
 model VerificationToken {

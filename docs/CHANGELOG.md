@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-16 [schema] AdminRemark model for admin-only student remark history on student detail
 - 2026-07-04 [convention] AI Cohort Training Program public routes renamed from `/ai-talent-hunt` to `/ai-cohort-register` (+ `/apply` subroute).
 - 2026-07-04 [rule] AI Talent Hunt applications at `/ai-talent-hunt` stored in workshop Supabase `cohort_applications` (not Neon); confirmation email deferred. Dashboard read paths must not write; streaks/daysCompleted stay write-time-only (submitDay). Immutable content (daily tasks, Challenge.startsAt) cached via unstable_cache tags daily-tasks:<challengeId> / challenge:CLAUDE, busted on reseed/redeploy.
 - 2026-06-28 [rule] Marketplace item costSP raised from 250 to 1800 SP for all catalog products in marketplace.json.
