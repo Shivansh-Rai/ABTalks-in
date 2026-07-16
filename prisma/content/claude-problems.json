@@ -4648,5 +4648,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 46,
+    "domain": "CLAUDE",
+    "title": "Day 46: Build Autonomous Agent Studio – Create Multi-Agent AI Systems",
+    "problemStatement": "Welcome to Day 46 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 7 — Autonomous AI Agents & Multi-Agent Systems\n\nToday's focus: Learn how to build autonomous AI systems using Claude.\n\nYou'll create Autonomous Agent Studio, an AI-powered orchestration platform capable of planning, executing, evaluating, improving, remembering, and iterating through complex workflows using multiple specialized AI agents.\n\nInstead of building a simple chatbot, you'll design a complete autonomous agent system that continuously improves its output until predefined stopping conditions are satisfied.\n\nTasks:\n1. Choose an autonomous agent use case.\n2. Narrow the workflow into a specific automation process.\n3. Configure success criteria and stopping conditions.\n4. Generate the complete Autonomous Agent Studio.\n5. Watch the agents collaborate through multiple iterations.\n6. Analyze execution history and evaluation reports.\n7. Review the final architecture.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, execution logs, and key learnings.",
+    "learningObjectives": [
+      "Understand autonomous AI agents",
+      "Build multi-agent orchestration systems",
+      "Learn iterative AI improvement workflows",
+      "Design production-quality AI architectures",
+      "Create commercial-grade HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/lCrM4hd-anQ"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 46/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built Autonomous Agent Studio using Claude.\n\nInstead of creating a chatbot, I built a complete multi-agent AI system where specialized agents collaborate, evaluate, improve, and iterate until the desired outcome is achieved.\n\n🤖 Multi-Agent Architecture\n🧠 Planning Agent\n⚡ Execution Agent\n📊 Evaluation & Critique Loop\n💾 Memory Management\n🛡️ Safety Monitoring\n✅ Final Review\n\nBiggest takeaway:\n\nThe future of AI isn't a single prompt—it's autonomous systems where multiple AI agents work together to solve complex problems.\n\n#ClaudeAI #AutonomousAgents #AgenticAI #BuildWithClaude #ArtificialIntelligence #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the execution pipeline, iteration history, and key learnings.",
+    "tags": [
+      "claude",
+      "day-46",
+      "autonomous-agents",
+      "multi-agent",
+      "agentic-ai",
+      "html",
+      "javascript",
+      "automation"
+    ],
+    "dayContent": {
+      "title": "Build Autonomous Agent Studio",
+      "tagline": "Design Multi-Agent AI Systems with Claude",
+      "module": "Autonomous AI Systems",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 30,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how modern autonomous AI systems work by building a multi-agent orchestration platform where specialized AI agents collaborate, critique, improve, and iterate until predefined success criteria are achieved.",
+        "bullets": [
+          {
+            "label": "Agentic AI",
+            "text": "Understand how specialized AI agents collaborate to solve complex workflows."
+          },
+          {
+            "label": "Iterative Improvement",
+            "text": "Build systems that continuously evaluate and improve their own outputs."
+          },
+          {
+            "label": "Workflow Orchestration",
+            "text": "Coordinate planning, execution, evaluation, memory, and safety across multiple AI agents."
+          },
+          {
+            "label": "Production Architectures",
+            "text": "Learn commercial multi-agent design patterns used in modern AI products."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the Autonomous Agent Studio prompt.",
+          "Answer Claude's interview questions.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open it locally in your browser.",
+          "Run multiple autonomous workflows.",
+          "Observe the agent orchestration loop.",
+          "Review execution history and stopping conditions.",
+          "Take screenshots.",
+          "Create a Day46 folder in your GitHub repository.",
+          "Create a day46.md file.",
+          "Upload screenshots, generated HTML file, execution logs, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/lCrM4hd-anQ"
+      },
+      "promptTemplate": "# Autonomous Agent Studio\n\nYou are an expert AI systems architect, agentic workflow designer, prompt engineer, automation engineer, conversation designer, UX designer, and senior frontend developer.\n\n**Interview first, one question at a time, MCQ only** (free text only for a final \"Other\" option):\n1. What kind of autonomous AI agent should we build? (offer domains/use cases)\n2. Narrow follow-ups until the workflow is specific enough to automate — don't stop at just a domain.\n3. Primary success criteria (accuracy, speed, quality score, approval, etc.)\n4. Stopping condition — offer options suited to the chosen workflow.\n5. Auto-design vs. customize components (if customize, ask which agents to include).\n\nAfter the interview, build a single-page HTML app, **\"Autonomous Agent Studio,\"** that runs a real multi-agent orchestration pipeline live against the Claude API (`fetch` to `https://api.anthropic.com/v1/messages`, no key needed) — planning, executing, evaluating, remembering, improving, and repeating until a stopping condition is met.\n\nChoose from these agents based on the workflow: Planner, Executor, Evaluator, Critic, Improver, Memory Manager, Safety Monitor, Final Reviewer. Give each a production-quality system prompt.\n\n## Non-negotiable: it must be a real loop\n- Implement the round portion as an actual `while`/`for` loop that re-calls Evaluator → Critic → Improver each pass with a **live API call every time**. No fixed/hardcoded sequence, and no pre-set round count — the number of rounds is a runtime result of the stop check, not a value chosen upfront.\n- Every agent output shown in the UI (score, critique, reasoning) must be the literal text from that round's API response. No regex, canned strings, or rule-based scoring standing in for a model call.\n- State must thread forward: each Improver call gets the prior round's evaluation + critique; each Evaluator call gets the current draft + rubric. Keep a running history array (score, critique, draft, delta) that the UI can display.\n- Check every round, in order: (1) plateau — score improved less than a small delta for 2 straight rounds; (2) threshold — score crossed the target set at interview; (3) hard iteration cap (safety fallback only, not the intended ending). Log and surface which one fired.\n\n## Dashboard\nShow: workflow visualization (draw the loop as a real cycle — return arrow from Improver to Evaluator, with a separate branch to Final Reviewer once a stop condition fires, not a straight pipeline), active agent, live status, iteration history, activity log, intermediate outputs, memory updates, evaluation reports, round-over-round improvements, retry count, and final summary naming the exact stop reason. Round indicator should read as open-ended (\"Round 3 — checking stop condition…\"), not \"Round 3 of 5.\"\n\nExplain each agent's responsibility and how the stop-check governs information flow between rounds.\n\n## Close with\nFinal output, agent performance summary, execution stats, architecture overview, extension ideas, and further prompts for building more advanced autonomous systems.\n\n## Build constraints\nSingle self-contained HTML file, vanilla HTML/CSS/JS only, no external libraries. Commercial-grade polish: responsive, dark mode, smooth animations, interactive visualizations, robust error handling/retries, loading states, graceful failure recovery, zero syntax errors.",
+      "engagement": {
+        "type": "Autonomous Agent Studio Showcase",
+        "description": "Share your Autonomous Agent Studio and explain the biggest insight you gained about multi-agent AI systems. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your Autonomous Agent Studio, generated HTML file, execution logs, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
