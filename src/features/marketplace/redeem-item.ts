@@ -39,6 +39,13 @@ export async function redeemItem(input: {
             reason: "inactive",
             message: "Item is no longer available",
           };
+        // Items priced at 0 SP are "Revealing Soon" — not redeemable yet.
+        if (item.costSP <= 0)
+          return {
+            ok: false,
+            reason: "inactive",
+            message: "This item isn't available for redemption yet.",
+          };
 
         const profile = await tx.studentProfile.findUnique({
           where: { userId: input.userId },
