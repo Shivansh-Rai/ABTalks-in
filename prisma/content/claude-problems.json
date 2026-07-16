@@ -4748,5 +4748,104 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 47,
+    "domain": "CLAUDE",
+    "title": "Day 47: Build Content Intelligence Studio – AI-Powered Content Analysis Platform",
+    "problemStatement": "Welcome to Day 47 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 7 — AI Content Intelligence & Multi-Agent Review Systems\n\nToday's focus: Learn how to build an AI-powered content analysis platform using Claude.\n\nYou'll create Content Intelligence Studio, an intelligent application capable of reviewing text, images, thumbnails, transcripts, analytics, and other content using multiple specialized AI reviewers. Instead of receiving generic feedback, you'll generate deep content intelligence through live Claude API analysis.\n\nTasks:\n1. Choose the type of content to analyze.\n2. Select the target platform.\n3. Define your content goal.\n4. Upload your content.\n5. Configure the review depth.\n6. Generate a complete AI content review.\n7. Explore recommendations and rewritten content.\n8. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, content analysis report, and key learnings.",
+    "learningObjectives": [
+      "Build AI-powered content analysis platforms",
+      "Create multi-stage AI review workflows",
+      "Analyze both text and images using Claude",
+      "Design premium SaaS dashboards",
+      "Generate production-quality HTML applications"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/KjPXxgO8WVQ"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 47/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built Content Intelligence Studio using Claude.\n\nInstead of getting generic feedback, I created an AI-powered platform that reviews content using multiple specialized AI reviewers and generates detailed optimization reports.\n\n📝 Content Analysis\n🖼️ Image & Thumbnail Review\n📊 AI Content Scoring\n💡 Platform-Specific Recommendations\n✍️ AI Rewrites\n📈 Executive Summary\n\nBiggest takeaway:\n\nThe future of content creation isn't guessing what works—it's using AI to analyze, optimize, and continuously improve before publishing.\n\n#ClaudeAI #ContentIntelligence #BuildWithClaude #AI #ContentCreation #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the analysis dashboard, and key learnings.",
+    "tags": [
+      "claude",
+      "day-47",
+      "content-intelligence",
+      "content-analysis",
+      "ai-review",
+      "html",
+      "javascript",
+      "saas"
+    ],
+    "dayContent": {
+      "title": "Build Content Intelligence Studio",
+      "tagline": "Create an AI-Powered Content Analysis Platform",
+      "module": "AI Content Intelligence",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 30,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how Claude can power intelligent content review systems by combining multiple specialized AI reviewers, multimodal analysis, live reasoning, and actionable recommendations into a premium SaaS experience.",
+        "bullets": [
+          {
+            "label": "Content Intelligence",
+            "text": "Analyze content using specialized AI reviewers instead of generic feedback."
+          },
+          {
+            "label": "Multimodal AI",
+            "text": "Review both text and images using Claude's vision capabilities."
+          },
+          {
+            "label": "SaaS Dashboard",
+            "text": "Design professional dashboards with scoring, reports, and visual insights."
+          },
+          {
+            "label": "AI Optimization",
+            "text": "Generate rewritten content, recommendations, and executive summaries using live AI reasoning."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the Content Intelligence Studio prompt.",
+          "Answer Claude's interview questions.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open it locally in your browser.",
+          "Upload sample content.",
+          "Review the AI-generated analysis and recommendations.",
+          "Take screenshots.",
+          "Create a Day47 folder in your GitHub repository.",
+          "Create a day47.md file.",
+          "Upload screenshots, generated HTML file, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/KjPXxgO8WVQ"
+      },
+      "promptTemplate": "Content Intelligence Studio\n\nYou are an expert content strategist, platform growth specialist, creator coach, behavioral psychologist, prompt engineer, AI systems architect, UX designer, and senior frontend developer.\n\nInterview first, one question at a time, using MCQs only (free text only for a final \"Other\" option).\n\nWhat type of content would you like to analyze?\nWhich platform is it for?\nWhat was your primary goal?\nWhat would you like to upload? (text, image, screenshot, thumbnail, analytics, transcript, etc.)\nHow critical should the review be?\n\nAfter the interview, build a polished single-page HTML application called Content Intelligence Studio that acts as an AI content consultant. The app should accept both text and image inputs and analyze them using the Claude Messages API (fetch to https://api.anthropic.com/v1/messages, no key required).\n\nThe application should automatically design an intelligent multi-stage review workflow using specialized AI reviewers appropriate for the uploaded content, each with production-quality system prompts. Every insight, score, explanation, and recommendation must come directly from Claude through live API calls. Do not use hardcoded logic, placeholder analysis, canned feedback, or rule-based scoring.\n\nThe dashboard should feel like a premium SaaS product, showing upload previews, overall content score, detailed category breakdowns, AI reasoning, strengths, weaknesses, missed opportunities, platform-specific recommendations, rewritten versions, alternative hooks and titles, publishing checklist, live activity log, reviewer status, and a comprehensive final report. If images or screenshots are uploaded, Claude must analyze the visual content directly.\n\nEnd with an executive summary, content health report, highest-impact improvements, predicted performance potential (clearly presented as an AI estimate), before-vs-after comparison, and further prompts for deeper optimization.\nDonot expect json format anywhere in order to avoid errors like \"expected '{' or '('\"\n\nBuild constraints: Single self-contained HTML file using only vanilla HTML, CSS, and JavaScript. No external libraries. Commercial-grade UI/UX, responsive design, dark mode, smooth animations, interactive visualizations, robust error handling, loading states, graceful retry logic, and zero syntax errors.",
+      "engagement": {
+        "type": "Content Intelligence Studio Showcase",
+        "description": "Share your Content Intelligence Studio and explain the most valuable insight the AI generated while reviewing your content. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your Content Intelligence Studio, generated HTML file, content analysis report, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
