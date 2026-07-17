@@ -2,7 +2,10 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
-import { getCohortCalendarDay } from "@/features/program/progression";
+import {
+  getCalendarDerivedMaxContentDay,
+  getCohortCalendarDay,
+} from "@/features/program/progression";
 import { getMemberAtRiskStatus } from "@/features/program/commits";
 
 const RECOMMENDATION_TTL_DAYS = 7;
@@ -64,14 +67,14 @@ export async function generateRecommendations(cohortId: string): Promise<{
     }
 
     const calendarDay = getCohortCalendarDay(member.cohort);
-    const behindBy = Math.max(0, calendarDay - member.highestUnlockedDay);
+    const expectedDay = getCalendarDerivedMaxContentDay(calendarDay);
+    const atRisk = await getMemberAtRiskStatus(member.id, cohortId);
+    const behindBy = atRisk.behindBy;
     const missionsPassed = Math.floor(member.missionPoints / 12);
     const cleanPassPct =
       missionsPassed > 0
         ? Math.round((member.cleanPassCount / missionsPassed) * 100)
         : 0;
-
-    const atRisk = await getMemberAtRiskStatus(member.id, cohortId);
 
     const projectSummary = member.projects
       .map(
@@ -87,7 +90,7 @@ export async function generateRecommendations(cohortId: string): Promise<{
         `Name: ${member.fullName}`,
         `Role: ${member.jobRole} @ ${member.company}`,
         `Scores — missions:${member.missionPoints} concept:${member.conceptPoints} commits:${member.commitPoints} projects:${member.projectPoints} total:${member.totalScore}`,
-        `Progress: day ${member.highestUnlockedDay}/${PROGRAM_TOTAL_DAYS}, cohort day ${calendarDay}, behind by ${behindBy}`,
+        `Progress: day ${member.highestUnlockedDay}/${PROGRAM_TOTAL_DAYS}, cohort content day ${expectedDay}, behind by ${behindBy}`,
         `Clean pass rate: ${cleanPassPct}%, skip tokens used: ${member.skipTokensUsed}`,
         `Project grades: ${projectSummary || "none yet"}`,
         `At-risk flags: ${atRisk.reasons.join(", ") || "none"}`,

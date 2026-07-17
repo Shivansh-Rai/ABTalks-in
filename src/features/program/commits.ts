@@ -1,19 +1,22 @@
 import "server-only";
 import { addDays } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/db";
+import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import {
-  IST,
-  istDateRangeToUtc,
-  parseCalendarKeyToUtcDate,
-} from "@/lib/date-utils";
-import { getCohortCalendarDay } from "@/features/program/progression";
+  collectPassSkipSets,
+  getBehindByDays,
+  getCohortCalendarDay,
+  getMemberProgressDay,
+  isSkippedPayload,
+} from "@/features/program/progression";
 import { recomputeMemberScore } from "@/features/program/missions";
 import { parseRepo } from "@/features/program/verify-mission";
 import {
   COMMIT_POINTS_PER_DAY,
   PROGRAM_MAX_COMMIT_POINTS,
   PROGRAM_TOTAL_DAYS,
+  PROGRAM_TZ,
 } from "@/features/program/constants";
 import { logger } from "@/lib/logger";
 
@@ -34,23 +37,43 @@ export type MemberAtRiskStatus = {
   behindBy: number;
 };
 
-/** IST calendar date key for N days before today in IST. */
-export function getIstDateKeyDaysAgo(daysAgo: number): string {
-  const todayKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+/** Program (America/Chicago) calendar date key for N days before today. */
+export function getProgramDateKeyDaysAgo(daysAgo: number): string {
+  const todayKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
   const base = parseCalendarKeyToUtcDate(todayKey);
-  return formatInTimeZone(addDays(base, -daysAgo), IST, "yyyy-MM-dd");
+  return formatInTimeZone(addDays(base, -daysAgo), PROGRAM_TZ, "yyyy-MM-dd");
 }
 
-function istDateKeyToDbDate(key: string): Date {
+function programDateKeyToDbDate(key: string): Date {
   return parseCalendarKeyToUtcDate(key);
+}
+
+/** Inclusive program-TZ calendar day → [startUtc, endExclusiveUtc). */
+function programDateRangeToUtc(
+  startKey?: string,
+  endKey?: string,
+): { startUtc?: Date; endExclusiveUtc?: Date } {
+  const startUtc = startKey
+    ? fromZonedTime(`${startKey}T00:00:00`, PROGRAM_TZ)
+    : undefined;
+  let endExclusiveUtc: Date | undefined;
+  if (endKey) {
+    const nextKey = formatInTimeZone(
+      addDays(parseCalendarKeyToUtcDate(endKey), 1),
+      "UTC",
+      "yyyy-MM-dd",
+    );
+    endExclusiveUtc = fromZonedTime(`${nextKey}T00:00:00`, PROGRAM_TZ);
+  }
+  return { startUtc, endExclusiveUtc };
 }
 
 function isDateKeyInCohortWindow(
   dateKey: string,
   cohort: { startsAt: Date; endsAt: Date },
 ): boolean {
-  const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
-  const endKey = formatInTimeZone(cohort.endsAt, IST, "yyyy-MM-dd");
+  const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
+  const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
   return dateKey >= startKey && dateKey <= endKey;
 }
 
@@ -120,10 +143,10 @@ async function recomputeCommitPointsForMember(
   memberId: string,
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<void> {
-  const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
-  const endKey = formatInTimeZone(cohort.endsAt, IST, "yyyy-MM-dd");
-  const startDate = istDateKeyToDbDate(startKey);
-  const endDate = istDateKeyToDbDate(endKey);
+  const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
+  const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
+  const startDate = programDateKeyToDbDate(startKey);
+  const endDate = programDateKeyToDbDate(endKey);
 
   await prisma.$transaction(async (tx) => {
     const qualifyingDays = await tx.programCommitDay.count({
@@ -157,9 +180,9 @@ type MemberRow = {
 export async function processMemberCommitDay(
   member: MemberRow,
   cohort: { startsAt: Date; endsAt: Date },
-  istDateKey: string,
+  programDateKey: string,
 ): Promise<{ ok: true } | { ok: false; memberId: string; reason: string }> {
-  if (!isDateKeyInCohortWindow(istDateKey, cohort)) {
+  if (!isDateKeyInCohortWindow(programDateKey, cohort)) {
     return { ok: true };
   }
 
@@ -168,9 +191,9 @@ export async function processMemberCommitDay(
     return { ok: false, memberId: member.id, reason: "invalid_repo_url" };
   }
 
-  const { startUtc, endExclusiveUtc } = istDateRangeToUtc(
-    istDateKey,
-    istDateKey,
+  const { startUtc, endExclusiveUtc } = programDateRangeToUtc(
+    programDateKey,
+    programDateKey,
   );
   if (!startUtc || !endExclusiveUtc) {
     return { ok: false, memberId: member.id, reason: "invalid_date_range" };
@@ -184,7 +207,7 @@ export async function processMemberCommitDay(
     endExclusiveUtc,
   );
 
-  const commitDate = istDateKeyToDbDate(istDateKey);
+  const commitDate = programDateKeyToDbDate(programDateKey);
 
   await prisma.programCommitDay.upsert({
     where: {
@@ -216,18 +239,18 @@ export async function runProgramCommitsCron(): Promise<{
     return { processed: 0, failures: [] };
   }
 
-  const endKey = formatInTimeZone(cohort.endsAt, IST, "yyyy-MM-dd");
+  const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
   const graceKey = formatInTimeZone(
     addDays(parseCalendarKeyToUtcDate(endKey), 1),
-    IST,
+    PROGRAM_TZ,
     "yyyy-MM-dd",
   );
-  const todayKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+  const todayKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
   if (todayKey > graceKey) {
     return { processed: 0, failures: [] };
   }
 
-  const istDateKey = getIstDateKeyDaysAgo(1);
+  const programDateKey = getProgramDateKeyDaysAgo(1);
 
   const members = await prisma.programMember.findMany({
     where: {
@@ -249,7 +272,7 @@ export async function runProgramCommitsCron(): Promise<{
   for (let i = 0; i < members.length; i += CHUNK_SIZE) {
     const chunk = members.slice(i, i + CHUNK_SIZE);
     const results = await Promise.allSettled(
-      chunk.map((m) => processMemberCommitDay(m, cohort, istDateKey)),
+      chunk.map((m) => processMemberCommitDay(m, cohort, programDateKey)),
     );
 
     for (let j = 0; j < results.length; j++) {
@@ -284,7 +307,7 @@ export async function getCommitHeatmap(
   memberId: string,
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<HeatmapCell[]> {
-  const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
+  const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
   const base = parseCalendarKeyToUtcDate(startKey);
 
   const rows = await prisma.programCommitDay.findMany({
@@ -294,28 +317,20 @@ export async function getCommitHeatmap(
 
   const byDate = new Map(
     rows.map((r) => [
-      formatInTimeZone(r.date, IST, "yyyy-MM-dd"),
+      formatInTimeZone(r.date, PROGRAM_TZ, "yyyy-MM-dd"),
       r.commitCount,
     ]),
   );
 
   const cells: HeatmapCell[] = [];
   for (let i = 0; i < PROGRAM_TOTAL_DAYS; i++) {
-    const dateKey = formatInTimeZone(addDays(base, i), IST, "yyyy-MM-dd");
+    const dateKey = formatInTimeZone(addDays(base, i), PROGRAM_TZ, "yyyy-MM-dd");
     cells.push({
       dateIso: dateKey,
       count: byDate.get(dateKey) ?? 0,
     });
   }
   return cells;
-}
-
-function isSkippedPayload(payload: unknown): boolean {
-  return (
-    !!payload &&
-    typeof payload === "object" &&
-    (payload as { skipped?: unknown }).skipped === true
-  );
 }
 
 async function evaluateMemberAtRisk(
@@ -326,41 +341,43 @@ async function evaluateMemberAtRisk(
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<AtRiskMember["reasons"]> {
   const reasons: AtRiskMember["reasons"] = [];
-  const calendarDay = getCohortCalendarDay(cohort);
 
-  if (member.highestUnlockedDay < calendarDay - 2) {
+  const submissions = await prisma.programMissionSubmission.findMany({
+    where: { memberId: member.id },
+    select: { dayNumber: true, passed: true, payload: true, createdAt: true },
+  });
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const behindBy = getBehindByDays(cohort, progressDay);
+
+  if (behindBy > 2) {
     reasons.push("behind_pace");
   }
 
-  const dayNumber = member.highestUnlockedDay;
-  const passed = await prisma.programMissionSubmission.findFirst({
-    where: { memberId: member.id, dayNumber, passed: true },
-    select: { id: true },
-  });
+  // Stuck on the next incomplete day (progress + 1), if they have failures there.
+  const dayNumber = Math.min(PROGRAM_TOTAL_DAYS, progressDay + 1);
+  const passed = passedDays.has(dayNumber) || skippedDays.has(dayNumber);
   if (!passed) {
-    const oldestFailed = await prisma.programMissionSubmission.findFirst({
-      where: {
-        memberId: member.id,
-        dayNumber,
-        passed: false,
-      },
-      orderBy: { createdAt: "asc" },
-      select: { createdAt: true, payload: true },
-    });
-    if (
-      oldestFailed &&
-      !isSkippedPayload(oldestFailed.payload)
-    ) {
-      const twoDaysAgoKey = getIstDateKeyDaysAgo(2);
-      const { startUtc } = istDateRangeToUtc(twoDaysAgoKey, twoDaysAgoKey);
+    const dayFails = submissions.filter(
+      (s) =>
+        s.dayNumber === dayNumber &&
+        !s.passed &&
+        !isSkippedPayload(s.payload),
+    );
+    const oldestFailed = dayFails.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    )[0];
+    if (oldestFailed) {
+      const twoDaysAgoKey = getProgramDateKeyDaysAgo(2);
+      const { startUtc } = programDateRangeToUtc(twoDaysAgoKey, twoDaysAgoKey);
       if (startUtc && oldestFailed.createdAt < startUtc) {
         reasons.push("stuck_mission");
       }
     }
   }
 
-  const recentKeys = [1, 2, 3, 4, 5].map((d) => getIstDateKeyDaysAgo(d));
-  const recentDates = recentKeys.map(istDateKeyToDbDate);
+  const recentKeys = [1, 2, 3, 4, 5].map((d) => getProgramDateKeyDaysAgo(d));
+  const recentDates = recentKeys.map(programDateKeyToDbDate);
   const commitDays = await prisma.programCommitDay.count({
     where: {
       memberId: member.id,
@@ -425,8 +442,13 @@ export async function getMemberAtRiskStatus(
     return { atRisk: false, reasons: [], behindBy: 0 };
   }
 
-  const calendarDay = getCohortCalendarDay(cohort);
-  const behindBy = Math.max(0, calendarDay - member.highestUnlockedDay);
+  const submissions = await prisma.programMissionSubmission.findMany({
+    where: { memberId: member.id },
+    select: { dayNumber: true, passed: true, payload: true },
+  });
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const behindBy = getBehindByDays(cohort, progressDay);
   const reasons = await evaluateMemberAtRisk(member, cohort);
 
   return {

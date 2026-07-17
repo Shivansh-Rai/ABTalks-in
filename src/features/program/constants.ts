@@ -4,6 +4,9 @@ export const PROGRAM_TOTAL_DAYS = 31;
 /** New ENROLLED members unlock here; days 1..(n-1) are waived as PASSED. */
 export const PROGRAM_MEMBER_START_DAY = 4;
 
+/** Program day boundaries and unlock calendar (Texas / US Central). */
+export const PROGRAM_TZ = "America/Chicago";
+
 export const PROGRAM_MAX_MISSION_POINTS = 372;
 export const PROGRAM_MAX_CONCEPT_POINTS = 93;
 export const PROGRAM_MAX_COMMIT_POINTS = 155;

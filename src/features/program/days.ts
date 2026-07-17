@@ -1,7 +1,12 @@
 import "server-only";
 import type { ProgramLanguage, ProgramMissionType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { deriveDayState, type DayState } from "@/features/program/progression";
+import {
+  collectPassSkipSets,
+  deriveDayState,
+  getMaxContentDay,
+  type DayState,
+} from "@/features/program/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 
 export type { DayState } from "@/features/program/progression";
@@ -35,14 +40,6 @@ export type DayShell = {
 };
 
 export type DayShellResult = { day: DayShell; state: DayState };
-
-function isSkippedPayload(payload: unknown): boolean {
-  return (
-    !!payload &&
-    typeof payload === "object" &&
-    (payload as { skipped?: unknown }).skipped === true
-  );
-}
 
 export async function getDayShell(
   memberId: string,
@@ -81,25 +78,27 @@ export async function getDayShell(
 
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
-    select: { highestUnlockedDay: true },
+    select: {
+      highestUnlockedDay: true,
+      cohort: { select: { startsAt: true } },
+    },
   });
   if (!member) return null;
 
   const submissions = await prisma.programMissionSubmission.findMany({
-    where: { memberId, dayNumber },
-    select: { passed: true, payload: true },
+    where: { memberId },
+    select: { dayNumber: true, passed: true, payload: true },
   });
 
-  const passedDays = new Set<number>();
-  const skippedDays = new Set<number>();
-  for (const row of submissions) {
-    if (row.passed) passedDays.add(dayNumber);
-    else if (isSkippedPayload(row.payload)) skippedDays.add(dayNumber);
-  }
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
 
   const state = deriveDayState(
     dayNumber,
-    member.highestUnlockedDay,
+    maxContentDay,
     passedDays,
     skippedDays,
     isDayLockBypassEnabled(),

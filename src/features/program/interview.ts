@@ -5,7 +5,11 @@ import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
-import { getMemberDayStates } from "@/features/program/progression";
+import {
+  collectPassSkipSets,
+  getMemberDayStates,
+  getMemberProgressDay,
+} from "@/features/program/progression";
 
 export const INTERVIEW_DURATION_SEC = 900;
 export const INTERVIEW_MIN_DURATION_SEC = 180;
@@ -191,19 +195,23 @@ export async function getInterviewEligibility(
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
     select: {
-      highestUnlockedDay: true,
       cohort: { select: { endsAt: true } },
     },
   });
   if (!member) return { state: "locked", reason: "Member not found." };
 
   const finalDayDone = await isFinalDayQuizDone(memberId);
-  const programComplete =
-    member.highestUnlockedDay >= PROGRAM_TOTAL_DAYS && finalDayDone;
+  const submissions = await prisma.programMissionSubmission.findMany({
+    where: { memberId },
+    select: { dayNumber: true, passed: true, payload: true },
+  });
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const programComplete = progressDay >= PROGRAM_TOTAL_DAYS && finalDayDone;
   const cohortEnded = new Date() > member.cohort.endsAt;
 
   if (!programComplete && !cohortEnded) {
-    if (member.highestUnlockedDay < PROGRAM_TOTAL_DAYS) {
+    if (progressDay < PROGRAM_TOTAL_DAYS) {
       return {
         state: "locked",
         reason: `Reach Day ${PROGRAM_TOTAL_DAYS} and complete the Day ${PROGRAM_TOTAL_DAYS} concept check to unlock your exit interview.`,

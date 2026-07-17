@@ -2,8 +2,13 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
-import { deriveDayState } from "@/features/program/progression";
-import { isCohortFrozen } from "@/features/program/progression";
+import {
+  collectPassSkipSets,
+  deriveDayState,
+  getMaxContentDay,
+  isCohortFrozen,
+  isSkippedPayload,
+} from "@/features/program/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import {
   getHiddenTestInputs,
@@ -52,14 +57,6 @@ export type SubmitMissionOk = {
   unlockedDay?: number;
   cleanPass: boolean;
 };
-
-function isSkippedPayload(payload: unknown): boolean {
-  return (
-    !!payload &&
-    typeof payload === "object" &&
-    (payload as { skipped?: unknown }).skipped === true
-  );
-}
 
 function parseVerdict(json: unknown): VerdictLine[] {
   if (!Array.isArray(json)) return [];
@@ -115,7 +112,7 @@ async function getDayAvailability(
       githubRepoUrl: true,
       missionPoints: true,
       cleanPassCount: true,
-      cohort: { select: { endsAt: true } },
+      cohort: { select: { endsAt: true, startsAt: true } },
     },
   });
   if (!member) return { ok: false, message: "Member not found." };
@@ -125,20 +122,19 @@ async function getDayAvailability(
   }
 
   const submissions = await prisma.programMissionSubmission.findMany({
-    where: { memberId, dayNumber },
-    select: { passed: true, payload: true },
+    where: { memberId },
+    select: { dayNumber: true, passed: true, payload: true },
   });
 
-  const passedDays = new Set<number>();
-  const skippedDays = new Set<number>();
-  for (const row of submissions) {
-    if (row.passed) passedDays.add(dayNumber);
-    else if (isSkippedPayload(row.payload)) skippedDays.add(dayNumber);
-  }
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
 
   const state = deriveDayState(
     dayNumber,
-    member.highestUnlockedDay,
+    maxContentDay,
     passedDays,
     skippedDays,
     isDayLockBypassEnabled(),
@@ -186,11 +182,15 @@ export async function getMissionState(
 ): Promise<MissionState | null> {
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
-    select: { highestUnlockedDay: true, skipTokensUsed: true },
+    select: {
+      highestUnlockedDay: true,
+      skipTokensUsed: true,
+      cohort: { select: { startsAt: true } },
+    },
   });
   if (!member) return null;
 
-  const [submissions, day] = await Promise.all([
+  const [daySubmissions, allSubmissions, day] = await Promise.all([
     prisma.programMissionSubmission.findMany({
       where: { memberId, dayNumber },
       select: {
@@ -202,6 +202,10 @@ export async function getMissionState(
       },
       orderBy: { attemptNumber: "asc" },
     }),
+    prisma.programMissionSubmission.findMany({
+      where: { memberId },
+      select: { dayNumber: true, passed: true, payload: true },
+    }),
     prisma.programDay.findUnique({
       where: { dayNumber },
       select: { missionType: true, missionSpec: true },
@@ -209,22 +213,21 @@ export async function getMissionState(
   ]);
   if (!day) return null;
 
-  const passedDays = new Set<number>();
-  const skippedDays = new Set<number>();
-  for (const row of submissions) {
-    if (row.passed) passedDays.add(dayNumber);
-    else if (isSkippedPayload(row.payload)) skippedDays.add(dayNumber);
-  }
+  const { passedDays, skippedDays } = collectPassSkipSets(allSubmissions);
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
 
   const dayState = deriveDayState(
     dayNumber,
-    member.highestUnlockedDay,
+    maxContentDay,
     passedDays,
     skippedDays,
     isDayLockBypassEnabled(),
   );
 
-  const failedRunCount = submissions.filter(
+  const failedRunCount = daySubmissions.filter(
     (s) => !s.passed && !isSkippedPayload(s.payload),
   ).length;
 
@@ -242,7 +245,7 @@ export async function getMissionState(
       member.skipTokensUsed < 2 &&
       failedRunCount >= 3,
     passed: passedDays.has(dayNumber),
-    runs: submissions
+    runs: daySubmissions
       .filter((s) => !isSkippedPayload(s.payload))
       .map((s) => ({
         attemptNumber: s.attemptNumber,
@@ -337,17 +340,45 @@ export async function submitMissionRun(
     });
 
     if (verifyResult.passed && isFirstPass) {
-      const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
       await tx.programMember.update({
         where: { id: memberId },
         data: {
           missionPoints: { increment: pointsAwarded },
-          highestUnlockedDay: nextDay,
           ...(cleanPass ? { cleanPassCount: { increment: 1 } } : {}),
         },
       });
-      unlockedDay = nextDay;
       await recomputeMemberScore(tx, memberId);
+
+      // Only surface "continue" when the next day is already within calendar unlock.
+      const memberAfter = await tx.programMember.findUnique({
+        where: { id: memberId },
+        select: {
+          highestUnlockedDay: true,
+          cohort: { select: { startsAt: true } },
+        },
+      });
+      if (memberAfter) {
+        const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
+        const maxContentDay = getMaxContentDay(
+          memberAfter.cohort,
+          memberAfter.highestUnlockedDay,
+        );
+        const allSubs = await tx.programMissionSubmission.findMany({
+          where: { memberId },
+          select: { dayNumber: true, passed: true, payload: true },
+        });
+        const { passedDays, skippedDays } = collectPassSkipSets(allSubs);
+        const nextState = deriveDayState(
+          nextDay,
+          maxContentDay,
+          passedDays,
+          skippedDays,
+          isDayLockBypassEnabled(),
+        );
+        if (nextState === "AVAILABLE") {
+          unlockedDay = nextDay;
+        }
+      }
     }
 
     if (verifyResult.passed && day.missionType === "BOSS_BUILD") {
@@ -419,7 +450,6 @@ export async function useSkipToken(
   const attemptCount = await prisma.programMissionSubmission.count({
     where: { memberId, dayNumber },
   });
-  const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
 
   await prisma.$transaction(async (tx) => {
     await tx.programMissionSubmission.create({
@@ -437,10 +467,40 @@ export async function useSkipToken(
       where: { id: memberId },
       data: {
         skipTokensUsed: { increment: 1 },
-        highestUnlockedDay: nextDay,
       },
     });
   });
 
-  return { ok: true, unlockedDay: nextDay };
+  // Next day only if already within calendar unlock after this skip.
+  const member = await prisma.programMember.findUnique({
+    where: { id: memberId },
+    select: {
+      highestUnlockedDay: true,
+      cohort: { select: { startsAt: true } },
+    },
+  });
+  const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
+  if (!member) return { ok: true, unlockedDay: nextDay };
+
+  const allSubs = await prisma.programMissionSubmission.findMany({
+    where: { memberId },
+    select: { dayNumber: true, passed: true, payload: true },
+  });
+  const { passedDays, skippedDays } = collectPassSkipSets(allSubs);
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
+  const nextState = deriveDayState(
+    nextDay,
+    maxContentDay,
+    passedDays,
+    skippedDays,
+    isDayLockBypassEnabled(),
+  );
+
+  return {
+    ok: true,
+    unlockedDay: nextState === "AVAILABLE" ? nextDay : dayNumber,
+  };
 }

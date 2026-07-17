@@ -3,9 +3,13 @@ import type { ProgramMissionType } from "@prisma/client";
 import { differenceInCalendarDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
-import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
+import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
-import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
+import {
+  PROGRAM_MEMBER_START_DAY,
+  PROGRAM_TOTAL_DAYS,
+  PROGRAM_TZ,
+} from "@/features/program/constants";
 
 export type DayState = "LOCKED" | "AVAILABLE" | "PASSED" | "SKIPPED";
 
@@ -27,7 +31,7 @@ export type CurriculumDay = {
   state: DayState;
 };
 
-function isSkippedPayload(payload: unknown): boolean {
+export function isSkippedPayload(payload: unknown): boolean {
   return (
     !!payload &&
     typeof payload === "object" &&
@@ -35,23 +39,59 @@ function isSkippedPayload(payload: unknown): boolean {
   );
 }
 
+/**
+ * Calendar unlock ceiling from cohort pace (Texas) + start-day offset.
+ * Cohort calendar day 1 → content day PROGRAM_MEMBER_START_DAY.
+ */
+export function getCalendarDerivedMaxContentDay(
+  cohortCalendarDay: number,
+): number {
+  return Math.min(
+    PROGRAM_TOTAL_DAYS,
+    PROGRAM_MEMBER_START_DAY - 1 + cohortCalendarDay,
+  );
+}
+
+/** Effective unlock ceiling: calendar-derived, raised by admin `highestUnlockedDay`. */
+export function getMaxContentDay(
+  cohort: { startsAt: Date },
+  highestUnlockedDay: number,
+): number {
+  const calendarDerived = getCalendarDerivedMaxContentDay(
+    getCohortCalendarDay(cohort),
+  );
+  return Math.min(
+    PROGRAM_TOTAL_DAYS,
+    Math.max(calendarDerived, highestUnlockedDay),
+  );
+}
+
+/**
+ * Day availability: calendar cap + sequential (prev must be PASSED/SKIPPED).
+ * `maxContentDay` is the unlock ceiling (calendar + admin floor).
+ */
 export function deriveDayState(
   dayNumber: number,
-  highestUnlockedDay: number,
+  maxContentDay: number,
   passedDays: Set<number>,
   skippedDays: Set<number>,
   bypassLocks = false,
 ): DayState {
   if (passedDays.has(dayNumber)) return "PASSED";
   if (skippedDays.has(dayNumber)) return "SKIPPED";
-  if (bypassLocks || dayNumber <= highestUnlockedDay) return "AVAILABLE";
-  return "LOCKED";
+  if (bypassLocks) return "AVAILABLE";
+  if (dayNumber > maxContentDay) return "LOCKED";
+  if (dayNumber > 1) {
+    const prev = dayNumber - 1;
+    if (!passedDays.has(prev) && !skippedDays.has(prev)) return "LOCKED";
+  }
+  return "AVAILABLE";
 }
 
-/** IST calendar days since cohort `startsAt`, clamped 1..PROGRAM_TOTAL_DAYS. */
+/** America/Chicago calendar days since cohort `startsAt`, clamped 1..PROGRAM_TOTAL_DAYS. */
 export function getCohortCalendarDay(cohort: { startsAt: Date }): number {
-  const startKey = formatInTimeZone(cohort.startsAt, IST, "yyyy-MM-dd");
-  const nowKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+  const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
+  const nowKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
   const startUtc = parseCalendarKeyToUtcDate(startKey);
   const nowUtc = parseCalendarKeyToUtcDate(nowKey);
   const diff = differenceInCalendarDays(nowUtc, startUtc);
@@ -62,14 +102,58 @@ export function isCohortFrozen(cohort: { endsAt: Date }): boolean {
   return new Date() > cohort.endsAt;
 }
 
+/** Highest day number the member has PASSED or SKIPPED (0 if none). */
+export function getMemberProgressDay(
+  passedDays: Set<number>,
+  skippedDays: Set<number>,
+): number {
+  let max = 0;
+  for (const d of passedDays) max = Math.max(max, d);
+  for (const d of skippedDays) max = Math.max(max, d);
+  return max;
+}
+
+/** How many content days behind the Texas calendar unlock pace. */
+export function getBehindByDays(
+  cohort: { startsAt: Date },
+  progressDay: number,
+): number {
+  const expected = getCalendarDerivedMaxContentDay(
+    getCohortCalendarDay(cohort),
+  );
+  return Math.max(0, expected - progressDay);
+}
+
+export function collectPassSkipSets(
+  submissions: { dayNumber: number; passed: boolean; payload: unknown }[],
+): { passedDays: Set<number>; skippedDays: Set<number> } {
+  const passedDays = new Set<number>();
+  const skippedDays = new Set<number>();
+  for (const row of submissions) {
+    if (row.passed) passedDays.add(row.dayNumber);
+    else if (isSkippedPayload(row.payload)) skippedDays.add(row.dayNumber);
+  }
+  return { passedDays, skippedDays };
+}
+
 export async function getMemberDayStates(
   memberId: string,
 ): Promise<{ modules: CurriculumModule[]; days: CurriculumDay[] }> {
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
-    select: { highestUnlockedDay: true },
+    select: {
+      highestUnlockedDay: true,
+      cohort: { select: { startsAt: true } },
+    },
   });
-  const highestUnlockedDay = member?.highestUnlockedDay ?? 1;
+  if (!member) {
+    return { modules: [], days: [] };
+  }
+
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
 
   const [modules, days, submissions] = await Promise.all([
     prisma.programModule.findMany({
@@ -100,12 +184,7 @@ export async function getMemberDayStates(
     }),
   ]);
 
-  const passedDays = new Set<number>();
-  const skippedDays = new Set<number>();
-  for (const row of submissions) {
-    if (row.passed) passedDays.add(row.dayNumber);
-    else if (isSkippedPayload(row.payload)) skippedDays.add(row.dayNumber);
-  }
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
 
   const dayStates: CurriculumDay[] = days.map((d) => ({
     dayNumber: d.dayNumber,
@@ -115,7 +194,7 @@ export async function getMemberDayStates(
     moduleNumber: d.module.number,
     state: deriveDayState(
       d.dayNumber,
-      highestUnlockedDay,
+      maxContentDay,
       passedDays,
       skippedDays,
       isDayLockBypassEnabled(),
@@ -125,15 +204,22 @@ export async function getMemberDayStates(
   return { modules, days: dayStates };
 }
 
-/** Current module number from the member's highest unlocked day. */
+/** Current module from the member's effective max content day. */
 export async function getMemberCurrentModuleNumber(
   memberId: string,
 ): Promise<number> {
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
-    select: { highestUnlockedDay: true },
+    select: {
+      highestUnlockedDay: true,
+      cohort: { select: { startsAt: true } },
+    },
   });
-  const dayNumber = member?.highestUnlockedDay ?? 1;
+  if (!member) return 1;
+  const dayNumber = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
   const day = await prisma.programDay.findUnique({
     where: { dayNumber },
     select: { module: { select: { number: true } } },

@@ -1,7 +1,12 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isCohortFrozen } from "@/features/program/progression";
+import {
+  collectPassSkipSets,
+  deriveDayState,
+  getMaxContentDay,
+  isCohortFrozen,
+} from "@/features/program/progression";
 import { recomputeMemberScore } from "@/features/program/missions";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 
@@ -42,9 +47,30 @@ async function isDayUnlocked(memberId: string, dayNumber: number): Promise<boole
   if (isDayLockBypassEnabled()) return true;
   const member = await prisma.programMember.findUnique({
     where: { id: memberId },
-    select: { highestUnlockedDay: true },
+    select: {
+      highestUnlockedDay: true,
+      cohort: { select: { startsAt: true } },
+    },
   });
-  return (member?.highestUnlockedDay ?? 0) >= dayNumber;
+  if (!member) return false;
+
+  const submissions = await prisma.programMissionSubmission.findMany({
+    where: { memberId },
+    select: { dayNumber: true, passed: true, payload: true },
+  });
+  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
+  const maxContentDay = getMaxContentDay(
+    member.cohort,
+    member.highestUnlockedDay,
+  );
+  const state = deriveDayState(
+    dayNumber,
+    maxContentDay,
+    passedDays,
+    skippedDays,
+    false,
+  );
+  return state === "AVAILABLE" || state === "PASSED" || state === "SKIPPED";
 }
 
 export async function startConceptCheck(

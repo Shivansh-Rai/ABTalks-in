@@ -5,10 +5,14 @@ import { prisma } from "@/lib/db";
 import { IST, formatDateTimeIST } from "@/lib/date-utils";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
-import { getAtRiskMembers } from "@/features/program/commits";
-import { getCohortCalendarDay } from "@/features/program/progression";
+import { getAtRiskMembers, getMemberAtRiskStatus } from "@/features/program/commits";
+import {
+  collectPassSkipSets,
+  getBehindByDays,
+  getCohortCalendarDay,
+  getMemberProgressDay,
+} from "@/features/program/progression";
 import { askClaudeJson } from "@/lib/anthropic";
-import { getMemberAtRiskStatus } from "@/features/program/commits";
 
 export type CohortOverview = {
   cohort: {
@@ -403,18 +407,14 @@ export async function getCohortOverview(
     count,
   }));
 
-  const cohortDay = getCohortCalendarDay(cohort);
   const atRiskDetailed = await Promise.all(
     atRisk.map(async (m) => {
-      const member = members.find((x) => x.id === m.memberId);
-      const behindBy = member
-        ? Math.max(0, cohortDay - member.highestUnlockedDay)
-        : 0;
+      const status = await getMemberAtRiskStatus(m.memberId, cohort.id);
       return {
         memberId: m.memberId,
         fullName: m.fullName,
         reasons: m.reasons,
-        behindBy,
+        behindBy: status.behindBy,
       };
     }),
   );
@@ -453,7 +453,6 @@ export async function getCohortMembers(
   });
   if (!cohort) return [];
 
-  const cohortDay = getCohortCalendarDay(cohort);
   const q = filters.q?.trim();
 
   const members = await prisma.programMember.findMany({
@@ -487,16 +486,36 @@ export async function getCohortMembers(
   });
 
   const userIds = members.map((m) => m.userId);
-  const entryAttempts = await prisma.programEntryAttempt.findMany({
-    where: { userId: { in: userIds }, cohortId },
-    select: {
-      userId: true,
-      aptitudeScore: true,
-      technicalScore: true,
-      answers: true,
-    },
-    orderBy: { attemptNumber: "desc" },
-  });
+  const memberIds = members.map((m) => m.id);
+  const [entryAttempts, missionSubs] = await Promise.all([
+    prisma.programEntryAttempt.findMany({
+      where: { userId: { in: userIds }, cohortId },
+      select: {
+        userId: true,
+        aptitudeScore: true,
+        technicalScore: true,
+        answers: true,
+      },
+      orderBy: { attemptNumber: "desc" },
+    }),
+    prisma.programMissionSubmission.findMany({
+      where: { memberId: { in: memberIds } },
+      select: {
+        memberId: true,
+        dayNumber: true,
+        passed: true,
+        payload: true,
+      },
+    }),
+  ]);
+
+  const subsByMember = new Map<string, typeof missionSubs>();
+  for (const s of missionSubs) {
+    const list = subsByMember.get(s.memberId) ?? [];
+    list.push(s);
+    subsByMember.set(s.memberId, list);
+  }
+
   const entryByUser = new Map<string, number>();
   for (const a of entryAttempts) {
     if (a.answers === null) continue;
@@ -505,19 +524,24 @@ export async function getCohortMembers(
     }
   }
 
-  return members.map((m) => ({
-    id: m.id,
-    fullName: m.fullName,
-    company: m.company,
-    jobRole: m.jobRole,
-    status: m.status,
-    totalScore: m.totalScore,
-    highestUnlockedDay: m.highestUnlockedDay,
-    behindBy: Math.max(0, cohortDay - m.highestUnlockedDay),
-    entryTotalScore: entryByUser.get(m.userId) ?? null,
-    interviewStatus: m.interview?.status ?? null,
-    interviewOverall: m.interview?.overallScore ?? null,
-  }));
+  return members.map((m) => {
+    const subs = subsByMember.get(m.id) ?? [];
+    const { passedDays, skippedDays } = collectPassSkipSets(subs);
+    const progressDay = getMemberProgressDay(passedDays, skippedDays);
+    return {
+      id: m.id,
+      fullName: m.fullName,
+      company: m.company,
+      jobRole: m.jobRole,
+      status: m.status,
+      totalScore: m.totalScore,
+      highestUnlockedDay: Math.max(m.highestUnlockedDay, progressDay),
+      behindBy: getBehindByDays(cohort, progressDay),
+      entryTotalScore: entryByUser.get(m.userId) ?? null,
+      interviewStatus: m.interview?.status ?? null,
+      interviewOverall: m.interview?.overallScore ?? null,
+    };
+  });
 }
 
 export async function promoteWaitlisted(
@@ -711,8 +735,7 @@ export async function regenerateMemberRecommendation(
   if (!member) return { ok: false, message: "Member not found." };
 
   const atRisk = await getMemberAtRiskStatus(memberId, member.cohort.id);
-  const cohortDay = getCohortCalendarDay(member.cohort);
-  const behindBy = Math.max(0, cohortDay - member.highestUnlockedDay);
+  const behindBy = atRisk.behindBy;
   const missionsPassed = Math.floor(member.missionPoints / 12);
   const cleanPassPct =
     missionsPassed > 0

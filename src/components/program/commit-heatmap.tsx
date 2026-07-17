@@ -1,17 +1,16 @@
 "use client";
 
 import { formatInTimeZone } from "date-fns-tz";
+import { PROGRAM_TZ } from "@/features/program/constants";
 import { cn } from "@/lib/utils";
 
 type Cell = { dateIso: string; count: number };
-
-const IST = "Asia/Kolkata";
 
 function formatTooltip(dateIso: string, count: number): string {
   const [y, m, d] = dateIso.split("-").map(Number);
   const label = formatInTimeZone(
     new Date(Date.UTC(y!, m! - 1, d!)),
-    IST,
+    PROGRAM_TZ,
     "d MMM yyyy",
   );
   if (count === 0) return `${label}: no commits`;
@@ -39,14 +38,6 @@ export function CommitHeatmap({ cells }: { cells: Cell[] }) {
             )}
           />
         ))}
-      </div>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>Less</span>
-        <div className="size-3 rounded-sm bg-muted" />
-        <div className="size-3 rounded-sm bg-emerald-400/70" />
-        <div className="size-3 rounded-sm bg-emerald-500" />
-        <div className="size-3 rounded-sm bg-emerald-600" />
-        <span>More</span>
       </div>
     </div>
   );

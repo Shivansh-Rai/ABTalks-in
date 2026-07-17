@@ -1,8 +1,10 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import {
+  getBehindByDays,
   getCohortCalendarDay,
   getMemberDayStates,
+  getMemberProgressDay,
 } from "@/features/program/progression";
 import { getMemberRank } from "@/features/program/leaderboard";
 import type { VerdictLine } from "@/features/program/verify-mission";
@@ -60,7 +62,6 @@ export async function getMemberDashboard(
     prisma.programMember.findUnique({
       where: { id: memberId },
       select: {
-        highestUnlockedDay: true,
         totalScore: true,
         missionPoints: true,
         conceptPoints: true,
@@ -92,8 +93,12 @@ export async function getMemberDashboard(
   if (!member || !cohort) return null;
 
   const cohortDay = getCohortCalendarDay(cohort);
-  const memberDay = member.highestUnlockedDay;
-  const behindBy = Math.max(0, cohortDay - memberDay);
+  const progressDay = getMemberProgressDay(
+    new Set(days.filter((d) => d.state === "PASSED").map((d) => d.dayNumber)),
+    new Set(days.filter((d) => d.state === "SKIPPED").map((d) => d.dayNumber)),
+  );
+  const memberDay = progressDay;
+  const behindBy = getBehindByDays(cohort, progressDay);
 
   const passedDays = new Set(
     days.filter((d) => d.state === "PASSED").map((d) => d.dayNumber),

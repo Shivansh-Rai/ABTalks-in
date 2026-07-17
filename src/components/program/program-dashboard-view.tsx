@@ -230,8 +230,8 @@ export function ProgramDashboardView({
         <section className={cn(cardClass, "group relative md:min-h-[280px]")}>
           <SectionHeading icon={Activity}>Commit Activity</SectionHeading>
           <p className="mb-4 text-xs text-[#E9E9E9] md:text-sm">
-            One commit in your program repo earns 5 pts for that IST Day (max{" "}
-            {PROGRAM_MAX_COMMIT_POINTS}).
+            One commit in your program repo earns 5 pts for that Central (Texas)
+            day (max {PROGRAM_MAX_COMMIT_POINTS}).
           </p>
           <div
             className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10 md:gap-2.5"
