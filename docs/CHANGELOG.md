@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-17 [env] Entry assessment skipped unless SKIP_PRE_ASSESSMENT=false; apply enrolls/waitlists directly (quiz code retained)
 - 2026-07-17 [rule] Program members start at Day 4 on enroll: Days 1–3 waived as PASSED (+ mission points); `npm run db:bootstrap:program-start-day` backfills existing ENROLLED/COMPLETED
 - 2026-07-17 [rule] SHIP_IT missions may include missionSpec.answers; Day 3 requires both task answers and repo checks to pass
 - 2026-07-17 [convention] Program Day 3 full-aligned to curriculum sheet: coverage-chatbot-api SHIP_IT paths; verbatim 11 build steps

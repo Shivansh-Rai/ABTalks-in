@@ -19,6 +19,7 @@ import {
   getEntryState,
 } from "@/features/program/entry";
 import { formatDateTimeIST } from "@/lib/date-utils";
+import { isProgramEntryBypassEnabled } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -176,6 +177,7 @@ export default async function ProgramApplyPage() {
   }
 
   // state.screen === "form"
+  const skipAssessment = isProgramEntryBypassEnabled();
   return (
     <Shell>
       <div className="mb-6">
@@ -183,8 +185,9 @@ export default async function ProgramApplyPage() {
           Apply to {state.cohortName}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tell us about your professional background. After applying you&apos;ll
-          take a short entry assessment.
+          {skipAssessment
+            ? "Tell us about your professional background to join the program."
+            : "Tell us about your professional background. After applying you'll take a short entry assessment."}
         </p>
       </div>
       <ApplyForm />

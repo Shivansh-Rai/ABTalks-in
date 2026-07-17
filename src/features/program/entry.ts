@@ -102,6 +102,34 @@ async function getEnrollingOrActiveCohort() {
   });
 }
 
+/** Capacity-checked enroll or waitlist + Day-start bootstrap when enrolled. */
+async function enrollOrWaitlist(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  cohortId: string,
+): Promise<"ENROLLED" | "WAITLISTED"> {
+  const cohort = await tx.programCohort.findUnique({
+    where: { id: cohortId },
+    select: { capacity: true },
+  });
+  const enrolledCount = await tx.programMember.count({
+    where: { cohortId, status: "ENROLLED" },
+  });
+  const hasRoom = !!cohort && enrolledCount < cohort.capacity;
+
+  const memberAfter = await tx.programMember.update({
+    where: { userId_cohortId: { userId, cohortId } },
+    data: hasRoom
+      ? { status: "ENROLLED", enrolledAt: new Date() }
+      : { status: "WAITLISTED" },
+    select: { id: true },
+  });
+  if (hasRoom) {
+    await bootstrapMemberStartDay(tx, memberAfter.id);
+  }
+  return hasRoom ? "ENROLLED" : "WAITLISTED";
+}
+
 export async function getEntryState(userId: string): Promise<EntryState> {
   const cohort = await getEnrollingOrActiveCohort();
   if (!cohort) return { screen: "unavailable" };
@@ -140,6 +168,19 @@ export async function getEntryState(userId: string): Promise<EntryState> {
       return { screen: "closed", cohortName: cohort.name };
     }
     return { screen: "form", cohortName: cohort.name, existingProfile: null };
+  }
+
+  // Stuck APPLIED while assessment is skipped → enroll/waitlist immediately.
+  if (
+    member.status === "APPLIED" &&
+    isProgramEntryBypassEnabled()
+  ) {
+    const outcome = await prisma.$transaction((tx) =>
+      enrollOrWaitlist(tx, userId, cohort.id),
+    );
+    return outcome === "ENROLLED"
+      ? { screen: "enrolled" }
+      : { screen: "waitlisted" };
   }
 
   // member.status === "APPLIED"
@@ -220,10 +261,15 @@ export async function createApplication(
     githubRepoUrl: profile.githubRepoUrl,
   };
 
-  await prisma.programMember.upsert({
-    where: { userId_cohortId: { userId, cohortId: cohort.id } },
-    create: { userId, cohortId: cohort.id, status: "APPLIED", ...data },
-    update: { status: "APPLIED", ...data },
+  await prisma.$transaction(async (tx) => {
+    await tx.programMember.upsert({
+      where: { userId_cohortId: { userId, cohortId: cohort.id } },
+      create: { userId, cohortId: cohort.id, status: "APPLIED", ...data },
+      update: { status: "APPLIED", ...data },
+    });
+    if (isProgramEntryBypassEnabled()) {
+      await enrollOrWaitlist(tx, userId, cohort.id);
+    }
   });
 
   return { ok: true, cohortId: cohort.id };
@@ -461,28 +507,7 @@ export async function submitEntryAttempt(
       let retakeAtIso: string | null = null;
 
       if (passed) {
-        const cohort = await tx.programCohort.findUnique({
-          where: { id: attempt.cohortId },
-          select: { capacity: true },
-        });
-        const enrolledCount = await tx.programMember.count({
-          where: { cohortId: attempt.cohortId, status: "ENROLLED" },
-        });
-        const hasRoom = !!cohort && enrolledCount < cohort.capacity;
-
-        const memberAfter = await tx.programMember.update({
-          where: {
-            userId_cohortId: { userId, cohortId: attempt.cohortId },
-          },
-          data: hasRoom
-            ? { status: "ENROLLED", enrolledAt: new Date() }
-            : { status: "WAITLISTED" },
-          select: { id: true },
-        });
-        if (hasRoom) {
-          await bootstrapMemberStartDay(tx, memberAfter.id);
-        }
-        outcome = hasRoom ? "ENROLLED" : "WAITLISTED";
+        outcome = await enrollOrWaitlist(tx, userId, attempt.cohortId);
       } else if (attempt.attemptNumber < ENTRY_MAX_ATTEMPTS) {
         outcome = "RETAKE";
         retakeAtIso = new Date(

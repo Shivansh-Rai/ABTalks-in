@@ -14,7 +14,11 @@ export function isProgramEnabled(): boolean {
   return process.env.ENABLE_PROGRAM === "true";
 }
 
-/** Dev/staging only: treat entry assessment as pass regardless of score. */
+/**
+ * Skip entry quiz entirely (apply enrolls/waitlists directly).
+ * On by default; set SKIP_PRE_ASSESSMENT=false to require the assessment again.
+ * When the quiz is enabled, also treats submit as pass regardless of score.
+ */
 export function isProgramEntryBypassEnabled(): boolean {
-  return process.env.SKIP_PRE_ASSESSMENT === "true";
+  return process.env.SKIP_PRE_ASSESSMENT !== "false";
 }
