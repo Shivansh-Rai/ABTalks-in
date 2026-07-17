@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   DaySectionCard,
   dayMdClassName,
 } from "@/components/program/day-section-card";
-import { DayBuildStepImage } from "@/components/program/day-build-step-image";
 import { programMdComponents } from "@/components/program/markdown-code";
 import { cn } from "@/lib/utils";
 
@@ -32,23 +31,12 @@ function StepPointer() {
   );
 }
 
-export function DayBuildSteps({
-  dayNumber,
-  steps,
-}: {
-  dayNumber: number;
-  steps: string[];
-}) {
+export function DayBuildSteps({ steps }: { steps: string[] }) {
   const [active, setActive] = useState(0);
-  const [imagePresent, setImagePresent] = useState(false);
   const reduceMotion = useReducedMotion();
   const trackRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [pointerX, setPointerX] = useState<number | null>(null);
-
-  useEffect(() => {
-    setImagePresent(false);
-  }, [active]);
 
   const windowStart = useMemo(() => {
     if (steps.length <= MAX_VISIBLE_STEPS) return 0;
@@ -188,41 +176,19 @@ export function DayBuildSteps({
       </div>
 
       <div className="relative rounded-[16px] border border-[#8365E3] bg-[#110528] p-4 md:p-5">
-        <div
-          className={cn(
-            "grid gap-4 md:items-start",
-            imagePresent && "md:grid-cols-[minmax(140px,240px)_1fr]",
-          )}
+        <motion.div
+          key={`content-${active}`}
+          className={cn(dayMdClassName, "min-h-[80px]")}
+          initial={reduceMotion ? false : { opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={
+            reduceMotion ? { duration: 0 } : { duration: 0.28, ease: "easeOut" }
+          }
         >
-          <motion.div
-            key={`img-${active}`}
-            className={cn(!imagePresent && "contents")}
-            initial={reduceMotion ? false : { opacity: 0.6, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={
-              reduceMotion ? { duration: 0 } : { duration: 0.28, ease: "easeOut" }
-            }
-          >
-            <DayBuildStepImage
-              dayNumber={dayNumber}
-              stepNumber={active + 1}
-              onPresentChange={setImagePresent}
-            />
-          </motion.div>
-          <motion.div
-            key={`content-${active}`}
-            className={cn(dayMdClassName, "min-h-[80px]")}
-            initial={reduceMotion ? false : { opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={
-              reduceMotion ? { duration: 0 } : { duration: 0.28, ease: "easeOut" }
-            }
-          >
-            <ReactMarkdown components={programMdComponents}>
-              {steps[active] ?? ""}
-            </ReactMarkdown>
-          </motion.div>
-        </div>
+          <ReactMarkdown components={programMdComponents}>
+            {steps[active] ?? ""}
+          </ReactMarkdown>
+        </motion.div>
         <div className="mt-4 flex items-center justify-end gap-2 md:absolute md:right-5 md:bottom-4 md:mt-0">
           <button
             type="button"

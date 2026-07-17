@@ -142,7 +142,7 @@ export default async function ProgramDayPage({ params }: Props) {
       )}
 
       {brief.buildSteps.length > 0 && (
-        <DayBuildSteps dayNumber={dayNumber} steps={brief.buildSteps} />
+        <DayBuildSteps steps={brief.buildSteps} />
       )}
 
       {day.videos.length > 0 && (
