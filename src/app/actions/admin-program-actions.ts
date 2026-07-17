@@ -1,0 +1,178 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/admin-auth";
+import {
+  adminUnlockDay,
+  createOrUpdateCohort,
+  dropMember,
+  getAdminProgramCohort,
+  grantSkipToken,
+  promoteWaitlisted,
+  publishResults,
+  regenerateMemberRecommendation,
+  setCohortStatus,
+} from "@/features/program/admin";
+import {
+  adminMemberActionSchema,
+  adminMemberIdSchema,
+  adminUnlockDaySchema,
+  cohortFormSchema,
+  cohortIdSchema,
+  cohortStatusSchema,
+} from "@/lib/validations/program";
+
+type ActionResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
+export async function createOrUpdateCohortAction(
+  input: unknown,
+): Promise<ActionResult & { cohortId?: string }> {
+  const admin = await requireAdmin();
+  const parsed = cohortFormSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid cohort data." };
+
+  const result = await createOrUpdateCohort(admin.userId, {
+    cohortId: parsed.data.cohortId,
+    name: parsed.data.name,
+    startsAt: new Date(parsed.data.startsAt),
+    endsAt: new Date(parsed.data.endsAt),
+    capacity: parsed.data.capacity,
+  });
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program");
+  return { ok: true, cohortId: result.cohortId };
+}
+
+export async function setCohortStatusAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = cohortStatusSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid status." };
+
+  const result = await setCohortStatus(
+    admin.userId,
+    parsed.data.cohortId,
+    parsed.data.status,
+  );
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program");
+  return { ok: true };
+}
+
+export async function publishResultsAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = cohortIdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid cohort." };
+
+  const result = await publishResults(admin.userId, parsed.data.cohortId);
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program");
+  revalidatePath("/talent");
+  return { ok: true };
+}
+
+export async function promoteWaitlistedAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminMemberIdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid member." };
+
+  const result = await promoteWaitlisted(admin.userId, parsed.data.memberId);
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program/members");
+  revalidatePath(`/admin/program/members/${parsed.data.memberId}`);
+  return { ok: true };
+}
+
+export async function dropMemberAction(input: unknown): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminMemberActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input." };
+
+  const result = await dropMember(
+    admin.userId,
+    parsed.data.memberId,
+    parsed.data.reason,
+  );
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program");
+  revalidatePath("/admin/program/members");
+  revalidatePath(`/admin/program/members/${parsed.data.memberId}`);
+  revalidatePath("/program/leaderboard");
+  revalidatePath("/talent");
+  return { ok: true };
+}
+
+export async function adminUnlockDayAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminUnlockDaySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input." };
+
+  const result = await adminUnlockDay(
+    admin.userId,
+    parsed.data.memberId,
+    parsed.data.day,
+    parsed.data.reason,
+  );
+  if (!result.ok) return result;
+
+  revalidatePath(`/admin/program/members/${parsed.data.memberId}`);
+  return { ok: true };
+}
+
+export async function grantSkipTokenAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminMemberActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input." };
+
+  const result = await grantSkipToken(
+    admin.userId,
+    parsed.data.memberId,
+    parsed.data.reason,
+  );
+  if (!result.ok) return result;
+
+  revalidatePath(`/admin/program/members/${parsed.data.memberId}`);
+  return { ok: true };
+}
+
+export async function regenerateRecommendationAction(
+  input: unknown,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminMemberIdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid member." };
+
+  const result = await regenerateMemberRecommendation(
+    admin.userId,
+    parsed.data.memberId,
+  );
+  if (!result.ok) return result;
+
+  revalidatePath(`/admin/program/members/${parsed.data.memberId}`);
+  revalidatePath("/admin/program/projects");
+  return { ok: true };
+}
+
+export async function getAdminCohortIdAction(): Promise<
+  { ok: true; cohortId: string | null } | { ok: false; message: string }
+> {
+  await requireAdmin();
+  const cohort = await getAdminProgramCohort();
+  return { ok: true, cohortId: cohort?.id ?? null };
+}

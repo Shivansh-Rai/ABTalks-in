@@ -26,6 +26,7 @@ type IconName =
   | "ambassadors"
   | "referrals"
   | "redemptions"
+  | "program"
   | "cohort";
 
 const iconMap = {
@@ -38,6 +39,7 @@ const iconMap = {
   ambassadors: Megaphone,
   referrals: Gift,
   redemptions: Package,
+  program: GraduationCap,
   cohort: GraduationCap,
 } as const;
 

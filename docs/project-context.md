@@ -450,6 +450,19 @@ Each prompts a 5-second pause before deletion. Cascades handle related rows.
 3. Landing page before broader launch
 4. Soft launch to 5-10 trusted users
 
+### In planning: B2B AI Mastery Program (recruiter-oriented cohort)
+A separate 30-day, 4-module program for working professionals (max 100/batch, free),
+with a timed entry assessment (MCQ), then hands-on **Daily Missions** verified like CI
+in an in-browser Workbench (5 mission types: CODE_SPRINT, SHIP_IT, DATA_ROOM,
+PROMPT_FORGE, BOSS_BUILD; iterate-until-green gating + 2 skip tokens), GitHub commit
+tracking, AI-graded module projects + AI Mentor reviews, AI recommendations, an exit
+real-time voice AI interview, and a post-cohort recruiter portal (`/talent`, recruiter
+login + admin approval) featuring each member's mission portfolio. Fully specified in
+`docs/plans/023-b2b-program-00-roadmap.md` (v2) with sequential implementation plans
+`024`–`032`. Key upcoming env vars: `ENABLE_PROGRAM`, `GITHUB_API_TOKEN`,
+`CRON_SECRET`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Update the architecture sections
+of this doc as each phase actually ships (each plan says when).
+
 ---
 
 ## 19. How to use this document in new chats

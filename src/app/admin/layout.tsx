@@ -18,6 +18,7 @@ export default async function AdminLayout({
     { href: "/admin/jobs", label: "Jobs", icon: "jobs" as const },
     { href: "/admin/content", label: "Content", icon: "content" as const },
     { href: "/admin/analytics", label: "Analytics", icon: "analytics" as const },
+    { href: "/admin/program", label: "Program", icon: "program" as const },
     {
       href: "/admin/campus-ambassadors",
       label: "Campus Ambassadors",

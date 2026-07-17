@@ -1,0 +1,383 @@
+[
+  {
+    "dayNumber": 1,
+    "videos": [
+      {
+        "order": 1,
+        "title": "How to Setup Python in Visual Studio Code (2026)",
+        "youtubeId": "aNXko7KZF34",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Setting up VS Code for Python Beginners — official",
+        "youtubeId": "7FltByLPnrg",
+        "durationMin": null
+      },
+      {
+        "order": 3,
+        "title": "Setup Python in VS Code on Windows 10/11",
+        "youtubeId": "TFF8B8AXkZY",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 2,
+    "videos": [
+      {
+        "order": 1,
+        "title": "How to Install Ollama and Run Models Locally",
+        "youtubeId": "tVTwZRhxw9w",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Ollama Beginner Setup: Install, Run Models, Test the API",
+        "youtubeId": "zs_TFMph-t8",
+        "durationMin": null
+      },
+      {
+        "order": 3,
+        "title": "GitHub Copilot with Ollama: Local AI Models in VS Code",
+        "youtubeId": "SYmOVP9Z-NU",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 3,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Using Git with Visual Studio Code — official tutorial",
+        "youtubeId": "i_23KUAEtUM",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Ollama-Powered AI Chatbot with Python",
+        "youtubeId": "rvkSSQn4p4Y",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 4,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Pandas & Python for Data Analysis — freeCodeCamp",
+        "youtubeId": "gtjxAH8uaP0",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "SQL Tutorial — Full Database Course for Beginners",
+        "youtubeId": "HXV3zeQKqGY",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 5,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Web Scraping with Python — Beautiful Soup Crash Course",
+        "youtubeId": "XVv6mJpFOb0",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Extract Text from Scanned PDFs using OCR (Tesseract)",
+        "youtubeId": "k0Fs16vBv1s",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 6,
+    "videos": [
+      {
+        "order": 1,
+        "title": "RAG Tutorial: Text Chunking Strategies",
+        "youtubeId": "POE8LDjdAw4",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 7,
+    "videos": [
+      {
+        "order": 1,
+        "title": "OpenAI Embeddings Explained in 5 Minutes",
+        "youtubeId": "8kJStTRuMcs",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Diving into Text Embedding Models — Zilliz",
+        "youtubeId": "Hh0pIY_ex3c",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 8,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Vector Databases: ChromaDB, Pinecone & Weaviate",
+        "youtubeId": "8KrTO9bS91s",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 9,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Pinecone #1 — Getting Started (official)",
+        "youtubeId": "AGKY_Q3GjRc",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 10,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Semantic search and reranking with Cohere and Pinecone",
+        "youtubeId": "e7x1wJlmDjs",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Chat with SQL and Vector DBs using LLM agents",
+        "youtubeId": "xsCedrNP9w8",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 11,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Complete RAG Crash Course with LangChain",
+        "youtubeId": "o126p1QN_RI",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Connect to OpenAI-compatible APIs in 6 Minutes",
+        "youtubeId": "yKxDKc4Jn8c",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 12,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Master AI Prompting: Zero-Shot, Few-Shot & CoT",
+        "youtubeId": "sZIV7em3JA8",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 13,
+    "videos": [
+      {
+        "order": 1,
+        "title": "OpenAI Function Calling — Full Beginner Tutorial",
+        "youtubeId": "aqdWSYWC_LI",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Structured Outputs with LLMs & Pydantic",
+        "youtubeId": "Rpg9TQtqqhE",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 14,
+    "videos": [
+      {
+        "order": 1,
+        "title": "RAG vs Fine-Tuning — IBM Technology",
+        "youtubeId": "00Q0G84kq3M",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 15,
+    "videos": [
+      {
+        "order": 1,
+        "title": "LoRA & QLoRA Explained Simply — Full vs PEFT",
+        "youtubeId": "cO6Ly7mIziQ",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 16,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Build an API with Python: LLM + FastAPI + Ollama",
+        "youtubeId": "cy6EAp4iNN4",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 17,
+    "videos": [
+      {
+        "order": 1,
+        "title": "ChatGPT-style Chatbot with Streamlit — Step-by-Step",
+        "youtubeId": "jYY24eNTYNg",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 18,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Build a Streaming LLM API with FastAPI",
+        "youtubeId": "twXxb00w1_4",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 19,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Structured Outputs & Output Formatting with Pydantic",
+        "youtubeId": "Rpg9TQtqqhE",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 21,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Build a ReAct AI Agent from Scratch with LangGraph",
+        "youtubeId": "ZxOkyYz95s4",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 22,
+    "videos": [
+      {
+        "order": 1,
+        "title": "CrewAI Tutorial: Complete Crash Course",
+        "youtubeId": "sPzc6hMg7So",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "CrewAI vs LangGraph vs AutoGen",
+        "youtubeId": "EGz7SN-vPKU",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 23,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Anthropic Model Context Protocol (MCP) Setup Tutorial",
+        "youtubeId": "KiNyvT02HJM",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 25,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Guardrails for LLM Applications — Guardrails AI",
+        "youtubeId": "7V1w5gnZ-kw",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 27,
+    "videos": [
+      {
+        "order": 1,
+        "title": "RAGAS: Evaluate a RAG Application Like a Pro",
+        "youtubeId": "5fp6e5nhJRk",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 28,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Build and Containerize a FastAPI App with Docker",
+        "youtubeId": "4AVJNWX-KwY",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Dockerize a FastAPI app",
+        "youtubeId": "ED6PRjmXgBA",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 29,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Deploy with Docker and Kubernetes — Beginners",
+        "youtubeId": "ASlu3NG7J5k",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Minikube Basics: Getting Started with Kubernetes",
+        "youtubeId": "FacPam4bwRk",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 30,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Langfuse Explained: LLM Observability",
+        "youtubeId": "IIyL4gO-FE0",
+        "durationMin": null
+      }
+    ]
+  }
+]

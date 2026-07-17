@@ -81,19 +81,22 @@ export function LoginClient({
         email,
         password,
         redirect: false,
+        // Relative path only — Auth.js may rewrite absolute URLs using AUTH_URL
+        // (often localhost), which breaks login when the app is opened via a LAN IP.
         callbackUrl: target,
-        redirectTo: target,
       });
       if (result?.error) {
-        toast.error("Invalid email or password.");
+        toast.error(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password."
+            : `Sign-in failed (${result.error}). If you're on a phone/LAN URL, unset AUTH_URL or set it to this host.`,
+        );
         setPending(false);
         return;
       }
-      if (result?.url) {
-        window.location.href = result.url;
-        return;
-      }
-      window.location.href = target;
+      // Always stay on the origin the user opened (LAN IP vs localhost).
+      // Do not follow result.url — it often points at AUTH_URL's host.
+      window.location.assign(target);
     } catch {
       toast.error("Something went wrong. Try again.");
       setPending(false);
@@ -151,7 +154,12 @@ export function LoginClient({
       ) : null}
 
       {showDev ? (
-        <form onSubmit={handleCredentialsSignIn} className="flex flex-col gap-4">
+        <form
+          method="post"
+          action="#"
+          onSubmit={handleCredentialsSignIn}
+          className="flex flex-col gap-4"
+        >
           {referralRef ? (
             <input type="hidden" name="ref" value={referralRef} readOnly />
           ) : null}

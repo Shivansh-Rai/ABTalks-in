@@ -244,6 +244,10 @@ model User {
   redemptions                        Redemption[]
   remarksReceived                    AdminRemark[]   @relation("RemarkStudent")
   remarksAuthored                    AdminRemark[]   @relation("RemarkAdmin")
+  programMembers                     ProgramMember[]
+  programEntryAttempts               ProgramEntryAttempt[]
+  recruiterProfile                   RecruiterProfile?
+  shortlistItems                     RecruiterShortlistItem[]
 
   @@index([createdAt(sort: Desc)])
 }
@@ -440,9 +444,333 @@ enum EnrollmentStatus {
 enum Role {
   STUDENT
   ADMIN
+  RECRUITER
 }
 
 enum SubmissionStatus {
   ON_TIME
   LATE
+}
+
+enum ProgramCohortStatus {
+  DRAFT
+  ENROLLING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProgramMemberStatus {
+  APPLIED
+  WAITLISTED
+  ENROLLED
+  COMPLETED
+  DROPPED
+}
+
+enum ProgramLanguage {
+  PYTHON
+  SQL
+  JAVASCRIPT
+  YAML
+}
+
+enum ProgramEntrySection {
+  APTITUDE
+  TECHNICAL
+}
+
+enum ProgramInterviewStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ProgramProjectStatus {
+  SUBMITTED
+  GRADED
+}
+
+enum ProgramMissionType {
+  CODE_SPRINT
+  SHIP_IT
+  DATA_ROOM
+  PROMPT_FORGE
+  BOSS_BUILD
+}
+
+enum ProgramDayState {
+  LOCKED
+  AVAILABLE
+  PASSED
+  SKIPPED
+}
+
+model ProgramCohort {
+  id                 String              @id @default(cuid())
+  name               String
+  startsAt           DateTime            // IST Day-1 anchor
+  endsAt             DateTime            // hard end — scores freeze after this
+  capacity           Int                 @default(100)
+  status             ProgramCohortStatus @default(DRAFT)
+  resultsPublishedAt DateTime?
+  createdAt          DateTime            @default(now())
+  members            ProgramMember[]
+  entryAttempts      ProgramEntryAttempt[]
+}
+
+model ProgramMember {
+  id                 String              @id @default(cuid())
+  userId             String
+  cohortId           String
+  status             ProgramMemberStatus @default(APPLIED)
+  // professional profile (deliberately NOT StudentProfile)
+  fullName           String
+  jobRole            String
+  company            String
+  yearsExperience    Int
+  education          String?
+  university         String?
+  graduationYear     Int?
+  skills             String[]            @default([])
+  linkedinUrl        String?
+  resumeUrl          String?
+  phone              String?             // admin-only, NEVER shown to recruiters
+  githubUsername     String
+  githubRepoUrl      String              // dedicated public repo for the program
+  // progression + denormalized scores
+  highestUnlockedDay Int                 @default(1)
+  skipTokensUsed     Int                 @default(0)   // max 2 per member
+  missionPoints      Int                 @default(0)
+  conceptPoints      Int                 @default(0)
+  commitPoints       Int                 @default(0)
+  projectPoints      Int                 @default(0)
+  totalScore         Int                 @default(0)
+  cleanPassCount     Int                 @default(0)   // missions passed on 1st verification run
+  aiRecommendation   String?
+  aiRecommendationAt DateTime?
+  enrolledAt         DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort             ProgramCohort       @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  missionSubmissions  ProgramMissionSubmission[]
+  conceptAttempts     ProgramConceptAttempt[]
+  commitDays          ProgramCommitDay[]
+  exerciseCompletions ProgramExerciseCompletion[]
+  projects            ProgramProject[]
+  interview           ProgramInterview?
+  shortlistedBy       RecruiterShortlistItem[]
+
+  @@unique([userId, cohortId])
+  @@index([cohortId, totalScore(sort: Desc)])
+  @@index([cohortId, status])
+}
+
+model ProgramModule {
+  id        String       @id @default(cuid())
+  number    Int          @unique   // 1..4
+  title     String
+  subtitle  String
+  color     String
+  startDay  Int
+  endDay    Int
+  days      ProgramDay[]
+}
+
+model ProgramDay {
+  id            String             @id @default(cuid())
+  moduleId      String
+  dayNumber     Int                @unique   // 1..30
+  title         String
+  missionType   ProgramMissionType
+  briefMd       String             // the mission briefing: realistic enterprise scenario, markdown
+  assetsJson    Json?              // client-safe assets: datasets (CSV text), API specs, starter files
+  missionSpec   Json               // SERVER-ONLY verification spec (see §6b) — never serialized to client
+  starterCode   String?
+  language      ProgramLanguage?   // for CODE_SPRINT / DATA_ROOM workbench default
+  objectives    String[]           @default([])
+  tools         String[]           @default([])
+  estimatedMin  Int                @default(60)
+  missionPoints Int                @default(12)
+  isProjectDay  Boolean            @default(false)  // days 7, 14, 21, 30 (BOSS_BUILD)
+  module        ProgramModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  conceptQuestions ProgramConceptQuestion[]
+  videos           ProgramVideo[]
+}
+
+model ProgramConceptQuestion {
+  id           String     @id @default(cuid())
+  dayId        String
+  order        Int
+  question     String
+  options      String[]              // exactly 4
+  correctIndex Int
+  explanation  String
+  day          ProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  @@unique([dayId, order])
+}
+
+model ProgramMissionSubmission {
+  id            String        @id @default(cuid())
+  memberId      String
+  dayNumber     Int
+  attemptNumber Int
+  payload       Json          // type-specific: {code} | {repoRef} | {answers} | {prompt} | {checkOutputs}
+  verdict       Json          // per-check results: [{check, passed, detail}]
+  passed        Boolean       @default(false)
+  pointsAwarded Int           @default(0)
+  aiFeedback    String?       // AI Mentor review (029), post-pass
+  createdAt     DateTime      @default(now())
+  member        ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@unique([memberId, dayNumber, attemptNumber])
+  @@index([memberId, dayNumber])
+}
+
+model ProgramConceptAttempt {
+  id          String        @id @default(cuid())
+  memberId    String
+  dayNumber   Int
+  questionIds Json          // string[] — 3 sampled ids
+  answers     Json?
+  score       Int           @default(0)   // 0..3
+  createdAt   DateTime      @default(now())
+  member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@unique([memberId, dayNumber])          // ONE attempt — it's a warm-up, not a gate
+}
+
+model ProgramEntryQuestion {
+  id           String              @id @default(cuid())
+  section      ProgramEntrySection
+  question     String
+  options      String[]
+  correctIndex Int
+  explanation  String
+  active       Boolean             @default(true)
+  @@index([section, active])
+}
+
+model ProgramEntryAttempt {
+  id             String        @id @default(cuid())
+  userId         String
+  cohortId       String
+  attemptNumber  Int
+  questionIds    Json
+  answers        Json?
+  aptitudeScore  Int           @default(0)
+  technicalScore Int           @default(0)
+  passed         Boolean       @default(false)
+  startedAt      DateTime      @default(now())
+  submittedAt    DateTime?
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort         ProgramCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  @@unique([userId, cohortId, attemptNumber])
+  @@index([userId, cohortId])
+}
+
+model ProgramVideo {
+  id          String     @id @default(cuid())
+  dayId       String
+  order       Int
+  title       String
+  youtubeId   String
+  durationMin Int?
+  day         ProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  @@unique([dayId, order])
+}
+
+model ProgramExercise {              // Practice Arena — UNSCORED
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  title          String
+  language       ProgramLanguage
+  moduleNumber   Int
+  order          Int
+  description    String
+  starterCode    String
+  setupSql       String?
+  expectedOutput String?
+  completions    ProgramExerciseCompletion[]
+  @@index([moduleNumber, order])
+}
+
+model ProgramExerciseCompletion {
+  id          String          @id @default(cuid())
+  memberId    String
+  exerciseId  String
+  code        String
+  completedAt DateTime        @default(now())
+  member      ProgramMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  exercise    ProgramExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  @@unique([memberId, exerciseId])
+}
+
+model ProgramCommitDay {
+  id          String        @id @default(cuid())
+  memberId    String
+  date        DateTime      @db.Date
+  commitCount Int           @default(0)
+  member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@unique([memberId, date])
+}
+
+model ProgramProject {
+  id           String               @id @default(cuid())
+  memberId     String
+  moduleNumber Int
+  repoUrl      String
+  writeup      String
+  status       ProgramProjectStatus @default(SUBMITTED)
+  aiScore      Int?
+  aiFeedback   String?
+  aiRubricJson Json?
+  adminScore   Int?
+  submittedAt  DateTime             @default(now())
+  gradedAt     DateTime?
+  member       ProgramMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@unique([memberId, moduleNumber])
+}
+
+model ProgramInterview {
+  id           String                 @id @default(cuid())
+  memberId     String                 @unique
+  status       ProgramInterviewStatus @default(NOT_STARTED)
+  startedAt    DateTime?
+  endedAt      DateTime?
+  durationSec  Int?
+  transcript   Json?
+  commScore    Int?
+  techScore    Int?
+  problemScore Int?
+  overallScore Int?                   // NOT part of totalScore
+  summary      String?
+  evaluatedAt  DateTime?
+  resetCount   Int                    @default(0)
+  member       ProgramMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model RecruiterProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  fullName          String
+  company           String
+  phone             String?
+  approved          Boolean   @default(false)
+  approvedAt        DateTime?
+  approvedByAdminId String?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RecruiterShortlistItem {
+  id              String        @id @default(cuid())
+  recruiterUserId String
+  memberId        String
+  note            String?
+  createdAt       DateTime      @default(now())
+  recruiter       User          @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
+  member          ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@unique([recruiterUserId, memberId])
 }

@@ -1,6 +1,34 @@
 ## Pending reconcile
 
+- 2026-07-17 [rule] SHIP_IT missions may include missionSpec.answers; Day 3 requires both task answers and repo checks to pass
+- 2026-07-17 [convention] Program Day 3 full-aligned to curriculum sheet: coverage-chatbot-api SHIP_IT paths; verbatim 11 build steps
+- 2026-07-17 [convention] Program Day 2 build steps restored to full verbatim curriculum-sheet wording (no summarization)
+- 2026-07-17 [convention] Program Day 2 brief aligned to 11-step Ollama + Copilot/Cline curriculum sheet
+- 2026-07-17 [convention] Program Day 1 brief aligned to curriculum sheet (run hello.py step; concepts + stack in mission body)
+- 2026-07-17 [convention] Program Day 4 unlocked: full pandas/SQLite coverage ingestion brief + real SHIP_IT checks for coverage.db and structured_queries.md
+- 2026-07-17 [convention] Program day page uses Figma dark shell + briefMd section parser; no schema change
 - 2026-07-16 [schema] AdminRemark model for admin-only student remark history on student detail
+- 2026-07-16 [convention] `allowedDevOrigins` auto-includes LAN IPv4s so Next 16 serves `/_next` JS on Network URL (fixes dead login form when opened via 192.168.x.x).
+- 2026-07-16 [convention] Dev credentials login always navigates same-origin (ignores AUTH_URL host in result.url) so LAN/phone testing works; local AUTH_URL optional when trustHost is on.
+- 2026-07-16 [convention] `npm run db:seed:program:users` seeds AI Cohort test logins (`prog.*@abtalks.dev` / `test`) plus test cohort/members/recruiters for local program QA.
+- 2026-07-15 [convention] AI Cohort migration: PROGRAM_TOTAL_DAYS=31 / max score 1020; BOSS_BUILD ProgramProject.moduleNumber from missionSpec.checkpointNumber; dropped in-browser lab/arena/Workbench runners (git-artifact verification only); display name AI Cohort; apply requires 8GB RAM attestation (not persisted).
+- 2026-07-11 [env] BYPASS_DAY_LOCKS=true bypasses program day lock gating server-side (view, submit, concept check); PASSED/SKIPPED unchanged; mirrors existing challenge bypass.
+- 2026-07-11 [convention] Project Lab: JupyterLite static build at public/lab (client-side WASM notebooks), Colab/Codespaces launchers, git-native notebookParses/notebookMinCells SHIP_IT checks, notebook-aware Boss Build grading (≤150 KB × 2, outputs stripped); workbenchMode: notebook content convention.
+- 2026-07-09 [env] SKIP_PRE_ASSESSMENT=true bypasses program entry pass thresholds server-side (scores still stored; ENROLLED/WAITLISTED capacity rules unchanged).
+- 2026-07-09 [rule] Program admin hub at /admin/program: single non-ARCHIVED cohort lifecycle, publish results (PROGRAM_PUBLISH_RESULTS), member ops (promote/drop/unlock/skip-token/recommendation regen) with AdminAction audit, cohort analytics, CSV exports.
+- 2026-07-09 [rule] Recruiter talent portal at /talent: Google sign-in + company profile, admin approval (PROGRAM_APPROVE_RECRUITER), pool gated on cohort.resultsPublishedAt; ranked profiles with mission portfolio, projects, interview summary, private shortlists; member phone/entry details never exposed.
+- 2026-07-09 [rule] Program exit voice interview: one 15-min OpenAI Realtime WebRTC session per member (eligible at Day 30 concept check or cohort end); server-minted ephemeral secret; transcript stored then Claude-evaluated (comm/tech/problem/overall + summary); scores separate from totalScore; max 2 member restarts; admin reset/re-evaluate.
+- 2026-07-09 [env] OPENAI_API_KEY (server-only) for Realtime client_secrets session minting at POST /api/program/interview/session.
+- 2026-07-09 [rule] Program AI layer: admin-triggered Claude project grading (rubrics.json, GitHub context, admin override → AdminAction); member-triggered AI Mentor review (one per passed mission/day); batch member recommendations (7-day TTL); projectPoints recomputed idempotently via recomputeMemberScore.
+- 2026-07-09 [rule] Program commit tracking: daily Vercel cron polls GitHub commits per member repo (IST yesterday window); idempotent commitPoints = 5 × qualifying ProgramCommitDay rows (cap 150); at-risk = behind >2 days, stuck mission >2 IST days, or 0 commits in last 5 days.
+- 2026-07-09 [env] GITHUB_API_TOKEN (server-only GitHub REST for SHIP_IT + commit cron) and CRON_SECRET (Bearer auth on /api/cron/program-commits).
+- 2026-07-08 [rule] Daily Mission engine: 5 server-verified types (CODE_SPRINT hidden outputs, SHIP_IT GitHub repoChecks, DATA_ROOM answers, PROMPT_FORGE Anthropic evalCases, BOSS_BUILD project submit); unlimited runs with 15s spacing/30/day cap; pass unlocks next day (+12 mission pts, cleanPassCount on attempt #1); 2 skip tokens after ≥3 fails; concept check 3 MCQs/day +1 pt each single attempt no gate.
+- 2026-07-08 [convention] Program Workbench runs code fully client-side: Python (Pyodide) + SQL (sql.js) lazy-loaded from CDN on first Run, JS in a 5s-terminate blob Worker, YAML via js-yaml; styled textarea only (no Monaco/CodeMirror).
+- 2026-07-08 [env] ANTHROPIC_API_KEY (+ optional PROGRAM_ANTHROPIC_MODEL, default claude-sonnet-5) for server-only Claude JSON grading via src/lib/anthropic.ts (used from plan 027).
+- 2026-07-08 [rule] Program entry assessment: 20 MCQs (10 aptitude + 10 technical), server-timed 25 min, pass = >=12/20 and technical >=5/10, max 2 attempts 24h apart, capacity-checked ENROLLED else WAITLISTED (all enforced server-side in submitEntryAttempt transaction).
+- 2026-07-08 [schema] Added B2B AI Mastery Program models (Program* + RecruiterProfile/RecruiterShortlistItem) and Role.RECRUITER for the recruiter talent pipeline.
+- 2026-07-08 [env] ENABLE_PROGRAM feature flag gates all /program and /talent routes (notFound when unset).
+- 2026-07-08 [convention] Program auth via node-only src/lib/program-auth.ts (requireProgramMember/requireRecruiter, DB-checked); missionSpec is server-only, assetsJson is the only client-safe day asset.
 - 2026-07-04 [convention] AI Cohort Training Program public routes renamed from `/ai-talent-hunt` to `/ai-cohort-register` (+ `/apply` subroute).
 - 2026-07-04 [rule] AI Talent Hunt applications at `/ai-talent-hunt` stored in workshop Supabase `cohort_applications` (not Neon); confirmation email deferred. Dashboard read paths must not write; streaks/daysCompleted stay write-time-only (submitDay). Immutable content (daily tasks, Challenge.startsAt) cached via unstable_cache tags daily-tasks:<challengeId> / challenge:CLAUDE, busted on reseed/redeploy.
 - 2026-06-28 [rule] Marketplace item costSP raised from 250 to 1800 SP for all catalog products in marketplace.json.

@@ -1,0 +1,43 @@
+[
+  {
+    "slug": "placeholder-python-hello",
+    "title": "PLACEHOLDER — Python hello",
+    "language": "PYTHON",
+    "moduleNumber": 1,
+    "order": 1,
+    "description": "Print a greeting to stdout.",
+    "starterCode": "print(\"Hello, Arena\")\n",
+    "expectedOutput": "Hello, Arena"
+  },
+  {
+    "slug": "placeholder-sql-count",
+    "title": "PLACEHOLDER — SQL row count",
+    "language": "SQL",
+    "moduleNumber": 1,
+    "order": 2,
+    "description": "Count rows in the users table.",
+    "starterCode": "SELECT COUNT(*) AS cnt FROM users;",
+    "setupSql": "CREATE TABLE users (id INTEGER, name TEXT);\nINSERT INTO users VALUES (1,'a'),(2,'b'),(3,'c');",
+    "expectedOutput": "+-----+\n| cnt |\n+-----+\n| 3   |\n+-----+"
+  },
+  {
+    "slug": "placeholder-js-double",
+    "title": "PLACEHOLDER — JS double",
+    "language": "JAVASCRIPT",
+    "moduleNumber": 1,
+    "order": 3,
+    "description": "Log the doubled values.",
+    "starterCode": "console.log([1,2,3].map(n => n * 2));",
+    "expectedOutput": "[2,4,6]"
+  },
+  {
+    "slug": "placeholder-yaml-parse",
+    "title": "PLACEHOLDER — YAML key",
+    "language": "YAML",
+    "moduleNumber": 1,
+    "order": 4,
+    "description": "Parse a one-key YAML document.",
+    "starterCode": "service: api\n",
+    "expectedOutput": "{\n  \"service\": \"api\"\n}"
+  }
+]

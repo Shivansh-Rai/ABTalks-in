@@ -16,6 +16,15 @@ const protectedPaths = [
   "/admin",
   "/jobs",
   "/mission",
+  "/program/apply",
+  "/program/assessment",
+  "/program/dashboard",
+  "/program/day",
+  "/program/curriculum",
+  "/program/videos",
+  "/program/leaderboard",
+  "/program/interview",
+  "/talent",
 ];
 
 function applyRefCookie(response: NextResponse, ref: string | null) {

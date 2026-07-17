@@ -1,0 +1,522 @@
+[
+  {
+    "section": "APTITUDE",
+    "question": "A laptop's price drops from ₹50,000 to ₹42,500. What is the percentage decrease?",
+    "options": [
+      "12%",
+      "15%",
+      "17.5%",
+      "20%"
+    ],
+    "correctIndex": 1,
+    "explanation": "Decrease 7,500/50,000 = 15%.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "If a train covers 60 km in 45 minutes, its average speed is…",
+    "options": [
+      "70 km/h",
+      "75 km/h",
+      "80 km/h",
+      "90 km/h"
+    ],
+    "correctIndex": 2,
+    "explanation": "45 min = 0.75 h; 60/0.75 = 80 km/h.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Find the next number: 2, 6, 12, 20, 30, …",
+    "options": [
+      "36",
+      "40",
+      "42",
+      "44"
+    ],
+    "correctIndex": 2,
+    "explanation": "Differences are 4,6,8,10 → next difference 12 → 42.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "The average of five numbers is 24. Four of them are 20, 22, 26 and 28. The fifth is…",
+    "options": [
+      "22",
+      "24",
+      "26",
+      "28"
+    ],
+    "correctIndex": 1,
+    "explanation": "Sum = 120; 120 − 96 = 24.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "A is twice as old as B. In 10 years, A will be 1.5 times B's age. B's age now is…",
+    "options": [
+      "10",
+      "15",
+      "20",
+      "25"
+    ],
+    "correctIndex": 0,
+    "explanation": "2b+10 = 1.5(b+10) → 0.5b = 5 → b = 10.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "A shopkeeper buys at ₹800 and sells at ₹1,000. Profit percent is…",
+    "options": [
+      "20%",
+      "25%",
+      "30%",
+      "15%"
+    ],
+    "correctIndex": 1,
+    "explanation": "Profit 200 on cost 800 = 25%.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "If 6 workers finish a job in 12 days, 8 workers (same rate) finish it in…",
+    "options": [
+      "8 days",
+      "9 days",
+      "10 days",
+      "11 days"
+    ],
+    "correctIndex": 1,
+    "explanation": "Work = 72 worker-days; 72/8 = 9.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Ratio of boys to girls is 3:2 in a class of 40. How many girls?",
+    "options": [
+      "12",
+      "16",
+      "20",
+      "24"
+    ],
+    "correctIndex": 1,
+    "explanation": "2/5 of 40 = 16.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "A bag has 3 red and 2 blue balls. Probability of drawing a red ball is…",
+    "options": [
+      "2/5",
+      "1/2",
+      "3/5",
+      "3/2"
+    ],
+    "correctIndex": 2,
+    "explanation": "3 red of 5 total = 3/5.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Ravi walks 3 km north, then 4 km east. Straight-line distance from start is…",
+    "options": [
+      "5 km",
+      "6 km",
+      "7 km",
+      "3.5 km"
+    ],
+    "correctIndex": 0,
+    "explanation": "3-4-5 right triangle → 5 km.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "If CAT is coded as DBU, then DOG is coded as…",
+    "options": [
+      "EPH",
+      "EPI",
+      "FPH",
+      "DPH"
+    ],
+    "correctIndex": 0,
+    "explanation": "Each letter shifts +1: D→E, O→P, G→H.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Which is the odd one out: 3, 5, 7, 9, 11?",
+    "options": [
+      "3",
+      "7",
+      "9",
+      "11"
+    ],
+    "correctIndex": 2,
+    "explanation": "9 is not prime; the rest are.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Simple interest on ₹10,000 at 8% per year for 6 months is…",
+    "options": [
+      "₹400",
+      "₹480",
+      "₹800",
+      "₹4,800"
+    ],
+    "correctIndex": 0,
+    "explanation": "10,000 × 0.08 × 0.5 = 400.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "All engineers are readers. Some readers are writers. Which must be true?",
+    "options": [
+      "All engineers are writers",
+      "Some engineers may be writers",
+      "No engineer is a writer",
+      "All writers are engineers"
+    ],
+    "correctIndex": 1,
+    "explanation": "Only a possibility follows — 'may be' is the valid conclusion.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "A clock shows 3:00. The angle between the hands is…",
+    "options": [
+      "60°",
+      "75°",
+      "90°",
+      "120°"
+    ],
+    "correctIndex": 2,
+    "explanation": "At 3:00 the hands are exactly a quarter-circle apart: 90°.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Complete the series: A, C, F, J, O, …",
+    "options": [
+      "S",
+      "T",
+      "U",
+      "V"
+    ],
+    "correctIndex": 2,
+    "explanation": "Gaps grow by one: +2,+3,+4,+5,+6 → O+6 = U.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "20% of a number is 45. The number is…",
+    "options": [
+      "90",
+      "180",
+      "225",
+      "250"
+    ],
+    "correctIndex": 2,
+    "explanation": "45/0.20 = 225.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "If yesterday was Saturday, what day will it be 100 days from today?",
+    "options": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Sunday"
+    ],
+    "correctIndex": 1,
+    "explanation": "Today is Sunday; 100 mod 7 = 2 → Tuesday.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "Two numbers add to 30 and differ by 6. The larger is…",
+    "options": [
+      "16",
+      "17",
+      "18",
+      "20"
+    ],
+    "correctIndex": 2,
+    "explanation": "(30+6)/2 = 18.",
+    "active": true
+  },
+  {
+    "section": "APTITUDE",
+    "question": "A tank fills in 4 h by pipe A and 6 h by pipe B. Together they fill it in…",
+    "options": [
+      "2.4 h",
+      "3 h",
+      "5 h",
+      "2 h"
+    ],
+    "correctIndex": 0,
+    "explanation": "Rate 1/4+1/6 = 5/12 per hour → 12/5 = 2.4 h.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What does this print?\n\nx = 5\ny = x\nx = 10\nprint(y)",
+    "options": [
+      "5",
+      "10",
+      "15",
+      "Error"
+    ],
+    "correctIndex": 0,
+    "explanation": "y copied x's value (5) before x was reassigned — numbers don't stay linked.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "How many times does this loop print?\n\nfor i in range(3):\n    print(i)",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "Infinite"
+    ],
+    "correctIndex": 1,
+    "explanation": "range(3) yields 0, 1, 2 — three iterations.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What is the value of 17 % 5?",
+    "options": [
+      "3",
+      "2",
+      "3.4",
+      "12"
+    ],
+    "correctIndex": 1,
+    "explanation": "% is remainder: 17 = 3×5 + 2.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "In Python, 'hello'[1] is…",
+    "options": [
+      "h",
+      "e",
+      "l",
+      "hello1"
+    ],
+    "correctIndex": 1,
+    "explanation": "Indexing starts at 0, so index 1 is 'e'.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "len([10, 20, 30, 40]) returns…",
+    "options": [
+      "3",
+      "4",
+      "40",
+      "100"
+    ],
+    "correctIndex": 1,
+    "explanation": "The list has four elements.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What does this print?\n\nif 10 > 3:\n    print(\"A\")\nelse:\n    print(\"B\")",
+    "options": [
+      "A",
+      "B",
+      "AB",
+      "Nothing"
+    ],
+    "correctIndex": 0,
+    "explanation": "10 > 3 is True, so the if-branch runs.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "person = {\"name\": \"Asha\", \"age\": 21}. How do you get \"Asha\"?",
+    "options": [
+      "person[0]",
+      "person.name()",
+      "person[\"name\"]",
+      "person->name"
+    ],
+    "correctIndex": 2,
+    "explanation": "Dictionary values are accessed by key: person[\"name\"].",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "Which numbers does this print?\n\nn = 0\nwhile n < 3:\n    n = n + 1\n    print(n)",
+    "options": [
+      "0 1 2",
+      "1 2 3",
+      "0 1 2 3",
+      "It never stops"
+    ],
+    "correctIndex": 1,
+    "explanation": "n increments before printing: 1, 2, 3 — then the condition fails.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "A function ends with `return a + b`. What does that mean?",
+    "options": [
+      "It prints a + b to the screen",
+      "It sends the value a + b back to whoever called the function",
+      "It saves a + b to a file",
+      "It deletes a and b"
+    ],
+    "correctIndex": 1,
+    "explanation": "return hands a value back to the caller; printing is a separate thing.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What is the result of `True and False`?",
+    "options": [
+      "True",
+      "False",
+      "1",
+      "Error"
+    ],
+    "correctIndex": 1,
+    "explanation": "and requires both sides to be True.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "Which SQL query returns only plans cheaper than ₹400 per month?",
+    "options": [
+      "SELECT * FROM plans WHERE monthly_premium < 400",
+      "GET plans IF premium < 400",
+      "SELECT plans HAVING premium 400",
+      "FILTER plans BY 400"
+    ],
+    "correctIndex": 0,
+    "explanation": "SELECT … FROM … WHERE is the standard filter syntax.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What does SELECT COUNT(*) FROM claims; return?",
+    "options": [
+      "Every claim row",
+      "The number of rows in the claims table",
+      "The largest claim",
+      "The table schema"
+    ],
+    "correctIndex": 1,
+    "explanation": "COUNT(*) aggregates to a single number of rows.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "In JSON, {\"plan\": \"Gold\", \"premium\": 350} — what type is 350?",
+    "options": [
+      "String",
+      "Number",
+      "Boolean",
+      "Array"
+    ],
+    "correctIndex": 1,
+    "explanation": "Unquoted digits in JSON are numbers; \"350\" would be a string.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "Which list of git commands publishes your local work to GitHub, in order?",
+    "options": [
+      "git push → git commit → git add",
+      "git add → git commit → git push",
+      "git commit → git clone → git add",
+      "git init → git push → git add"
+    ],
+    "correctIndex": 1,
+    "explanation": "Stage (add), snapshot (commit), then upload (push).",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What is a CSV file?",
+    "options": [
+      "Rows of values separated by commas — a plain-text table",
+      "A compressed video",
+      "A Python script",
+      "An image format"
+    ],
+    "correctIndex": 0,
+    "explanation": "CSV = comma-separated values, the simplest tabular data format.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "x = [1, 2, 3]; x.append(4). Now x is…",
+    "options": [
+      "[1, 2, 3]",
+      "[1, 2, 3, 4]",
+      "[4, 1, 2, 3]",
+      "Error"
+    ],
+    "correctIndex": 1,
+    "explanation": "append adds one element to the end of the list.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "What does `pip install pandas` do?",
+    "options": [
+      "Downloads and installs the pandas library into your active environment",
+      "Opens the pandas documentation",
+      "Creates a file called pandas",
+      "Updates Python itself"
+    ],
+    "correctIndex": 0,
+    "explanation": "pip is Python's package installer; it fetches the library so `import pandas` works.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "This code prints… \n\nfor i in range(1, 6):\n    if i == 3:\n        continue\n    print(i)",
+    "options": [
+      "1 2 3 4 5",
+      "1 2 4 5",
+      "3",
+      "1 2"
+    ],
+    "correctIndex": 1,
+    "explanation": "continue skips the rest of the loop body just for i == 3.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "An 'API' is best described as…",
+    "options": [
+      "A defined way for one program to request data or actions from another",
+      "A type of database",
+      "A programming language",
+      "A computer virus"
+    ],
+    "correctIndex": 0,
+    "explanation": "APIs are contracts between programs — your chatbot frontend calls your backend's API.",
+    "active": true
+  },
+  {
+    "section": "TECHNICAL",
+    "question": "str(42) does what?",
+    "options": [
+      "Converts the number 42 into the text \"42\"",
+      "Rounds 42",
+      "Multiplies 42 by 10",
+      "Nothing — it's invalid"
+    ],
+    "correctIndex": 0,
+    "explanation": "str() converts a value to its string representation.",
+    "active": true
+  }
+]

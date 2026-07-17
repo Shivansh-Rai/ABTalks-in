@@ -16,9 +16,13 @@ export function AppFooter() {
   const isCohortIndia =
     pathname === "/ai-cohort-india" ||
     pathname.startsWith("/ai-cohort-india/");
+  const isProgram =
+    pathname === "/program" || pathname.startsWith("/program/");
+  const isTalent = pathname === "/talent" || pathname.startsWith("/talent/");
   const supportEmail = "team@abtalks.in";
 
-  if (isWorkshop || isCohortRegister || isCohortIndia) return null;
+  if (isWorkshop || isCohortRegister || isCohortIndia || isProgram || isTalent)
+    return null;
 
   return (
     <footer

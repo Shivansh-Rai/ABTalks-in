@@ -1,0 +1,197 @@
+[
+  {
+    "dayNumber": 1,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Why does every project get its own virtual environment (.venv)?",
+        "options": [
+          "So each project's package versions stay isolated and don't conflict",
+          "To make Python run faster",
+          "Because pip refuses to work without one",
+          "To encrypt your source code"
+        ],
+        "correctIndex": 0,
+        "explanation": "A venv isolates dependencies per project — Project A can use pandas 2.x while Project B stays on 1.x without conflicts."
+      },
+      {
+        "order": 2,
+        "question": "What does 'selecting an interpreter' in VS Code actually choose?",
+        "options": [
+          "Which Python installation/venv runs and analyzes your code",
+          "The color theme of the editor",
+          "Which git branch you are on",
+          "Your keyboard layout"
+        ],
+        "correctIndex": 0,
+        "explanation": "The interpreter setting tells VS Code which Python (system or a specific .venv) to use for running, debugging and IntelliSense."
+      },
+      {
+        "order": 3,
+        "question": "What does a breakpoint let you do?",
+        "options": [
+          "Pause the program at a line and inspect variable values",
+          "Delete a line of code permanently",
+          "Make the program skip errors",
+          "Automatically fix bugs"
+        ],
+        "correctIndex": 0,
+        "explanation": "Debugging with breakpoints pauses execution so you can step through code and inspect state — far more powerful than print statements."
+      },
+      {
+        "order": 4,
+        "question": "Your terminal prompt shows (.venv) at the start. What does that indicate?",
+        "options": [
+          "The virtual environment is activated — pip installs go into it",
+          "Python crashed",
+          "You are in the root directory",
+          "Git is tracking your changes"
+        ],
+        "correctIndex": 0,
+        "explanation": "The (.venv) prefix means the environment is active, so python and pip resolve to the project's isolated environment."
+      },
+      {
+        "order": 5,
+        "question": "What does Pylance add to VS Code?",
+        "options": [
+          "IntelliSense: autocomplete, type checking and code navigation for Python",
+          "A built-in web browser",
+          "GPU acceleration",
+          "A database viewer"
+        ],
+        "correctIndex": 0,
+        "explanation": "Pylance is the language server installed with the Python extension — it powers completions, hover docs and type checking."
+      }
+    ]
+  },
+  {
+    "dayNumber": 2,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What is Ollama?",
+        "options": [
+          "A tool that runs open LLMs locally and serves them via an API",
+          "A cloud-only paid AI service",
+          "A Python web framework",
+          "A database for embeddings"
+        ],
+        "correctIndex": 0,
+        "explanation": "Ollama downloads open models (Llama, Qwen, Mistral…) and runs them on your machine, exposing an API at localhost:11434."
+      },
+      {
+        "order": 2,
+        "question": "Why did you pick the model size (3b vs 7b vs 14b) based on your RAM?",
+        "options": [
+          "Model weights must fit in memory — too big a model won't run or will be extremely slow",
+          "Bigger models cost more money per query",
+          "Small models can't write Python",
+          "RAM only matters for the frontend"
+        ],
+        "correctIndex": 0,
+        "explanation": "A model's parameters load into RAM. A 7B model wants ~16 GB total; on an 8 GB laptop the 3B variant is the practical choice."
+      },
+      {
+        "order": 3,
+        "question": "What is the biggest advantage of a local model for this program?",
+        "options": [
+          "Free and private: no API key, no per-token cost, works offline",
+          "It is always smarter than cloud models",
+          "It updates itself automatically",
+          "It requires no disk space"
+        ],
+        "correctIndex": 0,
+        "explanation": "Local models cost nothing to run, keep data on your machine, and work without internet — ideal for training and synthetic-data projects."
+      },
+      {
+        "order": 4,
+        "question": "VS Code's Copilot/Cline talks to your local model through…",
+        "options": [
+          "The HTTP API Ollama serves on localhost:11434",
+          "A USB cable",
+          "A special GPU driver",
+          "GitHub's cloud servers only"
+        ],
+        "correctIndex": 0,
+        "explanation": "The editor extensions call Ollama's local HTTP API — the same API your Python code will call later in the program."
+      },
+      {
+        "order": 5,
+        "question": "Later in the program, your chatbot's LLM calls can stay free by…",
+        "options": [
+          "Pointing the openai SDK's base_url at Ollama (local) or Groq's free tier",
+          "Buying OpenAI credits",
+          "Using screenshots of ChatGPT",
+          "Hard-coding answers"
+        ],
+        "correctIndex": 0,
+        "explanation": "Both Ollama and Groq are drop-in compatible with the openai Python SDK — you just change base_url and key, so every exercise works free."
+      }
+    ]
+  },
+  {
+    "dayNumber": 3,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Why does chatbot.py append both the user message AND the model's reply to history?",
+        "options": [
+          "The model is stateless — it only 'remembers' what you resend in the messages list each call",
+          "To make the file bigger",
+          "Ollama requires it for billing",
+          "To avoid using functions"
+        ],
+        "correctIndex": 0,
+        "explanation": "LLM chat APIs have no memory between calls. Resending the running history is what makes follow-up questions work."
+      },
+      {
+        "order": 2,
+        "question": "What is the difference between git commit and git push?",
+        "options": [
+          "Commit records a snapshot locally; push uploads your commits to GitHub",
+          "They are identical",
+          "Push saves locally, commit uploads",
+          "Commit deletes old code"
+        ],
+        "correctIndex": 0,
+        "explanation": "Commits are local history checkpoints. Push publishes them to the remote — which is what our verification and recruiters can see."
+      },
+      {
+        "order": 3,
+        "question": "Why does the backend expose a /health endpoint from day one?",
+        "options": [
+          "Monitoring, Docker health checks and Kubernetes probes will all hit it later in the program",
+          "It makes FastAPI start faster",
+          "Browsers require it",
+          "It stores user passwords"
+        ],
+        "correctIndex": 0,
+        "explanation": "A trivial /health route is the standard liveness signal — Days 28–29 wire Docker HEALTHCHECK and k8s probes to this exact endpoint."
+      },
+      {
+        "order": 4,
+        "question": "What belongs in .gitignore?",
+        "options": [
+          "Generated/local files like .venv/, __pycache__/ and secrets like .env",
+          "Your main.py",
+          "The README",
+          "Everything — commit nothing"
+        ],
+        "correctIndex": 0,
+        "explanation": "Environments, caches and secrets are machine-local or sensitive; committing them bloats the repo and can leak keys."
+      },
+      {
+        "order": 5,
+        "question": "What does requirements.txt do?",
+        "options": [
+          "Lists your project's dependencies so anyone can recreate the environment with pip install -r",
+          "Configures VS Code themes",
+          "Runs the tests",
+          "Encrypts the repo"
+        ],
+        "correctIndex": 0,
+        "explanation": "requirements.txt pins what your project needs — Docker builds in week 4 install from this exact file."
+      }
+    ]
+  }
+]

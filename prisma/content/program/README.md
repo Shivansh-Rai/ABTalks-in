@@ -1,0 +1,1 @@
+Content JSONs land here in the content phase (`modules.json`, `days.json` — mission briefs + server-only `missionSpec`, `concept-questions.json`, `entry-questions.json`, `exercises.json` — practice arena, `videos.json`, `rubrics.json` — loaded at grade time, not seeded). Authored by architect, seeded via `npm run db:seed:program`.

@@ -44,6 +44,12 @@ export default async function LoginPage({ searchParams }: Props) {
 
   const session = await auth();
   if (session?.user?.id) {
+    // Program applicants and recruiters must never hit the student /register
+    // redirect below — send them straight to their destination.
+    if (redirectTo.startsWith("/program") || redirectTo.startsWith("/talent")) {
+      redirect(redirectTo);
+    }
+
     const profile = await prisma.studentProfile.findUnique({
       where: { userId: session.user.id },
       select: { id: true },

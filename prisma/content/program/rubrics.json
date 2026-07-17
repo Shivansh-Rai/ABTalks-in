@@ -1,0 +1,106 @@
+[
+  {
+    "moduleNumber": 1,
+    "title": "Module 1 — Data & Knowledge Engineering",
+    "criteria": [
+      {
+        "name": "Architecture & design",
+        "weight": 25,
+        "description": "Clear ingestion pipeline design, sensible component boundaries, README explains the data flow."
+      },
+      {
+        "name": "Implementation quality",
+        "weight": 30,
+        "description": "Working code, readable structure, appropriate use of libraries and patterns for the module topic."
+      },
+      {
+        "name": "Data handling",
+        "weight": 25,
+        "description": "Correct handling of datasets/events, validation, and storage or transformation logic."
+      },
+      {
+        "name": "Documentation & ops",
+        "weight": 20,
+        "description": "Setup instructions, sample runs, and evidence the project can be evaluated without guesswork."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 2,
+    "title": "Module 2 — APIs & Microservices",
+    "criteria": [
+      {
+        "name": "API design",
+        "weight": 30,
+        "description": "REST/GraphQL/gRPC endpoints are coherent, documented, and match the brief."
+      },
+      {
+        "name": "Service implementation",
+        "weight": 30,
+        "description": "Core service logic works; error handling and validation are present."
+      },
+      {
+        "name": "Deployment artifacts",
+        "weight": 20,
+        "description": "Docker/K8s or equivalent deployment files exist and are plausible."
+      },
+      {
+        "name": "Testing & README",
+        "weight": 20,
+        "description": "Evidence of manual or automated testing; clear run instructions."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 3,
+    "title": "Module 3 — LLM & Agentic Development",
+    "criteria": [
+      {
+        "name": "Prompt & agent design",
+        "weight": 30,
+        "description": "System prompts, tool use, or agent loops are purposeful and match requirements."
+      },
+      {
+        "name": "Integration",
+        "weight": 25,
+        "description": "LLM provider integration is wired correctly with sensible guardrails."
+      },
+      {
+        "name": "Evaluation & examples",
+        "weight": 25,
+        "description": "Sample inputs/outputs or eval notes demonstrate the agent behavior."
+      },
+      {
+        "name": "Code quality",
+        "weight": 20,
+        "description": "Readable, modular code with a clear entry point."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 4,
+    "title": "Module 4 — MCP & Enterprise Adoption",
+    "criteria": [
+      {
+        "name": "MCP / integration surface",
+        "weight": 30,
+        "description": "MCP server or enterprise adapter exposes the required tools/resources."
+      },
+      {
+        "name": "Security & scope",
+        "weight": 25,
+        "description": "Reasonable boundaries, refusal behavior, and safe defaults."
+      },
+      {
+        "name": "Enterprise readiness",
+        "weight": 25,
+        "description": "Deployment, config, or adoption notes suitable for a team rollout."
+      },
+      {
+        "name": "Write-up & repo hygiene",
+        "weight": 20,
+        "description": "Write-up matches the repo; structure is navigable."
+      }
+    ]
+  }
+]

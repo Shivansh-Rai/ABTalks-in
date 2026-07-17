@@ -1,0 +1,66 @@
+[
+  {
+    "number": 1,
+    "title": "Environment & Tooling",
+    "subtitle": "VS Code · Python · Ollama · Git",
+    "color": "#6366f1",
+    "startDay": 1,
+    "endDay": 3
+  },
+  {
+    "number": 2,
+    "title": "Data Foundations",
+    "subtitle": "pandas · SQL · PDF/OCR extraction · Knowledge base",
+    "color": "#0ea5e9",
+    "startDay": 4,
+    "endDay": 6
+  },
+  {
+    "number": 3,
+    "title": "Embeddings & Vector Search",
+    "subtitle": "Sentence-Transformers · Chroma · Hybrid retrieval",
+    "color": "#14b8a6",
+    "startDay": 7,
+    "endDay": 10
+  },
+  {
+    "number": 4,
+    "title": "LLM Core, Prompting & Fine-Tuning",
+    "subtitle": "RAG · Prompt engineering · Function calling · LoRA",
+    "color": "#f59e0b",
+    "startDay": 11,
+    "endDay": 15
+  },
+  {
+    "number": 5,
+    "title": "Chatbot Application Build",
+    "subtitle": "FastAPI · Streamlit · Streaming · Memory",
+    "color": "#ec4899",
+    "startDay": 16,
+    "endDay": 20
+  },
+  {
+    "number": 6,
+    "title": "Agentic AI & MCP",
+    "subtitle": "LangChain agents · CrewAI · Model Context Protocol",
+    "color": "#8b5cf6",
+    "startDay": 21,
+    "endDay": 24
+  },
+  {
+    "number": 7,
+    "title": "Governance & Evaluation",
+    "subtitle": "Guardrails · PHI redaction · RAGAS · Cost control",
+    "color": "#ef4444",
+    "startDay": 25,
+    "endDay": 27
+  },
+  {
+    "number": 8,
+    "title": "Containerization, Kubernetes & Production",
+    "subtitle": "Docker · Minikube · Langfuse · Capstone",
+    "color": "#10b981",
+    "startDay": 28,
+    "endDay": 31
+  }
+]
