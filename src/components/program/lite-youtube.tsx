@@ -2,20 +2,23 @@
 
 import { useState } from "react";
 import { PlayCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Lite embed: show the thumbnail until the user clicks, then mount the iframe.
 // Avoids loading the heavy YouTube player on every day page.
 export function LiteYoutube({
   youtubeId,
   title,
+  className,
 }: {
   youtubeId: string;
   title: string;
+  className?: string;
 }) {
   const [active, setActive] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-black">
+    <div className={cn("overflow-hidden rounded-xl border bg-black", className)}>
       <div className="relative aspect-video">
         {active ? (
           <iframe

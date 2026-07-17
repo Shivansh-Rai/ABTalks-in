@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import ReactMarkdown from "react-markdown";
-import { AlertTriangle, Send, SkipForward, Sparkles } from "lucide-react";
+import { AlertTriangle, SkipForward, Sparkles } from "lucide-react";
 import type { ProgramMissionType } from "@prisma/client";
 import { toast } from "sonner";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -35,12 +35,20 @@ type Props = {
   githubRepoUrl: string;
   missionState: MissionState;
   initialMentorFeedback?: string | null;
+  dataRoomQuestions?: string[];
+  verifyIntro?: string;
 };
+
+const figmaBtnClass =
+  "inline-flex h-10 items-center justify-center rounded-[15px] border border-black bg-[#7364E6] px-5 text-base font-bold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90";
+
+const cardClass =
+  "rounded-[20px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-6 md:p-8";
 
 function MentorFeedbackCard({ feedback }: { feedback: string }) {
   return (
-    <div className="rounded-xl border bg-background p-4 text-sm [&_h3]:mt-2 [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:text-muted-foreground">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-xl border border-[#8365E3]/40 bg-[#110528] p-4 text-sm text-white [&_h3]:mt-2 [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:text-[#BCBCBC]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#968BEC]">
         AI Mentor review
       </p>
       <ReactMarkdown>{feedback}</ReactMarkdown>
@@ -52,12 +60,20 @@ function fireConfetti() {
   void confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
 }
 
+function sectionTitle(missionType: ProgramMissionType): string {
+  if (missionType === "DATA_ROOM") return "Let’s test your work!";
+  if (missionType === "SHIP_IT") return "What we’ve achieved";
+  return "Mission verification";
+}
+
 export function MissionPanel({
   dayNumber,
   missionType,
   githubRepoUrl,
   missionState: initialState,
   initialMentorFeedback = null,
+  dataRoomQuestions = [],
+  verifyIntro,
 }: Props) {
   const [missionState, setMissionState] = useState(initialState);
   const [mentorFeedback, setMentorFeedback] = useState<string | null>(
@@ -177,15 +193,16 @@ export function MissionPanel({
 
   if (missionState.dayState === "PASSED") {
     return (
-      <div className="space-y-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-6">
-        <p className="font-semibold text-emerald-600 dark:text-emerald-400">
-          Mission cleared ✓
-        </p>
+      <div
+        id="mission-verify"
+        className={cn(cardClass, "space-y-4 border-emerald-500/40")}
+      >
+        <p className="font-semibold text-emerald-400">Mission cleared ✓</p>
         {passedBanner?.unlockedDay &&
           passedBanner.unlockedDay <= PROGRAM_TOTAL_DAYS && (
             <Link
               href={`/program/day/${passedBanner.unlockedDay}`}
-              className={buttonVariants({ size: "sm" })}
+              className={figmaBtnClass}
             >
               Continue to Day {passedBanner.unlockedDay}
             </Link>
@@ -198,7 +215,7 @@ export function MissionPanel({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 border-[#8365E3]/50 bg-transparent text-white"
             onClick={() => void handleMentorReview()}
             disabled={mentorLoading}
           >
@@ -212,7 +229,10 @@ export function MissionPanel({
 
   if (missionState.dayState === "SKIPPED") {
     return (
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-muted-foreground">
+      <div
+        id="mission-verify"
+        className={cn(cardClass, "border-amber-500/40 text-sm text-[#BCBCBC]")}
+      >
         You skipped this mission (0 points). The concept check below is still
         available.
       </div>
@@ -223,16 +243,26 @@ export function MissionPanel({
     missionType === "SHIP_IT"
       ? submitting
         ? "Verifying…"
-        : "Verify my repo"
+        : "Submit"
       : submitting
         ? "Verifying…"
-        : "Submit for verification";
+        : "Submit";
 
   return (
-    <div className="space-y-4">
+    <div id="mission-verify" className={cn(cardClass, "space-y-5")}>
+      <div className="flex items-center gap-3">
+        <span
+          className="size-9 shrink-0 rounded-md bg-[#D9D9D9]/80"
+          aria-hidden
+        />
+        <h2 className="text-xl font-semibold text-[#968BEC] md:text-2xl">
+          {sectionTitle(missionType)}
+        </h2>
+      </div>
+
       {passedBanner && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-          <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+          <p className="font-semibold text-emerald-400">
             Day {dayNumber} cleared — +{passedBanner.points} pts
             {passedBanner.unlockedDay
               ? ` · Day ${passedBanner.unlockedDay} unlocked`
@@ -242,7 +272,7 @@ export function MissionPanel({
             passedBanner.unlockedDay <= PROGRAM_TOTAL_DAYS && (
               <Link
                 href={`/program/day/${passedBanner.unlockedDay}`}
-                className={cn(buttonVariants({ size: "sm" }), "mt-2 inline-flex")}
+                className={cn(figmaBtnClass, "mt-3")}
               >
                 Go to Day {passedBanner.unlockedDay}
               </Link>
@@ -250,28 +280,32 @@ export function MissionPanel({
         </div>
       )}
 
+      {missionType === "DATA_ROOM" && verifyIntro && (
+        <p className="text-base text-[#BCBCBC] md:text-xl">{verifyIntro}</p>
+      )}
+
       {missionType === "SHIP_IT" && (
-        <div className="space-y-3 rounded-xl border p-4">
-          <p className="text-sm text-muted-foreground">
+        <div className="space-y-3">
+          <p className="text-base text-[#BCBCBC]">
             Build locally in VS Code, then push your artifact to{" "}
             <a
               href={githubRepoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-[#968BEC] underline-offset-4 hover:underline"
             >
               {githubRepoUrl}
             </a>
             . We verify the repo against the mission checklist.
           </p>
           {missionState.shipItHints && missionState.shipItHints.length > 0 && (
-            <ul className="space-y-1 text-sm">
+            <ul className="space-y-2 text-sm">
               {missionState.shipItHints.map((h, i) => (
                 <li
                   key={`${h.check}:${h.path}:${i}`}
-                  className="font-mono text-muted-foreground"
+                  className="font-mono text-[#A5A5A5]"
                 >
-                  {h.check}: <span className="text-foreground">{h.path}</span>
+                  {h.check}: <span className="text-white">{h.path}</span>
                 </li>
               ))}
             </ul>
@@ -281,35 +315,42 @@ export function MissionPanel({
 
       {missionType === "PROMPT_FORGE" && (
         <div className="space-y-2">
-          <Label htmlFor="prompt">Your system prompt</Label>
+          <Label htmlFor="prompt" className="text-[#BCBCBC]">
+            Your system prompt
+          </Label>
           <textarea
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-40 w-full rounded-lg border bg-muted/30 p-3 font-mono text-sm"
+            className="min-h-40 w-full rounded-[10px] border border-[#8365E3] bg-[#110528] p-3 font-mono text-sm text-white"
             placeholder="Write the prompt that satisfies the mission spec…"
           />
         </div>
       )}
 
       {missionType === "BOSS_BUILD" && (
-        <div className="space-y-4 rounded-xl border p-4">
+        <div className="space-y-4 rounded-[20px] border border-[#8365E3] bg-[#110528] p-4">
           <div className="space-y-2">
-            <Label htmlFor="boss-repo">Project repository URL</Label>
+            <Label htmlFor="boss-repo" className="text-[#BCBCBC]">
+              Project repository URL
+            </Label>
             <Input
               id="boss-repo"
               value={bossRepo}
               onChange={(e) => setBossRepo(e.target.value)}
               placeholder="https://github.com/you/project"
+              className="border-[#8365E3] bg-[#110528] text-white"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="boss-writeup">Write-up</Label>
+            <Label htmlFor="boss-writeup" className="text-[#BCBCBC]">
+              Write-up
+            </Label>
             <textarea
               id="boss-writeup"
               value={bossWriteup}
               onChange={(e) => setBossWriteup(e.target.value)}
-              className="min-h-32 w-full rounded-lg border bg-muted/30 p-3 text-sm"
+              className="min-h-32 w-full rounded-[10px] border border-[#8365E3] bg-[#030712] p-3 text-sm text-white"
               placeholder="Describe what you built and how to run it…"
             />
           </div>
@@ -317,35 +358,46 @@ export function MissionPanel({
       )}
 
       {missionType === "DATA_ROOM" && missionState.dataRoomQuestionCount && (
-        <div className="space-y-3 rounded-xl border p-4">
-          <p className="text-sm font-medium">Your answers</p>
-          {answers.map((val, i) => (
-            <div key={i} className="space-y-1">
-              <Label htmlFor={`answer-${i}`}>Answer {i + 1}</Label>
-              <Input
-                id={`answer-${i}`}
-                value={val}
-                onChange={(e) => {
-                  const next = [...answers];
-                  next[i] = e.target.value;
-                  setAnswers(next);
-                }}
-              />
-            </div>
-          ))}
+        <div className="space-y-6">
+          {answers.map((val, i) => {
+            const question =
+              dataRoomQuestions.length === answers.length
+                ? dataRoomQuestions[i]
+                : null;
+            return (
+              <div key={i} className="space-y-3">
+                <p className="text-base font-semibold text-white md:text-2xl">
+                  {question
+                    ? `Q${i + 1}) ${question}`
+                    : `Answer ${i + 1}`}
+                </p>
+                <Input
+                  id={`answer-${i}`}
+                  value={val}
+                  onChange={(e) => {
+                    const next = [...answers];
+                    next[i] = e.target.value;
+                    setAnswers(next);
+                  }}
+                  placeholder="Type answer here..."
+                  className="h-[70px] rounded-[10px] border border-[#8365E3] bg-[#110528] px-5 text-base text-white placeholder:text-[#8F8F8F]"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
       {missionType === "CODE_SPRINT" && (
-        <div className="rounded-xl border p-4 text-sm text-muted-foreground">
+        <div className="rounded-[20px] border border-[#8365E3]/40 bg-[#110528] p-4 text-sm text-[#BCBCBC]">
           In-browser Workbench was removed. CODE_SPRINT days are not used in the
           current curriculum — build and verify via SHIP_IT repo checks instead.
         </div>
       )}
 
       {verdict && (
-        <div className="rounded-xl border p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="rounded-[20px] border border-[#8365E3]/40 bg-[#110528] p-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#968BEC]">
             Verification
           </h3>
           <CheckList items={verdict} running={submitting} />
@@ -353,33 +405,31 @@ export function MissionPanel({
       )}
 
       {missionType !== "CODE_SPRINT" && (
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            onClick={() => void handleSubmit()}
-            disabled={submitting}
-            className="gap-2"
-          >
-            <Send className="size-4" />
-            {submitLabel}
-          </Button>
-
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {missionState.canSkip && (
             <Button
               type="button"
               variant="outline"
               onClick={() => setSkipOpen(true)}
-              className="gap-2"
+              className="gap-2 border-[#8365E3]/50 bg-transparent text-white"
             >
               <SkipForward className="size-4" />
               Use skip token ({missionState.skipTokensLeft} left)
             </Button>
           )}
+          <button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={submitting}
+            className={cn(figmaBtnClass, "disabled:opacity-60")}
+          >
+            {submitLabel}
+          </button>
         </div>
       )}
 
       {missionState.failedRunCount > 0 && missionState.failedRunCount < 3 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[#8F8F8F]">
           {3 - missionState.failedRunCount} more failed run
           {3 - missionState.failedRunCount === 1 ? "" : "s"} until skip token
           unlocks.
@@ -404,10 +454,18 @@ export function MissionPanel({
             </span>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setSkipOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSkipOpen(false)}
+            >
               Cancel
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void handleSkip()}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleSkip()}
+            >
               Skip this day
             </Button>
           </DialogFooter>

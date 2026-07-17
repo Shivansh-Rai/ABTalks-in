@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-17 [convention] Program day page uses Figma dark shell + briefMd section parser; no schema change
 - 2026-07-16 [convention] `allowedDevOrigins` auto-includes LAN IPv4s so Next 16 serves `/_next` JS on Network URL (fixes dead login form when opened via 192.168.x.x).
 - 2026-07-16 [convention] Dev credentials login always navigates same-origin (ignores AUTH_URL host in result.url) so LAN/phone testing works; local AUTH_URL optional when trustHost is on.
 - 2026-07-16 [convention] `npm run db:seed:program:users` seeds AI Cohort test logins (`prog.*@abtalks.dev` / `test`) plus test cohort/members/recruiters for local program QA.

@@ -1,27 +1,27 @@
 import { redirect } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { Award, Clock } from "lucide-react";
-import type { ProgramMissionType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireProgramMember } from "@/lib/program-auth";
 import { getDayShell } from "@/features/program/days";
 import { getMissionState } from "@/features/program/missions";
 import { getConceptCheckStatus } from "@/features/program/concept-check";
 import { getMissionMentorFeedback } from "@/features/program/mentor";
+import { getMemberDayStates } from "@/features/program/progression";
+import { parseBriefMd } from "@/features/program/parse-brief";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { LiteYoutube } from "@/components/program/lite-youtube";
 import { MissionPanel } from "@/components/program/mission-panel";
 import { ConceptCheckPanel } from "@/components/program/concept-check-panel";
+import { DayShell } from "@/components/program/day-shell";
+import { DayBuildSteps } from "@/components/program/day-build-steps";
+import {
+  DaySectionCard,
+  ToolChip,
+  dayMdClassName,
+} from "@/components/program/day-section-card";
+import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ day: string }> };
-
-const MISSION_LABEL: Record<ProgramMissionType, string> = {
-  CODE_SPRINT: "Code Sprint",
-  SHIP_IT: "Ship It",
-  DATA_ROOM: "Data Room",
-  PROMPT_FORGE: "Prompt Forge",
-  BOSS_BUILD: "Boss Build",
-};
 
 export default async function ProgramDayPage({ params }: Props) {
   const { member } = await requireProgramMember();
@@ -42,14 +42,16 @@ export default async function ProgramDayPage({ params }: Props) {
 
   const { day, state } = result;
 
-  const [missionState, conceptStatus, memberProfile] = await Promise.all([
-    getMissionState(member.id, dayNumber),
-    getConceptCheckStatus(member.id, dayNumber),
-    prisma.programMember.findUnique({
-      where: { id: member.id },
-      select: { githubRepoUrl: true },
-    }),
-  ]);
+  const [missionState, conceptStatus, memberProfile, curriculum] =
+    await Promise.all([
+      getMissionState(member.id, dayNumber),
+      getConceptCheckStatus(member.id, dayNumber),
+      prisma.programMember.findUnique({
+        where: { id: member.id },
+        select: { githubRepoUrl: true },
+      }),
+      getMemberDayStates(member.id),
+    ]);
 
   if (!missionState || !memberProfile) redirect("/program/curriculum");
 
@@ -58,113 +60,122 @@ export default async function ProgramDayPage({ params }: Props) {
       ? await getMissionMentorFeedback(member.id, dayNumber)
       : null;
 
+  const brief = parseBriefMd(day.briefMd);
+  const hasObjectives =
+    day.objectives.length > 0 || day.tools.length > 0;
+  const hasRepo = !!brief.repoLayoutMd;
+
   return (
-    <div className="space-y-6">
-      <header className="space-y-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span
-            className="size-2.5 rounded-full"
-            style={{ backgroundColor: day.module.color }}
-            aria-hidden
-          />
-          <span>
-            Phase {day.module.number} · {day.module.title}
-          </span>
+    <DayShell
+      dayNumber={day.dayNumber}
+      dayTitle={day.title}
+      moduleNumber={day.module.number}
+      moduleTitle={day.module.title}
+      days={curriculum.days}
+    >
+      <DaySectionCard title="Mission">
+        {(brief.missionTitle || day.title) && (
+          <h3 className="mb-3 text-xl font-semibold text-white md:text-2xl">
+            {brief.missionTitle ?? day.title}
+          </h3>
+        )}
+        <div className={dayMdClassName}>
+          <ReactMarkdown>{brief.missionBodyMd}</ReactMarkdown>
         </div>
-        <div className="flex items-baseline gap-3">
-          <span className="font-display text-sm font-bold uppercase tracking-wider text-primary">
-            Day {day.dayNumber}
-          </span>
-        </div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          {day.title}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            {MISSION_LABEL[day.missionType]}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs">
-            <Award className="size-3" />
-            {day.missionPoints} pts
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs">
-            <Clock className="size-3" />
-            {day.estimatedMin} min
-          </span>
-        </div>
-      </header>
+      </DaySectionCard>
 
-      <section className="space-y-2 text-sm [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3">
-        <ReactMarkdown>{day.briefMd}</ReactMarkdown>
-      </section>
+      {(hasRepo || hasObjectives) && (
+        <div
+          className={cn(
+            "grid gap-6",
+            hasRepo && hasObjectives
+              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
+              : "grid-cols-1",
+          )}
+        >
+          {brief.repoLayoutMd && (
+            <DaySectionCard title="Your Repo Layout (set this up first!)">
+              <div
+                className={cn(
+                  dayMdClassName,
+                  "rounded-[20px] border border-[#8365E3] bg-[#110528] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
+                )}
+              >
+                <ReactMarkdown>{brief.repoLayoutMd}</ReactMarkdown>
+              </div>
+            </DaySectionCard>
+          )}
 
-      {(day.objectives.length > 0 || day.tools.length > 0) && (
-        <section className="space-y-3">
-          {day.objectives.length > 0 && (
-            <div>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Objectives
-              </h2>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                {day.objectives.map((o, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    {o}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {hasObjectives && (
+            <DaySectionCard title="Objectives">
+              {day.objectives.length > 0 && (
+                <ul className="mb-6 space-y-3 text-base leading-[30px] text-white md:text-xl">
+                  {day.objectives.map((o, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-[#968BEC]">-</span>
+                      <span>{o}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {day.tools.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {day.tools.map((t) => (
+                    <ToolChip key={t} label={t} />
+                  ))}
+                </div>
+              )}
+            </DaySectionCard>
           )}
-          {day.tools.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {day.tools.map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-        </section>
+        </div>
+      )}
+
+      {brief.buildSteps.length > 0 && (
+        <DayBuildSteps steps={brief.buildSteps} />
       )}
 
       {day.videos.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Watch
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <DaySectionCard title="Reference Resources">
+          <div className="grid gap-6 sm:grid-cols-2">
             {day.videos.map((video) => (
-              <div key={video.id} className="space-y-1.5">
-                <LiteYoutube youtubeId={video.youtubeId} title={video.title} />
-                <p className="text-sm font-medium">{video.title}</p>
+              <div key={video.id} className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span
+                    className="mt-1.5 inline-block size-0 shrink-0 border-x-[10px] border-b-[16px] border-x-transparent border-b-[#970000]"
+                    aria-hidden
+                  />
+                  <p className="text-lg text-white md:text-2xl">{video.title}</p>
+                </div>
+                <LiteYoutube
+                  youtubeId={video.youtubeId}
+                  title={video.title}
+                  className="border-[#8365E3]/40"
+                />
               </div>
             ))}
           </div>
-        </section>
+        </DaySectionCard>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Mission
-        </h2>
-        <MissionPanel
-          dayNumber={dayNumber}
-          dayTitle={day.title}
-          missionType={day.missionType}
-          githubRepoUrl={memberProfile.githubRepoUrl}
-          missionState={missionState}
-          initialMentorFeedback={initialMentorFeedback}
-        />
-      </section>
+      <MissionPanel
+        dayNumber={dayNumber}
+        dayTitle={day.title}
+        missionType={day.missionType}
+        githubRepoUrl={memberProfile.githubRepoUrl}
+        missionState={missionState}
+        initialMentorFeedback={initialMentorFeedback}
+        dataRoomQuestions={brief.submitQuestions}
+        verifyIntro={brief.submitIntroMd ?? undefined}
+      />
 
       {(state === "AVAILABLE" ||
         state === "PASSED" ||
         state === "SKIPPED") && (
-        <ConceptCheckPanel dayNumber={dayNumber} initialStatus={conceptStatus} />
+        <ConceptCheckPanel
+          dayNumber={dayNumber}
+          initialStatus={conceptStatus}
+        />
       )}
-    </div>
+    </DayShell>
   );
 }

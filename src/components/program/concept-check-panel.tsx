@@ -102,9 +102,12 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
 
   if (status.status === "completed" && phase === "result" && !result?.review.length) {
     return (
-      <div className="rounded-xl border p-4 text-sm">
+      <div
+        id="concept-check"
+        className="scroll-mt-24 rounded-[20px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-6 text-sm text-white"
+      >
         <p className="font-medium">Concept check complete</p>
-        <p className="text-muted-foreground">
+        <p className="text-[#BCBCBC]">
           Score: {status.score}/3 · +{status.pointsAwarded} pts
         </p>
       </div>
@@ -112,26 +115,38 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
   }
 
   return (
-    <section className="space-y-4 rounded-xl border p-4">
+    <section
+      id="concept-check"
+      className="scroll-mt-24 space-y-4 rounded-[20px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-6 md:p-8"
+    >
       <div>
-        <h2 className="text-sm font-semibold">Concept check</h2>
-        <p className="text-xs text-muted-foreground">
+        <h2 className="text-xl font-semibold text-[#968BEC] md:text-2xl">
+          Concept check
+        </h2>
+        <p className="text-xs text-[#BCBCBC]">
           3 quick MCQs · one attempt · +1 pt each · does not gate progression
         </p>
       </div>
 
       {phase === "idle" && (
-        <Button type="button" onClick={() => void handleStart()} disabled={loading}>
+        <Button
+          type="button"
+          onClick={() => void handleStart()}
+          disabled={loading}
+          className="rounded-[15px] border border-black bg-[#7364E6] font-bold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90"
+        >
           {loading ? "Loading…" : "Start concept check"}
         </Button>
       )}
 
       {phase === "quiz" && questions[current] && (
         <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-[#BCBCBC]">
             Question {current + 1} of {questions.length}
           </p>
-          <p className="font-medium">{questions[current]!.question}</p>
+          <p className="font-medium text-white">
+            {questions[current]!.question}
+          </p>
           <div className="space-y-2">
             {questions[current]!.options.map((opt, i) => (
               <button
@@ -145,8 +160,8 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
                 className={cn(
                   "w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                   answers[current] === i
-                    ? "border-primary bg-primary/10"
-                    : "hover:bg-muted/60",
+                    ? "border-[#7364E6] bg-[#7364E6]/20 text-white"
+                    : "border-[#8365E3]/40 text-[#BCBCBC] hover:bg-white/5",
                 )}
               >
                 {opt}
@@ -159,6 +174,7 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
               variant="outline"
               disabled={current === 0}
               onClick={() => setCurrent((c) => c - 1)}
+              className="border-[#8365E3]/50 bg-transparent text-white"
             >
               Back
             </Button>
@@ -167,6 +183,7 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
                 type="button"
                 onClick={() => setCurrent((c) => c + 1)}
                 disabled={answers[current] === null}
+                className="rounded-[15px] border border-black bg-[#7364E6] font-bold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90"
               >
                 Next
               </Button>
@@ -175,6 +192,7 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
                 type="button"
                 onClick={() => void handleSubmit()}
                 disabled={loading || answers.some((a) => a === null)}
+                className="rounded-[15px] border border-black bg-[#7364E6] font-bold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90"
               >
                 Submit
               </Button>
@@ -185,21 +203,24 @@ export function ConceptCheckPanel({ dayNumber, initialStatus }: Props) {
 
       {phase === "result" && result && result.review.length > 0 && (
         <div className="space-y-4">
-          <p className="font-medium">
+          <p className="font-medium text-white">
             {result.score}/3 correct · +{result.pointsAwarded} pts
           </p>
           {result.review.map((r, i) => (
-            <div key={i} className="rounded-lg border p-3 text-sm">
-              <p className="font-medium">{r.question}</p>
+            <div
+              key={i}
+              className="rounded-lg border border-[#8365E3]/40 bg-[#110528] p-3 text-sm"
+            >
+              <p className="font-medium text-white">{r.question}</p>
               <p
                 className={cn(
                   "mt-1 text-xs",
-                  r.correct ? "text-emerald-600" : "text-rose-600",
+                  r.correct ? "text-emerald-400" : "text-rose-400",
                 )}
               >
                 {r.correct ? "Correct" : "Incorrect"}
               </p>
-              <p className="mt-2 text-muted-foreground">{r.explanation}</p>
+              <p className="mt-2 text-[#BCBCBC]">{r.explanation}</p>
             </div>
           ))}
         </div>
