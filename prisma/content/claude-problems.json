@@ -4847,5 +4847,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 48,
+    "domain": "CLAUDE",
+    "title": "Day 48: Build The Verdict Engine – AI-Powered Decision Comparison Platform",
+    "problemStatement": "Welcome to Day 48 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 7 — AI Research, Decision Support & Data-Grounded Applications\n\nToday's focus: Learn how to build a research-backed decision comparison tool using Claude.\n\nYou'll create Compare & Decide Builder, an intelligent application that helps a user choose between real options by researching verifiable data, scoring them against user-defined criteria, and letting the user re-weight priorities to see a ranked result update live — with every data point traceable to a named, citable source.\n\nTasks:\n1. Choose a category of options to compare.\n2. Define who the tool is for and the decision they need to make.\n3. Set measurable comparison criteria.\n4. Decide where the underlying data should come from.\n5. Choose whether criteria should be weighted or fixed.\n6. Generate the complete Compare & Decide Builder application.\n7. Adjust weights and review the live-updating ranked results.\n8. Review the sources panel and research transparency report.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, sourced data report, and key learnings.",
+    "learningObjectives": [
+      "Understand research-grounded AI application design",
+      "Build live-updating, weight-adjustable comparison tools",
+      "Learn to enforce citation discipline and prevent fabricated data",
+      "Design premium decision-support dashboards",
+      "Create production-quality HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/FZW0-4RuDms"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 48/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built The Verdict Engine using Claude.\n\nInstead of guessing between options, I built a tool that researches real, citable data, scores choices against my own criteria, and lets me re-weight priorities to see the ranking update live.\n\n🔎 Real Sourced Research\n⚖️ Weighted Criteria Scoring\n📊 Live Ranking Updates\n📚 Visible Sources Panel\n🧭 Research Transparency Report\n✅ Zero Fabricated Data\n\nBiggest takeaway:\n\nThe most trustworthy AI tools aren't the ones that sound confident—they're the ones that show you exactly where every number came from.\n\n#ClaudeAI #DecisionIntelligence #BuildWithClaude #AI #DataJournalism #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the comparison dashboard, the sourced data/research report, and key learnings.",
+    "tags": [
+      "claude",
+      "day-48",
+      "decision-intelligence",
+      "comparison-tool",
+      "research-grounded-ai",
+      "html",
+      "javascript",
+      "data-journalism"
+    ],
+    "dayContent": {
+      "title": "Build The Verdict Engine",
+      "tagline": "The AI That Renders a Verdict on Your Toughest Decisions",
+      "module": "AI Research & Decision Intelligence",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 30,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how to build a decision-support application that grounds every claim in real, citable data rather than fabricated numbers, letting users adjust their own priorities and instantly see how the ranked outcome changes.",
+        "bullets": [
+          {
+            "label": "Grounded Research",
+            "text": "Force an AI system to cite only real, named sources instead of inventing data points."
+          },
+          {
+            "label": "Weighted Decision Scoring",
+            "text": "Let users assign personal priority weights to criteria and see rankings update live."
+          },
+          {
+            "label": "Transparency by Design",
+            "text": "Surface sources, estimates, and resolved conflicts openly instead of hiding them."
+          },
+          {
+            "label": "Decision-Support UX",
+            "text": "Design a premium, responsive interface for comparing real-world options."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the The Verdict Engine prompt.",
+          "Answer Claude's interview questions.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open it locally in your browser.",
+          "Adjust criteria weights and observe the ranking update live.",
+          "Review the sources panel for every data point.",
+          "Open the 'How this was researched' panel and review conflicts resolved.",
+          "Take screenshots.",
+          "Create a Day48 folder in your GitHub repository.",
+          "Create a day48.md file.",
+          "Upload screenshots, generated HTML file, sourced data report, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/FZW0-4RuDms"
+      },
+      "promptTemplate": "Compare & Decide Builder\n\nYou are an expert research analyst, data journalist, UX designer, and frontend developer.\n\nBefore generating anything, interview the user ONE QUESTION AT A TIME in quiz form (MCQs only).\n\n1. What are you trying to decide between? (Ask for the general category, then present four realistic examples of comparable options in that category.)\n2. Who is this tool for, and what's the one decision they need to walk away confident about?\n3. What criteria matter in this comparison? (Ask for at least four measurable criteria, e.g. cost, time, risk, quality, availability.)\n4. Where should the underlying data come from? (Ask the user to name at least two real, citable sources per criterion, or confirm you should research and cite real sources yourself.)\n5. Should the user be able to weight criteria by personal priority, or see one fixed ranking?\n\nAfter collecting the answers:\n\n1. Research and verify real data points for each option against each criterion, using only sources you can name and cite. Do not invent numbers, benchmarks, or scores.\n\n2. Build a premium single-file HTML application (HTML/CSS/JavaScript only, no external libraries) that lets the user adjust criteria weights and see a ranked result update live.\n\nThe application should:\n- Display a visible sources panel listing every citation used.\n- Flag clearly if any data point is an estimate or a synthetic placeholder rather than sourced fact.\n- Handle loading states, empty states, and edge cases gracefully.\n- Be fully responsive with clean, professional visual design.\n\n3. Add a collapsible \"How this was researched\" panel explaining where each data point came from and any conflicts between sources you had to resolve.\n\nGenerate the complete application only after all interview questions have been answered.\n\nReturn ONLY the complete HTML inside one code block.",
+      "engagement": {
+        "type": "The Verdict Engine Showcase",
+        "description": "Share your The Verdict Engine and explain the most surprising or useful data point the AI surfaced during research. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your The Verdict Engine, generated HTML file, sourced data report, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
