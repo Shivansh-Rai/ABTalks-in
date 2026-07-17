@@ -33,6 +33,7 @@ function StepPointer() {
 
 export function DayBuildSteps({ steps }: { steps: string[] }) {
   const [active, setActive] = useState(0);
+  const [direction, setDirection] = useState(1);
   const reduceMotion = useReducedMotion();
   const trackRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -77,6 +78,12 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
   const isFirst = active <= 0;
   const isLast = active >= steps.length - 1;
 
+  function goToStep(next: number) {
+    if (next === active) return;
+    setDirection(next > active ? 1 : -1);
+    setActive(next);
+  }
+
   function handleNext() {
     if (isLast) {
       document
@@ -84,11 +91,11 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    setActive((i) => Math.min(i + 1, steps.length - 1));
+    goToStep(Math.min(active + 1, steps.length - 1));
   }
 
   function handleBack() {
-    setActive((i) => Math.max(i - 1, 0));
+    goToStep(Math.max(active - 1, 0));
   }
 
   return (
@@ -131,7 +138,7 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
                     else stepRefs.current.delete(stepIndex);
                   }}
                   type="button"
-                  onClick={() => setActive(stepIndex)}
+                  onClick={() => goToStep(stepIndex)}
                   className="flex min-w-0 flex-1 flex-col items-center"
                   aria-current={isActive ? "step" : undefined}
                 >
@@ -175,33 +182,36 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
         </div>
       </div>
 
-      <div className="relative rounded-[16px] border border-[#8365E3] bg-[#110528] p-4 md:p-5">
+      <div className="mb-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={isFirst}
+          className={stepNavBtn}
+        >
+          ← Back
+        </button>
+        <button type="button" onClick={handleNext} className={stepNavBtn}>
+          {isLast ? "Done" : "Next →"}
+        </button>
+      </div>
+
+      <div className="rounded-[16px] border border-[#8365E3] bg-[#110528] p-4 md:p-5">
         <motion.div
           key={`content-${active}`}
           className={cn(dayMdClassName, "min-h-[80px]")}
-          initial={reduceMotion ? false : { opacity: 0, x: 10 }}
+          initial={
+            reduceMotion ? false : { opacity: 0, x: direction * 12 }
+          }
           animate={{ opacity: 1, x: 0 }}
           transition={
-            reduceMotion ? { duration: 0 } : { duration: 0.28, ease: "easeOut" }
+            reduceMotion ? { duration: 0 } : { duration: 0.25, ease: "easeOut" }
           }
         >
           <ReactMarkdown components={programMdComponents}>
             {steps[active] ?? ""}
           </ReactMarkdown>
         </motion.div>
-        <div className="mt-4 flex items-center justify-end gap-2 md:absolute md:right-5 md:bottom-4 md:mt-0">
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={isFirst}
-            className={stepNavBtn}
-          >
-            ← Back
-          </button>
-          <button type="button" onClick={handleNext} className={stepNavBtn}>
-            {isLast ? "Done" : "Next →"}
-          </button>
-        </div>
       </div>
     </DaySectionCard>
   );
