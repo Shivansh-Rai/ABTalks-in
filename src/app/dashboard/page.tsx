@@ -51,7 +51,6 @@ import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-ba
 import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador-banner";
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
-import { WorkshopPromoModal } from "@/components/dashboard/workshop-promo-modal";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -674,7 +673,6 @@ export default async function DashboardPage({
         {enrollment.domain === "CLAUDE" ? <ClaudeFAQ /> : null}
       </main>
       <DashboardWalkthrough />
-      <WorkshopPromoModal />
     </div>
   );
 }
