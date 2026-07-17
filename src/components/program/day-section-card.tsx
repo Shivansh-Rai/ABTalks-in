@@ -1,31 +1,85 @@
+import {
+  BookOpen,
+  ClipboardCheck,
+  FolderGit2,
+  Hammer,
+  ListChecks,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export type DaySectionIconName =
+  | "mission"
+  | "repo"
+  | "objectives"
+  | "build"
+  | "resources"
+  | "verify";
+
+const SECTION_ICONS: Record<DaySectionIconName, LucideIcon> = {
+  mission: Target,
+  repo: FolderGit2,
+  objectives: ListChecks,
+  build: Hammer,
+  resources: BookOpen,
+  verify: ClipboardCheck,
+};
+
+export function DaySectionIcon({
+  name,
+  className,
+}: {
+  name: DaySectionIconName;
+  className?: string;
+}) {
+  const Icon = SECTION_ICONS[name];
+  return (
+    <span
+      className={cn(
+        "flex size-7 shrink-0 items-center justify-center rounded-md border border-[#8365E3]/40 bg-[#110528]",
+        className,
+      )}
+      aria-hidden
+    >
+      <Icon className="size-4 text-[#968BEC]" strokeWidth={2} />
+    </span>
+  );
+}
 
 export function DaySectionCard({
   title,
+  icon,
   iconPlaceholder,
   className,
   children,
 }: {
   title: string;
+  icon?: DaySectionIconName;
   iconPlaceholder?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
+  const showIcon = iconPlaceholder !== false;
+
   return (
     <section
       className={cn(
-        "rounded-[20px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-6 md:p-8",
+        "rounded-[16px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-4 md:p-5",
         className,
       )}
     >
-      <div className="mb-4 flex items-center gap-3">
-        {iconPlaceholder !== false && (
-          <span
-            className="size-9 shrink-0 rounded-md bg-[#D9D9D9]/80"
-            aria-hidden
-          />
-        )}
-        <h2 className="text-xl font-semibold text-[#968BEC] md:text-2xl">
+      <div className="mb-3 flex items-center gap-2.5">
+        {showIcon &&
+          (icon ? (
+            <DaySectionIcon name={icon} />
+          ) : (
+            <span
+              className="size-9 shrink-0 rounded-md bg-[#D9D9D9]/80"
+              aria-hidden
+            />
+          ))}
+        <h2 className="text-base font-semibold text-[#968BEC] md:text-lg">
           {title}
         </h2>
       </div>
@@ -105,4 +159,4 @@ export function ToolChip({ label }: { label: string }) {
 }
 
 export const dayMdClassName =
-  "text-base leading-[30px] text-white [&_a]:text-[#968BEC] [&_a]:underline [&_code]:rounded [&_code]:bg-[#110528] [&_code]:px-1.5 [&_code]:text-[#968BEC] [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-3 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[#8365E3]/40 [&_pre]:bg-[#110528] [&_pre]:p-4 [&_pre]:text-sm [&_pre]:text-[#A5A5A5] [&_strong]:font-semibold [&_strong]:text-[#7528C9]";
+  "text-sm leading-6 text-white [&_a]:text-[#968BEC] [&_a]:underline [&_code]:rounded [&_code]:bg-[#110528] [&_code]:px-1 [&_code]:text-xs [&_code]:text-[#968BEC] [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#8365E3]/40 [&_pre]:bg-[#110528] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-[#A5A5A5] [&_strong]:font-semibold [&_strong]:text-[#7528C9]";

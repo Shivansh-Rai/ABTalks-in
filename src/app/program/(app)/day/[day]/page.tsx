@@ -11,8 +11,7 @@ import { parseBriefMd } from "@/features/program/parse-brief";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { LiteYoutube } from "@/components/program/lite-youtube";
 import { MissionPanel } from "@/components/program/mission-panel";
-import { ConceptCheckPanel } from "@/components/program/concept-check-panel";
-import { DayShell } from "@/components/program/day-shell";
+import { ProgramDayClient } from "@/components/program/program-day-client";
 import { DayBuildSteps } from "@/components/program/day-build-steps";
 import {
   DaySectionCard,
@@ -66,16 +65,23 @@ export default async function ProgramDayPage({ params }: Props) {
   const hasRepo = !!brief.repoLayoutMd;
 
   return (
-    <DayShell
+    <ProgramDayClient
       dayNumber={day.dayNumber}
       dayTitle={day.title}
       moduleNumber={day.module.number}
       moduleTitle={day.module.title}
       days={curriculum.days}
+      estimatedMin={day.estimatedMin}
+      missionPoints={day.missionPoints}
+      memberFullName={member.fullName}
+      conceptStatus={conceptStatus}
+      showConceptCheck={
+        state === "AVAILABLE" || state === "PASSED" || state === "SKIPPED"
+      }
     >
-      <DaySectionCard title="Mission">
+      <DaySectionCard title="Mission" icon="mission">
         {(brief.missionTitle || day.title) && (
-          <h3 className="mb-3 text-xl font-semibold text-white md:text-2xl">
+          <h3 className="mb-2 text-base font-semibold text-white md:text-lg">
             {brief.missionTitle ?? day.title}
           </h3>
         )}
@@ -94,7 +100,7 @@ export default async function ProgramDayPage({ params }: Props) {
           )}
         >
           {brief.repoLayoutMd && (
-            <DaySectionCard title="Your Repo Layout (set this up first!)">
+            <DaySectionCard title="Your Repo Layout (set this up first!)" icon="repo">
               <div
                 className={cn(
                   dayMdClassName,
@@ -107,9 +113,9 @@ export default async function ProgramDayPage({ params }: Props) {
           )}
 
           {hasObjectives && (
-            <DaySectionCard title="Objectives">
+            <DaySectionCard title="Objectives" icon="objectives">
               {day.objectives.length > 0 && (
-                <ul className="mb-6 space-y-3 text-base leading-[30px] text-white md:text-xl">
+                <ul className={cn(dayMdClassName, "mb-4 space-y-1.5")}>
                   {day.objectives.map((o, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="text-[#968BEC]">-</span>
@@ -131,24 +137,27 @@ export default async function ProgramDayPage({ params }: Props) {
       )}
 
       {brief.buildSteps.length > 0 && (
-        <DayBuildSteps steps={brief.buildSteps} />
+        <DayBuildSteps dayNumber={dayNumber} steps={brief.buildSteps} />
       )}
 
       {day.videos.length > 0 && (
-        <DaySectionCard title="Reference Resources">
-          <div className="grid gap-6 sm:grid-cols-2">
+        <DaySectionCard title="Reference Resources" icon="resources">
+          <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2">
             {day.videos.map((video) => (
-              <div key={video.id} className="space-y-2">
-                <div className="flex items-start gap-2">
+              <div key={video.id} className="max-w-md space-y-2">
+                <div className="flex items-center gap-2">
                   <span
-                    className="mt-1.5 inline-block size-0 shrink-0 border-x-[10px] border-b-[16px] border-x-transparent border-b-[#970000]"
+                    className="inline-block size-0 shrink-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#970000]"
                     aria-hidden
                   />
-                  <p className="text-lg text-white md:text-2xl">{video.title}</p>
+                  <p className="text-sm font-medium text-white">
+                    {video.title}
+                  </p>
                 </div>
                 <LiteYoutube
                   youtubeId={video.youtubeId}
                   title={video.title}
+                  compact
                   className="border-[#8365E3]/40"
                 />
               </div>
@@ -167,15 +176,6 @@ export default async function ProgramDayPage({ params }: Props) {
         dataRoomQuestions={brief.submitQuestions}
         verifyIntro={brief.submitIntroMd ?? undefined}
       />
-
-      {(state === "AVAILABLE" ||
-        state === "PASSED" ||
-        state === "SKIPPED") && (
-        <ConceptCheckPanel
-          dayNumber={dayNumber}
-          initialStatus={conceptStatus}
-        />
-      )}
-    </DayShell>
+    </ProgramDayClient>
   );
 }

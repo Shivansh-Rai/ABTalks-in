@@ -33,17 +33,20 @@ function DaySidebar({
   const moduleDays = days.filter((d) => d.moduleNumber === moduleNumber);
 
   return (
-    <aside className="sticky top-20 flex h-fit flex-col overflow-hidden rounded-[20px] border border-[#8365E3] bg-[#040B1C]">
-      <div className="border-b border-[#8365E3]/40 bg-gradient-to-b from-[#7528C9]/30 to-transparent px-4 py-5">
+    <aside className="sticky top-20 flex h-auto max-h-[50vh] flex-col overflow-hidden rounded-[20px] border border-[#8365E3] bg-[#040B1C] lg:h-[calc(100svh-5.5rem)] lg:max-h-none">
+      <div className="shrink-0 border-b border-[#8365E3]/40 bg-gradient-to-b from-[#7528C9]/30 to-transparent px-4 py-5">
         <p className="text-xs font-semibold uppercase tracking-wider text-[#968BEC]">
           Phase {moduleNumber}
         </p>
         <p className="mt-1 text-sm font-medium text-white">{moduleTitle}</p>
-        <p className="mt-3 font-display text-4xl font-bold text-white/90">
+        <p className="mt-3 font-display text-2xl font-bold text-white/90">
           Day {currentDay}
         </p>
       </div>
-      <nav className="max-h-[60vh] space-y-0.5 overflow-y-auto p-3" aria-label="Days in this phase">
+      <nav
+        className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-3"
+        aria-label="Days in this phase"
+      >
         {moduleDays.map((d) => {
           const locked = d.state === "LOCKED";
           const active = d.dayNumber === currentDay;
@@ -92,12 +95,36 @@ function DaySidebar({
   );
 }
 
+function DayMetaTag({
+  children,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "required";
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-3 py-1 text-xs font-semibold md:text-sm",
+        variant === "required"
+          ? "border-[#FF4B4B]/60 bg-[#FF4B4B]/10 text-[#FF8A8A]"
+          : "border-[#8365E3]/50 bg-[#110528] text-[#BCBCBC]",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function DayShell({
   dayNumber,
   dayTitle,
   moduleNumber,
   moduleTitle,
   days,
+  estimatedMin,
+  missionPoints,
+  onConceptCheckClick,
   children,
 }: {
   dayNumber: number;
@@ -105,6 +132,9 @@ export function DayShell({
   moduleNumber: number;
   moduleTitle: string;
   days: CurriculumDay[];
+  estimatedMin: number;
+  missionPoints: number;
+  onConceptCheckClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -116,7 +146,7 @@ export function DayShell({
             alt="ABTalks"
             width={202}
             height={53}
-            className="h-10 w-auto md:h-12"
+            className="h-8 w-auto md:h-9"
             priority
           />
         </Link>
@@ -129,15 +159,17 @@ export function DayShell({
             Phase {moduleNumber}: {moduleTitle}
           </p>
         </div>
-        <a
-          href="#concept-check"
-          className="inline-flex h-[58px] shrink-0 items-center justify-center rounded-[15px] border border-black bg-[#7364E6] px-6 text-base font-semibold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] md:text-xl"
+        <button
+          type="button"
+          onClick={onConceptCheckClick}
+          disabled={!onConceptCheckClick}
+        className="inline-flex h-10 shrink-0 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-4 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Concept check →
-        </a>
+        </button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(240px,352px)_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(240px,352px)_1fr] lg:items-stretch">
         <div className="hidden lg:block">
           <DaySidebar
             currentDay={dayNumber}
@@ -147,14 +179,19 @@ export function DayShell({
           />
         </div>
 
-        <div className="min-w-0 space-y-6">
-          <div className="relative overflow-hidden rounded-[20px] border border-[#8365E3]/30 bg-gradient-to-br from-[#7528C9]/40 via-[#110528] to-[#030712] px-6 py-10 md:px-10 md:py-14">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#968BEC]">
+        <div className="min-w-0 space-y-5">
+          <div className="relative overflow-hidden rounded-[16px] border border-[#8365E3]/30 bg-gradient-to-br from-[#7528C9]/40 via-[#110528] to-[#030712] px-5 py-6 md:px-7 md:py-8">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#968BEC]">
               Day {dayNumber}
             </p>
-            <h1 className="mt-2 max-w-3xl font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
+            <h1 className="mt-1.5 max-w-3xl font-display text-xl font-bold tracking-tight text-white md:text-2xl">
               {dayTitle}
             </h1>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <DayMetaTag>{missionPoints} pts</DayMetaTag>
+              <DayMetaTag>~{estimatedMin} min est.</DayMetaTag>
+              <DayMetaTag variant="required">Required</DayMetaTag>
+            </div>
           </div>
 
           {/* Mobile day rail */}

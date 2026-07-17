@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckList, type CheckItem } from "@/components/program/workbench/check-list";
+import { DaySectionIcon } from "@/components/program/day-section-card";
 import type { MissionState } from "@/features/program/missions";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import {
@@ -40,10 +41,10 @@ type Props = {
 };
 
 const figmaBtnClass =
-  "inline-flex h-10 items-center justify-center rounded-[15px] border border-black bg-[#7364E6] px-5 text-base font-bold text-white shadow-[inset_4px_4px_4px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90";
+  "inline-flex h-9 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-4 text-sm font-bold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] hover:bg-[#7364E6]/90";
 
 const cardClass =
-  "rounded-[20px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-6 md:p-8";
+  "rounded-[16px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-4 md:p-5";
 
 function MentorFeedbackCard({ feedback }: { feedback: string }) {
   return (
@@ -233,8 +234,8 @@ export function MissionPanel({
         id="mission-verify"
         className={cn(cardClass, "border-amber-500/40 text-sm text-[#BCBCBC]")}
       >
-        You skipped this mission (0 points). The concept check below is still
-        available.
+        You skipped this mission (0 points). Use the Concept check button
+        in the header when you are ready.
       </div>
     );
   }
@@ -250,12 +251,9 @@ export function MissionPanel({
 
   return (
     <div id="mission-verify" className={cn(cardClass, "space-y-5")}>
-      <div className="flex items-center gap-3">
-        <span
-          className="size-9 shrink-0 rounded-md bg-[#D9D9D9]/80"
-          aria-hidden
-        />
-        <h2 className="text-xl font-semibold text-[#968BEC] md:text-2xl">
+      <div className="flex items-center gap-2.5">
+        <DaySectionIcon name="verify" />
+        <h2 className="text-base font-semibold text-[#968BEC] md:text-lg">
           {sectionTitle(missionType)}
         </h2>
       </div>
@@ -281,12 +279,12 @@ export function MissionPanel({
       )}
 
       {missionType === "DATA_ROOM" && verifyIntro && (
-        <p className="text-base text-[#BCBCBC] md:text-xl">{verifyIntro}</p>
+        <p className="text-sm text-[#BCBCBC]">{verifyIntro}</p>
       )}
 
       {missionType === "SHIP_IT" && (
-        <div className="space-y-3">
-          <p className="text-base text-[#BCBCBC]">
+        <div className="space-y-2">
+          <p className="text-sm text-[#BCBCBC]">
             Build locally in VS Code, then push your artifact to{" "}
             <a
               href={githubRepoUrl}
@@ -366,7 +364,7 @@ export function MissionPanel({
                 : null;
             return (
               <div key={i} className="space-y-3">
-                <p className="text-base font-semibold text-white md:text-2xl">
+                <p className="text-sm font-semibold text-white">
                   {question
                     ? `Q${i + 1}) ${question}`
                     : `Answer ${i + 1}`}
@@ -380,7 +378,7 @@ export function MissionPanel({
                     setAnswers(next);
                   }}
                   placeholder="Type answer here..."
-                  className="h-[70px] rounded-[10px] border border-[#8365E3] bg-[#110528] px-5 text-base text-white placeholder:text-[#8F8F8F]"
+                  className="h-12 rounded-[10px] border border-[#8365E3] bg-[#110528] px-4 text-sm text-white placeholder:text-[#8F8F8F]"
                 />
               </div>
             );

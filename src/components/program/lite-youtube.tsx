@@ -10,16 +10,18 @@ export function LiteYoutube({
   youtubeId,
   title,
   className,
+  compact = false,
 }: {
   youtubeId: string;
   title: string;
   className?: string;
+  compact?: boolean;
 }) {
   const [active, setActive] = useState(false);
 
   return (
-    <div className={cn("overflow-hidden rounded-xl border bg-black", className)}>
-      <div className="relative aspect-video">
+    <div className={cn("overflow-hidden rounded-lg border bg-black", className)}>
+      <div className={cn("relative w-full", compact ? "aspect-video max-h-[160px]" : "aspect-video")}>
         {active ? (
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1`}
@@ -42,7 +44,7 @@ export function LiteYoutube({
               className="h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
             />
             <span className="absolute inset-0 flex items-center justify-center">
-              <PlayCircle className="size-14 text-white drop-shadow-lg" />
+              <PlayCircle className={cn("text-white drop-shadow-lg", compact ? "size-10" : "size-14")} />
             </span>
           </button>
         )}
