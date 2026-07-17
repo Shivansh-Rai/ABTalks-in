@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckList, type CheckItem } from "@/components/program/workbench/check-list";
 import { DaySectionIcon } from "@/components/program/day-section-card";
+import { programMdComponents } from "@/components/program/markdown-code";
 import type { MissionState } from "@/features/program/missions";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import {
@@ -52,7 +53,7 @@ function MentorFeedbackCard({ feedback }: { feedback: string }) {
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#968BEC]">
         AI Mentor review
       </p>
-      <ReactMarkdown>{feedback}</ReactMarkdown>
+      <ReactMarkdown components={programMdComponents}>{feedback}</ReactMarkdown>
     </div>
   );
 }
@@ -61,8 +62,13 @@ function fireConfetti() {
   void confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
 }
 
-function sectionTitle(missionType: ProgramMissionType): string {
-  if (missionType === "DATA_ROOM") return "Let’s test your work!";
+function sectionTitle(
+  missionType: ProgramMissionType,
+  questionCount: number,
+): string {
+  if (missionType === "DATA_ROOM" || questionCount > 0) {
+    return "Let’s test your work!";
+  }
   if (missionType === "SHIP_IT") return "What we’ve achieved";
   return "Mission verification";
 }
@@ -107,7 +113,16 @@ export function MissionPanel({
         );
         return;
       } else if (missionType === "SHIP_IT") {
-        payload = {};
+        if ((missionState.dataRoomQuestionCount ?? 0) > 0) {
+          payload = {
+            answers: answers.map((a) => {
+              const n = Number(a);
+              return a.trim() !== "" && !Number.isNaN(n) ? n : a;
+            }),
+          };
+        } else {
+          payload = {};
+        }
       } else if (missionType === "DATA_ROOM") {
         payload = {
           answers: answers.map((a) => {
@@ -240,6 +255,8 @@ export function MissionPanel({
     );
   }
 
+  const questionCount = missionState.dataRoomQuestionCount ?? 0;
+
   const submitLabel =
     missionType === "SHIP_IT"
       ? submitting
@@ -254,7 +271,7 @@ export function MissionPanel({
       <div className="flex items-center gap-2.5">
         <DaySectionIcon name="verify" />
         <h2 className="text-base font-semibold text-[#968BEC] md:text-lg">
-          {sectionTitle(missionType)}
+          {sectionTitle(missionType, questionCount)}
         </h2>
       </div>
 
@@ -278,7 +295,7 @@ export function MissionPanel({
         </div>
       )}
 
-      {missionType === "DATA_ROOM" && verifyIntro && (
+      {verifyIntro && questionCount > 0 && (
         <p className="text-sm text-[#BCBCBC]">{verifyIntro}</p>
       )}
 
@@ -355,7 +372,7 @@ export function MissionPanel({
         </div>
       )}
 
-      {missionType === "DATA_ROOM" && missionState.dataRoomQuestionCount && (
+      {questionCount > 0 && (
         <div className="space-y-6">
           {answers.map((val, i) => {
             const question =
@@ -364,11 +381,17 @@ export function MissionPanel({
                 : null;
             return (
               <div key={i} className="space-y-3">
-                <p className="text-sm font-semibold text-white">
-                  {question
-                    ? `Q${i + 1}) ${question}`
-                    : `Answer ${i + 1}`}
-                </p>
+                {question ? (
+                  <div className="text-sm font-semibold text-white [&_p]:mb-0 [&_strong]:font-bold [&_strong]:text-white">
+                    <ReactMarkdown components={programMdComponents}>
+                      {`Q${i + 1}) ${question}`}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-sm font-semibold text-white">
+                    {`Answer ${i + 1}`}
+                  </p>
+                )}
                 <Input
                   id={`answer-${i}`}
                   value={val}

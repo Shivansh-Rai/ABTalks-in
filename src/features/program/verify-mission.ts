@@ -323,7 +323,10 @@ function verifyDataRoom(
       verdict: [{ check: "Answers", passed: false, detail: "Not configured" }],
     };
   }
-  if (payload.answers.length !== answers.length) {
+  const submittedAnswers = Array.isArray(payload?.answers)
+    ? payload.answers
+    : [];
+  if (submittedAnswers.length !== answers.length) {
     return {
       passed: false,
       verdict: [
@@ -337,7 +340,7 @@ function verifyDataRoom(
   }
 
   const verdict: VerdictLine[] = answers.map((ans, i) => {
-    const submitted = payload.answers[i]!;
+    const submitted = submittedAnswers[i]!;
     const passed = compareAnswer(submitted, ans);
     return {
       check: ans.check ?? `Answer ${i + 1}`,
@@ -498,8 +501,19 @@ export async function verifyMission(
   switch (day.missionType) {
     case "CODE_SPRINT":
       return verifyCodeSprint(spec, payload as CodeSprintPayload);
-    case "SHIP_IT":
-      return verifyShipIt(spec, context.githubRepoUrl);
+    case "SHIP_IT": {
+      const hasAnswers =
+        Array.isArray(spec.answers) && (spec.answers as unknown[]).length > 0;
+      if (!hasAnswers) {
+        return verifyShipIt(spec, context.githubRepoUrl);
+      }
+      const answersResult = verifyDataRoom(spec, payload as DataRoomPayload);
+      const shipResult = await verifyShipIt(spec, context.githubRepoUrl);
+      return {
+        passed: answersResult.passed && shipResult.passed,
+        verdict: [...answersResult.verdict, ...shipResult.verdict],
+      };
+    }
     case "DATA_ROOM":
       return verifyDataRoom(spec, payload as DataRoomPayload);
     case "PROMPT_FORGE":

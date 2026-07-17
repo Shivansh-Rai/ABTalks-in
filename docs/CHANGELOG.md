@@ -1,5 +1,10 @@
 ## Pending reconcile
 
+- 2026-07-17 [rule] SHIP_IT missions may include missionSpec.answers; Day 3 requires both task answers and repo checks to pass
+- 2026-07-17 [convention] Program Day 3 full-aligned to curriculum sheet: coverage-chatbot-api SHIP_IT paths; verbatim 11 build steps
+- 2026-07-17 [convention] Program Day 2 build steps restored to full verbatim curriculum-sheet wording (no summarization)
+- 2026-07-17 [convention] Program Day 2 brief aligned to 11-step Ollama + Copilot/Cline curriculum sheet
+- 2026-07-17 [convention] Program Day 1 brief aligned to curriculum sheet (run hello.py step; concepts + stack in mission body)
 - 2026-07-17 [convention] Program Day 4 unlocked: full pandas/SQLite coverage ingestion brief + real SHIP_IT checks for coverage.db and structured_queries.md
 - 2026-07-17 [convention] Program day page uses Figma dark shell + briefMd section parser; no schema change
 - 2026-07-16 [convention] `allowedDevOrigins` auto-includes LAN IPv4s so Next 16 serves `/_next` JS on Network URL (fixes dead login form when opened via 192.168.x.x).

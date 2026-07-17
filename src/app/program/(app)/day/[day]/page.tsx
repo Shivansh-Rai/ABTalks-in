@@ -18,6 +18,7 @@ import {
   ToolChip,
   dayMdClassName,
 } from "@/components/program/day-section-card";
+import { programMdComponents } from "@/components/program/markdown-code";
 import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ day: string }> };
@@ -86,7 +87,9 @@ export default async function ProgramDayPage({ params }: Props) {
           </h3>
         )}
         <div className={dayMdClassName}>
-          <ReactMarkdown>{brief.missionBodyMd}</ReactMarkdown>
+          <ReactMarkdown components={programMdComponents}>
+            {brief.missionBodyMd}
+          </ReactMarkdown>
         </div>
       </DaySectionCard>
 
@@ -107,7 +110,9 @@ export default async function ProgramDayPage({ params }: Props) {
                   "rounded-[20px] border border-[#8365E3] bg-[#110528] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
                 )}
               >
-                <ReactMarkdown>{brief.repoLayoutMd}</ReactMarkdown>
+                <ReactMarkdown components={programMdComponents}>
+                  {brief.repoLayoutMd}
+                </ReactMarkdown>
               </div>
             </DaySectionCard>
           )}
