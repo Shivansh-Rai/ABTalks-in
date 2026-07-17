@@ -72,6 +72,7 @@ export default async function ProgramDayPage({ params }: Props) {
       moduleNumber={day.module.number}
       moduleTitle={day.module.title}
       days={curriculum.days}
+      modules={curriculum.modules}
       estimatedMin={day.estimatedMin}
       missionPoints={day.missionPoints}
       memberFullName={member.fullName}

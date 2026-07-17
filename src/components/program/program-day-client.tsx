@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { CurriculumDay } from "@/features/program/progression";
+import type {
+  CurriculumDay,
+  CurriculumModule,
+} from "@/features/program/progression";
 import { DayShell } from "@/components/program/day-shell";
 import { ConceptCheckDialog } from "@/components/program/concept-check-panel";
 
@@ -15,6 +18,7 @@ export function ProgramDayClient({
   moduleNumber,
   moduleTitle,
   days,
+  modules,
   estimatedMin,
   missionPoints,
   conceptStatus,
@@ -27,6 +31,7 @@ export function ProgramDayClient({
   moduleNumber: number;
   moduleTitle: string;
   days: CurriculumDay[];
+  modules: CurriculumModule[];
   estimatedMin: number;
   missionPoints: number;
   conceptStatus: ConceptStatus;
@@ -44,6 +49,7 @@ export function ProgramDayClient({
         moduleNumber={moduleNumber}
         moduleTitle={moduleTitle}
         days={days}
+        modules={modules}
         estimatedMin={estimatedMin}
         missionPoints={missionPoints}
         onConceptCheckClick={

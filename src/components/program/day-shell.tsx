@@ -1,8 +1,13 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { CheckCircle2, Circle, Lock, SkipForward } from "lucide-react";
-import type { CurriculumDay, DayState } from "@/features/program/progression";
+import type {
+  CurriculumDay,
+  CurriculumModule,
+  DayState,
+} from "@/features/program/progression";
 import { cn } from "@/lib/utils";
 
 function StateIcon({ state }: { state: DayState }) {
@@ -23,13 +28,27 @@ function DaySidebar({
   moduleNumber,
   moduleTitle,
   days,
+  modules,
 }: {
   currentDay: number;
   moduleNumber: number;
   moduleTitle: string;
   days: CurriculumDay[];
+  modules: CurriculumModule[];
 }) {
-  const moduleDays = days.filter((d) => d.moduleNumber === moduleNumber);
+  const activeRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const el = activeRef.current;
+    if (!el) return;
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({
+      block: "nearest",
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  }, [currentDay]);
 
   return (
     <aside className="sticky top-20 flex h-auto max-h-[50vh] flex-col overflow-hidden rounded-[20px] border border-[#8365E3] bg-[#040B1C] lg:h-[calc(100svh-5.5rem)] lg:max-h-none">
@@ -43,50 +62,91 @@ function DaySidebar({
         </p>
       </div>
       <nav
-        className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-3"
-        aria-label="Days in this phase"
+        className="scrollbar-program-purple min-h-0 flex-1 space-y-4 overflow-y-auto p-3 pr-2"
+        aria-label="Course phases and days"
       >
-        {moduleDays.map((d) => {
-          const locked = d.state === "LOCKED";
-          const active = d.dayNumber === currentDay;
-          const className = cn(
-            "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-            active
-              ? "bg-[#7364E6]/25 text-white"
-              : locked
-                ? "cursor-not-allowed text-[#8F8F8F]"
-                : "text-[#BCBCBC] hover:bg-white/5 hover:text-white",
-          );
-
-          if (locked) {
-            return (
-              <span key={d.dayNumber} className={className}>
-                <StateIcon state={d.state} />
-                <span className="truncate">
-                  Day {d.dayNumber}
-                  <span className="ml-1 hidden text-xs opacity-70 sm:inline">
-                    · {d.title}
-                  </span>
-                </span>
-              </span>
-            );
-          }
-
+        {modules.map((mod) => {
+          const moduleDays = days.filter((d) => d.moduleNumber === mod.number);
           return (
-            <Link
-              key={d.dayNumber}
-              href={`/program/day/${d.dayNumber}`}
-              className={className}
-              aria-current={active ? "page" : undefined}
-            >
-              <StateIcon state={d.state} />
-              <span className="truncate">
-                Day {d.dayNumber}
-                <span className="ml-1 hidden text-xs opacity-70 sm:inline">
-                  · {d.title}
-                </span>
-              </span>
-            </Link>
+            <div key={mod.number}>
+              <div className="mb-1.5 flex items-center gap-2 px-2">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: mod.color }}
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#968BEC]">
+                    Phase {mod.number}
+                  </p>
+                  <h3 className="truncate text-sm font-medium text-white">
+                    {mod.title}
+                  </h3>
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                {moduleDays.map((d) => {
+                  const locked = d.state === "LOCKED";
+                  const active = d.dayNumber === currentDay;
+                  const className = cn(
+                    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                    active
+                      ? "bg-[#7364E6]/25 text-white"
+                      : locked
+                        ? "cursor-not-allowed text-[#8F8F8F]"
+                        : "text-[#BCBCBC] hover:bg-white/5 hover:text-white",
+                  );
+
+                  if (locked) {
+                    return (
+                      <span
+                        key={d.dayNumber}
+                        ref={
+                          active
+                            ? (node) => {
+                                activeRef.current = node;
+                              }
+                            : undefined
+                        }
+                        className={className}
+                      >
+                        <StateIcon state={d.state} />
+                        <span className="truncate">
+                          Day {d.dayNumber}
+                          <span className="ml-1 hidden text-xs opacity-70 sm:inline">
+                            · {d.title}
+                          </span>
+                        </span>
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={d.dayNumber}
+                      href={`/program/day/${d.dayNumber}`}
+                      className={className}
+                      aria-current={active ? "page" : undefined}
+                      ref={
+                        active
+                          ? (node) => {
+                              activeRef.current = node;
+                            }
+                          : undefined
+                      }
+                    >
+                      <StateIcon state={d.state} />
+                      <span className="truncate">
+                        Day {d.dayNumber}
+                        <span className="ml-1 hidden text-xs opacity-70 sm:inline">
+                          · {d.title}
+                        </span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </nav>
@@ -121,6 +181,7 @@ export function DayShell({
   moduleNumber,
   moduleTitle,
   days,
+  modules,
   estimatedMin,
   missionPoints,
   onConceptCheckClick,
@@ -131,6 +192,7 @@ export function DayShell({
   moduleNumber: number;
   moduleTitle: string;
   days: CurriculumDay[];
+  modules: CurriculumModule[];
   estimatedMin: number;
   missionPoints: number;
   onConceptCheckClick?: () => void;
@@ -152,7 +214,7 @@ export function DayShell({
           type="button"
           onClick={onConceptCheckClick}
           disabled={!onConceptCheckClick}
-        className="inline-flex h-10 shrink-0 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-4 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-4 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Concept check →
         </button>
@@ -165,6 +227,7 @@ export function DayShell({
             moduleNumber={moduleNumber}
             moduleTitle={moduleTitle}
             days={days}
+            modules={modules}
           />
         </div>
 
@@ -190,6 +253,7 @@ export function DayShell({
               moduleNumber={moduleNumber}
               moduleTitle={moduleTitle}
               days={days}
+              modules={modules}
             />
           </div>
 

@@ -194,6 +194,30 @@
     transition: box-shadow var(--dur-2) var(--ease-spark);
   }
 
+  /* Thin purple scrollbar — day page left curriculum rail */
+  .scrollbar-program-purple {
+    scrollbar-width: thin;
+    scrollbar-color: #8365e3 transparent;
+  }
+
+  .scrollbar-program-purple::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar-program-purple::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 6px;
+  }
+
+  .scrollbar-program-purple::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #968bec 0%, #7364e6 100%);
+    border-radius: 999px;
+  }
+
+  .scrollbar-program-purple::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #b9b2f3 0%, #8365e3 100%);
+  }
+
   @keyframes spark-pulse {
     0% {
       transform: scale(1);
