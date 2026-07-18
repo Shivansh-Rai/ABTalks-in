@@ -226,7 +226,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
             </h1> */}
             <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
               AI{" "}
-              <span className="bg-gradient-to-r from-slate-300 via-blue-400 to-indigo-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#A196FB] via-[#C9C3FD] to-[#F8F8FC] bg-clip-text text-transparent">
                 Cohort
               </span>
             </h1>
