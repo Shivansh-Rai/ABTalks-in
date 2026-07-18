@@ -41,24 +41,33 @@ export function Roadmap() {
   }, [isInView, reduceMotion, started]);
 
   return (
-    <section ref={rootRef} className="relative px-4 py-16 md:px-8 md:py-24">
+    <section ref={rootRef} className="relative px-4 pt-4 pb-16 md:px-8 md:pt-8 md:pb-24">
       <h2 className="mb-12 text-center text-2xl font-bold tracking-tight text-white md:mb-16 md:text-3xl">
         Course Roadmap
       </h2>
 
+      {/*
+        Desktop: path spine at left-3 + (28/80)*w-20 ≈ 40px.
+        Nodes were sitting right of the line; center size-9 (36px) on that x → left 22px.
+        Empirically the visible dash sits ~40px; use left-[22px] so the circle straddles it.
+      */}
       <div className="relative mx-auto max-w-4xl">
         <TimelineConnector activatedPhases={activatedPhases} />
         <MobileTimelineConnector activatedPhases={activatedPhases} />
 
-        <ol className="relative space-y-8 md:space-y-10">
+        <ol className="relative space-y-5 md:space-y-6">
           {ROADMAP_PHASES.map((phase, index) => {
             const active = index < activatedPhases;
             return (
               <li
                 key={phase.phase}
-                className="relative flex items-center gap-4 md:gap-8"
+                className="relative flex min-h-9 items-center pl-12 md:min-h-9 md:pl-[4.25rem]"
               >
-                <div className="absolute left-0 md:relative md:left-auto">
+                {/*
+                  Mobile line at 1.375rem; node half = 1.125rem → left = 0.25rem
+                  Desktop path x=28 in 80px svg at left 12px → 40px; half node 18 → left 22px
+                */}
+                <div className="absolute top-1/2 left-1 z-10 -translate-y-1/2 md:left-[32px]">
                   <AnimatedNode
                     active={active}
                     accent={phase.accent}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
@@ -8,6 +9,82 @@ import { Roadmap } from "@/components/program/roadmap/Roadmap";
 import { cn } from "@/lib/utils";
 
 type Cta = { label: string; href: string };
+
+/** Reference connector: circular dots + chevron, blue→purple neon glow. */
+function HowItWorksConnector() {
+  const uid = useId().replace(/:/g, "");
+  const gradId = `hiw-grad-${uid}`;
+  const glowId = `hiw-glow-${uid}`;
+
+  // viewBox units tuned to reference proportions:
+  // dot r≈1.55, pitch≈5 (gap ≈ diameter), ~18 dots, gap before chevron ≈ 6–7
+  const dotCount = 18;
+  const dotR = 1.55;
+  const pitch = 5;
+  const startX = 2.5;
+  const lastDotX = startX + (dotCount - 1) * pitch;
+  const chevronX = lastDotX + 7.5;
+  const midY = 14;
+  const viewW = chevronX + 16;
+
+  return (
+    <svg
+      viewBox={`0 0 ${viewW} 28`}
+      className="h-7 w-full overflow-visible"
+      fill="none"
+      aria-hidden
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <defs>
+        <linearGradient
+          id={gradId}
+          gradientUnits="userSpaceOnUse"
+          x1={startX}
+          y1={midY}
+          x2={lastDotX}
+          y2={midY}
+        >
+          <stop offset="0%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#8B5CF6" />
+        </linearGradient>
+        <filter
+          id={glowId}
+          x="-80%"
+          y="-80%"
+          width="260%"
+          height="260%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.35" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <g filter={`url(#${glowId})`}>
+        {Array.from({ length: dotCount }, (_, i) => (
+          <circle
+            key={i}
+            cx={startX + i * pitch}
+            cy={midY}
+            r={dotR}
+            fill={`url(#${gradId})`}
+          />
+        ))}
+        {/* Chevron > — ~90° tip, stroke ~2× dot thickness, rounded caps */}
+        <path
+          d={`M${chevronX} ${midY - 7.5} L${chevronX + 10} ${midY} L${chevronX} ${midY + 7.5}`}
+          stroke="#8B5CF6"
+          strokeWidth={3.1}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    </svg>
+  );
+}
 
 const requirements = [
   {
@@ -192,58 +269,58 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
       <section className="flex flex-wrap items-end justify-center gap-x-2 gap-y-1 px-4 pb-8 md:gap-x-4 md:pb-12">
         <span
           className="font-semibold leading-none"
-          style={{ fontSize: "clamp(4rem, 12vw, 8rem)", color: "#F0AA5B" }}
+          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#F0AA5B" }}
         >
           8
         </span>
-        <span className="mb-2 text-2xl font-medium md:text-5xl">Phases</span>
+        <span className="mb-2 text-xl font-medium md:text-5xl">Phases</span>
         <span
           className="ml-8 font-semibold leading-none md:ml-12"
-          style={{ fontSize: "clamp(4rem, 12vw, 8rem)", color: "#6AE276" }}
+          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#6AE276" }}
         >
           31
         </span>
-        <span className="mb-2 text-2xl font-medium md:text-5xl">Days</span>
+        <span className="mb-2 text-xl font-medium md:text-5xl">Days</span>
       </section>
 
       {/* Course roadmap */}
       <Roadmap />
 
       {/* How it works */}
-      <section className="px-4 py-12 md:px-8 md:py-16">
+      <section className="px-4 py-12 md:px-8 md:py-12">
         <h2 className="mb-10 text-center text-2xl font-bold text-[#968BEC] underline decoration-[#968BEC]/50 underline-offset-8 md:text-[32px]">
           How it works
         </h2>
         <div className="mx-auto max-w-6xl">
           <div className="hidden md:flex md:items-start md:justify-between">
             {HOW_IT_WORKS_STEPS.map((step, i) => (
-              <div
-                key={step.step}
-                className="relative flex flex-1 flex-col items-center"
-              >
-                {i > 0 && (
+              <div key={step.step} className="contents">
+                <div className="flex min-w-0 flex-1 flex-col items-center">
                   <div
-                    className="absolute right-1/2 top-10 h-0.5 w-full -translate-x-1/2 border-t-2 border-dashed border-[#8147E7]/80"
-                    style={{ width: "calc(100% + 2rem)", left: "-50%" }}
-                    aria-hidden
-                  />
-                )}
-                <div
-                  className="relative z-10 flex size-16 items-center justify-center rounded-full border-[3px] text-xl font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.25)]"
-                  style={{
-                    borderColor: "#1E1B37",
-                    background:
-                      "radial-gradient(circle, rgba(62,34,111,1) 0%, rgba(0,0,0,1) 100%)",
-                  }}
-                >
-                  {step.step}
+                    className="relative z-10 flex size-16 items-center justify-center rounded-full border-[3px] text-xl font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.25)]"
+                    style={{
+                      borderColor: "#1E1B37",
+                      background:
+                        "radial-gradient(circle, rgba(62,34,111,1) 0%, rgba(0,0,0,1) 100%)",
+                    }}
+                  >
+                    {step.step}
+                  </div>
+                  <p className="mt-4 text-center text-xl font-semibold">
+                    {step.title}
+                  </p>
+                  <p className="mt-2 max-w-[200px] text-center text-sm leading-snug text-[#E9E9E9]">
+                    {step.detail}
+                  </p>
                 </div>
-                <p className="mt-4 text-center text-xl font-semibold">
-                  {step.title}
-                </p>
-                <p className="mt-2 max-w-[200px] text-center text-sm leading-snug text-[#E9E9E9]">
-                  {step.detail}
-                </p>
+                {i < HOW_IT_WORKS_STEPS.length - 1 && (
+                  <div
+                    className="mt-5 flex w-[clamp(4.75rem,9vw,7.25rem)] shrink-0 items-center self-start px-2.5 lg:px-3.5"
+                    aria-hidden
+                  >
+                    <HowItWorksConnector />
+                  </div>
+                )}
               </div>
             ))}
           </div>

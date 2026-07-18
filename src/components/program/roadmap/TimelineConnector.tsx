@@ -41,7 +41,7 @@ export function TimelineConnector({
 
   return (
     <svg
-      className="pointer-events-none absolute left-3 top-6 hidden h-[calc(100%-3rem)] w-20 md:block lg:left-4"
+      className="pointer-events-none absolute top-8 bottom-6 left-3 hidden w-20 md:block lg:left-3"
       viewBox={`0 0 80 ${ROADMAP_PHASES.length * 100}`}
       preserveAspectRatio="none"
       aria-hidden
@@ -94,7 +94,7 @@ export function MobileTimelineConnector({
 
   return (
     <div
-      className="absolute bottom-6 left-[1.375rem] top-6 w-px md:hidden"
+      className="absolute top-6 bottom-6 left-[1.375rem] w-px md:hidden"
       aria-hidden
     >
       <div className="h-full w-full bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.12)_0,rgba(255,255,255,0.12)_4px,transparent_4px,transparent_10px)]" />

@@ -25,7 +25,7 @@ export type RoadmapPhase = {
 
 export const ROADMAP_PHASES: RoadmapPhase[] = [
   {
-    phase: 0,
+    phase: 1,
     displayNumber: "01",
     title: "Env & Tooling",
     subtitle: "Local AI stack, Git, Ollama",
@@ -37,7 +37,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Cpu,
   },
   {
-    phase: 1,
+    phase: 2,
     displayNumber: "02",
     title: "Data",
     subtitle: "Coverage data & structured queries",
@@ -49,7 +49,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Database,
   },
   {
-    phase: 2,
+    phase: 3,
     displayNumber: "03",
     title: "Embeddings & Vector",
     subtitle: "Knowledge base + retrieval",
@@ -61,7 +61,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Sparkles,
   },
   {
-    phase: 3,
+    phase: 4,
     displayNumber: "04",
     title: "LLM & Prompting",
     subtitle: "Prompting, fine-tune basics",
@@ -73,7 +73,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: BrainCircuit,
   },
   {
-    phase: 4,
+    phase: 5,
     displayNumber: "05",
     title: "App Build",
     subtitle: "Streamlit chatbot + FastAPI",
@@ -85,7 +85,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Boxes,
   },
   {
-    phase: 5,
+    phase: 6,
     displayNumber: "06",
     title: "Agentic + MCP",
     subtitle: "Tools, agents, MCP servers",
@@ -97,7 +97,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Network,
   },
   {
-    phase: 6,
+    phase: 7,
     displayNumber: "07",
     title: "Governance & Eval",
     subtitle: "Guardrails, evals, safety",
@@ -109,7 +109,7 @@ export const ROADMAP_PHASES: RoadmapPhase[] = [
     icon: Scale,
   },
   {
-    phase: 7,
+    phase: 8,
     displayNumber: "08",
     title: "Docker / K8s / Prod",
     subtitle: "Ship to production",
