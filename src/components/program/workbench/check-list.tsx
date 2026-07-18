@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, ChevronDown, Circle, Loader2, X } from "lucide-react";
+import { useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export type CheckItem = {
@@ -94,7 +95,7 @@ function CheckRow({
 }
 
 export function CheckList({ items, running = false, className }: Props) {
-  const reduceMotion = useReducedMotion() ?? false;
+  const reduceMotion = useSafeReducedMotion();
 
   if (items.length === 0) {
     return (

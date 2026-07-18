@@ -2,12 +2,13 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   DaySectionCard,
   dayMdClassName,
 } from "@/components/program/day-section-card";
 import { programMdComponents } from "@/components/program/markdown-code";
+import { useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const MAX_VISIBLE_STEPS = 5;
@@ -34,7 +35,7 @@ function StepPointer() {
 export function DayBuildSteps({ steps }: { steps: string[] }) {
   const [active, setActive] = useState(0);
   const [direction, setDirection] = useState(1);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useSafeReducedMotion();
   const trackRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [pointerX, setPointerX] = useState<number | null>(null);

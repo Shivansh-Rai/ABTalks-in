@@ -1,8 +1,9 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { RoadmapPhase } from "@/data/roadmap";
+import { useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -16,7 +17,7 @@ export function RoadmapCard({
   index: number;
   active: boolean;
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useSafeReducedMotion();
   const Icon = phase.icon;
   const slideFrom = index % 2 === 0 ? 48 : 32;
 

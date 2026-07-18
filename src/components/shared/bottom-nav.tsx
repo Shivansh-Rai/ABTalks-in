@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Briefcase, Compass, Gift, Home, User } from "lucide-react";
+import { useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -28,7 +29,7 @@ type IndicatorRect = { x: number; y: number; w: number; h: number };
 
 export function BottomNav() {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useSafeReducedMotion();
 
   const navRef = useRef<HTMLElement | null>(null);
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);

@@ -1,4 +1,23 @@
+"use client";
+
 // Client-only consumers. Do NOT import in Server Components, middleware, or auth.config.
+import { useEffect, useState } from "react";
+import { useReducedMotion as useFramerReducedMotion } from "framer-motion";
+
+/**
+ * SSR-safe reduced-motion flag. Always `false` on the server and during the
+ * first client render so Framer Motion styles hydrate identically; flips to the
+ * real preference after mount.
+ */
+export function useSafeReducedMotion(): boolean {
+  const prefers = useFramerReducedMotion();
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(true);
+  }, []);
+  return ready && prefers === true;
+}
+
 export const EASE_SPARK = [0.22, 1, 0.36, 1] as const;
 export const EASE_SPARK_SOFT = [0.33, 1, 0.68, 1] as const;
 export const EASE_SPARK_OUT = [0.34, 1.4, 0.64, 1] as const; // spark/celebration only

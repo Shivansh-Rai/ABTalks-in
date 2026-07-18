@@ -1,8 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ROADMAP_PHASES } from "@/data/roadmap";
+import { useSafeReducedMotion } from "@/lib/motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -25,7 +26,7 @@ export function TimelineConnector({
 }: {
   activatedPhases: number;
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useSafeReducedMotion();
   const pathRef = useRef<SVGPathElement>(null);
   const [pathLength, setPathLength] = useState(0);
   const d = useMemo(() => buildPath(ROADMAP_PHASES.length), []);
@@ -89,7 +90,7 @@ export function MobileTimelineConnector({
 }: {
   activatedPhases: number;
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useSafeReducedMotion();
   const progress = Math.min(activatedPhases / ROADMAP_PHASES.length, 1);
 
   return (
