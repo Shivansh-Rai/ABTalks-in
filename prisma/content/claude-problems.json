@@ -4947,5 +4947,107 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 49,
+    "domain": "CLAUDE",
+    "title": "Day 49: Build Personal AI Playbook – Your Own Prompt & Workflow Command Center",
+    "problemStatement": "Welcome to Day 49 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 7 — Personal AI Systems & Reusable Prompt Engineering\n\nToday's focus: Learn how to build a personalized command center for your own AI prompts and workflows using Claude.\n\nYou'll create Personal AI Playbook, an interactive single-page application that turns your recurring AI tasks into reusable, modular workflows — complete with a block-based Prompt Builder and a Loop Builder that converts any normal prompt into a self-improving autonomous loop.\n\nTasks:\n1. Share your profession, primary AI use cases, and daily repetitive tasks.\n2. Identify your biggest productivity bottlenecks and preferred AI models.\n3. State your experience level and desired outcomes.\n4. Generate the complete, personalized Personal AI Playbook application.\n5. Explore your organized workflow library.\n6. Assemble a prompt from building blocks in the Prompt Builder.\n7. Turn a prompt into an autonomous loop in the Loop Builder.\n8. Save, favorite, search, and export your own workflows.\n9. Share your learning publicly.\n\nImportant:\nSet Claude's effort level to Low.\n\nEnsure every interaction is fully functional and the generated HTML contains zero syntax errors.\n\nIf Claude reaches its usage limit, wait for the reset period and continue later.\n\nSubmission: Share your GitHub commit URL containing screenshots, generated HTML application, saved workflow exports, and key learnings.",
+    "learningObjectives": [
+      "Design personalized AI workflow systems instead of one-off prompts",
+      "Build reusable, modular prompt building blocks",
+      "Understand how to convert any prompt into a self-improving autonomous loop",
+      "Design self-explanatory, first-glance-clear SaaS interfaces",
+      "Create production-quality, locally-persisted HTML applications using Claude"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/AGL6SNq2ccU"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 30,
+    "linkedinTemplate": "Day 49/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I built my own Personal AI Playbook using Claude.\n\nInstead of collecting one-off prompts, I built a system of reusable workflow blocks — a Prompt Builder to assemble prompts live, and a Loop Builder that turns any prompt into a self-improving autonomous loop.\n\n🧩 Modular Prompt Building Blocks\n⚙️ Live Prompt Assembly\n♻️ Autonomous Loop Builder\n📂 Personalized Workflow Library\n💾 Local-First, Import/Export Ready\n🎯 Built From My Own AI Habits\n\nBiggest takeaway:\n\nThe real productivity unlock isn't a bigger prompt library — it's a small set of reusable building blocks you can recombine for almost anything.\n\n#ClaudeAI #PromptEngineering #BuildWithClaude #AI #Productivity #HTML #JavaScript #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated HTML application, screenshots of the Dashboard, Prompt Builder, and Loop Builder, exported workflow JSON, and key learnings.",
+    "tags": [
+      "claude",
+      "day-49",
+      "personal-ai-playbook",
+      "prompt-engineering",
+      "workflow-automation",
+      "html",
+      "javascript",
+      "productivity"
+    ],
+    "dayContent": {
+      "title": "Build Personal AI Playbook",
+      "tagline": "Turn Your Own AI Habits Into Reusable Workflow Systems",
+      "module": "Personal AI Systems",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 30,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how to turn your own recurring AI use cases into a personalized system of reusable prompt building blocks, rather than a static library of one-off prompts — and how to make that system self-explanatory to anyone who opens it.",
+        "bullets": [
+          {
+            "label": "Modular Prompt Design",
+            "text": "Break prompts into reusable blocks — role, objective, context, constraints, and more — that recombine into thousands of variations."
+          },
+          {
+            "label": "Autonomous Loop Prompts",
+            "text": "Convert any one-shot prompt into a self-evaluating, self-improving loop with real stop conditions and safety rules."
+          },
+          {
+            "label": "Personalization From Interview",
+            "text": "Use an interview-driven build process so the final system matches your actual role, tools, and bottlenecks."
+          },
+          {
+            "label": "Self-Explanatory UX",
+            "text": "Design interfaces that make their own purpose obvious at a glance, not just after reading documentation."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Set Claude effort level to Low.",
+          "Start a new conversation.",
+          "Paste the Personal AI Playbook prompt.",
+          "Answer Claude's interview questions about your role, use cases, and bottlenecks.",
+          "Generate the complete HTML application.",
+          "Save the generated HTML file.",
+          "Open it locally in your browser.",
+          "Explore your personalized workflow library.",
+          "Assemble a prompt block-by-block in the Prompt Builder.",
+          "Convert a prompt into an autonomous loop in the Loop Builder.",
+          "Save, favorite, and search your own workflows.",
+          "Export your workflow library as a backup file.",
+          "Take screenshots.",
+          "Create a Day49 folder in your GitHub repository.",
+          "Create a day49.md file.",
+          "Upload screenshots, generated HTML file, exported workflow JSON, and key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/AGL6SNq2ccU"
+      },
+      "promptTemplate": "Personal AI Playbook\n\nYou are an expert AI workflow designer, prompt engineer, productivity consultant, UX designer, and senior frontend developer.\n\nInterview first, one question at a time using MCQs whenever possible (free text only when absolutely necessary). Your goal is to understand how the user actually uses AI.\n\nDiscover things like:\n\n* Profession or role\n* Primary AI use cases\n* Daily repetitive tasks\n* Biggest productivity bottlenecks\n* Preferred AI models\n* Experience level\n* Desired outcomes\n\nOnly begin building after you have enough context.\n\nGenerate a premium, fully interactive Personal AI Playbook as a single self-contained HTML file using only HTML, CSS, and JavaScript (no external libraries).\n\nThe playbook should be completely personalized based on the interview. Instead of generic prompts, create reusable AI workflow systems that match the user's needs. Each workflow should include editable templates, customizable variables, practical examples, best practices, and one-click copy.\n\nThe application should intelligently organize workflows into relevant categories instead of showing unnecessary ones.\n\nInclude a Prompt Builder that lets users assemble prompts from reusable building blocks such as role, objective, context, constraints, reasoning strategy, output format, tone, examples, and quality checks while showing a live preview.\n\nInclude a Loop Builder that converts any normal prompt into an autonomous looping prompt by allowing users to define goals, evaluation criteria, improvement strategy, stop conditions, and safety rules.\n\nRather than storing hundreds of prompts, generate modular building blocks that can be combined into thousands of prompt variations tailored to the user's workflow. Give dropdown options wherever needed, to avoid workload on the user.\n\nAllow users to create, edit, duplicate, favorite, search, filter, and save their own workflows using local storage.\n\n## Make the purpose unmistakable to a first-time viewer\nSomeone opening this file cold — with no context, possibly just a screenshot — should understand what it is within seconds. To achieve that:\n- Include a persistent, plain-language explainer visible on the main view by default (not just a one-time onboarding modal), stating what the tool does and what its main sections are for. It can be dismissible, but only via user action.\n- Add a permanent, always-visible \"What is this?\" affordance (e.g. a small help button) that re-opens the full explanation on demand, at any time — not just on first run.\n- Use plain, self-descriptive navigation labels for every section (e.g. \"Dashboard,\" not invented jargon like \"Deck\" or \"Hub\"). If you introduce a novel term for a feature, define it in the UI the first time it appears.\n- In both the Prompt Builder and Loop Builder, every building block must carry a short, visible explanation of what it does and why it matters — shown both (a) in the block picker before it's added, and (b) inside the assembled block once it's in use. Someone should never have to guess what \"Reasoning strategy\" or \"Stop conditions\" means or why it's there.\n- Section subtitles and empty states should describe purpose in plain language, not just decorative flavor text (e.g. \"Your saved AI prompt workflows, at a glance\" rather than \"Your AI operating system, at a glance\").\n\nThe interface should feel like a polished commercial SaaS product with beautiful typography, smooth animations, responsive design, dark mode, keyboard shortcuts, onboarding, import/export, and thoughtful UX throughout.\n\nFocus on teaching users how to build reusable AI systems rather than simply giving them prompts.",
+      "engagement": {
+        "type": "Personal AI Playbook Showcase",
+        "description": "Share your Personal AI Playbook and explain the biggest insight you gained about turning your own AI habits into reusable workflows. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your Personal AI Playbook, generated HTML file, exported workflow library, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
