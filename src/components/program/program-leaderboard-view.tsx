@@ -10,21 +10,64 @@ function initials(name: string): string {
   return `${parts[0]!.slice(0, 1)}${parts[1]!.slice(0, 1)}`.toUpperCase();
 }
 
+const PLACE_STYLES = {
+  1: {
+    avatar:
+      "size-16 border-[3px] border-yellow-400 bg-[#5B4BDB] text-lg shadow-[0_0_22px_rgba(250,204,21,.45)] sm:size-[4.5rem]",
+    badge: "size-7 bg-yellow-400 text-black",
+    card: "min-h-[14rem] border-yellow-400/40 bg-gradient-to-b from-yellow-400/55 via-yellow-500/25 to-yellow-950/80 shadow-[0_12px_36px_rgba(250,204,21,.22)] sm:min-h-[16rem] lg:min-h-0 lg:flex-1",
+    score: "text-2xl font-extrabold text-yellow-200 sm:text-3xl",
+    name: "text-sm font-bold sm:text-base",
+    emptyCard:
+      "border-dashed border-yellow-400/25 bg-gradient-to-b from-yellow-400/15 via-yellow-500/5 to-transparent",
+  },
+  2: {
+    avatar:
+      "size-14 border-[3px] border-slate-300 bg-[#5B4BDB] text-base sm:size-16",
+    badge: "size-6 bg-slate-200 text-slate-800",
+    card: "min-h-[11rem] border-slate-300/35 bg-gradient-to-b from-slate-300/45 via-slate-500/20 to-slate-950/85 sm:min-h-[12.5rem] lg:min-h-0 lg:flex-[0.78]",
+    score: "text-xl font-bold text-slate-100 sm:text-2xl",
+    name: "text-xs font-semibold sm:text-sm",
+    emptyCard:
+      "border-dashed border-slate-400/25 bg-gradient-to-b from-slate-400/15 via-slate-500/5 to-transparent",
+  },
+  3: {
+    avatar:
+      "size-14 border-[3px] border-orange-400 bg-[#5B4BDB] text-base sm:size-16",
+    badge: "size-6 bg-orange-400 text-black",
+    card: "min-h-[9rem] border-orange-400/40 bg-gradient-to-b from-orange-400/50 via-orange-600/20 to-orange-950/85 sm:min-h-[10.5rem] lg:min-h-0 lg:flex-[0.62]",
+    score: "text-xl font-bold text-orange-100 sm:text-2xl",
+    name: "text-xs font-semibold sm:text-sm",
+    emptyCard:
+      "border-dashed border-orange-400/25 bg-gradient-to-b from-orange-400/15 via-orange-500/5 to-transparent",
+  },
+} as const;
+
 function PodiumCard({
   row,
   place,
 }: {
-  row: ProgramLeaderboardRow;
+  row: ProgramLeaderboardRow | null;
   place: 1 | 2 | 3;
 }) {
   const isFirst = place === 1;
+  const filled = row !== null;
+  const styles = PLACE_STYLES[place];
 
   return (
-    <div className="flex flex-col items-center">
-      <div className={cn("relative", isFirst ? "mb-5" : "mb-4")}>
+    <div
+      className={cn(
+        "flex h-full min-w-0 flex-1 flex-col items-center justify-end",
+        isFirst && "z-[1]",
+      )}
+    >
+      <div className={cn("relative shrink-0", isFirst ? "mb-3" : "mb-2.5")}>
         {isFirst && (
           <div
-            className="absolute -top-10 left-1/2 -translate-x-1/2 text-5xl"
+            className={cn(
+              "absolute -top-6 left-1/2 -translate-x-1/2 text-xl sm:text-2xl",
+              !filled && "opacity-40 grayscale",
+            )}
             aria-hidden
           >
             👑
@@ -33,25 +76,19 @@ function PodiumCard({
 
         <div
           className={cn(
-            "flex items-center justify-center rounded-full object-cover font-bold text-white shadow-xl",
-            isFirst
-              ? "h-28 w-28 border-[5px] border-yellow-400 bg-[#5B4BDB] text-3xl shadow-[0_0_35px_rgba(250,204,21,.5)]"
-              : place === 2
-                ? "h-20 w-20 border-4 border-slate-300 bg-[#5B4BDB] text-2xl"
-                : "h-20 w-20 border-4 border-orange-400 bg-[#5B4BDB] text-2xl",
+            "flex items-center justify-center rounded-full font-bold text-white shadow-md transition-opacity",
+            styles.avatar,
+            !filled &&
+              "border-dashed border-white/20 bg-[#1a2333] text-[#64748B] shadow-none",
           )}
         >
-          {initials(row.fullName)}
+          {filled ? initials(row.fullName) : "—"}
         </div>
 
         <div
           className={cn(
-            "absolute -right-1 -bottom-1 flex items-center justify-center rounded-full font-bold shadow-lg",
-            isFirst
-              ? "h-10 w-10 bg-yellow-400 text-black"
-              : place === 2
-                ? "h-8 w-8 bg-slate-200 text-slate-800"
-                : "h-8 w-8 bg-orange-400 text-black",
+            "absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full text-xs font-bold shadow",
+            styles.badge,
           )}
         >
           {place}
@@ -60,54 +97,30 @@ function PodiumCard({
 
       <div
         className={cn(
-          "rounded-t-3xl text-center shadow-2xl",
-          isFirst
-            ? "relative w-52 border border-yellow-400/20 bg-gradient-to-b from-yellow-500/15 via-slate-900 to-slate-950 p-7 shadow-[0_15px_50px_rgba(250,204,21,.2)]"
-            : "w-48 border border-white/10 bg-gradient-to-b from-slate-800 to-slate-900 p-6",
+          "flex w-full flex-col rounded-t-2xl border text-center",
+          filled ? styles.card : cn(styles.card, styles.emptyCard, "opacity-90"),
         )}
       >
-        {/* {isFirst && (
-          <div className="absolute top-1 left-1/2 -translate-x-1/2 rounded-full bg-yellow-400/15 px-3 py-1 text-xs font-semibold text-yellow-300">
-            TOP 1
+        <div className="flex flex-1 flex-col justify-start px-2.5 pt-4 pb-5 sm:px-3 sm:pt-5 sm:pb-6">
+          <h3 className={cn("truncate text-white", styles.name)}>
+            {filled ? row.fullName : "Awaiting challenger"}
+          </h3>
+
+          <p className="mt-1 truncate text-[10px] text-white/70 sm:text-xs">
+            {filled ? `${row.company} · ${row.jobRole}` : "Open spot"}
+          </p>
+
+          <div className="mt-auto pt-6">
+            <div
+              className={cn(styles.score, !filled && "text-white/40")}
+            >
+              {filled ? row.totalScore.toLocaleString() : "—"}
+            </div>
+            <p className="mt-0.5 text-[10px] text-white/55 sm:text-xs">
+              Total Score
+            </p>
           </div>
-        )} */}
-
-        <h3
-          className={cn(
-            "truncate text-white",
-            isFirst ? "text-xl font-bold" : "text-lg font-semibold",
-          )}
-        >
-          {row.fullName}
-        </h3>
-
-        <p className="mt-1 truncate text-sm text-slate-400">
-          {row.company} · {row.jobRole}
-        </p>
-
-        <div
-          className={cn(
-            "mt-5 font-bold",
-            isFirst
-              ? "mt-6 text-4xl font-extrabold text-yellow-300"
-              : "text-3xl text-slate-100",
-          )}
-        >
-          {row.totalScore.toLocaleString()}
         </div>
-
-        <p className="mt-1 text-sm text-slate-400">Total Score</p>
-
-        <div
-          className={cn(
-            "mt-6 rounded-xl bg-gradient-to-b to-transparent",
-            isFirst
-              ? "mt-7 h-56 from-yellow-400/20"
-              : place === 2
-                ? "h-40 from-slate-500/20"
-                : "h-28 from-orange-400/20",
-          )}
-        />
       </div>
     </div>
   );
@@ -121,11 +134,12 @@ export function ProgramLeaderboardView({
   const first = rows.find((r) => r.rank === 1) ?? null;
   const second = rows.find((r) => r.rank === 2) ?? null;
   const third = rows.find((r) => r.rank === 3) ?? null;
+  const rest = rows.filter((r) => r.rank > 3);
 
   return (
-    <div className="-mx-4 -my-6 min-h-[calc(100svh-3.5rem)] bg-[#040A12] px-4 py-6 text-white md:-mx-4 md:px-6">
-      <header className="mb-8">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
+    <div className="-mx-4 -my-6 flex h-[calc(100svh-3.5rem)] flex-col overflow-hidden bg-[#040A12] px-6 py-6 text-white sm:px-8 md:px-10 lg:px-12">
+      <header className="mb-5 shrink-0">
+        <h1 className="font-display text-xl font-bold tracking-tight text-white md:text-2xl">
           Leaderboard
         </h1>
         <p className="mt-1 text-sm text-[#9CA3AF]">
@@ -133,69 +147,96 @@ export function ProgramLeaderboardView({
         </p>
       </header>
 
-      {(first || second || third) && (
-        <div className="mx-auto mb-12 flex max-w-5xl flex-col items-center justify-center gap-6 overflow-x-auto py-8 sm:flex-row sm:items-end sm:py-12">
-          {second && <PodiumCard row={second} place={2} />}
-          {first && <PodiumCard row={first} place={1} />}
-          {third && <PodiumCard row={third} place={3} />}
-        </div>
-      )}
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-hidden lg:flex-row lg:gap-8">
+        {/* Top 3 — static */}
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden lg:h-full lg:w-[40%] lg:max-w-[40%]">
+          <p className="mb-3 shrink-0 text-xs font-semibold tracking-wide text-[#64748B] uppercase">
+            Top 3
+          </p>
+          <div className="relative flex min-h-[22rem] flex-1 flex-col overflow-hidden rounded-2xl border border-[#8365E3]/35 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(115,100,230,0.18),transparent_55%),linear-gradient(180deg,rgba(12,18,36,0.95)_0%,rgba(7,11,20,0.98)_100%)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[26rem] sm:p-6 lg:min-h-0">
+            <div
+              className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#968BEC]/50 to-transparent"
+              aria-hidden
+            />
+            <div className="flex h-full min-h-[18rem] flex-1 items-end justify-between gap-3 pt-8 sm:gap-4 sm:pt-10 lg:min-h-0">
+              <PodiumCard row={second} place={2} />
+              <PodiumCard row={first} place={1} />
+              <PodiumCard row={third} place={3} />
+            </div>
+          </div>
+        </aside>
 
-      {rows.length === 0 && (
-        <p className="rounded-2xl border border-[#1E293B] bg-[#0A0F1C] px-6 py-10 text-center text-sm text-[#9CA3AF]">
-          No ranked members yet. Complete missions to appear on the board.
-        </p>
-      )}
-
-      {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[#1E293B] bg-[#070B14]/80">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-[#1E293B] text-xs font-semibold tracking-wide text-[#64748B] uppercase">
-                <th className="px-5 py-4">Rank</th>
-                <th className="px-5 py-4">Name</th>
-                <th className="px-5 py-4">Company</th>
-                <th className="px-5 py-4">Role</th>
-                <th className="px-5 py-4 text-center">Yrs</th>
-                <th className="px-5 py-4 text-center">M/C/C/P</th>
-                <th className="px-5 py-4 text-center">Clean%</th>
-                <th className="px-5 py-4 text-center">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.memberId}
-                  className={cn(
-                    "border-b border-[#1E293B]/80 last:border-0",
-                    row.isViewer && "bg-[#7364E6]/10",
-                  )}
-                >
-                  <td className="px-5 py-4 font-semibold text-white">
-                    {row.rank}
-                  </td>
-                  <td className="px-5 py-4 text-white">{row.fullName}</td>
-                  <td className="px-5 py-4 text-[#E2E8F0]">{row.company}</td>
-                  <td className="px-5 py-4 text-[#E2E8F0]">{row.jobRole}</td>
-                  <td className="px-5 py-4 text-center text-white">
-                    {row.yearsExperience}
-                  </td>
-                  <td className="px-5 py-4 text-center text-[#94A3B8]">
-                    {row.missionPoints}/{row.conceptPoints}/{row.commitPoints}/
-                    {row.projectPoints}
-                  </td>
-                  <td className="px-5 py-4 text-center text-[#94A3B8]">
-                    {row.cleanPassPct}%
-                  </td>
-                  <td className="px-5 py-4 text-center text-base font-bold text-white">
-                    {row.totalScore}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* Rankings — only this panel scrolls */}
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:w-[60%]">
+          <p className="mb-3 shrink-0 text-xs font-semibold tracking-wide text-[#64748B] uppercase">
+            Rankings
+          </p>
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-2xl border border-[#1E293B] bg-[#070B14]/80">
+            {rows.length === 0 ? (
+              <p className="px-6 py-12 text-center text-sm text-[#9CA3AF]">
+                No ranked members yet. Complete missions to appear on the board.
+              </p>
+            ) : (
+              <>
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-[#0A0F1C]">
+                    <tr className="border-b border-[#1E293B] text-xs font-semibold tracking-wide text-[#64748B] uppercase">
+                      <th className="px-4 py-3">Rank</th>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Company</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3 text-center">Yrs</th>
+                      <th className="px-4 py-3 text-center">M/C/C/P</th>
+                      <th className="px-4 py-3 text-center">Clean%</th>
+                      <th className="px-4 py-3 text-center">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rest.map((row) => (
+                      <tr
+                        key={row.memberId}
+                        className={cn(
+                          "border-b border-[#1E293B]/80 last:border-0",
+                          row.isViewer && "bg-[#7364E6]/10",
+                        )}
+                      >
+                        <td className="px-4 py-3 font-semibold text-white">
+                          {row.rank}
+                        </td>
+                        <td className="px-4 py-3 text-white">{row.fullName}</td>
+                        <td className="px-4 py-3 text-[#E2E8F0]">
+                          {row.company}
+                        </td>
+                        <td className="px-4 py-3 text-[#E2E8F0]">
+                          {row.jobRole}
+                        </td>
+                        <td className="px-4 py-3 text-center text-white">
+                          {row.yearsExperience}
+                        </td>
+                        <td className="px-4 py-3 text-center text-[#94A3B8]">
+                          {row.missionPoints}/{row.conceptPoints}/
+                          {row.commitPoints}/{row.projectPoints}
+                        </td>
+                        <td className="px-4 py-3 text-center text-[#94A3B8]">
+                          {row.cleanPassPct}%
+                        </td>
+                        <td className="px-4 py-3 text-center text-sm font-bold text-white">
+                          {row.totalScore}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {rest.length === 0 && (
+                  <p className="px-4 py-8 text-center text-xs text-[#9CA3AF]">
+                    Rank 4+ will show here as more members climb the board.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
