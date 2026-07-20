@@ -29,7 +29,6 @@ export function JoinCodeGate({
         return;
       }
       router.push(`/program/apply?code=${encodeURIComponent(res.data.joinCode)}`);
-      router.refresh();
     } finally {
       setBusy(false);
     }
