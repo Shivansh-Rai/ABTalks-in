@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -46,7 +47,8 @@ type RegistrationFormValues = {
   domain: RegisterPayloadInput["domain"];
   skills: string[];
   linkedinUrl: string;
-  phone: string;
+  countryCode: string;
+  phoneNumber: string;
   githubUsername: string;
   referralCode: string;
 };
@@ -107,6 +109,7 @@ export function RegistrationForm({
   const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const domainCardList = useMemo(
     () => (forceClaudeDomain ? [] : domainCards),
@@ -127,7 +130,8 @@ export function RegistrationForm({
       domain: forceClaudeDomain ? "CLAUDE" : (initialDomain ?? "SE"),
       skills: [],
       linkedinUrl: "",
-      phone: "",
+      countryCode: "+91",
+      phoneNumber: "",
       githubUsername: "",
       referralCode: initialRef,
     },
@@ -146,6 +150,14 @@ export function RegistrationForm({
   const skills = watch("skills") ?? [];
   const selectedDomain = watch("domain");
   const userType = watch("userType");
+
+  const handlePhoneChange = useCallback(
+    (v: { countryCode: string; phoneNumber: string; e164: string }) => {
+      setValue("countryCode", v.countryCode);
+      setValue("phoneNumber", v.phoneNumber);
+    },
+    [setValue],
+  );
 
   useEffect(() => {
     if (forceClaudeDomain) {
@@ -192,6 +204,10 @@ export function RegistrationForm({
   }
 
   async function onSubmit(values: RegistrationFormValues) {
+    if (values.countryCode === "+91" && !phoneVerified) {
+      toast.error("Please verify your phone number first.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const fd = new FormData();
@@ -200,7 +216,8 @@ export function RegistrationForm({
       fd.append("domain", values.domain);
       fd.append("skills", values.skills.join(","));
       fd.append("linkedinUrl", values.linkedinUrl ?? "");
-      fd.append("phone", values.phone ?? "");
+      fd.append("countryCode", values.countryCode);
+      fd.append("phoneNumber", values.phoneNumber ?? "");
       fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
 
@@ -596,20 +613,18 @@ export function RegistrationForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone Number</Label>
-        <Input
-          id="phone"
-          type="tel"
-          placeholder="+91 9876543210 or +1 555 123 4567"
-          autoComplete="tel"
-          {...register("phone")}
-          aria-invalid={!!errors.phone}
+        <input type="hidden" {...register("countryCode")} />
+        <input type="hidden" {...register("phoneNumber")} />
+        <PhoneVerifyField
+          defaultCountryCode="+91"
+          onChange={handlePhoneChange}
+          onVerifiedChange={setPhoneVerified}
+          disabled={isSubmitting}
         />
-        <p className="text-xs text-muted-foreground">
-          Optional. International format. Visible to admins only.
-        </p>
-        {errors.phone ? (
-          <p className="text-sm text-destructive">{errors.phone.message}</p>
+        {errors.phoneNumber ? (
+          <p className="text-sm text-destructive">
+            {errors.phoneNumber.message}
+          </p>
         ) : null}
       </div>
 

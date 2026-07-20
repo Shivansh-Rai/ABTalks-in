@@ -25,6 +25,8 @@ export const getUserWithProfile = cache(async (userId: string) => {
           isReadyForInterview: true,
           isCampusAmbassadorCandidate: true,
           ambassadorDismissedAt: true,
+          phone: true,
+          phoneVerified: true,
         },
       },
     },

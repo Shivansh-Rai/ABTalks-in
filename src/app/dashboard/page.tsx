@@ -49,6 +49,7 @@ import { isClaudeEnabled } from "@/lib/feature-flags";
 import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador-banner";
+import { PhoneVerifyNudge } from "@/components/dashboard/phone-verify-nudge";
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
 
@@ -332,6 +333,10 @@ export default async function DashboardPage({
           cleanPath={dashboardPathWithoutToast}
         />
       ) : null}
+      <PhoneVerifyNudge
+        phone={profile.phone}
+        phoneVerified={profile.phoneVerified}
+      />
       <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
         {quizAvailability.banner ? (
           <div className="mb-6">

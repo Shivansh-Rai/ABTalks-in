@@ -22,3 +22,18 @@ export function isProgramEnabled(): boolean {
 export function isProgramEntryBypassEnabled(): boolean {
   return process.env.SKIP_PRE_ASSESSMENT !== "false";
 }
+
+/**
+ * Local/dev bypass for phone OTP verification.
+ * When `OTP_DEV_BYPASS=true`, the MSG91 widget is skipped: no SMS is sent and the
+ * fixed dev code (see `otpDevCode`) verifies. For developers/CI only — never enable
+ * in production.
+ */
+export function isOtpDevBypassEnabled(): boolean {
+  return process.env.OTP_DEV_BYPASS === "true";
+}
+
+/** Fixed OTP accepted in dev-bypass mode. Defaults to "1234" (4 digits). */
+export function otpDevCode(): string {
+  return process.env.OTP_DEV_CODE ?? "1234";
+}

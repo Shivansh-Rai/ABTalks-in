@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { optionalPhoneSchema } from "@/lib/validations/phone";
+import {
+  INDIA_DIALING_CODE,
+  indianMobileNumberSchema,
+  optionalPhoneSchema,
+} from "@/lib/validations/phone";
 
 const empty = z.literal("");
 
@@ -47,7 +51,10 @@ const professionalFields = z.object({
 
 const registerPayloadBase = z.object({
   fullName: z.string().min(1, "Name is required").max(200),
-  phone: optionalPhoneSchema,
+  /** Dialing code, e.g. "+91". Drives whether OTP verification is required. */
+  countryCode: z.string().default(INDIA_DIALING_CODE),
+  /** National number (no country code). Required + valid when countryCode is +91. */
+  phoneNumber: z.string().default(""),
   domain: domainSchema,
   skills: z.array(z.string().min(1).max(50)).max(10).default([]),
   linkedinUrl: z.union([empty, z.string().url()]).default(""),
@@ -63,9 +70,29 @@ const registerPayloadBase = z.object({
  * Server-side registration payload (students + professionals).
  * `completeRegistrationAction` builds this from `FormData` (including default `userType`).
  */
-export const registerPayloadSchema = z.discriminatedUnion("userType", [
-  registerPayloadBase.merge(studentFields),
-  registerPayloadBase.merge(professionalFields),
-]);
+export const registerPayloadSchema = z
+  .discriminatedUnion("userType", [
+    registerPayloadBase.merge(studentFields),
+    registerPayloadBase.merge(professionalFields),
+  ])
+  .superRefine((val, ctx) => {
+    // India (+91) numbers are mandatory and must be a valid 10-digit mobile.
+    // OTP verification itself is enforced server-side in completeRegistration.
+    if (val.countryCode === INDIA_DIALING_CODE) {
+      if (!val.phoneNumber || val.phoneNumber.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          message: "Phone number is required",
+          path: ["phoneNumber"],
+        });
+      } else if (!indianMobileNumberSchema.safeParse(val.phoneNumber).success) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Enter a valid 10-digit Indian mobile number",
+          path: ["phoneNumber"],
+        });
+      }
+    }
+  });
 
 export type RegisterPayloadInput = z.infer<typeof registerPayloadSchema>;
