@@ -115,27 +115,9 @@
           "path": "chatbot.py"
         },
         {
-          "check": "chatbot.py uses the ollama client",
-          "kind": "contentMatches",
-          "path": "chatbot.py",
-          "regex": "ollama"
-        },
-        {
-          "check": "chatbot.py keeps conversation history",
-          "kind": "contentMatches",
-          "path": "chatbot.py",
-          "regex": "history"
-        },
-        {
           "check": "FastAPI app exists",
           "kind": "fileExists",
           "path": "coverage-chatbot-api/main.py"
-        },
-        {
-          "check": "/health endpoint defined",
-          "kind": "contentMatches",
-          "path": "coverage-chatbot-api/main.py",
-          "regex": "health"
         },
         {
           "check": "coverage-chatbot-api requirements.txt exists",
@@ -143,22 +125,14 @@
           "path": "coverage-chatbot-api/requirements.txt"
         },
         {
-          "check": "requirements.txt lists fastapi",
-          "kind": "contentMatches",
-          "path": "coverage-chatbot-api/requirements.txt",
-          "regex": "fastapi"
+          "check": ".gitignore exists",
+          "kind": "fileExists",
+          "path": ".gitignore"
         },
         {
-          "check": ".gitignore protects .venv",
-          "kind": "contentMatches",
-          "path": ".gitignore",
-          "regex": "\\.venv"
-        },
-        {
-          "check": "README has real content",
-          "kind": "minLines",
-          "path": "README.md",
-          "min": 3
+          "check": "README.md exists",
+          "kind": "fileExists",
+          "path": "README.md"
         }
       ]
     },
@@ -200,18 +174,6 @@
           "path": "data/claims.csv"
         },
         {
-          "check": "plans.csv has plan_id header",
-          "kind": "contentMatches",
-          "path": "data/plans.csv",
-          "regex": "plan_id"
-        },
-        {
-          "check": "claims.csv has claim_id header",
-          "kind": "contentMatches",
-          "path": "data/claims.csv",
-          "regex": "claim_id"
-        },
-        {
           "check": "coverage.db exists",
           "kind": "fileExists",
           "path": "coverage.db"
@@ -220,30 +182,6 @@
           "check": "structured_queries.md exists",
           "kind": "fileExists",
           "path": "structured_queries.md"
-        },
-        {
-          "check": "structured_queries.md has real content",
-          "kind": "minLines",
-          "path": "structured_queries.md",
-          "min": 15
-        },
-        {
-          "check": "structured_queries.md includes SELECT",
-          "kind": "contentMatches",
-          "path": "structured_queries.md",
-          "regex": "SELECT"
-        },
-        {
-          "check": "structured_queries.md includes a JOIN",
-          "kind": "contentMatches",
-          "path": "structured_queries.md",
-          "regex": "(?i)join"
-        },
-        {
-          "check": "structured_queries.md covers sample member questions",
-          "kind": "contentMatches",
-          "path": "structured_queries.md",
-          "regex": "(?i)(deductible|premium|pending|procedure)"
         }
       ]
     },

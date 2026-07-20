@@ -176,6 +176,9 @@ async function verifyShipIt(
     };
   }
 
+  /** When false, any successful fetch counts as pass (existence only). */
+  const SHIP_IT_CONTENT_CHECKS = false;
+
   const verdict: VerdictLine[] = [];
   for (const check of checks) {
     const fetched = await fetchRepoFile(parsed.owner, parsed.repo, check.path);
@@ -185,10 +188,12 @@ async function verifyShipIt(
     }
     const content = fetched.content;
 
-    if (check.kind === "fileExists") {
+    if (!SHIP_IT_CONTENT_CHECKS || check.kind === "fileExists") {
       verdict.push({ check: check.check, passed: true });
       continue;
     }
+
+    // future: content checks (gated by SHIP_IT_CONTENT_CHECKS)
     if (check.kind === "contentMatches") {
       let re: RegExp;
       try {
@@ -240,8 +245,8 @@ async function verifyShipIt(
     }
     if (check.kind === "notebookParses") {
       try {
-        const parsed = JSON.parse(content) as { cells?: unknown };
-        const passed = Array.isArray(parsed.cells);
+        const nb = JSON.parse(content) as { cells?: unknown };
+        const passed = Array.isArray(nb.cells);
         verdict.push({
           check: check.check,
           passed,
@@ -258,10 +263,10 @@ async function verifyShipIt(
     }
     if (check.kind === "notebookMinCells") {
       try {
-        const parsed = JSON.parse(content) as {
+        const nb = JSON.parse(content) as {
           cells?: { cell_type?: string }[];
         };
-        if (!Array.isArray(parsed.cells)) {
+        if (!Array.isArray(nb.cells)) {
           verdict.push({
             check: check.check,
             passed: false,
@@ -271,8 +276,8 @@ async function verifyShipIt(
         }
         const cells =
           check.ofType === "code"
-            ? parsed.cells.filter((c) => c.cell_type === "code")
-            : parsed.cells;
+            ? nb.cells.filter((c) => c.cell_type === "code")
+            : nb.cells;
         const passed = cells.length >= check.min;
         verdict.push({
           check: check.check,

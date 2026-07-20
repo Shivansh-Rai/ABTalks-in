@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-20 [rule] SHIP_IT verifies file existence only (content/minLines/notebook checks gated off); Day 3/4 repoChecks slimmed to unique paths — reseed with `npm run db:seed:program`
 - 2026-07-17 [convention] Program commit scoring + heatmap use America/Chicago (aligned with unlock); admin cohort form remains IST-labeled
 - 2026-07-17 [rule] Program day unlock uses America/Chicago cohort calendar + sequential gate (no unlock-on-pass); admin highestUnlockedDay is floor override
 - 2026-07-17 [env] Entry assessment skipped unless SKIP_PRE_ASSESSMENT=false; apply enrolls/waitlists directly (quiz code retained)
