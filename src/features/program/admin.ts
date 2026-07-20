@@ -1,5 +1,9 @@
 import "server-only";
-import type { ProgramCohortStatus, ProgramMemberStatus } from "@prisma/client";
+import type {
+  Prisma,
+  ProgramCohortStatus,
+  ProgramMemberStatus,
+} from "@prisma/client";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { IST, formatDateTimeIST } from "@/lib/date-utils";
@@ -13,11 +17,13 @@ import {
   getMemberProgressDay,
 } from "@/features/program/progression";
 import { askClaudeJson } from "@/lib/anthropic";
+import { generateProgramJoinCode } from "@/lib/program-auth";
 
 export type CohortOverview = {
   cohort: {
     id: string;
     name: string;
+    joinCode: string;
     status: ProgramCohortStatus;
     startsAt: string;
     endsAt: string;
@@ -65,20 +71,74 @@ function experienceBand(years: number): string {
   return "10+ yrs";
 }
 
+const cohortAdminSelect = {
+  id: true,
+  name: true,
+  joinCode: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  capacity: true,
+  resultsPublishedAt: true,
+  createdAt: true,
+} as const;
+
+export type AdminCohortListItem = {
+  id: string;
+  name: string;
+  joinCode: string;
+  status: ProgramCohortStatus;
+  startsAt: Date;
+  endsAt: Date;
+  capacity: number;
+  resultsPublishedAt: Date | null;
+  createdAt: Date;
+};
+
+/** Newest non-archived cohort (fallback when no cohortId in URL). */
 export async function getAdminProgramCohort() {
   return prisma.programCohort.findFirst({
     where: { status: { not: "ARCHIVED" } },
     orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      status: true,
-      startsAt: true,
-      endsAt: true,
-      capacity: true,
-      resultsPublishedAt: true,
-    },
+    select: cohortAdminSelect,
   });
+}
+
+export async function listAdminCohorts(): Promise<AdminCohortListItem[]> {
+  const rows = await prisma.programCohort.findMany({
+    orderBy: { createdAt: "desc" },
+    select: cohortAdminSelect,
+  });
+  return [
+    ...rows.filter((c) => c.status !== "ARCHIVED"),
+    ...rows.filter((c) => c.status === "ARCHIVED"),
+  ];
+}
+
+/** Resolve cohort by id, else newest non-archived. */
+export async function resolveAdminProgramCohort(cohortId?: string | null) {
+  if (cohortId) {
+    const byId = await prisma.programCohort.findUnique({
+      where: { id: cohortId },
+      select: cohortAdminSelect,
+    });
+    if (byId) return byId;
+  }
+  return getAdminProgramCohort();
+}
+
+async function allocateUniqueJoinCode(
+  tx: Prisma.TransactionClient,
+): Promise<string> {
+  for (let i = 0; i < 12; i++) {
+    const joinCode = generateProgramJoinCode();
+    const clash = await tx.programCohort.findUnique({
+      where: { joinCode },
+      select: { id: true },
+    });
+    if (!clash) return joinCode;
+  }
+  throw new Error("Could not generate a unique join code.");
 }
 
 export async function createOrUpdateCohort(
@@ -117,24 +177,23 @@ export async function createOrUpdateCohort(
             adminUserId: adminId,
             targetUserId: adminId,
             actionType: "PROGRAM_UPDATE_COHORT",
-            metadata: { cohortId: data.cohortId, ...data },
+            metadata: {
+              cohortId: data.cohortId,
+              name: data.name,
+              startsAt: data.startsAt,
+              endsAt: data.endsAt,
+              capacity: data.capacity,
+            },
           },
         });
         return data.cohortId;
       }
 
-      const other = await tx.programCohort.count({
-        where: { status: { not: "ARCHIVED" } },
-      });
-      if (other > 0) {
-        throw new Error(
-          "Only one non-archived cohort is allowed. Archive the current cohort first.",
-        );
-      }
-
+      const joinCode = await allocateUniqueJoinCode(tx);
       const created = await tx.programCohort.create({
         data: {
           name: data.name,
+          joinCode,
           startsAt: data.startsAt,
           endsAt: data.endsAt,
           capacity: data.capacity,
@@ -147,7 +206,7 @@ export async function createOrUpdateCohort(
           adminUserId: adminId,
           targetUserId: adminId,
           actionType: "PROGRAM_CREATE_COHORT",
-          metadata: { cohortId: created.id },
+          metadata: { cohortId: created.id, joinCode },
         },
       });
       return created.id;
@@ -157,6 +216,46 @@ export async function createOrUpdateCohort(
     return {
       ok: false,
       message: e instanceof Error ? e.message : "Could not save cohort.",
+    };
+  }
+}
+
+export async function regenerateJoinCode(
+  adminId: string,
+  cohortId: string,
+): Promise<{ ok: true; joinCode: string } | { ok: false; message: string }> {
+  try {
+    const joinCode = await prisma.$transaction(async (tx) => {
+      const existing = await tx.programCohort.findUnique({
+        where: { id: cohortId },
+        select: { id: true, joinCode: true },
+      });
+      if (!existing) throw new Error("Cohort not found.");
+
+      const next = await allocateUniqueJoinCode(tx);
+      await tx.programCohort.update({
+        where: { id: cohortId },
+        data: { joinCode: next },
+      });
+      await tx.adminAction.create({
+        data: {
+          adminUserId: adminId,
+          targetUserId: adminId,
+          actionType: "PROGRAM_REGENERATE_JOIN_CODE",
+          metadata: {
+            cohortId,
+            previousJoinCode: existing.joinCode,
+            joinCode: next,
+          },
+        },
+      });
+      return next;
+    });
+    return { ok: true, joinCode };
+  } catch (e) {
+    return {
+      ok: false,
+      message: e instanceof Error ? e.message : "Could not regenerate code.",
     };
   }
 }
@@ -171,18 +270,6 @@ export async function setCohortStatus(
     select: { id: true, status: true },
   });
   if (!cohort) return { ok: false, message: "Cohort not found." };
-
-  if (status !== "ARCHIVED") {
-    const other = await prisma.programCohort.count({
-      where: { status: { not: "ARCHIVED" }, id: { not: cohortId } },
-    });
-    if (other > 0) {
-      return {
-        ok: false,
-        message: "Another active cohort exists. Archive it first.",
-      };
-    }
-  }
 
   await prisma.$transaction(async (tx) => {
     await tx.programCohort.update({
@@ -239,6 +326,7 @@ export async function getCohortOverview(
     select: {
       id: true,
       name: true,
+      joinCode: true,
       status: true,
       startsAt: true,
       endsAt: true,
@@ -423,6 +511,7 @@ export async function getCohortOverview(
     cohort: {
       id: cohort.id,
       name: cohort.name,
+      joinCode: cohort.joinCode,
       status: cohort.status,
       startsAt: formatDateTimeIST(cohort.startsAt),
       endsAt: formatDateTimeIST(cohort.endsAt),
@@ -809,7 +898,8 @@ export async function getMemberAdminDetail(memberId: string) {
       enrolledAt: true,
       userId: true,
       cohortId: true,
-      user: { select: { email: true } },
+      user: { select: { email: true, image: true } },
+      cohort: { select: { id: true, name: true, startsAt: true, status: true } },
       missionSubmissions: {
         select: {
           dayNumber: true,
@@ -817,6 +907,7 @@ export async function getMemberAdminDetail(memberId: string) {
           passed: true,
           pointsAwarded: true,
           verdict: true,
+          payload: true,
           createdAt: true,
         },
         orderBy: [{ dayNumber: "asc" }, { attemptNumber: "asc" }],
@@ -861,7 +952,55 @@ export async function getMemberAdminDetail(memberId: string) {
       },
     },
   });
-  return member;
+  if (!member) return null;
+
+  const [entryAttempts, atRisk] = await Promise.all([
+    prisma.programEntryAttempt.findMany({
+      where: { userId: member.userId, cohortId: member.cohortId },
+      orderBy: { attemptNumber: "asc" },
+      select: {
+        attemptNumber: true,
+        aptitudeScore: true,
+        technicalScore: true,
+        passed: true,
+        submittedAt: true,
+      },
+    }),
+    getMemberAtRiskStatus(member.id, member.cohortId),
+  ]);
+
+  const { passedDays, skippedDays } = collectPassSkipSets(
+    member.missionSubmissions,
+  );
+  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const calendarDay = getCohortCalendarDay(member.cohort);
+  const behindBy = getBehindByDays(member.cohort, progressDay);
+
+  const dayStates = Array.from({ length: PROGRAM_TOTAL_DAYS }, (_, i) => {
+    const dayNumber = i + 1;
+    const dayPassed = passedDays.has(dayNumber);
+    const daySkipped = skippedDays.has(dayNumber);
+    return {
+      dayNumber,
+      state: dayPassed
+        ? ("PASSED" as const)
+        : daySkipped
+          ? ("SKIPPED" as const)
+          : dayNumber <= member.highestUnlockedDay
+            ? ("AVAILABLE" as const)
+            : ("LOCKED" as const),
+    };
+  });
+
+  return {
+    ...member,
+    entryAttempts,
+    atRiskReasons: atRisk.reasons,
+    behindBy,
+    progressDay,
+    calendarDay,
+    dayStates,
+  };
 }
 
 export async function getProgramContentTree() {

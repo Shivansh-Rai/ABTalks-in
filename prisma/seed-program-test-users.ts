@@ -191,7 +191,7 @@ async function ensureCohort(db: PrismaClient): Promise<{
   const existing = await db.programCohort.findFirst({
     where: { status: { not: "ARCHIVED" } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, name: true, status: true },
+    select: { id: true, name: true, status: true, joinCode: true },
   });
   if (existing) {
     if (existing.status === "DRAFT") {
@@ -211,9 +211,16 @@ async function ensureCohort(db: PrismaClient): Promise<{
   const endsAt = new Date(startsAt);
   endsAt.setUTCDate(endsAt.getUTCDate() + 38);
 
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let joinCode = "";
+  for (let i = 0; i < 8; i++) {
+    joinCode += alphabet[Math.floor(Math.random() * alphabet.length)]!;
+  }
+
   const created = await db.programCohort.create({
     data: {
       name: COHORT_NAME,
+      joinCode,
       startsAt,
       endsAt,
       capacity: 50,
@@ -221,6 +228,7 @@ async function ensureCohort(db: PrismaClient): Promise<{
     },
     select: { id: true, name: true },
   });
+  console.log(`[program-users] created cohort join code: ${joinCode}`);
   return { id: created.id, name: created.name, created: true };
 }
 

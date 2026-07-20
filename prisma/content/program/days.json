@@ -4,7 +4,7 @@
     "moduleNumber": 1,
     "title": "VS Code & Python Environment Setup",
     "missionType": "DATA_ROOM",
-    "briefMd": "## Mission: VS Code & Python Environment Setup\n\nInstall VS Code and Python, and get comfortable running Python code inside VS Code \u2014 the foundation for every day that follows. **Stack for this program:** VS Code + Ollama + Python + React.\n\n**Concepts to learn**\n\n- Why VS Code is the standard free editor for this program, and what the extension ecosystem gives you\n- Installing Python and verifying the install from a terminal\n- The VS Code Python extension (Microsoft) + Pylance for IntelliSense, plus the optional Jupyter extension\n- Running a Python file from inside VS Code\n- Virtual environments (`.venv`) and why every project gets its own\n- Selecting the right Python interpreter for a project in VS Code\n\n### Build steps\n\n1. **Install VS Code:** go to https://code.visualstudio.com and click Download for Mac (or Windows). **macOS:** open the downloaded .zip and drag Visual Studio Code into your Applications folder. **Windows:** run the installer, keeping default options (\"Add to PATH\" checked). Launch VS Code.\n2. *(macOS, recommended)* Enable the `code` terminal command: press `Cmd+Shift+P` \u2192 type \"Shell Command: Install 'code' command in PATH\" \u2192 Enter. This lets you type `code .` from any terminal to open that folder in VS Code.\n3. **Install Python:** go to https://www.python.org/downloads/ and download the latest Python 3.x. **macOS:** run the .pkg installer. **Windows:** run the installer and check **\"Add python.exe to PATH\"** before clicking Install.\n4. **Verify the install:** open a terminal (in VS Code: `` Ctrl+` ``) and run `python3 --version` (macOS) or `python --version` (Windows). You should see something like Python 3.12.x.\n5. **Open the Extensions panel** (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"Python,\" and install the one published by **Microsoft** \u2014 this also installs Pylance (IntelliSense, type checking). Optionally install \"Jupyter\" (Microsoft) too.\n6. **Create a folder for your projects and open it:** File \u2192 Open Folder. Create a file named `hello.py` containing `print(\"Hello from Python!\")`.\n7. **Run it:** click the Play button in the top right, or right-click in the editor \u2192 \"Run Python File in Terminal.\" Output appears in the integrated terminal at the bottom. If prompted to select an interpreter: `Cmd+Shift+P` \u2192 \"Python: Select Interpreter\" \u2192 pick your installed Python 3.x.\n8. **Set up a virtual environment** \u2014 recommended per project: in the terminal run `python3 -m venv .venv`, then activate it (**macOS/Linux:** `source .venv/bin/activate`; **Windows:** `.venv\\Scripts\\activate`). Your terminal prompt should now show `(.venv)` at the start.\n9. **Install a test package to confirm the venv works:** `pip install requests`. VS Code will detect the new `.venv` and prompt \"select this environment as your interpreter?\" \u2014 click **Yes** (or repeat `Cmd+Shift+P` \u2192 \"Python: Select Interpreter\" \u2192 choose the one showing `.venv`).\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the setup):\n\n1. What is the name of the **folder** created by the `python3 -m venv .venv` command?\n2. Which **company/publisher** publishes the official Python extension for VS Code?\n3. Which **test package** did you install to confirm your virtual environment works?\n",
+    "briefMd": "## Mission: VS Code & Python Environment Setup\n\nInstall VS Code and Python, and get comfortable running Python code inside VS Code — the foundation for every day that follows. **Stack for this program:** VS Code + Ollama + Python + React.\n\n**Concepts to learn**\n\n- Why VS Code is the standard free editor for this program, and what the extension ecosystem gives you\n- Installing Python and verifying the install from a terminal\n- The VS Code Python extension (Microsoft) + Pylance for IntelliSense, plus the optional Jupyter extension\n- Running a Python file from inside VS Code\n- Virtual environments (`.venv`) and why every project gets its own\n- Selecting the right Python interpreter for a project in VS Code\n\n### Build steps\n\n1. **Install VS Code:** go to https://code.visualstudio.com and click Download for Mac (or Windows). **macOS:** open the downloaded .zip and drag Visual Studio Code into your Applications folder. **Windows:** run the installer, keeping default options (\"Add to PATH\" checked). Launch VS Code.\n2. *(macOS, recommended)* Enable the `code` terminal command: press `Cmd+Shift+P` → type \"Shell Command: Install 'code' command in PATH\" → Enter. This lets you type `code .` from any terminal to open that folder in VS Code.\n3. **Install Python:** go to https://www.python.org/downloads/ and download the latest Python 3.x. **macOS:** run the .pkg installer. **Windows:** run the installer and check **\"Add python.exe to PATH\"** before clicking Install.\n4. **Verify the install:** open a terminal (in VS Code: `` Ctrl+` ``) and run `python3 --version` (macOS) or `python --version` (Windows). You should see something like Python 3.12.x.\n5. **Open the Extensions panel** (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"Python,\" and install the one published by **Microsoft** — this also installs Pylance (IntelliSense, type checking). Optionally install \"Jupyter\" (Microsoft) too.\n6. **Create a folder for your projects and open it:** File → Open Folder. Create a file named `hello.py` containing `print(\"Hello from Python!\")`.\n7. **Run it:** click the Play button in the top right, or right-click in the editor → \"Run Python File in Terminal.\" Output appears in the integrated terminal at the bottom. If prompted to select an interpreter: `Cmd+Shift+P` → \"Python: Select Interpreter\" → pick your installed Python 3.x.\n8. **Set up a virtual environment** — recommended per project: in the terminal run `python3 -m venv .venv`, then activate it (**macOS/Linux:** `source .venv/bin/activate`; **Windows:** `.venv\\Scripts\\activate`). Your terminal prompt should now show `(.venv)` at the start.\n9. **Install a test package to confirm the venv works:** `pip install requests`. VS Code will detect the new `.venv` and prompt \"select this environment as your interpreter?\" — click **Yes** (or repeat `Cmd+Shift+P` → \"Python: Select Interpreter\" → choose the one showing `.venv`).\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the setup):\n\n1. What is the name of the **folder** created by the `python3 -m venv .venv` command?\n2. Which **company/publisher** publishes the official Python extension for VS Code?\n3. Which **test package** did you install to confirm your virtual environment works?\n",
     "missionSpec": {
       "answers": [
         {
@@ -44,7 +44,7 @@
     "moduleNumber": 1,
     "title": "Ollama (Local LLM) + AI Coding Assistant Setup",
     "missionType": "DATA_ROOM",
-    "briefMd": "## Mission: Your own local AI, running on your laptop\n\nToday you install **Ollama** and run an open coding model **fully locally** \u2014 free, no API key, works offline. Then you wire it into VS Code as your AI pair programmer. This local model also powers your chatbot's LLM calls later in the program, so nothing in these 31 days requires a paid subscription.\n\n### Build steps\n\n1. **Install Ollama:** go to https://ollama.com and click Download for macOS/Windows/Linux. macOS: open the .zip/.dmg, move Ollama to Applications, and launch it (a menu-bar icon appears). Windows: run the installer; Ollama runs in the system tray.\n2. **Verify in a terminal:** `ollama --version`.\n3. **Pull a coding model sized to your machine's RAM:** 8 GB \u2192 `ollama pull qwen2.5-coder:3b`; 16 GB (best all-round default for this course) \u2192 `ollama pull qwen2.5-coder:7b`; 32 GB+ \u2192 `ollama pull qwen2.5-coder:14b` (or deepseek-coder-v2). The first pull downloads several GB \u2014 let it finish.\n4. **Test the model directly:** `ollama run qwen2.5-coder:7b` (swap in whichever size you pulled). Type a question, e.g. \"write a python function to reverse a string,\" confirm you get a sensible answer, then type `/bye` to exit. Ollama now automatically serves an API at `http://localhost:11434` any time it's running \u2014 no separate \"start server\" step.\n5. **Option A \u2014 GitHub Copilot Free + Ollama** (recommended if you have a GitHub account). Open Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"GitHub Copilot,\" and Install (this usually installs GitHub Copilot Chat too \u2014 install it separately if not). Reload VS Code if prompted.\n6. **Sign in:** a Copilot icon appears in the bottom-right status bar. Click it \u2192 \"Sign in to use Copilot\" \u2192 your browser opens \u2192 log in to GitHub \u2192 click Authorize. Back in VS Code, the status bar icon should no longer show an error badge.\n7. **Open the Chat panel:** `Cmd+Ctrl+I` (macOS) / `Ctrl+Alt+I` (Windows), or click the chat bubble icon in the title bar / Activity Bar. The chat panel opens, usually on the right, labeled \"Chat.\"\n8. **Open the model picker:** at the bottom of the chat input box there's a small dropdown showing the current model (e.g. \"GPT-4.1\" or \"Auto\"). Click it, then click \"Manage Models...\" at the bottom of the list (in some versions: gear icon \u2192 \"Manage Language Models\").\n9. **Add Ollama as a provider:** a quick-pick appears listing providers \u2014 Anthropic, Azure, Gemini, Groq, Ollama, OpenAI, OpenRouter, and more. Select Ollama. Important: the Ollama app must be running (check the menu-bar/tray icon) \u2014 VS Code queries `http://localhost:11434` and lists every model you've pulled. Check the box next to your model (e.g. `qwen2.5-coder:7b`) and press OK. If nothing is listed: run `ollama list` in a terminal to confirm models exist, and `curl http://localhost:11434` to confirm the server responds (\"Ollama is running\").\n10. **Select and use it:** click the model dropdown again \u2014 your Ollama model now appears under an \"Ollama\" section. Select it, type a prompt like \"write a python function that checks if a number is prime,\" and confirm the response is generated 100% locally (you can disconnect from the internet and it still works). Switch between your local model and Copilot's cloud models any time from the same dropdown.\n11. **Option B \u2014 no GitHub account?** Install the free, open-source Cline extension instead (Extensions view, search \"Cline,\" publisher saoudrizwan). Open its settings gear icon, set API Provider to \"Ollama\" (a native preset), Base URL to `http://localhost:11434`, and pick your pulled model \u2014 no sign-in required at all. Everywhere the rest of this course says \"ask Copilot\" or \"open the Chat panel,\" the same prompt works in Cline's panel instead.\n\n### Submit your answers\n\n1. On which **localhost port** does Ollama serve its API?\n2. Which terminal command **lists the models** you have pulled?\n3. What do you type inside an `ollama run` chat session to **exit**?\n",
+    "briefMd": "## Mission: Your own local AI, running on your laptop\n\nToday you install **Ollama** and run an open coding model **fully locally** — free, no API key, works offline. Then you wire it into VS Code as your AI pair programmer. This local model also powers your chatbot's LLM calls later in the program, so nothing in these 31 days requires a paid subscription.\n\n### Build steps\n\n1. **Install Ollama:** go to https://ollama.com and click Download for macOS/Windows/Linux. macOS: open the .zip/.dmg, move Ollama to Applications, and launch it (a menu-bar icon appears). Windows: run the installer; Ollama runs in the system tray.\n2. **Verify in a terminal:** `ollama --version`.\n3. **Pull a coding model sized to your machine's RAM:** 8 GB → `ollama pull qwen2.5-coder:3b`; 16 GB (best all-round default for this course) → `ollama pull qwen2.5-coder:7b`; 32 GB+ → `ollama pull qwen2.5-coder:14b` (or deepseek-coder-v2). The first pull downloads several GB — let it finish.\n4. **Test the model directly:** `ollama run qwen2.5-coder:7b` (swap in whichever size you pulled). Type a question, e.g. \"write a python function to reverse a string,\" confirm you get a sensible answer, then type `/bye` to exit. Ollama now automatically serves an API at `http://localhost:11434` any time it's running — no separate \"start server\" step.\n5. **Option A — GitHub Copilot Free + Ollama** (recommended if you have a GitHub account). Open Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"GitHub Copilot,\" and Install (this usually installs GitHub Copilot Chat too — install it separately if not). Reload VS Code if prompted.\n6. **Sign in:** a Copilot icon appears in the bottom-right status bar. Click it → \"Sign in to use Copilot\" → your browser opens → log in to GitHub → click Authorize. Back in VS Code, the status bar icon should no longer show an error badge.\n7. **Open the Chat panel:** `Cmd+Ctrl+I` (macOS) / `Ctrl+Alt+I` (Windows), or click the chat bubble icon in the title bar / Activity Bar. The chat panel opens, usually on the right, labeled \"Chat.\"\n8. **Open the model picker:** at the bottom of the chat input box there's a small dropdown showing the current model (e.g. \"GPT-4.1\" or \"Auto\"). Click it, then click \"Manage Models...\" at the bottom of the list (in some versions: gear icon → \"Manage Language Models\").\n9. **Add Ollama as a provider:** a quick-pick appears listing providers — Anthropic, Azure, Gemini, Groq, Ollama, OpenAI, OpenRouter, and more. Select Ollama. Important: the Ollama app must be running (check the menu-bar/tray icon) — VS Code queries `http://localhost:11434` and lists every model you've pulled. Check the box next to your model (e.g. `qwen2.5-coder:7b`) and press OK. If nothing is listed: run `ollama list` in a terminal to confirm models exist, and `curl http://localhost:11434` to confirm the server responds (\"Ollama is running\").\n10. **Select and use it:** click the model dropdown again — your Ollama model now appears under an \"Ollama\" section. Select it, type a prompt like \"write a python function that checks if a number is prime,\" and confirm the response is generated 100% locally (you can disconnect from the internet and it still works). Switch between your local model and Copilot's cloud models any time from the same dropdown.\n11. **Option B — no GitHub account?** Install the free, open-source Cline extension instead (Extensions view, search \"Cline,\" publisher saoudrizwan). Open its settings gear icon, set API Provider to \"Ollama\" (a native preset), Base URL to `http://localhost:11434`, and pick your pulled model — no sign-in required at all. Everywhere the rest of this course says \"ask Copilot\" or \"open the Chat panel,\" the same prompt works in Cline's panel instead.\n\n### Submit your answers\n\n1. On which **localhost port** does Ollama serve its API?\n2. Which terminal command **lists the models** you have pulled?\n3. What do you type inside an `ollama run` chat session to **exit**?\n",
     "missionSpec": {
       "answers": [
         {
@@ -83,7 +83,7 @@
     "moduleNumber": 1,
     "title": "First Python Project, a Local Chatbot & Git/GitHub",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: First AI project \u2014 local chatbot, FastAPI skeleton & Node\n\nHands-on build (~3.5\u20134 hrs): create your first AI-assisted Python app, a command-line chatbot against your local Ollama model, scaffold the FastAPI backend this course extends, and install Node.js. When you finish the build steps, ship the artifacts to **your program repo** (the GitHub repository you registered when you applied) so we can verify them.\n\n### Your repo layout (verification checks these exact paths)\n\nAfter local work in `~/projects/my-first-app`, copy these into your program repo:\n\n```\nyour-program-repo/\n\u251c\u2500\u2500 main.py                         \u2190 AI-assisted first script\n\u251c\u2500\u2500 chatbot.py                      \u2190 local Ollama CLI chatbot\n\u251c\u2500\u2500 coverage-chatbot-api/\n\u2502   \u251c\u2500\u2500 main.py                     \u2190 FastAPI /health (grows later)\n\u2502   \u251c\u2500\u2500 requirements.txt\n\u2502   \u2514\u2500\u2500 README.md                   \u2190 optional inside the API folder\n\u251c\u2500\u2500 .gitignore\n\u2514\u2500\u2500 README.md\n```\n\n### Build steps\n\n1. **Create a new project:** `mkdir ~/projects/my-first-app && cd ~/projects/my-first-app`, then `code .` to open it in VS Code.\n2. **Create a virtual environment for this project** (in VS Code's terminal, `` Ctrl+` ``): `python3 -m venv .venv`, then activate it \u2014 macOS: `source .venv/bin/activate`; Windows: `.venv\\Scripts\\activate`. When VS Code asks \"select this environment?\", click **Yes** (or `Cmd+Shift+P` \u2192 \"Python: Select Interpreter\" \u2192 `.venv`).\n3. **Create main.py and write code with AI help:** as you type, Copilot suggests completions in gray \u2014 press **Tab** to accept. For a bigger ask, put your cursor in the file, press `Cmd+I` / `Ctrl+I` (inline chat), and type \"write a function that fetches a URL and returns the JSON\" \u2014 the code is inserted in place. Use the full chat panel for bigger questions, then click **Apply/Insert** on any code blocks it gives you.\n4. **Try the other AI shortcuts:** highlight any code \u2192 right-click \u2192 **Copilot** \u2192 **Explain / Fix / Generate Tests**, and read what each one produces.\n5. **Run and debug it:** click the **\u25b6 button** (top right) or run `python main.py` in the terminal. To debug: click just left of a line number to set a breakpoint, press **F5**, and choose \"Python File\" \u2014 step through and inspect variables.\n6. **Install the Ollama Python client** in this project's venv: `pip install ollama`.\n7. **Build a mini project** \u2014 a command-line chatbot against your local model. Create `chatbot.py`:\n\n```python\nimport ollama\n\nhistory = []\nprint(\"Local chatbot - type 'quit' to exit\")\nwhile True:\n    user = input(\"\\nYou: \")\n    if user.lower() == \"quit\":\n        break\n    history.append({\"role\": \"user\", \"content\": user})\n    reply = ollama.chat(model=\"qwen2.5-coder:7b\", messages=history)\n    text = reply[\"message\"][\"content\"]\n    history.append({\"role\": \"assistant\", \"content\": text})\n    print(f\"\\nAI: {text}\")\n```\n\n8. **Run it with `python chatbot.py`**, have a short back-and-forth, and confirm the model responds using conversation history (ask a follow-up question that only makes sense if it remembers the earlier message).\n9. **Scaffold the backend skeleton the rest of this course will build on:** in a new folder (e.g. `coverage-chatbot-api`), ask Copilot's chat panel to \"scaffold a FastAPI app with a /health endpoint returning {status: ok}, plus requirements.txt and a README.\" Review what it generates before accepting.\n10. **Install and run it:** `pip install -r requirements.txt`, then `uvicorn main:app --reload`. Confirm `/health` responds at `localhost:8000/health` in your browser \u2014 this is the same backend and endpoint later days (chat API, Docker, Kubernetes health checks) will extend.\n11. **Install Node.js:** check first in the VS Code terminal with `node -v`; if it's not installed, download the LTS version from https://nodejs.org, install it, then restart VS Code.\n\n### Ship to your program repo\n\nCopy `main.py`, `chatbot.py`, and the `coverage-chatbot-api/` folder into **your program repo** root. Add a root `.gitignore` containing at least: `.venv/`, `__pycache__/`, `*.pyc`, `.env`. Update the root `README.md` (what this project is \u2014 healthcare coverage chatbot, 31-day build \u2014 your name, and today's progress). Then commit and push: `git add . && git commit -m \"day 3: first app + chatbot + FastAPI skeleton\" && git push`. Hit **Verify my repo** below \u2014 the checks fetch your pushed files.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. In the Day 3 `chatbot.py` sample, which **model name** is passed to `ollama.chat`?\n2. What is the **folder name** for the FastAPI scaffold (the backend skeleton)?\n3. Which terminal command checks whether **Node.js** is installed?\n",
+    "briefMd": "## Mission: First AI project — local chatbot, FastAPI skeleton & Node\n\nHands-on build (~3.5–4 hrs): create your first AI-assisted Python app, a command-line chatbot against your local Ollama model, scaffold the FastAPI backend this course extends, and install Node.js. When you finish the build steps, ship the artifacts to **your program repo** (the GitHub repository you registered when you applied) so we can verify them.\n\n### Your repo layout (verification checks these exact paths)\n\nAfter local work in `~/projects/my-first-app`, copy these into your program repo:\n\n```\nyour-program-repo/\n├── main.py                         ← AI-assisted first script\n├── chatbot.py                      ← local Ollama CLI chatbot\n├── coverage-chatbot-api/\n│   ├── main.py                     ← FastAPI /health (grows later)\n│   ├── requirements.txt\n│   └── README.md                   ← optional inside the API folder\n├── .gitignore\n└── README.md\n```\n\n### Build steps\n\n1. **Create a new project:** `mkdir ~/projects/my-first-app && cd ~/projects/my-first-app`, then `code .` to open it in VS Code.\n2. **Create a virtual environment for this project** (in VS Code's terminal, `` Ctrl+` ``): `python3 -m venv .venv`, then activate it — macOS: `source .venv/bin/activate`; Windows: `.venv\\Scripts\\activate`. When VS Code asks \"select this environment?\", click **Yes** (or `Cmd+Shift+P` → \"Python: Select Interpreter\" → `.venv`).\n3. **Create main.py and write code with AI help:** as you type, Copilot suggests completions in gray — press **Tab** to accept. For a bigger ask, put your cursor in the file, press `Cmd+I` / `Ctrl+I` (inline chat), and type \"write a function that fetches a URL and returns the JSON\" — the code is inserted in place. Use the full chat panel for bigger questions, then click **Apply/Insert** on any code blocks it gives you.\n4. **Try the other AI shortcuts:** highlight any code → right-click → **Copilot** → **Explain / Fix / Generate Tests**, and read what each one produces.\n5. **Run and debug it:** click the **▶ button** (top right) or run `python main.py` in the terminal. To debug: click just left of a line number to set a breakpoint, press **F5**, and choose \"Python File\" — step through and inspect variables.\n6. **Install the Ollama Python client** in this project's venv: `pip install ollama`.\n7. **Build a mini project** — a command-line chatbot against your local model. Create `chatbot.py`:\n\n```python\nimport ollama\n\nhistory = []\nprint(\"Local chatbot - type 'quit' to exit\")\nwhile True:\n    user = input(\"\\nYou: \")\n    if user.lower() == \"quit\":\n        break\n    history.append({\"role\": \"user\", \"content\": user})\n    reply = ollama.chat(model=\"qwen2.5-coder:7b\", messages=history)\n    text = reply[\"message\"][\"content\"]\n    history.append({\"role\": \"assistant\", \"content\": text})\n    print(f\"\\nAI: {text}\")\n```\n\n8. **Run it with `python chatbot.py`**, have a short back-and-forth, and confirm the model responds using conversation history (ask a follow-up question that only makes sense if it remembers the earlier message).\n9. **Scaffold the backend skeleton the rest of this course will build on:** in a new folder (e.g. `coverage-chatbot-api`), ask Copilot's chat panel to \"scaffold a FastAPI app with a /health endpoint returning {status: ok}, plus requirements.txt and a README.\" Review what it generates before accepting.\n10. **Install and run it:** `pip install -r requirements.txt`, then `uvicorn main:app --reload`. Confirm `/health` responds at `localhost:8000/health` in your browser — this is the same backend and endpoint later days (chat API, Docker, Kubernetes health checks) will extend.\n11. **Install Node.js:** check first in the VS Code terminal with `node -v`; if it's not installed, download the LTS version from https://nodejs.org, install it, then restart VS Code.\n\n### Ship to your program repo\n\nCopy `main.py`, `chatbot.py`, and the `coverage-chatbot-api/` folder into **your program repo** root. Add a root `.gitignore` containing at least: `.venv/`, `__pycache__/`, `*.pyc`, `.env`. Update the root `README.md` (what this project is — healthcare coverage chatbot, 31-day build — your name, and today's progress). Then commit and push: `git add . && git commit -m \"day 3: first app + chatbot + FastAPI skeleton\" && git push`. Hit **Verify my repo** below — the checks fetch your pushed files.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. In the Day 3 `chatbot.py` sample, which **model name** is passed to `ollama.chat`?\n2. What is the **folder name** for the FastAPI scaffold (the backend skeleton)?\n3. Which terminal command checks whether **Node.js** is installed?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -159,7 +159,7 @@
     "moduleNumber": 2,
     "title": "Reading & Processing Structured Data",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Ingest and query the coverage data your chatbot will answer from\n\nToday you build the structured data layer behind the healthcare coverage chatbot. You'll create **synthetic** (fake) plans and claims datasets, clean them with pandas, load them into a local SQLite database, and write SQL queries that answer realistic member questions. Use synthetic data only \u2014 never real member PHI. Expect about **2\u20133 hours**.\n\n**Concepts to learn**\n\n- **Loading data with pandas** \u2014 CSV/Excel/JSON into DataFrames; filtering, joins, and cleaning\n- **SQL fundamentals** \u2014 SELECT, WHERE, JOIN, GROUP BY, and nested queries\n- **Connecting Python to a database** \u2014 SQLite for local development (today); Postgres via SQLAlchemy is the production pattern you'll see later \u2014 you do **not** need SQLAlchemy for this mission\n- **Basic data cleaning** \u2014 nulls, type coercion, and deduplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n\u251c\u2500\u2500 data/\n\u2502   \u251c\u2500\u2500 plans.csv\n\u2502   \u2514\u2500\u2500 claims.csv\n\u251c\u2500\u2500 coverage.db\n\u251c\u2500\u2500 structured_queries.md\n\u251c\u2500\u2500 notebooks/\n\u2502   \u2514\u2500\u2500 day04-ingestion-lab.ipynb   \u2190 optional workspace\n\u251c\u2500\u2500 chatbot.py                      \u2190 from Day 3\n\u2514\u2500\u2500 backend/                        \u2190 from Day 3\n```\n\n### Build steps\n\n1. In your activated venv, install dependencies: `pip install pandas openpyxl`.\n2. Create **synthetic** sample datasets (fake data only) \u2014 make a `data/` folder and save these two CSVs exactly:\n\n   **`data/plans.csv`**\n\n```csv\nplan_id,plan_name,monthly_premium,annual_deductible,copay_pct,coverage_type,network_tier\nP101,Gold PPO,500,2000,10,PPO,Gold\nP102,Silver HMO,300,1500,20,HMO,Silver\nP103,Bronze HMO,150,1000,30,HMO,Bronze\n```\n\n   **`data/claims.csv`**\n\n```csv\nclaim_id,member_id,plan_id,procedure,claim_amount,status,date_filed\nC1001,M1001,P101,X-ray,250,Pending,2023-04-01\nC1002,M1001,P101,Surgery,1200,Approved,2023-03-15\nC1003,M1002,P102,X-ray,150,Denied,2023-04-05\nC1004,M1002,P102,Surgery,900,Approved,2023-03-20\nC1005,M1003,P103,X-ray,50,Pending,2023-04-10\n```\n\n3. Load both CSVs with `pd.read_csv()`, inspect with `.info()` and `.head()`, then clean: drop duplicates, fill or drop nulls, and coerce `date_filed` to datetime.\n4. Create `coverage.db` with Python's `sqlite3` module and load the cleaned DataFrames via `df.to_sql()` (tables for plans and claims).\n5. Write and test **5 SQL queries** mapped to realistic member questions:\n   - \"What's the deductible on the Gold PPO plan?\"\n   - \"How many claims are pending for member M1001?\"\n   - \"Which plans have a monthly premium under $400?\"\n   - A JOIN between claims and plans\n   - A top-N query (e.g. most claimed procedures)\n6. Save each query and its output in `structured_queries.md` for later reference.\n7. Commit and push, then hit **Verify my repo** below \u2014 the checks fetch your pushed files.\n\nTip: `notebooks/day04-ingestion-lab.ipynb` is a convenient workspace for the lab. Deliverables at the paths above are what get verified.\n",
+    "briefMd": "## Mission: Ingest and query the coverage data your chatbot will answer from\n\nToday you build the structured data layer behind the healthcare coverage chatbot. You'll create **synthetic** (fake) plans and claims datasets, clean them with pandas, load them into a local SQLite database, and write SQL queries that answer realistic member questions. Use synthetic data only — never real member PHI. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Loading data with pandas** — CSV/Excel/JSON into DataFrames; filtering, joins, and cleaning\n- **SQL fundamentals** — SELECT, WHERE, JOIN, GROUP BY, and nested queries\n- **Connecting Python to a database** — SQLite for local development (today); Postgres via SQLAlchemy is the production pattern you'll see later — you do **not** need SQLAlchemy for this mission\n- **Basic data cleaning** — nulls, type coercion, and deduplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── data/\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db\n├── structured_queries.md\n├── notebooks/\n│   └── day04-ingestion-lab.ipynb   ← optional workspace\n├── chatbot.py                      ← from Day 3\n└── backend/                        ← from Day 3\n```\n\n### Build steps\n\n1. In your activated venv, install dependencies: `pip install pandas openpyxl`.\n2. Create **synthetic** sample datasets (fake data only) — make a `data/` folder and save these two CSVs exactly:\n\n   **`data/plans.csv`**\n\n```csv\nplan_id,plan_name,monthly_premium,annual_deductible,copay_pct,coverage_type,network_tier\nP101,Gold PPO,500,2000,10,PPO,Gold\nP102,Silver HMO,300,1500,20,HMO,Silver\nP103,Bronze HMO,150,1000,30,HMO,Bronze\n```\n\n   **`data/claims.csv`**\n\n```csv\nclaim_id,member_id,plan_id,procedure,claim_amount,status,date_filed\nC1001,M1001,P101,X-ray,250,Pending,2023-04-01\nC1002,M1001,P101,Surgery,1200,Approved,2023-03-15\nC1003,M1002,P102,X-ray,150,Denied,2023-04-05\nC1004,M1002,P102,Surgery,900,Approved,2023-03-20\nC1005,M1003,P103,X-ray,50,Pending,2023-04-10\n```\n\n3. Load both CSVs with `pd.read_csv()`, inspect with `.info()` and `.head()`, then clean: drop duplicates, fill or drop nulls, and coerce `date_filed` to datetime.\n4. Create `coverage.db` with Python's `sqlite3` module and load the cleaned DataFrames via `df.to_sql()` (tables for plans and claims).\n5. Write and test **5 SQL queries** mapped to realistic member questions:\n   - \"What's the deductible on the Gold PPO plan?\"\n   - \"How many claims are pending for member M1001?\"\n   - \"Which plans have a monthly premium under $400?\"\n   - A JOIN between claims and plans\n   - A top-N query (e.g. most claimed procedures)\n6. Save each query and its output in `structured_queries.md` for later reference.\n7. Commit and push, then hit **Verify my repo** below — the checks fetch your pushed files.\n\nTip: `notebooks/day04-ingestion-lab.ipynb` is a convenient workspace for the lab. Deliverables at the paths above are what get verified.\n",
     "language": "PYTHON",
     "missionSpec": {
       "repoChecks": [
@@ -205,7 +205,7 @@
     "moduleNumber": 2,
     "title": "Reading & Processing Unstructured Data",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Extract usable text from the documents your chatbot will answer from\n\nToday you build the unstructured-data layer behind the healthcare coverage chatbot. You'll pull text from policy PDFs, claim-form Word docs, scanned enrollment forms (OCR), and a public provider/FAQ page \u2014 then clean and save the results. Use **synthetic or publicly published templates only** \u2014 never real member PHI. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Text extraction from PDFs/Docs** \u2014 `pdfplumber`, `PyPDF2`, `python-docx`\n- **OCR for scanned documents** \u2014 Tesseract / `pytesseract` + `pdf2image`\n- **Web scraping basics** for pulling public documentation \u2014 `BeautifulSoup`, `requests`\n- **Normalizing extracted text** \u2014 removing headers/footers, fixing encoding issues, de-duplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n\u251c\u2500\u2500 raw_text/\n\u2502   \u251c\u2500\u2500 benefits.txt              \u2190 from Summary of Benefits PDF\n\u2502   \u251c\u2500\u2500 claims_process.txt        \u2190 from claims-process Word doc\n\u2502   \u2514\u2500\u2500 enrollment.txt            \u2190 from scanned enrollment form (OCR)\n\u251c\u2500\u2500 data/                         \u2190 from Day 4\n\u251c\u2500\u2500 coverage.db                   \u2190 from Day 4\n\u251c\u2500\u2500 chatbot.py                    \u2190 from Day 3\n\u2514\u2500\u2500 backend/                      \u2190 from Day 3\n```\n\n### Build steps\n\n1. **Install:** In your activated venv, run `pip install pdfplumber pypdf python-docx pytesseract pdf2image beautifulsoup4 requests`, and install the Tesseract OCR binary for your OS.\n2. **Gather** 3 sample documents (synthetic or publicly published templates only): a \"Summary of Benefits and Coverage\"-style PDF, a claims-process Word doc, and a scanned enrollment form image/PDF.\n3. **Extract** text from the benefits PDF with `pdfplumber` (`page.extract_text()` per page) and from the claims-process doc with `python-docx` (`paragraph.text`).\n4. **Convert** the scanned enrollment form's pages with `pdf2image.convert_from_path()`, then run `pytesseract.image_to_string()` on each page image; note any OCR accuracy issues with handwriting or checkboxes.\n5. **Scrape** one public webpage (e.g. a sample provider-network or FAQ page) with `requests` + `BeautifulSoup`, extracting only the main article/body text (strip nav/footer/ads).\n6. **Clean** all extracted text (strip extra whitespace, fix encoding) and save each document source as a separate `.txt` file in a `raw_text/` folder \u2014 at minimum `benefits.txt`, `claims_process.txt`, and `enrollment.txt`.\n7. Commit and push, then hit **Verify my repo** below \u2014 the checks fetch your pushed files.\n\n**Deliverable:** 3 cleaned text files extracted from a benefits PDF, a claims-process doc, and a scanned enrollment form (`raw_text/benefits.txt`, `raw_text/claims_process.txt`, `raw_text/enrollment.txt`).\n",
+    "briefMd": "## Mission: Extract usable text from the documents your chatbot will answer from\n\nToday you build the unstructured-data layer behind the healthcare coverage chatbot. You'll pull text from policy PDFs, claim-form Word docs, scanned enrollment forms (OCR), and a public provider/FAQ page — then clean and save the results. Use **synthetic or publicly published templates only** — never real member PHI. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Text extraction from PDFs/Docs** — `pdfplumber`, `PyPDF2`, `python-docx`\n- **OCR for scanned documents** — Tesseract / `pytesseract` + `pdf2image`\n- **Web scraping basics** for pulling public documentation — `BeautifulSoup`, `requests`\n- **Normalizing extracted text** — removing headers/footers, fixing encoding issues, de-duplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── raw_text/\n│   ├── benefits.txt              ← from Summary of Benefits PDF\n│   ├── claims_process.txt        ← from claims-process Word doc\n│   └── enrollment.txt            ← from scanned enrollment form (OCR)\n├── data/                         ← from Day 4\n├── coverage.db                   ← from Day 4\n├── chatbot.py                    ← from Day 3\n└── backend/                      ← from Day 3\n```\n\n### Build steps\n\n1. **Install:** In your activated venv, run `pip install pdfplumber pypdf python-docx pytesseract pdf2image beautifulsoup4 requests`, and install the Tesseract OCR binary for your OS.\n2. **Gather** 3 sample documents (synthetic or publicly published templates only): a \"Summary of Benefits and Coverage\"-style PDF, a claims-process Word doc, and a scanned enrollment form image/PDF.\n3. **Extract** text from the benefits PDF with `pdfplumber` (`page.extract_text()` per page) and from the claims-process doc with `python-docx` (`paragraph.text`).\n4. **Convert** the scanned enrollment form's pages with `pdf2image.convert_from_path()`, then run `pytesseract.image_to_string()` on each page image; note any OCR accuracy issues with handwriting or checkboxes.\n5. **Scrape** one public webpage (e.g. a sample provider-network or FAQ page) with `requests` + `BeautifulSoup`, extracting only the main article/body text (strip nav/footer/ads).\n6. **Clean** all extracted text (strip extra whitespace, fix encoding) and save each document source as a separate `.txt` file in a `raw_text/` folder — at minimum `benefits.txt`, `claims_process.txt`, and `enrollment.txt`.\n7. Commit and push, then hit **Verify my repo** below — the checks fetch your pushed files.\n\n**Deliverable:** 3 cleaned text files extracted from a benefits PDF, a claims-process doc, and a scanned enrollment form (`raw_text/benefits.txt`, `raw_text/claims_process.txt`, `raw_text/enrollment.txt`).\n",
     "missionSpec": {
       "repoChecks": [
         {
@@ -265,22 +265,104 @@
     "moduleNumber": 2,
     "title": "Building the Knowledge Base",
     "missionType": "SHIP_IT",
-    "briefMd": "## Building the Knowledge Base\n\nChunk your cleaned documents and structured data into a unified, metadata-tagged knowledge base ready for embedding.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Building the Knowledge Base\n\nTurn cleaned plan/claims data and policy documents into a unified, chunked knowledge base ready for embedding. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Document chunking strategies** — fixed-size, recursive character splitting, semantic chunking\n- **Chunk size and overlap trade-offs** — how they affect retrieval quality\n- **Metadata design** — `source`, `section`, `plan_type`, document type (critical for filtering later)\n- **Knowledge base schema** — a JSON/JSONL shape that both SQL plan rows and policy-document chunks can populate\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← today's deliverable (one JSON object per line)\n├── raw_text/                     ← from Day 5\n│   ├── benefits.txt\n│   ├── claims_process.txt\n│   └── enrollment.txt\n├── data/                         ← from Day 4\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db                   ← from Day 4\n├── chatbot.py\n└── coverage-chatbot-api/\n```\n\n### Build steps\n\n1. **Install a text splitter** in your activated venv:\n   - Run `pip install langchain-text-splitters`\n   - Or write a small recursive splitter yourself if you prefer\n\n2. **Load your Day 5 + Day 4 inputs:**\n   - Read all `.txt` files from `raw_text/` (`benefits.txt`, `claims_process.txt`, `enrollment.txt`)\n   - Export Day 4 plans (from `data/plans.csv` or `coverage.db`) into one chunk per plan, e.g. `\"Gold PPO: $350/month premium, $1,500 deductible, 20% coinsurance, network: national\"`\n\n3. **Chunk the policy / benefits text** with:\n   - `RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)`\n   - Prefer keeping coverage-relevant sections as distinct chunks where possible:\n     - exclusions\n     - covered services\n     - claims process\n\n4. **Attach metadata to every chunk** — each record must include:\n\n```json\n{\n  \"id\": \"...\",\n  \"text\": \"...\",\n  \"source_file\": \"...\",\n  \"source_type\": \"structured|unstructured\",\n  \"plan_type\": \"...\",\n  \"section\": \"coverage|exclusions|claims|enrollment\",\n  \"ingested_at\": \"...\"\n}\n```\n\n   - Plan rows → `source_type: structured`\n   - Policy `.txt` chunks → `source_type: unstructured`\n\n5. **Write the knowledge base:**\n   - Save all chunks to `knowledge_base.jsonl`\n   - One JSON object per line (JSONL)\n\n6. **Sanity-check before shipping:**\n   - Print the total chunk count\n   - Manually read **5 random chunks**\n   - Confirm they are coherent and not cut mid-sentence\n   - Especially exclusion clauses — they must stay intact\n\n7. **Ship to your program repo:**\n   - Commit and push `knowledge_base.jsonl` to your program repo root\n   - Suggested commit: `git add knowledge_base.jsonl && git commit -m \"day 6: chunked knowledge base\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **chunk_size** does this mission's `RecursiveCharacterTextSplitter` use?\n2. What **chunk_overlap** does this mission use?\n3. What is the **deliverable filename** (JSONL knowledge base at the repo root)?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "chunk_size",
+          "value": "500",
+          "caseInsensitive": true
+        },
+        {
+          "check": "chunk_overlap",
+          "value": "50",
+          "caseInsensitive": true
+        },
+        {
+          "check": "deliverable filename",
+          "value": "knowledge_base.jsonl",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "knowledge_base.jsonl exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "knowledge_base.jsonl"
+        },
+        {
+          "check": "knowledge_base.jsonl has multiple chunks",
+          "kind": "minLines",
+          "path": "knowledge_base.jsonl",
+          "min": 5
+        },
+        {
+          "check": "chunks include text field",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"text\"\\s*:"
+        },
+        {
+          "check": "chunks include source_file metadata",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"source_file\"\\s*:"
+        },
+        {
+          "check": "chunks include source_type metadata",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"source_type\"\\s*:"
+        },
+        {
+          "check": "includes structured source_type",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"source_type\"\\s*:\\s*\"structured\""
+        },
+        {
+          "check": "includes unstructured source_type",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"source_type\"\\s*:\\s*\"unstructured\""
+        },
+        {
+          "check": "chunks include section metadata",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"section\"\\s*:"
+        },
+        {
+          "check": "section uses allowed values",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"section\"\\s*:\\s*\"(coverage|exclusions|claims|enrollment)\""
+        },
+        {
+          "check": "chunks include id field",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"id\"\\s*:"
+        },
+        {
+          "check": "chunks include ingested_at metadata",
+          "kind": "contentMatches",
+          "path": "knowledge_base.jsonl",
+          "regex": "\"ingested_at\"\\s*:"
         }
       ]
     },
     "objectives": [
-      "Chunk your cleaned documents and structured data into a unified, metadata-tagged knowledge base ready for embedding."
+      "Apply recursive character splitting with chunk_size=500 and chunk_overlap=50",
+      "Attach filtering metadata (source_file, source_type, plan_type, section) to every chunk",
+      "Unify Day 4 plan rows and Day 5 policy text into one knowledge_base.jsonl",
+      "Sanity-check chunk coherence (especially exclusion clauses)"
     ],
     "tools": [
       "langchain-text-splitters",
-      "JSONL"
+      "JSONL",
+      "Python"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -291,23 +373,50 @@
     "moduleNumber": 3,
     "title": "Embeddings Explained",
     "missionType": "SHIP_IT",
-    "briefMd": "## Embeddings Explained\n\nTurn every knowledge-base chunk into a vector with Sentence-Transformers and visualize the clusters in 2D.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Embeddings Explained\n\nUnderstand how text becomes vectors, and generate embeddings for your coverage knowledge base. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **What embeddings are** — dense vector representations of meaning\n- **Popular embedding models** — OpenAI `text-embedding-3`, Sentence-Transformers, Cohere Embed\n- **Similarity metrics** — cosine similarity, dot product, Euclidean distance\n- **Dimensionality trade-offs** — cost vs performance across embedding models\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← from Day 6 (input)\n├── embeddings.npy                ← today's vectors (one row per chunk, same order)\n├── embeddings_2d.png             ← PCA scatter plot\n├── raw_text/\n├── data/\n└── coverage.db\n```\n\n### Build steps\n\n1. **Install dependencies** in your activated venv:\n   - Run `pip install scikit-learn matplotlib`\n   - Then pick one embedding path:\n     - **Recommended (free, local):** `pip install sentence-transformers`\n     - **Paid (higher quality):** `pip install openai`\n\n2. **Write `embed(text) -> vector`:**\n   - Local: call Sentence-Transformers model `all-MiniLM-L6-v2`\n   - OpenAI: call `text-embedding-3-small`\n   - Return a numeric vector for the input string\n\n3. **Embed every chunk** in `knowledge_base.jsonl`:\n   - Loop through each line / chunk\n   - Generate its embedding\n   - Store it either:\n     - as an `embedding` field on the chunk, **or**\n     - in a parallel `embeddings.npy` array matching the chunk index\n   - For verification, also save `embeddings.npy` (if you only added an `embedding` field, export with `numpy.save`)\n\n4. **If using a paid API**, batch calls (**50–100** chunks per request) to control cost and avoid rate limits.\n\n5. **Visualize in 2D:**\n   - Reduce all embeddings with `sklearn.decomposition.PCA(n_components=2)`\n   - Plot with `matplotlib.pyplot.scatter()`\n   - Color-code points by `section` (`coverage` / `exclusions` / `claims` / `enrollment`)\n\n6. **Sanity-check the clusters:**\n   - Confirm chunks from the same section sit near each other (e.g. exclusion clauses cluster together)\n   - Save the plot as `embeddings_2d.png`\n\n7. **Ship to your program repo:**\n   - Commit and push `embeddings.npy` and `embeddings_2d.png`\n   - Suggested commit: `git add embeddings.npy embeddings_2d.png && git commit -m \"day 7: embeddings + 2D plot\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which **local Sentence-Transformers model** does this mission recommend?\n2. How many **PCA components** do you reduce embeddings to for the plot?\n3. What is the **filename** of the 2D visualization you must save?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "local embedding model",
+          "value": "all-MiniLM-L6-v2",
+          "caseInsensitive": true
+        },
+        {
+          "check": "PCA components",
+          "value": "2",
+          "caseInsensitive": true
+        },
+        {
+          "check": "2D plot filename",
+          "value": "embeddings_2d.png",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "embeddings.npy exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "embeddings.npy"
+        },
+        {
+          "check": "embeddings_2d.png exists",
+          "kind": "fileExists",
+          "path": "embeddings_2d.png"
         }
       ]
     },
     "objectives": [
-      "Turn every knowledge-base chunk into a vector with Sentence-Transformers and visualize the clusters in 2D."
+      "Implement embed(text) with all-MiniLM-L6-v2 (or text-embedding-3-small)",
+      "Generate and save embeddings for every knowledge_base.jsonl chunk",
+      "Reduce embeddings to 2D with PCA and scatter-plot by section",
+      "Confirm same-section chunks cluster; ship embeddings.npy + embeddings_2d.png"
     ],
     "tools": [
       "sentence-transformers",
       "scikit-learn",
-      "matplotlib"
+      "matplotlib",
+      "numpy"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -316,23 +425,69 @@
   {
     "dayNumber": 8,
     "moduleNumber": 3,
-    "title": "Vector Databases \u2014 Overview",
+    "title": "Vector Databases — Overview",
     "missionType": "SHIP_IT",
-    "briefMd": "## Vector Databases \u2014 Overview\n\nSurvey the vector DB landscape and stand up a local Chroma instance (plus a free Pinecone index for comparison).\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Vector Databases — Overview\n\nSurvey the vector database landscape and stand up your first instance. Expect about **1.5 hours**.\n\n**Concepts to learn**\n\n- **Vector DB options** — Pinecone, Chroma, FAISS, Weaviate, Milvus (managed vs self-hosted)\n- **Indexing algorithms (high level)** — HNSW, IVF\n- **Choosing a vector DB** — scale, latency, and budget — and what changes for an enterprise workload with access-control requirements\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_db_notes.md            ← comparison table + decision paragraph\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n└── embeddings_2d.png             ← from Day 7\n```\n\nLocal Chroma data and Pinecone cloud indexes stay on your machine / account — do **not** commit secrets or API keys.\n\n### Build steps\n\n1. **Install Chroma** (fully free, local, no signup):\n   - Run `pip install chromadb`\n\n2. **Create a persistent Chroma client and one collection:**\n\n```python\nclient.create_collection(\"coverage_kb\")\n```\n\n   - Use a persistent client so the collection survives process restarts\n   - Confirm the collection exists (list collections / get by name)\n\n3. **Stand up Pinecone (free tier) for comparison:**\n   - Sign up at the Pinecone free tier (no credit card)\n   - Create a **serverless** index via their dashboard, **or** install the client: `pip install pinecone-client`\n   - Leave the index empty for now — Day 9+ will populate vectors\n\n4. **Write a short comparison table** in `vector_db_notes.md` covering:\n   - local vs. cloud\n   - free-tier limits\n   - latency\n   - ease of setup\n   - how each would handle per-member or per-plan access control in a real enterprise deployment\n\n5. **Decide which you'll use going forward:**\n   - Chroma is simplest and fully free for this program\n   - Add **one paragraph** of reasoning to `vector_db_notes.md`\n\n6. **Ship to your program repo:**\n   - Commit and push `vector_db_notes.md` only (no API keys, no Pinecone secrets)\n   - Suggested commit: `git add vector_db_notes.md && git commit -m \"day 8: chroma vs pinecone notes\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **collection name** do you create in Chroma?\n2. Which `pip` package installs local Chroma?\n3. Which vector DB does this program recommend going forward (simplest / fully free)?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "Chroma collection name",
+          "value": "coverage_kb",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Chroma pip package",
+          "value": "chromadb",
+          "caseInsensitive": true
+        },
+        {
+          "check": "recommended vector DB",
+          "value": "Chroma",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "vector_db_notes.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "vector_db_notes.md"
+        },
+        {
+          "check": "notes have real content",
+          "kind": "minLines",
+          "path": "vector_db_notes.md",
+          "min": 8
+        },
+        {
+          "check": "notes compare Chroma",
+          "kind": "contentMatches",
+          "path": "vector_db_notes.md",
+          "regex": "(?i)chroma"
+        },
+        {
+          "check": "notes compare Pinecone",
+          "kind": "contentMatches",
+          "path": "vector_db_notes.md",
+          "regex": "(?i)pinecone"
+        },
+        {
+          "check": "notes cover access control",
+          "kind": "contentMatches",
+          "path": "vector_db_notes.md",
+          "regex": "(?i)(access.?control|per-?member|per-?plan)"
         }
       ]
     },
     "objectives": [
-      "Survey the vector DB landscape and stand up a local Chroma instance (plus a free Pinecone index for comparison)."
+      "Install Chroma and create a persistent coverage_kb collection",
+      "Create a free Pinecone serverless index for comparison (leave empty)",
+      "Document Chroma vs Pinecone trade-offs including enterprise access control",
+      "Choose Chroma for this program and write one paragraph of reasoning"
     ],
     "tools": [
       "Chroma",
+      "chromadb",
       "Pinecone"
     ],
     "estimatedMin": 90,
@@ -344,21 +499,73 @@
     "moduleNumber": 3,
     "title": "Building & Populating the Vector Database",
     "missionType": "SHIP_IT",
-    "briefMd": "## Building & Populating the Vector Database\n\nBatch-upsert your embedded chunks into Chroma with metadata, and validate retrieval quality with real coverage questions.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Building & Populating the Vector Database\n\nLoad your embeddings into the vector DB with metadata so they're ready for retrieval. Expect about **2 hours**.\n\n**Concepts to learn**\n\n- **Indexing pipeline design** — batching upserts, ID management\n- **Metadata filtering at query time** — e.g. filter by `plan_type` or `section`\n- **Namespace / collection design** — multi-tenant or multi-source knowledge bases\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_query_test.md          ← today's documented query test\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n├── vector_db_notes.md            ← from Day 8\n└── chroma_data/                  ← local Chroma store (do not commit)\n```\n\nYour populated Chroma collection stays local — do **not** commit API keys or the Chroma data directory.\n\n### Build steps\n\n1. **Load inputs** from prior days:\n   - Read `knowledge_base.jsonl`\n   - Load the embeddings you generated on Day 7 (`embeddings.npy` or per-chunk `embedding` fields)\n\n2. **Batch-upsert into Chroma** (`coverage_kb` collection from Day 8):\n\n```python\ncollection.add(\n    ids=[...],\n    embeddings=[...],\n    documents=[...],\n    metadatas=[...],\n)\n```\n\n   - Upsert in batches of **~100** records per call\n\n3. **Verify the index size** matches your chunk count:\n\n```python\ncollection.count()\n```\n\n4. **Run a raw test query:**\n   - Embed: **\"Is physical therapy covered under the Silver plan?\"**\n   - Query:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n)\n```\n\n5. **Review the 5 returned chunks** in `vector_query_test.md`:\n   - Are they relevant?\n   - Do they reflect **Silver-plan-specific** coverage (not another plan)?\n   - Note any retrieval misses\n\n6. **Repeat with metadata filtering**, e.g.:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n    where={\"plan_type\": \"Silver\"},\n)\n```\n\n   - Confirm filters scope results to one plan\n   - Log filtered vs unfiltered results in `vector_query_test.md`\n\n7. **Ship to your program repo:**\n   - Commit and push `vector_query_test.md` only\n   - Suggested commit: `git add vector_query_test.md && git commit -m \"day 9: vector upsert query test\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Roughly how many records do you upsert per `collection.add` batch?\n2. What is the exact **test question** you embed for the raw query?\n3. How many results does `collection.query` return (`n_results`)?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "upsert batch size",
+          "value": "100",
+          "caseInsensitive": true
+        },
+        {
+          "check": "raw test question",
+          "value": "Is physical therapy covered under the Silver plan?",
+          "caseInsensitive": true
+        },
+        {
+          "check": "n_results",
+          "value": "5",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "vector_query_test.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "vector_query_test.md"
+        },
+        {
+          "check": "query test has real content",
+          "kind": "minLines",
+          "path": "vector_query_test.md",
+          "min": 10
+        },
+        {
+          "check": "documents the test question",
+          "kind": "contentMatches",
+          "path": "vector_query_test.md",
+          "regex": "(?i)physical therapy"
+        },
+        {
+          "check": "documents Silver plan scope",
+          "kind": "contentMatches",
+          "path": "vector_query_test.md",
+          "regex": "(?i)silver"
+        },
+        {
+          "check": "documents collection count check",
+          "kind": "contentMatches",
+          "path": "vector_query_test.md",
+          "regex": "(?i)(collection\\.count|chunk count|count\\(\\))"
+        },
+        {
+          "check": "documents metadata filtering",
+          "kind": "contentMatches",
+          "path": "vector_query_test.md",
+          "regex": "(?i)(plan_type|where=|metadata filter)"
         }
       ]
     },
     "objectives": [
-      "Batch-upsert your embedded chunks into Chroma with metadata, and validate retrieval quality with real coverage questions."
+      "Batch-upsert knowledge_base.jsonl chunks + embeddings into Chroma with metadata",
+      "Verify collection.count() matches your chunk total",
+      "Run and document a raw similarity query (n_results=5)",
+      "Confirm metadata filtering scopes results to one plan"
     ],
     "tools": [
       "Chroma",
+      "chromadb",
       "metadata filtering"
     ],
     "estimatedMin": 120,
@@ -368,19 +575,88 @@
   {
     "dayNumber": 10,
     "moduleNumber": 3,
-    "title": "CHECKPOINT 1 \u2014 The Retrieval / Matching Engine",
-    "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 1 \u2014 The Retrieval / Matching Engine\n\nBuild the engine that routes each member question to SQL, the vector DB, or both \u2014 then submit it for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "title": "The Retrieval / Matching Engine — Structured + Vector Search",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: The Retrieval / Matching Engine — Structured + Vector Search\n\nBuild the engine that decides, per member question, whether to query SQL (plans/claims), the vector DB (policy wording), or both. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Semantic vs keyword vs hybrid search** — dense + sparse retrieval\n- **Re-ranking** — improving precision (e.g. Cohere Rerank)\n- **Query routing** — classifying **structured lookup** (plan/claim data) vs **knowledge lookup** (coverage wording) vs **both**\n- **Context merging** — combining and de-duplicating results before the LLM sees them\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── retrieval_engine.py           ← classifier + sql_lookup + vector_lookup + retrieve\n├── retrieval_test_results.md     ← 10 test cases with scores\n├── coverage.db                     ← from Day 4\n├── knowledge_base.jsonl          ← from Day 6\n└── vector_db_notes.md            ← from Day 8\n```\n\n### Build steps\n\n1. **Write a lightweight question classifier:**\n   - Prompt-based function or simple keyword rules\n   - Label each question **structured** (e.g. \"what's my deductible\", \"claim status\"), **unstructured** (e.g. \"is X procedure covered\"), or **both**\n\n2. **Implement `sql_lookup(question)`:**\n   - Convert structured questions into SQL against your Day 4 plans/claims schema\n   - Start with a template, or have the LLM generate SQL\n\n3. **Implement `vector_lookup(question)`:**\n   - Embed the question\n   - Query your vector DB for the **top-5** relevant policy chunks\n\n4. **Implement `retrieve(question)`:**\n   - Route to `sql_lookup`, `vector_lookup`, or both based on the classifier\n   - Merge and de-duplicate results into one context block\n\n5. **Build a test harness** with **10 varied questions**, e.g.:\n   - \"what's my copay\"\n   - \"is maternity care covered on the Bronze plan\"\n   - \"status of claim C-2031\"\n   - at least one mixed question needing **both** sources\n\n6. **Log results** in `retrieval_test_results.md` for each question:\n   - question text\n   - classification\n   - retrieved context (summary or excerpt)\n   - manual score: **good** / **partial** / **poor**\n\n7. **Ship to your program repo:**\n   - Commit and push `retrieval_engine.py` and `retrieval_test_results.md`\n   - Suggested commit: `git add retrieval_engine.py retrieval_test_results.md && git commit -m \"day 10: retrieval engine + test harness\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the name of the **routing function** that calls SQL and/or vector lookup?\n2. How many **test questions** does your harness run?\n3. What **filename** logs classification and retrieved context for each test?\n",
+    "language": "PYTHON",
     "missionSpec": {
-      "checkpointNumber": 1,
-      "note": "PLACEHOLDER \u2014 checkpoint rubric ships before this day unlocks"
+      "answers": [
+        {
+          "check": "routing function name",
+          "value": "retrieve",
+          "caseInsensitive": true
+        },
+        {
+          "check": "test question count",
+          "value": "10",
+          "caseInsensitive": true
+        },
+        {
+          "check": "test results filename",
+          "value": "retrieval_test_results.md",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "retrieval_engine.py exists",
+          "kind": "fileExists",
+          "path": "retrieval_engine.py"
+        },
+        {
+          "check": "retrieval_engine.py defines retrieve",
+          "kind": "contentMatches",
+          "path": "retrieval_engine.py",
+          "regex": "def\\s+retrieve\\s*\\("
+        },
+        {
+          "check": "retrieval_engine.py defines sql_lookup",
+          "kind": "contentMatches",
+          "path": "retrieval_engine.py",
+          "regex": "def\\s+sql_lookup\\s*\\("
+        },
+        {
+          "check": "retrieval_engine.py defines vector_lookup",
+          "kind": "contentMatches",
+          "path": "retrieval_engine.py",
+          "regex": "def\\s+vector_lookup\\s*\\("
+        },
+        {
+          "check": "retrieval_test_results.md exists",
+          "kind": "fileExists",
+          "path": "retrieval_test_results.md"
+        },
+        {
+          "check": "test results have real content",
+          "kind": "minLines",
+          "path": "retrieval_test_results.md",
+          "min": 15
+        },
+        {
+          "check": "results include manual scores",
+          "kind": "contentMatches",
+          "path": "retrieval_test_results.md",
+          "regex": "(?i)(good|partial|poor)"
+        },
+        {
+          "check": "results document classifications",
+          "kind": "contentMatches",
+          "path": "retrieval_test_results.md",
+          "regex": "(?i)(structured|unstructured|both)"
+        }
+      ]
     },
     "objectives": [
-      "Build the engine that routes each member question to SQL, the vector DB, or both \u2014 then submit it for AI review."
+      "Classify questions as structured, unstructured, or both",
+      "Implement sql_lookup, vector_lookup, and retrieve routing",
+      "Run a 10-question test harness with logged context",
+      "Score each result good/partial/poor as a Day 11 baseline"
     ],
     "tools": [
-      "hybrid retrieval",
-      "query routing"
+      "SQL",
+      "Chroma",
+      "query routing",
+      "hybrid retrieval"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -391,18 +667,18 @@
     "moduleNumber": 4,
     "title": "RAG End-to-End & LLM API Basics",
     "missionType": "SHIP_IT",
-    "briefMd": "## RAG End-to-End & LLM API Basics\n\nConnect your retrieval engine to an LLM (local Ollama or free Groq) \u2014 your first full grounded RAG answer about coverage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## RAG End-to-End & LLM API Basics\n\nConnect your retrieval engine to an LLM (local Ollama or free Groq) — your first full grounded RAG answer about coverage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Connect your retrieval engine to an LLM (local Ollama or free Groq) \u2014 your first full grounded RAG answer about coverage."
+      "Connect your retrieval engine to an LLM (local Ollama or free Groq) — your first full grounded RAG answer about coverage."
     ],
     "tools": [
       "Ollama",
@@ -422,7 +698,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -445,18 +721,18 @@
     "moduleNumber": 4,
     "title": "Advanced Prompting: Function Calling & Structured Outputs",
     "missionType": "SHIP_IT",
-    "briefMd": "## Advanced Prompting: Function Calling & Structured Outputs\n\nGive the LLM tools \u2014 check_coverage, get_claim_status, get_plan_details \u2014 with Pydantic-validated structured outputs.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Advanced Prompting: Function Calling & Structured Outputs\n\nGive the LLM tools — check_coverage, get_claim_status, get_plan_details — with Pydantic-validated structured outputs.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Give the LLM tools \u2014 check_coverage, get_claim_status, get_plan_details \u2014 with Pydantic-validated structured outputs."
+      "Give the LLM tools — check_coverage, get_claim_status, get_plan_details — with Pydantic-validated structured outputs."
     ],
     "tools": [
       "function calling",
@@ -469,20 +745,20 @@
   {
     "dayNumber": 14,
     "moduleNumber": 4,
-    "title": "Fine-Tuning \u2014 Concepts & When to Use It",
+    "title": "Fine-Tuning — Concepts & When to Use It",
     "missionType": "SHIP_IT",
-    "briefMd": "## Fine-Tuning \u2014 Concepts & When to Use It\n\nLearn when fine-tuning beats RAG, and curate a 20\u201330 example dataset for consistent tone and disclaimer usage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Fine-Tuning — Concepts & When to Use It\n\nLearn when fine-tuning beats RAG, and curate a 20–30 example dataset for consistent tone and disclaimer usage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Learn when fine-tuning beats RAG, and curate a 20\u201330 example dataset for consistent tone and disclaimer usage."
+      "Learn when fine-tuning beats RAG, and curate a 20–30 example dataset for consistent tone and disclaimer usage."
     ],
     "tools": [
       "JSONL datasets",
@@ -495,13 +771,13 @@
   {
     "dayNumber": 15,
     "moduleNumber": 4,
-    "title": "Fine-Tuning \u2014 Hands-On with LoRA/QLoRA",
+    "title": "Fine-Tuning — Hands-On with LoRA/QLoRA",
     "missionType": "SHIP_IT",
-    "briefMd": "## Fine-Tuning \u2014 Hands-On with LoRA/QLoRA\n\nFine-tune a small model with LoRA and compare it against the base model on held-out questions.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Fine-Tuning — Hands-On with LoRA/QLoRA\n\nFine-tune a small model with LoRA and compare it against the base model on held-out questions.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -527,7 +803,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -553,7 +829,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -578,7 +854,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -604,7 +880,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -624,15 +900,15 @@
   {
     "dayNumber": 20,
     "moduleNumber": 5,
-    "title": "CHECKPOINT 2 \u2014 Working Full-Stack Chatbot with Memory",
+    "title": "CHECKPOINT 2 — Working Full-Stack Chatbot with Memory",
     "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 2 \u2014 Working Full-Stack Chatbot with Memory\n\nConversation memory, context budgeting and summarization \u2014 then submit the working full-stack chatbot for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## CHECKPOINT 2 — Working Full-Stack Chatbot with Memory\n\nConversation memory, context budgeting and summarization — then submit the working full-stack chatbot for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "checkpointNumber": 2,
-      "note": "PLACEHOLDER \u2014 checkpoint rubric ships before this day unlocks"
+      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
     },
     "objectives": [
-      "Conversation memory, context budgeting and summarization \u2014 then submit the working full-stack chatbot for AI review."
+      "Conversation memory, context budgeting and summarization — then submit the working full-stack chatbot for AI review."
     ],
     "tools": [
       "conversation memory",
@@ -651,7 +927,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -677,7 +953,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -703,7 +979,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -722,20 +998,20 @@
   {
     "dayNumber": 24,
     "moduleNumber": 6,
-    "title": "Agentic Chatbot \u2014 Full Integration",
+    "title": "Agentic Chatbot — Full Integration",
     "missionType": "SHIP_IT",
-    "briefMd": "## Agentic Chatbot \u2014 Full Integration\n\nBring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks \u2014 chaos-tested.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Agentic Chatbot — Full Integration\n\nBring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks — chaos-tested.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Bring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks \u2014 chaos-tested."
+      "Bring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks — chaos-tested."
     ],
     "tools": [
       "error handling",
@@ -750,18 +1026,18 @@
     "moduleNumber": 7,
     "title": "AI Governance, PHI Handling & Guardrails",
     "missionType": "SHIP_IT",
-    "briefMd": "## AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails \u2014 tested with adversarial prompts.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails — tested with adversarial prompts.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Write your governance checklist, build PII redaction, and add input/output guardrails \u2014 tested with adversarial prompts."
+      "Write your governance checklist, build PII redaction, and add input/output guardrails — tested with adversarial prompts."
     ],
     "tools": [
       "Guardrails AI",
@@ -781,7 +1057,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -802,15 +1078,15 @@
   {
     "dayNumber": 27,
     "moduleNumber": 7,
-    "title": "CHECKPOINT 3 \u2014 Evaluation Scorecard",
+    "title": "CHECKPOINT 3 — Evaluation Scorecard",
     "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 3 \u2014 Evaluation Scorecard\n\nMeasure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) \u2014 submit scorecard + guardrails for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## CHECKPOINT 3 — Evaluation Scorecard\n\nMeasure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) — submit scorecard + guardrails for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "checkpointNumber": 3,
-      "note": "PLACEHOLDER \u2014 checkpoint rubric ships before this day unlocks"
+      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
     },
     "objectives": [
-      "Measure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) \u2014 submit scorecard + guardrails for AI review."
+      "Measure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) — submit scorecard + guardrails for AI review."
     ],
     "tools": [
       "RAGAS",
@@ -823,13 +1099,13 @@
   {
     "dayNumber": 28,
     "moduleNumber": 8,
-    "title": "Docker \u2014 Containerizing the Coverage Chatbot",
+    "title": "Docker — Containerizing the Coverage Chatbot",
     "missionType": "SHIP_IT",
-    "briefMd": "## Docker \u2014 Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose and health checks.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Docker — Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose and health checks.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -849,13 +1125,13 @@
   {
     "dayNumber": 29,
     "moduleNumber": 8,
-    "title": "Kubernetes \u2014 Orchestrating & Scaling the Deployment",
+    "title": "Kubernetes — Orchestrating & Scaling the Deployment",
     "missionType": "SHIP_IT",
-    "briefMd": "## Kubernetes \u2014 Orchestrating & Scaling the Deployment\n\nDeploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Kubernetes — Orchestrating & Scaling the Deployment\n\nDeploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -882,7 +1158,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER \u2014 full checks ship before this day unlocks",
+          "check": "PLACEHOLDER — full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -902,15 +1178,15 @@
   {
     "dayNumber": 31,
     "moduleNumber": 8,
-    "title": "CHECKPOINT 4 \u2014 Capstone: Deployed System Demo & Roadmap",
+    "title": "CHECKPOINT 4 — Capstone: Deployed System Demo & Roadmap",
     "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 4 \u2014 Capstone: Deployed System Demo & Roadmap\n\nFull live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video \u2014 final AI-graded submission.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## CHECKPOINT 4 — Capstone: Deployed System Demo & Roadmap\n\nFull live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video — final AI-graded submission.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "checkpointNumber": 4,
-      "note": "PLACEHOLDER \u2014 checkpoint rubric ships before this day unlocks"
+      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
     },
     "objectives": [
-      "Full live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video \u2014 final AI-graded submission."
+      "Full live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video — final AI-graded submission."
     ],
     "tools": [
       "end-to-end demo",

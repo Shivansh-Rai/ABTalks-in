@@ -1,13 +1,31 @@
 import "server-only";
+import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 
-/** Newest cohort that is enrolling, running, or completed. Null if none. */
-export async function getActiveCohort() {
-  return prisma.programCohort.findFirst({
-    where: { status: { in: ["ENROLLING", "ACTIVE", "COMPLETED"] } },
-    orderBy: { createdAt: "desc" },
+const JOIN_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/** 8-char uppercase join code (no 0/O/1/I). */
+export function generateProgramJoinCode(length = 8): string {
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += JOIN_CODE_ALPHABET[bytes[i]! % JOIN_CODE_ALPHABET.length]!;
+  }
+  return out;
+}
+
+export function normalizeJoinCode(code: string): string {
+  return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export async function getCohortByJoinCode(code: string) {
+  const joinCode = normalizeJoinCode(code);
+  if (joinCode.length < 4) return null;
+
+  return prisma.programCohort.findUnique({
+    where: { joinCode },
     select: {
       id: true,
       name: true,
@@ -16,37 +34,80 @@ export async function getActiveCohort() {
       endsAt: true,
       capacity: true,
       resultsPublishedAt: true,
+      joinCode: true,
     },
   });
 }
 
 /**
- * Require an enrolled/completed program member for the active cohort.
- * DB-checked (the JWT can be stale). Redirects to the public landing otherwise.
+ * Resolve the caller's program membership without redirecting.
+ * Prefers ENROLLED over COMPLETED; among ties, newest enrolledAt.
  */
-export async function requireProgramMember() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/program");
-
-  const cohort = await getActiveCohort();
-  if (!cohort) redirect("/program");
-
-  const member = await prisma.programMember.findUnique({
-    where: { userId_cohortId: { userId: session.user.id, cohortId: cohort.id } },
+export async function resolveProgramMemberForUser(userId: string) {
+  const memberships = await prisma.programMember.findMany({
+    where: { userId, status: { in: ["ENROLLED", "COMPLETED"] } },
     select: {
       id: true,
       status: true,
       fullName: true,
       highestUnlockedDay: true,
       cohortId: true,
+      enrolledAt: true,
+      cohort: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          startsAt: true,
+          endsAt: true,
+          capacity: true,
+          resultsPublishedAt: true,
+          joinCode: true,
+        },
+      },
     },
   });
 
-  if (!member || (member.status !== "ENROLLED" && member.status !== "COMPLETED")) {
-    redirect("/program");
-  }
+  if (memberships.length === 0) return null;
 
-  return { member, cohort, userId: session.user.id };
+  memberships.sort((a, b) => {
+    if (a.status !== b.status) {
+      return a.status === "ENROLLED" ? -1 : 1;
+    }
+    const at = a.enrolledAt?.getTime() ?? 0;
+    const bt = b.enrolledAt?.getTime() ?? 0;
+    return bt - at;
+  });
+
+  const member = memberships[0]!;
+  return {
+    member: {
+      id: member.id,
+      status: member.status,
+      fullName: member.fullName,
+      highestUnlockedDay: member.highestUnlockedDay,
+      cohortId: member.cohortId,
+    },
+    cohort: member.cohort,
+  };
+}
+
+/**
+ * Require an enrolled/completed program member for their cohort.
+ * DB-checked (the JWT can be stale). Redirects to the public landing otherwise.
+ */
+export async function requireProgramMember() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/program");
+
+  const resolved = await resolveProgramMemberForUser(session.user.id);
+  if (!resolved) redirect("/program");
+
+  return {
+    member: resolved.member,
+    cohort: resolved.cohort,
+    userId: session.user.id,
+  };
 }
 
 /**

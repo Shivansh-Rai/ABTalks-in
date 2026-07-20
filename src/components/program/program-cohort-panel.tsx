@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
 import {
   createOrUpdateCohortAction,
   publishResultsAction,
+  regenerateJoinCodeAction,
   setCohortStatusAction,
 } from "@/app/actions/admin-program-actions";
 import type { CohortOverview } from "@/features/program/admin";
@@ -28,6 +30,13 @@ const STATUSES = [
   "COMPLETED",
   "ARCHIVED",
 ] as const;
+
+const emptyForm = {
+  name: "",
+  startsAt: "",
+  endsAt: "",
+  capacity: 100,
+};
 
 export function ProgramCohortPanel({
   overview,
@@ -41,6 +50,7 @@ export function ProgramCohortPanel({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [createMode, setCreateMode] = useState(!overview);
   const [form, setForm] = useState({
     name: overview?.name ?? "",
     startsAt: rawStartsAt ?? "",
@@ -48,18 +58,32 @@ export function ProgramCohortPanel({
     capacity: overview?.capacity ?? 100,
   });
 
+  useEffect(() => {
+    if (createMode) return;
+    setForm({
+      name: overview?.name ?? "",
+      startsAt: rawStartsAt ?? "",
+      endsAt: rawEndsAt ?? "",
+      capacity: overview?.capacity ?? 100,
+    });
+  }, [overview, rawStartsAt, rawEndsAt, createMode]);
+
   async function handleSave() {
     setBusy(true);
     try {
       const res = await createOrUpdateCohortAction({
-        cohortId: overview?.id,
+        cohortId: createMode ? undefined : overview?.id,
         ...form,
       });
       if (!res.ok) {
         toast.error(res.message);
         return;
       }
-      toast.success("Cohort saved.");
+      toast.success(createMode ? "Cohort created." : "Cohort saved.");
+      setCreateMode(false);
+      if (res.cohortId) {
+        router.push(`/admin/program?cohortId=${res.cohortId}`);
+      }
       router.refresh();
     } finally {
       setBusy(false);
@@ -67,7 +91,7 @@ export function ProgramCohortPanel({
   }
 
   async function handleStatus(status: string) {
-    if (!overview) return;
+    if (!overview || createMode) return;
     setBusy(true);
     try {
       const res = await setCohortStatusAction({ cohortId: overview.id, status });
@@ -99,14 +123,98 @@ export function ProgramCohortPanel({
     }
   }
 
+  async function handleRegenerateCode() {
+    if (!overview) return;
+    setBusy(true);
+    try {
+      const res = await regenerateJoinCodeAction({ cohortId: overview.id });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      toast.success(`New join code: ${res.joinCode}`);
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyJoinCode() {
+    if (!overview?.joinCode) return;
+    try {
+      await navigator.clipboard.writeText(overview.joinCode);
+      toast.success("Join code copied.");
+    } catch {
+      toast.error("Could not copy join code.");
+    }
+  }
+
+  function startCreate() {
+    setCreateMode(true);
+    setForm(emptyForm);
+  }
+
+  function cancelCreate() {
+    setCreateMode(false);
+    setForm({
+      name: overview?.name ?? "",
+      startsAt: rawStartsAt ?? "",
+      endsAt: rawEndsAt ?? "",
+      capacity: overview?.capacity ?? 100,
+    });
+  }
+
   return (
     <div className="space-y-6 rounded-xl border p-4">
-      {overview ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-lg font-semibold">
+          {createMode ? "Create cohort" : "Cohort settings"}
+        </h2>
+        {!createMode && (
+          <Button type="button" variant="outline" size="sm" onClick={startCreate}>
+            Create new cohort
+          </Button>
+        )}
+        {createMode && overview && (
+          <Button type="button" variant="ghost" size="sm" onClick={cancelCreate}>
+            Cancel
+          </Button>
+        )}
+      </div>
+
+      {!createMode && overview ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Stat label="Enrolled" value={String(overview.enrolled)} />
           <Stat label="Waitlisted" value={String(overview.waitlisted)} />
           <Stat label="Dropped" value={String(overview.dropped)} />
           <Stat label="Capacity" value={String(overview.capacity)} />
+          <div className="rounded-lg border px-3 py-2 sm:col-span-2 lg:col-span-1">
+            <p className="text-xs text-muted-foreground">Join code</p>
+            <div className="mt-1 flex items-center gap-1">
+              <p className="font-mono text-lg font-bold tracking-wider">
+                {overview.joinCode}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => void copyJoinCode()}
+                aria-label="Copy join code"
+              >
+                <Copy className="size-3.5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                disabled={busy}
+                onClick={() => void handleRegenerateCode()}
+                aria-label="Regenerate join code"
+              >
+                <RefreshCw className="size-3.5" />
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -158,9 +266,9 @@ export function ProgramCohortPanel({
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" onClick={() => void handleSave()} disabled={busy}>
-          {overview ? "Update cohort" : "Create cohort"}
+          {createMode ? "Create cohort" : "Update cohort"}
         </Button>
-        {overview && (
+        {!createMode && overview && (
           <>
             <select
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -188,7 +296,7 @@ export function ProgramCohortPanel({
         )}
       </div>
 
-      {overview?.resultsPublishedAt && (
+      {!createMode && overview?.resultsPublishedAt && (
         <p className="text-sm text-muted-foreground">
           Results published {overview.resultsPublishedAt}
         </p>

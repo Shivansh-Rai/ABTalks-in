@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { reviewMission } from "@/features/program/mentor";
 import {
@@ -11,6 +10,7 @@ import {
   listProjectsForAdmin,
 } from "@/features/program/projects";
 import { generateRecommendations } from "@/features/program/recommendations";
+import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import {
   generateRecommendationsSchema,
   gradeProjectSchema,
@@ -30,23 +30,9 @@ async function requireProgramMemberId(): Promise<
     return { ok: false, message: "Please sign in to continue." };
   }
 
-  const cohort = await prisma.programCohort.findFirst({
-    where: { status: { in: ["ENROLLING", "ACTIVE", "COMPLETED"] } },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-  if (!cohort) return { ok: false, message: "Program unavailable." };
-
-  const member = await prisma.programMember.findUnique({
-    where: {
-      userId_cohortId: { userId: session.user.id, cohortId: cohort.id },
-    },
-    select: { id: true, status: true },
-  });
-  if (!member || (member.status !== "ENROLLED" && member.status !== "COMPLETED")) {
-    return { ok: false, message: "Enrollment required." };
-  }
-  return { ok: true, memberId: member.id };
+  const resolved = await resolveProgramMemberForUser(session.user.id);
+  if (!resolved) return { ok: false, message: "Enrollment required." };
+  return { ok: true, memberId: resolved.member.id };
 }
 
 export async function requestMentorReviewAction(

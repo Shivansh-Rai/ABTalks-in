@@ -3,6 +3,11 @@ import type { Prisma, ProgramEntrySection } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isProgramEntryBypassEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
+import {
+  getCohortByJoinCode,
+  normalizeJoinCode,
+  resolveProgramMemberForUser,
+} from "@/lib/program-auth";
 import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
 
@@ -64,9 +69,15 @@ export type EntryProfile = {
 };
 
 export type EntryState =
-  | { screen: "unavailable" }
+  | { screen: "need_code" }
+  | { screen: "invalid_code" }
   | { screen: "closed"; cohortName: string }
-  | { screen: "form"; cohortName: string; existingProfile: EntryProfile | null }
+  | {
+      screen: "form";
+      cohortName: string;
+      joinCode: string;
+      existingProfile: EntryProfile | null;
+    }
   | { screen: "intro"; attemptNumber: number }
   | { screen: "in_progress"; attemptId: string }
   | { screen: "cooldown"; retakeAtIso: string }
@@ -89,16 +100,46 @@ function emptyToNull(value: string | undefined): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
-async function getEnrollingOrActiveCohort() {
-  return prisma.programCohort.findFirst({
-    where: { status: { in: ["ENROLLING", "ACTIVE", "COMPLETED"] } },
+/** Newest APPLIED (or mid-funnel) membership for assessment resume. */
+async function getAppliedMembership(userId: string) {
+  return prisma.programMember.findFirst({
+    where: { userId, status: "APPLIED" },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
-      name: true,
       status: true,
-      capacity: true,
+      cohortId: true,
+      fullName: true,
+      jobRole: true,
+      company: true,
+      yearsExperience: true,
+      education: true,
+      university: true,
+      graduationYear: true,
+      skills: true,
+      linkedinUrl: true,
+      resumeUrl: true,
+      phone: true,
+      githubUsername: true,
+      githubRepoUrl: true,
+      cohort: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          capacity: true,
+          joinCode: true,
+        },
+      },
     },
+  });
+}
+
+async function getWaitlistedMembership(userId: string) {
+  return prisma.programMember.findFirst({
+    where: { userId, status: "WAITLISTED" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
   });
 }
 
@@ -130,106 +171,98 @@ async function enrollOrWaitlist(
   return hasRoom ? "ENROLLED" : "WAITLISTED";
 }
 
-export async function getEntryState(userId: string): Promise<EntryState> {
-  const cohort = await getEnrollingOrActiveCohort();
-  if (!cohort) return { screen: "unavailable" };
+export async function getEntryState(
+  userId: string,
+  joinCode?: string | null,
+): Promise<EntryState> {
+  const enrolled = await resolveProgramMemberForUser(userId);
+  if (enrolled) return { screen: "enrolled" };
 
-  const member = await prisma.programMember.findUnique({
-    where: { userId_cohortId: { userId, cohortId: cohort.id } },
-    select: {
-      id: true,
-      status: true,
-      fullName: true,
-      jobRole: true,
-      company: true,
-      yearsExperience: true,
-      education: true,
-      university: true,
-      graduationYear: true,
-      skills: true,
-      linkedinUrl: true,
-      resumeUrl: true,
-      phone: true,
-      githubUsername: true,
-      githubRepoUrl: true,
-    },
-  });
+  const waitlisted = await getWaitlistedMembership(userId);
+  if (waitlisted) return { screen: "waitlisted" };
 
-  if (member?.status === "ENROLLED" || member?.status === "COMPLETED") {
-    return { screen: "enrolled" };
-  }
-  if (member?.status === "WAITLISTED") {
-    return { screen: "waitlisted" };
-  }
+  const applied = await getAppliedMembership(userId);
+  if (applied) {
+    const cohort = applied.cohort;
 
-  // No member (or DROPPED) → can apply while enrolling.
-  if (!member || member.status === "DROPPED") {
+    if (isProgramEntryBypassEnabled()) {
+      const outcome = await prisma.$transaction(
+        (tx) => enrollOrWaitlist(tx, userId, cohort.id),
+        { maxWait: 10_000, timeout: 20_000 },
+      );
+      return outcome === "ENROLLED"
+        ? { screen: "enrolled" }
+        : { screen: "waitlisted" };
+    }
+
+    const attempts = await prisma.programEntryAttempt.findMany({
+      where: { userId, cohortId: cohort.id },
+      orderBy: { attemptNumber: "asc" },
+      select: { id: true, submittedAt: true, passed: true },
+    });
+
+    const inProgress = attempts.find((a) => a.submittedAt === null);
+    if (inProgress) {
+      return { screen: "in_progress", attemptId: inProgress.id };
+    }
+
     if (cohort.status !== "ENROLLING") {
       return { screen: "closed", cohortName: cohort.name };
     }
-    return { screen: "form", cohortName: cohort.name, existingProfile: null };
+
+    const used = attempts.length;
+    if (used === 0) {
+      return { screen: "intro", attemptNumber: 1 };
+    }
+
+    if (used === 1) {
+      const first = attempts[0]!;
+      const submittedAt = first.submittedAt!;
+      const retakeAt = new Date(
+        submittedAt.getTime() + ENTRY_RETAKE_COOLDOWN_HOURS * 3600_000,
+      );
+      if (Date.now() < retakeAt.getTime()) {
+        return { screen: "cooldown", retakeAtIso: retakeAt.toISOString() };
+      }
+      return { screen: "intro", attemptNumber: 2 };
+    }
+
+    return { screen: "failed" };
   }
 
-  // Stuck APPLIED while assessment is skipped → enroll/waitlist immediately.
-  if (
-    member.status === "APPLIED" &&
-    isProgramEntryBypassEnabled()
-  ) {
-    const outcome = await prisma.$transaction(
-      (tx) => enrollOrWaitlist(tx, userId, cohort.id),
-      { maxWait: 10_000, timeout: 20_000 },
-    );
-    return outcome === "ENROLLED"
-      ? { screen: "enrolled" }
-      : { screen: "waitlisted" };
-  }
+  const rawCode = joinCode?.trim();
+  if (!rawCode) return { screen: "need_code" };
 
-  // member.status === "APPLIED"
-  const attempts = await prisma.programEntryAttempt.findMany({
-    where: { userId, cohortId: cohort.id },
-    orderBy: { attemptNumber: "asc" },
-    select: { id: true, submittedAt: true, passed: true },
-  });
-
-  const inProgress = attempts.find((a) => a.submittedAt === null);
-  if (inProgress) {
-    return { screen: "in_progress", attemptId: inProgress.id };
-  }
-
+  const cohort = await getCohortByJoinCode(rawCode);
+  if (!cohort) return { screen: "invalid_code" };
   if (cohort.status !== "ENROLLING") {
     return { screen: "closed", cohortName: cohort.name };
   }
 
-  const used = attempts.length;
-  if (used === 0) {
-    return { screen: "intro", attemptNumber: 1 };
-  }
-
-  if (used === 1) {
-    const first = attempts[0]!;
-    const submittedAt = first.submittedAt!;
-    const retakeAt = new Date(
-      submittedAt.getTime() + ENTRY_RETAKE_COOLDOWN_HOURS * 3600_000,
-    );
-    if (Date.now() < retakeAt.getTime()) {
-      return { screen: "cooldown", retakeAtIso: retakeAt.toISOString() };
-    }
-    return { screen: "intro", attemptNumber: 2 };
-  }
-
-  return { screen: "failed" };
+  return {
+    screen: "form",
+    cohortName: cohort.name,
+    joinCode: cohort.joinCode,
+    existingProfile: null,
+  };
 }
 
 export async function createApplication(
   userId: string,
   profile: ApplyProfileInput,
+  joinCode: string,
 ): Promise<Result<{ cohortId: string }>> {
-  const cohort = await getEnrollingOrActiveCohort();
+  const cohort = await getCohortByJoinCode(joinCode);
   if (!cohort) {
-    return { ok: false, message: "There is no program cohort open right now." };
+    return { ok: false, message: "Invalid cohort join code." };
   }
   if (cohort.status !== "ENROLLING") {
     return { ok: false, message: "Applications for this cohort are closed." };
+  }
+
+  const alreadyIn = await resolveProgramMemberForUser(userId);
+  if (alreadyIn) {
+    return { ok: false, message: "You are already enrolled in a program cohort." };
   }
 
   const existing = await prisma.programMember.findUnique({
@@ -308,11 +341,11 @@ async function loadQuestionsForClient(
 export async function getActiveAssessment(
   userId: string,
 ): Promise<ActiveAssessment | null> {
-  const cohort = await getEnrollingOrActiveCohort();
-  if (!cohort) return null;
+  const applied = await getAppliedMembership(userId);
+  if (!applied) return null;
 
   const attempt = await prisma.programEntryAttempt.findFirst({
-    where: { userId, cohortId: cohort.id, submittedAt: null },
+    where: { userId, cohortId: applied.cohortId, submittedAt: null },
     orderBy: { attemptNumber: "desc" },
     select: { id: true, attemptNumber: true, questionIds: true, startedAt: true },
   });
@@ -336,18 +369,15 @@ export async function getActiveAssessment(
 export async function startEntryAttempt(
   userId: string,
 ): Promise<Result<ActiveAssessment>> {
-  const cohort = await getEnrollingOrActiveCohort();
-  if (!cohort) {
-    return { ok: false, message: "There is no program cohort open right now." };
+  const applied = await getAppliedMembership(userId);
+  if (!applied) {
+    return {
+      ok: false,
+      message: "Apply to the program before starting the assessment.",
+    };
   }
 
-  const member = await prisma.programMember.findUnique({
-    where: { userId_cohortId: { userId, cohortId: cohort.id } },
-    select: { status: true },
-  });
-  if (!member || member.status !== "APPLIED") {
-    return { ok: false, message: "Apply to the program before starting the assessment." };
-  }
+  const cohort = applied.cohort;
 
   // Resume an in-progress attempt instead of creating a second one.
   const resumable = await getActiveAssessment(userId);
@@ -423,6 +453,29 @@ export async function startEntryAttempt(
     deadlineIso: deadline.toISOString(),
     durationMin: ENTRY_DURATION_MIN,
     questions,
+  };
+}
+
+/** Normalize + validate a join code for the apply gate (no side effects). */
+export async function peekJoinCode(code: string) {
+  const normalized = normalizeJoinCode(code);
+  if (!normalized) {
+    return { ok: false as const, message: "Enter a cohort join code." };
+  }
+  const cohort = await getCohortByJoinCode(normalized);
+  if (!cohort) {
+    return { ok: false as const, message: "Invalid cohort join code." };
+  }
+  if (cohort.status !== "ENROLLING") {
+    return {
+      ok: false as const,
+      message: "Applications for this cohort are closed.",
+    };
+  }
+  return {
+    ok: true as const,
+    joinCode: cohort.joinCode,
+    cohortName: cohort.name,
   };
 }
 

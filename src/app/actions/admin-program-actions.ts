@@ -10,7 +10,9 @@ import {
   grantSkipToken,
   promoteWaitlisted,
   publishResults,
+  regenerateJoinCode,
   regenerateMemberRecommendation,
+  resolveAdminProgramCohort,
   setCohortStatus,
 } from "@/features/program/admin";
 import {
@@ -20,6 +22,7 @@ import {
   cohortFormSchema,
   cohortIdSchema,
   cohortStatusSchema,
+  regenerateJoinCodeSchema,
 } from "@/lib/validations/program";
 
 type ActionResult =
@@ -44,6 +47,20 @@ export async function createOrUpdateCohortAction(
 
   revalidatePath("/admin/program");
   return { ok: true, cohortId: result.cohortId };
+}
+
+export async function regenerateJoinCodeAction(
+  input: unknown,
+): Promise<ActionResult & { joinCode?: string }> {
+  const admin = await requireAdmin();
+  const parsed = regenerateJoinCodeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid cohort." };
+
+  const result = await regenerateJoinCode(admin.userId, parsed.data.cohortId);
+  if (!result.ok) return result;
+
+  revalidatePath("/admin/program");
+  return { ok: true, joinCode: result.joinCode };
 }
 
 export async function setCohortStatusAction(
@@ -169,10 +186,16 @@ export async function regenerateRecommendationAction(
   return { ok: true };
 }
 
-export async function getAdminCohortIdAction(): Promise<
+export async function getAdminCohortIdAction(
+  preferredCohortId?: string | null,
+): Promise<
   { ok: true; cohortId: string | null } | { ok: false; message: string }
 > {
   await requireAdmin();
+  if (preferredCohortId) {
+    const cohort = await resolveAdminProgramCohort(preferredCohortId);
+    return { ok: true, cohortId: cohort?.id ?? null };
+  }
   const cohort = await getAdminProgramCohort();
   return { ok: true, cohortId: cohort?.id ?? null };
 }

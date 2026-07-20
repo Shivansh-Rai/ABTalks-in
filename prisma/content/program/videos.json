@@ -101,7 +101,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "RAG Tutorial: Text Chunking Strategies",
+        "title": "RAG Tutorial: Text Chunking Strategies for Better RAG Performance",
         "youtubeId": "POE8LDjdAw4",
         "durationMin": null
       }
@@ -118,7 +118,7 @@
       },
       {
         "order": 2,
-        "title": "Diving into Text Embedding Models — Zilliz",
+        "title": "Tutorial: Diving into Text Embedding Models",
         "youtubeId": "Hh0pIY_ex3c",
         "durationMin": null
       }
@@ -129,7 +129,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Vector Databases: ChromaDB, Pinecone & Weaviate",
+        "title": "Complete Tutorial on Vector Database - Learn ChromaDB, Pinecone & Weaviate",
         "youtubeId": "8KrTO9bS91s",
         "durationMin": null
       }
@@ -140,7 +140,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Pinecone #1 — Getting Started (official)",
+        "title": "Pinecone #1 - Getting Started",
         "youtubeId": "AGKY_Q3GjRc",
         "durationMin": null
       }
@@ -157,7 +157,7 @@
       },
       {
         "order": 2,
-        "title": "Chat with SQL and Vector DBs using LLM agents",
+        "title": "Chat with SQL and Vector Databases using LLM agents (Combine RAG and SQL-Agents)",
         "youtubeId": "xsCedrNP9w8",
         "durationMin": null
       }

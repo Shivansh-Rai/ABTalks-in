@@ -1,9 +1,16 @@
 import { AdminInterviewsPanel } from "@/components/program/admin-interviews-panel";
 import { listInterviewsForAdmin } from "@/features/program/interview";
-import { getAdminProgramCohort } from "@/features/program/admin";
+import { resolveAdminProgramCohort } from "@/features/program/admin";
 
-export default async function AdminProgramInterviewsPage() {
-  const cohort = await getAdminProgramCohort();
+type Props = {
+  searchParams: Promise<{ cohortId?: string }>;
+};
+
+export default async function AdminProgramInterviewsPage({
+  searchParams,
+}: Props) {
+  const params = await searchParams;
+  const cohort = await resolveAdminProgramCohort(params.cohortId);
 
   if (!cohort) {
     return <p className="text-sm text-muted-foreground">No cohort configured.</p>;

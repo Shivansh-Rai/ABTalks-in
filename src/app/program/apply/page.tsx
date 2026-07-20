@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ApplyForm } from "@/components/program/apply-form";
+import { JoinCodeGate } from "@/components/program/join-code-gate";
 import { startEntryAssessmentAction } from "@/app/actions/program-entry-actions";
 import {
   ENTRY_DURATION_MIN,
@@ -30,27 +31,45 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default async function ProgramApplyPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?from=/program/apply");
+type Props = {
+  searchParams: Promise<{ code?: string }>;
+};
 
-  const state = await getEntryState(session.user.id);
+export default async function ProgramApplyPage({ searchParams }: Props) {
+  const session = await auth();
+  const params = await searchParams;
+  const code = params.code ?? null;
+
+  if (!session?.user?.id) {
+    const from = code
+      ? `/program/apply?code=${encodeURIComponent(code)}`
+      : "/program/apply";
+    redirect(`/login?from=${encodeURIComponent(from)}`);
+  }
+
+  const state = await getEntryState(session.user.id, code);
 
   if (state.screen === "in_progress") {
     redirect("/program/assessment");
   }
 
-  if (state.screen === "unavailable") {
+  if (state.screen === "need_code" || state.screen === "invalid_code") {
     return (
       <Shell>
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>No open cohort</CardTitle>
+            <CardTitle>Enter your cohort join code</CardTitle>
             <CardDescription>
-              There isn&apos;t a program cohort accepting applications right now.
-              Check back soon.
+              You need a join code from your program organizer to apply to a
+              specific cohort.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <JoinCodeGate
+              initialCode={code ?? ""}
+              invalid={state.screen === "invalid_code"}
+            />
+          </CardContent>
         </Card>
       </Shell>
     );
@@ -190,7 +209,7 @@ export default async function ProgramApplyPage() {
             : "Tell us about your professional background. After applying you'll take a short entry assessment."}
         </p>
       </div>
-      <ApplyForm />
+      <ApplyForm joinCode={state.joinCode} />
     </Shell>
   );
 }

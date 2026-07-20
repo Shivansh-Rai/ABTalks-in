@@ -3,13 +3,18 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
+import type { Components } from "react-markdown";
 import {
   DaySectionCard,
-  dayMdClassName,
 } from "@/components/program/day-section-card";
-import { programMdComponents } from "@/components/program/markdown-code";
+import {
+  programMdComponents,
+  ProgramMarkdownCode,
+  ProgramMarkdownPre,
+} from "@/components/program/markdown-code";
 import { useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const MAX_VISIBLE_STEPS = 5;
 
@@ -18,6 +23,113 @@ const stepNavBtn =
 
 const pointerSpring = { type: "spring" as const, stiffness: 420, damping: 34 };
 const stepSpring = { type: "spring" as const, stiffness: 380, damping: 28 };
+
+/** Build-step prose: white body/bold/code; bold a notch heavier than mission MD. */
+const buildStepMdClassName =
+  "text-sm leading-6 text-white [&_a]:font-medium [&_a]:text-white [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-[#1a0a3a] [&_code]:px-1 [&_code]:text-xs [&_code]:text-white [&_li]:ml-1 [&_li]:list-disc [&_li]:marker:text-[#968BEC] [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#8365E3]/40 [&_pre]:bg-[#110528] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-[#E9E9E9] [&_strong]:font-bold [&_strong]:text-white [&_ul]:mb-2 [&_ul]:space-y-1.5 [&_ul]:pl-5";
+
+/**
+ * Normalize step markdown for clearer reading:
+ * - strip em/en dashes
+ * - wrap bare URLs in backticks (click-to-copy via code chip)
+ * - turn dense **Label:** / semicolon chunks into bullet lists
+ */
+function formatBuildStepContent(raw: string): string {
+  let text = raw
+    .replace(/\u2014/g, " - ")
+    .replace(/—/g, " - ")
+    .replace(/\u2013/g, "-")
+    .replace(/–/g, "-")
+    .replace(/\s+-\s+/g, " - ")
+    .trim();
+
+  // Bare URLs → inline code (click-to-copy). Skip ones already in backticks.
+  text = text.replace(
+    /(^|[\s([{}])(https?:\/\/[^\s<>\]`)'"]+)/g,
+    "$1`$2`",
+  );
+
+  if (/^\s*[-*+]\s/m.test(text) || /^\s*\d+\.\s/m.test(text)) {
+    return text;
+  }
+
+  // **Label:** sections → bullets
+  const labeled = text
+    .split(/(?=\*\*[^*\n]+?\*\*:)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (labeled.length >= 2) {
+    return labeled.map((chunk) => `- ${chunk}`).join("\n\n");
+  }
+
+  // Long semicolon lists (e.g. RAM → command options)
+  const semiParts = text.split(/\s*;\s+/).map((s) => s.trim()).filter(Boolean);
+  if (semiParts.length >= 3) {
+    return semiParts
+      .map((part, i) => {
+        const cleaned = part.replace(/\.$/, "");
+        return `- ${cleaned}${i === semiParts.length - 1 && part.endsWith(".") ? "." : ""}`;
+      })
+      .join("\n\n");
+  }
+
+  // Sentence breaks before a new **bold** lead-in
+  const boldBeats = text
+    .split(/(?<=\.)\s+(?=\*\*)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (boldBeats.length >= 2) {
+    return boldBeats.map((chunk) => `- ${chunk}`).join("\n\n");
+  }
+
+  return text;
+}
+
+function CopyableLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(href);
+      setCopied(true);
+      toast.success("Link copied");
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      title="Click to copy link"
+      aria-label={`Copy link ${href}`}
+      onClick={() => void copy()}
+      className={cn(
+        "inline max-w-full break-all font-medium text-white underline underline-offset-2 transition-colors hover:text-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968BEC]",
+        copied && "ring-2 ring-emerald-400/70",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+const buildStepMdComponents: Components = {
+  ...programMdComponents,
+  code: ProgramMarkdownCode,
+  pre: ProgramMarkdownPre,
+  a: ({ href, children }) => {
+    if (!href) return <span>{children}</span>;
+    return <CopyableLink href={href}>{children}</CopyableLink>;
+  },
+};
 
 function StepPointer() {
   return (
@@ -39,6 +151,11 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [pointerX, setPointerX] = useState<number | null>(null);
+
+  const formattedSteps = useMemo(
+    () => steps.map((step) => formatBuildStepContent(step)),
+    [steps],
+  );
 
   const windowStart = useMemo(() => {
     if (steps.length <= MAX_VISIBLE_STEPS) return 0;
@@ -200,7 +317,7 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
       <div className="rounded-[16px] border border-[#8365E3] bg-[#110528] p-4 md:p-5">
         <motion.div
           key={`content-${active}`}
-          className={cn(dayMdClassName, "min-h-[80px]")}
+          className={cn(buildStepMdClassName, "min-h-[80px]")}
           initial={
             reduceMotion ? false : { opacity: 0, x: direction * 12 }
           }
@@ -209,8 +326,8 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
             reduceMotion ? { duration: 0 } : { duration: 0.25, ease: "easeOut" }
           }
         >
-          <ReactMarkdown components={programMdComponents}>
-            {steps[active] ?? ""}
+          <ReactMarkdown components={buildStepMdComponents}>
+            {formattedSteps[active] ?? ""}
           </ReactMarkdown>
         </motion.div>
       </div>
