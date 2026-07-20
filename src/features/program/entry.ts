@@ -186,8 +186,9 @@ export async function getEntryState(
     const cohort = applied.cohort;
 
     if (isProgramEntryBypassEnabled()) {
-      const outcome = await prisma.$transaction((tx) =>
-        enrollOrWaitlist(tx, userId, cohort.id),
+      const outcome = await prisma.$transaction(
+        (tx) => enrollOrWaitlist(tx, userId, cohort.id),
+        { maxWait: 10_000, timeout: 20_000 },
       );
       return outcome === "ENROLLED"
         ? { screen: "enrolled" }
@@ -294,16 +295,20 @@ export async function createApplication(
     githubRepoUrl: profile.githubRepoUrl,
   };
 
-  await prisma.$transaction(async (tx) => {
-    await tx.programMember.upsert({
-      where: { userId_cohortId: { userId, cohortId: cohort.id } },
-      create: { userId, cohortId: cohort.id, status: "APPLIED", ...data },
-      update: { status: "APPLIED", ...data },
-    });
-    if (isProgramEntryBypassEnabled()) {
-      await enrollOrWaitlist(tx, userId, cohort.id);
-    }
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.programMember.upsert({
+        where: { userId_cohortId: { userId, cohortId: cohort.id } },
+        create: { userId, cohortId: cohort.id, status: "APPLIED", ...data },
+        update: { status: "APPLIED", ...data },
+      });
+      if (isProgramEntryBypassEnabled()) {
+        await enrollOrWaitlist(tx, userId, cohort.id);
+      }
+    },
+    // Neon pooler drops idle interactive txs (~5s). Bootstrap needs headroom.
+    { maxWait: 10_000, timeout: 20_000 },
+  );
 
   return { ok: true, cohortId: cohort.id };
 }

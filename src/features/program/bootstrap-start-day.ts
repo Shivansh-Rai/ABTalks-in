@@ -35,6 +35,9 @@ async function recomputeTotalScore(
 /**
  * Idempotent: waive days 1..(START-1) as PASSED, unlock START day,
  * award mission points only for newly created waived rows.
+ *
+ * Uses batched queries (no per-day round-trips) so Neon pooler
+ * interactive transactions do not hit P2028 timeouts.
  */
 export async function bootstrapMemberStartDay(
   tx: Prisma.TransactionClient,
@@ -68,44 +71,54 @@ export async function bootstrapMemberStartDay(
   let cleanPassesAdded = 0;
 
   if (missingDays.length > 0) {
-    const days = await tx.programDay.findMany({
-      where: { dayNumber: { in: missingDays } },
-      select: { dayNumber: true, missionPoints: true },
-    });
+    const [days, existingAttempts] = await Promise.all([
+      tx.programDay.findMany({
+        where: { dayNumber: { in: missingDays } },
+        select: { dayNumber: true, missionPoints: true },
+      }),
+      tx.programMissionSubmission.findMany({
+        where: { memberId, dayNumber: { in: missingDays } },
+        select: { dayNumber: true, attemptNumber: true },
+      }),
+    ]);
+
     const pointsByDay = new Map(
       days.map((d) => [d.dayNumber, d.missionPoints]),
     );
-
-    for (const dayNumber of missingDays) {
-      const missionPoints = pointsByDay.get(dayNumber) ?? 0;
-      const priorAttempts = await tx.programMissionSubmission.count({
-        where: { memberId, dayNumber },
-      });
-      await tx.programMissionSubmission.create({
-        data: {
-          memberId,
-          dayNumber,
-          attemptNumber: priorAttempts + 1,
-          passed: true,
-          pointsAwarded: missionPoints,
-          payload: {
-            waived: true,
-            reason: "cohort_start_day",
-          },
-          verdict: [
-            {
-              check: "waived",
-              passed: true,
-              detail: "Marked complete at enrollment",
-            },
-          ],
-        },
-      });
-      pointsAdded += missionPoints;
-      if (priorAttempts === 0) {
-        cleanPassesAdded += 1;
+    const maxAttemptByDay = new Map<number, number>();
+    for (const row of existingAttempts) {
+      const prev = maxAttemptByDay.get(row.dayNumber) ?? 0;
+      if (row.attemptNumber > prev) {
+        maxAttemptByDay.set(row.dayNumber, row.attemptNumber);
       }
     }
+
+    const rows = missingDays.map((dayNumber) => {
+      const missionPoints = pointsByDay.get(dayNumber) ?? 0;
+      const priorAttempts = maxAttemptByDay.get(dayNumber) ?? 0;
+      pointsAdded += missionPoints;
+      if (priorAttempts === 0) cleanPassesAdded += 1;
+      return {
+        memberId,
+        dayNumber,
+        attemptNumber: priorAttempts + 1,
+        passed: true,
+        pointsAwarded: missionPoints,
+        payload: {
+          waived: true,
+          reason: "cohort_start_day",
+        },
+        verdict: [
+          {
+            check: "waived",
+            passed: true,
+            detail: "Marked complete at enrollment",
+          },
+        ],
+      };
+    });
+
+    await tx.programMissionSubmission.createMany({ data: rows });
   }
 
   const nextUnlocked = Math.max(

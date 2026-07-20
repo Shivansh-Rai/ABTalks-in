@@ -56,10 +56,11 @@ const AT_RISK_LABEL: Record<string, string> = {
 };
 
 const figmaBtn =
-  "inline-flex h-11 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-6 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] transition-all duration-200 hover:scale-[1.03] hover:bg-[#7364E6]/90 hover:shadow-[0_0_18px_rgba(115,100,230,0.35)] active:scale-[0.98]";
+  "inline-flex h-11 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-6 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] transition-[background-color,box-shadow] duration-300 ease-out hover:bg-[#7364E6]/90 hover:shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5),0_0_12px_rgba(115,100,230,0.2)]";
 
 const cardClass =
-  "rounded-[16px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-4 transition-all duration-200 md:p-5 hover:-translate-y-0.5 hover:border-[#8365E3]/70 hover:shadow-[0_10px_28px_rgba(115,100,230,0.12)]";
+  "rounded-[16px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-4 transition-[border-color,box-shadow] duration-300 ease-out md:p-5 hover:border-[#8365E3]/55 hover:shadow-[0_4px_20px_rgba(115,100,230,0.08)]";
+
 
 function heatColor(count: number): string {
   if (count === 0) return "bg-[#1a2333] border border-[#2a3548]";
@@ -110,7 +111,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="group relative overflow-hidden rounded-[12px] border border-[rgba(46,57,75,0.69)] px-3.5 py-3.5 transition-all duration-200 hover:-translate-y-1 hover:border-[#968BEC]/50 hover:shadow-[0_12px_28px_rgba(115,100,230,0.18)] md:px-4 md:py-4"
+      className="group relative overflow-hidden rounded-[12px] border border-[rgba(46,57,75,0.69)] px-3.5 py-6 transition-[border-color,box-shadow] duration-300 ease-out hover:border-[#968BEC]/40 hover:shadow-[0_4px_18px_rgba(115,100,230,0.1)] md:px-4 md:py-7"
       style={{
         background:
           "linear-gradient(180deg, rgba(5, 12, 33, 0.89) 0%, rgba(61, 26, 117, 0.89) 76%, rgba(80, 25, 140, 0.89) 100%)",
@@ -119,11 +120,11 @@ function StatCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-semibold text-white md:text-sm">{label}</p>
-          <p className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-white transition-transform duration-200 group-hover:translate-x-0.5 md:text-[2rem] md:leading-none">
+          <p className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-white md:text-[2rem] md:leading-none">
             {value}
           </p>
         </div>
-        <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-[rgba(93,8,183,0.2)] transition-transform duration-200 group-hover:scale-110 md:size-11">
+        <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-[rgba(93,8,183,0.2)] transition-[background-color,transform] duration-300 ease-out group-hover:bg-[rgba(115,100,230,0.28)] group-hover:scale-[1.04] md:size-11">
           <Icon className={cn("size-5 md:size-6", iconClass)} />
         </div>
       </div>
@@ -181,7 +182,7 @@ export function ProgramDashboardView({
         </div>
 
         {atRisk.atRisk && (
-          <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-[10px] border-[1.5px] border-[#C9282B] bg-[rgba(121,58,59,0.69)] px-3 py-2 text-xs text-[#FF8A8A] md:text-sm">
+          <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-[10px] border-[1.5px] border-[#C9282B] bg-[rgba(121,58,59,0.69)] px-3 py-2 text-xs text-[#FACC15] md:text-sm">
             <AlertTriangle className="size-3.5 shrink-0" />
             <span>
               At risk:{" "}
@@ -242,13 +243,13 @@ export function ProgramDashboardView({
                 key={cell.dateIso}
                 title={`${cell.dateIso}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`}
                 className={cn(
-                  "aspect-square w-full max-w-[36px] justify-self-center rounded-full transition-transform duration-150 hover:z-10 hover:scale-125",
+                  "aspect-square w-full max-w-[36px] justify-self-center rounded-full transition-transform duration-200 ease-out hover:z-10 hover:scale-105",
                   heatColor(cell.count),
                 )}
               />
             ))}
           </div>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-[8px] border border-[#8365E3] bg-[#110528] px-3 py-1.5 text-xs text-[#E9E9E9] transition-colors duration-200 hover:border-[#968BEC] hover:bg-[#1a0a3a]">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-[8px] border border-[#8365E3] bg-[#110528] px-3 py-1.5 text-xs text-[#E9E9E9] transition-colors duration-300 ease-out hover:border-[#968BEC]/70">
             <span>Less</span>
             <span className="size-3.5 rounded-full bg-[#B4F0BA] sm:size-4" />
             <span className="size-3.5 rounded-full bg-[#6AE276] sm:size-4" />
@@ -295,30 +296,30 @@ export function ProgramDashboardView({
           <section
             className={cn(
               cardClass,
-              "group flex flex-1 flex-col border-[2.5px] border-[#968BEC] md:min-h-[140px]",
+              "group flex flex-1 flex-col md:min-h-[140px]",
             )}
           >
             <SectionHeading icon={Mic}>Voice Interview</SectionHeading>
             <div className="mt-auto flex flex-wrap items-end justify-between gap-3">
-              <div className="min-w-0 flex-1 space-y-8">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-[#E9E9E9] md:text-[15px]">
                   Scored separately, not part of your leaderboard total.
                 </p>
                 {interviewCard.state === "locked" ? (
-                  <span className="inline-flex rounded-[4px] border border-[#6B78F0] bg-[rgba(93,8,183,0.2)] px-3 py-1 text-xs text-[#B9B2F3] transition-colors duration-200 hover:border-[#968BEC] hover:bg-[rgba(115,100,230,0.25)]">
+                  <span className="mt-4 mb-4 inline-flex rounded-[4px] border border-[#6B78F0] bg-[rgba(93,8,183,0.2)] px-3 py-1 text-xs text-[#B9B2F3] transition-colors duration-300 ease-out hover:border-[#968BEC]/80">
                     Locked until program end
                   </span>
                 ) : interviewCard.state !== "exhausted" ? (
-                  <Link href="/program/interview" className={cn(figmaBtn, "mt-1")}>
+                  <Link href="/program/interview" className={cn(figmaBtn, "mt-3")}>
                     {interviewCard.state === "completed"
                       ? "View results"
                       : "Open →"}
                   </Link>
                 ) : (
-                  <p className="text-xs text-[#9CA3AF]">{interviewCard.label}</p>
+                  <p className="mt-2.5 text-xs text-[#9CA3AF]">{interviewCard.label}</p>
                 )}
               </div>
-              <div className="relative size-[72px] shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6 sm:size-[88px]">
+              <div className="relative size-[72px] shrink-0 transition-opacity duration-300 ease-out group-hover:opacity-95 sm:size-[88px]">
                 <Image
                   src="/program/interview-key.png"
                   alt=""
@@ -375,7 +376,7 @@ export function ProgramDashboardView({
             <div key={mod.number} className={cn(cardClass, "group")}>
               <div className="flex items-center gap-2 text-sm font-medium text-white">
                 <span
-                  className="size-2.5 shrink-0 rounded-full transition-transform duration-200 group-hover:scale-125"
+                  className="size-2.5 shrink-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-110"
                   style={{ backgroundColor: mod.color }}
                 />
                 {mod.title}
@@ -385,7 +386,7 @@ export function ProgramDashboardView({
               </p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1a2333]">
                 <div
-                  className="h-full rounded-full transition-all duration-300 group-hover:brightness-110"
+                  className="h-full rounded-full transition-[filter] duration-300 ease-out group-hover:brightness-105"
                   style={{
                     width: `${mod.total ? (mod.passed / mod.total) * 100 : 0}%`,
                     backgroundColor: mod.color,
@@ -427,7 +428,7 @@ export function ProgramDashboardView({
               return (
                 <li
                   key={p.moduleNumber}
-                  className="rounded-[10px] border border-[#8365E3]/30 bg-[#110528] px-3 py-2.5 text-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#968BEC]/60 hover:bg-[#1a0a3a]"
+                  className="rounded-[10px] border border-[#8365E3]/30 bg-[#110528] px-3 py-2.5 text-sm transition-[border-color,background-color] duration-300 ease-out hover:border-[#968BEC]/45 hover:bg-[#140830]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium text-white">
@@ -467,7 +468,7 @@ export function ProgramDashboardView({
             {data.recentVerdicts.map((v, i) => (
               <li
                 key={i}
-                className="rounded-[10px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] px-3 py-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#8365E3]/70 hover:shadow-[0_8px_20px_rgba(115,100,230,0.1)]"
+                className="rounded-[10px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] px-3 py-2.5 transition-[border-color,box-shadow] duration-300 ease-out hover:border-[#8365E3]/55 hover:shadow-[0_2px_12px_rgba(115,100,230,0.08)]"
               >
                 <span className="font-medium text-white">Day {v.dayNumber}</span>{" "}
                 <span
