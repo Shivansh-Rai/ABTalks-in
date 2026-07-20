@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import {
   getHiddenTestInputsForDay,
   getMissionState,
@@ -16,6 +15,7 @@ import {
   type ConceptCheckActive,
   type ConceptSubmitOk,
 } from "@/features/program/concept-check";
+import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import {
   conceptStartSchema,
   conceptSubmitSchema,
@@ -34,23 +34,9 @@ async function requireMemberId(): Promise<
   if (!session?.user?.id) {
     return { ok: false, message: "Please sign in to continue." };
   }
-  const cohort = await prisma.programCohort.findFirst({
-    where: { status: { in: ["ENROLLING", "ACTIVE", "COMPLETED"] } },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-  if (!cohort) return { ok: false, message: "Program unavailable." };
-
-  const member = await prisma.programMember.findUnique({
-    where: {
-      userId_cohortId: { userId: session.user.id, cohortId: cohort.id },
-    },
-    select: { id: true, status: true },
-  });
-  if (!member || (member.status !== "ENROLLED" && member.status !== "COMPLETED")) {
-    return { ok: false, message: "Enrollment required." };
-  }
-  return { ok: true, memberId: member.id };
+  const resolved = await resolveProgramMemberForUser(session.user.id);
+  if (!resolved) return { ok: false, message: "Enrollment required." };
+  return { ok: true, memberId: resolved.member.id };
 }
 
 function revalidateMissionPaths(dayNumber: number) {

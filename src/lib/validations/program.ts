@@ -66,6 +66,19 @@ export const applyProfileSchema = z
 
 export type ApplyProfileInput = z.infer<typeof applyProfileSchema>;
 
+export const joinCodeSchema = z
+  .string()
+  .trim()
+  .min(4, "Enter a valid join code")
+  .max(16, "Enter a valid join code")
+  .transform((v) => v.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+
+export const applyToProgramSchema = applyProfileSchema.and(
+  z.object({ joinCode: joinCodeSchema }),
+);
+
+export type ApplyToProgramInput = z.infer<typeof applyToProgramSchema>;
+
 export const entrySubmitSchema = z.object({
   attemptId: z.string().cuid(),
   answers: z
@@ -176,6 +189,10 @@ export const cohortStatusSchema = z.object({
 });
 
 export const cohortIdSchema = z.object({
+  cohortId: z.string().cuid(),
+});
+
+export const regenerateJoinCodeSchema = z.object({
   cohortId: z.string().cuid(),
 });
 

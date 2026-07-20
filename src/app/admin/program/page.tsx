@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import {
-  getAdminProgramCohort,
   getCohortOverview,
+  resolveAdminProgramCohort,
 } from "@/features/program/admin";
 import { IST } from "@/lib/date-utils";
 import { ProgramCohortPanel } from "@/components/program/program-cohort-panel";
@@ -12,8 +12,13 @@ function toDatetimeLocal(d: Date) {
   return formatInTimeZone(d, IST, "yyyy-MM-dd'T'HH:mm");
 }
 
-export default async function AdminProgramOverviewPage() {
-  const cohort = await getAdminProgramCohort();
+type Props = {
+  searchParams: Promise<{ cohortId?: string }>;
+};
+
+export default async function AdminProgramOverviewPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const cohort = await resolveAdminProgramCohort(params.cohortId);
   const overview = cohort ? await getCohortOverview(cohort.id) : null;
 
   return (
@@ -23,7 +28,7 @@ export default async function AdminProgramOverviewPage() {
           Program overview
         </h1>
         <p className="text-sm text-muted-foreground">
-          Cohort lifecycle, publish results, and cohort analytics.
+          Cohort lifecycle, join codes, publish results, and analytics.
         </p>
       </header>
 

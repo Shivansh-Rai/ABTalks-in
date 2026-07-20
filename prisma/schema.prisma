@@ -510,6 +510,7 @@ enum ProgramDayState {
 model ProgramCohort {
   id                 String              @id @default(cuid())
   name               String
+  joinCode           String              @unique
   startsAt           DateTime            // IST Day-1 anchor
   endsAt             DateTime            // hard end — scores freeze after this
   capacity           Int                 @default(100)

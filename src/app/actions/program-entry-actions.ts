@@ -5,13 +5,15 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
   createApplication,
+  peekJoinCode,
   startEntryAttempt,
   submitEntryAttempt,
   type EntrySubmitOk,
 } from "@/features/program/entry";
 import {
-  applyProfileSchema,
+  applyToProgramSchema,
   entrySubmitSchema,
+  joinCodeSchema,
 } from "@/lib/validations/program";
 
 type ActionResult<T = undefined> =
@@ -26,17 +28,36 @@ export async function applyToProgramAction(
     return { ok: false, message: "Please sign in to continue." };
   }
 
-  const parsed = applyProfileSchema.safeParse(input);
+  const parsed = applyToProgramSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Please check the form and try again." };
   }
 
-  const result = await createApplication(session.user.id, parsed.data);
+  const { joinCode, ...profile } = parsed.data;
+  const result = await createApplication(session.user.id, profile, joinCode);
   if (!result.ok) return { ok: false, message: result.message };
 
   revalidatePath("/program/apply");
   revalidatePath("/program");
   return { ok: true };
+}
+
+export async function validateJoinCodeAction(
+  input: unknown,
+): Promise<
+  | { ok: true; data: { joinCode: string; cohortName: string } }
+  | { ok: false; message: string }
+> {
+  const parsed = joinCodeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Enter a valid join code." };
+  }
+  const result = await peekJoinCode(parsed.data);
+  if (!result.ok) return { ok: false, message: result.message };
+  return {
+    ok: true,
+    data: { joinCode: result.joinCode, cohortName: result.cohortName },
+  };
 }
 
 /** Form action: starts (or resumes) an attempt and sends the user to the assessment. */

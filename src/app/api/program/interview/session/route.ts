@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { prepareInterviewStart } from "@/features/program/interview";
+import { resolveProgramMemberForUser } from "@/lib/program-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,29 +27,8 @@ async function requireMemberId(): Promise<
     };
   }
 
-  const cohort = await prisma.programCohort.findFirst({
-    where: { status: { in: ["ENROLLING", "ACTIVE", "COMPLETED"] } },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-  if (!cohort) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { ok: false, message: "Program unavailable." },
-        { status: 404 },
-      ),
-    };
-  }
-
-  const member = await prisma.programMember.findUnique({
-    where: {
-      userId_cohortId: { userId: session.user.id, cohortId: cohort.id },
-    },
-    select: { id: true, status: true },
-  });
-
-  if (!member || (member.status !== "ENROLLED" && member.status !== "COMPLETED")) {
+  const resolved = await resolveProgramMemberForUser(session.user.id);
+  if (!resolved) {
     return {
       ok: false,
       response: NextResponse.json(
@@ -59,7 +38,7 @@ async function requireMemberId(): Promise<
     };
   }
 
-  return { ok: true, memberId: member.id };
+  return { ok: true, memberId: resolved.member.id };
 }
 
 export async function POST() {

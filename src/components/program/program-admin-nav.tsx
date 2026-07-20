@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -15,6 +15,9 @@ const TABS = [
 
 export function ProgramAdminNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const cohortId = searchParams.get("cohortId");
+  const qs = cohortId ? `?cohortId=${encodeURIComponent(cohortId)}` : "";
 
   return (
     <nav className="flex flex-wrap gap-2 border-b pb-4">
@@ -26,7 +29,7 @@ export function ProgramAdminNav() {
         return (
           <Link
             key={tab.href}
-            href={tab.href}
+            href={`${tab.href}${qs}`}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm transition-colors",
               active

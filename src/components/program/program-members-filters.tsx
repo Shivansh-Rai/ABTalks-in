@@ -22,6 +22,8 @@ export function ProgramMembersFilters() {
 
   function apply(formData: FormData) {
     const params = new URLSearchParams();
+    const cohortId = searchParams.get("cohortId");
+    if (cohortId) params.set("cohortId", cohortId);
     const q = String(formData.get("q") ?? "").trim();
     const status = String(formData.get("status") ?? "");
     if (q) params.set("q", q);

@@ -2,18 +2,18 @@ import { Suspense } from "react";
 import Link from "next/link";
 import type { ProgramMemberStatus } from "@prisma/client";
 import {
-  getAdminProgramCohort,
   getCohortMembers,
+  resolveAdminProgramCohort,
 } from "@/features/program/admin";
 import { ProgramMembersFilters } from "@/components/program/program-members-filters";
 
 type Props = {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; cohortId?: string }>;
 };
 
 export default async function AdminProgramMembersPage({ searchParams }: Props) {
   const params = await searchParams;
-  const cohort = await getAdminProgramCohort();
+  const cohort = await resolveAdminProgramCohort(params.cohortId);
 
   if (!cohort) {
     return (
@@ -28,6 +28,7 @@ export default async function AdminProgramMembersPage({ searchParams }: Props) {
     q: params.q,
     status: status || undefined,
   });
+  const cohortQs = `?cohortId=${encodeURIComponent(cohort.id)}`;
 
   return (
     <div className="space-y-6">
@@ -62,7 +63,7 @@ export default async function AdminProgramMembersPage({ searchParams }: Props) {
               <tr key={m.id} className="border-b last:border-0">
                 <td className="px-4 py-3">
                   <Link
-                    href={`/admin/program/members/${m.id}`}
+                    href={`/admin/program/members/${m.id}${cohortQs}`}
                     className="font-medium hover:underline"
                   >
                     {m.fullName}

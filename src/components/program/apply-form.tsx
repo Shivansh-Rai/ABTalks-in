@@ -23,7 +23,7 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-[0.8rem] font-medium text-destructive">{message}</p>;
 }
 
-export function ApplyForm() {
+export function ApplyForm({ joinCode }: { joinCode: string }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [skillInput, setSkillInput] = useState("");
@@ -90,7 +90,7 @@ export function ApplyForm() {
   async function onSubmit(values: ApplyProfileInput) {
     setSubmitting(true);
     try {
-      const res = await applyToProgramAction(values);
+      const res = await applyToProgramAction({ ...values, joinCode });
       if (!res.ok) {
         toast.error(res.message);
         return;

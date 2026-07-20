@@ -229,74 +229,73 @@ export async function runProgramCommitsCron(): Promise<{
   processed: number;
   failures: { memberId: string; reason: string }[];
 }> {
-  const cohort = await prisma.programCohort.findFirst({
+  const cohorts = await prisma.programCohort.findMany({
     where: { status: "ACTIVE" },
     orderBy: { createdAt: "desc" },
     select: { id: true, startsAt: true, endsAt: true },
   });
 
-  if (!cohort) {
+  if (cohorts.length === 0) {
     return { processed: 0, failures: [] };
   }
 
-  const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
-  const graceKey = formatInTimeZone(
-    addDays(parseCalendarKeyToUtcDate(endKey), 1),
-    PROGRAM_TZ,
-    "yyyy-MM-dd",
-  );
   const todayKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
-  if (todayKey > graceKey) {
-    return { processed: 0, failures: [] };
-  }
-
   const programDateKey = getProgramDateKeyDaysAgo(1);
-
-  const members = await prisma.programMember.findMany({
-    where: {
-      cohortId: cohort.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    take: 100,
-    select: {
-      id: true,
-      githubUsername: true,
-      githubRepoUrl: true,
-      highestUnlockedDay: true,
-    },
-  });
-
   const failures: { memberId: string; reason: string }[] = [];
   let processed = 0;
 
-  for (let i = 0; i < members.length; i += CHUNK_SIZE) {
-    const chunk = members.slice(i, i + CHUNK_SIZE);
-    const results = await Promise.allSettled(
-      chunk.map((m) => processMemberCommitDay(m, cohort, programDateKey)),
+  for (const cohort of cohorts) {
+    const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
+    const graceKey = formatInTimeZone(
+      addDays(parseCalendarKeyToUtcDate(endKey), 1),
+      PROGRAM_TZ,
+      "yyyy-MM-dd",
     );
+    if (todayKey > graceKey) continue;
 
-    for (let j = 0; j < results.length; j++) {
-      const member = chunk[j]!;
-      const result = results[j]!;
-      if (result.status === "rejected") {
-        failures.push({
-          memberId: member.id,
-          reason: String(result.reason),
-        });
-        logger.error("[commits] member processing failed", {
-          memberId: member.id,
-          error: String(result.reason),
-        });
-        continue;
+    const members = await prisma.programMember.findMany({
+      where: {
+        cohortId: cohort.id,
+        status: { in: ["ENROLLED", "COMPLETED"] },
+      },
+      take: 100,
+      select: {
+        id: true,
+        githubUsername: true,
+        githubRepoUrl: true,
+        highestUnlockedDay: true,
+      },
+    });
+
+    for (let i = 0; i < members.length; i += CHUNK_SIZE) {
+      const chunk = members.slice(i, i + CHUNK_SIZE);
+      const results = await Promise.allSettled(
+        chunk.map((m) => processMemberCommitDay(m, cohort, programDateKey)),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const member = chunk[j]!;
+        const result = results[j]!;
+        if (result.status === "rejected") {
+          failures.push({
+            memberId: member.id,
+            reason: String(result.reason),
+          });
+          logger.error("[commits] member processing failed", {
+            memberId: member.id,
+            error: String(result.reason),
+          });
+          continue;
+        }
+        if (!result.value.ok) {
+          failures.push({
+            memberId: result.value.memberId,
+            reason: result.value.reason,
+          });
+          continue;
+        }
+        processed += 1;
       }
-      if (!result.value.ok) {
-        failures.push({
-          memberId: result.value.memberId,
-          reason: result.value.reason,
-        });
-        continue;
-      }
-      processed += 1;
     }
   }
 

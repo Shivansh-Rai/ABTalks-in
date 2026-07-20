@@ -1,9 +1,14 @@
 import { listProjectsForAdmin } from "@/features/program/projects";
 import { AdminProjectsPanel } from "@/components/program/admin-projects-panel";
-import { getAdminProgramCohort } from "@/features/program/admin";
+import { resolveAdminProgramCohort } from "@/features/program/admin";
 
-export default async function AdminProgramProjectsPage() {
-  const cohort = await getAdminProgramCohort();
+type Props = {
+  searchParams: Promise<{ cohortId?: string }>;
+};
+
+export default async function AdminProgramProjectsPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const cohort = await resolveAdminProgramCohort(params.cohortId);
 
   if (!cohort) {
     return (

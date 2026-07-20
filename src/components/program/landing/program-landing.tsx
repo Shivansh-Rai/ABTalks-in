@@ -357,7 +357,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
               Ready to build?
             </h2>
             <p className="mt-2 max-w-md text-sm text-[#E9E9E9] md:text-base">
-              Free for participants. One batch at a time — apply while
+              Free for participants. Use your cohort join code to apply when
               enrollment is open.
             </p>
           </div>
