@@ -209,10 +209,7 @@ export default async function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
-                <ProfileForm
-                  initialProfile={formDefaults}
-                  phoneVerified={profile.phoneVerified}
-                />
+                <ProfileForm initialProfile={formDefaults} />
               </CardContent>
             </Card>
 

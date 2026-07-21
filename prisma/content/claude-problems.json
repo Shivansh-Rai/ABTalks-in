@@ -5149,5 +5149,105 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 51,
+    "domain": "CLAUDE",
+    "title": "Day 51: Product Discovery & Sprint Planning – Kick Off Your 10-Day Capstone",
+    "problemStatement": "Welcome to Day 51 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 8 — Capstone Project (Days 51-60): From Idea to Deployed v1.0\n\nToday's focus: Use Claude as a co-founder and technical lead to discover the right project idea, define a clear v1.0 scope, and produce a complete 10-day implementation blueprint before any code is written.\n\nThis is Day 1 of a 10-day capstone that continues through Day 60. Everything decided today — the project, its scope, and the daily blueprint — becomes the foundation for every day that follows, so treat this session as one you'll return to throughout the capstone.\n\nTasks:\n1. Start the capstone conversation with Claude acting as co-founder and technical lead.\n2. Answer the interview questions one at a time, honestly reflecting your interests, goals, skills, and time constraints.\n3. Work with Claude to discover, compare, and refine project ideas until you've chosen the strongest one you can realistically ship in 10 days.\n4. Confirm the finalized v1.0 scope: what's included, what's intentionally left out, and what success on Day 10 looks like.\n5. Review the one-paragraph project summary and give explicit approval before any deliverables are generated.\n6. Generate and download the Product Requirements Document (PRD).\n7. Generate and download the day-by-day Implementation Blueprint for Days 2-10.\n8. Generate and download the Project Pitch Deck.\n9. Share your chosen project and key decisions publicly.\n\nImportant:\nThis prompt intentionally does not choose a tech stack or write code today — that's out of scope for Day 51.\n\nIf a manual step is required outside the chat (e.g. creating a repo, an account, or a folder), follow Claude's step-by-step instructions exactly and confirm each one with a screenshot before moving on — don't let Claude assume a step is done.\n\nSince this is the start of a multi-day capstone, keep this conversation active or well-documented, since Day 52 onward will build directly on today's PRD and Blueprint.\n\nSubmission: Share your GitHub commit URL containing the PRD, the Implementation Blueprint, the Pitch Deck, and a short write-up of the project you chose and why.",
+    "learningObjectives": [
+      "Use Claude as a structured product-discovery interviewer rather than a generic idea generator",
+      "Scope a realistic v1.0 that can be fully shipped in a fixed 10-day window",
+      "Distinguish must-have scope from deliberately deferred scope to prevent scope creep",
+      "Produce a professional Product Requirements Document (PRD) with Claude",
+      "Create a day-by-day implementation blueprint detailed enough for a fresh AI conversation to pick up work each day"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/Z5SdAzCU34Y"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 45,
+    "linkedinTemplate": "Day 51/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nToday I kicked off my 10-day capstone with Claude acting as co-founder and technical lead.\n\nInstead of jumping straight to code, we spent the day on product discovery — interviewing through ideas, scoping a realistic v1.0, and protecting the plan from scope creep.\n\n🧭 Guided Idea Discovery\n📋 Product Requirements Document\n🗺️ Day-by-Day Implementation Blueprint (Days 2-10)\n🎤 Project Pitch Deck\n🎯 A Clearly Scoped v1.0\n🚫 Scope Creep, Avoided\n\nBiggest takeaway:\n\nThe hardest part of shipping in 10 days isn't the code — it's having the discipline to define exactly what you're NOT building.\n\n#ClaudeAI #ProductDiscovery #BuildWithClaude #AI #SprintPlanning #Capstone #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL containing the generated PRD, Implementation Blueprint (Days 2-10), Pitch Deck, and a short write-up explaining the chosen project and key scoping decisions.",
+    "tags": [
+      "claude",
+      "day-51",
+      "capstone",
+      "product-discovery",
+      "sprint-planning",
+      "prd",
+      "product-management",
+      "project-scoping"
+    ],
+    "dayContent": {
+      "title": "Product Discovery & Sprint Planning",
+      "tagline": "Kick Off Your 10-Day Capstone: From No Idea to a Deployed v1.0",
+      "module": "Capstone Project — Day 1 of 10",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 45,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how to use Claude as a structured product-discovery partner: interviewing you toward the right idea, scoping a v1.0 that's realistic for 10 days, and producing the PRD, implementation blueprint, and pitch deck that will guide every remaining day of the capstone.",
+        "bullets": [
+          {
+            "label": "Guided Discovery",
+            "text": "Let Claude interview you one question at a time to surface the strongest project you can realistically ship, instead of picking the most ambitious idea."
+          },
+          {
+            "label": "Scope Discipline",
+            "text": "Explicitly define what v1.0 includes, what's deliberately excluded, and what 'done' looks like on Day 10."
+          },
+          {
+            "label": "Professional PRD",
+            "text": "Produce a complete Product Requirements Document as the single source of truth for the project."
+          },
+          {
+            "label": "Self-Contained Daily Blueprint",
+            "text": "Generate a Days 2-10 plan detailed enough that a fresh AI conversation each day can continue building without re-planning."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Read the provided resources.",
+          "Watch the solution video.",
+          "Open Claude.",
+          "Start a new conversation for the capstone — you'll return to it across all 10 days.",
+          "Paste the Product Discovery & Sprint Planning prompt.",
+          "Answer Claude's interview questions one at a time, honestly.",
+          "Work with Claude to discover, compare, and refine your project idea.",
+          "Confirm the finalized v1.0 scope, exclusions, and Day 10 success criteria.",
+          "Review the one-paragraph project summary and explicitly approve it.",
+          "Generate and download the Product Requirements Document (PRD).",
+          "Generate and download the Implementation Blueprint for Days 2-10.",
+          "Generate and download the Project Pitch Deck.",
+          "For any manual step Claude asks you to do outside the chat, follow it exactly and confirm with a screenshot.",
+          "Take screenshots of the interview, the approved summary, and each deliverable.",
+          "Create a Day51 folder in your GitHub repository.",
+          "Create a day51.md file.",
+          "Upload screenshots, the PRD, Implementation Blueprint, Pitch Deck, and your key learnings.",
+          "Commit and push the changes.",
+          "Submit the GitHub commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/Z5SdAzCU34Y"
+      },
+      "promptTemplate": "Product Discovery & Sprint Planning\n\nYou are my co-founder, product mentor, and technical lead for this 10-day capstone. Your goal is to help me go from no idea to a deployed v1.0 product. Help me discover the right problem, shape the best solution, and guide me through the entire journey over the next 10 days (including today).\n\nI'm participating in the AB Talks 60-Day Claude AI Challenge. This capstone follows a real software development lifecycle:\n\nRequirements → Design → Setup → Implementation → Testing → Deployment → Maintenance\n\nWe'll continue this entire capstone in the same conversation, so treat today's decisions as the foundation for everything that follows.\n\nStanding Rules\nAssume I need guidance for every manual step unless I tell you otherwise.\nWhenever I need to perform a manual task outside this chat, explain it step by step using the actual buttons, menus, and commands.\nWait for my confirmation and a screenshot before continuing.\nNever assume I've completed a step.\nDo not recommend paid tools or services unless I explicitly ask for them.\n\nToday's Goal\n\nInterview me one question at a time.\n\nKeep every question simple, and briefly explain why you're asking it.\n\nIf I don't already have a project idea, interview me to discover one. Understand my interests, goals, skills, strengths, and constraints, then suggest, compare, refine, combine, and challenge ideas until we've chosen the strongest project I can realistically build in 10 days.\n\nDon't optimize for the most ambitious project. Optimize for the most impressive project that can be fully completed within the available time. Continuously protect me from scope creep.\n\nOnce we've selected the project, continue the interview until you have everything needed to confidently guide the remaining nine days.\n\nClearly define:\n\nWhat the v1.0 will include\nWhat will intentionally be left out\nWhat success on Day 10 looks like\n\nBefore generating any documents, summarize the finalized project in one paragraph and ask for my approval.\n\nOnly generate the deliverables after I confirm.\n\nDeliverables\n\nGenerate downloadable versions of:\n\n1. Product Requirements Document (PRD)\n\nA complete, professional PRD for the finalized project.\n\n2. Implementation Blueprint (Days 2-10)\n\nGenerate a project-specific implementation blueprint for building this exact project over the remaining nine days.\n\nThis must not be a generic template.\n\nBreak the project into realistic daily milestones so that completing every day's work results in a polished, deployed v1.0 by Day 10.\n\nFor each day, include:\n\n🎯 Objective\n📖 What I'll learn\n🛠 Features to build\n📝 Step-by-step implementation plan\n📂 Files and folders to create or modify\n🔗 APIs, libraries, services, or tools to integrate (if applicable)\n🧪 Testing tasks\n🐞 Common issues and debugging tips\n✅ End-of-day checklist\n📸 Expected project state and screenshots to capture\n➡️ Handoff notes for the next day\n\nThe implementation plan should contain enough technical detail that the corresponding daily AI prompt can guide me through building the project without redesigning, re-planning, or making major architectural decisions.\n\nAssume each remaining day begins with a fresh AI conversation. Therefore, each day's section must contain enough context that another AI assistant could immediately continue building from where the previous day ended.\n\nThe blueprint should function as the single source of truth for the remainder of the capstone.\n\n3. Project Pitch Deck\n\nCreate a presentation-ready pitch deck covering:\n\nProblem\nTarget Users\nSolution\nKey Features\nTechnical Approach\nFuture Scope\nVision\n\nImportant\n\nDo not choose the tech stack or write code today.\n\nToday's objective is to discover the right project, define it clearly, and produce a complete implementation blueprint that will enable the remaining daily prompts to guide me through building and shipping a polished v1.0 product by Day 10.",
+      "engagement": {
+        "type": "Capstone Kickoff Showcase",
+        "description": "Share the project you chose for your 10-day capstone and the biggest scoping decision you made to keep it realistic. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a markdown file containing screenshots of your interview and approved summary, the generated PRD, Implementation Blueprint, Pitch Deck, and your key learnings.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]

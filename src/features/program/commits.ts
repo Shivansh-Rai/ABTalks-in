@@ -15,10 +15,12 @@ import { parseRepo } from "@/features/program/verify-mission";
 import {
   COMMIT_POINTS_PER_DAY,
   PROGRAM_MAX_COMMIT_POINTS,
+  PROGRAM_MEMBER_START_DAY,
   PROGRAM_TOTAL_DAYS,
   PROGRAM_TZ,
 } from "@/features/program/constants";
 import { logger } from "@/lib/logger";
+import type { Prisma } from "@prisma/client";
 
 const MAX_COMMIT_POINTS = PROGRAM_MAX_COMMIT_POINTS;
 const CHUNK_SIZE = 10;
@@ -139,7 +141,8 @@ export async function fetchGithubCommitCount(
   }
 }
 
-async function recomputeCommitPointsForMember(
+async function recomputeCommitPointsInTx(
+  tx: Prisma.TransactionClient,
   memberId: string,
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<void> {
@@ -148,26 +151,136 @@ async function recomputeCommitPointsForMember(
   const startDate = programDateKeyToDbDate(startKey);
   const endDate = programDateKeyToDbDate(endKey);
 
-  await prisma.$transaction(async (tx) => {
-    const qualifyingDays = await tx.programCommitDay.count({
-      where: {
-        memberId,
-        commitCount: { gt: 0 },
-        date: { gte: startDate, lte: endDate },
-      },
-    });
-
-    const commitPoints = Math.min(
-      MAX_COMMIT_POINTS,
-      qualifyingDays * COMMIT_POINTS_PER_DAY,
-    );
-
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: { commitPoints },
-    });
-    await recomputeMemberScore(tx, memberId);
+  const qualifyingDays = await tx.programCommitDay.count({
+    where: {
+      memberId,
+      commitCount: { gt: 0 },
+      date: { gte: startDate, lte: endDate },
+    },
   });
+
+  const commitPoints = Math.min(
+    MAX_COMMIT_POINTS,
+    qualifyingDays * COMMIT_POINTS_PER_DAY,
+  );
+
+  await tx.programMember.update({
+    where: { id: memberId },
+    data: { commitPoints },
+  });
+  await recomputeMemberScore(tx, memberId);
+}
+
+async function recomputeCommitPointsForMember(
+  memberId: string,
+  cohort: { startsAt: Date; endsAt: Date },
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await recomputeCommitPointsInTx(tx, memberId, cohort);
+  });
+}
+
+/**
+ * Upsert a ProgramCommitDay with commitCount = max(existing, 1).
+ * Returns true if the date was inside the cohort window.
+ */
+export async function creditCommitDayInTx(
+  tx: Prisma.TransactionClient,
+  memberId: string,
+  programDateKey: string,
+  cohort: { startsAt: Date; endsAt: Date },
+): Promise<boolean> {
+  if (!isDateKeyInCohortWindow(programDateKey, cohort)) {
+    return false;
+  }
+
+  const commitDate = programDateKeyToDbDate(programDateKey);
+  const existing = await tx.programCommitDay.findUnique({
+    where: { memberId_date: { memberId, date: commitDate } },
+    select: { commitCount: true },
+  });
+  const nextCount = Math.max(existing?.commitCount ?? 0, 1);
+
+  await tx.programCommitDay.upsert({
+    where: { memberId_date: { memberId, date: commitDate } },
+    create: {
+      memberId,
+      date: commitDate,
+      commitCount: nextCount,
+    },
+    update: { commitCount: nextCount },
+  });
+  return true;
+}
+
+/**
+ * Mark programDateKey as a qualifying commit day (min count 1) and recompute points.
+ * Used after first mission pass — does not call GitHub.
+ */
+export async function creditCommitDayForMember(
+  memberId: string,
+  programDateKey: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const member = await prisma.programMember.findUnique({
+    where: { id: memberId },
+    select: {
+      id: true,
+      cohort: { select: { startsAt: true, endsAt: true } },
+    },
+  });
+  if (!member) {
+    return { ok: false, message: "Member not found." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const credited = await creditCommitDayInTx(
+        tx,
+        memberId,
+        programDateKey,
+        member.cohort,
+      );
+      if (credited) {
+        await recomputeCommitPointsInTx(tx, memberId, member.cohort);
+      }
+    });
+    return { ok: true };
+  } catch (e) {
+    logger.error("[commits] creditCommitDayForMember failed", {
+      memberId,
+      programDateKey,
+      error: String(e),
+    });
+    return { ok: false, message: "Could not credit commit day." };
+  }
+}
+
+/** Number of early cohort calendar days to green at enroll (matches waived mission days). */
+export const EARLY_COMMIT_DAY_COUNT = PROGRAM_MEMBER_START_DAY - 1;
+
+/**
+ * Seed commit activity for cohort calendar days start+0 .. start+(N-1).
+ * Prefer bootstrapMemberStartDay for enroll; this is for callers that already
+ * have a transaction and cohort window.
+ */
+export async function seedEarlyCommitDaysInTx(
+  tx: Prisma.TransactionClient,
+  memberId: string,
+  cohort: { startsAt: Date; endsAt: Date },
+): Promise<void> {
+  const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
+  const startUtc = parseCalendarKeyToUtcDate(startKey);
+  let any = false;
+
+  for (let i = 0; i < EARLY_COMMIT_DAY_COUNT; i++) {
+    const dateKey = formatInTimeZone(addDays(startUtc, i), PROGRAM_TZ, "yyyy-MM-dd");
+    const credited = await creditCommitDayInTx(tx, memberId, dateKey, cohort);
+    if (credited) any = true;
+  }
+
+  if (any) {
+    await recomputeCommitPointsInTx(tx, memberId, cohort);
+  }
 }
 
 type MemberRow = {

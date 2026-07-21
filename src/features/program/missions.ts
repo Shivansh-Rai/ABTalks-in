@@ -1,7 +1,12 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
-import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
+import { logger } from "@/lib/logger";
+import {
+  PROGRAM_TOTAL_DAYS,
+  PROGRAM_TZ,
+} from "@/features/program/constants";
 import {
   collectPassSkipSets,
   deriveDayState,
@@ -410,6 +415,30 @@ export async function submitMissionRun(
       });
     }
   });
+
+  if (verifyResult.passed && isFirstPass) {
+    try {
+      // Dynamic import avoids commits.ts ↔ missions.ts cycle (recomputeMemberScore).
+      const { creditCommitDayForMember } = await import(
+        "@/features/program/commits"
+      );
+      const todayKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
+      const credit = await creditCommitDayForMember(memberId, todayKey);
+      if (!credit.ok) {
+        logger.error("[missions] commit credit after pass failed", {
+          memberId,
+          dayNumber,
+          message: credit.message,
+        });
+      }
+    } catch (e) {
+      logger.error("[missions] commit credit after pass errored", {
+        memberId,
+        dayNumber,
+        error: String(e),
+      });
+    }
+  }
 
   return {
     passed: verifyResult.passed,

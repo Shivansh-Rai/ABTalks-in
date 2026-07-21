@@ -1,5 +1,7 @@
 ## Pending reconcile
 
+- 2026-07-20 [schema] PhoneVerification table + StudentProfile.phoneVerified/phoneVerifiedAt (OTP phone verification; was ondev only)
+- 2026-07-20 [rule] Program commit days credited on first mission pass (today) and seeded for cohort calendar days 1–3 at enroll; cron remains supplemental
 - 2026-07-20 [schema] ProgramCohort.joinCode (unique); multi concurrent cohorts allowed; apply gated by ENROLLING join code; requireProgramMember resolves by membership
 - 2026-07-20 [rule] SHIP_IT verifies file existence only (content/minLines/notebook checks gated off); Day 3/4 repoChecks slimmed to unique paths — reseed with `npm run db:seed:program`
 - 2026-07-17 [convention] Program commit scoring + heatmap use America/Chicago (aligned with unlock); admin cohort form remains IST-labeled
