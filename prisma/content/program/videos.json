@@ -168,13 +168,13 @@
     "videos": [
       {
         "order": 1,
-        "title": "Complete RAG Crash Course with LangChain",
+        "title": "Complete RAG Crash Course With Langchain In 2 Hours",
         "youtubeId": "o126p1QN_RI",
         "durationMin": null
       },
       {
         "order": 2,
-        "title": "Connect to OpenAI-compatible APIs in 6 Minutes",
+        "title": "Python Crash Course: Connect to OpenAI in 6 Minutes!",
         "youtubeId": "yKxDKc4Jn8c",
         "durationMin": null
       }
@@ -185,7 +185,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Master AI Prompting: Zero-Shot, Few-Shot & CoT",
+        "title": "Master AI Prompting: Zero-Shot, Few-Shot & Chain of Thought Explained",
         "youtubeId": "sZIV7em3JA8",
         "durationMin": null
       }
@@ -196,13 +196,13 @@
     "videos": [
       {
         "order": 1,
-        "title": "OpenAI Function Calling — Full Beginner Tutorial",
+        "title": "OpenAI Function Calling - Full Beginner Tutorial",
         "youtubeId": "aqdWSYWC_LI",
         "durationMin": null
       },
       {
         "order": 2,
-        "title": "Structured Outputs with LLMs & Pydantic",
+        "title": "AI Structured Outputs with LLMs, LlamaIndex & Pydantic",
         "youtubeId": "Rpg9TQtqqhE",
         "durationMin": null
       }
@@ -213,7 +213,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "RAG vs Fine-Tuning — IBM Technology",
+        "title": "RAG vs. Fine Tuning",
         "youtubeId": "00Q0G84kq3M",
         "durationMin": null
       }
@@ -224,7 +224,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "LoRA & QLoRA Explained Simply — Full vs PEFT",
+        "title": "LoRA & QLoRA Explained Simply | Full Fine-Tuning vs PEFT (Complete Guide)",
         "youtubeId": "cO6Ly7mIziQ",
         "durationMin": null
       }
@@ -235,7 +235,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Build an API with Python: LLM + FastAPI + Ollama",
+        "title": "How To Build an API with Python (LLM Integration, FastAPI, Ollama & More)",
         "youtubeId": "cy6EAp4iNN4",
         "durationMin": null
       }
@@ -246,7 +246,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "ChatGPT-style Chatbot with Streamlit — Step-by-Step",
+        "title": "Creating a ChatGPT-style Chatbot with Streamlit & LLMs | Step-by-Step Guide",
         "youtubeId": "jYY24eNTYNg",
         "durationMin": null
       }
@@ -257,7 +257,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Build a Streaming LLM API with FastAPI",
+        "title": "Build a Streaming LLM API with FastAPI in Python (Real Time Responses)",
         "youtubeId": "twXxb00w1_4",
         "durationMin": null
       }
@@ -268,7 +268,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Structured Outputs & Output Formatting with Pydantic",
+        "title": "AI Structured Outputs with LLMs, LlamaIndex & Pydantic (revisit for output formatting)",
         "youtubeId": "Rpg9TQtqqhE",
         "durationMin": null
       }
