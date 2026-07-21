@@ -63,16 +63,6 @@ export async function completeRegistrationAction(formData: FormData) {
   const roleRaw = formData.get("role");
   const role = typeof roleRaw === "string" ? roleRaw.trim() : roleRaw;
 
-  const countryCodeRaw = formData.get("countryCode");
-  const countryCode =
-    typeof countryCodeRaw === "string" && countryCodeRaw.trim() !== ""
-      ? countryCodeRaw.trim()
-      : "+91";
-
-  const phoneNumberRaw = formData.get("phoneNumber");
-  const phoneNumber =
-    typeof phoneNumberRaw === "string" ? phoneNumberRaw.trim() : "";
-
   const parsed = registerPayloadSchema.safeParse({
     fullName,
     college,
@@ -84,8 +74,7 @@ export async function completeRegistrationAction(formData: FormData) {
     domain: formData.get("domain"),
     skills,
     linkedinUrl: formData.get("linkedinUrl") || "",
-    countryCode,
-    phoneNumber,
+    phone: String(formData.get("phone") ?? ""),
     githubUsername: formData.get("githubUsername") || "",
     referralCode,
   });

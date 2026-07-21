@@ -42,8 +42,6 @@ export type DashboardDataWithEnrollment = {
     isReadyForInterview: boolean;
     isCampusAmbassadorCandidate: boolean;
     ambassadorDismissedAt: Date | null;
-    phone: string | null;
-    phoneVerified: boolean;
   };
   enrollment: {
     id: string;
@@ -118,8 +116,6 @@ export async function getDashboardData(
     isReadyForInterview: user.studentProfile.isReadyForInterview,
     isCampusAmbassadorCandidate: user.studentProfile.isCampusAmbassadorCandidate,
     ambassadorDismissedAt: user.studentProfile.ambassadorDismissedAt,
-    phone: user.studentProfile.phone,
-    phoneVerified: user.studentProfile.phoneVerified,
   };
 
   const enrollment = await resolveDashboardEnrollment(
