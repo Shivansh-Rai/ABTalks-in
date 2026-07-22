@@ -1,7 +1,7 @@
 import "server-only";
 import type { ProgramMissionType } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { getCommitHeatmap, type HeatmapCell } from "@/features/program/commits";
+import { getMissionHeatmap, type MissionHeatmapCell } from "@/features/program/progression";
 
 const PAGE_SIZE = 30;
 
@@ -73,7 +73,7 @@ export type TalentProfile = {
     totalScore: number;
   };
   cleanPassPct: number;
-  commitHeatmap: HeatmapCell[];
+  missionHeatmap: MissionHeatmapCell[];
   missionPortfolio: MissionPortfolioDay[];
   projects: {
     moduleNumber: number;
@@ -417,8 +417,8 @@ export async function getTalentProfile(
   });
   const rank = ranked.findIndex((m) => m.id === memberId) + 1;
 
-  const [heatmap, missionPortfolio, shortlistItem] = await Promise.all([
-    getCommitHeatmap(memberId, access.cohort),
+  const [missionHeatmap, missionPortfolio, shortlistItem] = await Promise.all([
+    getMissionHeatmap(memberId),
     buildMissionPortfolio(memberId, member.highestUnlockedDay),
     prisma.recruiterShortlistItem.findUnique({
       where: {
@@ -466,7 +466,7 @@ export async function getTalentProfile(
         member.missionPoints,
         member.cleanPassCount,
       ),
-      commitHeatmap: heatmap,
+      missionHeatmap,
       missionPortfolio,
       projects: member.projects.map((p) => ({
         moduleNumber: p.moduleNumber,

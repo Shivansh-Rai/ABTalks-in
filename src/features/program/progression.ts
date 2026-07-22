@@ -67,7 +67,7 @@ export function getMaxContentDay(
 }
 
 /**
- * Day availability: calendar cap + sequential (prev must be PASSED/SKIPPED).
+ * Day availability: calendar cap + sequential (prev must be PASSED).
  * `maxContentDay` is the unlock ceiling (calendar + admin floor).
  */
 export function deriveDayState(
@@ -83,7 +83,7 @@ export function deriveDayState(
   if (dayNumber > maxContentDay) return "LOCKED";
   if (dayNumber > 1) {
     const prev = dayNumber - 1;
-    if (!passedDays.has(prev) && !skippedDays.has(prev)) return "LOCKED";
+    if (!passedDays.has(prev)) return "LOCKED";
   }
   return "AVAILABLE";
 }
@@ -102,15 +102,23 @@ export function isCohortFrozen(cohort: { endsAt: Date }): boolean {
   return new Date() > cohort.endsAt;
 }
 
-/** Highest day number the member has PASSED or SKIPPED (0 if none). */
-export function getMemberProgressDay(
-  passedDays: Set<number>,
-  skippedDays: Set<number>,
-): number {
+/** Highest day number the member has PASSED (0 if none). */
+export function getMemberProgressDay(passedDays: Set<number>): number {
   let max = 0;
   for (const d of passedDays) max = Math.max(max, d);
-  for (const d of skippedDays) max = Math.max(max, d);
   return max;
+}
+
+export type MissionHeatmapCell = { dayNumber: number; completed: boolean };
+
+export async function getMissionHeatmap(
+  memberId: string,
+): Promise<MissionHeatmapCell[]> {
+  const { days } = await getMemberDayStates(memberId);
+  return days.map((d) => ({
+    dayNumber: d.dayNumber,
+    completed: d.state === "PASSED",
+  }));
 }
 
 /** How many content days behind the Texas calendar unlock pace. */

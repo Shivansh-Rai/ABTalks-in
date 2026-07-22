@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
 import { requireRecruiter } from "@/lib/program-auth";
 import { getTalentProfile } from "@/features/talent-pool/pool";
-import { CommitHeatmap } from "@/components/program/commit-heatmap";
+import { MissionHeatmap } from "@/components/program/mission-heatmap";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { ShortlistNoteForm } from "@/components/talent/shortlist-note-form";
 import { ScoreBreakdown } from "@/components/talent/score-breakdown";
@@ -31,7 +31,7 @@ export default async function TalentMemberPage({ params }: Props) {
   const profile = profileResult.data;
 
   const portfolioDays = profile.missionPortfolio.filter(
-    (d) => d.state === "PASSED" || d.state === "SKIPPED",
+    (d) => d.state === "PASSED",
   );
 
   return (
@@ -167,8 +167,8 @@ export default async function TalentMemberPage({ params }: Props) {
       )}
 
       <section className="space-y-3 rounded-xl border p-4">
-        <h2 className="text-sm font-semibold">Commit activity</h2>
-        <CommitHeatmap cells={profile.commitHeatmap} />
+        <h2 className="text-sm font-semibold">Mission progress</h2>
+        <MissionHeatmap cells={profile.missionHeatmap} variant="compact" />
       </section>
 
       {profile.projects.length > 0 && (
@@ -257,7 +257,7 @@ export default async function TalentMemberPage({ params }: Props) {
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {day.state === "SKIPPED" ? "Skipped" : "Passed"}
+                Passed
                 {day.state === "PASSED" && (
                   <>
                     {" "}

@@ -4,18 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import ReactMarkdown from "react-markdown";
-import { AlertTriangle, SkipForward, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { ProgramMissionType } from "@prisma/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckList, type CheckItem } from "@/components/program/workbench/check-list";
@@ -25,7 +17,6 @@ import type { MissionState } from "@/features/program/missions";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import {
   submitMissionRunAction,
-  useSkipTokenAction,
 } from "@/app/actions/program-mission-actions";
 import { requestMentorReviewAction } from "@/app/actions/program-ai-actions";
 import { cn } from "@/lib/utils";
@@ -93,7 +84,6 @@ export function MissionPanel({
     points: number;
     unlockedDay?: number;
   } | null>(null);
-  const [skipOpen, setSkipOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [bossRepo, setBossRepo] = useState(githubRepoUrl);
   const [bossWriteup, setBossWriteup] = useState("");
@@ -164,7 +154,6 @@ export function MissionPanel({
         setMissionState((s) => ({
           ...s,
           failedRunCount: s.failedRunCount + 1,
-          canSkip: s.skipTokensLeft > 0 && s.failedRunCount + 1 >= 3,
         }));
       }
     } finally {
@@ -189,22 +178,6 @@ export function MissionPanel({
     } finally {
       setMentorLoading(false);
     }
-  }
-
-  async function handleSkip() {
-    const result = await useSkipTokenAction({ dayNumber });
-    if (!result.ok) {
-      toast.error(result.message);
-      return;
-    }
-    toast.success(`Day skipped — Day ${result.data.unlockedDay} unlocked`);
-    setSkipOpen(false);
-    setMissionState((s) => ({
-      ...s,
-      dayState: "SKIPPED",
-      skipTokensLeft: s.skipTokensLeft - 1,
-      canSkip: false,
-    }));
   }
 
   if (missionState.dayState === "PASSED") {
@@ -430,17 +403,6 @@ export function MissionPanel({
 
       {missionType !== "CODE_SPRINT" && (
         <div className="flex flex-wrap items-center justify-end gap-3">
-          {missionState.canSkip && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSkipOpen(true)}
-              className="gap-2 border-[#8365E3]/50 bg-transparent text-white"
-            >
-              <SkipForward className="size-4" />
-              Use skip token ({missionState.skipTokensLeft} left)
-            </Button>
-          )}
           <button
             type="button"
             onClick={() => void handleSubmit()}
@@ -451,50 +413,6 @@ export function MissionPanel({
           </button>
         </div>
       )}
-
-      {missionState.failedRunCount > 0 && missionState.failedRunCount < 3 && (
-        <p className="text-xs text-[#8F8F8F]">
-          {3 - missionState.failedRunCount} more failed run
-          {3 - missionState.failedRunCount === 1 ? "" : "s"} until skip token
-          unlocks.
-        </p>
-      )}
-
-      <Dialog open={skipOpen} onOpenChange={setSkipOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Use a skip token?</DialogTitle>
-            <DialogDescription>
-              This is irreversible. You will earn 0 mission points for Day{" "}
-              {dayNumber}, but the next day will unlock. You have{" "}
-              {missionState.skipTokensLeft} token
-              {missionState.skipTokensLeft === 1 ? "" : "s"} remaining.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-            <span>
-              Skipped days still allow the concept check, but no mission points.
-            </span>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSkipOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void handleSkip()}
-            >
-              Skip this day
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

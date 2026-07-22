@@ -5,6 +5,7 @@ import {
   getCohortCalendarDay,
   getMemberDayStates,
   getMemberProgressDay,
+  type MissionHeatmapCell,
 } from "@/features/program/progression";
 import { getMemberRank } from "@/features/program/leaderboard";
 import type { VerdictLine } from "@/features/program/verify-mission";
@@ -41,6 +42,7 @@ export type MemberDashboard = {
     checks: VerdictLine[];
     createdAt: string;
   }[];
+  missionHeatmap: MissionHeatmapCell[];
 };
 
 function parseVerdict(json: unknown): VerdictLine[] {
@@ -93,16 +95,17 @@ export async function getMemberDashboard(
   if (!member || !cohort) return null;
 
   const cohortDay = getCohortCalendarDay(cohort);
-  const progressDay = getMemberProgressDay(
-    new Set(days.filter((d) => d.state === "PASSED").map((d) => d.dayNumber)),
-    new Set(days.filter((d) => d.state === "SKIPPED").map((d) => d.dayNumber)),
-  );
-  const memberDay = progressDay;
-  const behindBy = getBehindByDays(cohort, progressDay);
-
   const passedDays = new Set(
     days.filter((d) => d.state === "PASSED").map((d) => d.dayNumber),
   );
+  const progressDay = getMemberProgressDay(passedDays);
+  const memberDay = progressDay;
+  const behindBy = getBehindByDays(cohort, progressDay);
+
+  const missionHeatmap: MissionHeatmapCell[] = days.map((d) => ({
+    dayNumber: d.dayNumber,
+    completed: d.state === "PASSED",
+  }));
 
   const availableDay = days.find((d) => d.state === "AVAILABLE");
   let currentDay: MemberDashboard["currentDay"] = null;
@@ -170,5 +173,6 @@ export async function getMemberDashboard(
     currentDay,
     moduleProgress,
     recentVerdicts,
+    missionHeatmap,
   };
 }
