@@ -5249,5 +5249,114 @@
         "format": "GitHub commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 52,
+    "domain": "CLAUDE",
+    "title": "Day 52: System Design – Turn Yesterday's Plan Into a Technical Blueprint",
+    "problemStatement": "Welcome to Day 52 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 8 — Capstone Project (Days 51-60): From Idea to Deployed v1.0\n\nThis is Day 2 of the 10-day capstone, continuing the same conversation from Day 51. Today's focus: turn the approved PRD, Implementation Blueprint, and Pitch Deck into a complete technical design — tech stack, architecture, database schema, API contracts, UI flow, and project structure — without writing production code.\n\nTasks:\n1. Continue the Day 51 capstone conversation with Claude and paste today's System Design prompt.\n2. Confirm Claude has re-read yesterday's PRD, Implementation Blueprint, and Pitch Deck as the source of truth before it proposes anything new.\n3. If you don't already have a GitHub repository for the project, follow Claude's exact numbered steps to create one, clone it locally, and set up the initial project structure — confirm each step with a screenshot.\n4. Work through the tech stack decision (frontend, backend, database, auth, AI model/API, hosting, other tools) and confirm you understand Claude's reasoning for each pick.\n5. Review the system architecture (component diagram, data flow, request lifecycle, AI interaction, external services) rendered as Mermaid diagrams.\n6. Review the database design (tables/collections, fields, relationships, constraints) and confirm it covers every user story from the PRD.\n7. Review the full API design (every v1.0 endpoint with purpose, request, response, validation, auth, error cases) — no implementation yet.\n8. Review the UI & user flow design (user flow diagram, screen flow, low-fidelity wireframes, navigation).\n9. Review the proposed project folder structure and Claude's explanation of what each folder is responsible for.\n10. Go through the Day 3 readiness check with Claude and confirm the remaining Blueprint is still realistic, or simplify scope now if needed.\n11. Generate and download today's five deliverables: ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, and PROJECT-STRUCTURE.md.\n12. If today's design decisions require it, get an updated version of the Implementation Blueprint from Claude.\n13. Commit all five deliverables (and the updated Blueprint, if changed) into your actual project's GitHub repo, in the location Claude set up (e.g. /docs), and push.\n14. In your AB Talks challenge repo, create a Day52 folder containing the same five deliverable files (and updated Blueprint, if applicable) as actual documents — not just screenshots — plus your project log update and write-up, then commit and push.\n15. Have Claude draft a LinkedIn post summarizing today's system design decisions, then post it and share your chosen architecture and any scope changes publicly.\n\nImportant:\nThis is a design day — do not write production code, and do not redesign or rethink the project itself unless a critical issue surfaces; the PRD and Blueprint from Day 51 stay the source of truth unless Claude flags a conflict and you approve the change.\n\nFor every manual step outside the chat (creating a repo, cloning it, installing software, configuring dashboards), follow Claude's exact numbered steps using the real button/menu/command names, and confirm each with a screenshot before moving on.\n\nSubmission: Share your GitHub commit URL from the AB Talks challenge repo's Day52 folder. That commit must contain ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, PROJECT-STRUCTURE.md (and the updated Implementation Blueprint if it changed) as actual files, your project log update, and a link to the commit in your project repo where the same design docs now also live.",
+    "learningObjectives": [
+      "Treat yesterday's PRD and Blueprint as source of truth and design against them without re-litigating the idea",
+      "Choose and justify a tech stack (frontend, backend, DB, auth, AI/API, hosting) against real project requirements",
+      "Produce a Mermaid-based system architecture: components, data flow, request lifecycle, external services",
+      "Design a database schema and validate it against every PRD user story",
+      "Specify a complete API contract (endpoints, requests, responses, validation, auth, errors) before writing any code",
+      "Design a user flow and low-fidelity wireframes so every screen has a stated reason to exist",
+      "Run a Day 3 readiness check to catch scope creep before implementation begins",
+      "Commit the real design docs into both the project repo and the challenge repo, and log progress publicly"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/e78ZLeXIkuI"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 60,
+    "linkedinTemplate": "Day 52/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nDay 2 of my 10-day capstone: turned yesterday's PRD into a full technical blueprint with Claude as my technical lead — no code yet, just design.\n\n🏗 Tech stack finalized (and justified)\n🗺 System architecture mapped with Mermaid diagrams\n🗄 Database schema validated against every user story\n🔌 Full API contract specified — every endpoint, before any code\n🎨 User flow + low-fidelity wireframes\n📁 Project structure planned out\n✅ Day 3 readiness check passed — no scope creep\n\nBiggest takeaway:\n\nDesigning the whole system before touching code is what makes tomorrow's build fast instead of chaotic.\n\n#ClaudeAI #SystemDesign #SoftwareArchitecture #BuildWithClaude #AI #Capstone #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit a GitHub commit URL from your AB Talks challenge repo's Day52 folder. That folder must contain the actual ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, and PROJECT-STRUCTURE.md files (plus the updated Implementation Blueprint, if today's decisions changed it) — uploaded as documents, not screenshots — along with your project log update and write-up. Also commit the same design docs into your separate project repo, since that's the repo where implementation starts tomorrow.",
+    "tags": [
+      "claude",
+      "day-52",
+      "capstone",
+      "system-design",
+      "architecture",
+      "database-design",
+      "api-design",
+      "ui-flow",
+      "tech-stack"
+    ],
+    "dayContent": {
+      "title": "System Design",
+      "tagline": "Turn Yesterday's Plan Into a Technical Blueprint",
+      "module": "Capstone Project — Day 2 of 10",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 60,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll turn yesterday's PRD, Implementation Blueprint, and Pitch Deck into a complete technical design: a justified tech stack, a diagrammed system architecture, a validated database schema, a full API contract, a user flow with wireframes, and a project folder structure — all without writing production code.",
+        "bullets": [
+          {
+            "label": "Source of Truth Discipline",
+            "text": "Read yesterday's PRD and Blueprint first and design against them — only deviate if Claude flags a real conflict and you approve the change."
+          },
+          {
+            "label": "Justified Tech Stack",
+            "text": "Pick frontend, backend, database, auth, AI/API, and hosting choices with clear reasoning, preferring free tools where possible."
+          },
+          {
+            "label": "Diagrammed Architecture",
+            "text": "Get the component diagram, data flow, request lifecycle, and external services mapped out in Mermaid before any implementation starts."
+          },
+          {
+            "label": "Schema and API Before Code",
+            "text": "Validate the database schema against every PRD user story and specify every v1.0 endpoint's request, response, validation, auth, and error cases."
+          },
+          {
+            "label": "Day 3 Readiness Check",
+            "text": "Catch and cut scope creep now so tomorrow can start building immediately instead of re-planning."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Open your Day 51 capstone conversation with Claude (same thread — do not start a new one).",
+          "Paste today's System Design prompt.",
+          "Confirm Claude re-reads yesterday's PRD, Implementation Blueprint, and Pitch Deck before proposing anything.",
+          "If you don't already have a GitHub repository for the project, follow Claude's exact numbered steps: create the repo, clone it locally, and set up the initial project structure. Confirm each step with a screenshot.",
+          "Work through the tech stack section — frontend, backend, database, authentication, AI model/API, hosting, other tools — and ask Claude to justify each choice against your actual project requirements.",
+          "Review the Mermaid system architecture: component diagram, data flow, request lifecycle, AI interaction, external services.",
+          "Review the database design (tables/collections, fields, relationships, constraints) and check it against every user story in yesterday's PRD.",
+          "Review the full API design: every v1.0 endpoint with purpose, request, response, validation, authentication, and error cases.",
+          "Review the user flow diagram, screen flow, low-fidelity wireframes, and navigation.",
+          "Review the proposed project folder structure and what each major folder is responsible for.",
+          "Go through the Day 3 readiness check: confirm the remaining Blueprint is realistic, no scope has crept in, and tomorrow can start implementation immediately. Simplify now if Claude recommends it.",
+          "Generate and download the five deliverables: ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, PROJECT-STRUCTURE.md.",
+          "If today's decisions required any changes, generate and download the updated Implementation Blueprint.",
+          "In your project repo, commit today's five deliverable files (and the updated Blueprint, if changed) into the docs location Claude set up, then push.",
+          "In your AB Talks challenge repo, create a Day52 folder.",
+          "Upload the actual ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, and PROJECT-STRUCTURE.md files (and updated Blueprint, if applicable) into the Day52 folder — as real documents, not only screenshots.",
+          "Update your project log with today's progress and add a day52.md write-up linking to the commit in your project repo.",
+          "Commit and push the changes in both repos.",
+          "Ask Claude to draft a LinkedIn post summarizing today's system design decisions, then post it.",
+          "Submit the GitHub commit URL from your AB Talks challenge repo."
+        ],
+        "solutionVideoUrl": "https://youtu.be/e78ZLeXIkuI"
+      },
+      "promptTemplate": "System Design\n\nToday is Day 2, continuing our chat from Day 1. Read the PRD, Implementation Blueprint, and Pitch Deck created yesterday. These are now the source of truth for the project. Do not redesign or rethink the project unless a critical issue is discovered.\n\nStanding Rules\n\nWhenever I need to perform a manual task outside this chat (creating a GitHub repository, installing software, using Git, configuring dashboards, etc.), stop and give me an exact numbered step-by-step guide using the real names of buttons, menus, fields, and commands.\nWait for my confirmation and a screenshot before moving on.\nDo not assume I've completed any manual step.\n\nToday's Goal\n\nToday's objective is to transform the project plan into a complete technical blueprint that makes implementation straightforward.\n\nDo not write production code today.\n\nFollow the Day 2 section of the Implementation Blueprint, but improve it wherever necessary.\n\nIf any design decision conflicts with the approved PRD or Implementation Blueprint, explain why and ask for my approval before changing it.\n\nComplete the following\n\n0. Repository Setup\n\nIf I don't already have a GitHub repository for this project:\n\nWalk me through creating one.\nClone it locally.\nCreate the initial project structure.\nExplain every step before we continue.\n\n1. Finalize the Tech Stack\n\nBased on the project requirements:\n\nFrontend\nBackend\nDatabase\nAuthentication\nAI Model/API (if needed)\nHosting\nOther tools or libraries\n\nExplain why each choice is the best fit. Prefer free tools whenever possible.\n\n2. System Architecture\n\nDesign the complete architecture. Include:\n\nComponent diagram\nData flow\nRequest lifecycle\nAI interaction (if applicable)\nExternal services\n\nShow the architecture using diagrams (Mermaid preferred).\n\n3. Database Design\n\nIf the project requires data storage: Design:\n\nTables / Collections\nFields\nRelationships\nConstraints\n\nValidate the schema against every user story from the PRD.\n\n4. API Design\n\nList every endpoint required for the v1.0 product. For each endpoint include:\n\nPurpose\nRequest\nResponse\nValidation\nAuthentication\nError cases\n\nNo implementation yet.\n\n5. UI & User Flow\n\nDesign the complete user journey. Include:\n\nUser Flow Diagram\nScreen Flow\nWireframes (low fidelity is enough)\nNavigation\n\nEvery screen should exist for a reason.\n\n6. Project Structure\n\nDesign the complete folder structure. Explain:\n\nWhat every major folder is responsible for.\nWhere future code will live.\nWhy the structure was chosen.\n\n7. Day 3 Readiness Check\n\nReview the remaining Implementation Blueprint. Confirm that:\n\nThe project can realistically be completed within the remaining days.\nNo unnecessary scope has crept in.\nTomorrow can begin implementation immediately.\n\nIf anything should be simplified, recommend it now.\n\nDeliverables\n\nGenerate downloadable versions of:\n\nARCHITECTURE.md\nSCHEMA.md\nAPI.md\nUI-WIREFRAMES.md\nPROJECT-STRUCTURE.md\n\nAlso update the Implementation Blueprint if today's design decisions require any changes.\n\nEnd of Day\n\nHelp me:\n\nCommit today's work.\nPush it to GitHub.\nUpdate the project log.\nWrite a LinkedIn post summarizing today's progress.\n\nTomorrow should begin building immediately, with no additional planning required.",
+      "engagement": {
+        "type": "System Design Showcase",
+        "description": "Share your finalized tech stack and one architecture or scope decision you made today to keep the project realistic for the remaining days. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Upload a day52.md file containing: your project log update, the actual ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, and PROJECT-STRUCTURE.md files (as documents, not only screenshots), the updated Implementation Blueprint if it changed, and a link to the commit in your project repo where the same design docs now also live.",
+        "format": "GitHub commit URL"
+      }
+    }
   }
 ]
