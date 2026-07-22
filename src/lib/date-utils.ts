@@ -9,6 +9,19 @@ export function parseCalendarKeyToUtcDate(key: string): Date {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
+/**
+ * Add N civil calendar days to a `yyyy-MM-dd` key using UTC arithmetic.
+ * Do not reformat UTC-midnight keys through a behind-UTC zone (e.g. Chicago) —
+ * that shifts the key back one day and drops day-0 seeds / heatmap lookups.
+ */
+export function addCalendarDaysToKey(key: string, days: number): string {
+  return formatInTimeZone(
+    addDays(parseCalendarKeyToUtcDate(key), days),
+    "UTC",
+    "yyyy-MM-dd",
+  );
+}
+
 /** Current moment formatted in IST (readable). */
 export function getNowInIST(): string {
   return formatInTimeZone(new Date(), IST, "EEEE, d MMM yyyy, h:mm a zzz");

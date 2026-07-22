@@ -1,7 +1,9 @@
 import type { Prisma } from "@prisma/client";
-import { addDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
+import {
+  addCalendarDaysToKey,
+  parseCalendarKeyToUtcDate,
+} from "@/lib/date-utils";
 import {
   COMMIT_POINTS_PER_DAY,
   PROGRAM_MAX_COMMIT_POINTS,
@@ -49,17 +51,12 @@ async function seedEarlyCommitDays(
 ): Promise<void> {
   const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
   const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
-  const startUtc = parseCalendarKeyToUtcDate(startKey);
   const startDate = parseCalendarKeyToUtcDate(startKey);
   const endDate = parseCalendarKeyToUtcDate(endKey);
 
   const dateKeys: string[] = [];
   for (let i = 0; i < EARLY_COMMIT_DAY_COUNT; i++) {
-    const dateKey = formatInTimeZone(
-      addDays(startUtc, i),
-      PROGRAM_TZ,
-      "yyyy-MM-dd",
-    );
+    const dateKey = addCalendarDaysToKey(startKey, i);
     if (dateKey >= startKey && dateKey <= endKey) {
       dateKeys.push(dateKey);
     }

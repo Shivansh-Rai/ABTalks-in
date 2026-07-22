@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-22 [convention] Program calendar-key day math uses UTC (addCalendarDaysToKey) so Chicago reformat no longer drops early commit day 0 (10→15 pts)
 - 2026-07-22 [rule] Program commit cron preserves existing commitCount floor (Math.max) so seeded early days are not wiped to 0
 - 2026-07-22 [rule] Program mission heatmap is PASSED-only (days 1–3 via bootstrap); commit UI archived on Mission Control; skip tokens disabled for members
 - 2026-07-21 [rule] MSG91 phone OTP removed from app/UI; StudentProfile.phoneVerified* + PhoneVerification remain in DB unused

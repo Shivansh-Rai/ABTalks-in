@@ -1,8 +1,10 @@
 import "server-only";
-import { addDays } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/db";
-import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
+import {
+  addCalendarDaysToKey,
+  parseCalendarKeyToUtcDate,
+} from "@/lib/date-utils";
 import {
   collectPassSkipSets,
   getBehindByDays,
@@ -42,8 +44,7 @@ export type MemberAtRiskStatus = {
 /** Program (America/Chicago) calendar date key for N days before today. */
 export function getProgramDateKeyDaysAgo(daysAgo: number): string {
   const todayKey = formatInTimeZone(new Date(), PROGRAM_TZ, "yyyy-MM-dd");
-  const base = parseCalendarKeyToUtcDate(todayKey);
-  return formatInTimeZone(addDays(base, -daysAgo), PROGRAM_TZ, "yyyy-MM-dd");
+  return addCalendarDaysToKey(todayKey, -daysAgo);
 }
 
 function programDateKeyToDbDate(key: string): Date {
@@ -60,11 +61,7 @@ function programDateRangeToUtc(
     : undefined;
   let endExclusiveUtc: Date | undefined;
   if (endKey) {
-    const nextKey = formatInTimeZone(
-      addDays(parseCalendarKeyToUtcDate(endKey), 1),
-      "UTC",
-      "yyyy-MM-dd",
-    );
+    const nextKey = addCalendarDaysToKey(endKey, 1);
     endExclusiveUtc = fromZonedTime(`${nextKey}T00:00:00`, PROGRAM_TZ);
   }
   return { startUtc, endExclusiveUtc };
@@ -269,11 +266,10 @@ export async function seedEarlyCommitDaysInTx(
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<void> {
   const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
-  const startUtc = parseCalendarKeyToUtcDate(startKey);
   let any = false;
 
   for (let i = 0; i < EARLY_COMMIT_DAY_COUNT; i++) {
-    const dateKey = formatInTimeZone(addDays(startUtc, i), PROGRAM_TZ, "yyyy-MM-dd");
+    const dateKey = addCalendarDaysToKey(startKey, i);
     const credited = await creditCommitDayInTx(tx, memberId, dateKey, cohort);
     if (credited) any = true;
   }
@@ -367,11 +363,7 @@ export async function runProgramCommitsCron(): Promise<{
 
   for (const cohort of cohorts) {
     const endKey = formatInTimeZone(cohort.endsAt, PROGRAM_TZ, "yyyy-MM-dd");
-    const graceKey = formatInTimeZone(
-      addDays(parseCalendarKeyToUtcDate(endKey), 1),
-      PROGRAM_TZ,
-      "yyyy-MM-dd",
-    );
+    const graceKey = addCalendarDaysToKey(endKey, 1);
     if (todayKey > graceKey) continue;
 
     const members = await prisma.programMember.findMany({
@@ -428,23 +420,23 @@ export async function getCommitHeatmap(
   cohort: { startsAt: Date; endsAt: Date },
 ): Promise<HeatmapCell[]> {
   const startKey = formatInTimeZone(cohort.startsAt, PROGRAM_TZ, "yyyy-MM-dd");
-  const base = parseCalendarKeyToUtcDate(startKey);
 
   const rows = await prisma.programCommitDay.findMany({
     where: { memberId },
     select: { date: true, commitCount: true },
   });
 
+  // Stored as UTC-midnight civil keys — read keys in UTC, not Chicago.
   const byDate = new Map(
     rows.map((r) => [
-      formatInTimeZone(r.date, PROGRAM_TZ, "yyyy-MM-dd"),
+      formatInTimeZone(r.date, "UTC", "yyyy-MM-dd"),
       r.commitCount,
     ]),
   );
 
   const cells: HeatmapCell[] = [];
   for (let i = 0; i < PROGRAM_TOTAL_DAYS; i++) {
-    const dateKey = formatInTimeZone(addDays(base, i), PROGRAM_TZ, "yyyy-MM-dd");
+    const dateKey = addCalendarDaysToKey(startKey, i);
     cells.push({
       dateIso: dateKey,
       count: byDate.get(dateKey) ?? 0,
