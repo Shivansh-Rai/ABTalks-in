@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-22 [env] SUPABASE_SERVICE_ROLE_KEY for hackathon registration (server-only service role; bypasses RLS on hackathon_* tables)
 - 2026-07-22 [convention] Program calendar-key day math uses UTC (addCalendarDaysToKey) so Chicago reformat no longer drops early commit day 0 (10→15 pts)
 - 2026-07-22 [rule] Program commit cron preserves existing commitCount floor (Math.max) so seeded early days are not wiped to 0
 - 2026-07-22 [rule] Program mission heatmap is PASSED-only (days 1–3 via bootstrap); commit UI archived on Mission Control; skip tokens disabled for members
