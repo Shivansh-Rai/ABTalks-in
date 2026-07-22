@@ -1,5 +1,7 @@
 ## Pending reconcile
 
+- 2026-07-22 [rule] Program commit cron preserves existing commitCount floor (Math.max) so seeded early days are not wiped to 0
+- 2026-07-22 [rule] Program mission heatmap is PASSED-only (days 1–3 via bootstrap); commit UI archived on Mission Control; skip tokens disabled for members
 - 2026-07-21 [rule] MSG91 phone OTP removed from app/UI; StudentProfile.phoneVerified* + PhoneVerification remain in DB unused
 - 2026-07-20 [schema] PhoneVerification table + StudentProfile.phoneVerified/phoneVerifiedAt (OTP phone verification; was ondev only)
 - 2026-07-20 [rule] Program commit days credited on first mission pass (today) and seeded for cohort calendar days 1–3 at enroll; cron remains supplemental

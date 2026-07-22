@@ -30,7 +30,7 @@ export type HeatmapCell = { dateIso: string; count: number };
 export type AtRiskMember = {
   memberId: string;
   fullName: string;
-  reasons: ("behind_pace" | "stuck_mission" | "no_commits")[];
+  reasons: ("behind_pace" | "stuck_mission")[];
 };
 
 export type MemberAtRiskStatus = {
@@ -322,6 +322,14 @@ export async function processMemberCommitDay(
 
   const commitDate = programDateKeyToDbDate(programDateKey);
 
+  // Preserve seeded / credited floors (e.g. early days 1–3 at enroll) —
+  // never let a GitHub 0 wipe an existing qualifying day.
+  const existing = await prisma.programCommitDay.findUnique({
+    where: { memberId_date: { memberId: member.id, date: commitDate } },
+    select: { commitCount: true },
+  });
+  const nextCount = Math.max(existing?.commitCount ?? 0, count);
+
   await prisma.programCommitDay.upsert({
     where: {
       memberId_date: { memberId: member.id, date: commitDate },
@@ -329,9 +337,9 @@ export async function processMemberCommitDay(
     create: {
       memberId: member.id,
       date: commitDate,
-      commitCount: count,
+      commitCount: nextCount,
     },
-    update: { commitCount: count },
+    update: { commitCount: nextCount },
   });
 
   await recomputeCommitPointsForMember(member.id, cohort);
@@ -458,8 +466,8 @@ async function evaluateMemberAtRisk(
     where: { memberId: member.id },
     select: { dayNumber: true, passed: true, payload: true, createdAt: true },
   });
-  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
-  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const { passedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays);
   const behindBy = getBehindByDays(cohort, progressDay);
 
   if (behindBy > 2) {
@@ -468,7 +476,7 @@ async function evaluateMemberAtRisk(
 
   // Stuck on the next incomplete day (progress + 1), if they have failures there.
   const dayNumber = Math.min(PROGRAM_TOTAL_DAYS, progressDay + 1);
-  const passed = passedDays.has(dayNumber) || skippedDays.has(dayNumber);
+  const passed = passedDays.has(dayNumber);
   if (!passed) {
     const dayFails = submissions.filter(
       (s) =>
@@ -486,19 +494,6 @@ async function evaluateMemberAtRisk(
         reasons.push("stuck_mission");
       }
     }
-  }
-
-  const recentKeys = [1, 2, 3, 4, 5].map((d) => getProgramDateKeyDaysAgo(d));
-  const recentDates = recentKeys.map(programDateKeyToDbDate);
-  const commitDays = await prisma.programCommitDay.count({
-    where: {
-      memberId: member.id,
-      commitCount: { gt: 0 },
-      date: { in: recentDates },
-    },
-  });
-  if (commitDays === 0) {
-    reasons.push("no_commits");
   }
 
   return reasons;
@@ -558,8 +553,8 @@ export async function getMemberAtRiskStatus(
     where: { memberId: member.id },
     select: { dayNumber: true, passed: true, payload: true },
   });
-  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
-  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const { passedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays);
   const behindBy = getBehindByDays(cohort, progressDay);
   const reasons = await evaluateMemberAtRisk(member, cohort);
 

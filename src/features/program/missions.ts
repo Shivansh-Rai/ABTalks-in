@@ -40,9 +40,7 @@ const MIN_RUN_INTERVAL_MS = 15_000;
 
 export type MissionState = {
   dayState: "LOCKED" | "AVAILABLE" | "PASSED" | "SKIPPED";
-  skipTokensLeft: number;
   failedRunCount: number;
-  canSkip: boolean;
   passed: boolean;
   runs: {
     attemptNumber: number;
@@ -243,12 +241,7 @@ export async function getMissionState(
 
   return {
     dayState,
-    skipTokensLeft: Math.max(0, 2 - member.skipTokensUsed),
     failedRunCount,
-    canSkip:
-      dayState === "AVAILABLE" &&
-      member.skipTokensUsed < 2 &&
-      failedRunCount >= 3,
     passed: passedDays.has(dayNumber),
     runs: daySubmissions
       .filter((s) => !isSkippedPayload(s.payload))
@@ -451,85 +444,8 @@ export async function submitMissionRun(
 }
 
 export async function useSkipToken(
-  memberId: string,
-  dayNumber: number,
+  _memberId: string,
+  _dayNumber: number,
 ): Promise<{ ok: true; unlockedDay: number } | { ok: false; message: string }> {
-  const avail = await getDayAvailability(memberId, dayNumber);
-  if (!avail.ok) return avail;
-
-  if (avail.member.skipTokensUsed >= 2) {
-    return { ok: false, message: "No skip tokens remaining." };
-  }
-
-  const dayRuns = await prisma.programMissionSubmission.findMany({
-    where: { memberId, dayNumber },
-    select: { passed: true, payload: true },
-  });
-  const failedRunCount = dayRuns.filter(
-    (r) => !r.passed && !isSkippedPayload(r.payload),
-  ).length;
-
-  if (failedRunCount < 3) {
-    return {
-      ok: false,
-      message: "Complete at least 3 failed verification runs before skipping.",
-    };
-  }
-
-  const attemptCount = await prisma.programMissionSubmission.count({
-    where: { memberId, dayNumber },
-  });
-
-  await prisma.$transaction(async (tx) => {
-    await tx.programMissionSubmission.create({
-      data: {
-        memberId,
-        dayNumber,
-        attemptNumber: attemptCount + 1,
-        payload: { skipped: true },
-        verdict: [{ check: "Skipped", passed: false, detail: "Skip token used" }],
-        passed: false,
-        pointsAwarded: 0,
-      },
-    });
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: {
-        skipTokensUsed: { increment: 1 },
-      },
-    });
-  });
-
-  // Next day only if already within calendar unlock after this skip.
-  const member = await prisma.programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      highestUnlockedDay: true,
-      cohort: { select: { startsAt: true } },
-    },
-  });
-  const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
-  if (!member) return { ok: true, unlockedDay: nextDay };
-
-  const allSubs = await prisma.programMissionSubmission.findMany({
-    where: { memberId },
-    select: { dayNumber: true, passed: true, payload: true },
-  });
-  const { passedDays, skippedDays } = collectPassSkipSets(allSubs);
-  const maxContentDay = getMaxContentDay(
-    member.cohort,
-    member.highestUnlockedDay,
-  );
-  const nextState = deriveDayState(
-    nextDay,
-    maxContentDay,
-    passedDays,
-    skippedDays,
-    isDayLockBypassEnabled(),
-  );
-
-  return {
-    ok: true,
-    unlockedDay: nextState === "AVAILABLE" ? nextDay : dayNumber,
-  };
+  return { ok: false, message: "Skip tokens are disabled." };
 }

@@ -6,7 +6,6 @@ import {
   getHiddenTestInputsForDay,
   getMissionState,
   submitMissionRun,
-  useSkipToken,
   type SubmitMissionOk,
 } from "@/features/program/missions";
 import {
@@ -87,19 +86,9 @@ export async function submitMissionRunAction(
 }
 
 export async function useSkipTokenAction(
-  input: unknown,
+  _input: unknown,
 ): Promise<ActionResult<{ unlockedDay: number }>> {
-  const authResult = await requireMemberId();
-  if (!authResult.ok) return authResult;
-
-  const parsed = missionDaySchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Invalid day." };
-
-  const result = await useSkipToken(authResult.memberId, parsed.data.dayNumber);
-  if (!result.ok) return { ok: false, message: result.message };
-
-  revalidateMissionPaths(parsed.data.dayNumber);
-  return { ok: true, data: { unlockedDay: result.unlockedDay } };
+  return { ok: false, message: "Skip tokens are disabled." };
 }
 
 export async function startConceptCheckAction(

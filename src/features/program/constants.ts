@@ -18,3 +18,6 @@ export const PROGRAM_MAX_TOTAL_POINTS =
   PROGRAM_MAX_PROJECT_POINTS;
 
 export const COMMIT_POINTS_PER_DAY = 5;
+
+/** When false, Mission Control hides commit pts / commit heatmap UI (backend kept). */
+export const PROGRAM_COMMIT_UI_ENABLED = false;

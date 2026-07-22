@@ -616,7 +616,7 @@ export async function getCohortMembers(
   return members.map((m) => {
     const subs = subsByMember.get(m.id) ?? [];
     const { passedDays, skippedDays } = collectPassSkipSets(subs);
-    const progressDay = getMemberProgressDay(passedDays, skippedDays);
+    const progressDay = getMemberProgressDay(passedDays);
     return {
       id: m.id,
       fullName: m.fullName,
@@ -972,7 +972,7 @@ export async function getMemberAdminDetail(memberId: string) {
   const { passedDays, skippedDays } = collectPassSkipSets(
     member.missionSubmissions,
   );
-  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const progressDay = getMemberProgressDay(passedDays);
   const calendarDay = getCohortCalendarDay(member.cohort);
   const behindBy = getBehindByDays(member.cohort, progressDay);
 

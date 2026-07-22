@@ -205,8 +205,8 @@ export async function getInterviewEligibility(
     where: { memberId },
     select: { dayNumber: true, passed: true, payload: true },
   });
-  const { passedDays, skippedDays } = collectPassSkipSets(submissions);
-  const progressDay = getMemberProgressDay(passedDays, skippedDays);
+  const { passedDays } = collectPassSkipSets(submissions);
+  const progressDay = getMemberProgressDay(passedDays);
   const programComplete = progressDay >= PROGRAM_TOTAL_DAYS && finalDayDone;
   const cohortEnded = new Date() > member.cohort.endsAt;
 

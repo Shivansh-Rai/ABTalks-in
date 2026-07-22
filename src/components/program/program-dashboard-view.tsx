@@ -19,6 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import {
+  PROGRAM_COMMIT_UI_ENABLED,
   PROGRAM_MAX_COMMIT_POINTS,
   PROGRAM_MAX_CONCEPT_POINTS,
   PROGRAM_MAX_MISSION_POINTS,
@@ -28,9 +29,8 @@ import {
 } from "@/features/program/constants";
 import type { MemberDashboard } from "@/features/program/dashboard";
 import type { InterviewDashboardCard } from "@/features/program/interview";
+import { MissionHeatmap } from "@/components/program/mission-heatmap";
 import { cn } from "@/lib/utils";
-
-type HeatCell = { dateIso: string; count: number };
 
 type ProjectRow = {
   moduleNumber: number;
@@ -42,7 +42,6 @@ type ProjectRow = {
 
 type Props = {
   data: MemberDashboard;
-  heatmap: HeatCell[];
   atRisk: { atRisk: boolean; reasons: string[] };
   projects: ProjectRow[];
   aiRec: { recommendation: string | null; generatedAt: string | null };
@@ -52,7 +51,6 @@ type Props = {
 const AT_RISK_LABEL: Record<string, string> = {
   behind_pace: "Behind cohort pace",
   stuck_mission: "Stuck on current mission",
-  no_commits: "No commits in last 5 days",
 };
 
 const figmaBtn =
@@ -60,15 +58,6 @@ const figmaBtn =
 
 const cardClass =
   "rounded-[16px] border border-[rgba(46,57,75,0.69)] bg-[rgba(5,12,33,0.89)] p-4 transition-[border-color,box-shadow] duration-300 ease-out md:p-5 hover:border-[#8365E3]/55 hover:shadow-[0_4px_20px_rgba(115,100,230,0.08)]";
-
-
-function heatColor(count: number): string {
-  if (count === 0) return "bg-[#1a2333] border border-[#2a3548]";
-  if (count === 1) return "bg-[#B4F0BA]";
-  if (count <= 3) return "bg-[#6AE276]";
-  if (count <= 5) return "bg-[#43DA52]";
-  return "bg-[#20A42D]";
-}
 
 function SectionIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
@@ -161,7 +150,6 @@ function ScoreBar({
 
 export function ProgramDashboardView({
   data,
-  heatmap,
   atRisk,
   projects,
   aiRec,
@@ -229,33 +217,12 @@ export function ProgramDashboardView({
       {/* Commit + Mission / Interview — equal columns like Figma 844/844 */}
       <div className="mb-5 grid gap-4 md:mb-6 lg:grid-cols-2">
         <section className={cn(cardClass, "group relative md:min-h-[280px]")}>
-          <SectionHeading icon={Activity}>Commit Activity</SectionHeading>
+          <SectionHeading icon={Activity}>Mission progress</SectionHeading>
           <p className="mb-4 text-xs text-[#E9E9E9] md:text-sm">
-            One commit in your program repo earns 5 pts for that Central (Texas)
-            day (max {PROGRAM_MAX_COMMIT_POINTS}).
+            Green means you passed that day&apos;s mission verification. Complete
+            each day to unlock the next.
           </p>
-          <div
-            className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10 md:gap-2.5"
-            aria-label="31-day commit heatmap"
-          >
-            {heatmap.map((cell) => (
-              <div
-                key={cell.dateIso}
-                title={`${cell.dateIso}: ${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-                className={cn(
-                  "aspect-square w-full max-w-[36px] justify-self-center rounded-full transition-transform duration-200 ease-out hover:z-10 hover:scale-105",
-                  heatColor(cell.count),
-                )}
-              />
-            ))}
-          </div>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-[8px] border border-[#8365E3] bg-[#110528] px-3 py-1.5 text-xs text-[#E9E9E9] transition-colors duration-300 ease-out hover:border-[#968BEC]/70">
-            <span>Less</span>
-            <span className="size-3.5 rounded-full bg-[#B4F0BA] sm:size-4" />
-            <span className="size-3.5 rounded-full bg-[#6AE276] sm:size-4" />
-            <span className="size-3.5 rounded-full bg-[#43DA52] sm:size-4" />
-            <span>More</span>
-          </div>
+          <MissionHeatmap cells={data.missionHeatmap} variant="dashboard" />
         </section>
 
         <div className="flex flex-col gap-4">
@@ -347,11 +314,13 @@ export function ProgramDashboardView({
             value={data.scoreBreakdown.conceptPoints}
             max={PROGRAM_MAX_CONCEPT_POINTS}
           />
-          <ScoreBar
-            label="Commits"
-            value={data.scoreBreakdown.commitPoints}
-            max={PROGRAM_MAX_COMMIT_POINTS}
-          />
+          {PROGRAM_COMMIT_UI_ENABLED && (
+            <ScoreBar
+              label="Commits"
+              value={data.scoreBreakdown.commitPoints}
+              max={PROGRAM_MAX_COMMIT_POINTS}
+            />
+          )}
           <ScoreBar
             label="Projects"
             value={data.scoreBreakdown.projectPoints}
