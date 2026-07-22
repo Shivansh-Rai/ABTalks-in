@@ -4,7 +4,7 @@
     "moduleNumber": 1,
     "title": "VS Code & Python Environment Setup",
     "missionType": "DATA_ROOM",
-    "briefMd": "## Mission: VS Code & Python Environment Setup\n\nInstall VS Code and Python, and get comfortable running Python code inside VS Code — the foundation for every day that follows. **Stack for this program:** VS Code + Ollama + Python + React.\n\n**Concepts to learn**\n\n- Why VS Code is the standard free editor for this program, and what the extension ecosystem gives you\n- Installing Python and verifying the install from a terminal\n- The VS Code Python extension (Microsoft) + Pylance for IntelliSense, plus the optional Jupyter extension\n- Running a Python file from inside VS Code\n- Virtual environments (`.venv`) and why every project gets its own\n- Selecting the right Python interpreter for a project in VS Code\n\n### Build steps\n\n1. **Install VS Code:** go to https://code.visualstudio.com and click Download for Mac (or Windows). **macOS:** open the downloaded .zip and drag Visual Studio Code into your Applications folder. **Windows:** run the installer, keeping default options (\"Add to PATH\" checked). Launch VS Code.\n2. *(macOS, recommended)* Enable the `code` terminal command: press `Cmd+Shift+P` → type \"Shell Command: Install 'code' command in PATH\" → Enter. This lets you type `code .` from any terminal to open that folder in VS Code.\n3. **Install Python:** go to https://www.python.org/downloads/ and download the latest Python 3.x. **macOS:** run the .pkg installer. **Windows:** run the installer and check **\"Add python.exe to PATH\"** before clicking Install.\n4. **Verify the install:** open a terminal (in VS Code: `` Ctrl+` ``) and run `python3 --version` (macOS) or `python --version` (Windows). You should see something like Python 3.12.x.\n5. **Open the Extensions panel** (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"Python,\" and install the one published by **Microsoft** — this also installs Pylance (IntelliSense, type checking). Optionally install \"Jupyter\" (Microsoft) too.\n6. **Create a folder for your projects and open it:** File → Open Folder. Create a file named `hello.py` containing `print(\"Hello from Python!\")`.\n7. **Run it:** click the Play button in the top right, or right-click in the editor → \"Run Python File in Terminal.\" Output appears in the integrated terminal at the bottom. If prompted to select an interpreter: `Cmd+Shift+P` → \"Python: Select Interpreter\" → pick your installed Python 3.x.\n8. **Set up a virtual environment** — recommended per project: in the terminal run `python3 -m venv .venv`, then activate it (**macOS/Linux:** `source .venv/bin/activate`; **Windows:** `.venv\\Scripts\\activate`). Your terminal prompt should now show `(.venv)` at the start.\n9. **Install a test package to confirm the venv works:** `pip install requests`. VS Code will detect the new `.venv` and prompt \"select this environment as your interpreter?\" — click **Yes** (or repeat `Cmd+Shift+P` → \"Python: Select Interpreter\" → choose the one showing `.venv`).\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the setup):\n\n1. What is the name of the **folder** created by the `python3 -m venv .venv` command?\n2. Which **company/publisher** publishes the official Python extension for VS Code?\n3. Which **test package** did you install to confirm your virtual environment works?\n",
+    "briefMd": "## Mission: VS Code & Python Environment Setup\n\nInstall VS Code and Python, and get comfortable running Python code inside VS Code - the foundation for every day that follows. **Stack for this program:** VS Code + Ollama + Python + React.\n\n**Concepts to learn**\n\n- Why VS Code is the standard free editor for this program, and what the extension ecosystem gives you\n- Installing Python and verifying the install from a terminal\n- The VS Code Python extension (Microsoft) + Pylance for IntelliSense, plus the optional Jupyter extension\n- Running a Python file from inside VS Code\n- Virtual environments (`.venv`) and why every project gets its own\n- Selecting the right Python interpreter for a project in VS Code\n\n### Build steps\n\n1. **Install VS Code:** go to https://code.visualstudio.com and click Download for Mac (or Windows). **macOS:** open the downloaded .zip and drag Visual Studio Code into your Applications folder. **Windows:** run the installer, keeping default options (\"Add to PATH\" checked). Launch VS Code.\n2. *(macOS, recommended)* Enable the `code` terminal command: press `Cmd+Shift+P` → type \"Shell Command: Install 'code' command in PATH\" → Enter. This lets you type `code .` from any terminal to open that folder in VS Code.\n3. **Install Python:** go to https://www.python.org/downloads/ and download the latest Python 3.x. **macOS:** run the .pkg installer. **Windows:** run the installer and check **\"Add python.exe to PATH\"** before clicking Install.\n4. **Verify the install:** open a terminal (in VS Code: `` Ctrl+` ``) and run `python3 --version` (macOS) or `python --version` (Windows). You should see something like Python 3.12.x.\n5. **Open the Extensions panel** (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"Python,\" and install the one published by **Microsoft** - this also installs Pylance (IntelliSense, type checking). Optionally install \"Jupyter\" (Microsoft) too.\n6. **Create a folder for your projects and open it:** File → Open Folder. Create a file named `hello.py` containing `print(\"Hello from Python!\")`.\n7. **Run it:** click the Play button in the top right, or right-click in the editor → \"Run Python File in Terminal.\" Output appears in the integrated terminal at the bottom. If prompted to select an interpreter: `Cmd+Shift+P` → \"Python: Select Interpreter\" → pick your installed Python 3.x.\n8. **Set up a virtual environment** - recommended per project: in the terminal run `python3 -m venv .venv`, then activate it (**macOS/Linux:** `source .venv/bin/activate`; **Windows:** `.venv\\Scripts\\activate`). Your terminal prompt should now show `(.venv)` at the start.\n9. **Install a test package to confirm the venv works:** `pip install requests`. VS Code will detect the new `.venv` and prompt \"select this environment as your interpreter?\" - click **Yes** (or repeat `Cmd+Shift+P` → \"Python: Select Interpreter\" → choose the one showing `.venv`).\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the setup):\n\n1. What is the name of the **folder** created by the `python3 -m venv .venv` command?\n2. Which **company/publisher** publishes the official Python extension for VS Code?\n3. Which **test package** did you install to confirm your virtual environment works?\n",
     "missionSpec": {
       "answers": [
         {
@@ -44,7 +44,7 @@
     "moduleNumber": 1,
     "title": "Ollama (Local LLM) + AI Coding Assistant Setup",
     "missionType": "DATA_ROOM",
-    "briefMd": "## Mission: Your own local AI, running on your laptop\n\nToday you install **Ollama** and run an open coding model **fully locally** — free, no API key, works offline. Then you wire it into VS Code as your AI pair programmer. This local model also powers your chatbot's LLM calls later in the program, so nothing in these 31 days requires a paid subscription.\n\n### Build steps\n\n1. **Install Ollama:** go to https://ollama.com and click Download for macOS/Windows/Linux. macOS: open the .zip/.dmg, move Ollama to Applications, and launch it (a menu-bar icon appears). Windows: run the installer; Ollama runs in the system tray.\n2. **Verify in a terminal:** `ollama --version`.\n3. **Pull a coding model sized to your machine's RAM:** 8 GB → `ollama pull qwen2.5-coder:3b`; 16 GB (best all-round default for this course) → `ollama pull qwen2.5-coder:7b`; 32 GB+ → `ollama pull qwen2.5-coder:14b` (or deepseek-coder-v2). The first pull downloads several GB — let it finish.\n4. **Test the model directly:** `ollama run qwen2.5-coder:7b` (swap in whichever size you pulled). Type a question, e.g. \"write a python function to reverse a string,\" confirm you get a sensible answer, then type `/bye` to exit. Ollama now automatically serves an API at `http://localhost:11434` any time it's running — no separate \"start server\" step.\n5. **Option A — GitHub Copilot Free + Ollama** (recommended if you have a GitHub account). Open Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"GitHub Copilot,\" and Install (this usually installs GitHub Copilot Chat too — install it separately if not). Reload VS Code if prompted.\n6. **Sign in:** a Copilot icon appears in the bottom-right status bar. Click it → \"Sign in to use Copilot\" → your browser opens → log in to GitHub → click Authorize. Back in VS Code, the status bar icon should no longer show an error badge.\n7. **Open the Chat panel:** `Cmd+Ctrl+I` (macOS) / `Ctrl+Alt+I` (Windows), or click the chat bubble icon in the title bar / Activity Bar. The chat panel opens, usually on the right, labeled \"Chat.\"\n8. **Open the model picker:** at the bottom of the chat input box there's a small dropdown showing the current model (e.g. \"GPT-4.1\" or \"Auto\"). Click it, then click \"Manage Models...\" at the bottom of the list (in some versions: gear icon → \"Manage Language Models\").\n9. **Add Ollama as a provider:** a quick-pick appears listing providers — Anthropic, Azure, Gemini, Groq, Ollama, OpenAI, OpenRouter, and more. Select Ollama. Important: the Ollama app must be running (check the menu-bar/tray icon) — VS Code queries `http://localhost:11434` and lists every model you've pulled. Check the box next to your model (e.g. `qwen2.5-coder:7b`) and press OK. If nothing is listed: run `ollama list` in a terminal to confirm models exist, and `curl http://localhost:11434` to confirm the server responds (\"Ollama is running\").\n10. **Select and use it:** click the model dropdown again — your Ollama model now appears under an \"Ollama\" section. Select it, type a prompt like \"write a python function that checks if a number is prime,\" and confirm the response is generated 100% locally (you can disconnect from the internet and it still works). Switch between your local model and Copilot's cloud models any time from the same dropdown.\n11. **Option B — no GitHub account?** Install the free, open-source Cline extension instead (Extensions view, search \"Cline,\" publisher saoudrizwan). Open its settings gear icon, set API Provider to \"Ollama\" (a native preset), Base URL to `http://localhost:11434`, and pick your pulled model — no sign-in required at all. Everywhere the rest of this course says \"ask Copilot\" or \"open the Chat panel,\" the same prompt works in Cline's panel instead.\n\n### Submit your answers\n\n1. On which **localhost port** does Ollama serve its API?\n2. Which terminal command **lists the models** you have pulled?\n3. What do you type inside an `ollama run` chat session to **exit**?\n",
+    "briefMd": "## Mission: Your own local AI, running on your laptop\n\nToday you install **Ollama** and run an open coding model **fully locally** - free, no API key, works offline. Then you wire it into VS Code as your AI pair programmer. This local model also powers your chatbot's LLM calls later in the program, so nothing in these 31 days requires a paid subscription.\n\n### Build steps\n\n1. **Install Ollama:** go to https://ollama.com and click Download for macOS/Windows/Linux. macOS: open the .zip/.dmg, move Ollama to Applications, and launch it (a menu-bar icon appears). Windows: run the installer; Ollama runs in the system tray.\n2. **Verify in a terminal:** `ollama --version`.\n3. **Pull a coding model sized to your machine's RAM:** 8 GB → `ollama pull qwen2.5-coder:3b`; 16 GB (best all-round default for this course) → `ollama pull qwen2.5-coder:7b`; 32 GB+ → `ollama pull qwen2.5-coder:14b` (or deepseek-coder-v2). The first pull downloads several GB - let it finish.\n4. **Test the model directly:** `ollama run qwen2.5-coder:7b` (swap in whichever size you pulled). Type a question, e.g. \"write a python function to reverse a string,\" confirm you get a sensible answer, then type `/bye` to exit. Ollama now automatically serves an API at `http://localhost:11434` any time it's running - no separate \"start server\" step.\n5. **Option A - GitHub Copilot Free + Ollama** (recommended if you have a GitHub account). Open Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`), search \"GitHub Copilot,\" and Install (this usually installs GitHub Copilot Chat too - install it separately if not). Reload VS Code if prompted.\n6. **Sign in:** a Copilot icon appears in the bottom-right status bar. Click it → \"Sign in to use Copilot\" → your browser opens → log in to GitHub → click Authorize. Back in VS Code, the status bar icon should no longer show an error badge.\n7. **Open the Chat panel:** `Cmd+Ctrl+I` (macOS) / `Ctrl+Alt+I` (Windows), or click the chat bubble icon in the title bar / Activity Bar. The chat panel opens, usually on the right, labeled \"Chat.\"\n8. **Open the model picker:** at the bottom of the chat input box there's a small dropdown showing the current model (e.g. \"GPT-4.1\" or \"Auto\"). Click it, then click \"Manage Models...\" at the bottom of the list (in some versions: gear icon → \"Manage Language Models\").\n9. **Add Ollama as a provider:** a quick-pick appears listing providers - Anthropic, Azure, Gemini, Groq, Ollama, OpenAI, OpenRouter, and more. Select Ollama. Important: the Ollama app must be running (check the menu-bar/tray icon) - VS Code queries `http://localhost:11434` and lists every model you've pulled. Check the box next to your model (e.g. `qwen2.5-coder:7b`) and press OK. If nothing is listed: run `ollama list` in a terminal to confirm models exist, and `curl http://localhost:11434` to confirm the server responds (\"Ollama is running\").\n10. **Select and use it:** click the model dropdown again - your Ollama model now appears under an \"Ollama\" section. Select it, type a prompt like \"write a python function that checks if a number is prime,\" and confirm the response is generated 100% locally (you can disconnect from the internet and it still works). Switch between your local model and Copilot's cloud models any time from the same dropdown.\n11. **Option B - no GitHub account?** Install the free, open-source Cline extension instead (Extensions view, search \"Cline,\" publisher saoudrizwan). Open its settings gear icon, set API Provider to \"Ollama\" (a native preset), Base URL to `http://localhost:11434`, and pick your pulled model - no sign-in required at all. Everywhere the rest of this course says \"ask Copilot\" or \"open the Chat panel,\" the same prompt works in Cline's panel instead.\n\n### Submit your answers\n\n1. On which **localhost port** does Ollama serve its API?\n2. Which terminal command **lists the models** you have pulled?\n3. What do you type inside an `ollama run` chat session to **exit**?\n",
     "missionSpec": {
       "answers": [
         {
@@ -83,7 +83,7 @@
     "moduleNumber": 1,
     "title": "First Python Project, a Local Chatbot & Git/GitHub",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: First AI project — local chatbot, FastAPI skeleton & Node\n\nHands-on build (~3.5–4 hrs): create your first AI-assisted Python app, a command-line chatbot against your local Ollama model, scaffold the FastAPI backend this course extends, and install Node.js. When you finish the build steps, ship the artifacts to **your program repo** (the GitHub repository you registered when you applied) so we can verify them.\n\n### Your repo layout (verification checks these exact paths)\n\nAfter local work in `~/projects/my-first-app`, copy these into your program repo:\n\n```\nyour-program-repo/\n├── main.py                         ← AI-assisted first script\n├── chatbot.py                      ← local Ollama CLI chatbot\n├── coverage-chatbot-api/\n│   ├── main.py                     ← FastAPI /health (grows later)\n│   ├── requirements.txt\n│   └── README.md                   ← optional inside the API folder\n├── .gitignore\n└── README.md\n```\n\n### Build steps\n\n1. **Create a new project:** `mkdir ~/projects/my-first-app && cd ~/projects/my-first-app`, then `code .` to open it in VS Code.\n2. **Create a virtual environment for this project** (in VS Code's terminal, `` Ctrl+` ``): `python3 -m venv .venv`, then activate it — macOS: `source .venv/bin/activate`; Windows: `.venv\\Scripts\\activate`. When VS Code asks \"select this environment?\", click **Yes** (or `Cmd+Shift+P` → \"Python: Select Interpreter\" → `.venv`).\n3. **Create main.py and write code with AI help:** as you type, Copilot suggests completions in gray — press **Tab** to accept. For a bigger ask, put your cursor in the file, press `Cmd+I` / `Ctrl+I` (inline chat), and type \"write a function that fetches a URL and returns the JSON\" — the code is inserted in place. Use the full chat panel for bigger questions, then click **Apply/Insert** on any code blocks it gives you.\n4. **Try the other AI shortcuts:** highlight any code → right-click → **Copilot** → **Explain / Fix / Generate Tests**, and read what each one produces.\n5. **Run and debug it:** click the **▶ button** (top right) or run `python main.py` in the terminal. To debug: click just left of a line number to set a breakpoint, press **F5**, and choose \"Python File\" — step through and inspect variables.\n6. **Install the Ollama Python client** in this project's venv: `pip install ollama`.\n7. **Build a mini project** — a command-line chatbot against your local model. Create `chatbot.py`:\n\n```python\nimport ollama\n\nhistory = []\nprint(\"Local chatbot - type 'quit' to exit\")\nwhile True:\n    user = input(\"\\nYou: \")\n    if user.lower() == \"quit\":\n        break\n    history.append({\"role\": \"user\", \"content\": user})\n    reply = ollama.chat(model=\"qwen2.5-coder:7b\", messages=history)\n    text = reply[\"message\"][\"content\"]\n    history.append({\"role\": \"assistant\", \"content\": text})\n    print(f\"\\nAI: {text}\")\n```\n\n8. **Run it with `python chatbot.py`**, have a short back-and-forth, and confirm the model responds using conversation history (ask a follow-up question that only makes sense if it remembers the earlier message).\n9. **Scaffold the backend skeleton the rest of this course will build on:** in a new folder (e.g. `coverage-chatbot-api`), ask Copilot's chat panel to \"scaffold a FastAPI app with a /health endpoint returning {status: ok}, plus requirements.txt and a README.\" Review what it generates before accepting.\n10. **Install and run it:** `pip install -r requirements.txt`, then `uvicorn main:app --reload`. Confirm `/health` responds at `localhost:8000/health` in your browser — this is the same backend and endpoint later days (chat API, Docker, Kubernetes health checks) will extend.\n11. **Install Node.js:** check first in the VS Code terminal with `node -v`; if it's not installed, download the LTS version from https://nodejs.org, install it, then restart VS Code.\n\n### Ship to your program repo\n\nCopy `main.py`, `chatbot.py`, and the `coverage-chatbot-api/` folder into **your program repo** root. Add a root `.gitignore` containing at least: `.venv/`, `__pycache__/`, `*.pyc`, `.env`. Update the root `README.md` (what this project is — healthcare coverage chatbot, 31-day build — your name, and today's progress). Then commit and push: `git add . && git commit -m \"day 3: first app + chatbot + FastAPI skeleton\" && git push`. Hit **Verify my repo** below — the checks fetch your pushed files.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. In the Day 3 `chatbot.py` sample, which **model name** is passed to `ollama.chat`?\n2. What is the **folder name** for the FastAPI scaffold (the backend skeleton)?\n3. Which terminal command checks whether **Node.js** is installed?\n",
+    "briefMd": "## Mission: First AI project - local chatbot, FastAPI skeleton & Node\n\nHands-on build (~3.5–4 hrs): create your first AI-assisted Python app, a command-line chatbot against your local Ollama model, scaffold the FastAPI backend this course extends, and install Node.js. When you finish the build steps, ship the artifacts to **your program repo** (the GitHub repository you registered when you applied) so we can verify them.\n\n### Your repo layout (verification checks these exact paths)\n\nAfter local work in `~/projects/my-first-app`, copy these into your program repo:\n\n```\nyour-program-repo/\n├── main.py                         ← AI-assisted first script\n├── chatbot.py                      ← local Ollama CLI chatbot\n├── coverage-chatbot-api/\n│   ├── main.py                     ← FastAPI /health (grows later)\n│   ├── requirements.txt\n│   └── README.md                   ← optional inside the API folder\n├── .gitignore\n└── README.md\n```\n\n### Build steps\n\n1. **Create a new project:** `mkdir ~/projects/my-first-app && cd ~/projects/my-first-app`, then `code .` to open it in VS Code.\n2. **Create a virtual environment for this project** (in VS Code's terminal, `` Ctrl+` ``): `python3 -m venv .venv`, then activate it - macOS: `source .venv/bin/activate`; Windows: `.venv\\Scripts\\activate`. When VS Code asks \"select this environment?\", click **Yes** (or `Cmd+Shift+P` → \"Python: Select Interpreter\" → `.venv`).\n3. **Create main.py and write code with AI help:** as you type, Copilot suggests completions in gray - press **Tab** to accept. For a bigger ask, put your cursor in the file, press `Cmd+I` / `Ctrl+I` (inline chat), and type \"write a function that fetches a URL and returns the JSON\" - the code is inserted in place. Use the full chat panel for bigger questions, then click **Apply/Insert** on any code blocks it gives you.\n4. **Try the other AI shortcuts:** highlight any code → right-click → **Copilot** → **Explain / Fix / Generate Tests**, and read what each one produces.\n5. **Run and debug it:** click the **▶ button** (top right) or run `python main.py` in the terminal. To debug: click just left of a line number to set a breakpoint, press **F5**, and choose \"Python File\" - step through and inspect variables.\n6. **Install the Ollama Python client** in this project's venv: `pip install ollama`.\n7. **Build a mini project** - a command-line chatbot against your local model. Create `chatbot.py`:\n\n```python\nimport ollama\n\nhistory = []\nprint(\"Local chatbot - type 'quit' to exit\")\nwhile True:\n    user = input(\"\\nYou: \")\n    if user.lower() == \"quit\":\n        break\n    history.append({\"role\": \"user\", \"content\": user})\n    reply = ollama.chat(model=\"qwen2.5-coder:7b\", messages=history)\n    text = reply[\"message\"][\"content\"]\n    history.append({\"role\": \"assistant\", \"content\": text})\n    print(f\"\\nAI: {text}\")\n```\n\n8. **Run it with `python chatbot.py`**, have a short back-and-forth, and confirm the model responds using conversation history (ask a follow-up question that only makes sense if it remembers the earlier message).\n9. **Scaffold the backend skeleton the rest of this course will build on:** in a new folder (e.g. `coverage-chatbot-api`), ask Copilot's chat panel to \"scaffold a FastAPI app with a /health endpoint returning {status: ok}, plus requirements.txt and a README.\" Review what it generates before accepting.\n10. **Install and run it:** `pip install -r requirements.txt`, then `uvicorn main:app --reload`. Confirm `/health` responds at `localhost:8000/health` in your browser - this is the same backend and endpoint later days (chat API, Docker, Kubernetes health checks) will extend.\n11. **Install Node.js:** check first in the VS Code terminal with `node -v`; if it's not installed, download the LTS version from https://nodejs.org, install it, then restart VS Code.\n\n### Ship to your program repo\n\nCopy `main.py`, `chatbot.py`, and the `coverage-chatbot-api/` folder into **your program repo** root. Add a root `.gitignore` containing at least: `.venv/`, `__pycache__/`, `*.pyc`, `.env`. Update the root `README.md` (what this project is - healthcare coverage chatbot, 31-day build - your name, and today's progress). Then commit and push: `git add . && git commit -m \"day 3: first app + chatbot + FastAPI skeleton\" && git push`. Hit **Verify my repo** below - the checks fetch your pushed files.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. In the Day 3 `chatbot.py` sample, which **model name** is passed to `ollama.chat`?\n2. What is the **folder name** for the FastAPI scaffold (the backend skeleton)?\n3. Which terminal command checks whether **Node.js** is installed?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -159,7 +159,7 @@
     "moduleNumber": 2,
     "title": "Reading & Processing Structured Data",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Ingest and query the coverage data your chatbot will answer from\n\nToday you build the structured data layer behind the healthcare coverage chatbot. You'll create **synthetic** (fake) plans and claims datasets, clean them with pandas, load them into a local SQLite database, and write SQL queries that answer realistic member questions. Use synthetic data only — never real member PHI. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Loading data with pandas** — CSV/Excel/JSON into DataFrames; filtering, joins, and cleaning\n- **SQL fundamentals** — SELECT, WHERE, JOIN, GROUP BY, and nested queries\n- **Connecting Python to a database** — SQLite for local development (today); Postgres via SQLAlchemy is the production pattern you'll see later — you do **not** need SQLAlchemy for this mission\n- **Basic data cleaning** — nulls, type coercion, and deduplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── data/\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db\n├── structured_queries.md\n├── notebooks/\n│   └── day04-ingestion-lab.ipynb   ← optional workspace\n├── chatbot.py                      ← from Day 3\n└── backend/                        ← from Day 3\n```\n\n### Build steps\n\n1. In your activated venv, install dependencies: `pip install pandas openpyxl`.\n2. Create **synthetic** sample datasets (fake data only) — make a `data/` folder and save these two CSVs exactly:\n\n   **`data/plans.csv`**\n\n```csv\nplan_id,plan_name,monthly_premium,annual_deductible,copay_pct,coverage_type,network_tier\nP101,Gold PPO,500,2000,10,PPO,Gold\nP102,Silver HMO,300,1500,20,HMO,Silver\nP103,Bronze HMO,150,1000,30,HMO,Bronze\n```\n\n   **`data/claims.csv`**\n\n```csv\nclaim_id,member_id,plan_id,procedure,claim_amount,status,date_filed\nC1001,M1001,P101,X-ray,250,Pending,2023-04-01\nC1002,M1001,P101,Surgery,1200,Approved,2023-03-15\nC1003,M1002,P102,X-ray,150,Denied,2023-04-05\nC1004,M1002,P102,Surgery,900,Approved,2023-03-20\nC1005,M1003,P103,X-ray,50,Pending,2023-04-10\n```\n\n3. Load both CSVs with `pd.read_csv()`, inspect with `.info()` and `.head()`, then clean: drop duplicates, fill or drop nulls, and coerce `date_filed` to datetime.\n4. Create `coverage.db` with Python's `sqlite3` module and load the cleaned DataFrames via `df.to_sql()` (tables for plans and claims).\n5. Write and test **5 SQL queries** mapped to realistic member questions:\n   - \"What's the deductible on the Gold PPO plan?\"\n   - \"How many claims are pending for member M1001?\"\n   - \"Which plans have a monthly premium under $400?\"\n   - A JOIN between claims and plans\n   - A top-N query (e.g. most claimed procedures)\n6. Save each query and its output in `structured_queries.md` for later reference.\n7. Commit and push, then hit **Verify my repo** below — the checks fetch your pushed files.\n\nTip: `notebooks/day04-ingestion-lab.ipynb` is a convenient workspace for the lab. Deliverables at the paths above are what get verified.\n",
+    "briefMd": "## Mission: Ingest and query the coverage data your chatbot will answer from\n\nToday you build the structured data layer behind the healthcare coverage chatbot. You'll create **synthetic** (fake) plans and claims datasets, clean them with pandas, load them into a local SQLite database, and write SQL queries that answer realistic member questions. Use synthetic data only - never real member PHI. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Loading data with pandas** - CSV/Excel/JSON into DataFrames; filtering, joins, and cleaning\n- **SQL fundamentals** - SELECT, WHERE, JOIN, GROUP BY, and nested queries\n- **Connecting Python to a database** - SQLite for local development (today); Postgres via SQLAlchemy is the production pattern you'll see later - you do **not** need SQLAlchemy for this mission\n- **Basic data cleaning** - nulls, type coercion, and deduplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── data/\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db\n├── structured_queries.md\n├── notebooks/\n│   └── day04-ingestion-lab.ipynb   ← optional workspace\n├── chatbot.py                      ← from Day 3\n└── backend/                        ← from Day 3\n```\n\n### Build steps\n\n1. In your activated venv, install dependencies: `pip install pandas openpyxl`.\n2. Create **synthetic** sample datasets (fake data only) - make a `data/` folder and save these two CSVs exactly:\n\n   **`data/plans.csv`**\n\n```csv\nplan_id,plan_name,monthly_premium,annual_deductible,copay_pct,coverage_type,network_tier\nP101,Gold PPO,500,2000,10,PPO,Gold\nP102,Silver HMO,300,1500,20,HMO,Silver\nP103,Bronze HMO,150,1000,30,HMO,Bronze\n```\n\n   **`data/claims.csv`**\n\n```csv\nclaim_id,member_id,plan_id,procedure,claim_amount,status,date_filed\nC1001,M1001,P101,X-ray,250,Pending,2023-04-01\nC1002,M1001,P101,Surgery,1200,Approved,2023-03-15\nC1003,M1002,P102,X-ray,150,Denied,2023-04-05\nC1004,M1002,P102,Surgery,900,Approved,2023-03-20\nC1005,M1003,P103,X-ray,50,Pending,2023-04-10\n```\n\n3. Load both CSVs with `pd.read_csv()`, inspect with `.info()` and `.head()`, then clean: drop duplicates, fill or drop nulls, and coerce `date_filed` to datetime.\n4. Create `coverage.db` with Python's `sqlite3` module and load the cleaned DataFrames via `df.to_sql()` (tables for plans and claims).\n5. Write and test **5 SQL queries** mapped to realistic member questions:\n   - \"What's the deductible on the Gold PPO plan?\"\n   - \"How many claims are pending for member M1001?\"\n   - \"Which plans have a monthly premium under $400?\"\n   - A JOIN between claims and plans\n   - A top-N query (e.g. most claimed procedures)\n6. Save each query and its output in `structured_queries.md` for later reference.\n7. Commit and push, then hit **Verify my repo** below - the checks fetch your pushed files.\n\nTip: `notebooks/day04-ingestion-lab.ipynb` is a convenient workspace for the lab. Deliverables at the paths above are what get verified.\n",
     "language": "PYTHON",
     "missionSpec": {
       "repoChecks": [
@@ -205,7 +205,7 @@
     "moduleNumber": 2,
     "title": "Reading & Processing Unstructured Data",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Extract usable text from the documents your chatbot will answer from\n\nToday you build the unstructured-data layer behind the healthcare coverage chatbot. You'll pull text from policy PDFs, claim-form Word docs, scanned enrollment forms (OCR), and a public provider/FAQ page — then clean and save the results. Use **synthetic or publicly published templates only** — never real member PHI. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Text extraction from PDFs/Docs** — `pdfplumber`, `PyPDF2`, `python-docx`\n- **OCR for scanned documents** — Tesseract / `pytesseract` + `pdf2image`\n- **Web scraping basics** for pulling public documentation — `BeautifulSoup`, `requests`\n- **Normalizing extracted text** — removing headers/footers, fixing encoding issues, de-duplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── raw_text/\n│   ├── benefits.txt              ← from Summary of Benefits PDF\n│   ├── claims_process.txt        ← from claims-process Word doc\n│   └── enrollment.txt            ← from scanned enrollment form (OCR)\n├── data/                         ← from Day 4\n├── coverage.db                   ← from Day 4\n├── chatbot.py                    ← from Day 3\n└── backend/                      ← from Day 3\n```\n\n### Build steps\n\n1. **Install:** In your activated venv, run `pip install pdfplumber pypdf python-docx pytesseract pdf2image beautifulsoup4 requests`, and install the Tesseract OCR binary for your OS.\n2. **Gather** 3 sample documents (synthetic or publicly published templates only): a \"Summary of Benefits and Coverage\"-style PDF, a claims-process Word doc, and a scanned enrollment form image/PDF.\n3. **Extract** text from the benefits PDF with `pdfplumber` (`page.extract_text()` per page) and from the claims-process doc with `python-docx` (`paragraph.text`).\n4. **Convert** the scanned enrollment form's pages with `pdf2image.convert_from_path()`, then run `pytesseract.image_to_string()` on each page image; note any OCR accuracy issues with handwriting or checkboxes.\n5. **Scrape** one public webpage (e.g. a sample provider-network or FAQ page) with `requests` + `BeautifulSoup`, extracting only the main article/body text (strip nav/footer/ads).\n6. **Clean** all extracted text (strip extra whitespace, fix encoding) and save each document source as a separate `.txt` file in a `raw_text/` folder — at minimum `benefits.txt`, `claims_process.txt`, and `enrollment.txt`.\n7. Commit and push, then hit **Verify my repo** below — the checks fetch your pushed files.\n\n**Deliverable:** 3 cleaned text files extracted from a benefits PDF, a claims-process doc, and a scanned enrollment form (`raw_text/benefits.txt`, `raw_text/claims_process.txt`, `raw_text/enrollment.txt`).\n",
+    "briefMd": "## Mission: Extract usable text from the documents your chatbot will answer from\n\nToday you build the unstructured-data layer behind the healthcare coverage chatbot. You'll pull text from policy PDFs, claim-form Word docs, scanned enrollment forms (OCR), and a public provider/FAQ page - then clean and save the results. Use **synthetic or publicly published templates only** - never real member PHI. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Text extraction from PDFs/Docs** - `pdfplumber`, `PyPDF2`, `python-docx`\n- **OCR for scanned documents** - Tesseract / `pytesseract` + `pdf2image`\n- **Web scraping basics** for pulling public documentation - `BeautifulSoup`, `requests`\n- **Normalizing extracted text** - removing headers/footers, fixing encoding issues, de-duplication\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── raw_text/\n│   ├── benefits.txt              ← from Summary of Benefits PDF\n│   ├── claims_process.txt        ← from claims-process Word doc\n│   └── enrollment.txt            ← from scanned enrollment form (OCR)\n├── data/                         ← from Day 4\n├── coverage.db                   ← from Day 4\n├── chatbot.py                    ← from Day 3\n└── backend/                      ← from Day 3\n```\n\n### Build steps\n\n1. **Install:** In your activated venv, run `pip install pdfplumber pypdf python-docx pytesseract pdf2image beautifulsoup4 requests`, and install the Tesseract OCR binary for your OS.\n2. **Gather** 3 sample documents (synthetic or publicly published templates only): a \"Summary of Benefits and Coverage\"-style PDF, a claims-process Word doc, and a scanned enrollment form image/PDF.\n3. **Extract** text from the benefits PDF with `pdfplumber` (`page.extract_text()` per page) and from the claims-process doc with `python-docx` (`paragraph.text`).\n4. **Convert** the scanned enrollment form's pages with `pdf2image.convert_from_path()`, then run `pytesseract.image_to_string()` on each page image; note any OCR accuracy issues with handwriting or checkboxes.\n5. **Scrape** one public webpage (e.g. a sample provider-network or FAQ page) with `requests` + `BeautifulSoup`, extracting only the main article/body text (strip nav/footer/ads).\n6. **Clean** all extracted text (strip extra whitespace, fix encoding) and save each document source as a separate `.txt` file in a `raw_text/` folder - at minimum `benefits.txt`, `claims_process.txt`, and `enrollment.txt`.\n7. Commit and push, then hit **Verify my repo** below - the checks fetch your pushed files.\n\n**Deliverable:** 3 cleaned text files extracted from a benefits PDF, a claims-process doc, and a scanned enrollment form (`raw_text/benefits.txt`, `raw_text/claims_process.txt`, `raw_text/enrollment.txt`).\n",
     "missionSpec": {
       "repoChecks": [
         {
@@ -265,7 +265,7 @@
     "moduleNumber": 2,
     "title": "Building the Knowledge Base",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Building the Knowledge Base\n\nTurn cleaned plan/claims data and policy documents into a unified, chunked knowledge base ready for embedding. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Document chunking strategies** — fixed-size, recursive character splitting, semantic chunking\n- **Chunk size and overlap trade-offs** — how they affect retrieval quality\n- **Metadata design** — `source`, `section`, `plan_type`, document type (critical for filtering later)\n- **Knowledge base schema** — a JSON/JSONL shape that both SQL plan rows and policy-document chunks can populate\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← today's deliverable (one JSON object per line)\n├── raw_text/                     ← from Day 5\n│   ├── benefits.txt\n│   ├── claims_process.txt\n│   └── enrollment.txt\n├── data/                         ← from Day 4\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db                   ← from Day 4\n├── chatbot.py\n└── coverage-chatbot-api/\n```\n\n### Build steps\n\n1. **Install a text splitter** in your activated venv:\n   - Run `pip install langchain-text-splitters`\n   - Or write a small recursive splitter yourself if you prefer\n\n2. **Load your Day 5 + Day 4 inputs:**\n   - Read all `.txt` files from `raw_text/` (`benefits.txt`, `claims_process.txt`, `enrollment.txt`)\n   - Export Day 4 plans (from `data/plans.csv` or `coverage.db`) into one chunk per plan, e.g. `\"Gold PPO: $350/month premium, $1,500 deductible, 20% coinsurance, network: national\"`\n\n3. **Chunk the policy / benefits text** with:\n   - `RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)`\n   - Prefer keeping coverage-relevant sections as distinct chunks where possible:\n     - exclusions\n     - covered services\n     - claims process\n\n4. **Attach metadata to every chunk** — each record must include:\n\n```json\n{\n  \"id\": \"...\",\n  \"text\": \"...\",\n  \"source_file\": \"...\",\n  \"source_type\": \"structured|unstructured\",\n  \"plan_type\": \"...\",\n  \"section\": \"coverage|exclusions|claims|enrollment\",\n  \"ingested_at\": \"...\"\n}\n```\n\n   - Plan rows → `source_type: structured`\n   - Policy `.txt` chunks → `source_type: unstructured`\n\n5. **Write the knowledge base:**\n   - Save all chunks to `knowledge_base.jsonl`\n   - One JSON object per line (JSONL)\n\n6. **Sanity-check before shipping:**\n   - Print the total chunk count\n   - Manually read **5 random chunks**\n   - Confirm they are coherent and not cut mid-sentence\n   - Especially exclusion clauses — they must stay intact\n\n7. **Ship to your program repo:**\n   - Commit and push `knowledge_base.jsonl` to your program repo root\n   - Suggested commit: `git add knowledge_base.jsonl && git commit -m \"day 6: chunked knowledge base\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **chunk_size** does this mission's `RecursiveCharacterTextSplitter` use?\n2. What **chunk_overlap** does this mission use?\n3. What is the **deliverable filename** (JSONL knowledge base at the repo root)?\n",
+    "briefMd": "## Mission: Building the Knowledge Base\n\nTurn cleaned plan/claims data and policy documents into a unified, chunked knowledge base ready for embedding. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **Document chunking strategies** - fixed-size, recursive character splitting, semantic chunking\n- **Chunk size and overlap trade-offs** - how they affect retrieval quality\n- **Metadata design** - `source`, `section`, `plan_type`, document type (critical for filtering later)\n- **Knowledge base schema** - a JSON/JSONL shape that both SQL plan rows and policy-document chunks can populate\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← today's deliverable (one JSON object per line)\n├── raw_text/                     ← from Day 5\n│   ├── benefits.txt\n│   ├── claims_process.txt\n│   └── enrollment.txt\n├── data/                         ← from Day 4\n│   ├── plans.csv\n│   └── claims.csv\n├── coverage.db                   ← from Day 4\n├── chatbot.py\n└── coverage-chatbot-api/\n```\n\n### Build steps\n\n1. **Install a text splitter** in your activated venv:\n   - Run `pip install langchain-text-splitters`\n   - Or write a small recursive splitter yourself if you prefer\n\n2. **Load your Day 5 + Day 4 inputs:**\n   - Read all `.txt` files from `raw_text/` (`benefits.txt`, `claims_process.txt`, `enrollment.txt`)\n   - Export Day 4 plans (from `data/plans.csv` or `coverage.db`) into one chunk per plan, e.g. `\"Gold PPO: $350/month premium, $1,500 deductible, 20% coinsurance, network: national\"`\n\n3. **Chunk the policy / benefits text** with:\n   - `RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)`\n   - Prefer keeping coverage-relevant sections as distinct chunks where possible:\n     - exclusions\n     - covered services\n     - claims process\n\n4. **Attach metadata to every chunk** - each record must include:\n\n```json\n{\n  \"id\": \"...\",\n  \"text\": \"...\",\n  \"source_file\": \"...\",\n  \"source_type\": \"structured|unstructured\",\n  \"plan_type\": \"...\",\n  \"section\": \"coverage|exclusions|claims|enrollment\",\n  \"ingested_at\": \"...\"\n}\n```\n\n   - Plan rows → `source_type: structured`\n   - Policy `.txt` chunks → `source_type: unstructured`\n\n5. **Write the knowledge base:**\n   - Save all chunks to `knowledge_base.jsonl`\n   - One JSON object per line (JSONL)\n\n6. **Sanity-check before shipping:**\n   - Print the total chunk count\n   - Manually read **5 random chunks**\n   - Confirm they are coherent and not cut mid-sentence\n   - Especially exclusion clauses - they must stay intact\n\n7. **Ship to your program repo:**\n   - Commit and push `knowledge_base.jsonl` to your program repo root\n   - Suggested commit: `git add knowledge_base.jsonl && git commit -m \"day 6: chunked knowledge base\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **chunk_size** does this mission's `RecursiveCharacterTextSplitter` use?\n2. What **chunk_overlap** does this mission use?\n3. What is the **deliverable filename** (JSONL knowledge base at the repo root)?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -373,7 +373,7 @@
     "moduleNumber": 3,
     "title": "Embeddings Explained",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Embeddings Explained\n\nUnderstand how text becomes vectors, and generate embeddings for your coverage knowledge base. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **What embeddings are** — dense vector representations of meaning\n- **Popular embedding models** — OpenAI `text-embedding-3`, Sentence-Transformers, Cohere Embed\n- **Similarity metrics** — cosine similarity, dot product, Euclidean distance\n- **Dimensionality trade-offs** — cost vs performance across embedding models\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← from Day 6 (input)\n├── embeddings.npy                ← today's vectors (one row per chunk, same order)\n├── embeddings_2d.png             ← PCA scatter plot\n├── raw_text/\n├── data/\n└── coverage.db\n```\n\n### Build steps\n\n1. **Install dependencies** in your activated venv:\n   - Run `pip install scikit-learn matplotlib`\n   - Then pick one embedding path:\n     - **Recommended (free, local):** `pip install sentence-transformers`\n     - **Paid (higher quality):** `pip install openai`\n\n2. **Write `embed(text) -> vector`:**\n   - Local: call Sentence-Transformers model `all-MiniLM-L6-v2`\n   - OpenAI: call `text-embedding-3-small`\n   - Return a numeric vector for the input string\n\n3. **Embed every chunk** in `knowledge_base.jsonl`:\n   - Loop through each line / chunk\n   - Generate its embedding\n   - Store it either:\n     - as an `embedding` field on the chunk, **or**\n     - in a parallel `embeddings.npy` array matching the chunk index\n   - For verification, also save `embeddings.npy` (if you only added an `embedding` field, export with `numpy.save`)\n\n4. **If using a paid API**, batch calls (**50–100** chunks per request) to control cost and avoid rate limits.\n\n5. **Visualize in 2D:**\n   - Reduce all embeddings with `sklearn.decomposition.PCA(n_components=2)`\n   - Plot with `matplotlib.pyplot.scatter()`\n   - Color-code points by `section` (`coverage` / `exclusions` / `claims` / `enrollment`)\n\n6. **Sanity-check the clusters:**\n   - Confirm chunks from the same section sit near each other (e.g. exclusion clauses cluster together)\n   - Save the plot as `embeddings_2d.png`\n\n7. **Ship to your program repo:**\n   - Commit and push `embeddings.npy` and `embeddings_2d.png`\n   - Suggested commit: `git add embeddings.npy embeddings_2d.png && git commit -m \"day 7: embeddings + 2D plot\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which **local Sentence-Transformers model** does this mission recommend?\n2. How many **PCA components** do you reduce embeddings to for the plot?\n3. What is the **filename** of the 2D visualization you must save?\n",
+    "briefMd": "## Mission: Embeddings Explained\n\nUnderstand how text becomes vectors, and generate embeddings for your coverage knowledge base. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **What embeddings are** - dense vector representations of meaning\n- **Popular embedding models** - OpenAI `text-embedding-3`, Sentence-Transformers, Cohere Embed\n- **Similarity metrics** - cosine similarity, dot product, Euclidean distance\n- **Dimensionality trade-offs** - cost vs performance across embedding models\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← from Day 6 (input)\n├── embeddings.npy                ← today's vectors (one row per chunk, same order)\n├── embeddings_2d.png             ← PCA scatter plot\n├── raw_text/\n├── data/\n└── coverage.db\n```\n\n### Build steps\n\n1. **Install dependencies** in your activated venv:\n   - Run `pip install scikit-learn matplotlib`\n   - Then pick one embedding path:\n     - **Recommended (free, local):** `pip install sentence-transformers`\n     - **Paid (higher quality):** `pip install openai`\n\n2. **Write `embed(text) -> vector`:**\n   - Local: call Sentence-Transformers model `all-MiniLM-L6-v2`\n   - OpenAI: call `text-embedding-3-small`\n   - Return a numeric vector for the input string\n\n3. **Embed every chunk** in `knowledge_base.jsonl`:\n   - Loop through each line / chunk\n   - Generate its embedding\n   - Store it either:\n     - as an `embedding` field on the chunk, **or**\n     - in a parallel `embeddings.npy` array matching the chunk index\n   - For verification, also save `embeddings.npy` (if you only added an `embedding` field, export with `numpy.save`)\n\n4. **If using a paid API**, batch calls (**50–100** chunks per request) to control cost and avoid rate limits.\n\n5. **Visualize in 2D:**\n   - Reduce all embeddings with `sklearn.decomposition.PCA(n_components=2)`\n   - Plot with `matplotlib.pyplot.scatter()`\n   - Color-code points by `section` (`coverage` / `exclusions` / `claims` / `enrollment`)\n\n6. **Sanity-check the clusters:**\n   - Confirm chunks from the same section sit near each other (e.g. exclusion clauses cluster together)\n   - Save the plot as `embeddings_2d.png`\n\n7. **Ship to your program repo:**\n   - Commit and push `embeddings.npy` and `embeddings_2d.png`\n   - Suggested commit: `git add embeddings.npy embeddings_2d.png && git commit -m \"day 7: embeddings + 2D plot\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which **local Sentence-Transformers model** does this mission recommend?\n2. How many **PCA components** do you reduce embeddings to for the plot?\n3. What is the **filename** of the 2D visualization you must save?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -425,9 +425,9 @@
   {
     "dayNumber": 8,
     "moduleNumber": 3,
-    "title": "Vector Databases — Overview",
+    "title": "Vector Databases Overview",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Vector Databases — Overview\n\nSurvey the vector database landscape and stand up your first instance. Expect about **1.5 hours**.\n\n**Concepts to learn**\n\n- **Vector DB options** — Pinecone, Chroma, FAISS, Weaviate, Milvus (managed vs self-hosted)\n- **Indexing algorithms (high level)** — HNSW, IVF\n- **Choosing a vector DB** — scale, latency, and budget — and what changes for an enterprise workload with access-control requirements\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_db_notes.md            ← comparison table + decision paragraph\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n└── embeddings_2d.png             ← from Day 7\n```\n\nLocal Chroma data and Pinecone cloud indexes stay on your machine / account — do **not** commit secrets or API keys.\n\n### Build steps\n\n1. **Install Chroma** (fully free, local, no signup):\n   - Run `pip install chromadb`\n\n2. **Create a persistent Chroma client and one collection:**\n\n```python\nclient.create_collection(\"coverage_kb\")\n```\n\n   - Use a persistent client so the collection survives process restarts\n   - Confirm the collection exists (list collections / get by name)\n\n3. **Stand up Pinecone (free tier) for comparison:**\n   - Sign up at the Pinecone free tier (no credit card)\n   - Create a **serverless** index via their dashboard, **or** install the client: `pip install pinecone-client`\n   - Leave the index empty for now — Day 9+ will populate vectors\n\n4. **Write a short comparison table** in `vector_db_notes.md` covering:\n   - local vs. cloud\n   - free-tier limits\n   - latency\n   - ease of setup\n   - how each would handle per-member or per-plan access control in a real enterprise deployment\n\n5. **Decide which you'll use going forward:**\n   - Chroma is simplest and fully free for this program\n   - Add **one paragraph** of reasoning to `vector_db_notes.md`\n\n6. **Ship to your program repo:**\n   - Commit and push `vector_db_notes.md` only (no API keys, no Pinecone secrets)\n   - Suggested commit: `git add vector_db_notes.md && git commit -m \"day 8: chroma vs pinecone notes\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **collection name** do you create in Chroma?\n2. Which `pip` package installs local Chroma?\n3. Which vector DB does this program recommend going forward (simplest / fully free)?\n",
+    "briefMd": "## Mission: Vector Databases Overview\n\nSurvey the vector database landscape and stand up your first instance. Expect about **1.5 hours**.\n\n**Concepts to learn**\n\n- **Vector DB options** - Pinecone, Chroma, FAISS, Weaviate, Milvus (managed vs self-hosted)\n- **Indexing algorithms (high level)** - HNSW, IVF\n- **Choosing a vector DB** - scale, latency, and budget - and what changes for an enterprise workload with access-control requirements\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_db_notes.md            ← comparison table + decision paragraph\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n└── embeddings_2d.png             ← from Day 7\n```\n\nLocal Chroma data and Pinecone cloud indexes stay on your machine / account - do **not** commit secrets or API keys.\n\n### Build steps\n\n1. **Install Chroma** (fully free, local, no signup):\n   - Run `pip install chromadb`\n\n2. **Create a persistent Chroma client and one collection:**\n\n```python\nclient.create_collection(\"coverage_kb\")\n```\n\n   - Use a persistent client so the collection survives process restarts\n   - Confirm the collection exists (list collections / get by name)\n\n3. **Stand up Pinecone (free tier) for comparison:**\n   - Sign up at the Pinecone free tier (no credit card)\n   - Create a **serverless** index via their dashboard, **or** install the client: `pip install pinecone-client`\n   - Leave the index empty for now - Day 9+ will populate vectors\n\n4. **Write a short comparison table** in `vector_db_notes.md` covering:\n   - local vs. cloud\n   - free-tier limits\n   - latency\n   - ease of setup\n   - how each would handle per-member or per-plan access control in a real enterprise deployment\n\n5. **Decide which you'll use going forward:**\n   - Chroma is simplest and fully free for this program\n   - Add **one paragraph** of reasoning to `vector_db_notes.md`\n\n6. **Ship to your program repo:**\n   - Commit and push `vector_db_notes.md` only (no API keys, no Pinecone secrets)\n   - Suggested commit: `git add vector_db_notes.md && git commit -m \"day 8: chroma vs pinecone notes\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **collection name** do you create in Chroma?\n2. Which `pip` package installs local Chroma?\n3. Which vector DB does this program recommend going forward (simplest / fully free)?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -499,7 +499,7 @@
     "moduleNumber": 3,
     "title": "Building & Populating the Vector Database",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: Building & Populating the Vector Database\n\nLoad your embeddings into the vector DB with metadata so they're ready for retrieval. Expect about **2 hours**.\n\n**Concepts to learn**\n\n- **Indexing pipeline design** — batching upserts, ID management\n- **Metadata filtering at query time** — e.g. filter by `plan_type` or `section`\n- **Namespace / collection design** — multi-tenant or multi-source knowledge bases\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_query_test.md          ← today's documented query test\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n├── vector_db_notes.md            ← from Day 8\n└── chroma_data/                  ← local Chroma store (do not commit)\n```\n\nYour populated Chroma collection stays local — do **not** commit API keys or the Chroma data directory.\n\n### Build steps\n\n1. **Load inputs** from prior days:\n   - Read `knowledge_base.jsonl`\n   - Load the embeddings you generated on Day 7 (`embeddings.npy` or per-chunk `embedding` fields)\n\n2. **Batch-upsert into Chroma** (`coverage_kb` collection from Day 8):\n\n```python\ncollection.add(\n    ids=[...],\n    embeddings=[...],\n    documents=[...],\n    metadatas=[...],\n)\n```\n\n   - Upsert in batches of **~100** records per call\n\n3. **Verify the index size** matches your chunk count:\n\n```python\ncollection.count()\n```\n\n4. **Run a raw test query:**\n   - Embed: **\"Is physical therapy covered under the Silver plan?\"**\n   - Query:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n)\n```\n\n5. **Review the 5 returned chunks** in `vector_query_test.md`:\n   - Are they relevant?\n   - Do they reflect **Silver-plan-specific** coverage (not another plan)?\n   - Note any retrieval misses\n\n6. **Repeat with metadata filtering**, e.g.:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n    where={\"plan_type\": \"Silver\"},\n)\n```\n\n   - Confirm filters scope results to one plan\n   - Log filtered vs unfiltered results in `vector_query_test.md`\n\n7. **Ship to your program repo:**\n   - Commit and push `vector_query_test.md` only\n   - Suggested commit: `git add vector_query_test.md && git commit -m \"day 9: vector upsert query test\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Roughly how many records do you upsert per `collection.add` batch?\n2. What is the exact **test question** you embed for the raw query?\n3. How many results does `collection.query` return (`n_results`)?\n",
+    "briefMd": "## Mission: Building & Populating the Vector Database\n\nLoad your embeddings into the vector DB with metadata so they're ready for retrieval. Expect about **2 hours**.\n\n**Concepts to learn**\n\n- **Indexing pipeline design** - batching upserts, ID management\n- **Metadata filtering at query time** - e.g. filter by `plan_type` or `section`\n- **Namespace / collection design** - multi-tenant or multi-source knowledge bases\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_query_test.md          ← today's documented query test\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n├── vector_db_notes.md            ← from Day 8\n└── chroma_data/                  ← local Chroma store (do not commit)\n```\n\nYour populated Chroma collection stays local - do **not** commit API keys or the Chroma data directory.\n\n### Build steps\n\n1. **Load inputs** from prior days:\n   - Read `knowledge_base.jsonl`\n   - Load the embeddings you generated on Day 7 (`embeddings.npy` or per-chunk `embedding` fields)\n\n2. **Batch-upsert into Chroma** (`coverage_kb` collection from Day 8):\n\n```python\ncollection.add(\n    ids=[...],\n    embeddings=[...],\n    documents=[...],\n    metadatas=[...],\n)\n```\n\n   - Upsert in batches of **~100** records per call\n\n3. **Verify the index size** matches your chunk count:\n\n```python\ncollection.count()\n```\n\n4. **Run a raw test query:**\n   - Embed: **\"Is physical therapy covered under the Silver plan?\"**\n   - Query:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n)\n```\n\n5. **Review the 5 returned chunks** in `vector_query_test.md`:\n   - Are they relevant?\n   - Do they reflect **Silver-plan-specific** coverage (not another plan)?\n   - Note any retrieval misses\n\n6. **Repeat with metadata filtering**, e.g.:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n    where={\"plan_type\": \"Silver\"},\n)\n```\n\n   - Confirm filters scope results to one plan\n   - Log filtered vs unfiltered results in `vector_query_test.md`\n\n7. **Ship to your program repo:**\n   - Commit and push `vector_query_test.md` only\n   - Suggested commit: `git add vector_query_test.md && git commit -m \"day 9: vector upsert query test\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Roughly how many records do you upsert per `collection.add` batch?\n2. What is the exact **test question** you embed for the raw query?\n3. How many results does `collection.query` return (`n_results`)?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -575,9 +575,9 @@
   {
     "dayNumber": 10,
     "moduleNumber": 3,
-    "title": "The Retrieval / Matching Engine — Structured + Vector Search",
+    "title": "The Retrieval / Matching Engine - Structured + Vector Search",
     "missionType": "SHIP_IT",
-    "briefMd": "## Mission: The Retrieval / Matching Engine — Structured + Vector Search\n\nBuild the engine that decides, per member question, whether to query SQL (plans/claims), the vector DB (policy wording), or both. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Semantic vs keyword vs hybrid search** — dense + sparse retrieval\n- **Re-ranking** — improving precision (e.g. Cohere Rerank)\n- **Query routing** — classifying **structured lookup** (plan/claim data) vs **knowledge lookup** (coverage wording) vs **both**\n- **Context merging** — combining and de-duplicating results before the LLM sees them\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── retrieval_engine.py           ← classifier + sql_lookup + vector_lookup + retrieve\n├── retrieval_test_results.md     ← 10 test cases with scores\n├── coverage.db                     ← from Day 4\n├── knowledge_base.jsonl          ← from Day 6\n└── vector_db_notes.md            ← from Day 8\n```\n\n### Build steps\n\n1. **Write a lightweight question classifier:**\n   - Prompt-based function or simple keyword rules\n   - Label each question **structured** (e.g. \"what's my deductible\", \"claim status\"), **unstructured** (e.g. \"is X procedure covered\"), or **both**\n\n2. **Implement `sql_lookup(question)`:**\n   - Convert structured questions into SQL against your Day 4 plans/claims schema\n   - Start with a template, or have the LLM generate SQL\n\n3. **Implement `vector_lookup(question)`:**\n   - Embed the question\n   - Query your vector DB for the **top-5** relevant policy chunks\n\n4. **Implement `retrieve(question)`:**\n   - Route to `sql_lookup`, `vector_lookup`, or both based on the classifier\n   - Merge and de-duplicate results into one context block\n\n5. **Build a test harness** with **10 varied questions**, e.g.:\n   - \"what's my copay\"\n   - \"is maternity care covered on the Bronze plan\"\n   - \"status of claim C-2031\"\n   - at least one mixed question needing **both** sources\n\n6. **Log results** in `retrieval_test_results.md` for each question:\n   - question text\n   - classification\n   - retrieved context (summary or excerpt)\n   - manual score: **good** / **partial** / **poor**\n\n7. **Ship to your program repo:**\n   - Commit and push `retrieval_engine.py` and `retrieval_test_results.md`\n   - Suggested commit: `git add retrieval_engine.py retrieval_test_results.md && git commit -m \"day 10: retrieval engine + test harness\" && git push`\n   - Hit **Verify my repo** below — checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the name of the **routing function** that calls SQL and/or vector lookup?\n2. How many **test questions** does your harness run?\n3. What **filename** logs classification and retrieved context for each test?\n",
+    "briefMd": "## Mission: The Retrieval / Matching Engine - Structured + Vector Search\n\nBuild the engine that decides, per member question, whether to query SQL (plans/claims), the vector DB (policy wording), or both. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Semantic vs keyword vs hybrid search** - dense + sparse retrieval\n- **Re-ranking** - improving precision (e.g. Cohere Rerank)\n- **Query routing** - classifying **structured lookup** (plan/claim data) vs **knowledge lookup** (coverage wording) vs **both**\n- **Context merging** - combining and de-duplicating results before the LLM sees them\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── retrieval_engine.py           ← classifier + sql_lookup + vector_lookup + retrieve\n├── retrieval_test_results.md     ← 10 test cases with scores\n├── coverage.db                     ← from Day 4\n├── knowledge_base.jsonl          ← from Day 6\n└── vector_db_notes.md            ← from Day 8\n```\n\n### Build steps\n\n1. **Write a lightweight question classifier:**\n   - Prompt-based function or simple keyword rules\n   - Label each question **structured** (e.g. \"what's my deductible\", \"claim status\"), **unstructured** (e.g. \"is X procedure covered\"), or **both**\n\n2. **Implement `sql_lookup(question)`:**\n   - Convert structured questions into SQL against your Day 4 plans/claims schema\n   - Start with a template, or have the LLM generate SQL\n\n3. **Implement `vector_lookup(question)`:**\n   - Embed the question\n   - Query your vector DB for the **top-5** relevant policy chunks\n\n4. **Implement `retrieve(question)`:**\n   - Route to `sql_lookup`, `vector_lookup`, or both based on the classifier\n   - Merge and de-duplicate results into one context block\n\n5. **Build a test harness** with **10 varied questions**, e.g.:\n   - \"what's my copay\"\n   - \"is maternity care covered on the Bronze plan\"\n   - \"status of claim C-2031\"\n   - at least one mixed question needing **both** sources\n\n6. **Log results** in `retrieval_test_results.md` for each question:\n   - question text\n   - classification\n   - retrieved context (summary or excerpt)\n   - manual score: **good** / **partial** / **poor**\n\n7. **Ship to your program repo:**\n   - Commit and push `retrieval_engine.py` and `retrieval_test_results.md`\n   - Suggested commit: `git add retrieval_engine.py retrieval_test_results.md && git commit -m \"day 10: retrieval engine + test harness\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the name of the **routing function** that calls SQL and/or vector lookup?\n2. How many **test questions** does your harness run?\n3. What **filename** logs classification and retrieved context for each test?\n",
     "language": "PYTHON",
     "missionSpec": {
       "answers": [
@@ -667,23 +667,80 @@
     "moduleNumber": 4,
     "title": "RAG End-to-End & LLM API Basics",
     "missionType": "SHIP_IT",
-    "briefMd": "## RAG End-to-End & LLM API Basics\n\nConnect your retrieval engine to an LLM (local Ollama or free Groq) — your first full grounded RAG answer about coverage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: RAG End-to-End & LLM API Basics\n\nConnect your retrieval engine to a real LLM call - your first full RAG answer about coverage. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **Full RAG pipeline** - retrieve → augment prompt → generate → return\n- **LLM API basics** - Anthropic Claude / OpenAI authentication and request/response shape\n- **Free options** - Ollama (local, free, no key) or Groq (free API key) as OpenAI-SDK-compatible alternatives\n- **Streaming vs non-streaming** completions\n- **Grounding system prompts** - answers strictly from retrieved context (critical for health coverage)\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── rag_chatbot.py                ← generate_answer + retrieve_and_answer\n├── rag_qa_results.md             ← 10 logged Q&A from full pipeline\n├── retrieval_engine.py           ← from Day 10\n├── .env                          ← local only - never commit API keys\n└── .gitignore                    ← must ignore .env\n```\n\n### Build steps\n\n1. **Install an SDK** in your activated venv:\n   - `pip install openai` (works as a drop-in client for free providers too)\n   - or `pip install anthropic` if you're using a paid Claude key\n\n2. **Choose a free path:**\n\n   - **(a) Ollama** - install from `https://ollama.com`, run `ollama pull llama3.1`, then:\n\n```python\nopenai.OpenAI(\n    base_url=\"http://localhost:11434/v1\",\n    api_key=\"ollama\",\n)\n```\n\n   - Fully free, runs on your machine, no signup\n\n   - **(b) Groq** - free key at `https://console.groq.com`, then:\n\n```python\nopenai.OpenAI(\n    base_url=\"https://api.groq.com/openai/v1\",\n    api_key=os.environ[\"GROQ_API_KEY\"],\n)\n```\n\n   - Store any key in `.env` and load with `python-dotenv`\n   - Never commit `.env`\n\n3. **Write `generate_answer(question, context)`** with a grounding prompt:\n\n```\nAnswer using ONLY the context below.\nIf the answer isn't in the context, say you don't know and suggest the member contact support.\nThis is not medical advice.\n\nContext: {context}\n\nQuestion: {question}\n```\n\n4. **Chain retrieve → generate:**\n\n```python\nanswer = generate_answer(question, retrieve(question))\n```\n\n   - Wrap it as `retrieve_and_answer(question)` in `rag_chatbot.py`\n\n5. **Run your same 10 Day 10 test questions** through the full pipeline and log final answers in `rag_qa_results.md`.\n\n6. **Compare against the Day 10 baseline:**\n   - Are answers correct, well-formed sentences (not raw chunks)?\n   - Do they avoid overstating coverage that isn't clearly confirmed?\n\n7. **Test one streaming call** with the SDK's streaming mode and watch tokens arrive in the terminal.\n\n8. **Ship to your program repo:**\n   - Commit `rag_chatbot.py` and `rag_qa_results.md` (no secrets)\n   - Suggested commit: `git add rag_chatbot.py rag_qa_results.md && git commit -m \"day 11: RAG retrieve_and_answer\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the name of the **end-to-end function** that retrieves context and generates an answer?\n2. Which **Ollama model** does this mission tell you to pull for the free local path?\n3. How many **test questions** do you run through the full RAG pipeline?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "end-to-end function",
+          "value": "retrieve_and_answer",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Ollama model to pull",
+          "value": "llama3.1",
+          "caseInsensitive": true
+        },
+        {
+          "check": "RAG test question count",
+          "value": "10",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "rag_chatbot.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "rag_chatbot.py"
+        },
+        {
+          "check": "rag_chatbot.py defines generate_answer",
+          "kind": "contentMatches",
+          "path": "rag_chatbot.py",
+          "regex": "def\\s+generate_answer\\s*\\("
+        },
+        {
+          "check": "rag_chatbot.py defines retrieve_and_answer",
+          "kind": "contentMatches",
+          "path": "rag_chatbot.py",
+          "regex": "def\\s+retrieve_and_answer\\s*\\("
+        },
+        {
+          "check": "rag_chatbot.py includes grounding prompt",
+          "kind": "contentMatches",
+          "path": "rag_chatbot.py",
+          "regex": "(?i)(only the context|not medical advice|don't know|do not know)"
+        },
+        {
+          "check": "rag_qa_results.md exists",
+          "kind": "fileExists",
+          "path": "rag_qa_results.md"
+        },
+        {
+          "check": "rag_qa_results.md has real content",
+          "kind": "minLines",
+          "path": "rag_qa_results.md",
+          "min": 15
+        },
+        {
+          "check": "results log questions and answers",
+          "kind": "contentMatches",
+          "path": "rag_qa_results.md",
+          "regex": "(?i)(question|answer|q&a|q\\s*:)"
         }
       ]
     },
     "objectives": [
-      "Connect your retrieval engine to an LLM (local Ollama or free Groq) — your first full grounded RAG answer about coverage."
+      "Wire retrieve → grounded generate into retrieve_and_answer",
+      "Use Ollama or Groq via the OpenAI-compatible SDK (no paid key required)",
+      "Log 10 full-pipeline Q&A results and compare to the Day 10 baseline",
+      "Smoke-test one streaming completion in the terminal"
     ],
     "tools": [
       "Ollama",
       "Groq",
-      "openai SDK"
+      "openai SDK",
+      "python-dotenv"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -694,18 +751,75 @@
     "moduleNumber": 4,
     "title": "Prompt Engineering Fundamentals",
     "missionType": "SHIP_IT",
-    "briefMd": "## Prompt Engineering Fundamentals\n\nDesign and A/B five system-prompt variants for accurate, empathetic, compliant coverage answers.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Prompt Engineering Fundamentals\n\nLearn the core prompting techniques and apply them to a clear, empathetic, compliant system prompt for coverage questions. Expect about **2 hours**.\n\n**Concepts to learn**\n\n- **Zero-shot vs few-shot** prompting\n- **Chain-of-thought** prompting for multi-step reasoning\n- **System vs user prompt roles** - persona, tone, and constraints\n- **Prompt templates** and variable injection\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── prompt_variants.md            ← variants A–E + scores + chosen prompt\n├── rag_chatbot.py                ← from Day 11\n└── rag_qa_results.md             ← from Day 11\n```\n\n### Build steps\n\n1. **Draft variant A** - strict/formal tone:\n   - Cites exact plan terms\n   - Refuses anything resembling medical advice outright\n\n2. **Draft variant B** - warm/empathetic tone:\n   - Members are often stressed about medical costs\n   - Still precise; redirects medical questions to a licensed provider\n\n3. **Draft variant C** - few-shot:\n   - Add **2–3** ideal coverage Q&A examples before the real question\n   - Include one example that shows the required disclaimer language\n\n4. **Draft variant D** - chain-of-thought:\n   - Add an explicit instruction such as:\n\n```\ncheck the plan type and section before answering, then give a final answer\n```\n\n5. **Draft variant E** - your hybrid:\n   - Combine what worked best across A–D\n   - Include a standard closing disclaimer\n\n6. **Run the same 5 test questions** through all **5** variants and score each **1–5** on:\n   - accuracy\n   - tone\n   - conciseness\n   - compliance\n\n7. **Lock in a winner** as your production system prompt and write a short comparison in `prompt_variants.md`.\n\n8. **Ship to your program repo:**\n   - Commit and push `prompt_variants.md`\n   - Suggested commit: `git add prompt_variants.md && git commit -m \"day 12: prompt variants + winner\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many **system-prompt variants** (A–E) do you draft?\n2. How many **test questions** do you run through every variant?\n3. What is the **filename** where you store variants, scores, and the final chosen prompt?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "prompt variant count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "prompt test question count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "prompt variants filename",
+          "value": "prompt_variants.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "prompt_variants.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "prompt_variants.md"
+        },
+        {
+          "check": "prompt_variants.md has real content",
+          "kind": "minLines",
+          "path": "prompt_variants.md",
+          "min": 20
+        },
+        {
+          "check": "documents variants A–E",
+          "kind": "contentMatches",
+          "path": "prompt_variants.md",
+          "regex": "(?i)(variant\\s*A|##\\s*A\\b)"
+        },
+        {
+          "check": "includes few-shot or chain-of-thought",
+          "kind": "contentMatches",
+          "path": "prompt_variants.md",
+          "regex": "(?i)(few-?shot|chain.?of.?thought|variant\\s*[CDE])"
+        },
+        {
+          "check": "includes scoring dimensions",
+          "kind": "contentMatches",
+          "path": "prompt_variants.md",
+          "regex": "(?i)(accuracy|tone|conciseness|compliance)"
+        },
+        {
+          "check": "includes disclaimer language",
+          "kind": "contentMatches",
+          "path": "prompt_variants.md",
+          "regex": "(?i)disclaimer"
+        },
+        {
+          "check": "names a chosen / production prompt",
+          "kind": "contentMatches",
+          "path": "prompt_variants.md",
+          "regex": "(?i)(chosen|winner|production|final)"
         }
       ]
     },
     "objectives": [
-      "Design and A/B five system-prompt variants for accurate, empathetic, compliant coverage answers."
+      "Draft five system-prompt variants (strict, empathetic, few-shot, CoT, hybrid)",
+      "Score each variant 1–5 on accuracy, tone, conciseness, and compliance",
+      "Lock a production system prompt with standard disclaimer language",
+      "Document the comparison and winner in prompt_variants.md"
     ],
     "tools": [
       "prompt design",
@@ -721,22 +835,85 @@
     "moduleNumber": 4,
     "title": "Advanced Prompting: Function Calling & Structured Outputs",
     "missionType": "SHIP_IT",
-    "briefMd": "## Advanced Prompting: Function Calling & Structured Outputs\n\nGive the LLM tools — check_coverage, get_claim_status, get_plan_details — with Pydantic-validated structured outputs.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Advanced Prompting: Function Calling & Structured Outputs\n\nLet the LLM decide when to call tools, and force its responses into consistent, parseable formats. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Function / tool calling** - defining schemas, letting the model choose when to invoke them\n- **Structured outputs** - JSON mode, Pydantic models for guaranteed response shape\n- **Coverage tool schemas** - `check_coverage`, `get_claim_status`, `get_plan_details`, `estimate_out_of_pocket_cost`\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── tool_calling_chatbot.py       ← tools + execution loop + Pydantic validation\n├── tool_call_log.md              ← logged tool calls from tests\n├── coverage.db                   ← from Day 4 (or mock data)\n├── prompt_variants.md            ← Day 12 system prompt\n└── rag_chatbot.py                ← from Day 11\n```\n\n### Build steps\n\n1. **Define JSON schemas for 3–4 tools** (mock data is fine):\n   - `check_coverage(plan_id, procedure)`\n   - `get_claim_status(claim_id)`\n   - `get_plan_details(plan_id)`\n   - `estimate_out_of_pocket_cost(procedure, plan_id)`\n\n2. **Pass tool schemas to the LLM** with the `tools=` parameter alongside your Day 12 system prompt.\n\n3. **Implement the tool-execution loop:**\n   - If the model returns a tool call, run the matching Python function against your Day 4 database (or mocks)\n   - Feed the tool result back to the model\n   - Get the final natural-language answer\n\n4. **Define Pydantic models** for each tool's expected output and validate every tool response before returning it to the model.\n\n5. **Test with 5 questions** that should each trigger a different tool, plus **one** that should trigger **no** tool - confirm correct tool selection every time.\n\n6. **Log every tool call** in `tool_call_log.md`:\n   - which tool\n   - what arguments\n   - what result\n   - (for debugging and future audit trails)\n\n7. **Ship to your program repo:**\n   - Commit `tool_calling_chatbot.py` and `tool_call_log.md`\n   - Suggested commit: `git add tool_calling_chatbot.py tool_call_log.md && git commit -m \"day 13: function calling + pydantic\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which LLM API parameter do you use to pass tool schemas (`tools=` / `functions=` style)?\n2. Which library validates tool response shapes in this mission?\n3. How many **no-tool** control questions do you include in the test set?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "tools API parameter",
+          "value": "tools",
+          "caseInsensitive": true
+        },
+        {
+          "check": "validation library",
+          "value": "Pydantic",
+          "caseInsensitive": true
+        },
+        {
+          "check": "no-tool control questions",
+          "value": "1",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "tool_calling_chatbot.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "tool_calling_chatbot.py"
+        },
+        {
+          "check": "defines check_coverage tool",
+          "kind": "contentMatches",
+          "path": "tool_calling_chatbot.py",
+          "regex": "check_coverage"
+        },
+        {
+          "check": "defines get_claim_status tool",
+          "kind": "contentMatches",
+          "path": "tool_calling_chatbot.py",
+          "regex": "get_claim_status"
+        },
+        {
+          "check": "defines get_plan_details tool",
+          "kind": "contentMatches",
+          "path": "tool_calling_chatbot.py",
+          "regex": "get_plan_details"
+        },
+        {
+          "check": "uses Pydantic validation",
+          "kind": "contentMatches",
+          "path": "tool_calling_chatbot.py",
+          "regex": "(?i)(pydantic|BaseModel)"
+        },
+        {
+          "check": "tool_call_log.md exists",
+          "kind": "fileExists",
+          "path": "tool_call_log.md"
+        },
+        {
+          "check": "tool_call_log.md has real content",
+          "kind": "minLines",
+          "path": "tool_call_log.md",
+          "min": 10
+        },
+        {
+          "check": "log documents tool names or args",
+          "kind": "contentMatches",
+          "path": "tool_call_log.md",
+          "regex": "(?i)(check_coverage|get_claim_status|get_plan_details|estimate|arguments|tool)"
         }
       ]
     },
     "objectives": [
-      "Give the LLM tools — check_coverage, get_claim_status, get_plan_details — with Pydantic-validated structured outputs."
+      "Define 3–4 coverage tool schemas and pass them via tools=",
+      "Implement the tool-execution loop against Day 4 data (or mocks)",
+      "Validate every tool response with Pydantic before returning to the model",
+      "Log tool calls and confirm correct selection on 5+1 test questions"
     ],
     "tools": [
       "function calling",
-      "Pydantic"
+      "Pydantic",
+      "openai SDK"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -745,24 +922,91 @@
   {
     "dayNumber": 14,
     "moduleNumber": 4,
-    "title": "Fine-Tuning — Concepts & When to Use It",
+    "title": "Fine-Tuning - Concepts & When to Use It",
     "missionType": "SHIP_IT",
-    "briefMd": "## Fine-Tuning — Concepts & When to Use It\n\nLearn when fine-tuning beats RAG, and curate a 20–30 example dataset for consistent tone and disclaimer usage.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Fine-Tuning - Concepts & When to Use It\n\nUnderstand when fine-tuning beats RAG/prompting, and prepare a fine-tuning dataset for consistent coverage-communication tone. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **Fine-tuning vs RAG vs prompting** - decision framework\n- **Full fine-tuning vs PEFT** - LoRA / QLoRA\n- **When fine-tuning helps a coverage chatbot** - consistent empathetic tone, correct disclaimer usage, domain jargon (deductible, coinsurance, copay) - **not** new factual knowledge about specific plans\n- **Dataset prep** - format, size, quality bar\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── fine_tune_dataset.jsonl       ← full curated set (20–30 examples)\n├── fine_tune_train.jsonl         ← 25 training examples\n├── fine_tune_test.jsonl          ← 5 held-out examples (do NOT train on these)\n└── fine_tune_prep_notes.md       ← issues FT can vs cannot fix\n```\n\n### Build steps\n\n1. **Review Day 10–13 test logs** and identify **3 recurring issues**:\n   - Which ones fine-tuning could fix (e.g. forgetting the disclaimer, inconsistent tone)?\n   - Which are actually retrieval problems (fine-tuning won't fix those)?\n   - Write this up in `fine_tune_prep_notes.md`\n\n2. **Draft 20–30 ideal Q&A pairs** by hand or with LLM help:\n   - Exact tone, disclaimer usage, and terminology you want\n   - e.g. always define **\"deductible\"** in plain language on first use\n\n3. **Format as JSONL** in your target platform's schema, e.g. OpenAI:\n\n```json\n{\"messages\": [{\"role\": \"system\", \"content\": \"...\"}, {\"role\": \"user\", \"content\": \"...\"}, {\"role\": \"assistant\", \"content\": \"...\"}]}\n```\n\n4. **Validate every line** - write a short script that confirms each line is valid JSON and follows the schema; save the full set as `fine_tune_dataset.jsonl`.\n\n5. **Split the data:**\n   - Training set: **25** examples → `fine_tune_train.jsonl`\n   - Held-out test set: **5** examples → `fine_tune_test.jsonl`\n   - You will **NOT** train on the held-out set - Day 15 uses it for comparison\n\n6. **Ship to your program repo:**\n   - Commit the JSONL files and prep notes\n   - Suggested commit: `git add fine_tune_dataset.jsonl fine_tune_train.jsonl fine_tune_test.jsonl fine_tune_prep_notes.md && git commit -m \"day 14: fine-tune dataset prep\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many examples go in the **training** split?\n2. How many examples go in the **held-out test** split?\n3. What is the **filename** of the full curated JSONL dataset?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "training split size",
+          "value": "25",
+          "caseInsensitive": true
+        },
+        {
+          "check": "held-out test size",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "full dataset filename",
+          "value": "fine_tune_dataset.jsonl",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "fine_tune_dataset.jsonl exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "fine_tune_dataset.jsonl"
+        },
+        {
+          "check": "dataset has enough examples",
+          "kind": "minLines",
+          "path": "fine_tune_dataset.jsonl",
+          "min": 20
+        },
+        {
+          "check": "dataset uses messages schema",
+          "kind": "contentMatches",
+          "path": "fine_tune_dataset.jsonl",
+          "regex": "\"messages\"\\s*:"
+        },
+        {
+          "check": "fine_tune_train.jsonl exists",
+          "kind": "fileExists",
+          "path": "fine_tune_train.jsonl"
+        },
+        {
+          "check": "train split has 25 examples",
+          "kind": "minLines",
+          "path": "fine_tune_train.jsonl",
+          "min": 25
+        },
+        {
+          "check": "fine_tune_test.jsonl exists",
+          "kind": "fileExists",
+          "path": "fine_tune_test.jsonl"
+        },
+        {
+          "check": "test split has 5 examples",
+          "kind": "minLines",
+          "path": "fine_tune_test.jsonl",
+          "min": 5
+        },
+        {
+          "check": "fine_tune_prep_notes.md exists",
+          "kind": "fileExists",
+          "path": "fine_tune_prep_notes.md"
+        },
+        {
+          "check": "prep notes discuss FT vs retrieval",
+          "kind": "contentMatches",
+          "path": "fine_tune_prep_notes.md",
+          "regex": "(?i)(disclaimer|tone|retrieval|fine-?tun)"
         }
       ]
     },
     "objectives": [
-      "Learn when fine-tuning beats RAG, and curate a 20–30 example dataset for consistent tone and disclaimer usage."
+      "Separate issues fine-tuning can fix from retrieval problems",
+      "Curate 20–30 ideal coverage Q&A pairs with tone and disclaimers",
+      "Format and validate JSONL in the platform messages schema",
+      "Split into 25 train + 5 held-out test examples for Day 15"
     ],
     "tools": [
       "JSONL datasets",
-      "LoRA concepts"
+      "LoRA concepts",
+      "OpenAI fine-tune format"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -771,24 +1015,76 @@
   {
     "dayNumber": 15,
     "moduleNumber": 4,
-    "title": "Fine-Tuning — Hands-On with LoRA/QLoRA",
+    "title": "Fine-Tuning - Hands-On with LoRA/QLoRA",
     "missionType": "SHIP_IT",
-    "briefMd": "## Fine-Tuning — Hands-On with LoRA/QLoRA\n\nFine-tune a small model with LoRA and compare it against the base model on held-out questions.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Fine-Tuning - Hands-On with LoRA/QLoRA\n\nActually fine-tune a model and compare it against the base model. Expect about **3–4 hours**.\n\n**Concepts to learn**\n\n- **LoRA / QLoRA mechanics** - low-rank adapters, why they're cheap to train\n- **Fine-tuning workflows** - OpenAI fine-tuning API, or HuggingFace + PEFT for open models\n- **Evaluation** - fine-tuned vs base model on held-out examples\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── fine_tune_comparison.md       ← before/after scores + conclusion\n├── fine_tune_train.jsonl         ← from Day 14\n├── fine_tune_test.jsonl          ← 5 held-out questions (from Day 14)\n└── adapters/ or notes            ← local LoRA weights optional (do not commit secrets)\n```\n\nDo **not** commit API keys or huge model weights. Ship the comparison write-up.\n\n### Build steps\n\n1. **Start fine-tuning** (pick one path):\n   - **OpenAI:** upload training file via `client.files.create()`, start a job with `client.fine_tuning.jobs.create()`\n   - **Open-source:** `pip install peft transformers bitsandbytes`, load a small base model (e.g. **1–3B** parameters)\n\n2. **Monitor the job** until it completes (OpenAI dashboard, or local LoRA training logs).\n\n3. **Load the fine-tuned model or adapter** once training finishes.\n\n4. **Run your 5 held-out test questions** from Day 14 through:\n   - the **base** model\n   - the **fine-tuned** model\n\n5. **Score each pair side-by-side** in `fine_tune_comparison.md` on:\n   - tone\n   - correctness\n   - disclaimer usage\n   - terminology clarity\n\n6. **Write a short conclusion:**\n   - Did fine-tuning meaningfully improve consistency?\n   - Or would more prompt / retrieval tuning have gotten you there for less effort?\n\n7. **Ship to your program repo:**\n   - Commit `fine_tune_comparison.md` (and any small training script if you wrote one)\n   - Suggested commit: `git add fine_tune_comparison.md && git commit -m \"day 15: fine-tune before/after\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many **held-out test questions** do you compare base vs fine-tuned on?\n2. Which PEFT method does this day's title focus on (LoRA / QLoRA family)?\n3. What is the **filename** of your before/after comparison write-up?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "held-out comparison count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "PEFT method",
+          "value": "LoRA",
+          "caseInsensitive": true
+        },
+        {
+          "check": "comparison filename",
+          "value": "fine_tune_comparison.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "fine_tune_comparison.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "fine_tune_comparison.md"
+        },
+        {
+          "check": "comparison has real content",
+          "kind": "minLines",
+          "path": "fine_tune_comparison.md",
+          "min": 15
+        },
+        {
+          "check": "compares base vs fine-tuned",
+          "kind": "contentMatches",
+          "path": "fine_tune_comparison.md",
+          "regex": "(?i)(base|fine-?tun)"
+        },
+        {
+          "check": "scores disclaimer or tone",
+          "kind": "contentMatches",
+          "path": "fine_tune_comparison.md",
+          "regex": "(?i)(tone|disclaimer|terminology|correctness)"
+        },
+        {
+          "check": "includes a conclusion",
+          "kind": "contentMatches",
+          "path": "fine_tune_comparison.md",
+          "regex": "(?i)(conclusion|worth|prompt|retrieval|improve)"
+        },
+        {
+          "check": "held-out test set still present",
+          "kind": "fileExists",
+          "path": "fine_tune_test.jsonl"
         }
       ]
     },
     "objectives": [
-      "Fine-tune a small model with LoRA and compare it against the base model on held-out questions."
+      "Fine-tune via OpenAI API or HuggingFace PEFT (LoRA/QLoRA)",
+      "Evaluate base vs fine-tuned model on 5 held-out Day 14 questions",
+      "Score tone, correctness, disclaimer usage, and terminology clarity",
+      "Conclude whether fine-tuning beat more prompt/retrieval work"
     ],
     "tools": [
       "HuggingFace PEFT",
-      "LoRA"
+      "LoRA",
+      "QLoRA",
+      "OpenAI fine-tuning"
     ],
     "estimatedMin": 210,
     "missionPoints": 12,
@@ -799,22 +1095,85 @@
     "moduleNumber": 5,
     "title": "Chatbot Backend & API Integration",
     "missionType": "SHIP_IT",
-    "briefMd": "## Chatbot Backend & API Integration\n\nAssemble retrieval, tools and the LLM into your FastAPI backend: POST /chat and GET /history endpoints with sessions.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Chatbot Backend & API Integration\n\nAssemble retrieval, function calling, and the LLM into one orchestrated backend service. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **API design for a chatbot backend** - `/chat`, `/history` endpoints\n- **Session and conversation-ID management**\n- **Orchestration flow** - receive question → retrieve → build prompt → call LLM/tools → return response\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── coverage-chatbot-api/\n│   ├── main.py                   ← POST /chat + GET /history/{session_id}\n│   └── requirements.txt\n├── retrieval_engine.py           ← from Day 10\n├── rag_chatbot.py                ← from Day 11\n├── tool_calling_chatbot.py       ← from Day 13 (optional in the pipeline)\n└── backend_chat_test.md          ← curl/Postman notes for 3-message session test\n```\n\n### Build steps\n\n1. **In your Day 3 FastAPI app** (`coverage-chatbot-api/main.py`), add a `POST /chat` endpoint accepting:\n   - `{session_id, member_id, message}`\n\n2. **Inside the endpoint**, call in sequence:\n   - Day 10 `retrieve()`\n   - Day 11/13 `generate_answer()` / tool-calling pipeline\n\n3. **Add a session store** keyed by `session_id` (in-memory or SQLite-backed) to track conversation state.\n\n4. **Add `GET /history/{session_id}`** that returns the stored conversation so far.\n\n5. **Test with curl or Postman:**\n   - Send **3 sequential messages** with the same `session_id`\n   - Confirm `/history` reflects all of them\n   - Log the requests/responses in `backend_chat_test.md`\n\n6. **Add basic error handling:**\n   - `try/except` around the LLM call\n   - Graceful **500** message on failure\n   - A request-timing log\n\n7. **Ship to your program repo:**\n   - Commit `coverage-chatbot-api/main.py` and `backend_chat_test.md`\n   - Suggested commit: `git add coverage-chatbot-api/main.py backend_chat_test.md && git commit -m \"day 16: /chat + /history backend\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the **HTTP method + path** for sending a chat message (e.g. `POST /chat`)?\n2. What path pattern returns conversation history for a session (e.g. `/history/{session_id}`)?\n3. How many **sequential messages** do you send with the same `session_id` in the test?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "chat endpoint",
+          "value": "POST /chat",
+          "caseInsensitive": true
+        },
+        {
+          "check": "history endpoint",
+          "value": "/history/{session_id}",
+          "caseInsensitive": true
+        },
+        {
+          "check": "sequential message count",
+          "value": "3",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "coverage-chatbot-api/main.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "coverage-chatbot-api/main.py"
+        },
+        {
+          "check": "defines /chat endpoint",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(/chat|\"chat\")"
+        },
+        {
+          "check": "defines /history endpoint",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(/history|\"history\")"
+        },
+        {
+          "check": "uses session_id",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "session_id"
+        },
+        {
+          "check": "has error handling around LLM path",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(try:|except|HTTPException|500)"
+        },
+        {
+          "check": "backend_chat_test.md exists",
+          "kind": "fileExists",
+          "path": "backend_chat_test.md"
+        },
+        {
+          "check": "backend test notes have content",
+          "kind": "minLines",
+          "path": "backend_chat_test.md",
+          "min": 8
+        },
+        {
+          "check": "test notes mention history or session",
+          "kind": "contentMatches",
+          "path": "backend_chat_test.md",
+          "regex": "(?i)(session|history|/chat)"
         }
       ]
     },
     "objectives": [
-      "Assemble retrieval, tools and the LLM into your FastAPI backend: POST /chat and GET /history endpoints with sessions."
+      "Add POST /chat that orchestrates retrieve → generate/tools",
+      "Track conversation state with a session_id store",
+      "Expose GET /history/{session_id} for stored turns",
+      "Test a 3-message session and add LLM error handling + timing logs"
     ],
     "tools": [
       "FastAPI",
-      "session management"
+      "session management",
+      "uvicorn"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -823,23 +1182,88 @@
   {
     "dayNumber": 17,
     "moduleNumber": 5,
-    "title": "Chatbot Frontend Development (Streamlit)",
+    "title": "Chatbot Frontend Development",
     "missionType": "SHIP_IT",
-    "briefMd": "## Chatbot Frontend Development (Streamlit)\n\nBuild the chat UI in Streamlit: message bubbles, chat input, a plan selector, and a New Conversation button.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Chatbot Frontend Development\n\nBuild a usable chat interface that talks to your backend. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **Chat UI patterns** - message bubbles, input box, typing indicators, chat history\n- **Rapid prototyping** - Streamlit vs a production React chat UI\n- **Calling your backend API** from the frontend and handling loading/error states\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── app.py                        ← Streamlit chat UI\n├── coverage-chatbot-api/\n│   └── main.py                   ← Day 16 /chat backend\n└── data/plans.csv                ← for plan-selector dropdown\n```\n\n### Build steps\n\n1. **Install Streamlit:** `pip install streamlit`\n\n2. **Build `app.py`** using `st.chat_message` and `st.chat_input` to render a conversation thread.\n\n3. **On each new user message**, POST to your `/chat` endpoint (via `requests`) with a `session_id` generated once via `uuid4()` and stored in `st.session_state`.\n\n4. **Display the assistant reply** in a chat bubble; keep the full history in `st.session_state.messages` so it persists across reruns.\n\n5. **Add a sidebar** with:\n   - a plan-selector dropdown (populate from your Day 4 plans table)\n   - a **\"New conversation\"** button that resets the `session_id` and clears history\n\n6. **Run and test:** `streamlit run app.py`\n   - Manually test a **4–5 turn** conversation end-to-end\n\n7. **Ship to your program repo:**\n   - Commit `app.py`\n   - Suggested commit: `git add app.py && git commit -m \"day 17: streamlit chat UI\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What Streamlit function renders a chat message bubble?\n2. What command runs the Streamlit app?\n3. Where do you store `session_id` and message history so they persist across reruns?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "chat message widget",
+          "value": "st.chat_message",
+          "caseInsensitive": true
+        },
+        {
+          "check": "run command",
+          "value": "streamlit run app.py",
+          "caseInsensitive": true
+        },
+        {
+          "check": "persistent state object",
+          "value": "st.session_state",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "app.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "app.py"
+        },
+        {
+          "check": "uses st.chat_message",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "st\\.chat_message"
+        },
+        {
+          "check": "uses st.chat_input",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "st\\.chat_input"
+        },
+        {
+          "check": "posts to /chat via requests",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(requests\\.|/chat)"
+        },
+        {
+          "check": "uses session_id / uuid",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(session_id|uuid4|uuid)"
+        },
+        {
+          "check": "uses st.session_state",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "st\\.session_state"
+        },
+        {
+          "check": "has plan selector or sidebar",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(sidebar|selectbox|plan)"
+        },
+        {
+          "check": "has New conversation control",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(new conversation|reset|clear)"
         }
       ]
     },
     "objectives": [
-      "Build the chat UI in Streamlit: message bubbles, chat input, a plan selector, and a New Conversation button."
+      "Build a Streamlit chat UI with st.chat_message and st.chat_input",
+      "POST each turn to /chat with a uuid4 session_id in st.session_state",
+      "Persist message history across Streamlit reruns",
+      "Add a plan selector and New conversation sidebar controls"
     ],
     "tools": [
-      "Streamlit"
+      "Streamlit",
+      "requests",
+      "uuid"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -850,22 +1274,87 @@
     "moduleNumber": 5,
     "title": "Full-Stack Integration & Streaming Responses",
     "missionType": "SHIP_IT",
-    "briefMd": "## Full-Stack Integration & Streaming Responses\n\nStream tokens from backend to frontend with SSE so answers type out in real time.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Full-Stack Integration & Streaming Responses\n\nMake the chatbot feel real-time by streaming tokens from backend to frontend. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **Token streaming** from LLM APIs\n- **Server-Sent Events (SSE)** and WebSockets for pushing tokens to the frontend\n- **Partial responses, cancellation, and error states** in the UI\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── coverage-chatbot-api/\n│   └── main.py                   ← StreamingResponse /chat (SSE)\n├── app.py                        ← Streamlit client with stream=True\n└── streaming_notes.md            ← confirm typing UX + timeout handling\n```\n\n### Build steps\n\n1. **Update `/chat`** to a streaming response using FastAPI's `StreamingResponse` with `media_type=\"text/event-stream\"`.\n\n2. **Inside the stream**, use your LLM SDK's streaming mode and yield each token/chunk as an SSE-formatted line:\n   - `data: ...\\n\\n`\n\n3. **On the Streamlit side**, call `requests` with `stream=True` and iterate over `response.iter_lines()`, appending each token to a placeholder (`st.empty()`) as it arrives.\n\n4. **Confirm the UI** visibly \"types out\" the response instead of waiting for the full answer.\n\n5. **Add a loading spinner/indicator** that shows before the first token arrives.\n\n6. **Handle a dropped connection mid-stream** (timeout + user-facing error message). Document the behavior in `streaming_notes.md`.\n\n7. **Ship to your program repo:**\n   - Commit `coverage-chatbot-api/main.py`, `app.py`, and `streaming_notes.md`\n   - Suggested commit: `git add coverage-chatbot-api/main.py app.py streaming_notes.md && git commit -m \"day 18: SSE streaming chat\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What FastAPI class wraps the streaming `/chat` response?\n2. What `media_type` do you set for SSE streaming?\n3. Which `requests` flag enables reading the response as a stream?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "streaming response class",
+          "value": "StreamingResponse",
+          "caseInsensitive": true
+        },
+        {
+          "check": "SSE media type",
+          "value": "text/event-stream",
+          "caseInsensitive": true
+        },
+        {
+          "check": "requests stream flag",
+          "value": "stream=True",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "backend uses StreamingResponse",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "StreamingResponse"
+        },
+        {
+          "check": "backend sets text/event-stream",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "text/event-stream"
+        },
+        {
+          "check": "backend yields SSE data lines",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(data:|event-stream|yield)"
+        },
+        {
+          "check": "frontend uses stream=True",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "stream\\s*=\\s*True"
+        },
+        {
+          "check": "frontend iterates streamed lines",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(iter_lines|st\\.empty)"
+        },
+        {
+          "check": "streaming_notes.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "streaming_notes.md"
+        },
+        {
+          "check": "streaming notes have content",
+          "kind": "minLines",
+          "path": "streaming_notes.md",
+          "min": 6
+        },
+        {
+          "check": "notes cover timeout or errors",
+          "kind": "contentMatches",
+          "path": "streaming_notes.md",
+          "regex": "(?i)(timeout|error|spinner|stream)"
         }
       ]
     },
     "objectives": [
-      "Stream tokens from backend to frontend with SSE so answers type out in real time."
+      "Stream /chat with FastAPI StreamingResponse and text/event-stream",
+      "Yield SSE data lines from the LLM SDK streaming mode",
+      "Consume tokens in Streamlit with stream=True and st.empty()",
+      "Add pre-first-token loading UX and mid-stream timeout/error handling"
     ],
     "tools": [
+      "FastAPI",
       "SSE",
-      "StreamingResponse"
+      "Streamlit",
+      "requests"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -876,22 +1365,91 @@
     "moduleNumber": 5,
     "title": "Response Formatting & Rich Outputs",
     "missionType": "SHIP_IT",
-    "briefMd": "## Response Formatting & Rich Outputs\n\nAdd citations back to policy chunks, plus claim-status and coverage-summary cards.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Response Formatting & Rich Outputs\n\nMake chatbot answers trustworthy and readable: citations, coverage cards, claim-status cards, and clean formatting. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **Markdown rendering** in chat responses (lists, tables, code blocks)\n- **Citing sources** - linking an answer back to the specific policy clause/chunk it came from\n- **Rich response types** - coverage summary cards, claim-status cards, plan comparison tables\n- **Output validation and post-processing** before sending to the user\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── rag_chatbot.py                ← generate_answer returns citation chunk IDs\n├── response_cards.py             ← ClaimStatusCard + CoverageSummaryCard (Pydantic)\n├── app.py                        ← citations + card rendering in Streamlit\n└── rich_outputs_test.md          ← 3-question render checklist\n```\n\n### Build steps\n\n1. **Update `generate_answer()`** to also return which chunk IDs were used:\n   - Have the model cite them, **or**\n   - Track which chunks were passed into context\n\n2. **In the frontend**, render citations as:\n   - small numbered footnotes, **or**\n   - an expandable **\"Policy sources\"** section under each answer\n\n3. **Define two structured card schemas** as Pydantic models in `response_cards.py`:\n   - `ClaimStatusCard{claim_id, status, amount, date}`\n   - `CoverageSummaryCard{plan_name, deductible, copay, covered: bool}`\n\n4. **When a tool call returns claim or coverage data**, render it in Streamlit as a formatted card (`st.container`, borders, columns) instead of raw text.\n\n5. **Confirm markdown rendering** works for lists/tables/code blocks inside `st.chat_message`.\n\n6. **Test with 3 questions** and log results in `rich_outputs_test.md`:\n   - one that should show **policy citations**\n   - one that should show a **claim-status card**\n   - one that should show a **coverage-summary card**\n   - Confirm each renders correctly\n\n7. **Ship to your program repo:**\n   - Commit `rag_chatbot.py`, `response_cards.py`, `app.py`, and `rich_outputs_test.md`\n   - Suggested commit: `git add rag_chatbot.py response_cards.py app.py rich_outputs_test.md && git commit -m \"day 19: citations + rich cards\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the **Pydantic model name** for claim status cards?\n2. What is the **Pydantic model name** for coverage summary cards?\n3. How many **test questions** do you run to confirm citations + both card types?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "claim status card model",
+          "value": "ClaimStatusCard",
+          "caseInsensitive": true
+        },
+        {
+          "check": "coverage summary card model",
+          "value": "CoverageSummaryCard",
+          "caseInsensitive": true
+        },
+        {
+          "check": "rich output test count",
+          "value": "3",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "response_cards.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "response_cards.py"
+        },
+        {
+          "check": "defines ClaimStatusCard",
+          "kind": "contentMatches",
+          "path": "response_cards.py",
+          "regex": "ClaimStatusCard"
+        },
+        {
+          "check": "defines CoverageSummaryCard",
+          "kind": "contentMatches",
+          "path": "response_cards.py",
+          "regex": "CoverageSummaryCard"
+        },
+        {
+          "check": "uses Pydantic BaseModel",
+          "kind": "contentMatches",
+          "path": "response_cards.py",
+          "regex": "(?i)(BaseModel|pydantic)"
+        },
+        {
+          "check": "app.py renders citations or sources",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(citation|policy sources|source)"
+        },
+        {
+          "check": "app.py renders card UI",
+          "kind": "contentMatches",
+          "path": "app.py",
+          "regex": "(?i)(st\\.container|ClaimStatus|CoverageSummary|card)"
+        },
+        {
+          "check": "rich_outputs_test.md exists",
+          "kind": "fileExists",
+          "path": "rich_outputs_test.md"
+        },
+        {
+          "check": "test notes have content",
+          "kind": "minLines",
+          "path": "rich_outputs_test.md",
+          "min": 8
+        },
+        {
+          "check": "test notes cover citations and cards",
+          "kind": "contentMatches",
+          "path": "rich_outputs_test.md",
+          "regex": "(?i)(citation|claim|coverage)"
         }
       ]
     },
     "objectives": [
-      "Add citations back to policy chunks, plus claim-status and coverage-summary cards."
+      "Return citation chunk IDs from generate_answer / context tracking",
+      "Render Policy sources footnotes under Streamlit answers",
+      "Define ClaimStatusCard and CoverageSummaryCard with Pydantic",
+      "Render tool results as cards and verify markdown in chat_message"
     ],
     "tools": [
       "citations",
-      "Pydantic cards"
+      "Pydantic",
+      "Streamlit"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -900,23 +1458,92 @@
   {
     "dayNumber": 20,
     "moduleNumber": 5,
-    "title": "CHECKPOINT 2 — Working Full-Stack Chatbot with Memory",
-    "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 2 — Working Full-Stack Chatbot with Memory\n\nConversation memory, context budgeting and summarization — then submit the working full-stack chatbot for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "title": "Conversation Memory & Context Management",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Conversation Memory & Context Management\n\nGive the chatbot short- and long-term memory across a conversation - including remembering which plan the member is asking about. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Short-term (session) memory vs long-term (persisted) memory**\n- **Context window budgeting** - what to keep, drop, or summarize as conversations grow\n- **Summarizing long conversation history** to stay within token limits\n- **Storing conversation history** in a database keyed by session ID\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── coverage-chatbot-api/\n│   └── main.py                   ← /chat saves + loads history; summarization\n├── coverage.db                   ← conversations table (or shared SQLite)\n├── memory_test.md                ← 15+ turn plan-memory test + token logs\n└── app.py                        ← frontend still uses same session_id\n```\n\n### Build steps\n\n1. **Create a `conversations` table** in SQLite with columns:\n   - `session_id`, `role`, `content`, `timestamp`\n\n2. **On every `/chat` call**, save both the user message and assistant reply to this table.\n\n3. **When building the prompt**, load the full history for that `session_id` and include:\n   - the last **N** turns (e.g. last **10** messages) directly in context\n   - any `plan_id` the member has already specified\n\n4. **Implement a token-counting check** (reuse a `tiktoken` helper - you'll deepen this on Day 26):\n   - Once history exceeds **~2000** tokens, summarize the oldest half with one LLM call\n   - Replace those turns with the summary\n\n5. **Test a long conversation (15+ turns)** and confirm the bot still correctly remembers which plan the member selected back in **turn 2** by **turn 15**. Log this in `memory_test.md`.\n\n6. **Log token counts per request** before/after summarization kicks in to confirm it's working.\n\n7. **Ship to your program repo:**\n   - Commit `coverage-chatbot-api/main.py` and `memory_test.md`\n   - Suggested commit: `git add coverage-chatbot-api/main.py memory_test.md && git commit -m \"day 20: conversation memory + summarization\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the **SQLite table name** that stores chat turns?\n2. About how many **tokens** of history trigger summarization of the oldest half?\n3. How many **turns** (minimum) do you run in the long memory test?\n",
+    "language": "PYTHON",
     "missionSpec": {
-      "checkpointNumber": 2,
-      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
+      "answers": [
+        {
+          "check": "conversations table name",
+          "value": "conversations",
+          "caseInsensitive": true
+        },
+        {
+          "check": "summarization token threshold",
+          "value": "2000",
+          "caseInsensitive": true
+        },
+        {
+          "check": "long conversation turn count",
+          "value": "15",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "coverage-chatbot-api/main.py exists",
+          "kind": "fileExists",
+          "path": "coverage-chatbot-api/main.py"
+        },
+        {
+          "check": "references conversations table or history persist",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(conversations|CREATE TABLE|session_id)"
+        },
+        {
+          "check": "implements summarization or token budget",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(summar|tiktoken|token|2000)"
+        },
+        {
+          "check": "loads or limits recent turns",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(history|last.*10|plan_id|messages)"
+        },
+        {
+          "check": "memory_test.md exists",
+          "kind": "fileExists",
+          "path": "memory_test.md"
+        },
+        {
+          "check": "memory_test.md has real content",
+          "kind": "minLines",
+          "path": "memory_test.md",
+          "min": 10
+        },
+        {
+          "check": "test documents plan memory across turns",
+          "kind": "contentMatches",
+          "path": "memory_test.md",
+          "regex": "(?i)(plan|turn|session)"
+        },
+        {
+          "check": "test logs token counts",
+          "kind": "contentMatches",
+          "path": "memory_test.md",
+          "regex": "(?i)(token|summar)"
+        }
+      ]
     },
     "objectives": [
-      "Conversation memory, context budgeting and summarization — then submit the working full-stack chatbot for AI review."
+      "Persist chat turns in a SQLite conversations table by session_id",
+      "Inject last N turns plus plan_id into the prompt context",
+      "Summarize oldest history once past ~2000 tokens",
+      "Prove plan memory across a 15+ turn conversation with token logs"
     ],
     "tools": [
+      "SQLite",
       "conversation memory",
+      "tiktoken",
       "token budgeting"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
-    "isProjectDay": true
+    "isProjectDay": false
   },
   {
     "dayNumber": 21,
@@ -927,7 +1554,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -953,7 +1580,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -979,7 +1606,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -998,20 +1625,20 @@
   {
     "dayNumber": 24,
     "moduleNumber": 6,
-    "title": "Agentic Chatbot — Full Integration",
+    "title": "Agentic Chatbot - Full Integration",
     "missionType": "SHIP_IT",
-    "briefMd": "## Agentic Chatbot — Full Integration\n\nBring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks — chaos-tested.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Agentic Chatbot - Full Integration\n\nBring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks - chaos-tested.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Bring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks — chaos-tested."
+      "Bring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks - chaos-tested."
     ],
     "tools": [
       "error handling",
@@ -1026,18 +1653,18 @@
     "moduleNumber": 7,
     "title": "AI Governance, PHI Handling & Guardrails",
     "missionType": "SHIP_IT",
-    "briefMd": "## AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails — tested with adversarial prompts.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails - tested with adversarial prompts.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
       ]
     },
     "objectives": [
-      "Write your governance checklist, build PII redaction, and add input/output guardrails — tested with adversarial prompts."
+      "Write your governance checklist, build PII redaction, and add input/output guardrails - tested with adversarial prompts."
     ],
     "tools": [
       "Guardrails AI",
@@ -1057,7 +1684,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -1078,15 +1705,15 @@
   {
     "dayNumber": 27,
     "moduleNumber": 7,
-    "title": "CHECKPOINT 3 — Evaluation Scorecard",
+    "title": "CHECKPOINT 3 - Evaluation Scorecard",
     "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 3 — Evaluation Scorecard\n\nMeasure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) — submit scorecard + guardrails for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## CHECKPOINT 3 - Evaluation Scorecard\n\nMeasure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) - submit scorecard + guardrails for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "checkpointNumber": 3,
-      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
+      "note": "PLACEHOLDER - checkpoint rubric ships before this day unlocks"
     },
     "objectives": [
-      "Measure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) — submit scorecard + guardrails for AI review."
+      "Measure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) - submit scorecard + guardrails for AI review."
     ],
     "tools": [
       "RAGAS",
@@ -1099,13 +1726,13 @@
   {
     "dayNumber": 28,
     "moduleNumber": 8,
-    "title": "Docker — Containerizing the Coverage Chatbot",
+    "title": "Docker - Containerizing the Coverage Chatbot",
     "missionType": "SHIP_IT",
-    "briefMd": "## Docker — Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose and health checks.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Docker - Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose and health checks.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -1125,13 +1752,13 @@
   {
     "dayNumber": 29,
     "moduleNumber": 8,
-    "title": "Kubernetes — Orchestrating & Scaling the Deployment",
+    "title": "Kubernetes - Orchestrating & Scaling the Deployment",
     "missionType": "SHIP_IT",
-    "briefMd": "## Kubernetes — Orchestrating & Scaling the Deployment\n\nDeploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Kubernetes - Orchestrating & Scaling the Deployment\n\nDeploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -1158,7 +1785,7 @@
     "missionSpec": {
       "repoChecks": [
         {
-          "check": "PLACEHOLDER — full checks ship before this day unlocks",
+          "check": "PLACEHOLDER - full checks ship before this day unlocks",
           "kind": "fileExists",
           "path": "README.md"
         }
@@ -1178,15 +1805,15 @@
   {
     "dayNumber": 31,
     "moduleNumber": 8,
-    "title": "CHECKPOINT 4 — Capstone: Deployed System Demo & Roadmap",
+    "title": "CHECKPOINT 4 - Capstone: Deployed System Demo & Roadmap",
     "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 4 — Capstone: Deployed System Demo & Roadmap\n\nFull live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video — final AI-graded submission.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## CHECKPOINT 4 - Capstone: Deployed System Demo & Roadmap\n\nFull live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video - final AI-graded submission.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
     "missionSpec": {
       "checkpointNumber": 4,
-      "note": "PLACEHOLDER — checkpoint rubric ships before this day unlocks"
+      "note": "PLACEHOLDER - checkpoint rubric ships before this day unlocks"
     },
     "objectives": [
-      "Full live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video — final AI-graded submission."
+      "Full live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video - final AI-graded submission."
     ],
     "tools": [
       "end-to-end demo",
