@@ -51,6 +51,7 @@ import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-ba
 import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador-banner";
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
+import { ClaudeDay0SharePrompt } from "@/components/claude/claude-day0-share-prompt";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -162,6 +163,20 @@ export default async function DashboardPage({
   const { enrollment, profile, todayTask, isTodayCompleted } = dashboardData;
 
   const hasClaudeEnrollment = allEnrollments.some((e) => e.domain === "CLAUDE");
+  const claudeEnrollment = allEnrollments.find((e) => e.domain === "CLAUDE");
+  let hasClaudeDay1Submission = false;
+  if (claudeEnrollment) {
+    const day1 = await prisma.submission.findUnique({
+      where: {
+        enrollmentId_dayNumber: {
+          enrollmentId: claudeEnrollment.id,
+          dayNumber: 1,
+        },
+      },
+      select: { id: true },
+    });
+    hasClaudeDay1Submission = day1 != null;
+  }
   const shouldShowAmbassadorBanner =
     profile.userType === "STUDENT" &&
     !profile.isCampusAmbassadorCandidate &&
@@ -261,6 +276,9 @@ export default async function DashboardPage({
         {hasClaudeEnrollment && shouldShowAmbassadorBanner ? (
           <CampusAmbassadorBanner />
         ) : null}
+        {hasClaudeEnrollment ? (
+          <ClaudeDay0SharePrompt hasDay1Submission={hasClaudeDay1Submission} />
+        ) : null}
         {showPastMissedToast ? (
           <PastMissedChallengeToast
             trigger={showPastMissedToast}
@@ -325,6 +343,9 @@ export default async function DashboardPage({
       ) : null}
       {showClaudeModal && claudeModalStartsAt ? (
         <ClaudeChallengeModal startsAt={claudeModalStartsAt} />
+      ) : null}
+      {hasClaudeEnrollment ? (
+        <ClaudeDay0SharePrompt hasDay1Submission={hasClaudeDay1Submission} />
       ) : null}
       {showPastMissedToast ? (
         <PastMissedChallengeToast

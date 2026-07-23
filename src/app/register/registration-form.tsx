@@ -222,6 +222,13 @@ export function RegistrationForm({
         return;
       }
       toast.success("Welcome to ABTalks!");
+      if (forceClaudeDomain || values.domain === "CLAUDE") {
+        try {
+          window.localStorage.setItem("claude-day0-share-pending", "1");
+        } catch {
+          // ignore storage failures
+        }
+      }
       router.push("/dashboard");
       router.refresh();
     } finally {

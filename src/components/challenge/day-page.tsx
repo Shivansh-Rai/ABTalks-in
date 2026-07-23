@@ -27,6 +27,12 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { submitDayAction } from "@/app/actions/submission-actions";
 import { useSynergy } from "@/components/shared/synergy-provider";
+import { ClaudeSharePromptDialog } from "@/components/claude/claude-share-prompt-dialog";
+import { CLAUDE_DAY0_SHARE_PENDING_KEY } from "@/components/claude/claude-day0-share-prompt";
+import {
+  isClaudeMilestoneDay,
+  type ClaudeMilestoneDay,
+} from "@/lib/claude-linkedin-prompts";
 
 // Matches CollapsibleSection's expand/collapse transition duration. When one
 // section closes right before another opens, we wait for the close to finish
@@ -224,6 +230,8 @@ export function DayPage({
   const [promptOpen, setPromptOpen] = useState(true);
   const [videoOpen, setVideoOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
+  const [milestoneDialogDay, setMilestoneDialogDay] =
+    useState<ClaudeMilestoneDay | null>(null);
 
   const solutionVideoUrl =
     content.solutionVideoUrl ?? content.task.solutionVideoUrl;
@@ -304,6 +312,18 @@ export function DayPage({
             ? `Day ${dayNumber} submitted! +${result.synergyAwarded} synergy 🔥`
             : `Day ${dayNumber} submitted! 🔥`;
         toast.success(synergyMsg);
+        if (dayNumber === 1) {
+          try {
+            window.localStorage.removeItem(CLAUDE_DAY0_SHARE_PENDING_KEY);
+          } catch {
+            // ignore
+          }
+        }
+        if (isClaudeMilestoneDay(dayNumber)) {
+          setMilestoneDialogDay(dayNumber);
+          setSubmitting(false);
+          return;
+        }
         router.push(
           `/dashboard?challenge=${encodeURIComponent(enrollmentId)}`,
         );
@@ -319,6 +339,20 @@ export function DayPage({
 
   return (
     <div className="min-h-screen">
+      {milestoneDialogDay != null ? (
+        <ClaudeSharePromptDialog
+          open
+          day={milestoneDialogDay}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMilestoneDialogDay(null);
+              router.push(
+                `/dashboard?challenge=${encodeURIComponent(enrollmentId)}`,
+              );
+            }
+          }}
+        />
+      ) : null}
       <main className="container mx-auto max-w-3xl space-y-6 px-4 py-6 md:px-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
