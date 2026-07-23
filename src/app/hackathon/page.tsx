@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Deliverables } from "@/components/hackathon/deliverables";
 import { Faq } from "@/components/hackathon/faq";
-import { FinalCta } from "@/components/hackathon/final-cta";
+import { HackathonHeader } from "@/components/hackathon/hackathon-header";
 import { Hero } from "@/components/hackathon/hero";
 import { HowItWorks } from "@/components/hackathon/how-it-works";
 import { Prizes } from "@/components/hackathon/prizes";
 import { Rules } from "@/components/hackathon/rules";
-import { ThemeSection } from "@/components/hackathon/theme-section";
 import { Timeline } from "@/components/hackathon/timeline";
 
 export const metadata: Metadata = {
@@ -17,16 +16,20 @@ export const metadata: Metadata = {
 
 export default function HackathonPage() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <Hero />
-      <ThemeSection />
-      <HowItWorks />
-      <Timeline />
-      <Deliverables />
-      <Rules />
-      <Prizes />
-      <Faq />
-      <FinalCta />
-    </main>
+    <div className="origin-top bg-black" style={{ zoom: 0.9 }}>
+      <HackathonHeader />
+      <main className="min-h-screen bg-black text-white">
+        <Hero />
+        {/* Mobile-only: zoom bottom sections out 20% */}
+        <div className="origin-top max-md:[zoom:0.8] md:[zoom:1]">
+          <HowItWorks />
+          <Timeline />
+          <Deliverables />
+          <Rules />
+          <Prizes />
+          <Faq />
+        </div>
+      </main>
+    </div>
   );
 }

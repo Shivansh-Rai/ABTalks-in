@@ -26,7 +26,7 @@ export function Countdown({ targetIso }: { targetIso: string }) {
   const pad = (n: number) => n.toString().padStart(2, "0");
 
   return (
-    <div className="inline-flex items-center gap-2 sm:gap-3">
+    <div className="inline-flex items-center gap-1.5 sm:gap-3">
       {mounted ? (
         <>
           <Unit val={pad(time.d)} label="Days" />
@@ -39,13 +39,13 @@ export function Countdown({ targetIso }: { targetIso: string }) {
         </>
       ) : (
         <>
-          <Unit val="--" label="Days" />
+          <Unit val="00" label="Days" />
           <Sep />
-          <Unit val="--" label="Hrs" />
+          <Unit val="00" label="Hrs" />
           <Sep />
-          <Unit val="--" label="Min" />
+          <Unit val="00" label="Min" />
           <Sep />
-          <Unit val="--" label="Sec" />
+          <Unit val="00" label="Sec" />
         </>
       )}
     </div>
@@ -54,13 +54,30 @@ export function Countdown({ targetIso }: { targetIso: string }) {
 
 function Unit({ val, label }: { val: string; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="flex min-w-[52px] items-center justify-center rounded-xl border border-border bg-card px-2.5 py-2 shadow-sm sm:min-w-[64px] sm:px-3 sm:py-2.5">
-        <span className="font-mono text-lg font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">
+    <div className="flex flex-col items-center gap-0.5 sm:gap-1.5">
+      <div
+        className="relative flex min-w-[48px] items-center justify-center rounded-lg border border-[#1E1B37] px-2 py-1.5 sm:min-w-[72px] sm:rounded-xl sm:px-3 sm:py-2.5"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(118, 74, 194, 1) 0%, rgba(62, 34, 111, 1) 50%, rgba(0, 0, 0, 1) 100%)",
+        }}
+      >
+        {/* Ghost segments behind for classic LCD look */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute text-[17px] font-normal tracking-wider text-white/15 sm:text-[1.75rem]"
+          style={{ fontFamily: '"DSEG7 Classic", monospace' }}
+        >
+          88
+        </span>
+        <span
+          className="relative text-[17px] font-normal tracking-wider text-white sm:text-[1.75rem]"
+          style={{ fontFamily: '"DSEG7 Classic", monospace' }}
+        >
           {val}
         </span>
       </div>
-      <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-[#BCBCBC] sm:text-[9px] sm:tracking-[0.16em]">
         {label}
       </span>
     </div>
@@ -69,7 +86,10 @@ function Unit({ val, label }: { val: string; label: string }) {
 
 function Sep() {
   return (
-    <span className="-mt-4 text-lg font-light text-muted-foreground/50 sm:text-xl">
+    <span
+      className="-mt-3 text-[17px] font-normal text-white sm:-mt-4 sm:text-[1.75rem]"
+      style={{ fontFamily: '"DSEG7 Classic", monospace' }}
+    >
       :
     </span>
   );

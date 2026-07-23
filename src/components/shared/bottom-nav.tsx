@@ -77,6 +77,8 @@ export function BottomNav() {
     pathname === "/" ||
     pathname === "/ai-workshop" ||
     pathname.startsWith("/ai-workshop/") ||
+    pathname === "/hackathon" ||
+    pathname.startsWith("/hackathon/") ||
     /^\/(login|register|claude-signup|students|r|program|talent)(\/|$)/.test(
       pathname,
     )

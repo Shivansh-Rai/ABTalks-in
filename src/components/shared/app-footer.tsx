@@ -19,9 +19,18 @@ export function AppFooter() {
   const isProgram =
     pathname === "/program" || pathname.startsWith("/program/");
   const isTalent = pathname === "/talent" || pathname.startsWith("/talent/");
+  const isHackathon =
+    pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   const supportEmail = "team@abtalks.in";
 
-  if (isWorkshop || isCohortRegister || isCohortIndia || isProgram || isTalent)
+  if (
+    isWorkshop ||
+    isCohortRegister ||
+    isCohortIndia ||
+    isProgram ||
+    isTalent ||
+    isHackathon
+  )
     return null;
 
   return (
