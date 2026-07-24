@@ -376,23 +376,6 @@
     "briefMd": "## Mission: Embeddings Explained\n\nUnderstand how text becomes vectors, and generate embeddings for your coverage knowledge base. Expect about **2–3 hours**.\n\n**Concepts to learn**\n\n- **What embeddings are** - dense vector representations of meaning\n- **Popular embedding models** - OpenAI `text-embedding-3`, Sentence-Transformers, Cohere Embed\n- **Similarity metrics** - cosine similarity, dot product, Euclidean distance\n- **Dimensionality trade-offs** - cost vs performance across embedding models\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── knowledge_base.jsonl          ← from Day 6 (input)\n├── embeddings.npy                ← today's vectors (one row per chunk, same order)\n├── embeddings_2d.png             ← PCA scatter plot\n├── raw_text/\n├── data/\n└── coverage.db\n```\n\n### Build steps\n\n1. **Install dependencies** in your activated venv:\n   - Run `pip install scikit-learn matplotlib`\n   - Then pick one embedding path:\n     - **Recommended (free, local):** `pip install sentence-transformers`\n     - **Paid (higher quality):** `pip install openai`\n\n2. **Write `embed(text) -> vector`:**\n   - Local: call Sentence-Transformers model `all-MiniLM-L6-v2`\n   - OpenAI: call `text-embedding-3-small`\n   - Return a numeric vector for the input string\n\n3. **Embed every chunk** in `knowledge_base.jsonl`:\n   - Loop through each line / chunk\n   - Generate its embedding\n   - Store it either:\n     - as an `embedding` field on the chunk, **or**\n     - in a parallel `embeddings.npy` array matching the chunk index\n   - For verification, also save `embeddings.npy` (if you only added an `embedding` field, export with `numpy.save`)\n\n4. **If using a paid API**, batch calls (**50–100** chunks per request) to control cost and avoid rate limits.\n\n5. **Visualize in 2D:**\n   - Reduce all embeddings with `sklearn.decomposition.PCA(n_components=2)`\n   - Plot with `matplotlib.pyplot.scatter()`\n   - Color-code points by `section` (`coverage` / `exclusions` / `claims` / `enrollment`)\n\n6. **Sanity-check the clusters:**\n   - Confirm chunks from the same section sit near each other (e.g. exclusion clauses cluster together)\n   - Save the plot as `embeddings_2d.png`\n\n7. **Ship to your program repo:**\n   - Commit and push `embeddings.npy` and `embeddings_2d.png`\n   - Suggested commit: `git add embeddings.npy embeddings_2d.png && git commit -m \"day 7: embeddings + 2D plot\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed files\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which **local Sentence-Transformers model** does this mission recommend?\n2. How many **PCA components** do you reduce embeddings to for the plot?\n3. What is the **filename** of the 2D visualization you must save?\n",
     "language": "PYTHON",
     "missionSpec": {
-      "answers": [
-        {
-          "check": "local embedding model",
-          "value": "all-MiniLM-L6-v2",
-          "caseInsensitive": true
-        },
-        {
-          "check": "PCA components",
-          "value": "2",
-          "caseInsensitive": true
-        },
-        {
-          "check": "2D plot filename",
-          "value": "embeddings_2d.png",
-          "caseInsensitive": true
-        }
-      ],
       "repoChecks": [
         {
           "check": "embeddings.npy exists",

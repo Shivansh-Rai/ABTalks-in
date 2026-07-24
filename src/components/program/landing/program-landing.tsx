@@ -104,21 +104,60 @@ const requirements = [
   },
   {
     text: "",
-    highlight: "Everything else is free!",
-    suffix: " (Ollama / Groq / Chroma — no paid API keys needed)",
+    highlight: "Ollama / Groq / Chroma",
+    suffix: " - no paid API keys needed",
   },
 ];
 
-const primaryBtnClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#7364E6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#7364E6]/90 md:h-12 md:text-base";
+const prerequisites = [
+  {
+    text: "",
+    highlight: "Python",
+    suffix: " Programming Fundamentals",
+  },
+  {
+    text: "",
+    highlight: "SQL & Database",
+    suffix: " Fundamentals",
+  },
+  {
+    text: "",
+    highlight: "Git, GitHub",
+    suffix: " & Command Line Basics",
+  },
+  {
+    text: "",
+    highlight: "REST APIs & Backend ",
+    suffix: "Development Basics",
+  },
+  {
+    text: "",
+    highlight: "JavaScript & React",
+    suffix: " Fundamentals",
+  },
+];
 
-const outlineBtnClass =
-  "inline-flex h-11 items-center justify-center rounded-lg border border-[#7364E6]/70 bg-transparent px-6 text-sm font-semibold text-white transition-colors hover:border-[#968BEC] hover:bg-white/5 md:h-12 md:text-base";
+/** Evenly spaced drop positions in a 0–1200 SVG viewBox for `count` branches. */
+function treeDropXs(count: number): number[] {
+  return Array.from({ length: count }, (_, i) =>
+    Math.round(((i + 0.5) / count) * 1200),
+  );
+}
 
-function RequirementsTree() {
+function BranchTree({
+  items,
+  dense = false,
+}: {
+  items: { text: string; highlight: string; suffix: string }[];
+  /** Slightly smaller copy for 5+ branches so labels still fit. */
+  dense?: boolean;
+}) {
+  const drops = treeDropXs(items.length);
+  const crossStart = drops[0]!;
+  const crossEnd = drops[drops.length - 1]!;
+
   return (
     <div className="hidden md:block">
-      {/* stem from title */}
       <div className="mx-auto h-10 w-[3px] bg-white" aria-hidden />
 
       <div className="relative mx-auto w-full max-w-6xl">
@@ -129,15 +168,15 @@ function RequirementsTree() {
           aria-hidden
         >
           <line
-            x1="150"
+            x1={crossStart}
             y1="0"
-            x2="1050"
+            x2={crossEnd}
             y2="0"
             stroke="white"
             strokeWidth="3"
             strokeLinecap="round"
           />
-          {[150, 450, 750, 1050].map((x) => (
+          {drops.map((x) => (
             <line
               key={x}
               x1={x}
@@ -151,13 +190,22 @@ function RequirementsTree() {
           ))}
         </svg>
 
-        <div className="grid grid-cols-4 gap-3 pt-[44px]">
-          {requirements.map((item, i) => (
+        <div
+          className="grid gap-3 pt-[44px]"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
+          {items.map((item, i) => (
             <div
               key={i}
               className="flex min-h-[88px] items-start justify-center px-1 text-center"
             >
-              <p className="text-base font-semibold leading-snug text-white lg:text-[24px] lg:leading-[29px]">
+              <p
+                className={
+                  dense
+                    ? "text-sm font-semibold leading-snug text-white lg:text-xl lg:leading-snug"
+                    : "text-base font-semibold leading-snug text-white lg:text-[24px] lg:leading-[29px]"
+                }
+              >
                 {item.text}
                 <span className="text-[#4C9EEB]">{item.highlight}</span>
                 {item.suffix}
@@ -170,10 +218,14 @@ function RequirementsTree() {
   );
 }
 
-function RequirementsMobile() {
+function BranchTreeMobile({
+  items,
+}: {
+  items: { text: string; highlight: string; suffix: string }[];
+}) {
   return (
     <ul className="mx-auto mt-6 max-w-lg space-y-4 md:hidden">
-      {requirements.map((item, i) => (
+      {items.map((item, i) => (
         <li
           key={i}
           className="text-center text-sm font-semibold leading-snug text-white"
@@ -186,6 +238,28 @@ function RequirementsMobile() {
     </ul>
   );
 }
+
+function RequirementsTree() {
+  return <BranchTree items={requirements} />;
+}
+
+function RequirementsMobile() {
+  return <BranchTreeMobile items={requirements} />;
+}
+
+function PrerequisitesTree() {
+  return <BranchTree items={prerequisites} dense />;
+}
+
+function PrerequisitesMobile() {
+  return <BranchTreeMobile items={prerequisites} />;
+}
+
+const primaryBtnClass =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#7364E6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#7364E6]/90 md:h-12 md:text-base";
+
+const outlineBtnClass =
+  "inline-flex h-11 items-center justify-center rounded-lg border border-[#7364E6]/70 bg-transparent px-6 text-sm font-semibold text-white transition-colors hover:border-[#968BEC] hover:bg-white/5 md:h-12 md:text-base";
 
 export function ProgramLanding({ cta }: { cta: Cta }) {
   return (
@@ -261,6 +335,19 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
           <div className="mt-1">
             <RequirementsTree />
             <RequirementsMobile />
+          </div>
+        </div>
+      </section>
+
+      {/* Prerequisites */}
+      <section className="relative px-4 pb-10 md:mt-20 md:px-8 md:pb-25">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-2xl font-bold text-[#968BEC] md:text-[32px]">
+            Prerequisites
+          </h2>
+          <div className="mt-1">
+            <PrerequisitesTree />
+            <PrerequisitesMobile />
           </div>
         </div>
       </section>
