@@ -5,12 +5,12 @@ export const HACKATHON = {
   maxTeamSize: 3,
 
   // TODO(organizer): replace the three date values below before launch.
-  kickoffUtc: "2026-08-14T14:30:00Z", // Fri 8:00 PM IST
-  deadlineUtc: "2026-08-16T14:30:00Z", // Sun 8:00 PM IST
-  kickoffLabel: "Friday, 14 Aug · 8:00 PM IST",
-  deadlineLabel: "Sunday, 16 Aug · 8:00 PM IST",
-  resultsLabel: "Winners announced: Friday, 21 Aug",
-  registrationClosesLabel: "Registration closes Thursday, 13 Aug · 11:59 PM IST",
+  kickoffUtc: "2026-08-07T14:30:00Z", // Fri 8:00 PM IST
+  deadlineUtc: "2026-08-09T14:30:00Z", // Sun 8:00 PM IST
+  kickoffLabel: "Friday, 7 Aug · 8:00 PM IST",
+  deadlineLabel: "Sunday, 9 Aug · 8:00 PM IST",
+  resultsLabel: "Winners announced: Friday, 14 Aug",
+  registrationClosesLabel: "Registration closes Thursday, 6 Aug · 11:59 PM IST",
 
   whatsappLink: "#", // TODO(organizer)
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
