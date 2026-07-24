@@ -40,8 +40,19 @@ function formatBuildStepContent(raw: string): string {
     .replace(/—/g, " - ")
     .replace(/\u2013/g, "-")
     .replace(/–/g, "-")
-    .replace(/\s+-\s+/g, " - ")
     .trim();
+
+  // Normalize mid-sentence " - " spacing only — never touch markdown list markers
+  // (a prior global /\s+-\s+/g flattened `\n   - item` into one paragraph).
+  text = text
+    .split("\n")
+    .map((line) => {
+      if (/^\s*[-*+]\s/.test(line) || /^\s*\d+\.\s/.test(line)) {
+        return line;
+      }
+      return line.replace(/\s+-\s+/g, " - ");
+    })
+    .join("\n");
 
   // Bare URLs → inline code (click-to-copy). Skip ones already in backticks.
   text = text.replace(
