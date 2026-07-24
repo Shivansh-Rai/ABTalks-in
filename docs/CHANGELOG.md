@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-24 [rule] Profile-less hackathon registrants divert to /hackathon/dashboard (not /register) from /, /dashboard, /login; hackathon header sign-in uses ?from=/hackathon/register
 - 2026-07-24 [schema] hackathon_event singleton row (problem_statement) for live kickoff brief on participant dashboard
 - 2026-07-24 [schema] hackathon_teams unique index on lower(team_name) where not null — block duplicate team names
 - 2026-07-22 [env] SUPABASE_SERVICE_ROLE_KEY for hackathon registration (server-only service role; bypasses RLS on hackathon_* tables)

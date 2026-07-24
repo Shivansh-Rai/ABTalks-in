@@ -68,6 +68,24 @@ export async function isEmailRegistered(email: string): Promise<boolean> {
   return data !== null;
 }
 
+/**
+ * For a logged-in user WITHOUT a 60-day profile: return "/hackathon/dashboard" if they
+ * registered for the hackathon, else null (caller proceeds to the normal /register
+ * funnel). Fails open to null on any error so legitimate new 60-day users are never
+ * blocked from registering.
+ */
+export async function hackathonRedirectForProfilelessUser(
+  email: string | null | undefined,
+): Promise<"/hackathon/dashboard" | null> {
+  if (!email) return null;
+  try {
+    const registered = await isEmailRegistered(email.trim().toLowerCase());
+    return registered ? "/hackathon/dashboard" : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function isTeamNameTaken(teamName: string): Promise<boolean> {
   const { data, error } = await hackathonSupabase
     .from("hackathon_teams")

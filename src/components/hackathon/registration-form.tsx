@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { switchHackathonAccountAction } from "@/app/actions/hackathon-auth-actions";
 import {
   lookupHackathonTeamAction,
   submitHackathonRegistrationAction,
@@ -246,6 +247,26 @@ export function RegistrationForm({
             />
           </div>
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          Registering as <span className="font-medium text-foreground">{initialEmail}</span>
+          {" · "}
+          <button
+            type="button"
+            className="text-primary underline-offset-2 hover:underline"
+            onClick={() => {
+              if (form.formState.isDirty) {
+                const ok = window.confirm(
+                  "Switch account? You'll lose what you've entered here.",
+                );
+                if (!ok) return;
+              }
+              void switchHackathonAccountAction();
+            }}
+          >
+            Not you? Switch account
+          </button>
+        </p>
 
         {step === 1 ? (
           <FormField

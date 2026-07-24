@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { formatDateIST, isEnrollmentPreStart } from "@/lib/date-utils";
 import { PreStartDashboard } from "@/components/dashboard/pre-start-dashboard";
 import { prisma } from "@/lib/db";
+import { hackathonRedirectForProfilelessUser } from "@/lib/hackathon-supabase";
 import { Domain } from "@prisma/client";
 import { ClaudeChallengeModal } from "@/components/dashboard/claude-challenge-modal";
 import { getUserActiveEnrollments } from "@/features/enrollment/get-user-enrollments";
@@ -148,6 +149,8 @@ export default async function DashboardPage({
   }
 
   if (!data.profile || !data.enrollment) {
+    const hx = await hackathonRedirectForProfilelessUser(session.user.email);
+    if (hx) redirect(hx);
     redirect("/register");
   }
 

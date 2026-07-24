@@ -2,6 +2,7 @@ import "@fontsource/dseg7-classic/400.css";
 import "@fontsource/dseg7-classic/700.css";
 import { Bitcount_Prop_Single, IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { HackathonHeader } from "@/components/hackathon/hackathon-header";
 
 const bitcount = Bitcount_Prop_Single({
   subsets: ["latin"],
@@ -20,6 +21,7 @@ export default function HackathonLayout({ children }: { children: ReactNode }) {
     <div
       className={`${bitcount.variable} ${plexMono.variable} min-h-screen bg-black text-white antialiased`}
     >
+      <HackathonHeader />
       {children}
     </div>
   );
