@@ -43,6 +43,20 @@ export async function getTeamByCode(
   };
 }
 
+export async function getTeamLeader(
+  teamId: string,
+): Promise<{ fullName: string; email: string } | null> {
+  const { data, error } = await hackathonSupabase
+    .from("hackathon_participants")
+    .select("full_name, email")
+    .eq("team_id", teamId)
+    .eq("is_leader", true)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return { fullName: data.full_name, email: data.email };
+}
+
 export async function isEmailRegistered(email: string): Promise<boolean> {
   const { data, error } = await hackathonSupabase
     .from("hackathon_participants")
