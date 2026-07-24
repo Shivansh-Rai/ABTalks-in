@@ -24,9 +24,9 @@ const stepNavBtn =
 const pointerSpring = { type: "spring" as const, stiffness: 420, damping: 34 };
 const stepSpring = { type: "spring" as const, stiffness: 380, damping: 28 };
 
-/** Build-step prose: white body/bold/code; bold a notch heavier than mission MD. */
+/** Build-step prose: white body/bold/code; looser line spacing for readability. */
 const buildStepMdClassName =
-  "text-sm leading-6 text-white [&_a]:font-medium [&_a]:text-white [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-[#1a0a3a] [&_code]:px-1 [&_code]:text-xs [&_code]:text-white [&_li]:ml-1 [&_li]:list-disc [&_li]:marker:text-[#968BEC] [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#8365E3]/40 [&_pre]:bg-[#110528] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-[#E9E9E9] [&_strong]:font-bold [&_strong]:text-white [&_ul]:mb-2 [&_ul]:space-y-1.5 [&_ul]:pl-5";
+  "text-sm leading-7 text-white [&_a]:font-medium [&_a]:text-white [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-[#1a0a3a] [&_code]:px-1 [&_code]:text-xs [&_code]:text-white [&_li]:ml-1 [&_li]:list-disc [&_li]:leading-7 [&_li]:marker:text-[#968BEC] [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:space-y-2.5 [&_ol]:pl-5 [&_p]:mb-3 [&_p]:leading-8 [&_p]:last:mb-0 [&_pre]:my-3 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#8365E3]/40 [&_pre]:bg-[#110528] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:leading-6 [&_pre]:text-[#E9E9E9] [&_strong]:font-bold [&_strong]:text-white [&_ul]:mb-3 [&_ul]:space-y-2.5 [&_ul]:pl-5";
 
 /**
  * Normalize step markdown for clearer reading:
