@@ -96,10 +96,19 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <Link
+          href="/hackathon/dashboard"
+          className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}
+        >
+          Go to your dashboard →
+        </Link>
+        <Link
           href={HACKATHON.whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "w-full sm:w-auto",
+          )}
         >
           Join the WhatsApp group
         </Link>

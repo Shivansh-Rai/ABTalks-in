@@ -26,6 +26,7 @@ const protectedPaths = [
   "/program/interview",
   "/talent",
   "/hackathon/register",
+  "/hackathon/dashboard",
 ];
 
 function applyRefCookie(response: NextResponse, ref: string | null) {

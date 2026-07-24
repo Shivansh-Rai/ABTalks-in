@@ -64,3 +64,86 @@ export async function isTeamNameTaken(teamName: string): Promise<boolean> {
   if (error) return false;
   return data !== null;
 }
+
+export type HackathonMember = {
+  fullName: string;
+  college: string;
+  isLeader: boolean;
+  slotIndex: number;
+};
+
+export type MyRegistration = {
+  team: {
+    id: string;
+    code: string;
+    name: string | null;
+    entryType: "SOLO" | "TEAM";
+  };
+  me: { fullName: string; isLeader: boolean };
+  members: HackathonMember[];
+  spotsLeft: number;
+};
+
+export async function getMyRegistration(
+  email: string,
+): Promise<MyRegistration | null> {
+  const { data: participant, error: participantError } = await hackathonSupabase
+    .from("hackathon_participants")
+    .select("id, team_id, full_name, is_leader")
+    .ilike("email", email)
+    .maybeSingle();
+
+  if (participantError || !participant) return null;
+
+  const { data: team, error: teamError } = await hackathonSupabase
+    .from("hackathon_teams")
+    .select("id, team_code, team_name, entry_type")
+    .eq("id", participant.team_id)
+    .maybeSingle();
+
+  if (teamError || !team) return null;
+
+  const { data: memberRows, error: membersError } = await hackathonSupabase
+    .from("hackathon_participants")
+    .select("full_name, college, is_leader, slot_index")
+    .eq("team_id", participant.team_id)
+    .order("slot_index");
+
+  if (membersError || !memberRows) return null;
+
+  const entryType = team.entry_type === "SOLO" ? "SOLO" : "TEAM";
+  const members: HackathonMember[] = memberRows.map((row) => ({
+    fullName: row.full_name,
+    college: row.college,
+    isLeader: row.is_leader,
+    slotIndex: row.slot_index,
+  }));
+
+  return {
+    team: {
+      id: team.id,
+      code: team.team_code,
+      name: team.team_name,
+      entryType,
+    },
+    me: {
+      fullName: participant.full_name,
+      isLeader: participant.is_leader,
+    },
+    members,
+    spotsLeft:
+      entryType === "SOLO" ? 0 : HACKATHON.maxTeamSize - members.length,
+  };
+}
+
+export async function getHackathonEvent(): Promise<{
+  problemStatement: string | null;
+}> {
+  const { data, error } = await hackathonSupabase
+    .from("hackathon_event")
+    .select("problem_statement")
+    .maybeSingle();
+
+  if (error) return { problemStatement: null };
+  return { problemStatement: data?.problem_statement ?? null };
+}
