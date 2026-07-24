@@ -53,6 +53,7 @@ import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
 import { ClaudeDay0SharePrompt } from "@/components/claude/claude-day0-share-prompt";
+import { HackathonPromoModal } from "@/components/dashboard/hackathon-promo-modal";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -288,6 +289,7 @@ export default async function DashboardPage({
             cleanPath={dashboardPathWithoutToast}
           />
         ) : null}
+        <HackathonPromoModal />
         <div className="relative z-10 flex-1">
         <PreStartDashboard
           enrollment={{
@@ -347,6 +349,7 @@ export default async function DashboardPage({
       {showClaudeModal && claudeModalStartsAt ? (
         <ClaudeChallengeModal startsAt={claudeModalStartsAt} />
       ) : null}
+      <HackathonPromoModal />
       {hasClaudeEnrollment ? (
         <ClaudeDay0SharePrompt hasDay1Submission={hasClaudeDay1Submission} />
       ) : null}
