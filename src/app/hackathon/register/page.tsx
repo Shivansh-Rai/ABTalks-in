@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Register | ABTalks Vibe Code Hackathon",
   description:
-    "Register for the ABTalks Vibe Code Hackathon — solo or as a team of up to 3.",
+    "Register for the ABTalks Vibe Code Hackathon, solo or as a team of up to 3.",
 };
 
 export default function HackathonRegisterPage() {
@@ -31,7 +31,7 @@ export default function HackathonRegisterPage() {
           Register
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {HACKATHON.name} — free entry, solo or teams of {HACKATHON.maxTeamSize}.
+          {HACKATHON.name}, free entry, solo or teams of {HACKATHON.maxTeamSize}.
         </p>
 
         <div className="mt-8">

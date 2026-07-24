@@ -1,10 +1,10 @@
 import Image from "next/image";
 
 const CARDS = [
-  { src: "/hackathon/how-1.png", alt: "Step 1 — Register" },
-  { src: "/hackathon/how-2.png", alt: "Step 2 — Join WhatsApp" },
-  { src: "/hackathon/how-3.png", alt: "Step 3 — Build for 48 hours" },
-  { src: "/hackathon/how-4.png", alt: "Step 4 — Submit before the deadline" },
+  { src: "/hackathon/how-1.png", alt: "Step 1, Register" },
+  { src: "/hackathon/how-2.png", alt: "Step 2, Join WhatsApp" },
+  { src: "/hackathon/how-3.png", alt: "Step 3, Build for 48 hours" },
+  { src: "/hackathon/how-4.png", alt: "Step 4, Submit before the deadline" },
 ] as const;
 
 function DottedArrow() {

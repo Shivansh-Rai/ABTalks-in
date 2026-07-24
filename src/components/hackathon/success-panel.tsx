@@ -42,10 +42,10 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
         <div className="space-y-4">
           <h2 className="font-display text-xl font-bold text-foreground">
             Team created
-            {teamName ? ` — ${teamName}` : ""}
+            {teamName ? `, ${teamName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Share this code with your teammates — they each register at{" "}
+            Share this code with your teammates, they each register at{" "}
             <span className="font-medium text-foreground">
               abtalksapp.vercel.app/hackathon/register
             </span>{" "}
@@ -74,7 +74,7 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
 
       {entryType === "TEAM_JOIN" ? (
         <h2 className="font-display text-xl font-bold text-foreground">
-          You&apos;re in{teamName ? ` — ${teamName}` : ""}.
+          You&apos;re in{teamName ? `, ${teamName}` : ""}.
         </h2>
       ) : null}
 
@@ -90,7 +90,7 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
         </h3>
         <p className="text-sm text-muted-foreground">
           Kickoff is {HACKATHON.kickoffLabel}. The problem statement drops at
-          kickoff — be in the WhatsApp group so you don&apos;t miss it.
+          kickoff, be in the WhatsApp group so you don&apos;t miss it.
         </p>
       </div>
 

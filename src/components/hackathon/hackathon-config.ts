@@ -12,7 +12,7 @@ export const HACKATHON = {
   resultsLabel: "Winners announced: Friday, 14 Aug",
   registrationClosesLabel: "Registration closes Thursday, 6 Aug · 11:59 PM IST",
 
-  whatsappLink: "#", // TODO(organizer)
+  whatsappLink: "https://chat.whatsapp.com/BbF7QWppRjD9KlER4lGYLX?s=cl&p=a&ilr=1",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 
   steps: [
@@ -26,7 +26,7 @@ export const HACKATHON = {
     },
     {
       title: "Build for 48 hours",
-      body: "From Friday kickoff to Sunday deadline — describe what you want, let AI write the code, ship something real.",
+      body: "From Friday kickoff to Sunday deadline, describe what you want, let AI write the code, ship something real.",
     },
     {
       title: "Submit before the deadline",
@@ -37,7 +37,7 @@ export const HACKATHON = {
   timeline: [
     {
       title: "Kickoff",
-      body: "Problem statement drops. Clock starts. Build anything — product judgment over typing speed.",
+      body: "Problem statement drops. Clock starts. Build anything, product judgment over typing speed.",
     },
     {
       title: "Midpoint check-in",
@@ -60,7 +60,7 @@ export const HACKATHON = {
     },
     {
       title: "Live deployed URL",
-      body: "Something we can open — Vercel, Netlify, or any reachable host. A README-only demo doesn't count.",
+      body: "Something we can open, Vercel, Netlify, or any reachable host. A README-only demo doesn't count.",
     },
     {
       title: "AI-usage log",
@@ -71,11 +71,11 @@ export const HACKATHON = {
   rules: [
     {
       title: "Solo or teams of up to 3",
-      body: "Enter alone or create a team. One shareable 6-character code joins teammates — max three people total.",
+      body: "Enter alone or create a team. One shareable 6-character code joins teammates, max three people total.",
     },
     {
       title: "Open to Indian college students",
-      body: "1st year through recent grads. One entry per person — enforced by email.",
+      body: "1st year through recent grads. One entry per person, enforced by email.",
     },
     {
       title: "Build starts at kickoff",
@@ -105,7 +105,7 @@ export const HACKATHON = {
   faq: [
     {
       q: "Do I need a team?",
-      a: "No. Solo entries are welcome. If you want teammates, create a team and share the 6-character code — up to 3 people total.",
+      a: "No. Solo entries are welcome. If you want teammates, create a team and share the 6-character code, up to 3 people total.",
     },
     {
       q: "What if I can't code?",
@@ -117,7 +117,7 @@ export const HACKATHON = {
     },
     {
       q: "What counts as vibe coding?",
-      a: "You steer with natural language and AI writes most of the code. Hand-typing every line defeats the theme — we check your AI-usage log.",
+      a: "You steer with natural language and AI writes most of the code. Hand-typing every line defeats the theme, we check your AI-usage log.",
     },
     {
       q: "Can I use a template?",

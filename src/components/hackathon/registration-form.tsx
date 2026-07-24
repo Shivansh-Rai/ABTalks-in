@@ -184,7 +184,7 @@ export function RegistrationForm() {
       setLookupTeamName(result.data.teamName);
       setLookupSpots(result.data.spotsLeft);
       setLookupMessage(
-        `Joining ${result.data.teamName ?? "team"} — ${result.data.spotsLeft} spot(s) left`,
+        `Joining ${result.data.teamName ?? "team"}, ${result.data.spotsLeft} spot(s) left`,
       );
     });
   }
@@ -466,7 +466,7 @@ export function RegistrationForm() {
                 )}
               >
                 {lookupOk && lookupTeamName != null && lookupSpots != null
-                  ? `Joining ${lookupTeamName} — ${lookupSpots} spot(s) left`
+                  ? `Joining ${lookupTeamName}, ${lookupSpots} spot(s) left`
                   : lookupMessage}
               </p>
             ) : null}
