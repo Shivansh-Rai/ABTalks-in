@@ -27,8 +27,27 @@ Production has been identified and the two riskiest unknowns are already cleared
 36 teams · 40 participants · 36 unique team codes · 28 solo + 8 team entries ·
 0 teams over 3 members · 0 orphan participants.
 
-**Still outstanding:** Neon production branch snapshot (Phase 2), the 20 uncommitted
-files (Phase 1), `prisma migrate deploy` (Phase 3), and the script hardening (Phase 4).
+### ▶ RESUME POINT — START AT PHASE 6a
+
+Verified live on 2026-07-25. Phases 1–5 are **done**; do not redo them.
+
+| Item | Status |
+|---|---|
+| Phase 1 — work committed to branch | ✅ `6983825` on `feature/hackathon-neon-cutover` |
+| Phase 2 — Neon prod snapshot | ✅ taken |
+| Phase 3 — `migrate deploy` on prod | ✅ applied — hackathon tables exist on prod |
+| Phase 4 — script hardening | ✅ committed `4c4b18c` (preflight + case-insensitive + loud guard) |
+| Phase 5 — preflight | ✅ passed — **40 / 40 matched, 0 unmatched** |
+| Phase 6 — migrate | ❌ **FAILED: `P2028` mid-transaction** |
+| **Phase 6a — P2028 fix** | ⬅ **NOT APPLIED. THIS IS YOUR NEXT ACTION.** |
+| Production registration | 🔒 **FROZEN** — `e66e873` on `master` |
+| Neon hackathon rows | **0 / 0 / 0** — verified clean, transaction rolled back, **safe to retry** |
+| Supabase data | Untouched (the script only ever reads it) |
+| Cutover code | Not deployed; sits on `feature/hackathon-neon-cutover` |
+| Current branch | `feature/hackathon-neon-cutover` (correct place to make the 6a edits) |
+
+**Go to Phase 6a, apply the three edits, then run preflight → migrate → verify → Phase 7.**
+Registration stays closed until Phase 7 completes or the owner deliberately reopens.
 
 ### Two traps already hit once — do not re-introduce them
 
@@ -334,6 +353,106 @@ npm run hackathon:verify
 
 ---
 
+### Phase 6a — Fix `P2028` before retrying the migrate `[CURSOR]`
+
+**Only run this if Phase 6 failed with `P2028 Transaction not found / Transaction API
+error` at `tx.hackathonTeam.create()`.**
+
+**Observed state at failure:** preflight passed (40 matched); Neon hackathon rows = **0**
+— the transaction rolled back cleanly, so there is **no partial write**. Supabase
+untouched. Registration frozen. Cutover not deployed. It is safe to retry once the two
+fixes below are in.
+
+**There are two causes. Fixing only the connection is likely to fail again.**
+
+1. **Wrong connection type.** `new PrismaClient()` (~line 356) uses `DATABASE_URL`, the
+   Neon **pooler**. PgBouncer in transaction mode is not suited to long interactive
+   transactions; batch/maintenance scripts should use the **direct** endpoint — the same
+   one Prisma Migrate already uses.
+2. **Prisma's default interactive-transaction timeout is 5 seconds** (`maxWait` 2 s). The
+   write performs 36 team creates + 40 participant creates = **76 sequential
+   round-trips** in a single transaction. At even ~100 ms each that exceeds 5 s; over the
+   pooler across continents it is far over. **This is the more likely trigger, and
+   `DIRECT_URL` alone does not raise the timeout.**
+
+All three edits are in `scripts/migrate-hackathon-to-neon.ts`. **Line numbers verified
+against the current file (post-`4c4b18c`).**
+
+**Edit 1 — fail fast if `DIRECT_URL` is missing.** At **line 455**, `main()` currently reads:
+
+```ts
+  const url = requireEnv("NEXT_PUBLIC_SUPABASE_URL");   // 453
+  const key = requireEnv("SUPABASE_SERVICE_ROLE_KEY");  // 454
+  requireEnv("DATABASE_URL");                           // 455
+```
+
+Add one line after 455:
+
+```ts
+  requireEnv("DIRECT_URL");
+```
+
+**Edit 2 — point the script's client at the direct (non-pooled) endpoint.** At **line 461**:
+
+```ts
+// BEFORE
+  const prisma = new PrismaClient();
+
+// AFTER
+  const prisma = new PrismaClient({
+    datasourceUrl: process.env.DIRECT_URL,
+  });
+```
+
+If `datasourceUrl` does not type-check on this Prisma version, use
+`{ datasources: { db: { url: process.env.DIRECT_URL } } }` instead.
+
+**Scope this to the script only.** Do **not** change how the Next.js app connects — the
+app must keep the pooled `DATABASE_URL`, because serverless functions need pooling.
+
+**Edit 3 — raise the transaction limits.** The transaction opens at **line 394** and its
+matching close is at **line 445**:
+
+```ts
+// BEFORE — line 394
+  await prisma.$transaction(async (tx) => {
+    ... 51 lines of body ...
+  });                                          // line 445
+
+// AFTER — body byte-for-byte unchanged, only the wrapper changes
+  await prisma.$transaction(
+    async (tx) => {
+      ... same body ...
+    },
+    { timeout: 120_000, maxWait: 15_000 },
+  );
+```
+
+**DO NOT** change anything inside the transaction body, split it into chunks, or drop the
+transaction. Atomicity is the entire point — it is why the failed run left zero partial
+rows.
+
+Then commit and retry:
+
+```bash
+git add scripts/migrate-hackathon-to-neon.ts
+git commit -m "fix(hackathon): run migration on direct connection with extended transaction timeout"
+
+npm run hackathon:preflight    # must still exit 0, Neon tables still empty
+npm run hackathon:migrate
+npm run hackathon:verify       # must exit 0
+```
+
+**If `P2028` still occurs after both edits** — and only then — reduce the number of
+round-trips rather than relaxing any safety property: pre-generate the team ids and
+replace the two inner loops with two `createMany` calls **inside the same single
+transaction** (76 round-trips → 2). Report back before doing this; do not chunk into
+multiple transactions.
+
+**Registration stays frozen throughout Phase 6a.** Do not reopen until Phase 7 succeeds.
+
+---
+
 ### Phase 7 — Deploy the cutover `[CURSOR prepares; push is `[HUMAN]`-approved]`
 
 Only once verify is green.
@@ -450,11 +569,17 @@ or `src/components/ui/` means something went off-plan.
 
 ## 9. Commit messages
 
-All four are reproduced inline at their step:
-1. Phase 1 — `refactor(hackathon): migrate from Supabase to Neon/Prisma` (full body in Phase 1).
-2. Phase 4 — `fix(hackathon): harden migration preflight` (full body in Phase 4).
-3. Phase 6 — `chore(hackathon): freeze registration for Neon migration`.
-4. Phase 7 — `chore(hackathon): reopen registration after Neon cutover`.
+All five are reproduced inline at their step. ✅ = already committed.
+
+1. ✅ Phase 1 — `refactor(hackathon): migrate from Supabase to Neon/Prisma` — `6983825`
+   (full body in Phase 1).
+2. ✅ Phase 4 — `fix(hackathon): harden migration preflight` — `4c4b18c`
+   (full body in Phase 4).
+3. ✅ Phase 6 — `chore(hackathon): freeze registration for Neon migration` — `e66e873`
+   (on `master`).
+4. ⬅ **Phase 6a (next)** —
+   `fix(hackathon): run migration on direct connection with extended transaction timeout`
+5. Phase 7 — `chore(hackathon): reopen registration after Neon cutover`.
 
 ## 10. Timing note for the owner `[HUMAN]`
 
