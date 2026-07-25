@@ -8,10 +8,8 @@ import { MissionTimer } from "@/components/hackathon/dashboard/mission-timer";
 import { ProblemStatementPanel } from "@/components/hackathon/dashboard/problem-statement-panel";
 import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission-checklist";
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
-import {
-  getHackathonEvent,
-  getMyRegistration,
-} from "@/lib/hackathon-supabase";
+import { getHackathonEvent } from "@/features/hackathon/get-hackathon-event";
+import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 
 export const metadata: Metadata = {
   title: "Your Dashboard | ABTalks Vibe Code Hackathon",
@@ -19,11 +17,11 @@ export const metadata: Metadata = {
 
 export default async function HackathonDashboardPage() {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     redirect("/login?from=/hackathon/dashboard");
   }
 
-  const reg = await getMyRegistration(session.user.email.trim().toLowerCase());
+  const reg = await getMyRegistration(session.user.id);
   if (!reg) {
     redirect("/hackathon/register");
   }

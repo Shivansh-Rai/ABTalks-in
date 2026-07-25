@@ -3,15 +3,13 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { Countdown } from "@/components/hackathon/countdown";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
-import { getMyRegistration } from "@/lib/hackathon-supabase";
+import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 
 export async function Hero() {
   const session = await auth();
   let registered = false;
-  if (session?.user?.email) {
-    const reg = await getMyRegistration(
-      session.user.email.trim().toLowerCase(),
-    );
+  if (session?.user?.id) {
+    const reg = await getMyRegistration(session.user.id);
     registered = reg !== null;
   }
 
