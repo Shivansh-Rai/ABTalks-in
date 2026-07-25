@@ -138,7 +138,7 @@ export default async function AdminHomePage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Recent Activity</CardTitle>
             <Link
-              href="/admin/submissions"
+              href="/admin/actions"
               className="text-xs text-primary hover:underline"
             >
               View all Activity →

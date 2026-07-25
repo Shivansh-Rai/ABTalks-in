@@ -21,6 +21,10 @@ const deleteInput = z.object({
   remarkId: z.string().min(1),
 });
 
+function reasonFromBody(body: string): string {
+  return body.trim().slice(0, 500);
+}
+
 export async function createAdminRemarkAction(input: {
   studentUserId: string;
   body: string;
@@ -39,15 +43,30 @@ export async function createAdminRemarkAction(input: {
     return { ok: false as const, message: "Student not found" };
   }
 
-  await prisma.adminRemark.create({
-    data: {
-      studentUserId,
-      adminUserId: admin.userId,
-      body,
-    },
+  await prisma.$transaction(async (tx) => {
+    const remark = await tx.adminRemark.create({
+      data: {
+        studentUserId,
+        adminUserId: admin.userId,
+        body,
+      },
+      select: { id: true },
+    });
+
+    await tx.adminAction.create({
+      data: {
+        adminUserId: admin.userId,
+        targetUserId: studentUserId,
+        actionType: "ADD_REMARK",
+        reason: reasonFromBody(body),
+        metadata: { remarkId: remark.id },
+      },
+    });
   });
 
   revalidatePath(`/admin/students/${studentUserId}`);
+  revalidatePath("/admin/actions");
+  revalidatePath("/admin");
   return { ok: true as const };
 }
 
@@ -55,7 +74,7 @@ export async function updateAdminRemarkAction(input: {
   remarkId: string;
   body: string;
 }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = updateInput.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid input" };
 
@@ -69,17 +88,31 @@ export async function updateAdminRemarkAction(input: {
     return { ok: false as const, message: "Remark not found" };
   }
 
-  await prisma.adminRemark.update({
-    where: { id: remarkId },
-    data: { body },
+  await prisma.$transaction(async (tx) => {
+    await tx.adminRemark.update({
+      where: { id: remarkId },
+      data: { body },
+    });
+
+    await tx.adminAction.create({
+      data: {
+        adminUserId: admin.userId,
+        targetUserId: existing.studentUserId,
+        actionType: "UPDATE_REMARK",
+        reason: reasonFromBody(body),
+        metadata: { remarkId },
+      },
+    });
   });
 
   revalidatePath(`/admin/students/${existing.studentUserId}`);
+  revalidatePath("/admin/actions");
+  revalidatePath("/admin");
   return { ok: true as const };
 }
 
 export async function deleteAdminRemarkAction(input: { remarkId: string }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const parsed = deleteInput.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid input" };
 
@@ -87,16 +120,30 @@ export async function deleteAdminRemarkAction(input: { remarkId: string }) {
 
   const existing = await prisma.adminRemark.findUnique({
     where: { id: remarkId },
-    select: { id: true, studentUserId: true },
+    select: { id: true, studentUserId: true, body: true },
   });
   if (!existing) {
     return { ok: false as const, message: "Remark not found" };
   }
 
-  await prisma.adminRemark.delete({
-    where: { id: remarkId },
+  await prisma.$transaction(async (tx) => {
+    await tx.adminRemark.delete({
+      where: { id: remarkId },
+    });
+
+    await tx.adminAction.create({
+      data: {
+        adminUserId: admin.userId,
+        targetUserId: existing.studentUserId,
+        actionType: "DELETE_REMARK",
+        reason: reasonFromBody(existing.body),
+        metadata: { remarkId },
+      },
+    });
   });
 
   revalidatePath(`/admin/students/${existing.studentUserId}`);
+  revalidatePath("/admin/actions");
+  revalidatePath("/admin");
   return { ok: true as const };
 }
