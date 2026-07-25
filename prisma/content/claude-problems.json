@@ -5662,5 +5662,108 @@
         "format": "Project repo link + ABTalks repo commit URL"
       }
     }
+  },
+  {
+    "dayNumber": 56,
+    "domain": "CLAUDE",
+    "title": "Day 56: Complete the MVP & Deliver a Working Demo",
+    "problemStatement": "Welcome to Day 56 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 8 — Capstone Project (Days 51-60): From Idea to Deployed v1.0\n\nToday's focus: Continuing the same capstone conversation (or re-uploading the 10-Day Blueprint / Sprint Workbook if context was lost), review everything built through Day 5 and implement only the remaining features scheduled for Day 6 — with the explicit goal of ending today with a fully functional MVP that runs start-to-finish, deployed, and demonstrable to someone else.\n\nThis is Day 6 of the 10-day capstone that began on Day 51, and the last implementation day before Testing begins. Today locks in the same free-tools-only constraint as Day 5 — no paid services, APIs, or hosting unless the Sprint Workbook explicitly says otherwise, with free-tier options like Gemini API, Supabase, Firebase, Vercel, Netlify, Render, or Railway preferred.\n\nTasks:\n1. Continue the capstone conversation with Claude, or upload the 10-Day Blueprint / Sprint Workbook if Claude no longer has the context, and use it as the source of truth.\n2. Review everything built so far and confirm with Claude only the Day 6 remaining features will be implemented — no redesign, no Day 7 work.\n3. Confirm only free-tier tools, APIs, SDKs, and hosting platforms will be used today, unless the Workbook explicitly specifies otherwise.\n4. Work through today's milestones — for each, get a brief explanation, the full list of files to create/modify/delete, and complete final file contents (no snippets or TODOs).\n5. Let Claude pause only at major milestones, deployments, external configuration, UI verification, or debugging — otherwise continuing on its own judgment.\n6. If a feature needs to be simplified to deliver a working MVP, choose the working simplification over an incomplete ambitious version.\n7. Ensure the project runs successfully from start to finish before ending the session.\n8. Deploy the latest version using your chosen free-tier hosting platform, and verify the deployed application works correctly.\n9. Test the complete user flow on the live deployment and capture screenshots of the working app.\n10. Verify every feature works together as a complete application, update any affected documentation, and review the code for obvious cleanup.\n11. Commit and push today's work to GitHub with a meaningful commit message.\n\nImportant:\nDo not end today's session until you have a working, shareable demo — or have fully debugged any blocking issues. Do not introduce any paid service or API without explicit approval.\n\nSubmission: Share (1) your project repo link showing the completed MVP code committed and pushed, plus the live deployment link, and (2) your ABTalks challenge repo commit URL containing DAY6-SUMMARY.md, screenshots of the full user flow, and a short write-up of what's ready, what still needs polish, and what Day 7 (Testing) will focus on.",
+    "learningObjectives": [
+      "Recognize when to simplify a feature in order to ship a working MVP rather than hold out for an incomplete ambitious version",
+      "Enforce a free-tier-only constraint across every remaining API, SDK, and hosting decision for the project",
+      "Verify an entire application runs start-to-finish as one connected product, not just as isolated features",
+      "Deploy a project to a free-tier host and confirm the live version actually works, not just the local build",
+      "Test and capture a complete end-to-end user flow as proof the MVP is genuinely demonstrable"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "YOUTUBE_LINK_PLACEHOLDER"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 56/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nDay 6 of my 10-day capstone: MVP complete, deployed, and demoable.\n\nEvery core feature now works together as one product — running free-tier end to end, live on the internet, tested through the full user flow.\n\n🧩 All Core Features Integrated\n🆓 100% Free-Tier Stack\n🚀 Deployed & Verified Live\n🎬 Full User Flow Tested\n\nBiggest takeaway:\n\n'Working and simple' beats 'ambitious and half-built' every single time — the MVP that actually runs is the one you can show someone.\n\n#ClaudeAI #MVP #BuildWithClaude #AI #Capstone #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit your project repo link with the completed MVP code committed and pushed, the live deployment link, plus your ABTalks challenge repo commit URL containing DAY6-SUMMARY.md, screenshots of the full user flow, and a short write-up of what's ready, what needs polish, and what Day 7 will focus on.",
+    "tags": [
+      "claude",
+      "day-56",
+      "capstone",
+      "mvp",
+      "free-tier",
+      "deployment",
+      "demo",
+      "end-to-end-testing"
+    ],
+    "dayContent": {
+      "title": "Complete the MVP & Deliver a Working Demo",
+      "tagline": "Day 6 of 10: Ship a Working, Demoable MVP",
+      "module": "Capstone Project — Day 6 of 10",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 100,
+      "deliverableFormat": "GitHub commit URL",
+      "learning": {
+        "summary": "Today you'll learn how to bring every feature built so far together into one working MVP, choosing simplicity over incompleteness, and how to actually prove it works by deploying it live and testing the complete user flow rather than trusting the local build alone.",
+        "bullets": [
+          {
+            "label": "Working Over Ambitious",
+            "text": "If a Day 6 feature needs to be simplified to ship, the simplified working version wins over an incomplete ambitious one."
+          },
+          {
+            "label": "Free-Tier Stack Discipline",
+            "text": "Every remaining tool, API, and hosting choice stays free-tier unless the Sprint Workbook explicitly says otherwise."
+          },
+          {
+            "label": "One Connected Application",
+            "text": "Verify all core features work together as a single MVP, not as isolated pieces that each work alone."
+          },
+          {
+            "label": "Prove It Live",
+            "text": "Deploy to a free-tier host, verify the live version, and test the full user flow end-to-end before calling today done."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Continue your capstone conversation with Claude from Day 55, or upload the 10-Day Blueprint / Sprint Workbook if context was lost.",
+          "Have Claude review everything built through Day 5 before proceeding.",
+          "Paste the Complete the MVP & Deliver a Working Demo prompt.",
+          "Confirm with Claude which Day 6 features remain and that only free-tier tools/APIs/hosting will be used.",
+          "Work through today's milestones, adding every file Claude provides in the location it specifies.",
+          "Run every command Claude gives you and follow exact instructions for any manual step.",
+          "If a feature needs simplifying to work, choose the working simplification over the incomplete ambitious version.",
+          "If something breaks, debug it fully with Claude before continuing.",
+          "Add a footer to the application stating it was built with Claude as part of the AB Talks 60-Day Claude AI Challenge.",
+          "Confirm the project runs successfully from start to finish locally.",
+          "Deploy the latest version using your chosen free-tier hosting platform.",
+          "Verify the deployed application works correctly.",
+          "Test the complete user flow on the live app and capture screenshots.",
+          "Verify every feature works together as a complete MVP.",
+          "Update any affected documentation and review the code for obvious cleanup.",
+          "Commit today's work with a meaningful message and push it to GitHub.",
+          "Get Claude's summary of what was completed today, what still needs polish, and what Day 7 will focus on.",
+          "Create a Day56 folder in your GitHub repository.",
+          "Create a day56.md file.",
+          "Upload screenshots of the full user flow, the live deployment link, and your key learnings.",
+          "Commit and push the changes.",
+          "Submit your project repo link and the ABTalks repo commit URL."
+        ],
+        "solutionVideoUrl": "YOUTUBE_LINK_PLACEHOLDER"
+      },
+      "promptTemplate": "Day 6: Complete the MVP & Deliver a Working Demo\n\nToday is Day 6, continuing our chat from the previous days.\n\nIf you no longer remember the project context, ask me to upload the 10-Day Blueprint (Sprint Workbook) before continuing. Use it as the source of truth.\n\nReview everything built so far, then implement only the remaining features scheduled for Day 6. Do not redesign the project or begin tomorrow's work.\n\nImportant: Use only free tools, APIs, SDKs, hosting platforms, and services unless the Sprint Workbook explicitly specifies otherwise. Prefer free-tier solutions such as Gemini API, Supabase, Firebase, Vercel, Netlify, Render, Railway, or equivalent free alternatives. Never introduce paid services or APIs without my approval.\n\nAssume I have zero technical experience unless I tell you otherwise.\n\nWhenever I need to perform a manual step (installing packages, creating accounts, configuring services, running commands, deploying, etc.), stop and give me exact step-by-step instructions using the real button names, menu names, and terminal commands.\n\nPrioritize implementation over explanation. Keep explanations brief and practical. Spend most of your response generating production-ready code and complete files rather than lengthy descriptions.\n\nBuild today's work one milestone at a time.\n\nFor each milestone:\n\n1. Briefly explain what we're building and why.\n2. Show every file that needs to be created, modified, or deleted.\n3. Generate the complete final contents of every required file. Never generate snippets, placeholders, TODOs, \"...existing code...\", or \"add this below...\" instructions.\n4. Clearly state where each file belongs and whether it is new or replaces an existing file.\n5. Provide every command I need to run.\n6. Pause only after major milestones, deployments, external configurations, UI verification, or when debugging is required.\n7. If anything breaks, debug it completely before moving forward.\n\nDo not skip implementation because it seems repetitive. If today's work requires 2 files or 50 files, generate all of them completely.\n\nContinue across as many responses as necessary until every Day 6 feature has been implemented and verified.\n\nToday's Objective\n\nBy the end of today, the application should have a fully functional MVP.\n\nAdd a small footer to the application stating: \"Built with Claude as part of the AB Talks 60-Day Claude AI Challenge.\" Make sure it's visible on the deployed live version, not just in the local build.\n\nEvery core feature planned for the MVP should be working together as a complete application.\n\nIf features need to be simplified to deliver a working MVP, prefer a working solution over an incomplete ambitious one.\n\nRunnable Demo\n\nBefore ending today's session:\n\n* Ensure the project runs successfully from start to finish.\n* Help me deploy the latest version using the chosen free-tier hosting platform.\n* Verify that the deployed application works correctly.\n* Guide me through testing the complete user flow.\n* Ask me for screenshots of the live application.\n* Do not end today's session until we have a working, shareable demo or have fully debugged any blocking issues.\n\nWhen today's implementation is complete:\n\n* Verify every feature works together.\n* Update any affected documentation.\n* Help me review and clean up obvious code issues.\n* Help me commit and push today's work to GitHub with a meaningful commit message.\n* Finish with a concise summary of what was completed today, what still needs polishing, and what tomorrow will focus on.\n\nYour goal is not simply to generate code. Your goal is to help me finish today's implementation and leave with a working, runnable MVP that I can demonstrate to someone else. Never optimize for brevity. Optimize for successfully completing today's implementation.",
+      "engagement": {
+        "type": "MVP Demo Showcase",
+        "description": "Share a screenshot or short clip of your live, deployed MVP being used end-to-end. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Provide your project repo link with the completed MVP code committed and pushed, and upload to your ABTalks repo a markdown file containing DAY6-SUMMARY.md, the live deployment link, screenshots of the full user flow, and your key learnings. The actual MVP code in the project repo is the deliverable, not the screenshots.",
+        "format": "Project repo link + ABTalks repo commit URL"
+      }
+    }
   }
 ]
