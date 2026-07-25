@@ -1,0 +1,14 @@
+---
+description: Figma MCP must use Shallika's team only for this project
+alwaysApply: true
+---
+
+# Figma MCP — Shallika's team only
+
+When using the Figma MCP (`user-figma`) in this workspace:
+
+- **Only** use Shallika's team.
+- `planKey` for `create_new_file` (and any plan selection): `team::1643535071763592829`
+- Do **not** use `shivanshrai2316's team` (`team::1371560189170429263`) or any other plan.
+- If `whoami` no longer lists Shallika's team, stop and tell the user — do not fall back to another team.
+- Authenticate with `mcp_auth` when `serverStatus` is `needsAuth`; do not create designs unless the user asks.
