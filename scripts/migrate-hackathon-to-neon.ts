@@ -391,58 +391,61 @@ async function migrate(
   const { sbTeams, sbParticipants, sbEvents, userIdByParticipantId } = result;
   const oldToNewTeamId = new Map<string, string>();
 
-  await prisma.$transaction(async (tx) => {
-    for (const t of sbTeams) {
-      const entryType: HackathonEntryType =
-        t.entry_type === "SOLO" ? "SOLO" : "TEAM";
-      const created = await tx.hackathonTeam.create({
-        data: {
-          entryType,
-          teamName: t.team_name,
-          teamCode: t.team_code,
-          createdAt: new Date(t.created_at),
-        },
-        select: { id: true },
-      });
-      oldToNewTeamId.set(t.id, created.id);
-    }
-
-    for (const p of sbParticipants) {
-      const newTeamId = oldToNewTeamId.get(p.team_id);
-      const userId = userIdByParticipantId.get(p.id);
-      if (!newTeamId || !userId) {
-        throw new Error(`Internal mapping miss for participant ${p.id}`);
+  await prisma.$transaction(
+    async (tx) => {
+      for (const t of sbTeams) {
+        const entryType: HackathonEntryType =
+          t.entry_type === "SOLO" ? "SOLO" : "TEAM";
+        const created = await tx.hackathonTeam.create({
+          data: {
+            entryType,
+            teamName: t.team_name,
+            teamCode: t.team_code,
+            createdAt: new Date(t.created_at),
+          },
+          select: { id: true },
+        });
+        oldToNewTeamId.set(t.id, created.id);
       }
-      await tx.hackathonParticipant.create({
-        data: {
-          teamId: newTeamId,
-          userId,
-          slotIndex: p.slot_index,
-          isLeader: p.is_leader,
-          fullName: p.full_name,
-          email: p.email,
-          phone: p.phone,
-          college: p.college,
-          graduationYear: p.graduation_year,
-          createdAt: new Date(p.created_at),
-        },
-      });
-    }
 
-    const sbEvent = sbEvents[0];
-    if (sbEvent) {
-      await tx.hackathonEvent.upsert({
-        where: { id: 1 },
-        create: {
-          id: 1,
-          problemStatement: sbEvent.problem_statement,
-        },
-        update: {
-          problemStatement: sbEvent.problem_statement,
-        },
-      });
-    }
-  });
+      for (const p of sbParticipants) {
+        const newTeamId = oldToNewTeamId.get(p.team_id);
+        const userId = userIdByParticipantId.get(p.id);
+        if (!newTeamId || !userId) {
+          throw new Error(`Internal mapping miss for participant ${p.id}`);
+        }
+        await tx.hackathonParticipant.create({
+          data: {
+            teamId: newTeamId,
+            userId,
+            slotIndex: p.slot_index,
+            isLeader: p.is_leader,
+            fullName: p.full_name,
+            email: p.email,
+            phone: p.phone,
+            college: p.college,
+            graduationYear: p.graduation_year,
+            createdAt: new Date(p.created_at),
+          },
+        });
+      }
+
+      const sbEvent = sbEvents[0];
+      if (sbEvent) {
+        await tx.hackathonEvent.upsert({
+          where: { id: 1 },
+          create: {
+            id: 1,
+            problemStatement: sbEvent.problem_statement,
+          },
+          update: {
+            problemStatement: sbEvent.problem_statement,
+          },
+        });
+      }
+    },
+    { timeout: 120_000, maxWait: 15_000 },
+  );
 
   console.log(
     `Wrote to Neon: teams=${sbTeams.length}, participants=${sbParticipants.length}, event=${sbEvents.length > 0 ? "y" : "n"}`,
@@ -453,11 +456,14 @@ async function main() {
   const url = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const key = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
   requireEnv("DATABASE_URL");
+  requireEnv("DIRECT_URL");
 
   const supabase = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   }) as unknown as SupabaseLike;
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({
+    datasourceUrl: process.env.DIRECT_URL,
+  });
 
   try {
     if (verifyOnly) {
