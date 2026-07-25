@@ -12,6 +12,7 @@ import {
   Gift,
   GraduationCap,
   LayoutDashboard,
+  Link2,
   Megaphone,
   Menu,
   Package,
@@ -29,6 +30,7 @@ type IconName =
   | "analytics"
   | "ambassadors"
   | "referrals"
+  | "hackathonLinks"
   | "redemptions"
   | "program"
   | "cohort"
@@ -43,6 +45,7 @@ const iconMap = {
   analytics: BarChart3,
   ambassadors: Megaphone,
   referrals: Gift,
+  hackathonLinks: Link2,
   redemptions: Package,
   program: GraduationCap,
   cohort: GraduationCap,

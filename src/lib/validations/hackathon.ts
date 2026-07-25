@@ -32,3 +32,9 @@ export const hackathonRegistrationSchema = z.discriminatedUnion("entryType", [
 export type HackathonRegistrationInput = z.infer<
   typeof hackathonRegistrationSchema
 >;
+
+export const sourceSlugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9_-]{1,32}$/, "Invalid source slug");
