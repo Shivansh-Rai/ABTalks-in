@@ -485,23 +485,6 @@
     "briefMd": "## Mission: Building & Populating the Vector Database\n\nLoad your embeddings into the vector DB with metadata so they're ready for retrieval. Expect about **2 hours**.\n\n**Concepts to learn**\n\n- **Indexing pipeline design** - batching upserts, ID management\n- **Metadata filtering at query time** - e.g. filter by `plan_type` or `section`\n- **Namespace / collection design** - multi-tenant or multi-source knowledge bases\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── vector_query_test.md          ← today's documented query test\n├── knowledge_base.jsonl          ← from Day 6\n├── embeddings.npy                ← from Day 7\n├── vector_db_notes.md            ← from Day 8\n└── chroma_data/                  ← local Chroma store (do not commit)\n```\n\nYour populated Chroma collection stays local - do **not** commit API keys or the Chroma data directory.\n\n### Build steps\n\n1. **Load inputs** from prior days:\n   - Read `knowledge_base.jsonl`\n   - Load the embeddings you generated on Day 7 (`embeddings.npy` or per-chunk `embedding` fields)\n\n2. **Batch-upsert into Chroma** (`coverage_kb` collection from Day 8):\n\n```python\ncollection.add(\n    ids=[...],\n    embeddings=[...],\n    documents=[...],\n    metadatas=[...],\n)\n```\n\n   - Upsert in batches of **~100** records per call\n\n3. **Verify the index size** matches your chunk count:\n\n```python\ncollection.count()\n```\n\n4. **Run a raw test query:**\n   - Embed: **\"Is physical therapy covered under the Silver plan?\"**\n   - Query:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n)\n```\n\n5. **Review the 5 returned chunks** in `vector_query_test.md`:\n   - Are they relevant?\n   - Do they reflect **Silver-plan-specific** coverage (not another plan)?\n   - Note any retrieval misses\n\n6. **Repeat with metadata filtering**, e.g.:\n\n```python\ncollection.query(\n    query_embeddings=[...],\n    n_results=5,\n    where={\"plan_type\": \"Silver\"},\n)\n```\n\n   - Confirm filters scope results to one plan\n   - Log filtered vs unfiltered results in `vector_query_test.md`\n\n7. **Ship to your program repo:**\n   - Commit and push `vector_query_test.md` only\n   - Suggested commit: `git add vector_query_test.md && git commit -m \"day 9: vector upsert query test\" && git push`\n   - Hit **Verify my repo** below - checks fetch your pushed file\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Roughly how many records do you upsert per `collection.add` batch?\n2. What is the exact **test question** you embed for the raw query?\n3. How many results does `collection.query` return (`n_results`)?\n",
     "language": "PYTHON",
     "missionSpec": {
-      "answers": [
-        {
-          "check": "upsert batch size",
-          "value": "100",
-          "caseInsensitive": true
-        },
-        {
-          "check": "raw test question",
-          "value": "Is physical therapy covered under the Silver plan?",
-          "caseInsensitive": true
-        },
-        {
-          "check": "n_results",
-          "value": "5",
-          "caseInsensitive": true
-        }
-      ],
       "repoChecks": [
         {
           "check": "vector_query_test.md exists",
