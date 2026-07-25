@@ -20,7 +20,7 @@ export function Prizes() {
             <Trophy className="size-6 text-[#968BEC]" aria-hidden />
           </div>
           <p className="mt-5 text-base text-[#E9E9E9] sm:text-lg">
-            Prizes announced soon — register now, we&apos;ll email you the moment
+            Prizes announced soon, register now, we&apos;ll email you the moment
             they&apos;re live.
           </p>
         </div>

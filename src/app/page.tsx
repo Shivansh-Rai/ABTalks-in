@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isClaudeEnabled } from "@/lib/feature-flags";
+import { hackathonRedirectForProfilelessUser } from "@/lib/hackathon-supabase";
 import { OnboardingClient } from "@/components/landing/onboarding-client";
 
 export default async function HomePage() {
@@ -16,6 +17,8 @@ export default async function HomePage() {
     if (profile) {
       redirect("/dashboard");
     } else {
+      const hx = await hackathonRedirectForProfilelessUser(session.user.email);
+      if (hx) redirect(hx);
       redirect("/register");
     }
   }

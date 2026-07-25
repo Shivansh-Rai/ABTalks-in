@@ -1,11 +1,20 @@
 "use server";
 
+import { auth } from "@/auth";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import {
   getTeamByCode,
+  getTeamLeader,
   hackathonSupabase,
   isEmailRegistered,
+  isTeamNameTaken,
 } from "@/lib/hackathon-supabase";
+import {
+  sendLeaderNewMemberEmail,
+  sendLeaderWelcomeEmail,
+  sendMemberWelcomeEmail,
+  sendSoloWelcomeEmail,
+} from "@/lib/hackathon-email";
 import { logger } from "@/lib/logger";
 import {
   hackathonRegistrationSchema,
@@ -25,6 +34,39 @@ function generateTeamCode(): string {
 
 function isUniqueViolation(error: { code?: string } | null): boolean {
   return error?.code === "23505";
+}
+
+// Best-effort emails when a member joins a team: welcome the member (with team
+// + lead name) and notify the leader (with the new member's name + team code).
+// Failures are logged and never block registration.
+async function sendTeamJoinEmails(args: {
+  teamId: string;
+  teamName: string | null;
+  memberName: string;
+  memberEmail: string;
+  teamCode: string;
+}): Promise<void> {
+  try {
+    const leader = await getTeamLeader(args.teamId);
+    const teamName = args.teamName ?? "your team";
+    await sendMemberWelcomeEmail(
+      args.memberName,
+      args.memberEmail,
+      teamName,
+      leader?.fullName ?? "your team lead",
+    );
+    if (leader) {
+      await sendLeaderNewMemberEmail(
+        leader.fullName,
+        leader.email,
+        args.memberName,
+        teamName,
+        args.teamCode,
+      );
+    }
+  } catch (error) {
+    logger.error("hackathon team-join emails failed", { error });
+  }
 }
 
 export async function lookupHackathonTeamAction(code: string) {
@@ -57,6 +99,12 @@ export async function lookupHackathonTeamAction(code: string) {
 export async function submitHackathonRegistrationAction(
   input: HackathonRegistrationInput,
 ) {
+  const session = await auth();
+  if (!session?.user?.id || !session.user.email) {
+    return { ok: false as const, message: "Not authenticated" };
+  }
+  const email = session.user.email.trim().toLowerCase();
+
   if (!HACKATHON.registrationOpen) {
     return { ok: false as const, message: "Registration is closed." };
   }
@@ -68,12 +116,19 @@ export async function submitHackathonRegistrationAction(
       message: parsed.error.issues[0]?.message ?? "Invalid input",
     };
   }
-  const d = parsed.data;
+  const d = { ...parsed.data, email };
 
   if (await isEmailRegistered(d.email)) {
     return {
       ok: false as const,
       message: "You're already registered with this email.",
+    };
+  }
+
+  if (d.entryType === "TEAM_CREATE" && (await isTeamNameTaken(d.teamName))) {
+    return {
+      ok: false as const,
+      message: "That team name is already taken. Pick another.",
     };
   }
 
@@ -103,6 +158,15 @@ export async function submitHackathonRegistrationAction(
       }
 
       if (isUniqueViolation(teamError)) {
+        if (
+          teamName !== null &&
+          (await isTeamNameTaken(teamName))
+        ) {
+          return {
+            ok: false as const,
+            message: "That team name is already taken. Pick another.",
+          };
+        }
         continue;
       }
 
@@ -143,6 +207,21 @@ export async function submitHackathonRegistrationAction(
         ok: false as const,
         message: "Something went wrong. Please try again.",
       };
+    }
+
+    try {
+      if (d.entryType === "SOLO") {
+        await sendSoloWelcomeEmail(d.fullName, d.email);
+      } else {
+        await sendLeaderWelcomeEmail(
+          d.fullName,
+          d.email,
+          teamName ?? "your team",
+          teamCode,
+        );
+      }
+    } catch (error) {
+      logger.error("hackathon welcome email failed", { error });
     }
 
     return {
@@ -198,6 +277,13 @@ export async function submitHackathonRegistrationAction(
 
   const first = await insertJoin(team.id, team.spotsLeft);
   if (first.ok) {
+    await sendTeamJoinEmails({
+      teamId: team.id,
+      teamName: team.teamName,
+      memberName: d.fullName,
+      memberEmail: d.email,
+      teamCode: d.teamCode,
+    });
     return {
       ok: true as const,
       data: {
@@ -226,6 +312,13 @@ export async function submitHackathonRegistrationAction(
 
   const second = await insertJoin(refreshed.id, refreshed.spotsLeft);
   if (second.ok) {
+    await sendTeamJoinEmails({
+      teamId: refreshed.id,
+      teamName: refreshed.teamName,
+      memberName: d.fullName,
+      memberEmail: d.email,
+      teamCode: d.teamCode,
+    });
     return {
       ok: true as const,
       data: {

@@ -8,6 +8,7 @@ import {
 import { setReferralCookie } from "@/app/actions/referral-actions";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { hackathonRedirectForProfilelessUser } from "@/lib/hackathon-supabase";
 import { redirect } from "next/navigation";
 import { LoginClient } from "./login-client";
 
@@ -44,9 +45,13 @@ export default async function LoginPage({ searchParams }: Props) {
 
   const session = await auth();
   if (session?.user?.id) {
-    // Program applicants and recruiters must never hit the student /register
-    // redirect below — send them straight to their destination.
-    if (redirectTo.startsWith("/program") || redirectTo.startsWith("/talent")) {
+    // Program applicants, recruiters, and hackathon registrants must never hit
+    // the student /register redirect below — send them straight to their destination.
+    if (
+      redirectTo.startsWith("/program") ||
+      redirectTo.startsWith("/talent") ||
+      redirectTo.startsWith("/hackathon")
+    ) {
       redirect(redirectTo);
     }
 
@@ -63,6 +68,8 @@ export default async function LoginPage({ searchParams }: Props) {
       redirect(redirectTo);
     }
 
+    const hx = await hackathonRedirectForProfilelessUser(session.user.email);
+    if (hx) redirect(hx);
     redirect(registerHrefWithRef(params.ref));
   }
 

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { switchHackathonAccountAction } from "@/app/actions/hackathon-auth-actions";
 import {
   lookupHackathonTeamAction,
   submitHackathonRegistrationAction,
@@ -76,7 +77,13 @@ const ENTRY_OPTIONS: { value: EntryType; title: string; body: string }[] = [
   },
 ];
 
-export function RegistrationForm() {
+export function RegistrationForm({
+  initialEmail,
+  initialName = "",
+}: {
+  initialEmail: string;
+  initialName?: string;
+}) {
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessState | null>(null);
@@ -93,8 +100,8 @@ export function RegistrationForm() {
     ) as unknown as Resolver<FormValues>,
     defaultValues: {
       entryType: "SOLO",
-      fullName: "",
-      email: "",
+      fullName: initialName,
+      email: initialEmail,
       phone: "",
       college: "",
       graduationYear: 2026,
@@ -184,7 +191,7 @@ export function RegistrationForm() {
       setLookupTeamName(result.data.teamName);
       setLookupSpots(result.data.spotsLeft);
       setLookupMessage(
-        `Joining ${result.data.teamName ?? "team"} — ${result.data.spotsLeft} spot(s) left`,
+        `Joining ${result.data.teamName ?? "team"}, ${result.data.spotsLeft} spot(s) left`,
       );
     });
   }
@@ -240,6 +247,26 @@ export function RegistrationForm() {
             />
           </div>
         </div>
+
+        <p className="text-sm text-muted-foreground">
+          Registering as <span className="font-medium text-foreground">{initialEmail}</span>
+          {" · "}
+          <button
+            type="button"
+            className="text-primary underline-offset-2 hover:underline"
+            onClick={() => {
+              if (form.formState.isDirty) {
+                const ok = window.confirm(
+                  "Switch account? You'll lose what you've entered here.",
+                );
+                if (!ok) return;
+              }
+              void switchHackathonAccountAction();
+            }}
+          >
+            Not you? Switch account
+          </button>
+        </p>
 
         {step === 1 ? (
           <FormField
@@ -324,7 +351,14 @@ export function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      readOnly
+                      tabIndex={-1}
+                      className="bg-muted text-muted-foreground"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -466,7 +500,7 @@ export function RegistrationForm() {
                 )}
               >
                 {lookupOk && lookupTeamName != null && lookupSpots != null
-                  ? `Joining ${lookupTeamName} — ${lookupSpots} spot(s) left`
+                  ? `Joining ${lookupTeamName}, ${lookupSpots} spot(s) left`
                   : lookupMessage}
               </p>
             ) : null}

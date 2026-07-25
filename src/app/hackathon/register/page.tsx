@@ -1,18 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { auth } from "@/auth";
 import { RegistrationForm } from "@/components/hackathon/registration-form";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { buttonVariants } from "@/components/ui/button";
+import { getMyRegistration } from "@/lib/hackathon-supabase";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Register | ABTalks Vibe Code Hackathon",
   description:
-    "Register for the ABTalks Vibe Code Hackathon — solo or as a team of up to 3.",
+    "Register for the ABTalks Vibe Code Hackathon, solo or as a team of up to 3.",
 };
 
-export default function HackathonRegisterPage() {
+export default async function HackathonRegisterPage() {
+  const session = await auth();
+  if (!session?.user?.id || !session.user.email) {
+    redirect("/login?from=/hackathon/register");
+  }
+
+  const existing = await getMyRegistration(
+    session.user.email.trim().toLowerCase(),
+  );
+  if (existing) redirect("/hackathon/dashboard");
+
+  const initialEmail = session.user.email;
+  const initialName = session.user.name ?? "";
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-4 py-12 sm:py-16">
@@ -31,12 +47,15 @@ export default function HackathonRegisterPage() {
           Register
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {HACKATHON.name} — free entry, solo or teams of {HACKATHON.maxTeamSize}.
+          {HACKATHON.name}, free entry, solo or teams of {HACKATHON.maxTeamSize}.
         </p>
 
         <div className="mt-8">
           {HACKATHON.registrationOpen ? (
-            <RegistrationForm />
+            <RegistrationForm
+              initialEmail={initialEmail}
+              initialName={initialName}
+            />
           ) : (
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="font-display text-lg font-semibold text-foreground">

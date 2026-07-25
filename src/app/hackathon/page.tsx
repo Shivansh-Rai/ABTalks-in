@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Deliverables } from "@/components/hackathon/deliverables";
 import { Faq } from "@/components/hackathon/faq";
-import { HackathonHeader } from "@/components/hackathon/hackathon-header";
 import { Hero } from "@/components/hackathon/hero";
 import { HowItWorks } from "@/components/hackathon/how-it-works";
 import { Prizes } from "@/components/hackathon/prizes";
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
 export default function HackathonPage() {
   return (
     <div className="origin-top bg-black" style={{ zoom: 0.9 }}>
-      <HackathonHeader />
       <main className="min-h-screen bg-black text-white">
         <Hero />
         {/* Mobile-only: zoom bottom sections out 20% */}

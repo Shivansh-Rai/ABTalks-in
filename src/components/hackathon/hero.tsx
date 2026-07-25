@@ -1,9 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/auth";
 import { Countdown } from "@/components/hackathon/countdown";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { getMyRegistration } from "@/lib/hackathon-supabase";
 
-export function Hero() {
+export async function Hero() {
+  const session = await auth();
+  let registered = false;
+  if (session?.user?.email) {
+    const reg = await getMyRegistration(
+      session.user.email.trim().toLowerCase(),
+    );
+    registered = reg !== null;
+  }
+
   return (
     <section className="relative bg-black">
       <div className="relative mx-auto w-full max-w-[1600px] md:aspect-[1024/568]">
@@ -74,16 +85,29 @@ export function Hero() {
           {/* CTA — mobile near bottom of 80vh; desktop normal flow */}
           <div className="mt-6 flex w-full shrink-0 flex-col items-center pb-2 md:mt-6 md:pb-0">
             <div className="flex w-full flex-row items-center justify-center gap-2 sm:gap-3 md:w-auto">
-              <Link
-                href="/hackathon/register"
-                className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
-                }}
-              >
-                Register now →
-              </Link>
+              {registered ? (
+                <Link
+                  href="/hackathon/dashboard"
+                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
+                  }}
+                >
+                  Go to your dashboard →
+                </Link>
+              ) : (
+                <Link
+                  href="/hackathon/register"
+                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
+                  }}
+                >
+                  Register free →
+                </Link>
+              )}
               <Link
                 href="#how-it-works"
                 className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-[#2C1BA9] bg-[#100A3D] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"

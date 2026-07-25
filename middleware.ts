@@ -25,6 +25,8 @@ const protectedPaths = [
   "/program/leaderboard",
   "/program/interview",
   "/talent",
+  "/hackathon/register",
+  "/hackathon/dashboard",
 ];
 
 function applyRefCookie(response: NextResponse, ref: string | null) {
@@ -58,8 +60,13 @@ export default auth((req) => {
   }
 
   if (isAuthPage && isLoggedIn) {
+    const from = req.nextUrl.searchParams.get("from");
+    const destination =
+      from && from.startsWith("/") && !from.startsWith("//")
+        ? from
+        : "/dashboard";
     return applyRefCookie(
-      NextResponse.redirect(new URL("/dashboard", req.nextUrl)),
+      NextResponse.redirect(new URL(destination, req.nextUrl)),
       ref,
     );
   }

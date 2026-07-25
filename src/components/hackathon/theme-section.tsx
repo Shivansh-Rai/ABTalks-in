@@ -14,7 +14,7 @@ export function ThemeSection() {
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
             You describe what you want. The AI writes the code. Tools like Claude
-            Code, Cursor, or any AI coding assistant are allowed — and expected.
+            Code, Cursor, or any AI coding assistant are allowed, and expected.
           </p>
           <p className="mt-3 text-base text-muted-foreground sm:text-lg">
             The point is prompting skill and product judgment, not typing speed.
