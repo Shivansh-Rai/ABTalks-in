@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-25 [schema] HackathonLink + HackathonParticipant.sourceSlug for invisible ?s= share-link attribution (first-touch abtalks_src cookie)
 - 2026-07-25 [schema] HackathonTeam / HackathonParticipant / HackathonEvent on Neon with User.userId FK; registration + admin moved off Supabase hackathon_* tables
 - 2026-07-25 [rule] Admin remark CRUD writes AdminAction audit rows; /admin/actions paginated activity feed
 - 2026-07-24 [rule] Profile-less hackathon registrants divert to /hackathon/dashboard (not /register) from /, /dashboard, /login; hackathon header sign-in uses ?from=/hackathon/register

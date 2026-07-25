@@ -19,6 +19,7 @@ export type ProfileData = {
   skills: string[];
   resumeUrl: string | null;
   phone: string | null;
+  phoneVerified: boolean;
   linkedinUrl: string | null;
   githubUsername: string | null;
   referralCode: string;
@@ -49,6 +50,7 @@ export async function getProfile(userId: string): Promise<{
           skills: true,
           resumeUrl: true,
           phone: true,
+          phoneVerified: true,
           linkedinUrl: true,
           githubUsername: true,
           referralCode: true,

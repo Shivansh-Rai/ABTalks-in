@@ -66,7 +66,7 @@ export async function isEmailRegistered(email: string): Promise<boolean> {
 
   if (error) return false;
   return data !== null;
-}
+} 
 
 /**
  * For a logged-in user WITHOUT a 60-day profile: return "/hackathon/dashboard" if they

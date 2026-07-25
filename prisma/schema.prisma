@@ -821,6 +821,7 @@ model HackathonParticipant {
   phone          String
   college        String
   graduationYear Int
+  sourceSlug     String?
   createdAt      DateTime @default(now())
 
   team HackathonTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
@@ -828,6 +829,7 @@ model HackathonParticipant {
 
   @@unique([teamId, slotIndex])
   @@index([teamId])
+  @@index([sourceSlug])
 }
 
 /// Singleton (id always 1) — event-wide config editable from /admin/hackathon.
@@ -835,4 +837,13 @@ model HackathonEvent {
   id               Int      @id @default(1)
   problemStatement String?
   updatedAt        DateTime @updatedAt
+}
+
+/// Named share links for hackathon attribution (`?s=<slug>`). Inserted by hand.
+model HackathonLink {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  note      String?
+  createdAt DateTime @default(now())
 }
