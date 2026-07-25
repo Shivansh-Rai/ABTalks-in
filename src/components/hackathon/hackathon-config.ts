@@ -1,7 +1,7 @@
 export const HACKATHON = {
   name: "ABTalks Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
-  registrationOpen: false,
+  registrationOpen: true,
   maxTeamSize: 3,
 
   // TODO(organizer): replace the three date values below before launch.
