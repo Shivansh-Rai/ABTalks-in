@@ -1,14 +1,15 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { isUserRegistered } from "@/features/hackathon/registration-status";
 import {
   getTeamByCode,
   getTeamLeader,
-  hackathonSupabase,
-  isEmailRegistered,
   isTeamNameTaken,
-} from "@/lib/hackathon-supabase";
+} from "@/features/hackathon/team-lookup";
+import { prisma } from "@/lib/db";
 import {
   sendLeaderNewMemberEmail,
   sendLeaderWelcomeEmail,
@@ -32,8 +33,21 @@ function generateTeamCode(): string {
   return code;
 }
 
-function isUniqueViolation(error: { code?: string } | null): boolean {
-  return error?.code === "23505";
+function isPrismaUniqueViolation(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
+}
+
+function uniqueTargetIncludes(
+  error: Prisma.PrismaClientKnownRequestError,
+  field: string,
+): boolean {
+  const target = error.meta?.target;
+  if (Array.isArray(target)) return target.includes(field);
+  if (typeof target === "string") return target.includes(field);
+  return false;
 }
 
 // Best-effort emails when a member joins a team: welcome the member (with team
@@ -103,6 +117,7 @@ export async function submitHackathonRegistrationAction(
   if (!session?.user?.id || !session.user.email) {
     return { ok: false as const, message: "Not authenticated" };
   }
+  const userId = session.user.id;
   const email = session.user.email.trim().toLowerCase();
 
   if (!HACKATHON.registrationOpen) {
@@ -118,7 +133,7 @@ export async function submitHackathonRegistrationAction(
   }
   const d = { ...parsed.data, email };
 
-  if (await isEmailRegistered(d.email)) {
+  if (await isUserRegistered(userId)) {
     return {
       ok: false as const,
       message: "You're already registered with this email.",
@@ -137,72 +152,62 @@ export async function submitHackathonRegistrationAction(
     const teamName = d.entryType === "TEAM_CREATE" ? d.teamName : null;
 
     let teamCode: string | null = null;
-    let teamId: string | null = null;
 
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidate = generateTeamCode();
-      const { data: teamRow, error: teamError } = await hackathonSupabase
-        .from("hackathon_teams")
-        .insert({
-          entry_type: entryTypeDb,
-          team_name: teamName,
-          team_code: candidate,
-        })
-        .select("id, team_code")
-        .single();
-
-      if (!teamError && teamRow) {
-        teamCode = teamRow.team_code;
-        teamId = teamRow.id;
+      try {
+        const team = await prisma.$transaction(async (tx) => {
+          const created = await tx.hackathonTeam.create({
+            data: {
+              entryType: entryTypeDb,
+              teamName,
+              teamCode: candidate,
+            },
+            select: { id: true, teamCode: true },
+          });
+          await tx.hackathonParticipant.create({
+            data: {
+              teamId: created.id,
+              userId,
+              slotIndex: 1,
+              isLeader: true,
+              fullName: d.fullName,
+              email: d.email,
+              phone: d.phone,
+              college: d.college,
+              graduationYear: d.graduationYear,
+            },
+          });
+          return created;
+        });
+        teamCode = team.teamCode;
         break;
-      }
-
-      if (isUniqueViolation(teamError)) {
+      } catch (error) {
         if (
-          teamName !== null &&
-          (await isTeamNameTaken(teamName))
+          isPrismaUniqueViolation(error) &&
+          uniqueTargetIncludes(
+            error as Prisma.PrismaClientKnownRequestError,
+            "teamCode",
+          )
         ) {
-          return {
-            ok: false as const,
-            message: "That team name is already taken. Pick another.",
-          };
+          if (teamName !== null && (await isTeamNameTaken(teamName))) {
+            return {
+              ok: false as const,
+              message: "That team name is already taken. Pick another.",
+            };
+          }
+          continue;
         }
-        continue;
+        logger.error("hackathon team insert failed", { error });
+        return {
+          ok: false as const,
+          message: "Something went wrong. Please try again.",
+        };
       }
-
-      logger.error("hackathon team insert failed", { error: teamError });
-      return {
-        ok: false as const,
-        message: "Something went wrong. Please try again.",
-      };
     }
 
-    if (!teamId || !teamCode) {
+    if (!teamCode) {
       logger.error("hackathon team code generation exhausted");
-      return {
-        ok: false as const,
-        message: "Something went wrong. Please try again.",
-      };
-    }
-
-    const { error: participantError } = await hackathonSupabase
-      .from("hackathon_participants")
-      .insert({
-        team_id: teamId,
-        slot_index: 1,
-        is_leader: true,
-        full_name: d.fullName,
-        email: d.email,
-        phone: d.phone,
-        college: d.college,
-        graduation_year: d.graduationYear,
-      });
-
-    if (participantError) {
-      logger.error("hackathon leader participant insert failed", {
-        error: participantError,
-      });
-      await hackathonSupabase.from("hackathon_teams").delete().eq("id", teamId);
       return {
         ok: false as const,
         message: "Something went wrong. Please try again.",
@@ -257,22 +262,30 @@ export async function submitHackathonRegistrationAction(
     spotsLeft: number,
   ): Promise<{ ok: true } | { ok: false; uniqueViolation: boolean }> {
     const slotIndex = HACKATHON.maxTeamSize - spotsLeft + 1;
-    const { error } = await hackathonSupabase.from("hackathon_participants").insert({
-      team_id: teamId,
-      slot_index: slotIndex,
-      is_leader: false,
-      full_name: d.fullName,
-      email: d.email,
-      phone: d.phone,
-      college: d.college,
-      graduation_year: d.graduationYear,
-    });
-
-    if (!error) return { ok: true };
-    if (isUniqueViolation(error)) return { ok: false, uniqueViolation: true };
-
-    logger.error("hackathon join participant insert failed", { error });
-    return { ok: false, uniqueViolation: false };
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.hackathonParticipant.create({
+          data: {
+            teamId,
+            userId,
+            slotIndex,
+            isLeader: false,
+            fullName: d.fullName,
+            email: d.email,
+            phone: d.phone,
+            college: d.college,
+            graduationYear: d.graduationYear,
+          },
+        });
+      });
+      return { ok: true };
+    } catch (error) {
+      if (isPrismaUniqueViolation(error)) {
+        return { ok: false, uniqueViolation: true };
+      }
+      logger.error("hackathon join participant insert failed", { error });
+      return { ok: false, uniqueViolation: false };
+    }
   }
 
   const first = await insertJoin(team.id, team.spotsLeft);

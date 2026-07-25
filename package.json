@@ -19,7 +19,9 @@
     "db:cleanup": "tsx prisma/cleanup.ts test",
     "db:cleanup:test": "tsx prisma/cleanup.ts test",
     "db:cleanup:real": "tsx prisma/cleanup.ts real",
-    "db:cleanup:all": "tsx prisma/cleanup.ts all"
+    "db:cleanup:all": "tsx prisma/cleanup.ts all",
+    "hackathon:migrate": "tsx scripts/migrate-hackathon-to-neon.ts",
+    "hackathon:verify": "tsx scripts/migrate-hackathon-to-neon.ts --verify"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

@@ -8,7 +8,7 @@ import {
 import { setReferralCookie } from "@/app/actions/referral-actions";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { hackathonRedirectForProfilelessUser } from "@/lib/hackathon-supabase";
+import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/registration-status";
 import { redirect } from "next/navigation";
 import { LoginClient } from "./login-client";
 
@@ -68,7 +68,7 @@ export default async function LoginPage({ searchParams }: Props) {
       redirect(redirectTo);
     }
 
-    const hx = await hackathonRedirectForProfilelessUser(session.user.email);
+    const hx = await hackathonRedirectForProfilelessUser(session.user.id);
     if (hx) redirect(hx);
     redirect(registerHrefWithRef(params.ref));
   }
