@@ -133,8 +133,8 @@ export function StudentActionPanel({
 
   const handleGrantSynergy = async () => {
     const points = Number.parseInt(grantPoints, 10);
-    if (!Number.isFinite(points) || points < 1 || points > 1000) {
-      toast.error("Enter points between 1 and 1000");
+    if (!Number.isFinite(points) || points < 1 || points > 2000) {
+      toast.error("Enter points between 1 and 2000");
       throw new Error("Invalid points");
     }
     setPending(true);
@@ -236,12 +236,12 @@ export function StudentActionPanel({
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="grant-points">Points (1–1000)</Label>
+            <Label htmlFor="grant-points">Points (1–2000)</Label>
             <Input
               id="grant-points"
               type="number"
               min={1}
-              max={1000}
+              max={2000}
               value={grantPoints}
               onChange={(e) => setGrantPoints(e.target.value)}
             />
