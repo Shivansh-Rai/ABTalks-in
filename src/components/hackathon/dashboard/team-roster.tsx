@@ -1,4 +1,4 @@
-import type { HackathonMember } from "@/lib/hackathon-supabase";
+import type { HackathonMember } from "@/features/hackathon/get-my-registration";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 
 type Props = {

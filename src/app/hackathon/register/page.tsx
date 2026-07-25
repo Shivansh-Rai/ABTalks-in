@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { RegistrationForm } from "@/components/hackathon/registration-form";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { buttonVariants } from "@/components/ui/button";
-import { getMyRegistration } from "@/lib/hackathon-supabase";
+import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -21,9 +21,7 @@ export default async function HackathonRegisterPage() {
     redirect("/login?from=/hackathon/register");
   }
 
-  const existing = await getMyRegistration(
-    session.user.email.trim().toLowerCase(),
-  );
+  const existing = await getMyRegistration(session.user.id);
   if (existing) redirect("/hackathon/dashboard");
 
   const initialEmail = session.user.email;

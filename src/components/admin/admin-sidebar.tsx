@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
+  Code2,
   FileText,
   Gift,
   GraduationCap,
@@ -27,7 +28,8 @@ type IconName =
   | "referrals"
   | "redemptions"
   | "program"
-  | "cohort";
+  | "cohort"
+  | "hackathon";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -41,6 +43,7 @@ const iconMap = {
   redemptions: Package,
   program: GraduationCap,
   cohort: GraduationCap,
+  hackathon: Code2,
 } as const;
 
 type NavItem = {

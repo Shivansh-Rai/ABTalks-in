@@ -251,6 +251,7 @@ model User {
   programEntryAttempts               ProgramEntryAttempt[]
   recruiterProfile                   RecruiterProfile?
   shortlistItems                     RecruiterShortlistItem[]
+  hackathonParticipant               HackathonParticipant?
 
   @@index([createdAt(sort: Desc)])
 }
@@ -791,4 +792,47 @@ model RecruiterShortlistItem {
   recruiter       User          @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
   member          ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
   @@unique([recruiterUserId, memberId])
+}
+
+enum HackathonEntryType {
+  SOLO
+  TEAM
+}
+
+model HackathonTeam {
+  id           String                 @id @default(cuid())
+  entryType    HackathonEntryType
+  teamName     String?
+  teamCode     String                 @unique
+  createdAt    DateTime               @default(now())
+  participants HackathonParticipant[]
+
+  @@index([createdAt(sort: Desc)])
+}
+
+model HackathonParticipant {
+  id             String   @id @default(cuid())
+  teamId         String
+  userId         String   @unique
+  slotIndex      Int
+  isLeader       Boolean  @default(false)
+  fullName       String
+  email          String
+  phone          String
+  college        String
+  graduationYear Int
+  createdAt      DateTime @default(now())
+
+  team HackathonTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, slotIndex])
+  @@index([teamId])
+}
+
+/// Singleton (id always 1) — event-wide config editable from /admin/hackathon.
+model HackathonEvent {
+  id               Int      @id @default(1)
+  problemStatement String?
+  updatedAt        DateTime @updatedAt
 }

@@ -15,6 +15,7 @@ export default async function AdminLayout({
     { href: "/admin/actions", label: "Activity", icon: "submissions" as const },
     { href: "/admin/students", label: "Students", icon: "students" as const },
     { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" as const },
+    { href: "/admin/hackathon", label: "Hackathon", icon: "hackathon" as const },
     { href: "/admin/submissions", label: "Submissions", icon: "submissions" as const },
     { href: "/admin/jobs", label: "Jobs", icon: "jobs" as const },
     { href: "/admin/content", label: "Content", icon: "content" as const },
