@@ -1,9 +1,10 @@
 /**
  * One-off: copy hackathon_* rows from Supabase into Neon/Prisma.
- * Idempotent — exits 0 without writing if Neon already has teams.
  * Abort-on-unmatched — never writes partial data.
+ * Fail loudly if Neon already has teams (never exit 0 as a silent no-op).
  *
  * Usage:
+ *   npm run hackathon:preflight
  *   npm run hackathon:migrate
  *   npm run hackathon:verify
  */
@@ -62,7 +63,24 @@ type SbEvent = {
   updated_at: string;
 };
 
+type ResolveResult = {
+  sbTeams: SbTeam[];
+  sbParticipants: SbParticipant[];
+  sbEvents: SbEvent[];
+  userIdByParticipantId: Map<string, string>;
+  unmatched: { email: string; teamCode: string }[];
+  ambiguous: { email: string; teamCode: string; hitCount: number }[];
+  duplicateUserIds: {
+    userId: string;
+    a: { email: string; participantId: string };
+    b: { email: string; participantId: string };
+  }[];
+  neonTeamCount: number;
+  neonParticipantCount: number;
+};
+
 const verifyOnly = process.argv.includes("--verify");
+const preflightOnly = process.argv.includes("--preflight");
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -119,6 +137,142 @@ async function fetchAllRows<T>(
     from += pageSize;
   }
   return all;
+}
+
+/**
+ * Fetch Supabase rows and resolve every participant email → User.id
+ * (case-insensitive; ambiguity is a hard error).
+ */
+async function resolveParticipants(
+  supabase: SupabaseLike,
+  prisma: PrismaClient,
+): Promise<ResolveResult> {
+  const [sbTeams, sbParticipants, sbEvents, neonTeamCount, neonParticipantCount] =
+    await Promise.all([
+      fetchAllRows<SbTeam>(supabase, "hackathon_teams"),
+      fetchAllRows<SbParticipant>(supabase, "hackathon_participants"),
+      fetchAllRows<SbEvent>(supabase, "hackathon_event", { optional: true }),
+      prisma.hackathonTeam.count(),
+      prisma.hackathonParticipant.count(),
+    ]);
+
+  const userIdByParticipantId = new Map<string, string>();
+  const unmatched: { email: string; teamCode: string }[] = [];
+  const ambiguous: { email: string; teamCode: string; hitCount: number }[] = [];
+  const userIdSeen = new Map<string, { email: string; participantId: string }>();
+  const duplicateUserIds: ResolveResult["duplicateUserIds"] = [];
+
+  const teamCodeById = new Map(sbTeams.map((t) => [t.id, t.team_code]));
+
+  for (const p of sbParticipants) {
+    const teamCode = teamCodeById.get(p.team_id) ?? "(unknown)";
+    const hits = await prisma.user.findMany({
+      where: { email: { equals: p.email.trim(), mode: "insensitive" } },
+      select: { id: true },
+    });
+
+    if (hits.length === 0) {
+      unmatched.push({ email: p.email, teamCode });
+      continue;
+    }
+    if (hits.length > 1) {
+      ambiguous.push({ email: p.email, teamCode, hitCount: hits.length });
+      continue;
+    }
+
+    const userId = hits[0]!.id;
+    const prior = userIdSeen.get(userId);
+    if (prior) {
+      duplicateUserIds.push({
+        userId,
+        a: prior,
+        b: { email: p.email, participantId: p.id },
+      });
+      continue;
+    }
+    userIdSeen.set(userId, { email: p.email, participantId: p.id });
+    userIdByParticipantId.set(p.id, userId);
+  }
+
+  return {
+    sbTeams,
+    sbParticipants,
+    sbEvents,
+    userIdByParticipantId,
+    unmatched,
+    ambiguous,
+    duplicateUserIds,
+    neonTeamCount,
+    neonParticipantCount,
+  };
+}
+
+function printResolveAborts(result: ResolveResult): boolean {
+  let blocked = false;
+
+  if (result.unmatched.length > 0) {
+    console.error("ABORT: unmatched participants (no User for email):");
+    for (const row of result.unmatched) {
+      console.error(`  email=${row.email} team_code=${row.teamCode}`);
+    }
+    blocked = true;
+  }
+
+  if (result.ambiguous.length > 0) {
+    console.error("ABORT: ambiguous email matches (multiple Users):");
+    for (const row of result.ambiguous) {
+      console.error(
+        `  email=${row.email} team_code=${row.teamCode} hits=${row.hitCount}`,
+      );
+    }
+    blocked = true;
+  }
+
+  if (result.duplicateUserIds.length > 0) {
+    console.error("ABORT: two participants resolve to the same userId:");
+    for (const d of result.duplicateUserIds) {
+      console.error(
+        `  userId=${d.userId}\n    a: ${d.a.email} (${d.a.participantId})\n    b: ${d.b.email} (${d.b.participantId})`,
+      );
+    }
+    blocked = true;
+  }
+
+  return blocked;
+}
+
+async function preflight(
+  supabase: SupabaseLike,
+  prisma: PrismaClient,
+): Promise<void> {
+  const result = await resolveParticipants(supabase, prisma);
+  const matched = result.userIdByParticipantId.size;
+
+  console.log(`Supabase teams: ${result.sbTeams.length}`);
+  console.log(`Supabase participants: ${result.sbParticipants.length}`);
+  console.log(`Matched: ${matched}`);
+  console.log(`Unmatched: ${result.unmatched.length}`);
+  console.log(`Ambiguous: ${result.ambiguous.length}`);
+  console.log(`Duplicate userIds: ${result.duplicateUserIds.length}`);
+  console.log(`Neon HackathonTeam count: ${result.neonTeamCount}`);
+  console.log(
+    `Neon HackathonParticipant count: ${result.neonParticipantCount}`,
+  );
+
+  let blocked = printResolveAborts(result);
+
+  if (result.neonTeamCount > 0 || result.neonParticipantCount > 0) {
+    console.error(
+      `ABORT: Neon hackathon tables are not empty (teams=${result.neonTeamCount}, participants=${result.neonParticipantCount}).`,
+    );
+    blocked = true;
+  }
+
+  if (blocked) {
+    process.exit(1);
+  }
+
+  console.log("preflight OK");
 }
 
 async function verify(
@@ -211,80 +365,30 @@ async function migrate(
 ): Promise<void> {
   const existingCount = await prisma.hackathonTeam.count();
   if (existingCount > 0) {
-    const pCount = await prisma.hackathonParticipant.count();
-    const eCount = await prisma.hackathonEvent.count();
-    console.log(
-      `Neon already has hackathon data (teams=${existingCount}, participants=${pCount}, events=${eCount}). Skipping write (idempotent).`,
+    const existing = await prisma.hackathonTeam.findMany({
+      select: { teamCode: true },
+      orderBy: { teamCode: "asc" },
+    });
+    console.error(
+      `ABORT: Neon already has ${existingCount} hackathon teams — refusing to migrate. Resolve manually.`,
     );
-    process.exit(0);
+    console.error(
+      `Existing team codes: ${existing.map((t) => t.teamCode).join(", ")}`,
+    );
+    process.exit(1);
   }
 
-  const [sbTeams, sbParticipants, sbEvents] = await Promise.all([
-    fetchAllRows<SbTeam>(supabase, "hackathon_teams"),
-    fetchAllRows<SbParticipant>(supabase, "hackathon_participants"),
-    fetchAllRows<SbEvent>(supabase, "hackathon_event", { optional: true }),
-  ]);
+  const result = await resolveParticipants(supabase, prisma);
 
   console.log(
-    `Read from Supabase: teams=${sbTeams.length}, participants=${sbParticipants.length}, events=${sbEvents.length}`,
+    `Read from Supabase: teams=${result.sbTeams.length}, participants=${result.sbParticipants.length}, events=${result.sbEvents.length}`,
   );
 
-  // Pre-flight: resolve every participant email → User.id
-  const userIdByParticipantId = new Map<string, string>();
-  const unmatched: { email: string; teamCode: string }[] = [];
-  const userIdSeen = new Map<string, { email: string; participantId: string }>();
-  const duplicateUserIds: {
-    userId: string;
-    a: { email: string; participantId: string };
-    b: { email: string; participantId: string };
-  }[] = [];
-
-  const teamCodeById = new Map(sbTeams.map((t) => [t.id, t.team_code]));
-
-  for (const p of sbParticipants) {
-    const email = p.email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
-    if (!user) {
-      unmatched.push({
-        email: p.email,
-        teamCode: teamCodeById.get(p.team_id) ?? "(unknown)",
-      });
-      continue;
-    }
-    const prior = userIdSeen.get(user.id);
-    if (prior) {
-      duplicateUserIds.push({
-        userId: user.id,
-        a: prior,
-        b: { email: p.email, participantId: p.id },
-      });
-      continue;
-    }
-    userIdSeen.set(user.id, { email: p.email, participantId: p.id });
-    userIdByParticipantId.set(p.id, user.id);
-  }
-
-  if (unmatched.length > 0) {
-    console.error("ABORT: unmatched participants (no User for email):");
-    for (const row of unmatched) {
-      console.error(`  email=${row.email} team_code=${row.teamCode}`);
-    }
+  if (printResolveAborts(result)) {
     process.exit(1);
   }
 
-  if (duplicateUserIds.length > 0) {
-    console.error("ABORT: two participants resolve to the same userId:");
-    for (const d of duplicateUserIds) {
-      console.error(
-        `  userId=${d.userId}\n    a: ${d.a.email} (${d.a.participantId})\n    b: ${d.b.email} (${d.b.participantId})`,
-      );
-    }
-    process.exit(1);
-  }
-
+  const { sbTeams, sbParticipants, sbEvents, userIdByParticipantId } = result;
   const oldToNewTeamId = new Map<string, string>();
 
   await prisma.$transaction(async (tx) => {
@@ -358,6 +462,8 @@ async function main() {
   try {
     if (verifyOnly) {
       await verify(supabase, prisma);
+    } else if (preflightOnly) {
+      await preflight(supabase, prisma);
     } else {
       await migrate(supabase, prisma);
     }

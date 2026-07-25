@@ -21,7 +21,8 @@
     "db:cleanup:real": "tsx prisma/cleanup.ts real",
     "db:cleanup:all": "tsx prisma/cleanup.ts all",
     "hackathon:migrate": "tsx scripts/migrate-hackathon-to-neon.ts",
-    "hackathon:verify": "tsx scripts/migrate-hackathon-to-neon.ts --verify"
+    "hackathon:verify": "tsx scripts/migrate-hackathon-to-neon.ts --verify",
+    "hackathon:preflight": "tsx scripts/migrate-hackathon-to-neon.ts --preflight"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
