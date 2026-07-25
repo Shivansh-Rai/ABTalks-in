@@ -40,8 +40,19 @@ function formatBuildStepContent(raw: string): string {
     .replace(/—/g, " - ")
     .replace(/\u2013/g, "-")
     .replace(/–/g, "-")
-    .replace(/\s+-\s+/g, " - ")
     .trim();
+
+  // Normalize mid-sentence " - " spacing only — never touch markdown list markers
+  // (a prior global /\s+-\s+/g flattened `\n   - item` into one paragraph).
+  text = text
+    .split("\n")
+    .map((line) => {
+      if (/^\s*[-*+]\s/.test(line) || /^\s*\d+\.\s/.test(line)) {
+        return line;
+      }
+      return line.replace(/\s+-\s+/g, " - ");
+    })
+    .join("\n");
 
   // Bare URLs → inline code (click-to-copy). Skip ones already in backticks.
   text = text.replace(
@@ -131,16 +142,54 @@ const buildStepMdComponents: Components = {
   },
 };
 
-function StepPointer() {
+/** Figma 246:20 — triple chevron pointing right (active step marker). */
+function StepActiveArrow() {
   return (
-    <div
-      className="flex h-6 w-10 items-center justify-center rounded-[4px] bg-[#7528C9]/30"
+    <svg
+      width="60"
+      height="40"
+      viewBox="0 0 60 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <svg width="16" height="10" viewBox="0 0 24 14" fill="none">
-        <path d="M12 14L0 0H24L12 14Z" fill="#968BEC" />
-      </svg>
-    </div>
+      <path
+        d="M30.8127 15.7334C34.0034 17.683 34.0034 22.317 30.8127 24.2666L17.0558 32.6724C13.7241 34.7082 9.44883 32.3104 9.44883 28.4059V11.5942C9.44883 7.68964 13.7241 5.29178 17.0558 7.32759L30.8127 15.7334Z"
+        fill="#2C1BA9"
+      />
+      <path
+        d="M41.6788 15.7334C44.8695 17.683 44.8695 22.317 41.6788 24.2666L27.9219 32.6724C24.5902 34.7082 20.3149 32.3104 20.3149 28.4059V11.5942C20.3149 7.68964 24.5902 5.29178 27.9219 7.32759L41.6788 15.7334Z"
+        fill="#503EE0"
+      />
+      <path
+        d="M53.0174 15.7334C56.2081 17.683 56.2081 22.317 53.0174 24.2666L39.2605 32.6724C35.9288 34.7082 31.6535 32.3104 31.6535 28.4059V11.5942C31.6535 7.68964 35.9288 5.29178 39.2605 7.32759L53.0174 15.7334Z"
+        fill="#7364E6"
+      />
+    </svg>
+  );
+}
+
+/** Figma 246:14 — purple dotted connector (`stroke-dasharray: 6 6`). */
+function StepDottedLine() {
+  return (
+    <svg
+      className="mx-1 h-[2px] min-w-3 flex-1"
+      viewBox="0 0 100 2"
+      preserveAspectRatio="none"
+      aria-hidden
+    >
+      <line
+        x1="0"
+        y1="1"
+        x2="100"
+        y2="1"
+        stroke="#7528C9"
+        strokeOpacity="0.54"
+        strokeWidth="2"
+        strokeDasharray="6 6"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 
@@ -219,37 +268,28 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
   return (
     <DaySectionCard title="Build Steps" icon="build">
       <div className="relative mb-8 min-h-[4.75rem] pt-1">
-        {pointerX !== null && (
-          <motion.div
-            className="pointer-events-none absolute top-0 z-10 -translate-x-1/2"
-            initial={false}
-            animate={{ left: pointerX }}
-            transition={reduceMotion ? { duration: 0 } : pointerSpring}
-          >
-            <motion.div
-              key={active}
-              initial={reduceMotion ? false : { scale: 0.85, opacity: 0.5 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : { duration: 0.3, ease: "easeOut" }
-              }
-            >
-              <StepPointer />
-            </motion.div>
-          </motion.div>
-        )}
-
         <div
           ref={trackRef}
-          className="flex w-full items-end justify-between gap-1"
+          className="relative flex w-full items-center justify-between gap-1"
         >
+          {/* Active arrow slides along the track, replacing the circle at the current step */}
+          {pointerX !== null && (
+            <motion.div
+              className="pointer-events-none absolute top-0 z-10 -translate-x-1/2"
+              initial={false}
+              animate={{ left: pointerX }}
+              transition={reduceMotion ? { duration: 0 } : pointerSpring}
+              aria-hidden
+            >
+              <StepActiveArrow />
+            </motion.div>
+          )}
+
           {visibleIndices.map((stepIndex, vi) => {
             const isActive = stepIndex === active;
             const isLastVisible = vi === visibleIndices.length - 1;
             return (
-              <div key={stepIndex} className="flex min-w-0 flex-1 items-end">
+              <div key={stepIndex} className="flex min-w-0 flex-1 items-start">
                 <button
                   ref={(el) => {
                     if (el) stepRefs.current.set(stepIndex, el);
@@ -260,21 +300,19 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
                   className="flex min-w-0 flex-1 flex-col items-center"
                   aria-current={isActive ? "step" : undefined}
                 >
-                  <div className="h-6 w-full shrink-0" aria-hidden />
-                  <motion.span
-                    className={cn(
-                      "mt-1 flex size-4 items-center justify-center rounded-full border-2 border-[#7528C9] bg-[#040C20]",
-                    )}
-                    initial={false}
-                    animate={{
-                      scale: isActive && !reduceMotion ? 1.2 : 1,
-                      boxShadow:
-                        isActive && !reduceMotion
-                          ? "0 0 0 3px rgba(117, 40, 201, 0.35)"
-                          : "0 0 0 0px rgba(117, 40, 201, 0)",
-                    }}
-                    transition={reduceMotion ? { duration: 0 } : stepSpring}
-                  />
+                  {/* Marker slot: Figma arrow 60×40; circle 20×20 centered on the dotted line */}
+                  <span className="relative flex h-10 w-[60px] items-center justify-center">
+                    <motion.span
+                      className="size-5 rounded-full border-[3px] border-[#7528C9] bg-[#040C20]"
+                      initial={false}
+                      animate={{
+                        opacity: isActive ? 0 : 1,
+                        scale: isActive ? 0.6 : 1,
+                      }}
+                      transition={reduceMotion ? { duration: 0 } : stepSpring}
+                      aria-hidden
+                    />
+                  </span>
                   <motion.span
                     className="mt-1.5 flex h-6 w-full origin-center items-center justify-center truncate text-center text-xs leading-none"
                     initial={false}
@@ -288,11 +326,11 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
                     Step {stepIndex + 1}
                   </motion.span>
                 </button>
+                {/* Align connector to marker midpoint (h-10 → 20px − 1px line) */}
                 {!isLastVisible && (
-                  <div
-                    className="mx-1 mb-[1.625rem] h-0 min-w-3 flex-1 border-t border-dashed border-[rgba(117,40,201,0.54)]"
-                    aria-hidden
-                  />
+                  <div className="mt-[19px] flex min-w-3 flex-1 items-center">
+                    <StepDottedLine />
+                  </div>
                 )}
               </div>
             );
