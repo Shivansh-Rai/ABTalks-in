@@ -184,7 +184,6 @@ export function DayShell({
   modules,
   estimatedMin,
   missionPoints,
-  onConceptCheckClick,
   children,
 }: {
   dayNumber: number;
@@ -195,31 +194,10 @@ export function DayShell({
   modules: CurriculumModule[];
   estimatedMin: number;
   missionPoints: number;
-  onConceptCheckClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <div className="-mx-4 -my-6 min-h-[calc(100svh-4rem)] bg-[#030712] px-4 py-6 text-white md:-mx-4 md:px-6">
-      <header className="mb-6 flex flex-wrap items-center gap-4 md:gap-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span
-            className="size-2.5 shrink-0 rounded-full bg-[#FF4B4B]"
-            aria-hidden
-          />
-          <p className="truncate text-sm font-semibold text-[#BCBCBC] md:text-base">
-            Phase {moduleNumber}: {moduleTitle}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onConceptCheckClick}
-          disabled={!onConceptCheckClick}
-          className="inline-flex h-10 shrink-0 items-center justify-center rounded-[12px] border border-black bg-[#7364E6] px-4 text-sm font-semibold text-white shadow-[inset_3px_3px_3px_0_rgba(0,0,0,0.5)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Concept check →
-        </button>
-      </header>
-
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(240px,352px)_1fr] lg:items-stretch">
         <div className="hidden lg:block">
           <DaySidebar
