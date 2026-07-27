@@ -1,36 +1,9 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { Mail } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const SOCIAL_LINKS = [
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/abtalksonai/",
-    icon: InstagramIcon,
-  },
-  {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/company/abtalks-on-ai/",
-    icon: LinkedInIcon,
-  },
-  {
-    label: "YouTube",
-    href: "https://www.youtube.com/@ABTalksOnAI",
-    icon: YouTubeIcon,
-  },
-  {
-    label: "X",
-    href: "https://x.com/abtalksonai",
-    icon: XIcon,
-  },
-  {
-    label: "Discord",
-    href: "https://discord.gg/j4Q8tvDj6",
-    icon: DiscordIcon,
-  },
-] as const;
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -102,6 +75,40 @@ function DiscordIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+type SocialLink = {
+  label: string;
+  href: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+const SOCIAL_LINKS: SocialLink[] = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/abtalksonai/",
+    icon: InstagramIcon,
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/abtalks-on-ai/",
+    icon: LinkedInIcon,
+  },
+  {
+    label: "YouTube",
+    href: "https://www.youtube.com/@ABTalksOnAI",
+    icon: YouTubeIcon,
+  },
+  {
+    label: "X",
+    href: "https://x.com/abtalksonai",
+    icon: XIcon,
+  },
+  {
+    label: "Discord",
+    href: "https://discord.gg/j4Q8tvDj6",
+    icon: DiscordIcon,
+  },
+];
 
 const socialIconClassName = cn(
   "inline-flex size-9 items-center justify-center rounded-full text-primary",
