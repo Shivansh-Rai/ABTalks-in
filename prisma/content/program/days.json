@@ -1516,22 +1516,97 @@
     "moduleNumber": 6,
     "title": "Agentic Frameworks: LangChain Agents & Tool Use",
     "missionType": "SHIP_IT",
-    "briefMd": "## Agentic Frameworks: LangChain Agents & Tool Use\n\nTurn your function-calling logic into a ReAct reasoning agent and read its reasoning traces.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Agentic Frameworks: LangChain Agents & Tool Use\n\nTurn your Day 13 function-calling tools into a ReAct reasoning agent and read its Thought → Action → Observation traces. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **LangChain Tool objects** - name + description drive when the agent calls a tool\n- **ReAct agents** - `create_react_agent` / `AgentExecutor` loops\n- **Reasoning traces** - Thought → Action → Observation → Final Answer\n- **Tool-selection quality** - compare agent choices to what a human coverage-support rep would do\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── langchain_agent.py            ← tools wrapped + ReAct agent\n├── agent_traces.md               ← full reasoning traces for 5 questions\n├── tool_calling_chatbot.py       ← Day 13 tools (reuse)\n└── coverage.db                   ← Day 4 data (or mocks)\n```\n\n### Build steps\n\n1. **Install LangChain** in your activated venv:\n   - `pip install langchain langchain-anthropic`\n   - or `pip install langchain langchain-openai`\n   - Pick the package that matches the LLM you already use\n\n2. **Wrap your Day 13 tools** as LangChain `Tool` objects:\n   - `check_coverage`\n   - `get_claim_status`\n   - `get_plan_details`\n   - Give each a clear **name** and **description**\n   - The description is what the agent uses to decide when to call it\n\n3. **Create a ReAct agent** with your LLM and tool list:\n   - Use `create_react_agent` **or** `AgentExecutor`\n   - Pass the same tools you wrapped in step 2\n\n4. **Run with verbose traces:**\n   - Set `verbose=True`\n   - Run your **5** test questions\n   - Read the printed reasoning: Thought → Action → Observation → … → Final Answer\n\n5. **Compare tool choices** to a human coverage-support rep:\n   - Note any wrong tool selections\n   - Note any questions that should have skipped tools but didn't (or the reverse)\n\n6. **Save the full reasoning traces** to `agent_traces.md` for reference.\n\n7. **Ship to your program repo:**\n   - Commit `langchain_agent.py` and `agent_traces.md`\n   - Suggested commit: `git add langchain_agent.py agent_traces.md && git commit -m \"day 21: langchain react agent traces\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What flag do you set so the agent prints its reasoning trace (`verbose=…`)?\n2. How many **test questions** do you run through the agent?\n3. What is the **filename** where you save the full reasoning traces?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "verbose flag value",
+          "value": "True",
+          "caseInsensitive": true
+        },
+        {
+          "check": "agent test question count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "traces filename",
+          "value": "agent_traces.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "langchain_agent.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "langchain_agent.py"
+        },
+        {
+          "check": "wraps check_coverage tool",
+          "kind": "contentMatches",
+          "path": "langchain_agent.py",
+          "regex": "check_coverage"
+        },
+        {
+          "check": "wraps get_claim_status tool",
+          "kind": "contentMatches",
+          "path": "langchain_agent.py",
+          "regex": "get_claim_status"
+        },
+        {
+          "check": "wraps get_plan_details tool",
+          "kind": "contentMatches",
+          "path": "langchain_agent.py",
+          "regex": "get_plan_details"
+        },
+        {
+          "check": "creates a ReAct agent or AgentExecutor",
+          "kind": "contentMatches",
+          "path": "langchain_agent.py",
+          "regex": "(?i)(create_react_agent|AgentExecutor)"
+        },
+        {
+          "check": "enables verbose traces",
+          "kind": "contentMatches",
+          "path": "langchain_agent.py",
+          "regex": "(?i)verbose\\s*=\\s*True"
+        },
+        {
+          "check": "agent_traces.md exists",
+          "kind": "fileExists",
+          "path": "agent_traces.md"
+        },
+        {
+          "check": "agent_traces.md has real content",
+          "kind": "minLines",
+          "path": "agent_traces.md",
+          "min": 15
+        },
+        {
+          "check": "traces include ReAct steps",
+          "kind": "contentMatches",
+          "path": "agent_traces.md",
+          "regex": "(?i)(Thought|Action|Observation|Final Answer)"
+        },
+        {
+          "check": "traces note tool selection review",
+          "kind": "contentMatches",
+          "path": "agent_traces.md",
+          "regex": "(?i)(wrong|tool|human|rep|correct|miss)"
         }
       ]
     },
     "objectives": [
-      "Turn your function-calling logic into a ReAct reasoning agent and read its reasoning traces."
+      "Install LangChain and wrap Day 13 tools as Tool objects with clear descriptions",
+      "Create a ReAct agent (create_react_agent or AgentExecutor) with verbose=True",
+      "Run 5 test questions and read Thought → Action → Observation traces",
+      "Compare tool choices to a human coverage rep and save traces to agent_traces.md"
     ],
     "tools": [
       "LangChain",
-      "ReAct"
+      "ReAct",
+      "langchain-anthropic / langchain-openai"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -1542,18 +1617,80 @@
     "moduleNumber": 6,
     "title": "Multi-Agent Orchestration",
     "missionType": "SHIP_IT",
-    "briefMd": "## Multi-Agent Orchestration\n\nSplit responsibilities across a Router, Coverage Specialist and Claims Specialist with CrewAI or LangGraph.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Multi-Agent Orchestration\n\nSplit responsibilities across a Router, Coverage Specialist, and Claims Specialist with CrewAI or LangGraph. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Multi-agent roles** - Router vs domain specialists\n- **Crew / graph wiring** - router output decides which specialist runs\n- **When multi-agent is worth it** - genuinely different domains vs one well-tooled agent\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── multi_agent.py                ← Router + specialists + Crew/Graph\n├── multi_agent_comparison.md     ← vs Day 21 single-agent + when multi-agent wins\n├── langchain_agent.py            ← Day 21 baseline\n└── agent_traces.md               ← Day 21 traces\n```\n\n### Build steps\n\n1. **Install your orchestration library:**\n   - `pip install crewai`\n   - or `pip install langgraph` if you prefer a graph-based approach\n\n2. **Define Agent 1 (\"Router\"):**\n   - Role: classify the question as **coverage**, **claims**, or **enrollment**\n   - Decide which specialist should handle it\n\n3. **Define the specialists:**\n   - Agent 2 **\"Coverage Specialist\"** - answers using retrieval + tools for coverage\n   - Agent 3 **\"Claims Specialist\"** - answers using retrieval + tools for claims\n\n4. **Wire them into a Crew / Graph:**\n   - Router output determines which specialist is invoked\n   - Pass clear instructions for that specialist\n\n5. **Run your 5 test questions** through the multi-agent workflow:\n   - Compare results against the single-agent Day 21 traces\n   - Note routing accuracy and answer quality differences\n\n6. **Document when multi-agent is worth it** in `multi_agent_comparison.md`:\n   - Genuinely different domains (e.g. coverage vs claims) → multi-agent helps\n   - Simple / single-domain questions → one well-tooled agent is often enough\n\n7. **Ship to your program repo:**\n   - Commit `multi_agent.py` and `multi_agent_comparison.md`\n   - Suggested commit: `git add multi_agent.py multi_agent_comparison.md && git commit -m \"day 22: multi-agent router + specialists\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the **name/role** of the agent that classifies questions and picks a specialist?\n2. How many **specialist agents** do you define besides the Router?\n3. How many **test questions** do you run through the multi-agent workflow?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "router agent name",
+          "value": "Router",
+          "caseInsensitive": true
+        },
+        {
+          "check": "specialist agent count",
+          "value": "2",
+          "caseInsensitive": true
+        },
+        {
+          "check": "multi-agent test question count",
+          "value": "5",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "multi_agent.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "multi_agent.py"
+        },
+        {
+          "check": "defines Router agent",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)Router"
+        },
+        {
+          "check": "defines Coverage Specialist",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)Coverage Specialist"
+        },
+        {
+          "check": "defines Claims Specialist",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)Claims Specialist"
+        },
+        {
+          "check": "uses CrewAI or LangGraph",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)(crewai|Crew\\(|langgraph|StateGraph)"
+        },
+        {
+          "check": "multi_agent_comparison.md exists",
+          "kind": "fileExists",
+          "path": "multi_agent_comparison.md"
+        },
+        {
+          "check": "comparison has real content",
+          "kind": "minLines",
+          "path": "multi_agent_comparison.md",
+          "min": 10
+        },
+        {
+          "check": "compares to single-agent or documents when worth it",
+          "kind": "contentMatches",
+          "path": "multi_agent_comparison.md",
+          "regex": "(?i)(day 21|single-?agent|worth|coverage|claims)"
         }
       ]
     },
     "objectives": [
-      "Split responsibilities across a Router, Coverage Specialist and Claims Specialist with CrewAI or LangGraph."
+      "Install CrewAI or LangGraph for multi-agent orchestration",
+      "Define Router, Coverage Specialist, and Claims Specialist agents",
+      "Wire routing so the Router picks which specialist runs",
+      "Compare 5-question results to Day 21 and document when multi-agent helps"
     ],
     "tools": [
       "CrewAI",
@@ -1568,21 +1705,84 @@
     "moduleNumber": 6,
     "title": "Model Context Protocol (MCP)",
     "missionType": "SHIP_IT",
-    "briefMd": "## Model Context Protocol (MCP)\n\nExpose your coverage and claims tools as an MCP server and connect it to Claude Desktop or Cline.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Model Context Protocol (MCP)\n\nExpose your coverage and claims tools as an MCP server and connect it to Claude Desktop or Cline. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **MCP servers** - local tools discoverable by desktop AI clients\n- **Tool manifests** - name, description, schema per the MCP spec\n- **Client registration** - Claude Desktop `claude_desktop_config.json` or Cline MCP settings\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── mcp_server.py                 ← MCP server with check_coverage + get_claim_status\n├── mcp_test_notes.md             ← registration + tool-call confirmation\n├── retrieval_engine.py           ← Day 10 vector_lookup\n└── coverage.db / data/plans.csv  ← Day 4 plans\n```\n\nDo **not** commit API keys or private desktop config with secrets.\n\n### Build steps\n\n1. **Install the MCP Python SDK:**\n   - `pip install mcp`\n\n2. **Write a minimal MCP server** in `mcp_server.py` exposing one tool:\n   - `check_coverage`\n   - Internally call Day 10 `vector_lookup()` plus your Day 4 plans table\n\n3. **Define the server's manifest** per the MCP spec:\n   - name\n   - description\n   - tool schema\n\n4. **Run and register locally:**\n   - Run: `python mcp_server.py`\n   - Register in Claude Desktop (`claude_desktop_config.json`) **or** Cline (MCP Servers icon / `cline_mcp_settings.json`)\n\n5. **Restart / reload and test:**\n   - Restart Claude Desktop or reload the Cline panel\n   - Ask a coverage question that should trigger your MCP tool\n   - Confirm you see the tool call happen\n   - Log what you saw in `mcp_test_notes.md`\n\n6. **Add a second tool** `get_claim_status` to the same server and re-test.\n\n7. **Ship to your program repo:**\n   - Commit `mcp_server.py` and `mcp_test_notes.md`\n   - Suggested commit: `git add mcp_server.py mcp_test_notes.md && git commit -m \"day 23: mcp server tools\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which `pip` package installs the MCP Python SDK?\n2. What is the **first tool** your MCP server exposes?\n3. What command runs the MCP server locally?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "MCP pip package",
+          "value": "mcp",
+          "caseInsensitive": true
+        },
+        {
+          "check": "first MCP tool",
+          "value": "check_coverage",
+          "caseInsensitive": true
+        },
+        {
+          "check": "run MCP server command",
+          "value": "python mcp_server.py",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "mcp_server.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "mcp_server.py"
+        },
+        {
+          "check": "exposes check_coverage",
+          "kind": "contentMatches",
+          "path": "mcp_server.py",
+          "regex": "check_coverage"
+        },
+        {
+          "check": "exposes get_claim_status",
+          "kind": "contentMatches",
+          "path": "mcp_server.py",
+          "regex": "get_claim_status"
+        },
+        {
+          "check": "uses MCP SDK or server APIs",
+          "kind": "contentMatches",
+          "path": "mcp_server.py",
+          "regex": "(?i)(mcp|Server|tool)"
+        },
+        {
+          "check": "calls vector_lookup or plans data",
+          "kind": "contentMatches",
+          "path": "mcp_server.py",
+          "regex": "(?i)(vector_lookup|plans|coverage)"
+        },
+        {
+          "check": "mcp_test_notes.md exists",
+          "kind": "fileExists",
+          "path": "mcp_test_notes.md"
+        },
+        {
+          "check": "test notes have content",
+          "kind": "minLines",
+          "path": "mcp_test_notes.md",
+          "min": 8
+        },
+        {
+          "check": "notes document client registration or tool call",
+          "kind": "contentMatches",
+          "path": "mcp_test_notes.md",
+          "regex": "(?i)(claude|cline|tool|mcp|config)"
         }
       ]
     },
     "objectives": [
-      "Expose your coverage and claims tools as an MCP server and connect it to Claude Desktop or Cline."
+      "Install the MCP Python SDK and write mcp_server.py",
+      "Expose check_coverage using vector_lookup + Day 4 plans",
+      "Register the server in Claude Desktop or Cline and confirm a tool call",
+      "Add get_claim_status and re-test"
     ],
     "tools": [
-      "MCP Python SDK"
+      "MCP Python SDK",
+      "Claude Desktop / Cline"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -1593,22 +1793,86 @@
     "moduleNumber": 6,
     "title": "Agentic Chatbot - Full Integration",
     "missionType": "SHIP_IT",
-    "briefMd": "## Agentic Chatbot - Full Integration\n\nBring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks - chaos-tested.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Agentic Chatbot - Full Integration\n\nBring agents, MCP tools, memory, and retrieval together with timeouts, retries, and graceful fallbacks - then chaos-test them. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **MCP tools inside multi-agent workflows**\n- **Conversation memory** for plan-aware reasoning\n- **Resilience** - timeouts, one retry, canned fallback (no 500 to the member)\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── multi_agent.py                ← Day 22 workflow updated to call MCP tools\n├── mcp_server.py                 ← Day 23 tools\n├── coverage-chatbot-api/main.py  ← Day 20 memory / /chat path (if wired there)\n└── chaos_test.md                 ← break-one-tool + fallback confirmation\n```\n\n### Build steps\n\n1. **Replace mock/direct tool calls** in your Day 22 agent workflow with actual **MCP tool calls** from Day 23.\n\n2. **Wire in the Day 20 memory store** so agents can use conversation history (including the member's selected plan) when reasoning.\n\n3. **Wrap every tool call** in `try/except` with a timeout:\n   - e.g. `asyncio.wait_for(..., timeout=10)`\n   - On failure, fall back to a canned response like: \"I'm having trouble accessing that right now, please contact member support\"\n   - Do **not** crash or return a raw 500 to the member\n\n4. **Add a retry** - max **1** retry for transient failures before falling back.\n\n5. **Run a chaos test:**\n   - Temporarily break one tool (e.g. rename a function)\n   - Confirm the fallback triggers gracefully\n   - Log results in `chaos_test.md`\n\n6. **Fix the break** and confirm everything passes again.\n\n7. **Ship to your program repo:**\n   - Commit updated agent/backend files and `chaos_test.md`\n   - Suggested commit: `git add multi_agent.py chaos_test.md && git commit -m \"day 24: mcp + memory + resilient fallbacks\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What **timeout (seconds)** do you use around tool calls (e.g. `asyncio.wait_for`)?\n2. How many **retries** do you allow for transient failures before falling back?\n3. What is the **filename** where you document the chaos test?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "tool call timeout seconds",
+          "value": "10",
+          "caseInsensitive": true
+        },
+        {
+          "check": "max retries before fallback",
+          "value": "1",
+          "caseInsensitive": true
+        },
+        {
+          "check": "chaos test filename",
+          "value": "chaos_test.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "multi_agent.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "multi_agent.py"
+        },
+        {
+          "check": "references MCP tools or mcp_server",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)(mcp|check_coverage|get_claim_status)"
+        },
+        {
+          "check": "uses timeout or wait_for",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)(wait_for|timeout|asyncio)"
+        },
+        {
+          "check": "has try/except or fallback path",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)(try:|except|fallback|member support|trouble accessing)"
+        },
+        {
+          "check": "implements retry",
+          "kind": "contentMatches",
+          "path": "multi_agent.py",
+          "regex": "(?i)(retry|retries|attempt)"
+        },
+        {
+          "check": "chaos_test.md exists",
+          "kind": "fileExists",
+          "path": "chaos_test.md"
+        },
+        {
+          "check": "chaos_test.md has content",
+          "kind": "minLines",
+          "path": "chaos_test.md",
+          "min": 8
+        },
+        {
+          "check": "chaos notes document fallback",
+          "kind": "contentMatches",
+          "path": "chaos_test.md",
+          "regex": "(?i)(fallback|break|timeout|graceful|support)"
         }
       ]
     },
     "objectives": [
-      "Bring agents, MCP tools, memory and retrieval together with timeouts, retries and graceful fallbacks - chaos-tested."
+      "Call Day 23 MCP tools from the Day 22 multi-agent workflow",
+      "Give agents Day 20 conversation memory including selected plan",
+      "Add 10s timeouts, max 1 retry, and a canned support fallback",
+      "Chaos-test a broken tool and confirm no raw 500 reaches the member"
     ],
     "tools": [
-      "error handling",
-      "fallbacks"
+      "MCP",
+      "conversation memory",
+      "asyncio timeouts",
+      "retries"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -1619,18 +1883,84 @@
     "moduleNumber": 7,
     "title": "AI Governance, PHI Handling & Guardrails",
     "missionType": "SHIP_IT",
-    "briefMd": "## AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails - tested with adversarial prompts.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: AI Governance, PHI Handling & Guardrails\n\nWrite your governance checklist, build PII redaction, and add input/output guardrails - tested with adversarial prompts. Expect about **4 hours**.\n\n**Concepts to learn**\n\n- **Governance checklists** - data sensitivity, accountability, review ownership\n- **PHI/PII redaction** - regex or Presidio\n- **Input/output guardrails** - prompt injection, leakage, medical-advice redirects\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── GOVERNANCE.md                 ← checklist + production compliance note\n├── redact_pii.py                 ← redact_pii(text) + unit tests\n├── guardrails_config.py          ← input + output guardrails\n├── adversarial_tests.md          ← 5 prompts with pass/fail\n└── coverage-chatbot-api/main.py  ← /chat logging uses redact_pii\n```\n\nUse **synthetic / fake** PHI only - never real member data.\n\n### Build steps\n\n1. **Write `GOVERNANCE.md`** covering:\n   - data sources used and their sensitivity\n   - PHI/PII fields present (`member_id`, claim details, procedures)\n   - bias risks (e.g. plan-tier assumptions)\n   - who's accountable for reviewing chatbot outputs\n\n2. **Scan `knowledge_base.jsonl` and SQL tables** for likely PHI/PII columns, then write `redact_pii(text)`:\n   - regex, **or**\n   - free/open-source Presidio\n   - Cover names, member IDs, and other identifiers\n\n3. **Unit test `redact_pii`** with **3** sample strings containing fake PHI/PII, then wire it into your `/chat` endpoint's logging code.\n\n4. **Install Guardrails AI:**\n   - `pip install guardrails-ai`\n   - Define an **input** guardrail that rejects/flags prompt-injection patterns\n   - Examples: \"ignore previous instructions\", \"show me another member's claims\"\n\n5. **Define an output guardrail** that:\n   - scans for PHI/PII leakage (reuse `redact_pii`)\n   - flags anything resembling a medical diagnosis (e.g. \"you should take\", \"your condition is\")\n   - redirects those to a licensed-provider disclaimer\n\n6. **Write 5 adversarial test prompts** and run them through the full pipeline:\n   - a jailbreak attempt\n   - a request for another member's claim data\n   - a medical-advice question\n   - an off-topic question\n   - a PHI-fishing question\n\n7. **Log pass/fail** in `adversarial_tests.md` and fix any guardrail that missed:\n   - Note in `GOVERNANCE.md` that production use requires a formal compliance review beyond this exercise\n\n8. **Ship to your program repo:**\n   - Commit governance, redaction, guardrails, and test log files\n   - Suggested commit: `git add GOVERNANCE.md redact_pii.py guardrails_config.py adversarial_tests.md && git commit -m \"day 25: governance + guardrails\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the **filename** of your governance checklist?\n2. What is the **function name** that redacts PHI/PII from text?\n3. How many **adversarial test prompts** do you run?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "governance filename",
+          "value": "GOVERNANCE.md",
+          "caseInsensitive": true
+        },
+        {
+          "check": "redaction function name",
+          "value": "redact_pii",
+          "caseInsensitive": true
+        },
+        {
+          "check": "adversarial test count",
+          "value": "5",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "GOVERNANCE.md exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "GOVERNANCE.md"
+        },
+        {
+          "check": "GOVERNANCE.md has real content",
+          "kind": "minLines",
+          "path": "GOVERNANCE.md",
+          "min": 15
+        },
+        {
+          "check": "governance covers PHI/PII or accountability",
+          "kind": "contentMatches",
+          "path": "GOVERNANCE.md",
+          "regex": "(?i)(PHI|PII|member_id|accountab|compliance)"
+        },
+        {
+          "check": "redact_pii.py exists",
+          "kind": "fileExists",
+          "path": "redact_pii.py"
+        },
+        {
+          "check": "defines redact_pii",
+          "kind": "contentMatches",
+          "path": "redact_pii.py",
+          "regex": "def\\s+redact_pii\\s*\\("
+        },
+        {
+          "check": "guardrails_config.py exists",
+          "kind": "fileExists",
+          "path": "guardrails_config.py"
+        },
+        {
+          "check": "guardrails mention input or injection",
+          "kind": "contentMatches",
+          "path": "guardrails_config.py",
+          "regex": "(?i)(guardrail|inject|ignore previous|input|output)"
+        },
+        {
+          "check": "adversarial_tests.md exists",
+          "kind": "fileExists",
+          "path": "adversarial_tests.md"
+        },
+        {
+          "check": "adversarial tests log pass/fail",
+          "kind": "contentMatches",
+          "path": "adversarial_tests.md",
+          "regex": "(?i)(pass|fail|jailbreak|medical|PHI)"
         }
       ]
     },
     "objectives": [
-      "Write your governance checklist, build PII redaction, and add input/output guardrails - tested with adversarial prompts."
+      "Write GOVERNANCE.md covering data sensitivity, PHI/PII, bias, and accountability",
+      "Implement and unit-test redact_pii; wire into /chat logging",
+      "Add input/output guardrails (injection, leakage, medical-advice redirects)",
+      "Run 5 adversarial prompts, log pass/fail, and note formal compliance review is still required"
     ],
     "tools": [
       "Guardrails AI",
