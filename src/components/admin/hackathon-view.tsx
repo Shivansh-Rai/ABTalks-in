@@ -1,12 +1,13 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
+import Link from "next/link";
 import { ChevronDown, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import { updateHackathonProblemStatementAction } from "@/app/actions/admin-hackathon-actions";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -95,10 +96,18 @@ export function HackathonView({ data }: Props) {
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-medium">Teams</h2>
-          <Button type="button" variant="outline" size="sm" onClick={handleExport}>
-            <Download className="size-4" aria-hidden />
-            Export CSV
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/admin/hackathon/students"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Master Data
+            </Link>
+            <Button type="button" variant="outline" size="sm" onClick={handleExport}>
+              <Download className="size-4" aria-hidden />
+              Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-lg border">
