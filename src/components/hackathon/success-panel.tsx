@@ -47,7 +47,7 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
           <p className="text-sm text-muted-foreground">
             Share this code with your teammates, they each register at{" "}
             <span className="font-medium text-foreground">
-              abtalksapp.vercel.app/hackathon/register
+              abtalks.in/hackathon/register
             </span>{" "}
             and enter it.
           </p>
