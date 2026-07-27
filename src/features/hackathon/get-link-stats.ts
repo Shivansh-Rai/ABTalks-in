@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 export type HackathonLinkStat = {
+  id: string;
   slug: string;
   label: string;
   note: string | null;
@@ -19,7 +20,7 @@ export type HackathonLinkStats = {
 export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
   const [linkRows, participantRows] = await Promise.all([
     prisma.hackathonLink.findMany({
-      select: { slug: true, label: true, note: true },
+      select: { id: true, slug: true, label: true, note: true },
       orderBy: { label: "asc" },
     }),
     prisma.hackathonParticipant.findMany({
@@ -43,6 +44,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
 
   const links: HackathonLinkStat[] = linkRows
     .map((r) => ({
+      id: r.id,
       slug: r.slug,
       label: r.label,
       note: r.note ?? null,
