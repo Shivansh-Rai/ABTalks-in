@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { HackathonLinkAdd } from "@/components/admin/hackathon-link-add";
 import { HackathonLinkCopy } from "@/components/admin/hackathon-link-copy";
 import { HackathonLinkRowActions } from "@/components/admin/hackathon-link-row-actions";
+import { HackathonLinkView } from "@/components/admin/hackathon-link-view";
 import {
   Table,
   TableBody,
@@ -89,6 +90,11 @@ export default async function AdminHackathonLinksPage() {
                         <span className="truncate font-mono text-xs text-muted-foreground">
                           {url}
                         </span>
+                        <HackathonLinkView
+                          label={row.label}
+                          slug={row.slug}
+                          users={row.users}
+                        />
                         <HackathonLinkCopy url={url} />
                       </div>
                     </TableCell>
