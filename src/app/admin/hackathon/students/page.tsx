@@ -58,6 +58,7 @@ export default async function AdminHackathonMasterStudentsPage({
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Team Name</TableHead>
               </TableRow>
@@ -67,6 +68,7 @@ export default async function AdminHackathonMasterStudentsPage({
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.fullName}</TableCell>
                   <TableCell>{row.email}</TableCell>
+                  <TableCell>{row.phone}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{row.entryType}</Badge>
                   </TableCell>

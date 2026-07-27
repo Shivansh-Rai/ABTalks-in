@@ -11,6 +11,7 @@ export type HackathonLinkStat = {
     id: string;
     fullName: string;
     email: string;
+    phone: string;
     team: "solo" | "team";
     college: string;
   }[];
@@ -36,6 +37,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
         sourceSlug: true,
         fullName: true,
         email: true,
+        phone: true,
         college: true,
         team: {
           select: {
@@ -53,6 +55,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
       id: string;
       fullName: string;
       email: string;
+      phone: string;
       team: "solo" | "team";
       college: string;
     }[]
@@ -71,6 +74,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
       id: row.id,
       fullName: row.fullName,
       email: row.email,
+      phone: row.phone,
       team: row.team.entryType === "SOLO" ? "solo" : "team",
       college: row.college,
     });

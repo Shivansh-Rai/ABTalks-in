@@ -22,6 +22,7 @@ type LinkUser = {
   id: string;
   fullName: string;
   email: string;
+  phone: string;
   team: "solo" | "team";
   college: string;
 };
@@ -51,7 +52,7 @@ export function HackathonLinkView({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
               {label} <span className="text-muted-foreground">({slug})</span>
@@ -64,6 +65,7 @@ export function HackathonLinkView({
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>College</TableHead>
                 </TableRow>
@@ -71,7 +73,10 @@ export function HackathonLinkView({
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="py-8 text-center text-muted-foreground"
+                    >
                       No users have joined using this link
                     </TableCell>
                   </TableRow>
@@ -80,6 +85,7 @@ export function HackathonLinkView({
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.fullName}</TableCell>
                       <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.phone}</TableCell>
                       <TableCell className="capitalize">{user.team}</TableCell>
                       <TableCell>{user.college}</TableCell>
                     </TableRow>
