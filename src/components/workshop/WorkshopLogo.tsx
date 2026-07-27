@@ -21,7 +21,7 @@ export default function WorkshopLogo() {
         @keyframes wk-logo-shine { to { transform: translateX(130%) skewX(-15deg); } }
         .wk-logo img { transition: filter 0.3s ease, transform 0.3s ease; }
         .wk-logo:hover img {
-          filter: drop-shadow(0 0 10px rgba(255,122,26,0.55));
+          filter: drop-shadow(0 0 10px rgba(var(--wk-a1-rgb),0.55));
           transform: scale(1.03);
         }
       `}</style>

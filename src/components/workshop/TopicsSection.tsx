@@ -1,55 +1,69 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bot,
+  Briefcase,
+  Clock,
+  GraduationCap,
+  Lightbulb,
+  MapPin,
+  MessagesSquare,
+  PenLine,
+  Tag,
+  Wrench,
+  Zap,
+} from "lucide-react";
 
 const TOPICS = [
   {
     title: "ChatGPT vs Claude vs Gemini",
     desc: "Deep comparison of today's leading LLMs, their strengths, limitations, and best use cases.",
-    icon: "🤖",
-    accent: "#ff7a1a",
+    Icon: Bot,
+    accent: "#6366f1",
   },
   {
     title: "Which AI Model Should You Use?",
     desc: "Learn a practical decision framework to pick the best AI tool for coding, writing, or analysis.",
-    icon: "💡",
-    accent: "#ffb020",
+    Icon: Lightbulb,
+    accent: "#818cf8",
   },
   {
     title: "Prompt Engineering",
     desc: "Master advanced frameworks (CoT, few-shot) to prompt like a pro and get 10x better outputs.",
-    icon: "✍️",
-    accent: "#ff4d94",
+    Icon: PenLine,
+    accent: "#8b5cf6",
   },
   {
     title: "AI Tools for Students",
     desc: "Supercharge your learning, summarize research papers, and automate notes in seconds.",
-    icon: "🎓",
+    Icon: GraduationCap,
     accent: "#a855f7",
   },
   {
     title: "AI Tools for Professionals",
     desc: "Multiply your office productivity with AI email templates, slides, and automated summaries.",
-    icon: "💼",
-    accent: "#6366f1",
+    Icon: Briefcase,
+    accent: "#7c3aed",
   },
   {
     title: "AI Workflow Automation",
     desc: "Connect AI tools using Zapier or Make to build simple autonomous agents and bots.",
-    icon: "⚡",
-    accent: "#ff9a3c",
+    Icon: Zap,
+    accent: "#4f46e5",
   },
   {
     title: "Live Practical Use Cases",
     desc: "Watch live coding, content creation, and workflow builds done in real-time from scratch.",
-    icon: "🛠️",
-    accent: "#2dd4bf",
+    Icon: Wrench,
+    accent: "#c084fc",
   },
   {
     title: "Q&A Session",
     desc: "Get your doubts resolved live and ask the instructors anything during the open forum.",
-    icon: "💬",
-    accent: "#f472b6",
+    Icon: MessagesSquare,
+    accent: "#a78bfa",
   },
 ];
 
@@ -111,12 +125,13 @@ export default function TopicsSection() {
         <span
           className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
           style={{
-            background: "rgba(255,122,26,0.1)",
-            color: "#ff9a3c",
-            border: "1px solid rgba(255,122,26,0.2)",
+            background: "rgba(var(--wk-a1-rgb),0.1)",
+            color: "var(--wk-a1-light)",
+            border: "1px solid rgba(var(--wk-a1-rgb),0.2)",
           }}
         >
-          ⚡ Bootcamp Curriculum
+          <Zap size={13} strokeWidth={2.25} />
+          Bootcamp Curriculum
         </span>
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           What You&apos;ll Learn
@@ -137,9 +152,9 @@ export default function TopicsSection() {
       <div ref={infoRow.ref} className="grid grid-cols-3 gap-3">
         {(
           [
-            { icon: "⏱️", label: "Duration", value: "1 Hour", subtext: "Live Interactive", accent: "#2dd4bf" },
-            { icon: "📍", label: "Platform", value: "Google Meet", subtext: "Secure link sent", accent: "#6366f1" },
-            { icon: "💰", label: "Price", value: "FREE", subtext: "100% Sponsored", accent: "#ff7a1a", highlight: true },
+            { Icon: Clock, label: "Duration", value: "1 Hour", subtext: "Live Interactive", accent: "#c084fc" },
+            { Icon: MapPin, label: "Platform", value: "Google Meet", subtext: "Secure link sent", accent: "#6366f1" },
+            { Icon: Tag, label: "Price", value: "FREE", subtext: "100% Sponsored", accent: "#8b5cf6", highlight: true },
           ] as const
         ).map((data, i) => (
           <div
@@ -241,13 +256,13 @@ function TiltCard({ topic, num }: { topic: (typeof TOPICS)[0]; num: number }) {
       <div className="relative z-10 p-5">
         <div className="flex items-start gap-4">
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[22px]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
             style={{
               background: `${topic.accent}18`,
               border: `1px solid ${topic.accent}30`,
             }}
           >
-            {topic.icon}
+            <topic.Icon size={20} strokeWidth={1.75} style={{ color: topic.accent }} />
           </div>
           <div className="min-w-0 flex-1">
             <span
@@ -270,7 +285,7 @@ function TiltCard({ topic, num }: { topic: (typeof TOPICS)[0]; num: number }) {
 }
 
 interface InfoCardProps {
-  icon: string;
+  Icon: LucideIcon;
   label: string;
   value: string;
   subtext: string;
@@ -278,7 +293,7 @@ interface InfoCardProps {
   highlight?: boolean;
 }
 
-function InfoCard({ icon, label, value, subtext, accent, highlight }: InfoCardProps) {
+function InfoCard({ Icon, label, value, subtext, accent, highlight }: InfoCardProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -308,13 +323,13 @@ function InfoCard({ icon, label, value, subtext, accent, highlight }: InfoCardPr
         }}
       />
       <span
-        className="mb-1.5 block text-xl sm:text-2xl"
+        className="mb-1.5 block"
         style={{
           transform: hovered ? "translateY(-3px) scale(1.15)" : "translateY(0) scale(1)",
           transition: "transform 0.22s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-        {icon}
+        <Icon size={22} strokeWidth={1.75} style={{ color: accent }} />
       </span>
       <span className="mb-1.5 text-[8px] font-extrabold uppercase tracking-widest text-white/40 sm:text-[9px]">
         {label}

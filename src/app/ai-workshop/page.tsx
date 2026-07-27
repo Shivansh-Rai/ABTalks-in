@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Calendar, Clock, MapPin, Tag, Target } from "lucide-react";
 import WorkshopHeader from "@/components/workshop/Header";
 import RegistrationForm from "@/components/workshop/RegistrationForm";
 import TopicsSection from "@/components/workshop/TopicsSection";
@@ -28,14 +29,37 @@ export default async function AIWorkshopPage() {
 
   return (
     <div
-      className="relative min-h-screen"
+      className="wk-root relative min-h-screen"
       style={{
-        background: "#08060d",
-        color: "#f4f2f7",
+        background: "var(--wk-bg)",
+        color: "var(--wk-text)",
         overflowX: "clip",
       }}
     >
       <style>{`
+        /* Brand palette — mirrors --primary (#6366f1) / AI-domain violet (#8b5cf6)
+           from globals.css. Scoped to this page; the app theme is untouched. */
+        .wk-root {
+          --wk-bg: #050a17;
+          --wk-surface: #0b1120;
+          --wk-text: #f5f6fa;
+          --wk-text-dim: #c7cbda;
+
+          --wk-a1: #6366f1;
+          --wk-a1-rgb: 99, 102, 241;
+          --wk-a1-light: #818cf8;
+          --wk-a1-light-rgb: 129, 140, 248;
+          --wk-a1-deep: #4f46e5;
+
+          --wk-a2: #8b5cf6;
+          --wk-a2-rgb: 139, 92, 246;
+          --wk-a3: #a855f7;
+          --wk-a3-light: #c084fc;
+          --wk-a4: #a78bfa;
+
+          --wk-grad: linear-gradient(135deg, var(--wk-a1) 0%, var(--wk-a2) 100%);
+        }
+
         html { scroll-behavior: smooth; }
         @keyframes wk-float-a {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -68,8 +92,8 @@ export default async function AIWorkshopPage() {
 
         /* Hero CTA — breathing glow + shine sweep */
         @keyframes hero-cta-glow {
-          0%, 100% { box-shadow: 0 12px 34px -10px rgba(255,77,148,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
-          50%      { box-shadow: 0 18px 44px -8px rgba(255,77,148,0.85), 0 0 24px 2px rgba(255,122,26,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
+          0%, 100% { box-shadow: 0 12px 34px -10px rgba(var(--wk-a2-rgb),0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+          50%      { box-shadow: 0 18px 44px -8px rgba(var(--wk-a2-rgb),0.85), 0 0 24px 2px rgba(var(--wk-a1-rgb),0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
         }
         @keyframes hero-cta-shine {
           0%, 55% { transform: translateX(-130%) skewX(-15deg); }
@@ -104,7 +128,7 @@ export default async function AIWorkshopPage() {
             width: "560px",
             height: "560px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,122,26,0.28), transparent 65%)",
+            background: "radial-gradient(circle, rgba(var(--wk-a1-rgb),0.28), transparent 65%)",
             filter: "blur(60px)",
             animation: "wk-float-a 16s ease-in-out infinite",
           }}
@@ -117,7 +141,7 @@ export default async function AIWorkshopPage() {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,77,148,0.22), transparent 65%)",
+            background: "radial-gradient(circle, rgba(var(--wk-a2-rgb),0.22), transparent 65%)",
             filter: "blur(70px)",
             animation: "wk-float-b 20s ease-in-out infinite",
           }}
@@ -130,7 +154,7 @@ export default async function AIWorkshopPage() {
             width: "620px",
             height: "620px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.16), transparent 65%)",
+            background: "radial-gradient(circle, rgba(var(--wk-a1-rgb),0.16), transparent 65%)",
             filter: "blur(80px)",
             animation: "wk-float-a 24s ease-in-out infinite",
           }}
@@ -153,13 +177,13 @@ export default async function AIWorkshopPage() {
         {/* floating particles (top / hero region) */}
         <div className="absolute inset-x-0 top-0 h-[720px]">
           {[
-            { l: "12%", t: "22%", s: 4, c: "#ff7a1a", d: 9, delay: 0 },
-            { l: "24%", t: "58%", s: 3, c: "#ff4d94", d: 12, delay: 1.5 },
+            { l: "12%", t: "22%", s: 4, c: "#6366f1", d: 9, delay: 0 },
+            { l: "24%", t: "58%", s: 3, c: "#8b5cf6", d: 12, delay: 1.5 },
             { l: "40%", t: "16%", s: 5, c: "#a855f7", d: 11, delay: 0.8 },
-            { l: "58%", t: "48%", s: 3, c: "#ff9a3c", d: 10, delay: 2.2 },
-            { l: "72%", t: "26%", s: 4, c: "#6366f1", d: 13, delay: 0.4 },
-            { l: "86%", t: "60%", s: 3, c: "#ff4d94", d: 9.5, delay: 1.1 },
-            { l: "50%", t: "70%", s: 4, c: "#ff7a1a", d: 12.5, delay: 2.8 },
+            { l: "58%", t: "48%", s: 3, c: "#818cf8", d: 10, delay: 2.2 },
+            { l: "72%", t: "26%", s: 4, c: "#4f46e5", d: 13, delay: 0.4 },
+            { l: "86%", t: "60%", s: 3, c: "#8b5cf6", d: 9.5, delay: 1.1 },
+            { l: "50%", t: "70%", s: 4, c: "#6366f1", d: 12.5, delay: 2.8 },
             { l: "32%", t: "38%", s: 2, c: "#ffffff", d: 8, delay: 1.9 },
           ].map((p, i) => (
             <span
@@ -198,8 +222,8 @@ export default async function AIWorkshopPage() {
               }}
             >
               <span
-                className="h-1.5 w-1.5 rounded-full bg-[#ff4d94]"
-                style={{ boxShadow: "0 0 8px 1px rgba(255,77,148,0.8)" }}
+                className="h-1.5 w-1.5 rounded-full bg-(--wk-a2)"
+                style={{ boxShadow: "0 0 8px 1px rgba(var(--wk-a2-rgb),0.8)" }}
               />
               Free Live Bootcamp
             </span>
@@ -212,7 +236,8 @@ export default async function AIWorkshopPage() {
             Become{" "}
             <span
               style={{
-                background: "linear-gradient(120deg, #ff9a3c 0%, #ff4d94 55%, #a855f7 100%)",
+                background:
+                  "linear-gradient(120deg, var(--wk-a1-light) 0%, var(--wk-a2) 55%, var(--wk-a3) 100%)",
                 backgroundSize: "200% auto",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -246,9 +271,15 @@ export default async function AIWorkshopPage() {
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <span>📅 {config.webinarDate}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar size={14} strokeWidth={1.75} />
+                {config.webinarDate}
+              </span>
               <span className="text-white/20">•</span>
-              <span>🕒 {config.webinarTime}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Clock size={14} strokeWidth={1.75} />
+                {config.webinarTime}
+              </span>
             </div>
 
             <CountdownTimer targetUtc={config.webinarTargetUtc} />
@@ -263,7 +294,7 @@ export default async function AIWorkshopPage() {
               href="#register"
               className="hero-cta w-full rounded-full px-8 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 sm:w-auto"
               style={{
-                background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
+                background: "var(--wk-grad)",
               }}
             >
               <span className="relative z-10">
@@ -288,10 +319,10 @@ export default async function AIWorkshopPage() {
             style={{ animationDelay: "0.44s" }}
           >
             {[
-              { icon: "⏱️", text: "1 Hour Live" },
-              { icon: "📍", text: "Google Meet" },
-              { icon: "💰", text: "100% Free" },
-              { icon: "🎯", text: "Beginner Friendly" },
+              { Icon: Clock, text: "1 Hour Live" },
+              { Icon: MapPin, text: "Google Meet" },
+              { Icon: Tag, text: "100% Free" },
+              { Icon: Target, text: "Beginner Friendly" },
             ].map((c) => (
               <span
                 key={c.text}
@@ -301,7 +332,7 @@ export default async function AIWorkshopPage() {
                   border: "1px solid rgba(255,255,255,0.07)",
                 }}
               >
-                <span>{c.icon}</span>
+                <c.Icon size={14} strokeWidth={1.75} />
                 {c.text}
               </span>
             ))}
@@ -338,7 +369,7 @@ export default async function AIWorkshopPage() {
               className="absolute inset-x-0 top-0 h-px"
               style={{
                 background:
-                  "linear-gradient(to right, transparent, rgba(255,122,26,0.7), rgba(255,77,148,0.7), transparent)",
+                  "linear-gradient(to right, transparent, rgba(var(--wk-a1-rgb),0.7), rgba(var(--wk-a2-rgb),0.7), transparent)",
               }}
             />
             <h3 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">

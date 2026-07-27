@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-const CONFETTI_COLORS = ["#ff7a1a", "#ff4d94", "#a855f7", "#6366f1", "#2dd4bf", "#ffd23f"];
+const CONFETTI_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#c084fc", "#818cf8", "#4f46e5"];
 
 function buildConfetti() {
   return Array.from({ length: 44 }, (_, i) => ({
@@ -118,7 +118,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
           border-radius: 12px;
           background: rgba(255,255,255,0.03);
           border: 1px solid rgba(255,255,255,0.09);
-          color: #f4f2f7;
+          color: var(--wk-text);
           font-size: 15px;
           font-weight: 500;
           outline: none;
@@ -126,23 +126,23 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
         }
         .wk-input::placeholder { color: rgba(255,255,255,0.32); font-weight: 400; }
         .wk-input:focus {
-          border-color: rgba(255,122,26,0.55);
+          border-color: rgba(var(--wk-a1-rgb),0.55);
           background: rgba(255,255,255,0.05);
-          box-shadow: 0 0 0 3px rgba(255,122,26,0.12), 0 0 20px -6px rgba(255,77,148,0.4);
+          box-shadow: 0 0 0 3px rgba(var(--wk-a1-rgb),0.12), 0 0 20px -6px rgba(var(--wk-a2-rgb),0.4);
         }
         .wk-input.err { border-color: rgba(248,113,113,0.6); }
         .wk-input.err:focus { box-shadow: 0 0 0 3px rgba(248,113,113,0.14); }
-        .wk-select option { background: #16121d; color: #f4f2f7; }
+        .wk-select option { background: var(--wk-surface); color: var(--wk-text); }
 
         .register-btn {
-          background: linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%);
-          box-shadow: 0 8px 28px -8px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
+          background: var(--wk-grad);
+          box-shadow: 0 8px 28px -8px rgba(var(--wk-a2-rgb),0.6), inset 0 1px 0 rgba(255,255,255,0.25);
           transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
         }
         .register-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           filter: brightness(1.07);
-          box-shadow: 0 14px 36px -8px rgba(255,77,148,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+          box-shadow: 0 14px 36px -8px rgba(var(--wk-a2-rgb),0.7), inset 0 1px 0 rgba(255,255,255,0.3);
         }
         .register-btn:active:not(:disabled) { transform: translateY(0); }
         .register-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -165,7 +165,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
             className="absolute inset-x-0 top-0 h-px"
             style={{
               background:
-                "linear-gradient(to right, transparent, rgba(255,122,26,0.7), rgba(255,77,148,0.7), transparent)",
+                "linear-gradient(to right, transparent, rgba(var(--wk-a1-rgb),0.7), rgba(var(--wk-a2-rgb),0.7), transparent)",
             }}
           />
 
@@ -253,7 +253,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
                 value={form.role}
                 onChange={(e) => set("role", e.target.value)}
                 className={`wk-input wk-select cursor-pointer ${errors.role ? "err" : ""}`}
-                style={{ color: form.role ? "#f4f2f7" : "rgba(255,255,255,0.32)" }}
+                style={{ color: form.role ? "var(--wk-text)" : "rgba(255,255,255,0.32)" }}
               >
                 <option value="" disabled>Select an option</option>
                 <option value="Student">Student</option>
@@ -350,7 +350,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
           <div
             className="animate-pop relative z-[102] w-full max-w-md overflow-hidden rounded-3xl p-8 text-center sm:p-10"
             style={{
-              background: "rgba(20,16,27,0.92)",
+              background: "rgba(11,17,32,0.92)",
               border: "1px solid rgba(255,255,255,0.1)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
@@ -437,7 +437,7 @@ function Field({ label, required, error, children }: FieldProps) {
     <div className="w-full">
       <label className="mb-1.5 block text-[13px] font-semibold text-white/70">
         {label}
-        {required && <span className="ml-1 text-[#ff4d94]">*</span>}
+        {required && <span className="ml-1 text-(--wk-a2)">*</span>}
       </label>
       {children}
       {error && (

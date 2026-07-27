@@ -1,10 +1,15 @@
+import type { LucideIcon } from "lucide-react";
+import { Bot, GraduationCap } from "lucide-react";
+
 export interface WorkshopEvent {
   id: string;
   date: string; // ISO (YYYY-MM-DD)
   time: string;
   tag: string;
   accent: string;
-  icon: string;
+  /** Import this module only from Client Components — a component reference
+   *  cannot be serialized across the Server→Client boundary. */
+  Icon: LucideIcon;
   title: string;
   desc: string;
   host: string;
@@ -19,8 +24,8 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-07-18",
     time: "4:00 PM IST",
     tag: "Live",
-    accent: "#ff4d94",
-    icon: "🎓",
+    accent: "#8b5cf6",
+    Icon: GraduationCap,
     title: "FREE AI Bootcamp — Live Workshop",
     desc: "Master ChatGPT, Claude & Gemini in one hands-on live hour — prompt engineering, real workflows, and the tools that 10x your output.",
     host: "ABTalks",
@@ -32,8 +37,8 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-08-08",
     time: "4:30 PM IST",
     tag: "Advanced",
-    accent: "#ff7a1a",
-    icon: "🤖",
+    accent: "#6366f1",
+    Icon: Bot,
     title: "Building AI Agents with Claude",
     desc: "Design autonomous agents that plan, use tools, and complete multi-step tasks end to end.",
     host: "ABTalks",

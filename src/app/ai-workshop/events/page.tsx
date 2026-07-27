@@ -12,9 +12,38 @@ export const metadata: Metadata = {
 export default function WorkshopEventsPage() {
   return (
     <div
-      className="relative min-h-screen"
-      style={{ background: "#08060d", color: "#f4f2f7", overflowX: "clip" }}
+      className="wk-root relative min-h-screen"
+      style={{
+        background: "var(--wk-bg)",
+        color: "var(--wk-text)",
+        overflowX: "clip",
+      }}
     >
+      <style>{`
+        /* Brand palette — mirrors --primary (#6366f1) / AI-domain violet (#8b5cf6)
+           from globals.css. Scoped to this page; the app theme is untouched. */
+        .wk-root {
+          --wk-bg: #050a17;
+          --wk-surface: #0b1120;
+          --wk-text: #f5f6fa;
+          --wk-text-dim: #c7cbda;
+
+          --wk-a1: #6366f1;
+          --wk-a1-rgb: 99, 102, 241;
+          --wk-a1-light: #818cf8;
+          --wk-a1-light-rgb: 129, 140, 248;
+          --wk-a1-deep: #4f46e5;
+
+          --wk-a2: #8b5cf6;
+          --wk-a2-rgb: 139, 92, 246;
+          --wk-a3: #a855f7;
+          --wk-a3-light: #c084fc;
+          --wk-a4: #a78bfa;
+
+          --wk-grad: linear-gradient(135deg, var(--wk-a1) 0%, var(--wk-a2) 100%);
+        }
+      `}</style>
+
       {/* ambient */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div
@@ -25,7 +54,7 @@ export default function WorkshopEventsPage() {
             width: "520px",
             height: "520px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,122,26,0.22), transparent 65%)",
+            background: "radial-gradient(circle, rgba(var(--wk-a1-rgb),0.22), transparent 65%)",
             filter: "blur(70px)",
           }}
         />
@@ -37,7 +66,7 @@ export default function WorkshopEventsPage() {
             width: "560px",
             height: "560px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.16), transparent 65%)",
+            background: "radial-gradient(circle, rgba(var(--wk-a2-rgb),0.16), transparent 65%)",
             filter: "blur(80px)",
           }}
         />
@@ -48,7 +77,7 @@ export default function WorkshopEventsPage() {
         <header
           className="sticky top-0 z-50 w-full px-4"
           style={{
-            background: "rgba(10,7,16,0.7)",
+            background: "rgba(5,10,23,0.7)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -61,9 +90,9 @@ export default function WorkshopEventsPage() {
               <span
                 className="hidden rounded-md px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-widest sm:inline-block"
                 style={{
-                  background: "rgba(255,122,26,0.12)",
-                  color: "#ff9a3c",
-                  border: "1px solid rgba(255,122,26,0.25)",
+                  background: "rgba(var(--wk-a1-rgb),0.12)",
+                  color: "var(--wk-a1-light)",
+                  border: "1px solid rgba(var(--wk-a1-rgb),0.25)",
                 }}
               >
                 AI Workshop
@@ -87,8 +116,9 @@ export default function WorkshopEventsPage() {
             href="/ai-workshop#register"
             className="mt-4 inline-flex items-center gap-2 rounded-full px-7 py-3 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
-              background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
-              boxShadow: "0 12px 30px -10px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
+              background: "var(--wk-grad)",
+              boxShadow:
+                "0 12px 30px -10px rgba(var(--wk-a2-rgb),0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
             }}
           >
             Reserve Your Free Seat →
