@@ -15,12 +15,11 @@ export function isProgramEnabled(): boolean {
 }
 
 /**
- * Skip entry quiz entirely (apply enrolls/waitlists directly).
- * On by default; set SKIP_PRE_ASSESSMENT=false to require the assessment again.
- * When the quiz is enabled, also treats submit as pass regardless of score.
+ * Entry assessment quiz is removed from the program cohort product surface.
+ * Apply enrolls/waitlists directly. Kept as a always-on flag for call sites.
  */
 export function isProgramEntryBypassEnabled(): boolean {
-  return process.env.SKIP_PRE_ASSESSMENT !== "false";
+  return true;
 }
 
 /**
