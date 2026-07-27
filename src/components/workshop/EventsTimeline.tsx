@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CalendarX2, MapPin } from "lucide-react";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
 import {
   EVENTS,
@@ -66,7 +67,11 @@ export default function EventsTimeline() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <span className="mb-3 block text-4xl">🗂️</span>
+          <CalendarX2
+            size={36}
+            strokeWidth={1.5}
+            className="mx-auto mb-3 block text-white/30"
+          />
           <p className="text-[15px] font-semibold text-white/70">
             No past events yet
           </p>
@@ -164,7 +169,8 @@ export default function EventsTimeline() {
                           By {ev.host}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          📍 {ev.location}
+                          <MapPin size={12} strokeWidth={1.75} />
+                          {ev.location}
                         </span>
                       </div>
 
@@ -207,7 +213,7 @@ export default function EventsTimeline() {
                         border: `1px solid ${ev.accent}30`,
                       }}
                     >
-                      <span className="text-3xl">{ev.icon}</span>
+                      <ev.Icon size={30} strokeWidth={1.5} style={{ color: ev.accent }} />
                       <span
                         className="mt-1.5 text-[9px] font-bold uppercase tracking-widest"
                         style={{ color: ev.accent }}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 import { EVENTS, monthAbbr, dayNum } from "@/components/workshop/events-data";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
 
@@ -47,12 +48,13 @@ export default function UpcomingEvents() {
         <span
           className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
           style={{
-            background: "rgba(99,102,241,0.1)",
-            color: "#a5b4fc",
-            border: "1px solid rgba(99,102,241,0.22)",
+            background: "rgba(var(--wk-a1-rgb),0.1)",
+            color: "var(--wk-a1-light)",
+            border: "1px solid rgba(var(--wk-a1-rgb),0.22)",
           }}
         >
-          🗓️ What&apos;s Next
+          <CalendarDays size={13} strokeWidth={2.25} />
+          What&apos;s Next
         </span>
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           Upcoming Workshops &amp; Events
@@ -76,7 +78,7 @@ export default function UpcomingEvents() {
           aria-label="Previous"
           className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white sm:flex md:-left-5"
           style={{
-            background: "rgba(20,16,27,0.8)",
+            background: "rgba(11,17,32,0.8)",
             border: "1px solid rgba(255,255,255,0.12)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
@@ -89,7 +91,7 @@ export default function UpcomingEvents() {
           aria-label="Next"
           className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white sm:flex md:-right-5"
           style={{
-            background: "rgba(20,16,27,0.8)",
+            background: "rgba(11,17,32,0.8)",
             border: "1px solid rgba(255,255,255,0.12)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
@@ -232,7 +234,7 @@ export default function UpcomingEvents() {
               width: i === index ? 22 : 8,
               background:
                 i === index
-                  ? "linear-gradient(135deg, #ff7a1a, #ff4d94)"
+                  ? "var(--wk-grad)"
                   : "rgba(255,255,255,0.18)",
             }}
           />
