@@ -109,7 +109,7 @@ export function HackathonView({ data }: Props) {
                 <TableHead>Code</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Members</TableHead>
+                <TableHead>Member(s)</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
@@ -144,12 +144,18 @@ export function HackathonView({ data }: Props) {
                         <TableCell className="font-mono text-sm">
                           {team.teamCode}
                         </TableCell>
-                        <TableCell>{team.teamName ?? "—"}</TableCell>
+                        <TableCell>
+                          {team.entryType === "SOLO"
+                            ? (team.members[0]?.fullName ?? "—")
+                            : (team.teamName ?? "—")}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{team.entryType}</Badge>
                         </TableCell>
                         <TableCell>
-                          {team.memberCount}/{HACKATHON.maxTeamSize}
+                          {team.entryType === "SOLO"
+                            ? team.memberCount
+                            : `${team.memberCount}/${HACKATHON.maxTeamSize}`}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(team.createdAt).toLocaleString("en-IN", {
