@@ -13,7 +13,7 @@ import { AppHeader } from "@/components/shared/app-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const DISCORD_URL = "https://discord.gg/REts227w9";
+const DISCORD_URL = "https://discord.gg/j4Q8tvDj6";
 
 export default async function MissionPage() {
   const session = await auth();
