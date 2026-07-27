@@ -9,6 +9,7 @@ export type HackathonMasterStudent = {
   fullName: string;
   email: string;
   phone: string;
+  college: string;
   entryType: "SOLO" | "TEAM";
   teamName: string | null;
   createdAt: string;
@@ -47,6 +48,7 @@ export async function getHackathonMasterStudents(input?: {
       fullName: true,
       email: true,
       phone: true,
+      college: true,
       createdAt: true,
       team: {
         select: {
@@ -64,6 +66,7 @@ export async function getHackathonMasterStudents(input?: {
       fullName: row.fullName,
       email: row.email,
       phone: row.phone,
+      college: row.college,
       entryType,
       teamName: entryType === "SOLO" ? null : row.team.teamName,
       createdAt: row.createdAt.toISOString(),
