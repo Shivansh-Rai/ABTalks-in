@@ -5868,5 +5868,109 @@
         "format": "Project repo link + ABTalks repo commit URL"
       }
     }
+  },
+    {
+    "dayNumber": 58,
+    "domain": "CLAUDE",
+    "title": "Day 58: Testing, Debugging & Production Optimization – Make It Launch-Ready",
+    "problemStatement": "Welcome to Day 58 of the 60-Day Claude AI Mastery Challenge.\n\nTheme: Phase 8 — Capstone Project (Days 51-60): From Idea to Deployed v1.0\n\nToday's focus: Continuing the same capstone conversation (or re-uploading the 10-Day Blueprint / Sprint Workbook if context was lost), complete only the Day 8 tasks scheduled in the Sprint Workbook, then run a full release-readiness review of the application as a Senior QA Engineer, Senior Software Engineer, Security Reviewer, and Performance Engineer would — as if it will be launched publicly tomorrow.\n\nThis is Day 8 of the 10-day capstone that began on Day 51, and the day the project shifts from 'refined' to 'production-ready.' No new features get introduced today — the entire focus is stability, reliability, and fixing everything that would embarrass you at launch. Free-tier tools and hosting remain the rule unless the Workbook explicitly says otherwise.\n\nTasks:\n1. Continue the capstone conversation with Claude, or upload the 10-Day Blueprint / Sprint Workbook if context was lost, and use it as the source of truth.\n2. Complete only the Day 8 tasks scheduled in the Sprint Workbook — no redesign, no Day 9 work.\n3. Before any code changes, have Claude perform a complete review of the project as a Senior QA Engineer, Senior Software Engineer, Security Reviewer, and Performance Engineer.\n4. Work through the issues found — bugs, edge cases, error handling, form validation, API failures, loading/empty/offline states, responsive design, accessibility, performance bottlenecks, duplicate code, security concerns, console warnings, runtime errors, and other production-readiness issues.\n5. Work through today's milestones one at a time — for each, get a brief explanation, the full list of files to create/modify/delete, and complete final file contents (packaged into a ZIP with clear usage/verification instructions when the project is too large for chat).\n6. Let Claude pause only at major testing milestones, deployments, or when debugging genuinely needs your input.\n7. If anything breaks, debug it completely with Claude before moving forward.\n8. Once the scheduled fixes are done, perform a complete end-to-end walkthrough of the application and verify every planned feature works with no obvious runtime errors.\n9. Deploy the latest version if changes were made, then test the live application yourself and report back any screenshots or issues.\n10. Update any affected documentation.\n11. Commit and push today's work to GitHub with a meaningful commit message.\n12. Push Claude to keep reviewing — bugs, UX problems, performance bottlenecks, security concerns, accessibility issues, edge cases, production risks, code quality — until it is confident it would personally approve the release, not just after finding a few issues.\n\nImportant:\nDo not introduce new features today, even useful ones — the goal is a stable, reliable, production-ready version of what already exists. Don't let the review stop early; today's bar is 'ready to launch publicly tomorrow.'\n\nSubmission: Share (1) your project repo link showing today's fixes and optimizations committed and pushed, plus the updated live deployment link, and (2) your ABTalks challenge repo commit URL containing DAY8-SUMMARY.md, a list of what was found and fixed, and a short write-up of what remains before launch and what Day 9 will focus on.",
+    "learningObjectives": [
+      "Separate 'finish the scheduled Sprint Workbook tasks' from a dedicated release-readiness review, run back-to-back in the same session",
+      "Review a working product through the combined lens of QA, security, and performance — not just 'does it look right'",
+      "Treat bugs, edge cases, accessibility gaps, and console warnings as production blockers, not minor cleanup",
+      "Resist scope creep into new features during a stabilization pass, even when improvements are tempting",
+      "Push a review past the first few found issues, continuing until genuinely confident in a public launch"
+    ],
+    "resources": [
+      "https://claude.ai",
+      "https://youtu.be/7VVU5tNGrsQ"
+    ],
+    "difficulty": "Advanced",
+    "estimatedMinutes": 100,
+    "linkedinTemplate": "Day 58/60 of #60DayClaudeChallenge with @ABTalksOnAI 🚀\n\nDay 8 of my 10-day capstone: zero new features today, all stabilization.\n\nClaude reviewed the whole app like a Senior QA Engineer, Security Reviewer, and Performance Engineer combined — bugs, edge cases, accessibility gaps, console warnings, the works — and didn't stop after the easy fixes.\n\n🐞 Full QA & Debugging Pass\n🔒 Security & Performance Review\n♿ Accessibility Gaps Closed\n✅ End-to-End Walkthrough Verified\n\nBiggest takeaway:\n\n'Would I personally approve this release?' is a much higher bar than 'does the demo work' — and today was about actually clearing that bar.\n\n#ClaudeAI #QA #ProductionReady #BuildWithClaude #AI #Capstone #ABTalksOnAI #60DayClaudeChallenge",
+    "solutionApproach": "Submit your project repo link with today's fixes and optimizations committed and pushed, the updated live deployment link, plus your ABTalks challenge repo commit URL containing DAY8-SUMMARY.md, a list of what was found and fixed, and a short write-up of what remains before launch and what's next for Day 9.",
+    "tags": [
+      "claude",
+      "day-58",
+      "capstone",
+      "qa",
+      "debugging",
+      "security-review",
+      "performance",
+      "production-readiness",
+      "free-tier"
+    ],
+    "dayContent": {
+      "title": "Testing, Debugging & Production Optimization",
+      "tagline": "Day 8 of 10: Test It Like You're Launching Tomorrow",
+      "module": "Capstone Project — Day 8 of 10",
+      "difficulty": "Advanced",
+      "estimatedMinutes": 100,
+      "deliverableFormat": "Project repo link + ABTalks repo commit URL",
+      "learning": {
+        "summary": "Today you'll learn how to run a genuine release-readiness review: finishing whatever the Sprint Workbook still scheduled for Day 8, then stepping into the role of QA engineer, security reviewer, and performance engineer to find and fix everything standing between the current build and a public launch.",
+        "bullets": [
+          {
+            "label": "Workbook First, Stabilization Second",
+            "text": "Finish the Day 8 Sprint Workbook tasks completely before starting the full QA and production-readiness review."
+          },
+          {
+            "label": "Four Reviewer Lenses",
+            "text": "Have Claude review the app as a Senior QA Engineer, Senior Software Engineer, Security Reviewer, and Performance Engineer all at once."
+          },
+          {
+            "label": "Stability Over New Features",
+            "text": "No new functionality gets added today — every change makes the existing application more stable and reliable."
+          },
+          {
+            "label": "Don't Stop at the Easy Bugs",
+            "text": "Keep reviewing past the first few issues found, until you'd genuinely approve launching the app publicly."
+          }
+        ]
+      },
+      "task": {
+        "title": "Your Task",
+        "steps": [
+          "Continue your capstone conversation with Claude from Day 57, or upload the 10-Day Blueprint / Sprint Workbook if context was lost.",
+          "Paste the Testing, Debugging & Production Optimization prompt.",
+          "Confirm with Claude exactly which Day 8 tasks the Sprint Workbook schedules.",
+          "Have Claude perform a complete review of the project as a Senior QA Engineer, Senior Software Engineer, Security Reviewer, and Performance Engineer before any code changes.",
+          "Work through today's milestones, adding every file Claude provides in the location it specifies.",
+          "If Claude packages changes into a ZIP, follow its extraction, replacement, and verification instructions exactly.",
+          "Run every command Claude gives you and follow exact instructions for any manual step.",
+          "If something breaks, debug it fully with Claude before continuing.",
+          "Confirm every Day 8 Sprint Workbook task is implemented and verified.",
+          "Perform a complete end-to-end walkthrough of the application with Claude.",
+          "Verify every planned feature works correctly with no obvious runtime errors.",
+          "Deploy the latest version if changes were made.",
+          "Test the live application yourself and report back screenshots or any issues you find.",
+          "Push Claude to keep reviewing for additional bugs, UX problems, performance issues, security concerns, and accessibility issues until it's confident in the release.",
+          "Update any affected documentation.",
+          "Commit today's work with a meaningful message and push it to GitHub.",
+          "Get Claude's summary of everything improved today and what remains before launch.",
+          "Create a Day58 folder in your GitHub repository.",
+          "Create a day58.md file.",
+          "Upload screenshots of the end-to-end walkthrough, DAY8-SUMMARY.md, and your key learnings.",
+          "Commit and push the changes.",
+          "Submit your project repo link and the ABTalks repo commit URL."
+        ],
+        "solutionVideoUrl": "https://youtu.be/7VVU5tNGrsQ"
+      },
+      "promptTemplate": "Day 8: Testing, Debugging & Production Optimization\n\nToday is Day 8, continuing our chat from the previous days.\n\nIf you've forgotten the project or no longer have enough context, ask me to upload the 10-Day Blueprint (Sprint Workbook) before continuing. Use it as the source of truth.\n\nReview everything built so far, then complete only the work scheduled for Day 8 in the Sprint Workbook. Do not redesign the project or begin tomorrow's work.\n\nUse only free tools, APIs, SDKs, hosting platforms, and services unless the Sprint Workbook explicitly specifies otherwise. Prefer free-tier solutions such as Gemini API, Supabase, Firebase, Vercel, Netlify, Render, Railway, or equivalent free alternatives.\n\nAssume I have zero technical experience unless I tell you otherwise.\n\nWhenever I need to perform a manual step (running tests, configuring services, deploying, installing packages, etc.), stop and give me exact step-by-step instructions using the real button names, menu names, and terminal commands.\n\nPrioritize implementation over explanation. Keep explanations concise and spend most of your response generating production-ready code and complete files.\n\nBuild today's work one milestone at a time.\n\nFor each milestone:\n\n1. Briefly explain what we're testing or improving and why.\n2. Show every file that needs to be created, modified, or deleted.\n3. Generate the complete final contents of every required file. Never generate snippets, placeholders, TODOs, \"...existing code...\", or \"add this below...\" instructions.\n4. Clearly state where each file belongs and whether it is new or replaces an existing file.\n5. If you provide the implementation as a downloadable ZIP because the project is too large to fit comfortably in chat, also explain exactly how to use it. Tell me where to extract it, which files replace existing ones, which files are new, any commands I should run afterward, and how to verify everything was applied correctly.\n6. Provide every command I need to run.\n7. Pause only after major testing milestones, deployments, or when debugging requires my input.\n8. If anything breaks, help me debug it completely before moving forward.\n\nContinue across as many responses as necessary until every Day 8 task in the Sprint Workbook has been successfully completed and verified.\n\nBefore writing any code, perform a complete review of the project like a Senior QA Engineer, Senior Software Engineer, Security Reviewer, and Performance Engineer.\n\nLook for and fix issues such as:\n\n* Bugs and broken functionality\n* Edge cases\n* Error handling\n* Form validation\n* API failures\n* Loading, empty, and offline states\n* Responsive design issues\n* Accessibility improvements\n* Performance bottlenecks\n* Duplicate or unnecessary code\n* Security concerns appropriate for this project\n* Console warnings and runtime errors\n* Production-readiness issues\n\nDo not introduce unnecessary new features. Focus on making the existing application stable, reliable, and production-ready.\n\nWhen today's implementation is complete:\n\n* Perform a complete end-to-end walkthrough of the application.\n* Verify every planned feature works correctly.\n* Verify there are no obvious runtime errors.\n* Deploy the latest version if changes were made.\n* Ask me to test the live application and share screenshots or any issues I encounter.\n* Update any affected documentation.\n* Help me commit and push today's work to GitHub with a meaningful commit message.\n* Finish with a concise summary of everything improved today and what remains before launch.\n\nYour goal is not simply to fix bugs. Your goal is to ensure the application is stable, reliable, polished, and ready for launch. Never optimize for brevity. Optimize for helping me successfully complete today's implementation.\n\nConduct a comprehensive release-readiness review. Assume the application will be launched publicly tomorrow. Continue reviewing, testing, debugging, and optimizing until you are confident you would personally approve this release.\n\nDo not stop after finding a few issues.\n\nContinue looking for additional bugs, UX problems, performance bottlenecks, security concerns, accessibility issues, edge cases, production risks, and code quality improvements until you are satisfied no major improvements remain.",
+      "engagement": {
+        "type": "Bug Squash Showcase",
+        "description": "Share the trickiest bug or edge case you fixed today during the release-readiness review. Mention @Anthropic @ABTalksOnAI @AnilBajpai.",
+        "hashtag": "#60DayClaudeChallenge",
+        "mentions": [
+          "@AnilBajpai",
+          "@ABTalksOnAI",
+          "@Anthropic"
+        ]
+      },
+      "deliverable": {
+        "description": "Provide your project repo link with today's fixes and optimizations committed and pushed, and upload to your ABTalks repo a markdown file containing DAY8-SUMMARY.md, a list of issues found and fixed, screenshots of the end-to-end walkthrough, and your key learnings. The actual fixes in the project repo are the deliverable, not the screenshots.",
+        "format": "Project repo link + ABTalks repo commit URL"
+      }
+    }
   }
 ]
