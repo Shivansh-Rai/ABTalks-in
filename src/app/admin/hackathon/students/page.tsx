@@ -60,7 +60,7 @@ export default async function AdminHackathonMasterStudentsPage({
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>College</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Type (Solo/Team)</TableHead>
                 <TableHead>Team Name</TableHead>
               </TableRow>
             </TableHeader>
