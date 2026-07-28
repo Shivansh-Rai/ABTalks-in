@@ -3,66 +3,66 @@
 import { useState, useRef, useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
-  Blocks,
+  CheckCircle2,
   Clock,
   Code2,
   Frame,
   Layers,
   MapPin,
   MessagesSquare,
-  PenTool,
   Plug,
-  Share2,
+  Sparkles,
   Tag,
+  Workflow,
   Zap,
 } from "lucide-react";
 
 const TOPICS = [
   {
-    title: "Figma Fundamentals, Fast",
-    desc: "Frames, auto-layout, components and variants — the core mechanics that make every later step quicker.",
+    title: "Figma Fundamentals",
+    desc: "Learn frames, auto layout, components, variables, and Dev Mode—the essential concepts every developer should understand before implementing a design.",
     Icon: Frame,
     accent: "#6366f1",
   },
   {
-    title: "Cursor for Designers",
-    desc: "Get comfortable in an AI code editor — no CS degree needed — and turn your own screens into a running page.",
-    Icon: Code2,
+    title: "Why Figma?",
+    desc: "Explore why Figma is the industry standard, its collaboration features, pricing plans, and products like Design, Draw, Slides, Jam, Make, and Dev Mode.",
+    Icon: Sparkles,
     accent: "#818cf8",
   },
   {
-    title: "AI Plugins That Actually Help",
-    desc: "The Figma plugins worth installing — wireframes, copy, images and cleanup, demoed live.",
-    Icon: Blocks,
+    title: "Understanding MCP",
+    desc: "Learn what the Model Context Protocol is, how it differs from traditional APIs, and why it enables AI tools to work directly with design files.",
+    Icon: Workflow,
     accent: "#8b5cf6",
   },
   {
-    title: "Figma MCP × Cursor",
-    desc: "Wire Figma to Cursor through MCP so your frames, components and tokens are readable by AI as it writes code.",
+    title: "Connecting Figma to Cursor",
+    desc: "Configure the Official Figma MCP, authenticate Cursor with Figma, and understand how AI securely accesses design information.",
     Icon: Plug,
     accent: "#a855f7",
   },
   {
-    title: "Prompt to Prototype",
-    desc: "Go from a written idea to a clickable screen — generating layouts, then refining them by hand.",
-    Icon: PenTool,
+    title: "Inside the Design-to-Code Workflow",
+    desc: "Discover how AI reads frames, components, typography, spacing, colors, variables, and layout information to generate accurate frontend code.",
+    Icon: Layers,
     accent: "#7c3aed",
   },
   {
-    title: "Design Systems & Tokens",
-    desc: "Build a small system with reusable styles and tokens, and let AI keep it consistent as it grows.",
-    Icon: Layers,
+    title: "Live Implementation with Cursor",
+    desc: "Convert a complete Figma design into a responsive React/Next.js application using Cursor and the Official Figma MCP.",
+    Icon: Code2,
     accent: "#4f46e5",
   },
   {
-    title: "Design → Code, Live",
-    desc: "Take one finished frame all the way to responsive front-end code in Cursor, then fix what the AI gets wrong.",
-    Icon: Share2,
+    title: "Review, Refine & Best Practices",
+    desc: "Improve the generated code, build reusable components, maintain responsiveness, and follow production-ready frontend practices.",
+    Icon: CheckCircle2,
     accent: "#c084fc",
   },
   {
-    title: "Q&A Session",
-    desc: "Get your doubts resolved live and ask the instructors anything during the open forum.",
+    title: "Q&A & Future of AI Development",
+    desc: "Ask questions, explore AI-assisted development workflows, and understand where MCP-powered tools are taking frontend engineering.",
     Icon: MessagesSquare,
     accent: "#a78bfa",
   },
@@ -123,17 +123,7 @@ export default function TopicsSection() {
         ref={heading.ref}
         className={`mb-12 select-none text-center ${heading.visible ? "wk-anim-down" : "opacity-0"}`}
       >
-        <span
-          className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-          style={{
-            background: "rgba(var(--wk-a1-rgb),0.1)",
-            color: "var(--wk-a1-light)",
-            border: "1px solid rgba(var(--wk-a1-rgb),0.2)",
-          }}
-        >
-          <Zap size={13} strokeWidth={2.25} />
-          Bootcamp Curriculum
-        </span>
+        
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           What You&apos;ll Learn
         </h2>

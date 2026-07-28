@@ -170,9 +170,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
           />
 
           <div className="mb-6 text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-white/60">
-              🎟️ Free Registration
-            </span>
+            
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-[26px]">
               Reserve your seat
             </h2>
@@ -285,7 +283,7 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
             disabled={loading}
             className="register-btn mt-6 w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
           >
-            {loading ? "Registering..." : "Register Now — It's Free"}
+            {loading ? "Registering..." : "Register Now"}
           </button>
 
           <p className="mt-3.5 text-center text-xs text-white/35">

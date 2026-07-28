@@ -73,9 +73,7 @@ export default function CommunityStats() {
 
         {/* Heading */}
         <div className="text-center">
-          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-(--wk-a1-light)">
-            Our Community
-          </span>
+          
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[38px]">
             The ABTalks AI Learners Community
           </h2>

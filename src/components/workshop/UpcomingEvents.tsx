@@ -74,17 +74,7 @@ export default function UpcomingEvents() {
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-20">
       <div className="mb-10 text-center">
-        <span
-          className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-          style={{
-            background: "rgba(var(--wk-a1-rgb),0.1)",
-            color: "var(--wk-a1-light)",
-            border: "1px solid rgba(var(--wk-a1-rgb),0.22)",
-          }}
-        >
-          <CalendarDays size={13} strokeWidth={2.25} />
-          What&apos;s Next
-        </span>
+        
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           Upcoming Workshops &amp; Events
         </h2>
