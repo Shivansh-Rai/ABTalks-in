@@ -13,13 +13,13 @@ import UpcomingEvents from "@/components/workshop/UpcomingEvents";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 
 export const metadata: Metadata = {
-  title: "ABTalks | FREE Figma × Cursor UI/UX Workshop",
+  title: "ABTalks | Figma × Cursor Workshop",
   description:
     "Join ABTalks' FREE 1-Hour Live UI/UX Workshop on Zoom. Learn Figma, Cursor, AI design plugins and MCP-powered workflows, from design to working code.",
   keywords:
     "UI, UX, design, Figma, Cursor, MCP, AI plugins, design systems, prototyping, design to code, workshop, ABTalks",
   openGraph: {
-    title: "ABTalks | FREE Figma × Cursor UI/UX Workshop",
+    title: "ABTalks | Figma × Cursor Workshop",
     description: "Join the FREE 1-Hour Live Figma × Cursor UI/UX Workshop",
     type: "website",
   },
@@ -236,7 +236,7 @@ export default async function AIWorkshopPage() {
             >
               Design to Production
             </span>{" "}
-            using AI
+            using Figma x Cursor
           </h1>
 
           <p
