@@ -19,8 +19,8 @@ import {
 
 const TOPICS = [
   {
-    title: "Figma Fundamentals",
-    desc: "Learn frames, auto layout, components, variables, and Dev Mode—the essential concepts every developer should understand before implementing a design.",
+    title: "Introduction of Design Tools & Figma Fundamentals",
+    desc: "Overview of design tools like Figma, Illustrator, Affinity Designer, and others. Learn frames, auto layout, components, variables, and Dev Mode—the essential concepts every developer should understand before implementing a design.",
     Icon: Frame,
     accent: "#6366f1",
   },
