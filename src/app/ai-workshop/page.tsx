@@ -213,27 +213,14 @@ export default async function AIWorkshopPage() {
         {/* ================= HERO ================= */}
         <section className="mx-auto w-full max-w-4xl px-4 pt-8 pb-0 text-center sm:pt-10">
           <div className="wk-hero-item" style={{ animationDelay: "0.05s" }}>
-            <span
-              className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(255,255,255,0.75)",
-              }}
-            >
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-(--wk-a2)"
-                style={{ boxShadow: "0 0 8px 1px rgba(var(--wk-a2-rgb),0.8)" }}
-              />
-              Free Live Bootcamp
-            </span>
+            
           </div>
 
           <h1
             className="wk-hero-item mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-[56px]"
             style={{ animationDelay: "0.12s" }}
           >
-            Design{" "}
+            From {" "}
             <span
               style={{
                 background:
@@ -245,19 +232,18 @@ export default async function AIWorkshopPage() {
                 animation: "wk-badge-shine 6s linear infinite",
               }}
             >
-              Smarter with AI
+              Design to Production
             </span>{" "}
-            in One Free Hour
+            using AI
           </h1>
 
           <p
             className="wk-hero-item mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg"
             style={{ animationDelay: "0.2s" }}
           >
-            A hands-on live bootcamp on Figma &amp; Cursor, supercharged with AI —
-            design plugins, MCP-powered workflows, and the tools that take you
-            from blank canvas to polished screens to working code.
-            Beginner-friendly, zero fluff.
+            A hands-on workshop on Figma, Cursor, and the Official Figma MCP, 
+            learn modern UI design fundamentals, understand how AI interprets design files, and 
+            transform Figma designs into production-ready frontend code with Cursor.
           </p>
 
           {/* date + countdown */}
@@ -299,7 +285,7 @@ export default async function AIWorkshopPage() {
               }}
             >
               <span className="relative z-10">
-                Reserve Your Free Seat <span className="cta-arrow">→</span>
+                Reserve Your Free Seat <span className="cta-arrow"></span>
               </span>
             </a>
             <a
