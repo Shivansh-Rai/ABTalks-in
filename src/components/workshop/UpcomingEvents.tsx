@@ -135,7 +135,7 @@ export default function UpcomingEvents() {
                   const cardCommon = "relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-transform";
                   const cardStyle: React.CSSProperties = {
                     background: "rgba(255,255,255,0.025)",
-                    border: `1px solid ${ev.id === openEventId ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
+                    border: `1px solid ${ev.id === openEventId || ev.href ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
                   };
@@ -200,6 +200,21 @@ export default function UpcomingEvents() {
                             />
                             Register →
                           </span>
+                        ) : ev.href ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                            style={{
+                              background: `${ev.accent}20`,
+                              color: ev.accent,
+                              border: `1px solid ${ev.accent}55`,
+                            }}
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
+                            />
+                            {ev.ctaLabel ?? "Learn more"} →
+                          </span>
                         ) : (
                           <span
                             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
@@ -216,6 +231,19 @@ export default function UpcomingEvents() {
                       </div>
                     </>
                   );
+                  if (ev.href) {
+                    return (
+                      <a
+                        href={ev.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`${cardCommon} cursor-pointer hover:-translate-y-1`}
+                        style={cardStyle}
+                      >
+                        {body}
+                      </a>
+                    );
+                  }
                   return ev.id === openEventId ? (
                     <Link
                       href="/ai-workshop#register"
