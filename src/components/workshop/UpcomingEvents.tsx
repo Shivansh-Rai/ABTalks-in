@@ -1,17 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
-import { EVENTS, monthAbbr, dayNum } from "@/components/workshop/events-data";
+import {
+  EVENTS,
+  dayNum,
+  getRegistrableEvent,
+  istTodayKey,
+  monthAbbr,
+  upcomingEvents,
+} from "@/components/workshop/events-data";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
-
-const TOTAL_SLIDES = EVENTS.length + 1; // events + the "coming soon" teaser
 
 export default function UpcomingEvents() {
   const [perView, setPerView] = useState(3);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Client-only: this page is statically prerendered, so a build-time date
+  // would freeze the list. null keeps the first render deterministic.
+  const [todayKey, setTodayKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => setTodayKey(istTodayKey());
+    sync();
+    const id = setInterval(sync, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { events, openEventId } = useMemo(
+    () =>
+      todayKey
+        ? {
+            events: upcomingEvents(todayKey),
+            openEventId: getRegistrableEvent(todayKey)?.id,
+          }
+        : { events: EVENTS, openEventId: undefined },
+    [todayKey],
+  );
+
+  const TOTAL_SLIDES = events.length + 1; // events + the "coming soon" teaser
 
   useEffect(() => {
     const calc = () => {
@@ -106,7 +135,7 @@ export default function UpcomingEvents() {
             className="flex transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${index * (100 / perView)}%)` }}
           >
-            {EVENTS.map((ev) => (
+            {events.map((ev) => (
               <div
                 key={ev.title}
                 className="shrink-0 px-2"
@@ -116,7 +145,7 @@ export default function UpcomingEvents() {
                   const cardCommon = "relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-transform";
                   const cardStyle: React.CSSProperties = {
                     background: "rgba(255,255,255,0.025)",
-                    border: `1px solid ${ev.register ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
+                    border: `1px solid ${ev.id === openEventId ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
                   };
@@ -166,7 +195,7 @@ export default function UpcomingEvents() {
                         <span className="text-[11.5px] font-medium text-white/40">
                           {ev.location}
                         </span>
-                        {ev.register ? (
+                        {ev.id === openEventId ? (
                           <span
                             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
                             style={{
@@ -197,7 +226,7 @@ export default function UpcomingEvents() {
                       </div>
                     </>
                   );
-                  return ev.register ? (
+                  return ev.id === openEventId ? (
                     <Link
                       href="/ai-workshop#register"
                       className={`${cardCommon} cursor-pointer hover:-translate-y-1`}

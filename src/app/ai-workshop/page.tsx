@@ -12,14 +12,14 @@ import UpcomingEvents from "@/components/workshop/UpcomingEvents";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 
 export const metadata: Metadata = {
-  title: "ABTalks | FREE AI Bootcamp — Live Workshop",
+  title: "ABTalks | FREE Figma × Cursor UI/UX Workshop",
   description:
-    "Join ABTalks' FREE 1-Hour Live AI Bootcamp on Google Meet. Learn practical AI skills — ChatGPT, Claude, Gemini, prompt engineering — through hands-on demonstrations.",
+    "Join ABTalks' FREE 1-Hour Live UI/UX Workshop on Google Meet. Learn Figma, Cursor, AI design plugins and MCP-powered workflows — from design to working code.",
   keywords:
-    "AI, bootcamp, workshop, ChatGPT, Claude, Gemini, prompt engineering, ABTalks",
+    "UI, UX, design, Figma, Cursor, MCP, AI plugins, design systems, prototyping, design to code, workshop, ABTalks",
   openGraph: {
-    title: "ABTalks | FREE AI Bootcamp",
-    description: "Join the FREE 1-Hour Live AI Bootcamp",
+    title: "ABTalks | FREE Figma × Cursor UI/UX Workshop",
+    description: "Join the FREE 1-Hour Live Figma × Cursor UI/UX Workshop",
     type: "website",
   },
 };
@@ -233,7 +233,7 @@ export default async function AIWorkshopPage() {
             className="wk-hero-item mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-[56px]"
             style={{ animationDelay: "0.12s" }}
           >
-            Become{" "}
+            Design{" "}
             <span
               style={{
                 background:
@@ -245,7 +245,7 @@ export default async function AIWorkshopPage() {
                 animation: "wk-badge-shine 6s linear infinite",
               }}
             >
-              AI-Fluent
+              Smarter with AI
             </span>{" "}
             in One Free Hour
           </h1>
@@ -254,8 +254,9 @@ export default async function AIWorkshopPage() {
             className="wk-hero-item mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg"
             style={{ animationDelay: "0.2s" }}
           >
-            A hands-on live bootcamp on ChatGPT, Claude &amp; Gemini — prompt
-            engineering, real workflows, and the tools that 10x your output.
+            A hands-on live bootcamp on Figma &amp; Cursor, supercharged with AI —
+            design plugins, MCP-powered workflows, and the tools that take you
+            from blank canvas to polished screens to working code.
             Beginner-friendly, zero fluff.
           </p>
 
@@ -373,7 +374,7 @@ export default async function AIWorkshopPage() {
               }}
             />
             <h3 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Ready to get AI-fluent?
+              Ready to design smarter?
             </h3>
             <p className="mx-auto mt-3 max-w-md text-sm text-white/50 sm:text-base">
               Seats are limited and fill fast. Grab yours before registration
