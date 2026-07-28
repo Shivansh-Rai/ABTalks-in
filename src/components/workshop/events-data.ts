@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { LucideIcon } from "lucide-react";
 import { IST } from "@/lib/date-utils";
-import { BriefcaseBusiness, GraduationCap, Palette } from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, Palette, Trophy } from "lucide-react";
 
 export interface WorkshopEvent {
   id: string;
@@ -27,6 +27,15 @@ export interface WorkshopEvent {
    * used directly as a table identifier and must never come from user input.
    */
   registrationTable?: string;
+  /**
+   * External destination for events that live outside the workshop funnel
+   * (e.g. the hackathon). When set, the card links here in a new tab instead
+   * of scrolling to the workshop registration form, and `ctaLabel` names the
+   * action. Mutually exclusive with `register` in practice.
+   */
+  href?: string;
+  /** Button text for an `href` event. Defaults to "Learn more". */
+  ctaLabel?: string;
 }
 
 export const EVENTS: WorkshopEvent[] = [
@@ -55,6 +64,20 @@ export const EVENTS: WorkshopEvent[] = [
     location: "Live · Zoom",
     register: true,
     registrationTable: "registrations-AIW-15Aug",
+  },
+  {
+    id: "ai-hackathon-48h",
+    date: "2026-08-07",
+    time: "Starts 8:00 PM IST",
+    tag: "Hackathon",
+    accent: "#22d3ee",
+    Icon: Trophy,
+    title: "48-Hour AI Hackathon",
+    desc: "Build a working AI product in a weekend. Form a team, ship something real, and pitch it to judges for prizes and recruiter visibility.",
+    host: "ABTalks",
+    location: "Online · Team event",
+    href: "https://www.abtalks.in/hackathon?s=suy",
+    ctaLabel: "View hackathon",
   },
   {
     id: "linkedin-ai-interview",

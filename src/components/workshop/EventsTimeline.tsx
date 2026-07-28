@@ -164,12 +164,15 @@ export default function EventsTimeline() {
                 // Only the soonest upcoming flagged event is open, so a
                 // finished event can never offer signup.
                 const canRegister = !isPastTab && ev.id === openEventId;
+                // Events that live outside the workshop funnel link out instead.
+                const externalHref = !isPastTab ? ev.href : undefined;
+                const isLinked = canRegister || Boolean(externalHref);
                 const cardClass = `ev-card group flex flex-1 gap-4 overflow-hidden rounded-2xl p-4 sm:p-5${
-                  canRegister ? " cursor-pointer" : ""
+                  isLinked ? " cursor-pointer" : ""
                 }`;
                 const cardStyle: React.CSSProperties = {
                   background: "rgba(255,255,255,0.03)",
-                  border: `1px solid ${canRegister ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
+                  border: `1px solid ${isLinked ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                   backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
                 };
@@ -180,7 +183,7 @@ export default function EventsTimeline() {
                 };
                 const onLeave = (e: React.MouseEvent<HTMLElement>) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = canRegister
+                  e.currentTarget.style.borderColor = isLinked
                     ? `${ev.accent}45`
                     : "rgba(255,255,255,0.08)";
                   e.currentTarget.style.boxShadow = "none";
@@ -246,6 +249,22 @@ export default function EventsTimeline() {
                           Register now
                           <span className="transition-transform group-hover:translate-x-0.5">→</span>
                         </span>
+                      ) : externalHref ? (
+                        <span
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                          style={{
+                            background: `${ev.accent}20`,
+                            color: ev.accent,
+                            border: `1px solid ${ev.accent}55`,
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
+                          />
+                          {ev.ctaLabel ?? "Learn more"}
+                          <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                        </span>
                       ) : (
                         <span
                           className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
@@ -279,6 +298,22 @@ export default function EventsTimeline() {
                     </div>
                   </>
                 );
+
+                if (externalHref) {
+                  return (
+                    <a
+                      href={externalHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cardClass}
+                      style={cardStyle}
+                      onMouseEnter={onEnter}
+                      onMouseLeave={onLeave}
+                    >
+                      {body}
+                    </a>
+                  );
+                }
 
                 return canRegister ? (
                   <Link
