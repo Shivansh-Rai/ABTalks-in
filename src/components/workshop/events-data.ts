@@ -18,6 +18,15 @@ export interface WorkshopEvent {
   location: string;
   /** Open for registration now — its card links straight to the form. */
   register?: boolean;
+  /**
+   * Supabase table this event's signups are written to. Each event gets its
+   * own table, so a repeat attendee is never blocked by another event's
+   * duplicate-email check.
+   *
+   * Only ever set this to a literal table name that exists in Supabase — it is
+   * used directly as a table identifier and must never come from user input.
+   */
+  registrationTable?: string;
 }
 
 export const EVENTS: WorkshopEvent[] = [
@@ -45,6 +54,7 @@ export const EVENTS: WorkshopEvent[] = [
     host: "ABTalks",
     location: "Live · Zoom",
     register: true,
+    registrationTable: "registrations-AIW-15Aug",
   },
   {
     id: "linkedin-ai-interview",
@@ -102,7 +112,7 @@ export const pastEvents = (todayKey: string) =>
 export const getRegistrableEvent = (
   todayKey: string,
 ): WorkshopEvent | undefined =>
-  upcomingEvents(todayKey).find((e) => e.register);
+  upcomingEvents(todayKey).find((e) => e.register && e.registrationTable);
 
 export const fullDate = (iso: string) =>
   utc(iso).toLocaleString("en-US", {
