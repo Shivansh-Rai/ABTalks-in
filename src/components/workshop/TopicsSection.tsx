@@ -154,7 +154,7 @@ export default function TopicsSection() {
         {(
           [
             { Icon: Clock, label: "Duration", value: "1 Hour", subtext: "Live Interactive", accent: "#c084fc" },
-            { Icon: MapPin, label: "Platform", value: "Google Meet", subtext: "Secure link sent", accent: "#6366f1" },
+            { Icon: MapPin, label: "Platform", value: "Zoom", subtext: "Secure link sent", accent: "#6366f1" },
             { Icon: Tag, label: "Price", value: "FREE", subtext: "100% Sponsored", accent: "#8b5cf6", highlight: true },
           ] as const
         ).map((data, i) => (
