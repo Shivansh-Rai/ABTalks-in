@@ -6,7 +6,7 @@ import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 export const metadata: Metadata = {
   title: "Upcoming Events | ABTalks AI Workshop",
   description:
-    "All upcoming ABTalks live AI workshops and events — agents, content, SaaS, data, careers and automation.",
+    "All upcoming ABTalks live workshops and events — UI/UX design, AI tools, agents, content, SaaS, data and careers.",
 };
 
 export default function WorkshopEventsPage() {
