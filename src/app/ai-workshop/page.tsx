@@ -14,7 +14,7 @@ import { getWorkshopConfig } from "@/lib/workshop-supabase";
 export const metadata: Metadata = {
   title: "ABTalks | FREE Figma × Cursor UI/UX Workshop",
   description:
-    "Join ABTalks' FREE 1-Hour Live UI/UX Workshop on Google Meet. Learn Figma, Cursor, AI design plugins and MCP-powered workflows — from design to working code.",
+    "Join ABTalks' FREE 1-Hour Live UI/UX Workshop on Zoom. Learn Figma, Cursor, AI design plugins and MCP-powered workflows, from design to working code.",
   keywords:
     "UI, UX, design, Figma, Cursor, MCP, AI plugins, design systems, prototyping, design to code, workshop, ABTalks",
   openGraph: {
@@ -321,7 +321,7 @@ export default async function AIWorkshopPage() {
           >
             {[
               { Icon: Clock, text: "1 Hour Live" },
-              { Icon: MapPin, text: "Google Meet" },
+              { Icon: MapPin, text: "Live on Zoom" },
               { Icon: Tag, text: "100% Free" },
               { Icon: Target, text: "Beginner Friendly" },
             ].map((c) => (

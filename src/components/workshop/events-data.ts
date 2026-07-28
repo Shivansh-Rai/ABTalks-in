@@ -18,6 +18,15 @@ export interface WorkshopEvent {
   location: string;
   /** Open for registration now — its card links straight to the form. */
   register?: boolean;
+  /**
+   * Supabase table this event's signups are written to. Each event gets its
+   * own table, so a repeat attendee is never blocked by another event's
+   * duplicate-email check.
+   *
+   * Only ever set this to a literal table name that exists in Supabase — it is
+   * used directly as a table identifier and must never come from user input.
+   */
+  registrationTable?: string;
 }
 
 export const EVENTS: WorkshopEvent[] = [
@@ -31,7 +40,7 @@ export const EVENTS: WorkshopEvent[] = [
     title: "FREE AI Bootcamp — Live Workshop",
     desc: "Master ChatGPT, Claude & Gemini in one hands-on live hour — prompt engineering, real workflows, and the tools that 10x your output.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
   },
   {
     id: "uiux-ai-workshop",
@@ -43,8 +52,9 @@ export const EVENTS: WorkshopEvent[] = [
     title: "Figma × Cursor — AI-Powered UI/UX Workshop",
     desc: "Design in Figma, ship with Cursor — MCP servers, AI plugins, and a live run from blank canvas to polished screens to working front-end code.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
     register: true,
+    registrationTable: "registrations-AIW-15Aug",
   },
   {
     id: "linkedin-ai-interview",
@@ -56,7 +66,7 @@ export const EVENTS: WorkshopEvent[] = [
     title: "Enhance LinkedIn & AI Mock Interview",
     desc: "Rebuild your LinkedIn profile so recruiters actually find you, then run live AI mock interviews that grill you and score your answers.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
   },
 ];
 
@@ -102,7 +112,7 @@ export const pastEvents = (todayKey: string) =>
 export const getRegistrableEvent = (
   todayKey: string,
 ): WorkshopEvent | undefined =>
-  upcomingEvents(todayKey).find((e) => e.register);
+  upcomingEvents(todayKey).find((e) => e.register && e.registrationTable);
 
 export const fullDate = (iso: string) =>
   utc(iso).toLocaleString("en-US", {
