@@ -218,6 +218,31 @@
     background: linear-gradient(180deg, #b9b2f3 0%, #8365e3 100%);
   }
 
+  /* Thin ABTalks purple scrollbar — admin desktop panes */
+  .scrollbar-admin-purple {
+    scrollbar-width: thin;
+    scrollbar-color: #7c5cff transparent;
+  }
+
+  .scrollbar-admin-purple::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-admin-purple::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 6px;
+  }
+
+  .scrollbar-admin-purple::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9a88ff 0%, #6f56f5 100%);
+    border-radius: 999px;
+  }
+
+  .scrollbar-admin-purple::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #b3a6ff 0%, #7c5cff 100%);
+  }
+
   @keyframes spark-pulse {
     0% {
       transform: scale(1);

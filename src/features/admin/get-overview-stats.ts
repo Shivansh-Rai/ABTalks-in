@@ -1,6 +1,10 @@
 import { formatDistanceToNow } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
+import {
+  countRegisteredUsers,
+  getRegistrationDatesSince,
+} from "@/features/admin/get-registration-dates";
 
 const IST = "Asia/Kolkata";
 
@@ -56,21 +60,22 @@ export async function getOverviewStats() {
     getIstRollingWeekBounds();
   const last14Keys = getLast14IstDayKeys();
   const seriesStart = new Date(`${last14Keys[0]}T00:00:00+05:30`);
+  const windowStart = new Date(
+    Math.min(seriesStart.getTime(), lastWeekStart.getTime()),
+  );
 
   const [
     totalStudents,
     activeToday,
     day30Reached,
     day60Reached,
-    newStudentsThisWeek,
-    newStudentsLastWeek,
     activeThisWeek,
     activeLastWeek,
-    newStudentsForSeries,
+    registrationDates,
     liveSubmissionsRaw,
     recentAdminActionsRaw,
   ] = await Promise.all([
-    prisma.studentProfile.count(),
+    countRegisteredUsers(),
     prisma.submission.findMany({
       where: { submittedAt: { gte: start, lt: end } },
       distinct: ["userId"],
@@ -78,12 +83,6 @@ export async function getOverviewStats() {
     }),
     prisma.enrollment.count({ where: { daysCompleted: { gte: 30 } } }),
     prisma.enrollment.count({ where: { daysCompleted: { gte: 60 } } }),
-    prisma.studentProfile.count({
-      where: { createdAt: { gte: thisWeekStart, lt: thisWeekEnd } },
-    }),
-    prisma.studentProfile.count({
-      where: { createdAt: { gte: lastWeekStart, lt: lastWeekEnd } },
-    }),
     prisma.submission.findMany({
       where: { submittedAt: { gte: thisWeekStart, lt: thisWeekEnd } },
       distinct: ["userId"],
@@ -94,10 +93,7 @@ export async function getOverviewStats() {
       distinct: ["userId"],
       select: { userId: true },
     }),
-    prisma.studentProfile.findMany({
-      where: { createdAt: { gte: seriesStart } },
-      select: { createdAt: true },
-    }),
+    getRegistrationDatesSince(windowStart),
     prisma.submission.findMany({
       orderBy: { submittedAt: "desc" },
       take: 10,
@@ -133,12 +129,19 @@ export async function getOverviewStats() {
     }),
   ]);
 
+  const newStudentsThisWeek = registrationDates.filter(
+    (date) => date >= thisWeekStart && date < thisWeekEnd,
+  ).length;
+  const newStudentsLastWeek = registrationDates.filter(
+    (date) => date >= lastWeekStart && date < lastWeekEnd,
+  ).length;
+
   const seriesBuckets = new Map<string, number>();
   for (const key of last14Keys) {
     seriesBuckets.set(key, 0);
   }
-  for (const row of newStudentsForSeries) {
-    const key = formatInTimeZone(row.createdAt, IST, "yyyy-MM-dd");
+  for (const date of registrationDates) {
+    const key = formatInTimeZone(date, IST, "yyyy-MM-dd");
     if (seriesBuckets.has(key)) {
       seriesBuckets.set(key, (seriesBuckets.get(key) ?? 0) + 1);
     }
