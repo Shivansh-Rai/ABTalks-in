@@ -6,14 +6,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
 
 const TOUR_KEY = "abtalks_tour_done"; // set by DashboardWalkthrough when finished
-// July 18, 2026 · 4:00 PM IST
-const TARGET = new Date("2026-07-18T10:30:00Z").getTime();
+// Bump the version suffix to re-show the popup to everyone after a change.
+const SEEN_KEY = "abtalks_figma_workshop_promo_v2";
+// Aug 1, 2026 · 6:00 PM IST
+const TARGET = new Date("2026-08-01T12:30:00Z").getTime();
 
 const AVATARS = [
-  { i: "A", g: "linear-gradient(135deg,#ff7a1a,#ff4d94)" },
-  { i: "R", g: "linear-gradient(135deg,#a855f7,#6366f1)" },
-  { i: "P", g: "linear-gradient(135deg,#2dd4bf,#3b82f6)" },
-  { i: "S", g: "linear-gradient(135deg,#ff4d94,#a855f7)" },
+  { i: "A", g: "linear-gradient(135deg,#6366f1,#8b5cf6)" },
+  { i: "R", g: "linear-gradient(135deg,#8b5cf6,#a855f7)" },
+  { i: "P", g: "linear-gradient(135deg,#818cf8,#6366f1)" },
+  { i: "S", g: "linear-gradient(135deg,#a855f7,#4f46e5)" },
 ];
 
 export function WorkshopPromoModal() {
@@ -21,9 +23,20 @@ export function WorkshopPromoModal() {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const glowRef = useRef<HTMLDivElement>(null);
 
-  // Show on every dashboard load/refresh. If the first-visit walkthrough is
-  // still running, wait for the user to finish it before showing the promo.
+  function closeTemporarily() {
+    setOpen(false);
+  }
+
+  function dismissPermanently() {
+    localStorage.setItem(SEEN_KEY, "1");
+    setOpen(false);
+  }
+
+  // Show on every refresh unless the user chose "Not interested".
+  // If the first-visit walkthrough is still running, wait for it to finish.
   useEffect(() => {
+    if (localStorage.getItem(SEEN_KEY)) return;
+
     let showTimer: ReturnType<typeof setTimeout>;
     let poll: ReturnType<typeof setInterval>;
 
@@ -34,10 +47,8 @@ export function WorkshopPromoModal() {
     const tourDone = () => !!localStorage.getItem(TOUR_KEY);
 
     if (tourDone()) {
-      // No walkthrough (or already completed) → show 3s after load.
       show();
     } else {
-      // Walkthrough will run first — poll until it's completed, then show.
       poll = setInterval(() => {
         if (tourDone()) {
           clearInterval(poll);
@@ -51,6 +62,16 @@ export function WorkshopPromoModal() {
       clearInterval(poll);
     };
   }, []);
+
+  // Lock background scroll while the popup is open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   // live countdown while open
   useEffect(() => {
@@ -96,18 +117,69 @@ export function WorkshopPromoModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-70 flex items-center justify-center bg-black/65 px-4 backdrop-blur-md"
+          className="wk-promo fixed inset-0 z-70 flex items-center justify-center px-4 backdrop-blur-md"
+          style={{ background: "rgba(5, 10, 23, 0.72)" }}
         >
           <style>{`
-            @keyframes wp-halo-spin { to { transform: rotate(360deg); } }
-            @keyframes wp-shine { 0%,55% { transform: translateX(-140%) skewX(-16deg); } 100% { transform: translateX(140%) skewX(-16deg); } }
-            @keyframes wp-live { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
-            .wp-cta::after {
-              content:""; position:absolute; inset:0;
-              background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.45) 50%,transparent 60%);
-              transform:translateX(-140%) skewX(-16deg); animation:wp-shine 3.4s ease-in-out infinite; pointer-events:none;
+            .wk-promo {
+              --wk-bg: #050a17;
+              --wk-surface: #0b1120;
+              --wk-text: #f5f6fa;
+              --wk-a1: #6366f1;
+              --wk-a1-rgb: 99, 102, 241;
+              --wk-a1-light: #818cf8;
+              --wk-a1-deep: #4f46e5;
+              --wk-a2: #8b5cf6;
+              --wk-a2-rgb: 139, 92, 246;
+              --wk-a3: #a855f7;
+              --wk-grad: linear-gradient(135deg, var(--wk-a1) 0%, var(--wk-a2) 100%);
             }
-            .wp-cta:hover { transform: translateY(-2px); filter: brightness(1.06); }
+            @keyframes wk-promo-halo { to { transform: rotate(360deg); } }
+            @keyframes wk-promo-live {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.45; transform: scale(0.82); }
+            }
+            @keyframes wk-promo-shine-text {
+              0% { background-position: 200% center; }
+              100% { background-position: -200% center; }
+            }
+            @keyframes wk-promo-cta-glow {
+              0%, 100% {
+                box-shadow: 0 12px 34px -10px rgba(var(--wk-a2-rgb), 0.55),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.25);
+              }
+              50% {
+                box-shadow: 0 18px 44px -8px rgba(var(--wk-a2-rgb), 0.85),
+                  0 0 24px 2px rgba(var(--wk-a1-rgb), 0.35),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+              }
+            }
+            @keyframes wk-promo-cta-shine {
+              0%, 55% { transform: translateX(-130%) skewX(-15deg); }
+              100% { transform: translateX(130%) skewX(-15deg); }
+            }
+            .wk-promo-cta {
+              position: relative;
+              overflow: hidden;
+              animation: wk-promo-cta-glow 2.6s ease-in-out infinite;
+            }
+            .wk-promo-cta::after {
+              content: "";
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(
+                105deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.38) 50%,
+                transparent 60%
+              );
+              transform: translateX(-130%) skewX(-15deg);
+              animation: wk-promo-cta-shine 3.6s ease-in-out infinite;
+              pointer-events: none;
+            }
+            .wk-promo-cta:hover {
+              transform: translateY(-2px);
+            }
           `}</style>
 
           <motion.div
@@ -118,14 +190,14 @@ export function WorkshopPromoModal() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-[440px]"
           >
-            {/* rotating gradient halo */}
+            {/* rotating indigo/violet halo */}
             <div
               aria-hidden
               className="pointer-events-none absolute -inset-6 rounded-[42px] opacity-50 blur-2xl"
               style={{
                 background:
-                  "conic-gradient(from 0deg, #ff7a1a, #ff4d94, #a855f7, #6366f1, #ff7a1a)",
-                animation: "wp-halo-spin 8s linear infinite",
+                  "conic-gradient(from 0deg, #6366f1, #8b5cf6, #a855f7, #4f46e5, #6366f1)",
+                animation: "wk-promo-halo 8s linear infinite",
               }}
             />
 
@@ -133,13 +205,58 @@ export function WorkshopPromoModal() {
             <div
               onMouseMove={onMove}
               onMouseLeave={onLeave}
-              className="relative overflow-hidden rounded-[28px] border border-white/10 p-7 sm:p-8"
+              className="relative overflow-hidden rounded-[28px] p-7 sm:p-8"
               style={{
                 background:
-                  "radial-gradient(120% 90% at 50% -10%, #1a1424 0%, #0b0912 55%)",
+                  "radial-gradient(120% 90% at 50% -10%, #121a33 0%, var(--wk-bg) 58%)",
+                border: "1px solid rgba(255,255,255,0.09)",
                 boxShadow: "0 40px 100px -30px rgba(0,0,0,0.9)",
+                color: "var(--wk-text)",
               }}
             >
+              {/* soft aurora orbs */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full blur-3xl"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(var(--wk-a1-rgb),0.28), transparent 65%)",
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -bottom-24 -right-16 h-60 w-60 rounded-full blur-3xl"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(var(--wk-a2-rgb),0.22), transparent 65%)",
+                }}
+              />
+
+              {/* subtle grid */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+                  backgroundSize: "40px 40px",
+                  maskImage:
+                    "radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 100%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 100%)",
+                }}
+              />
+
+              {/* top accent line */}
+              <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(to right, transparent, rgba(var(--wk-a1-rgb),0.7), rgba(var(--wk-a2-rgb),0.7), transparent)",
+                }}
+              />
+
               {/* pointer-follow glow */}
               <div
                 ref={glowRef}
@@ -149,14 +266,14 @@ export function WorkshopPromoModal() {
                   marginLeft: -180,
                   marginTop: -180,
                   background:
-                    "radial-gradient(circle, rgba(255,77,148,0.14), transparent 60%)",
+                    "radial-gradient(circle, rgba(var(--wk-a2-rgb),0.16), transparent 60%)",
                 }}
               />
 
               {/* close */}
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeTemporarily}
                 aria-label="Close"
                 className="absolute right-4 top-4 z-10 flex size-8 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
               >
@@ -165,33 +282,50 @@ export function WorkshopPromoModal() {
 
               <div className="relative">
                 {/* live pill */}
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70">
+                <span
+                  className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.18em]"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.75)",
+                  }}
+                >
                   <span
-                    className="h-1.5 w-1.5 rounded-full bg-[#ff4d94]"
-                    style={{ boxShadow: "0 0 8px 1px rgba(255,77,148,.9)", animation: "wp-live 1.8s ease-in-out infinite" }}
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      background: "var(--wk-a2)",
+                      boxShadow: "0 0 8px 1px rgba(var(--wk-a2-rgb),0.8)",
+                      animation: "wk-promo-live 1.8s ease-in-out infinite",
+                    }}
                   />
                   Free Live Workshop
                 </span>
 
                 <h2 className="mt-4 font-display text-[26px] font-extrabold leading-[1.12] tracking-tight text-white sm:text-[30px]">
-                  Become{" "}
+                  From {" "}
                   <span
                     style={{
-                      background: "linear-gradient(120deg,#ff9a3c,#ff4d94 55%,#a855f7)",
+                      background:
+                        "linear-gradient(120deg, var(--wk-a1-light) 0%, var(--wk-a2) 55%, var(--wk-a3) 100%)",
+                      backgroundSize: "200% auto",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
+                      animation: "wk-promo-shine-text 6s linear infinite",
                     }}
                   >
-                    AI-Fluent
+                    Design to Production
                   </span>{" "}
-                  in one free hour
+                  using AI
                 </h2>
 
-                <p className="mt-3 text-[13.5px] leading-relaxed text-white/50">
-                  A hands-on live bootcamp on ChatGPT, Claude &amp; Gemini —
-                  prompt engineering, real workflows, and the tools that 10× your
-                  output.
+                <p className="mt-3 text-[13.5px] leading-relaxed text-white/55">
+                  Learn how to design modern UIs in Figma and instantly convert
+                  them into working code using Cursor with the official Figma
+                  MCP. This hands-on workshop covers Figma basics, UI design
+                  principles, MCP concepts, setup, AI-powered development
+                  workflow, and a live demo of building a responsive application
+                  from design to code.
                 </p>
 
                 {/* countdown */}
@@ -203,8 +337,12 @@ export function WorkshopPromoModal() {
                     {units.map((u, i) => (
                       <div key={u.l} className="flex items-center gap-2">
                         <div
-                          className="flex min-w-[52px] flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2"
-                          style={{ backdropFilter: "blur(6px)" }}
+                          className="flex min-w-[52px] flex-col items-center rounded-xl px-2 py-2"
+                          style={{
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            backdropFilter: "blur(6px)",
+                          }}
                         >
                           <span className="font-mono text-lg font-bold tabular-nums text-white">
                             {pad(u.v)}
@@ -221,57 +359,34 @@ export function WorkshopPromoModal() {
                   </div>
                 </div>
 
-                {/* social proof */}
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex -space-x-2.5">
-                    {AVATARS.map((a) => (
-                      <span
-                        key={a.i}
-                        className="flex size-7 items-center justify-center rounded-full border-2 text-[11px] font-bold text-white"
-                        style={{ background: a.g, borderColor: "#0b0912" }}
-                      >
-                        {a.i}
-                      </span>
-                    ))}
-                    <span
-                      className="flex size-7 items-center justify-center rounded-full border-2 text-[9px] font-bold text-white/70"
-                      style={{ background: "#241b2f", borderColor: "#0b0912" }}
-                    >
-                      3k+
-                    </span>
-                  </div>
-                  <span className="text-[12.5px] text-white/45">
-                    <span className="font-semibold text-white/70">3,000+ learners</span>{" "}
-                    already registered
-                  </span>
-                </div>
+                
 
                 {/* CTA */}
                 <Link
                   href="/ai-workshop"
-                  onClick={() => setOpen(false)}
-                  className="wp-cta group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-full py-3.5 text-[15px] font-semibold text-white transition-[transform,filter] duration-200"
-                  style={{
-                    background: "linear-gradient(135deg,#ff7a1a 0%,#ff4d94 100%)",
-                    boxShadow: "0 14px 34px -12px rgba(255,77,148,.65), inset 0 1px 0 rgba(255,255,255,.28)",
-                  }}
+                  onClick={closeTemporarily}
+                  className="wk-promo-cta group relative mt-7 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-[15px] font-semibold text-white transition-transform duration-200"
+                  style={{ background: "var(--wk-grad)" }}
                 >
-                  <span className="relative z-10">Reserve your free seat</span>
-                  <ArrowRight className="relative z-10 size-4 transition-transform group-hover:translate-x-1" aria-hidden />
+                  <span className="relative z-10">Register now</span>
+                  <ArrowRight
+                    className="relative z-10 size-4 transition-transform group-hover:translate-x-1"
+                    aria-hidden
+                  />
                 </Link>
 
                 <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-white/30">
-                  <span>Live on Zoom</span>
+                  <span>Live on Zoom Meet</span>
                   <span className="text-white/15">•</span>
                   <span>Limited seats</span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={dismissPermanently}
                   className="mt-4 w-full text-center text-[12.5px] font-medium text-white/35 transition-colors hover:text-white/60"
                 >
-                  Maybe later
+                  Not interested
                 </button>
               </div>
             </div>
