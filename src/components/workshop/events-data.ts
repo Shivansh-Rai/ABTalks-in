@@ -31,7 +31,7 @@ export const EVENTS: WorkshopEvent[] = [
     title: "FREE AI Bootcamp — Live Workshop",
     desc: "Master ChatGPT, Claude & Gemini in one hands-on live hour — prompt engineering, real workflows, and the tools that 10x your output.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
   },
   {
     id: "uiux-ai-workshop",
@@ -43,7 +43,7 @@ export const EVENTS: WorkshopEvent[] = [
     title: "Figma × Cursor — AI-Powered UI/UX Workshop",
     desc: "Design in Figma, ship with Cursor — MCP servers, AI plugins, and a live run from blank canvas to polished screens to working front-end code.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
     register: true,
   },
   {
@@ -56,7 +56,7 @@ export const EVENTS: WorkshopEvent[] = [
     title: "Enhance LinkedIn & AI Mock Interview",
     desc: "Rebuild your LinkedIn profile so recruiters actually find you, then run live AI mock interviews that grill you and score your answers.",
     host: "ABTalks",
-    location: "Live · Google Meet",
+    location: "Live · Zoom",
   },
 ];
 
