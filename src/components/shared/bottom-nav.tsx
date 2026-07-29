@@ -79,7 +79,7 @@ export function BottomNav() {
     pathname.startsWith("/ai-workshop/") ||
     pathname === "/hackathon" ||
     pathname.startsWith("/hackathon/") ||
-    /^\/(login|register|claude-signup|students|r|program|talent)(\/|$)/.test(
+    /^\/(login|register|claude-signup|students|r|program|talent|verify)(\/|$)/.test(
       pathname,
     )
   ) {

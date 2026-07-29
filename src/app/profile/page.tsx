@@ -241,6 +241,18 @@ export default async function ProfilePage() {
 
             <Card className="min-w-0">
               <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle>Your Achievements</CardTitle>
+                <CardDescription>Certificates and milestones you&apos;ve earned.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <Link href="/achievements" className={cn(buttonVariants({ variant: "outline" }))}>
+                  View achievements
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="min-w-0">
+              <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle>My Redemptions</CardTitle>
                 <CardDescription>
                   Items you&apos;ve redeemed with synergy points.

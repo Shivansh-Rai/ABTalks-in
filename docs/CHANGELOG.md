@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-29 [schema] Certificate model + enums for Claude Challenge credentials (ABT-CC-XXXXX); CERTIFICATE_TEMPLATE_URL/PATH for pdf-lib template overlay
 - 2026-07-27 [rule] Program cohort quizzes removed (concept checks + entry assessment always bypassed); exit interview unlocks on Day 31 progress only
 - 2026-07-25 [schema] HackathonLink + HackathonParticipant.sourceSlug for invisible ?s= share-link attribution (first-touch abtalks_src cookie)
 - 2026-07-25 [schema] HackathonTeam / HackathonParticipant / HackathonEvent on Neon with User.userId FK; registration + admin moved off Supabase hackathon_* tables
