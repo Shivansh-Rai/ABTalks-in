@@ -174,15 +174,99 @@ This should also ask others to join and all the demographics should be accurate 
   The best projects are still ahead! 🚀", elegant quote card with "Small progress every day leads to big transformation.", section title "WHAT WE'RE BUILDING TOGETHER" with five premium icon cards: Real Projects, AI Mastery, Build in Public, Level Up, Amazing Community. Bottom glowing brush-stroke banner with trophy icon reading "45 DAYS OF FOCUS. A LIFETIME OF IMPACT." and subtitle "LET'S FINISH THESE 15 DAYS LIKE LEGENDS. 🔥". Add handwritten script in the top-right saying "Build. Reflect. Grow.". Use modern startup branding, Behance and Dribbble-quality composition, ultra-sharp typography, clean spacing, high contrast, 
   crisp readable text, premium graphic design, no watermark, no logo distortion, preserve the uploaded photograph exactly without changing the person's appearance.`,
 
-  60: `[DAY 60 MILESTONE PLACEHOLDER]
+  60: `Create a premium LinkedIn achievement poster (portrait 1080×1350, 4:5) celebrating 60/60 Days Completed of the ABTalks 60 Days Claude AI Challenge. This is an IMAGE EDITING task, not image generation.
 
-Maecenas faucibus mollis interdum. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Aenean lacinia bibendum nulla sed consectetur. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Cras mattis consectetur purus sit amet fermentum. Sed posuere consectetur est at lobortis. Nulla vitae elit libero, a pharetra augue.
+Use my uploaded photograph exactly as provided. Do not redraw, regenerate, beautify, stylize, alter, or modify my face, hairstyle, skin tone, facial features, expression, clothing, pose, body proportions, or camera angle. Preserve the original photo pixel-for-pixel. Only remove the background and seamlessly composite it into the poster. Place the photo on the right with subtle blue and violet brush-stroke blending and soft cinematic rim lighting around the edges only.
 
-Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Etiam porta sem malesuada magna mollis euismod. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit.
+Theme
 
-Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Nullam quis risus eget urna mollis ornare vel eu leo. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Maecenas sed diam eget risus varius blandit sit amet non magna. Donec ullamcorper nulla non metus auctor fringilla.
+Elite AI Professional • Graduation • Innovation • Growth • Community • Future of Work
 
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Cras mattis consectetur purus sit amet fermentum. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Aenean lacinia bibendum nulla sed consectetur. Sed posuere consectetur est at lobortis. Nulla vitae elit libero, a pharetra augue. Donec id elit non mi porta gravida at eget metus.`,
+Background
+
+Dark navy-black cosmic backdrop with subtle stars, neural-network patterns, holographic UI, floating particles, glassmorphism, and neon blue (#4EA8FF) & violet (#8B5CF6) lighting. Modern OpenAI / Linear / Apple-style aesthetic.
+
+Branding
+
+Top-left:
+
+ABTALKS
+PRESENTS
+Rounded badge: 60 DAYS CLAUDE AI CHALLENGE
+Official Claude logo (undistorted)
+Hero Section
+
+Huge typography:
+
+60
+DAYS
+Gold glowing pill: COMPLETED
+
+Floating glass achievement card:
+
+60/60
+100% Complete
+Elite AI Builder
+Full circular progress ring (100%)
+Gold completion badge
+Headline
+
+60 DAYS. COUNTLESS LESSONS. A NEW BEGINNING.
+
+From experimenting with AI to building production-ready projects. This is only the beginning. 🚀
+
+Quote Card
+
+"Consistency beats talent when talent stops showing up."
+
+— ABTalks Community
+
+What We Built Together
+
+Premium icon cards for:
+
+Prompt Engineering
+Claude Mastery
+AI Agents
+MCP & Connectors
+Artifacts & Apps
+Healthcare AI
+Supply Chain AI
+Creative AI
+Data & Analytics
+AI Automation
+Challenge Stats
+60 Days
+60 AI Projects
+8 Learning Phases
+Countless Skills Learned
+One Incredible Community
+Community
+
+MORE THAN A CHALLENGE
+
+Learning together. Building together. Growing together. Creating the next generation of AI professionals.
+
+What's Next
+Build Real Products
+Launch AI Career
+Build in Public
+Never Stop Learning
+
+Top-right handwritten script:
+Build. Learn. Ship. Repeat.
+
+Bottom glowing banner:
+60 DAYS OF DISCIPLINE. A FUTURE BUILT WITH AI.
+
+THANK YOU FOR BUILDING THIS JOURNEY WITH ABTALKS ❤️
+
+Footer:
+KEEP BUILDING • KEEP LEARNING • KEEP SHARING
+
+ABTalks • #60DaysClaudeChallenge
+
+The final poster should look like a prestigious global AI certification or graduation announcement, with ultra-sharp typography, clean spacing, no watermark, no logo distortion, and the uploaded photograph preserved exactly. Keep the original lighting, exposure, color temperature, skin texture, and facial contrast exactly as in the uploaded photograph. Do not relight the face, increase contrast, sharpen facial details, smooth skin, alter shadows, brighten highlights, or apply beauty-retouching. Any glow or rim lighting must be applied only behind the subject and around the silhouette, never across the face or clothing.`,
 };
 
 export function getClaudeSharePromptTitle(day: ClaudeSharePromptKey): string {
