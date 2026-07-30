@@ -3,6 +3,7 @@ import { HackathonLinkAdd } from "@/components/admin/hackathon-link-add";
 import { HackathonLinkCopy } from "@/components/admin/hackathon-link-copy";
 import { HackathonLinkRowActions } from "@/components/admin/hackathon-link-row-actions";
 import { HackathonLinkView } from "@/components/admin/hackathon-link-view";
+import { HackathonUnknownSlugRow } from "@/components/admin/hackathon-unknown-slug-row";
 import {
   Table,
   TableBody,
@@ -132,18 +133,17 @@ export default async function AdminHackathonLinksPage() {
                 <TableRow>
                   <TableHead>Slug</TableHead>
                   <TableHead>Registrations</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {unknownSlugs.map((row) => (
-                  <TableRow key={row.slug}>
-                    <TableCell className="font-mono text-sm">
-                      {row.slug}
-                    </TableCell>
-                    <TableCell className="font-bold tabular-nums">
-                      {row.registrations}
-                    </TableCell>
-                  </TableRow>
+                  <HackathonUnknownSlugRow
+                    key={row.slug}
+                    slug={row.slug}
+                    registrations={row.registrations}
+                    users={row.users}
+                  />
                 ))}
               </TableBody>
             </Table>

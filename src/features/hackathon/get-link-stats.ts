@@ -17,12 +17,25 @@ export type HackathonLinkStat = {
   }[];
 };
 
+export type HackathonLinkUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  team: "solo" | "team";
+  college: string;
+};
+
 export type HackathonLinkStats = {
   links: HackathonLinkStat[];
   totalRegistrations: number;
   attributedRegistrations: number;
   directRegistrations: number;
-  unknownSlugs: { slug: string; registrations: number }[];
+  unknownSlugs: {
+    slug: string;
+    registrations: number;
+    users: HackathonLinkUser[];
+  }[];
 };
 
 export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
@@ -96,7 +109,11 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
 
   const unknownSlugs = [...counts.entries()]
     .filter(([slug]) => !known.has(slug))
-    .map(([slug, registrations]) => ({ slug, registrations }))
+    .map(([slug, registrations]) => ({
+      slug,
+      registrations,
+      users: usersBySlug.get(slug) ?? [],
+    }))
     .sort((a, b) => b.registrations - a.registrations);
 
   return {
