@@ -30,9 +30,15 @@ import { userTypeLabel } from "@/lib/profile-display";
 type Props = {
   initialProfile: ProfileFormValues;
   phoneVerified: boolean;
+  /** When false (local next dev), hide Verify button/dialog for unverified phones. */
+  otpVerificationRequired: boolean;
 };
 
-export function ProfileForm({ initialProfile, phoneVerified }: Props) {
+export function ProfileForm({
+  initialProfile,
+  phoneVerified,
+  otpVerificationRequired,
+}: Props) {
   const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -286,7 +292,7 @@ export function ProfileForm({ initialProfile, phoneVerified }: Props) {
             <p className="text-sm text-destructive">{errors.phone.message}</p>
           ) : null}
         </div>
-      ) : (
+      ) : otpVerificationRequired ? (
         <div className="space-y-1.5 sm:space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
           <div className="flex gap-2">
@@ -333,6 +339,23 @@ export function ProfileForm({ initialProfile, phoneVerified }: Props) {
               />
             </DialogContent>
           </Dialog>
+        </div>
+      ) : (
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="+91 9876543210 or +1 555 123 4567"
+            autoComplete="tel"
+            {...register("phone")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional. Visible to admins only.
+          </p>
+          {errors.phone ? (
+            <p className="text-sm text-destructive">{errors.phone.message}</p>
+          ) : null}
         </div>
       )}
 

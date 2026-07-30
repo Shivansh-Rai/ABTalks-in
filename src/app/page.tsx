@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isClaudeEnabled } from "@/lib/feature-flags";
 import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/registration-status";
-import { OnboardingClient } from "@/components/landing/onboarding-client";
+import { LandingHub } from "@/components/landing/landing-hub";
 
 export default async function HomePage() {
   const session = await auth();
@@ -23,9 +23,5 @@ export default async function HomePage() {
     }
   }
 
-  if (isClaudeEnabled()) {
-    redirect("/claude-signup");
-  }
-
-  return <OnboardingClient />;
+  return <LandingHub claudeEnabled={isClaudeEnabled()} />;
 }

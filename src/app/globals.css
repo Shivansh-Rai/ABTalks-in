@@ -334,6 +334,9 @@
   .dark .logo-image {
     filter: none;
   }
+  .logo-image-no-invert {
+    filter: none !important;
+  }
   @media (max-width: 47.9375rem) {
     .logo-link {
       max-width: 6.4rem; /* 7.125rem − 10% */

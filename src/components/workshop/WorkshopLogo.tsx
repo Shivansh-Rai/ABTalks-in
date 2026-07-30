@@ -4,9 +4,9 @@ import Link from "next/link";
 export default function WorkshopLogo() {
   return (
     <Link
-      href="/ai-workshop"
-      aria-label="ABTalks — AI Workshop"
-      className="wk-logo group relative inline-flex shrink-0 overflow-hidden rounded-md"
+      href="/"
+      aria-label="ABTalks home"
+      className="wk-logo logo-link group relative inline-flex shrink-0 overflow-hidden rounded-md"
     >
       <style>{`
         .wk-logo::after {
@@ -31,7 +31,7 @@ export default function WorkshopLogo() {
         width={300}
         height={84}
         priority
-        className="block h-6 w-auto max-w-none object-cover object-left sm:h-7"
+        className="logo-image logo-image-no-invert !h-6 w-auto sm:!h-7"
       />
     </Link>
   );

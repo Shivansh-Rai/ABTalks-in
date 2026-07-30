@@ -46,7 +46,7 @@ import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/regist
 import { Domain } from "@prisma/client";
 import { ClaudeChallengeModal } from "@/components/dashboard/claude-challenge-modal";
 import { getUserActiveEnrollments } from "@/features/enrollment/get-user-enrollments";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
 import { CampusAmbassadorBanner } from "@/components/dashboard/campus-ambassador-banner";
@@ -360,10 +360,12 @@ export default async function DashboardPage({
           cleanPath={dashboardPathWithoutToast}
         />
       ) : null}
-      <PhoneVerifyNudge
-        phone={profile.phone}
-        phoneVerified={profile.phoneVerified}
-      />
+      {isOtpVerificationRequired() ? (
+        <PhoneVerifyNudge
+          phone={profile.phone}
+          phoneVerified={profile.phoneVerified}
+        />
+      ) : null}
       <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
         {quizAvailability.banner ? (
           <div className="mb-6">

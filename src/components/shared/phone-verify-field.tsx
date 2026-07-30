@@ -162,6 +162,8 @@ type Props = {
   /** Fires once when a real OTP verification succeeds (not for the non-India no-op). */
   onVerified?: (e164: string) => void;
   disabled?: boolean;
+  /** When false (local next dev), OTP controls are hidden and the field is allowed to continue. */
+  verificationRequired?: boolean;
 };
 
 export function PhoneVerifyField({
@@ -171,6 +173,7 @@ export function PhoneVerifyField({
   onVerifiedChange,
   onVerified,
   disabled,
+  verificationRequired = true,
 }: Props) {
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
   const [phoneNumber, setPhoneNumber] = useState(defaultPhoneNumber);
@@ -192,9 +195,14 @@ export function PhoneVerifyField({
   }, [countryCode, phoneNumber, onChange]);
 
   // Non-India numbers need no verification; report "verified" so gating passes.
+  // When verification is not required (local next dev), always allow continue.
   useEffect(() => {
+    if (!verificationRequired) {
+      onVerifiedChange?.(true);
+      return;
+    }
     onVerifiedChange?.(!isIndia ? true : step === "verified");
-  }, [isIndia, step, onVerifiedChange]);
+  }, [isIndia, step, onVerifiedChange, verificationRequired]);
 
   // Resend cooldown ticker.
   useEffect(() => {
@@ -356,7 +364,7 @@ export function PhoneVerifyField({
           disabled={disabled || step === "verified"}
           className="flex-1"
         />
-        {isIndia && step !== "verified" ? (
+        {verificationRequired && isIndia && step !== "verified" ? (
           <Button
             type="button"
             variant="outline"
@@ -375,14 +383,14 @@ export function PhoneVerifyField({
         ) : null}
       </div>
 
-      {isIndia && step === "verified" ? (
+      {verificationRequired && isIndia && step === "verified" ? (
         <p className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="size-4" aria-hidden />
           Phone number verified
         </p>
       ) : null}
 
-      {isIndia && step === "sent" ? (
+      {verificationRequired && isIndia && step === "sent" ? (
         <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
           <Label htmlFor="otp" className="text-sm">
             Enter the 4-digit code sent to {countryCode} {phoneNumber}
@@ -427,7 +435,7 @@ export function PhoneVerifyField({
         </div>
       ) : null}
 
-      {!isIndia ? (
+      {!verificationRequired || !isIndia ? (
         <p className="text-xs text-muted-foreground">
           Optional. Visible to admins only.
         </p>

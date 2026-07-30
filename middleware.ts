@@ -12,7 +12,8 @@ const { auth } = NextAuth(authConfig);
 
 const protectedPaths = [
   "/dashboard",
-  "/challenge",
+  "/explore",
+  "/challenge/",
   "/profile",
   "/achievements",
   "/quiz",
@@ -92,7 +93,7 @@ export default auth((req) => {
 
   if (isProtected && !isLoggedIn) {
     const url = new URL("/login", req.nextUrl);
-    url.searchParams.set("from", pathname);
+    url.searchParams.set("from", pathname + req.nextUrl.search);
     return withTracking(NextResponse.redirect(url), ref, src, alreadyAttributed);
   }
 

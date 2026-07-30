@@ -1,6 +1,6 @@
 import { EnrollmentStatus, UserType } from "@prisma/client";
 import { clearRefCookie } from "@/lib/cookies";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import type { RegisterPayloadInput } from "@/lib/validations/register";
 import { INDIA_DIALING_CODE, toE164 } from "@/lib/validations/phone";
 import { prisma } from "@/lib/db";
@@ -106,8 +106,9 @@ export async function completeRegistration(
       ? toE164(input.countryCode, input.phoneNumber)
       : null;
 
-  // India (+91) requires a phone that has been OTP-verified. Re-check the
-  // verification server-side — never trust the client. Non-+91 skips OTP.
+  // India (+91) requires a phone that has been OTP-verified (production).
+  // Under next dev, OTP is skipped — persist the phone as unverified.
+  // Re-check the verification server-side — never trust the client.
   let phoneVerified = false;
   if (input.countryCode === INDIA_DIALING_CODE) {
     if (!phone) {
@@ -117,18 +118,20 @@ export async function completeRegistration(
         message: "Phone number is required.",
       };
     }
-    const verification = await prisma.phoneVerification.findUnique({
-      where: { userId },
-      select: { phone: true, verified: true },
-    });
-    if (!verification || !verification.verified || verification.phone !== phone) {
-      return {
-        ok: false,
-        reason: "internal_error",
-        message: "Please verify your phone number to continue.",
-      };
+    if (isOtpVerificationRequired()) {
+      const verification = await prisma.phoneVerification.findUnique({
+        where: { userId },
+        select: { phone: true, verified: true },
+      });
+      if (!verification || !verification.verified || verification.phone !== phone) {
+        return {
+          ok: false,
+          reason: "internal_error",
+          message: "Please verify your phone number to continue.",
+        };
+      }
+      phoneVerified = true;
     }
-    phoneVerified = true;
   }
 
   try {

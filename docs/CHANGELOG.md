@@ -4,6 +4,8 @@
 - 2026-07-30 [rule] Claude certificates now issue at 50+ completed days; CLAUDE test seed includes one deterministic 60/60 completed login for local QA
 - 2026-07-30 [convention] Certificate template now serves from `public/certificates/claude-certificate-template.pdf`; runtime fetch defaults to site URL unless CERTIFICATE_TEMPLATE_URL overrides it
 - 2026-07-29 [schema] Certificate model + enums for Claude Challenge credentials (ABT-CC-XXXXX); CERTIFICATE_TEMPLATE_URL/PATH for pdf-lib template overlay
+- 2026-07-29 [rule] Phone OTP remains required in production but is skipped under next dev so local registration and profile testing need no verification code
+- 2026-07-29 [rule] Signed-out / is a three-track public hub and /challenges is the public 60-day overview; Claude remains available but is no longer the default entry point
 - 2026-07-27 [rule] Program cohort quizzes removed (concept checks + entry assessment always bypassed); exit interview unlocks on Day 31 progress only
 - 2026-07-25 [schema] HackathonLink + HackathonParticipant.sourceSlug for invisible ?s= share-link attribution (first-touch abtalks_src cookie)
 - 2026-07-25 [schema] HackathonTeam / HackathonParticipant / HackathonEvent on Neon with User.userId FK; registration + admin moved off Supabase hackathon_* tables

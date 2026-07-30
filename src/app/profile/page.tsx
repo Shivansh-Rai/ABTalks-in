@@ -24,7 +24,7 @@ import { ProfileForm } from "./profile-form";
 import type { ProfileFormValues } from "@/lib/validations/profile";
 import { userTypeLabel } from "@/lib/profile-display";
 import { UserType } from "@prisma/client";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
 import { getMyRedemptions } from "@/features/marketplace/get-my-redemptions";
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
@@ -212,6 +212,7 @@ export default async function ProfilePage() {
                 <ProfileForm
                   initialProfile={formDefaults}
                   phoneVerified={profile.phoneVerified}
+                  otpVerificationRequired={isOtpVerificationRequired()}
                 />
               </CardContent>
             </Card>

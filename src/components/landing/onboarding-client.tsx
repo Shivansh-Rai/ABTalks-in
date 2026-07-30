@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
@@ -96,7 +97,16 @@ export function OnboardingClient() {
 
       <div className="relative z-10 flex min-h-svh flex-col">
         <header className="shrink-0 px-6 py-4">
-          <div className="font-display text-xl font-bold">ABTalks</div>
+          <Link href="/" aria-label="ABTalks home" className="logo-link">
+            <Image
+              src="/abtalks-logo.png"
+              alt="ABTalks"
+              width={300}
+              height={84}
+              priority
+              className="logo-image"
+            />
+          </Link>
         </header>
 
         <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6 py-4">
