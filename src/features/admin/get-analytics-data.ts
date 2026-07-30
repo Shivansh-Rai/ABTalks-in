@@ -2,6 +2,7 @@ import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
+import { getRegistrationDatesSince } from "@/features/admin/get-registration-dates";
 
 export type TimeRange = "daily" | "weekly" | "monthly";
 
@@ -85,17 +86,15 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   const bucketSet = new Set(buckets.map((b) => b.key));
 
   const [
-    rangedProfiles,
+    registrationDates,
     rangedSubmissions,
     enrollmentByDomain,
+    hackathonRegistered,
     allEnrollments,
     allSubmissions,
     topPerformersRaw,
   ] = await Promise.all([
-    prisma.studentProfile.findMany({
-      where: { createdAt: { gte: start } },
-      select: { createdAt: true },
-    }),
+    getRegistrationDatesSince(start),
     prisma.submission.findMany({
       where: { submittedAt: { gte: start } },
       select: { submittedAt: true },
@@ -104,6 +103,7 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
       by: ["domain"],
       _count: { _all: true },
     }),
+    prisma.hackathonParticipant.count(),
     prisma.enrollment.findMany({
       select: { daysCompleted: true },
     }),
@@ -127,8 +127,8 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   ]);
 
   const registrationsCountByKey = new Map<string, number>();
-  for (const profile of rangedProfiles) {
-    const key = timeKeyFor(profile.createdAt, range);
+  for (const date of registrationDates) {
+    const key = timeKeyFor(date, range);
     if (!bucketSet.has(key)) continue;
     registrationsCountByKey.set(key, (registrationsCountByKey.get(key) ?? 0) + 1);
   }
@@ -151,11 +151,15 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   }));
 
   const domainOrder = ["SE", "DS", "AI", "CLAUDE"] as const;
-  const domainDistribution = domainOrder.map((domain) => ({
-    name: domain,
-    value:
-      enrollmentByDomain.find((row) => row.domain === domain)?._count._all ?? 0,
-  }));
+  const domainDistribution = [
+    ...domainOrder.map((domain) => ({
+      name: domain,
+      value:
+        enrollmentByDomain.find((row) => row.domain === domain)?._count._all ??
+        0,
+    })),
+    { name: "Hackathon", value: hackathonRegistered },
+  ];
 
   const milestones = [1, 7, 14, 30, 45, 60];
   const dropOff = milestones.map((milestone) => ({

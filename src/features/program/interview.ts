@@ -172,16 +172,6 @@ export function buildInterviewInstructions(member: MemberContext): string {
     .join("\n");
 }
 
-async function isFinalDayQuizDone(memberId: string): Promise<boolean> {
-  const attempt = await prisma.programConceptAttempt.findUnique({
-    where: {
-      memberId_dayNumber: { memberId, dayNumber: PROGRAM_TOTAL_DAYS },
-    },
-    select: { answers: true },
-  });
-  return attempt?.answers !== null && attempt?.answers !== undefined;
-}
-
 export type InterviewEligibility =
   | { state: "locked"; reason: string }
   | { state: "ready"; resetsRemaining: number }
@@ -200,26 +190,19 @@ export async function getInterviewEligibility(
   });
   if (!member) return { state: "locked", reason: "Member not found." };
 
-  const finalDayDone = await isFinalDayQuizDone(memberId);
   const submissions = await prisma.programMissionSubmission.findMany({
     where: { memberId },
     select: { dayNumber: true, passed: true, payload: true },
   });
   const { passedDays } = collectPassSkipSets(submissions);
   const progressDay = getMemberProgressDay(passedDays);
-  const programComplete = progressDay >= PROGRAM_TOTAL_DAYS && finalDayDone;
+  const programComplete = progressDay >= PROGRAM_TOTAL_DAYS;
   const cohortEnded = new Date() > member.cohort.endsAt;
 
   if (!programComplete && !cohortEnded) {
-    if (progressDay < PROGRAM_TOTAL_DAYS) {
-      return {
-        state: "locked",
-        reason: `Reach Day ${PROGRAM_TOTAL_DAYS} and complete the Day ${PROGRAM_TOTAL_DAYS} concept check to unlock your exit interview.`,
-      };
-    }
     return {
       state: "locked",
-      reason: `Complete the Day ${PROGRAM_TOTAL_DAYS} concept check to unlock your exit interview.`,
+      reason: `Reach Day ${PROGRAM_TOTAL_DAYS} to unlock your exit interview.`,
     };
   }
 

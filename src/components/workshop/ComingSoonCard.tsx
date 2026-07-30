@@ -15,7 +15,7 @@ export default function ComingSoonCard() {
           left: -40%;
           width: 180%;
           height: 180%;
-          background: radial-gradient(circle at center, rgba(255,77,148,0.10), transparent 55%);
+          background: radial-gradient(circle at center, rgba(var(--wk-a2-rgb),0.10), transparent 55%);
           animation: wk-soon-orbit 9s linear infinite;
           pointer-events: none;
         }
@@ -51,7 +51,7 @@ export default function ComingSoonCard() {
             key={i}
             className="wk-soon-dot h-1.5 w-1.5 rounded-full"
             style={{
-              background: "linear-gradient(135deg, #ff7a1a, #ff4d94)",
+              background: "var(--wk-grad)",
               animationDelay: `${i * 0.18}s`,
             }}
           />

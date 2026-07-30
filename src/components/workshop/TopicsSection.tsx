@@ -1,55 +1,70 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  Code2,
+  Frame,
+  Layers,
+  MapPin,
+  MessagesSquare,
+  Plug,
+  Sparkles,
+  Tag,
+  Workflow,
+  Zap,
+} from "lucide-react";
 
 const TOPICS = [
   {
-    title: "ChatGPT vs Claude vs Gemini",
-    desc: "Deep comparison of today's leading LLMs, their strengths, limitations, and best use cases.",
-    icon: "🤖",
-    accent: "#ff7a1a",
-  },
-  {
-    title: "Which AI Model Should You Use?",
-    desc: "Learn a practical decision framework to pick the best AI tool for coding, writing, or analysis.",
-    icon: "💡",
-    accent: "#ffb020",
-  },
-  {
-    title: "Prompt Engineering",
-    desc: "Master advanced frameworks (CoT, few-shot) to prompt like a pro and get 10x better outputs.",
-    icon: "✍️",
-    accent: "#ff4d94",
-  },
-  {
-    title: "AI Tools for Students",
-    desc: "Supercharge your learning, summarize research papers, and automate notes in seconds.",
-    icon: "🎓",
-    accent: "#a855f7",
-  },
-  {
-    title: "AI Tools for Professionals",
-    desc: "Multiply your office productivity with AI email templates, slides, and automated summaries.",
-    icon: "💼",
+    title: "Introduction of Design Tools & Figma Fundamentals",
+    desc: "Overview of design tools like Figma, Illustrator, Affinity Designer, and others. Learn frames, auto layout, components, variables, and Dev Mode—the essential concepts every developer should understand before implementing a design.",
+    Icon: Frame,
     accent: "#6366f1",
   },
   {
-    title: "AI Workflow Automation",
-    desc: "Connect AI tools using Zapier or Make to build simple autonomous agents and bots.",
-    icon: "⚡",
-    accent: "#ff9a3c",
+    title: "Why Figma?",
+    desc: "Explore why Figma is the industry standard, its collaboration features, pricing plans, and products like Design, Draw, Slides, Jam, Make, and Dev Mode.",
+    Icon: Sparkles,
+    accent: "#818cf8",
   },
   {
-    title: "Live Practical Use Cases",
-    desc: "Watch live coding, content creation, and workflow builds done in real-time from scratch.",
-    icon: "🛠️",
-    accent: "#2dd4bf",
+    title: "Understanding MCP",
+    desc: "Learn what the Model Context Protocol is, how it differs from traditional APIs, and why it enables AI tools to work directly with design files.",
+    Icon: Workflow,
+    accent: "#8b5cf6",
   },
   {
-    title: "Q&A Session",
-    desc: "Get your doubts resolved live and ask the instructors anything during the open forum.",
-    icon: "💬",
-    accent: "#f472b6",
+    title: "Connecting Figma to Cursor",
+    desc: "Configure the Official Figma MCP, authenticate Cursor with Figma, and understand how AI securely accesses design information.",
+    Icon: Plug,
+    accent: "#a855f7",
+  },
+  {
+    title: "Inside the Design-to-Code Workflow",
+    desc: "Discover how AI reads frames, components, typography, spacing, colors, variables, and layout information to generate accurate frontend code.",
+    Icon: Layers,
+    accent: "#7c3aed",
+  },
+  {
+    title: "Live Implementation with Cursor",
+    desc: "Convert a complete Figma design into a responsive React/Next.js application using Cursor and the Official Figma MCP.",
+    Icon: Code2,
+    accent: "#4f46e5",
+  },
+  {
+    title: "Review, Refine & Best Practices",
+    desc: "Improve the generated code, build reusable components, maintain responsiveness, and follow production-ready frontend practices.",
+    Icon: CheckCircle2,
+    accent: "#c084fc",
+  },
+  {
+    title: "Q&A & Future of AI Development",
+    desc: "Ask questions, explore AI-assisted development workflows, and understand where MCP-powered tools are taking frontend engineering.",
+    Icon: MessagesSquare,
+    accent: "#a78bfa",
   },
 ];
 
@@ -108,16 +123,7 @@ export default function TopicsSection() {
         ref={heading.ref}
         className={`mb-12 select-none text-center ${heading.visible ? "wk-anim-down" : "opacity-0"}`}
       >
-        <span
-          className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-          style={{
-            background: "rgba(255,122,26,0.1)",
-            color: "#ff9a3c",
-            border: "1px solid rgba(255,122,26,0.2)",
-          }}
-        >
-          ⚡ Bootcamp Curriculum
-        </span>
+        
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           What You&apos;ll Learn
         </h2>
@@ -137,9 +143,9 @@ export default function TopicsSection() {
       <div ref={infoRow.ref} className="grid grid-cols-3 gap-3">
         {(
           [
-            { icon: "⏱️", label: "Duration", value: "1 Hour", subtext: "Live Interactive", accent: "#2dd4bf" },
-            { icon: "📍", label: "Platform", value: "Google Meet", subtext: "Secure link sent", accent: "#6366f1" },
-            { icon: "💰", label: "Price", value: "FREE", subtext: "100% Sponsored", accent: "#ff7a1a", highlight: true },
+            { Icon: Clock, label: "Duration", value: "1 Hour", subtext: "Live Interactive", accent: "#c084fc" },
+            { Icon: MapPin, label: "Platform", value: "Zoom", subtext: "Secure link sent", accent: "#6366f1" },
+            { Icon: Tag, label: "Price", value: "FREE", subtext: "100% Sponsored", accent: "#8b5cf6", highlight: true },
           ] as const
         ).map((data, i) => (
           <div
@@ -241,13 +247,13 @@ function TiltCard({ topic, num }: { topic: (typeof TOPICS)[0]; num: number }) {
       <div className="relative z-10 p-5">
         <div className="flex items-start gap-4">
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[22px]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
             style={{
               background: `${topic.accent}18`,
               border: `1px solid ${topic.accent}30`,
             }}
           >
-            {topic.icon}
+            <topic.Icon size={20} strokeWidth={1.75} style={{ color: topic.accent }} />
           </div>
           <div className="min-w-0 flex-1">
             <span
@@ -270,7 +276,7 @@ function TiltCard({ topic, num }: { topic: (typeof TOPICS)[0]; num: number }) {
 }
 
 interface InfoCardProps {
-  icon: string;
+  Icon: LucideIcon;
   label: string;
   value: string;
   subtext: string;
@@ -278,7 +284,7 @@ interface InfoCardProps {
   highlight?: boolean;
 }
 
-function InfoCard({ icon, label, value, subtext, accent, highlight }: InfoCardProps) {
+function InfoCard({ Icon, label, value, subtext, accent, highlight }: InfoCardProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -308,13 +314,13 @@ function InfoCard({ icon, label, value, subtext, accent, highlight }: InfoCardPr
         }}
       />
       <span
-        className="mb-1.5 block text-xl sm:text-2xl"
+        className="mb-1.5 block"
         style={{
           transform: hovered ? "translateY(-3px) scale(1.15)" : "translateY(0) scale(1)",
           transition: "transform 0.22s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-        {icon}
+        <Icon size={22} strokeWidth={1.75} style={{ color: accent }} />
       </span>
       <span className="mb-1.5 text-[8px] font-extrabold uppercase tracking-widest text-white/40 sm:text-[9px]">
         {label}

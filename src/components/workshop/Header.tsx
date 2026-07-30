@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 
 export default function WorkshopHeader() {
@@ -6,7 +7,7 @@ export default function WorkshopHeader() {
     <header
       className="sticky top-0 z-50 w-full px-4"
       style={{
-        background: "rgba(10,7,16,0.7)",
+        background: "rgba(5,10,23,0.7)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -19,9 +20,9 @@ export default function WorkshopHeader() {
           <span
             className="hidden rounded-md px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-widest sm:inline-block"
             style={{
-              background: "rgba(255,122,26,0.12)",
-              color: "#ff9a3c",
-              border: "1px solid rgba(255,122,26,0.25)",
+              background: "rgba(var(--wk-a1-rgb),0.12)",
+              color: "var(--wk-a1-light)",
+              border: "1px solid rgba(var(--wk-a1-rgb),0.25)",
             }}
           >
             AI Workshop
@@ -33,7 +34,7 @@ export default function WorkshopHeader() {
             href="/ai-workshop/events"
             className="group inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-white/60 transition-colors hover:text-white sm:px-3.5"
           >
-            <span className="text-[15px] leading-none">🗓️</span>
+            <CalendarDays size={15} strokeWidth={1.75} />
             <span className="hidden sm:inline">Discover events</span>
             <span className="sm:hidden">Events</span>
           </Link>
@@ -42,8 +43,8 @@ export default function WorkshopHeader() {
             href="#register"
             className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
-              background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
-              boxShadow: "0 6px 20px -6px rgba(255,77,148,0.6)",
+              background: "var(--wk-grad)",
+              boxShadow: "0 6px 20px -6px rgba(var(--wk-a2-rgb),0.6)",
             }}
           >
             Reserve seat

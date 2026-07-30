@@ -7,14 +7,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Mail, Phone, ExternalLink, Calendar } from "lucide-react";
 import { formatDateIST } from "@/lib/date-utils";
 
-export default async function CampusAmbassadorsPage() {
+export default async function CampusAmbassadorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await requireAdmin();
+  const sp = await searchParams;
+  const search = sp.q?.trim() ?? "";
 
   const candidates = await prisma.studentProfile.findMany({
-    where: { isCampusAmbassadorCandidate: true },
+    where: {
+      isCampusAmbassadorCandidate: true,
+      ...(search
+        ? {
+            OR: [
+              { fullName: { contains: search, mode: "insensitive" } },
+              { college: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { ambassadorAppliedAt: "desc" },
     select: {
       userId: true,
@@ -35,14 +53,29 @@ export default async function CampusAmbassadorsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">
-          Campus Ambassador Candidates
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {candidates.length} student{candidates.length !== 1 ? "s" : ""}{" "}
-          interested in being a campus ambassador
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold md:text-3xl">
+            Campus Ambassador Candidates
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {candidates.length} student{candidates.length !== 1 ? "s" : ""}{" "}
+            interested in being a campus ambassador
+          </p>
+        </div>
+
+        <form className="flex w-full gap-2 md:w-auto md:min-w-[320px]" method="get">
+          <Input
+            type="search"
+            name="q"
+            defaultValue={search}
+            placeholder="Search Campus Ambassadors"
+            className="md:w-[240px]"
+          />
+          <Button type="submit" variant="outline">
+            Search
+          </Button>
+        </form>
       </div>
 
       {candidates.length === 0 ? (

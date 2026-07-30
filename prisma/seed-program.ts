@@ -270,7 +270,6 @@ async function seedProgram() {
   console.log("[program-seed] starting…");
   await seedModules();
   await seedDays();
-  await seedConceptQuestions();
   await seedEntryQuestions();
   await seedExercises();
   await seedVideos();

@@ -8,16 +8,8 @@ import {
   submitMissionRun,
   type SubmitMissionOk,
 } from "@/features/program/missions";
-import {
-  startConceptCheck,
-  submitConceptCheck,
-  type ConceptCheckActive,
-  type ConceptSubmitOk,
-} from "@/features/program/concept-check";
 import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import {
-  conceptStartSchema,
-  conceptSubmitSchema,
   missionDaySchema,
   submitMissionSchema,
 } from "@/lib/validations/program";
@@ -89,48 +81,4 @@ export async function useSkipTokenAction(
   _input: unknown,
 ): Promise<ActionResult<{ unlockedDay: number }>> {
   return { ok: false, message: "Skip tokens are disabled." };
-}
-
-export async function startConceptCheckAction(
-  input: unknown,
-): Promise<ActionResult<ConceptCheckActive>> {
-  const authResult = await requireMemberId();
-  if (!authResult.ok) return authResult;
-
-  const parsed = conceptStartSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Invalid day." };
-
-  const result = await startConceptCheck(
-    authResult.memberId,
-    parsed.data.dayNumber,
-  );
-  if ("ok" in result && result.ok === false) {
-    return { ok: false, message: result.message };
-  }
-
-  revalidatePath(`/program/day/${parsed.data.dayNumber}`);
-  revalidatePath("/program/dashboard");
-  return { ok: true, data: result as ConceptCheckActive };
-}
-
-export async function submitConceptCheckAction(
-  input: unknown,
-): Promise<ActionResult<ConceptSubmitOk>> {
-  const authResult = await requireMemberId();
-  if (!authResult.ok) return authResult;
-
-  const parsed = conceptSubmitSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Invalid submission." };
-
-  const result = await submitConceptCheck(
-    authResult.memberId,
-    parsed.data.attemptId,
-    parsed.data.answers,
-  );
-  if ("ok" in result && result.ok === false) {
-    return { ok: false, message: result.message };
-  }
-
-  revalidatePath("/program/dashboard");
-  return { ok: true, data: result as ConceptSubmitOk };
 }

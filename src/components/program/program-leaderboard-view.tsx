@@ -186,7 +186,7 @@ export function ProgramLeaderboardView({
                       <th className="px-4 py-3">Company</th>
                       <th className="px-4 py-3">Role</th>
                       <th className="px-4 py-3 text-center">Yrs</th>
-                      <th className="px-4 py-3 text-center">M/C/C/P</th>
+                      <th className="px-4 py-3 text-center">M/C/P</th>
                       <th className="px-4 py-3 text-center">Clean%</th>
                       <th className="px-4 py-3 text-center">Total</th>
                     </tr>
@@ -214,8 +214,8 @@ export function ProgramLeaderboardView({
                           {row.yearsExperience}
                         </td>
                         <td className="px-4 py-3 text-center text-[#94A3B8]">
-                          {row.missionPoints}/{row.conceptPoints}/
-                          {row.commitPoints}/{row.projectPoints}
+                          {row.missionPoints}/{row.commitPoints}/
+                          {row.projectPoints}
                         </td>
                         <td className="px-4 py-3 text-center text-[#94A3B8]">
                           {row.cleanPassPct}%

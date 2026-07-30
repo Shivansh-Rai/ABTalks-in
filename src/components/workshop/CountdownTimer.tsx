@@ -61,7 +61,7 @@ function Unit({ val, label, live }: { val: string; label: string; live?: boolean
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.09)",
           boxShadow: live
-            ? "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 20px -4px rgba(255,77,148,0.4)"
+            ? "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 20px -4px rgba(var(--wk-a2-rgb),0.4)"
             : "inset 0 1px 0 rgba(255,255,255,0.06)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
@@ -71,8 +71,8 @@ function Unit({ val, label, live }: { val: string; label: string; live?: boolean
           className="font-mono text-lg font-bold tabular-nums tracking-tight sm:text-2xl"
           style={{
             background: live
-              ? "linear-gradient(135deg, #ff9a3c, #ff4d94)"
-              : "linear-gradient(180deg, #ffffff, #cfc8d8)",
+              ? "linear-gradient(135deg, var(--wk-a1-light), var(--wk-a2))"
+              : "linear-gradient(180deg, #ffffff, var(--wk-text-dim))",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",

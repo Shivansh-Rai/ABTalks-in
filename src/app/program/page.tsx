@@ -17,7 +17,6 @@ async function getPrimaryCta(): Promise<{ label: string; href: string }> {
     case "enrolled":
       return { label: "Go to dashboard", href: "/program/dashboard" };
     case "in_progress":
-      return { label: "Continue assessment", href: "/program/assessment" };
     case "intro":
       return { label: "Continue application", href: "/program/apply" };
     case "cooldown":

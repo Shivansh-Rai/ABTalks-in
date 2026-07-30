@@ -10,8 +10,9 @@ export default function ScrollToTop() {
       }}
       className="cursor-pointer rounded-full px-9 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
       style={{
-        background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
-        boxShadow: "0 10px 30px -8px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
+        background: "var(--wk-grad)",
+        boxShadow:
+          "0 10px 30px -8px rgba(var(--wk-a2-rgb),0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
       }}
     >
       Reserve Your Free Seat →

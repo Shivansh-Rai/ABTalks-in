@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
+import { HackathonLinkAdd } from "@/components/admin/hackathon-link-add";
 import { HackathonLinkCopy } from "@/components/admin/hackathon-link-copy";
+import { HackathonLinkRowActions } from "@/components/admin/hackathon-link-row-actions";
+import { HackathonLinkView } from "@/components/admin/hackathon-link-view";
 import {
   Table,
   TableBody,
@@ -27,13 +30,16 @@ export default async function AdminHackathonLinksPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">
-          Hackathon Links
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Registrations attributed to share links (`?s=`). First touch wins.
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold md:text-3xl">
+            Hackathon Links
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Registrations attributed to share links (`?s=`). First touch wins.
+          </p>
+        </div>
+        <HackathonLinkAdd />
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -45,9 +51,7 @@ export default async function AdminHackathonLinksPage() {
 
       {links.length === 0 ? (
         <p className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
-          No share links yet. Insert rows into the{" "}
-          <span className="font-mono text-foreground">HackathonLink</span> table
-          in Neon (see plan 047 §7), then refresh this page.
+          No share links yet. Click &ldquo;Add link&rdquo; above to create one.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border">
@@ -57,20 +61,16 @@ export default async function AdminHackathonLinksPage() {
                 <TableHead>Label</TableHead>
                 <TableHead>Slug</TableHead>
                 <TableHead>Registrations</TableHead>
-                <TableHead>Share</TableHead>
                 <TableHead>Link</TableHead>
+                <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {links.map((row) => {
                 const url = `${baseUrl}/hackathon?s=${row.slug}`;
-                const share =
-                  totalRegistrations === 0
-                    ? "—"
-                    : `${Math.round((row.registrations / totalRegistrations) * 100)}%`;
 
                 return (
-                  <TableRow key={row.slug}>
+                  <TableRow key={row.slug} className="group/row">
                     <TableCell>
                       <div className="font-medium">{row.label}</div>
                       {row.note ? (
@@ -79,19 +79,33 @@ export default async function AdminHackathonLinksPage() {
                         </p>
                       ) : null}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{row.slug}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {row.slug}
+                    </TableCell>
                     <TableCell className="font-bold tabular-nums">
                       {row.registrations}
-                    </TableCell>
-                    <TableCell className="tabular-nums text-muted-foreground">
-                      {share}
                     </TableCell>
                     <TableCell>
                       <div className="flex max-w-md items-center gap-2">
                         <span className="truncate font-mono text-xs text-muted-foreground">
                           {url}
                         </span>
+                        <HackathonLinkView
+                          label={row.label}
+                          slug={row.slug}
+                          users={row.users}
+                        />
                         <HackathonLinkCopy url={url} />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <HackathonLinkRowActions
+                          id={row.id}
+                          slug={row.slug}
+                          label={row.label}
+                          note={row.note}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -123,7 +137,9 @@ export default async function AdminHackathonLinksPage() {
               <TableBody>
                 {unknownSlugs.map((row) => (
                   <TableRow key={row.slug}>
-                    <TableCell className="font-mono text-sm">{row.slug}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {row.slug}
+                    </TableCell>
                     <TableCell className="font-bold tabular-nums">
                       {row.registrations}
                     </TableCell>

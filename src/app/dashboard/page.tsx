@@ -54,6 +54,7 @@ import { PhoneVerifyNudge } from "@/components/dashboard/phone-verify-nudge";
 import { ClaudeFAQ } from "@/components/shared/claude-faq";
 import { DashboardWalkthrough } from "@/components/dashboard/dashboard-walkthrough";
 import { ClaudeDay0SharePrompt } from "@/components/claude/claude-day0-share-prompt";
+import { WorkshopPromoModal } from "@/components/dashboard/workshop-promo-modal";
 
 function readQueryParam(
   query: Record<string, string | string[] | undefined>,
@@ -289,6 +290,7 @@ export default async function DashboardPage({
             cleanPath={dashboardPathWithoutToast}
           />
         ) : null}
+        <WorkshopPromoModal />
         <div className="relative z-10 flex-1">
         <PreStartDashboard
           enrollment={{
@@ -348,6 +350,7 @@ export default async function DashboardPage({
       {showClaudeModal && claudeModalStartsAt ? (
         <ClaudeChallengeModal startsAt={claudeModalStartsAt} />
       ) : null}
+      <WorkshopPromoModal />
       {hasClaudeEnrollment ? (
         <ClaudeDay0SharePrompt hasDay1Submission={hasClaudeDay1Submission} />
       ) : null}
