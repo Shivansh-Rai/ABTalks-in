@@ -8,6 +8,7 @@ import { UserType } from "@prisma/client";
 import { claudeWelcomeEmail } from "@/features/email/claude-welcome-email";
 import { completeRegistration } from "@/features/registration/complete-registration";
 import { sendEmail } from "@/lib/email";
+import { isClaudeEnabled } from "@/lib/feature-flags";
 import { registerPayloadSchema } from "@/lib/validations/register";
 
 export async function completeRegistrationAction(formData: FormData) {
@@ -95,6 +96,10 @@ export async function completeRegistrationAction(formData: FormData) {
       ok: false as const,
       message: parsed.error.issues[0]?.message ?? "Invalid input",
     };
+  }
+
+  if (parsed.data.domain === "CLAUDE" && !isClaudeEnabled()) {
+    return { ok: false as const, message: "That track is not open." };
   }
 
   const result = await completeRegistration(session.user.id, parsed.data);

@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   AlertCircle,
   ChevronRight,
+  Compass,
   Flame,
   LogOut,
   Menu,
@@ -179,6 +180,17 @@ export function MobileSidebar({ user, isMarketplace }: Props) {
                   >
                     <User className="size-4 text-muted-foreground" aria-hidden />
                     Profile
+                  </Link>
+                  <Link
+                    href="/mission"
+                    onClick={() => setOpen(false)}
+                    className={ROW_CLASS}
+                  >
+                    <Compass
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                    Our mission
                   </Link>
                   <button
                     type="button"

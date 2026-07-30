@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getRefCookie } from "@/lib/cookies";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import {
   Card,
   CardContent,
@@ -56,10 +56,13 @@ export default async function RegisterPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const claudeEnabled = isClaudeEnabled();
+  const requested = params.domain;
   const initialDomain =
-    claudeEnabled || params.domain === "CLAUDE"
-      ? ("CLAUDE" as const)
-      : undefined;
+    requested === "CLAUDE"
+      ? (claudeEnabled ? "CLAUDE" : undefined)
+      : requested === "SE" || requested === "DS" || requested === "AI"
+        ? requested
+        : undefined;
   const refParam = params.ref;
   const refFromUrlNormalized =
     typeof refParam === "string"
@@ -102,8 +105,9 @@ export default async function RegisterPage({ searchParams }: PageProps) {
             <RegistrationForm
               initialName={initialName}
               initialRef={initialRef}
-              forceClaudeDomain={claudeEnabled}
+              claudeEnabled={claudeEnabled}
               initialDomain={initialDomain}
+              otpVerificationRequired={isOtpVerificationRequired()}
             />
           </CardContent>
         </Card>

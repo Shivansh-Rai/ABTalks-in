@@ -37,3 +37,13 @@ export function isOtpDevBypassEnabled(): boolean {
 export function otpDevCode(): string {
   return process.env.OTP_DEV_CODE ?? "1234";
 }
+
+/**
+ * Whether phone OTP verification is required.
+ * Under `next dev` (`NODE_ENV=development`) OTP is skipped so local registration
+ * and profile testing need no code. Production / production-mode builds keep
+ * MSG91 enforcement intact.
+ */
+export function isOtpVerificationRequired(): boolean {
+  return process.env.NODE_ENV !== "development";
+}

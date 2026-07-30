@@ -1,5 +1,7 @@
 ## Pending reconcile
 
+- 2026-07-29 [rule] Phone OTP remains required in production but is skipped under next dev so local registration and profile testing need no verification code
+- 2026-07-29 [rule] Signed-out / is a three-track public hub and /challenges is the public 60-day overview; Claude remains available but is no longer the default entry point
 - 2026-07-25 [schema] HackathonLink + HackathonParticipant.sourceSlug for invisible ?s= share-link attribution (first-touch abtalks_src cookie)
 - 2026-07-25 [schema] HackathonTeam / HackathonParticipant / HackathonEvent on Neon with User.userId FK; registration + admin moved off Supabase hackathon_* tables
 - 2026-07-25 [rule] Admin remark CRUD writes AdminAction audit rows; /admin/actions paginated activity feed
