@@ -40,7 +40,7 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
   }
 
   const eligible =
-    enrollment.status === EnrollmentStatus.COMPLETED ||
+    enrollment.status === EnrollmentStatus.COMPLETED &&
     enrollment.daysCompleted >= CERTIFICATE_ELIGIBLE_DAYS;
 
   if (!eligible) {

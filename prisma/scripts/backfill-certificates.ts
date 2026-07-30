@@ -22,10 +22,8 @@ async function main() {
     where: {
       domain: Domain.CLAUDE,
       certificate: null,
-      OR: [
-        { status: EnrollmentStatus.COMPLETED },
-        { daysCompleted: { gte: CERTIFICATE_ELIGIBLE_DAYS } },
-      ],
+      status: EnrollmentStatus.COMPLETED,
+      daysCompleted: { gte: CERTIFICATE_ELIGIBLE_DAYS },
     },
     select: {
       id: true,
