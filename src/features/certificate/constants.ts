@@ -54,16 +54,16 @@ export const CLAUDE_CERT_LAYOUT = {
   contentCenterXRatio: 0.512,
 
   issuedOn: {
-    /** Bottom-right, centred under the "ISSUED ON" label. */
-    centerXRatio: 0.85,
+    /** Bottom-right, centred under the "ISSUED ON" label. Nudged 22px left (page w=960). */
+    centerXRatio: 0.737083,
     baselineYRatio: 0.085,
     fontSize: 10,
     color: { r: 0.07, g: 0.09, b: 0.15 },
   },
   certificateId: {
-    /** Top-right, centred under "CERTIFICATE ID" (left of the Verified badge). */
-    centerXRatio: 0.78,
-    baselineYRatio: 0.88,
+    /** Top-right under "CERTIFICATE ID". Nudged up by 5% of page width (48pt / h=639.75). */
+    centerXRatio: 0.76125,
+    baselineYRatio: 0.928815,
     fontSize: 10,
     color: { r: 0.07, g: 0.09, b: 0.15 },
   },
@@ -80,16 +80,16 @@ export const CLAUDE_CERT_LAYOUT = {
     color: { r: 0.07, g: 0.09, b: 0.15 },
   },
   qr: {
-    /** Bottom-left corner of the QR square, centred under "SCAN TO VERIFY". */
-    xRatio: 0.873,
-    yRatio: 0.082,
+    /** Bottom-left corner of QR. Nudged 8px right, 10px up (page 960×639.75). */
+    xRatio: 0.850200,
+    yRatio: 0.117627,
     sizeRatio: 0.082,
   },
   verifyText: {
     /** LEFT-aligned under "Verify authenticity at" — this label is bottom-right in the
      *  artwork, not bottom-centre. Do not centre this on the page. */
-    xRatio: 0.855,
-    baselineYRatio: 0.033,
+    xRatio: 0.835,
+    baselineYRatio: 0.09,
     fontSize: 7,
     color: { r: 0.42, g: 0.45, b: 0.5 },
   },
