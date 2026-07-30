@@ -144,6 +144,7 @@ const TEAM_USERS = [
 ] as const;
 
 const DEV_TEST_PASSWORD = "test";
+const COMPLETED_TEST_EMAIL = `claude.completed60${TEST_EMAIL_SUFFIX}`;
 
 const PROFESSIONAL_USERS = [
   { firstName: "Karan", lastName: "Verma", organization: "Tata Consultancy Services", role: "Software Engineer", yearsExperience: 3 },
@@ -240,6 +241,18 @@ function generateSubmissions(
       throw new Error(`Unknown progress pattern: ${pattern}`);
   }
 
+  return submissions;
+}
+
+function generateCompletedSixtyDaySubmissions(startDate: Date): SubmissionSeed[] {
+  const submissions: SubmissionSeed[] = [];
+  for (let day = 1; day <= 60; day++) {
+    submissions.push({
+      dayNumber: day,
+      status: SubmissionStatus.ON_TIME,
+      submittedAt: dayDate(startDate, day, 20),
+    });
+  }
   return submissions;
 }
 
@@ -483,6 +496,73 @@ async function seedClaudeTestUsers() {
       `   ${user.name} (${pattern.name}): ${daysCompleted} days, streak ${currentStreak}`,
     );
   }
+
+  console.log("🏁 Creating one completed 60-day CLAUDE test user...");
+
+  const completedStartDate = challengeStartDaysAgo(60);
+  const completedUser = await prisma.user.create({
+    data: {
+      email: COMPLETED_TEST_EMAIL,
+      password: DEV_TEST_PASSWORD,
+      name: "Claude Completed 60",
+      emailVerified: new Date(),
+      studentProfile: {
+        create: {
+          fullName: "Claude Completed 60",
+          phone: "+919299999999",
+          userType: UserType.STUDENT,
+          domain: Domain.CLAUDE,
+          college: "ABTalks Test College",
+          graduationYear: 2026,
+          skills: ["Python", "AI", "Claude"],
+          linkedinUrl: "https://linkedin.com/in/claude-completed-60",
+          githubUsername: "claudecompleted60",
+          referralCode: "TEAM060",
+          isReadyForInterview: true,
+        },
+      },
+    },
+  });
+
+  const completedEnrollment = await prisma.enrollment.create({
+    data: {
+      userId: completedUser.id,
+      challengeId: claudeChallenge.id,
+      domain: Domain.CLAUDE,
+      status: EnrollmentStatus.COMPLETED,
+      startedAt: completedStartDate,
+      completedAt: dayDate(completedStartDate, 60, 20),
+      daysCompleted: 60,
+      currentStreak: 60,
+      longestStreak: 60,
+      lastSubmittedDay: 60,
+    },
+  });
+
+  const completedSubs = generateCompletedSixtyDaySubmissions(completedStartDate);
+  for (const sub of completedSubs) {
+    const dailyTaskId = taskIdByDay.get(sub.dayNumber);
+    if (!dailyTaskId) {
+      fail(
+        `❌ Missing DailyTask for CLAUDE day ${sub.dayNumber}. Run db:seed:content first.`,
+      );
+    }
+
+    await prisma.submission.create({
+      data: {
+        userId: completedUser.id,
+        enrollmentId: completedEnrollment.id,
+        dailyTaskId,
+        dayNumber: sub.dayNumber,
+        githubUrl: `https://github.com/abtalks-claude-seed/${completedUser.id}-day-${sub.dayNumber}`,
+        linkedinUrl: `https://www.linkedin.com/posts/abtalks-claude-seed-${completedUser.id}-day-${sub.dayNumber}`,
+        status: sub.status,
+        submittedAt: sub.submittedAt,
+      },
+    });
+  }
+
+  console.log(`   ${COMPLETED_TEST_EMAIL} / ${DEV_TEST_PASSWORD} (60/60 completed)`);
 
   console.log("");
   console.log("✅ CLAUDE test seed complete!");

@@ -15,6 +15,7 @@ const protectedPaths = [
   "/explore",
   "/challenge/",
   "/profile",
+  "/achievements",
   "/quiz",
   "/register",
   "/admin",
