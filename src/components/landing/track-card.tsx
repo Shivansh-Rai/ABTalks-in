@@ -58,7 +58,7 @@ export function TrackCard({
     <Link
       href={href}
       className={cn(
-        "group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border bg-card/80 p-6 shadow-card backdrop-blur-md transition-all hover:-translate-y-1 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border bg-card/80 p-6 shadow-card backdrop-blur-md transition-all duration-1000 ease-out hover:-translate-y-1 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         styles.border,
       )}
     >
@@ -79,7 +79,7 @@ export function TrackCard({
         >
           {pill}
         </span>
-        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform duration-1000 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
       </div>
 
       <h2 className="relative mt-8 font-display text-2xl font-bold tracking-tight text-foreground">
