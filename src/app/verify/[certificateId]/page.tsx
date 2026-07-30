@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { getPublicCertificate } from "@/features/certificate/get-certificate";
+import { CertificatePreviewPanel } from "@/components/certificate/certificate-preview-panel";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -78,77 +79,88 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
     );
   }
 
+  // `#toolbar=0&navpanes=0&view=FitH` are PDF open-parameter hints — Chrome honours them,
+  // Firefox's pdf.js ignores most. Harmless either way; the fragment must follow the query.
+  const previewSrc = `/verify/${cert.certificateId}/download?inline=1#toolbar=0&navpanes=0&view=FitH`;
+
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/30 px-4 py-12">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-green-600/10">
-            <ShieldCheck className="size-6 text-green-600" aria-hidden />
-          </div>
-          <CardTitle className="text-green-700 dark:text-green-500">
-            Verified Certificate
-          </CardTitle>
-          <CardDescription>{cert.subtitle}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground">Recipient</dt>
-              <dd className="font-medium">{cert.recipientName}</dd>
+    <div className="min-h-svh bg-muted/30 px-4 py-8 sm:py-12">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-stretch">
+        <Card className="min-w-0 lg:h-full">
+          <CardHeader className="items-center text-center">
+            <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-green-600/10">
+              <ShieldCheck className="size-6 text-green-600" aria-hidden />
             </div>
-            <div>
-              <dt className="text-muted-foreground">Credential</dt>
-              <dd className="font-medium">{cert.title}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Track</dt>
-              <dd className="font-medium">{cert.domainLabel}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Issued on</dt>
-              <dd className="font-medium">{cert.issuedOn}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Certificate ID</dt>
-              <dd className="font-mono font-medium">{cert.certificateId}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Status</dt>
-              <dd>
-                <Badge className="bg-green-600 text-white hover:bg-green-600/90">
-                  Completed
-                </Badge>
-              </dd>
-            </div>
-            {cert.daysCompleted != null ? (
+            <CardTitle className="text-green-700 dark:text-green-500">
+              Verified Certificate
+            </CardTitle>
+            <CardDescription>{cert.subtitle}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-muted-foreground">Days completed</dt>
-                <dd className="font-medium">{cert.daysCompleted}</dd>
+                <dt className="text-muted-foreground">Recipient</dt>
+                <dd className="font-medium">{cert.recipientName}</dd>
               </div>
-            ) : null}
-            {cert.longestStreak != null ? (
               <div>
-                <dt className="text-muted-foreground">Longest streak</dt>
-                <dd className="font-medium">{cert.longestStreak}</dd>
+                <dt className="text-muted-foreground">Credential</dt>
+                <dd className="font-medium">{cert.title}</dd>
               </div>
-            ) : null}
-          </dl>
+              <div>
+                <dt className="text-muted-foreground">Track</dt>
+                <dd className="font-medium">{cert.domainLabel}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Issued on</dt>
+                <dd className="font-medium">{cert.issuedOn}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Certificate ID</dt>
+                <dd className="font-mono font-medium">{cert.certificateId}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd>
+                  <Badge className="bg-green-600 text-white hover:bg-green-600/90">
+                    Completed
+                  </Badge>
+                </dd>
+              </div>
+              {cert.daysCompleted != null ? (
+                <div>
+                  <dt className="text-muted-foreground">Days completed</dt>
+                  <dd className="font-medium">{cert.daysCompleted}</dd>
+                </div>
+              ) : null}
+              {cert.longestStreak != null ? (
+                <div>
+                  <dt className="text-muted-foreground">Longest streak</dt>
+                  <dd className="font-medium">{cert.longestStreak}</dd>
+                </div>
+              ) : null}
+            </dl>
 
-          <div className="flex justify-center">
-            <a
-              href={`/verify/${cert.certificateId}/download`}
-              download
-              className={cn(buttonVariants())}
-            >
-              Download certificate
-            </a>
-          </div>
+            <div className="flex justify-center">
+              <a
+                href={`/verify/${cert.certificateId}/download`}
+                download
+                className={cn(buttonVariants())}
+              >
+                Download certificate
+              </a>
+            </div>
 
-          <p className="text-center text-xs text-muted-foreground">
-            Issued by ABTalks · abtalks.in
-          </p>
-        </CardContent>
-      </Card>
+            <p className="text-center text-xs text-muted-foreground">
+              Issued by ABTalks · abtalks.in
+            </p>
+          </CardContent>
+        </Card>
+
+        <CertificatePreviewPanel
+          previewSrc={previewSrc}
+          certificateId={cert.certificateId}
+        />
+      </div>
     </div>
   );
 }

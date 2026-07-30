@@ -32,9 +32,11 @@ export async function GET(
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://abtalks.in";
   const verifyUrl = `${base}/verify/${cert.certificateId}`;
 
+  const searchParams = new URL(req.url).searchParams;
+  const inline = searchParams.get("inline") === "1";
   const debugGrid =
     process.env.NODE_ENV !== "production" &&
-    new URL(req.url).searchParams.get("debug") === "grid";
+    searchParams.get("debug") === "grid";
 
   try {
     const bytes = await renderCertificatePdf({
@@ -53,7 +55,7 @@ export async function GET(
     return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${safeFilename}"`,
+        "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${safeFilename}"`,
         "Cache-Control": "public, max-age=300",
       },
     });
