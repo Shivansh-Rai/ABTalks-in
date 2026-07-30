@@ -13,6 +13,8 @@ import { ensureClaudeCertificate } from "../../src/features/certificate/issue-ce
 config({ path: ".env.local" });
 config();
 
+const CERTIFICATE_ELIGIBLE_DAYS = 50;
+
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
 
@@ -22,7 +24,7 @@ async function main() {
       certificate: null,
       OR: [
         { status: EnrollmentStatus.COMPLETED },
-        { daysCompleted: { gte: 60 } },
+        { daysCompleted: { gte: CERTIFICATE_ELIGIBLE_DAYS } },
       ],
     },
     select: {

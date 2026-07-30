@@ -9,6 +9,8 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { generateCertificateId } from "./generate-certificate-id";
 
+const CERTIFICATE_ELIGIBLE_DAYS = 50;
+
 export type IssueResult =
   | { ok: true; data: { certificateId: string; alreadyIssued: boolean } }
   | { ok: false; message: string };
@@ -37,10 +39,9 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
     return { ok: false, message: "Not enrolled in the Claude challenge" };
   }
 
-  const totalDays = enrollment.challenge.totalDays ?? 60;
   const eligible =
     enrollment.status === EnrollmentStatus.COMPLETED ||
-    enrollment.daysCompleted >= totalDays;
+    enrollment.daysCompleted >= CERTIFICATE_ELIGIBLE_DAYS;
 
   if (!eligible) {
     return { ok: false, message: "Challenge not completed yet" };

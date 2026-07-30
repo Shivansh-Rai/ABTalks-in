@@ -35,8 +35,8 @@ export const CERTIFICATE_TYPES: Record<CertificateType, CertificateTypeConfig> =
  * (1.294) — it is a custom page box, so hard-coded points would be wrong.
  *
  * The template has FIVE stamp targets, not three:
- *   1. ISSUED ON value       — under the top-left "ISSUED ON" label
- *   2. CERTIFICATE ID value  — under the top-centre "CERTIFICATE ID" label
+ *   1. CERTIFICATE ID value  — under the top-right "CERTIFICATE ID" label (left of badge)
+ *   2. ISSUED ON value       — under the bottom-right "ISSUED ON" label
  *   3. Recipient name        — between "PROUDLY PRESENTED TO" and the orange rule
  *   4. QR code               — under the bottom-right "SCAN TO VERIFY" label
  *   5. Verify URL            — under the bottom-right "Verify authenticity at" label
@@ -54,14 +54,16 @@ export const CLAUDE_CERT_LAYOUT = {
   contentCenterXRatio: 0.512,
 
   issuedOn: {
-    centerXRatio: 0.315,
-    baselineYRatio: 0.905,
+    /** Bottom-right, centred under the "ISSUED ON" label. */
+    centerXRatio: 0.85,
+    baselineYRatio: 0.085,
     fontSize: 10,
     color: { r: 0.07, g: 0.09, b: 0.15 },
   },
   certificateId: {
-    centerXRatio: 0.619,
-    baselineYRatio: 0.905,
+    /** Top-right, centred under "CERTIFICATE ID" (left of the Verified badge). */
+    centerXRatio: 0.78,
+    baselineYRatio: 0.88,
     fontSize: 10,
     color: { r: 0.07, g: 0.09, b: 0.15 },
   },
