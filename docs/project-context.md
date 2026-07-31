@@ -66,7 +66,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 
 ### Core domain tables
 - `StudentProfile` (1:1 with User) — `userType` (STUDENT | PROFESSIONAL), `fullName`, `domain`, `skills` (string[]), `phone` (admin-only visibility), `resumeUrl` (admin-only visibility), `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`. Student-only fields: `college`, `graduationYear`. Professional-only fields: `organization`, `role`, `yearsExperience`. Campus-ambassador fields: `isCampusAmbassadorCandidate`, `ambassadorAppliedAt`, `ambassadorDismissedAt`.
-- `Challenge` — one per Domain (SE / DS / AI / CLAUDE), has `totalDays = 60`. Optional `startsAt: DateTime?` — when set, all enrolled students share the same IST calendar day boundary anchored at `startsAt` (cohort mode, used for CLAUDE). Null = rolling start from `Enrollment.startedAt`.
+- `Challenge` — one per Domain (SE / DS / AI / CLAUDE), has `totalDays = 60`. Optional `startsAt: DateTime?` — when set (CLAUDE), `referenceStartDate` floors the student's window at `startsAt` (pre-start joiners wait for cohort kickoff; post-start joiners roll from their real `Enrollment.startedAt`). Null = rolling start from `Enrollment.startedAt` only (SE/DS/AI).
 - `DailyTask` — 1-60 per Challenge, contains `problemStatement`, `learningObjectives`, `resources`, `difficulty`, `estimatedMinutes`, `linkedinTemplate` (with `{{github_link}}` placeholder), `solutionApproach` (admin-only), `tags`, and `dayContent` (Json?) — optional structured day content (e.g. rich CLAUDE day pages) consumed by the challenge UI alongside the legacy text fields.
 - `Enrollment` (unique on userId+challengeId) — daysCompleted, currentStreak, longestStreak, lastSubmittedDay, status, startedAt, completedAt
 - `Submission` (unique on enrollmentId+dayNumber, githubUrl globally unique) — dayNumber, githubUrl, linkedinUrl, status (ON_TIME/LATE), submittedAt
@@ -84,9 +84,11 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 
 ### Day calculation (timezone)
 - All day boundaries in IST (Asia/Kolkata)
-- Day 1 = day of enrollment in IST
+- Day 1 = day of the reference start in IST (`max(challenge.startsAt, enrollment.startedAt)` when synchronized; else `enrollment.startedAt`)
 - Day N = N calendar days after start in IST
-- `getCurrentDayNumber(startedAt)` in `lib/date-utils.ts` handles this
+- `getCurrentDayNumber` in `lib/date-utils.ts` caps at 60 — use for display, unlocking, and streaks
+- `getElapsedDayNumber` is uncapped (61+) — the only correct input for backfill / relaxation-window decisions; do not use it for UI day labels
+- CLAUDE enrollments roll from the real join date (`Enrollment.startedAt` defaults to `now()`), floored at the cohort `startsAt`
 
 ### Submission validation
 - GitHub URL must match `https://github.com/{owner}/{repo}` pattern

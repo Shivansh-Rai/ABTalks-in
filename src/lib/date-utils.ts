@@ -117,6 +117,34 @@ export function getCurrentDayNumber(
   return Math.min(60, Math.max(1, day));
 }
 
+/**
+ * Elapsed challenge day, UNCAPPED — day 61+ once a student passes day 60.
+ * Use this ONLY to decide whether a day is in the past (backfill / relaxation
+ * window). Everything user-facing (unlock checks, display, streaks) must keep
+ * using `getCurrentDayNumber`, which caps at 60.
+ *
+ * Returns 0 before a synchronized challenge's effective start, matching
+ * `getCurrentDayNumber`.
+ */
+export function getElapsedDayNumber(
+  enrollment: EnrollmentDayAnchor | Date,
+  challenge?: ChallengeSyncStart,
+): number {
+  const startedAt =
+    enrollment instanceof Date ? enrollment : enrollment.startedAt;
+  const ref = referenceStartDate(startedAt, challenge);
+  const startKey = formatInTimeZone(ref, IST, "yyyy-MM-dd");
+  const nowKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+  const startUtc = parseCalendarKeyToUtcDate(startKey);
+  const nowUtc = parseCalendarKeyToUtcDate(nowKey);
+
+  if (challenge?.startsAt != null && nowUtc < startUtc) {
+    return 0;
+  }
+
+  return Math.max(1, differenceInCalendarDays(nowUtc, startUtc) + 1);
+}
+
 /** e.g. "15 Mar 2026" in IST */
 export function formatDateIST(date: Date): string {
   return formatInTimeZone(date, IST, "d MMM yyyy");

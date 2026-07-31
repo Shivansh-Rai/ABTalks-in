@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { readDayNumberFromMetadata } from "@/lib/admin-action-metadata";
 import {
   getCurrentDayNumber,
+  getElapsedDayNumber,
   getIstDateKeyForChallengeDay,
   IST,
 } from "@/lib/date-utils";
@@ -38,7 +39,8 @@ export async function assertPastDaySubmittable(
   challenge?: { startsAt: Date | null },
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const currentDay = getCurrentDayNumber(enrollment, challenge);
-  if (currentDay > 0 && dayNumber >= currentDay) return { ok: true };
+  const elapsedDay = getElapsedDayNumber(enrollment, challenge);
+  if (currentDay > 0 && dayNumber >= elapsedDay) return { ok: true };
 
   const existing = await prisma.submission.findUnique({
     where: {
@@ -62,7 +64,7 @@ export async function assertPastDaySubmittable(
   );
   if (hasRejectResubmit) return { ok: true };
 
-  if (isWithinRelaxationWindow(currentDay, dayNumber)) return { ok: true };
+  if (isWithinRelaxationWindow(elapsedDay, dayNumber)) return { ok: true };
 
   return {
     ok: false,
@@ -177,7 +179,8 @@ export async function submitDay(input: {
     dayNumber,
     challengeAnchor,
   );
-  const isBackfill = dayNumber < currentDay;
+  const elapsedDay = getElapsedDayNumber(enrollment, challengeAnchor);
+  const isBackfill = dayNumber < elapsedDay;
   if (!isBackfill && submittedAtIst !== expectedDate) {
     return {
       ok: false,

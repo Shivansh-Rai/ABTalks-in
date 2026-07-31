@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { readDayNumberFromMetadata } from "@/lib/admin-action-metadata";
 import {
   getCurrentDayNumber,
+  getElapsedDayNumber,
   getIstDateKeyForChallengeDay,
 } from "@/lib/date-utils";
 import { isWithinRelaxationWindow } from "@/features/submission/submit-day";
@@ -201,6 +202,7 @@ export async function getHeatmapData(
   }
 
   const currentDay = getCurrentDayNumber(enrollment, enrollment.challenge);
+  const elapsedDay = getElapsedDayNumber(enrollment, enrollment.challenge);
   const out: HeatmapCell[] = [];
 
   for (let dayNumber = 1; dayNumber <= 60; dayNumber++) {
@@ -233,7 +235,7 @@ export async function getHeatmapData(
     const hasSubmission = status === "on_time" || status === "late";
     const action = status === "rejected" ? rejectAction : null;
     const isRelaxable =
-      status === "missed" && isWithinRelaxationWindow(currentDay, dayNumber);
+      status === "missed" && isWithinRelaxationWindow(elapsedDay, dayNumber);
 
     out.push({
       dayNumber,
