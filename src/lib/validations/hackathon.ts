@@ -38,3 +38,10 @@ export const sourceSlugSchema = z
   .trim()
   .toLowerCase()
   .regex(/^[a-z0-9_-]{1,32}$/, "Invalid source slug");
+
+export const removeTeamMemberSchema = z.object({
+  participantId: z.string().trim().min(1, "Missing participant"),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export type RemoveTeamMemberInput = z.infer<typeof removeTeamMemberSchema>;

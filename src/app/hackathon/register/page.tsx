@@ -7,6 +7,7 @@ import { RegistrationForm } from "@/components/hackathon/registration-form";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
+import { getLastRemovalForUser } from "@/features/hackathon/remove-participant";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -23,6 +24,8 @@ export default async function HackathonRegisterPage() {
 
   const existing = await getMyRegistration(session.user.id);
   if (existing) redirect("/hackathon/dashboard");
+
+  const lastRemoval = await getLastRemovalForUser(session.user.id);
 
   const initialEmail = session.user.email;
   const initialName = session.user.name ?? "";
@@ -49,6 +52,23 @@ export default async function HackathonRegisterPage() {
         </p>
 
         <div className="mt-8">
+          {lastRemoval ? (
+            <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <p className="font-display text-sm font-semibold text-foreground">
+                You&apos;re no longer on{" "}
+                {lastRemoval.teamName ?? "your previous team"}.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                The team leader removed you from the roster. You can register
+                again below — solo, as your own team, or with any team code
+                (including{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {lastRemoval.teamCode}
+                </span>{" "}
+                if you&apos;re rejoining).
+              </p>
+            </div>
+          ) : null}
           {HACKATHON.registrationOpen ? (
             <RegistrationForm
               initialEmail={initialEmail}

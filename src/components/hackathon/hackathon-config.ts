@@ -12,6 +12,12 @@ export const HACKATHON = {
   resultsLabel: "Winners announced: Friday, 14 Aug",
   registrationClosesLabel: "Registration closes Thursday, 6 Aug · 11:59 PM IST",
 
+  // Leaders can edit the roster (remove a teammate) up to and including
+  // Tue 4 Aug IST — 3 days before kickoff. This instant is 5 Aug 00:00 IST, so
+  // the whole of 4 Aug is still open. Admins are never subject to this lock.
+  rosterLockUtc: "2026-08-04T18:30:00Z", // Tue 4 Aug 11:59 PM IST (= 5 Aug 00:00 IST)
+  rosterLockLabel: "Tuesday, 4 Aug · 11:59 PM IST",
+
   whatsappLink: "https://chat.whatsapp.com/BbF7QWppRjD9KlER4lGYLX?s=cl&p=a&ilr=1",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 

@@ -2,9 +2,12 @@
 
 import { Fragment, useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Download } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, UserMinus } from "lucide-react";
 import { toast } from "sonner";
-import { updateHackathonProblemStatementAction } from "@/app/actions/admin-hackathon-actions";
+import {
+  adminRemoveHackathonTeamMemberAction,
+  updateHackathonProblemStatementAction,
+} from "@/app/actions/admin-hackathon-actions";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -80,6 +83,30 @@ export function HackathonView({ data }: Props) {
         return;
       }
       toast.success("Problem statement saved");
+    });
+  }
+
+  function handleRemoveMember(
+    participantId: string,
+    fullName: string,
+    teamLabel: string,
+  ) {
+    if (
+      !window.confirm(
+        `Remove ${fullName} from ${teamLabel}? Their slot frees up immediately.`,
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      const result = await adminRemoveHackathonTeamMemberAction({
+        participantId,
+      });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(`Removed ${result.data.fullName}`);
     });
   }
 
@@ -175,12 +202,12 @@ export function HackathonView({ data }: Props) {
                       {open
                         ? team.members.map((m) => (
                             <TableRow
-                              key={`${team.id}-${m.slotIndex}`}
+                              key={m.id}
                               className="bg-muted/30"
                             >
                               <TableCell />
                               <TableCell colSpan={5}>
-                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                   <span className="font-medium">
                                     {m.fullName}
                                     {m.isLeader ? " (leader)" : ""}
@@ -197,6 +224,25 @@ export function HackathonView({ data }: Props) {
                                   <span className="text-muted-foreground">
                                     Grad {m.graduationYear}
                                   </span>
+                                  {team.entryType === "TEAM" && !m.isLeader ? (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive"
+                                      disabled={pending}
+                                      onClick={() =>
+                                        handleRemoveMember(
+                                          m.id,
+                                          m.fullName,
+                                          team.teamName ?? team.teamCode,
+                                        )
+                                      }
+                                    >
+                                      <UserMinus className="size-3.5" />
+                                      Remove
+                                    </Button>
+                                  ) : null}
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -205,6 +251,61 @@ export function HackathonView({ data }: Props) {
                     </Fragment>
                   );
                 })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">Recent removals</h2>
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Team</TableHead>
+                <TableHead>Removed by</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>When</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.recentRemovals.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-muted-foreground">
+                    No removals yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.recentRemovals.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.fullName}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {r.email}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-sm">{r.teamCode}</span>
+                      {r.teamName ? (
+                        <span className="ml-2 text-muted-foreground">
+                          {r.teamName}
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{r.removedByRole}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {r.reason ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {new Date(r.createdAt).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                      })}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
