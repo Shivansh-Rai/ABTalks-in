@@ -1,12 +1,13 @@
 /**
- * Issue certificates for already-COMPLETED CLAUDE enrollments.
+ * Issue certificates for CLAUDE enrollments that submitted day 60
+ * and have daysCompleted >= 50.
  *
  * Usage:
  *   npm run db:backfill:certificates
  *   npm run db:backfill:certificates -- --dry-run
  */
 import { config } from "dotenv";
-import { Domain, EnrollmentStatus } from "@prisma/client";
+import { Domain } from "@prisma/client";
 import { prisma } from "../../src/lib/db";
 import { ensureClaudeCertificate } from "../../src/features/certificate/issue-certificate";
 
@@ -14,6 +15,7 @@ config({ path: ".env.local" });
 config();
 
 const CERTIFICATE_ELIGIBLE_DAYS = 50;
+const CERTIFICATE_REQUIRED_DAY = 60;
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
@@ -22,8 +24,8 @@ async function main() {
     where: {
       domain: Domain.CLAUDE,
       certificate: null,
-      status: EnrollmentStatus.COMPLETED,
       daysCompleted: { gte: CERTIFICATE_ELIGIBLE_DAYS },
+      submissions: { some: { dayNumber: CERTIFICATE_REQUIRED_DAY } },
     },
     select: {
       id: true,

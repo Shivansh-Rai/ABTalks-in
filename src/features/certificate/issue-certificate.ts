@@ -2,7 +2,6 @@ import "server-only";
 import {
   CertificateType,
   Domain,
-  EnrollmentStatus,
   Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
@@ -10,6 +9,7 @@ import { logger } from "@/lib/logger";
 import { generateCertificateId } from "./generate-certificate-id";
 
 const CERTIFICATE_ELIGIBLE_DAYS = 50;
+const CERTIFICATE_REQUIRED_DAY = 60;
 
 export type IssueResult =
   | { ok: true; data: { certificateId: string; alreadyIssued: boolean } }
@@ -20,11 +20,9 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
     where: { userId, domain: Domain.CLAUDE },
     select: {
       id: true,
-      status: true,
       daysCompleted: true,
       longestStreak: true,
       completedAt: true,
-      challenge: { select: { totalDays: true } },
       user: {
         select: {
           studentProfile: {
@@ -39,8 +37,16 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
     return { ok: false, message: "Not enrolled in the Claude challenge" };
   }
 
+  const day60Submission = await prisma.submission.findFirst({
+    where: {
+      enrollmentId: enrollment.id,
+      dayNumber: CERTIFICATE_REQUIRED_DAY,
+    },
+    select: { id: true },
+  });
+
   const eligible =
-    enrollment.status === EnrollmentStatus.COMPLETED &&
+    day60Submission != null &&
     enrollment.daysCompleted >= CERTIFICATE_ELIGIBLE_DAYS;
 
   if (!eligible) {
