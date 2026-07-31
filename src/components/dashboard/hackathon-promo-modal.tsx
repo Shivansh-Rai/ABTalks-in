@@ -148,7 +148,7 @@ export function HackathonPromoModal() {
             </div>
 
             <Link
-              href="/hackathon"
+              href="/hackathon?s=shr"
               onClick={() => setOpen(false)}
               className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-[14px] font-semibold text-white transition-[transform,filter] duration-200 hover:-translate-y-0.5 hover:brightness-110"
               style={{

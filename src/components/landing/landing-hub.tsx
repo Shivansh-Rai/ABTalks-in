@@ -34,7 +34,7 @@ const TRACKS = [
       "Build anything using AI in 48 hours. Compete solo or with a team of up to three and ship something real.",
     pill: "Registration open",
     chips: ["48 hours", "Teams of 1–3"],
-    href: "/hackathon",
+    href: "/hackathon?s=shr",
     ctaLabel: "Register now",
   },
   {

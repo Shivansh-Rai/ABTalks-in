@@ -40,7 +40,7 @@ export function TrackList({ enrollments, claudeEnabled }: Props) {
   }
   openTracks.push(
     {
-      href: "/hackathon",
+      href: "/hackathon?s=shr",
       title: "Vibe code hackathon",
       support: "48 hours · teams of 3",
       icon: "bolt",
