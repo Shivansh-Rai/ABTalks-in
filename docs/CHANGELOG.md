@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-31 [rule] Claude certificates require day-60 submission AND daysCompleted >= 50 (no longer gated on EnrollmentStatus.COMPLETED)
 - 2026-07-30 [convention] Certificate template loads from `public/certificates/` on disk (mtime-busted cache); CERTIFICATE_TEMPLATE_URL optional remote override with no-store fetch
 - 2026-07-30 [rule] Claude certificates now issue at 50+ completed days; CLAUDE test seed includes one deterministic 60/60 completed login for local QA
 - 2026-07-30 [convention] Certificate template now serves from `public/certificates/claude-certificate-template.pdf`; runtime fetch defaults to site URL unless CERTIFICATE_TEMPLATE_URL overrides it
