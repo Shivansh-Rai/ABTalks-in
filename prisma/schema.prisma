@@ -281,6 +281,7 @@ model User {
   recruiterProfile                   RecruiterProfile?
   shortlistItems                     RecruiterShortlistItem[]
   hackathonParticipant               HackathonParticipant?
+  hackathonRemovals                  HackathonRemoval[]
   certificates                       Certificate[]
 
   @@index([createdAt(sort: Desc)])
@@ -872,6 +873,42 @@ model HackathonParticipant {
   @@unique([teamId, slotIndex])
   @@index([teamId])
   @@index([sourceSlug])
+}
+
+enum HackathonRemovalActor {
+  LEADER
+  ADMIN
+}
+
+/// Append-only log of hackathon team removals. The `HackathonParticipant` row is
+/// hard-deleted on removal — that frees `userId @unique` (so the person can
+/// register again, including back into the same team) and frees the slot. This
+/// table preserves who was removed, by whom, and their original share-link
+/// attribution so a rejoin keeps its `sourceSlug`.
+model HackathonRemoval {
+  id               String                @id @default(cuid())
+  teamId           String
+  teamCode         String
+  teamName         String?
+  userId           String
+  fullName         String
+  email            String
+  phone            String
+  college          String
+  graduationYear   Int
+  slotIndex        Int
+  sourceSlug       String?
+  originalJoinedAt DateTime
+  removedByUserId  String
+  removedByRole    HackathonRemovalActor
+  reason           String?
+  createdAt        DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([teamId])
+  @@index([createdAt(sort: Desc)])
 }
 
 /// Singleton (id always 1) — event-wide config editable from /admin/hackathon.

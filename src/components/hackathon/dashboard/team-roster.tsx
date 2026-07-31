@@ -1,10 +1,12 @@
 import type { HackathonMember } from "@/features/hackathon/get-my-registration";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { RemoveMemberButton } from "@/components/hackathon/dashboard/remove-member-button";
 
 type Props = {
   entryType: "SOLO" | "TEAM";
   teamName: string | null;
   members: HackathonMember[];
+  canManage: boolean;
 };
 
 function initials(fullName: string): string {
@@ -14,7 +16,12 @@ function initials(fullName: string): string {
   return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
 }
 
-export function TeamRoster({ entryType, teamName, members }: Props) {
+export function TeamRoster({
+  entryType,
+  teamName,
+  members,
+  canManage,
+}: Props) {
   const openSpots =
     entryType === "TEAM"
       ? Math.max(0, HACKATHON.maxTeamSize - members.length)
@@ -33,7 +40,7 @@ export function TeamRoster({ entryType, teamName, members }: Props) {
       <ul className="mt-4 space-y-3">
         {members.map((member) => (
           <li
-            key={`${member.slotIndex}-${member.fullName}`}
+            key={member.id}
             className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-3"
           >
             <span
@@ -55,6 +62,12 @@ export function TeamRoster({ entryType, teamName, members }: Props) {
               </div>
               <p className="truncate text-xs text-zinc-400">{member.college}</p>
             </div>
+            {canManage && !member.isLeader ? (
+              <RemoveMemberButton
+                participantId={member.id}
+                memberName={member.fullName}
+              />
+            ) : null}
           </li>
         ))}
         {Array.from({ length: openSpots }).map((_, i) => (

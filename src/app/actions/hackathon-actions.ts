@@ -273,13 +273,35 @@ export async function submitHackathonRegistrationAction(
     return { ok: false as const, message: "That team is already full." };
   }
 
-  async function insertJoin(
-    teamId: string,
-    spotsLeft: number,
-  ): Promise<{ ok: true } | { ok: false; uniqueViolation: boolean }> {
-    const slotIndex = HACKATHON.maxTeamSize - spotsLeft + 1;
+  type JoinFailure = "full" | "already-registered" | "slot-race" | "error";
+  type JoinResult = { ok: true } | { ok: false; kind: JoinFailure };
+
+  async function insertJoin(teamId: string): Promise<JoinResult> {
     try {
-      await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async (tx) => {
+        const taken = await tx.hackathonParticipant.findMany({
+          where: { teamId },
+          select: { slotIndex: true },
+        });
+        const used = new Set(taken.map((r) => r.slotIndex));
+        let slotIndex = 0;
+        for (let i = 1; i <= HACKATHON.maxTeamSize; i++) {
+          if (!used.has(i)) {
+            slotIndex = i;
+            break;
+          }
+        }
+        if (slotIndex === 0) return { ok: false as const, kind: "full" as const };
+
+        // A previously-removed member rejoining THIS team keeps their original
+        // share-link attribution, so a remove/re-add cycle can't re-attribute the
+        // signup to a different link. Fresh joiners use the current visit cookie.
+        const priorRemoval = await tx.hackathonRemoval.findFirst({
+          where: { userId, teamId },
+          orderBy: { createdAt: "desc" },
+          select: { sourceSlug: true },
+        });
+
         await tx.hackathonParticipant.create({
           data: {
             teamId,
@@ -291,78 +313,65 @@ export async function submitHackathonRegistrationAction(
             phone: d.phone,
             college: d.college,
             graduationYear: d.graduationYear,
-            sourceSlug,
+            sourceSlug: priorRemoval ? priorRemoval.sourceSlug : sourceSlug,
           },
         });
+        return { ok: true as const };
       });
-      return { ok: true };
     } catch (error) {
       if (isPrismaUniqueViolation(error)) {
-        return { ok: false, uniqueViolation: true };
+        const e = error as Prisma.PrismaClientKnownRequestError;
+        if (uniqueTargetIncludes(e, "userId")) {
+          return { ok: false, kind: "already-registered" };
+        }
+        if (uniqueTargetIncludes(e, "slotIndex")) {
+          return { ok: false, kind: "slot-race" };
+        }
       }
       logger.error("hackathon join participant insert failed", { error });
-      return { ok: false, uniqueViolation: false };
+      return { ok: false, kind: "error" };
     }
   }
 
-  const first = await insertJoin(team.id, team.spotsLeft);
-  if (first.ok) {
-    await sendTeamJoinEmails({
-      teamId: team.id,
-      teamName: team.teamName,
-      memberName: d.fullName,
-      memberEmail: d.email,
-      teamCode: d.teamCode,
-    });
-    (await cookies()).delete(SRC_COOKIE_NAME);
-    return {
-      ok: true as const,
-      data: {
-        entryType: "TEAM_JOIN" as const,
-        teamCode: d.teamCode,
-        teamName: team.teamName,
-      },
-    };
+  let joined: JoinResult = { ok: false, kind: "slot-race" };
+  for (let attempt = 0; attempt < HACKATHON.maxTeamSize; attempt++) {
+    joined = await insertJoin(team.id);
+    if (joined.ok || joined.kind !== "slot-race") break;
   }
 
-  if (!first.uniqueViolation) {
-    return {
-      ok: false as const,
-      message: "Something went wrong. Please try again.",
-    };
-  }
-
-  // Race handler: re-fetch once and retry with recomputed slot.
-  const refreshed = await getTeamByCode(d.teamCode);
-  if (!refreshed || refreshed.entryType === "SOLO" || refreshed.spotsLeft <= 0) {
+  if (!joined.ok) {
+    if (joined.kind === "already-registered") {
+      return {
+        ok: false as const,
+        message: "You're already registered with this email.",
+      };
+    }
+    if (joined.kind === "error") {
+      return {
+        ok: false as const,
+        message: "Something went wrong. Please try again.",
+      };
+    }
     return {
       ok: false as const,
       message: "That team just filled up. Ask your leader for another team.",
     };
   }
 
-  const second = await insertJoin(refreshed.id, refreshed.spotsLeft);
-  if (second.ok) {
-    await sendTeamJoinEmails({
-      teamId: refreshed.id,
-      teamName: refreshed.teamName,
-      memberName: d.fullName,
-      memberEmail: d.email,
-      teamCode: d.teamCode,
-    });
-    (await cookies()).delete(SRC_COOKIE_NAME);
-    return {
-      ok: true as const,
-      data: {
-        entryType: "TEAM_JOIN" as const,
-        teamCode: d.teamCode,
-        teamName: refreshed.teamName,
-      },
-    };
-  }
-
+  await sendTeamJoinEmails({
+    teamId: team.id,
+    teamName: team.teamName,
+    memberName: d.fullName,
+    memberEmail: d.email,
+    teamCode: d.teamCode,
+  });
+  (await cookies()).delete(SRC_COOKIE_NAME);
   return {
-    ok: false as const,
-    message: "That team just filled up. Ask your leader for another team.",
+    ok: true as const,
+    data: {
+      entryType: "TEAM_JOIN" as const,
+      teamCode: d.teamCode,
+      teamName: team.teamName,
+    },
   };
 }

@@ -257,3 +257,57 @@ export async function sendLeaderNewMemberEmail(
     shell(body),
   );
 }
+
+// 5. Notify a member that they were removed from a team
+export async function sendMemberRemovedEmail(
+  name: string,
+  email: string,
+  teamName: string | null,
+): Promise<void> {
+  const teamLabel = teamName ?? "your previous team";
+  const body = `
+    ${heading(`Hi ${name},`)}
+    <p style="margin:0 0 12px;">You've been removed from <strong>${teamLabel}</strong> on the 48-Hour AI Hackathon roster.</p>
+    <p style="margin:0 0 12px;">You can register again at any time — solo, as your own team, or by rejoining with a team code (including the same one if your leader invites you back).</p>
+    <p style="margin:0;"><a href="${appUrl}/hackathon/register" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
+  await send(
+    email,
+    name,
+    "You've been removed from a hackathon team",
+    shell(body),
+  );
+}
+
+// 6. Confirm to the leader that a member was removed
+export async function sendLeaderMemberRemovedEmail(
+  leaderName: string,
+  leaderEmail: string,
+  memberName: string,
+  teamName: string | null,
+  teamCode: string,
+  spotsLeft: number,
+): Promise<void> {
+  const teamLabel = teamName ?? "your team";
+  const spotLabel =
+    spotsLeft === 1 ? "1 spot left" : `${spotsLeft} spots left`;
+  const body = `
+    ${heading(`Hi ${leaderName},`)}
+    <p style="margin:0 0 12px;"><strong>${memberName}</strong> has been removed from <strong>${teamLabel}</strong>.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:18px 0;">
+      <tr><td style="padding:20px 22px;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Updated Team Details</p>
+        <p style="margin:0;font-size:15px;line-height:1.9;color:${C.text};">
+          Team Name: <strong>${teamLabel}</strong><br>
+          Team Code: <strong style="letter-spacing:3px;font-family:monospace;">${teamCode}</strong><br>
+          Open spots: <strong>${spotLabel}</strong>
+        </p>
+      </td></tr>
+    </table>
+    <p style="margin:0;">Share your Team Code with someone else to fill the open spot, or invite ${memberName} back with the same code if you change your mind.</p>`;
+  await send(
+    leaderEmail,
+    leaderName,
+    "A member was removed from your hackathon team",
+    shell(body),
+  );
+}
