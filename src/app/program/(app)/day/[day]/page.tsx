@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { requireProgramMember } from "@/lib/program-auth";
 import { getDayShell } from "@/features/program/days";
 import { getMissionState } from "@/features/program/missions";
-import { getConceptCheckStatus } from "@/features/program/concept-check";
 import { getMissionMentorFeedback } from "@/features/program/mentor";
 import { getMemberDayStates } from "@/features/program/progression";
 import { parseBriefMd } from "@/features/program/parse-brief";
@@ -40,18 +39,16 @@ export default async function ProgramDayPage({ params }: Props) {
     redirect("/program/curriculum");
   }
 
-  const { day, state } = result;
+  const { day } = result;
 
-  const [missionState, conceptStatus, memberProfile, curriculum] =
-    await Promise.all([
-      getMissionState(member.id, dayNumber),
-      getConceptCheckStatus(member.id, dayNumber),
-      prisma.programMember.findUnique({
-        where: { id: member.id },
-        select: { githubRepoUrl: true },
-      }),
-      getMemberDayStates(member.id),
-    ]);
+  const [missionState, memberProfile, curriculum] = await Promise.all([
+    getMissionState(member.id, dayNumber),
+    prisma.programMember.findUnique({
+      where: { id: member.id },
+      select: { githubRepoUrl: true },
+    }),
+    getMemberDayStates(member.id),
+  ]);
 
   if (!missionState || !memberProfile) redirect("/program/curriculum");
 
@@ -75,11 +72,6 @@ export default async function ProgramDayPage({ params }: Props) {
       modules={curriculum.modules}
       estimatedMin={day.estimatedMin}
       missionPoints={day.missionPoints}
-      memberFullName={member.fullName}
-      conceptStatus={conceptStatus}
-      showConceptCheck={
-        state === "AVAILABLE" || state === "PASSED" || state === "SKIPPED"
-      }
     >
       <DaySectionCard title="Mission" icon="mission">
         {(brief.missionTitle || day.title) && (

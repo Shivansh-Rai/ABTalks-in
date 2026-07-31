@@ -749,110 +749,110 @@
     ]
   },
   {
-    "weekNumber": 8,
-    "domain": "CLAUDE",
-    "title": "Week 8: Capstone, Advanced Techniques & Launch",
-    "questions": [
-      {
-        "questionOrder": 1,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 1: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 2,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 2: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 3,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 3: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 4,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 4: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 5,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 5: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 6,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 6: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 7,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 7: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 8,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 8: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 9,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 9: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      },
-      {
-        "questionOrder": 10,
-        "questionText": "Week 8: Capstone, Advanced Techniques & Launch - Question 10: What is the best default habit when using Claude for serious work?",
-        "optionA": "Write a clear goal, constraints, output format, and review steps before accepting outputs",
-        "optionB": "Paste sensitive credentials so Claude can debug faster",
-        "optionC": "Ship external content without reading for speed",
-        "optionD": "Avoid saving reusable prompts or templates",
-        "correctAnswer": "A",
-        "explanation": "Week 8 placeholder: structured prompting plus human review is the backbone of responsible use. Final quiz copy arrives with curriculum."
-      }
-    ]
-  }
+  "weekNumber": 8,
+  "domain": "CLAUDE",
+  "title": "Week 8 Challenge Quiz: Capstone, Advanced Techniques & Launch",
+  "questions": [
+    {
+      "questionOrder": 1,
+      "questionText": "A Claude workflow gives inconsistent outputs across different users. Which improvement should be made first?",
+      "optionA": "Increase effort level",
+      "optionB": "Use a larger model",
+      "optionC": "Standardize the instructions",
+      "optionD": "Start a new conversation",
+      "correctAnswer": "C",
+      "explanation": "Consistent system instructions reduce output variability more effectively than changing models."
+    },
+    {
+      "questionOrder": 2,
+      "questionText": "Before publishing AI-generated research, what should be verified first?",
+      "optionA": "Visual formatting",
+      "optionB": "Prompt length",
+      "optionC": "Response speed",
+      "optionD": "Facts and sources",
+      "correctAnswer": "D",
+      "explanation": "Human verification of important facts is essential before sharing AI-generated work."
+    },
+    {
+      "questionOrder": 3,
+      "questionText": "A team repeats the same prompt every morning. What is the most scalable solution?",
+      "optionA": "Save a reusable Skill",
+      "optionB": "Copy previous chats",
+      "optionC": "Increase context size",
+      "optionD": "Switch conversation tabs",
+      "correctAnswer": "A",
+      "explanation": "Reusable Skills eliminate repetitive prompting and improve consistency."
+    },
+    {
+      "questionOrder": 4,
+      "questionText": "Which habit best improves long-term AI productivity?",
+      "optionA": "Switch models frequently",
+      "optionB": "Reuse proven workflows",
+      "optionC": "Write longer prompts",
+      "optionD": "Restart every project",
+      "correctAnswer": "B",
+      "explanation": "Reliable workflows save time and produce more consistent results."
+    },
+    {
+      "questionOrder": 5,
+      "questionText": "Claude proposes three different business strategies. What should happen next?",
+      "optionA": "Merge every strategy",
+      "optionB": "Pick the fastest reply",
+      "optionC": "Evaluate the trade-offs",
+      "optionD": "Generate more options",
+      "correctAnswer": "C",
+      "explanation": "Different strategies optimize different objectives, so trade-offs must be reviewed."
+    },
+    {
+      "questionOrder": 6,
+      "questionText": "An AI dashboard labels estimated values as confirmed numbers. What is the main issue?",
+      "optionA": "Weak interface design",
+      "optionB": "Slow performance",
+      "optionC": "Missing animations",
+      "optionD": "Misleading information",
+      "correctAnswer": "D",
+      "explanation": "Estimated information must always be distinguished from verified facts."
+    },
+    {
+      "questionOrder": 7,
+      "questionText": "What usually creates the biggest improvement in AI output quality?",
+      "optionA": "Clearer requirements",
+      "optionB": "Higher token limits",
+      "optionC": "Premium subscription",
+      "optionD": "Longer conversations",
+      "correctAnswer": "A",
+      "explanation": "Better requirements generally have more impact than model settings."
+    },
+    {
+      "questionOrder": 8,
+      "questionText": "During a product launch, which metric is the strongest indicator of success?",
+      "optionA": "Prompt count",
+      "optionB": "HTML size",
+      "optionC": "Returning users",
+      "optionD": "Generation speed",
+      "correctAnswer": "C",
+      "explanation": "Users returning to the product indicates sustained value."
+    },
+    {
+      "questionOrder": 9,
+      "questionText": "Which practice makes an AI workflow easiest to maintain over time?",
+      "optionA": "Single massive prompt",
+      "optionB": "Separate reusable modules",
+      "optionC": "Maximum effort mode",
+      "optionD": "Multiple chat windows",
+      "correctAnswer": "B",
+      "explanation": "Modular workflows are easier to update, test, and reuse."
+    },
+    {
+      "questionOrder": 10,
+      "questionText": "After completing the challenge, what represents the biggest mindset shift?",
+      "optionA": "Collect more prompts",
+      "optionB": "Depend on AI completely",
+      "optionC": "Build reliable systems",
+      "optionD": "Use advanced models",
+      "correctAnswer": "C",
+      "explanation": "The goal is to think like a system designer who builds dependable AI workflows."
+    }
+  ]
+}
 ]

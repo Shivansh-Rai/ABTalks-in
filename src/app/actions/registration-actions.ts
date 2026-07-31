@@ -8,6 +8,7 @@ import { UserType } from "@prisma/client";
 import { claudeWelcomeEmail } from "@/features/email/claude-welcome-email";
 import { completeRegistration } from "@/features/registration/complete-registration";
 import { sendEmail } from "@/lib/email";
+import { isClaudeEnabled } from "@/lib/feature-flags";
 import { registerPayloadSchema } from "@/lib/validations/register";
 
 export async function completeRegistrationAction(formData: FormData) {
@@ -63,6 +64,16 @@ export async function completeRegistrationAction(formData: FormData) {
   const roleRaw = formData.get("role");
   const role = typeof roleRaw === "string" ? roleRaw.trim() : roleRaw;
 
+  const countryCodeRaw = formData.get("countryCode");
+  const countryCode =
+    typeof countryCodeRaw === "string" && countryCodeRaw.trim() !== ""
+      ? countryCodeRaw.trim()
+      : "+91";
+
+  const phoneNumberRaw = formData.get("phoneNumber");
+  const phoneNumber =
+    typeof phoneNumberRaw === "string" ? phoneNumberRaw.trim() : "";
+
   const parsed = registerPayloadSchema.safeParse({
     fullName,
     college,
@@ -74,7 +85,8 @@ export async function completeRegistrationAction(formData: FormData) {
     domain: formData.get("domain"),
     skills,
     linkedinUrl: formData.get("linkedinUrl") || "",
-    phone: String(formData.get("phone") ?? ""),
+    countryCode,
+    phoneNumber,
     githubUsername: formData.get("githubUsername") || "",
     referralCode,
   });
@@ -84,6 +96,10 @@ export async function completeRegistrationAction(formData: FormData) {
       ok: false as const,
       message: parsed.error.issues[0]?.message ?? "Invalid input",
     };
+  }
+
+  if (parsed.data.domain === "CLAUDE" && !isClaudeEnabled()) {
+    return { ok: false as const, message: "That track is not open." };
   }
 
   const result = await completeRegistration(session.user.id, parsed.data);

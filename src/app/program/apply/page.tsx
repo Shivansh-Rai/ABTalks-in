@@ -11,16 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ApplyForm } from "@/components/program/apply-form";
 import { JoinCodeGate } from "@/components/program/join-code-gate";
-import { startEntryAssessmentAction } from "@/app/actions/program-entry-actions";
-import {
-  ENTRY_DURATION_MIN,
-  ENTRY_PASS_TECHNICAL,
-  ENTRY_PASS_TOTAL,
-  ENTRY_TOTAL,
-  getEntryState,
-} from "@/features/program/entry";
-import { formatDateTimeIST } from "@/lib/date-utils";
-import { isProgramEntryBypassEnabled } from "@/lib/feature-flags";
+import { getEntryState } from "@/features/program/entry";
 import { cn } from "@/lib/utils";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -49,8 +40,9 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
 
   const state = await getEntryState(session.user.id, code);
 
+  // Assessment quiz removed — any in-progress attempt resumes at apply/enroll.
   if (state.screen === "in_progress") {
-    redirect("/program/assessment");
+    redirect("/program/apply");
   }
 
   if (state.screen === "need_code" || state.screen === "invalid_code") {
@@ -120,8 +112,7 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
           <CardHeader>
             <CardTitle>You&apos;re on the waitlist</CardTitle>
             <CardDescription>
-              You passed the assessment, but this cohort is full. We&apos;ll reach
-              out if a spot opens up.
+              This cohort is full. We&apos;ll reach out if a spot opens up.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -129,16 +120,16 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
     );
   }
 
-  if (state.screen === "cooldown") {
+  // Legacy assessment failure screens (quiz removed; rare for old attempts).
+  if (state.screen === "cooldown" || state.screen === "failed") {
     return (
       <Shell>
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Retake locked</CardTitle>
+            <CardTitle>Application status</CardTitle>
             <CardDescription>
-              You didn&apos;t pass your first attempt. You can retake the
-              assessment after {formatDateTimeIST(new Date(state.retakeAtIso))}{" "}
-              (IST).
+              Please contact your program organizer if you need help joining
+              this cohort.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -146,57 +137,12 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
     );
   }
 
-  if (state.screen === "failed") {
-    return (
-      <Shell>
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle>Not eligible this cohort</CardTitle>
-            <CardDescription>
-              You&apos;ve used both assessment attempts for this cohort. You&apos;re
-              welcome to apply to a future cohort.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </Shell>
-    );
-  }
-
+  // Bypass enrolls on apply — "intro" should not appear; treat as form if it does.
   if (state.screen === "intro") {
-    return (
-      <Shell>
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle>Entry assessment</CardTitle>
-            <CardDescription>
-              {state.attemptNumber === 2
-                ? "This is your final attempt."
-                : "One quick check before you join the program."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• {ENTRY_TOTAL} questions — aptitude + technical.</li>
-              <li>• {ENTRY_DURATION_MIN} minutes, timed. The timer is enforced by the server.</li>
-              <li>
-                • Pass mark: {ENTRY_PASS_TOTAL}/{ENTRY_TOTAL} overall and at least{" "}
-                {ENTRY_PASS_TECHNICAL}/10 on the technical section.
-              </li>
-              <li>• Attempt {state.attemptNumber} of 2.</li>
-            </ul>
-            <form action={startEntryAssessmentAction}>
-              <button type="submit" className={cn(buttonVariants(), "w-full sm:w-auto")}>
-                Start assessment
-              </button>
-            </form>
-          </CardContent>
-        </Card>
-      </Shell>
-    );
+    redirect(code ? `/program/apply?code=${encodeURIComponent(code)}` : "/program/apply");
   }
 
   // state.screen === "form"
-  const skipAssessment = isProgramEntryBypassEnabled();
   return (
     <Shell>
       <div className="mb-6">
@@ -204,9 +150,7 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
           Apply to {state.cohortName}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {skipAssessment
-            ? "Tell us about your professional background to join the program."
-            : "Tell us about your professional background. After applying you'll take a short entry assessment."}
+          Tell us about your professional background to join the program.
         </p>
       </div>
       <ApplyForm joinCode={state.joinCode} />

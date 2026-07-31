@@ -27,6 +27,11 @@ export default async function AdminLayout({
       icon: "ambassadors" as const,
     },
     { href: "/admin/referrals", label: "Referrals", icon: "referrals" as const },
+    {
+      href: "/admin/hackathon-links",
+      label: "Hackathon Links",
+      icon: "hackathonLinks" as const,
+    },
     { href: "/admin/redemptions", label: "Redemptions", icon: "redemptions" as const },
   ];
 
@@ -41,11 +46,13 @@ export default async function AdminLayout({
           isAdmin: true,
         }}
       />
-      <div className="flex">
-        <div className="sticky top-14 hidden min-h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col border-r bg-card px-4 py-6 md:flex">
-          <AdminSidebar navItems={navItems} />
+      <div className="flex md:h-[calc(100vh-3.5rem)] md:overflow-hidden">
+        <div className="scrollbar-admin-purple hidden w-64 shrink-0 border-r bg-card md:block md:h-full md:overflow-y-auto">
+          <div className="flex min-h-full flex-col px-4 py-6">
+            <AdminSidebar navItems={navItems} />
+          </div>
         </div>
-        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+        <main className="scrollbar-admin-purple min-w-0 flex-1 px-4 py-6 md:overflow-y-auto md:px-8">
           <AdminMobileNav navItems={navItems} />
           {children}
         </main>

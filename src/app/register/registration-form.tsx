@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -46,7 +47,8 @@ type RegistrationFormValues = {
   domain: RegisterPayloadInput["domain"];
   skills: string[];
   linkedinUrl: string;
-  phone: string;
+  countryCode: string;
+  phoneNumber: string;
   githubUsername: string;
   referralCode: string;
 };
@@ -56,10 +58,12 @@ const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 
 type Props = {
   initialName: string;
   initialRef: string;
-  /** When true, domain is locked to CLAUDE and the picker is hidden. */
-  forceClaudeDomain: boolean;
-  /** When set (e.g. from `/register?domain=CLAUDE`), pre-select this track. */
-  initialDomain?: "CLAUDE";
+  /** Controls whether the Claude domain card is offered. */
+  claudeEnabled: boolean;
+  /** When set from `/register?domain=…`, pre-select this track. */
+  initialDomain?: RegistrationDomain;
+  /** When false (local `next dev`), OTP is not required to submit. */
+  otpVerificationRequired: boolean;
 };
 
 type RegistrationDomain = RegisterPayloadInput["domain"];
@@ -101,16 +105,21 @@ const domainCards: {
 export function RegistrationForm({
   initialName,
   initialRef,
-  forceClaudeDomain,
+  claudeEnabled,
   initialDomain,
+  otpVerificationRequired,
 }: Props) {
   const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(!otpVerificationRequired);
 
   const domainCardList = useMemo(
-    () => (forceClaudeDomain ? [] : domainCards),
-    [forceClaudeDomain],
+    () =>
+      claudeEnabled
+        ? domainCards
+        : domainCards.filter((card) => card.value !== "CLAUDE"),
+    [claudeEnabled],
   );
 
   const form = useForm<RegistrationFormValues>({
@@ -124,10 +133,11 @@ export function RegistrationForm({
       organization: "",
       role: "",
       yearsExperience: undefined,
-      domain: forceClaudeDomain ? "CLAUDE" : (initialDomain ?? "SE"),
+      domain: initialDomain ?? "SE",
       skills: [],
       linkedinUrl: "",
-      phone: "",
+      countryCode: "+91",
+      phoneNumber: "",
       githubUsername: "",
       referralCode: initialRef,
     },
@@ -147,11 +157,13 @@ export function RegistrationForm({
   const selectedDomain = watch("domain");
   const userType = watch("userType");
 
-  useEffect(() => {
-    if (forceClaudeDomain) {
-      setValue("domain", "CLAUDE", { shouldValidate: true });
-    }
-  }, [forceClaudeDomain, setValue]);
+  const handlePhoneChange = useCallback(
+    (v: { countryCode: string; phoneNumber: string; e164: string }) => {
+      setValue("countryCode", v.countryCode);
+      setValue("phoneNumber", v.phoneNumber);
+    },
+    [setValue],
+  );
 
   function handleUserTypeChange(next: "STUDENT" | "PROFESSIONAL") {
     setValue("userType", next, { shouldValidate: false });
@@ -192,6 +204,14 @@ export function RegistrationForm({
   }
 
   async function onSubmit(values: RegistrationFormValues) {
+    if (
+      otpVerificationRequired &&
+      values.countryCode === "+91" &&
+      !phoneVerified
+    ) {
+      toast.error("Please verify your phone number first.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const fd = new FormData();
@@ -200,7 +220,8 @@ export function RegistrationForm({
       fd.append("domain", values.domain);
       fd.append("skills", values.skills.join(","));
       fd.append("linkedinUrl", values.linkedinUrl ?? "");
-      fd.append("phone", values.phone ?? "");
+      fd.append("countryCode", values.countryCode);
+      fd.append("phoneNumber", values.phoneNumber ?? "");
       fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
 
@@ -222,7 +243,7 @@ export function RegistrationForm({
         return;
       }
       toast.success("Welcome to ABTalks!");
-      if (forceClaudeDomain || values.domain === "CLAUDE") {
+      if (values.domain === "CLAUDE") {
         try {
           window.localStorage.setItem("claude-day0-share-pending", "1");
         } catch {
@@ -459,20 +480,9 @@ export function RegistrationForm({
         )}
       </AnimatePresence>
 
-      {forceClaudeDomain ? (
-        <div className="flex items-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-3">
-          <Sparkles className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">Claude AI Mastery Challenge</p>
-            <p className="text-xs text-muted-foreground">
-              Synchronized June 1, 2026 start · 60 days
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <Label>Domain</Label>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="space-y-3">
+        <Label>Domain</Label>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {domainCardList.map(({ value, title, icon: Icon, accent, featured }) => {
             const selected = selectedDomain === value;
             return (
@@ -529,13 +539,24 @@ export function RegistrationForm({
                 </CardHeader>
               </Card>
             );
-            })}
-          </div>
-          {errors.domain ? (
-            <p className="text-sm text-destructive">{errors.domain.message}</p>
-          ) : null}
+          })}
         </div>
-      )}
+        {errors.domain ? (
+          <p className="text-sm text-destructive">{errors.domain.message}</p>
+        ) : null}
+      </div>
+
+      {selectedDomain === "CLAUDE" ? (
+        <div className="flex items-center gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-3">
+          <Sparkles className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">Claude AI Mastery Challenge</p>
+            <p className="text-xs text-muted-foreground">
+              Build practical Claude skills across 60 days.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="skills">Skills</Label>
@@ -603,20 +624,19 @@ export function RegistrationForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone Number</Label>
-        <Input
-          id="phone"
-          type="tel"
-          placeholder="+91 9876543210 or +1 555 123 4567"
-          autoComplete="tel"
-          {...register("phone")}
-          aria-invalid={!!errors.phone}
+        <input type="hidden" {...register("countryCode")} />
+        <input type="hidden" {...register("phoneNumber")} />
+        <PhoneVerifyField
+          defaultCountryCode="+91"
+          onChange={handlePhoneChange}
+          onVerifiedChange={setPhoneVerified}
+          disabled={isSubmitting}
+          verificationRequired={otpVerificationRequired}
         />
-        <p className="text-xs text-muted-foreground">
-          Optional. International format. Visible to admins only.
-        </p>
-        {errors.phone ? (
-          <p className="text-sm text-destructive">{errors.phone.message}</p>
+        {errors.phoneNumber ? (
+          <p className="text-sm text-destructive">
+            {errors.phoneNumber.message}
+          </p>
         ) : null}
       </div>
 

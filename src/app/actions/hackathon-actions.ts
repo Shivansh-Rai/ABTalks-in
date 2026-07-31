@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
+import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
@@ -19,9 +20,19 @@ import {
 import { logger } from "@/lib/logger";
 import {
   hackathonRegistrationSchema,
+  sourceSlugSchema,
   teamCodeSchema,
   type HackathonRegistrationInput,
 } from "@/lib/validations/hackathon";
+
+const SRC_COOKIE_NAME = "abtalks_src";
+
+async function readSourceSlug(): Promise<string | null> {
+  const raw = (await cookies()).get(SRC_COOKIE_NAME)?.value;
+  if (!raw) return null;
+  const parsed = sourceSlugSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
 
 const TEAM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -133,6 +144,8 @@ export async function submitHackathonRegistrationAction(
   }
   const d = { ...parsed.data, email };
 
+  const sourceSlug = await readSourceSlug();
+
   if (await isUserRegistered(userId)) {
     return {
       ok: false as const,
@@ -176,6 +189,7 @@ export async function submitHackathonRegistrationAction(
               phone: d.phone,
               college: d.college,
               graduationYear: d.graduationYear,
+              sourceSlug,
             },
           });
           return created;
@@ -229,6 +243,8 @@ export async function submitHackathonRegistrationAction(
       logger.error("hackathon welcome email failed", { error });
     }
 
+    (await cookies()).delete(SRC_COOKIE_NAME);
+
     return {
       ok: true as const,
       data: {
@@ -275,6 +291,7 @@ export async function submitHackathonRegistrationAction(
             phone: d.phone,
             college: d.college,
             graduationYear: d.graduationYear,
+            sourceSlug,
           },
         });
       });
@@ -297,6 +314,7 @@ export async function submitHackathonRegistrationAction(
       memberEmail: d.email,
       teamCode: d.teamCode,
     });
+    (await cookies()).delete(SRC_COOKIE_NAME);
     return {
       ok: true as const,
       data: {
@@ -332,6 +350,7 @@ export async function submitHackathonRegistrationAction(
       memberEmail: d.email,
       teamCode: d.teamCode,
     });
+    (await cookies()).delete(SRC_COOKIE_NAME);
     return {
       ok: true as const,
       data: {

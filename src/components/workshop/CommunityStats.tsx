@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 const STATS = [
-  { value: 3000, suffix: "+", label: "AI Learners", sub: "From 20+ Countries", accent: "#ff7a1a" },
+  { value: 3000, suffix: "+", label: "AI Learners", sub: "From 20+ Countries", accent: "#6366f1" },
   { value: 550, suffix: "+", label: "Institutions", sub: "Students enrolled", accent: "#a855f7" },
-  { value: 300, suffix: "+", label: "Organisations", sub: "Working professionals", accent: "#2dd4bf" },
+  { value: 300, suffix: "+", label: "Organisations", sub: "Working professionals", accent: "#818cf8" },
 ];
 
 const CLAUDE_SIGNUP = "https://www.abtalks.in/?ref=N2VD2X";
@@ -67,15 +67,13 @@ export default function CommunityStats() {
           className="absolute inset-x-0 top-0 h-px"
           style={{
             background:
-              "linear-gradient(to right, transparent, rgba(255,122,26,0.6), rgba(255,77,148,0.6), transparent)",
+              "linear-gradient(to right, transparent, rgba(var(--wk-a1-rgb),0.6), rgba(var(--wk-a2-rgb),0.6), transparent)",
           }}
         />
 
         {/* Heading */}
         <div className="text-center">
-          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#ff9a3c]">
-            Our Community
-          </span>
+          
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[38px]">
             The ABTalks AI Learners Community
           </h2>
@@ -140,8 +138,9 @@ export default function CommunityStats() {
             rel="noopener noreferrer"
             className="mt-7 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
-              background: "linear-gradient(135deg, #ff7a1a 0%, #ff4d94 100%)",
-              boxShadow: "0 12px 30px -10px rgba(255,77,148,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
+              background: "var(--wk-grad)",
+              boxShadow:
+                "0 12px 30px -10px rgba(var(--wk-a2-rgb),0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
             }}
           >
             Join the Claude Challenge →

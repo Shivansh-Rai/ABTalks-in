@@ -222,8 +222,8 @@ export function MissionPanel({
         id="mission-verify"
         className={cn(cardClass, "border-amber-500/40 text-sm text-[#BCBCBC]")}
       >
-        You skipped this mission (0 points). Use the Concept check button
-        in the header when you are ready.
+        You skipped this mission (0 points). Continue with the next unlocked
+        day when you are ready.
       </div>
     );
   }

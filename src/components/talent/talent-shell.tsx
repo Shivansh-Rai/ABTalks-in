@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -19,12 +20,23 @@ export function TalentShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-svh bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
-          <Link
-            href={showNav ? "/talent" : "/program"}
-            className="font-display text-base font-semibold tracking-tight"
-          >
-            ABTalks <span className="text-primary">Talent</span>
-          </Link>
+          <div className="inline-flex items-center gap-2 font-display text-base font-semibold tracking-tight">
+            <Link href="/" aria-label="ABTalks home">
+            <span className="logo-link">
+              <Image
+                src="/abtalks-logo.png"
+                alt="ABTalks"
+                width={300}
+                height={84}
+                priority
+                className="logo-image"
+              />
+            </span>
+            </Link>
+            <Link href={showNav ? "/talent" : "/program"} className="text-primary">
+              Talent
+            </Link>
+          </div>
           {showNav && (
             <nav className="flex gap-4 text-sm">
               {NAV.map((item) => (

@@ -1,7 +1,8 @@
 import { EnrollmentStatus, UserType } from "@prisma/client";
 import { clearRefCookie } from "@/lib/cookies";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import type { RegisterPayloadInput } from "@/lib/validations/register";
+import { INDIA_DIALING_CODE, toE164 } from "@/lib/validations/phone";
 import { prisma } from "@/lib/db";
 import { awardReferralSynergy } from "@/features/synergy/award-referral-synergy";
 import { generateUniqueReferralCode } from "./generate-referral-code";
@@ -100,7 +101,38 @@ export async function completeRegistration(
     input.linkedinUrl === "" ? null : input.linkedinUrl;
   const githubUsername =
     input.githubUsername === "" ? null : input.githubUsername;
-  const phone = input.phone === "" ? null : input.phone;
+  const phone =
+    input.phoneNumber && input.phoneNumber.trim() !== ""
+      ? toE164(input.countryCode, input.phoneNumber)
+      : null;
+
+  // India (+91) requires a phone that has been OTP-verified (production).
+  // Under next dev, OTP is skipped — persist the phone as unverified.
+  // Re-check the verification server-side — never trust the client.
+  let phoneVerified = false;
+  if (input.countryCode === INDIA_DIALING_CODE) {
+    if (!phone) {
+      return {
+        ok: false,
+        reason: "internal_error",
+        message: "Phone number is required.",
+      };
+    }
+    if (isOtpVerificationRequired()) {
+      const verification = await prisma.phoneVerification.findUnique({
+        where: { userId },
+        select: { phone: true, verified: true },
+      });
+      if (!verification || !verification.verified || verification.phone !== phone) {
+        return {
+          ok: false,
+          reason: "internal_error",
+          message: "Please verify your phone number to continue.",
+        };
+      }
+      phoneVerified = true;
+    }
+  }
 
   try {
     const profileId = await prisma.$transaction(async (tx) => {
@@ -120,6 +152,7 @@ export async function completeRegistration(
                 skills: input.skills ?? [],
                 linkedinUrl,
                 phone,
+                phoneVerified,
                 githubUsername,
                 referralCode: newReferralCode,
               }
@@ -136,6 +169,7 @@ export async function completeRegistration(
                 skills: input.skills ?? [],
                 linkedinUrl,
                 phone,
+                phoneVerified,
                 githubUsername,
                 referralCode: newReferralCode,
               },

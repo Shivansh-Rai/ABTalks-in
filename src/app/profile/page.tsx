@@ -24,7 +24,7 @@ import { ProfileForm } from "./profile-form";
 import type { ProfileFormValues } from "@/lib/validations/profile";
 import { userTypeLabel } from "@/lib/profile-display";
 import { UserType } from "@prisma/client";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import { shouldShowClaudeBanner } from "@/features/user/check-claude-enrollment";
 import { getMyRedemptions } from "@/features/marketplace/get-my-redemptions";
 import { ClaudeEnrollmentBanner } from "@/components/shared/claude-enrollment-banner";
@@ -209,7 +209,11 @@ export default async function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
-                <ProfileForm initialProfile={formDefaults} />
+                <ProfileForm
+                  initialProfile={formDefaults}
+                  phoneVerified={profile.phoneVerified}
+                  otpVerificationRequired={isOtpVerificationRequired()}
+                />
               </CardContent>
             </Card>
 
@@ -233,6 +237,18 @@ export default async function ProfilePage() {
                     No resume link added yet
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card className="min-w-0">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle>Your Achievements</CardTitle>
+                <CardDescription>Certificates and milestones you&apos;ve earned.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <Link href="/achievements" className={cn(buttonVariants({ variant: "outline" }))}>
+                  View achievements
+                </Link>
               </CardContent>
             </Card>
 

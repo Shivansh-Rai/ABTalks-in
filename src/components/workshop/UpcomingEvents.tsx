@@ -1,16 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { EVENTS, monthAbbr, dayNum } from "@/components/workshop/events-data";
+import { CalendarDays } from "lucide-react";
+import {
+  EVENTS,
+  dayNum,
+  getRegistrableEvent,
+  istTodayKey,
+  monthAbbr,
+  upcomingEvents,
+} from "@/components/workshop/events-data";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
-
-const TOTAL_SLIDES = EVENTS.length + 1; // events + the "coming soon" teaser
 
 export default function UpcomingEvents() {
   const [perView, setPerView] = useState(3);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Client-only: this page is statically prerendered, so a build-time date
+  // would freeze the list. null keeps the first render deterministic.
+  const [todayKey, setTodayKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => setTodayKey(istTodayKey());
+    sync();
+    const id = setInterval(sync, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { events, openEventId } = useMemo(
+    () =>
+      todayKey
+        ? {
+            events: upcomingEvents(todayKey),
+            openEventId: getRegistrableEvent(todayKey)?.id,
+          }
+        : { events: EVENTS, openEventId: undefined },
+    [todayKey],
+  );
+
+  const TOTAL_SLIDES = events.length + 1; // events + the "coming soon" teaser
 
   useEffect(() => {
     const calc = () => {
@@ -44,16 +74,7 @@ export default function UpcomingEvents() {
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-20">
       <div className="mb-10 text-center">
-        <span
-          className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-          style={{
-            background: "rgba(99,102,241,0.1)",
-            color: "#a5b4fc",
-            border: "1px solid rgba(99,102,241,0.22)",
-          }}
-        >
-          🗓️ What&apos;s Next
-        </span>
+        
         <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-[38px]">
           Upcoming Workshops &amp; Events
         </h2>
@@ -76,7 +97,7 @@ export default function UpcomingEvents() {
           aria-label="Previous"
           className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white sm:flex md:-left-5"
           style={{
-            background: "rgba(20,16,27,0.8)",
+            background: "rgba(11,17,32,0.8)",
             border: "1px solid rgba(255,255,255,0.12)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
@@ -89,7 +110,7 @@ export default function UpcomingEvents() {
           aria-label="Next"
           className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white sm:flex md:-right-5"
           style={{
-            background: "rgba(20,16,27,0.8)",
+            background: "rgba(11,17,32,0.8)",
             border: "1px solid rgba(255,255,255,0.12)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
@@ -104,7 +125,7 @@ export default function UpcomingEvents() {
             className="flex transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${index * (100 / perView)}%)` }}
           >
-            {EVENTS.map((ev) => (
+            {events.map((ev) => (
               <div
                 key={ev.title}
                 className="shrink-0 px-2"
@@ -114,7 +135,7 @@ export default function UpcomingEvents() {
                   const cardCommon = "relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-transform";
                   const cardStyle: React.CSSProperties = {
                     background: "rgba(255,255,255,0.025)",
-                    border: `1px solid ${ev.register ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
+                    border: `1px solid ${ev.id === openEventId || ev.href ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                     backdropFilter: "blur(12px)",
                     WebkitBackdropFilter: "blur(12px)",
                   };
@@ -164,7 +185,7 @@ export default function UpcomingEvents() {
                         <span className="text-[11.5px] font-medium text-white/40">
                           {ev.location}
                         </span>
-                        {ev.register ? (
+                        {ev.id === openEventId ? (
                           <span
                             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
                             style={{
@@ -178,6 +199,21 @@ export default function UpcomingEvents() {
                               style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
                             />
                             Register →
+                          </span>
+                        ) : ev.href ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                            style={{
+                              background: `${ev.accent}20`,
+                              color: ev.accent,
+                              border: `1px solid ${ev.accent}55`,
+                            }}
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
+                            />
+                            {ev.ctaLabel ?? "Learn more"} →
                           </span>
                         ) : (
                           <span
@@ -195,7 +231,20 @@ export default function UpcomingEvents() {
                       </div>
                     </>
                   );
-                  return ev.register ? (
+                  if (ev.href) {
+                    return (
+                      <a
+                        href={ev.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`${cardCommon} cursor-pointer hover:-translate-y-1`}
+                        style={cardStyle}
+                      >
+                        {body}
+                      </a>
+                    );
+                  }
+                  return ev.id === openEventId ? (
                     <Link
                       href="/ai-workshop#register"
                       className={`${cardCommon} cursor-pointer hover:-translate-y-1`}
@@ -232,7 +281,7 @@ export default function UpcomingEvents() {
               width: i === index ? 22 : 8,
               background:
                 i === index
-                  ? "linear-gradient(135deg, #ff7a1a, #ff4d94)"
+                  ? "var(--wk-grad)"
                   : "rgba(255,255,255,0.18)",
             }}
           />

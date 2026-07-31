@@ -12,7 +12,7 @@ const tabs = [
   { href: "/dashboard", label: "Home", Icon: Home },
   { href: "/jobs", label: "Jobs", Icon: Briefcase },
   { href: "/marketplace", label: "Rewards", Icon: Gift },
-  { href: "/mission", label: "Mission", Icon: Compass },
+  { href: "/explore", label: "Explore", Icon: Compass },
   { href: "/profile", label: "Profile", Icon: User },
 ] as const;
 
@@ -79,7 +79,7 @@ export function BottomNav() {
     pathname.startsWith("/ai-workshop/") ||
     pathname === "/hackathon" ||
     pathname.startsWith("/hackathon/") ||
-    /^\/(login|register|claude-signup|students|r|program|talent)(\/|$)/.test(
+    /^\/(login|register|claude-signup|students|r|program|talent|verify)(\/|$)/.test(
       pathname,
     )
   ) {

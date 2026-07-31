@@ -21,7 +21,6 @@ import {
 import {
   PROGRAM_COMMIT_UI_ENABLED,
   PROGRAM_MAX_COMMIT_POINTS,
-  PROGRAM_MAX_CONCEPT_POINTS,
   PROGRAM_MAX_MISSION_POINTS,
   PROGRAM_MAX_PROJECT_POINTS,
   PROGRAM_MAX_TOTAL_POINTS,
@@ -308,11 +307,6 @@ export function ProgramDashboardView({
             label="Missions"
             value={data.scoreBreakdown.missionPoints}
             max={PROGRAM_MAX_MISSION_POINTS}
-          />
-          <ScoreBar
-            label="Concept checks"
-            value={data.scoreBreakdown.conceptPoints}
-            max={PROGRAM_MAX_CONCEPT_POINTS}
           />
           {PROGRAM_COMMIT_UI_ENABLED && (
             <ScoreBar

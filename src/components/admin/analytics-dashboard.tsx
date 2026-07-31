@@ -30,6 +30,7 @@ const domainColors: Record<string, string> = {
   DS: "#0891B2",
   AI: "#8B5CF6",
   CLAUDE: "#F97316",
+  Hackathon: "#EF4444",
 };
 
 type AnalyticsData = {

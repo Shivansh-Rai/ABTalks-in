@@ -136,21 +136,16 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
   },
   {
     step: 2,
-    title: "Entry assessment",
-    detail: "A timed aptitude + basic programming check.",
-  },
-  {
-    step: 3,
     title: "31 days of missions",
     detail: "Build locally; we verify your GitHub artifacts.",
   },
   {
-    step: 4,
+    step: 3,
     title: "AI interview",
     detail: "A real-time voice interview to close it out.",
   },
   {
-    step: 5,
+    step: 4,
     title: "Recruiter visibility",
     detail: "Ranked profile + your build portfolio.",
   },

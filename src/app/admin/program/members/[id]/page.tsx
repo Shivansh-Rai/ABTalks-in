@@ -205,7 +205,7 @@ export default async function AdminProgramMemberDetailPage({
             </p>
             <p>
               <span className="text-muted-foreground">Missions:</span>{" "}
-              {member.missionPoints} · Concepts {member.conceptPoints} · Commits{" "}
+              {member.missionPoints} · Commits{" "}
               {member.commitPoints} · Projects {member.projectPoints}
             </p>
             <p>
@@ -278,7 +278,6 @@ export default async function AdminProgramMemberDetailPage({
       <Tabs defaultValue="missions">
         <TabsList>
           <TabsTrigger value="missions">Missions</TabsTrigger>
-          <TabsTrigger value="concepts">Concepts</TabsTrigger>
           <TabsTrigger value="commits">Commits</TabsTrigger>
           <TabsTrigger value="arena">Arena</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
@@ -320,41 +319,6 @@ export default async function AdminProgramMemberDetailPage({
                       </TableCell>
                       <TableCell>+{s.pointsAwarded}</TableCell>
                       <TableCell>{formatDateTimeIST(s.createdAt)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="concepts">
-          <div className="rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Day</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {member.conceptAttempts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-muted-foreground">
-                      No concept checks yet.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  member.conceptAttempts.map((c) => (
-                    <TableRow key={c.dayNumber}>
-                      <TableCell>{c.dayNumber}</TableCell>
-                      <TableCell>
-                        {c.answers === null ? "—" : `${c.score}/3`}
-                      </TableCell>
-                      <TableCell>
-                        {c.answers === null ? "In progress" : "Submitted"}
-                      </TableCell>
                     </TableRow>
                   ))
                 )}

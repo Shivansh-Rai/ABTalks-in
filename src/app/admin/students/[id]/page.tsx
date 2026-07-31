@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -134,6 +134,21 @@ export default async function AdminStudentDetailPage({
               ) : (
                 <span className="text-muted-foreground">Not provided</span>
               )}
+              {data.profile.phone ? (
+                data.profile.phoneVerified ? (
+                  <Badge className="ml-2 gap-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+                    <CheckCircle2 className="size-3.5" aria-hidden />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="ml-2 text-muted-foreground"
+                  >
+                    Not verified
+                  </Badge>
+                )
+              ) : null}
             </p>
             <div className="flex flex-wrap gap-2">
               {data.profile.skills.map((skill: string) => (

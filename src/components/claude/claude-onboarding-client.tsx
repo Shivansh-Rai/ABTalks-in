@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
@@ -211,9 +212,16 @@ export function ClaudeOnboardingClient() {
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="font-display text-xl font-bold tracking-tight">
-                  <span className="text-primary">A</span>Btalks
-                </div>
+                <Link href="/" aria-label="ABTalks home" className="logo-link">
+                  <Image
+                    src="/abtalks-logo.png"
+                    alt="ABTalks"
+                    width={300}
+                    height={84}
+                    priority
+                    className="logo-image"
+                  />
+                </Link>
                 <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400">
                   CLAUDE
                 </span>

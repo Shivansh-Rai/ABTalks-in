@@ -21,7 +21,7 @@ export default async function ProgramAppLayout({
     <div className="min-h-svh bg-[#040A12] text-white">
       <header className="sticky top-0 z-40 border-b border-[#1E1E1E] bg-[#040A12]/95 backdrop-blur">
         <div className="container mx-auto flex items-center gap-4 px-4 py-3 md:gap-6">
-          <Link href="/program/dashboard" className="shrink-0">
+          <Link href="/" className="shrink-0" aria-label="ABTalks home">
             <Image
               src="/abtalks-logo.png"
               alt="ABTalks"

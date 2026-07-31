@@ -318,7 +318,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Guardrails for LLM Applications — Guardrails AI",
+        "title": "Guardrails for LLM Applications - Guardrails AI",
         "youtubeId": "7V1w5gnZ-kw",
         "durationMin": null
       }
@@ -329,7 +329,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "RAGAS: Evaluate a RAG Application Like a Pro",
+        "title": "RAGAS: How to Evaluate a RAG Application Like a Pro for Beginners",
         "youtubeId": "5fp6e5nhJRk",
         "durationMin": null
       }
@@ -340,13 +340,13 @@
     "videos": [
       {
         "order": 1,
-        "title": "Build and Containerize a FastAPI App with Docker",
+        "title": "Master Docker: Build and Containerize Python Web App (FastAPI) | Easy Tutorial",
         "youtubeId": "4AVJNWX-KwY",
         "durationMin": null
       },
       {
         "order": 2,
-        "title": "Dockerize a FastAPI app",
+        "title": "Dockerize fastapi app - Python Framework inside docker container",
         "youtubeId": "ED6PRjmXgBA",
         "durationMin": null
       }
@@ -357,13 +357,13 @@
     "videos": [
       {
         "order": 1,
-        "title": "Deploy with Docker and Kubernetes — Beginners",
+        "title": "Deploy Node.js With Docker and Kubernetes Tutorial for Beginners",
         "youtubeId": "ASlu3NG7J5k",
         "durationMin": null
       },
       {
         "order": 2,
-        "title": "Minikube Basics: Getting Started with Kubernetes",
+        "title": "Minikube Basics and How to Get Started with Kubernetes",
         "youtubeId": "FacPam4bwRk",
         "durationMin": null
       }
@@ -374,7 +374,7 @@
     "videos": [
       {
         "order": 1,
-        "title": "Langfuse Explained: LLM Observability",
+        "title": "Langfuse Explained: LLM Observability Without Guessing What Broke",
         "youtubeId": "IIyL4gO-FE0",
         "durationMin": null
       }

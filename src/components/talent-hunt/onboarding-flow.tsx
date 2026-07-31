@@ -2,6 +2,7 @@
 
 import { Children, useState, type ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
@@ -86,14 +87,16 @@ export function CohortRegisterOnboardingFlow({
       </div>
 
       <header className="relative z-10 shrink-0 px-6 py-4">
-        <Image
-          src="/abt-logo2.png"
-          alt="ABTalks"
-          width={300}
-          height={84}
-          priority
-          className="block h-7 w-auto dark:invert"
-        />
+        <Link href="/" aria-label="ABTalks home" className="logo-link">
+          <Image
+            src="/abtalks-logo.png"
+            alt="ABTalks"
+            width={300}
+            height={84}
+            priority
+            className="logo-image"
+          />
+        </Link>
         <p className="mt-1 text-sm text-muted-foreground">
           AI Cohort Training Program
         </p>

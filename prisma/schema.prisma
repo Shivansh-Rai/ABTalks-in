@@ -94,10 +94,39 @@ model Enrollment {
   challenge        Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   submissions      Submission[]
+  certificate      Certificate?
 
   @@unique([userId, challengeId])
   @@index([domain, daysCompleted, currentStreak])
   @@index([userId, status])
+}
+
+model Certificate {
+  id            String            @id @default(cuid())
+  /// Public, human-readable credential ID. Format: ABT-XX-XXXXX (e.g. ABT-CC-7K2M9).
+  certificateId String            @unique
+  userId        String
+  type          CertificateType
+  status        CertificateStatus @default(ISSUED)
+  /// Snapshot of the recipient's name at issue time — never re-read from the profile.
+  recipientName String
+  /// Snapshot of the track. Null for non-challenge certificate types.
+  domain        Domain?
+  /// Set for challenge certificates; one certificate per completed enrollment.
+  enrollmentId  String?           @unique
+  issuedAt      DateTime          @default(now())
+  /// Snapshot: { daysCompleted, longestStreak, completedAt, college? , organization? }
+  metadata      Json?
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([type, issuedAt])
 }
 
 model Quiz {
@@ -252,6 +281,7 @@ model User {
   recruiterProfile                   RecruiterProfile?
   shortlistItems                     RecruiterShortlistItem[]
   hackathonParticipant               HackathonParticipant?
+  certificates                       Certificate[]
 
   @@index([createdAt(sort: Desc)])
 }
@@ -468,6 +498,18 @@ enum Role {
 enum SubmissionStatus {
   ON_TIME
   LATE
+}
+
+enum CertificateType {
+  CLAUDE_CHALLENGE
+  HACKATHON
+  COHORT
+  WORKSHOP
+}
+
+enum CertificateStatus {
+  ISSUED
+  REVOKED
 }
 
 enum ProgramCohortStatus {
@@ -821,6 +863,7 @@ model HackathonParticipant {
   phone          String
   college        String
   graduationYear Int
+  sourceSlug     String?
   createdAt      DateTime @default(now())
 
   team HackathonTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
@@ -828,6 +871,7 @@ model HackathonParticipant {
 
   @@unique([teamId, slotIndex])
   @@index([teamId])
+  @@index([sourceSlug])
 }
 
 /// Singleton (id always 1) — event-wide config editable from /admin/hackathon.
@@ -835,4 +879,13 @@ model HackathonEvent {
   id               Int      @id @default(1)
   problemStatement String?
   updatedAt        DateTime @updatedAt
+}
+
+/// Named share links for hackathon attribution (`?s=<slug>`). Inserted by hand.
+model HackathonLink {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  note      String?
+  createdAt DateTime @default(now())
 }

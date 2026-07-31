@@ -1,18 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { CalendarClock, CalendarX2, Check, MapPin } from "lucide-react";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
 import {
   EVENTS,
   dayNum,
   fullDate,
+  getRegistrableEvent,
+  istTodayKey,
   monthAbbr,
+  pastEvents,
+  upcomingEvents,
   weekday,
 } from "@/components/workshop/events-data";
 
 export default function EventsTimeline() {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
+
+  // Resolved on the client only: this page is statically prerendered, so a
+  // build-time date would freeze the split forever. null on the server keeps
+  // the first render deterministic (no hydration mismatch).
+  const [todayKey, setTodayKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => setTodayKey(istTodayKey());
+    sync();
+    // Rolls an already-open tab over at IST midnight without a reload.
+    const id = setInterval(sync, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { upcoming, past, openEventId } = useMemo(() => {
+    if (!todayKey) {
+      return { upcoming: EVENTS, past: [] as typeof EVENTS, openEventId: undefined };
+    }
+    return {
+      upcoming: upcomingEvents(todayKey),
+      past: pastEvents(todayKey),
+      openEventId: getRegistrableEvent(todayKey)?.id,
+    };
+  }, [todayKey]);
+
+  const isPastTab = tab === "past";
+  const list = isPastTab ? past : upcoming;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-20 sm:pt-12">
@@ -58,7 +90,7 @@ export default function EventsTimeline() {
         </div>
       </div>
 
-      {tab === "past" ? (
+      {list.length === 0 ? (
         <div
           className="rounded-3xl px-6 py-20 text-center"
           style={{
@@ -66,17 +98,31 @@ export default function EventsTimeline() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <span className="mb-3 block text-4xl">🗂️</span>
+          {isPastTab ? (
+            <CalendarX2
+              size={36}
+              strokeWidth={1.5}
+              className="mx-auto mb-3 block text-white/30"
+            />
+          ) : (
+            <CalendarClock
+              size={36}
+              strokeWidth={1.5}
+              className="mx-auto mb-3 block text-white/30"
+            />
+          )}
           <p className="text-[15px] font-semibold text-white/70">
-            No past events yet
+            {isPastTab ? "No past events yet" : "No upcoming events right now"}
           </p>
           <p className="mt-1 text-[13px] text-white/40">
-            Our journey is just getting started — check back soon.
+            {isPastTab
+              ? "Our journey is just getting started — check back soon."
+              : "The next one is being planned — check back soon."}
           </p>
         </div>
       ) : (
         <div className="space-y-6">
-          {EVENTS.map((ev, i) => (
+          {list.map((ev, i) => (
             <div
               key={ev.id}
               className="ev-row flex gap-4 sm:gap-6"
@@ -115,12 +161,18 @@ export default function EventsTimeline() {
 
               {/* card (registerable events link to the form) */}
               {(() => {
+                // Only the soonest upcoming flagged event is open, so a
+                // finished event can never offer signup.
+                const canRegister = !isPastTab && ev.id === openEventId;
+                // Events that live outside the workshop funnel link out instead.
+                const externalHref = !isPastTab ? ev.href : undefined;
+                const isLinked = canRegister || Boolean(externalHref);
                 const cardClass = `ev-card group flex flex-1 gap-4 overflow-hidden rounded-2xl p-4 sm:p-5${
-                  ev.register ? " cursor-pointer" : ""
+                  isLinked ? " cursor-pointer" : ""
                 }`;
                 const cardStyle: React.CSSProperties = {
                   background: "rgba(255,255,255,0.03)",
-                  border: `1px solid ${ev.register ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
+                  border: `1px solid ${isLinked ? `${ev.accent}45` : "rgba(255,255,255,0.08)"}`,
                   backdropFilter: "blur(12px)",
                   WebkitBackdropFilter: "blur(12px)",
                 };
@@ -131,7 +183,7 @@ export default function EventsTimeline() {
                 };
                 const onLeave = (e: React.MouseEvent<HTMLElement>) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = ev.register
+                  e.currentTarget.style.borderColor = isLinked
                     ? `${ev.accent}45`
                     : "rgba(255,255,255,0.08)";
                   e.currentTarget.style.boxShadow = "none";
@@ -164,11 +216,24 @@ export default function EventsTimeline() {
                           By {ev.host}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          📍 {ev.location}
+                          <MapPin size={12} strokeWidth={1.75} />
+                          {ev.location}
                         </span>
                       </div>
 
-                      {ev.register ? (
+                      {isPastTab ? (
+                        <span
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                          style={{
+                            background: "rgba(255,255,255,0.04)",
+                            color: "rgba(255,255,255,0.5)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                          }}
+                        >
+                          <Check size={11} strokeWidth={2.5} />
+                          Completed
+                        </span>
+                      ) : canRegister ? (
                         <span
                           className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
                           style={{
@@ -182,6 +247,22 @@ export default function EventsTimeline() {
                             style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
                           />
                           Register now
+                          <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                        </span>
+                      ) : externalHref ? (
+                        <span
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                          style={{
+                            background: `${ev.accent}20`,
+                            color: ev.accent,
+                            border: `1px solid ${ev.accent}55`,
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: ev.accent, boxShadow: `0 0 6px 1px ${ev.accent}` }}
+                          />
+                          {ev.ctaLabel ?? "Learn more"}
                           <span className="transition-transform group-hover:translate-x-0.5">→</span>
                         </span>
                       ) : (
@@ -207,7 +288,7 @@ export default function EventsTimeline() {
                         border: `1px solid ${ev.accent}30`,
                       }}
                     >
-                      <span className="text-3xl">{ev.icon}</span>
+                      <ev.Icon size={30} strokeWidth={1.5} style={{ color: ev.accent }} />
                       <span
                         className="mt-1.5 text-[9px] font-bold uppercase tracking-widest"
                         style={{ color: ev.accent }}
@@ -218,7 +299,23 @@ export default function EventsTimeline() {
                   </>
                 );
 
-                return ev.register ? (
+                if (externalHref) {
+                  return (
+                    <a
+                      href={externalHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cardClass}
+                      style={cardStyle}
+                      onMouseEnter={onEnter}
+                      onMouseLeave={onLeave}
+                    >
+                      {body}
+                    </a>
+                  );
+                }
+
+                return canRegister ? (
                   <Link
                     href="/ai-workshop#register"
                     className={cardClass}
@@ -242,8 +339,9 @@ export default function EventsTimeline() {
             </div>
           ))}
 
-          {/* coming-soon teaser */}
-          <div className="ev-row flex gap-4 sm:gap-6" style={{ animationDelay: `${EVENTS.length * 0.08}s` }}>
+          {/* coming-soon teaser — only ever tails the upcoming list */}
+          {!isPastTab && (
+          <div className="ev-row flex gap-4 sm:gap-6" style={{ animationDelay: `${list.length * 0.08}s` }}>
             <div className="w-14 shrink-0 sm:w-16" />
             <div className="relative flex w-3 shrink-0 justify-center">
               <span
@@ -255,6 +353,7 @@ export default function EventsTimeline() {
               <ComingSoonCard />
             </div>
           </div>
+          )}
         </div>
       )}
     </div>

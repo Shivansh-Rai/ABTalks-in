@@ -12,11 +12,11 @@ export async function HackathonHeader() {
       <div className="mx-auto flex h-[72px] w-full max-w-[1897px] items-center justify-between px-4 sm:h-[100px] sm:px-9">
         <Link href="/" className="inline-flex shrink-0 items-center" aria-label="ABTalks home">
           <Image
-            src="/hackathon/logo.png"
+            src="/abtalks-logo.png"
             alt="ABTalks"
-            width={153}
-            height={36}
-            className="h-7 w-auto sm:h-9"
+            width={300}
+            height={84}
+            className="logo-image logo-image-no-invert h-7 w-auto sm:h-9"
             priority
           />
         </Link>
