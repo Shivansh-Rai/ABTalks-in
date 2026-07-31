@@ -5,6 +5,7 @@ import { isProgramEntryBypassEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import {
   getCohortByJoinCode,
+  getOpenEnrollmentCohort,
   normalizeJoinCode,
   resolveProgramMemberForUser,
 } from "@/lib/program-auth";
@@ -231,7 +232,16 @@ export async function getEntryState(
   }
 
   const rawCode = joinCode?.trim();
-  if (!rawCode) return { screen: "need_code" };
+  if (!rawCode) {
+    const open = await getOpenEnrollmentCohort();
+    if (!open) return { screen: "need_code" };
+    return {
+      screen: "form",
+      cohortName: open.name,
+      joinCode: open.joinCode,
+      existingProfile: null,
+    };
+  }
 
   const cohort = await getCohortByJoinCode(rawCode);
   if (!cohort) return { screen: "invalid_code" };

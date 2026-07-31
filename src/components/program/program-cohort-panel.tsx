@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -36,37 +37,51 @@ const emptyForm = {
   startsAt: "",
   endsAt: "",
   capacity: 100,
+  requiresJoinCode: true,
 };
 
 export function ProgramCohortPanel({
   overview,
   rawStartsAt,
   rawEndsAt,
+  forceCreate,
 }: {
   overview: CohortOverview["cohort"] | null;
   rawStartsAt: string | null;
   rawEndsAt: string | null;
+  forceCreate: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
-  const [createMode, setCreateMode] = useState(!overview);
+  const createMode = forceCreate || !overview;
   const [form, setForm] = useState({
     name: overview?.name ?? "",
     startsAt: rawStartsAt ?? "",
     endsAt: rawEndsAt ?? "",
     capacity: overview?.capacity ?? 100,
+    requiresJoinCode: overview?.requiresJoinCode ?? true,
   });
 
   useEffect(() => {
-    if (createMode) return;
+    if (createMode) {
+      setForm(emptyForm);
+      return;
+    }
     setForm({
       name: overview?.name ?? "",
       startsAt: rawStartsAt ?? "",
       endsAt: rawEndsAt ?? "",
       capacity: overview?.capacity ?? 100,
+      requiresJoinCode: overview?.requiresJoinCode ?? true,
     });
   }, [overview, rawStartsAt, rawEndsAt, createMode]);
+
+  function cancelCreate() {
+    router.push(
+      overview ? `/admin/program?cohortId=${overview.id}` : "/admin/program",
+    );
+  }
 
   async function handleSave() {
     setBusy(true);
@@ -80,9 +95,9 @@ export function ProgramCohortPanel({
         return;
       }
       toast.success(createMode ? "Cohort created." : "Cohort saved.");
-      setCreateMode(false);
-      if (res.cohortId) {
-        router.push(`/admin/program?cohortId=${res.cohortId}`);
+      const nextId = res.cohortId ?? overview?.id;
+      if (nextId) {
+        router.push(`/admin/program?cohortId=${nextId}`);
       }
       router.refresh();
     } finally {
@@ -149,19 +164,15 @@ export function ProgramCohortPanel({
     }
   }
 
-  function startCreate() {
-    setCreateMode(true);
-    setForm(emptyForm);
-  }
-
-  function cancelCreate() {
-    setCreateMode(false);
-    setForm({
-      name: overview?.name ?? "",
-      startsAt: rawStartsAt ?? "",
-      endsAt: rawEndsAt ?? "",
-      capacity: overview?.capacity ?? 100,
-    });
+  async function copyApplyLink() {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/program/apply`,
+      );
+      toast.success("Apply link copied.");
+    } catch {
+      toast.error("Could not copy apply link.");
+    }
   }
 
   return (
@@ -170,11 +181,6 @@ export function ProgramCohortPanel({
         <h2 className="font-display text-lg font-semibold">
           {createMode ? "Create cohort" : "Cohort settings"}
         </h2>
-        {!createMode && (
-          <Button type="button" variant="outline" size="sm" onClick={startCreate}>
-            Create new cohort
-          </Button>
-        )}
         {createMode && overview && (
           <Button type="button" variant="ghost" size="sm" onClick={cancelCreate}>
             Cancel
@@ -188,33 +194,51 @@ export function ProgramCohortPanel({
           <Stat label="Waitlisted" value={String(overview.waitlisted)} />
           <Stat label="Dropped" value={String(overview.dropped)} />
           <Stat label="Capacity" value={String(overview.capacity)} />
-          <div className="rounded-lg border px-3 py-2 sm:col-span-2 lg:col-span-1">
-            <p className="text-xs text-muted-foreground">Join code</p>
-            <div className="mt-1 flex items-center gap-1">
-              <p className="font-mono text-lg font-bold tracking-wider">
-                {overview.joinCode}
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => void copyJoinCode()}
-                aria-label="Copy join code"
-              >
-                <Copy className="size-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                disabled={busy}
-                onClick={() => void handleRegenerateCode()}
-                aria-label="Regenerate join code"
-              >
-                <RefreshCw className="size-3.5" />
-              </Button>
+          {overview.requiresJoinCode ? (
+            <div className="rounded-lg border px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <p className="text-xs text-muted-foreground">Join code</p>
+              <div className="mt-1 flex items-center gap-1">
+                <p className="font-mono text-lg font-bold tracking-wider">
+                  {overview.joinCode}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => void copyJoinCode()}
+                  aria-label="Copy join code"
+                >
+                  <Copy className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={busy}
+                  onClick={() => void handleRegenerateCode()}
+                  aria-label="Regenerate join code"
+                >
+                  <RefreshCw className="size-3.5" />
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-lg border px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <p className="text-xs text-muted-foreground">Enrollment</p>
+              <div className="mt-1 flex items-center gap-1">
+                <p className="text-sm font-semibold">Open · no code</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => void copyApplyLink()}
+                  aria-label="Copy apply link"
+                >
+                  <Copy className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -261,6 +285,50 @@ export function ProgramCohortPanel({
               setForm((f) => ({ ...f, endsAt: e.target.value }))
             }
           />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Enrollment</Label>
+          <RadioGroup
+            value={form.requiresJoinCode ? "code" : "open"}
+            onValueChange={(v) =>
+              setForm((f) => ({ ...f, requiresJoinCode: v === "code" }))
+            }
+            className="grid gap-2 sm:grid-cols-2"
+          >
+            <Label
+              htmlFor="enroll-code"
+              className="flex items-start gap-3 rounded-lg border p-3 font-normal"
+            >
+              <RadioGroupItem value="code" id="enroll-code" className="mt-0.5" />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium">
+                  Join code required
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Applicants must enter the cohort code to reach the form.
+                </span>
+              </span>
+            </Label>
+            <Label
+              htmlFor="enroll-open"
+              className="flex items-start gap-3 rounded-lg border p-3 font-normal"
+            >
+              <RadioGroupItem value="open" id="enroll-open" className="mt-0.5" />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium">Open — no code</span>
+                <span className="block text-xs text-muted-foreground">
+                  Anyone signed in can apply straight from /program/apply.
+                </span>
+              </span>
+            </Label>
+          </RadioGroup>
+          {!form.requiresJoinCode && (
+            <p className="text-xs text-muted-foreground">
+              Open enrollment only applies while the cohort status is ENROLLING.
+              If several open cohorts are ENROLLING, applicants land in the most
+              recently created one. The join code keeps working as a direct link.
+            </p>
+          )}
         </div>
       </div>
 

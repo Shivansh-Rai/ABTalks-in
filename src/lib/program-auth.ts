@@ -40,6 +40,18 @@ export async function getCohortByJoinCode(code: string) {
 }
 
 /**
+ * Newest ENROLLING cohort that does not require a join code.
+ * When several open cohorts are ENROLLING, the most recently created one wins.
+ */
+export async function getOpenEnrollmentCohort() {
+  return prisma.programCohort.findFirst({
+    where: { status: "ENROLLING", requiresJoinCode: false },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, name: true, status: true, joinCode: true },
+  });
+}
+
+/**
  * Resolve the caller's program membership without redirecting.
  * Prefers ENROLLED over COMPLETED; among ties, newest enrolledAt.
  */

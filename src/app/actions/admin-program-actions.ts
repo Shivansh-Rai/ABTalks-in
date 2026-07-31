@@ -42,6 +42,7 @@ export async function createOrUpdateCohortAction(
     startsAt: new Date(parsed.data.startsAt),
     endsAt: new Date(parsed.data.endsAt),
     capacity: parsed.data.capacity,
+    requiresJoinCode: parsed.data.requiresJoinCode,
   });
   if (!result.ok) return result;
 

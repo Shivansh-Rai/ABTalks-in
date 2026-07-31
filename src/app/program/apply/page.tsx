@@ -23,13 +23,14 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 type Props = {
-  searchParams: Promise<{ code?: string }>;
+  searchParams: Promise<{ code?: string; gate?: string }>;
 };
 
 export default async function ProgramApplyPage({ searchParams }: Props) {
   const session = await auth();
   const params = await searchParams;
   const code = params.code ?? null;
+  const forceGate = params.gate === "1";
 
   if (!session?.user?.id) {
     const from = code
@@ -45,7 +46,12 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
     redirect("/program/apply");
   }
 
-  if (state.screen === "need_code" || state.screen === "invalid_code") {
+  const showGate =
+    state.screen === "need_code" ||
+    state.screen === "invalid_code" ||
+    (forceGate && !code && state.screen === "form");
+
+  if (showGate) {
     return (
       <Shell>
         <Card className="border-border/60">
@@ -152,6 +158,17 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">
           Tell us about your professional background to join the program.
         </p>
+        {!code && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Applying to a different cohort?{" "}
+            <Link
+              href="/program/apply?gate=1"
+              className="underline underline-offset-4"
+            >
+              Enter a join code
+            </Link>
+          </p>
+        )}
       </div>
       <ApplyForm joinCode={state.joinCode} />
     </Shell>

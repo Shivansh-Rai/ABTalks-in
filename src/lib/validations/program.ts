@@ -177,6 +177,7 @@ export const cohortFormSchema = z
     startsAt: z.string().min(1),
     endsAt: z.string().min(1),
     capacity: z.coerce.number().int().min(1).max(100),
+    requiresJoinCode: z.boolean().default(true),
   })
   .refine((d) => new Date(d.startsAt) < new Date(d.endsAt), {
     message: "Start must be before end.",
