@@ -1976,21 +1976,95 @@
     "moduleNumber": 7,
     "title": "Token Governance, Cost Management & Experiment Design",
     "missionType": "SHIP_IT",
-    "briefMd": "## Token Governance, Cost Management & Experiment Design\n\nToken/cost logging, rate limiting, response caching, and a designed A/B experiment across two chatbot variants.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Token Governance, Cost Management & Experiment Design\n\nAdd token/cost logging, rate limiting, response caching, and a designed A/B experiment across two chatbot variants. Expect about **4 hours**.\n\n**Concepts to learn**\n\n- **Token counting** with `tiktoken` on prompts and completions\n- **Cost logging** from published per-1K-token rates\n- **Rate limiting** per member\n- **Exact-match caching** for general questions (never for member-specific ones)\n- **Experiment design** - hypothesis, metric, sample size, decision rule\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── token_utils.py                ← count_tokens(text)\n├── coverage-chatbot-api/\n│   └── main.py                   ← /chat logs tokens, rate limit, cache\n├── experiment_design.md          ← one-page A/B design\n├── ab_test_results.md            ← 15 questions, both variants, scores + conclusion\n└── token_usage.csv               ← or SQLite table for usage logs (optional path)\n```\n\n### Build steps\n\n1. **Install and count tokens:**\n   - `pip install tiktoken`\n   - Write `count_tokens(text)` in `token_utils.py`\n   - Call it on every prompt + completion inside your `/chat` endpoint\n\n2. **Log usage** for each request to a CSV or SQLite table:\n   - `{session_id, timestamp, input_tokens, output_tokens, estimated_cost}`\n   - Estimate cost from your provider's published per-1K-token rate\n\n3. **Add a simple rate limiter:**\n   - Free `slowapi` library, **or** a manual dict-based counter\n   - Cap requests **per member per minute**\n\n4. **Implement an exact-match cache** for repeated **general-coverage** questions:\n   - Hash the normalized question\n   - Member-specific questions (e.g. claim status) must **never** be cached\n   - Test that a repeated general question hits the cache\n\n5. **Write a one-page experiment design** in `experiment_design.md`:\n   - Pick two variants (e.g. Day 12 prompt A vs E, or two Day 6 chunk-size settings)\n   - Include: hypothesis, metric (e.g. % of answers rated \"good\"), sample size (**15** questions), decision rule\n\n6. **Build a small test harness** that runs the same **15** coverage/claims questions through both variants and logs both answer sets side by side.\n\n7. **Score and conclude** in `ab_test_results.md`:\n   - Manually (or with an LLM-as-judge prompt) score each answer\n   - Tabulate results\n   - Write which variant wins, by how much, and whether the difference feels meaningful given the small sample size\n\n8. **Ship to your program repo:**\n   - Commit helpers, updated `/chat`, and experiment docs\n   - Suggested commit: `git add token_utils.py coverage-chatbot-api/main.py experiment_design.md ab_test_results.md && git commit -m \"day 26: tokens cost cache AB test\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the name of the **token-counting helper function**?\n2. How many **questions** are in the A/B experiment sample?\n3. What is the **filename** of your one-page experiment design doc?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "token helper function",
+          "value": "count_tokens",
+          "caseInsensitive": true
+        },
+        {
+          "check": "AB experiment sample size",
+          "value": "15",
+          "caseInsensitive": true
+        },
+        {
+          "check": "experiment design filename",
+          "value": "experiment_design.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "token_utils.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "token_utils.py"
+        },
+        {
+          "check": "defines count_tokens",
+          "kind": "contentMatches",
+          "path": "token_utils.py",
+          "regex": "def\\s+count_tokens\\s*\\("
+        },
+        {
+          "check": "/chat logs or counts tokens",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(count_tokens|input_tokens|output_tokens|tiktoken)"
+        },
+        {
+          "check": "rate limiter present",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(slowapi|rate.?limit|Limiter|per.?minute)"
+        },
+        {
+          "check": "cache for general questions",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)(cache|hash|normalized)"
+        },
+        {
+          "check": "experiment_design.md exists",
+          "kind": "fileExists",
+          "path": "experiment_design.md"
+        },
+        {
+          "check": "experiment design has hypothesis or metric",
+          "kind": "contentMatches",
+          "path": "experiment_design.md",
+          "regex": "(?i)(hypothesis|metric|sample|decision)"
+        },
+        {
+          "check": "ab_test_results.md exists",
+          "kind": "fileExists",
+          "path": "ab_test_results.md"
+        },
+        {
+          "check": "AB results have content",
+          "kind": "minLines",
+          "path": "ab_test_results.md",
+          "min": 15
+        },
+        {
+          "check": "AB results include conclusion",
+          "kind": "contentMatches",
+          "path": "ab_test_results.md",
+          "regex": "(?i)(conclusion|wins|variant|score|good)"
         }
       ]
     },
     "objectives": [
-      "Token/cost logging, rate limiting, response caching, and a designed A/B experiment across two chatbot variants."
+      "Count prompt/completion tokens with tiktoken on every /chat call",
+      "Log session usage and estimated cost; rate-limit per member per minute",
+      "Cache exact-match general questions only (never claim/member-specific)",
+      "Run a 15-question A/B test with design doc, scores, and a clear conclusion"
     ],
     "tools": [
       "tiktoken",
+      "slowapi",
       "caching",
       "A/B testing"
     ],
@@ -2001,19 +2075,104 @@
   {
     "dayNumber": 27,
     "moduleNumber": 7,
-    "title": "CHECKPOINT 3 - Evaluation Scorecard",
-    "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 3 - Evaluation Scorecard\n\nMeasure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) - submit scorecard + guardrails for AI review.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "title": "Evaluation Frameworks",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Evaluation Frameworks\n\nMeasure chatbot quality systematically with RAGAS (faithfulness, relevancy, context precision/recall), then improve your weakest metric. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **RAG evaluation datasets** - question / ideal-answer pairs with retrieved context\n- **RAGAS metrics** - faithfulness, answer_relevancy, context_precision, context_recall\n- **Iterate from the scorecard** - weakest metric → one concrete fix → re-eval\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── ragas_eval_set.jsonl          ← 15–20 question / ideal-answer pairs (CSV ok too)\n├── ragas_run.py                  ← run pipeline + RAGAS evaluate()\n├── ragas_scorecard.md            ← scores, weakest metric, hypothesis, re-run delta\n└── rag_chatbot.py / retrieval    ← full RAG pipeline under test\n```\n\nIf you prefer CSV, also keep a JSONL export or name the CSV `ragas_eval_set.csv` and reference it in the scorecard.\n\n### Build steps\n\n1. **Install RAGAS:**\n   - `pip install ragas datasets`\n\n2. **Build a test set of 15–20** question / ideal-answer pairs covering:\n   - deductibles\n   - exclusions\n   - claims status\n   - plan comparisons\n   - Save as `ragas_eval_set.jsonl` (or CSV)\n\n3. **Run each question through your full RAG pipeline**, capturing:\n   - question\n   - retrieved contexts\n   - generated answer\n   - ground-truth (ideal) answer\n\n4. **Format a RAGAS-compatible dataset** and run `evaluate()` with:\n   - `faithfulness`\n   - `answer_relevancy`\n   - `context_precision`\n   - `context_recall`\n\n5. **Review the scorecard** in `ragas_scorecard.md`:\n   - Identify your **weakest metric** (often `context_recall` on exclusion clauses)\n   - Hypothesize why (e.g. chunk size too large, embedding model too weak)\n\n6. **Make one concrete change** based on the finding (e.g. reduce chunk size for exclusion sections) and **re-run** the eval to see if the score improves. Log before/after in the scorecard.\n\n7. **Ship to your program repo:**\n   - Commit the eval set, runner, and scorecard\n   - Suggested commit: `git add ragas_eval_set.jsonl ragas_run.py ragas_scorecard.md && git commit -m \"day 27: RAGAS scorecard + one fix\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Python package (with `datasets`) do you install for this eval?\n2. About how many **question / ideal-answer pairs** are in the test set (minimum)?\n3. What is the **filename** of your written scorecard (weakest metric + re-run)?\n",
+    "language": "PYTHON",
     "missionSpec": {
-      "checkpointNumber": 3,
-      "note": "PLACEHOLDER - checkpoint rubric ships before this day unlocks"
+      "answers": [
+        {
+          "check": "RAGAS pip package",
+          "value": "ragas",
+          "caseInsensitive": true
+        },
+        {
+          "check": "eval set minimum size",
+          "value": "15",
+          "caseInsensitive": true
+        },
+        {
+          "check": "scorecard filename",
+          "value": "ragas_scorecard.md",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "ragas_run.py exists",
+          "kind": "fileExists",
+          "path": "ragas_run.py"
+        },
+        {
+          "check": "ragas_run.py calls evaluate",
+          "kind": "contentMatches",
+          "path": "ragas_run.py",
+          "regex": "(?i)(evaluate|ragas)"
+        },
+        {
+          "check": "includes faithfulness metric",
+          "kind": "contentMatches",
+          "path": "ragas_run.py",
+          "regex": "(?i)faithfulness"
+        },
+        {
+          "check": "includes answer_relevancy metric",
+          "kind": "contentMatches",
+          "path": "ragas_run.py",
+          "regex": "(?i)answer_relevancy"
+        },
+        {
+          "check": "includes context_precision metric",
+          "kind": "contentMatches",
+          "path": "ragas_run.py",
+          "regex": "(?i)context_precision"
+        },
+        {
+          "check": "includes context_recall metric",
+          "kind": "contentMatches",
+          "path": "ragas_run.py",
+          "regex": "(?i)context_recall"
+        },
+        {
+          "check": "ragas_scorecard.md exists",
+          "kind": "fileExists",
+          "path": "ragas_scorecard.md"
+        },
+        {
+          "check": "scorecard has real content",
+          "kind": "minLines",
+          "path": "ragas_scorecard.md",
+          "min": 12
+        },
+        {
+          "check": "scorecard names a weakest metric or hypothesis",
+          "kind": "contentMatches",
+          "path": "ragas_scorecard.md",
+          "regex": "(?i)(weakest|context_recall|faithfulness|hypothesis|improv)"
+        },
+        {
+          "check": "eval set exists (jsonl)",
+          "kind": "fileExists",
+          "path": "ragas_eval_set.jsonl"
+        },
+        {
+          "check": "eval set has enough pairs",
+          "kind": "minLines",
+          "path": "ragas_eval_set.jsonl",
+          "min": 15
+        }
+      ]
     },
     "objectives": [
-      "Measure quality systematically with RAGAS (faithfulness, relevance, context precision/recall) - submit scorecard + guardrails for AI review."
+      "Build a 15–20 pair coverage eval set (deductibles, exclusions, claims, plan comparisons)",
+      "Run the full RAG pipeline and evaluate with RAGAS faithfulness/relevancy/precision/recall",
+      "Identify the weakest metric and hypothesize why",
+      "Make one concrete fix and re-run to measure improvement"
     ],
     "tools": [
-      "RAGAS",
-      "LLM-as-judge"
+      "ragas",
+      "datasets",
+      "RAG evaluation"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -2024,22 +2183,84 @@
     "moduleNumber": 8,
     "title": "Docker - Containerizing the Coverage Chatbot",
     "missionType": "SHIP_IT",
-    "briefMd": "## Docker - Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose and health checks.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Docker - Containerizing the Coverage Chatbot\n\nPackage backend and frontend into containers with multi-stage builds, docker-compose, and health checks. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **Multi-stage Dockerfiles** - builder installs deps; final stage stays slim\n- **docker-compose** - backend + frontend + volumes + `env_file`\n- **Container health checks** - `HEALTHCHECK` + `/health`\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── Dockerfile                    ← FastAPI backend (multi-stage) OR backend/Dockerfile\n├── Dockerfile.frontend           ← Streamlit frontend (if separate)\n├── docker-compose.yml            ← wires services + Chroma volume + env_file\n├── .env.example                  ← keys as placeholders only (never commit real secrets)\n├── .dockerignore\n└── docker_notes.md               ← confirm compose up + healthy status\n```\n\nIf your backend Dockerfile lives at `coverage-chatbot-api/Dockerfile`, keep `docker-compose.yml` at the repo root and point `build:` at that path. Never hardcode API keys.\n\n### Build steps\n\n1. **Install Docker Desktop** (free for personal / small business) if you don't already have it.\n\n2. **Scaffold a Dockerfile for the FastAPI backend** (ask Cline if helpful):\n   - Use a **multi-stage** build\n   - Builder stage installs deps\n   - Final stage is slim\n\n3. **Containerize the Streamlit frontend:**\n   - Write a second Dockerfile, **or**\n   - Combine both services in `docker-compose.yml`\n\n4. **Write `docker-compose.yml`** wiring:\n   - backend + frontend\n   - a mounted volume for Chroma's local data\n   - API keys via `env_file` (never hardcoded)\n\n5. **Build and run locally:**\n   - `docker compose up --build`\n   - Confirm both services start\n   - Confirm `/health` responds from inside the container network\n\n6. **Add a `HEALTHCHECK`** instruction to the backend Dockerfile and confirm `docker ps` shows it as **healthy**. Log proof in `docker_notes.md`.\n\n7. **Ship to your program repo:**\n   - Commit Dockerfiles, `docker-compose.yml`, `.env.example`, and notes (no real secrets)\n   - Suggested commit: `git add Dockerfile* docker-compose.yml .env.example docker_notes.md && git commit -m \"day 28: dockerize chatbot stack\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What compose command builds and starts the full stack?\n2. Which Dockerfile instruction defines the container health probe?\n3. How should API keys be passed into compose (not hardcoded)?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "compose up command",
+          "value": "docker compose up --build",
+          "caseInsensitive": true
+        },
+        {
+          "check": "health instruction",
+          "value": "HEALTHCHECK",
+          "caseInsensitive": true
+        },
+        {
+          "check": "secrets via env file",
+          "value": "env_file",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "docker-compose.yml exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "docker-compose.yml"
+        },
+        {
+          "check": "compose defines services",
+          "kind": "contentMatches",
+          "path": "docker-compose.yml",
+          "regex": "(?i)services:"
+        },
+        {
+          "check": "compose uses env_file",
+          "kind": "contentMatches",
+          "path": "docker-compose.yml",
+          "regex": "(?i)env_file"
+        },
+        {
+          "check": "compose mounts a volume (e.g. Chroma)",
+          "kind": "contentMatches",
+          "path": "docker-compose.yml",
+          "regex": "(?i)(volumes:|chroma)"
+        },
+        {
+          "check": "backend Dockerfile exists (root)",
+          "kind": "fileExists",
+          "path": "Dockerfile"
+        },
+        {
+          "check": "Dockerfile is multi-stage or has HEALTHCHECK",
+          "kind": "contentMatches",
+          "path": "Dockerfile",
+          "regex": "(?i)(FROM |HEALTHCHECK|as builder|AS builder)"
+        },
+        {
+          "check": "docker_notes.md exists",
+          "kind": "fileExists",
+          "path": "docker_notes.md"
+        },
+        {
+          "check": "notes confirm healthy or /health",
+          "kind": "contentMatches",
+          "path": "docker_notes.md",
+          "regex": "(?i)(healthy|/health|compose)"
         }
       ]
     },
     "objectives": [
-      "Package backend and frontend into containers with multi-stage builds, docker-compose and health checks."
+      "Multi-stage Dockerfile for the FastAPI backend",
+      "Containerize Streamlit and wire both services in docker-compose.yml",
+      "Mount Chroma data and pass secrets via env_file only",
+      "Prove /health works and docker ps shows the backend as healthy"
     ],
     "tools": [
       "Docker",
-      "docker-compose"
+      "docker-compose",
+      "Docker Desktop"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
@@ -2050,18 +2271,83 @@
     "moduleNumber": 8,
     "title": "Kubernetes - Orchestrating & Scaling the Deployment",
     "missionType": "SHIP_IT",
-    "briefMd": "## Kubernetes - Orchestrating & Scaling the Deployment\n\nDeploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Kubernetes - Orchestrating & Scaling the Deployment\n\nDeploy the chatbot to a local Minikube cluster with Deployments, Services, Secrets, probes, scaling, and rolling updates. Expect about **3.5 hours**.\n\n**Concepts to learn**\n\n- **Minikube + kubectl** local cluster workflow\n- **Deployments & Services** - replicas, ClusterIP / NodePort\n- **Secrets** via `envFrom` (never plain YAML in git)\n- **readinessProbe / livenessProbe**, scale, and rolling updates\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── k8s/\n│   ├── backend-deployment.yaml\n│   ├── backend-service.yaml\n│   ├── frontend-deployment.yaml\n│   └── frontend-service.yaml\n├── k8s_notes.md                  ← scale + rolling update + teardown notes\n└── docker-compose.yml            ← from Day 28\n```\n\nCreate Secrets with `kubectl create secret` - do **not** commit real API keys in YAML.\n\n### Build steps\n\n1. **Install Minikube and kubectl**, then start a local cluster:\n   - `minikube start`\n\n2. **Get Day 28 images into Minikube:**\n   - Push to a registry Minikube can reach, **or**\n   - `minikube image load` your local images\n\n3. **Write manifests** under `k8s/`:\n   - `backend-deployment.yaml` (**2** replicas)\n   - `backend-service.yaml` (ClusterIP or NodePort)\n   - Same pair for the frontend\n\n4. **Store the LLM API key as a Kubernetes Secret:**\n   - `kubectl create secret ...`\n   - Reference it via `envFrom` in the deployment spec\n   - Never commit the secret value in plain YAML\n\n5. **Add probes and apply:**\n   - `readinessProbe` and `livenessProbe` pointing at `/health`\n   - `kubectl apply -f` the manifests\n   - Confirm pods reach **Running / Ready**\n\n6. **Test scale and rolling update**, then tear down:\n   - `kubectl scale deployment backend --replicas=3`\n   - Change the image tag and `kubectl apply` again - confirm zero-downtime rollout\n   - `kubectl delete` to tear down\n   - Log what you observed in `k8s_notes.md`\n\n7. **Ship to your program repo:**\n   - Commit manifests + notes (no secret values)\n   - Suggested commit: `git add k8s/ k8s_notes.md && git commit -m \"day 29: minikube deploy scale rollout\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What command starts the local Minikube cluster?\n2. How many **replicas** does the initial backend Deployment use?\n3. Which probe types do you point at `/health` (readiness + liveness)?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "start minikube command",
+          "value": "minikube start",
+          "caseInsensitive": true
+        },
+        {
+          "check": "backend replica count",
+          "value": "2",
+          "caseInsensitive": true
+        },
+        {
+          "check": "health probe types",
+          "value": "readinessProbe and livenessProbe",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "backend-deployment.yaml exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "k8s/backend-deployment.yaml"
+        },
+        {
+          "check": "backend deployment has 2 replicas",
+          "kind": "contentMatches",
+          "path": "k8s/backend-deployment.yaml",
+          "regex": "(?i)replicas:\\s*2"
+        },
+        {
+          "check": "backend has readiness or liveness probe",
+          "kind": "contentMatches",
+          "path": "k8s/backend-deployment.yaml",
+          "regex": "(?i)(readinessProbe|livenessProbe)"
+        },
+        {
+          "check": "backend uses envFrom or secretRef",
+          "kind": "contentMatches",
+          "path": "k8s/backend-deployment.yaml",
+          "regex": "(?i)(envFrom|secretRef|secretKeyRef)"
+        },
+        {
+          "check": "backend-service.yaml exists",
+          "kind": "fileExists",
+          "path": "k8s/backend-service.yaml"
+        },
+        {
+          "check": "frontend-deployment.yaml exists",
+          "kind": "fileExists",
+          "path": "k8s/frontend-deployment.yaml"
+        },
+        {
+          "check": "frontend-service.yaml exists",
+          "kind": "fileExists",
+          "path": "k8s/frontend-service.yaml"
+        },
+        {
+          "check": "k8s_notes.md exists",
+          "kind": "fileExists",
+          "path": "k8s_notes.md"
+        },
+        {
+          "check": "notes cover scale or rolling update",
+          "kind": "contentMatches",
+          "path": "k8s_notes.md",
+          "regex": "(?i)(scale|replicas|rolling|rollout|Ready)"
         }
       ]
     },
     "objectives": [
-      "Deploy to a local Minikube cluster: deployments, services, secrets, probes, scaling and rolling updates."
+      "Start Minikube and load Day 28 images into the cluster",
+      "Write backend/frontend Deployment + Service manifests (2 backend replicas)",
+      "Inject the LLM key via Secret + envFrom; add /health probes",
+      "Practice scale to 3, rolling update, then tear down with notes"
     ],
     "tools": [
       "Kubernetes",
@@ -2077,22 +2363,79 @@
     "moduleNumber": 8,
     "title": "Monitoring & Observability",
     "missionType": "SHIP_IT",
-    "briefMd": "## Monitoring & Observability\n\nWire Langfuse tracing into the deployed chatbot and practice debugging pods with kubectl.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "briefMd": "## Mission: Monitoring & Observability\n\nWire Langfuse tracing into the deployed chatbot and practice debugging pods with kubectl. Expect about **2.5 hours**.\n\n**Concepts to learn**\n\n- **LLM observability** - latency, tokens, full prompt/response traces\n- **kubectl debugging** - `logs -f` and `describe pod`\n- **Production alert sketch** - error rate, p95 latency, daily cost ceiling\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── coverage-chatbot-api/\n│   └── main.py                   ← Langfuse tracing on LLM calls\n├── observability_notes.md        ← Langfuse confirm + kubectl debug + alert sketch\n└── k8s/                          ← Day 29 manifests (redeploy with tracing)\n```\n\nStore Langfuse keys in Secrets / `env_file` - never commit them.\n\n### Build steps\n\n1. **Sign up for Langfuse** (free cloud or self-host) and install:\n   - `pip install langfuse`\n\n2. **Wrap your LLM calls** with Langfuse's tracing decorator / context manager so every request logs:\n   - latency\n   - token usage\n   - full prompt / response\n\n3. **Redeploy to your Day 29 Minikube cluster** and generate a handful of test conversations:\n   - Open the Langfuse dashboard\n   - Confirm traces are appearing\n   - Note confirmation in `observability_notes.md`\n\n4. **Practice kubectl debugging** on a deliberately broken pod (e.g. a bad env var):\n   - `kubectl logs -f <pod-name>`\n   - `kubectl describe pod <pod-name>`\n   - Document what you saw\n\n5. **Sketch production alerts** (paper or in the notes doc):\n   - error-rate threshold\n   - p95 latency threshold\n   - daily cost ceiling\n\n6. **Push the final code** (with tracing wired in) to GitHub.\n\n7. **Ship notes + traced code:**\n   - Suggested commit: `git add coverage-chatbot-api/main.py observability_notes.md && git commit -m \"day 30: langfuse tracing + ops notes\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which `pip` package installs Langfuse?\n2. Which kubectl command follows live logs for a pod (`kubectl logs …`)?\n3. What is the **filename** of your observability / alerts notes?\n",
+    "language": "PYTHON",
     "missionSpec": {
+      "answers": [
+        {
+          "check": "langfuse pip package",
+          "value": "langfuse",
+          "caseInsensitive": true
+        },
+        {
+          "check": "follow logs command",
+          "value": "kubectl logs -f",
+          "caseInsensitive": true
+        },
+        {
+          "check": "observability notes filename",
+          "value": "observability_notes.md",
+          "caseInsensitive": true
+        }
+      ],
       "repoChecks": [
         {
-          "check": "PLACEHOLDER - full checks ship before this day unlocks",
+          "check": "backend main.py exists",
           "kind": "fileExists",
-          "path": "README.md"
+          "path": "coverage-chatbot-api/main.py"
+        },
+        {
+          "check": "Langfuse wired into backend",
+          "kind": "contentMatches",
+          "path": "coverage-chatbot-api/main.py",
+          "regex": "(?i)langfuse"
+        },
+        {
+          "check": "observability_notes.md exists",
+          "kind": "fileExists",
+          "path": "observability_notes.md"
+        },
+        {
+          "check": "notes have real content",
+          "kind": "minLines",
+          "path": "observability_notes.md",
+          "min": 10
+        },
+        {
+          "check": "notes mention Langfuse or traces",
+          "kind": "contentMatches",
+          "path": "observability_notes.md",
+          "regex": "(?i)(langfuse|trace)"
+        },
+        {
+          "check": "notes mention kubectl debugging",
+          "kind": "contentMatches",
+          "path": "observability_notes.md",
+          "regex": "(?i)(kubectl|describe|logs)"
+        },
+        {
+          "check": "notes sketch production alerts",
+          "kind": "contentMatches",
+          "path": "observability_notes.md",
+          "regex": "(?i)(alert|latency|error.?rate|cost)"
         }
       ]
     },
     "objectives": [
-      "Wire Langfuse tracing into the deployed chatbot and practice debugging pods with kubectl."
+      "Install Langfuse and wrap LLM calls with tracing (latency, tokens, prompt/response)",
+      "Redeploy to Minikube and confirm traces in the Langfuse dashboard",
+      "Practice kubectl logs -f and describe on a broken pod",
+      "Sketch production alerts: error rate, p95 latency, daily cost ceiling"
     ],
     "tools": [
       "Langfuse",
-      "kubectl logs"
+      "kubectl",
+      "Minikube"
     ],
     "estimatedMin": 150,
     "missionPoints": 12,
@@ -2101,19 +2444,86 @@
   {
     "dayNumber": 31,
     "moduleNumber": 8,
-    "title": "CHECKPOINT 4 - Capstone: Deployed System Demo & Roadmap",
-    "missionType": "BOSS_BUILD",
-    "briefMd": "## CHECKPOINT 4 - Capstone: Deployed System Demo & Roadmap\n\nFull live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video - final AI-graded submission.\n\n> **The full mission brief for this day unlocks as the cohort approaches it.** Keep your daily rhythm: every day's work is committed and pushed to your program repo.",
+    "title": "Capstone - End-to-End Review & Roadmap",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Capstone - End-to-End Review & Roadmap\n\nDo a full live walkthrough of your Kubernetes-deployed chatbot, capture observability evidence, write a retrospective + v2 roadmap, record a short demo, and archive a clean GitHub repo. Expect about **3 hours**.\n\n**Concepts to learn**\n\n- **End-to-end acceptance** across structured, policy, claims, multi-turn, and adversarial paths\n- **Portfolio packaging** - demo video, README, retrospective, roadmap\n- **Responsible next steps** - formal compliance/legal review before real member data\n\n### Your repo layout (verification checks these exact paths)\n\n```\nyour-program-repo/\n├── README.md                     ← clean summary of what you built\n├── capstone_walkthrough.md       ← 5 scenario results + Langfuse evidence note\n├── retrospective.md              ← what worked / hard / do differently\n├── v2_roadmap.md                 ← prioritized next features + compliance note\n└── (optional) demo link in README\n```\n\nYou do not need to commit the demo video binary - link it from README (Drive/YouTube/unlisted).\n\n### Build steps\n\n1. **Full live walkthrough** of your Kubernetes-deployed chatbot - confirm each path is handled as designed:\n   - a structured coverage question\n   - a policy-wording question\n   - a claim-status lookup\n   - a multi-turn follow-up\n   - one adversarial / off-topic question\n   - Log results in `capstone_walkthrough.md`\n\n2. **Check Langfuse** for the session and screenshot the trace as evidence of end-to-end observability (note/link the screenshot in the walkthrough doc).\n\n3. **Write a 1-page retrospective** in `retrospective.md`:\n   - what worked well\n   - what was harder than expected\n   - 2–3 things you'd do differently starting over\n\n4. **Write a prioritized v2 roadmap** in `v2_roadmap.md`, e.g.:\n   - multi-modal (image) support for scanned documents\n   - voice input/output\n   - additional languages\n   - scaling to a managed cloud Kubernetes service\n   - **critically** - a formal compliance/legal review before touching any real member data\n\n5. **Record a 2–3 minute demo video** (OS built-in screen recorder) walking through the chatbot for your portfolio. Link it from `README.md`.\n\n6. **Archive the whole project** in GitHub with a clean `README.md` summarizing what you built (code, docs, this program).\n\n7. **Ship the capstone docs:**\n   - Suggested commit: `git add README.md capstone_walkthrough.md retrospective.md v2_roadmap.md && git commit -m \"day 31: capstone demo docs + roadmap\" && git push`\n   - Hit **Verify my repo** below\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many **live walkthrough scenarios** do you run (coverage, policy, claim, multi-turn, adversarial)?\n2. About how long should the portfolio **demo video** be (minutes)?\n3. What is the **filename** of your prioritized v2 roadmap?\n",
+    "language": "PYTHON",
     "missionSpec": {
-      "checkpointNumber": 4,
-      "note": "PLACEHOLDER - checkpoint rubric ships before this day unlocks"
+      "answers": [
+        {
+          "check": "walkthrough scenario count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "demo video length minutes",
+          "value": "2-3",
+          "caseInsensitive": true
+        },
+        {
+          "check": "v2 roadmap filename",
+          "value": "v2_roadmap.md",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "README.md exists",
+          "kind": "fileExists",
+          "path": "README.md"
+        },
+        {
+          "check": "README has real content",
+          "kind": "minLines",
+          "path": "README.md",
+          "min": 10
+        },
+        {
+          "check": "capstone_walkthrough.md exists",
+          "kind": "fileExists",
+          "path": "capstone_walkthrough.md"
+        },
+        {
+          "check": "walkthrough covers key scenarios",
+          "kind": "contentMatches",
+          "path": "capstone_walkthrough.md",
+          "regex": "(?i)(coverage|claim|policy|adversarial|multi-?turn|langfuse)"
+        },
+        {
+          "check": "retrospective.md exists",
+          "kind": "fileExists",
+          "path": "retrospective.md"
+        },
+        {
+          "check": "retrospective has substance",
+          "kind": "minLines",
+          "path": "retrospective.md",
+          "min": 8
+        },
+        {
+          "check": "v2_roadmap.md exists",
+          "kind": "fileExists",
+          "path": "v2_roadmap.md"
+        },
+        {
+          "check": "roadmap mentions compliance or v2 ideas",
+          "kind": "contentMatches",
+          "path": "v2_roadmap.md",
+          "regex": "(?i)(compliance|legal|kubernetes|voice|roadmap|v2)"
+        }
+      ]
     },
     "objectives": [
-      "Full live walkthrough of your Kubernetes-deployed chatbot, retrospective, v2 roadmap and demo video - final AI-graded submission."
+      "Run five live scenarios on the K8s-deployed chatbot and log results",
+      "Capture Langfuse trace evidence for the session",
+      "Write a retrospective and a prioritized v2 roadmap (incl. compliance review)",
+      "Record a short demo and ship a clean GitHub README archive"
     ],
     "tools": [
       "end-to-end demo",
-      "retrospective"
+      "Langfuse",
+      "retrospective",
+      "roadmap"
     ],
     "estimatedMin": 180,
     "missionPoints": 12,
