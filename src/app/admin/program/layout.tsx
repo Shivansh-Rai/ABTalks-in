@@ -15,17 +15,18 @@ export default async function AdminProgramLayout({
   return (
     <div className="space-y-6">
       <Suspense fallback={null}>
-        <ProgramAdminNav />
-      </Suspense>
-      <Suspense fallback={null}>
         <ProgramCohortSwitcher
           cohorts={cohorts.map((c) => ({
             id: c.id,
             name: c.name,
             status: c.status,
             joinCode: c.joinCode,
+            requiresJoinCode: c.requiresJoinCode,
           }))}
         />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ProgramAdminNav />
       </Suspense>
       {children}
     </div>

@@ -24,6 +24,7 @@ export type CohortOverview = {
     id: string;
     name: string;
     joinCode: string;
+    requiresJoinCode: boolean;
     status: ProgramCohortStatus;
     startsAt: string;
     endsAt: string;
@@ -75,6 +76,7 @@ const cohortAdminSelect = {
   id: true,
   name: true,
   joinCode: true,
+  requiresJoinCode: true,
   status: true,
   startsAt: true,
   endsAt: true,
@@ -87,6 +89,7 @@ export type AdminCohortListItem = {
   id: string;
   name: string;
   joinCode: string;
+  requiresJoinCode: boolean;
   status: ProgramCohortStatus;
   startsAt: Date;
   endsAt: Date;
@@ -149,6 +152,7 @@ export async function createOrUpdateCohort(
     startsAt: Date;
     endsAt: Date;
     capacity: number;
+    requiresJoinCode: boolean;
   },
 ): Promise<{ ok: true; cohortId: string } | { ok: false; message: string }> {
   if (data.startsAt >= data.endsAt) {
@@ -170,6 +174,7 @@ export async function createOrUpdateCohort(
             startsAt: data.startsAt,
             endsAt: data.endsAt,
             capacity: data.capacity,
+            requiresJoinCode: data.requiresJoinCode,
           },
         });
         await tx.adminAction.create({
@@ -183,6 +188,7 @@ export async function createOrUpdateCohort(
               startsAt: data.startsAt,
               endsAt: data.endsAt,
               capacity: data.capacity,
+              requiresJoinCode: data.requiresJoinCode,
             },
           },
         });
@@ -197,6 +203,7 @@ export async function createOrUpdateCohort(
           startsAt: data.startsAt,
           endsAt: data.endsAt,
           capacity: data.capacity,
+          requiresJoinCode: data.requiresJoinCode,
           status: "ENROLLING",
         },
         select: { id: true },
@@ -206,7 +213,11 @@ export async function createOrUpdateCohort(
           adminUserId: adminId,
           targetUserId: adminId,
           actionType: "PROGRAM_CREATE_COHORT",
-          metadata: { cohortId: created.id, joinCode },
+          metadata: {
+            cohortId: created.id,
+            joinCode,
+            requiresJoinCode: data.requiresJoinCode,
+          },
         },
       });
       return created.id;
@@ -327,6 +338,7 @@ export async function getCohortOverview(
       id: true,
       name: true,
       joinCode: true,
+      requiresJoinCode: true,
       status: true,
       startsAt: true,
       endsAt: true,
@@ -512,6 +524,7 @@ export async function getCohortOverview(
       id: cohort.id,
       name: cohort.name,
       joinCode: cohort.joinCode,
+      requiresJoinCode: cohort.requiresJoinCode,
       status: cohort.status,
       startsAt: formatDateTimeIST(cohort.startsAt),
       endsAt: formatDateTimeIST(cohort.endsAt),

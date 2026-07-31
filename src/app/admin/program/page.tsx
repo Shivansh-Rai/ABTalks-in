@@ -13,7 +13,7 @@ function toDatetimeLocal(d: Date) {
 }
 
 type Props = {
-  searchParams: Promise<{ cohortId?: string }>;
+  searchParams: Promise<{ cohortId?: string; create?: string }>;
 };
 
 export default async function AdminProgramOverviewPage({ searchParams }: Props) {
@@ -38,6 +38,7 @@ export default async function AdminProgramOverviewPage({ searchParams }: Props) 
         overview={overview?.cohort ?? null}
         rawStartsAt={cohort ? toDatetimeLocal(cohort.startsAt) : null}
         rawEndsAt={cohort ? toDatetimeLocal(cohort.endsAt) : null}
+        forceCreate={params.create === "1"}
       />
 
       {overview && (

@@ -576,6 +576,7 @@ model ProgramCohort {
   endsAt             DateTime            // hard end — scores freeze after this
   capacity           Int                 @default(100)
   status             ProgramCohortStatus @default(DRAFT)
+  requiresJoinCode   Boolean             @default(true)  // false = open enrollment, no code
   resultsPublishedAt DateTime?
   createdAt          DateTime            @default(now())
   members            ProgramMember[]
