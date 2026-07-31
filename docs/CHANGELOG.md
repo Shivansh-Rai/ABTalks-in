@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-07-31 [rule] Hackathon registrations with no ?s= cookie now attribute to sourceSlug `shr` so Direct/untracked stays frozen
 - 2026-07-31 [schema] ProgramCohort.requiresJoinCode (default true) for open enrollment without join code
 - 2026-07-31 [rule] getElapsedDayNumber (uncapped) drives backfill/relaxation so day 60 stays submittable after its date; CLAUDE enrollments roll from join date floored at startsAt
 - 2026-07-31 [rule] Claude certificates require day-60 submission AND daysCompleted >= 50 (no longer gated on EnrollmentStatus.COMPLETED)
