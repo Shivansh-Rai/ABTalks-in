@@ -31,6 +31,7 @@ export type HackathonLinkStats = {
   totalRegistrations: number;
   attributedRegistrations: number;
   directRegistrations: number;
+  directUsers: HackathonLinkUser[];
   unknownSlugs: {
     slug: string;
     registrations: number;
@@ -62,37 +63,30 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
   ]);
 
   const counts = new Map<string, number>();
-  const usersBySlug = new Map<
-    string,
-    {
-      id: string;
-      fullName: string;
-      email: string;
-      phone: string;
-      team: "solo" | "team";
-      college: string;
-    }[]
-  >();
-  let directRegistrations = 0;
+  const usersBySlug = new Map<string, HackathonLinkUser[]>();
+  const directUsers: HackathonLinkUser[] = [];
 
   for (const row of participantRows) {
-    const slug = row.sourceSlug;
-    if (!slug) {
-      directRegistrations += 1;
-      continue;
-    }
-    counts.set(slug, (counts.get(slug) ?? 0) + 1);
-    const users = usersBySlug.get(slug) ?? [];
-    users.push({
+    const user: HackathonLinkUser = {
       id: row.id,
       fullName: row.fullName,
       email: row.email,
       phone: row.phone,
       team: row.team.entryType === "SOLO" ? "solo" : "team",
       college: row.college,
-    });
+    };
+    const slug = row.sourceSlug;
+    if (!slug) {
+      directUsers.push(user);
+      continue;
+    }
+    counts.set(slug, (counts.get(slug) ?? 0) + 1);
+    const users = usersBySlug.get(slug) ?? [];
+    users.push(user);
     usersBySlug.set(slug, users);
   }
+
+  const directRegistrations = directUsers.length;
 
   const known = new Set(linkRows.map((r) => r.slug));
 
@@ -121,6 +115,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
     totalRegistrations: participantRows.length,
     attributedRegistrations: participantRows.length - directRegistrations,
     directRegistrations,
+    directUsers,
     unknownSlugs,
   };
 }

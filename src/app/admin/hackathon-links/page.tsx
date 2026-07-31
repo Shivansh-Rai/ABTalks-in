@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { HackathonDirectUntrackedTile } from "@/components/admin/hackathon-direct-untracked-tile";
 import { HackathonLinkAdd } from "@/components/admin/hackathon-link-add";
 import { HackathonLinkCopy } from "@/components/admin/hackathon-link-copy";
 import { HackathonLinkRowActions } from "@/components/admin/hackathon-link-row-actions";
@@ -26,6 +27,7 @@ export default async function AdminHackathonLinksPage() {
     totalRegistrations,
     attributedRegistrations,
     directRegistrations,
+    directUsers,
     unknownSlugs,
   } = stats;
 
@@ -46,7 +48,10 @@ export default async function AdminHackathonLinksPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SummaryTile label="Total registrations" value={totalRegistrations} />
         <SummaryTile label="From tracked links" value={attributedRegistrations} />
-        <SummaryTile label="Direct / untracked" value={directRegistrations} />
+        <HackathonDirectUntrackedTile
+          count={directRegistrations}
+          users={directUsers}
+        />
         <SummaryTile label="Active links" value={links.length} />
       </div>
 
