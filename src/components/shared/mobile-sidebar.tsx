@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   AlertCircle,
+  Award,
   ChevronRight,
   Compass,
   Flame,
@@ -173,6 +174,17 @@ export function MobileSidebar({ user, isMarketplace }: Props) {
                       {isDark ? "Light Mode" : "Dark Mode"}
                     </button>
                   ) : null}
+                  <Link
+                    href="/achievements"
+                    onClick={() => setOpen(false)}
+                    className={ROW_CLASS}
+                  >
+                    <Award
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                    Your Achievements
+                  </Link>
                   <Link
                     href="/profile"
                     onClick={() => setOpen(false)}

@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
+import { HackathonDirectUntrackedTile } from "@/components/admin/hackathon-direct-untracked-tile";
 import { HackathonLinkAdd } from "@/components/admin/hackathon-link-add";
 import { HackathonLinkCopy } from "@/components/admin/hackathon-link-copy";
 import { HackathonLinkRowActions } from "@/components/admin/hackathon-link-row-actions";
 import { HackathonLinkView } from "@/components/admin/hackathon-link-view";
+import { HackathonUnknownSlugRow } from "@/components/admin/hackathon-unknown-slug-row";
 import {
   Table,
   TableBody,
@@ -25,6 +27,7 @@ export default async function AdminHackathonLinksPage() {
     totalRegistrations,
     attributedRegistrations,
     directRegistrations,
+    directUsers,
     unknownSlugs,
   } = stats;
 
@@ -45,7 +48,10 @@ export default async function AdminHackathonLinksPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SummaryTile label="Total registrations" value={totalRegistrations} />
         <SummaryTile label="From tracked links" value={attributedRegistrations} />
-        <SummaryTile label="Direct / untracked" value={directRegistrations} />
+        <HackathonDirectUntrackedTile
+          count={directRegistrations}
+          users={directUsers}
+        />
         <SummaryTile label="Active links" value={links.length} />
       </div>
 
@@ -132,18 +138,17 @@ export default async function AdminHackathonLinksPage() {
                 <TableRow>
                   <TableHead>Slug</TableHead>
                   <TableHead>Registrations</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {unknownSlugs.map((row) => (
-                  <TableRow key={row.slug}>
-                    <TableCell className="font-mono text-sm">
-                      {row.slug}
-                    </TableCell>
-                    <TableCell className="font-bold tabular-nums">
-                      {row.registrations}
-                    </TableCell>
-                  </TableRow>
+                  <HackathonUnknownSlugRow
+                    key={row.slug}
+                    slug={row.slug}
+                    registrations={row.registrations}
+                    users={row.users}
+                  />
                 ))}
               </TableBody>
             </Table>

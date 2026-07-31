@@ -3,6 +3,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type HackathonMember = {
+  id: string;
   fullName: string;
   college: string;
   isLeader: boolean;
@@ -38,6 +39,7 @@ export async function getMyRegistration(
           participants: {
             orderBy: { slotIndex: "asc" },
             select: {
+              id: true,
               fullName: true,
               college: true,
               isLeader: true,
@@ -54,6 +56,7 @@ export async function getMyRegistration(
   const { team } = participant;
   const entryType = team.entryType === "SOLO" ? "SOLO" : "TEAM";
   const members: HackathonMember[] = team.participants.map((row) => ({
+    id: row.id,
     fullName: row.fullName,
     college: row.college,
     isLeader: row.isLeader,

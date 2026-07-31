@@ -31,6 +31,11 @@ export default async function HackathonDashboardPage() {
   const entryChip =
     reg.team.entryType === "SOLO" ? "SOLO" : (reg.team.name ?? "TEAM");
 
+  const rosterLocked =
+    Date.now() >= new Date(HACKATHON.rosterLockUtc).getTime();
+  const canManage =
+    reg.team.entryType === "TEAM" && reg.me.isLeader && !rosterLocked;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
       <header className="mb-8 flex flex-wrap items-center gap-3">
@@ -56,7 +61,15 @@ export default async function HackathonDashboardPage() {
           entryType={reg.team.entryType}
           teamName={reg.team.name}
           members={reg.members}
+          canManage={canManage}
         />
+        {reg.me.isLeader && reg.team.entryType === "TEAM" ? (
+          <p className="text-xs text-zinc-400">
+            {rosterLocked
+              ? `Team changes closed on ${HACKATHON.rosterLockLabel}. Message the organizers on WhatsApp if you need a change.`
+              : `You can add or remove teammates until ${HACKATHON.rosterLockLabel}.`}
+          </p>
+        ) : null}
         {reg.team.entryType === "TEAM" && reg.spotsLeft > 0 ? (
           <InvitePanel teamCode={reg.team.code} spotsLeft={reg.spotsLeft} />
         ) : null}
