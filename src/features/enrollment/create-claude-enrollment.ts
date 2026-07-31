@@ -35,7 +35,7 @@ export async function createClaudeEnrollment(
 
   const challenge = await prisma.challenge.findUnique({
     where: { domain: Domain.CLAUDE },
-    select: { id: true, startsAt: true },
+    select: { id: true },
   });
   if (!challenge) {
     return {
@@ -60,8 +60,6 @@ export async function createClaudeEnrollment(
     };
   }
 
-  const anchorStart = challenge.startsAt ?? new Date();
-
   try {
     await prisma.enrollment.create({
       data: {
@@ -69,7 +67,6 @@ export async function createClaudeEnrollment(
         challengeId: challenge.id,
         domain: Domain.CLAUDE,
         status: EnrollmentStatus.ACTIVE,
-        startedAt: anchorStart,
         daysCompleted: 0,
         currentStreak: 0,
         longestStreak: 0,

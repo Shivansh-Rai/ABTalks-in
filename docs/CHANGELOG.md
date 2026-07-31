@@ -1,6 +1,7 @@
 ## Pending reconcile
 
 - 2026-07-31 [schema] ProgramCohort.requiresJoinCode (default true) for open enrollment without join code
+- 2026-07-31 [rule] getElapsedDayNumber (uncapped) drives backfill/relaxation so day 60 stays submittable after its date; CLAUDE enrollments roll from join date floored at startsAt
 - 2026-07-31 [rule] Claude certificates require day-60 submission AND daysCompleted >= 50 (no longer gated on EnrollmentStatus.COMPLETED)
 - 2026-07-30 [convention] Certificate template loads from `public/certificates/` on disk (mtime-busted cache); CERTIFICATE_TEMPLATE_URL optional remote override with no-store fetch
 - 2026-07-30 [rule] Claude certificates now issue at 50+ completed days; CLAUDE test seed includes one deterministic 60/60 completed login for local QA

@@ -1,6 +1,6 @@
 import type { DailyTask, Domain, SubmissionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { getCurrentDayNumber } from "@/lib/date-utils";
+import { getCurrentDayNumber, getElapsedDayNumber } from "@/lib/date-utils";
 import { readDayNumberFromMetadata } from "@/lib/admin-action-metadata";
 import { resolveChallengeEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
 import { isWithinRelaxationWindow } from "@/features/submission/submit-day";
@@ -78,10 +78,10 @@ export async function getDayData(
   );
 
   const currentDayNumber = getCurrentDayNumber(enrollment, enrollment.challenge);
+  const elapsedDayNumber = getElapsedDayNumber(enrollment, enrollment.challenge);
   const isUnlocked = dayNumber <= currentDayNumber;
   const isRelaxable =
-    !submission &&
-    isWithinRelaxationWindow(currentDayNumber, dayNumber);
+    !submission && isWithinRelaxationWindow(elapsedDayNumber, dayNumber);
 
   return {
     task,

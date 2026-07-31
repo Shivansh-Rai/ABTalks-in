@@ -76,7 +76,7 @@ export const EVENTS: WorkshopEvent[] = [
     desc: "Build a working AI product in a weekend. Form a team, ship something real, and pitch it to judges for prizes and recruiter visibility.",
     host: "ABTalks",
     location: "Online · Team event",
-    href: "https://www.abtalks.in/hackathon?s=suy",
+    href: "https://www.abtalks.in/hackathon?s=shr",
     ctaLabel: "View hackathon",
   },
   {
