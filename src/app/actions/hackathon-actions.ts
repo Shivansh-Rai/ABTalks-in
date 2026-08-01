@@ -27,7 +27,7 @@ import {
 
 const SRC_COOKIE_NAME = "abtalks_src";
 /** Fallback attribution when a registration has no share-link cookie. */
-const DEFAULT_SOURCE_SLUG = "shr";
+const DEFAULT_SOURCE_SLUG = "suy";
 
 async function readSourceSlug(): Promise<string> {
   const raw = (await cookies()).get(SRC_COOKIE_NAME)?.value;
