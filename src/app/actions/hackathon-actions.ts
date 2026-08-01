@@ -26,14 +26,12 @@ import {
 } from "@/lib/validations/hackathon";
 
 const SRC_COOKIE_NAME = "abtalks_src";
-/** Fallback attribution when a registration has no share-link cookie. */
-const DEFAULT_SOURCE_SLUG = "suy";
 
-async function readSourceSlug(): Promise<string> {
+async function readSourceSlug(): Promise<string | null> {
   const raw = (await cookies()).get(SRC_COOKIE_NAME)?.value;
-  if (!raw) return DEFAULT_SOURCE_SLUG;
+  if (!raw) return null;
   const parsed = sourceSlugSchema.safeParse(raw);
-  return parsed.success ? parsed.data : DEFAULT_SOURCE_SLUG;
+  return parsed.success ? parsed.data : null;
 }
 
 const TEAM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
