@@ -7,20 +7,43 @@ import { ArrowRight, Sparkles, X } from "lucide-react";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 
 // Bump the version suffix to re-show the popup to everyone after a change.
-const SEEN_KEY = "abtalks_hackathon_promo_v1";
+const DISMISS_KEY = "abtalks_vicodathon_promo_dismiss_v1";
+const CLOSE_COUNT_KEY = "abtalks_vicodathon_promo_close_v1";
+const MAX_CLOSE_COUNT = 3;
+// Show through 6 Aug 2026 IST (exclusive end = 7 Aug 00:00 IST).
+const PROMO_ENDS_AT = new Date("2026-08-06T18:30:00Z").getTime();
 const TARGET = new Date(HACKATHON.kickoffUtc).getTime();
 
 export function HackathonPromoModal() {
   const [open, setOpen] = useState(false);
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
 
-  // Show once, ever, 1s after the dashboard loads.
+  function dismissPermanently() {
+    localStorage.setItem(DISMISS_KEY, "1");
+    setOpen(false);
+  }
+
+  function closeWithLimit() {
+    const raw = localStorage.getItem(CLOSE_COUNT_KEY);
+    const current = Number.parseInt(raw ?? "0", 10);
+    const next = Number.isFinite(current) ? current + 1 : 1;
+    localStorage.setItem(CLOSE_COUNT_KEY, String(next));
+    if (next >= MAX_CLOSE_COUNT) {
+      localStorage.setItem(DISMISS_KEY, "1");
+    }
+    setOpen(false);
+  }
+
+  // Show until 6 Aug IST, unless permanently dismissed or close limit reached.
   useEffect(() => {
-    if (localStorage.getItem(SEEN_KEY)) return;
-    const timer = setTimeout(() => {
-      setOpen(true);
-      localStorage.setItem(SEEN_KEY, "1");
-    }, 1000);
+    if (Date.now() >= PROMO_ENDS_AT) return;
+    if (localStorage.getItem(DISMISS_KEY)) return;
+
+    const raw = localStorage.getItem(CLOSE_COUNT_KEY);
+    const closes = Number.parseInt(raw ?? "0", 10);
+    if (Number.isFinite(closes) && closes >= MAX_CLOSE_COUNT) return;
+
+    const timer = setTimeout(() => setOpen(true), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -66,7 +89,6 @@ export function HackathonPromoModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22 }}
-          onClick={() => setOpen(false)}
           className="fixed inset-0 z-70 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
         >
           <motion.div
@@ -94,7 +116,7 @@ export function HackathonPromoModal() {
 
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={closeWithLimit}
               aria-label="Close"
               className="absolute right-3.5 top-3.5 flex size-7 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
             >
@@ -103,7 +125,7 @@ export function HackathonPromoModal() {
 
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">
               <Sparkles className="size-3 text-violet-400" aria-hidden />
-              AI Hackathon
+              ViCODATHON
             </span>
 
             <h2 className="mt-3.5 font-display text-[22px] font-extrabold leading-[1.15] tracking-tight text-white">
@@ -116,13 +138,13 @@ export function HackathonPromoModal() {
                   backgroundClip: "text",
                 }}
               >
-                Vibe Code Hackathon
+                ViCODATHON
               </span>
             </h2>
 
             <p className="mt-2 text-[13px] leading-relaxed text-white/50">
               48 hours. No boilerplate. Just you, your ideas, and AI. Build solo
-              or in a team of up to 3.
+              or in a team of up to 3. Registration closes 6 Aug.
             </p>
 
             {/* compact countdown */}
@@ -157,7 +179,7 @@ export function HackathonPromoModal() {
                   "0 12px 28px -12px rgba(124,92,246,0.7), inset 0 1px 0 rgba(255,255,255,0.22)",
               }}
             >
-              Register now
+              Register Now
               <ArrowRight
                 className="size-4 transition-transform group-hover:translate-x-0.5"
                 aria-hidden
@@ -166,10 +188,10 @@ export function HackathonPromoModal() {
 
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={dismissPermanently}
               className="mt-3 w-full text-center text-[12px] font-medium text-white/35 transition-colors hover:text-white/60"
             >
-              Maybe later
+              Already Registered
             </button>
           </motion.div>
         </motion.div>
