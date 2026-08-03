@@ -38,14 +38,14 @@ const TRACKS = [
     ctaLabel: "Register now",
   },
   {
-    accent: "orange" as const,
-    title: "Free AI Bootcamp",
+    accent: "indigo" as const,
+    title: "31 Days AI Cohort",
     blurb:
-      "A live, hands-on session on prompt engineering with ChatGPT, Claude, and Gemini. No recordings, no fluff.",
-    pill: "Next session live",
-    chips: ["1 hour", "Live on Meet"],
-    href: "/ai-workshop",
-    ctaLabel: "Save my seat",
+      "Build and deploy a production AI chatbot in 31 days. Learn RAG, agents, MCP, and get in front of recruiters.",
+    pill: "Applications open",
+    chips: ["31 days"],
+    href: "/program",
+    ctaLabel: "Apply now",
   },
 ];
 
@@ -242,7 +242,7 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-border/60">
+      {/* <footer className="relative z-10 border-t border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-8">
           <p>© 2026 ABTalks. Build in public.</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
@@ -257,7 +257,7 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             </Link>
           </nav>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
