@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { RecentRegistrant } from "@/lib/workshop-supabase";
+import type { RecentRegistrant } from "@/features/workshop/get-recent-registrations";
 
 // Shown only before there are real registrations, so the ticker is never empty.
 const FALLBACK: RecentRegistrant[] = [

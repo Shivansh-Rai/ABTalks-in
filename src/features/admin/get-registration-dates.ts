@@ -3,32 +3,54 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 /**
- * Earliest registration date per user (StudentProfile.createdAt vs
- * HackathonParticipant.createdAt), for anyone whose profile OR hackathon
- * row was created at/after `since`. One entry per person - a challenge
- * student who also joined the hackathon appears once, at the earlier date.
+ * Earliest registration date per user across StudentProfile, HackathonParticipant
+ * and WorkshopRegistration, for anyone whose first touch in ANY of those falls
+ * at/after `since`. One entry per person — someone who did a workshop and later
+ * joined a challenge appears once, at the earlier date.
  *
- * Each row carries its counterpart's date so a user whose earliest
- * registration predates `since` is correctly excluded by the caller's
- * window filter, even when their other row falls inside the window.
+ * Two passes on purpose: the first finds who was active in the window, the
+ * second reads their dates unbounded, so a user whose real first registration
+ * predates `since` is correctly excluded by the caller's window filter.
  */
 export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
-  const [profileRows, participantRows] = await Promise.all([
+  const [profileHits, participantHits, workshopHits] = await Promise.all([
     prisma.studentProfile.findMany({
       where: { createdAt: { gte: since } },
-      select: {
-        userId: true,
-        createdAt: true,
-        user: { select: { hackathonParticipant: { select: { createdAt: true } } } },
-      },
+      select: { userId: true },
     }),
     prisma.hackathonParticipant.findMany({
       where: { createdAt: { gte: since } },
-      select: {
-        userId: true,
-        createdAt: true,
-        user: { select: { studentProfile: { select: { createdAt: true } } } },
-      },
+      select: { userId: true },
+    }),
+    prisma.workshopRegistration.findMany({
+      where: { createdAt: { gte: since } },
+      select: { userId: true },
+      distinct: ["userId"],
+    }),
+  ]);
+
+  const candidates = new Set<string>();
+  for (const r of [...profileHits, ...participantHits, ...workshopHits]) {
+    candidates.add(r.userId);
+  }
+  if (candidates.size === 0) return [];
+
+  const userIds = [...candidates];
+
+  const [profiles, participants, workshops] = await Promise.all([
+    prisma.studentProfile.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, createdAt: true },
+    }),
+    prisma.hackathonParticipant.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, createdAt: true },
+    }),
+    // A person can hold many workshop rows — only their first one matters here.
+    prisma.workshopRegistration.groupBy({
+      by: ["userId"],
+      where: { userId: { in: userIds } },
+      _min: { createdAt: true },
     }),
   ]);
 
@@ -36,31 +58,32 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
 
   const note = (userId: string, date: Date | null | undefined) => {
     if (!date) return;
-
     const prev = earliestByUser.get(userId);
     if (!prev || date < prev) {
       earliestByUser.set(userId, date);
     }
   };
 
-  for (const row of profileRows) {
-    note(row.userId, row.createdAt);
-    note(row.userId, row.user.hackathonParticipant?.createdAt);
-  }
-
-  for (const row of participantRows) {
-    note(row.userId, row.createdAt);
-    note(row.userId, row.user.studentProfile?.createdAt);
-  }
+  for (const row of profiles) note(row.userId, row.createdAt);
+  for (const row of participants) note(row.userId, row.createdAt);
+  for (const row of workshops) note(row.userId, row._min.createdAt);
 
   return [...earliestByUser.values()];
 }
 
-/** Count of distinct people who have registered for anything (all time). */
+/**
+ * Count of distinct people who have registered for anything (all time) —
+ * challenge students, hackathon participants, and workshop attendees.
+ * Counted per person: attending three workshops still counts once.
+ */
 export async function countRegisteredUsers(): Promise<number> {
   return prisma.user.count({
     where: {
-      OR: [{ studentProfile: { isNot: null } }, { hackathonParticipant: { isNot: null } }],
+      OR: [
+        { studentProfile: { isNot: null } },
+        { hackathonParticipant: { isNot: null } },
+        { workshopRegistrations: { some: {} } },
+      ],
     },
   });
 }

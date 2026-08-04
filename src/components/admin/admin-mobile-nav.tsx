@@ -16,6 +16,7 @@ import {
   Megaphone,
   Menu,
   Package,
+  Presentation,
   Users,
   X,
 } from "lucide-react";
@@ -34,7 +35,8 @@ type IconName =
   | "redemptions"
   | "program"
   | "cohort"
-  | "hackathon";
+  | "hackathon"
+  | "workshop";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -50,6 +52,7 @@ const iconMap = {
   program: GraduationCap,
   cohort: GraduationCap,
   hackathon: Code2,
+  workshop: Presentation,
 } as const;
 
 type NavItem = {

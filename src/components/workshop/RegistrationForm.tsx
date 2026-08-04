@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { submitWorkshopRegistrationAction } from "@/app/actions/workshop-actions";
 
 const CONFETTI_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#c084fc", "#818cf8", "#4f46e5"];
 
@@ -25,26 +26,72 @@ interface FormData {
   countryCode: string;
   role: string;
   organization: string;
+  graduationYear: string;
+}
+
+// Matches lib/validations/register.ts + profile.ts so a write-through to
+// StudentProfile can never produce a year those schemas would reject.
+const GRAD_YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
+
+/** Stored phone is "+91XXXXXXXXXX"; split it back for the two inputs. */
+function splitPhone(stored: string | null): { code: string; rest: string } {
+  if (!stored) return { code: "+91", rest: "" };
+  const m = /^(\+\d{1,4})(\d+)$/.exec(stored.trim());
+  if (m) return { code: m[1]!, rest: m[2]! };
+  return { code: "+91", rest: stored.replace(/[^0-9]/g, "") };
 }
 
 interface Errors {
   name?: string;
-  email?: string;
   phone?: string;
   role?: string;
 }
 
-export default function RegistrationForm({ whatsappLink }: { whatsappLink: string }) {
+interface RegistrationFormProps {
+  whatsappLink: string;
+  isSignedIn: boolean;
+  sessionEmail: string | null;
+  sessionName: string | null;
+  registrationOpen: boolean;
+  alreadyRegistered: boolean;
+  prefillName: string | null;
+  prefillPhone: string | null;
+  prefillOrganization: string | null;
+  prefillGraduationYear: number | null;
+  prefillRole: "Student" | "Professional" | null;
+  isExistingMember: boolean;
+}
+
+const FALLBACK_WHATSAPP =
+  "https://chat.whatsapp.com/LDUvHRIlb5dGHpDJLueR9i?s=cl&p=a&mlu=0&amv=0";
+
+export default function RegistrationForm({
+  whatsappLink,
+  isSignedIn,
+  sessionEmail,
+  sessionName,
+  registrationOpen,
+  alreadyRegistered,
+  prefillName,
+  prefillPhone,
+  prefillOrganization,
+  prefillGraduationYear,
+  prefillRole,
+  isExistingMember,
+}: RegistrationFormProps) {
+  const initialPhone = splitPhone(prefillPhone);
   const [form, setForm] = useState<FormData>({
-    name: "",
-    email: "",
-    phone: "",
-    countryCode: "+91",
-    role: "",
-    organization: "",
+    // Known profile data wins over the Google display name.
+    name: prefillName ?? sessionName ?? "",
+    email: sessionEmail ?? "",
+    phone: initialPhone.rest,
+    countryCode: initialPhone.code,
+    role: prefillRole ?? "",
+    organization: prefillOrganization ?? "",
+    graduationYear: prefillGraduationYear ? String(prefillGraduationYear) : "",
   });
   const [errors, setErrors] = useState<Errors>({});
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [apiError, setApiError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
@@ -53,12 +100,11 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
   const set = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  // Email is no longer user input — the server takes it from the session — so it
+  // is not validated here.
   const validate = (): boolean => {
     const e: Errors = {};
     if (!form.name.trim()) e.name = "Full name is required";
-    if (!form.email.trim()) e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = "Please enter a valid email address";
     if (!form.phone.trim()) e.phone = "Phone number is required";
     else if (!/^\d{7,15}$/.test(form.phone.replace(/\s/g, "")))
       e.phone = "Please enter a valid phone number";
@@ -67,46 +113,67 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (ev: React.FormEvent) => {
+  const startRedirect = () => {
+    setShowSuccess(true);
+    let count = 3;
+    const interval = setInterval(() => {
+      count -= 1;
+      setRedirectCountdown(count);
+      if (count <= 0) {
+        clearInterval(interval);
+        window.location.href = whatsappLink || FALLBACK_WHATSAPP;
+      }
+    }, 1000);
+  };
+
+  // Precedence matters: an already-registered user should see confirmation even
+  // once the event closes, and the sign-in CTA is pointless if nothing is open.
+  const state: "registered" | "closed" | "signedOut" | "form" = alreadyRegistered
+    ? "registered"
+    : !registrationOpen
+      ? "closed"
+      : !isSignedIn
+        ? "signedOut"
+        : "form";
+
+  const heading =
+    state === "registered"
+      ? "You're registered"
+      : state === "closed"
+        ? "Registration closed"
+        : "Reserve your seat";
+
+  const subheading =
+    state === "registered"
+      ? "See you at the workshop — we've emailed your joining details."
+      : state === "closed"
+        ? "Registration isn't open right now."
+        : state === "signedOut"
+          ? "Sign in to confirm your seat · takes less than 30 seconds"
+          : "Limited spots · takes less than 30 seconds";
+
+  const handleSubmit = (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
-    setLoading(true);
     setApiError("");
-    try {
-      const res = await fetch("/api/ai-workshop/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+    startTransition(async () => {
+      try {
+        const result = await submitWorkshopRegistrationAction({
           name: form.name.trim(),
-          email: form.email.trim().toLowerCase(),
           phone: `${form.countryCode}${form.phone.trim()}`,
-          role: form.role,
+          role: form.role === "Professional" ? "Professional" : "Student",
           organization: form.organization.trim() || null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setApiError(data.error || "Something went wrong. Please try again.");
-        return;
-      }
-      setShowSuccess(true);
-      let count = 3;
-      const interval = setInterval(() => {
-        count -= 1;
-        setRedirectCountdown(count);
-        if (count <= 0) {
-          clearInterval(interval);
-          const whatsappUrl =
-            whatsappLink ||
-            "https://chat.whatsapp.com/LDUvHRIlb5dGHpDJLueR9i?s=cl&p=a&mlu=0&amv=0";
-          window.location.href = whatsappUrl;
+          graduationYear: form.graduationYear ? Number(form.graduationYear) : null,
+        });
+        if (!result.ok) {
+          setApiError(result.message);
+          return;
         }
-      }, 1000);
-    } catch {
-      setApiError("Network error. Please check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
+        startRedirect();
+      } catch {
+        setApiError("Network error. Please check your connection and try again.");
+      }
+    });
   };
 
   return (
@@ -170,15 +237,51 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
           />
 
           <div className="mb-6 text-center">
-            
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-[26px]">
-              Reserve your seat
+              {heading}
             </h2>
-            <p className="mt-1.5 text-sm text-white/45">
-              Limited spots · takes less than 30 seconds
-            </p>
+            <p className="mt-1.5 text-sm text-white/45">{subheading}</p>
           </div>
 
+          {state === "registered" && (
+            <div className="text-center">
+              <a
+                href={whatsappLink || FALLBACK_WHATSAPP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="register-btn inline-block w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
+              >
+                Join the WhatsApp group
+              </a>
+              <p className="mt-3.5 text-xs text-white/35">
+                Your webinar details are in your inbox — check Spam or Promotions if
+                you don&apos;t see them.
+              </p>
+            </div>
+          )}
+
+          {state === "closed" && (
+            <p className="text-center text-sm leading-relaxed text-white/45">
+              There&apos;s no workshop open for registration at the moment. The next
+              one will be announced here and on our WhatsApp community.
+            </p>
+          )}
+
+          {state === "signedOut" && (
+            <div className="text-center">
+              <a
+                href="/login?from=%2Fai-workshop%23register"
+                className="register-btn inline-block w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
+              >
+                Continue with Google to reserve your seat
+              </a>
+              <p className="mt-3.5 text-xs text-white/35">
+                Takes a few seconds — we use it to confirm your seat.
+              </p>
+            </div>
+          )}
+
+          {state === "form" && (
           <div className="space-y-4">
             <Field label="Full Name" required error={errors.name}>
               <input
@@ -190,14 +293,17 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
               />
             </Field>
 
-            <Field label="Email Address" required error={errors.email}>
+            <Field label="Email Address">
               <input
                 type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={(e) => set("email", e.target.value)}
-                className={`wk-input ${errors.email ? "err" : ""}`}
+                value={sessionEmail ?? ""}
+                readOnly
+                disabled
+                className="wk-input cursor-not-allowed opacity-60"
               />
+              <p className="mt-1.5 text-xs text-white/35">
+                Signed in as {sessionEmail} — your seat is confirmed to this address.
+              </p>
             </Field>
 
             <Field label="Phone Number" required error={errors.phone}>
@@ -259,16 +365,52 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
               </select>
             </Field>
 
-            <Field label="College / Company">
+            <Field
+              label={form.role === "Professional" ? "Company" : "College / Company"}
+            >
               <input
                 type="text"
-                placeholder="Your college or company (optional)"
+                placeholder={
+                  form.role === "Professional"
+                    ? "Your company (optional)"
+                    : "Your college or company (optional)"
+                }
                 value={form.organization}
                 onChange={(e) => set("organization", e.target.value)}
                 className="wk-input"
               />
             </Field>
+
+            {/* Students only — a professional has no graduation year to give. */}
+            {form.role !== "Professional" && (
+              <Field label="Graduation Year">
+                <select
+                  value={form.graduationYear}
+                  onChange={(e) => set("graduationYear", e.target.value)}
+                  className="wk-input wk-select cursor-pointer"
+                  style={{
+                    color: form.graduationYear
+                      ? "var(--wk-text)"
+                      : "rgba(255,255,255,0.32)",
+                  }}
+                >
+                  <option value="">Select year (optional)</option>
+                  {GRAD_YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            {isExistingMember && (
+              <p className="text-xs text-white/35">
+                Prefilled from your ABTalks profile — any changes here update it.
+              </p>
+            )}
           </div>
+          )}
 
           {apiError && (
             <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3.5">
@@ -278,17 +420,21 @@ export default function RegistrationForm({ whatsappLink }: { whatsappLink: strin
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="register-btn mt-6 w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
-          >
-            {loading ? "Registering..." : "Register Now"}
-          </button>
+          {state === "form" && (
+            <>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="register-btn mt-6 w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
+              >
+                {isPending ? "Registering..." : "Register Now"}
+              </button>
 
-          <p className="mt-3.5 text-center text-xs text-white/35">
-            No spam. We&apos;ll only send your webinar details.
-          </p>
+              <p className="mt-3.5 text-center text-xs text-white/35">
+                No spam. We&apos;ll only send your webinar details.
+              </p>
+            </>
+          )}
         </div>
       </form>
 

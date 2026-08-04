@@ -10,6 +10,13 @@ import AutoScrollToForm from "@/components/workshop/AutoScrollToForm";
 import HackathonPromoModal from "@/components/workshop/HackathonPromoModal";
 import CommunityStats from "@/components/workshop/CommunityStats";
 import UpcomingEvents from "@/components/workshop/UpcomingEvents";
+import { auth } from "@/auth";
+import {
+  getRegistrableEvent,
+  istTodayKey,
+} from "@/components/workshop/events-data";
+import { getWorkshopPrefill } from "@/features/workshop/get-prefill";
+import { getMyRegistration } from "@/features/workshop/registration-status";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 
 export const metadata: Metadata = {
@@ -26,7 +33,21 @@ export const metadata: Metadata = {
 };
 
 export default async function AIWorkshopPage() {
-  const config = await getWorkshopConfig();
+  // This page stays PUBLIC — the marketing content, countdown and event list must
+  // render for logged-out cold traffic. Only the form section below is gated.
+  const [config, session] = await Promise.all([getWorkshopConfig(), auth()]);
+
+  const event = getRegistrableEvent(istTodayKey());
+  const userId = session?.user?.id ?? null;
+
+  const [alreadyRegistered, prefill] = userId
+    ? await Promise.all([
+        event
+          ? getMyRegistration(userId, event.id).then((r) => r !== null)
+          : Promise.resolve(false),
+        getWorkshopPrefill(userId),
+      ])
+    : [false, null];
 
   return (
     <div
@@ -331,7 +352,22 @@ export default async function AIWorkshopPage() {
         {/* ================= REGISTRATION ================= */}
         <section className="px-0 py-24 sm:py-32">
           <div id="register" className="scroll-mt-24">
-            <RegistrationForm whatsappLink={config.whatsappLink} />
+            {/* Primitives only across the Server→Client boundary — never the
+                session object or a WorkshopEvent (it carries a LucideIcon). */}
+            <RegistrationForm
+              whatsappLink={config.whatsappLink}
+              isSignedIn={Boolean(userId)}
+              sessionEmail={session?.user?.email ?? null}
+              sessionName={session?.user?.name ?? null}
+              registrationOpen={Boolean(event)}
+              alreadyRegistered={alreadyRegistered}
+              prefillName={prefill?.name ?? null}
+              prefillPhone={prefill?.phone ?? null}
+              prefillOrganization={prefill?.organization ?? null}
+              prefillGraduationYear={prefill?.graduationYear ?? null}
+              prefillRole={prefill?.role ?? null}
+              isExistingMember={prefill?.isExistingMember ?? false}
+            />
           </div>
         </section>
 
