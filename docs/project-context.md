@@ -75,6 +75,9 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `QuizAttempt` (unique on userId+quizId) — score, answers (JSON)
 - `Referral` (unique on referredId) — referrerId, referredId, rewardGiven
 
+### Workshop tables
+- `WorkshopRegistration` — every workshop/webinar signup, **all events in one table** keyed by `eventId` (matches `WorkshopEvent.id` in `components/workshop/events-data.ts`; events stay code-defined because they carry marketing copy + Lucide icons). `@@unique([eventId, email])` reproduces the old per-event-table email constraint, so a repeat attendee can register for a later event — 66 people in the migrated data did exactly that. `@@unique([eventId, userId])` is the auth-era duplicate guard. `userId` is **nullable by design**: 505 of 526 migrated rows predate the auth gate and have no account. Migrated from two Supabase tables (`registrations-AIW-18july`, `registrations-AIW-15Aug`) via `npm run workshop:migrate` with `created_at` preserved.
+
 ### Admin tables
 - `AdminAction` — adminUserId, targetUserId, actionType (string: MARK_DAY_COMPLETE | RESET_PROGRESS | TOGGLE_READY_FOR_INTERVIEW | REMOVE_FROM_CHALLENGE | REJECT_SUBMISSION), metadata (JSON), reason (optional), createdAt
 
@@ -177,7 +180,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `/login` — Server Component, redirects logged-in users to dashboard or register based on profile state
 - `/students/[id]` — public profile page for a finished/active student (basic info only — no email, phone, resume)
 - `/claude-signup` — public Claude track signup / interest page (Claude cohort entry)
-- `/ai-workshop` — standalone workshop registration microsite (isolated Supabase `registrations` table)
+- `/ai-workshop` — standalone workshop registration microsite. Page is **public**; the registration form itself requires a Google session (email taken from the session, never the client). Signups go to Neon `WorkshopRegistration`; `workshop_config` (Zoom/WhatsApp links) is still read from Supabase.
 - `/ai-cohort-register` — guided 4-screen onboarding for the AI Cohort Training Program (landing → program overview → curriculum → audience CTA)
 - `/ai-cohort-register/apply` — 5-step application form (gated: requires completing onboarding; stored in workshop Supabase `cohort_applications`; confirmation email deferred)
 
@@ -197,6 +200,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `/admin/content` — read-only viewer for problems and quizzes
 - `/admin/analytics` — Recharts dashboards (registrations, domain distribution, drop-off, hourly submissions, top performers)
 - `/admin/campus-ambassadors` — review students who flagged interest in the campus ambassador program (`isCampusAmbassadorCandidate`); accept / dismiss actions
+- `/admin/workshop` — per-event workshop registration rosters (`?event=` tabs), CSV export, Linked/Legacy badge showing whether the row has a `userId`
 
 ### API routes (sparse — most logic via Server Actions)
 - `/api/auth/[...nextauth]` — Auth.js handler
@@ -216,6 +220,7 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 - `admin-export-actions.ts` — CSV export server actions (uses `lib/csv.ts`); admin-gated
 - `campus-ambassador-actions.ts` — student-side opt-in / dismiss + admin-side accept / reject for the campus ambassador program
 - `cohort-application-actions.ts` — `submitCohortApplicationAction` (public; inserts into workshop Supabase `cohort_applications`)
+- `workshop-actions.ts` — `submitWorkshopRegistrationAction` (**session-gated**; event resolved server-side via `getRegistrableEvent(istTodayKey())`, never from the client; `P2002` → duplicate message; confirmation email failure logged and swallowed)
 
 All return discriminated union: `{ ok: true, data } | { ok: false, message }`
 
@@ -233,6 +238,7 @@ All return discriminated union: `{ ok: true, data } | { ok: false, message }`
 - `quiz/` — getAvailableQuiz, getQuizWithQuestions, submitQuiz
 - `user/` — cross-cutting user lookups, including `checkClaudeEnrollment` / `shouldShowClaudeBanner` used by header / profile / dashboard
 - `admin/` — getOverviewStats, getStudents, getStudentDetail, getSubmissionsFeed, getContent, getAnalyticsData (campus-ambassador admin views included)
+- `workshop/` — getRecentRegistrations (public ticker: first name + org only), getMyRegistration, getWorkshopRegistrations / getWorkshopEventCounts (admin). Note `getWorkshopConfig` is NOT here — it stays in `lib/workshop-supabase.ts`.
 
 ---
 

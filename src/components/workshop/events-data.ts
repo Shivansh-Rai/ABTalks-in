@@ -4,6 +4,18 @@ import { IST } from "@/lib/date-utils";
 import { BriefcaseBusiness, GraduationCap, Palette, Trophy } from "lucide-react";
 
 export interface WorkshopEvent {
+  /**
+   * Stable identifier, written to `WorkshopRegistration.eventId` on every signup
+   * and never changed afterwards — it is how a roster stays attached to its
+   * workshop even if the title or date is edited later.
+   *
+   * For NEW events use a dated slug: `workshop-YYYY-MM-DD` (e.g.
+   * `workshop-2026-08-14`). At a weekly cadence, topic-based names run out and
+   * risk being reused, which would silently merge two workshops' rosters.
+   *
+   * `ai-workshop-live` and `uiux-ai-workshop` predate this convention and are
+   * already written into 526 migrated rows — leave them as they are.
+   */
   id: string;
   date: string; // ISO (YYYY-MM-DD)
   time: string;
@@ -19,14 +31,13 @@ export interface WorkshopEvent {
   /** Open for registration now — its card links straight to the form. */
   register?: boolean;
   /**
-   * Supabase table this event's signups are written to. Each event gets its
-   * own table, so a repeat attendee is never blocked by another event's
-   * duplicate-email check.
+   * Accepting signups. Set this (alongside `register`) on exactly one upcoming
+   * event to open the form; clearing it closes registration immediately.
    *
-   * Only ever set this to a literal table name that exists in Supabase — it is
-   * used directly as a table identifier and must never come from user input.
+   * Signups all land in the single `WorkshopRegistration` table keyed by
+   * `event.id`, so opening a new workshop needs nothing beyond an entry here.
    */
-  registrationTable?: string;
+  registrationOpen?: boolean;
   /**
    * External destination for events that live outside the workshop funnel
    * (e.g. the hackathon). When set, the card links here in a new tab instead
@@ -63,7 +74,8 @@ export const EVENTS: WorkshopEvent[] = [
     host: "ABTalks",
     location: "Live · Zoom",
     register: true,
-    registrationTable: "registrations-AIW-15Aug",
+    // No `registrationOpen`: this event is past, so registration is closed.
+    // Set it on the next upcoming event to reopen the form.
   },
   {
     id: "ai-hackathon-48h",
@@ -81,7 +93,7 @@ export const EVENTS: WorkshopEvent[] = [
   },
   {
     id: "linkedin-ai-interview",
-    date: "2026-08-22",
+    date: "2026-08-21",
     time: "6:00 PM IST",
     tag: "Career",
     accent: "#a855f7",
@@ -90,6 +102,8 @@ export const EVENTS: WorkshopEvent[] = [
     desc: "Rebuild your LinkedIn profile so recruiters actually find you, then run live AI mock interviews that grill you and score your answers.",
     host: "ABTalks",
     location: "Live · Zoom",
+    register: true,
+    registrationOpen: true,
   },
 ];
 
@@ -135,7 +149,7 @@ export const pastEvents = (todayKey: string) =>
 export const getRegistrableEvent = (
   todayKey: string,
 ): WorkshopEvent | undefined =>
-  upcomingEvents(todayKey).find((e) => e.register && e.registrationTable);
+  upcomingEvents(todayKey).find((e) => e.register && e.registrationOpen);
 
 export const fullDate = (iso: string) =>
   utc(iso).toLocaleString("en-US", {

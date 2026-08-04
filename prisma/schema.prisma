@@ -46,7 +46,9 @@ model Challenge {
   description String
   totalDays   Int          @default(60)
   isActive    Boolean      @default(true)
-  /** When set, challenge days are synchronized from this IST calendar anchor (e.g. Claude cohort). Null = rolling start from enrollment.startedAt. */
+  /**
+   * When set, challenge days are synchronized from this IST calendar anchor (e.g. Claude cohort). Null = rolling start from enrollment.startedAt.
+   */
   startsAt    DateTime?
   createdAt   DateTime     @default(now())
   dailyTasks  DailyTask[]
@@ -130,14 +132,14 @@ model Certificate {
 }
 
 model Quiz {
-  id           String         @id @default(cuid())
-  challengeId  String
-  domain       Domain
-  weekNumber   Int
-  title        String
-  createdAt    DateTime       @default(now())
-  challenge    Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  quizAttempts QuizAttempt[]
+  id            String         @id @default(cuid())
+  challengeId   String
+  domain        Domain
+  weekNumber    Int
+  title         String
+  createdAt     DateTime       @default(now())
+  challenge     Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  quizAttempts  QuizAttempt[]
   quizQuestions QuizQuestion[]
 
   @@unique([challengeId, weekNumber])
@@ -174,13 +176,13 @@ model QuizQuestion {
 }
 
 model Referral {
-  id                             String   @id @default(cuid())
-  referrerId                     String
-  referredId                     String   @unique
-  rewardGiven                    Boolean  @default(false)
-  createdAt                      DateTime @default(now())
-  referred                      User     @relation("Referral_referredIdToUser", fields: [referredId], references: [id], onDelete: Cascade)
-  referrer                      User     @relation("Referral_referrerIdToUser", fields: [referrerId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  referrerId  String
+  referredId  String   @unique
+  rewardGiven Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  referred    User     @relation("Referral_referredIdToUser", fields: [referredId], references: [id], onDelete: Cascade)
+  referrer    User     @relation("Referral_referrerIdToUser", fields: [referrerId], references: [id], onDelete: Cascade)
 
   @@index([referrerId])
 }
@@ -196,32 +198,32 @@ model Session {
 }
 
 model StudentProfile {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  fullName            String
-  userType            UserType @default(STUDENT)
-  college             String?
-  graduationYear      Int?
-  organization        String?
-  role                String?
-  yearsExperience     Int?
-  domain              Domain
-  skills              String[] @default([])
-  resumeUrl           String?
-  phone               String?
-  phoneVerified       Boolean   @default(false)
-  phoneVerifiedAt     DateTime?
-  linkedinUrl         String?
-  githubUsername      String?
-  referralCode        String   @unique
-  isReadyForInterview           Boolean   @default(false)
-  isCampusAmbassadorCandidate   Boolean   @default(false)
-  ambassadorAppliedAt           DateTime?
-  ambassadorDismissedAt         DateTime?
-  synergyPoints                 Int       @default(0)
-  createdAt                     DateTime  @default(now())
-  updatedAt                     DateTime  @updatedAt
-  user                          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                          String    @id @default(cuid())
+  userId                      String    @unique
+  fullName                    String
+  userType                    UserType  @default(STUDENT)
+  college                     String?
+  graduationYear              Int?
+  organization                String?
+  role                        String?
+  yearsExperience             Int?
+  domain                      Domain
+  skills                      String[]  @default([])
+  resumeUrl                   String?
+  phone                       String?
+  phoneVerified               Boolean   @default(false)
+  phoneVerifiedAt             DateTime?
+  linkedinUrl                 String?
+  githubUsername              String?
+  referralCode                String    @unique
+  isReadyForInterview         Boolean   @default(false)
+  isCampusAmbassadorCandidate Boolean   @default(false)
+  ambassadorAppliedAt         DateTime?
+  ambassadorDismissedAt       DateTime?
+  synergyPoints               Int       @default(0)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  user                        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([isCampusAmbassadorCandidate])
   @@index([domain, createdAt(sort: Desc)])
@@ -250,39 +252,40 @@ model Submission {
 }
 
 model User {
-  id                                 String          @id @default(cuid())
-  email                              String          @unique
-  emailVerified                      DateTime?
-  name                               String?
-  image                              String?
-  password                           String?
-  role                               Role            @default(STUDENT)
-  createdAt                          DateTime        @default(now())
-  updatedAt                          DateTime        @updatedAt
-  accounts                           Account[]
-  enrollments                        Enrollment[]
-  quizAttempts                       QuizAttempt[]
-  adminActionsPerformed              AdminAction[]   @relation("AdminActor")
-  adminActionsReceived               AdminAction[]   @relation("AdminTarget")
-  referredBy                         Referral?       @relation("Referral_referredIdToUser")
-  referralsMade                      Referral[]      @relation("Referral_referrerIdToUser")
-  sessions                           Session[]
-  studentProfile                     StudentProfile?
-  phoneVerification                  PhoneVerification?
-  recruiterReview                    RecruiterReview?
-  submissions                        Submission[]
-  synergyEvents                      SynergyEvent[]
-  jobApplications                    JobApplication[]
-  redemptions                        Redemption[]
-  remarksReceived                    AdminRemark[]   @relation("RemarkStudent")
-  remarksAuthored                    AdminRemark[]   @relation("RemarkAdmin")
-  programMembers                     ProgramMember[]
-  programEntryAttempts               ProgramEntryAttempt[]
-  recruiterProfile                   RecruiterProfile?
-  shortlistItems                     RecruiterShortlistItem[]
-  hackathonParticipant               HackathonParticipant?
-  hackathonRemovals                  HackathonRemoval[]
-  certificates                       Certificate[]
+  id                    String                   @id @default(cuid())
+  email                 String                   @unique
+  emailVerified         DateTime?
+  name                  String?
+  image                 String?
+  password              String?
+  role                  Role                     @default(STUDENT)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  accounts              Account[]
+  enrollments           Enrollment[]
+  quizAttempts          QuizAttempt[]
+  adminActionsPerformed AdminAction[]            @relation("AdminActor")
+  adminActionsReceived  AdminAction[]            @relation("AdminTarget")
+  referredBy            Referral?                @relation("Referral_referredIdToUser")
+  referralsMade         Referral[]               @relation("Referral_referrerIdToUser")
+  sessions              Session[]
+  studentProfile        StudentProfile?
+  phoneVerification     PhoneVerification?
+  recruiterReview       RecruiterReview?
+  submissions           Submission[]
+  synergyEvents         SynergyEvent[]
+  jobApplications       JobApplication[]
+  redemptions           Redemption[]
+  remarksReceived       AdminRemark[]            @relation("RemarkStudent")
+  remarksAuthored       AdminRemark[]            @relation("RemarkAdmin")
+  programMembers        ProgramMember[]
+  programEntryAttempts  ProgramEntryAttempt[]
+  recruiterProfile      RecruiterProfile?
+  shortlistItems        RecruiterShortlistItem[]
+  hackathonParticipant  HackathonParticipant?
+  hackathonRemovals     HackathonRemoval[]
+  certificates          Certificate[]
+  workshopRegistrations WorkshopRegistration[]
 
   @@index([createdAt(sort: Desc)])
 }
@@ -325,19 +328,19 @@ model MarketplaceItem {
 }
 
 model Redemption {
-  id               String           @id @default(cuid())
-  userId           String
-  itemId           String
-  costSP           Int
-  itemTitle        String
-  status           RedemptionStatus @default(PENDING)
-  shippingAddress  String
-  recipientPhone   String
-  trackingNote     String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  item             MarketplaceItem  @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  id              String           @id @default(cuid())
+  userId          String
+  itemId          String
+  costSP          Int
+  itemTitle       String
+  status          RedemptionStatus @default(PENDING)
+  shippingAddress String
+  recipientPhone  String
+  trackingNote    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item            MarketplaceItem  @relation(fields: [itemId], references: [id], onDelete: Restrict)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
@@ -569,56 +572,56 @@ enum ProgramDayState {
 }
 
 model ProgramCohort {
-  id                 String              @id @default(cuid())
+  id                 String                @id @default(cuid())
   name               String
-  joinCode           String              @unique
-  startsAt           DateTime            // IST Day-1 anchor
-  endsAt             DateTime            // hard end — scores freeze after this
-  capacity           Int                 @default(100)
-  status             ProgramCohortStatus @default(DRAFT)
-  requiresJoinCode   Boolean             @default(true)  // false = open enrollment, no code
+  joinCode           String                @unique
+  startsAt           DateTime // IST Day-1 anchor
+  endsAt             DateTime // hard end — scores freeze after this
+  capacity           Int                   @default(100)
+  status             ProgramCohortStatus   @default(DRAFT)
+  requiresJoinCode   Boolean               @default(true) // false = open enrollment, no code
   resultsPublishedAt DateTime?
-  createdAt          DateTime            @default(now())
+  createdAt          DateTime              @default(now())
   members            ProgramMember[]
   entryAttempts      ProgramEntryAttempt[]
 }
 
 model ProgramMember {
-  id                 String              @id @default(cuid())
-  userId             String
-  cohortId           String
-  status             ProgramMemberStatus @default(APPLIED)
+  id                  String                      @id @default(cuid())
+  userId              String
+  cohortId            String
+  status              ProgramMemberStatus         @default(APPLIED)
   // professional profile (deliberately NOT StudentProfile)
-  fullName           String
-  jobRole            String
-  company            String
-  yearsExperience    Int
-  education          String?
-  university         String?
-  graduationYear     Int?
-  skills             String[]            @default([])
-  linkedinUrl        String?
-  resumeUrl          String?
-  phone              String?             // admin-only, NEVER shown to recruiters
-  githubUsername     String
-  githubRepoUrl      String              // dedicated public repo for the program
+  fullName            String
+  jobRole             String
+  company             String
+  yearsExperience     Int
+  education           String?
+  university          String?
+  graduationYear      Int?
+  skills              String[]                    @default([])
+  linkedinUrl         String?
+  resumeUrl           String?
+  phone               String? // admin-only, NEVER shown to recruiters
+  githubUsername      String
+  githubRepoUrl       String // dedicated public repo for the program
   // progression + denormalized scores
-  highestUnlockedDay Int                 @default(1)
-  skipTokensUsed     Int                 @default(0)   // max 2 per member
-  missionPoints      Int                 @default(0)
-  conceptPoints      Int                 @default(0)
-  commitPoints       Int                 @default(0)
-  projectPoints      Int                 @default(0)
-  totalScore         Int                 @default(0)
-  cleanPassCount     Int                 @default(0)   // missions passed on 1st verification run
-  aiRecommendation   String?
-  aiRecommendationAt DateTime?
-  enrolledAt         DateTime?
-  completedAt        DateTime?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort             ProgramCohort       @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  highestUnlockedDay  Int                         @default(1)
+  skipTokensUsed      Int                         @default(0) // max 2 per member
+  missionPoints       Int                         @default(0)
+  conceptPoints       Int                         @default(0)
+  commitPoints        Int                         @default(0)
+  projectPoints       Int                         @default(0)
+  totalScore          Int                         @default(0)
+  cleanPassCount      Int                         @default(0) // missions passed on 1st verification run
+  aiRecommendation    String?
+  aiRecommendationAt  DateTime?
+  enrolledAt          DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  user                User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort              ProgramCohort               @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   missionSubmissions  ProgramMissionSubmission[]
   conceptAttempts     ProgramConceptAttempt[]
   commitDays          ProgramCommitDay[]
@@ -633,33 +636,33 @@ model ProgramMember {
 }
 
 model ProgramModule {
-  id        String       @id @default(cuid())
-  number    Int          @unique   // 1..4
-  title     String
-  subtitle  String
-  color     String
-  startDay  Int
-  endDay    Int
-  days      ProgramDay[]
+  id       String       @id @default(cuid())
+  number   Int          @unique // 1..4
+  title    String
+  subtitle String
+  color    String
+  startDay Int
+  endDay   Int
+  days     ProgramDay[]
 }
 
 model ProgramDay {
-  id            String             @id @default(cuid())
-  moduleId      String
-  dayNumber     Int                @unique   // 1..30
-  title         String
-  missionType   ProgramMissionType
-  briefMd       String             // the mission briefing: realistic enterprise scenario, markdown
-  assetsJson    Json?              // client-safe assets: datasets (CSV text), API specs, starter files
-  missionSpec   Json               // SERVER-ONLY verification spec (see §6b) — never serialized to client
-  starterCode   String?
-  language      ProgramLanguage?   // for CODE_SPRINT / DATA_ROOM workbench default
-  objectives    String[]           @default([])
-  tools         String[]           @default([])
-  estimatedMin  Int                @default(60)
-  missionPoints Int                @default(12)
-  isProjectDay  Boolean            @default(false)  // days 7, 14, 21, 30 (BOSS_BUILD)
-  module        ProgramModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id               String                   @id @default(cuid())
+  moduleId         String
+  dayNumber        Int                      @unique // 1..30
+  title            String
+  missionType      ProgramMissionType
+  briefMd          String // the mission briefing: realistic enterprise scenario, markdown
+  assetsJson       Json? // client-safe assets: datasets (CSV text), API specs, starter files
+  missionSpec      Json // SERVER-ONLY verification spec (see §6b) — never serialized to client
+  starterCode      String?
+  language         ProgramLanguage? // for CODE_SPRINT / DATA_ROOM workbench default
+  objectives       String[]                 @default([])
+  tools            String[]                 @default([])
+  estimatedMin     Int                      @default(60)
+  missionPoints    Int                      @default(12)
+  isProjectDay     Boolean                  @default(false) // days 7, 14, 21, 30 (BOSS_BUILD)
+  module           ProgramModule            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   conceptQuestions ProgramConceptQuestion[]
   videos           ProgramVideo[]
 }
@@ -669,10 +672,11 @@ model ProgramConceptQuestion {
   dayId        String
   order        Int
   question     String
-  options      String[]              // exactly 4
+  options      String[] // exactly 4
   correctIndex Int
   explanation  String
   day          ProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
   @@unique([dayId, order])
 }
 
@@ -681,13 +685,14 @@ model ProgramMissionSubmission {
   memberId      String
   dayNumber     Int
   attemptNumber Int
-  payload       Json          // type-specific: {code} | {repoRef} | {answers} | {prompt} | {checkOutputs}
-  verdict       Json          // per-check results: [{check, passed, detail}]
+  payload       Json // type-specific: {code} | {repoRef} | {answers} | {prompt} | {checkOutputs}
+  verdict       Json // per-check results: [{check, passed, detail}]
   passed        Boolean       @default(false)
   pointsAwarded Int           @default(0)
-  aiFeedback    String?       // AI Mentor review (029), post-pass
+  aiFeedback    String? // AI Mentor review (029), post-pass
   createdAt     DateTime      @default(now())
   member        ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
   @@unique([memberId, dayNumber, attemptNumber])
   @@index([memberId, dayNumber])
 }
@@ -696,12 +701,13 @@ model ProgramConceptAttempt {
   id          String        @id @default(cuid())
   memberId    String
   dayNumber   Int
-  questionIds Json          // string[] — 3 sampled ids
+  questionIds Json // string[] — 3 sampled ids
   answers     Json?
-  score       Int           @default(0)   // 0..3
+  score       Int           @default(0) // 0..3
   createdAt   DateTime      @default(now())
   member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  @@unique([memberId, dayNumber])          // ONE attempt — it's a warm-up, not a gate
+
+  @@unique([memberId, dayNumber]) // ONE attempt — it's a warm-up, not a gate
 }
 
 model ProgramEntryQuestion {
@@ -712,6 +718,7 @@ model ProgramEntryQuestion {
   correctIndex Int
   explanation  String
   active       Boolean             @default(true)
+
   @@index([section, active])
 }
 
@@ -729,6 +736,7 @@ model ProgramEntryAttempt {
   submittedAt    DateTime?
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   cohort         ProgramCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
   @@unique([userId, cohortId, attemptNumber])
   @@index([userId, cohortId])
 }
@@ -741,12 +749,13 @@ model ProgramVideo {
   youtubeId   String
   durationMin Int?
   day         ProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
   @@unique([dayId, order])
 }
 
-model ProgramExercise {              // Practice Arena — UNSCORED
-  id             String          @id @default(cuid())
-  slug           String          @unique
+model ProgramExercise {
+  id             String                      @id @default(cuid())
+  slug           String                      @unique
   title          String
   language       ProgramLanguage
   moduleNumber   Int
@@ -756,6 +765,7 @@ model ProgramExercise {              // Practice Arena — UNSCORED
   setupSql       String?
   expectedOutput String?
   completions    ProgramExerciseCompletion[]
+
   @@index([moduleNumber, order])
 }
 
@@ -767,6 +777,7 @@ model ProgramExerciseCompletion {
   completedAt DateTime        @default(now())
   member      ProgramMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   exercise    ProgramExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
   @@unique([memberId, exerciseId])
 }
 
@@ -776,6 +787,7 @@ model ProgramCommitDay {
   date        DateTime      @db.Date
   commitCount Int           @default(0)
   member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
   @@unique([memberId, date])
 }
 
@@ -793,6 +805,7 @@ model ProgramProject {
   submittedAt  DateTime             @default(now())
   gradedAt     DateTime?
   member       ProgramMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
   @@unique([memberId, moduleNumber])
 }
 
@@ -807,7 +820,7 @@ model ProgramInterview {
   commScore    Int?
   techScore    Int?
   problemScore Int?
-  overallScore Int?                   // NOT part of totalScore
+  overallScore Int? // NOT part of totalScore
   summary      String?
   evaluatedAt  DateTime?
   resetCount   Int                    @default(0)
@@ -835,6 +848,7 @@ model RecruiterShortlistItem {
   createdAt       DateTime      @default(now())
   recruiter       User          @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
   member          ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
   @@unique([recruiterUserId, memberId])
 }
 
@@ -927,3 +941,44 @@ model HackathonLink {
   note      String?
   createdAt DateTime @default(now())
 }
+
+/// Every workshop / webinar signup — all events in one table, one row per
+/// (event, person). Google sign-in is mandatory, so `userId` is REQUIRED: every
+/// registration belongs to a real User, exactly like HackathonParticipant.
+///
+/// Unlike the hackathon, `userId` is NOT globally unique — workshops run weekly
+/// and the same person is expected to register again for each one. The scoped
+/// `@@unique([eventId, userId])` allows that while blocking a double signup for
+/// the same workshop.
+///
+/// `eventId` matches WorkshopEvent.id in src/components/workshop/events-data.ts.
+/// Events stay code-defined — they carry marketing copy and Lucide icon
+/// references — so a new workshop needs an EVENTS entry and nothing else here.
+model WorkshopRegistration {
+  id             String   @id @default(cuid())
+  eventId        String
+  userId         String
+  /// Snapshot of what they submitted for THIS workshop. Kept on the row rather
+  /// than read from the profile because a workshop-only attendee has a User but
+  /// no StudentProfile (that requires a domain + referralCode they never chose).
+  name           String
+  email          String
+  phone          String
+  /// "Student" or "Professional" — drives which profile fields are written back.
+  role           String
+  /// College (students) or company (professionals).
+  organization   String?
+  graduationYear Int?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // No separate [eventId, email] constraint: User.email is already unique and
+  // userId is required, so this single constraint fully prevents duplicates.
+  @@unique([eventId, userId])
+  @@index([eventId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+// NOTE: `workshop_config` deliberately stays in Supabase — only registrations
+// migrated. See src/lib/workshop-supabase.ts for the config reader.
