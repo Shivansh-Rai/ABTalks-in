@@ -1,4 +1,4 @@
-import { Trophy } from "lucide-react";
+import { Sparkles, Trophy } from "lucide-react";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 
 export function Prizes() {
@@ -44,6 +44,21 @@ export function Prizes() {
           ))}
         </ul>
       )}
+
+      <div className="mt-8 max-w-2xl rounded-[20px] border border-[#403880] bg-[#030712] p-6 sm:p-8">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-[#403880]/40">
+          <Sparkles className="size-6 text-[#968BEC]" aria-hidden />
+        </div>
+        <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-[#968BEC]">
+          Sponsored by {HACKATHON.sponsor.name}
+        </p>
+        <h3 className="mt-2 text-lg font-semibold text-white">
+          {HACKATHON.sponsor.prizeTitle}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-[#BCBCBC]">
+          {HACKATHON.sponsor.prizeReward}
+        </p>
+      </div>
     </section>
   );
 }

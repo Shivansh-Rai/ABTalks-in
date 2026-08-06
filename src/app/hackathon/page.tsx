@@ -5,6 +5,7 @@ import { Hero } from "@/components/hackathon/hero";
 import { HowItWorks } from "@/components/hackathon/how-it-works";
 import { Prizes } from "@/components/hackathon/prizes";
 import { Rules } from "@/components/hackathon/rules";
+import { SponsorSection } from "@/components/hackathon/sponsor-section";
 import { Timeline } from "@/components/hackathon/timeline";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function HackathonPage() {
           <HowItWorks />
           <Timeline />
           <Deliverables />
+          <SponsorSection />
           <Rules />
           <Prizes />
           <Faq />
