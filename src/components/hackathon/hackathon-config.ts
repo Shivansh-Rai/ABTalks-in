@@ -21,6 +21,40 @@ export const HACKATHON = {
   whatsappLink: "https://chat.whatsapp.com/HbBDtKpAIPk9HXjatXBe8t?s=cl&p=a&ilr=1",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 
+  // TODO(organizer): paste the real Breeth redeem URL before kickoff.
+  // Breeth supplied two capped links: 5,000 redemptions and 3,000 redemptions.
+  // Ship the 5k link. If it exhausts mid-event, swap this one value to the 3k
+  // link — no other file changes.
+  // Reserve (3k): "PASTE_3K_LINK_HERE"
+  sponsor: {
+    name: "Breeth",
+    kicker: "Sponsor",
+    heading: "Your apps get memory",
+    blurb:
+      "Breeth is a memory layer for AI agents. Your app writes what happened, and it remembers — across sessions, across users, across the whole weekend. Every participant gets Breeth Pro, free.",
+    capabilities: [
+      {
+        title: "Persistent memory, no infra",
+        body: "One API call to save, one to search. No embeddings, no vector database, no retrieval pipeline to build in 48 hours.",
+      },
+      {
+        title: "Plugs into Claude Code and Cursor",
+        body: "Breeth ships an MCP server, so your AI assistant can read and write project memory while it codes for you.",
+      },
+      {
+        title: "Remembers why, not just what",
+        body: "Facts carry the reasoning behind them, and old beliefs fade as they're contradicted. Build things that notice when a user changes their mind.",
+      },
+    ],
+    siteUrl: "https://thebreeth.com",
+    docsUrl: "https://docs.thebreeth.com",
+    redeemUrl: "https://www.thebreeth.com/event/abtalks-vibe-code-hackathon-breeth-ai-memory",
+    redeemLabel: "Claim your Breeth Pro access",
+    // TODO(organizer): confirm reward with Breeth before announcing.
+    prizeTitle: "Best use of Breeth",
+    prizeReward: "Sponsor track prize: reward announced soon.",
+  },
+
   steps: [
     {
       title: "Register",

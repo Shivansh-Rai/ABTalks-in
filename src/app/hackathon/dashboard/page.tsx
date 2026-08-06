@@ -6,6 +6,7 @@ import { EventInfo } from "@/components/hackathon/dashboard/event-info";
 import { InvitePanel } from "@/components/hackathon/dashboard/invite-panel";
 import { MissionTimer } from "@/components/hackathon/dashboard/mission-timer";
 import { ProblemStatementPanel } from "@/components/hackathon/dashboard/problem-statement-panel";
+import { SponsorPanel } from "@/components/hackathon/dashboard/sponsor-panel";
 import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission-checklist";
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
 import { getHackathonEvent } from "@/features/hackathon/get-hackathon-event";
@@ -53,6 +54,7 @@ export default async function HackathonDashboardPage() {
           deadlineUtc={HACKATHON.deadlineUtc}
           resultsLabel={HACKATHON.resultsLabel}
         />
+        <SponsorPanel />
         <ProblemStatementPanel
           kickoffUtc={HACKATHON.kickoffUtc}
           statement={problemStatement}
