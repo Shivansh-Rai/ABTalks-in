@@ -20,7 +20,7 @@ export async function getCatalog(): Promise<CatalogItem[]> {
       costSP: true,
       imagePath: true,
     },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ costSP: "desc" }, { sortOrder: "asc" }],
   });
   return items;
 }
