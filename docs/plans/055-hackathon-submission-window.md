@@ -1,0 +1,1017 @@
+# 055 — Hackathon Submission Window (`/hackathon/submission`)
+
+> **Revision 2 (6 Aug).** Rev 1 proposed a brand-new `HackathonSubmission` table and
+> kept brief copy in `hackathon-config.ts`. Both are obsolete: the tables **already
+> exist in Neon** from an abandoned 4 Aug attempt, and one of them
+> (`HackathonProblem`) stores the briefs in the DB — better than the config approach.
+> This revision fixes the migration drift that blocks all schema work, then builds the
+> page on top of the existing tables. **No new tables, no new columns, no new
+> migration.**
+
+---
+
+## 1. Goal
+
+Give registered hackathon teams a place to read the three briefs and file their
+entry: a new `/hackathon/submission` page that unlocks at kickoff (Fri 7 Aug ·
+8:00 PM IST), greets them by team name, lists the briefs as collapsible cards read
+from `HackathonProblem`, and takes one editable submission per team (chosen brief +
+public GitHub repo, live URL, AI-usage log URL) that they can re-save until the
+deadline. The dashboard's problem-statement card gains the **"Unlock Problem
+Statement"** CTA that routes here once the clock passes kickoff.
+
+---
+
+## 2. BLOCKER — fix the migration drift first
+
+Nothing else in this plan can proceed until this is done. Do this as its own commit.
+
+### What is actually wrong
+
+Verified by introspection and by querying `_prisma_migrations` on 6 Aug:
+
+| Fact | Evidence |
+|---|---|
+| `_prisma_migrations` contains `20260804053455_hackathon_submission` | `finished_at 2026-08-04T05:34:58Z`, `applied_steps_count 1`, `rolled_back_at null` |
+| That migration folder exists **nowhere** in git | `git log --all --diff-filter=A -- prisma/migrations/20260804053455_*` → no commits; no branch, local or remote, contains `HackathonProblem` |
+| The DB has two tables the local schema doesn't know about | `HackathonProblem`, `HackathonSubmission` |
+| `HackathonSubmission` is **empty** | `select count(*)` → `0` |
+| `HackathonProblem` has **one junk row** | `id 'cmse8g5vs0000vfh87xr49loz'`, `title 'test'`, `statement 'test 123'`, `sortOrder 0` |
+
+So the local migration history cannot produce the current database. That is what makes
+`prisma migrate dev` demand a reset. **A reset would drop every table on the shared
+Neon DB — never accept that prompt.**
+
+The orphan row may also be failing `prisma migrate deploy`, which `npm run build`
+runs on Vercel. Check `npx prisma migrate status` and whether the most recent Vercel
+build succeeded. Either way, the fix below resolves it.
+
+### The fix: baseline the missing migration (nothing is executed against the DB)
+
+The strategy is to make local history *describe* what the DB already has, and record
+it as applied without running it. `prisma migrate resolve --applied` writes the
+bookkeeping row only — it never executes the SQL.
+
+**Step B1 — snapshot.** Commit the working tree
+(`git add -A && git commit -m "checkpoint before migration baseline"`, note the hash)
+and create a Neon branch from `main`.
+
+**Step B2 — add both models to `prisma/schema.prisma`** exactly as introspected. Put
+them with the other hackathon models (after `HackathonEvent`):
+
+```prisma
+/// The hackathon briefs rendered on /hackathon/submission. Content lives in the DB,
+/// not in hackathon-config.ts, so it can be edited without a redeploy.
+///
+/// CONVENTION: the FIRST LINE of `statement` is the one-line tagline shown on the
+/// collapsed card. Everything after the first newline is the expanded body. An empty
+/// `statement` means "no tagline, body not written yet".
+///
+/// `id` has no DB default on purpose — rows are seeded with stable slugs
+/// (`brief-1`, `brief-2`, `brief-3`) by prisma/seed-hackathon-problems.ts.
+model HackathonProblem {
+  id          String                @id
+  title       String
+  statement   String
+  sortOrder   Int                   @default(0)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  submissions HackathonSubmission[]
+
+  @@index([sortOrder])
+}
+
+/// One entry per team (`teamId` is unique) — a team answers exactly ONE brief.
+/// Re-saving overwrites in place; there is no edit history, by design.
+/// `liveUrl` and `aiLogUrl` are NOT NULL in the DB: store "" for "not provided yet",
+/// never null.
+model HackathonSubmission {
+  id        String   @id @default(cuid())
+  teamId    String   @unique
+  problemId String?
+  repoUrl   String
+  liveUrl   String
+  aiLogUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team    HackathonTeam     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  problem HackathonProblem? @relation(fields: [problemId], references: [id])
+
+  @@index([problemId])
+}
+```
+
+Add one line to the existing `HackathonTeam` model
+([schema.prisma:860](prisma/schema.prisma:860)) — Prisma needs the back-relation:
+
+```prisma
+  submission   HackathonSubmission?
+```
+
+`@default(cuid())` and `@updatedAt` are **Prisma-level**, generated by the client, so
+they are invisible to Postgres and cause no drift against columns that have no DB
+default. `HackathonProblem.id` deliberately has no default.
+
+**Step B3 — create the migration folder by hand**, named to match the orphan row
+exactly:
+
+`prisma/migrations/20260804053455_hackathon_submission/migration.sql`
+
+```sql
+-- CreateTable
+CREATE TABLE "HackathonProblem" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "statement" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "HackathonProblem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "HackathonSubmission" (
+    "id" TEXT NOT NULL,
+    "teamId" TEXT NOT NULL,
+    "problemId" TEXT,
+    "repoUrl" TEXT NOT NULL,
+    "liveUrl" TEXT NOT NULL,
+    "aiLogUrl" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "HackathonSubmission_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "HackathonProblem_sortOrder_idx" ON "HackathonProblem"("sortOrder");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "HackathonSubmission_teamId_key" ON "HackathonSubmission"("teamId");
+
+-- CreateIndex
+CREATE INDEX "HackathonSubmission_problemId_idx" ON "HackathonSubmission"("problemId");
+
+-- AddForeignKey
+ALTER TABLE "HackathonSubmission" ADD CONSTRAINT "HackathonSubmission_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "HackathonTeam"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "HackathonSubmission" ADD CONSTRAINT "HackathonSubmission_problemId_fkey" FOREIGN KEY ("problemId") REFERENCES "HackathonProblem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+```
+
+This is transcribed from the live database (`information_schema.columns`,
+`pg_constraint`, `pg_indexes`), including the exact constraint and index names, so it
+reproduces the current state byte-for-byte in behaviour. It will only ever run against
+a *fresh* database.
+
+**Step B4 — check whether the checksum happens to match:**
+
+```bash
+npx prisma migrate status
+```
+
+- If it reports **"Database schema is up to date"** → skip B5, go to B6.
+- If it reports the migration **was modified after it was applied** (expected — the
+  stored checksum came from the original file, which is lost) → do B5.
+
+**Step B5 — re-record the row with the local checksum.** In the Neon SQL editor:
+
+```sql
+DELETE FROM "_prisma_migrations"
+WHERE migration_name = '20260804053455_hackathon_submission';
+```
+
+That touches **only the bookkeeping table** — no application data, no schema objects.
+Confirm it reports `DELETE 1`. Then immediately:
+
+```bash
+npx prisma migrate resolve --applied 20260804053455_hackathon_submission
+```
+
+This re-inserts the row with the checksum of the local file and marks it applied
+**without executing the SQL**. (`applied_steps_count` will read `0`, exactly like the
+already-baselined `20260804134500_add_workshop_registration` and
+`20260720143000_add_phone_verified` rows.)
+
+**Step B6 — regenerate and verify:**
+
+```bash
+npx prisma generate
+```
+
+```bash
+npx prisma migrate status
+```
+→ must say the database schema is up to date.
+
+```bash
+npx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-schema-datasource prisma/schema.prisma --script
+```
+→ must print an **empty migration** (no statements). This proves `schema.prisma` now
+matches the live DB exactly. If it prints any `CREATE`/`ALTER`/`DROP`, the model
+definitions in B2 are wrong — fix them and re-check. **Do not proceed while this
+prints statements.**
+
+```bash
+npx prisma migrate dev
+```
+→ with no pending schema change this must be a no-op ("Already in sync"). **If it
+asks to reset the database, answer no, abort, and report** — that means the baseline
+SQL still doesn't describe the DB.
+
+**Step B7 — commit the baseline on its own:**
+
+```
+fix(prisma): baseline the orphaned hackathon_submission migration
+
+The 20260804053455_hackathon_submission migration was applied to Neon on 4 Aug
+but its folder exists in no branch, so local history could not reproduce the
+database and `migrate dev` demanded a destructive reset.
+
+Add HackathonProblem and HackathonSubmission to schema.prisma exactly as they
+exist in the database, recreate the migration folder from the live DDL, and
+re-record it as applied. No SQL was executed against the database.
+```
+
+### Guardrails for the baseline (DO NOT)
+
+- **DO NOT** accept a reset prompt from `prisma migrate dev`, and never run
+  `prisma migrate reset` against this DB. Dev and prod share one Neon database.
+- **DO NOT** run `prisma db push` — it would silently reshape the live schema.
+- **DO NOT** run `prisma db pull` without `--print`; it rewrites `schema.prisma`
+  wholesale and would mangle every hand-written doc comment in the file.
+- **DO NOT** delete or edit any `_prisma_migrations` row other than the single
+  `20260804053455_hackathon_submission` one.
+- **DO NOT** drop or alter `HackathonProblem` / `HackathonSubmission`. They are
+  already the shape this feature needs.
+- **DO NOT** hand-edit the checksum column. Let `migrate resolve` compute it.
+
+---
+
+## 3. Current behavior (application side)
+
+- `/hackathon/dashboard` ([page.tsx](src/app/hackathon/dashboard/page.tsx)) is a
+  Server Component: `auth()` → `getMyRegistration(session.user.id)` → renders
+  `MissionTimer`, `ProblemStatementPanel`, `TeamRoster`, `InvitePanel`,
+  `SubmissionChecklist`, `EventInfo`.
+- [problem-statement-panel.tsx](src/components/hackathon/dashboard/problem-statement-panel.tsx)
+  computes `unlocked` itself from `Date.now() >= kickoffUtc` and renders the free-text
+  `HackathonEvent.problemStatement`. **There is no path forward from it today.**
+- [submission-checklist.tsx](src/components/hackathon/dashboard/submission-checklist.tsx)
+  is read-only; its footnote ("Submission opens near the deadline") goes stale here.
+- Hackathon data is fully on Neon/Prisma (plans `045`/`046`). Nothing hackathon-related
+  reads Supabase any more.
+- `getMyRegistration(userId)`
+  ([get-my-registration.ts](src/features/hackathon/get-my-registration.ts)) already
+  returns `{ team: { id, code, name, entryType }, me: { fullName, isLeader }, members, spotsLeft }`.
+  Reuse it as-is; **do not** write a second lookup.
+- `/hackathon/*` has its own dark layout ([layout.tsx](src/app/hackathon/layout.tsx)):
+  `bg-black text-white`, DSEG7 + IBM Plex Mono, `HackathonHeader`. A page under that
+  segment inherits all of it.
+- `middleware.ts` `protectedPaths` already lists `/hackathon/register` and
+  `/hackathon/dashboard`.
+- Feature flags live in [feature-flags.ts](src/lib/feature-flags.ts). There is **no
+  `.env.example`**; env vars go into `.env.local` by hand.
+- Seed-script precedent: `db:seed:hackathon-links` → `prisma/seed-hackathon-links.ts`.
+
+### Layout gotcha (from plan 042 — do not re-litigate)
+
+`main-shell.tsx` strips bottom padding on `/hackathon/*`, but `BottomNavGate` still
+renders the fixed mobile bottom nav for logged-in users. The submission page's
+container must carry **`pb-28 md:pb-10`**. Do not edit `main-shell.tsx` or the
+bottom-nav files.
+
+---
+
+## 4. Decisions locked before implementation
+
+Confirmed with the product owner — settled, do not re-open:
+
+| Question | Decision |
+|---|---|
+| Route | `/hackathon/submission` (inside the hackathon segment, not top-level `/submission`) |
+| Who owns a submission | **The team.** One row per team; any member can view and edit it |
+| "Option to upload" | **Three URL text fields only.** No file upload, no Vercel Blob |
+| How many briefs per team | **Exactly one.** `teamId` is unique; picking a different brief and saving *moves* the entry rather than adding one |
+| The lost 4 Aug code | Abandoned. Rebuild against the existing tables — there is nothing to reconcile |
+| The `'test'` problem row | **Delete it** as part of seeding (nothing references it: 0 submissions) |
+| Where brief content lives | **`HackathonProblem` rows**, populated by a seed script mirroring `db:seed:hackathon-links`. No admin CRUD UI in this plan |
+
+Decisions taken as part of this plan (flagged, not asked):
+
+- **Tagline without a schema change.** `HackathonProblem` has no `tagline` column and
+  this plan adds none. Convention: **the first line of `statement` is the tagline**,
+  everything after the first newline is the body, and an empty `statement` means
+  "no tagline, body not written yet". A real `tagline` column can be added later now
+  that migration history is clean.
+- **Required to save:** `repoUrl` only. `liveUrl` and `aiLogUrl` are NOT NULL in the
+  DB, so a blank one is stored as `""` — **never null**. A submission missing either
+  shows an **Incomplete** badge.
+- **No "last saved by" attribution.** The table has no `updatedByUserId` column and
+  this plan adds none. The UI shows only "Last saved <time>" from `updatedAt`.
+- **Edit window:** editable from kickoff until `HACKATHON.deadlineUtc`, then read-only.
+- **No network liveness check** on any URL, and **no global uniqueness** on `repoUrl`.
+- **No edit history.** Saves overwrite, exactly as specified.
+- `HACKATHON_PREVIEW=true` bypasses **only the kickoff lock**, never the deadline.
+- `HackathonEvent.problemStatement` (the old single free-text field) is left in place
+  and still renders on the dashboard when non-null, as an organizer note. The three
+  briefs now live in `HackathonProblem`.
+
+### Copy the organizer still owes (does not block the build)
+
+- **Brief 2 title** is seeded verbatim as `"AI Interview Agent - 02 · The Interview Agent"`.
+  If that was meant to be a title plus a separate kicker, it is now a one-row DB edit.
+- **Brief 3 has no tagline and no body** — seeded with `statement: ""`, so its card
+  shows the title and the "Full brief drops here shortly" placeholder.
+- **All three bodies are unwritten.** Fill them in the seed file and re-run, or edit
+  the `statement` cell directly in Neon.
+
+---
+
+## 5. Files to touch
+
+### New
+
+| Path | New/Edit | Server/Client | Note |
+|---|---|---|---|
+| `prisma/migrations/20260804053455_hackathon_submission/migration.sql` | `[new]` | — | The baseline from §2. Never executed against this DB. |
+| `prisma/seed-hackathon-problems.ts` | `[new]` | script | Upserts the three briefs; removes stray problems. |
+| `src/app/hackathon/submission/page.tsx` | `[new]` | **Server** | Auth + registration gate, window gate, composition. |
+| `src/components/hackathon/submission/locked-state.tsx` | `[new]` | Server (presentational) | Pre-kickoff panel + link back to the dashboard. |
+| `src/components/hackathon/submission/brief-list.tsx` | `[new]` | Server (presentational) | "Choose your Brief" + collapsible `<details>` cards. |
+| `src/components/hackathon/submission/submission-form.tsx` | `[new]` | **Client** | Brief selector + 3 URL inputs + save. |
+| `src/features/hackathon/submission-window.ts` | `[new]` | server-only | Single source of truth for unlocked / closed / editable. |
+| `src/features/hackathon/get-hackathon-problems.ts` | `[new]` | server-only | Reads + parses `HackathonProblem` rows. |
+| `src/features/hackathon/get-team-submission.ts` | `[new]` | server-only | Reads the team's row, returns serializable data. |
+| `src/app/actions/hackathon-submission-actions.ts` | `[new]` | Server Action | `saveHackathonSubmissionAction`. |
+
+### Edit
+
+| Path | New/Edit | Note |
+|---|---|---|
+| `prisma/schema.prisma` | `[edit]` | §2 Step B2 — models transcribed from the live DB + one back-relation line. **No new tables or columns.** |
+| `package.json` | `[edit]` | One script: `db:seed:hackathon-problems`. |
+| `src/components/hackathon/hackathon-config.ts` | `[edit]` | Add `briefsHeading` only. Brief content is **not** in config. |
+| `src/lib/validations/hackathon.ts` | `[edit]` | Add the submission schema. |
+| `src/lib/feature-flags.ts` | `[edit]` | Add `isHackathonPreviewEnabled()`. |
+| `middleware.ts` | `[edit]` | One string in `protectedPaths`. |
+| `src/app/hackathon/dashboard/page.tsx` | `[edit]` | Compute the window once, pass `unlocked`/`closed` down. |
+| `src/components/hackathon/dashboard/problem-statement-panel.tsx` | `[edit]` | Take `unlocked`/`closed` as props; add the CTA. |
+| `src/components/hackathon/dashboard/submission-checklist.tsx` | `[edit]` | Take `submissionOpen`; replace the stale footnote. |
+| `.env.local` (local only, not committed) | `[edit]` | `HACKATHON_PREVIEW="true"`. |
+
+**Not touched:** `main-shell.tsx`, `bottom-nav*.tsx`, `src/components/ui/**`,
+`src/lib/hackathon-supabase.ts`, `workshop-*`, every other Prisma model, and every
+other migration folder.
+
+---
+
+## 6. Server vs Client
+
+- `page.tsx`, `locked-state.tsx`, `brief-list.tsx` are **Server Components** passing
+  only plain serializable data — strings, numbers, booleans, arrays of string-keyed
+  objects. No functions, no Lucide components, no `Date` instances cross the boundary.
+- **One** `"use client"` file: `submission-form.tsx`.
+- Props into the client form (all serializable):
+  ```ts
+  <SubmissionForm
+    briefs={[{ id: string; number: number; title: string }]}
+    initial={ { problemId: string | null; repoUrl: string; liveUrl: string;
+                aiLogUrl: string; updatedAtIso: string } | null }
+    editable={boolean}
+    closed={boolean}
+  />
+  ```
+  `updatedAt` crosses as an **ISO string**, never a `Date`.
+- `submission-form.tsx` **may** import `HACKATHON` from `hackathon-config.ts` (plain
+  object, no `server-only`, already imported by `mission-timer.tsx`) and the Zod
+  schemas. It must **never** import from `src/features/hackathon/*` or `@/lib/db`.
+- `MissionTimer` is reused unchanged (already a client component taking three strings).
+
+---
+
+## 7. Steps
+
+> §2 (B1–B7) must be complete and committed before starting here. From this point on
+> there is **no schema change and no migration** — only reads and writes against
+> tables that already exist.
+
+### Step 1 — `prisma/seed-hackathon-problems.ts` `[new]` + `package.json` `[edit]`
+
+Mirror the structure of [seed-hackathon-links.ts](prisma/seed-hackathon-links.ts).
+
+```ts
+const CANONICAL = [
+  {
+    id: "brief-1",
+    sortOrder: 1,
+    title: "Redesign ABTalks",
+    // First line = tagline. Body goes after a blank line.
+    statement: "Reimagine the platform you're standing on.",
+  },
+  {
+    id: "brief-2",
+    sortOrder: 2,
+    // TODO(organizer): confirm this is one title, not a title + kicker.
+    title: "AI Interview Agent - 02 · The Interview Agent",
+    statement:
+      "Build an agent that runs a real technical interview and gives feedback worth acting on.",
+  },
+  {
+    id: "brief-3",
+    sortOrder: 3,
+    title: "Autonomous AI Creator",
+    // TODO(organizer): tagline + body. Empty statement renders the placeholder.
+    statement: "",
+  },
+] as const;
+```
+
+Behaviour:
+1. `upsert` each row by `id` (create with all fields; update `title`, `statement`,
+   `sortOrder`). Re-running is idempotent and is how content gets updated.
+2. Remove strays: `findMany({ where: { id: { notIn: [...] } }, select: { id: true,
+   title: true, _count: { select: { submissions: true } } } })`. Delete each with
+   `_count.submissions === 0`; for any with submissions, **log a warning and skip**
+   (never orphan a team's entry — the FK is `ON DELETE SET NULL`, so a careless delete
+   would silently blank their chosen brief). This is what removes the `'test'` row.
+3. Log what it created / updated / deleted, then `await prisma.$disconnect()`.
+
+`package.json` scripts, next to `db:seed:hackathon-links`:
+
+```json
+"db:seed:hackathon-problems": "tsx prisma/seed-hackathon-problems.ts",
+```
+
+Run it once locally after the baseline:
+
+```bash
+npm run db:seed:hackathon-problems
+```
+
+It writes to the shared DB, so verify afterwards that `HackathonProblem` has exactly
+three rows (`brief-1`, `brief-2`, `brief-3`) and the `'test'` row is gone.
+
+### Step 2 — `src/components/hackathon/hackathon-config.ts` `[edit]`
+
+Add exactly one key:
+
+```ts
+  briefsHeading: "Choose your Brief",
+```
+
+Brief titles and bodies do **not** go in this file — they come from the DB.
+
+### Step 3 — `src/lib/feature-flags.ts` `[edit]`
+
+```ts
+/**
+ * Local preview of the hackathon submission window before kickoff.
+ * `HACKATHON_PREVIEW=true` in .env.local unlocks /hackathon/submission early for the
+ * developer only. It does NOT bypass the submission deadline, and it must never be
+ * set in the Vercel project env.
+ */
+export function isHackathonPreviewEnabled(): boolean {
+  return process.env.HACKATHON_PREVIEW === "true";
+}
+```
+
+Add `HACKATHON_PREVIEW="true"` to `.env.local` by hand.
+
+### Step 4 — `src/features/hackathon/submission-window.ts` `[new]`
+
+```ts
+import "server-only";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { isHackathonPreviewEnabled } from "@/lib/feature-flags";
+
+export type SubmissionWindow = {
+  unlocked: boolean;   // briefs + form visible
+  closed: boolean;     // past deadline — read-only
+  editable: boolean;   // unlocked && !closed
+  previewing: boolean; // unlocked only because of the env flag
+};
+
+export function getSubmissionWindow(now: number = Date.now()): SubmissionWindow
+```
+
+- `unlocked = now >= kickoff || preview`
+- `closed = now >= deadline` — **preview never affects this**
+- `editable = unlocked && !closed`
+- `previewing = preview && now < kickoff`
+
+This is the **only** place the window is computed. Page, dashboard, and Server Action
+all call it — no duplicated `Date.now() >= kickoff` comparisons anywhere.
+
+### Step 5 — `src/features/hackathon/get-hackathon-problems.ts` `[new]`
+
+```ts
+import "server-only";
+
+export type HackathonBrief = {
+  id: string;
+  number: number;   // 1-based display index, from sort order
+  title: string;
+  tagline: string;  // "" when absent
+  body: string[];   // paragraphs; [] when unwritten
+};
+
+export async function getHackathonProblems(): Promise<HackathonBrief[]>
+```
+
+- `prisma.hackathonProblem.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt:
+  "asc" }], select: { id: true, title: true, statement: true } })` — `select` is
+  mandatory (house rule).
+- Parse per the convention: split `statement` on `\n`; the first line (trimmed) is
+  `tagline`; the remainder, trimmed, split on blank lines, is `body`. Empty statement
+  → `tagline: ""`, `body: []`.
+- `number` is `index + 1` after ordering — so the UI labels stay `BRIEF 1/2/3` no
+  matter what the ids or `sortOrder` values are.
+
+### Step 6 — `src/features/hackathon/get-team-submission.ts` `[new]`
+
+```ts
+import "server-only";
+
+export type TeamSubmission = {
+  problemId: string | null;
+  repoUrl: string;
+  liveUrl: string;
+  aiLogUrl: string;
+  updatedAtIso: string;
+};
+
+export async function getTeamSubmission(teamId: string): Promise<TeamSubmission | null>
+```
+
+`findUnique({ where: { teamId }, select: { problemId: true, repoUrl: true, liveUrl:
+true, aiLogUrl: true, updatedAt: true } })`; `null` when absent; `updatedAt` →
+`.toISOString()`. `liveUrl`/`aiLogUrl` are NOT NULL so they arrive as strings already.
+
+### Step 7 — `src/lib/validations/hackathon.ts` `[edit]`
+
+Append (existing exports untouched):
+
+```ts
+const hackathonRepoRegex =
+  /^https:\/\/github\.com\/([a-zA-Z0-9-]{1,39})\/([a-zA-Z0-9._-]{1,100})\/?$/;
+
+export const hackathonSubmissionSchema = z.object({
+  problemId: z.string().trim().min(1, "Pick a brief").max(64),
+  repoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .regex(
+      hackathonRepoRegex,
+      "Enter a public repo URL like https://github.com/you/project",
+    ),
+  liveUrl: z
+    .union([z.literal(""), z.string().trim().url("Enter a valid URL").max(500)])
+    .default(""),
+  aiLogUrl: z
+    .union([z.literal(""), z.string().trim().url("Enter a valid URL").max(500)])
+    .default(""),
+});
+
+export type HackathonSubmissionInput = z.infer<typeof hackathonSubmissionSchema>;
+```
+
+The regex is a local copy of the module-private one in
+[program.ts:6](src/lib/validations/program.ts:6); do not export it from there or
+create a shared URL-validation file. The optional-URL shape mirrors
+[program.ts:36](src/lib/validations/program.ts:36).
+
+### Step 8 — `src/app/actions/hackathon-submission-actions.ts` `[new]`
+
+`"use server";` — one export, `saveHackathonSubmissionAction(input: HackathonSubmissionInput)`,
+returning `{ ok: true, data } | { ok: false, message }`.
+
+1. `const session = await auth();` — no `session?.user?.id` →
+   `{ ok: false, message: "Not authenticated" }`.
+2. `hackathonSubmissionSchema.safeParse(input)` → on failure return
+   `parsed.error.issues[0]?.message ?? "Invalid input"` (same shape as
+   [hackathon-team-actions.ts:30](src/app/actions/hackathon-team-actions.ts:30)).
+3. `const window = getSubmissionWindow();`
+   - `!window.unlocked` → `Submissions open at kickoff — ${HACKATHON.kickoffLabel}.`
+   - `window.closed` → `Submissions closed on ${HACKATHON.deadlineLabel}.`
+   **This is the real gate** — the page's rendering state is only UX.
+4. `prisma.hackathonParticipant.findUnique({ where: { userId: session.user.id },
+   select: { teamId: true } })`. Missing → `"You're not registered for the hackathon."`
+5. Verify the brief exists: `prisma.hackathonProblem.findUnique({ where: { id:
+   parsed.data.problemId }, select: { id: true } })`. Missing →
+   `"That brief is no longer available. Reload the page."` (prevents an FK violation
+   from a stale client.)
+6. `prisma.hackathonSubmission.upsert({ where: { teamId }, create: {...}, update: {...} })`
+   — one statement, **no transaction needed**. Write `problemId`, `repoUrl`, and
+   `liveUrl` / `aiLogUrl` **as-is, `""` when blank — never `null`** (both columns are
+   NOT NULL). `update` sets the same fields: this is the "new edits override" rule.
+7. `revalidatePath("/hackathon/submission")` and `revalidatePath("/hackathon/dashboard")`.
+8. Return `{ ok: true, data: { problemId, updatedAtIso: saved.updatedAt.toISOString() } }`.
+
+Wrap the upsert in `try/catch`; on error `logger.error("hackathon submission save
+failed", { error })` and return `"Couldn't save your submission. Try again."`. Never
+`console.*`.
+
+**The team is resolved from the session, never from client input.** The action takes
+no `teamId`, no `participantId`, no email.
+
+### Step 9 — `src/app/hackathon/submission/page.tsx` `[new]` (Server)
+
+```tsx
+export const metadata: Metadata = {
+  title: "Submit your build | ABTalks Vibe Code Hackathon",
+};
+```
+
+1. `auth()` → no `session?.user?.id` → `redirect("/login?from=/hackathon/submission")`.
+2. `getMyRegistration(session.user.id)` → `null` → `redirect("/hackathon/register")`.
+3. `const window = getSubmissionWindow();`
+4. Container on every branch:
+   `<div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">`
+   (`pb-28` clears the fixed mobile bottom nav — see §3).
+5. **If `!window.unlocked`:** render `<LockedState />` and return. Do not query the
+   briefs or the submission, and do **not** redirect — a locked page that explains
+   itself beats a bounce.
+6. Otherwise load both in parallel:
+   `const [briefs, submission] = await Promise.all([getHackathonProblems(), getTeamSubmission(reg.team.id)]);`
+7. Greeting header:
+   - `const greetingName = reg.team.entryType === "TEAM" ? (reg.team.name ?? reg.me.fullName) : reg.me.fullName;`
+   - `<h1>Hello {greetingName}</h1>` + the entry chip the dashboard already uses, plus,
+     when `window.previewing`, a small amber `PREVIEW` chip: "Preview mode — locked for
+     everyone else."
+8. Body, top to bottom:
+   - `<MissionTimer kickoffUtc={…} deadlineUtc={…} resultsLabel={…} />`
+   - `<BriefList briefs={briefs} selectedId={submission?.problemId ?? null} />`
+   - **If `briefs.length === 0`:** a single card — "The briefs are being published —
+     check the WhatsApp group." — and **no form** (there is nothing to submit against).
+     Otherwise `<SubmissionForm briefs={…} initial={submission} editable={window.editable} closed={window.closed} />`.
+   - A back link to `/hackathon/dashboard` via `buttonVariants({ variant: "outline" })`.
+
+### Step 10 — `locked-state.tsx` `[new]` (Server)
+
+No props. Card in the established style (`rounded-2xl border border-white/10
+bg-white/[0.03] p-5 sm:p-6`, heading `text-sm font-semibold uppercase
+tracking-[0.16em] text-[#A78BFA]`):
+
+- Lucide `Lock` + heading "Submission window".
+- `Briefs unlock at kickoff: {HACKATHON.kickoffLabel}` and
+  `Submissions close: {HACKATHON.deadlineLabel}`.
+- `buttonVariants({ variant: "outline" })` `<Link href="/hackathon/dashboard">` —
+  "Back to your dashboard".
+
+### Step 11 — `brief-list.tsx` `[new]` (Server)
+
+Props: `{ briefs: HackathonBrief[]; selectedId: string | null }`.
+
+- Heading `{HACKATHON.briefsHeading}` in the standard style, muted subline:
+  "Read all three. You submit to one."
+- Map `briefs` to **native `<details>` elements** — collapsible with zero JavaScript,
+  so this stays a Server Component. Do **not** add an accordion primitive to
+  `src/components/ui/` and do **not** make this a client component.
+
+  ```tsx
+  <details
+    key={brief.id}
+    className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors open:border-[#7364E6]/40 open:bg-[#7364E6]/[0.06] sm:p-6"
+  >
+    <summary className="flex cursor-pointer list-none items-start gap-4 [&::-webkit-details-marker]:hidden">
+      {/* number badge: size-8 rounded-lg border border-[#7364E6]/40 bg-[#7364E6]/15
+          grid place-items-center font-mono text-sm font-bold text-[#C4B5FD] */}
+      {/* min-w-0 column: title (text-base font-semibold text-white) +
+          tagline (mt-1 text-sm text-zinc-400) rendered only when tagline !== "" */}
+      {/* ChevronDown: ml-auto shrink-0 text-zinc-500 transition-transform group-open:rotate-180 */}
+    </summary>
+    {/* body */}
+  </details>
+  ```
+- Body: one `<p className="text-sm leading-relaxed text-zinc-300">` per `body`
+  paragraph; when `body.length === 0`, the single muted line "Full brief drops here
+  shortly — watch the WhatsApp group."
+- When `selectedId === brief.id`, an emerald **"Your entry"** pill in the summary row.
+  That is the only coupling between the list and the form, and it is server-rendered —
+  the form calls `router.refresh()` after a successful save so the pill moves.
+- Must stay readable at 390px: `min-w-0` on the text column, no `whitespace-nowrap` on
+  the title.
+
+### Step 12 — `submission-form.tsx` `[new]` (Client)
+
+`"use client"`. Props per §6.
+
+**Read-only branch first:** if `!editable`, render a card headed "Your submission"
+with the saved values as static labelled rows (URLs as
+`<a target="_blank" rel="noopener noreferrer">`), the brief title resolved from
+`briefs` by `initial.problemId`, a muted `Submissions closed · {HACKATHON.deadlineLabel}`,
+and — when `initial === null` — "No submission was recorded for your team." **No inputs
+and no save button** in this branch.
+
+**Editable branch:**
+
+- State: `selectedId` (init `initial?.problemId ?? briefs[0].id`) and the three field
+  values (init from `initial` or `""`). `useTransition` for pending, `useRouter` for
+  `router.refresh()`, `toast` from `sonner`.
+- Heading "Submission" + subline "Edit as often as you like until the deadline. Each
+  save replaces the last one."
+- **Brief selector — three horizontal buttons** (labels come from `brief.number`, so
+  they read `BRIEF 1 / BRIEF 2 / BRIEF 3`):
+  ```tsx
+  <div className="grid grid-cols-3 gap-2">
+    {briefs.map((b) => (
+      <button type="button" key={b.id} onClick={() => setSelectedId(b.id)}
+        aria-pressed={selectedId === b.id}
+        className={cn(
+          "rounded-xl border px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm",
+          selectedId === b.id
+            ? "border-[#7364E6] bg-[#7364E6]/20 text-white"
+            : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/25 hover:text-white",
+        )}>
+        BRIEF {b.number}
+      </button>
+    ))}
+  </div>
+  ```
+  Three columns at every breakpoint (fine at 390px with `text-xs`). If `briefs.length`
+  is not 3 the grid still works — do not hardcode three.
+- Under the selector, the selected brief's `title` in muted text.
+- **Switch warning.** When `initial?.problemId` is set and `selectedId !==
+  initial.problemId`, an amber notice above the fields: "Your saved entry is for
+  **{old title}**. Saving now moves it to **{new title}** — you can only enter one brief."
+- Three fields using the existing `Input` + `Label`, `type="url"`, `inputMode="url"`,
+  `spellCheck={false}`:
+
+  | Label | Placeholder | Required |
+  |---|---|---|
+  | Public GitHub repo link | `https://github.com/your-username/your-project` | yes |
+  | Live URL | `https://your-project.vercel.app` | no |
+  | AI-usage log URL | `https://github.com/your-username/your-project/blob/main/PROMPTS.md` | no |
+
+  Each with a one-line muted helper taken from the matching
+  `HACKATHON.deliverables[i].body` — do not retype that copy.
+- Validate on submit with `hackathonSubmissionSchema.safeParse(...)`; show the first
+  issue inline under the offending field and `toast.error` it. Client validation is
+  convenience only — the action re-validates.
+- **Save button** (`Button`, full width on mobile): "Save submission", or "Saving…"
+  with `<Loader2 className="size-4 animate-spin" />` while pending — same pattern as
+  [registration-form.tsx:486](src/components/hackathon/registration-form.tsx:486).
+- **Confirm dialog only when the brief is being moved** (`initial?.problemId` set and
+  `selectedId !== initial.problemId`): reuse the Base UI `Dialog` pattern from
+  [remove-member-button.tsx](src/components/hackathon/dashboard/remove-member-button.tsx)
+  — `DialogTrigger render={<Button …/>}`, title "Move your entry to {new title}?",
+  confirm button "Move and save". Every other save submits directly, no dialog.
+- On `{ ok: true }`: `toast.success("Submission saved")` + `router.refresh()`.
+  On `{ ok: false }`: `toast.error(result.message)` and **leave the fields as typed** —
+  never clear the form on failure.
+- Below the button, when `initial !== null`: `Last saved <local time from
+  initial.updatedAtIso>`. Render the timestamp only after a `mounted` flag flips in
+  `useEffect` (same hydration guard as
+  [mission-timer.tsx:27](src/components/hackathon/dashboard/mission-timer.tsx:27)) —
+  server and client time zones differ and would mismatch on hydration. There is **no**
+  "last saved by <name>": the table has no such column and this plan adds none.
+- **Incomplete badge:** when `initial !== null` and either optional URL is `""`, an
+  amber pill in the section header: "Incomplete — add your live URL and AI-usage log
+  before the deadline."
+
+### Step 13 — `middleware.ts` `[edit]`
+
+Add `"/hackathon/submission"` to `protectedPaths`, directly after
+`"/hackathon/dashboard"`. That is the **entire** edit — no `@/lib/*` import may enter
+this file (Edge bundle limit).
+
+### Step 14 — `src/app/hackathon/dashboard/page.tsx` `[edit]`
+
+- `import { getSubmissionWindow } from "@/features/hackathon/submission-window";`
+- `const submissionWindow = getSubmissionWindow();`
+- `<ProblemStatementPanel unlocked={submissionWindow.unlocked} closed={submissionWindow.closed} statement={problemStatement} />`
+  — the `kickoffUtc` prop goes away.
+- `<SubmissionChecklist submissionOpen={submissionWindow.unlocked} />`
+- Nothing else on this page changes.
+
+### Step 15 — `problem-statement-panel.tsx` `[edit]`
+
+- New props `{ unlocked: boolean; closed: boolean; statement: string | null }`.
+  **Delete** the internal `Date.now() >= new Date(kickoffUtc).getTime()` computation —
+  the window helper is now the single source of truth (this is what makes
+  `HACKATHON_PREVIEW` reach the dashboard too).
+- Locked branch: unchanged markup.
+- Unlocked branch: keep rendering `statement` when present (and the existing "dropping
+  shortly" fallback when null), then append:
+  ```tsx
+  <Link
+    href="/hackathon/submission"
+    className={cn(buttonVariants({ size: "lg" }), "mt-6 w-full sm:w-auto")}
+  >
+    {closed ? "View your submission" : "Unlock Problem Statement"}
+  </Link>
+  ```
+  `buttonVariants` on the `<Link>` — never `<Button asChild>` / `<Button render>`.
+- When unlocked and not closed, a muted line under the CTA: "3 briefs are live. Pick
+  one and submit before {HACKATHON.deadlineLabel}."
+
+### Step 16 — `submission-checklist.tsx` `[edit]`
+
+- New prop `{ submissionOpen: boolean }`.
+- Keep the current footnote when false; when true render
+  `<Link href="/hackathon/submission" className="text-[#A78BFA] underline-offset-2 hover:underline">Submit these on the submission page →</Link>`.
+- Stays read-only, stays a Server Component.
+
+---
+
+## 8. Verification
+
+**Migration health (run these first — they gate everything else):**
+
+```bash
+npx prisma migrate status
+```
+
+```bash
+npx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-schema-datasource prisma/schema.prisma --script
+```
+→ empty migration. Anything else means §2 B2/B3 is wrong.
+
+**Build / typecheck — must pass clean:**
+
+```bash
+npx tsc --noEmit
+```
+
+```bash
+npm run build
+```
+
+`npm run build` runs `prisma migrate deploy` first — it must report no pending
+migrations and **must not** re-run `20260804053455_hackathon_submission`. The route
+list must include `/hackathon/submission`.
+
+**Data check after seeding:**
+
+```bash
+npm run db:seed:hackathon-problems
+```
+Then confirm in Neon: `HackathonProblem` has exactly three rows (`brief-1`, `brief-2`,
+`brief-3`, sortOrder 1/2/3) and the `'test'` row is gone.
+
+**Greps (eyeball each):**
+
+```bash
+grep -rn "use client" src/components/hackathon/submission/
+```
+→ exactly one hit, `submission-form.tsx`.
+
+```bash
+grep -rn "features/hackathon\|lib/db" src/components/hackathon/submission/
+```
+→ zero hits.
+
+**Manual test script:**
+
+1. Signed out → `/hackathon/submission` redirects to `/login?from=/hackathon/submission`.
+2. Signed in but not registered → redirects to `/hackathon/register`.
+3. `HACKATHON_PREVIEW` unset, before kickoff, registered → the **locked** panel renders
+   (not a redirect), and the dashboard's problem-statement card is still locked with
+   **no** CTA.
+4. Set `HACKATHON_PREVIEW="true"` in `.env.local`, restart `npm run dev`:
+   - Dashboard shows "Unlock Problem Statement" → click → `/hackathon/submission`.
+   - The page greets `Hello <Team Name>` for a team account and `Hello <Full Name>` for
+     a solo account, and shows the amber `PREVIEW` chip.
+5. Three briefs render, expand and collapse independently. Brief 1 and 2 show their
+   taglines; Brief 3 shows no tagline; all three show the "Full brief drops here
+   shortly" placeholder body.
+6. Save with a malformed repo URL (`github.com/foo`) → inline error, nothing written.
+7. Save `https://github.com/you/project` with both optional fields blank → success
+   toast. Reload → values persist, "Incomplete" pill shows, "Your entry" pill appears
+   on the chosen brief, "Last saved <time>" renders. In Neon, `liveUrl` and `aiLogUrl`
+   are `''` — **not null**.
+8. Fill the other two URLs and save again → the same row updates: still **one**
+   `HackathonSubmission` row for the team, `updatedAt` moved, old values gone.
+9. Sign in as a **teammate** of the same team → they see the same saved submission and
+   can edit it.
+10. Select a different brief while one is saved → amber switch warning → Save → confirm
+    dialog → confirm → still exactly **one** row, `problemId` changed, and the "Your
+    entry" pill moves after the refresh.
+11. **Deadline behavior:** temporarily set `HACKATHON.deadlineUtc` a minute ahead. After
+    it passes: the page renders read-only (no inputs, no save button), the dashboard CTA
+    reads "View your submission", and saving from a stale open tab returns the
+    "Submissions closed" message with no DB write. **Revert the config date afterward.**
+12. Remove `HACKATHON_PREVIEW` from `.env.local`, restart → back to locked. Confirm the
+    var is **not** set in the Vercel project env.
+13. Mobile at 390px: no horizontal scroll; the three BRIEF buttons fit one row; the
+    fixed bottom nav does not cover the last card (the `pb-28` works).
+
+**Exactly these files should show as changed:**
+
+```
+prisma/schema.prisma
+prisma/migrations/20260804053455_hackathon_submission/migration.sql
+prisma/seed-hackathon-problems.ts
+package.json
+middleware.ts
+src/lib/feature-flags.ts
+src/lib/validations/hackathon.ts
+src/components/hackathon/hackathon-config.ts
+src/app/hackathon/dashboard/page.tsx
+src/components/hackathon/dashboard/problem-statement-panel.tsx
+src/components/hackathon/dashboard/submission-checklist.tsx
+src/app/hackathon/submission/page.tsx
+src/app/actions/hackathon-submission-actions.ts
+src/features/hackathon/submission-window.ts
+src/features/hackathon/get-hackathon-problems.ts
+src/features/hackathon/get-team-submission.ts
+src/components/hackathon/submission/locked-state.tsx
+src/components/hackathon/submission/brief-list.tsx
+src/components/hackathon/submission/submission-form.tsx
+```
+
+Anything under `src/components/ui/`, `main-shell.tsx`, the bottom-nav files, **any
+other migration folder**, or any non-hackathon Prisma model appearing in `git status`
+means the executor went off-plan — revert before committing.
+
+---
+
+## 9. Guardrails for Cursor (DO NOT)
+
+**Migration (see also §2):**
+
+- **DO NOT** accept a reset prompt, run `prisma migrate reset`, or run `prisma db push`.
+  Dev and prod share one Neon database.
+- **DO NOT** create a new migration for this feature. The tables already exist; the
+  only migration folder involved is the §2 baseline.
+- **DO NOT** add columns to `HackathonProblem` or `HackathonSubmission` (no `tagline`,
+  no `updatedByUserId`, no brief enum). Work with the columns that are there.
+- **DO NOT** run `prisma db pull` without `--print`.
+
+**Application:**
+
+- **DO NOT** create more than one `HackathonSubmission` row per team. `teamId` is
+  `@unique` and the write is a single `upsert`.
+- **DO NOT** write `null` into `liveUrl` or `aiLogUrl` — both are NOT NULL. Blank is `""`.
+- **DO NOT** accept a `teamId`, `participantId`, team code, or email from the client in
+  the Server Action. The team comes from `auth()` alone. (No IDOR.)
+- **DO NOT** rely on the page's rendered state as the gate. The action calls
+  `getSubmissionWindow()` itself and refuses when locked or closed.
+- **DO NOT** let `HACKATHON_PREVIEW` bypass the deadline, and do not read it anywhere
+  except `isHackathonPreviewEnabled()`.
+- **DO NOT** duplicate the `Date.now() >= kickoff` comparison anywhere.
+- **DO NOT** put brief titles or bodies in `hackathon-config.ts`. They come from
+  `HackathonProblem`.
+- **DO NOT** delete a `HackathonProblem` row that has submissions — the FK is
+  `ON DELETE SET NULL` and would silently blank a team's chosen brief.
+- **DO NOT** add a file upload, Vercel Blob, `FormData` file handling, or a fourth field.
+- **DO NOT** add a HEAD/fetch liveness check on any submitted URL.
+- **DO NOT** import `@/features/hackathon/*`, `@/lib/db`, or anything `server-only`
+  from a `"use client"` file.
+- **DO NOT** mark `page.tsx`, `brief-list.tsx`, or `locked-state.tsx` as `"use client"`.
+  Use native `<details>` for the collapsibles.
+- **DO NOT** add an accordion primitive to `src/components/ui/`, or modify anything in
+  that folder.
+- **DO NOT** edit `main-shell.tsx`, `bottom-nav.tsx`, or `bottom-nav-gate.tsx`. Clear
+  the mobile nav with `pb-28 md:pb-10` on the page container.
+- **DO NOT** add `@/lib/*` imports to `middleware.ts`.
+- **DO NOT** use `<Button asChild>` or `<Button render={<Link>}>`. `buttonVariants` on
+  the `<Link>`.
+- **DO NOT** use `console.*` (use `logger`), `any`, or silencing `as` casts.
+- **DO NOT** return full Prisma records — every query carries a `select`.
+- **DO NOT** run `db:seed`, `db:cleanup`, or any seed other than
+  `db:seed:hackathon-problems`.
+- **DO NOT** build an admin view of submissions in this plan (see §11).
+- **DO NOT** send email on save.
+
+---
+
+## 10. Commit messages
+
+Two commits. The baseline lands first, on its own — see §2 Step B7 for its message.
+
+```
+feat(hackathon): submission window with DB-backed briefs and per-team entry
+
+Add /hackathon/submission: unlocks at kickoff, greets the team by name, lists
+the briefs from HackathonProblem as collapsible cards, and takes one editable
+submission per team (chosen brief + public repo, live URL, AI-usage log URL).
+Saves overwrite in place and stay editable until the deadline, after which the
+page renders read-only.
+
+Uses the existing HackathonProblem / HackathonSubmission tables as-is — no
+schema change. Briefs are seeded by db:seed:hackathon-problems, so copy edits
+need no redeploy. The window is computed in one server-only helper shared by the
+page, the dashboard, and the Server Action; HACKATHON_PREVIEW=true unlocks it
+locally before kickoff without bypassing the deadline. The dashboard's
+problem-statement card now routes here via "Unlock Problem Statement".
+```
+
+---
+
+## 11. Deferred (separate later plans)
+
+- **Admin view** of submissions at `/admin/hackathon` — per-team brief + links, CSV
+  export, judging/scoring. Organizers need this before results day.
+- **Admin CRUD for briefs** (the `HackathonProblem` shape was clearly built for one),
+  replacing the seed script.
+- A real `tagline` column on `HackathonProblem`, retiring the first-line convention —
+  cheap and safe now that migration history is clean.
+- Attribution (`updatedByUserId` / `updatedByName`) so teams see who last saved.
+- Retiring `HackathonEvent.problemStatement`, now superseded by `HackathonProblem`.
+- Confirmation email on first save; a deadline reminder to teams still Incomplete.
+- Automated verification of submitted URLs (repo public? deploy reachable?).

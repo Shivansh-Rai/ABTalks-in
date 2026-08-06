@@ -1,14 +1,16 @@
+import Link from "next/link";
 import { Lock } from "lucide-react";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Props = {
-  kickoffUtc: string;
+  unlocked: boolean;
+  closed: boolean;
   statement: string | null;
 };
 
-export function ProblemStatementPanel({ kickoffUtc, statement }: Props) {
-  const unlocked = Date.now() >= new Date(kickoffUtc).getTime();
-
+export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
   if (!unlocked) {
     return (
       <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 opacity-80 sm:p-6">
@@ -32,7 +34,7 @@ export function ProblemStatementPanel({ kickoffUtc, statement }: Props) {
           Your challenge
         </h2>
         <p className="mt-3 text-sm text-zinc-300">
-          The brief is dropping shortly. Check the WhatsApp group.
+          The brief is dropping shortly. 
         </p>
       </section>
     );
@@ -43,12 +45,23 @@ export function ProblemStatementPanel({ kickoffUtc, statement }: Props) {
       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
         Your challenge
       </h2>
-      <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+      {/* <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
         {statement}
-      </p>
+      </p> */}
       <p className="mt-4 text-sm text-zinc-400">
         Full brief and Q&amp;A in the WhatsApp group.
       </p>
+      <Link
+        href="/hackathon/submission"
+        className={cn(buttonVariants({ size: "lg" }), "mt-6 w-full sm:w-auto")}
+      >
+        {closed ? "View your submission" : "Unlock Problem Statement"}
+      </Link>
+      {!closed ? (
+        <p className="mt-3 text-sm text-zinc-400">
+          3 briefs are live. Pick one and submit before {HACKATHON.deadlineLabel}.
+        </p>
+      ) : null}
     </section>
   );
 }

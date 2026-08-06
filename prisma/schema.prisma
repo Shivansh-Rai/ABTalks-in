@@ -864,6 +864,7 @@ model HackathonTeam {
   teamCode     String                 @unique
   createdAt    DateTime               @default(now())
   participants HackathonParticipant[]
+  submission   HackathonSubmission?
 
   @@index([createdAt(sort: Desc)])
 }
@@ -931,6 +932,47 @@ model HackathonEvent {
   id               Int      @id @default(1)
   problemStatement String?
   updatedAt        DateTime @updatedAt
+}
+
+/// The hackathon briefs rendered on /hackathon/submission. Content lives in the DB,
+/// not in hackathon-config.ts, so it can be edited without a redeploy.
+///
+/// CONVENTION: the FIRST LINE of `statement` is the one-line tagline shown on the
+/// collapsed card. Everything after the first newline is the expanded body. An empty
+/// `statement` means "no tagline, body not written yet".
+///
+/// `id` has no DB default on purpose — rows are seeded with stable slugs
+/// (`brief-1`, `brief-2`, `brief-3`) by prisma/seed-hackathon-problems.ts.
+model HackathonProblem {
+  id          String                @id
+  title       String
+  statement   String
+  sortOrder   Int                   @default(0)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  submissions HackathonSubmission[]
+
+  @@index([sortOrder])
+}
+
+/// One entry per team (`teamId` is unique) — a team answers exactly ONE brief.
+/// Re-saving overwrites in place; there is no edit history, by design.
+/// `liveUrl` and `aiLogUrl` are NOT NULL in the DB: store "" for "not provided yet",
+/// never null.
+model HackathonSubmission {
+  id        String   @id @default(cuid())
+  teamId    String   @unique
+  problemId String?
+  repoUrl   String
+  liveUrl   String
+  aiLogUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team    HackathonTeam     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  problem HackathonProblem? @relation(fields: [problemId], references: [id])
+
+  @@index([problemId])
 }
 
 /// Named share links for hackathon attribution (`?s=<slug>`). Inserted by hand.

@@ -46,3 +46,13 @@ export function otpDevCode(): string {
 export function isOtpVerificationRequired(): boolean {
   return process.env.NODE_ENV !== "development";
 }
+
+/**
+ * Local preview of the hackathon submission window before kickoff.
+ * `HACKATHON_PREVIEW=true` in .env.local unlocks /hackathon/submission early for the
+ * developer only. It does NOT bypass the submission deadline, and it must never be
+ * set in the Vercel project env.
+ */
+export function isHackathonPreviewEnabled(): boolean {
+  return process.env.HACKATHON_PREVIEW === "true";
+}

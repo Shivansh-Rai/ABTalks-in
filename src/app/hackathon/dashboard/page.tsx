@@ -11,6 +11,7 @@ import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
 import { getHackathonEvent } from "@/features/hackathon/get-hackathon-event";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
+import { getSubmissionWindow } from "@/features/hackathon/submission-window";
 
 export const metadata: Metadata = {
   title: "Your Dashboard | ABTalks Vibe Code Hackathon",
@@ -28,6 +29,7 @@ export default async function HackathonDashboardPage() {
   }
 
   const { problemStatement } = await getHackathonEvent();
+  const submissionWindow = getSubmissionWindow();
   const firstName = reg.me.fullName.split(" ")[0] ?? reg.me.fullName;
   const entryChip =
     reg.team.entryType === "SOLO" ? "SOLO" : (reg.team.name ?? "TEAM");
@@ -56,7 +58,8 @@ export default async function HackathonDashboardPage() {
         />
         <SponsorPanel />
         <ProblemStatementPanel
-          kickoffUtc={HACKATHON.kickoffUtc}
+          unlocked={submissionWindow.unlocked}
+          closed={submissionWindow.closed}
           statement={problemStatement}
         />
         <TeamRoster
@@ -75,7 +78,7 @@ export default async function HackathonDashboardPage() {
         {reg.team.entryType === "TEAM" && reg.spotsLeft > 0 ? (
           <InvitePanel teamCode={reg.team.code} spotsLeft={reg.spotsLeft} />
         ) : null}
-        <SubmissionChecklist />
+        <SubmissionChecklist submissionOpen={submissionWindow.unlocked} />
         <EventInfo />
       </div>
     </div>

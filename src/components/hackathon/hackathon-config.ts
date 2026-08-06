@@ -11,6 +11,7 @@ export const HACKATHON = {
   deadlineLabel: "Sunday, 9 Aug · 8:00 PM IST",
   resultsLabel: "Winners announced: Friday, 14 Aug",
   registrationClosesLabel: "Registration closes Thursday, 6 Aug · 11:59 PM IST",
+  briefsHeading: "Choose your Brief",
 
   // Leaders can edit the roster (remove a teammate) up to and including
   // Tue 4 Aug IST — 3 days before kickoff. This instant is 5 Aug 00:00 IST, so
