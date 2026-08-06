@@ -430,6 +430,8 @@ export async function seedMarketplaceItems() {
   const raw = loadJsonFile<MarketplaceItemJson[]>("marketplace.json");
   if (!Array.isArray(raw)) return;
 
+  const seededSlugs = raw.map((entry) => entry.slug);
+
   for (const entry of raw) {
     await prisma.marketplaceItem.upsert({
       where: { slug: entry.slug },
@@ -452,6 +454,12 @@ export async function seedMarketplaceItems() {
       },
     });
   }
+
+  // Keep redemption history: deactivate catalog rows removed from JSON.
+  await prisma.marketplaceItem.updateMany({
+    where: { slug: { notIn: seededSlugs } },
+    data: { active: false },
+  });
 }
 
 async function loadChallengeIdByDomain(): Promise<Map<Domain, { id: string }>> {
