@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
+import { HACKATHON, isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
 import { RegistrationForm } from "@/components/hackathon/registration-form";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getLastRemovalForUser } from "@/features/hackathon/remove-participant";
@@ -29,6 +29,7 @@ export default async function HackathonRegisterPage() {
 
   const initialEmail = session.user.email;
   const initialName = session.user.name ?? "";
+  const registrationOpen = isHackathonRegistrationOpen();
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -69,7 +70,7 @@ export default async function HackathonRegisterPage() {
               </p>
             </div>
           ) : null}
-          {HACKATHON.registrationOpen ? (
+          {registrationOpen ? (
             <RegistrationForm
               initialEmail={initialEmail}
               initialName={initialName}

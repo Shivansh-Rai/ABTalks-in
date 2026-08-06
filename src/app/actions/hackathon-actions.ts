@@ -3,7 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { HACKATHON, isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
 import {
   getTeamByCode,
@@ -131,7 +131,7 @@ export async function submitHackathonRegistrationAction(
   const userId = session.user.id;
   const email = session.user.email.trim().toLowerCase();
 
-  if (!HACKATHON.registrationOpen) {
+  if (!isHackathonRegistrationOpen()) {
     return { ok: false as const, message: "Registration is closed." };
   }
 

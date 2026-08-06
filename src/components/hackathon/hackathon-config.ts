@@ -1,6 +1,7 @@
 export const HACKATHON = {
   name: "ABTalks Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
+  // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
   registrationOpen: true,
   maxTeamSize: 3,
 
@@ -10,7 +11,9 @@ export const HACKATHON = {
   kickoffLabel: "Friday, 7 Aug · 8:00 PM IST",
   deadlineLabel: "Sunday, 9 Aug · 8:00 PM IST",
   resultsLabel: "Winners announced: Friday, 14 Aug",
-  registrationClosesLabel: "Registration closes Thursday, 6 Aug · 11:59 PM IST",
+  // Open while now < this instant (Fri 7 Aug 6:00 PM IST).
+  registrationClosesUtc: "2026-08-07T12:30:00Z",
+  registrationClosesLabel: "Registration closes Friday, 7 Aug · 6:00 PM IST",
   briefsHeading: "Choose your Brief",
 
   // Leaders can edit the roster (remove a teammate) up to and including
@@ -170,3 +173,9 @@ export const HACKATHON = {
     },
   ],
 } as const;
+
+/** Open when the kill switch is on and now is before registrationClosesUtc. */
+export function isHackathonRegistrationOpen(now: number = Date.now()): boolean {
+  if (!HACKATHON.registrationOpen) return false;
+  return now < new Date(HACKATHON.registrationClosesUtc).getTime();
+}
