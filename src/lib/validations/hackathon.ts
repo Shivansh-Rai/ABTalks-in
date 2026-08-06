@@ -45,3 +45,28 @@ export const removeTeamMemberSchema = z.object({
 });
 
 export type RemoveTeamMemberInput = z.infer<typeof removeTeamMemberSchema>;
+
+const hackathonRepoRegex =
+  /^https:\/\/github\.com\/([a-zA-Z0-9-]{1,39})\/([a-zA-Z0-9._-]{1,100})\/?$/;
+
+export const hackathonSubmissionSchema = z.object({
+  problemId: z.string().trim().min(1, "Pick a brief").max(64),
+  repoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .regex(
+      hackathonRepoRegex,
+      "Enter a public repo URL like https://github.com/you/project",
+    ),
+  liveUrl: z
+    .union([z.literal(""), z.string().trim().url("Enter a valid URL").max(500)])
+    .default(""),
+  aiLogUrl: z
+    .union([z.literal(""), z.string().trim().url("Enter a valid URL").max(500)])
+    .default(""),
+});
+
+export type HackathonSubmissionInput = z.infer<
+  typeof hackathonSubmissionSchema
+>;

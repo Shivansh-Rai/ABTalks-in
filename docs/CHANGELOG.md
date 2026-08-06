@@ -1,5 +1,6 @@
 ## Pending reconcile
 
+- 2026-08-06 [schema] Baselined orphaned HackathonProblem/HackathonSubmission migration and added /hackathon/submission flow on the existing tables to avoid shared-Neon drift
 - 2026-08-04 [schema] WorkshopRegistration table (eventId+userId unique) for Neon workshop signups, matching development
 - 2026-07-31 [schema] ProgramCohort.requiresJoinCode (default true) for open enrollment without join code
 - 2026-07-31 [rule] getElapsedDayNumber (uncapped) drives backfill/relaxation so day 60 stays submittable after its date; CLAUDE enrollments roll from join date floored at startsAt
