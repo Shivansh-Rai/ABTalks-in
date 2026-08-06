@@ -2,48 +2,57 @@
 
 > **Purpose of this file:** Single-source-of-truth context to start fresh chats. Paste this at the beginning of any new conversation so the AI has full project context.
 
-> **Last updated:** During active build, before launch. Real users not yet onboarded.
+> **Last updated:** 2026-08-05, reconciled against commit `519cc34` (master). Covers everything logged under `## Pending reconcile` in `docs/CHANGELOG.md` through 2026-08-04.
 
 ---
 
 ## 1. What is ABTalks
 
-A 60-day coding challenge platform built around Anil Bajpai's community of recruiters and students. Students do daily coding tasks across three domains (AI / DS / SE), submit GitHub + LinkedIn proof of work, and become discoverable to recruiters from Anil sir's podcast network after completing the challenge.
+Originally a 60-day coding challenge platform built around Anil Bajpai's community of recruiters and students. It has since grown into a **multi-track platform** with four distinct products sharing one auth + admin spine:
+
+1. **60-Day Challenge** — daily tasks across SE / DS / AI / CLAUDE, GitHub + LinkedIn proof of work, streaks, leaderboard, certificates.
+2. **AI Cohort Program** (`/program`, formerly "B2B AI Mastery") — a 31-day cohort for working professionals with server-verified Daily Missions, GitHub commit tracking, AI-graded projects, an exit voice interview, and a recruiter talent portal (`/talent`).
+3. **Hackathon** (`/hackathon`) — solo/team registration with share-link attribution and a participant dashboard.
+4. **Workshops & AI Cohort applications** (`/ai-workshop`, `/ai-cohort-register`, `/ai-cohort-india`) — top-of-funnel webinar signups and long-form applications.
 
 **Vision:** Public daily commitment (GitHub + LinkedIn) produces real skill and real visibility.
 
-**Audience:** Indian college students (1st year through recent graduates), primarily mobile users.
+**Audience:** Indian college students (1st year through recent graduates), primarily mobile — plus working professionals for the Program track.
 
 ---
 
-## 2. Hard constraints (non-negotiable for v1)
+## 2. Hard constraints
 
-- Solo developer, building with Cursor + Claude
-- 7-day target build, willing to extend by 1-2 days for admin dashboard
+- Solo developer, building with Cursor + Claude (Claude plans, Cursor executes)
 - Free or near-free hosting (Vercel free tier, Neon free tier)
-- Max scale: 1,500 students, 100 recruiters, 1,500 daily submissions
-- IST (Asia/Kolkata) timezone for all day boundaries
-- Recruiter side deferred to Phase 2 (post-launch)
+- Max scale: ~1,500 students, 100 recruiters, 1,500 daily submissions
+- IST (Asia/Kolkata) for challenge day boundaries — **exception:** the Program track uses America/Chicago (see §5)
 - One database for both dev and production (single Neon DB)
 
 ---
 
 ## 3. Tech stack (as deployed)
 
-- **Framework:** Next.js 15 / 16 (App Router, TypeScript strict, Turbopack)
-- **Database:** PostgreSQL on Neon (single shared instance — dev and prod)
+- **Framework:** Next.js 16.2.4 (App Router, TypeScript strict, Turbopack), React 19.2.4
+- **Database:** PostgreSQL on Neon (single shared instance — dev and prod). `DATABASE_URL` (pooled) + `DIRECT_URL` (migrations).
 - **ORM:** Prisma 6.19.3 (NOT Prisma 7 — pinned)
-- **Auth:** Auth.js v5 (next-auth@beta) with split config (`auth.config.ts` for edge-safe middleware, `auth.ts` for full Node usage)
-- **Auth providers:** Google OAuth (production), Credentials (dev-only, gated by `ENABLE_DEV_AUTH=true`, plain string password compare, no bcrypt)
-- **Deployment:** Vercel (`abtalksapp.vercel.app`)
-- **Styling:** Tailwind CSS + shadcn/ui (base-nova preset, slate base color)
-- **Fonts:** Plus Jakarta Sans (display), Inter (body) via next/font
-- **Forms:** React Hook Form + Zod
-- **Theming:** next-themes with system default; toggle in header
+- **Auth:** Auth.js v5 (next-auth@beta) with split config (`auth.config.ts` edge-safe, `auth.ts` full Node)
+- **Auth providers:** Google OAuth (production), Credentials (dev-only, gated by `ENABLE_DEV_AUTH=true`, plain string compare, no bcrypt)
+- **Deployment:** Vercel (`abtalksapp.vercel.app`), plus a Vercel cron for program commit polling
+- **Styling:** Tailwind CSS + shadcn/ui on Base UI (`@base-ui/react`), slate base
+- **Fonts:** Plus Jakarta Sans (display), Inter (body); `@fontsource/dseg7-classic` for countdown displays
+- **Forms:** React Hook Form + Zod 4
+- **Motion:** framer-motion; `canvas-confetti` for celebrations
+- **Charts:** Recharts (admin analytics)
+- **Toasts:** sonner
+- **Markdown:** react-markdown (program day briefs, mission content)
+- **AI:** Anthropic via `lib/anthropic.ts` (project grading, AI mentor, recommendations, interview evaluation); OpenAI Realtime (WebRTC voice interview only)
+- **Email:** Resend (`RESEND_API_KEY`) and Brevo (`@getbrevo/brevo`) — see `lib/email.ts`, `lib/workshop-email.ts`, `lib/hackathon-email.ts`
+- **SMS/OTP:** MSG91 widget (`lib/msg91.ts`) for phone verification
+- **PDF:** `pdf-lib` + `qrcode` for certificates (template overlay); `@react-pdf/renderer` for the recruiter report at `/r/[token]/pdf` (Node runtime only)
+- **Supabase (residual):** `@supabase/supabase-js` still used for exactly two things — the hand-edited `workshop_config` row and the `cohort_applications` / `cohort_applications_india` tables. Everything else moved to Neon.
 - **Validation:** Zod everywhere
 - **Logging:** Custom `lib/logger.ts` (console wrappers, edge-safe)
-- **Charts:** Recharts (admin analytics)
-- **File storage:** Vercel Blob (planned for resumes, not yet implemented)
 
 **Critical:** Middleware must remain edge-safe — NO `@/lib/*` imports in `middleware.ts`. Uses only `next-auth` and `next/server`.
 
@@ -52,93 +61,145 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 ## 4. Domain model (Prisma schema)
 
 ### Auth tables (Auth.js standard)
-- `User` — has `email`, `password` (dev only, plaintext), `role` (STUDENT | ADMIN)
-- `Account` — OAuth account links
-- `Session` — Auth.js sessions
-- `VerificationToken` — Auth.js tokens
+- `User` — `email`, `password` (dev only, plaintext), `role` (STUDENT | ADMIN | RECRUITER)
+- `Account`, `Session`, `VerificationToken`
 
-### Domain enums
-- `Role`: STUDENT, ADMIN
-- `UserType`: STUDENT, PROFESSIONAL — a `StudentProfile` row can represent either an Indian college student OR a working professional (different required fields). Distinct from `Role`.
-- `Domain`: SE, DS, AI, **CLAUDE** (Claude AI Mastery track — synchronized cohort, see `Challenge.startsAt`). Was ML originally, renamed to DS.
+### Core enums
+- `Role`: STUDENT, ADMIN, **RECRUITER**
+- `UserType`: STUDENT, PROFESSIONAL — a `StudentProfile` row can represent either. Distinct from `Role`.
+- `Domain`: SE, DS, AI, CLAUDE (Claude AI Mastery track — synchronized cohort, see `Challenge.startsAt`). Was ML originally, renamed to DS.
 - `EnrollmentStatus`: ACTIVE, COMPLETED, ABANDONED
 - `SubmissionStatus`: ON_TIME, LATE
 
-### Core domain tables
-- `StudentProfile` (1:1 with User) — `userType` (STUDENT | PROFESSIONAL), `fullName`, `domain`, `skills` (string[]), `phone` (admin-only visibility), `resumeUrl` (admin-only visibility), `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`. Student-only fields: `college`, `graduationYear`. Professional-only fields: `organization`, `role`, `yearsExperience`. Campus-ambassador fields: `isCampusAmbassadorCandidate`, `ambassadorAppliedAt`, `ambassadorDismissedAt`.
-- `Challenge` — one per Domain (SE / DS / AI / CLAUDE), has `totalDays = 60`. Optional `startsAt: DateTime?` — when set (CLAUDE), `referenceStartDate` floors the student's window at `startsAt` (pre-start joiners wait for cohort kickoff; post-start joiners roll from their real `Enrollment.startedAt`). Null = rolling start from `Enrollment.startedAt` only (SE/DS/AI).
-- `DailyTask` — 1-60 per Challenge, contains `problemStatement`, `learningObjectives`, `resources`, `difficulty`, `estimatedMinutes`, `linkedinTemplate` (with `{{github_link}}` placeholder), `solutionApproach` (admin-only), `tags`, and `dayContent` (Json?) — optional structured day content (e.g. rich CLAUDE day pages) consumed by the challenge UI alongside the legacy text fields.
-- `Enrollment` (unique on userId+challengeId) — daysCompleted, currentStreak, longestStreak, lastSubmittedDay, status, startedAt, completedAt
-- `Submission` (unique on enrollmentId+dayNumber, githubUrl globally unique) — dayNumber, githubUrl, linkedinUrl, status (ON_TIME/LATE), submittedAt
-- `Quiz` (unique on challengeId+weekNumber) — Week 1-8 quizzes per domain
-- `QuizQuestion` — 10 per Quiz, with optionA/B/C/D, correctAnswer, explanation
-- `QuizAttempt` (unique on userId+quizId) — score, answers (JSON)
-- `Referral` (unique on referredId) — referrerId, referredId, rewardGiven
+### Challenge tables
+- `StudentProfile` (1:1 with User) — `userType`, `fullName`, `domain`, `skills[]`, `phone` + `phoneVerified` / `phoneVerifiedAt` (admin-only visibility), `resumeUrl`, `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`, **`synergyPoints`** (denormalized SP balance). Student-only: `college`, `graduationYear`. Professional-only: `organization`, `role`, `yearsExperience`. Campus-ambassador: `isCampusAmbassadorCandidate`, `ambassadorAppliedAt`, `ambassadorDismissedAt`.
+- `Challenge` — one per Domain, `totalDays = 60`. Optional `startsAt: DateTime?` — when set (CLAUDE), the reference start is `max(startsAt, enrollment.startedAt)`; null = rolling start (SE/DS/AI).
+- `DailyTask` — 1–60 per Challenge: `problemStatement`, `learningObjectives`, `resources`, `difficulty`, `estimatedMinutes`, `linkedinTemplate` (`{{github_link}}` placeholder), `solutionApproach` (admin-only), `tags`, `dayContent` (Json?) for rich CLAUDE day pages.
+- `Enrollment` (unique userId+challengeId) — daysCompleted, currentStreak, longestStreak, lastSubmittedDay, status, startedAt, completedAt; 0–1 `Certificate`.
+- `Submission` (unique enrollmentId+dayNumber) — `githubUrl` and `linkedinUrl` are both **nullable** (proof URLs became optional when Synergy landed); `githubUrl` still globally unique when present. Has 0–1 `SynergyEvent`.
+- `Quiz` (unique challengeId+weekNumber), `QuizQuestion` (10 per quiz), `QuizAttempt` (unique userId+quizId)
+- `Referral` (unique referredId) — referrerId, referredId, rewardGiven
+- `PhoneVerification` (unique userId) — E.164 phone, verified flag; bridges OTP done before `StudentProfile` exists
 
-### Workshop tables
-- `WorkshopRegistration` — every workshop/webinar signup, **all events in one table** keyed by `eventId` (matches `WorkshopEvent.id` in `components/workshop/events-data.ts`; events stay code-defined because they carry marketing copy + Lucide icons). `@@unique([eventId, email])` reproduces the old per-event-table email constraint, so a repeat attendee can register for a later event — 66 people in the migrated data did exactly that. `@@unique([eventId, userId])` is the auth-era duplicate guard. `userId` is **nullable by design**: 505 of 526 migrated rows predate the auth gate and have no account. Migrated from two Supabase tables (`registrations-AIW-18july`, `registrations-AIW-15Aug`) via `npm run workshop:migrate` with `created_at` preserved.
+### Synergy / rewards
+- `SynergyEvent` — append-only SP ledger: userId, points (+/-), type, optional submissionId (unique) / enrollmentId / dayNumber / rankAtAward / reason / createdByAdminId. **Every SP movement gets a row** — redemptions and refunds included.
+- `MarketplaceItem` — slug, title, description, `costSP`, imagePath, active, sortOrder
+- `Redemption` — userId, itemId, costSP + itemTitle snapshots, `status` (PENDING | SHIPPED | FULFILLED | …), shippingAddress, recipientPhone, trackingNote
+
+### Certificates
+- `Certificate` — `certificateId` (public, `ABT-XX-XXXXX`, Crockford alphabet, unique), userId, `type` (CLAUDE_CHALLENGE | HACKATHON | COHORT | WORKSHOP), `status` (ISSUED | REVOKED), `recipientName` + `domain` + `metadata` **snapshots at issue time** (never re-read from the profile), `enrollmentId` (unique, one cert per completed enrollment), revokedAt / revokedReason.
+
+### Recruiter-facing (challenge side)
+- `RecruiterReview` (unique userId) — admin-curated anonymized assessment report: `/100` scores (communication / programming / behavior) + feedback, resume sections (`skillGroups`, `education`, `certifications`, `experience`, `projects`, `achievements[]`, `languagesSpoken[]`), `codingChallenges`, strengths / areasForGrowth, `recommendation` (`RecommendationLevel`), admin-only `logistics` + `compensation`, `isPublished` + `shareToken` (unique) for the public `/r/[token]` page.
+- `Job` (`JobType`: FULL_TIME | INTERNSHIP | CONTRACT | PART_TIME) and `JobApplication` (unique jobId+userId)
 
 ### Admin tables
-- `AdminAction` — adminUserId, targetUserId, actionType (string: MARK_DAY_COMPLETE | RESET_PROGRESS | TOGGLE_READY_FOR_INTERVIEW | REMOVE_FROM_CHALLENGE | REJECT_SUBMISSION), metadata (JSON), reason (optional), createdAt
+- `AdminAction` — adminUserId, targetUserId, `actionType` (string), metadata (Json), reason, createdAt. Written by every admin mutation across all tracks, not just the 5 original student actions.
+- `AdminRemark` — admin-only free-text remark history on a student (CRUD writes an `AdminAction` audit row)
+
+### Hackathon tables (all on Neon — the Supabase `hackathon_*` tables are retired)
+- `HackathonTeam` — `entryType` (SOLO | TEAM), teamName, `teamCode` (unique). Unique index on `lower(team_name)` where not null.
+- `HackathonParticipant` — `userId` **globally unique** (one hackathon registration per person), teamId + `slotIndex` (unique together), isLeader, contact/college fields, `sourceSlug` (share-link attribution)
+- `HackathonRemoval` — append-only removal log. The participant row is **hard-deleted** on removal (frees `userId` and the slot); this table preserves who/by whom/original `sourceSlug` so a rejoin keeps attribution. `removedByRole`: LEADER | ADMIN.
+- `HackathonEvent` — singleton (id = 1), `problemStatement` for the live kickoff brief
+- `HackathonLink` — named share links (`?s=<slug>`), inserted by hand / seeded
+
+### Workshop table
+- `WorkshopRegistration` — every workshop/webinar signup, **all events in one table** keyed by `eventId` (matches `WorkshopEvent.id` in `components/workshop/events-data.ts`; events stay code-defined because they carry marketing copy + Lucide icons). `userId` is **REQUIRED** — Google sign-in is mandatory, so every row belongs to a real User. Only constraint is `@@unique([eventId, userId])`: the same person is expected to register for each weekly workshop, but not twice for the same one. Row snapshots name/email/phone/role/organization/graduationYear because a workshop-only attendee has a `User` but no `StudentProfile`.
+
+### Program tables (`/program` track, ~20 models)
+Enums: `ProgramCohortStatus` (DRAFT | ENROLLING | ACTIVE | COMPLETED | ARCHIVED), `ProgramMemberStatus` (APPLIED | WAITLISTED | ENROLLED | COMPLETED | DROPPED), `ProgramLanguage` (PYTHON | SQL | JAVASCRIPT | YAML), `ProgramEntrySection`, `ProgramInterviewStatus`, `ProgramProjectStatus`, `ProgramMissionType` (CODE_SPRINT | SHIP_IT | DATA_ROOM | PROMPT_FORGE | BOSS_BUILD), `ProgramDayState` (LOCKED | AVAILABLE | PASSED | SKIPPED).
+
+- `ProgramCohort` — name, `joinCode` (unique), startsAt / endsAt, capacity (100), status, `requiresJoinCode` (default true; false = open enrollment), `resultsPublishedAt`
+- `ProgramMember` — professional profile kept **deliberately separate from `StudentProfile`** (fullName, jobRole, company, yearsExperience, education, university, …), status, scores, skip tokens, highest unlocked day
+- `ProgramModule`, `ProgramDay`, `ProgramConceptQuestion`, `ProgramMissionSubmission`, `ProgramConceptAttempt`
+- `ProgramEntryQuestion`, `ProgramEntryAttempt` (entry assessment — retained in schema, bypassed in product)
+- `ProgramVideo`, `ProgramExercise`, `ProgramExerciseCompletion`
+- `ProgramCommitDay` — one row per member per qualifying GitHub commit day
+- `ProgramProject` (AI-graded module projects), `ProgramInterview` (exit voice interview + Claude evaluation)
+- `RecruiterProfile`, `RecruiterShortlistItem` — the `/talent` portal
 
 ---
 
 ## 5. Business rules
 
-### Day calculation (timezone)
-- All day boundaries in IST (Asia/Kolkata)
+### Challenge day calculation (IST)
+- All challenge day boundaries in IST (Asia/Kolkata)
 - Day 1 = day of the reference start in IST (`max(challenge.startsAt, enrollment.startedAt)` when synchronized; else `enrollment.startedAt`)
-- Day N = N calendar days after start in IST
-- `getCurrentDayNumber` in `lib/date-utils.ts` caps at 60 — use for display, unlocking, and streaks
-- `getElapsedDayNumber` is uncapped (61+) — the only correct input for backfill / relaxation-window decisions; do not use it for UI day labels
-- CLAUDE enrollments roll from the real join date (`Enrollment.startedAt` defaults to `now()`), floored at the cohort `startsAt`
+- `getCurrentDayNumber` in `lib/date-utils.ts` **caps at 60** — use for display, unlocking, streaks
+- `getElapsedDayNumber` is **uncapped** (61+) — the only correct input for backfill / relaxation-window decisions. Using the capped version here is what broke day-60 submissions; do not use it for UI day labels either.
+- CLAUDE enrollments roll from the real join date, floored at the cohort `startsAt`
+- `BYPASS_DAY_LOCKS=true` bypasses challenge day-lock gating server-side (dev only)
 
 ### Submission validation
-- GitHub URL must match `https://github.com/{owner}/{repo}` pattern
-- GitHub URL must be globally unique (no two students, no two days, can share)
-- GitHub URL must return HTTP 2xx on HEAD request (5s timeout)
-- LinkedIn URL must match `https://www.linkedin.com/posts/...` or `linkedin.com/feed/update/...`
-- LinkedIn URL is format-only (no network check, LinkedIn blocks bots)
+- GitHub URL must match `https://github.com/{owner}/{repo}`, be globally unique, and return HTTP 2xx on HEAD (5s timeout)
+- LinkedIn URL format-only (`/posts/…` or `/feed/update/…`) — LinkedIn blocks bots
+- Both proof URLs are **optional** since Synergy; a submission with neither still counts for the day but earns fewer SP
 
-### Streak rules
-- `currentStreak` = consecutive ON_TIME submissions ending today/yesterday
-- `longestStreak` = max value currentStreak has reached
-- Late submissions don't count toward streaks
-- Missing a day resets `currentStreak` to 0
+### Synergy points (SP)
+- Per submission: `10` base `+ 5` if GitHub proof `+ 8` if LinkedIn proof (`features/synergy/scoring.ts`)
+- Referral: `3` SP
+- `StudentProfile.synergyPoints` is a denormalized balance; `SynergyEvent` is the source of truth. Never move SP without writing an event row.
 
-### Leaderboard sort order (per-domain)
-1. daysCompleted DESC
-2. currentStreak DESC
-3. longestStreak DESC
-4. startedAt ASC (earlier joiners win ties)
-- Cached with 5-minute TTL via `unstable_cache`
+### Streaks
+- `currentStreak` = consecutive ON_TIME submissions ending today/yesterday; `longestStreak` = max ever reached
+- Late submissions don't count; missing a day resets to 0
+- Streaks / `daysCompleted` are **write-time only** (`submitDay`) — dashboard read paths must never write
 
-### Ready for Interview
-- Set automatically when daysCompleted reaches 60 AND profile has minimum fields
-- Admin can manually toggle (creates AdminAction)
-- Phase 2 visibility: only Ready students appear to recruiters
+### Leaderboard (per-domain)
+1. daysCompleted DESC → 2. currentStreak DESC → 3. longestStreak DESC → 4. startedAt ASC. Cached 5-min TTL via `unstable_cache`.
+- Immutable content (daily tasks, `Challenge.startsAt`) cached via `unstable_cache` tags `daily-tasks:<challengeId>` / `challenge:CLAUDE`, busted on reseed/redeploy.
+
+### Certificates
+- Claude Challenge certificate issues when there is a **Day 60 submission AND `daysCompleted >= 50`** — deliberately not gated on `EnrollmentStatus.COMPLETED`
+- ID format `ABT-XX-XXXXX` (CC / HK / CH / WS per type), Crockford alphabet (no 0/O/1/I/L)
+- Rendered by overlaying `pdf-lib` text + QR onto a template PDF in `public/certificates/` (mtime-busted cache). `CERTIFICATE_TEMPLATE_URL` / `CERTIFICATE_TEMPLATE_PATH` optionally override with a no-store fetch.
+- Public verification at `/verify/[certificateId]`, download at `/verify/[certificateId]/download`
+
+### Marketplace
+- Redeem spends SP inside a transaction: balance check → `Redemption` row → negative `SynergyEvent`. Refund is the mirror image (also a `SynergyEvent`).
+- Catalog `costSP` currently 1800 SP across `marketplace.json`
 
 ### Quiz availability
-- Only the CURRENT week's quiz is shown (not past unattempted)
-- currentWeek = `Math.min(Math.floor(daysCompleted / 7), 8)`
-- If user attempted current week's quiz: show "Already attempted, scored X/10"
-- If quiz not seeded for current week: show nothing
-- Past attempts visible in "Quiz History" section
+- Only the CURRENT week's quiz is shown; `currentWeek = Math.min(Math.floor(daysCompleted / 7), 8)`
+- Already-attempted → show score; not seeded → show nothing; past attempts in "Quiz History"
 
 ### Referrals
-- 6-character alphanumeric code (uppercase) per StudentProfile
-- New user enters code at registration → Referral row created
-- When referred user completes Day 7: `rewardGiven = true`
-- Referral persisted via `abtalks_ref` httpOnly cookie (10-min lifetime) for OAuth flow
-- Badges: bronze (1), silver (5), gold (10), platinum (25) — based on rewarded count
+- 6-char uppercase alphanumeric code per StudentProfile; reward at referred user's Day 7
+- Persisted via `abtalks_ref` httpOnly cookie (7 days, set in middleware)
+- Badges: bronze (1), silver (5), gold (10), platinum (25)
 
-### Admin actions (require requireAdmin)
-- markDayCompleteAction: creates manual submission with `admin-marked://` URL
-- resetProgressAction: deletes all submissions, resets enrollment counters
-- toggleReadyForInterviewAction: flips boolean
-- removeFromChallengeAction: sets status to ABANDONED (soft, not deleted)
-- rejectSubmissionAction: deletes specific submission, decrements daysCompleted
-- All wrapped in transaction with AdminAction audit log row
+### Hackathon
+- Solo or team entry; team joined by `teamCode`; duplicate team names blocked case-insensitively
+- Registration requires a Google session; one participant row per user globally
+- Share-link attribution: `?s=<slug>` → `abtalks_src` httpOnly cookie, **first touch wins**, 30 days, copied to `HackathonParticipant.sourceSlug`
+- Removal hard-deletes the participant and writes a `HackathonRemoval` row (leader or admin); rejoin re-uses the preserved `sourceSlug`
+- A logged-in user with a hackathon registration but no `StudentProfile` is diverted to `/hackathon/dashboard` (not `/register`) from `/`, `/dashboard` and `/login`
+
+### Workshop
+- Page public, **form session-gated**: the event is resolved server-side from the IST day key, never from the client; email comes from the session
+- `P2002` on `[eventId, userId]` → friendly duplicate message; confirmation email failure is logged and swallowed
+
+### Program (AI Cohort) — differs from the challenge on purpose
+- **Timezone: America/Chicago**, not IST. Day unlock uses the Chicago cohort calendar with a sequential gate (no unlock-on-pass); admin `highestUnlockedDay` is a floor override. Calendar-key math is UTC-based (`addCalendarDaysToKey`) so the Chicago reformat doesn't drop day 0.
+- 31 days total (`PROGRAM_TOTAL_DAYS`), max score 1020 = 372 mission + 93 concept + 155 commit + 400 project
+- New ENROLLED members **start at Day 4**; Days 1–3 are waived as PASSED with mission points (`npm run db:bootstrap:program-start-day` backfills existing members)
+- 5 server-verified mission types: CODE_SPRINT (hidden outputs), SHIP_IT (GitHub repo checks — file existence only; content/minLines/notebook checks gated off), DATA_ROOM (answers), PROMPT_FORGE (Anthropic eval cases), BOSS_BUILD (project submit). Unlimited runs, 15s spacing, 30/day cap. Pass unlocks the next day (+12 mission pts; `cleanPassCount` when passed on attempt #1).
+- Skip tokens (2, after ≥3 fails) are **disabled for members** currently; concept checks and the entry assessment are **bypassed** (`isProgramEntryBypassEnabled()` returns true unconditionally) — apply enrolls or waitlists directly
+- Commit tracking: daily Vercel cron polls GitHub per member repo; `commitPoints = 5 × qualifying ProgramCommitDay rows` (cap 150), preserving the existing floor via `Math.max` so seeded days aren't wiped. Commit UI is archived on Mission Control (`PROGRAM_COMMIT_UI_ENABLED = false`); backend retained.
+- At-risk = behind >2 days, stuck on a mission >2 IST days, or 0 commits in the last 5 days
+- Exit voice interview: one 15-min OpenAI Realtime WebRTC session per member, unlocked on Day 31 progress or cohort end; server-minted ephemeral secret at `POST /api/program/interview/session`; transcript stored then Claude-evaluated (comm / tech / problem / overall + summary), scored separately from `totalScore`; max 2 member restarts; admin can reset / re-evaluate
+- AI layer: admin-triggered Claude project grading (rubrics.json + GitHub context, admin override → AdminAction); member-triggered AI Mentor review (one per passed mission/day); batch recommendations with 7-day TTL; `projectPoints` recomputed idempotently via `recomputeMemberScore`
+- Recruiter portal `/talent`: Google sign-in + company profile, admin approval, pool gated on `cohort.resultsPublishedAt`; ranked profiles with mission portfolio, projects, interview summary, private shortlists. **Member phone / entry details are never exposed.**
+- `missionSpec` is server-only; `assetsJson` is the only client-safe day asset
+
+### Phone OTP
+- MSG91 OTP required in production; **skipped under `next dev`** (`isOtpVerificationRequired()` returns false when `NODE_ENV === "development"`)
+- `OTP_DEV_BYPASS=true` + `OTP_DEV_CODE` (default `1234`) for non-dev-mode local/CI runs
+
+### Admin actions
+- Original 5 student actions: markDayComplete (`admin-marked://` URL), resetProgress, toggleReadyForInterview, removeFromChallenge (soft → ABANDONED), rejectSubmission
+- Plus hackathon, program, recruiter, redemption, job, remark and link admin mutations — **all wrapped in a transaction with an `AdminAction` audit row**, surfaced in the paginated `/admin/actions` feed
 
 ---
 
@@ -146,254 +207,266 @@ A 60-day coding challenge platform built around Anil Bajpai's community of recru
 
 ### Two auth modes
 - **Production (Vercel):** Google OAuth only. `ENABLE_DEV_AUTH` not set.
-- **Local dev:** Both Google OAuth (if configured) AND Credentials (email + plaintext password).
+- **Local dev:** Google OAuth (if configured) AND Credentials (email + plaintext password).
+- Dev credentials login always navigates **same-origin** (ignores the `AUTH_URL` host in `result.url`) so LAN/phone testing works; local `AUTH_URL` is optional when `trustHost` is on. `allowedDevOrigins` auto-includes LAN IPv4s so Next 16 serves `/_next` on the Network URL.
 
 ### Auth.js v5 split config
-- `src/auth.config.ts` — minimal, edge-safe (no Prisma, no `@/lib/*` imports). Used by middleware.
-- `src/auth.ts` — full config with PrismaAdapter and real Credentials authorize. Used everywhere else.
-- This split is REQUIRED because middleware on Vercel runs in Edge Runtime with strict bundle size limits. Including Prisma would exceed the 1 MB Edge limit.
+- `src/auth.config.ts` — minimal, edge-safe (no Prisma, no `@/lib/*`). Used by middleware.
+- `src/auth.ts` — PrismaAdapter + real Credentials authorize. Used everywhere else.
+- Required because Vercel middleware runs in Edge Runtime with a 1 MB bundle limit.
 
 ### Session strategy
-- JWT-based sessions (stateless, no DB lookup per request)
-- `AUTH_SECRET` required env var (no fallback)
-- `trustHost: true` set for Vercel proxy compatibility
-- Cookies: `__Secure-authjs.session-token` (production HTTPS) or `authjs.session-token` (local HTTP)
+- JWT sessions (stateless). `AUTH_SECRET` required, no fallback. `trustHost: true`.
+- Cookies: `__Secure-authjs.session-token` (prod) / `authjs.session-token` (local)
 
-### Admin authentication
-- Email-based gating via `ADMIN_EMAILS` env var (comma-separated list)
-- `requireAdmin()` helper redirects non-admins to `/dashboard`
-- `session.user.isAdmin` boolean computed in JWT/session callback
-- No DB role assignment for admin (just env var membership)
+### Authorization layers
+- **Admin:** email-based via `ADMIN_EMAILS`; `requireAdmin()` in `lib/admin-auth.ts`; `session.user.isAdmin` computed in the JWT/session callback. No DB role for admin.
+- **Program / recruiter:** `lib/program-auth.ts` (node-only) — `requireProgramMember` (resolved by membership, not by role) and `requireRecruiter` (DB-checked, `Role.RECRUITER` + admin approval)
+- **Middleware:** path-prefix list only (`/dashboard`, `/explore`, `/challenge/`, `/profile`, `/achievements`, `/quiz`, `/register`, `/admin`, `/jobs`, `/mission`, `/program/*` app routes, `/talent`, `/hackathon/register`, `/hackathon/dashboard`) — redirects to `/login?from=…`. It also sets the `abtalks_ref` and `abtalks_src` tracking cookies on every request.
 
 ### Stale session warning
-- JWT sessions don't verify user still exists in DB on every request
-- If a user is deleted from DB, their browser cookie remains valid until expiry
-- Cleanup script deletions require users to clear cookies / use incognito to re-auth
-- Foreign key violations possible if action tries to use a deleted-user's userId
+- JWT sessions don't verify the user still exists in the DB per request. Deleted users keep a valid cookie until expiry; FK violations are possible. Cleanup-script deletions require clearing cookies / incognito.
 
 ---
 
 ## 7. Routing structure
 
-### Public routes
-- `/` — landing page (real marketing landing in `components/landing/`, no longer a placeholder)
-- `/login` — Server Component, redirects logged-in users to dashboard or register based on profile state
-- `/students/[id]` — public profile page for a finished/active student (basic info only — no email, phone, resume)
-- `/claude-signup` — public Claude track signup / interest page (Claude cohort entry)
-- `/ai-workshop` — standalone workshop registration microsite. Page is **public**; the registration form itself requires a Google session (email taken from the session, never the client). Signups go to Neon `WorkshopRegistration`; `workshop_config` (Zoom/WhatsApp links) is still read from Supabase.
-- `/ai-cohort-register` — guided 4-screen onboarding for the AI Cohort Training Program (landing → program overview → curriculum → audience CTA)
-- `/ai-cohort-register/apply` — 5-step application form (gated: requires completing onboarding; stored in workshop Supabase `cohort_applications`; confirmation email deferred)
+### Public
+- `/` — signed-out **three-track landing hub** (`components/landing/landing-hub.tsx`). Signed-in with a profile → `/dashboard`; signed-in without a profile → hackathon dashboard if registered, else `/register`.
+- `/challenges` — public 60-day challenge overview (domain picker, streak grid, FAQ)
+- `/login`
+- `/students/[id]` — public student profile (basic info only)
+- `/claude-signup` — Claude track signup / interest page
+- `/verify/[certificateId]` + `/verify/[certificateId]/download` — public certificate verification and PDF download
+- `/r/[token]` + `/r/[token]/pdf` — public share link for an admin-curated recruiter assessment report
+- `/ai-workshop`, `/ai-workshop/events` — workshop microsite. Page public; the **registration form requires a Google session**. Signups → Neon `WorkshopRegistration`; `workshop_config` (Zoom/WhatsApp links) still read from Supabase.
+- `/ai-cohort-register` + `/apply` — AI Cohort (US) onboarding + 5-step application → Supabase `cohort_applications`
+- `/ai-cohort-india` + `/apply` — India clone → Supabase `cohort_applications_india`
+- `/hackathon` — hackathon landing (`/hackathon/register` and `/hackathon/dashboard` are protected)
+- `/program` — program landing (gated by `ENABLE_PROGRAM`; `notFound()` when unset)
 
-### Protected routes (require session via middleware)
-- `/register` — Server Component, redirects to dashboard if profile + enrollment exist; auto-cleans orphaned profiles (profile without enrollment). Supports both STUDENT and PROFESSIONAL `userType`, and a CLAUDE-only forced-domain mode via `?domain=CLAUDE`.
-- `/dashboard` — student home with stats, today's task, leaderboard, heatmap, quiz card, recent activity
-- `/challenge/today` — redirects to `/challenge/{currentDay}`
-- `/challenge/[day]` — Server Component shows problem; renders submission flow client component. Uses `dailyTask.dayContent` (Json) when present (CLAUDE), otherwise legacy text fields.
-- `/profile` — view + edit profile
-- `/quiz/[quizId]` — take quiz or view results
+### Protected (student)
+- `/register` — supports STUDENT and PROFESSIONAL `userType`, plus CLAUDE-forced mode via `?domain=CLAUDE`; auto-cleans orphaned profiles
+- `/dashboard` — stats, today's task, leaderboard, heatmap, quiz card, recent activity
+- `/explore` — track list / cross-track discovery
+- `/challenge/today` → `/challenge/[day]` — uses `dailyTask.dayContent` when present, else legacy text fields
+- `/profile`, `/quiz/[quizId]`
+- `/achievements` — earned certificates
+- `/mission` — community / mission page (Discord link)
+- `/marketplace` — redeem SP
+- `/jobs`, `/jobs/[id]` — jobs board + apply
 
-### Admin routes (require admin email)
-- `/admin` — overview with stat cards, live submissions feed, recent admin actions
-- `/admin/students` — searchable/filterable student list
-- `/admin/students/[id]` — full student detail with tabs (Submissions, Quiz Attempts, Admin Actions) + StudentActionPanel
-- `/admin/submissions` — recent submissions feed, filterable
-- `/admin/content` — read-only viewer for problems and quizzes
-- `/admin/analytics` — Recharts dashboards (registrations, domain distribution, drop-off, hourly submissions, top performers)
-- `/admin/campus-ambassadors` — review students who flagged interest in the campus ambassador program (`isCampusAmbassadorCandidate`); accept / dismiss actions
-- `/admin/workshop` — per-event workshop registration rosters (`?event=` tabs), CSV export, Linked/Legacy badge showing whether the row has a `userId`
+### Protected (hackathon)
+- `/hackathon/register`, `/hackathon/dashboard`
+
+### Protected (program — all behind `ENABLE_PROGRAM`)
+- `/program/apply`, `/program/assessment`
+- `/program/dashboard` (Mission Control), `/program/day/[day]`, `/program/curriculum`, `/program/videos`, `/program/leaderboard`, `/program/interview`
+
+### Protected (recruiter talent portal)
+- `/talent`, `/talent/register`, `/talent/pending`, `/talent/members/[id]`, `/talent/shortlist`
+
+### Admin (`/admin`, requires admin email)
+- `/admin` — overview, live submissions feed, recent admin actions
+- `/admin/students`, `/admin/students/[id]` (tabs + StudentActionPanel + remarks)
+- `/admin/submissions`, `/admin/content`, `/admin/analytics`
+- `/admin/actions` — paginated audit-log feed
+- `/admin/campus-ambassadors`, `/admin/referrals`, `/admin/redemptions`
+- `/admin/jobs`, `/admin/jobs/[id]`
+- `/admin/workshop` — per-event rosters (Registrations / Analytics tabs, `?events=` filter), CSV export
+- `/admin/hackathon`, `/admin/hackathon/students`, `/admin/hackathon-links`
+- `/admin/ai-cohort` — Supabase cohort applications (US + India)
+- `/admin/program`, `/admin/program/members`, `/admin/program/members/[id]`, `/admin/program/content`, `/admin/program/projects`, `/admin/program/interviews`, `/admin/program/recruiters`
 
 ### API routes (sparse — most logic via Server Actions)
 - `/api/auth/[...nextauth]` — Auth.js handler
+- `/api/claude-recent-signups` — public ticker data
+- `/api/cron/program-commits` — Vercel cron, Bearer-auth via `CRON_SECRET`
+- `/api/program/interview/session` — mints an OpenAI Realtime ephemeral secret
 
 ---
 
 ## 8. Server Actions (`src/app/actions/`)
 
-- `auth-actions.ts` — signOutAction
-- `submission-actions.ts` — submitGithubStepAction (validate GitHub, return template), submitLinkedinStepAction (full submission with streak update)
-- `registration-actions.ts` — completeRegistrationAction (handles STUDENT and PROFESSIONAL `userType`, plus CLAUDE-domain forced flow)
-- `enrollment-actions.ts` — enroll/upgrade flows decoupled from initial registration (e.g. opt-in to a new Challenge after profile already exists)
-- `profile-actions.ts` — updateProfileAction
-- `quiz-actions.ts` — submitQuizAction
-- `referral-actions.ts` — setReferralCookie, getReferralCookie, clearReferralCookie
-- `admin-actions.ts` — 5 admin actions (markDayComplete, resetProgress, toggleReadyForInterview, removeFromChallenge, rejectSubmission)
-- `admin-export-actions.ts` — CSV export server actions (uses `lib/csv.ts`); admin-gated
-- `campus-ambassador-actions.ts` — student-side opt-in / dismiss + admin-side accept / reject for the campus ambassador program
-- `cohort-application-actions.ts` — `submitCohortApplicationAction` (public; inserts into workshop Supabase `cohort_applications`)
-- `workshop-actions.ts` — `submitWorkshopRegistrationAction` (**session-gated**; event resolved server-side via `getRegistrableEvent(istTodayKey())`, never from the client; `P2002` → duplicate message; confirmation email failure logged and swallowed)
+**Challenge core:** `auth-actions`, `registration-actions`, `enrollment-actions`, `submission-actions`, `profile-actions`, `quiz-actions`, `referral-actions`, `otp-actions`, `synergy-actions`
 
-All return discriminated union: `{ ok: true, data } | { ok: false, message }`
+**Student features:** `marketplace-actions`, `job-actions`
+
+**Hackathon:** `hackathon-actions`, `hackathon-auth-actions`, `hackathon-team-actions`
+
+**Workshop / cohort funnel:** `workshop-actions`, `cohort-application-actions`, `cohort-application-india-actions`
+
+**Program:** `program-entry-actions`, `program-mission-actions`, `program-ai-actions`, `program-interview-actions`, `talent-actions`
+
+**Recruiter (challenge side):** `recruiter-review-actions`
+
+**Admin:** `admin-actions`, `admin-export-actions`, `admin-remark-actions`, `admin-redemption-actions`, `admin-job-actions`, `admin-recruiter-actions`, `admin-hackathon-actions`, `admin-hackathon-link-actions`, `admin-program-actions`, `admin-program-export-actions`, `campus-ambassador-actions`
+
+All return the discriminated union `{ ok: true, data } | { ok: false, message }`.
 
 ---
 
 ## 9. Feature modules (`src/features/`)
 
-- `auth/` — login, register, logout
-- `registration/` — completeRegistration, generateUniqueReferralCode
-- `enrollment/` — post-registration enrollment helpers (separate from initial registration; e.g. Claude track signup, additional challenge enrollment)
-- `submission/` — validateGithubUrl, validateLinkedinUrl, submitDay
-- `challenge/` — getTodaysTask, getDayData
-- `dashboard/` — getDashboardData, getLeaderboard, getHeatmapData
-- `profile/` — getProfile, getPublicProfile (for `/students/[id]`), updateProfile, getReferralStats
-- `quiz/` — getAvailableQuiz, getQuizWithQuestions, submitQuiz
-- `user/` — cross-cutting user lookups, including `checkClaudeEnrollment` / `shouldShowClaudeBanner` used by header / profile / dashboard
-- `admin/` — getOverviewStats, getStudents, getStudentDetail, getSubmissionsFeed, getContent, getAnalyticsData (campus-ambassador admin views included)
-- `workshop/` — getRecentRegistrations (public ticker: first name + org only), getMyRegistration, getWorkshopRegistrations / getWorkshopEventCounts (admin). Note `getWorkshopConfig` is NOT here — it stays in `lib/workshop-supabase.ts`.
+`registration/` · `enrollment/` · `submission/` · `challenge/` · `dashboard/` · `profile/` · `quiz/` · `user/` · `synergy/` · `certificate/` · `marketplace/` · `jobs/` · `recruiter/` · `hackathon/` · `workshop/` · `program/` · `talent-pool/` · `email/` · `admin/`
+
+Notes:
+- `program/` is the largest module (missions, verify-mission, days, progression, commits, mentor, recommendations, projects, interview, leaderboard, entry, admin, bootstrap-start-day, parse-brief, constants)
+- `certificate/` owns ID generation, eligibility/issue, PDF render, template source, achievements
+- `workshop/` has admin data, analytics, prefill, recent registrations, registration status. `getWorkshopConfig` is **not** here — it stays in `lib/workshop-supabase.ts`.
+- `recruiter/` holds the `@react-pdf/renderer` document (`recruiter-pdf.tsx`) — keep it out of client/edge bundles
 
 ---
 
 ## 10. Content management
 
-- Content stored in JSON: `prisma/content/problems.json` and `prisma/content/quizzes.json`
-- Seeded via `npm run db:seed`
-- Upserts on (challengeId, dayNumber) for problems, on (challengeId, weekNumber) for quizzes
-- Quiz questions are clean-replaced on each reseed
-- Days/weeks NOT in JSON show as "Day X placeholder" content
-- Real Day 1-10 content + Week 1 quiz × 3 domains expected from senior (status: pending)
-- NO admin UI for content editing in v1
+- Challenge content: `prisma/content/problems.json`, `prisma/content/quizzes.json`, seeded via `npm run db:seed`
+- Upserts on (challengeId, dayNumber) / (challengeId, weekNumber); quiz questions clean-replaced each reseed
+- Program content seeded separately (`npm run db:seed:program`) — reseed after any mission-spec change
+- Marketplace catalog from `marketplace.json` (`npm run db:seed:marketplace`)
+- Days/weeks not in JSON render as "Day X placeholder"
+- NO admin UI for challenge content editing (program content has a read view at `/admin/program/content`)
 
 ---
 
-## 11. Test data (seed script)
+## 11. Seed scripts
 
-10 test users with `@abtalks.dev` emails, password `test`:
-- Arjun (SE, fresh Day 1)
-- Priya (DS, fresh Day 1)
-- Rohan (AI, fresh Day 1)
-- Sneha (SE, Day 7, has Week 1 quiz attempt)
-- Vikram (DS, Day 15)
-- Anika (SE, Day 30)
-- Karan (AI, Day 45, broken streak)
-- Meera (SE, Day 60, COMPLETED, isReadyForInterview)
-- Dhruv (SE, Day 20, has 3 referrals to Arjun/Priya/Rohan)
-- admin@abtalks.dev (ADMIN role, password "admin")
+```
+npm run db:seed                    # challenge content + 10 test users (@abtalks.dev)
+npm run db:seed:content            # content only
+npm run db:seed:test-users         # test logins only
+npm run db:seed:claude-test        # CLAUDE test users (incl. one deterministic 60/60 completed login)
+npm run db:seed:program            # program cohort content / missions
+npm run db:seed:program:users      # prog.*@abtalks.dev / "test" + test cohort, members, recruiters
+npm run db:seed:marketplace        # marketplace catalog
+npm run db:seed:hackathon-links    # named share links
+npm run db:bootstrap:program-start-day   # waive Days 1–3 for existing ENROLLED/COMPLETED members
+npm run db:backfill:certificates   # issue certs for already-eligible enrollments
+```
+
+Base test users (password `test`): Arjun (SE D1), Priya (DS D1), Rohan (AI D1), Sneha (SE D7 + quiz), Vikram (DS D15), Anika (SE D30), Karan (AI D45 broken streak), Meera (SE D60 COMPLETED + ready), Dhruv (SE D20 + 3 referrals), `admin@abtalks.dev` (ADMIN, password `admin`).
+
+`SEED_ALLOW_PRODUCTION` guards seeds against a production database.
 
 ---
 
-## 12. Cleanup scripts
+## 12. Cleanup & migration scripts
 
-`prisma/cleanup.ts` exposes:
-- `npm run db:cleanup:test` — delete only @abtalks.dev test users
-- `npm run db:cleanup:real` — delete all real Google users (keep test)
-- `npm run db:cleanup:all` — wipe everything
-Each prompts a 5-second pause before deletion. Cascades handle related rows.
+- `npm run db:cleanup:test | :real | :all` — delete test users / real Google users / everything (5s pause; cascades handle related rows)
+- `npm run hackathon:preflight | hackathon:migrate | hackathon:verify` — the Supabase → Neon hackathon cutover (`scripts/migrate-hackathon-to-neon.ts`). Already executed; kept for reference.
+- `scripts/merge-problems.mjs`, `scripts/seed-swarit-recruiter-profile.ts`
 
 ---
 
 ## 13. Environment variables
 
-### Required everywhere
-- `DATABASE_URL` — Neon Postgres connection string
-- `AUTH_SECRET` — random hex (64 bytes), no fallback in code
-- `AUTH_URL` — `https://abtalksapp.vercel.app` (prod) or `http://localhost:3000` (local)
-
-### Auth providers
-- `AUTH_GOOGLE_ID` — Google OAuth client ID
-- `AUTH_GOOGLE_SECRET` — Google OAuth secret
-
-### Local-only
-- `ENABLE_DEV_AUTH` — `"true"` enables Credentials provider on localhost ONLY
-
-### Admin
-- `ADMIN_EMAILS` — comma-separated list of admin email addresses
-
-### Public
+### Core
+- `DATABASE_URL` — Neon pooled connection
+- `DIRECT_URL` — Neon direct connection (migrations; added to fix deploy lock timeouts)
+- `AUTH_SECRET` — random hex, no fallback
+- `AUTH_URL` / `NEXTAUTH_URL` — site URL (optional locally when `trustHost` is on)
 - `NEXT_PUBLIC_APP_URL` — same as AUTH_URL
+- `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+- `ADMIN_EMAILS` — comma-separated admin emails
+
+### Feature flags
+- `ENABLE_DEV_AUTH` — Credentials provider, localhost only
+- `ENABLE_CLAUDE_CHALLENGE` — Claude track visibility
+- `ENABLE_PROGRAM` — gates all `/program` and `/talent` routes (`notFound()` when unset)
+- `BYPASS_DAY_LOCKS` — bypass challenge/program day gating server-side (dev)
+- `OTP_DEV_BYPASS`, `OTP_DEV_CODE` — skip MSG91, accept a fixed code (default `1234`)
+- `SEED_ALLOW_PRODUCTION` — required to run seeds against prod
+
+### Integrations
+- `ANTHROPIC_API_KEY` (+ optional `PROGRAM_ANTHROPIC_MODEL`, default `claude-sonnet-5`) — server-only Claude JSON grading via `lib/anthropic.ts`
+- `OPENAI_API_KEY` — Realtime `client_secrets` minting for the exit voice interview (server-only)
+- `GITHUB_API_TOKEN` — GitHub REST for SHIP_IT verification + the commit cron
+- `CRON_SECRET` — Bearer auth on `/api/cron/program-commits`
+- `RESEND_API_KEY`, `BREVO_API_KEY`, `FROM_EMAIL`, `FROM_NAME` — transactional email
+- `MSG91_AUTH_KEY`, `NEXT_PUBLIC_MSG91_WIDGET_ID`, `NEXT_PUBLIC_MSG91_TOKEN_AUTH` — phone OTP
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — `workshop_config` + cohort applications
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; was required for the Supabase hackathon tables (now retired)
+- `CERTIFICATE_TEMPLATE_URL` / `CERTIFICATE_TEMPLATE_PATH` — optional overrides for the certificate template
 
 ---
 
 ## 14. Conventions
 
 ### Code style
-- TypeScript strict mode, no `any` allowed
-- Server Components by default, `"use client"` only when needed
+- TypeScript strict, no `any`
+- Server Components by default; `"use client"` only when needed
 - Server Actions for mutations (preferred over API routes)
-- Zod validation at every boundary (action entry, route handler)
-- Prisma queries always use `select` clauses (no full-record returns)
-- Multi-step writes wrapped in transactions
-- Errors logged via `lib/logger.ts`, never `console.error`
-- Result envelope: `{ ok: true, data } | { ok: false, message }` everywhere
+- Zod validation at every boundary
+- Prisma queries always use `select`; multi-step writes in transactions
+- Errors via `lib/logger.ts`, never `console.error`
+- Result envelope `{ ok: true, data } | { ok: false, message }` everywhere
 
 ### Routing
-- Auth routes are public (no requireRole)
-- All other routes use `requireRole(["STUDENT", "ADMIN"])` or `requireAdmin()`
-- Logout is idempotent (always succeeds, fail-closed silent)
+- Auth routes are public (no `requireRole`)
+- Everything else uses `requireRole([...])` / `requireAdmin()` / `requireProgramMember()` / `requireRecruiter()`
+- Logout is idempotent (fail-closed silent)
 
 ### Files
 - `src/features/<domain>/` — business logic
-- `src/lib/` — shared utilities (db, auth, logger, validations)
+- `src/lib/` — shared utilities (db, auth, logger, validations, date-utils, feature-flags)
 - `src/app/actions/` — Server Actions
 - `src/components/ui/` — shadcn primitives (don't modify)
-- `src/components/<feature>/` — feature-specific components
+- `src/components/<feature>/` — feature components
+
+### Changelog discipline
+Cursor appends ONE dated line to `docs/CHANGELOG.md` under `## Pending reconcile` after any schema change, new/changed business rule, new env var, or new convention — never for cosmetic changes or bug fixes. Those lines are folded into **this** document during a reconcile pass. Cursor never edits `CLAUDE.md` or `docs/project-context.md`.
 
 ---
 
 ## 15. Design system
 
 ### Typography
-- Display font: Plus Jakarta Sans (font-display class) — for headings
-- Body font: Inter (default font-sans) — for body, buttons, inputs
+- Display: Plus Jakarta Sans (`font-display`) for headings; Body: Inter
+- `dseg7-classic` for seven-segment countdown displays
 
-### Colors (CSS vars in globals.css)
-- Light theme: warm off-white background (`38 38% 98%`), pure white cards
-- Dark theme: deep blue-gray background, slightly lighter cards
+### Colors (CSS vars in `globals.css`)
+- Light: warm off-white background, pure white cards. Dark: deep blue-gray.
 - Primary: indigo `239 84% 67%` (#4F46E5)
-- Domain colors:
-  - AI: violet `#8B5CF6`
-  - DS: cyan `#0891B2`
-  - SE: emerald `#10B981`
+- Domain colors — AI violet `#8B5CF6`, DS cyan `#0891B2`, SE emerald `#10B981`
 
 ### UX patterns
-- Cards: rounded-xl, soft border, subtle shadow, hover:shadow-md
-- Buttons: shadcn defaults, NEVER use `<Button asChild>` with `<Link>` — use `buttonVariants` directly on the Link instead (Base UI strict about button semantics)
-- Theme toggle: single button (sun/moon), light ↔ dark, system as initial default
-- Mobile-first responsive (390px tested)
-
-### Polish completed
-- Custom design pass replacing default shadcn slate
-- Domain badge in header (color-coded)
-- Theme toggle with optional click sound (off by default, configured in profile)
+- Cards: `rounded-xl`, soft border, subtle shadow, `hover:shadow-md`
+- Buttons: NEVER `<Button asChild>` or `<Button render={<Link>}>` — use `buttonVariants` directly on the `<Link>` (Base UI is strict about button semantics)
+- Theme toggle: single sun/moon button, system default; optional click sound (off by default)
+- Mobile-first (390px tested)
+- Program day pages use a distinct **Figma dark shell** with a `briefMd` section parser — deliberately not the challenge theme
 
 ---
 
 ## 16. Known issues / decisions parked
 
 ### Resolved (don't touch)
-- Edge Runtime middleware must avoid `@/lib/*` imports → split auth.config.ts
+- Edge Runtime middleware must avoid `@/lib/*` imports → split `auth.config.ts`
 - Auth.js v5 default cookie name change → `auth()` middleware pattern
-- Stale Prisma client after `node_modules` delete → `npx prisma generate` required
-- Postgres enum rename ML → DS via ALTER TYPE RENAME VALUE
-- Foreign key violation when User deleted but session still valid → user must clear cookies
-- `<Button render={<Link>}>` triggers Base UI nativeButton warning → use `buttonVariants` directly
+- Stale Prisma client after `node_modules` delete → `npx prisma generate`
+- Postgres enum rename ML → DS via `ALTER TYPE RENAME VALUE`
+- FK violation when User deleted but session still valid → clear cookies
+- `<Button render={<Link>}>` Base UI nativeButton warning → `buttonVariants`
+- Deploy lock timeouts on migrate → added `DIRECT_URL`
+- Day 60 not submittable → use uncapped `getElapsedDayNumber` for backfill/relaxation
+- Chicago reformat dropping commit day 0 → UTC calendar-key math
+- Dead login form over LAN IP → `allowedDevOrigins` includes LAN IPv4s
 
-### Shipped since the original doc snapshot (no longer pending)
-- Phone number on registration + profile, admin-only visibility (`StudentProfile.phone`, `optionalPhoneSchema` in `lib/validations/phone.ts`)
-- Clickable student names → public profile at `/students/[id]` (basic info only — see `features/profile/get-public-profile.ts`)
-- Resume link field on `StudentProfile.resumeUrl` (paste-a-URL flavour; Vercel Blob upload still deferred)
-- Real landing page at `/` (see `components/landing/`)
-- Campus ambassador program (student opt-in chip + admin review screen)
-- Professional `userType` track on `StudentProfile` (organization / role / yearsExperience)
-- CLAUDE 4th domain with synchronized cohort start via `Challenge.startsAt`, structured day content via `DailyTask.dayContent`, and the `/claude-signup` + Claude enrollment banner UX
-- CSV admin exports (`admin-export-actions.ts` + `lib/csv.ts`)
-- Confetti on celebration (`canvas-confetti` is in deps)
+### Cleanup candidates spotted during this reconcile
+- `src/lib/hackathon-supabase.ts` has **no importers** — dead since the Neon cutover; the same is true of `SUPABASE_SERVICE_ROLE_KEY`'s only documented purpose
+- `StudentProfile.phoneVerified*` + `PhoneVerification` were noted as "unused" when MSG91 was removed on 2026-07-21, then OTP was restored on 2026-07-27 — they are live again, but the OTP surface is skipped in dev
+- `ProgramEntryQuestion` / `ProgramEntryAttempt` and the skip-token machinery remain in the schema while bypassed in product
 
-### Pending tester feedback (planned but not built)
-- Leaderboard filters: college, domain, search by name; cross-domain view; scrolling
-- Resume **upload** (binary, Vercel Blob) — only the URL field exists today
-- More polish on celebration screen after day completion
-- Heatmap cells clickable to view past day's problem
-- Logo scroll animation (ABTalks → AB collapse on scroll)
+### Deferred / not built
+- Resume **upload** (binary, Vercel Blob) — only the URL field exists
+- Admin UI for challenge content CRUD
+- Plagiarism detection beyond global URL uniqueness
+- Rate limiting on auth/submission endpoints
+- Email verification (Google handles OAuth users)
+- Heatmap cells clickable to view a past day's problem
+- Logo scroll animation (ABTalks → AB collapse)
 
-### Deferred to Phase 2 (post-launch)
-- Recruiter dashboard, registration, approval
-- Admin UI for content CRUD (editing problems via UI instead of JSON)
-- Plagiarism detection (currently only global URL uniqueness)
-- Email notifications (welcome, streak warnings)
-- Email verification (Google handles for OAuth users)
-- Rate limiting on submission/login
-- Password complexity rules (only min 8 today)
-
-### Security TODOs (`docs/security-todos.md`)
+### Security TODOs
 - No rate limiting on auth or submission endpoints
 - No email verification for any flow
 - No password policy beyond min 8 chars
@@ -406,80 +479,52 @@ Each prompts a 5-second pause before deletion. Cascades handle related rows.
 ## 17. Working with Cursor — guardrails
 
 ### Before any DB-touching change
-1. Commit current state: `git add -A && git commit -m "checkpoint before X"`
-2. Create Neon branch as snapshot
-3. Note current commit hash
+1. `git add -A && git commit -m "checkpoint before X"`
+2. Create a Neon branch as a snapshot
+3. Note the commit hash
 
 ### Cursor failure modes observed
-- Adds `requireRole` to public routes (logout, login) when rule says "every route needs it" — must explicitly mark exceptions
-- Confuses Server vs Client component boundaries when passing component props (e.g., Lucide icons)
+- Adds `requireRole` to public routes (logout, login) — mark exceptions explicitly
+- Confuses Server vs Client boundaries when passing props (Lucide icons, functions)
 - Defends wrong choices when build errors contradict its model (jose subpath import)
-- Over-engineers (creates files like `lib/jwt-env.ts` for trivial logic)
-- Misses transitive imports causing Edge Runtime bundle size violations
+- Over-engineers (new files for trivial logic)
+- Misses transitive imports causing Edge bundle violations
 - Sometimes silently fails to apply file changes
 
-### Working pattern that works
-1. Small, scoped prompts (one feature at a time)
-2. Explicit "do NOT" lists in prompts
-3. Cursor reports back, you verify
-4. Manually test each change before committing
-5. Commit after each successful task
-6. If something breaks: gather data (logs, file contents, exact error) before fixing
+### Working pattern
+Small scoped prompts → explicit "do NOT" lists → Cursor reports back → you verify → manually test → commit per task. On breakage, gather data (logs, file contents, exact error) before fixing.
 
 ---
 
 ## 18. Current state
 
-### Working
-- Full auth flow (Google OAuth + dev login)
-- Registration with three domains
-- Dashboard with stats, leaderboard, heatmap, quiz card, recent activity
-- Challenge submission with GitHub validation + LinkedIn template (editable)
-- Quizzes (Week 1 only seeded; logic supports 1-8)
-- Profile view + edit
-- Referral system with cookie persistence and badges
-- Theme toggle (light/dark/system)
-- Admin dashboard: overview, students, student detail, submissions feed, content viewer, analytics, action panel with audit log
+### Live and working
+- Auth (Google OAuth + dev credentials), registration (STUDENT / PROFESSIONAL / CLAUDE-forced)
+- 60-Day Challenge: dashboard, day pages, submissions with optional proofs, streaks, leaderboard, heatmap, quizzes, profile, referrals, Synergy points
+- Certificates: issue, achievements page, public verification + PDF download
+- Marketplace (SP redemption) and Jobs board
+- Hackathon: landing, solo/team registration, dashboard, share-link attribution, member removal
+- Workshops: microsite, session-gated registration on Neon, admin rosters + analytics
+- AI Cohort applications (US + India) on Supabase, admin viewer
+- Program (`/program`): apply, Mission Control, day pages, missions, commits cron, AI grading/mentor/recommendations, exit voice interview, leaderboard
+- Recruiter surfaces: `/talent` portal (program) and `/r/[token]` assessment reports + PDF (challenge)
+- Admin: 20+ pages spanning students, submissions, content, analytics, actions feed, referrals, redemptions, jobs, workshop, hackathon, ai-cohort, program
 - Production deployment on Vercel
 
 ### Not yet built
-- Real Day 1-10 content (pending from senior, seeded with placeholders)
-- Landing page at `/` (currently placeholder)
-- Recruiter side (Phase 2)
-
-### Active testing
-- Parallel testing in progress with multiple Google accounts
-- Real Google users have been onboarded (no real student users; testers only)
-- Cleanup scripts available to wipe test data before real launch
+- Full real Day 1–60 content for SE / DS / AI (placeholders remain where JSON is missing)
+- Resume upload (binary)
 
 ### Next priorities
-1. Tester feedback batch (leaderboard filters, clickable names, phone, resume) — chosen order: phone → leaderboard → clickable → resume
-2. Real content from senior when delivered
-3. Landing page before broader launch
-4. Soft launch to 5-10 trusted users
-
-### In planning: B2B AI Mastery Program (recruiter-oriented cohort)
-A separate 30-day, 4-module program for working professionals (max 100/batch, free),
-with a timed entry assessment (MCQ), then hands-on **Daily Missions** verified like CI
-in an in-browser Workbench (5 mission types: CODE_SPRINT, SHIP_IT, DATA_ROOM,
-PROMPT_FORGE, BOSS_BUILD; iterate-until-green gating + 2 skip tokens), GitHub commit
-tracking, AI-graded module projects + AI Mentor reviews, AI recommendations, an exit
-real-time voice AI interview, and a post-cohort recruiter portal (`/talent`, recruiter
-login + admin approval) featuring each member's mission portfolio. Fully specified in
-`docs/plans/023-b2b-program-00-roadmap.md` (v2) with sequential implementation plans
-`024`–`032`. Key upcoming env vars: `ENABLE_PROGRAM`, `GITHUB_API_TOKEN`,
-`CRON_SECRET`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Update the architecture sections
-of this doc as each phase actually ships (each plan says when).
+Driven by whichever track is actively launching. Check `docs/plans/` for the newest numbered plans — `052`–`054` (workshop → Neon + auth) are the most recent completed work.
 
 ---
 
 ## 19. How to use this document in new chats
 
-Open a new chat and paste this entire document at the start, with a message like:
+Paste this entire document at the start of a new chat with:
 
 > "I'm working on a project called ABTalks. Read this context document carefully before we start. After reading, just say 'Context loaded' and ask me what I want to work on."
-
-This onboards the AI with everything needed to continue. Update this document at major milestones to keep it current.
 
 ---
 
@@ -492,9 +537,6 @@ Update this document when:
 - New env vars added
 - New conventions adopted
 
-Don't update for:
-- Tiny bug fixes
-- Cosmetic changes
-- Routine commits
+Don't update for tiny bug fixes, cosmetic changes, or routine commits.
 
-The doc should reflect the architecture and decisions, not every line of code.
+**Reconcile pass:** read `docs/CHANGELOG.md` → `## Pending reconcile`, fold every line into the right section here, then clear that list and note the reconciled-through date at the top of this file. The doc should reflect architecture and decisions, not every line of code.

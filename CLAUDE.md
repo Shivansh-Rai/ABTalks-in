@@ -1,11 +1,15 @@
 # CLAUDE.md — ABTalks
 
 ## What this project is
-ABTalks is a 60-day coding challenge platform for Indian college students
-(1st year through recent grads, mostly mobile). Students do daily tasks across
-three domains (AI / DS / SE), submit GitHub + LinkedIn proof of work, build
-streaks, and become discoverable to recruiters after finishing the challenge.
-Solo-developer build, free-tier hosting (Vercel + Neon), currently pre-launch.
+ABTalks started as a 60-day coding challenge platform for Indian college students
+(1st year through recent grads, mostly mobile): daily tasks across four domains
+(AI / DS / SE / CLAUDE), GitHub + LinkedIn proof of work, streaks, and recruiter
+discoverability after finishing. It now runs four tracks on one auth + admin spine:
+the **60-Day Challenge**, the **AI Cohort Program** (`/program`, 31 days, working
+professionals, plus the `/talent` recruiter portal), the **Hackathon**
+(`/hackathon`), and the **Workshop / cohort-application funnel** (`/ai-workshop`,
+`/ai-cohort-register`, `/ai-cohort-india`). Solo-developer build, free-tier hosting
+(Vercel + Neon), live in production.
 
 ## Your role here: ARCHITECT, not executor
 You handle PLANNING and ARCHITECTURE. A separate tool (Cursor) writes the code.
@@ -33,8 +37,12 @@ here, to keep this file lean.)
 - Split auth config: `auth.config.ts` is edge-safe (no Prisma); `auth.ts` has
   PrismaAdapter + Credentials. Keep them split.
 - Prisma pinned to 6.x (NOT 7).
-- IST (Asia/Kolkata) for all day boundaries. Day 1 = enrollment day in IST.
-  Use `lib/date-utils.ts`.
+- IST (Asia/Kolkata) for all CHALLENGE day boundaries. Day 1 = reference start day
+  in IST. Use `lib/date-utils.ts`. `getCurrentDayNumber` caps at 60 (display,
+  unlocking, streaks); `getElapsedDayNumber` is uncapped and is the ONLY correct
+  input for backfill / relaxation-window decisions.
+  **Exception:** the `/program` track runs on America/Chicago — see
+  `features/program/constants.ts`. Never mix the two.
 - Result envelope everywhere: `{ ok: true, data } | { ok: false, message }`.
 - Zod at every boundary (action entry, route handler). Strict TS — no `any`.
 - Server Components by default; `"use client"` only when needed. Mutations via
@@ -46,18 +54,33 @@ here, to keep this file lean.)
 - Logging via `lib/logger.ts`, never `console.error`.
 
 ## Project layout
-- `src/features/<domain>/` — business logic (auth, registration, submission,
-  challenge, dashboard, profile, quiz, admin)
-- `src/app/actions/` — Server Actions
-- `src/lib/` — db, auth, logger, validations, date-utils
+- `src/features/<domain>/` — business logic. 19 modules: registration, enrollment,
+  submission, challenge, dashboard, profile, quiz, user, synergy, certificate,
+  marketplace, jobs, recruiter, hackathon, workshop, program, talent-pool, email,
+  admin. (No `auth/` module — auth lives in `src/auth.ts` + `src/lib/*-auth.ts`.)
+- `src/app/actions/` — Server Actions (34 files, grouped by track)
+- `src/lib/` — db, auth (admin-auth, program-auth), logger, validations,
+  date-utils, feature-flags, anthropic, email, csv
 - `src/components/ui/` — shadcn primitives (do not modify)
 - `src/components/<feature>/` — feature components
 - `prisma/content/*.json` — seeded problem/quiz content
 
 ## Commands
-- `npm run db:seed` — seed content + 10 test users (@abtalks.dev)
+- `npm run db:seed` — challenge content + 10 test users (@abtalks.dev)
+- `npm run db:seed:program | :program:users | :marketplace | :claude-test |
+  :hackathon-links | :content | :test-users` — per-track seeds
 - `npm run db:cleanup:test | :real | :all` — wipe test / real / all (5s pause)
+- `npm run db:backfill:certificates`, `npm run db:bootstrap:program-start-day`
 - `npx prisma generate` — regenerate client (required after node_modules changes)
+
+## Reconcile pass
+Cursor logs every architecturally significant change as ONE dated line under
+`## Pending reconcile` in `docs/CHANGELOG.md` (see `.cursorrules`). When I say
+"reconcile": read that list, fold each line into the right section of
+`docs/project-context.md`, verify it against the actual code (the log is a claim,
+not proof), and update the reconciled-through date at the top of that file. Ask
+before clearing the CHANGELOG list — it is Cursor's append-only log, outside the
+file set above.
 
 ## Planning workflow
 When I ask you to plan a feature:
