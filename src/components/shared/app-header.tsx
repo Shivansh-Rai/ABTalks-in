@@ -40,6 +40,7 @@ type Props = {
   headerDomain?: Domain | null;
   userEnrollments?: ChallengeSwitcherEnrollment[];
   activeEnrollmentId?: string;
+  isHackathonRegistered?: boolean;
 };
 
 function displayLabel(user: AppHeaderUser): string {
@@ -58,6 +59,7 @@ export function AppHeader({
   user,
   userEnrollments,
   activeEnrollmentId,
+  isHackathonRegistered = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -66,7 +68,7 @@ export function AppHeader({
     pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   const label = displayLabel(user);
   const showChallengeSwitcher =
-    (userEnrollments?.length ?? 0) >= 2 &&
+    (userEnrollments?.length ?? 0) >= 1 &&
     !!activeEnrollmentId &&
     (userEnrollments?.some((e) => e.id === activeEnrollmentId) ?? false);
 
@@ -118,6 +120,7 @@ export function AppHeader({
               <ChallengeSwitcher
                 enrollments={userEnrollments!}
                 activeEnrollmentId={activeEnrollmentId!}
+                isHackathonRegistered={isHackathonRegistered}
               />
             </Suspense>
           ) : null}
