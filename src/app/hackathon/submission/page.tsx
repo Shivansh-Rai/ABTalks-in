@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { MissionTimer } from "@/components/hackathon/dashboard/mission-timer";
 import { BriefList } from "@/components/hackathon/submission/brief-list";
+import { EvaluationRules } from "@/components/hackathon/submission/evaluation-rules";
 import { LockedState } from "@/components/hackathon/submission/locked-state";
 import { SubmissionForm } from "@/components/hackathon/submission/submission-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -95,6 +96,8 @@ async function SubmissionContent({
       />
 
       <BriefList briefs={briefs} selectedId={submission?.problemId ?? null} />
+
+      <EvaluationRules />
 
       {briefs.length === 0 ? (
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
