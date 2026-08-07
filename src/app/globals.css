@@ -361,6 +361,16 @@
   }
 }
 
+/* Swipeable card rails: keep the native scrollbar out of the layout without
+   losing scrollability (the testimonials carousel pairs this with arrows). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
