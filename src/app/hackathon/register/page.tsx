@@ -84,12 +84,14 @@ export default async function HackathonRegisterPage() {
                 Thanks for your interest. Registration for this hackathon has
                 closed. Follow ABTalks for the next event.
               </p>
-              <Link
-                href="/hackathon"
-                className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex")}
+              <a
+                href="https://abtalks.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants(), "mt-4 inline-flex")}
               >
-                Back to landing
-              </Link>
+                Explore ABTalks
+              </a>
             </div>
           )}
         </div>

@@ -33,10 +33,10 @@ const TRACKS = [
     title: "Vibe Code Hackathon",
     blurb:
       "Build anything using AI in 48 hours. Compete solo or with a team of up to three and ship something real.",
-    pill: "Registration open",
+    pill: "Registration closed",
     chips: ["48 hours", "Teams of 1–3"],
-    href: "/hackathon?s=shr",
-    ctaLabel: "Register now",
+    href: "https://abtalks.in",
+    ctaLabel: "Explore ABTalks",
   },
   {
     accent: "indigo" as const,

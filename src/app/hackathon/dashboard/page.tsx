@@ -9,8 +9,10 @@ import { ProblemStatementPanel } from "@/components/hackathon/dashboard/problem-
 import { SponsorPanel } from "@/components/hackathon/dashboard/sponsor-panel";
 import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission-checklist";
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
+import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getSubmissionWindow } from "@/features/hackathon/submission-window";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Your Dashboard | ABTalks Vibe Code Hackathon",
@@ -34,6 +36,14 @@ export default async function HackathonDashboardPage() {
             Thanks for your interest. Registration for this hackathon has
             closed. Follow ABTalks for the next event.
           </p>
+          <a
+            href="https://abtalks.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants(), "mt-4 inline-flex")}
+          >
+            Explore ABTalks
+          </a>
         </section>
       </div>
     );
