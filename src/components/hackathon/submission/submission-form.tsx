@@ -213,7 +213,7 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
       {movingBrief && initialBrief && selectedBrief ? (
         <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           Your saved entry is for <strong>{initialBrief.title}</strong>. Saving now moves it to{" "}
-          <strong>{selectedBrief.title}</strong> — you can only enter one brief.
+          <strong>{selectedBrief.title}</strong> you can submit only one problem statement.
         </div>
       ) : null}
 
