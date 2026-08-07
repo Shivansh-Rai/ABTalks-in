@@ -6,26 +6,25 @@ export type HackathonBrief = {
   number: number;
   title: string;
   tagline: string;
-  body: string[];
+  bodyMd: string;
 };
 
-function parseStatement(statement: string): Pick<HackathonBrief, "tagline" | "body"> {
+function parseStatement(
+  statement: string,
+): Pick<HackathonBrief, "tagline" | "bodyMd"> {
   const trimmed = statement.trim();
   if (!trimmed) {
-    return { tagline: "", body: [] };
+    return { tagline: "", bodyMd: "" };
   }
 
-  const [firstLine = "", ...rest] = trimmed.split("\n");
-  const remainder = rest.join("\n").trim();
+  const newline = trimmed.indexOf("\n");
+  if (newline === -1) {
+    return { tagline: trimmed, bodyMd: "" };
+  }
 
   return {
-    tagline: firstLine.trim(),
-    body: remainder
-      ? remainder
-          .split(/\n\s*\n/)
-          .map((part) => part.trim())
-          .filter(Boolean)
-      : [],
+    tagline: trimmed.slice(0, newline).trim(),
+    bodyMd: trimmed.slice(newline + 1).trim(),
   };
 }
 
@@ -46,7 +45,7 @@ export async function getHackathonProblems(): Promise<HackathonBrief[]> {
       number: index + 1,
       title: row.title,
       tagline: parsed.tagline,
-      body: parsed.body,
+      bodyMd: parsed.bodyMd,
     };
   });
 }

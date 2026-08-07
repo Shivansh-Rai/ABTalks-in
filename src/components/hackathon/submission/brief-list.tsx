@@ -1,4 +1,6 @@
+import type { Components } from "react-markdown";
 import { ChevronDown } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 
 type Props = {
@@ -7,9 +9,82 @@ type Props = {
     number: number;
     title: string;
     tagline: string;
-    body: string[];
+    bodyMd: string;
   }[];
   selectedId: string | null;
+};
+
+const briefMdComponents: Components = {
+  h1: ({ children }) => (
+    <h3 className="mt-6 text-base font-semibold tracking-tight text-white first:mt-0">
+      {children}
+    </h3>
+  ),
+  h2: ({ children }) => (
+    <h3 className="mt-6 text-base font-semibold tracking-tight text-white first:mt-0">
+      {children}
+    </h3>
+  ),
+  h3: ({ children }) => (
+    <h4 className="mt-4 text-sm font-semibold tracking-tight text-[#C4B5FD]">
+      {children}
+    </h4>
+  ),
+  h4: ({ children }) => (
+    <h5 className="mt-3 text-sm font-semibold text-[#C4B5FD]">{children}</h5>
+  ),
+  p: ({ children }) => (
+    <p className="mt-3 text-sm leading-relaxed text-zinc-300 first:mt-0">
+      {children}
+    </p>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-[#C4B5FD]">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic text-zinc-300">{children}</em>,
+  ul: ({ children }) => (
+    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-300">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-zinc-300">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="pl-0.5">{children}</li>,
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="break-all text-[#A78BFA] underline-offset-2 hover:underline"
+    >
+      {children}
+    </a>
+  ),
+  code: ({ className, children }) => {
+    const isBlock = Boolean(className);
+    if (isBlock) {
+      return <code className={className}>{children}</code>;
+    }
+    return (
+      <code className="rounded-md border border-[#7364E6]/30 bg-[#7364E6]/15 px-1.5 py-0.5 font-mono text-[0.85em] text-[#C4B5FD]">
+        {children}
+      </code>
+    );
+  },
+  pre: ({ children }) => (
+    <pre className="mt-3 overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-xs leading-relaxed text-zinc-200">
+      {children}
+    </pre>
+  ),
+  hr: () => <hr className="my-5 border-white/10" />,
+  blockquote: ({ children }) => (
+    <blockquote className="mt-3 border-l-2 border-[#7364E6]/50 pl-3 text-sm italic text-zinc-400">
+      {children}
+    </blockquote>
+  ),
 };
 
 export function BriefList({ briefs, selectedId }: Props) {
@@ -50,16 +125,14 @@ export function BriefList({ briefs, selectedId }: Props) {
               <ChevronDown className="ml-auto size-5 shrink-0 text-zinc-500 transition-transform group-open:rotate-180" />
             </summary>
 
-            <div className="mt-4 space-y-3">
-              {brief.body.length > 0 ? (
-                brief.body.map((paragraph) => (
-                  <p key={paragraph} className="text-sm leading-relaxed text-zinc-300">
-                    {paragraph}
-                  </p>
-                ))
+            <div className="mt-4">
+              {brief.bodyMd ? (
+                <ReactMarkdown components={briefMdComponents}>
+                  {brief.bodyMd}
+                </ReactMarkdown>
               ) : (
                 <p className="text-sm text-zinc-400">
-                  Full brief drops here shortly — watch the WhatsApp group.
+                  Problem statement 3 will be updated soon.
                 </p>
               )}
             </div>
