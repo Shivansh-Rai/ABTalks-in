@@ -10,7 +10,7 @@ const logoUrl = `${appUrl}/abtalks-logo.png`;
 const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
 
 const WHATSAPP_LINK =
-  "https://chat.whatsapp.com/HbBDtKpAIPk9HXjatXBe8t?s=cl&p=a&ilr=1";
+  "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1";
 const SOCIALS = {
   linkedin: "https://www.linkedin.com/company/abtalks-on-ai",
   youtube: "https://youtube.com/@abtalksonai",

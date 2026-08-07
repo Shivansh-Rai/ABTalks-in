@@ -22,7 +22,7 @@ export const HACKATHON = {
   rosterLockUtc: "2026-08-04T18:30:00Z", // Tue 4 Aug 11:59 PM IST (= 5 Aug 00:00 IST)
   rosterLockLabel: "Tuesday, 4 Aug · 11:59 PM IST",
 
-  whatsappLink: "https://chat.whatsapp.com/HbBDtKpAIPk9HXjatXBe8t?s=cl&p=a&ilr=1",
+  whatsappLink: "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 
   // TODO(organizer): paste the real Breeth redeem URL before kickoff.
