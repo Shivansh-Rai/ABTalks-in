@@ -129,7 +129,7 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
           <h2 className="text-lg font-semibold text-white">Your submission</h2>
           {showIncompleteBadge ? (
             <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300">
-              Incomplete — add your live URL and AI-usage log before the deadline.
+              Incomplete - add your live URL and AI-usage log before the deadline.
             </span>
           ) : null}
         </div>
@@ -173,7 +173,7 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
         <h2 className="text-lg font-semibold text-white">Submission</h2>
         {showIncompleteBadge ? (
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300">
-            Incomplete — add your live URL and AI-usage log before the deadline.
+            Incomplete - add your live URL and AI-usage log before the deadline.
           </span>
         ) : null}
       </div>
@@ -198,7 +198,7 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
                 : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/25 hover:text-white",
             )}
           >
-            BRIEF {brief.number}
+            PROBLEM STATEMENT {brief.number}
           </button>
         ))}
       </div>

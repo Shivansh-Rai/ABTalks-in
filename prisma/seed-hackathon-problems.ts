@@ -1,20 +1,30 @@
+import fs from "node:fs";
+import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+
+function loadStatement(id: string): string {
+  const full = path.join(
+    process.cwd(),
+    "prisma",
+    "content",
+    "hackathon",
+    `${id}.md`,
+  );
+  return fs.readFileSync(full, "utf-8").replace(/^\uFEFF/, "").trimEnd() + "\n";
+}
 
 const CANONICAL = [
   {
     id: "HACKPS2608001",
     sortOrder: 1,
     title: "Redesign ABTalks",
-    // First line = tagline. Body goes after a blank line.
-    statement: "Reimagine the platform you're standing on.",
+    statement: loadStatement("HACKPS2608001"),
   },
   {
     id: "HACKPS2608002",
     sortOrder: 2,
-    // TODO(organizer): confirm this is one title, not a title + kicker.
-    title: "AI Interview Agent - 02 · The Interview Agent",
-    statement:
-      "Build an agent that runs a real technical interview and gives feedback worth acting on.",
+    title: "The Interview Agent",
+    statement: loadStatement("HACKPS2608002"),
   },
   {
     id: "HACKPS2608003",
@@ -94,7 +104,7 @@ async function main() {
         sortOrder: row.sortOrder,
       },
     });
-    console.log(`upserted: ${row.id}`);
+    console.log(`upserted: ${row.id} (${row.statement.length} chars)`);
   }
 
   const strays = await prisma.hackathonProblem.findMany({
@@ -120,12 +130,14 @@ async function main() {
   }
 
   const rows = await prisma.hackathonProblem.findMany({
-    select: { id: true, title: true, sortOrder: true },
+    select: { id: true, title: true, sortOrder: true, statement: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
   console.log(`total briefs now: ${rows.length}`);
   for (const row of rows) {
-    console.log(`  - ${row.sortOrder}: ${row.id} (${row.title})`);
+    console.log(
+      `  - ${row.sortOrder}: ${row.id} (${row.title}) [${row.statement.length} chars]`,
+    );
   }
 
   await prisma.$disconnect();

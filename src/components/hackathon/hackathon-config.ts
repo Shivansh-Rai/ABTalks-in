@@ -14,7 +14,7 @@ export const HACKATHON = {
   // Open while now < this instant (Fri 7 Aug 6:00 PM IST).
   registrationClosesUtc: "2026-08-07T12:30:00Z",
   registrationClosesLabel: "Registration closes Friday, 7 Aug · 6:00 PM IST",
-  briefsHeading: "Choose your Brief",
+  briefsHeading: "Problem Statements",
 
   // Leaders can edit the roster (remove a teammate) up to and including
   // Tue 4 Aug IST — 3 days before kickoff. This instant is 5 Aug 00:00 IST, so
