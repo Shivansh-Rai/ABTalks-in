@@ -210,6 +210,10 @@ export default async function AdminStudentDetailPage({
               <span className="text-muted-foreground">Last Submitted Day:</span>{" "}
               {data.progress.lastSubmittedDay ?? "-"}
             </p>
+            <p>
+              <span className="text-muted-foreground">Synergy Points:</span>{" "}
+              {data.profile.synergyPoints}
+            </p>
           </CardContent>
         </Card>
       </div>
