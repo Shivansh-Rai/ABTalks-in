@@ -30,8 +30,7 @@ const CANONICAL = [
     id: "HACKPS2608003",
     sortOrder: 3,
     title: "Autonomous AI Creator",
-    // TODO(organizer): tagline + body. Empty statement renders the placeholder.
-    statement: "",
+    statement: loadStatement("HACKPS2608003"),
   },
 ] as const;
 
