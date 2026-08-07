@@ -25,7 +25,19 @@ export default async function HackathonDashboardPage() {
 
   const reg = await getMyRegistration(session.user.id);
   if (!reg) {
-    redirect("/hackathon/register");
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            Registration is closed
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+            Thanks for your interest. Registration for this hackathon has
+            closed. Follow ABTalks for the next event.
+          </p>
+        </section>
+      </div>
+    );
   }
 
   const { problemStatement } = await getHackathonEvent();

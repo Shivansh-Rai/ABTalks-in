@@ -2,7 +2,7 @@ export const HACKATHON = {
   name: "ABTalks Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
   // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
-  registrationOpen: true,
+  registrationOpen: false,
   maxTeamSize: 3,
 
   // TODO(organizer): replace the three date values below before launch.

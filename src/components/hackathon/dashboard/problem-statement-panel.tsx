@@ -57,11 +57,6 @@ export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
       >
         {closed ? "View your submission" : "Check Problem Statements"}
       </Link>
-      {!closed ? (
-        <p className="mt-3 text-sm text-zinc-400">
-         Pick one and submit before {HACKATHON.deadlineLabel}.
-        </p>
-      ) : null}
     </section>
   );
 }
