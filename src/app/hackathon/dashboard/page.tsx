@@ -9,7 +9,6 @@ import { ProblemStatementPanel } from "@/components/hackathon/dashboard/problem-
 import { SponsorPanel } from "@/components/hackathon/dashboard/sponsor-panel";
 import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission-checklist";
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
-import { getHackathonEvent } from "@/features/hackathon/get-hackathon-event";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getSubmissionWindow } from "@/features/hackathon/submission-window";
 
@@ -40,7 +39,6 @@ export default async function HackathonDashboardPage() {
     );
   }
 
-  const { problemStatement } = await getHackathonEvent();
   const submissionWindow = getSubmissionWindow();
   const firstName = reg.me.fullName.split(" ")[0] ?? reg.me.fullName;
   const entryChip =
@@ -72,7 +70,6 @@ export default async function HackathonDashboardPage() {
         <ProblemStatementPanel
           unlocked={submissionWindow.unlocked}
           closed={submissionWindow.closed}
-          statement={problemStatement}
         />
         <TeamRoster
           entryType={reg.team.entryType}
