@@ -49,17 +49,17 @@ export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
         {statement}
       </p> */}
       <p className="mt-4 text-sm text-zinc-400">
-        Full brief and Q&amp;A in the WhatsApp group.
+        Three Problem Statements are now available. 
       </p>
       <Link
         href="/hackathon/submission"
-        className={cn(buttonVariants({ size: "lg" }), "mt-6 w-full sm:w-auto")}
+        className={cn(buttonVariants({ size: "lg" }), "mt-4 w-full sm:w-auto")}
       >
-        {closed ? "View your submission" : "Unlock Problem Statement"}
+        {closed ? "View your submission" : "Check Problem Statements"}
       </Link>
       {!closed ? (
         <p className="mt-3 text-sm text-zinc-400">
-          3 briefs are live. Pick one and submit before {HACKATHON.deadlineLabel}.
+         Pick one and submit before {HACKATHON.deadlineLabel}.
         </p>
       ) : null}
     </section>
