@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TrackCard } from "./track-card";
+import { TestimonialsCarousel } from "./testimonials-carousel";
 
 const WHATSAPP_LINK = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
 
@@ -240,6 +241,8 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             />
           </div>
         </section>
+
+        <TestimonialsCarousel />
       </main>
 
       {/* <footer className="relative z-10 border-t border-border/60">
