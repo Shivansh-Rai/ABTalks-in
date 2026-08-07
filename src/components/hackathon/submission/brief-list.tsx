@@ -2,6 +2,8 @@ import type { Components } from "react-markdown";
 import { ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Props = {
   briefs: {
@@ -135,6 +137,40 @@ export function BriefList({ briefs, selectedId }: Props) {
                   Problem statement 3 will be updated soon.
                 </p>
               )}
+              {brief.id === "HACKPS2608002" ? (
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <a
+                    href="/hackathon/curriculum.json"
+                    download="curriculum.json"
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-full border-[#7364E6]/50 text-[#C4B5FD] hover:bg-[#7364E6]/15 hover:text-[#C4B5FD]",
+                    )}
+                  >
+                    DOWNLOAD CURRICULUM.JSON
+                  </a>
+                  <a
+                    href="/hackathon/candidates.json"
+                    download="candidates.json"
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-full border-[#7364E6]/50 text-[#C4B5FD] hover:bg-[#7364E6]/15 hover:text-[#C4B5FD]",
+                    )}
+                  >
+                    DOWNLOAD CANDIDATES.JSON
+                  </a>
+                  <a
+                    href="/hackathon/technical-spec.md"
+                    download="technical-spec.md"
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-full border-[#7364E6]/50 text-[#C4B5FD] hover:bg-[#7364E6]/15 hover:text-[#C4B5FD]",
+                    )}
+                  >
+                    DOWNLOAD TECHNICAL-SPECS.MD
+                  </a>
+                </div>
+              ) : null}
             </div>
           </details>
         ))}
