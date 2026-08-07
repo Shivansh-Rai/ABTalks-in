@@ -7,10 +7,9 @@ import { cn } from "@/lib/utils";
 type Props = {
   unlocked: boolean;
   closed: boolean;
-  statement: string | null;
 };
 
-export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
+export function ProblemStatementPanel({ unlocked, closed }: Props) {
   if (!unlocked) {
     return (
       <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 opacity-80 sm:p-6">
@@ -27,29 +26,13 @@ export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
     );
   }
 
-  if (!statement) {
-    return (
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
-          Your challenge
-        </h2>
-        <p className="mt-3 text-sm text-zinc-300">
-          The brief is dropping shortly. 
-        </p>
-      </section>
-    );
-  }
-
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
         Your challenge
       </h2>
-      {/* <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
-        {statement}
-      </p> */}
       <p className="mt-4 text-sm text-zinc-400">
-        Three Problem Statements are now available. 
+        Three Problem Statements are now available.
       </p>
       <Link
         href="/hackathon/submission"
@@ -59,7 +42,7 @@ export function ProblemStatementPanel({ unlocked, closed, statement }: Props) {
       </Link>
       {!closed ? (
         <p className="mt-3 text-sm text-zinc-400">
-         Pick one and submit before {HACKATHON.deadlineLabel}.
+          Pick one and submit before {HACKATHON.deadlineLabel}.
         </p>
       ) : null}
     </section>
