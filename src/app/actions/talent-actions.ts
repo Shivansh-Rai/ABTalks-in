@@ -14,6 +14,7 @@ import {
   shortlistNoteSchema,
   shortlistToggleSchema,
 } from "@/lib/validations/talent";
+import { recordLegalConsents } from "@/features/legal/record-consent";
 
 type ActionResult<T = undefined> =
   | (T extends undefined ? { ok: true } : { ok: true; data: T })
@@ -29,7 +30,10 @@ export async function registerRecruiterAction(
 
   const parsed = recruiterRegisterSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Please check the form and try again." };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Please check the form and try again.",
+    };
   }
 
   const result = await registerRecruiter(session.user.id, {
@@ -38,6 +42,12 @@ export async function registerRecruiterAction(
     phone: parsed.data.phone || undefined,
   });
   if (!result.ok) return result;
+
+  await recordLegalConsents({
+    userId: session.user.id,
+    email: session.user.email,
+    source: "talent_register",
+  });
 
   revalidatePath("/talent/register");
   revalidatePath("/talent/pending");

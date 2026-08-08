@@ -245,22 +245,25 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
         <TestimonialsCarousel />
       </main>
 
-      {/* <footer className="relative z-10 border-t border-border/60">
+      <footer className="relative z-10 border-t border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-8">
           <p>© 2026 ABTalks. Build in public.</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
             <Link href="/mission" className="hover:text-foreground">
               Mission
             </Link>
             <Link href="/jobs" className="hover:text-foreground">
               Jobs
             </Link>
-            <Link href="/talent" className="hover:text-foreground">
-              Talent
-            </Link>
           </nav>
         </div>
-      </footer> */}
+      </footer>
     </div>
   );
 }

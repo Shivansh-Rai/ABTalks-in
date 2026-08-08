@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import Link from "next/link";
 import { Mail } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -159,11 +160,25 @@ export function AppFooter() {
         <div className="grid grid-cols-1 items-center gap-4 text-sm md:grid-cols-3">
           <div
             className={cn(
-              "font-display font-medium md:justify-self-start",
+              "flex flex-col gap-2 font-display font-medium md:justify-self-start",
               isMarketplace ? "text-white" : "text-foreground",
             )}
           >
-            ABTalks
+            <span>ABTalks</span>
+            <nav
+              className={cn(
+                "flex flex-wrap gap-x-4 gap-y-1 text-xs font-sans font-normal",
+                isMarketplace ? "text-white/70" : "text-muted-foreground",
+              )}
+              aria-label="Legal"
+            >
+              <Link href="/terms" className="hover:text-primary hover:underline">
+                Terms
+              </Link>
+              <Link href="/privacy" className="hover:text-primary hover:underline">
+                Privacy
+              </Link>
+            </nav>
           </div>
           <div className="flex items-center justify-center gap-1">
             {SOCIAL_LINKS.map(({ label, href, icon: Icon }) =>

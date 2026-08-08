@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { sendWorkshopConfirmationEmail } from "@/lib/workshop-email";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
+import { recordLegalConsents } from "@/features/legal/record-consent";
 
 /**
  * `email` is deliberately absent: it comes from the session, never the client.
@@ -24,6 +25,15 @@ const workshopRegistrationSchema = z.object({
   role: z.enum(["Student", "Professional"]),
   organization: z.string().trim().min(1).nullish(),
   graduationYear: z.coerce.number().int().min(2020).max(2035).nullish(),
+  acceptTerms: z.boolean().refine((v) => v === true, {
+    message: "Please accept the Terms of Service",
+  }),
+  acceptPrivacy: z.boolean().refine((v) => v === true, {
+    message: "Please accept the Privacy Policy",
+  }),
+  confirmAge18: z.boolean().refine((v) => v === true, {
+    message: "You must be 18 or older",
+  }),
 });
 
 export type WorkshopRegistrationInput = z.infer<typeof workshopRegistrationSchema>;
@@ -51,7 +61,10 @@ export async function submitWorkshopRegistrationAction(
 
   const parsed = workshopRegistrationSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Name, phone, and role are required." };
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Name, phone, and role are required.",
+    };
   }
   const { name, phone, role, organization, graduationYear } = parsed.data;
 
@@ -118,6 +131,12 @@ export async function submitWorkshopRegistrationAction(
     });
     return { ok: false, message: "Failed to save registration. Please try again." };
   }
+
+  await recordLegalConsents({
+    userId,
+    email,
+    source: "workshop",
+  });
 
   // The row is saved at this point. A mail failure must never fail the request.
   const config = await getWorkshopConfig();

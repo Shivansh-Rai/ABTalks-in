@@ -8,6 +8,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { registerRecruiterAction } from "@/app/actions/talent-actions";
+import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,20 +31,42 @@ function FieldError({ message }: { message?: string }) {
 export function RecruiterRegisterForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
+    acceptTerms: false,
+    acceptPrivacy: false,
+    confirmAge18: false,
+  });
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormInput, unknown, RecruiterRegisterInput>({
     resolver: zodResolver(recruiterRegisterSchema),
-    defaultValues: { fullName: "", company: "", phone: "" },
+    defaultValues: {
+      fullName: "",
+      company: "",
+      phone: "",
+      acceptTerms: false,
+      acceptPrivacy: false,
+      confirmAge18: false,
+    },
   });
 
   async function onSubmit(data: RecruiterRegisterInput) {
+    if (!legalConsentAccepted(legalConsent)) {
+      toast.error("Please accept the Terms, Privacy Policy, and age confirmation.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const result = await registerRecruiterAction(data);
+      const result = await registerRecruiterAction({
+        ...data,
+        acceptTerms: true,
+        acceptPrivacy: true,
+        confirmAge18: true,
+      });
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -69,7 +96,20 @@ export function RecruiterRegisterForm() {
         <Input id="phone" type="tel" {...register("phone")} />
         <FieldError message={errors.phone?.message} />
       </div>
-      <Button type="submit" disabled={submitting} className="w-full gap-2">
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={(next) => {
+          setLegalConsent(next);
+          setValue("acceptTerms", next.acceptTerms);
+          setValue("acceptPrivacy", next.acceptPrivacy);
+          setValue("confirmAge18", next.confirmAge18);
+        }}
+      />
+      <Button
+        type="submit"
+        disabled={submitting || !legalConsentAccepted(legalConsent)}
+        className="w-full gap-2"
+      >
         {submitting && <Loader2 className="size-4 animate-spin" />}
         Submit application
       </Button>

@@ -102,6 +102,9 @@ export const cohortApplicationIndiaSchema = z.object({
   understandPreCall: confirmed,
   readyForChallenge: confirmed,
   preferredStartWindow: z.enum(START_WINDOWS, { error: "Select an option" }),
+  acceptTerms: confirmed,
+  acceptPrivacy: confirmed,
+  confirmAge18: confirmed,
 });
 
 export type CohortApplicationIndiaInput = z.infer<

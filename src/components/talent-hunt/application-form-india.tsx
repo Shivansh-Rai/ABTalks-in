@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { CircleCheck, Loader2 } from "lucide-react";
@@ -81,6 +82,9 @@ const STEP_FIELDS: Record<number, (keyof CohortApplicationIndiaInput)[]> = {
     "understandPreCall",
     "readyForChallenge",
     "preferredStartWindow",
+    "acceptTerms",
+    "acceptPrivacy",
+    "confirmAge18",
   ],
   5: [],
 };
@@ -134,6 +138,9 @@ const EMPTY_DEFAULTS = {
   understandPreCall: false,
   readyForChallenge: false,
   preferredStartWindow: "",
+  acceptTerms: false,
+  acceptPrivacy: false,
+  confirmAge18: false,
 } as unknown as CohortApplicationIndiaInput;
 
 function countWords(text: string): number {
@@ -729,6 +736,80 @@ export function ApplicationFormIndia() {
                 <>
                   <div className="space-y-4">
                     {COMMITMENTS.map(({ name, label }) => (
+                      <div key={name} className="space-y-1">
+                        <div className="flex items-start gap-3">
+                          <Controller
+                            name={name}
+                            control={control}
+                            render={({ field }) => (
+                              <Checkbox
+                                id={name}
+                                checked={field.value === true}
+                                onCheckedChange={(checked) =>
+                                  field.onChange(checked === true)
+                                }
+                                aria-invalid={!!errors[name]}
+                                className="mt-0.5"
+                              />
+                            )}
+                          />
+                          <Label
+                            htmlFor={name}
+                            className="cursor-pointer text-sm font-normal leading-snug"
+                          >
+                            {label}
+                          </Label>
+                        </div>
+                        {errors[name] ? (
+                          <p className="pl-7 text-sm text-destructive">
+                            {errors[name]?.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+                    {(
+                      [
+                        {
+                          name: "acceptTerms" as const,
+                          label: (
+                            <>
+                              I agree to the{" "}
+                              <Link
+                                href="/terms"
+                                target="_blank"
+                                className="font-medium text-primary underline-offset-2 hover:underline"
+                              >
+                                Terms of Service
+                              </Link>
+                              .
+                            </>
+                          ),
+                        },
+                        {
+                          name: "acceptPrivacy" as const,
+                          label: (
+                            <>
+                              I agree to the{" "}
+                              <Link
+                                href="/privacy"
+                                target="_blank"
+                                className="font-medium text-primary underline-offset-2 hover:underline"
+                              >
+                                Privacy Policy
+                              </Link>
+                              .
+                            </>
+                          ),
+                        },
+                        {
+                          name: "confirmAge18" as const,
+                          label: <>I confirm that I am 18 years of age or older.</>,
+                        },
+                      ] as const
+                    ).map(({ name, label }) => (
                       <div key={name} className="space-y-1">
                         <div className="flex items-start gap-3">
                           <Controller
