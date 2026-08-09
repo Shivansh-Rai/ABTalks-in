@@ -1,27 +1,172 @@
+import type { StudentProfile } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
-export async function getStudentDetail(userId: string) {
-  const [user, submissions, quizAttempts, adminActions, remarks] =
-    await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        studentProfile: true,
-        enrollments: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: {
-            domain: true,
-            status: true,
-            daysCompleted: true,
-            currentStreak: true,
-            longestStreak: true,
-            lastSubmittedDay: true,
-            challenge: { select: { totalDays: true } },
+export type ChallengeStudentDetail = {
+  kind: "challenge";
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    joinedAt: Date;
+  };
+  profile: StudentProfile;
+  enrollment: {
+    domain: string;
+    status: string;
+    daysCompleted: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastSubmittedDay: number | null;
+    challenge: { totalDays: number };
+  } | null;
+  student: {
+    userId: string;
+    fullName: string;
+    isReadyForInterview: boolean;
+    enrollmentStatus: string | null;
+  };
+  progress: {
+    totalDays: number;
+    daysCompleted: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastSubmittedDay: number | null;
+    onTimeCount: number;
+    lateCount: number;
+  };
+  submissions: Array<{
+    id: string;
+    dayNumber: number;
+    status: string;
+    githubUrl: string | null;
+    linkedinUrl: string | null;
+    submittedAt: Date;
+  }>;
+  quizAttempts: Array<{
+    id: string;
+    weekNumber: number;
+    quizTitle: string;
+    score: number;
+    attemptedAt: Date;
+  }>;
+  adminActions: Array<{
+    id: string;
+    actionType: string;
+    metadata: unknown;
+    reason: string | null;
+    createdAt: Date;
+    adminName: string;
+  }>;
+  remarks: Array<{
+    id: string;
+    body: string;
+    createdAt: Date;
+    updatedAt: Date;
+    adminName: string;
+  }>;
+};
+
+export type HackathonStudentDetail = {
+  kind: "hackathon";
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    joinedAt: Date;
+  };
+  hackathon: {
+    fullName: string;
+    email: string;
+    phone: string;
+    college: string;
+    graduationYear: number;
+    entryType: "SOLO" | "TEAM";
+    teamName: string | null;
+    teamCode: string;
+    createdAt: Date;
+  };
+};
+
+export type StudentDetail = ChallengeStudentDetail | HackathonStudentDetail;
+
+export async function getStudentDetail(
+  userId: string,
+): Promise<StudentDetail | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      studentProfile: true,
+      enrollments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          domain: true,
+          status: true,
+          daysCompleted: true,
+          currentStreak: true,
+          longestStreak: true,
+          lastSubmittedDay: true,
+          challenge: { select: { totalDays: true } },
+        },
+      },
+      hackathonParticipant: {
+        select: {
+          fullName: true,
+          email: true,
+          phone: true,
+          college: true,
+          graduationYear: true,
+          createdAt: true,
+          team: {
+            select: {
+              entryType: true,
+              teamName: true,
+              teamCode: true,
+            },
           },
         },
       },
-    }),
+    },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  if (!user.studentProfile) {
+    if (!user.hackathonParticipant) {
+      return null;
+    }
+
+    const participant = user.hackathonParticipant;
+    const entryType = participant.team.entryType === "SOLO" ? "SOLO" : "TEAM";
+
+    return {
+      kind: "hackathon",
+      user: {
+        id: user.id,
+        name: participant.fullName.trim() || user.email,
+        email: user.email,
+        image: user.image,
+        joinedAt: participant.createdAt,
+      },
+      hackathon: {
+        fullName: participant.fullName,
+        email: participant.email,
+        phone: participant.phone,
+        college: participant.college,
+        graduationYear: participant.graduationYear,
+        entryType,
+        teamName: entryType === "SOLO" ? null : participant.team.teamName,
+        teamCode: participant.team.teamCode,
+        createdAt: participant.createdAt,
+      },
+    };
+  }
+
+  const [submissions, quizAttempts, adminActions, remarks] = await Promise.all([
     prisma.submission.findMany({
       where: { userId },
       orderBy: [{ dayNumber: "asc" }, { submittedAt: "desc" }],
@@ -71,10 +216,6 @@ export async function getStudentDetail(userId: string) {
     }),
   ]);
 
-  if (!user || !user.studentProfile) {
-    return null;
-  }
-
   const enrollment = user.enrollments[0] ?? null;
   const onTimeCount = submissions.filter(
     (s) => s.status === "ON_TIME" || s.status === "LATE",
@@ -82,6 +223,7 @@ export async function getStudentDetail(userId: string) {
   const lateCount = 0;
 
   return {
+    kind: "challenge",
     user: {
       id: user.id,
       name: user.studentProfile.fullName,

@@ -34,6 +34,8 @@ function initials(name: string) {
 function domainBadgeClass(domain: string): string {
   if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
   if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
+  if (domain === "HACKATHON")
+    return "border-border bg-muted text-muted-foreground";
   return "border-domains-se/50 bg-domains-se-bg text-domains-se";
 }
 
@@ -43,11 +45,97 @@ export default async function AdminStudentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [data, review] = await Promise.all([
-    getStudentDetail(id),
-    getRecruiterReview(id),
-  ]);
+  const data = await getStudentDetail(id);
   if (!data) notFound();
+
+  if (data.kind === "hackathon") {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col justify-between gap-4 rounded-xl border p-4 md:flex-row md:items-center">
+          <div className="flex items-center gap-3">
+            <Avatar className="size-14">
+              {data.user.image ? <AvatarImage src={data.user.image} alt="" /> : null}
+              <AvatarFallback>{initials(data.user.name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="font-display text-2xl font-bold">{data.user.name}</h1>
+              <p className="text-sm text-muted-foreground">
+                {data.user.email} · Joined {formatDateIST(data.user.joinedAt)}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge variant="outline" className={domainBadgeClass("HACKATHON")}>
+                  HACKATHON
+                </Badge>
+                <Badge>{data.hackathon.entryType}</Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Hackathon registration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>
+              <span className="text-muted-foreground">Full name:</span>{" "}
+              {data.hackathon.fullName}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Email:</span>{" "}
+              {data.hackathon.email}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Phone:</span>{" "}
+              <a
+                className="text-primary underline"
+                href={`tel:${encodeURIComponent(data.hackathon.phone)}`}
+              >
+                {data.hackathon.phone}
+              </a>
+            </p>
+            <p>
+              <span className="text-muted-foreground">College:</span>{" "}
+              {data.hackathon.college}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Graduation year:</span>{" "}
+              {data.hackathon.graduationYear}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Entry type:</span>{" "}
+              {data.hackathon.entryType}
+            </p>
+            {data.hackathon.entryType === "TEAM" ? (
+              <p>
+                <span className="text-muted-foreground">Team name:</span>{" "}
+                {data.hackathon.teamName ?? "-"}
+              </p>
+            ) : null}
+            <p>
+              <span className="text-muted-foreground">Team code:</span>{" "}
+              {data.hackathon.teamCode}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Registered:</span>{" "}
+              {formatDateIST(data.hackathon.createdAt)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <div>
+          <Link
+            href="/admin/students"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            Back to Students
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const review = await getRecruiterReview(id);
 
   return (
     <div className="space-y-6">
@@ -241,7 +329,7 @@ export default async function AdminStudentDetailPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.submissions.map((row: (typeof data.submissions)[number]) => (
+                {data.submissions.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.dayNumber}</TableCell>
                     <TableCell>{row.status}</TableCell>
@@ -292,7 +380,7 @@ export default async function AdminStudentDetailPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.quizAttempts.map((row: (typeof data.quizAttempts)[number]) => (
+                  {data.quizAttempts.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell>{row.weekNumber}</TableCell>
                       <TableCell>{row.quizTitle}</TableCell>
@@ -311,7 +399,7 @@ export default async function AdminStudentDetailPage({
             <p className="text-sm text-muted-foreground">No admin actions for this user</p>
           ) : (
             <div className="space-y-2">
-              {data.adminActions.map((row: (typeof data.adminActions)[number]) => (
+              {data.adminActions.map((row) => (
                 <Card key={row.id}>
                   <CardContent className="space-y-1 pt-4 text-sm">
                     <p className="font-medium">

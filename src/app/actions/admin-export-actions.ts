@@ -16,77 +16,134 @@ const SUBMISSIONS_EXPORT_CAP = 10_000;
 export async function getStudentsForExport(filters: {
   domain?: Domain | "ALL";
   search?: string;
+  track?: "ALL" | "CHALLENGE" | "HACKATHON";
 }) {
   await requireAdmin();
 
   const q = filters.search?.trim();
+  const track = filters.track ?? "ALL";
+  const wantChallenge = track !== "HACKATHON";
+  const wantHackathon =
+    track === "HACKATHON" ||
+    (track === "ALL" &&
+      (!filters.domain || filters.domain === "ALL"));
 
-  const enrollments = await prisma.enrollment.findMany({
-    where: {
-      ...(filters.domain && filters.domain !== "ALL"
-        ? { domain: filters.domain }
-        : {}),
-      ...(q
-        ? {
+  const [enrollments, hackathonRows] = await Promise.all([
+    wantChallenge
+      ? prisma.enrollment.findMany({
+          where: {
+            ...(filters.domain && filters.domain !== "ALL"
+              ? { domain: filters.domain }
+              : {}),
+            ...(q
+              ? {
+                  user: {
+                    OR: [
+                      { name: { contains: q, mode: "insensitive" } },
+                      { email: { contains: q, mode: "insensitive" } },
+                      {
+                        studentProfile: {
+                          fullName: { contains: q, mode: "insensitive" },
+                        },
+                      },
+                    ],
+                  },
+                }
+              : {}),
+          },
+          select: {
+            id: true,
+            domain: true,
+            status: true,
+            startedAt: true,
+            daysCompleted: true,
+            currentStreak: true,
+            longestStreak: true,
             user: {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { email: { contains: q, mode: "insensitive" } },
-                {
-                  studentProfile: {
-                    fullName: { contains: q, mode: "insensitive" },
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                studentProfile: {
+                  select: {
+                    fullName: true,
+                    phone: true,
+                    userType: true,
+                    college: true,
+                    graduationYear: true,
+                    organization: true,
+                    role: true,
+                    yearsExperience: true,
+                    linkedinUrl: true,
+                    githubUsername: true,
+                    isReadyForInterview: true,
+                    referralCode: true,
                   },
                 },
-              ],
-            },
-          }
-        : {}),
-    },
-    select: {
-      id: true,
-      domain: true,
-      status: true,
-      startedAt: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      user: {
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          studentProfile: {
-            select: {
-              fullName: true,
-              phone: true,
-              userType: true,
-              college: true,
-              graduationYear: true,
-              organization: true,
-              role: true,
-              yearsExperience: true,
-              linkedinUrl: true,
-              githubUsername: true,
-              isReadyForInterview: true,
-              referralCode: true,
+              },
             },
           },
-        },
-      },
-    },
-    orderBy: [{ lastSubmittedDay: "desc" }, { createdAt: "desc" }],
-  });
+          orderBy: [{ lastSubmittedDay: "desc" }, { createdAt: "desc" }],
+        })
+      : Promise.resolve([]),
+    wantHackathon
+      ? prisma.hackathonParticipant.findMany({
+          where: q
+            ? {
+                OR: [
+                  { fullName: { contains: q, mode: "insensitive" } },
+                  { email: { contains: q, mode: "insensitive" } },
+                  {
+                    user: {
+                      OR: [
+                        { name: { contains: q, mode: "insensitive" } },
+                        { email: { contains: q, mode: "insensitive" } },
+                      ],
+                    },
+                  },
+                ],
+              }
+            : undefined,
+          select: {
+            fullName: true,
+            email: true,
+            phone: true,
+            college: true,
+            graduationYear: true,
+            createdAt: true,
+            userId: true,
+            team: {
+              select: {
+                entryType: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : Promise.resolve([]),
+  ]);
 
-  const referralCountRows = await prisma.referral.groupBy({
-    by: ["referrerId"],
-    where: { referrerId: { in: enrollments.map((e) => e.user.id) } },
-    _count: { id: true },
-  });
+  const userIds = [
+    ...new Set([
+      ...enrollments.map((e) => e.user.id),
+      ...hackathonRows.map((row) => row.userId),
+    ]),
+  ];
+
+  const referralCountRows =
+    userIds.length > 0
+      ? await prisma.referral.groupBy({
+          by: ["referrerId"],
+          where: { referrerId: { in: userIds } },
+          _count: { id: true },
+        })
+      : [];
   const referralCountMap = new Map(
     referralCountRows.map((r) => [r.referrerId, r._count.id]),
   );
 
-  return enrollments.map((e) => ({
+  const challengeExport = enrollments.map((e) => ({
+    Track: "CHALLENGE",
     "Full Name": e.user.studentProfile?.fullName ?? e.user.name ?? "",
     Email: e.user.email,
     Phone: e.user.studentProfile?.phone ?? "",
@@ -108,6 +165,35 @@ export async function getStudentsForExport(filters: {
     "Referral Code": e.user.studentProfile?.referralCode ?? "",
     "Referral Count": referralCountMap.get(e.user.id) ?? 0,
   }));
+
+  const hackathonExport = hackathonRows.map((row) => {
+    const entryType = row.team.entryType === "SOLO" ? "SOLO" : "TEAM";
+    return {
+      Track: "HACKATHON",
+      "Full Name": row.fullName,
+      Email: row.email,
+      Phone: row.phone,
+      "User Type": "STUDENT",
+      Domain: "HACKATHON",
+      Status: entryType,
+      "Started At": row.createdAt.toISOString().split("T")[0],
+      "Days Completed": 0,
+      "Current Streak": 0,
+      "Longest Streak": 0,
+      College: row.college,
+      "Graduation Year": row.graduationYear,
+      Organization: "",
+      Role: "",
+      "Years Experience": "",
+      LinkedIn: "",
+      GitHub: "",
+      "Ready For Interview": false,
+      "Referral Code": "",
+      "Referral Count": referralCountMap.get(row.userId) ?? 0,
+    };
+  });
+
+  return [...challengeExport, ...hackathonExport];
 }
 
 export async function getAnalyticsForExport(range: TimeRange = "daily") {
