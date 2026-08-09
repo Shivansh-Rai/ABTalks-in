@@ -6,7 +6,10 @@ import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
 import { recomputeMemberScore } from "@/features/program/missions";
-import { parseRepo } from "@/features/program/verify-mission";
+import {
+  encodeRepoContentsPath,
+  parseRepo,
+} from "@/features/program/verify-mission";
 
 const RUBRICS_PATH = path.join(
   process.cwd(),
@@ -84,7 +87,7 @@ async function fetchRepoFileRaw(
 
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(filePath)}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeRepoContentsPath(filePath)}`,
       { headers, signal: AbortSignal.timeout(15000) },
     );
     if (!res.ok) return { ok: false };

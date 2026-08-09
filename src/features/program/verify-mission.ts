@@ -62,6 +62,14 @@ export function parseRepo(
   return { owner: match[1]!, repo: match[2]!.replace(/\.git$/, "") };
 }
 
+/** Encode each path segment; keep `/` so nested Contents API paths work. */
+export function encodeRepoContentsPath(filePath: string): string {
+  return filePath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
 export function normalizeOutput(text: string): string {
   return text
     .trim()
@@ -88,16 +96,25 @@ async function fetchRepoFile(
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const githubFileUrl = `https://github.com/${owner}/${repo}/${filePath}`;
+  const pathHint = "repo root, default branch";
+
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(filePath)}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeRepoContentsPath(filePath)}`,
       { headers, signal: AbortSignal.timeout(15000) },
     );
     if (res.status === 404) {
-      return { ok: false, detail: `File not found: ${filePath}` };
+      return {
+        ok: false,
+        detail: `Not found at ${githubFileUrl} (${pathHint})`,
+      };
     }
     if (!res.ok) {
-      return { ok: false, detail: `GitHub API ${res.status} for ${filePath}` };
+      return {
+        ok: false,
+        detail: `GitHub API ${res.status} for ${githubFileUrl} (${pathHint})`,
+      };
     }
     const content = await res.text();
     return { ok: true, content };
@@ -108,7 +125,10 @@ async function fetchRepoFile(
       path: filePath,
       error: String(e),
     });
-    return { ok: false, detail: `Could not fetch ${filePath}` };
+    return {
+      ok: false,
+      detail: `Could not fetch ${githubFileUrl} (${pathHint})`,
+    };
   }
 }
 
