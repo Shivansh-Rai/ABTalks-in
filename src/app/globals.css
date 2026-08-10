@@ -381,6 +381,12 @@
   body.marketplace-page {
     background-color: #030712;
   }
+  body.not-found-page footer {
+    display: none;
+  }
+  body.not-found-page main {
+    padding-bottom: 0;
+  }
   html {
     @apply font-sans;
   }
