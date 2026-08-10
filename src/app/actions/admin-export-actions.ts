@@ -10,6 +10,7 @@ import {
 import { getMissingStudentsForDay } from "@/features/admin/get-missing-by-day";
 import { getReferrersInRange } from "@/features/admin/get-referrals-report";
 import { getSubmissionsFeed } from "@/features/admin/get-submissions-feed";
+import { getHackathonSubmissionsFeed } from "@/features/admin/get-hackathon-submissions-feed";
 
 const SUBMISSIONS_EXPORT_CAP = 10_000;
 
@@ -314,6 +315,31 @@ export async function getMissingStudentsForExport(
     "Enrollment Status": r.status,
     "Days Completed": r.daysCompleted,
     "Last Submitted Day": r.lastSubmittedDay ?? "",
+  }));
+}
+
+export async function getHackathonSubmissionsForExport(filters?: {
+  problemId?: string;
+}) {
+  await requireAdmin();
+
+  const rows = await getHackathonSubmissionsFeed({
+    problemId: filters?.problemId,
+    take: SUBMISSIONS_EXPORT_CAP,
+  });
+
+  return rows.map((r) => ({
+    Team: r.teamLabel,
+    "Team Code": r.teamCode,
+    "Entry Type": r.entryType,
+    Leader: r.leaderName,
+    "Leader Email": r.leaderEmail,
+    Brief: r.problemTitle ?? "",
+    "Repo URL": r.repoUrl,
+    "Live URL": r.liveUrl,
+    "AI Log URL": r.aiLogUrl,
+    Members: r.memberCount,
+    "Updated At (UTC)": r.updatedAt.toISOString(),
   }));
 }
 
