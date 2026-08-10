@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -9,16 +9,10 @@ import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-jakarta",
-  weight: ["500", "600", "700", "800"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-archivo",
+  weight: ["400", "600", "800"],
 });
 
 export const metadata: Metadata = {
@@ -34,14 +28,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
+      className={`${archivo.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`${jakarta.variable} ${inter.variable} min-h-full flex flex-col font-sans`}>
+      <body className={`${archivo.variable} min-h-full flex flex-col font-sans`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          forcedTheme="light"
           disableTransitionOnChange
         >
           <SynergyProvider>
