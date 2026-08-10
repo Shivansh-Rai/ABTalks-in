@@ -103,17 +103,21 @@ export function CookieConsentModal() {
 
         {/* Two equal outline buttons, then full-width primary — reference layout */}
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link
-            href="/cookies"
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onChoose("limited")}
             className={cn(
               "inline-flex h-10 items-center justify-center rounded-md border border-border",
               "bg-background px-3 text-xs font-semibold tracking-wide uppercase",
               "text-foreground transition-colors hover:bg-muted",
               "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+              choice === "limited" && "ring-1 ring-primary/50",
             )}
           >
-            Customize
-          </Link>
+            {pending === "limited" ? "…" : "Limited"}
+          </button>
           <button
             type="button"
             disabled={busy}
