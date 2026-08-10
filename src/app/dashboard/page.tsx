@@ -14,6 +14,8 @@ import { AppHeader } from "@/components/shared/app-header";
 // import { CommunityLeaderboard } from "@/components/dashboard/community-leaderboard"; // hidden post-launch
 import { EnrollmentEndedScreen } from "@/components/dashboard/enrollment-ended-screen";
 import { QuizUnlockBanner } from "@/components/dashboard/quiz-unlock-banner";
+import { ConsentRefreshBanner } from "@/components/legal/consent-refresh-banner";
+import { needsReconsent } from "@/features/legal/needs-reconsent";
 import { PastMissedChallengeToast } from "@/components/dashboard/past-missed-challenge-toast";
 import { SubmissionHeatmap } from "@/components/dashboard/submission-heatmap";
 import {
@@ -320,6 +322,8 @@ export default async function DashboardPage({
     getQuizAttemptHistory(session.user.id, dashboardData.enrollment),
   ]);
 
+  const mustReconsent = await needsReconsent(session.user.id);
+
   const progressPct = Math.min(
     100,
     Math.round((enrollment.currentDay / enrollment.totalDays) * 100),
@@ -371,6 +375,7 @@ export default async function DashboardPage({
         />
       ) : null}
       <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
+        <ConsentRefreshBanner needsReconsent={mustReconsent} />
         {quizAvailability.banner ? (
           <div className="mb-6">
             <QuizUnlockBanner

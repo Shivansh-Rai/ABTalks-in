@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { notifyDataRightsRequest } from "@/features/legal/notify-data-request";
+import { recordLegalConsents } from "@/features/legal/record-consent";
 import { getAdminContext } from "@/lib/admin-auth";
 import {
   clearAttributionCookies,
@@ -48,6 +49,23 @@ export async function submitDataRightsRequestAction(input: unknown) {
     email,
     type: parsed.data.type,
     message,
+  });
+
+  return { ok: true as const };
+}
+
+/** Records fresh TERMS + PRIVACY consent at the current versions. */
+export async function acceptCurrentLegalVersionsAction() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return { ok: false as const, message: "Not signed in" };
+  }
+
+  await recordLegalConsents({
+    userId,
+    email: session.user.email ?? null,
+    source: "reconsent",
   });
 
   return { ok: true as const };

@@ -12,7 +12,9 @@ export type ConsentSource =
   | "program_apply"
   | "talent_register"
   | "cohort_us"
-  | "cohort_india";
+  | "cohort_india"
+  /** Re-acceptance after a TERMS/PRIVACY version bump. */
+  | "reconsent";
 
 type RecordConsentArgs = {
   userId?: string | null;
