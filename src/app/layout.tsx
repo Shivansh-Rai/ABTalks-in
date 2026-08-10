@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppFooter } from "@/components/shared/app-footer";
 import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
+import { ChatWidget } from "@/components/chatbot/ChatWidget";
+import { isChatbotEnabled } from "@/lib/feature-flags";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -45,6 +47,7 @@ export default function RootLayout({
           <AppFooter />
           <BottomNavGate />
           <Toaster />
+          {isChatbotEnabled() && <ChatWidget />}
         </ThemeProvider>
       </body>
     </html>

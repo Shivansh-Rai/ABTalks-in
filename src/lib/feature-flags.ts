@@ -56,3 +56,7 @@ export function isOtpVerificationRequired(): boolean {
 export function isHackathonPreviewEnabled(): boolean {
   return process.env.HACKATHON_PREVIEW === "true";
 }
+
+export function isChatbotEnabled(): boolean {
+  return process.env.ENABLE_CHATBOT === "true";
+}
