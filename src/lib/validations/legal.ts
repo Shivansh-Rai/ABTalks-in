@@ -37,3 +37,13 @@ export const cookieConsentSchema = z.object({
 });
 
 export type CookieConsentInput = z.infer<typeof cookieConsentSchema>;
+
+/** Admin action closing out a data-rights request. */
+export const resolveDataRightsRequestSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(["PENDING", "DONE", "REJECTED"]),
+});
+
+export type ResolveDataRightsRequestInput = z.infer<
+  typeof resolveDataRightsRequestSchema
+>;

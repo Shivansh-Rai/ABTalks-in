@@ -1,6 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { notifyDataRightsRequest } from "@/features/legal/notify-data-request";
+import { getAdminContext } from "@/lib/admin-auth";
 import {
   clearAttributionCookies,
   setConsentCookie,
@@ -11,6 +14,7 @@ import { prisma } from "@/lib/db";
 import {
   cookieConsentSchema,
   dataRightsRequestSchema,
+  resolveDataRightsRequestSchema,
 } from "@/lib/validations/legal";
 
 export async function submitDataRightsRequestAction(input: unknown) {
@@ -25,16 +29,52 @@ export async function submitDataRightsRequestAction(input: unknown) {
   const session = await auth();
   const email = parsed.data.email.trim().toLowerCase();
 
-  await prisma.dataRightsRequest.create({
+  const message = parsed.data.message?.trim() || null;
+
+  const created = await prisma.dataRightsRequest.create({
     data: {
       userId: session?.user?.id ?? null,
       email,
       type: parsed.data.type,
-      message: parsed.data.message?.trim() || null,
+      message,
     },
     select: { id: true },
   });
 
+  // Best-effort: the request is already recorded, so a mail failure must not
+  // surface to the user or change the result.
+  await notifyDataRightsRequest({
+    id: created.id,
+    email,
+    type: parsed.data.type,
+    message,
+  });
+
+  return { ok: true as const };
+}
+
+/** Admin-only: close out a data-rights request. */
+export async function resolveDataRightsRequestAction(input: unknown) {
+  const admin = await getAdminContext();
+  if (!admin) {
+    return { ok: false as const, message: "Not authorized" };
+  }
+
+  const parsed = resolveDataRightsRequestSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      message: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  await prisma.dataRightsRequest.update({
+    where: { id: parsed.data.id },
+    data: { status: parsed.data.status },
+    select: { id: true },
+  });
+
+  revalidatePath("/admin/data-requests");
   return { ok: true as const };
 }
 
