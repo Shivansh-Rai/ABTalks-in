@@ -11,7 +11,7 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
@@ -208,7 +208,7 @@
   /* Thin purple scrollbar — day page left curriculum rail */
   .scrollbar-program-purple {
     scrollbar-width: thin;
-    scrollbar-color: #8365e3 transparent;
+    scrollbar-color: var(--color-accent-600) transparent;
   }
 
   .scrollbar-program-purple::-webkit-scrollbar {
@@ -221,18 +221,18 @@
   }
 
   .scrollbar-program-purple::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #968bec 0%, #7364e6 100%);
+    background: linear-gradient(180deg, var(--color-accent-400) 0%, var(--color-accent-500) 100%);
     border-radius: 999px;
   }
 
   .scrollbar-program-purple::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #b9b2f3 0%, #8365e3 100%);
+    background: linear-gradient(180deg, var(--color-accent-300) 0%, var(--color-accent-600) 100%);
   }
 
   /* Thin ABTalks purple scrollbar — admin desktop panes */
   .scrollbar-admin-purple {
     scrollbar-width: thin;
-    scrollbar-color: #7c5cff transparent;
+    scrollbar-color: var(--color-accent-500) transparent;
   }
 
   .scrollbar-admin-purple::-webkit-scrollbar {
@@ -246,12 +246,12 @@
   }
 
   .scrollbar-admin-purple::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #9a88ff 0%, #6f56f5 100%);
+    background: linear-gradient(180deg, var(--color-accent-400) 0%, var(--color-accent-600) 100%);
     border-radius: 999px;
   }
 
   .scrollbar-admin-purple::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #b3a6ff 0%, #7c5cff 100%);
+    background: linear-gradient(180deg, var(--color-accent-300) 0%, var(--color-accent-500) 100%);
   }
 
   @keyframes spark-pulse {
@@ -292,12 +292,12 @@
       transparent 0deg,
       transparent 210deg,
       hsl(var(--primary)) 290deg,
-      #d8b4fe 320deg,
+      var(--color-accent-300) 320deg,
       transparent 360deg
     );
     -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
+      linear-gradient(hsl(var(--foreground)) 0 0) content-box,
+      linear-gradient(hsl(var(--foreground)) 0 0);
     -webkit-mask-composite: xor;
             mask-composite: exclude;
     animation: synergy-beam 3s linear infinite;

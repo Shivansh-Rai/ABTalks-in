@@ -151,7 +151,7 @@ export function AppFooter() {
       className={cn(
         "mt-auto border-t pb-16 backdrop-blur-sm md:pb-0",
         isMarketplace
-          ? "border-[#030712] bg-[#050C1D] text-white/80"
+          ? "border-ink-900 bg-ink-900 text-white/80"
           : "bg-card/50 text-muted-foreground",
       )}
     >
