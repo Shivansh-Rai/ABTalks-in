@@ -15,7 +15,7 @@ function cellClass(completed: boolean, variant: "dashboard" | "compact"): string
     return variant === "dashboard" ? "bg-[#6AE276]" : "bg-emerald-500";
   }
   return variant === "dashboard"
-    ? "bg-[#1a2333] border border-[#2a3548]"
+    ? "bg-ink-900 border border-ink-800"
     : "bg-muted";
 }
 
@@ -49,7 +49,7 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
         className={cn(
           "inline-flex items-center gap-2 text-xs",
           isDashboard
-            ? "rounded-[8px] border border-[#8365E3] bg-[#110528] px-3 py-1.5 text-[#E9E9E9] transition-colors duration-300 ease-out hover:border-[#968BEC]/70"
+            ? "rounded-[8px] border border-accent-600 bg-ink-900 px-3 py-1.5 text-ink-200 transition-colors duration-300 ease-out hover:border-accent-400/70"
             : "text-muted-foreground",
         )}
       >
@@ -57,7 +57,7 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
         <span
           className={cn(
             isDashboard ? "size-3.5 rounded-none sm:size-4" : "size-3 rounded-sm sm:size-3.5",
-            isDashboard ? "bg-[#1a2333] border border-[#2a3548]" : "bg-muted",
+            isDashboard ? "bg-ink-900 border border-ink-800" : "bg-muted",
           )}
         />
         <span>Complete</span>

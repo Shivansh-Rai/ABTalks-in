@@ -102,7 +102,7 @@ export function RoadmapCard({
             >
               Phase {phase.phase}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-none border border-white/15 bg-white/[0.04] px-2 py-px text-[10px] text-[#E9E9E9] md:text-xs">
+            <span className="inline-flex items-center gap-1 rounded-none border border-white/15 bg-white/[0.04] px-2 py-px text-[10px] text-ink-200 md:text-xs">
               <CalendarDays className="size-3 opacity-70" />
               {phase.days}
             </span>
@@ -110,7 +110,7 @@ export function RoadmapCard({
           <h3 className="mt-1 text-sm font-semibold text-white md:text-base">
             {phase.title}
           </h3>
-          <p className="truncate text-xs text-[#9CA3AF] md:text-[13px]">
+          <p className="truncate text-xs text-ink-500 md:text-[13px]">
             {phase.subtitle}
           </p>
         </div>
