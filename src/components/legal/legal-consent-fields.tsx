@@ -61,7 +61,7 @@ export function LegalConsentFields({
           onCheckedChange={(c) =>
             onChange({ ...values, acceptTerms: c === true })
           }
-          className="mt-0.5"
+          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
           aria-label="Accept Terms of Service"
         />
         <span>
@@ -78,7 +78,7 @@ export function LegalConsentFields({
           onCheckedChange={(c) =>
             onChange({ ...values, acceptPrivacy: c === true })
           }
-          className="mt-0.5"
+          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
           aria-label="Accept Privacy Policy"
         />
         <span>
@@ -95,7 +95,7 @@ export function LegalConsentFields({
           onCheckedChange={(c) =>
             onChange({ ...values, confirmAge18: c === true })
           }
-          className="mt-0.5"
+          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
           aria-label="Confirm age 18 or older"
         />
         <Label className="font-normal leading-snug">
@@ -110,7 +110,7 @@ export function LegalConsentFields({
           onCheckedChange={(c) =>
             onChange({ ...values, newsletterOptIn: c === true })
           }
-          className="mt-0.5"
+          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
           aria-label="Receive occasional updates by email"
         />
         <Label className="font-normal leading-snug">{newsletterLabel}</Label>

@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import authConfig from "@/auth.config";
+import { cookies } from "next/headers";
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { logger } from "@/lib/logger";
@@ -59,14 +60,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email ?? null,
           source: "oauth_signup",
         });
-        // Matches the login-page notice: product updates are on by default at
-        // first account creation. Users can opt out on any later registration
-        // form (or via unsubscribe once campaigns ship).
+        // Login page writes abtalks_newsletter_pref before OAuth starts.
+        // Default true if the cookie is missing (e.g. old clients).
+        let newsletterOptIn = true;
+        try {
+          const pref = (await cookies()).get("abtalks_newsletter_pref")?.value;
+          if (pref === "0") newsletterOptIn = false;
+          if (pref === "1") newsletterOptIn = true;
+        } catch {
+          // cookies() can throw outside a request context — keep default.
+        }
         await recordNewsletterOptIn({
           userId: user.id,
           email: user.email ?? null,
           source: "oauth_signup",
-          optIn: true,
+          optIn: newsletterOptIn,
         });
       } catch (error) {
         logger.error("[legal] oauth signup consent not recorded", {

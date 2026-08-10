@@ -1,13 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import {
+  DEFAULT_LEGAL_CONSENT,
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+/** Cookie read by auth createUser so newsletter opt-out survives OAuth redirect. */
+const NEWSLETTER_PREF_COOKIE = "abtalks_newsletter_pref";
+
+function writeNewsletterPrefCookie(optIn: boolean) {
+  // Short-lived: only needs to survive the OAuth round-trip.
+  const maxAge = 60 * 15;
+  document.cookie = `${NEWSLETTER_PREF_COOKIE}=${optIn ? "1" : "0"}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+}
 
 function GoogleMark({ className }: { className?: string }) {
   return (
@@ -61,10 +75,23 @@ export function LoginClient({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  const [legalConsent, setLegalConsent] =
+    useState<LegalConsentValues>(DEFAULT_LEGAL_CONSENT);
 
   const target = safeRedirectPath(redirectTo, "/dashboard");
+  const canSignIn = legalConsentAccepted(legalConsent);
+
+  function ensureLegalAccepted(): boolean {
+    if (legalConsentAccepted(legalConsent)) return true;
+    toast.error(
+      "Please accept the Terms, Privacy Policy, and confirm you are 18+.",
+    );
+    return false;
+  }
 
   async function handleGoogleSignIn() {
+    if (!ensureLegalAccepted()) return;
+    writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
       await signIn("google", { callbackUrl: target });
@@ -76,6 +103,8 @@ export function LoginClient({
 
   async function handleCredentialsSignIn(e: React.FormEvent) {
     e.preventDefault();
+    if (!ensureLegalAccepted()) return;
+    writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
       const result = await signIn("credentials", {
@@ -131,18 +160,31 @@ export function LoginClient({
         </div>
       ) : null}
 
+      {/* Checkboxes first — signing in can create the account, so consent
+          must be explicit before Google / Dev login is enabled. */}
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={setLegalConsent}
+      />
+
       {showGoogle ? (
         <div className="flex flex-col gap-2">
           <Button
             type="button"
             variant="outline"
             className="h-11 w-full gap-3 font-medium"
-            disabled={pending}
+            disabled={pending || !canSignIn}
             onClick={handleGoogleSignIn}
           >
             <GoogleMark className="size-5 shrink-0" />
             Sign in with Google
           </Button>
+          {!canSignIn ? (
+            <p className="text-center text-xs text-muted-foreground">
+              Accept Terms, Privacy Policy and age confirmation above to
+              continue.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -191,7 +233,11 @@ export function LoginClient({
               disabled={pending}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={pending}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={pending || !canSignIn}
+          >
             Sign in
           </Button>
           <p className="text-xs text-muted-foreground">
@@ -199,49 +245,6 @@ export function LoginClient({
           </p>
         </form>
       ) : null}
-
-      {/* Signing in creates the account, so the notice belongs here — not only
-          on the later registration form. Deliberately not a checkbox row:
-          returning users sign in repeatedly and have already accepted.
-          Newsletter opt-out is offered on every track registration form. */}
-      <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-3 text-center text-xs leading-relaxed text-muted-foreground">
-        <p>
-          By signing in, you agree to our{" "}
-          <Link
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Privacy Policy
-          </Link>
-          , and confirm that you are{" "}
-          <span className="font-medium text-foreground">18+</span>.
-        </p>
-        <p className="mt-2">
-          We may email occasional product updates (challenges, workshops,
-          opportunities). You can opt out on any registration form or via the
-          unsubscribe link in those emails — see the{" "}
-          <Link
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
-      </div>
     </div>
   );
 }
