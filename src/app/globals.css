@@ -389,7 +389,9 @@
     background-attachment: fixed;
   }
   body.marketplace-page {
+    /* Sanctioned dark exception (plan 058 §8) — suppress Modernist ground grid */
     background-color: #030712;
+    background-image: none;
   }
   html {
     @apply font-sans;
