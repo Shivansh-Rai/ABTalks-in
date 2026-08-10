@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { isClaudeEnabled } from "@/lib/feature-flags";
 import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/registration-status";
-import { LandingHub } from "@/components/landing/landing-hub";
+import { ModernistLanding } from "@/components/landing/modernist/landing-page";
 
 export default async function HomePage() {
   const session = await auth();
@@ -23,5 +22,5 @@ export default async function HomePage() {
     }
   }
 
-  return <LandingHub claudeEnabled={isClaudeEnabled()} />;
+  return <ModernistLanding />;
 }

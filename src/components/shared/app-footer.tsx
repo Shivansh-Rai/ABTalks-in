@@ -134,6 +134,8 @@ export function AppFooter() {
   const isTalent = pathname === "/talent" || pathname.startsWith("/talent/");
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
+  // the Modernist landing ships its own footer
+  const isLanding = pathname === "/";
   const supportEmail = "team@abtalks.in";
 
   if (
@@ -142,7 +144,8 @@ export function AppFooter() {
     isCohortIndia ||
     isProgram ||
     isTalent ||
-    isHackathon
+    isHackathon ||
+    isLanding
   )
     return null;
 
