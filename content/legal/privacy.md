@@ -14,10 +14,12 @@ We are the **Data Fiduciary** for the personal data described in this Policy.
 
 | | |
 |---|---|
-| **Registered entity** | `<<FILL: registered entity legal name>>` |
+| **Registered entity** | ABTalksOnAI |
+| **Entity type** | Sole Proprietorship |
+| **Proprietor** | Suman Shukla |
 | **Trading name** | ABTalks |
-| **Registered address** | `<<FILL: registered address>>` |
-| **Registration number** | `<<FILL: CIN / LLPIN / GSTIN, or 'Not applicable'>>` |
+| **Registered address** | Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
+| **Registration number** | UDYAM-UP-29-0250625 (Udyam Registration, MSME) |
 | **Contact** | [team@abtalks.in](mailto:team@abtalks.in) |
 
 ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including abtalks.in and related domains).
@@ -28,10 +30,10 @@ In accordance with the Digital Personal Data Protection Act, 2023, the Informati
 
 | | |
 |---|---|
-| **Name** | `<<FILL: grievance officer name>>` |
-| **Designation** | `<<FILL: designation>>` |
+| **Name** | Suman Shukla |
+| **Designation** | Proprietor and Grievance Officer |
 | **Email** | [team@abtalks.in](mailto:team@abtalks.in) |
-| **Address** | `<<FILL: registered address>>` |
+| **Address** | Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
 
 We **acknowledge grievances within 24 hours** of receipt and aim to **resolve them within 15 days**. Full contact details are also published at [/contact](/contact).
 

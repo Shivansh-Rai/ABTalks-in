@@ -27,7 +27,7 @@ These defaults unblock Phase 0–4 implementation. Counsel review should confirm
 
 | Decision | v2 value | Supersedes |
 |----------|----------|------------|
-| Entity identification | **Published** on `/terms`, `/privacy`, `/contact` as a Data Fiduciary block. Values held as `<<FILL: …>>` markers in `LEGAL_ENTITY` (`src/lib/legal.ts`) until the real details are supplied | v1 row "Legal entity name" |
+| Entity identification | **Published** on `/terms`, `/privacy`, `/contact` as a Data Fiduciary block. Values held as `<<FILL: …>>` markers in `LEGAL_ENTITY` (`src/lib/legal-constants.ts`) until the real details are supplied | v1 row "Legal entity name" |
 | Grievance Officer | **Published** — name, designation, email, address. Commitment: acknowledge within **24 hours**, resolve within **15 days** (IT Rules 2021 timeline, stricter than the E-Commerce Rules, so safe for both) | new |
 | Cookie banner | **Required.** Blocking centre-screen chooser with Allow all / Limited / Deny that genuinely gates attribution cookies in middleware and third-party embeds | **Supersedes** the v1 row "Cookie banner: not required" |
 | Cookie consent storage | `abtalks_consent` cookie only — **no DB row**. For anonymous visitors there is no identifier, and logging an IP per visitor is itself a privacy cost | new |
@@ -40,4 +40,20 @@ These defaults unblock Phase 0–4 implementation. Counsel review should confirm
 | DPDP rights | Added §13 grievance redressal (with escalation to the Data Protection Board) and §14 nomination to Privacy §10 | new |
 | Consent versioning | `TERMS` / `PRIVACY` / `COOKIE_POLICY` version `2026-08-10` | supersedes v1 `2026-08-08` |
 
-**Open — blocking production merge:** registered entity legal name, registered address, registration number, Grievance Officer name and designation. Until supplied, the `<<FILL: …>>` markers render literally on the public pages. Per the v1 rule, **do not invent an address**.
+~~**Open — blocking production merge:** registered entity legal name, registered address, registration number, Grievance Officer name and designation.~~ **Resolved 2026-08-10 — see v3 below.**
+
+---
+
+## v3 decisions — 2026-08-10 (plan 061)
+
+| Decision | v3 value | Supersedes |
+|----------|----------|------------|
+| Legal entity | **ABTalksOnAI**, Sole Proprietorship, proprietor **Suman Shukla**. Registered address: Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016. Registration: **UDYAM-UP-29-0250625** (Udyam / MSME) | Closes the v1 "TBD" and v2 `<<FILL>>` rows |
+| Not published | PAN, bank account number, IFSC, and the proprietor's personal mobile all appear on the Udyam certificate and are **deliberately excluded** from every public surface and from the repo. Publishing them invites impersonation and payment fraud | new |
+| Grievance Officer contact | `team@abtalks.in` only. Name and registered address are published because a proprietorship's legal identity is the proprietor; the personal mobile is not | refines v2 |
+| Cookie chooser placement | Small **bottom-right banner**, no overlay, no focus trap, page stays usable. Attribution cookies still wait for an explicit choice — ignoring the banner sets nothing | supersedes v2 "blocking centre modal" |
+| Newsletter opt-in | Checkbox on all signup funnels, **pre-checked by default**. Stored in `NewsletterSubscription`. Excluded from the submit gate, so it can never block registration | new |
+
+**Recorded risk — pre-ticked newsletter.** DPDP §6(1) requires consent given by "clear affirmative action"; a pre-ticked box is not that, and regulators elsewhere (GDPR Art. 4(11), *Planet49*) have held the same. This was raised with the owner on 2026-08-10 and the owner chose to keep the box pre-ticked. The Privacy Policy and Terms were updated to describe the behaviour accurately rather than leave the previous "transactional email only" wording, which would have contradicted the product. Revisit if the Service takes EU/UK traffic or if a complaint is received.
+
+**Required before the first marketing email is sent:** a working one-click unsubscribe link in every campaign, honouring `NewsletterSubscription.subscribed`. Storing the opt-in is safe; sending without unsubscribe is not.

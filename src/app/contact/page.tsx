@@ -12,9 +12,14 @@ type Row = { label: string; value: string; href?: string };
 
 const entityRows: Row[] = [
   { label: "Registered entity", value: LEGAL_ENTITY.name },
+  { label: "Entity type", value: LEGAL_ENTITY.entityType },
+  { label: "Proprietor", value: LEGAL_ENTITY.proprietor },
   { label: "Trading name", value: LEGAL_ENTITY.tradingName },
   { label: "Registered address", value: LEGAL_ENTITY.address },
-  { label: "Registration number", value: LEGAL_ENTITY.registrationNumber },
+  {
+    label: "Registration number",
+    value: `${LEGAL_ENTITY.registrationNumber} (${LEGAL_ENTITY.registrationType})`,
+  },
   {
     label: "Email",
     value: LEGAL_ENTITY.email,
@@ -42,7 +47,7 @@ function DetailTable({ rows }: { rows: Row[] }) {
           className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,10rem)_1fr] sm:gap-4"
         >
           <dt className="text-sm font-medium text-foreground">{row.label}</dt>
-          <dd className="text-sm break-words text-muted-foreground">
+          <dd className="text-sm wrap-break-word text-muted-foreground">
             {row.href ? (
               <a
                 href={row.href}

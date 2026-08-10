@@ -17,25 +17,33 @@ export const COOKIE_POLICY_VERSION = "2026-08-10";
 export type LegalDocKind = "terms" | "privacy" | "cookies";
 
 /**
- * Single source of truth for entity identification.
+ * Single source of truth for entity identification, required under India's
+ * DPDP Act 2023, the IT Rules 2021, and the Consumer Protection (E-Commerce)
+ * Rules 2020.
  *
  * `content/legal/terms.md` and `content/legal/privacy.md` repeat these values
  * literally because markdown cannot import — update all three together.
  *
- * The `<<FILL: …>>` markers are intentional. They must be replaced with the
- * real registered details before this ships to production; they are required
- * under India's DPDP Act 2023, the IT Rules 2021, and the Consumer Protection
- * (E-Commerce) Rules 2020. Do not invent values.
+ * Only what the law requires published goes here: entity name, type,
+ * proprietor, registered address, registration number, and a contact address.
+ * PAN, bank account, IFSC and personal phone numbers appear on the Udyam
+ * certificate but must NEVER be added — publishing them invites impersonation
+ * and payment fraud.
  */
 export const LEGAL_ENTITY = {
-  name: "<<FILL: registered entity legal name>>",
+  name: "ABTalksOnAI",
+  proprietor: "Suman Shukla",
+  entityType: "Sole Proprietorship",
   tradingName: "ABTalks",
-  address: "<<FILL: registered address>>",
-  registrationNumber: "<<FILL: CIN / LLPIN / GSTIN, or 'Not applicable'>>",
+  address:
+    "Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, " +
+    "Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India",
+  registrationNumber: "UDYAM-UP-29-0250625",
+  registrationType: "Udyam Registration (MSME)",
   email: "team@abtalks.in",
   grievanceOfficer: {
-    name: "<<FILL: grievance officer name>>",
-    designation: "<<FILL: designation>>",
+    name: "Suman Shukla",
+    designation: "Proprietor and Grievance Officer",
     email: "team@abtalks.in",
     acknowledgeWithin: "24 hours",
     resolveWithin: "15 days",
