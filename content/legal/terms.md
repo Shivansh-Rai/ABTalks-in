@@ -5,14 +5,20 @@
 
 These Terms of Service (“Terms”) govern your access to and use of ABTalks websites, apps, and related services (the “Service”), operated under the trading name **ABTalks** (“ABTalks”, “we”, “us”).
 
-| | |
+| Field | Detail |
 |---|---|
 | **Registered entity** | ABTalksOnAI |
-| **Entity type** | Sole Proprietorship |
+| **Entity type** | Sole Proprietorship (Proprietary) |
+| **Enterprise scale** | Micro (Udyam) |
+| **Major activity** | Services |
+| **Industry (NIC)** | 62099 — Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
 | **Trading name** | ABTalks |
+| **Unit name** | ABTalksOnAI |
 | **Registered address** | Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
-| **Registration number** | UDYAM-UP-29-0250625 (Udyam Registration, MSME) |
+| **Udyam registration number** | UDYAM-UP-29-0250625 |
+| **Udyam registration date** | 01 August 2026 |
+| **Date of incorporation** | 25 July 2026 |
 | **Contact** | [team@abtalks.in](mailto:team@abtalks.in) · [/contact](/contact) |
 
 By creating an account, registering for a track, or clicking “I agree”, you accept these Terms and our [Privacy Policy](/privacy).
@@ -128,7 +134,7 @@ We may update these Terms. The version and effective date appear at the top. Mat
 
 For complaints about the Service, your content, or your data:
 
-| | |
+| Field | Detail |
 |---|---|
 | **Name** | Suman Shukla |
 | **Designation** | Proprietor and Grievance Officer |

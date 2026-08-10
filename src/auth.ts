@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import authConfig from "@/auth.config";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { logger } from "@/lib/logger";
 //auth is the full config with PrismaAdapter and real Credentials authorize. Used everywhere else.
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -57,6 +58,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userId: user.id,
           email: user.email ?? null,
           source: "oauth_signup",
+        });
+        // Matches the login-page notice: product updates are on by default at
+        // first account creation. Users can opt out on any later registration
+        // form (or via unsubscribe once campaigns ship).
+        await recordNewsletterOptIn({
+          userId: user.id,
+          email: user.email ?? null,
+          source: "oauth_signup",
+          optIn: true,
         });
       } catch (error) {
         logger.error("[legal] oauth signup consent not recorded", {

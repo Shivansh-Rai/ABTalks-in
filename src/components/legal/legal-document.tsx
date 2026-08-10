@@ -1,5 +1,6 @@
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 const mdComponents: Components = {
@@ -74,7 +75,11 @@ type Props = {
 export function LegalDocument({ markdown, className }: Props) {
   return (
     <article className={cn("mx-auto max-w-3xl px-5 py-12 md:px-8 md:py-16", className)}>
-      <ReactMarkdown components={mdComponents}>{markdown}</ReactMarkdown>
+      {/* remark-gfm is required for pipe tables in content/legal/*.md —
+          without it, tables render as raw | | | text (see /terms, /cookies). */}
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+        {markdown}
+      </ReactMarkdown>
     </article>
   );
 }

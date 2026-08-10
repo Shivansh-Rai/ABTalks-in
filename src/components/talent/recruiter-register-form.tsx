@@ -101,6 +101,15 @@ export function RecruiterRegisterForm() {
       </div>
       <LegalConsentFields
         values={legalConsent}
+        newsletterLabel={
+          <>
+            Send me occasional updates about talent-pool access, cohort
+            releases, and recruiter product news.{" "}
+            <span className="text-muted-foreground">
+              Optional — untick to opt out, and you can unsubscribe any time.
+            </span>
+          </>
+        }
         onChange={(next) => {
           setLegalConsent(next);
           setValue("acceptTerms", next.acceptTerms);

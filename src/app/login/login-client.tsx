@@ -201,29 +201,47 @@ export function LoginClient({
       ) : null}
 
       {/* Signing in creates the account, so the notice belongs here — not only
-          on the later registration form. Deliberately not a checkbox: returning
-          users sign in repeatedly and have already accepted. */}
-      <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        By signing in, you agree to our{" "}
-        <Link
-          href="/terms"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link
-          href="/privacy"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Privacy Policy
-        </Link>
-        , and confirm that you are 18 years of age or older.
-      </p>
+          on the later registration form. Deliberately not a checkbox row:
+          returning users sign in repeatedly and have already accepted.
+          Newsletter opt-out is offered on every track registration form. */}
+      <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-3 text-center text-xs leading-relaxed text-muted-foreground">
+        <p>
+          By signing in, you agree to our{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          , and confirm that you are{" "}
+          <span className="font-medium text-foreground">18+</span>.
+        </p>
+        <p className="mt-2">
+          We may email occasional product updates (challenges, workshops,
+          opportunities). You can opt out on any registration form or via the
+          unsubscribe link in those emails — see the{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }

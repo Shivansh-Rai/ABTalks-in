@@ -12,14 +12,20 @@ You can also submit a request in-product at [/privacy/requests](/privacy/request
 
 We are the **Data Fiduciary** for the personal data described in this Policy.
 
-| | |
+| Field | Detail |
 |---|---|
 | **Registered entity** | ABTalksOnAI |
-| **Entity type** | Sole Proprietorship |
+| **Entity type** | Sole Proprietorship (Proprietary) |
+| **Enterprise scale** | Micro (Udyam) |
+| **Major activity** | Services |
+| **Industry (NIC)** | 62099 — Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
 | **Trading name** | ABTalks |
+| **Unit name** | ABTalksOnAI |
 | **Registered address** | Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
-| **Registration number** | UDYAM-UP-29-0250625 (Udyam Registration, MSME) |
+| **Udyam registration number** | UDYAM-UP-29-0250625 |
+| **Udyam registration date** | 01 August 2026 |
+| **Date of incorporation** | 25 July 2026 |
 | **Contact** | [team@abtalks.in](mailto:team@abtalks.in) |
 
 ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including abtalks.in and related domains).
@@ -28,7 +34,7 @@ ABTalks operates learning challenges, workshops, hackathons, an AI cohort progra
 
 In accordance with the Digital Personal Data Protection Act, 2023, the Information Technology Rules, 2021, and the Consumer Protection (E-Commerce) Rules, 2020:
 
-| | |
+| Field | Detail |
 |---|---|
 | **Name** | Suman Shukla |
 | **Designation** | Proprietor and Grievance Officer |

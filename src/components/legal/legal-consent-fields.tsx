@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -25,14 +26,31 @@ type Props = {
   values: LegalConsentValues;
   onChange: (next: LegalConsentValues) => void;
   className?: string;
+  /**
+   * Marketing-checkbox copy. Defaults to learner-oriented wording; recruiter
+   * and other funnels should pass a surface-specific label so we do not
+   * advertise "challenges/workshops" to employers.
+   */
+  newsletterLabel?: ReactNode;
   /** Optional extra checkboxes rendered after the legal trio. */
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
+
+const DEFAULT_NEWSLETTER_LABEL = (
+  <>
+    Send me occasional updates about new challenges, workshops and
+    opportunities.{" "}
+    <span className="text-muted-foreground">
+      Optional — untick to opt out, and you can unsubscribe any time.
+    </span>
+  </>
+);
 
 export function LegalConsentFields({
   values,
   onChange,
   className,
+  newsletterLabel = DEFAULT_NEWSLETTER_LABEL,
   children,
 }: Props) {
   return (
@@ -95,13 +113,7 @@ export function LegalConsentFields({
           className="mt-0.5"
           aria-label="Receive occasional updates by email"
         />
-        <Label className="font-normal leading-snug">
-          Send me occasional updates about new challenges, workshops and
-          opportunities.{" "}
-          <span className="text-muted-foreground">
-            Optional — untick to opt out, and you can unsubscribe any time.
-          </span>
-        </Label>
+        <Label className="font-normal leading-snug">{newsletterLabel}</Label>
       </label>
       {children}
     </div>

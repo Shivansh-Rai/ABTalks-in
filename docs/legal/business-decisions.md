@@ -48,8 +48,8 @@ These defaults unblock Phase 0–4 implementation. Counsel review should confirm
 
 | Decision | v3 value | Supersedes |
 |----------|----------|------------|
-| Legal entity | **ABTalksOnAI**, Sole Proprietorship, proprietor **Suman Shukla**. Registered address: Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016. Registration: **UDYAM-UP-29-0250625** (Udyam / MSME) | Closes the v1 "TBD" and v2 `<<FILL>>` rows |
-| Not published | PAN, bank account number, IFSC, and the proprietor's personal mobile all appear on the Udyam certificate and are **deliberately excluded** from every public surface and from the repo. Publishing them invites impersonation and payment fraud | new |
+| Legal entity | **ABTalksOnAI**, Sole Proprietorship (Proprietary), proprietor **Suman Shukla**. Micro enterprise, major activity Services, NIC 62099. Udyam **UDYAM-UP-29-0250625** (registered 01 Aug 2026; incorporation 25 Jul 2026). Address: Flat No 803-A, Tower 2A, 8th Floor, Panchsheel Wellington, Crossing Republic, Ghaziabad, Uttar Pradesh 201016 | Closes the v1 "TBD" and v2 `<<FILL>>` rows; expanded from full Udyam certificate 2026-08-10 |
+| Not published | PAN, bank account number, IFSC, and the proprietor's personal mobile (and the certificate mailbox if different from product support) all appear on the Udyam certificate and are **deliberately excluded** from every public surface and from the repo. Publishing them invites impersonation and payment fraud | new |
 | Grievance Officer contact | `team@abtalks.in` only. Name and registered address are published because a proprietorship's legal identity is the proprietor; the personal mobile is not | refines v2 |
 | Cookie chooser placement | Small **bottom-right banner**, no overlay, no focus trap, page stays usable. Attribution cookies still wait for an explicit choice — ignoring the banner sets nothing | supersedes v2 "blocking centre modal" |
 | Newsletter opt-in | Checkbox on all signup funnels, **pre-checked by default**. Stored in `NewsletterSubscription`. Excluded from the submit gate, so it can never block registration | new |

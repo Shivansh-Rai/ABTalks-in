@@ -13,12 +13,24 @@ type Row = { label: string; value: string; href?: string };
 const entityRows: Row[] = [
   { label: "Registered entity", value: LEGAL_ENTITY.name },
   { label: "Entity type", value: LEGAL_ENTITY.entityType },
+  { label: "Enterprise scale", value: LEGAL_ENTITY.enterpriseScale },
+  { label: "Major activity", value: LEGAL_ENTITY.majorActivity },
+  { label: "Industry (NIC)", value: LEGAL_ENTITY.industryClassification },
   { label: "Proprietor", value: LEGAL_ENTITY.proprietor },
   { label: "Trading name", value: LEGAL_ENTITY.tradingName },
+  { label: "Unit name", value: LEGAL_ENTITY.unitName },
   { label: "Registered address", value: LEGAL_ENTITY.address },
   {
-    label: "Registration number",
+    label: "Udyam registration number",
     value: `${LEGAL_ENTITY.registrationNumber} (${LEGAL_ENTITY.registrationType})`,
+  },
+  {
+    label: "Udyam registration date",
+    value: LEGAL_ENTITY.udyamRegistrationDate,
+  },
+  {
+    label: "Date of incorporation",
+    value: LEGAL_ENTITY.incorporationDate,
   },
   {
     label: "Email",
