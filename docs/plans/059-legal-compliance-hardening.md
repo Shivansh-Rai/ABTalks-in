@@ -1,8 +1,18 @@
 # 059 — Legal & Privacy Compliance Hardening
 
-> **Branch:** `feat/legal-compliance-hardening`, cut fresh from `master`.
-> **Not** on `fix/dashboard-single-progress-bar` — that branch carries an unrelated dashboard fix.
-> **Own PR**, separate from any other in-flight work. See §9 for the required PR body.
+> **Status: IMPLEMENTED** on branch `feat/legal-compliance-hardening` (commits `0110205`, `5295441`, `d14e0ba`, `624fb4c`, `ec64a55`).
+>
+> **Branch base correction:** cut from `feat/terms-privacy-consent`, **not** `master`. Plan 057 is unmerged, so `content/legal/`, `/terms` and `/privacy` do not exist on `master` — basing this work there would have broken every phase. The PR therefore targets `feat/terms-privacy-consent` (or rebase onto `master` once 057 lands).
+>
+> **Deviations from the plan as written**, all decided during implementation:
+> 1. `src/lib/legal-constants.ts` `[new]` was added. Importing `@/lib/legal` from a Client Component pulled `node:fs/promises` into the browser bundle and failed the Turbopack build; client-safe constants had to be split out. `legal.ts` re-exports them so server callers are untouched.
+> 2. The challenge day-page video was **left auto-loading** at the owner's direction. It is disclosed in the Privacy and Cookie policies instead of changed. `LiteYoutube` still moved to `components/shared` and is consent-aware for the program routes.
+> 3. Consent gates the **YouTube preview thumbnail** (`i.ytimg.com`), not iframe auto-load. Auto-mounting a player on render is worse UX than the facade it would replace, and the thumbnail is the actual pre-consent call to Google.
+> 4. `/ai-workshop` keeps its branded footer with legal links added inline; `AppFooter` returns the minimal strip for the other five funnel routes. The two workshop copyright lines were **not** deleted — that would have left those pages with no footer identity.
+> 5. Admin status values are `PENDING` / `DONE` / `REJECTED` (the schema's actual `DataRightsRequestStatus`), not the `RESOLVED` named in §5.
+> 6. `needsReconsent` swallows query errors and returns `false` — see the blocker below.
+>
+> **⚠️ Deployment blocker:** migration `20260808120000_legal_consent_and_rights` (from plan 057) has **never been applied** to the Neon database — `public.LegalConsent` does not exist. `npm run build` runs `prisma migrate deploy`, so a normal deploy applies it, but until then Phases 4 and 5 have no table to read. This was not run here: it is a state-changing command against a database shared by dev and prod.
 
 ---
 
