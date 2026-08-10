@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -198,6 +199,31 @@ export function LoginClient({
           </p>
         </form>
       ) : null}
+
+      {/* Signing in creates the account, so the notice belongs here — not only
+          on the later registration form. Deliberately not a checkbox: returning
+          users sign in repeatedly and have already accepted. */}
+      <p className="text-center text-xs leading-relaxed text-muted-foreground">
+        By signing in, you agree to our{" "}
+        <Link
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Privacy Policy
+        </Link>
+        , and confirm that you are 18 years of age or older.
+      </p>
     </div>
   );
 }

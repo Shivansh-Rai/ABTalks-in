@@ -14,7 +14,13 @@ export type ConsentSource =
   | "cohort_us"
   | "cohort_india"
   /** Re-acceptance after a TERMS/PRIVACY version bump. */
-  | "reconsent";
+  | "reconsent"
+  /**
+   * First-ever OAuth sign-in. The adapter creates the User row before the
+   * visitor reaches any form, so this is the earliest point at which we hold
+   * their data — the login page carries the corresponding notice.
+   */
+  | "oauth_signup";
 
 type RecordConsentArgs = {
   userId?: string | null;
