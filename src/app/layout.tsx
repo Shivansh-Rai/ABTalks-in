@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -8,6 +8,12 @@ import { AppFooter } from "@/components/shared/app-footer";
 import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import "./globals.css";
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  weight: ["400", "600", "800"],
+});
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -34,10 +40,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
+      className={`${archivo.variable} ${jakarta.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`${jakarta.variable} ${inter.variable} min-h-full flex flex-col font-sans`}>
+      <body
+        className={`${archivo.variable} ${jakarta.variable} ${inter.variable} min-h-full flex flex-col font-sans`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

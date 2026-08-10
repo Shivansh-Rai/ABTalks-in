@@ -7,10 +7,10 @@
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
-  --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-sidebar-border: hsl(var(--sidebar-border));
@@ -20,11 +20,11 @@
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar: hsl(var(--sidebar));
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-1: hsl(var(--chart-1));
   --color-ring: hsl(var(--ring));
   --color-input: hsl(var(--input));
   --color-border: hsl(var(--border));
@@ -48,6 +48,26 @@
   --color-domains-ds-bg: #ecfeff;
   --color-domains-se: #10b981;
   --color-domains-se-bg: #ecfdf5;
+  /* Modernist ink ramp */
+  --color-ink-100: hsl(0 22% 96%);
+  --color-ink-200: hsl(0 7% 91%);
+  --color-ink-300: hsl(0 5% 84%);
+  --color-ink-400: hsl(0 3% 72%);
+  --color-ink-500: hsl(0 2% 60%);
+  --color-ink-600: hsl(0 2% 48%);
+  --color-ink-700: hsl(0 2% 37%);
+  --color-ink-800: hsl(0 2% 26%);
+  --color-ink-900: hsl(0 2% 17%);
+  /* Modernist accent ramp */
+  --color-accent-100: hsl(252 100% 97%);
+  --color-accent-200: hsl(254 100% 93%);
+  --color-accent-300: hsl(253 100% 88%);
+  --color-accent-400: hsl(252 100% 80%);
+  --color-accent-500: hsl(252 100% 68%);
+  --color-accent-600: hsl(253 77% 58%);
+  --color-accent-700: hsl(253 61% 47%);
+  --color-accent-800: hsl(254 63% 35%);
+  --color-accent-900: hsl(252 57% 24%);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -90,43 +110,46 @@
 }
 
 :root {
-  --background: 38 38% 98%;
-  --foreground: 224 71% 4%;
-  --card: 0 0% 100%;
-  --card-foreground: 224 71% 4%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 71% 4%;
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 224 71% 4%;
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 8% 46%;
-  --accent: 220 14% 96%;
-  --accent-foreground: 224 71% 4%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 239 84% 67%;
-  --radius: 0.625rem;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: 38 38% 97%;
-  --sidebar-foreground: 224 71% 4%;
-  --sidebar-primary: 239 84% 67%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 96%;
-  --sidebar-accent-foreground: 224 71% 4%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 239 84% 67%;
-  --elevation-card: 0 1px 2px -1px hsl(239 30% 20% / 0.08), 0 2px 8px -2px hsl(239 40% 40% / 0.08);
-  --elevation-card-hover: 0 2px 4px -1px hsl(239 30% 20% / 0.10), 0 8px 24px -4px hsl(239 50% 45% / 0.14);
+  --background: 0 4% 95%;
+  --foreground: 20 5% 12%;
+  --card: 0 22% 96%;
+  --card-foreground: 20 5% 12%;
+  --popover: 0 22% 96%;
+  --popover-foreground: 20 5% 12%;
+  --primary: 252 100% 68%;
+  --primary-foreground: 0 4% 95%;
+  --secondary: 0 2% 92%;
+  --secondary-foreground: 20 5% 12%;
+  --muted: 0 7% 91%;
+  --muted-foreground: 0 2% 37%;
+  --accent: 254 100% 93%;
+  --accent-foreground: 254 63% 35%;
+  --destructive: 8 100% 34%;
+  --destructive-foreground: 0 4% 95%;
+  --border: 20 5% 12%;
+  --input: 20 5% 12%;
+  --ring: 252 100% 68%;
+  --radius: 0px;
+  --divider: 20 5% 12%;
+  --rule: 2px;
+  --grid-unit: 96px;
+  --chart-1: 252 100% 68%;
+  --chart-2: 253 61% 47%;
+  --chart-3: 0 2% 37%;
+  --chart-4: 252 100% 80%;
+  --chart-5: 0 3% 72%;
+  --sidebar: 0 4% 95%;
+  --sidebar-foreground: 20 5% 12%;
+  --sidebar-primary: 252 100% 68%;
+  --sidebar-primary-foreground: 0 4% 95%;
+  --sidebar-accent: 254 100% 93%;
+  --sidebar-accent-foreground: 254 63% 35%;
+  --sidebar-border: 20 5% 12%;
+  --sidebar-ring: 252 100% 68%;
+  --elevation-card: 0 1px 2px -1px hsl(20 5% 12% / 0.08), 0 2px 8px -2px hsl(20 5% 12% / 0.08);
+  --elevation-card-hover: 0 2px 4px -1px hsl(20 5% 12% / 0.10), 0 8px 24px -4px hsl(252 100% 68% / 0.14);
   --elevation-primary: 0 1px 2px -1px hsl(var(--primary) / 0.20), 0 8px 24px -6px hsl(var(--primary) / 0.25);
-  --elevation-pop: 0 8px 40px -8px hsl(239 40% 20% / 0.22);
+  --elevation-pop: 0 8px 40px -8px hsl(20 5% 12% / 0.22);
 }
 
 .dark {
@@ -187,6 +210,46 @@
 }
 
 @layer components {
+  /* Modernist craft — from handoff/globals.theme.css, hsl(var(…)) form */
+  .rule2 {
+    height: var(--rule);
+    border: 0;
+    margin: 0;
+    background: hsl(var(--divider) / 0.4);
+  }
+
+  .kicker {
+    display: block;
+    font-size: 13px;
+    line-height: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+  }
+  .kicker-muted {
+    color: hsl(var(--foreground) / 0.7);
+  }
+
+  .lattice {
+    display: grid;
+    gap: var(--rule);
+    background: hsl(var(--divider) / 0.4);
+  }
+  .lattice > * {
+    background: hsl(var(--background));
+  }
+
+  .shell {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 72px);
+  }
+
+  .poster {
+    background: hsl(var(--primary));
+    color: hsl(var(--background));
+  }
+
   .focus-spark:focus-visible {
     outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
@@ -367,12 +430,32 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        hsl(var(--foreground) / 0.05) 0 1px,
+        transparent 1px var(--grid-unit)
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        hsl(var(--foreground) / 0.035) 0 1px,
+        transparent 1px var(--grid-unit)
+      );
+    background-attachment: fixed;
   }
   body.marketplace-page {
     background-color: #030712;
   }
   html {
     @apply font-sans;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: hsl(var(--accent));
+    color: hsl(var(--foreground));
   }
 }
 
