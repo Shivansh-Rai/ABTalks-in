@@ -136,7 +136,7 @@ export default function CommunityStats() {
             href={CLAUDE_SIGNUP}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-7 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            className="mt-7 inline-flex items-center gap-2 rounded-none px-7 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
               background: "var(--wk-grad)",
               boxShadow:

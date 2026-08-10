@@ -50,7 +50,7 @@ export function TrackRow({ href, title, support, icon, badge }: Props) {
       </span>
       {badge ? (
         <span
-          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${toneClasses[badge.tone]}`}
+          className={`shrink-0 rounded-none px-2 py-1 text-[10px] font-semibold ${toneClasses[badge.tone]}`}
         >
           {badge.label}
         </span>

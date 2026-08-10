@@ -303,7 +303,7 @@ export function DayBuildSteps({ steps }: { steps: string[] }) {
                   {/* Marker slot: Figma arrow 60×40; circle 20×20 centered on the dotted line */}
                   <span className="relative flex h-10 w-[60px] items-center justify-center">
                     <motion.span
-                      className="size-5 rounded-full border-[3px] border-[#7528C9] bg-[#040C20]"
+                      className="size-5 rounded-none border-[3px] border-[#7528C9] bg-[#040C20]"
                       initial={false}
                       animate={{
                         opacity: isActive ? 0 : 1,

@@ -97,12 +97,12 @@ export function RoadmapCard({
         <div className="min-w-0 flex-1 pr-14 md:pr-24">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <span
-              className="inline-flex rounded-full px-2 py-px text-[10px] font-semibold tracking-wide text-white"
+              className="inline-flex rounded-none px-2 py-px text-[10px] font-semibold tracking-wide text-white"
               style={{ backgroundColor: phase.accent }}
             >
               Phase {phase.phase}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] px-2 py-px text-[10px] text-[#E9E9E9] md:text-xs">
+            <span className="inline-flex items-center gap-1 rounded-none border border-white/15 bg-white/[0.04] px-2 py-px text-[10px] text-[#E9E9E9] md:text-xs">
               <CalendarDays className="size-3 opacity-70" />
               {phase.days}
             </span>

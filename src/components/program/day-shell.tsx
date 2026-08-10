@@ -71,7 +71,7 @@ function DaySidebar({
             <div key={mod.number}>
               <div className="mb-1.5 flex items-center gap-2 px-2">
                 <span
-                  className="size-2 shrink-0 rounded-full"
+                  className="size-2 shrink-0 rounded-none"
                   style={{ backgroundColor: mod.color }}
                   aria-hidden
                 />

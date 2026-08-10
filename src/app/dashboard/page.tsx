@@ -483,7 +483,7 @@ export default async function DashboardPage({
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        "rounded-full px-3 py-1 text-xs font-semibold tracking-wide",
+                        "rounded-none px-3 py-1 text-xs font-semibold tracking-wide",
                         difficultyPillClass(todayTask.difficulty),
                       )}
                     >

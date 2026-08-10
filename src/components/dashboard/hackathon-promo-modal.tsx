@@ -118,12 +118,12 @@ export function HackathonPromoModal() {
               type="button"
               onClick={closeWithLimit}
               aria-label="Close"
-              className="absolute right-3.5 top-3.5 flex size-7 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
+              className="absolute right-3.5 top-3.5 flex size-7 items-center justify-center rounded-none text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
             >
               <X className="size-4" aria-hidden />
             </button>
 
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">
+            <span className="inline-flex items-center gap-1.5 rounded-none border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">
               <Sparkles className="size-3 text-violet-400" aria-hidden />
               ViCODATHON
             </span>
@@ -172,7 +172,7 @@ export function HackathonPromoModal() {
             <Link
               href="/hackathon?s=shr"
               onClick={() => setOpen(false)}
-              className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-[14px] font-semibold text-white transition-[transform,filter] duration-200 hover:-translate-y-0.5 hover:brightness-110"
+              className="group mt-5 flex w-full items-center justify-center gap-2 rounded-none py-3 text-[14px] font-semibold text-white transition-[transform,filter] duration-200 hover:-translate-y-0.5 hover:brightness-110"
               style={{
                 background: "linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)",
                 boxShadow:

@@ -137,9 +137,9 @@ function ScoreBar({
           {value}/{max}
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-[#1a2333]">
+      <div className="h-1.5 overflow-hidden rounded-none bg-[#1a2333]">
         <div
-          className="h-full rounded-full bg-[#7364E6] transition-all duration-300 group-hover/bar:bg-[#968BEC]"
+          className="h-full rounded-none bg-[#7364E6] transition-all duration-300 group-hover/bar:bg-[#968BEC]"
           style={{ width: `${max ? Math.min(100, (value / max) * 100) : 0}%` }}
         />
       </div>
@@ -236,7 +236,7 @@ export function ProgramDashboardView({
               <div className="mt-auto flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start gap-2">
-                    <span className="mt-1.5 size-2.5 shrink-0 rounded-full bg-[#FF7878]" />
+                    <span className="mt-1.5 size-2.5 shrink-0 rounded-none bg-[#FF7878]" />
                     <p className="text-sm font-semibold text-[#E9E9E9] md:text-base">
                       Day {data.currentDay.dayNumber}: {data.currentDay.title}
                     </p>
@@ -339,7 +339,7 @@ export function ProgramDashboardView({
             <div key={mod.number} className={cn(cardClass, "group")}>
               <div className="flex items-center gap-2 text-sm font-medium text-white">
                 <span
-                  className="size-2.5 shrink-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-110"
+                  className="size-2.5 shrink-0 rounded-none transition-transform duration-300 ease-out group-hover:scale-110"
                   style={{ backgroundColor: mod.color }}
                 />
                 {mod.title}
@@ -347,9 +347,9 @@ export function ProgramDashboardView({
               <p className="mt-1 text-xs text-[#9CA3AF]">
                 {mod.passed}/{mod.total} missions passed
               </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#1a2333]">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-none bg-[#1a2333]">
                 <div
-                  className="h-full rounded-full transition-[filter] duration-300 ease-out group-hover:brightness-105"
+                  className="h-full rounded-none transition-[filter] duration-300 ease-out group-hover:brightness-105"
                   style={{
                     width: `${mod.total ? (mod.passed / mod.total) * 100 : 0}%`,
                     backgroundColor: mod.color,

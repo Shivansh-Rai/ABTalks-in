@@ -73,7 +73,7 @@ export function TrackCard({
       <div className="relative flex items-start justify-between gap-3">
         <span
           className={cn(
-            "rounded-full border px-3 py-1 text-xs font-semibold",
+            "rounded-none border px-3 py-1 text-xs font-semibold",
             styles.pill,
           )}
         >
@@ -94,7 +94,7 @@ export function TrackCard({
           <span
             key={chip}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium",
+              "rounded-none px-3 py-1 text-xs font-medium",
               styles.chip,
             )}
           >

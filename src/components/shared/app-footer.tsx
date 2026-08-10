@@ -111,7 +111,7 @@ const SOCIAL_LINKS: SocialLink[] = [
 ];
 
 const socialIconClassName = cn(
-  "inline-flex size-9 items-center justify-center rounded-full text-primary",
+  "inline-flex size-9 items-center justify-center rounded-none text-primary",
   "transition-all duration-200 ease-out",
   "hover:-translate-y-0.5 hover:scale-110 hover:bg-primary/10 hover:text-primary",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",

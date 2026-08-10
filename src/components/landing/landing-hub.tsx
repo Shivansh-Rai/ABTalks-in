@@ -157,7 +157,7 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
                 key={stat.label}
                 className="flex items-center justify-center gap-3 py-4 sm:py-0"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="flex h-10 w-10 items-center justify-center rounded-none bg-primary/10 text-primary">
                   {index === 0 ? (
                     <UsersRound className="h-5 w-5" />
                   ) : index === 1 ? (
@@ -235,7 +235,7 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
               Join now
             </a>
             <div
-              className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl"
+              className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-none bg-emerald-400/20 blur-3xl"
               aria-hidden
             />
           </div>
@@ -265,9 +265,9 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
 function BackgroundBlobs() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
-      <div className="absolute -right-32 top-20 h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
-      <div className="absolute -left-40 top-[34rem] h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl" />
-      <div className="absolute right-0 top-[62rem] h-80 w-80 rounded-full bg-orange-500/10 blur-3xl" />
+      <div className="absolute -right-32 top-20 h-96 w-96 rounded-none bg-violet-500/15 blur-3xl" />
+      <div className="absolute -left-40 top-[34rem] h-96 w-96 rounded-none bg-indigo-500/15 blur-3xl" />
+      <div className="absolute right-0 top-[62rem] h-80 w-80 rounded-none bg-orange-500/10 blur-3xl" />
     </div>
   );
 }

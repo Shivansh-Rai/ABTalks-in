@@ -275,7 +275,7 @@ export default async function AIWorkshopPage() {
             style={{ animationDelay: "0.28s" }}
           >
             <div
-              className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full px-4 py-2 text-[13px] font-medium text-white/70"
+              className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-none px-4 py-2 text-[13px] font-medium text-white/70"
               style={{
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.08)",
@@ -302,7 +302,7 @@ export default async function AIWorkshopPage() {
           >
             <a
               href="#register"
-              className="hero-cta w-full rounded-full px-8 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 sm:w-auto"
+              className="hero-cta w-full rounded-none px-8 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 sm:w-auto"
               style={{
                 background: "var(--wk-grad)",
               }}
@@ -313,7 +313,7 @@ export default async function AIWorkshopPage() {
             </a>
             <a
               href="#curriculum"
-              className="w-full rounded-full px-8 py-3.5 text-[15px] font-semibold text-white/80 transition-colors hover:text-white sm:w-auto"
+              className="w-full rounded-none px-8 py-3.5 text-[15px] font-semibold text-white/80 transition-colors hover:text-white sm:w-auto"
               style={{
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.12)",

@@ -112,7 +112,7 @@ export function DropoffStudentsView({ rows, domain }: Props) {
               type="button"
               onClick={() => handleDomainChange(opt.value)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-none border px-3 py-1 text-xs font-medium transition-colors",
                 domain === opt.value
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-card hover:bg-accent/40",

@@ -345,7 +345,7 @@ export function InterviewClient({
             )}
             <div className="flex-1">
               <p className="text-sm font-medium">Microphone check</p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="mt-2 h-2 overflow-hidden rounded-none bg-muted">
                 <div
                   className="h-full bg-primary transition-all"
                   style={{ width: `${micLevel}%` }}

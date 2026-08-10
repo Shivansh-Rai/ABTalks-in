@@ -217,7 +217,7 @@ export function WorkshopPromoModal() {
               {/* soft aurora orbs */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full blur-3xl"
+                className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-none blur-3xl"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(var(--wk-a1-rgb),0.28), transparent 65%)",
@@ -225,7 +225,7 @@ export function WorkshopPromoModal() {
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute -bottom-24 -right-16 h-60 w-60 rounded-full blur-3xl"
+                className="pointer-events-none absolute -bottom-24 -right-16 h-60 w-60 rounded-none blur-3xl"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(var(--wk-a2-rgb),0.22), transparent 65%)",
@@ -261,7 +261,7 @@ export function WorkshopPromoModal() {
               <div
                 ref={glowRef}
                 aria-hidden
-                className="pointer-events-none absolute left-0 top-0 h-[360px] w-[360px] rounded-full opacity-0 transition-opacity duration-300"
+                className="pointer-events-none absolute left-0 top-0 h-[360px] w-[360px] rounded-none opacity-0 transition-opacity duration-300"
                 style={{
                   marginLeft: -180,
                   marginTop: -180,
@@ -275,7 +275,7 @@ export function WorkshopPromoModal() {
                 type="button"
                 onClick={closeTemporarily}
                 aria-label="Close"
-                className="absolute right-4 top-4 z-10 flex size-8 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
+                className="absolute right-4 top-4 z-10 flex size-8 items-center justify-center rounded-none text-white/40 transition-colors hover:bg-white/5 hover:text-white/80"
               >
                 <X className="size-4" aria-hidden />
               </button>
@@ -283,7 +283,7 @@ export function WorkshopPromoModal() {
               <div className="relative">
                 {/* live pill */}
                 <span
-                  className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.18em]"
+                  className="inline-flex items-center gap-2 rounded-none px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.18em]"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.1)",
@@ -291,7 +291,7 @@ export function WorkshopPromoModal() {
                   }}
                 >
                   <span
-                    className="h-1.5 w-1.5 rounded-full"
+                    className="h-1.5 w-1.5 rounded-none"
                     style={{
                       background: "var(--wk-a2)",
                       boxShadow: "0 0 8px 1px rgba(var(--wk-a2-rgb),0.8)",
@@ -365,7 +365,7 @@ export function WorkshopPromoModal() {
                 <Link
                   href="/ai-workshop"
                   onClick={closeTemporarily}
-                  className="wk-promo-cta group relative mt-7 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-[15px] font-semibold text-white transition-transform duration-200"
+                  className="wk-promo-cta group relative mt-7 flex w-full items-center justify-center gap-2 rounded-none py-3.5 text-[15px] font-semibold text-white transition-transform duration-200"
                   style={{ background: "var(--wk-grad)" }}
                 >
                   <span className="relative z-10">Register now</span>

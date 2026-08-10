@@ -150,7 +150,7 @@ export function SubmissionFlow({
         <div className="w-full space-y-10 py-4">
           <div className="flex flex-col items-center space-y-6 text-center">
             <div
-              className="flex size-28 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50"
+              className="flex size-28 items-center justify-center rounded-none bg-amber-100 dark:bg-amber-950/50"
               aria-hidden
             >
               <span className="text-6xl leading-none">🏆</span>
@@ -187,7 +187,7 @@ export function SubmissionFlow({
       <div className="w-full space-y-10 py-2">
         <div className="flex flex-col items-center space-y-6 text-center">
           <div
-            className="flex size-28 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50"
+            className="flex size-28 items-center justify-center rounded-none bg-emerald-100 dark:bg-emerald-950/50"
             aria-hidden
           >
             <CheckCircle2 className="size-20 text-emerald-500" strokeWidth={1.75} />
@@ -255,9 +255,9 @@ export function SubmissionFlow({
         </div>
 
         <div className="space-y-2">
-          <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-3 w-full overflow-hidden rounded-none bg-muted">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-primary-foreground transition-all duration-500"
+              className="h-full rounded-none bg-gradient-to-r from-primary to-primary-foreground transition-all duration-500"
               style={{ width: `${journeyPct}%` }}
             />
           </div>

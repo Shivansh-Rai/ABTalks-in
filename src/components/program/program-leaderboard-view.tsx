@@ -76,7 +76,7 @@ function PodiumCard({
 
         <div
           className={cn(
-            "flex items-center justify-center rounded-full font-bold text-white shadow-md transition-opacity",
+            "flex items-center justify-center rounded-none font-bold text-white shadow-md transition-opacity",
             styles.avatar,
             !filled &&
               "border-dashed border-white/20 bg-[#1a2333] text-[#64748B] shadow-none",
@@ -87,7 +87,7 @@ function PodiumCard({
 
         <div
           className={cn(
-            "absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full text-xs font-bold shadow",
+            "absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-none text-xs font-bold shadow",
             styles.badge,
           )}
         >

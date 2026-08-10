@@ -79,7 +79,7 @@ export function MissingByDayView(props: Props) {
                 </span>
               </div>
               <div
-                className="mt-2 h-1 overflow-hidden rounded-full bg-muted"
+                className="mt-2 h-1 overflow-hidden rounded-none bg-muted"
                 aria-hidden
               >
                 <div
@@ -119,7 +119,7 @@ export function MissingByDayView(props: Props) {
                   <TableCell>{row.missing}</TableCell>
                   <TableCell>
                     <div className="flex min-w-[8rem] items-center gap-2">
-                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div className="h-1 flex-1 overflow-hidden rounded-none bg-muted">
                         <div
                           className="h-1 bg-primary"
                           style={{ width: `${Math.min(100, row.pctSubmitted)}%` }}

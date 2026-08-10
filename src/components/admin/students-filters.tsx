@@ -145,7 +145,7 @@ export function StudentsFilters({
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
+              <span className="rounded-none bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
                 {activeFilterCount}
               </span>
             ) : null}
@@ -174,7 +174,7 @@ export function StudentsFilters({
                       type="button"
                       onClick={() => pushWith({ domain })}
                       className={cn(
-                        "rounded-full border px-3 py-1 text-xs",
+                        "rounded-none border px-3 py-1 text-xs",
                         currentDomain === domain
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-border hover:bg-accent",
@@ -197,7 +197,7 @@ export function StudentsFilters({
                       type="button"
                       onClick={() => pushWith({ status })}
                       className={cn(
-                        "rounded-full border px-3 py-1 text-xs",
+                        "rounded-none border px-3 py-1 text-xs",
                         currentStatus === status
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-border hover:bg-accent",

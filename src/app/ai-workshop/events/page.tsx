@@ -114,7 +114,7 @@ export default function WorkshopEventsPage() {
           <p className="text-sm text-white/45">Don&apos;t miss the next one.</p>
           <Link
             href="/ai-workshop#register"
-            className="mt-4 inline-flex items-center gap-2 rounded-full px-7 py-3 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            className="mt-4 inline-flex items-center gap-2 rounded-none px-7 py-3 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
               background: "var(--wk-grad)",
               boxShadow:

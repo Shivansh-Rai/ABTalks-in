@@ -39,7 +39,7 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
             className={cn(
               cellClass(cell.completed, variant),
               isDashboard
-                ? "aspect-square w-full max-w-[36px] justify-self-center rounded-full transition-transform duration-200 ease-out hover:z-10 hover:scale-105"
+                ? "aspect-square w-full max-w-[36px] justify-self-center rounded-none transition-transform duration-200 ease-out hover:z-10 hover:scale-105"
                 : "size-3 rounded-sm sm:size-3.5",
             )}
           />
@@ -56,14 +56,14 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
         <span>Incomplete</span>
         <span
           className={cn(
-            isDashboard ? "size-3.5 rounded-full sm:size-4" : "size-3 rounded-sm sm:size-3.5",
+            isDashboard ? "size-3.5 rounded-none sm:size-4" : "size-3 rounded-sm sm:size-3.5",
             isDashboard ? "bg-[#1a2333] border border-[#2a3548]" : "bg-muted",
           )}
         />
         <span>Complete</span>
         <span
           className={cn(
-            isDashboard ? "size-3.5 rounded-full sm:size-4" : "size-3 rounded-sm sm:size-3.5",
+            isDashboard ? "size-3.5 rounded-none sm:size-4" : "size-3 rounded-sm sm:size-3.5",
             isDashboard ? "bg-[#6AE276]" : "bg-emerald-500",
           )}
         />

@@ -140,11 +140,11 @@ export function ChallengeSwitcher({
                     Day {enrollment.daysCompleted} / 60
                   </div>
                   <div
-                    className="h-1 w-full overflow-hidden rounded-full bg-muted"
+                    className="h-1 w-full overflow-hidden rounded-none bg-muted"
                     aria-hidden
                   >
                     <div
-                      className="h-full rounded-full bg-primary/70 transition-[width]"
+                      className="h-full rounded-none bg-primary/70 transition-[width]"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
@@ -155,7 +155,7 @@ export function ChallengeSwitcher({
               </div>
               {isActive ? (
                 <span
-                  className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10"
+                  className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-none bg-primary/10"
                   aria-hidden
                 >
                   <Check className="size-3 text-primary" />
