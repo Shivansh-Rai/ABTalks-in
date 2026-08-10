@@ -1,0 +1,76 @@
+{
+  "sources": [
+    {
+      "id": "master-fact-sheet",
+      "type": "pdf",
+      "status": "authoritative",
+      "scope": ["abtalks", "programs", "community", "channels", "website"],
+      "note": "Not present in this repository."
+    },
+    {
+      "id": "abtalks-overview",
+      "type": "pptx",
+      "status": "supporting",
+      "scope": ["positioning", "market", "product", "traction"],
+      "note": "Not present in this repository."
+    },
+    {
+      "id": "fact-sheet-docx",
+      "type": "docx",
+      "status": "supporting",
+      "scope": ["abtalks", "programs", "community", "channels", "website"],
+      "note": "Treated as a duplicate or alternate representation of master-fact-sheet unless it contains new information. Not present in this repository; not yet cross-checked for new content."
+    },
+    {
+      "id": "fact-sheet-pdf",
+      "type": "pdf",
+      "status": "supporting",
+      "scope": ["abtalks", "programs", "community", "channels", "website"],
+      "note": "Same treatment as master-fact-sheet. Not present in this repository."
+    },
+    {
+      "id": "ai-tools-workshop-overview",
+      "type": "document",
+      "status": "authoritative",
+      "scope": ["ai-tools-workshop"],
+      "note": "Primary source for AI Tools Workshop purpose, duration, format, audience, tools, curriculum. Not present in this repository."
+    },
+    {
+      "id": "figma-cursor-workshop-pdf",
+      "type": "pdf",
+      "status": "authoritative",
+      "scope": ["figma-cursor-workshop"],
+      "note": "Separate workshop from the AI Tools Workshop; must not be merged with it. Not present in this repository."
+    },
+    {
+      "id": "vicodathon-event-notice",
+      "type": "document",
+      "status": "authoritative",
+      "scope": ["vicodathon"],
+      "note": "Highest-authority source for ViCodathon 2026 event-specific facts. Event is historical/completed relative to the current project date. Not present in this repository."
+    },
+    {
+      "id": "vicodathon-influencer-brief",
+      "type": "document",
+      "status": "supporting",
+      "scope": ["vicodathon"],
+      "note": "Supporting source for hackathon positioning, content angles, and event ecosystem context. Not present in this repository."
+    },
+    {
+      "id": "claude-challenge-guidelines-pdf",
+      "type": "pdf",
+      "status": "authoritative",
+      "scope": ["claude-challenge"],
+      "path": "public/documents/ABTalks-60-Day-Challenge-Guidelines.pdf",
+      "note": "Present in this repository and currently linked from the live site. Ingested 2026-08-10 into claude-challenge.md."
+    },
+    {
+      "id": "live-site-abtalks-in",
+      "type": "website",
+      "status": "authoritative",
+      "scope": ["community", "channels", "workshops", "events", "programs"],
+      "lastCheckedAt": "2026-08-10",
+      "note": "abtalks.in, cross-checked directly for verification of facts, dates, and social handles. Time-sensitive facts sourced here (event dates/status, social handles) should be treated as current only as of lastCheckedAt; re-verify before relying on them long after this date."
+    }
+  ]
+}
