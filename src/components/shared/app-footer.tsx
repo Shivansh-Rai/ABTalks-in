@@ -111,6 +111,13 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
 ];
 
+const LEGAL_LINKS = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/cookies", label: "Cookies" },
+  { href: "/contact", label: "Contact" },
+] as const;
+
 const socialIconClassName = cn(
   "inline-flex size-9 items-center justify-center rounded-full text-primary",
   "transition-all duration-200 ease-out",
@@ -137,15 +144,35 @@ export function AppFooter() {
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   const supportEmail = "team@abtalks.in";
 
-  if (
-    isWorkshop ||
-    isCohortRegister ||
-    isCohortIndia ||
-    isProgram ||
-    isTalent ||
-    isHackathon
-  )
-    return null;
+  // The workshop pages carry their own branded footer, which links legal
+  // inline — anything here would duplicate their copyright line.
+  if (isWorkshop) return null;
+
+  // The remaining funnel routes have no footer of their own, but must still
+  // surface the legal links — a minimal strip instead of the full footer.
+  if (isCohortRegister || isCohortIndia || isProgram || isTalent || isHackathon) {
+    return (
+      <footer className="mt-auto border-t border-border/60 pb-16 md:pb-0">
+        <div className="container mx-auto flex flex-col items-center gap-2 px-6 py-5 text-center text-xs text-muted-foreground">
+          <nav
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+            aria-label="Legal"
+          >
+            {LEGAL_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="hover:text-primary hover:underline"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <span>© {new Date().getFullYear()} ABTalks</span>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer
@@ -172,12 +199,15 @@ export function AppFooter() {
               )}
               aria-label="Legal"
             >
-              <Link href="/terms" className="hover:text-primary hover:underline">
-                Terms
-              </Link>
-              <Link href="/privacy" className="hover:text-primary hover:underline">
-                Privacy
-              </Link>
+              {LEGAL_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="hover:text-primary hover:underline"
+                >
+                  {label}
+                </Link>
+              ))}
             </nav>
           </div>
           <div className="flex items-center justify-center gap-1">

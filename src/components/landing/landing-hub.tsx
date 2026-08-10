@@ -255,6 +255,12 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             <Link href="/privacy" className="hover:text-foreground">
               Privacy
             </Link>
+            <Link href="/cookies" className="hover:text-foreground">
+              Cookies
+            </Link>
+            <Link href="/contact" className="hover:text-foreground">
+              Contact
+            </Link>
             <Link href="/mission" className="hover:text-foreground">
               Mission
             </Link>
