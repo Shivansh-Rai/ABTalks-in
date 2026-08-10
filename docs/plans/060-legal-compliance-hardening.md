@@ -1,4 +1,4 @@
-# 059 — Legal & Privacy Compliance Hardening
+# 060 — Legal & Privacy Compliance Hardening
 
 > **Status: IMPLEMENTED** on branch `feat/legal-compliance-hardening` (commits `0110205`, `5295441`, `d14e0ba`, `624fb4c`, `ec64a55`).
 >

@@ -23,7 +23,7 @@ These defaults unblock Phase 0–4 implementation. Counsel review should confirm
 
 ---
 
-## v2 decisions — 2026-08-10 (plan 059)
+## v2 decisions — 2026-08-10 (plan 060)
 
 | Decision | v2 value | Supersedes |
 |----------|----------|------------|
