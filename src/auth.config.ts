@@ -3,6 +3,10 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 
 export default {
+  // Explicit so Edge middleware (middleware.ts) always receives the secret.
+  // Auth.js also reads AUTH_SECRET from env; this is the belt-and-suspenders fix
+  // when process.env is sparse under Turbopack/edge bundling.
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   pages: {
     signIn: "/login",

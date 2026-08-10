@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env NODE_ENV=production prisma migrate deploy && cross-env NODE_ENV=production prisma generate && cross-env NODE_ENV=production next build",
+    "build": "cross-env NODE_ENV=production prisma generate && cross-env NODE_ENV=production next build",
+    "build:deploy": "cross-env NODE_ENV=production prisma migrate deploy && npm run build",
+    "db:migrate:deploy": "prisma migrate deploy",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
