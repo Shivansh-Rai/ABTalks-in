@@ -23,6 +23,8 @@ type ConsentContextValue = {
   /** True when the chooser should be visible. */
   isOpen: boolean;
   open: () => void;
+  /** Closes a chooser reopened from /cookies. No-op while undecided. */
+  close: () => void;
   decide: (choice: CookieChoice) => Promise<void>;
 };
 
@@ -64,6 +66,7 @@ export function CookieConsentProvider({
   }, []);
 
   const open = useCallback(() => setManuallyOpened(true), []);
+  const close = useCallback(() => setManuallyOpened(false), []);
 
   const decide = useCallback(async (next: CookieChoice) => {
     // Attribution params are only on the URL at first landing; middleware no
@@ -86,9 +89,10 @@ export function CookieConsentProvider({
       ready,
       isOpen: ready && (manuallyOpened || choice === null),
       open,
+      close,
       decide,
     }),
-    [choice, ready, manuallyOpened, open, decide],
+    [choice, ready, manuallyOpened, open, close, decide],
   );
 
   return (
