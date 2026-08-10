@@ -160,13 +160,8 @@ export function LoginClient({
         </div>
       ) : null}
 
-      {/* Checkboxes first — signing in can create the account, so consent
-          must be explicit before Google / Dev login is enabled. */}
-      <LegalConsentFields
-        values={legalConsent}
-        onChange={setLegalConsent}
-      />
-
+      {/* Standard order: auth controls first, legal checkboxes under them
+          (every major app puts "I agree…" below the primary action). */}
       {showGoogle ? (
         <div className="flex flex-col gap-2">
           <Button
@@ -179,12 +174,6 @@ export function LoginClient({
             <GoogleMark className="size-5 shrink-0" />
             Sign in with Google
           </Button>
-          {!canSignIn ? (
-            <p className="text-center text-xs text-muted-foreground">
-              Accept Terms, Privacy Policy and age confirmation above to
-              continue.
-            </p>
-          ) : null}
         </div>
       ) : null}
 
@@ -244,6 +233,16 @@ export function LoginClient({
             Dev mode: use test accounts from seed script
           </p>
         </form>
+      ) : null}
+
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={setLegalConsent}
+      />
+      {!canSignIn ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Tick Terms, Privacy Policy and age confirmation to enable Sign in.
+        </p>
       ) : null}
     </div>
   );
