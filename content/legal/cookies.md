@@ -17,9 +17,9 @@ The first time you visit, we ask you to choose one of three options. You can cha
 
 | Choice | What it does |
 |--------|--------------|
-| **Allow all** | Sign-in cookies, plus referral and share attribution cookies, plus video embeds load automatically |
-| **Limited** | Sign-in cookies and attribution cookies. Video embeds stay click-to-load, so nothing is requested from Google until you press play |
-| **Deny** | Sign-in cookies only. We set no attribution cookies and expire any we previously set. Video embeds stay click-to-load |
+| **Allow all** | Sign-in cookies, plus referral and share attribution cookies, plus video preview thumbnails loaded from YouTube |
+| **Limited** | Sign-in cookies and attribution cookies. No preview thumbnails are fetched from YouTube — click-to-load videos request nothing until you press play |
+| **Deny** | Sign-in cookies only. We set no attribution cookies and expire any we previously set. No preview thumbnails are fetched |
 
 Strictly necessary cookies cannot be switched off — they are required to sign you in and keep your session secure. Choosing **Deny** does not reduce your access to any feature; it only means we cannot credit referrals or measure which share link brought you here.
 
@@ -37,7 +37,9 @@ Your choice is itself stored in a cookie (`abtalks_consent`) so we don't ask aga
 ## 4. Third-party scripts and embeds
 
 - **Phone verification (MSG91).** When you use phone/OTP verification, your browser loads a widget script from `verify.msg91.com`. That provider may set its own cookies or storage under its own domain, governed by its own privacy policy. The script loads only at the moment you use phone verification — never on page load.
-- **Video embeds (YouTube).** Videos use the `youtube-nocookie.com` domain. Unless you chose **Allow all**, we show a placeholder and load nothing from Google until you press play.
+- **Video embeds (YouTube).** All videos use the privacy-extended `youtube-nocookie.com` domain, which does not set advertising cookies.
+  - On **program mission pages and the video library**, videos are click-to-load. We show a placeholder and request nothing from Google until you press play. The video's preview thumbnail is fetched from YouTube only if you chose **Allow all**.
+  - On **challenge day pages**, the tutorial player loads together with the page, so Google is contacted when you open that page. We disclose this rather than hide it; if you would rather it did not, avoid opening those pages or block the domain in your browser.
 
 ## 5. What we do not use
 

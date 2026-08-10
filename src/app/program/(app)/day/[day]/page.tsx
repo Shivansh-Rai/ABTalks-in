@@ -8,7 +8,7 @@ import { getMissionMentorFeedback } from "@/features/program/mentor";
 import { getMemberDayStates } from "@/features/program/progression";
 import { parseBriefMd } from "@/features/program/parse-brief";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
-import { LiteYoutube } from "@/components/program/lite-youtube";
+import { LiteYoutube } from "@/components/shared/lite-youtube";
 import { MissionPanel } from "@/components/program/mission-panel";
 import { ProgramDayClient } from "@/components/program/program-day-client";
 import { DayBuildSteps } from "@/components/program/day-build-steps";

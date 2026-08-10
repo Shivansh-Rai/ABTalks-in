@@ -78,7 +78,7 @@ We **acknowledge grievances within 24 hours** of receipt and aim to **resolve th
 **Third-party scripts and embeds.**
 
 - **Phone verification (MSG91).** If you use phone/OTP verification, your browser loads a script from `verify.msg91.com` in order to run the verification widget. That provider may set its own cookies or browser storage under its domain, governed by its own privacy policy. The script loads only when you actually use phone verification.
-- **Video embeds (YouTube).** Lesson and mission videos use `youtube-nocookie.com`. Unless you chose **Allow all**, a video is not loaded until you press play — nothing is requested from Google before that point.
+- **Video embeds (YouTube).** All video embeds use the privacy-extended `youtube-nocookie.com` domain, which does not set advertising cookies. On program mission pages and the video library, videos are **click-to-load**: nothing is requested from Google until you press play, and the video’s preview thumbnail is fetched from YouTube only if you chose **Allow all**. On challenge day pages the tutorial player loads together with the page, so Google is contacted when you open that page.
 
 We do **not** currently use third-party advertising analytics SDKs (e.g. Google Analytics, PostHog) in the product. If that changes, we will update this Policy and add the relevant category to the cookie choice above.
 

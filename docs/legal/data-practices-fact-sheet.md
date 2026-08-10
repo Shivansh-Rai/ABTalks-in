@@ -63,7 +63,8 @@ No Google Analytics / PostHog / ad pixels in app code today.
 | Script | Origin | When |
 |--------|--------|------|
 | MSG91 OTP widget | `verify.msg91.com/otp-provider.js` | Injected at runtime by `src/components/shared/phone-verify-field.tsx` only when the user uses phone verification |
-| YouTube embed | `youtube-nocookie.com` | Click-to-load facade (`src/components/shared/lite-youtube.tsx`); auto-loads only when consent is `all` |
+| YouTube embed (program) | `youtube-nocookie.com` + `i.ytimg.com` | Click-to-load facade (`src/components/shared/lite-youtube.tsx`). Preview thumbnail from `i.ytimg.com` is fetched only when consent is `all` |
+| YouTube embed (challenge day page) | `youtube-nocookie.com` | `src/components/challenge/day-page.tsx` mounts the iframe on page load, **not** gated on consent — deliberate product decision, disclosed in the Privacy and Cookie policies |
 
 ## Processors
 

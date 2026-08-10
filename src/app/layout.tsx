@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppFooter } from "@/components/shared/app-footer";
 import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
+import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
+import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -44,14 +46,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SynergyProvider>
-            <MotionProvider>
-              <MainShell>{children}</MainShell>
-            </MotionProvider>
-          </SynergyProvider>
-          <AppFooter />
-          <BottomNavGate />
-          <Toaster />
+          <CookieConsentProvider>
+            <SynergyProvider>
+              <MotionProvider>
+                <MainShell>{children}</MainShell>
+              </MotionProvider>
+            </SynergyProvider>
+            <AppFooter />
+            <BottomNavGate />
+            <Toaster />
+            <CookieConsentModal />
+          </CookieConsentProvider>
         </ThemeProvider>
       </body>
     </html>

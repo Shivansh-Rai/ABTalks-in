@@ -24,3 +24,16 @@ export const dataRightsRequestSchema = z.object({
 });
 
 export type DataRightsRequestInput = z.infer<typeof dataRightsRequestSchema>;
+
+/**
+ * Cookie chooser submission. `ref` / `src` are the attribution values read from
+ * the current URL at the moment the user decides — middleware no longer sets
+ * them pre-consent, so they must round-trip through this action.
+ */
+export const cookieConsentSchema = z.object({
+  choice: z.enum(["all", "limited", "essential"]),
+  ref: z.string().trim().max(32).nullable().optional(),
+  src: z.string().trim().max(32).nullable().optional(),
+});
+
+export type CookieConsentInput = z.infer<typeof cookieConsentSchema>;
