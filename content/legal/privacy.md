@@ -1,17 +1,39 @@
 # Privacy Policy
 
-**Version:** 2026-08-08  
-**Effective date:** 2026-08-08  
-**Status:** Platform draft pending counsel review — not a substitute for legal advice.
+**Version:** 2026-08-10  
+**Effective date:** 2026-08-10
 
 This Privacy Policy explains how **ABTalks** (“we”, “us”) collects, uses, shares, and protects personal data when you use our Service. It is designed around our actual product practices and India’s Digital Personal Data Protection Act, 2023 (DPDP), with disclosures relevant to US-facing cohort and program features.
 
 **Contact for privacy / data rights:** [team@abtalks.in](mailto:team@abtalks.in)  
 You can also submit a request in-product at [/privacy/requests](/privacy/requests).
 
-## 1. Who we are
+## 1. Who we are — Data Fiduciary identification
 
-ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including abtalks.in and related domains). Formal registered entity details may be updated here when finalized.
+We are the **Data Fiduciary** for the personal data described in this Policy.
+
+| | |
+|---|---|
+| **Registered entity** | `<<FILL: registered entity legal name>>` |
+| **Trading name** | ABTalks |
+| **Registered address** | `<<FILL: registered address>>` |
+| **Registration number** | `<<FILL: CIN / LLPIN / GSTIN, or 'Not applicable'>>` |
+| **Contact** | [team@abtalks.in](mailto:team@abtalks.in) |
+
+ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including abtalks.in and related domains).
+
+### 1.1 Grievance Officer
+
+In accordance with the Digital Personal Data Protection Act, 2023, the Information Technology Rules, 2021, and the Consumer Protection (E-Commerce) Rules, 2020:
+
+| | |
+|---|---|
+| **Name** | `<<FILL: grievance officer name>>` |
+| **Designation** | `<<FILL: designation>>` |
+| **Email** | [team@abtalks.in](mailto:team@abtalks.in) |
+| **Address** | `<<FILL: registered address>>` |
+
+We **acknowledge grievances within 24 hours** of receipt and aim to **resolve them within 15 days**. Full contact details are also published at [/contact](/contact).
 
 ## 2. Data we collect
 
@@ -44,13 +66,21 @@ ABTalks operates learning challenges, workshops, hackathons, an AI cohort progra
 
 ### 2.5 Cookies and similar tech
 
-| Cookie | Purpose |
-|--------|---------|
-| Auth.js session cookie | Keep you signed in |
-| `abtalks_ref` | Referral code from `?ref=` (httpOnly, ~7 days) |
-| `abtalks_src` | First-touch share attribution from `?s=` (httpOnly, ~30 days) |
+| Cookie | Purpose | Category |
+|--------|---------|----------|
+| Auth.js session cookie | Keep you signed in (httpOnly) | Strictly necessary |
+| `abtalks_consent` | Stores your cookie choice so we don’t ask again (~180 days, readable by the page) | Strictly necessary |
+| `abtalks_ref` | Referral code from `?ref=` (httpOnly, ~7 days) | Attribution — set only with your consent |
+| `abtalks_src` | First-touch share attribution from `?s=` (httpOnly, ~30 days) | Attribution — set only with your consent |
 
-We do **not** currently use third-party advertising analytics SDKs (e.g. Google Analytics, PostHog) in the product. If that changes, we will update this Policy.
+**Your choice.** On your first visit we ask you to choose **Allow all**, **Limited**, or **Deny**. Attribution cookies (`abtalks_ref`, `abtalks_src`) are set only if you choose Allow all or Limited; choosing Deny means we set no attribution cookies and expire any we already set. Strictly necessary cookies are required for sign-in and cannot be switched off. You can change your choice any time at [/cookies](/cookies). Full details: [Cookie Policy](/cookies).
+
+**Third-party scripts and embeds.**
+
+- **Phone verification (MSG91).** If you use phone/OTP verification, your browser loads a script from `verify.msg91.com` in order to run the verification widget. That provider may set its own cookies or browser storage under its domain, governed by its own privacy policy. The script loads only when you actually use phone verification.
+- **Video embeds (YouTube).** Lesson and mission videos use `youtube-nocookie.com`. Unless you chose **Allow all**, a video is not loaded until you press play — nothing is requested from Google before that point.
+
+We do **not** currently use third-party advertising analytics SDKs (e.g. Google Analytics, PostHog) in the product. If that changes, we will update this Policy and add the relevant category to the cookie choice above.
 
 ### 2.6 Sources
 
@@ -93,12 +123,15 @@ Processors may process data in India, the United States, and other countries (e.
 
 - Account and profile data: while your account is active  
 - After a confirmed deletion request: erase or anonymize within **30 days**, except certificates retained as public credentials unless revoked; limited audit/security records up to **24 months**; longer if required by law or dispute  
-- Hackathon removal logs and admin audit rows may be retained for integrity  
+- **Hackathon removal records:** if you are removed from, or leave, a hackathon team, we keep a removal record containing your **name, email, phone, college and graduation year** even after your participant record itself is deleted. We do this to prevent re-registration abuse and to keep team-attribution accurate. These records are retained for up to **24 months**, then deleted.  
+- Admin audit rows may be retained for integrity for up to **24 months**  
 - Consent records retained to demonstrate acceptance  
 
 ## 8. Security
 
 We use industry-standard hosting, access controls (admin allowlists, role checks), and encrypted transport (HTTPS). No method of transmission or storage is 100% secure.
+
+**Breach notification.** If a personal data breach occurs, we will notify the Data Protection Board of India and each affected user in the manner and within the timelines required by the DPDP Act and its rules.
 
 ## 9. Children
 
@@ -108,12 +141,16 @@ The Service is for users **18+**. We do not knowingly collect data from children
 
 Subject to applicable law, you may request:
 
-- Access to personal data we hold about you  
-- Correction of inaccurate data (you can also edit much of your profile in-app)  
-- Erasure / account deletion  
-- Withdrawal of consent for optional processing (e.g. recruiter visibility), which may limit features  
+- **Access** to personal data we hold about you, including a summary of processing and the recipients we have shared it with  
+- **Correction** of inaccurate data, and completion or updating of incomplete data (you can also edit much of your profile in-app)  
+- **Erasure** / account deletion  
+- **Withdrawal of consent** for optional processing (e.g. recruiter visibility), which may limit features. Withdrawal is as easy as giving consent, and does not affect processing already carried out  
+- **Grievance redressal (DPDP §13)** — you may raise a grievance with our Grievance Officer (§1.1) about our handling of your data or your rights request, regardless of whether you have used any other remedy. We acknowledge within **24 hours** and aim to resolve within **15 days**. If you are not satisfied with our response, you may escalate to the **Data Protection Board of India**  
+- **Nomination (DPDP §14)** — you may nominate another individual to exercise these rights on your behalf in the event of your death or incapacity. Submit a nomination through [/privacy/requests](/privacy/requests)  
 
 Submit requests at [/privacy/requests](/privacy/requests) or email [team@abtalks.in](mailto:team@abtalks.in). We may need to verify your identity. We aim to respond within a reasonable period (target: 30 days).
+
+**Your duties.** Under DPDP §15, please do not impersonate another person when providing data, suppress material information, or file false or frivolous grievances.
 
 ## 11. AI processing notice
 
@@ -131,4 +168,7 @@ We may update this Policy. The version and effective date appear at the top. Mat
 
 ## 14. Contact
 
-[team@abtalks.in](mailto:team@abtalks.in) · [/privacy/requests](/privacy/requests)
+Grievance Officer and full entity details: [/contact](/contact)  
+Data rights requests: [/privacy/requests](/privacy/requests)  
+Cookie choices: [/cookies](/cookies)  
+Email: [team@abtalks.in](mailto:team@abtalks.in)

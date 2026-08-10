@@ -47,13 +47,23 @@
 
 ## Cookies (first-party)
 
-| Cookie | Purpose | Max-age |
-|--------|---------|---------|
-| Auth.js session | Login | session/JWT policy |
-| `abtalks_ref` | Referral `?ref=` | 7 days, httpOnly |
-| `abtalks_src` | Share attribution `?s=` | 30 days, httpOnly, first-touch |
+| Cookie | Purpose | Max-age | Consent |
+|--------|---------|---------|---------|
+| Auth.js session | Login | session/JWT policy | Strictly necessary |
+| `abtalks_consent` | Stores cookie choice + policy version (`<choice>.<version>`) | 180 days, **not** httpOnly (client must read it) | Strictly necessary |
+| `abtalks_ref` | Referral `?ref=` | 7 days, httpOnly | Set only on `all` / `limited` |
+| `abtalks_src` | Share attribution `?s=` | 30 days, httpOnly, first-touch | Set only on `all` / `limited` |
+
+Since plan 059, `middleware.ts` reads `abtalks_consent` and sets no attribution cookies until the user chooses; on `essential` it actively expires both. Consent choice is **not** persisted to the database — the cookie is the record.
 
 No Google Analytics / PostHog / ad pixels in app code today.
+
+## Third-party scripts loaded in the browser
+
+| Script | Origin | When |
+|--------|--------|------|
+| MSG91 OTP widget | `verify.msg91.com/otp-provider.js` | Injected at runtime by `src/components/shared/phone-verify-field.tsx` only when the user uses phone verification |
+| YouTube embed | `youtube-nocookie.com` | Click-to-load facade (`src/components/shared/lite-youtube.tsx`); auto-loads only when consent is `all` |
 
 ## Processors
 
