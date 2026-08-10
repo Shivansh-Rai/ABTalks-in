@@ -97,7 +97,7 @@ export function BottomNav() {
       <nav
         ref={navRef}
         aria-label="Main navigation"
-        className="pointer-events-auto relative flex w-full max-w-md items-center justify-between gap-1 rounded-none border border-border/40 bg-card/70 px-2 py-1.5 shadow-lg shadow-black/10 backdrop-blur-xl dark:bg-card/60 dark:shadow-black/40"
+        className="pointer-events-auto relative flex w-full max-w-md items-center justify-between gap-1 rounded-none border border-border/40 bg-card/70 px-2 py-1.5 shadow-lg shadow-black/10 backdrop-blur-xl"
       >
         {rect ? (
           <motion.span

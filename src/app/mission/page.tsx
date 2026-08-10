@@ -74,7 +74,7 @@ export default async function MissionPage() {
               </p>
             </article>
             <article className="rounded-2xl border bg-card p-5 shadow-sm">
-              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-600">
                 <EyeOff className="size-5" aria-hidden />
               </div>
               <h3 className="font-display text-lg font-semibold">

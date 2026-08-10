@@ -9,7 +9,6 @@ import {
   Trophy,
   UsersRound,
 } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TrackCard } from "./track-card";
@@ -106,7 +105,6 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             />
           </Link>
           <div className="flex items-center gap-1">
-            <ThemeToggle />
             <Link
               href="/login"
               className={cn(buttonVariants({ variant: "ghost" }), "h-10")}
@@ -214,7 +212,7 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
         <section className="mx-auto max-w-7xl px-5 pb-20 md:px-8 md:pb-24">
           <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-emerald-500/15 p-7 backdrop-blur-md md:flex md:items-center md:justify-between md:gap-8 md:p-10">
             <div className="relative z-10 flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600">
                 <MessageCircle className="h-6 w-6" />
               </span>
               <div>

@@ -30,11 +30,11 @@ import type {
 function statusBadgeClass(status: string): string {
   const s = status.toLowerCase();
   if (s === "accepted" || s === "approved")
-    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400";
+    return "bg-emerald-100 text-emerald-700";
   if (s === "rejected")
-    return "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400";
+    return "bg-red-100 text-red-700";
   if (s === "reviewed" || s === "shortlisted")
-    return "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400";
+    return "bg-violet-100 text-violet-700";
   return "bg-muted text-muted-foreground";
 }
 

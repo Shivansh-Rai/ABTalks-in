@@ -196,7 +196,7 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
           rel="noopener noreferrer"
           className={cn(
             buttonVariants({ variant: "outline" }),
-            "mt-4 inline-flex border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400",
+            "mt-4 inline-flex border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10",
           )}
         >
           Join WhatsApp Group

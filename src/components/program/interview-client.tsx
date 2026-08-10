@@ -316,7 +316,7 @@ export function InterviewClient({
 
   return (
     <div className="space-y-6 rounded-xl border p-6">
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
         Use a laptop with headphones in a quiet room for the best experience.
         Mobile browsers may have limited microphone support.
       </div>

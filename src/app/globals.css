@@ -153,60 +153,8 @@
 }
 
 .dark {
-  --background: 224 71% 4%;
-  --foreground: 0 0% 98%;
-  --card: 224 71% 6%;
-  --card-foreground: 0 0% 98%;
-  --popover: 224 71% 6%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 215 28% 17%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 215 28% 17%;
-  --muted-foreground: 217 11% 65%;
-  --accent: 215 28% 17%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 215 28% 17%;
-  --input: 215 28% 17%;
-  --ring: 239 84% 67%;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: 224 71% 6%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 239 84% 67%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 215 28% 17%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 215 28% 17%;
-  --sidebar-ring: 239 84% 67%;
-  --elevation-card: 0 1px 2px -1px hsl(224 71% 2% / 0.50), 0 2px 8px -2px hsl(224 71% 2% / 0.45);
-  --elevation-card-hover: 0 2px 6px -1px hsl(224 71% 2% / 0.60), 0 10px 28px -6px hsl(239 60% 30% / 0.35);
-  --elevation-primary: 0 1px 2px -1px hsl(var(--primary) / 0.35), 0 10px 28px -8px hsl(var(--primary) / 0.40);
-  --elevation-pop: 0 10px 48px -10px hsl(224 71% 2% / 0.70);
-}
-
-/* Theme-independent light surface for shareable recruiter report (/r/[token]) */
-.report-light {
-  --background: 38 38% 98%;
-  --foreground: 224 71% 4%;
-  --card: 0 0% 100%;
-  --card-foreground: 224 71% 4%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 71% 4%;
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 8% 46%;
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 224 71% 4%;
-  --accent: 220 14% 96%;
-  --accent-foreground: 224 71% 4%;
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  /* Guard against a stale class="dark" in localStorage — Modernist is light-only. */
+  color-scheme: light;
 }
 
 @layer components {
@@ -393,9 +341,6 @@
     object-fit: cover;
     object-position: left center;
     filter: invert(1);
-  }
-  .dark .logo-image {
-    filter: none;
   }
   .logo-image-no-invert {
     filter: none !important;

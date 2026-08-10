@@ -99,7 +99,7 @@ export function CampusAmbassadorModal({ isOpen, onClose }: Props) {
 
             <div className="mb-2 inline-flex items-center gap-2 rounded-none bg-violet-500/10 px-3 py-1">
               <Sparkles className="h-3 w-3 text-violet-500" />
-              <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">
+              <span className="text-xs font-semibold text-violet-600">
                 Campus Ambassador Program
               </span>
             </div>

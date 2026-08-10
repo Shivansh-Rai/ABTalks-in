@@ -222,7 +222,7 @@ export function ClaudeOnboardingClient() {
                     className="logo-image"
                   />
                 </Link>
-                <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-600">
                   CLAUDE
                 </span>
               </div>

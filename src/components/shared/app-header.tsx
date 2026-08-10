@@ -17,7 +17,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SynergyChip } from "@/components/shared/synergy-chip";
 import {
   ChallengeSwitcher,
@@ -150,11 +149,6 @@ export function AppHeader({
           <div className="hidden md:block">
             <SynergyChip />
           </div>
-          {!isMarketplace ? (
-            <div className="hidden md:block">
-              <ThemeToggle />
-            </div>
-          ) : null}
           <span className="hidden h-6 w-px shrink-0 bg-border md:block" aria-hidden />
           <div className="hidden md:block">
             <DropdownMenu>

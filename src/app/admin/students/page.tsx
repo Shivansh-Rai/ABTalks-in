@@ -29,15 +29,15 @@ function domainBadgeClass(domain: string): string {
   if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
   if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
   if (domain === "CLAUDE")
-    return "border-orange-500/40 bg-orange-50 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200";
+    return "border-orange-500/40 bg-orange-50 text-orange-800";
   return "border-domains-se/50 bg-domains-se-bg text-domains-se";
 }
 
 function statusBadgeClass(status: string): string {
   if (status === "ACTIVE")
-    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400";
+    return "bg-emerald-100 text-emerald-700";
   if (status === "COMPLETED")
-    return "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400";
+    return "bg-violet-100 text-violet-700";
   return "bg-muted text-muted-foreground";
 }
 

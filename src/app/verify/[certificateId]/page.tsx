@@ -91,7 +91,7 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
             <div className="mb-2 flex size-12 items-center justify-center rounded-none bg-green-600/10">
               <ShieldCheck className="size-6 text-green-600" aria-hidden />
             </div>
-            <CardTitle className="text-green-700 dark:text-green-500">
+            <CardTitle className="text-green-700">
               Verified Certificate
             </CardTitle>
             <CardDescription>{cert.subtitle}</CardDescription>

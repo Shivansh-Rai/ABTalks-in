@@ -36,11 +36,11 @@ const DOMAIN_COLORS: Record<string, string> = {
   DS: "border-domains-ds/50 bg-domains-ds-bg text-domains-ds",
   AI: "border-domains-ai/50 bg-domains-ai-bg text-domains-ai",
   CLAUDE:
-    "border-violet-500/50 bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-200",
+    "border-violet-500/50 bg-violet-50 text-violet-800",
 };
 
 const HACK_BADGE_COLOR =
-  "border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
+  "border-amber-500/50 bg-amber-50 text-amber-800";
 
 const BADGE_BASE =
   "inline-flex h-6 w-16 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-bold leading-none tracking-wide";

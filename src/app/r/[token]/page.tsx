@@ -215,7 +215,7 @@ export default async function RecruiterProfilePage({
   return (
     <div
       className={cn(
-        "report-light min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
+        "min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
         "[print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
       )}
     >
