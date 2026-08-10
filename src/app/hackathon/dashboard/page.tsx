@@ -9,9 +9,10 @@ import { ProblemStatementPanel } from "@/components/hackathon/dashboard/problem-
 import { SponsorPanel } from "@/components/hackathon/dashboard/sponsor-panel";
 import { SubmissionChecklist } from "@/components/hackathon/dashboard/submission-checklist";
 import { TeamRoster } from "@/components/hackathon/dashboard/team-roster";
-import { getHackathonEvent } from "@/features/hackathon/get-hackathon-event";
+import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getSubmissionWindow } from "@/features/hackathon/submission-window";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Your Dashboard | ABTalks Vibe Code Hackathon",
@@ -25,10 +26,29 @@ export default async function HackathonDashboardPage() {
 
   const reg = await getMyRegistration(session.user.id);
   if (!reg) {
-    redirect("/hackathon/register");
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            Registration is closed
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+            Thanks for your interest. Registration for this hackathon has
+            closed. Follow ABTalks for the next event.
+          </p>
+          <a
+            href="https://abtalks.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants(), "mt-4 inline-flex")}
+          >
+            Explore ABTalks
+          </a>
+        </section>
+      </div>
+    );
   }
 
-  const { problemStatement } = await getHackathonEvent();
   const submissionWindow = getSubmissionWindow();
   const firstName = reg.me.fullName.split(" ")[0] ?? reg.me.fullName;
   const entryChip =
@@ -60,7 +80,6 @@ export default async function HackathonDashboardPage() {
         <ProblemStatementPanel
           unlocked={submissionWindow.unlocked}
           closed={submissionWindow.closed}
-          statement={problemStatement}
         />
         <TeamRoster
           entryType={reg.team.entryType}

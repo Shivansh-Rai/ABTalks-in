@@ -243,7 +243,7 @@ export default async function AIWorkshopPage() {
             className="wk-hero-item mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-[56px]"
             style={{ animationDelay: "0.12s" }}
           >
-            From {" "}
+            Enhance {" "}
             <span
               style={{
                 background:
@@ -255,18 +255,16 @@ export default async function AIWorkshopPage() {
                 animation: "wk-badge-shine 6s linear infinite",
               }}
             >
-              Design to Production
+              LinkedIn & AI Mock Interview
             </span>{" "}
-            using Figma x Cursor
+              Workshop
           </h1>
 
           <p
             className="wk-hero-item mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg"
             style={{ animationDelay: "0.2s" }}
           >
-            A hands-on workshop on Figma, Cursor, and the Official Figma MCP, 
-            learn modern UI design fundamentals, understand how AI interprets design files, and 
-            transform Figma designs into production-ready frontend code with Cursor.
+            Rebuild your LinkedIn profile so recruiters actually find you, then run live AI mock interviews that grill you and score your answers.
           </p>
 
           {/* date + countdown */}

@@ -10,13 +10,17 @@ import {
   UsersRound,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import type { LandingState } from "@/features/landing/get-landing-state";
 import { cn } from "@/lib/utils";
+import { LandingUserMenu } from "./landing-user-menu";
 import { TrackCard } from "./track-card";
+import { TestimonialsCarousel } from "./testimonials-carousel";
 
 const WHATSAPP_LINK = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
 
 const TRACKS = [
   {
+    key: "challenge" as const,
     accent: "violet" as const,
     title: "60-Day Coding Challenge",
     blurb:
@@ -27,16 +31,18 @@ const TRACKS = [
     ctaLabel: "Start the challenge",
   },
   {
+    key: "hackathon" as const,
     accent: "indigo" as const,
     title: "Vibe Code Hackathon",
     blurb:
       "Build anything using AI in 48 hours. Compete solo or with a team of up to three and ship something real.",
-    pill: "Registration open",
+    pill: "Registration closed",
     chips: ["48 hours", "Teams of 1–3"],
-    href: "/hackathon?s=shr",
-    ctaLabel: "Register now",
+    href: "https://abtalks.in",
+    ctaLabel: "Explore ABTalks",
   },
   {
+    key: "program" as const,
     accent: "indigo" as const,
     title: "31 Days AI Cohort",
     blurb:
@@ -49,6 +55,7 @@ const TRACKS = [
 ];
 
 const CLAUDE_TRACK = {
+  key: "claude" as const,
   accent: "amber" as const,
   title: "Claude Challenge",
   blurb:
@@ -85,9 +92,19 @@ const STEPS = [
 
 type LandingHubProps = {
   claudeEnabled: boolean;
+  state: LandingState;
 };
 
-export function LandingHub({ claudeEnabled }: LandingHubProps) {
+export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
+  const ctaByKey = {
+    challenge: state.challengeCta,
+    hackathon: state.hackathonCta,
+    program: state.programCta,
+    claude: state.claudeCta,
+  } as const;
+
+  const { key: _claudeKey, ...claudeTrackProps } = CLAUDE_TRACK;
+
   return (
     <div className="relative min-h-svh overflow-hidden bg-background">
       <BackgroundBlobs />
@@ -105,12 +122,16 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             />
           </Link>
           <div className="flex items-center gap-1">
-            <Link
-              href="/login"
-              className={cn(buttonVariants({ variant: "ghost" }), "h-10")}
-            >
-              Sign in
-            </Link>
+            {state.user ? (
+              <LandingUserMenu user={state.user} />
+            ) : (
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "ghost" }), "h-10")}
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -142,10 +163,12 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             claudeEnabled && "lg:grid-cols-4",
           )}
         >
-          {TRACKS.map((track) => (
-            <TrackCard key={track.title} {...track} />
+          {TRACKS.map(({ key, ...track }) => (
+            <TrackCard key={track.title} {...track} {...(ctaByKey[key] ?? {})} />
           ))}
-          {claudeEnabled ? <TrackCard {...CLAUDE_TRACK} /> : null}
+          {claudeEnabled ? (
+            <TrackCard {...claudeTrackProps} {...(ctaByKey.claude ?? {})} />
+          ) : null}
         </section>
 
         <section className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
@@ -238,6 +261,8 @@ export function LandingHub({ claudeEnabled }: LandingHubProps) {
             />
           </div>
         </section>
+
+        <TestimonialsCarousel />
       </main>
 
       {/* <footer className="relative z-10 border-t border-border/60">

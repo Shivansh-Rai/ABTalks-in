@@ -369,6 +369,16 @@
   }
 }
 
+/* Swipeable card rails: keep the native scrollbar out of the layout without
+   losing scrollability (the testimonials carousel pairs this with arrows). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -392,6 +402,12 @@
     /* Sanctioned dark exception (plan 058 §8) — suppress Modernist ground grid */
     background-color: #030712;
     background-image: none;
+  }
+  body.not-found-page footer {
+    display: none;
+  }
+  body.not-found-page main {
+    padding-bottom: 0;
   }
   html {
     @apply font-sans;

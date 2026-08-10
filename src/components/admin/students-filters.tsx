@@ -13,10 +13,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { downloadCSV, toCSV } from "@/lib/csv";
-import type { StudentDomainCounts } from "@/features/admin/get-students";
+import type {
+  StudentDomainCounts,
+  StudentTrack,
+  StudentTrackCounts,
+} from "@/features/admin/get-students";
 import { cn } from "@/lib/utils";
 import type { Domain } from "@prisma/client";
 
+const trackOptions = ["ALL", "CHALLENGE", "HACKATHON"] as const;
 const domainOptions = ["ALL", "SE", "DS", "AI", "CLAUDE"] as const;
 const statusOptions = ["ALL", "ACTIVE", "COMPLETED"] as const;
 const sortOptions = [
@@ -26,10 +31,18 @@ const sortOptions = [
   { value: "referrals", label: "Referrals" },
 ] as const;
 
+function trackLabel(track: (typeof trackOptions)[number]): string {
+  if (track === "CHALLENGE") return "Challenge";
+  if (track === "HACKATHON") return "Hackathon";
+  return "All";
+}
+
 export function StudentsFilters({
   domainCounts,
+  trackCounts,
 }: {
   domainCounts: StudentDomainCounts;
+  trackCounts: StudentTrackCounts;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +51,10 @@ export function StudentsFilters({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isExporting, startExport] = useTransition();
 
+  const currentTrack = useMemo(
+    () => (searchParams.get("track") as StudentTrack | null) ?? "ALL",
+    [searchParams],
+  );
   const currentDomain = useMemo(
     () => searchParams.get("domain") ?? "ALL",
     [searchParams],
@@ -51,8 +68,11 @@ export function StudentsFilters({
     [searchParams],
   );
 
+  const hackathonOnly = currentTrack === "HACKATHON";
+
   function pushWith(next: {
     q?: string;
+    track?: string;
     domain?: string;
     status?: string;
     sort?: string;
@@ -61,6 +81,10 @@ export function StudentsFilters({
     if (next.q !== undefined) {
       if (next.q.trim()) params.set("q", next.q.trim());
       else params.delete("q");
+    }
+    if (next.track !== undefined) {
+      if (next.track && next.track !== "ALL") params.set("track", next.track);
+      else params.delete("track");
     }
     if (next.domain !== undefined) {
       if (next.domain && next.domain !== "ALL") params.set("domain", next.domain);
@@ -82,8 +106,27 @@ export function StudentsFilters({
     return count > 0 ? `${domain} (${count})` : domain;
   }
 
+  function trackCountLabel(track: (typeof trackOptions)[number]) {
+    const count = trackCounts[track];
+    const label = trackLabel(track);
+    return count > 0 ? `${label} (${count})` : label;
+  }
+
   function handleClearFilters() {
-    pushWith({ domain: "ALL", status: "ALL", sort: "recent" });
+    pushWith({
+      track: "ALL",
+      domain: "ALL",
+      status: "ALL",
+      sort: "recent",
+    });
+  }
+
+  function handleTrackSelect(track: (typeof trackOptions)[number]) {
+    if (track === "HACKATHON") {
+      pushWith({ track: "HACKATHON", domain: "ALL", status: "ALL" });
+      return;
+    }
+    pushWith({ track });
   }
 
   function handleExport() {
@@ -91,9 +134,16 @@ export function StudentsFilters({
       try {
         const domain =
           currentDomain === "ALL" ? "ALL" : (currentDomain as Domain);
+        const track =
+          currentTrack === "ALL" ||
+          currentTrack === "CHALLENGE" ||
+          currentTrack === "HACKATHON"
+            ? currentTrack
+            : "ALL";
         const data = await getStudentsForExport({
           domain,
           search: searchParams.get("q") ?? undefined,
+          track,
         });
 
         if (data.length === 0) {
@@ -103,7 +153,7 @@ export function StudentsFilters({
 
         const csv = toCSV(data);
         const date = new Date().toISOString().split("T")[0];
-        const filename = `abtalks-students-${currentDomain}-${date}.csv`;
+        const filename = `abtalks-students-${track}-${date}.csv`;
         downloadCSV(filename, csv);
         toast.success(`Exported ${data.length} students`);
       } catch {
@@ -113,6 +163,7 @@ export function StudentsFilters({
   }
 
   const activeFilterCount =
+    (currentTrack !== "ALL" ? 1 : 0) +
     (currentDomain !== "ALL" ? 1 : 0) +
     (currentStatus !== "ALL" ? 1 : 0) +
     (currentSort !== "recent" ? 1 : 0);
@@ -165,49 +216,76 @@ export function StudentsFilters({
             <div className="space-y-4">
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Domain
+                  Track
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {domainOptions.map((domain) => (
+                  {trackOptions.map((track) => (
                     <button
-                      key={domain}
+                      key={track}
                       type="button"
-                      onClick={() => pushWith({ domain })}
+                      onClick={() => handleTrackSelect(track)}
                       className={cn(
                         "rounded-none border px-3 py-1 text-xs",
-                        currentDomain === domain
+                        currentTrack === track
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-border hover:bg-accent",
                       )}
                     >
-                      {domainCountLabel(domain)}
+                      {trackCountLabel(track)}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Status
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {statusOptions.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => pushWith({ status })}
-                      className={cn(
-                        "rounded-none border px-3 py-1 text-xs",
-                        currentStatus === status
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:bg-accent",
-                      )}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {!hackathonOnly ? (
+                <>
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Domain
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {domainOptions.map((domain) => (
+                        <button
+                          key={domain}
+                          type="button"
+                          onClick={() => pushWith({ domain })}
+                          className={cn(
+                            "rounded-none border px-3 py-1 text-xs",
+                            currentDomain === domain
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:bg-accent",
+                          )}
+                        >
+                          {domainCountLabel(domain)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Status
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {statusOptions.map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => pushWith({ status })}
+                          className={cn(
+                            "rounded-none border px-3 py-1 text-xs",
+                            currentStatus === status
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:bg-accent",
+                          )}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : null}
 
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">

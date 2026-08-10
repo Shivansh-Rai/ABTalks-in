@@ -2,14 +2,14 @@ export const HACKATHON = {
   name: "ABTalks Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
   // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
-  registrationOpen: true,
+  registrationOpen: false,
   maxTeamSize: 3,
 
   // TODO(organizer): replace the three date values below before launch.
   kickoffUtc: "2026-08-07T14:30:00Z", // Fri 8:00 PM IST
-  deadlineUtc: "2026-08-09T14:30:00Z", // Sun 8:00 PM IST
+  deadlineUtc: "2026-08-09T15:15:00Z", // Sun 8:45 PM IST
   kickoffLabel: "Friday, 7 Aug · 8:00 PM IST",
-  deadlineLabel: "Sunday, 9 Aug · 8:00 PM IST",
+  deadlineLabel: "Sunday, 9 Aug · 8:45 PM IST",
   resultsLabel: "Winners announced: Friday, 14 Aug",
   // Open while now < this instant (Fri 7 Aug 6:00 PM IST).
   registrationClosesUtc: "2026-08-07T12:30:00Z",
