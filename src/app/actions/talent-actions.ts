@@ -15,6 +15,7 @@ import {
   shortlistToggleSchema,
 } from "@/lib/validations/talent";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 type ActionResult<T = undefined> =
   | (T extends undefined ? { ok: true } : { ok: true; data: T })
@@ -47,6 +48,13 @@ export async function registerRecruiterAction(
     userId: session.user.id,
     email: session.user.email,
     source: "talent_register",
+  });
+
+  await recordNewsletterOptIn({
+    userId: session.user.id,
+    email: session.user.email,
+    source: "talent_register",
+    optIn: parsed.data.newsletterOptIn === true,
   });
 
   revalidatePath("/talent/register");

@@ -35,6 +35,7 @@ export function RecruiterRegisterForm() {
     acceptTerms: false,
     acceptPrivacy: false,
     confirmAge18: false,
+      newsletterOptIn: true,
   });
 
   const {
@@ -51,6 +52,7 @@ export function RecruiterRegisterForm() {
       acceptTerms: false,
       acceptPrivacy: false,
       confirmAge18: false,
+      newsletterOptIn: true,
     },
   });
 
@@ -66,6 +68,7 @@ export function RecruiterRegisterForm() {
         acceptTerms: true,
         acceptPrivacy: true,
         confirmAge18: true,
+        newsletterOptIn: legalConsent.newsletterOptIn,
       });
       if (!result.ok) {
         toast.error(result.message);
@@ -103,6 +106,7 @@ export function RecruiterRegisterForm() {
           setValue("acceptTerms", next.acceptTerms);
           setValue("acceptPrivacy", next.acceptPrivacy);
           setValue("confirmAge18", next.confirmAge18);
+          setValue("newsletterOptIn", next.newsletterOptIn);
         }}
       />
       <Button

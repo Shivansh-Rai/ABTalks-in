@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import { sendWorkshopConfirmationEmail } from "@/lib/workshop-email";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 /**
  * `email` is deliberately absent: it comes from the session, never the client.
@@ -34,6 +35,8 @@ const workshopRegistrationSchema = z.object({
   confirmAge18: z.boolean().refine((v) => v === true, {
     message: "You must be 18 or older",
   }),
+  // Marketing opt-in — plain boolean, never blocks signup.
+  newsletterOptIn: z.boolean(),
 });
 
 export type WorkshopRegistrationInput = z.infer<typeof workshopRegistrationSchema>;
@@ -136,6 +139,13 @@ export async function submitWorkshopRegistrationAction(
     userId,
     email,
     source: "workshop",
+  });
+
+  await recordNewsletterOptIn({
+    userId: userId,
+    email: email,
+    source: "workshop",
+    optIn: parsed.data.newsletterOptIn === true,
   });
 
   // The row is saved at this point. A mail failure must never fail the request.

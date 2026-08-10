@@ -9,6 +9,16 @@ export type LegalConsentValues = {
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   confirmAge18: boolean;
+  /** Marketing opt-in. Pre-checked; never gates submission. */
+  newsletterOptIn: boolean;
+};
+
+/** Every funnel starts from this — newsletter on, legal boxes off. */
+export const DEFAULT_LEGAL_CONSENT: LegalConsentValues = {
+  acceptTerms: false,
+  acceptPrivacy: false,
+  confirmAge18: false,
+  newsletterOptIn: true,
 };
 
 type Props = {
@@ -72,6 +82,25 @@ export function LegalConsentFields({
         />
         <Label className="font-normal leading-snug">
           I confirm that I am 18 years of age or older.
+        </Label>
+      </label>
+      {/* Optional and pre-selected. Deliberately excluded from
+          legalConsentAccepted() so unticking it can never block signup. */}
+      <label className="flex items-start gap-3 border-t border-border/60 pt-3 text-sm leading-snug">
+        <Checkbox
+          checked={values.newsletterOptIn}
+          onCheckedChange={(c) =>
+            onChange({ ...values, newsletterOptIn: c === true })
+          }
+          className="mt-0.5"
+          aria-label="Receive occasional updates by email"
+        />
+        <Label className="font-normal leading-snug">
+          Send me occasional updates about new challenges, workshops and
+          opportunities.{" "}
+          <span className="text-muted-foreground">
+            Optional — untick to opt out, and you can unsubscribe any time.
+          </span>
         </Label>
       </label>
       {children}

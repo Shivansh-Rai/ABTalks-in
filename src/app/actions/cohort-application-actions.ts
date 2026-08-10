@@ -7,6 +7,7 @@ import {
   type CohortApplicationInput,
 } from "@/lib/validations/cohort-application";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 
 export async function submitCohortApplicationAction(input: CohortApplicationInput) {
@@ -67,6 +68,12 @@ export async function submitCohortApplicationAction(input: CohortApplicationInpu
       privacy: PRIVACY_VERSION,
     });
   }
+
+  await recordNewsletterOptIn({
+    email: d.email,
+    source: "cohort_us",
+    optIn: d.newsletterOptIn === true,
+  });
 
   return { ok: true as const };
 }

@@ -36,6 +36,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
     acceptTerms: false,
     acceptPrivacy: false,
     confirmAge18: false,
+      newsletterOptIn: true,
   });
   const [recruiterVisibility, setRecruiterVisibility] = useState(false);
 
@@ -56,6 +57,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
       acceptTerms: false,
       acceptPrivacy: false,
       confirmAge18: false,
+      newsletterOptIn: true,
       recruiterVisibilityConsent: false,
     },
   });
@@ -115,6 +117,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
         acceptTerms: true,
         acceptPrivacy: true,
         confirmAge18: true,
+        newsletterOptIn: legalConsent.newsletterOptIn,
         recruiterVisibilityConsent: recruiterVisibility,
       });
       if (!res.ok) {
@@ -300,6 +303,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
           setValue("acceptTerms", next.acceptTerms);
           setValue("acceptPrivacy", next.acceptPrivacy);
           setValue("confirmAge18", next.confirmAge18);
+          setValue("newsletterOptIn", next.newsletterOptIn);
         }}
       >
         <label className="flex items-start gap-3 text-sm leading-snug">

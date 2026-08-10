@@ -6,6 +6,7 @@ import { INDIA_DIALING_CODE, toE164 } from "@/lib/validations/phone";
 import { prisma } from "@/lib/db";
 import { awardReferralSynergy } from "@/features/synergy/award-referral-synergy";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { generateUniqueReferralCode } from "./generate-referral-code";
 
 export type CompleteRegistrationResult =
@@ -218,6 +219,13 @@ export async function completeRegistration(
       userId,
       email: opts?.email,
       source: "register",
+    });
+
+    await recordNewsletterOptIn({
+      userId: userId,
+      email: opts?.email,
+      source: "register",
+      optIn: input.newsletterOptIn === true,
     });
 
     await clearRefCookie();

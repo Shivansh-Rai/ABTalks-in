@@ -8,6 +8,16 @@ export const legalAcceptanceSchema = z.object({
   acceptTerms: mustAccept("Please accept the Terms of Service"),
   acceptPrivacy: mustAccept("Please accept the Privacy Policy"),
   confirmAge18: mustAccept("You must be 18 or older"),
+  /**
+   * Marketing opt-in. A plain boolean, NOT a `mustAccept` — declining must
+   * never fail validation or block signup.
+   *
+   * Required rather than `.optional()` or `.default()`: either of those makes
+   * the schema's input type diverge from its output type, which breaks
+   * react-hook-form's resolver generics in the register and hackathon forms.
+   * Every funnel sends the value explicitly.
+   */
+  newsletterOptIn: z.boolean(),
 });
 
 export type LegalAcceptanceInput = z.infer<typeof legalAcceptanceSchema>;

@@ -152,6 +152,7 @@ const EMPTY_DEFAULTS = {
   acceptTerms: false,
   acceptPrivacy: false,
   confirmAge18: false,
+  newsletterOptIn: true,
 } as unknown as CohortApplicationInput;
 
 function countWords(text: string): number {
@@ -857,6 +858,35 @@ export function ApplicationForm() {
                         ) : null}
                       </div>
                     ))}
+                    <div className="space-y-1 border-t border-border/60 pt-3">
+                      <div className="flex items-start gap-3">
+                        <Controller
+                          name="newsletterOptIn"
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="newsletterOptIn"
+                              checked={field.value === true}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked === true)
+                              }
+                              className="mt-0.5"
+                            />
+                          )}
+                        />
+                        <Label
+                          htmlFor="newsletterOptIn"
+                          className="cursor-pointer text-sm font-normal leading-snug"
+                        >
+                          Send me occasional updates about new challenges,
+                          workshops and opportunities.{" "}
+                          <span className="text-muted-foreground">
+                            Optional — untick to opt out, and you can unsubscribe
+                            any time.
+                          </span>
+                        </Label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

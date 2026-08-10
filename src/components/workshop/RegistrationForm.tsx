@@ -104,6 +104,7 @@ export default function RegistrationForm({
     acceptTerms: false,
     acceptPrivacy: false,
     confirmAge18: false,
+      newsletterOptIn: true,
   });
   const confetti = useMemo(buildConfetti, []);
 
@@ -181,6 +182,7 @@ export default function RegistrationForm({
           acceptTerms: true,
           acceptPrivacy: true,
           confirmAge18: true,
+          newsletterOptIn: legalConsent.newsletterOptIn,
         });
         if (!result.ok) {
           setApiError(result.message);

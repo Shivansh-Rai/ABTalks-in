@@ -86,6 +86,10 @@ The Service is currently provided **free of charge**. We do not collect fees and
 
 If we introduce paid offerings in future, the applicable prices, billing terms, cancellation rights, and refund policy will be presented to you at the point of purchase and will govern that purchase in addition to these Terms.
 
+## 9A. Communications
+
+We send **transactional** messages needed to run the Service (sign-in, OTP, registration and event confirmations, account notices). Separately, signup forms include a **newsletter** checkbox for occasional product updates (challenges, workshops, opportunities). That checkbox is **selected by default**; you may untick it, and you may unsubscribe from marketing mail at any time. Newsletter subscription is optional and is not required to use the Service. Details are in the [Privacy Policy](/privacy).
+
 ## 10. AI features
 
 Some features use third-party AI (e.g. mission feedback, project grading, voice interview). Outputs may be incomplete or incorrect. AI scores and summaries are **not** sole determinants of employment decisions by ABTalks. Do not submit secrets or highly sensitive personal data in prompts or repos beyond what the feature requires.

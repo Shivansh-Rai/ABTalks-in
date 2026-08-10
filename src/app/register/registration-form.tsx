@@ -59,6 +59,7 @@ type RegistrationFormValues = {
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   confirmAge18: boolean;
+  newsletterOptIn: boolean;
 };
 
 const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035] as const;
@@ -124,6 +125,7 @@ export function RegistrationForm({
     acceptTerms: false,
     acceptPrivacy: false,
     confirmAge18: false,
+      newsletterOptIn: true,
   });
   const [phoneVerified, setPhoneVerified] = useState(!otpVerificationRequired);
 
@@ -156,6 +158,7 @@ export function RegistrationForm({
       acceptTerms: false,
       acceptPrivacy: false,
       confirmAge18: false,
+      newsletterOptIn: true,
     },
   });
 
@@ -247,6 +250,7 @@ export function RegistrationForm({
       fd.append("acceptTerms", String(legalConsent.acceptTerms));
       fd.append("acceptPrivacy", String(legalConsent.acceptPrivacy));
       fd.append("confirmAge18", String(legalConsent.confirmAge18));
+      fd.append("newsletterOptIn", String(legalConsent.newsletterOptIn));
 
       if (values.userType === "STUDENT") {
         fd.append("college", values.college);
@@ -717,6 +721,9 @@ export function RegistrationForm({
           setValue("acceptTerms", next.acceptTerms, { shouldValidate: true });
           setValue("acceptPrivacy", next.acceptPrivacy, { shouldValidate: true });
           setValue("confirmAge18", next.confirmAge18, { shouldValidate: true });
+          setValue("newsletterOptIn", next.newsletterOptIn, {
+            shouldValidate: true,
+          });
         }}
       />
 

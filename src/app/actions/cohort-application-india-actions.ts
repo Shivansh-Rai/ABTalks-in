@@ -7,6 +7,7 @@ import {
   type CohortApplicationIndiaInput,
 } from "@/lib/validations/cohort-application-india";
 import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 export async function submitCohortApplicationIndiaAction(
   input: CohortApplicationIndiaInput,
@@ -65,6 +66,12 @@ export async function submitCohortApplicationIndiaAction(
       error: consentErr instanceof Error ? consentErr.message : String(consentErr),
     });
   }
+
+  await recordNewsletterOptIn({
+    email: d.email,
+    source: "cohort_india",
+    optIn: d.newsletterOptIn === true,
+  });
 
   return { ok: true as const };
 }

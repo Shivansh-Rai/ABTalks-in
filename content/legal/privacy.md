@@ -91,16 +91,21 @@ You; Google (sign-in); GitHub API (public repo/commit checks for program feature
 ## 3. How we use data
 
 - Provide accounts, tracks, day unlocks, grading, certificates, and support  
-- Send **transactional** email/SMS (welcome, workshop/hackathon confirmations, OTP, account notices) — not marketing lists unless you separately opt in later  
+- Send **transactional** email/SMS (welcome, workshop/hackathon confirmations, OTP, account notices)  
+- Send **occasional marketing / product updates** (new challenges, workshops, and opportunities) when the newsletter box on signup is left selected — see §3.1  
 - Operate referrals, leaderboards, and peer profiles (limited fields)  
 - Admin operations, integrity (anti-cheat), and security  
 - AI-assisted feedback, grading, recommendations, and interview evaluation  
 - Recruiter discoverability **only if you opt in** (program talent pool)  
 - Improve the Service using aggregated or de-identified insights where feasible  
 
+### 3.1 Newsletter / marketing email
+
+At signup (and on other registration funnels) we show a checkbox offering occasional updates about new challenges, workshops, and opportunities. **That box is selected by default.** You may untick it before submitting, or unsubscribe later at any time (every marketing email will include an unsubscribe link once campaigns begin). Newsletter opt-in is **never** a condition of using the Service — declining it does not block registration. Opt-in records are stored separately from your legal Terms/Privacy acceptance.
+
 ## 4. Legal bases / consent (high level)
 
-Where required, we rely on your **consent** (checkbox acceptance of Terms/Privacy; age attestation; recruiter-visibility opt-in; interview notice acknowledgment). We also process data as needed to provide the Service you request and for security and compliance. Counsel may refine DPDP basis language.
+Where required, we rely on your **consent** (checkbox acceptance of Terms/Privacy; age attestation; recruiter-visibility opt-in; interview notice acknowledgment; newsletter opt-in as presented at signup). We also process data as needed to provide the Service you request and for security and compliance. Counsel may refine DPDP basis language.
 
 ## 5. Sharing
 

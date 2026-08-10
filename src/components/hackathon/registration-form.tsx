@@ -59,6 +59,7 @@ type FormValues = {
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   confirmAge18: boolean;
+  newsletterOptIn: boolean;
 };
 
 type SuccessState = {
@@ -105,6 +106,7 @@ export function RegistrationForm({
     acceptTerms: false,
     acceptPrivacy: false,
     confirmAge18: false,
+      newsletterOptIn: true,
   });
 
   const form = useForm<FormValues>({
@@ -123,6 +125,7 @@ export function RegistrationForm({
       acceptTerms: false,
       acceptPrivacy: false,
       confirmAge18: false,
+      newsletterOptIn: true,
     },
     mode: "onTouched",
   });
@@ -135,6 +138,7 @@ export function RegistrationForm({
       acceptTerms: true as const,
       acceptPrivacy: true as const,
       confirmAge18: true as const,
+      newsletterOptIn: values.newsletterOptIn,
     };
     if (values.entryType === "SOLO") {
       return {
@@ -554,6 +558,7 @@ export function RegistrationForm({
               form.setValue("acceptTerms", next.acceptTerms);
               form.setValue("acceptPrivacy", next.acceptPrivacy);
               form.setValue("confirmAge18", next.confirmAge18);
+              form.setValue("newsletterOptIn", next.newsletterOptIn);
             }}
           />
         ) : null}

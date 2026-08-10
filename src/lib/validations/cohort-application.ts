@@ -121,6 +121,8 @@ export const cohortApplicationSchema = z.object({
   acceptTerms: confirmed,
   acceptPrivacy: confirmed,
   confirmAge18: confirmed,
+  // Pre-checked marketing opt-in — not a required confirmation.
+  newsletterOptIn: z.boolean(),
 });
 
 export type CohortApplicationInput = z.infer<typeof cohortApplicationSchema>;

@@ -92,6 +92,7 @@ export async function completeRegistrationAction(formData: FormData) {
     acceptTerms: formData.get("acceptTerms") === "true",
     acceptPrivacy: formData.get("acceptPrivacy") === "true",
     confirmAge18: formData.get("confirmAge18") === "true",
+    newsletterOptIn: formData.get("newsletterOptIn") === "true",
   });
 
   if (!parsed.success) {
