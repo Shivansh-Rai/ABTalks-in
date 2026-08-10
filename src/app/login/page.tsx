@@ -16,10 +16,9 @@ type Props = {
   searchParams: Promise<{ from?: string; ref?: string }>;
 };
 
-function resolveRedirectTo(from: string | undefined) {
-  if (!from || !from.startsWith("/") || from.startsWith("//")) {
-    return "/dashboard";
-  }
+/** Valid same-origin `from`, or null. */
+function safeFrom(from: string | undefined): string | null {
+  if (!from || !from.startsWith("/") || from.startsWith("//")) return null;
   return from;
 }
 
@@ -41,10 +40,13 @@ function registerHrefWithRef(refRaw: string | undefined): string {
 
 export default async function LoginPage({ searchParams }: Props) {
   const params = await searchParams;
-  const redirectTo = resolveRedirectTo(params.from);
+  const from = safeFrom(params.from);
+  const redirectTo = from ?? "/dashboard";
 
   const session = await auth();
   if (session?.user?.id) {
+    if (!from) redirect("/");
+
     // Program applicants, recruiters, and hackathon registrants must never hit
     // the student /register redirect below — send them straight to their destination.
     if (

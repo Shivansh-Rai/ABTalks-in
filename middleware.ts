@@ -103,7 +103,7 @@ export default auth((req) => {
     const destination =
       from && from.startsWith("/") && !from.startsWith("//")
         ? from
-        : "/dashboard";
+        : "/";
     return withTracking(
       NextResponse.redirect(new URL(destination, req.nextUrl)),
       ref,
