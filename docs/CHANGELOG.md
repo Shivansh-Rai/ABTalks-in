@@ -2,6 +2,7 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-11 [env|convention] Site help chatbot behind ENABLE_CHATBOT: /api/chat + ChatWidget in root layout, knowledge/ KB, optional GEMINI_API_KEY / ANTHROPIC_API_KEY for generation
 - 2026-08-11 [convention] Privacy Policy polish (v2026-08-11): plain-English section leads, DNT, hosting logs/IP, DPDP lawful-basis framing, concrete security measures, material-change notice (email/banner/re-accept); PRIVACY_VERSION bump triggers reconsent banner
 - 2026-08-10 [schema|convention] Plan 061: cookie chooser is a small bottom-right banner (no overlay); entity details published (ABTalksOnAI / Suman Shukla / Udyam UDYAM-UP-29-0250625 / Ghaziabad address — no PAN/bank/IFSC); NewsletterSubscription model + pre-checked newsletter opt-in on all signup funnels (excluded from submit gate); Privacy/Terms wording updated to match. Migration 20260810180000_newsletter_subscription applied to Neon on 2026-08-11 (additive only: CREATE TABLE + indexes + FK)
 - 2026-08-10 [rule] Consent now recorded at OAuth signup: auth.ts events.createUser writes TERMS+PRIVACY rows under source "oauth_signup" when the adapter first creates a User, closing the gap where Google sign-in created an account before any consent form was reached. /login carries a Terms/Privacy/18+ notice (notice, not checkbox — returning users have already accepted). Wrapped in try/catch; auth.config.ts untouched to stay edge-safe

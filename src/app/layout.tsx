@@ -9,6 +9,8 @@ import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
 import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
+import { ChatWidget } from "@/components/chatbot/ChatWidget";
+import { isChatbotEnabled } from "@/lib/feature-flags";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -56,6 +58,7 @@ export default function RootLayout({
             <BottomNavGate />
             <Toaster />
             <CookieConsentModal />
+            {isChatbotEnabled() && <ChatWidget />}
           </CookieConsentProvider>
         </ThemeProvider>
       </body>

@@ -1,0 +1,112 @@
+{
+  "schemaNotes": {
+    "status": "Accuracy/versioning status of the fact's VALUE itself: current | historical | deprecated | corrected-error | unresolved. Does NOT describe whether a dated event is upcoming or past.",
+    "eventStatus": "Present only on facts describing a specific dated event. Temporal status derived by comparing the event date to the project date: upcoming | historical. Independent from `status` — a fact can be the current, correct value (status: current) while the event it describes has already happened (eventStatus: historical)."
+  },
+  "facts": [
+    {
+      "id": "community-size",
+      "area": "community",
+      "statement": "10,000+ AI learners and community members",
+      "status": "current",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["master-fact-sheet", "live-site-abtalks-in"],
+      "supersedes": "community-size-legacy"
+    },
+    {
+      "id": "community-size-legacy",
+      "area": "community",
+      "statement": "approximately 2,400+ (associated with hackathon context)",
+      "status": "historical",
+      "sourceIds": ["vicodathon-influencer-brief"],
+      "note": "Superseded by community-size. Do not present as current."
+    },
+    {
+      "id": "instagram-handle-current",
+      "area": "socials",
+      "statement": "@abtalksonai",
+      "status": "current",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in", "master-fact-sheet"],
+      "supersedes": "instagram-handle-legacy"
+    },
+    {
+      "id": "instagram-handle-legacy",
+      "area": "socials",
+      "statement": "@abtalks_official",
+      "status": "deprecated",
+      "sourceIds": ["fact-sheet-docx"],
+      "note": "Flagged for duplication. Must not be presented as the current official Instagram identity."
+    },
+    {
+      "id": "figma-cursor-date-current",
+      "area": "workshops",
+      "statement": "Figma x Cursor AI/UI/UX Workshop: August 1, 2026, 6:00 PM IST",
+      "status": "current",
+      "eventStatus": "historical",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in"],
+      "supersedes": "figma-cursor-date-incorrect",
+      "note": "This is the currently-accurate date value (status: current). The event itself has already occurred as of the project date (eventStatus: historical) — do not read 'current' as 'upcoming.'"
+    },
+    {
+      "id": "figma-cursor-date-incorrect",
+      "area": "workshops",
+      "statement": "August 21, 2026 (previously recorded in this knowledge base as the Figma x Cursor date)",
+      "status": "corrected-error",
+      "note": "This date actually belongs to a separate event, 'Enhance LinkedIn & AI Mock Interview.' Corrected 2026-08-10 against live-site-abtalks-in."
+    },
+    {
+      "id": "enhance-linkedin-mock-interview-event",
+      "area": "events",
+      "statement": "Enhance LinkedIn & AI Mock Interview: Friday, August 21, 2026, 6:00 PM IST, Zoom, free",
+      "status": "current",
+      "eventStatus": "upcoming",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in"]
+    },
+    {
+      "id": "hackathon-48hr-aug7-2026",
+      "area": "events",
+      "statement": "48-Hour AI Hackathon: starts Friday, August 7, 2026, 8:00 PM IST",
+      "status": "current",
+      "eventStatus": "historical",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in"],
+      "relatedIds": ["vicodathon-2026-status"],
+      "note": "Probable latest edition of the Vibe Code Hackathon / ViCodathon series based on matching format; not confirmed under the ViCodathon name by an authoritative source."
+    },
+    {
+      "id": "free-ai-bootcamp-vs-ai-tools-workshop",
+      "area": "workshops",
+      "statement": "Relationship between 'Free AI Bootcamp - Live Workshop' (live-site edition, Jul 18 2026) and 'AI Tools Workshop' (knowledge area named in implementation.md) is UNRESOLVED.",
+      "status": "unresolved",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in"],
+      "appearsIn": [
+        "knowledge/processed/abtalks.md",
+        "knowledge/processed/programs.md",
+        "knowledge/processed/workshops.md",
+        "knowledge/processed/events.md"
+      ],
+      "note": "Do not merge these into one entity and do not assert they are confirmed-separate, in any of the files listed in appearsIn. Requires confirmation against an authoritative source (e.g. master-fact-sheet) before any knowledge file is changed to reflect a merge or a split."
+    },
+    {
+      "id": "vicodathon-2026-status",
+      "area": "vicodathon",
+      "statement": "ViCodathon 2026 is historical/completed relative to the current project date",
+      "status": "current",
+      "eventStatus": "historical",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["vicodathon-event-notice"]
+    },
+    {
+      "id": "live-site-status-labels-unreliable",
+      "area": "meta",
+      "statement": "The live site's own event status labels (e.g. 'Coming soon', 'Accepting registrations') do not reliably reflect whether an event is actually upcoming or past; status must be derived by comparing the event date to the current project date, not read off the site's badge text.",
+      "status": "current",
+      "asOfDate": "2026-08-10",
+      "sourceIds": ["live-site-abtalks-in"]
+    }
+  ]
+}
