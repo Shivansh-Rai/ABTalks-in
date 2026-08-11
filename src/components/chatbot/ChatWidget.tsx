@@ -437,7 +437,7 @@ export function ChatWidget() {
                 </button>
               )}
               <p className="text-sm font-semibold text-foreground">
-                {viewState === "chat" ? "ABTalks Assistant" : "Recent Chats"}
+                {viewState === "chat" ? "Rudra AI" : "Recent Chats"}
               </p>
             </div>
             
