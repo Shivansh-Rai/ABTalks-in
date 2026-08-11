@@ -84,9 +84,7 @@ const STEP_FIELDS: Record<number, (keyof CohortApplicationInput)[]> = {
     "basedInUsa",
     "readyForChallenge",
     "preferredStartWindow",
-    "acceptTerms",
-    "acceptPrivacy",
-    "confirmAge18",
+    "acceptLegal",
   ],
   5: [],
 };
@@ -149,9 +147,7 @@ const EMPTY_DEFAULTS = {
   basedInUsa: false,
   readyForChallenge: false,
   preferredStartWindow: "",
-  acceptTerms: false,
-  acceptPrivacy: false,
-  confirmAge18: false,
+  acceptLegal: false,
   newsletterOptIn: true,
 } as unknown as CohortApplicationInput;
 
@@ -787,77 +783,52 @@ export function ApplicationForm() {
                   </div>
 
                   <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
-                    {(
-                      [
-                        {
-                          name: "acceptTerms" as const,
-                          label: (
-                            <>
-                              I agree to the{" "}
-                              <Link
-                                href="/terms"
-                                target="_blank"
-                                className="font-medium text-primary underline-offset-2 hover:underline"
-                              >
-                                Terms of Service
-                              </Link>
-                              .
-                            </>
-                          ),
-                        },
-                        {
-                          name: "acceptPrivacy" as const,
-                          label: (
-                            <>
-                              I agree to the{" "}
-                              <Link
-                                href="/privacy"
-                                target="_blank"
-                                className="font-medium text-primary underline-offset-2 hover:underline"
-                              >
-                                Privacy Policy
-                              </Link>
-                              .
-                            </>
-                          ),
-                        },
-                        {
-                          name: "confirmAge18" as const,
-                          label: <>I confirm that I am 18 years of age or older.</>,
-                        },
-                      ] as const
-                    ).map(({ name, label }) => (
-                      <div key={name} className="space-y-1">
-                        <div className="flex items-start gap-3">
-                          <Controller
-                            name={name}
-                            control={control}
-                            render={({ field }) => (
-                              <Checkbox
-                                id={name}
-                                checked={field.value === true}
-                                onCheckedChange={(checked) =>
-                                  field.onChange(checked === true)
-                                }
-                                aria-invalid={!!errors[name]}
-                                className="mt-0.5"
-                              />
-                            )}
-                          />
-                          <Label
-                            htmlFor={name}
-                            className="cursor-pointer text-sm font-normal leading-snug"
+                    <div className="space-y-1">
+                      <div className="flex items-start gap-3">
+                        <Controller
+                          name="acceptLegal"
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="acceptLegal"
+                              checked={field.value === true}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked === true)
+                              }
+                              aria-invalid={!!errors.acceptLegal}
+                              className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
+                            />
+                          )}
+                        />
+                        <Label
+                          htmlFor="acceptLegal"
+                          className="cursor-pointer text-sm font-normal leading-snug"
+                        >
+                          I agree to the{" "}
+                          <Link
+                            href="/terms"
+                            target="_blank"
+                            className="font-medium text-primary underline-offset-2 hover:underline"
                           >
-                            {label}
-                          </Label>
-                        </div>
-                        {errors[name] ? (
-                          <p className="pl-7 text-sm text-destructive">
-                            {errors[name]?.message}
-                          </p>
-                        ) : null}
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy"
+                            target="_blank"
+                            className="font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            Privacy Policy
+                          </Link>
+                          .
+                        </Label>
                       </div>
-                    ))}
+                      {errors.acceptLegal ? (
+                        <p className="pl-7 text-sm text-destructive">
+                          {errors.acceptLegal?.message}
+                        </p>
+                      ) : null}
+                    </div>
                     <div className="space-y-1 border-t border-border/60 pt-3">
                       <div className="flex items-start gap-3">
                         <Controller
@@ -870,7 +841,7 @@ export function ApplicationForm() {
                               onCheckedChange={(checked) =>
                                 field.onChange(checked === true)
                               }
-                              className="mt-0.5"
+                              className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
                             />
                           )}
                         />

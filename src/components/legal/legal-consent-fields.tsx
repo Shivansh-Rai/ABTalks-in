@@ -7,18 +7,15 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export type LegalConsentValues = {
-  acceptTerms: boolean;
-  acceptPrivacy: boolean;
-  confirmAge18: boolean;
+  /** Combined Terms of Service + Privacy Policy acceptance. */
+  acceptLegal: boolean;
   /** Marketing opt-in. Pre-checked; never gates submission. */
   newsletterOptIn: boolean;
 };
 
-/** Every funnel starts from this — newsletter on, legal boxes off. */
+/** Every funnel starts from this — newsletter on, legal box off. */
 export const DEFAULT_LEGAL_CONSENT: LegalConsentValues = {
-  acceptTerms: false,
-  acceptPrivacy: false,
-  confirmAge18: false,
+  acceptLegal: false,
   newsletterOptIn: true,
 };
 
@@ -32,7 +29,7 @@ type Props = {
    * advertise "challenges/workshops" to employers.
    */
   newsletterLabel?: ReactNode;
-  /** Optional extra checkboxes rendered after the legal trio. */
+  /** Optional extra checkboxes rendered after the legal pair. */
   children?: ReactNode;
 };
 
@@ -57,50 +54,32 @@ export function LegalConsentFields({
     <div className={cn("space-y-3 rounded-lg border border-border/70 bg-muted/20 p-4", className)}>
       <label className="flex items-start gap-3 text-sm leading-snug">
         <Checkbox
-          checked={values.acceptTerms}
+          checked={values.acceptLegal}
           onCheckedChange={(c) =>
-            onChange({ ...values, acceptTerms: c === true })
+            onChange({ ...values, acceptLegal: c === true })
           }
           className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
-          aria-label="Accept Terms of Service"
+          aria-label="Accept Terms of Service and Privacy Policy"
         />
         <span>
           I agree to the{" "}
-          <Link href="/terms" target="_blank" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link
+            href="/terms"
+            target="_blank"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
             Terms of Service
-          </Link>
-          .
-        </span>
-      </label>
-      <label className="flex items-start gap-3 text-sm leading-snug">
-        <Checkbox
-          checked={values.acceptPrivacy}
-          onCheckedChange={(c) =>
-            onChange({ ...values, acceptPrivacy: c === true })
-          }
-          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
-          aria-label="Accept Privacy Policy"
-        />
-        <span>
-          I agree to the{" "}
-          <Link href="/privacy" target="_blank" className="font-medium text-primary underline-offset-2 hover:underline">
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
             Privacy Policy
           </Link>
           .
         </span>
-      </label>
-      <label className="flex items-start gap-3 text-sm leading-snug">
-        <Checkbox
-          checked={values.confirmAge18}
-          onCheckedChange={(c) =>
-            onChange({ ...values, confirmAge18: c === true })
-          }
-          className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
-          aria-label="Confirm age 18 or older"
-        />
-        <Label className="font-normal leading-snug">
-          I confirm that I am 18 years of age or older.
-        </Label>
       </label>
       {/* Optional and pre-selected. Deliberately excluded from
           legalConsentAccepted() so unticking it can never block signup. */}
@@ -121,5 +100,5 @@ export function LegalConsentFields({
 }
 
 export function legalConsentAccepted(values: LegalConsentValues): boolean {
-  return values.acceptTerms && values.acceptPrivacy && values.confirmAge18;
+  return values.acceptLegal === true;
 }

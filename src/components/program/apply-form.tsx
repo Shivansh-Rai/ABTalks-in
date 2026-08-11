@@ -33,10 +33,8 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptTerms: false,
-    acceptPrivacy: false,
-    confirmAge18: false,
-      newsletterOptIn: true,
+    acceptLegal: false,
+    newsletterOptIn: true,
   });
   const [recruiterVisibility, setRecruiterVisibility] = useState(false);
 
@@ -54,9 +52,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
       phone: "",
       githubUsername: "",
       githubRepoUrl: "",
-      acceptTerms: false,
-      acceptPrivacy: false,
-      confirmAge18: false,
+      acceptLegal: false,
       newsletterOptIn: true,
       recruiterVisibilityConsent: false,
     },
@@ -106,7 +102,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
 
   async function onSubmit(values: ApplyProfileInput) {
     if (!legalConsentAccepted(legalConsent)) {
-      toast.error("Please accept the Terms, Privacy Policy, and age confirmation.");
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
     setSubmitting(true);
@@ -114,9 +110,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
       const res = await applyToProgramAction({
         ...values,
         joinCode,
-        acceptTerms: true,
-        acceptPrivacy: true,
-        confirmAge18: true,
+        acceptLegal: legalConsent.acceptLegal,
         newsletterOptIn: legalConsent.newsletterOptIn,
         recruiterVisibilityConsent: recruiterVisibility,
       });
@@ -300,9 +294,7 @@ export function ApplyForm({ joinCode }: { joinCode: string }) {
         values={legalConsent}
         onChange={(next) => {
           setLegalConsent(next);
-          setValue("acceptTerms", next.acceptTerms);
-          setValue("acceptPrivacy", next.acceptPrivacy);
-          setValue("confirmAge18", next.confirmAge18);
+          setValue("acceptLegal", next.acceptLegal);
           setValue("newsletterOptIn", next.newsletterOptIn);
         }}
       >

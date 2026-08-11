@@ -56,9 +56,7 @@ type RegistrationFormValues = {
   phoneNumber: string;
   githubUsername: string;
   referralCode: string;
-  acceptTerms: boolean;
-  acceptPrivacy: boolean;
-  confirmAge18: boolean;
+  acceptLegal: boolean;
   newsletterOptIn: boolean;
 };
 
@@ -122,10 +120,8 @@ export function RegistrationForm({
   const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptTerms: false,
-    acceptPrivacy: false,
-    confirmAge18: false,
-      newsletterOptIn: true,
+    acceptLegal: false,
+    newsletterOptIn: true,
   });
   const [phoneVerified, setPhoneVerified] = useState(!otpVerificationRequired);
 
@@ -155,9 +151,7 @@ export function RegistrationForm({
       phoneNumber: "",
       githubUsername: "",
       referralCode: initialRef,
-      acceptTerms: false,
-      acceptPrivacy: false,
-      confirmAge18: false,
+      acceptLegal: false,
       newsletterOptIn: true,
     },
   });
@@ -224,7 +218,7 @@ export function RegistrationForm({
 
   async function onSubmit(values: RegistrationFormValues) {
     if (!legalConsentAccepted(legalConsent)) {
-      toast.error("Please accept the Terms, Privacy Policy, and age confirmation.");
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
     if (
@@ -247,9 +241,7 @@ export function RegistrationForm({
       fd.append("phoneNumber", values.phoneNumber ?? "");
       fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
-      fd.append("acceptTerms", String(legalConsent.acceptTerms));
-      fd.append("acceptPrivacy", String(legalConsent.acceptPrivacy));
-      fd.append("confirmAge18", String(legalConsent.confirmAge18));
+      fd.append("acceptLegal", String(legalConsent.acceptLegal));
       fd.append("newsletterOptIn", String(legalConsent.newsletterOptIn));
 
       if (values.userType === "STUDENT") {
@@ -718,9 +710,7 @@ export function RegistrationForm({
         values={legalConsent}
         onChange={(next) => {
           setLegalConsent(next);
-          setValue("acceptTerms", next.acceptTerms, { shouldValidate: true });
-          setValue("acceptPrivacy", next.acceptPrivacy, { shouldValidate: true });
-          setValue("confirmAge18", next.confirmAge18, { shouldValidate: true });
+          setValue("acceptLegal", next.acceptLegal, { shouldValidate: true });
           setValue("newsletterOptIn", next.newsletterOptIn, {
             shouldValidate: true,
           });

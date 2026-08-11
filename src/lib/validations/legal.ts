@@ -3,11 +3,15 @@ import { z } from "zod";
 const mustAccept = (message: string) =>
   z.boolean().refine((v) => v === true, { message });
 
-/** Shared Terms + Privacy + age attestation for all signup funnels. */
+/**
+ * Shared legal acceptance for all signup funnels.
+ * One checkbox covers Terms + Privacy; age is stated in the Terms (18+).
+ * Newsletter is separate and never blocks signup.
+ */
 export const legalAcceptanceSchema = z.object({
-  acceptTerms: mustAccept("Please accept the Terms of Service"),
-  acceptPrivacy: mustAccept("Please accept the Privacy Policy"),
-  confirmAge18: mustAccept("You must be 18 or older"),
+  acceptLegal: mustAccept(
+    "Please accept the Terms of Service and Privacy Policy",
+  ),
   /**
    * Marketing opt-in. A plain boolean, NOT a `mustAccept` — declining must
    * never fail validation or block signup.

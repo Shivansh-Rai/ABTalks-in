@@ -89,9 +89,7 @@ export async function completeRegistrationAction(formData: FormData) {
     phoneNumber,
     githubUsername: formData.get("githubUsername") || "",
     referralCode,
-    acceptTerms: formData.get("acceptTerms") === "true",
-    acceptPrivacy: formData.get("acceptPrivacy") === "true",
-    confirmAge18: formData.get("confirmAge18") === "true",
+    acceptLegal: formData.get("acceptLegal") === "true",
     newsletterOptIn: formData.get("newsletterOptIn") === "true",
   });
 

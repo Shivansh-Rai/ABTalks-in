@@ -101,10 +101,8 @@ export default function RegistrationForm({
   const [showSuccess, setShowSuccess] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptTerms: false,
-    acceptPrivacy: false,
-    confirmAge18: false,
-      newsletterOptIn: true,
+    acceptLegal: false,
+    newsletterOptIn: true,
   });
   const confetti = useMemo(buildConfetti, []);
 
@@ -167,7 +165,7 @@ export default function RegistrationForm({
     ev.preventDefault();
     if (!validate()) return;
     if (!legalConsentAccepted(legalConsent)) {
-      setApiError("Please accept the Terms, Privacy Policy, and age confirmation.");
+      setApiError("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
     setApiError("");
@@ -179,9 +177,7 @@ export default function RegistrationForm({
           role: form.role === "Professional" ? "Professional" : "Student",
           organization: form.organization.trim() || null,
           graduationYear: form.graduationYear ? Number(form.graduationYear) : null,
-          acceptTerms: true,
-          acceptPrivacy: true,
-          confirmAge18: true,
+          acceptLegal: legalConsent.acceptLegal,
           newsletterOptIn: legalConsent.newsletterOptIn,
         });
         if (!result.ok) {

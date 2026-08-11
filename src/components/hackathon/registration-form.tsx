@@ -56,9 +56,7 @@ type FormValues = {
   graduationYear: number;
   teamName: string;
   teamCode: string;
-  acceptTerms: boolean;
-  acceptPrivacy: boolean;
-  confirmAge18: boolean;
+  acceptLegal: boolean;
   newsletterOptIn: boolean;
 };
 
@@ -103,10 +101,7 @@ export function RegistrationForm({
   const [lookupTeamName, setLookupTeamName] = useState<string | null>(null);
   const [lookupSpots, setLookupSpots] = useState<number | null>(null);
   const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptTerms: false,
-    acceptPrivacy: false,
-    confirmAge18: false,
-      newsletterOptIn: true,
+    acceptLegal: false, newsletterOptIn: true,
   });
 
   const form = useForm<FormValues>({
@@ -122,10 +117,7 @@ export function RegistrationForm({
       graduationYear: 2026,
       teamName: "",
       teamCode: "",
-      acceptTerms: false,
-      acceptPrivacy: false,
-      confirmAge18: false,
-      newsletterOptIn: true,
+      acceptLegal: false, newsletterOptIn: true,
     },
     mode: "onTouched",
   });
@@ -135,9 +127,7 @@ export function RegistrationForm({
 
   function buildPayload(values: FormValues): HackathonRegistrationInput {
     const legal = {
-      acceptTerms: true as const,
-      acceptPrivacy: true as const,
-      confirmAge18: true as const,
+      acceptLegal: values.acceptLegal,
       newsletterOptIn: values.newsletterOptIn,
     };
     if (values.entryType === "SOLO") {
@@ -195,13 +185,12 @@ export function RegistrationForm({
       if (entryType === "SOLO") {
         if (!legalConsentAccepted(legalConsent)) {
           setSubmitError(
-            "Please accept the Terms, Privacy Policy, and age confirmation.",
+            "Please accept the Terms of Service and Privacy Policy.",
           );
           return;
         }
-        form.setValue("acceptTerms", true);
-        form.setValue("acceptPrivacy", true);
-        form.setValue("confirmAge18", true);
+        form.setValue("acceptLegal", legalConsent.acceptLegal);
+        form.setValue("newsletterOptIn", legalConsent.newsletterOptIn);
         form.handleSubmit(onSubmit)();
         return;
       }
@@ -237,7 +226,7 @@ export function RegistrationForm({
     setSubmitError(null);
     if (!legalConsentAccepted(legalConsent)) {
       setSubmitError(
-        "Please accept the Terms, Privacy Policy, and age confirmation.",
+        "Please accept the Terms of Service and Privacy Policy.",
       );
       return;
     }
@@ -555,9 +544,7 @@ export function RegistrationForm({
             values={legalConsent}
             onChange={(next) => {
               setLegalConsent(next);
-              form.setValue("acceptTerms", next.acceptTerms);
-              form.setValue("acceptPrivacy", next.acceptPrivacy);
-              form.setValue("confirmAge18", next.confirmAge18);
+              form.setValue("acceptLegal", next.acceptLegal);
               form.setValue("newsletterOptIn", next.newsletterOptIn);
             }}
           />

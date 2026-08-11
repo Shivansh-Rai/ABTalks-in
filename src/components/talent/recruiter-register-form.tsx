@@ -31,12 +31,7 @@ function FieldError({ message }: { message?: string }) {
 export function RecruiterRegisterForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptTerms: false,
-    acceptPrivacy: false,
-    confirmAge18: false,
-      newsletterOptIn: true,
-  });
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({ acceptLegal: false, newsletterOptIn: true });
 
   const {
     register,
@@ -49,25 +44,21 @@ export function RecruiterRegisterForm() {
       fullName: "",
       company: "",
       phone: "",
-      acceptTerms: false,
-      acceptPrivacy: false,
-      confirmAge18: false,
+      acceptLegal: false,
       newsletterOptIn: true,
     },
   });
 
   async function onSubmit(data: RecruiterRegisterInput) {
     if (!legalConsentAccepted(legalConsent)) {
-      toast.error("Please accept the Terms, Privacy Policy, and age confirmation.");
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
     setSubmitting(true);
     try {
       const result = await registerRecruiterAction({
         ...data,
-        acceptTerms: true,
-        acceptPrivacy: true,
-        confirmAge18: true,
+        acceptLegal: legalConsent.acceptLegal,
         newsletterOptIn: legalConsent.newsletterOptIn,
       });
       if (!result.ok) {
@@ -112,9 +103,7 @@ export function RecruiterRegisterForm() {
         }
         onChange={(next) => {
           setLegalConsent(next);
-          setValue("acceptTerms", next.acceptTerms);
-          setValue("acceptPrivacy", next.acceptPrivacy);
-          setValue("confirmAge18", next.confirmAge18);
+          setValue("acceptLegal", next.acceptLegal);
           setValue("newsletterOptIn", next.newsletterOptIn);
         }}
       />

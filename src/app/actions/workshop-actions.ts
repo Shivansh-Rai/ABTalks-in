@@ -26,14 +26,8 @@ const workshopRegistrationSchema = z.object({
   role: z.enum(["Student", "Professional"]),
   organization: z.string().trim().min(1).nullish(),
   graduationYear: z.coerce.number().int().min(2020).max(2035).nullish(),
-  acceptTerms: z.boolean().refine((v) => v === true, {
-    message: "Please accept the Terms of Service",
-  }),
-  acceptPrivacy: z.boolean().refine((v) => v === true, {
-    message: "Please accept the Privacy Policy",
-  }),
-  confirmAge18: z.boolean().refine((v) => v === true, {
-    message: "You must be 18 or older",
+  acceptLegal: z.boolean().refine((v) => v === true, {
+    message: "Please accept the Terms of Service and Privacy Policy",
   }),
   // Marketing opt-in — plain boolean, never blocks signup.
   newsletterOptIn: z.boolean(),

@@ -83,9 +83,7 @@ export function LoginClient({
 
   function ensureLegalAccepted(): boolean {
     if (legalConsentAccepted(legalConsent)) return true;
-    toast.error(
-      "Please accept the Terms, Privacy Policy, and confirm you are 18+.",
-    );
+    toast.error("Please accept the Terms of Service and Privacy Policy.");
     return false;
   }
 
@@ -241,7 +239,7 @@ export function LoginClient({
       />
       {!canSignIn ? (
         <p className="text-center text-xs text-muted-foreground">
-          Tick Terms, Privacy Policy and age confirmation to enable Sign in.
+          Accept the Terms of Service and Privacy Policy to enable Sign in.
         </p>
       ) : null}
     </div>
