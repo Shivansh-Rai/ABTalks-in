@@ -51,8 +51,8 @@ export function CookieConsentModal() {
       role="region"
       aria-label="Cookie choices"
       className={cn(
-        // Mobile: narrow card (~16.5rem); desktop: up to 20rem — not full-bleed.
-        "fixed z-100 w-[min(calc(100%-1.5rem),16.5rem)] sm:w-[min(calc(100%-2rem),20rem)]",
+        // Mobile: ~18rem (slightly roomier than 16.5); desktop: up to 21rem.
+        "fixed z-100 w-[min(calc(100%-1.5rem),18rem)] sm:w-[min(calc(100%-2rem),21rem)]",
         "left-3 right-auto sm:left-4",
         // Clear mobile bottom nav without floating too high.
         "bottom-[4.5rem] sm:bottom-5 md:bottom-6",
@@ -61,10 +61,10 @@ export function CookieConsentModal() {
     >
       <div className="h-1 w-full bg-primary sm:h-1.5" aria-hidden="true" />
 
-      <div className="p-3 sm:p-4">
-        <div className="flex items-start gap-1.5">
+      <div className="p-3.5 sm:p-4">
+        <div className="flex items-start gap-2">
           {/* Short line on mobile; slightly fuller on sm+ */}
-          <p className="flex-1 text-[11px] leading-snug text-muted-foreground sm:text-xs sm:leading-relaxed">
+          <p className="flex-1 text-xs leading-snug text-muted-foreground sm:text-[13px] sm:leading-relaxed">
             <span className="sm:hidden">
               We use cookies for sign-in and optional attribution.{" "}
               <Link
@@ -108,19 +108,19 @@ export function CookieConsentModal() {
               aria-label="Close cookie choices"
               className="shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:p-1"
             >
-              <X className="size-3.5 sm:size-4" />
+              <X className="size-4" />
             </button>
           )}
         </div>
 
-        <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2">
           <button
             type="button"
             disabled={busy}
             onClick={() => onChoose("limited")}
             className={cn(
-              "inline-flex h-8 items-center justify-center rounded-md border border-border sm:h-9",
-              "bg-background px-2 text-[10px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
+              "inline-flex h-9 items-center justify-center rounded-md border border-border sm:h-9",
+              "bg-background px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
               "text-foreground transition-colors hover:bg-muted",
               "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
               "disabled:cursor-not-allowed disabled:opacity-60",
@@ -134,8 +134,8 @@ export function CookieConsentModal() {
             disabled={busy}
             onClick={() => onChoose("essential")}
             className={cn(
-              "inline-flex h-8 items-center justify-center rounded-md border border-border sm:h-9",
-              "bg-background px-2 text-[10px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
+              "inline-flex h-9 items-center justify-center rounded-md border border-border sm:h-9",
+              "bg-background px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
               "text-foreground transition-colors hover:bg-muted",
               "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
               "disabled:cursor-not-allowed disabled:opacity-60",
@@ -151,8 +151,8 @@ export function CookieConsentModal() {
           disabled={busy}
           onClick={() => onChoose("all")}
           className={cn(
-            "mt-1.5 flex h-8 w-full items-center justify-center rounded-md sm:mt-2 sm:h-9",
-            "bg-primary px-2 text-[10px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
+            "mt-1.5 flex h-9 w-full items-center justify-center rounded-md sm:mt-2 sm:h-10",
+            "bg-primary px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
             "text-primary-foreground transition-colors hover:bg-primary/90",
             "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
             "disabled:cursor-not-allowed disabled:opacity-60",
