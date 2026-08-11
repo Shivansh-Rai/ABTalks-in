@@ -14,6 +14,8 @@ import { AppHeader } from "@/components/shared/app-header";
 // import { CommunityLeaderboard } from "@/components/dashboard/community-leaderboard"; // hidden post-launch
 import { EnrollmentEndedScreen } from "@/components/dashboard/enrollment-ended-screen";
 import { QuizUnlockBanner } from "@/components/dashboard/quiz-unlock-banner";
+import { ConsentRefreshBanner } from "@/components/legal/consent-refresh-banner";
+import { needsReconsent } from "@/features/legal/needs-reconsent";
 import { PastMissedChallengeToast } from "@/components/dashboard/past-missed-challenge-toast";
 import { SubmissionHeatmap } from "@/components/dashboard/submission-heatmap";
 import {
@@ -33,11 +35,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Progress,
-  ProgressIndicator,
-  ProgressTrack,
-} from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { formatDateIST, isEnrollmentPreStart } from "@/lib/date-utils";
 import { PreStartDashboard } from "@/components/dashboard/pre-start-dashboard";
@@ -320,6 +317,8 @@ export default async function DashboardPage({
     getQuizAttemptHistory(session.user.id, dashboardData.enrollment),
   ]);
 
+  const mustReconsent = await needsReconsent(session.user.id);
+
   const progressPct = Math.min(
     100,
     Math.round((enrollment.currentDay / enrollment.totalDays) * 100),
@@ -371,6 +370,7 @@ export default async function DashboardPage({
         />
       ) : null}
       <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
+        <ConsentRefreshBanner needsReconsent={mustReconsent} />
         {quizAvailability.banner ? (
           <div className="mb-6">
             <QuizUnlockBanner
@@ -516,11 +516,19 @@ export default async function DashboardPage({
                 Day {enrollment.currentDay} of {enrollment.totalDays}
               </p>
               <div className="mt-4">
-                <Progress value={progressPct}>
-                  <ProgressTrack>
-                    <ProgressIndicator />
-                  </ProgressTrack>
-                </Progress>
+                <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPct}
+                  aria-label="Calendar progress"
+                  className="relative h-1 w-full overflow-hidden rounded-full bg-muted"
+                >
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Calendar progress (IST) from your start date
                 </p>

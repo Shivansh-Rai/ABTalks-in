@@ -34,6 +34,11 @@ export default async function AdminLayout({
       icon: "hackathonLinks" as const,
     },
     { href: "/admin/redemptions", label: "Redemptions", icon: "redemptions" as const },
+    {
+      href: "/admin/data-requests",
+      label: "Data Requests",
+      icon: "dataRequests" as const,
+    },
   ];
 
   return (

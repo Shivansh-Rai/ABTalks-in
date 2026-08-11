@@ -4,6 +4,7 @@ import {
   indianMobileNumberSchema,
   optionalPhoneSchema,
 } from "@/lib/validations/phone";
+import { legalAcceptanceSchema } from "@/lib/validations/legal";
 
 const empty = z.literal("");
 
@@ -49,22 +50,24 @@ const professionalFields = z.object({
     .max(60),
 });
 
-const registerPayloadBase = z.object({
-  fullName: z.string().min(1, "Name is required").max(200),
-  /** Dialing code, e.g. "+91". Drives whether OTP verification is required. */
-  countryCode: z.string().default(INDIA_DIALING_CODE),
-  /** National number (no country code). Required + valid when countryCode is +91. */
-  phoneNumber: z.string().default(""),
-  domain: domainSchema,
-  skills: z.array(z.string().min(1).max(50)).max(10).default([]),
-  linkedinUrl: z.union([empty, z.string().url()]).default(""),
-  githubUsername: z
-    .union([empty, z.string().regex(/^[a-zA-Z0-9-]+$/).max(50)])
-    .default(""),
-  referralCode: z
-    .union([empty, z.string().length(6).regex(/^[A-Z0-9]{6}$/)])
-    .default(""),
-});
+const registerPayloadBase = z
+  .object({
+    fullName: z.string().min(1, "Name is required").max(200),
+    /** Dialing code, e.g. "+91". Drives whether OTP verification is required. */
+    countryCode: z.string().default(INDIA_DIALING_CODE),
+    /** National number (no country code). Required + valid when countryCode is +91. */
+    phoneNumber: z.string().default(""),
+    domain: domainSchema,
+    skills: z.array(z.string().min(1).max(50)).max(10).default([]),
+    linkedinUrl: z.union([empty, z.string().url()]).default(""),
+    githubUsername: z
+      .union([empty, z.string().regex(/^[a-zA-Z0-9-]+$/).max(50)])
+      .default(""),
+    referralCode: z
+      .union([empty, z.string().length(6).regex(/^[A-Z0-9]{6}$/)])
+      .default(""),
+  })
+  .merge(legalAcceptanceSchema);
 
 /**
  * Server-side registration payload (students + professionals).

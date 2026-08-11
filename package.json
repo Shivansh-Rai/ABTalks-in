@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env NODE_ENV=production prisma migrate deploy && cross-env NODE_ENV=production prisma generate && cross-env NODE_ENV=production next build",
+    "build": "cross-env NODE_ENV=production prisma generate && cross-env NODE_ENV=production next build",
+    "build:deploy": "cross-env NODE_ENV=production prisma migrate deploy && npm run build",
+    "db:migrate:deploy": "prisma migrate deploy",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
@@ -56,6 +58,7 @@
     "react-hook-form": "^7.73.1",
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.13.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",

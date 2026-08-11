@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { optionalPhoneSchema } from "./phone";
+import { legalAcceptanceSchema } from "./legal";
 
 const githubUsernameRegex = /^[a-zA-Z0-9-]{1,39}$/;
 const githubRepoRegex =
@@ -51,7 +52,9 @@ export const applyProfileSchema = z
     hasLaptop8Gb: z.literal(true, {
       error: "Confirm you have a laptop with at least 8 GB RAM",
     }),
+    recruiterVisibilityConsent: z.boolean().default(false),
   })
+  .merge(legalAcceptanceSchema)
   .refine(
     (data) => {
       const match = data.githubRepoUrl.match(githubRepoRegex);

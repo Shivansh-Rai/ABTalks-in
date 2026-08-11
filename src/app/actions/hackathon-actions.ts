@@ -24,6 +24,8 @@ import {
   teamCodeSchema,
   type HackathonRegistrationInput,
 } from "@/lib/validations/hackathon";
+import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 const SRC_COOKIE_NAME = "abtalks_src";
 
@@ -245,6 +247,18 @@ export async function submitHackathonRegistrationAction(
 
     (await cookies()).delete(SRC_COOKIE_NAME);
 
+    await recordLegalConsents({
+      userId,
+      email: d.email,
+      source: "hackathon",
+    });
+    await recordNewsletterOptIn({
+      userId,
+      email: d.email,
+      source: "hackathon",
+      optIn: d.newsletterOptIn === true,
+    });
+
     return {
       ok: true as const,
       data: {
@@ -366,6 +380,17 @@ export async function submitHackathonRegistrationAction(
     teamCode: d.teamCode,
   });
   (await cookies()).delete(SRC_COOKIE_NAME);
+  await recordLegalConsents({
+    userId,
+    email: d.email,
+    source: "hackathon",
+  });
+  await recordNewsletterOptIn({
+    userId,
+    email: d.email,
+    source: "hackathon",
+    optIn: d.newsletterOptIn === true,
+  });
   return {
     ok: true as const,
     data: {

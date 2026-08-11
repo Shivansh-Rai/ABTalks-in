@@ -2,6 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { submitWorkshopRegistrationAction } from "@/app/actions/workshop-actions";
+import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
 
 const CONFETTI_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#c084fc", "#818cf8", "#4f46e5"];
 
@@ -95,6 +100,10 @@ export default function RegistrationForm({
   const [apiError, setApiError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
+    acceptLegal: false,
+    newsletterOptIn: true,
+  });
   const confetti = useMemo(buildConfetti, []);
 
   const set = (field: keyof FormData, value: string) =>
@@ -155,6 +164,10 @@ export default function RegistrationForm({
   const handleSubmit = (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
+    if (!legalConsentAccepted(legalConsent)) {
+      setApiError("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
     setApiError("");
     startTransition(async () => {
       try {
@@ -164,6 +177,8 @@ export default function RegistrationForm({
           role: form.role === "Professional" ? "Professional" : "Student",
           organization: form.organization.trim() || null,
           graduationYear: form.graduationYear ? Number(form.graduationYear) : null,
+          acceptLegal: legalConsent.acceptLegal,
+          newsletterOptIn: legalConsent.newsletterOptIn,
         });
         if (!result.ok) {
           setApiError(result.message);
@@ -412,6 +427,14 @@ export default function RegistrationForm({
           </div>
           )}
 
+          <div className="mt-5">
+            <LegalConsentFields
+              values={legalConsent}
+              onChange={setLegalConsent}
+              className="border-white/15 bg-white/5 text-white/90 [&_a]:text-indigo-300"
+            />
+          </div>
+
           {apiError && (
             <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3.5">
               <p className="text-center text-sm font-medium leading-relaxed text-red-300">
@@ -424,7 +447,7 @@ export default function RegistrationForm({
             <>
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !legalConsentAccepted(legalConsent)}
                 className="register-btn mt-6 w-full cursor-pointer rounded-full py-3.5 text-base font-semibold text-white"
               >
                 {isPending ? "Registering..." : "Register Now"}
