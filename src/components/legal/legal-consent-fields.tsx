@@ -36,10 +36,7 @@ type Props = {
 const DEFAULT_NEWSLETTER_LABEL = (
   <>
     Send me occasional updates about new challenges, workshops and
-    opportunities.{" "}
-    <span className="text-muted-foreground">
-      Optional — untick to opt out, and you can unsubscribe any time.
-    </span>
+    opportunities.
   </>
 );
 

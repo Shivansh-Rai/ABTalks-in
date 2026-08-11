@@ -850,11 +850,7 @@ export function ApplicationForm() {
                           className="cursor-pointer text-sm font-normal leading-snug"
                         >
                           Send me occasional updates about new challenges,
-                          workshops and opportunities.{" "}
-                          <span className="text-muted-foreground">
-                            Optional — untick to opt out, and you can unsubscribe
-                            any time.
-                          </span>
+                          workshops and opportunities.
                         </Label>
                       </div>
                     </div>
