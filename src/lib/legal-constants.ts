@@ -9,7 +9,8 @@
 
 /** Bump these when `content/legal/*.md` versions change; consent rows store them. */
 export const TERMS_VERSION = "2026-08-10";
-export const PRIVACY_VERSION = "2026-08-10";
+/** Bump when content/legal/privacy.md version changes (triggers reconsent). */
+export const PRIVACY_VERSION = "2026-08-11";
 
 /** Bumping this invalidates every stored cookie choice and re-prompts. */
 export const COOKIE_POLICY_VERSION = "2026-08-10";

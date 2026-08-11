@@ -45,6 +45,8 @@ Your choice is itself stored in a cookie (`abtalks_consent`) so we don't ask aga
 
 We do **not** use Google Analytics, PostHog, Meta Pixel, advertising cookies, cross-site tracking, or any third-party analytics SDK in the product. We do not sell personal data. If this changes, we will update this Policy and add the relevant category to the choice in §2 before setting anything.
 
+**Do Not Track.** We do not currently alter our cookie practices in response to browser “Do Not Track” signals. Use the choice above (or Manage preferences) to control optional cookies.
+
 ## 6. Changing or clearing your choice
 
 - Use the **Manage cookie preferences** button on this page to reopen the chooser at any time.
