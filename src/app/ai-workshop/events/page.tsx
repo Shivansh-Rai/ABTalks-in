@@ -126,6 +126,23 @@ export default function WorkshopEventsPage() {
         </div>
 
         <footer className="border-t border-white/5 px-4 py-8 text-center">
+          <nav
+            className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-white/45"
+            aria-label="Legal"
+          >
+            <Link href="/terms" className="hover:text-white/80 hover:underline">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-white/80 hover:underline">
+              Privacy
+            </Link>
+            <Link href="/cookies" className="hover:text-white/80 hover:underline">
+              Cookies
+            </Link>
+            <Link href="/contact" className="hover:text-white/80 hover:underline">
+              Contact
+            </Link>
+          </nav>
           <p className="text-[13px] text-white/35">
             © {new Date().getFullYear()} ABTalks · AI Workshop
           </p>

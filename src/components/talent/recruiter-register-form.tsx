@@ -8,6 +8,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { registerRecruiterAction } from "@/app/actions/talent-actions";
+import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,20 +31,36 @@ function FieldError({ message }: { message?: string }) {
 export function RecruiterRegisterForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({ acceptLegal: false, newsletterOptIn: true });
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormInput, unknown, RecruiterRegisterInput>({
     resolver: zodResolver(recruiterRegisterSchema),
-    defaultValues: { fullName: "", company: "", phone: "" },
+    defaultValues: {
+      fullName: "",
+      company: "",
+      phone: "",
+      acceptLegal: false,
+      newsletterOptIn: true,
+    },
   });
 
   async function onSubmit(data: RecruiterRegisterInput) {
+    if (!legalConsentAccepted(legalConsent)) {
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const result = await registerRecruiterAction(data);
+      const result = await registerRecruiterAction({
+        ...data,
+        acceptLegal: legalConsent.acceptLegal,
+        newsletterOptIn: legalConsent.newsletterOptIn,
+      });
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -69,7 +90,25 @@ export function RecruiterRegisterForm() {
         <Input id="phone" type="tel" {...register("phone")} />
         <FieldError message={errors.phone?.message} />
       </div>
-      <Button type="submit" disabled={submitting} className="w-full gap-2">
+      <LegalConsentFields
+        values={legalConsent}
+        newsletterLabel={
+          <>
+            Send me occasional updates about talent-pool access, cohort
+            releases, and recruiter product news.
+          </>
+        }
+        onChange={(next) => {
+          setLegalConsent(next);
+          setValue("acceptLegal", next.acceptLegal);
+          setValue("newsletterOptIn", next.newsletterOptIn);
+        }}
+      />
+      <Button
+        type="submit"
+        disabled={submitting || !legalConsentAccepted(legalConsent)}
+        className="w-full gap-2"
+      >
         {submitting && <Loader2 className="size-4 animate-spin" />}
         Submit application
       </Button>

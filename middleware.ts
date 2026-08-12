@@ -8,6 +8,24 @@ const REF_COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
 const SRC_COOKIE_NAME = "abtalks_src";
 const SRC_COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
+// Kept in sync by hand with `src/lib/legal.ts` (COOKIE_POLICY_VERSION) and
+// `src/lib/cookies.ts`. Middleware must not import from `@/lib/*` — doing so
+// blows the 1 MB Edge bundle limit. This duplication is deliberate.
+const CONSENT_COOKIE_NAME = "abtalks_consent";
+const CONSENT_POLICY_VERSION = "2026-08-10";
+
+/** Returns the stored choice, or null if absent or from an older policy version. */
+function readConsentChoice(value: string | undefined): string | null {
+  if (!value) return null;
+  const dot = value.lastIndexOf(".");
+  if (dot === -1) return null;
+  if (value.slice(dot + 1) !== CONSENT_POLICY_VERSION) return null;
+  const choice = value.slice(0, dot);
+  return choice === "all" || choice === "limited" || choice === "essential"
+    ? choice
+    : null;
+}
+
 const { auth } = NextAuth(authConfig);
 
 const protectedPaths = [
@@ -78,7 +96,22 @@ function withTracking(
   ref: string | null,
   src: string | null,
   alreadyAttributed: boolean,
+  consent: string | null,
+  hasAttributionCookies: boolean,
 ) {
+  // No decision yet: set nothing. The consent modal captures `?ref=` / `?s=`
+  // from the URL and replays them through setCookieConsentAction on accept.
+  if (consent === null) return response;
+
+  // Declined: never set attribution, and expire anything already present.
+  if (consent === "essential") {
+    if (hasAttributionCookies) {
+      response.cookies.delete(REF_COOKIE_NAME);
+      response.cookies.delete(SRC_COOKIE_NAME);
+    }
+    return response;
+  }
+
   return applySourceCookie(applyRefCookie(response, ref), src, alreadyAttributed);
 }
 
@@ -88,6 +121,11 @@ export default auth((req) => {
   const ref = req.nextUrl.searchParams.get("ref");
   const src = req.nextUrl.searchParams.get("s");
   const alreadyAttributed = req.cookies.has(SRC_COOKIE_NAME);
+  const consent = readConsentChoice(
+    req.cookies.get(CONSENT_COOKIE_NAME)?.value,
+  );
+  const hasAttributionCookies =
+    req.cookies.has(REF_COOKIE_NAME) || alreadyAttributed;
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   const isAuthPage = pathname === "/login";
@@ -95,7 +133,14 @@ export default auth((req) => {
   if (isProtected && !isLoggedIn) {
     const url = new URL("/login", req.nextUrl);
     url.searchParams.set("from", pathname + req.nextUrl.search);
-    return withTracking(NextResponse.redirect(url), ref, src, alreadyAttributed);
+    return withTracking(
+      NextResponse.redirect(url),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+    );
   }
 
   if (isAuthPage && isLoggedIn) {
@@ -109,10 +154,19 @@ export default auth((req) => {
       ref,
       src,
       alreadyAttributed,
+      consent,
+      hasAttributionCookies,
     );
   }
 
-  return withTracking(NextResponse.next(), ref, src, alreadyAttributed);
+  return withTracking(
+    NextResponse.next(),
+    ref,
+    src,
+    alreadyAttributed,
+    consent,
+    hasAttributionCookies,
+  );
 });
 
 export const config = {

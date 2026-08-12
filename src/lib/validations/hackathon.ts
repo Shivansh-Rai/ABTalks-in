@@ -1,13 +1,16 @@
 import { z } from "zod";
 import { requiredPhoneSchema } from "@/lib/validations/phone";
+import { legalAcceptanceSchema } from "@/lib/validations/legal";
 
-export const participantSchema = z.object({
-  fullName: z.string().trim().min(2, "Name is required").max(120),
-  email: z.string().trim().toLowerCase().email("Enter a valid email"),
-  phone: requiredPhoneSchema,
-  college: z.string().trim().min(2, "College is required").max(200),
-  graduationYear: z.number().int().min(2024).max(2032),
-});
+export const participantSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "Name is required").max(120),
+    email: z.string().trim().toLowerCase().email("Enter a valid email"),
+    phone: requiredPhoneSchema,
+    college: z.string().trim().min(2, "College is required").max(200),
+    graduationYear: z.number().int().min(2024).max(2032),
+  })
+  .merge(legalAcceptanceSchema);
 
 export const teamCodeSchema = z
   .string()

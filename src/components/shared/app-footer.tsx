@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import Link from "next/link";
 import { Mail } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,13 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
 ];
 
+const LEGAL_LINKS = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/cookies", label: "Cookies" },
+  { href: "/contact", label: "Contact" },
+] as const;
+
 const socialIconClassName = cn(
   "inline-flex size-9 items-center justify-center rounded-none text-primary",
   "transition-all duration-200 ease-out",
@@ -138,16 +146,38 @@ export function AppFooter() {
   const isLanding = pathname === "/";
   const supportEmail = "team@abtalks.in";
 
-  if (
-    isWorkshop ||
-    isCohortRegister ||
-    isCohortIndia ||
-    isProgram ||
-    isTalent ||
-    isHackathon ||
-    isLanding
-  )
-    return null;
+// Landing hub ships its own footer.
+  if (isLanding) return null;
+
+  // The workshop pages carry their own branded footer, which links legal
+  // inline — anything here would duplicate their copyright line.
+  if (isWorkshop) return null;
+
+  // The remaining funnel routes have no footer of their own, but must still
+  // surface the legal links — a minimal strip instead of the full footer.
+  if (isCohortRegister || isCohortIndia || isProgram || isTalent || isHackathon) {
+    return (
+      <footer className="mt-auto border-t border-border/60 pb-16 md:pb-0">
+        <div className="container mx-auto flex flex-col items-center gap-2 px-6 py-5 text-center text-xs text-muted-foreground">
+          <nav
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+            aria-label="Legal"
+          >
+            {LEGAL_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="hover:text-primary hover:underline"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <span>© {new Date().getFullYear()} ABTalks</span>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer
@@ -162,11 +192,28 @@ export function AppFooter() {
         <div className="grid grid-cols-1 items-center gap-4 text-sm md:grid-cols-3">
           <div
             className={cn(
-              "font-display font-medium md:justify-self-start",
+              "flex flex-col gap-2 font-display font-medium md:justify-self-start",
               isMarketplace ? "text-white" : "text-foreground",
             )}
           >
-            ABTalks
+            <span>ABTalks</span>
+            <nav
+              className={cn(
+                "flex flex-wrap gap-x-4 gap-y-1 text-xs font-sans font-normal",
+                isMarketplace ? "text-white/70" : "text-muted-foreground",
+              )}
+              aria-label="Legal"
+            >
+              {LEGAL_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="hover:text-primary hover:underline"
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
           </div>
           <div className="flex items-center justify-center gap-1">
             {SOCIAL_LINKS.map(({ label, href, icon: Icon }) =>

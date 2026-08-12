@@ -14,6 +14,7 @@ import {
   Link2,
   Megaphone,
   Package,
+  ShieldCheck,
   Presentation,
   Users,
 } from "lucide-react";
@@ -30,6 +31,7 @@ type IconName =
   | "referrals"
   | "hackathonLinks"
   | "redemptions"
+  | "dataRequests"
   | "program"
   | "cohort"
   | "hackathon"
@@ -46,6 +48,7 @@ const iconMap = {
   referrals: Gift,
   hackathonLinks: Link2,
   redemptions: Package,
+  dataRequests: ShieldCheck,
   program: GraduationCap,
   cohort: GraduationCap,
   hackathon: Code2,

@@ -179,8 +179,9 @@ export async function getRecruiterProfileByToken(
   return {
     fullName: p.fullName,
     image: review.user.image,
-    email: review.user.email,
-    phone: p.phone,
+    // Public token pages must not expose direct contact (plan 057 / business decisions).
+    email: "",
+    phone: null,
     linkedinUrl: p.linkedinUrl,
     githubUsername: p.githubUsername,
     userType: p.userType,

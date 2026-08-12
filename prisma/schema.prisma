@@ -284,10 +284,91 @@ model User {
   shortlistItems        RecruiterShortlistItem[]
   hackathonParticipant  HackathonParticipant?
   hackathonRemovals     HackathonRemoval[]
+  newsletterSubscriptions NewsletterSubscription[]
   certificates          Certificate[]
   workshopRegistrations WorkshopRegistration[]
+  legalConsents         LegalConsent[]
+  dataRightsRequests    DataRightsRequest[]
 
   @@index([createdAt(sort: Desc)])
+}
+
+enum LegalDocument {
+  TERMS
+  PRIVACY
+}
+
+/// Versioned acceptance of Terms / Privacy (signup funnels + pre-auth cohort apps).
+model LegalConsent {
+  id         String        @id @default(cuid())
+  userId     String?
+  email      String?
+  document   LegalDocument
+  version    String
+  source     String
+  ip         String?
+  userAgent  String?
+  acceptedAt DateTime      @default(now())
+  user       User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, document, acceptedAt(sort: Desc)])
+  @@index([email, acceptedAt(sort: Desc)])
+  @@index([source, acceptedAt(sort: Desc)])
+}
+
+enum DataRightsRequestType {
+  ACCESS
+  CORRECTION
+  ERASURE
+  OTHER
+}
+
+enum DataRightsRequestStatus {
+  PENDING
+  DONE
+  REJECTED
+}
+
+/// Marketing-email opt-in, presented on every signup funnel.
+///
+/// Deliberately its own model rather than a StudentProfile column: the
+/// checkbox also appears on the workshop, hackathon, program and cohort
+/// funnels, where no StudentProfile exists. Keyed on `email` rather than
+/// `userId` because the cohort funnels write to Supabase and may have no
+/// User row at all.
+///
+/// `subscribed` is the source of truth for whether to send — unsubscribing
+/// flips it to false and stamps `unsubscribedAt`, keeping the record so a
+/// later opt-in is distinguishable from a never-subscribed address.
+model NewsletterSubscription {
+  id             String    @id @default(cuid())
+  /// Not unique: the same person may subscribe a second address through a
+  /// different funnel (e.g. a workshop signup with a work email).
+  userId         String?
+  email          String    @unique
+  subscribed     Boolean   @default(true)
+  /// Which funnel the opt-in came from (register, workshop, hackathon, …).
+  source         String
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([subscribed, subscribedAt(sort: Desc)])
+  @@index([userId])
+}
+
+model DataRightsRequest {
+  id        String                   @id @default(cuid())
+  userId    String?
+  email     String
+  type      DataRightsRequestType
+  message   String?
+  status    DataRightsRequestStatus  @default(PENDING)
+  createdAt DateTime                 @default(now())
+  user      User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([email, createdAt(sort: Desc)])
 }
 
 /// One-time phone OTP verification record (MSG91 OTP widget).
@@ -605,6 +686,8 @@ model ProgramMember {
   phone               String? // admin-only, NEVER shown to recruiters
   githubUsername      String
   githubRepoUrl       String // dedicated public repo for the program
+  /// Set when the member opts in to `/talent` recruiter visibility.
+  recruiterVisibilityConsentAt DateTime?
   // progression + denormalized scores
   highestUnlockedDay  Int                         @default(1)
   skipTokensUsed      Int                         @default(0) // max 2 per member

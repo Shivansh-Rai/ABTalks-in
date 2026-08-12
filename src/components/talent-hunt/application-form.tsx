@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { CircleCheck, Loader2 } from "lucide-react";
@@ -83,6 +84,7 @@ const STEP_FIELDS: Record<number, (keyof CohortApplicationInput)[]> = {
     "basedInUsa",
     "readyForChallenge",
     "preferredStartWindow",
+    "acceptLegal",
   ],
   5: [],
 };
@@ -145,6 +147,8 @@ const EMPTY_DEFAULTS = {
   basedInUsa: false,
   readyForChallenge: false,
   preferredStartWindow: "",
+  acceptLegal: false,
+  newsletterOptIn: true,
 } as unknown as CohortApplicationInput;
 
 function countWords(text: string): number {
@@ -776,6 +780,80 @@ export function ApplicationForm() {
                         ) : null}
                       </div>
                     ))}
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+                    <div className="space-y-1">
+                      <div className="flex items-start gap-3">
+                        <Controller
+                          name="acceptLegal"
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="acceptLegal"
+                              checked={field.value === true}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked === true)
+                              }
+                              aria-invalid={!!errors.acceptLegal}
+                              className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
+                            />
+                          )}
+                        />
+                        <Label
+                          htmlFor="acceptLegal"
+                          className="cursor-pointer text-sm font-normal leading-snug"
+                        >
+                          I agree to the{" "}
+                          <Link
+                            href="/terms"
+                            target="_blank"
+                            className="font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy"
+                            target="_blank"
+                            className="font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            Privacy Policy
+                          </Link>
+                          .
+                        </Label>
+                      </div>
+                      {errors.acceptLegal ? (
+                        <p className="pl-7 text-sm text-destructive">
+                          {errors.acceptLegal?.message}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-1 border-t border-border/60 pt-3">
+                      <div className="flex items-start gap-3">
+                        <Controller
+                          name="newsletterOptIn"
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="newsletterOptIn"
+                              checked={field.value === true}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked === true)
+                              }
+                              className="mt-0.5 size-4 border-foreground/50 bg-background shadow-sm"
+                            />
+                          )}
+                        />
+                        <Label
+                          htmlFor="newsletterOptIn"
+                          className="cursor-pointer text-sm font-normal leading-snug"
+                        >
+                          Send me occasional updates about new challenges,
+                          workshops and opportunities.
+                        </Label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

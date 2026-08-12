@@ -31,6 +31,11 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
+import {
   hackathonRegistrationSchema,
   type HackathonRegistrationInput,
 } from "@/lib/validations/hackathon";
@@ -51,6 +56,8 @@ type FormValues = {
   graduationYear: number;
   teamName: string;
   teamCode: string;
+  acceptLegal: boolean;
+  newsletterOptIn: boolean;
 };
 
 type SuccessState = {
@@ -93,6 +100,9 @@ export function RegistrationForm({
   const [lookupOk, setLookupOk] = useState(false);
   const [lookupTeamName, setLookupTeamName] = useState<string | null>(null);
   const [lookupSpots, setLookupSpots] = useState<number | null>(null);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
+    acceptLegal: false, newsletterOptIn: true,
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(
@@ -107,6 +117,7 @@ export function RegistrationForm({
       graduationYear: 2026,
       teamName: "",
       teamCode: "",
+      acceptLegal: false, newsletterOptIn: true,
     },
     mode: "onTouched",
   });
@@ -115,6 +126,10 @@ export function RegistrationForm({
   const totalSteps = entryType === "SOLO" ? 2 : 3;
 
   function buildPayload(values: FormValues): HackathonRegistrationInput {
+    const legal = {
+      acceptLegal: values.acceptLegal,
+      newsletterOptIn: values.newsletterOptIn,
+    };
     if (values.entryType === "SOLO") {
       return {
         entryType: "SOLO",
@@ -123,6 +138,7 @@ export function RegistrationForm({
         phone: values.phone,
         college: values.college,
         graduationYear: values.graduationYear,
+        ...legal,
       };
     }
     if (values.entryType === "TEAM_CREATE") {
@@ -134,6 +150,7 @@ export function RegistrationForm({
         college: values.college,
         graduationYear: values.graduationYear,
         teamName: values.teamName,
+        ...legal,
       };
     }
     return {
@@ -144,6 +161,7 @@ export function RegistrationForm({
       college: values.college,
       graduationYear: values.graduationYear,
       teamCode: values.teamCode,
+      ...legal,
     };
   }
 
@@ -165,6 +183,14 @@ export function RegistrationForm({
       ]);
       if (!ok) return;
       if (entryType === "SOLO") {
+        if (!legalConsentAccepted(legalConsent)) {
+          setSubmitError(
+            "Please accept the Terms of Service and Privacy Policy.",
+          );
+          return;
+        }
+        form.setValue("acceptLegal", legalConsent.acceptLegal);
+        form.setValue("newsletterOptIn", legalConsent.newsletterOptIn);
         form.handleSubmit(onSubmit)();
         return;
       }
@@ -198,6 +224,12 @@ export function RegistrationForm({
 
   function onSubmit(values: FormValues) {
     setSubmitError(null);
+    if (!legalConsentAccepted(legalConsent)) {
+      setSubmitError(
+        "Please accept the Terms of Service and Privacy Policy.",
+      );
+      return;
+    }
     const payload = buildPayload(values);
 
     startTransition(async () => {
@@ -507,6 +539,17 @@ export function RegistrationForm({
           </div>
         ) : null}
 
+        {step === totalSteps ? (
+          <LegalConsentFields
+            values={legalConsent}
+            onChange={(next) => {
+              setLegalConsent(next);
+              form.setValue("acceptLegal", next.acceptLegal);
+              form.setValue("newsletterOptIn", next.newsletterOptIn);
+            }}
+          />
+        ) : null}
+
         {submitError ? (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {submitError}
@@ -531,7 +574,11 @@ export function RegistrationForm({
           )}
 
           {step === 2 && entryType === "SOLO" ? (
-            <Button type="button" onClick={goNext} disabled={pending}>
+            <Button
+              type="button"
+              onClick={goNext}
+              disabled={pending || !legalConsentAccepted(legalConsent)}
+            >
               {pending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -548,7 +595,11 @@ export function RegistrationForm({
           ) : (
             <Button
               type="submit"
-              disabled={pending || (entryType === "TEAM_JOIN" && !lookupOk)}
+              disabled={
+                pending ||
+                !legalConsentAccepted(legalConsent) ||
+                (entryType === "TEAM_JOIN" && !lookupOk)
+              }
             >
               {pending ? (
                 <>

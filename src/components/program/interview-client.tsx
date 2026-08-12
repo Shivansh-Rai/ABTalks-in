@@ -20,6 +20,7 @@ const REALTIME_CALLS_URL =
   "https://api.openai.com/v1/realtime/calls?model=gpt-realtime";
 
 type Phase =
+  | "notice"
   | "mic_check"
   | "connecting"
   | "live"
@@ -77,7 +78,8 @@ export function InterviewClient({
   memberName: string;
 }) {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("mic_check");
+  const [phase, setPhase] = useState<Phase>("notice");
+  const [noticeAccepted, setNoticeAccepted] = useState(false);
   const [micGranted, setMicGranted] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(INTERVIEW_DURATION_SEC);
@@ -334,6 +336,34 @@ export function InterviewClient({
           <li>Your transcript is saved and evaluated separately from your leaderboard score.</li>
         </ul>
       </div>
+
+      {phase === "notice" && (
+        <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            By continuing you acknowledge that this session uses a third-party
+            AI voice service (OpenAI). Audio is transcribed for evaluation;
+            scores and a short summary may be shared with approved recruiters if
+            you opted into talent-portal visibility. The full transcript is kept
+            for ABTalks admins and evaluation — not shown to recruiters.
+          </p>
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 shrink-0 rounded border"
+              checked={noticeAccepted}
+              onChange={(e) => setNoticeAccepted(e.target.checked)}
+            />
+            <span>I understand and want to proceed with the voice interview.</span>
+          </label>
+          <Button
+            type="button"
+            disabled={!noticeAccepted}
+            onClick={() => setPhase("mic_check")}
+          >
+            Continue to microphone check
+          </Button>
+        </div>
+      )}
 
       {phase === "mic_check" && (
         <div className="space-y-4">

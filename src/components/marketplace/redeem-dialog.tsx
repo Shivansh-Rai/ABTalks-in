@@ -97,7 +97,8 @@ export function RedeemDialog({
         <DialogHeader>
           <DialogTitle className="text-white">{itemTitle}</DialogTitle>
           <DialogDescription className="text-[#BCBCBC]">
-            This will deduct {costSP} SP from your {balance} SP balance.
+            This will deduct {costSP} SP from your {balance} SP balance. Address
+            and phone are used only for fulfillment (admins only — not public).
           </DialogDescription>
         </DialogHeader>
 

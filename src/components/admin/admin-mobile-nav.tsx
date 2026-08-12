@@ -16,6 +16,7 @@ import {
   Megaphone,
   Menu,
   Package,
+  ShieldCheck,
   Presentation,
   Users,
   X,
@@ -33,6 +34,7 @@ type IconName =
   | "referrals"
   | "hackathonLinks"
   | "redemptions"
+  | "dataRequests"
   | "program"
   | "cohort"
   | "hackathon"
@@ -49,6 +51,7 @@ const iconMap = {
   referrals: Gift,
   hackathonLinks: Link2,
   redemptions: Package,
+  dataRequests: ShieldCheck,
   program: GraduationCap,
   cohort: GraduationCap,
   hackathon: Code2,

@@ -31,6 +31,11 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
+import {
   type RegisterPayloadInput,
   registerPayloadSchema,
 } from "@/lib/validations/register";
@@ -51,6 +56,8 @@ type RegistrationFormValues = {
   phoneNumber: string;
   githubUsername: string;
   referralCode: string;
+  acceptLegal: boolean;
+  newsletterOptIn: boolean;
 };
 
 const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035] as const;
@@ -112,6 +119,10 @@ export function RegistrationForm({
   const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
+    acceptLegal: false,
+    newsletterOptIn: true,
+  });
   const [phoneVerified, setPhoneVerified] = useState(!otpVerificationRequired);
 
   const domainCardList = useMemo(
@@ -140,6 +151,8 @@ export function RegistrationForm({
       phoneNumber: "",
       githubUsername: "",
       referralCode: initialRef,
+      acceptLegal: false,
+      newsletterOptIn: true,
     },
   });
 
@@ -204,6 +217,10 @@ export function RegistrationForm({
   }
 
   async function onSubmit(values: RegistrationFormValues) {
+    if (!legalConsentAccepted(legalConsent)) {
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
     if (
       otpVerificationRequired &&
       values.countryCode === "+91" &&
@@ -224,6 +241,8 @@ export function RegistrationForm({
       fd.append("phoneNumber", values.phoneNumber ?? "");
       fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
+      fd.append("acceptLegal", String(legalConsent.acceptLegal));
+      fd.append("newsletterOptIn", String(legalConsent.newsletterOptIn));
 
       if (values.userType === "STUDENT") {
         fd.append("college", values.college);
@@ -687,10 +706,21 @@ export function RegistrationForm({
         ) : null}
       </div>
 
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={(next) => {
+          setLegalConsent(next);
+          setValue("acceptLegal", next.acceptLegal, { shouldValidate: true });
+          setValue("newsletterOptIn", next.newsletterOptIn, {
+            shouldValidate: true,
+          });
+        }}
+      />
+
       <Button
         type="submit"
         className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !legalConsentAccepted(legalConsent)}
       >
         {isSubmitting ? (
           <>

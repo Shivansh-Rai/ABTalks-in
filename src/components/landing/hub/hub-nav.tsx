@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { LandingUser } from "@/features/landing/get-landing-state";
+import { LandingUserMenu } from "../landing-user-menu";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
@@ -11,7 +13,11 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export function HubNav() {
+type Props = {
+  user: LandingUser | null;
+};
+
+export function HubNav({ user }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const close = () => setMenuOpen(false);
 
@@ -37,9 +43,13 @@ export function HubNav() {
           ))}
         </div>
 
-        <Link href="/program" className="hub-nav-cta">
-          Get Started
-        </Link>
+        {user ? (
+          <LandingUserMenu user={user} />
+        ) : (
+          <Link href="/program" className="hub-nav-cta">
+            Get Started
+          </Link>
+        )}
 
         <button
           type="button"
@@ -61,16 +71,24 @@ export function HubNav() {
             {link.label}
           </a>
         ))}
-        <Link href="/login" className="hub-btn hub-btn-ghost" onClick={close}>
-          Sign in
-        </Link>
-        <Link
-          href="/program"
-          className="hub-btn hub-btn-primary"
-          onClick={close}
-        >
-          Get Started
-        </Link>
+        {user ? (
+          <div onClick={close}>
+            <LandingUserMenu user={user} />
+          </div>
+        ) : (
+          <>
+            <Link href="/login" className="hub-btn hub-btn-ghost" onClick={close}>
+              Sign in
+            </Link>
+            <Link
+              href="/program"
+              className="hub-btn hub-btn-primary"
+              onClick={close}
+            >
+              Get Started
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

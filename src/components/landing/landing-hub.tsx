@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { LandingState } from "@/features/landing/get-landing-state";
 import { HubNav } from "./hub/hub-nav";
 import { HeroHeadline } from "./hub/hero-headline";
 import { HubStatsStrip } from "./hub/hub-stats-strip";
@@ -24,8 +25,18 @@ const COMPANY_ITEMS = [
   "We build a cohort against that requirement",
 ];
 
-const PROGRAMS = [
+type ProgramKey = "challenge" | "hackathon" | "program" | "claude";
+
+const PROGRAMS: {
+  key: ProgramKey;
+  title: string;
+  href: string;
+  color: string;
+  glow: string;
+  lines: string[];
+}[] = [
   {
+    key: "challenge",
     title: "60 day coding challenge",
     href: "/challenges",
     color: "#7548e7",
@@ -37,6 +48,7 @@ const PROGRAMS = [
     ],
   },
   {
+    key: "hackathon",
     title: "abtalks Vicodathon",
     href: "/hackathon",
     color: "#009cf5",
@@ -48,6 +60,7 @@ const PROGRAMS = [
     ],
   },
   {
+    key: "program",
     title: "31 days ai cohort",
     href: "/program",
     color: "#97ea42",
@@ -59,6 +72,7 @@ const PROGRAMS = [
     ],
   },
   {
+    key: "claude",
     title: "claude challenge",
     href: "/claude-signup",
     color: "#ff7a00",
@@ -69,7 +83,7 @@ const PROGRAMS = [
       "Build real workflows and share the proof",
     ],
   },
-] as const;
+];
 
 const FAQS = [
   {
@@ -97,10 +111,40 @@ const COMMUNITY_BULLETS = [
   "A network that grows with you",
 ];
 
-export function LandingHub() {
+function ctaForProgram(key: ProgramKey, state: LandingState) {
+  switch (key) {
+    case "challenge":
+      return state.challengeCta;
+    case "claude":
+      return state.claudeCta;
+    case "program":
+      return state.programCta;
+    case "hackathon":
+      return state.hackathonCta;
+  }
+}
+
+export function LandingHub({
+  claudeEnabled,
+  state,
+}: {
+  claudeEnabled: boolean;
+  state: LandingState;
+}) {
+  const programs = PROGRAMS.filter(
+    (program) => program.key !== "claude" || claudeEnabled,
+  ).map((program) => {
+    const cta = ctaForProgram(program.key, state);
+    return {
+      ...program,
+      href: cta?.href ?? program.href,
+      badge: cta?.ctaLabel ?? "enrolling now",
+    };
+  });
+
   return (
     <div className="landing-hub">
-      <HubNav />
+      <HubNav user={state.user} />
 
       {/* —— hero + stats (above-fold; scales only under 1080px height) —— */}
       <div className="hub-above-fold">
@@ -288,9 +332,9 @@ export function LandingHub() {
             }}
             className="hub-programs-grid"
           >
-            {PROGRAMS.map((program) => (
+            {programs.map((program) => (
               <Link
-                key={program.href}
+                key={program.key}
                 href={program.href}
                 className="hub-program-card"
               >
@@ -320,7 +364,7 @@ export function LandingHub() {
                       textTransform: "capitalize",
                     }}
                   >
-                    enrolling now
+                    {program.badge}
                   </span>
                   <span
                     aria-hidden
@@ -551,6 +595,10 @@ export function LandingHub() {
               title="Help"
               links={[
                 { href: "#faq", label: "FAQs" },
+                { href: "/terms", label: "Terms" },
+                { href: "/privacy", label: "Privacy" },
+                { href: "/cookies", label: "Cookies" },
+                { href: "/contact", label: "Contact" },
                 { href: "/login", label: "Sign in" },
               ]}
             />
