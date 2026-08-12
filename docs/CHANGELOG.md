@@ -2,6 +2,9 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-12 [convention] App fonts self-hosted via next/font/local + src/fonts (no next/font/google fetch at build)
+- 2026-08-12 [convention] Open-right-now program cards each mount GhostCursor tinted to that card’s brand color (`three` postprocessing)
+- 2026-08-11 [convention] `/` logged-out landing is Figma rounded hub (`LandingHub`), not ModernistLanding
 - 2026-08-10 [convention] Modernist app retheme — HSL token palette, --radius 0, Archivo, light-only foundation (plan 058)
 - 2026-08-06 [schema] Baselined orphaned HackathonProblem/HackathonSubmission migration and added /hackathon/submission flow on the existing tables to avoid shared-Neon drift
 - 2026-08-06 [rule] Hackathon registration stays open until registrationClosesUtc (Fri 7 Aug 2026 6:00 PM IST); registrationOpen remains an emergency kill switch

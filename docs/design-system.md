@@ -179,6 +179,7 @@ is redesigned to light Modernist (option 1) or a designed dark variant ships
 | --- | --- | --- |
 | `/marketplace` | `MainShell` + `body.marketplace-page` + marketplace components | Near-black ground (`ink-900` / `#030712`); not rethemed in Phases B–D |
 | `/hackathon` | `MainShell` + hackathon components | `bg-black` shell; not rethemed in Phases B–D |
+| `/` (logged-out) | `LandingHub` + `src/components/landing/hub/*` | Figma rounded marketing landing (plan 061); ignore zero-radius lattice on this page only |
 
 Do not flatten these by swapping global tokens. When either track is next
 touched, redesign it to light Modernist or document a designed dark kit.

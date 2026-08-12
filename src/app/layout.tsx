@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -9,10 +9,104 @@ import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import "./globals.css";
 
-const archivo = Archivo({
-  subsets: ["latin"],
+const archivo = localFont({
+  src: [
+    {
+      path: "../fonts/archivo/archivo-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/archivo/archivo-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/archivo/archivo-latin-800-normal.woff2",
+      weight: "800",
+      style: "normal",
+    },
+  ],
   variable: "--font-archivo",
-  weight: ["400", "600", "800"],
+  display: "swap",
+});
+
+const hubSans = localFont({
+  src: [
+    {
+      path: "../fonts/inter/inter-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/inter/inter-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/inter/inter-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/inter/inter-latin-700-normal.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/inter/inter-latin-800-normal.woff2",
+      weight: "800",
+      style: "normal",
+    },
+  ],
+  variable: "--font-hub-sans",
+  display: "swap",
+});
+
+const hubSerif = localFont({
+  src: [
+    {
+      path: "../fonts/instrument-serif/instrument-serif-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/instrument-serif/instrument-serif-latin-400-italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+  ],
+  variable: "--font-hub-serif",
+  display: "swap",
+});
+
+const hubDisplay = localFont({
+  src: [
+    {
+      path: "../fonts/gemunu-libre/gemunu-libre-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/gemunu-libre/gemunu-libre-latin-700-normal.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-hub-display",
+  display: "swap",
+});
+
+const hubQuote = localFont({
+  src: [
+    {
+      path: "../fonts/jacques-francois/jacques-francois-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-hub-quote",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -20,18 +114,22 @@ export const metadata: Metadata = {
   description: "Build your coding habit. Get discovered.",
 };
 
+const fontVars = [
+  archivo.variable,
+  hubSans.variable,
+  hubSerif.variable,
+  hubDisplay.variable,
+  hubQuote.variable,
+].join(" ");
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${archivo.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
-      <body className={`${archivo.variable} min-h-full flex flex-col font-sans`}>
+    <html lang="en" className={`${fontVars} h-full antialiased`} suppressHydrationWarning>
+      <body className={`${fontVars} min-h-full flex flex-col font-sans`}>
         <ThemeProvider
           attribute="class"
           forcedTheme="light"

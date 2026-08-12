@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/registration-status";
-import { ModernistLanding } from "@/components/landing/modernist/landing-page";
+import { LandingHub } from "@/components/landing/landing-hub";
 
 export default async function HomePage() {
   const session = await auth();
@@ -22,5 +22,5 @@ export default async function HomePage() {
     }
   }
 
-  return <ModernistLanding />;
+  return <LandingHub />;
 }
