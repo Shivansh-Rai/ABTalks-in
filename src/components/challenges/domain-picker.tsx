@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 type DomainValue = "SE" | "DS" | "AI";
 
-const DOMAINS: {
+export const DOMAINS: {
   value: DomainValue;
   label: string;
   blurb: string;

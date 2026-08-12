@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Send, ThumbsDown, ThumbsUp, X, MessageSquarePlus, List, ChevronLeft, Minus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -60,15 +61,16 @@ function renderMenuText(): string {
 }
 
 export function ChatWidget() {
+  const pathname = usePathname() || "";
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
-  
+
   const [sessions, setSessions] = useState<Record<string, Session>>({});
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  
+
   const [viewState, setViewState] = useState<"chat" | "sessions">("chat");
   const [input, setInput] = useState("");
-  
+
   const hydrated = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -140,14 +142,14 @@ export function ChatWidget() {
   function addUserMessage(text: string) {
     if (!currentSessionId) return;
     const newMsg: Message = { id: generateId(), text, isUser: true, timestamp: Date.now() };
-    
+
     setSessions(prev => {
       const session = prev[currentSessionId];
       // Generate a title based on the first user message
-      const title = session.messages.filter(m => m.isUser).length === 0 
+      const title = session.messages.filter(m => m.isUser).length === 0
         ? text.slice(0, 30) + (text.length > 30 ? "..." : "")
         : session.title;
-        
+
       return {
         ...prev,
         [currentSessionId]: {
@@ -162,12 +164,12 @@ export function ChatWidget() {
 
   function giveFeedback(msgId: string, kind: "helpful" | "not-helpful") {
     if (!currentSessionId || !currentSession) return;
-    const updatedMessages = currentSession.messages.map(m => 
+    const updatedMessages = currentSession.messages.map(m =>
       m.id === msgId ? { ...m, feedback: kind } : m
     );
-    
+
     updateSession(currentSessionId, { messages: updatedMessages });
-    
+
     if (kind === "not-helpful") {
       // Add the fallback apology directly to the chat
       const fallbackMsg: Message = { id: generateId(), text: FALLBACK_MESSAGE, isUser: false, timestamp: Date.now() };
@@ -184,7 +186,7 @@ export function ChatWidget() {
 
   async function streamApiMessage(text: string) {
     if (!currentSessionId) return;
-    
+
     const id = generateId();
     // Add placeholder streaming message
     setSessions(prev => {
@@ -218,21 +220,21 @@ export function ChatWidget() {
 
       // Finally, append the current user's message
       if (nextExpectedRole === 'assistant') {
-         // If we are expecting an assistant message but the user sent another one (e.g. previous API failed)
-         // we must drop the last user message or combine them. We'll combine them for simplicity.
-         if (history.length > 0) {
-             history[history.length - 1].content += `\n\n${text}`;
-         } else {
-             history.push({ role: 'user', content: text });
-         }
+        // If we are expecting an assistant message but the user sent another one (e.g. previous API failed)
+        // we must drop the last user message or combine them. We'll combine them for simplicity.
+        if (history.length > 0) {
+          history[history.length - 1].content += `\n\n${text}`;
+        } else {
+          history.push({ role: 'user', content: text });
+        }
       } else {
-         history.push({ role: 'user', content: text });
+        history.push({ role: 'user', content: text });
       }
 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history })
+        body: JSON.stringify({ messages: history, pathname })
       });
 
       if (!response.ok) {
@@ -240,7 +242,7 @@ export function ChatWidget() {
         try {
           const errData = await response.json();
           errMessage = errData.details || errData.error || errMessage;
-        } catch {}
+        } catch { }
         throw new Error(errMessage);
       }
 
@@ -255,7 +257,7 @@ export function ChatWidget() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || ""; // Keep the incomplete line in the buffer
@@ -264,11 +266,11 @@ export function ChatWidget() {
           if (line.startsWith('data: ')) {
             const dataStr = line.slice(6);
             if (dataStr === '[DONE]') continue;
-            
+
             try {
               const data = JSON.parse(dataStr);
               let chunkText = "";
-              
+
               if (data.type === 'content_block_delta' && data.delta?.text) {
                 chunkText = data.delta.text; // Anthropic format
               } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
@@ -338,9 +340,9 @@ export function ChatWidget() {
     const trimmed = raw.trim();
     if (!trimmed) return;
     setInput("");
-    
+
     const lower = trimmed.toLowerCase();
-    
+
     // Check for explicit menu commands
     if (["menu", "home", "main menu"].includes(lower)) {
       if (currentSessionId) {
@@ -356,7 +358,7 @@ export function ChatWidget() {
 
     // Try local matching first (Hybrid RAG approach)
     const localMatch = matchQuestion(trimmed);
-    
+
     if (localMatch) {
       if (currentSessionId) {
         const userMsg: Message = { id: generateId(), text: trimmed, isUser: true, timestamp: Date.now() };
@@ -387,7 +389,7 @@ export function ChatWidget() {
       // Dragging UP (negative deltaY) increases height
       const deltaY = moveEvent.clientY - startY;
       const newHeight = Math.max(400, Math.min(window.innerHeight - 128, startH - deltaY));
-      
+
       // Top-right corner: typically if right is anchored, dragging right shouldn't expand width,
       // but to preserve 'resize both' behavior, dragging left (negative deltaX) increases width
       const deltaX = moveEvent.clientX - startX;
@@ -411,16 +413,27 @@ export function ChatWidget() {
   }
 
   const sortedSessions = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
-  const visibleSuggestions = QUICK_QUESTIONS.filter(q => !currentSession?.dismissedSuggestions.includes(q.id)).slice(0, 3);
+
+  // Page-aware suggestions
+  let contextQuestions = [...QUICK_QUESTIONS];
+  if (pathname.includes("/marketplace")) {
+    contextQuestions = [{ id: "what-are-sp", canonicalQuestion: "What are Synergy Points?" }, ...contextQuestions];
+  } else if (pathname.includes("/challenge")) {
+    contextQuestions = [{ id: "streak-rules", canonicalQuestion: "How do streaks work?" }, ...contextQuestions];
+  } else if (pathname.includes("/hackathon")) {
+    contextQuestions = [{ id: "hackathon-rules", canonicalQuestion: "What are the rules for the Hackathon?" }, ...contextQuestions];
+  }
+
+  const visibleSuggestions = contextQuestions.filter(q => !currentSession?.dismissedSuggestions.includes(q.id)).slice(0, 3);
 
   return (
     <>
       {(!open && minimized) && (
         <ChatLauncher open={false} onToggle={() => { setOpen(true); setMinimized(false); }} />
       )}
-      
+
       {open && (
-        <div 
+        <div
           className="fixed bottom-4 right-4 z-50 flex max-h-[calc(100vh-8rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border bg-background shadow-2xl"
           style={{ width: size.width, height: size.height }}
         >
@@ -437,27 +450,27 @@ export function ChatWidget() {
                 </button>
               )}
               <p className="text-sm font-semibold text-foreground">
-                {viewState === "chat" ? "ABTalks Assistant" : "Recent Chats"}
+                {viewState === "chat" ? "Rudra AI" : "Recent Chats"}
               </p>
             </div>
-            
+
             <div className="flex items-center h-full">
-              <button 
-                onClick={startNewSession} 
+              <button
+                onClick={startNewSession}
                 className="text-muted-foreground hover:text-foreground transition p-3"
                 title="New Chat"
               >
                 <MessageSquarePlus className="size-4" />
               </button>
-              <button 
-                onClick={() => { setOpen(false); setMinimized(true); }} 
+              <button
+                onClick={() => { setOpen(false); setMinimized(true); }}
                 className="text-muted-foreground hover:text-foreground transition p-3"
                 title="Minimize"
               >
                 <Minus className="size-4" />
               </button>
               {/* Custom Top-Right Resize Handle */}
-              <div 
+              <div
                 onMouseDown={startResize}
                 className="flex h-[44px] px-3 cursor-ne-resize items-center justify-center text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted transition-colors border-l"
                 title="Drag to resize (Up/Left)"
@@ -480,9 +493,8 @@ export function ChatWidget() {
                     <button
                       key={s.id}
                       onClick={() => { setCurrentSessionId(s.id); setViewState("chat"); }}
-                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${
-                        s.id === currentSessionId ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      }`}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${s.id === currentSessionId ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        }`}
                     >
                       <span className="truncate pr-2">{s.title}</span>
                       <span className="text-[10px] whitespace-nowrap opacity-70">
@@ -545,7 +557,7 @@ export function ChatWidget() {
                       >
                         {q.canonicalQuestion}
                       </button>
-                      <button 
+                      <button
                         onClick={() => dismissSuggestion(q.id)}
                         className="absolute right-1 p-0.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted"
                         aria-label="Dismiss suggestion"

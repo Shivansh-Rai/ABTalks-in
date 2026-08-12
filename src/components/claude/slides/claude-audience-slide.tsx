@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const ROLES: {
+export const ROLES: {
   icon: LucideIcon;
   title: string;
   desc: string;

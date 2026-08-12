@@ -86,7 +86,7 @@ function HowItWorksConnector() {
   );
 }
 
-const requirements = [
+export const requirements = [
   {
     text: "Laptop with at least ",
     highlight: "8 GB RAM",
@@ -109,7 +109,7 @@ const requirements = [
   },
 ];
 
-const prerequisites = [
+export const prerequisites = [
   {
     text: "",
     highlight: "Python",

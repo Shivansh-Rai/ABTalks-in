@@ -15,8 +15,8 @@ type Props = {
   country?: string;
 };
 
-export function ProgramAtAGlance({ compact = false, country = "USA" }: Props) {
-  const stats = [
+export function programAtAGlanceStats(country: string) {
+  return [
     { icon: Layers, value: "4", label: "Core Modules" },
     { icon: Rocket, value: "30", label: "Days Intensive" },
     { icon: Briefcase, value: "4", label: "Live Projects" },
@@ -24,6 +24,10 @@ export function ProgramAtAGlance({ compact = false, country = "USA" }: Props) {
     { icon: Clock, value: "2 hrs/day", label: "Time Commitment" },
     { icon: Target, value: "1-on-1", label: "Mentorship" },
   ] as const;
+}
+
+export function ProgramAtAGlance({ compact = false, country = "USA" }: Props) {
+  const stats = programAtAGlanceStats(country);
 
   return (
     <section className={cn("px-4", compact ? "py-4 md:py-6" : "py-16")}>

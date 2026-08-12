@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const modules = [
+export const modules = [
   {
     icon: Sparkles,
     title: "AI Enterprise & Ecosystem",

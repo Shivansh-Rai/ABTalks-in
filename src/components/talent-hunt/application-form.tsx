@@ -49,7 +49,7 @@ const STEP_SHORT_LABELS = [
 const SELECT_TRIGGER_CLASS =
   "h-10 w-full min-w-0 rounded-xl text-base md:text-sm data-[size=default]:h-10";
 
-const STEP_TITLES: Record<number, string> = {
+export const STEP_TITLES: Record<number, string> = {
   1: "Personal Information",
   2: "Professional Background",
   3: "Your Story",
@@ -57,7 +57,7 @@ const STEP_TITLES: Record<number, string> = {
   5: "Review & Submit",
 };
 
-const STEP_DESCRIPTIONS: Record<number, string> = {
+export const STEP_DESCRIPTIONS: Record<number, string> = {
   1: "Tell us about yourself. This helps us personalise your cohort experience and communicate program updates.",
   2: "Help us understand your experience level. Instructors use this to calibrate examples and mentorship to your context.",
   3: "This is the most important section. We want to understand your motivation, your goals, and what you plan to do with what you learn.",
@@ -87,7 +87,7 @@ const STEP_FIELDS: Record<number, (keyof CohortApplicationInput)[]> = {
   5: [],
 };
 
-const COMMITMENTS: {
+export const COMMITMENTS: {
   name: keyof Pick<
     CohortApplicationInput,
     | "commitHours"

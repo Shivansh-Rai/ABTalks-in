@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "Build every day, publish your progress, and finish with a portfolio recruiters can discover.",
 };
 
-const FAQ_ITEMS = [
+export const FAQ_ITEMS = [
   {
     q: "Do I need prior experience?",
     a: "No. Pick the domain that matches what you want to learn. Tasks build progressively, and each day includes a focused problem and learning resources.",
@@ -41,7 +41,7 @@ const FAQ_ITEMS = [
   },
 ];
 
-const DAY_STEPS = [
+export const DAY_STEPS = [
   { label: "Open today’s task", icon: Wrench },
   { label: "Build it", icon: Wrench },
   { label: "Push to GitHub", icon: GitBranch },

@@ -7,6 +7,13 @@ interface Props {
   totalCount: number;
 }
 
+export const CHALLENGE_RULES = [
+  "60 days = 60 individual daily posts on LinkedIn",
+  "Each day requires its own submission (no batching)",
+  "Posting 3 days of work in one post doesn't count as 3 days",
+  "Consistency is the win: missed days break your streak",
+];
+
 function BuildersBadge({ totalCount }: { totalCount: number }) {
   const isEarly = totalCount < 50;
   const displayCount = Math.max(50, Math.floor(totalCount / 50) * 50);
@@ -50,10 +57,9 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
           📋 Challenge Rules
         </h3>
         <ul className="space-y-1 text-xs text-muted-foreground">
-          <li>• 60 days = 60 individual daily posts on LinkedIn</li>
-          <li>• Each day requires its own submission (no batching)</li>
-          <li>• Posting 3 days of work in one post doesn&apos;t count as 3 days</li>
-          <li>• Consistency is the win: missed days break your streak</li>
+          {CHALLENGE_RULES.map((rule) => (
+            <li key={rule}>• {rule}</li>
+          ))}
         </ul>
       </motion.div>
 

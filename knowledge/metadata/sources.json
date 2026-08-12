@@ -65,6 +65,13 @@
       "note": "Present in this repository and currently linked from the live site. Ingested 2026-08-10 into claude-challenge.md."
     },
     {
+      "id": "chatbot-kb-site-scrape",
+      "type": "document",
+      "status": "supporting",
+      "scope": ["claude-challenge-curriculum", "testimonials", "community", "ai-cohort", "vicodathon", "audience-faqs"],
+      "note": "Provenance for content merged in from the retired knowledge/processed/abtalks-chatbot-kb.md monolith (docs/plans/061-chatbot-retrieval-quality-fixes.md) into claude-challenge-curriculum.md, testimonials.md, audience-faqs.md, and additions to community.md/ai-cohort.md/vicodathon.md/anil-bajpai.md. Predates the corrections in docs/plans/039-chatbot-knowledge-corrections-and-wiring.md and this file's other authoritative sources — wherever it conflicts with a topic file or facts.json, the topic file/facts.json wins. Not independently re-verified against the live site as a whole; individual unverified claims are flagged inline where merged."
+    },
+    {
       "id": "live-site-abtalks-in",
       "type": "website",
       "status": "authoritative",

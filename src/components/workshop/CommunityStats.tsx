@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const STATS = [
+export const STATS = [
   { value: 3000, suffix: "+", label: "AI Learners", sub: "From 20+ Countries", accent: "var(--color-accent-500)" },
   { value: 550, suffix: "+", label: "Institutions", sub: "Students enrolled", accent: "var(--color-accent-400)" },
   { value: 300, suffix: "+", label: "Organisations", sub: "Working professionals", accent: "var(--color-accent-400)" },

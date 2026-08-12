@@ -17,7 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 
-const TOPICS = [
+export const TOPICS = [
   {
     title: "Introduction of Design Tools & Figma Fundamentals",
     desc: "Overview of design tools like Figma, Illustrator, Affinity Designer, and others. Learn frames, auto layout, components, variables, and Dev Mode—the essential concepts every developer should understand before implementing a design.",

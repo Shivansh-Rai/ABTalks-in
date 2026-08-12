@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getRecruiterProfileByToken } from "@/features/recruiter/get-recruiter-profile";
+import { isApprovedRecruiterSession } from "@/lib/program-auth";
 import { cn } from "@/lib/utils";
 import { PrintButton } from "./print-button";
 
@@ -114,7 +115,8 @@ export default async function RecruiterProfilePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const profile = await getRecruiterProfileByToken(token);
+  const viewerIsApprovedRecruiter = await isApprovedRecruiterSession();
+  const profile = await getRecruiterProfileByToken(token, viewerIsApprovedRecruiter);
   if (!profile) notFound();
 
   const hasFullAssessmentScores =
@@ -662,6 +664,18 @@ export default async function RecruiterProfilePage({
                   <section className="break-inside-avoid">
                     <SectionHeading title="Compensation Details" />
                     <MetaList rows={compensationRows} />
+                  </section>
+                ) : null}
+
+                {profile.sensitiveDataRedacted ? (
+                  <section className="break-inside-avoid rounded-xl border border-dashed p-4 text-sm text-muted-foreground print:hidden">
+                    <p className="font-medium text-foreground">
+                      Logistics &amp; compensation details are available
+                    </p>
+                    <p className="mt-1">
+                      Sign in as an approved ABTalks recruiter to view this
+                      candidate&apos;s logistics and compensation details.
+                    </p>
                   </section>
                 ) : null}
 

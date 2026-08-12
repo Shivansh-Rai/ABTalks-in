@@ -82,7 +82,9 @@ type SocialLink = {
   icon: ComponentType<{ className?: string }>;
 };
 
-const SOCIAL_LINKS: SocialLink[] = [
+export const SUPPORT_EMAIL = "team@abtalks.in";
+
+export const SOCIAL_LINKS: SocialLink[] = [
   {
     label: "Instagram",
     href: "https://www.instagram.com/abtalksonai/",
@@ -136,7 +138,7 @@ export function AppFooter() {
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   // the Modernist landing ships its own footer
   const isLanding = pathname === "/";
-  const supportEmail = "team@abtalks.in";
+  const supportEmail = SUPPORT_EMAIL;
 
   if (
     isWorkshop ||
