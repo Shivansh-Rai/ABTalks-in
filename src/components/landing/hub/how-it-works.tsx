@@ -100,7 +100,7 @@ export function HowItWorks() {
     applyRotation(indexRef.current);
   }, [applyRotation, reduce]);
 
-  /* Engage only when the cube stage is vertically centered in the viewport */
+  /* Engage when the cube stage is near vertical center (wider band + wheel catch) */
   useEffect(() => {
     if (reduce) return;
     const stage = stageRef.current;
@@ -117,8 +117,9 @@ export function HowItWorks() {
       const rect = stage.getBoundingClientRect();
       const stageMid = (rect.top + rect.bottom) / 2;
       const viewMid = window.innerHeight / 2;
+      // ~20% of viewport — wider than 12% so fast trackpad flicks still catch
       const inBand =
-        Math.abs(stageMid - viewMid) <= window.innerHeight * 0.12;
+        Math.abs(stageMid - viewMid) <= window.innerHeight * 0.2;
 
       if (!inBand) {
         releasedRef.current = false;
@@ -134,13 +135,21 @@ export function HowItWorks() {
       setEngaged(true);
     };
 
+    // Catch the band between scroll events (momentum / large wheel deltas)
+    const onWheelPreLock = () => {
+      if (lockedRef.current || releasedRef.current) return;
+      evaluate();
+    };
+
     window.addEventListener("scroll", evaluate, { passive: true });
     window.addEventListener("resize", evaluate);
+    window.addEventListener("wheel", onWheelPreLock, { passive: true });
     evaluate();
 
     return () => {
       window.removeEventListener("scroll", evaluate);
       window.removeEventListener("resize", evaluate);
+      window.removeEventListener("wheel", onWheelPreLock);
     };
   }, [goToFace, reduce]);
 
