@@ -2,6 +2,8 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-13 [convention] Landing How it works cube uses discrete wheel/touch steps + temporary page scroll lock (not scrub); reduced-motion flat fade
+- 2026-08-13 [convention] Landing How it works uses scroll-pinned 3-face CSS 3D cube (rotateX scrub); reduced-motion keeps flat fade
 - 2026-08-12 [convention] App fonts self-hosted via next/font/local + src/fonts (no next/font/google fetch at build)
 - 2026-08-12 [convention] Open-right-now program cards each mount GhostCursor tinted to that card’s brand color (`three` postprocessing)
 - 2026-08-12 [rule] Program behind-by / at-risk pace uses cohort calendar day, not Day-4 unlock ceiling (calendar+3), so on-time members are not falsely flagged ~4 days behind

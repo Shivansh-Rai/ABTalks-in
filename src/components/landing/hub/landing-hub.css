@@ -131,9 +131,9 @@
   pointer-events: none;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(235, 227, 255, 0.48) 45%,
-    rgba(124, 92, 255, 0.16) 100%
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(235, 227, 255, 0.78) 45%,
+    rgba(124, 92, 255, 0.32) 100%
   );
   backdrop-filter: blur(40px) saturate(160%);
   -webkit-backdrop-filter: blur(40px) saturate(160%);
@@ -150,9 +150,9 @@
   top: 8px;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.36) 0%,
-    rgba(235, 227, 255, 0.5) 40%,
-    rgba(124, 92, 255, 0.22) 100%
+    rgba(255, 255, 255, 0.68) 0%,
+    rgba(235, 227, 255, 0.76) 40%,
+    rgba(124, 92, 255, 0.36) 100%
   );
   backdrop-filter: blur(56px) saturate(180%);
   -webkit-backdrop-filter: blur(56px) saturate(180%);
@@ -228,14 +228,14 @@
 .landing-hub .hub-nav-pill a.hub-nav-link {
   font-size: 16px;
   font-weight: 400;
-  color: #4b4b4b;
+  color: #000000;
   text-decoration: none;
   text-transform: capitalize;
   white-space: nowrap;
 }
 
 .landing-hub .hub-nav-pill a.hub-nav-link:hover {
-  color: var(--hub-text);
+  color: #000000;
 }
 
 .landing-hub .hub-nav-cta {
@@ -424,6 +424,16 @@
   line-height: 1;
   color: #888;
   margin: 0;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.landing-hub .hub-interview.in {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-hub .hub-interview-strike {
@@ -446,7 +456,6 @@
   display: inline-block;
   margin-top: 10px;
   max-width: 895px;
-  background: var(--hub-lavender);
   padding: 10px 18px;
   border-radius: 4px;
   font-family: var(--hub-font-sans);
@@ -454,27 +463,69 @@
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  color: var(--hub-text);
+  background: transparent;
   opacity: 0;
   transform: translateY(16px);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.landing-hub .hub-evidence.on {
+.landing-hub .hub-evidence.in {
   opacity: 1;
   transform: translateY(0);
+}
+
+.landing-hub .hub-evidence.highlight {
+  background: var(--hub-lavender);
+}
+
+.landing-hub .hub-hero-below {
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+}
+
+.landing-hub .hub-hero-below.on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
   transition:
-    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s,
-    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .landing-hub .hub-interview,
+  .landing-hub .hub-interview.in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
   .landing-hub .hub-interview-strike {
     width: calc(100% + 24px);
     transition: none;
   }
 
-  .landing-hub .hub-evidence {
+  .landing-hub .hub-evidence,
+  .landing-hub .hub-evidence.in {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+
+  .landing-hub .hub-evidence.highlight {
+    background: var(--hub-lavender);
+  }
+
+  .landing-hub .hub-hero-below,
+  .landing-hub .hub-hero-below.on {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
     transition: none;
   }
 }
@@ -488,12 +539,198 @@
   width: 100%;
 }
 
-.landing-hub .hub-how-frame {
-  background: #d9d9d9;
+/* —— How it works wheel-lock cube (067) —— */
+.landing-hub .hub-how {
+  --hub-how-face-h: min(420px, 58vh);
+  --hub-how-r: calc(var(--hub-how-face-h) / 2);
+  position: relative;
+  min-height: auto;
+  padding: 72px 0;
 }
 
-.landing-hub .hub-how-frame-img {
-  border-radius: inherit;
+.landing-hub .hub-how-sticky {
+  position: relative;
+  top: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+html.hub-how-scroll-lock {
+  overflow: hidden;
+}
+
+.landing-hub .hub-how-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.landing-hub .hub-how-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hub-border);
+  cursor: pointer;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.landing-hub .hub-how-dot[aria-current="true"] {
+  width: 28px;
+  background: var(--hub-accent);
+}
+
+.landing-hub .hub-how-stage {
+  position: relative;
+  width: 100%;
+  height: var(--hub-how-face-h);
+  overflow: hidden;
+  border-radius: var(--hub-radius-lg);
+  background: var(--hub-soft);
+  box-shadow: none;
+}
+
+.landing-hub .hub-how-perspective {
+  width: 100%;
+  height: 100%;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+}
+
+.landing-hub .hub-how-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: rotateX(var(--hub-how-rotate, 0deg));
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-hub .hub-how-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 48px);
+  align-items: center;
+  padding: clamp(20px, 3vw, 36px);
+  background: linear-gradient(90deg, #f3f4f6 0%, #fafafc 100%);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/*
+ * Faces sit on front / top / back so cube rotateX(0 → -90 → -180)
+ * brings each toward the camera upright. (Bottom-face layout hid 02
+ * behind the stage with backface-visibility: hidden.)
+ */
+.landing-hub .hub-how-face[data-face="0"] {
+  transform: rotateX(0deg) translateZ(var(--hub-how-r));
+}
+
+.landing-hub .hub-how-face[data-face="1"] {
+  transform: rotateX(90deg) translateZ(var(--hub-how-r));
+}
+
+.landing-hub .hub-how-face[data-face="2"] {
+  transform: rotateX(180deg) translateZ(var(--hub-how-r));
+}
+
+.landing-hub .hub-how-face-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  border-radius: var(--hub-radius-lg);
+  overflow: hidden;
+  background: #d9d9d9;
+  box-shadow: none;
+}
+
+.landing-hub .hub-how-face-media img {
+  object-fit: cover;
+  object-position: center;
+}
+
+.landing-hub .hub-how-face-copy {
+  min-width: 0;
+}
+
+.landing-hub .hub-how-face-num {
+  margin: 0;
+  font-size: clamp(48px, 6vw, 80px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--hub-accent);
+}
+
+.landing-hub .hub-how-face-title {
+  margin: 10px 0 0;
+  font-size: clamp(22px, 2.8vw, 40px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--hub-text);
+}
+
+.landing-hub .hub-how-face-body {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--hub-muted);
+  max-width: 42ch;
+}
+
+/* Reduced motion: no 3D / no scroll lock */
+.landing-hub .hub-how.hub-how--reduce .hub-how-cube {
+  transition: none;
+}
+
+.landing-hub .hub-how-flat {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+  margin-top: 8px;
+}
+
+.landing-hub .hub-how-flat-media {
+  position: relative;
+  min-height: 280px;
+  border-radius: var(--hub-radius-lg);
+  overflow: hidden;
+  background: #d9d9d9;
+  box-shadow: none;
+}
+
+@media (max-width: 800px) {
+  .landing-hub .hub-how {
+    --hub-how-face-h: min(520px, 70vh);
+  }
+
+  .landing-hub .hub-how-face {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-content: center;
+    padding: 16px;
+  }
+
+  .landing-hub .hub-how-face-media {
+    min-height: 160px;
+    max-height: 200px;
+  }
+
+  .landing-hub .hub-how-face-body {
+    font-size: 15px;
+  }
+
+  .landing-hub .hub-how-flat {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* —— consent tilt —— */
@@ -527,6 +764,12 @@
 .landing-hub .hub-consent-parallax {
   position: relative;
   z-index: 1;
+}
+
+/* —— programs (Open right now) — Figma 710:174 calendar-section —— */
+.landing-hub .hub-programs-section {
+  padding: 56px 0 72px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #fafafc 100%);
 }
 
 /* —— program cards —— */

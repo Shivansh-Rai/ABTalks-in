@@ -150,43 +150,44 @@ export function LandingHub({
         <section className="hub-hero-band">
           <div className="hub-shell hub-hero">
             <div className="hub-hero-copy">
-              <HeroHeadline />
-              <p
-                style={{
-                  margin: "28px 0 0",
-                  maxWidth: 775,
-                  fontSize: 20,
-                  lineHeight: 1.6,
-                  color: "var(--hub-muted)",
-                }}
-              >
-                ABTalks runs hackathons, cohorts and challenges where people
-                build in public. Companies see the work, not a rehearsed answer.
-                We sit in the middle: matching real output to real requirements,
-                and never sharing a profile without the candidate saying yes
-                first.
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 16,
-                  marginTop: 40,
-                }}
-              >
-                <Link
-                  href="/program"
-                  className="hub-btn hub-btn-primary hub-btn-hero"
+              <HeroHeadline>
+                <p
+                  style={{
+                    margin: "28px 0 0",
+                    maxWidth: 775,
+                    fontSize: 20,
+                    lineHeight: 1.6,
+                    color: "var(--hub-muted)",
+                  }}
                 >
-                  Get Started
-                </Link>
-                <Link
-                  href="/talent"
-                  className="hub-btn hub-btn-ghost hub-btn-hero"
+                  ABTalks runs hackathons, cohorts and challenges where people
+                  build in public. Companies see the work, not a rehearsed answer.
+                  We sit in the middle: matching real output to real requirements,
+                  and never sharing a profile without the candidate saying yes
+                  first.
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 16,
+                    marginTop: 40,
+                  }}
                 >
-                  Post a requirement
-                </Link>
-              </div>
+                  <Link
+                    href="/program"
+                    className="hub-btn hub-btn-primary hub-btn-hero"
+                  >
+                    Get Started
+                  </Link>
+                  <Link
+                    href="/talent"
+                    className="hub-btn hub-btn-ghost hub-btn-hero"
+                  >
+                    Post a requirement
+                  </Link>
+                </div>
+              </HeroHeadline>
             </div>
             <div className="hub-hero-spacer" aria-hidden />
           </div>
@@ -319,7 +320,7 @@ export function LandingHub({
       </section>
 
       {/* —— programs —— */}
-      <section id="programs" style={{ padding: "56px 0 72px" }}>
+      <section id="programs" className="hub-programs-section">
         <div className="hub-shell">
           <p className="hub-kicker">Open right now</p>
           <h2 className="hub-h2">
