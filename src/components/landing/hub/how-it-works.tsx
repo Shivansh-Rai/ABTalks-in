@@ -62,21 +62,14 @@ function setScrollLock(on: boolean) {
   document.documentElement.classList.toggle(LOCK_CLASS, on);
 }
 
-function isInViewport(el: HTMLElement): boolean {
-  const rect = el.getBoundingClientRect();
-  return rect.bottom > 0 && rect.top < window.innerHeight;
-}
-
 export function HowItWorks() {
   const reduce = useSafeReducedMotion();
-  const headingRef = useRef<HTMLParagraphElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const cubeRef = useRef<HTMLDivElement>(null);
   const indexRef = useRef(0);
   const lockedRef = useRef(false);
   const coolingRef = useRef(false);
   const releasedRef = useRef(false);
-  const stageRatioRef = useRef(0);
   const lastScrollYRef = useRef(0);
   const scrollDirRef = useRef<"up" | "down">("down");
   const touchYRef = useRef<number | null>(null);
@@ -107,11 +100,7 @@ export function HowItWorks() {
     applyRotation(indexRef.current);
   }, [applyRotation, reduce]);
 
-  /*
-   * Scroll down: lock when the cube stage is ≥55% visible.
-   * Scroll up: only lock after the "How it works" heading is also in view
-   * (otherwise the stage hits 55% before the heading appears).
-   */
+  /* Engage only when the cube stage is vertically centered in the viewport */
   useEffect(() => {
     if (reduce) return;
     const stage = stageRef.current;
@@ -125,20 +114,16 @@ export function HowItWorks() {
       else if (y > lastScrollYRef.current) scrollDirRef.current = "down";
       lastScrollYRef.current = y;
 
-      const stageOk = stageRatioRef.current >= 0.55;
-      if (!stageOk) {
+      const rect = stage.getBoundingClientRect();
+      const stageMid = (rect.top + rect.bottom) / 2;
+      const viewMid = window.innerHeight / 2;
+      const inBand =
+        Math.abs(stageMid - viewMid) <= window.innerHeight * 0.12;
+
+      if (!inBand) {
         releasedRef.current = false;
         setEngaged(false);
         return;
-      }
-
-      // Bottom → top: wait until the kicker heading is on screen
-      if (scrollDirRef.current === "up") {
-        const heading = headingRef.current;
-        if (!heading || !isInViewport(heading)) {
-          setEngaged(false);
-          return;
-        }
       }
 
       if (releasedRef.current) return;
@@ -149,21 +134,11 @@ export function HowItWorks() {
       setEngaged(true);
     };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        stageRatioRef.current = entry?.intersectionRatio ?? 0;
-        evaluate();
-      },
-      { threshold: [0, 0.55, 0.75, 1] },
-    );
-    observer.observe(stage);
-
     window.addEventListener("scroll", evaluate, { passive: true });
     window.addEventListener("resize", evaluate);
     evaluate();
 
     return () => {
-      observer.disconnect();
       window.removeEventListener("scroll", evaluate);
       window.removeEventListener("resize", evaluate);
     };
@@ -271,9 +246,7 @@ export function HowItWorks() {
       }
     >
       <div className="hub-how-sticky">
-        <p ref={headingRef} className="hub-kicker">
-          How it works
-        </p>
+        <p className="hub-kicker">How it works</p>
 
         <div
           className="hub-how-dots"

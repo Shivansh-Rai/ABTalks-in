@@ -52,9 +52,10 @@ export function HeroHeadline({ children }: Props) {
       window.setTimeout(() => {
         setPhase((p) => ({ ...p, highlight: true }));
       }, 2100),
+      // After highlighter finishes drawing (~1.1s)
       window.setTimeout(() => {
         setPhase((p) => ({ ...p, below: true }));
-      }, 2700),
+      }, 3300),
     ];
 
     return () => {

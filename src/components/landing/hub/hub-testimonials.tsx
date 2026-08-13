@@ -9,7 +9,7 @@ import {
 
 const AUTOPLAY_MS = 3500;
 const RESUME_AFTER_INPUT_MS = 8000;
-const CARD_GAP = 20;
+const CARD_GAP = 28;
 
 function initials(name: string) {
   return name
@@ -45,7 +45,7 @@ function HubTestimonialCard({ name, org, photo, quote }: Testimonial) {
           <p
             style={{
               margin: 0,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 700,
               color: "#111",
             }}
@@ -56,12 +56,12 @@ function HubTestimonialCard({ name, org, photo, quote }: Testimonial) {
             <p
               style={{
                 margin: "2px 0 0",
-                fontSize: 14,
+                fontSize: 12,
                 color: "#666",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                maxWidth: 280,
+                maxWidth: 240,
               }}
             >
               {org}

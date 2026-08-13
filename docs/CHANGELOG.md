@@ -2,6 +2,7 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-13 [convention] Landing hub polish 068: white frosted nav blur, L→R evidence highlight draw, center-band How-it-works lock, 1→3→2→4 program reveals, FAQ grid roll-open, community film-reel enter
 - 2026-08-13 [convention] Landing How it works cube uses discrete wheel/touch steps + temporary page scroll lock (not scrub); reduced-motion flat fade
 - 2026-08-13 [convention] Landing How it works uses scroll-pinned 3-face CSS 3D cube (rotateX scrub); reduced-motion keeps flat fade
 - 2026-08-12 [convention] App fonts self-hosted via next/font/local + src/fonts (no next/font/google fetch at build)

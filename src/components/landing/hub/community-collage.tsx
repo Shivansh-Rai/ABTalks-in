@@ -22,7 +22,7 @@ const AVATARS = [
 
 export function CommunityCollage() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.35 });
+  const inView = useInView(ref, { once: false, amount: 0.35 });
   const reduce = useSafeReducedMotion();
   const show = reduce || inView;
 
@@ -35,21 +35,22 @@ export function CommunityCollage() {
         gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
         gap: 12,
         minHeight: 280,
+        overflowX: "clip",
       }}
       className="hub-collage"
     >
       {PHOTOS.map((src, i) => (
         <motion.div
           key={`${src}-${i}`}
-          initial={reduce ? false : { opacity: 0, y: 36, scale: 0.96 }}
+          initial={reduce ? false : { opacity: 0, x: 80 }}
           animate={
             show
-              ? { opacity: 1, y: 0, scale: 1 }
-              : { opacity: 0, y: 36, scale: 0.96 }
+              ? { opacity: 1, x: 0 }
+              : { opacity: 0, x: 80 }
           }
           transition={{
             duration: 0.55,
-            delay: reduce ? 0 : i * 0.1,
+            delay: reduce ? 0 : i * 0.12,
             ease: EASE_SPARK,
           }}
           style={{
@@ -71,11 +72,11 @@ export function CommunityCollage() {
       ))}
 
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: 20 }}
-        animate={show ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        initial={reduce ? false : { opacity: 0, x: 40 }}
+        animate={show ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
         transition={{
           duration: 0.5,
-          delay: reduce ? 0 : 0.55,
+          delay: reduce ? 0 : PHOTOS.length * 0.12,
           ease: EASE_SPARK,
         }}
         style={{

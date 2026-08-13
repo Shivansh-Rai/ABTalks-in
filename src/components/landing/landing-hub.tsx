@@ -8,6 +8,7 @@ import { HowItWorks } from "./hub/how-it-works";
 import { ConsentTiltCard } from "./hub/consent-tilt-card";
 import { CommunityCollage } from "./hub/community-collage";
 import { HubTestimonials } from "./hub/hub-testimonials";
+import { HubProgramReveal } from "./hub/hub-program-reveal";
 import "./hub/landing-hub.css";
 
 const WHATSAPP_LINK = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
@@ -200,7 +201,7 @@ export function LandingHub({
       <section
         id="about"
         className="hub-bridge-section"
-        style={{ padding: "56px 0" }}
+        style={{ padding: "6px 0" }}
       >
         <div
           className="hub-shell"
@@ -335,67 +336,65 @@ export function LandingHub({
             }}
             className="hub-programs-grid"
           >
-            {programs.map((program) => (
-              <Link
-                key={program.key}
-                href={program.href}
-                className="hub-program-card"
-              >
-                <div className="hub-program-card-body">
-                  <span
-                    style={{
-                      alignSelf: "flex-start",
-                      border: "1px solid var(--hub-accent)",
-                      borderRadius: 8,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {program.badge}
-                  </span>
-                  <span
-                    aria-hidden
-                    style={{
-                      position: "absolute",
-                      top: 18,
-                      right: 22,
-                      fontSize: 28,
-                      color: "#626262",
-                      transform: "rotate(135deg)",
-                    }}
-                  >
-                    ←
-                  </span>
-                  <p
-                    className="hub-program-title"
-                    style={{ color: program.color }}
-                  >
-                    {program.title}
-                  </p>
-                  <p
-                    style={{
-                      margin: "auto 0 0",
-                      paddingTop: 24,
-                      fontSize: 15,
-                      lineHeight: 1.5,
-                      color: "#333",
-                    }}
-                  >
-                    {program.lines.map((line, i) => (
-                      <span key={line}>
-                        {i > 0 ? <br /> : null}
-                        {line}
-                      </span>
-                    ))}
-                  </p>
-                  <span
-                    className="hub-program-glow"
-                    style={{ background: program.glow }}
-                    aria-hidden
-                  />
-                </div>
-              </Link>
+            {programs.map((program, index) => (
+              <HubProgramReveal key={program.key} index={index}>
+                <Link href={program.href} className="hub-program-card">
+                  <div className="hub-program-card-body">
+                    <span
+                      style={{
+                        alignSelf: "flex-start",
+                        border: "1px solid var(--hub-accent)",
+                        borderRadius: 8,
+                        padding: "6px 12px",
+                        fontSize: 12,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {program.badge}
+                    </span>
+                    <span
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        top: 18,
+                        right: 22,
+                        fontSize: 28,
+                        color: "#626262",
+                        transform: "rotate(135deg)",
+                      }}
+                    >
+                      ←
+                    </span>
+                    <p
+                      className="hub-program-title"
+                      style={{ color: program.color }}
+                    >
+                      {program.title}
+                    </p>
+                    <p
+                      style={{
+                        margin: "auto 0 0",
+                        paddingTop: 24,
+                        fontSize: 15,
+                        lineHeight: 1.5,
+                        color: "#333",
+                      }}
+                    >
+                      {program.lines.map((line, i) => (
+                        <span key={line}>
+                          {i > 0 ? <br /> : null}
+                          {line}
+                        </span>
+                      ))}
+                    </p>
+                    <span
+                      className="hub-program-glow"
+                      style={{ background: program.glow }}
+                      aria-hidden
+                    />
+                  </div>
+                </Link>
+              </HubProgramReveal>
             ))}
           </div>
         </div>
@@ -419,7 +418,11 @@ export function LandingHub({
             {FAQS.map((faq) => (
               <details key={faq.q}>
                 <summary>{faq.q}</summary>
-                <p>{faq.a}</p>
+                <div className="hub-faq-answer">
+                  <div>
+                    <p>{faq.a}</p>
+                  </div>
+                </div>
               </details>
             ))}
           </div>
@@ -427,7 +430,7 @@ export function LandingHub({
       </section>
 
       {/* —— community —— */}
-      <section style={{ padding: "48px 0 80px" }}>
+      <section className="hub-community-clip" style={{ padding: "48px 0 80px" }}>
         <div
           className="hub-shell hub-community-grid"
           style={{
