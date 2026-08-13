@@ -112,52 +112,33 @@
 /* —— liquid-glass floating nav —— */
 /* Fixed (not sticky): Chromium often skips backdrop-filter on position:sticky */
 .landing-hub .hub-nav-spacer {
-  height: 85px;
+  height: 96px;
   flex: none;
 }
 
-/* Glass on the fixed pill-sized shell (same element as position:fixed) */
+/* Figma Rectangle 7 — GrayScale/200 pill (slightly thinner than 61px) */
 .landing-hub .hub-navwrap {
   position: fixed;
-  top: 16px;
+  top: 28px;
   left: 0;
   right: 0;
   z-index: 50;
   width: min(1493px, calc(100% - 2 * clamp(16px, 4vw, 48px)));
-  height: 61px;
+  height: 54px;
   margin-inline: auto;
-  border-radius: 25px;
+  border-radius: 22px;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.72) 0%,
-    rgba(235, 227, 255, 0.78) 45%,
-    rgba(124, 92, 255, 0.32) 100%
-  );
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
-  border: 1px solid rgba(182, 164, 255, 0.4);
-  box-shadow: 0 6px 18px rgba(124, 92, 255, 0.12);
-  transition:
-    top 260ms ease,
-    background 260ms ease,
-    border-color 260ms ease,
-    box-shadow 260ms ease;
+  background: rgba(210, 210, 210, 0.8);
+  border: none;
+  box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.25);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: top 260ms ease;
 }
 
 .landing-hub .hub-navwrap.scrolled {
-  top: 8px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.68) 0%,
-    rgba(235, 227, 255, 0.76) 40%,
-    rgba(124, 92, 255, 0.36) 100%
-  );
-  backdrop-filter: blur(56px) saturate(180%);
-  -webkit-backdrop-filter: blur(56px) saturate(180%);
-  border-color: rgba(182, 164, 255, 0.35);
-  box-shadow: 0 8px 30px rgba(124, 92, 255, 0.16);
+  top: 16px;
 }
 
 .landing-hub .hub-nav-pill {
@@ -189,11 +170,33 @@
 }
 
 .landing-hub .hub-nav-links {
+  position: relative;
   grid-area: links;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(20px, 3vw, 48px);
+}
+
+.landing-hub .hub-nav-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 30px;
+  margin-top: -15px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+
+.landing-hub .hub-nav-indicator.on {
+  opacity: 1;
 }
 
 .landing-hub .hub-nav-cta,
@@ -208,7 +211,7 @@
 }
 
 .landing-hub .hub-nav-logo-img {
-  height: 32px;
+  height: 28px;
   width: auto;
   object-fit: contain;
 }
@@ -226,15 +229,24 @@
 }
 
 .landing-hub .hub-nav-pill a.hub-nav-link {
-  font-size: 16px;
-  font-weight: 400;
-  color: #000000;
+  position: relative;
+  z-index: 1;
+  font-size: 15px;
+  /* Constant weight so active state does not reflow the centered row */
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.72);
   text-decoration: none;
   text-transform: capitalize;
   white-space: nowrap;
+  padding: 5px 12px;
+  transition: color 0.2s ease;
 }
 
 .landing-hub .hub-nav-pill a.hub-nav-link:hover {
+  color: #000000;
+}
+
+.landing-hub .hub-nav-pill a.hub-nav-link.active {
   color: #000000;
 }
 
@@ -242,10 +254,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 47px;
-  min-width: 160px;
-  padding: 0 28px;
-  border-radius: 15px;
+  height: 40px;
+  min-width: 148px;
+  padding: 0 24px;
+  border-radius: 12px;
   background: var(--hub-accent);
   border: 1px solid #b6a4ff;
   color: #fff;
