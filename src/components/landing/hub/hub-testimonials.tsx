@@ -9,6 +9,7 @@ import {
 
 const AUTOPLAY_MS = 3500;
 const RESUME_AFTER_INPUT_MS = 8000;
+const CARD_GAP = 20;
 
 function initials(name: string) {
   return name
@@ -30,33 +31,13 @@ function HubTestimonialCard({ name, org, photo, quote }: Testimonial) {
           <Image
             src={photo}
             alt=""
-            width={55}
-            height={55}
+            width={64}
+            height={64}
             loading="lazy"
-            style={{
-              width: 55,
-              height: 55,
-              borderRadius: 999,
-              objectFit: "cover",
-              flex: "none",
-            }}
+            className="hub-t-avatar"
           />
         ) : (
-          <span
-            aria-hidden
-            style={{
-              display: "inline-flex",
-              width: 55,
-              height: 55,
-              borderRadius: 999,
-              alignItems: "center",
-              justifyContent: "center",
-              background: "var(--hub-lavender)",
-              color: "var(--hub-accent)",
-              fontWeight: 700,
-              flex: "none",
-            }}
-          >
+          <span aria-hidden className="hub-t-avatar-fallback">
             {initials(name)}
           </span>
         )}
@@ -113,7 +94,9 @@ export function HubTestimonials() {
     const el = trackRef.current;
     if (!el) return;
     const card = el.querySelector("figure");
-    const distance = card ? card.clientWidth + 20 : el.clientWidth * 0.8;
+    const distance = card
+      ? card.clientWidth + CARD_GAP
+      : el.clientWidth * 0.8;
     el.scrollBy({ left: direction * distance, behavior: "smooth" });
   }, []);
 
@@ -185,14 +168,7 @@ export function HubTestimonials() {
       onFocus={() => setEngaged(true)}
       onBlur={() => setEngaged(false)}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
+      <div className="hub-t-row">
         <button
           type="button"
           className="hub-t-arrow"
@@ -202,6 +178,24 @@ export function HubTestimonials() {
         >
           ←
         </button>
+
+        <div
+          ref={trackRef}
+          onScroll={syncEdges}
+          onPointerDown={holdAutoplay}
+          onTouchStart={holdAutoplay}
+          tabIndex={0}
+          role="region"
+          aria-label="Testimonials, scroll horizontally"
+          className="hub-t-track no-scrollbar"
+        >
+          <div className="hub-t-track-inner">
+            {TESTIMONIALS.map((testimonial) => (
+              <HubTestimonialCard key={testimonial.name} {...testimonial} />
+            ))}
+          </div>
+        </div>
+
         <button
           type="button"
           className="hub-t-arrow"
@@ -211,36 +205,6 @@ export function HubTestimonials() {
         >
           →
         </button>
-      </div>
-
-      <div
-        ref={trackRef}
-        onScroll={syncEdges}
-        onPointerDown={holdAutoplay}
-        onTouchStart={holdAutoplay}
-        tabIndex={0}
-        role="region"
-        aria-label="Testimonials, scroll horizontally"
-        className="no-scrollbar"
-        style={{
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          scrollBehavior: "smooth",
-          outline: "none",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            width: "max-content",
-            gap: 20,
-            paddingBottom: 8,
-          }}
-        >
-          {TESTIMONIALS.map((testimonial) => (
-            <HubTestimonialCard key={testimonial.name} {...testimonial} />
-          ))}
-        </div>
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ import { HowItWorks } from "./hub/how-it-works";
 import { ConsentTiltCard } from "./hub/consent-tilt-card";
 import { CommunityCollage } from "./hub/community-collage";
 import { HubTestimonials } from "./hub/hub-testimonials";
-import { GhostCursor } from "./hub/ghost-cursor";
 import "./hub/landing-hub.css";
 
 const WHATSAPP_LINK = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
@@ -40,7 +39,7 @@ const PROGRAMS: {
     title: "60 day coding challenge",
     href: "/challenges",
     color: "#7548e7",
-    glow: "rgba(117, 72, 231, 0.55)",
+    glow: "rgba(117, 72, 231, 0.28)",
     lines: [
       "Daily tasks across AI, data, and software",
       "Prove the work on GitHub and LinkedIn",
@@ -52,7 +51,7 @@ const PROGRAMS: {
     title: "abtalks Vicodathon",
     href: "/hackathon",
     color: "#009cf5",
-    glow: "rgba(0, 156, 245, 0.55)",
+    glow: "rgba(0, 156, 245, 0.28)",
     lines: [
       "A weekend build from brief to shipped demo",
       "Solo or with a team, judged and archived",
@@ -64,7 +63,7 @@ const PROGRAMS: {
     title: "31 days ai cohort",
     href: "/program",
     color: "#97ea42",
-    glow: "rgba(151, 234, 66, 0.55)",
+    glow: "rgba(151, 234, 66, 0.28)",
     lines: [
       "Built for working professionals shipping AI",
       "Daily missions, projects, and an exit interview",
@@ -76,7 +75,7 @@ const PROGRAMS: {
     title: "claude challenge",
     href: "/claude-signup",
     color: "#ff7a00",
-    glow: "rgba(255, 122, 0, 0.55)",
+    glow: "rgba(255, 122, 0, 0.28)",
     lines: [
       "A focused track for Claude AI mastery",
       "Synchronized days with the cohort calendar",
@@ -197,13 +196,16 @@ export function LandingHub({
       </div>
 
       {/* —— bridge —— */}
-      <section id="about" style={{ padding: "56px 0" }}>
+      <section
+        id="about"
+        className="hub-bridge-section"
+        style={{ padding: "56px 0" }}
+      >
         <div
           className="hub-shell"
           style={{
             borderRadius: 25,
-            background:
-              "radial-gradient(ellipse at center, rgba(189,157,255,0.12), transparent 70%), #fafafc",
+            background: "transparent",
             padding: "clamp(28px, 4vw, 48px)",
           }}
         >
@@ -338,21 +340,6 @@ export function LandingHub({
                 href={program.href}
                 className="hub-program-card"
               >
-                <GhostCursor
-                  color={program.color}
-                  brightness={1.25}
-                  edgeIntensity={0}
-                  trailLength={50}
-                  inertia={0.5}
-                  grainIntensity={0}
-                  bloomStrength={0.04}
-                  bloomRadius={0.6}
-                  bloomThreshold={0.25}
-                  fadeDelayMs={400}
-                  fadeDurationMs={700}
-                  zIndex={0}
-                  mixBlendMode="screen"
-                />
                 <div className="hub-program-card-body">
                   <span
                     style={{

@@ -66,7 +66,7 @@ export function HubStatsStrip() {
 
   return (
     <section ref={ref} className="hub-stats" aria-label="Platform statistics">
-      <div className="hub-shell hub-stats-grid">
+      <div className="hub-stats-grid">
         {STATS.map((stat) => (
           <div key={stat.label} className="hub-stat">
             <p className="hub-stat-value">
