@@ -52,7 +52,9 @@ export default async function LoginPage({ searchParams }: Props) {
     if (
       redirectTo.startsWith("/program") ||
       redirectTo.startsWith("/talent") ||
-      redirectTo.startsWith("/hackathon")
+      redirectTo.startsWith("/hackathon") ||
+      redirectTo === "/dashboard" ||
+      redirectTo.startsWith("/dashboard?")
     ) {
       redirect(redirectTo);
     }

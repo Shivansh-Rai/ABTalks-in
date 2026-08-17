@@ -148,6 +148,8 @@ export function AppFooter() {
   // inline — anything here would duplicate their copyright line.
   if (isWorkshop) return null;
 
+  if (pathname === "/dashboard") return null;
+
   // The remaining funnel routes have no footer of their own, but must still
   // surface the legal links — a minimal strip instead of the full footer.
   if (isCohortRegister || isCohortIndia || isProgram || isTalent || isHackathon) {

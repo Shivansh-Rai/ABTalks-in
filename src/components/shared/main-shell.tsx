@@ -10,6 +10,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
     pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
+  const isDashboard = pathname === "/dashboard";
 
   useEffect(() => {
     document.body.classList.toggle("marketplace-page", isMarketplace);
@@ -20,7 +21,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
     <main
       className={cn(
         "flex-1",
-        !isHackathon && "pb-16 md:pb-0",
+        !isHackathon && !isDashboard && "pb-16 md:pb-0",
         isMarketplace && "bg-[#030712]",
         isHackathon && "bg-black",
       )}
