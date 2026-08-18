@@ -17,7 +17,7 @@ export function Roadmaps({ enrolledDomains }: RoadmapsProps) {
 
   return (
     <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-black">
+      <h2 className="font-display text-xl font-semibold text-[#e05226]">
         Roadmaps
       </h2>
       <ul className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -29,12 +29,12 @@ export function Roadmaps({ enrolledDomains }: RoadmapsProps) {
               className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-5"
             >
               <p className="font-display font-semibold text-black">{label}</p>
-              <p className="mt-1 flex-1 text-sm text-neutral-500">
+              <p className="mt-1 flex-1 text-sm text-[#555555]">
                 60-day challenge track
               </p>
               <Link
                 href={isEnrolled ? path : "/challenges"}
-                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
               >
                 {isEnrolled ? "Continue" : "Join"}
                 <ArrowRight className="size-4" aria-hidden />

@@ -17,10 +17,10 @@ export function HeroGreeting({ firstName }: HeroGreetingProps) {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-[#e05226] sm:text-4xl">
         {firstName ? `${greeting}, ${firstName}` : "Welcome"}
       </h1>
-      <p className="mt-2 text-neutral-500">
+      <p className="mt-2 text-[#555555]">
         {firstName
           ? "Pick up where you left off or explore something new."
           : "Sign in to your hub to browse challenges, events, and resources."}

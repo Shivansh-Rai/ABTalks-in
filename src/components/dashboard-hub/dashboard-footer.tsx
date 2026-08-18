@@ -109,18 +109,18 @@ const SOCIAL_LINKS = [
 
 export function DashboardFooter() {
   return (
-    <footer className={`mt-auto bg-white ${SIDEBAR_FOOTER_ROW_CLASS}`}>
+    <footer className={`mt-auto bg-[#FBF9F7] ${SIDEBAR_FOOTER_ROW_CLASS}`}>
       <div className="flex h-full items-center justify-between gap-4">
         <div className="min-w-0">
           <nav
-            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500"
+            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#555555]"
             aria-label="Legal"
           >
             {LEGAL_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className="hover:text-black hover:underline"
+                className="hover:text-[#e05226] hover:underline"
               >
                 {label}
               </Link>
@@ -138,7 +138,7 @@ export function DashboardFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="inline-flex size-8 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-black"
+              className="inline-flex size-8 items-center justify-center rounded-full text-[#555555] transition-colors hover:bg-[#e05226]/10 hover:text-[#e05226]"
             >
               <Icon className="size-4" />
             </a>

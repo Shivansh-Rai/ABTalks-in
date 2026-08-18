@@ -22,7 +22,7 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
       >
         &rdquo;
       </span>
-      <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-neutral-600">
+      <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#555555]">
         {quote}
       </blockquote>
       <figcaption className="mt-5 flex items-center gap-3 border-t border-neutral-100 pt-4">
@@ -48,7 +48,7 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
             {name}
           </p>
           {org ? (
-            <p className="truncate text-xs text-neutral-500">{org}</p>
+            <p className="truncate text-xs text-[#555555]">{org}</p>
           ) : null}
         </div>
       </figcaption>
@@ -60,7 +60,7 @@ export function TestimonialsSection() {
   return (
     <section id="testimonials" className="scroll-mt-20 py-8">
       <div className="px-4 sm:px-6">
-        <h2 className="font-display text-xl font-semibold text-black">
+        <h2 className="font-display text-xl font-semibold text-[#e05226]">
           What students say
         </h2>
       </div>

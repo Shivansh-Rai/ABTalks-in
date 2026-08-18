@@ -15,12 +15,12 @@ export function DashboardHeader({
   onMenuClick,
 }: DashboardHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-[#FBF9F7]">
       <div className="flex h-[72px] items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 md:hidden"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 hover:border-[#e05226] hover:text-[#e05226] md:hidden"
             aria-label="Open menu"
             aria-expanded={menuOpen}
             onClick={onMenuClick}
@@ -34,19 +34,19 @@ export function DashboardHeader({
           >
             <a
               href="#events"
-              className="text-sm font-medium text-neutral-600 hover:text-black"
+              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
             >
               Events
             </a>
             <a
               href="#faq"
-              className="text-sm font-medium text-neutral-600 hover:text-black"
+              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
             >
               FAQs
             </a>
             <a
               href="#testimonials"
-              className="text-sm font-medium text-neutral-600 hover:text-black"
+              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
             >
               Testimonials
             </a>
@@ -57,7 +57,7 @@ export function DashboardHeader({
           {isAdmin ? (
             <Link
               href="/admin"
-              className="rounded-full border border-neutral-300 bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+              className="rounded-full border border-[#e05226] bg-[#e05226] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#c44720]"
             >
               Admin
             </Link>

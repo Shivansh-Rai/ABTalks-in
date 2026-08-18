@@ -19,6 +19,8 @@ import {
   SIDEBAR_BRAND_ROW_CLASS,
   SIDEBAR_FOOTER_ROW_CLASS,
   SIDEBAR_WIDTH_CLASS,
+  HUB_NAV_ACTIVE_CLASS,
+  HUB_NAV_IDLE_CLASS,
   type NavIconKey,
 } from "./nav-items";
 
@@ -85,9 +87,7 @@ export function DashboardSidebar({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-neutral-100 text-black"
-                  : "text-neutral-600 hover:bg-neutral-50 hover:text-black",
+                active ? HUB_NAV_ACTIVE_CLASS : HUB_NAV_IDLE_CLASS,
               )}
             >
               <Icon className="size-5 shrink-0" aria-hidden />
@@ -118,13 +118,13 @@ export function DashboardSidebar({
             <p className="truncate text-sm font-medium text-black">
               {displayName}
             </p>
-            <p className="truncate text-xs text-neutral-500">{user.email}</p>
+            <p className="truncate text-xs text-[#555555]">{user.email}</p>
           </div>
         </div>
         <form action={signOutAction} className="mt-3">
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-[#555555] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]"
           >
             <LogOut className="size-4" aria-hidden />
             Sign out
@@ -137,7 +137,7 @@ export function DashboardSidebar({
   return (
     <>
       <aside
-        className={`sticky top-0 hidden h-svh shrink-0 flex-col overflow-y-auto border-r border-neutral-200 bg-white md:flex ${SIDEBAR_WIDTH_CLASS}`}
+        className={`sticky top-0 hidden h-svh shrink-0 flex-col overflow-y-auto border-r border-neutral-200 bg-[#FBF9F7] md:flex ${SIDEBAR_WIDTH_CLASS}`}
       >
         {sidebarContent}
       </aside>
@@ -147,7 +147,7 @@ export function DashboardSidebar({
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-y-auto border-r border-neutral-200 bg-white transition-transform duration-200 md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-y-auto border-r border-neutral-200 bg-[#FBF9F7] transition-transform duration-200 md:hidden",
           SIDEBAR_WIDTH_CLASS,
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}

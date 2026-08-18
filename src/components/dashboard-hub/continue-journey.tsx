@@ -26,20 +26,20 @@ type ContinueJourneyProps = {
 export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
   return (
     <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-black">
+      <h2 className="font-display text-xl font-semibold text-[#e05226]">
         Continue your journey
       </h2>
 
       {enrollments.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-center">
-          <p className="text-neutral-600">
+        <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-6 text-center">
+          <p className="text-[#555555]">
             You haven&apos;t started a challenge yet
           </p>
           <Link
             href="/challenges"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "mt-4 inline-flex bg-neutral-900 text-white hover:bg-neutral-800",
+              "mt-4 inline-flex bg-[#e05226] text-white hover:bg-[#c44720]",
             )}
           >
             Browse challenges
@@ -59,14 +59,14 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                     <p className="font-display font-semibold text-black">
                       {DOMAIN_LABEL[e.domain]}
                     </p>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <p className="mt-1 text-sm text-[#555555]">
                       Day {e.daysCompleted + 1} of 60 · {e.currentStreak}-day
                       streak
                     </p>
                   </div>
                   <Link
                     href={TRACK_PATH[e.domain]}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
                   >
                     Continue
                     <ArrowRight className="size-4" aria-hidden />
@@ -81,7 +81,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                   className="mt-4 h-1.5 overflow-hidden rounded-full bg-neutral-100"
                 >
                   <div
-                    className="h-full bg-neutral-900 transition-all"
+                    className="h-full bg-[#e05226] transition-all"
                     style={{ width: `${pct}%` }}
                   />
                 </div>

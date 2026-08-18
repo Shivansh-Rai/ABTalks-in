@@ -54,10 +54,10 @@ export function StreakCard({
           </span>
         </div>
         <div>
-          <p className="text-xs font-semibold tracking-widest text-neutral-500 uppercase">
+          <p className="text-xs font-semibold tracking-widest text-black uppercase">
             Day streak
           </p>
-          <p className="mt-1 text-sm text-neutral-600">
+          <p className="mt-1 text-sm text-[#555555]">
             Keep submitting daily to grow your streak.
           </p>
         </div>
@@ -93,25 +93,25 @@ export function StreakCard({
 
       <ul className="mt-5 space-y-2 border-t border-neutral-100 pt-4 text-sm">
         <li className="flex justify-between">
-          <span className="text-neutral-500">Current streak</span>
+          <span className="text-[#555555]">Current streak</span>
           <span className="font-medium tabular-nums text-black">
             {streak.current} days
           </span>
         </li>
         <li className="flex justify-between">
-          <span className="text-neutral-500">Longest streak</span>
+          <span className="text-[#555555]">Longest streak</span>
           <span className="font-medium tabular-nums text-black">
             {streak.longest} days
           </span>
         </li>
         <li className="flex justify-between">
-          <span className="text-neutral-500">Total active days</span>
+          <span className="text-[#555555]">Total active days</span>
           <span className="font-medium tabular-nums text-black">
             {totalActiveDays}
           </span>
         </li>
         <li className="flex justify-between">
-          <span className="text-neutral-500">Next milestone</span>
+          <span className="text-[#555555]">Next milestone</span>
           <span className="font-medium tabular-nums text-black">
             {milestone} days
           </span>

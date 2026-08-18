@@ -25,7 +25,7 @@ export function OtherChallenges({
 
   return (
     <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-black">
+      <h2 className="font-display text-xl font-semibold text-[#e05226]">
         Other challenges
       </h2>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -34,12 +34,12 @@ export function OtherChallenges({
             <p className="font-display font-semibold text-black">
               31 Days AI Cohort
             </p>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-[#555555]">
               Working professionals · structured curriculum
             </p>
             <Link
               href="/program"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
             >
               Learn more
               <ArrowRight className="size-4" aria-hidden />
@@ -51,12 +51,12 @@ export function OtherChallenges({
             <p className="font-display font-semibold text-black">
               Claude Challenge
             </p>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-[#555555]">
               Build with Claude · 60 days
             </p>
             <Link
               href="/claude-signup"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
             >
               Join
               <ArrowRight className="size-4" aria-hidden />

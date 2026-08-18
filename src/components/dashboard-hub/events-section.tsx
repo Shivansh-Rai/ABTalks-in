@@ -22,7 +22,7 @@ export function EventsSection() {
 
   return (
     <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-black">Events</h2>
+      <h2 className="font-display text-xl font-semibold text-[#e05226]">Events</h2>
 
       {upcoming.length > 0 ? (
         <EventRail title="Upcoming events" events={upcoming} />
@@ -46,7 +46,7 @@ function EventRail({
 }) {
   return (
     <div className={cn("mt-6", past && "mt-8")}>
-      <h3 className="text-sm font-semibold tracking-wide text-neutral-500 uppercase">
+      <h3 className="text-sm font-semibold tracking-wide text-black uppercase">
         {title}
       </h3>
       <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
@@ -93,19 +93,19 @@ function EventCard({
       <h4 className="mt-4 font-display text-base font-semibold leading-snug text-black">
         {event.title}
       </h4>
-      <p className="mt-2 text-xs text-neutral-500">
+      <p className="mt-2 text-xs text-[#555555]">
         {event.date} · {event.time}
       </p>
-      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-neutral-600">
+      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-[#555555]">
         {event.desc}
       </p>
-      <p className="mt-3 text-xs text-neutral-400">{event.location}</p>
+      <p className="mt-3 text-xs text-[#555555]">{event.location}</p>
       <Link
         href={href}
         {...(event.href
           ? { target: "_blank", rel: "noopener noreferrer" }
           : {})}
-        className="mt-4 inline-flex text-sm font-medium text-black hover:underline"
+        className="mt-4 inline-flex text-sm font-medium text-black hover:text-[#e05226]"
       >
         {ctaLabel} →
       </Link>

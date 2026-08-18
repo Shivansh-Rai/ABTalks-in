@@ -115,7 +115,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
     <Wrapper className={wrapperClass}>
       <h2
         className={cn(
-          "font-display font-semibold text-black",
+          "font-display font-semibold text-[#e05226]",
           embedded ? "text-base" : "text-xl",
         )}
       >
@@ -217,7 +217,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
 
       <div className="mt-3 flex items-center justify-between gap-4">
         {tooltip ? (
-          <p className="text-xs text-neutral-600">
+          <p className="text-xs text-[#555555]">
             {tooltip.count === 0
               ? `No submissions on ${formatTooltipDate(tooltip.date)}`
               : `${tooltip.count} submission${tooltip.count === 1 ? "" : "s"} on ${formatTooltipDate(tooltip.date)}`}
