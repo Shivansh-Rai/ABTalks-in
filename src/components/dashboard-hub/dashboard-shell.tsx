@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { DashboardFooter } from "./dashboard-footer";
 
 export type DashboardShellUser = {
   name: string;
@@ -51,13 +52,14 @@ export function DashboardShell({
         />
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-svh min-w-0 flex-1 flex-col">
         <DashboardHeader
           isAdmin={isAdmin}
           menuOpen={mobileOpen}
           onMenuClick={() => setMobileOpen(true)}
         />
         <div className="flex-1 overflow-x-hidden scroll-smooth">{children}</div>
+        <DashboardFooter />
       </div>
     </div>
   );

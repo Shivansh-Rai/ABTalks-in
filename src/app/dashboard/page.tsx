@@ -10,7 +10,6 @@ import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
 import { TestimonialsSection } from "@/components/dashboard-hub/testimonials-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
-import { DashboardFooter } from "@/components/dashboard-hub/dashboard-footer";
 import { getHubData } from "@/features/dashboard/get-hub-data";
 
 export default async function DashboardPage() {
@@ -62,7 +61,6 @@ export default async function DashboardPage() {
       <EventsSection />
       <TestimonialsSection />
       <FaqSection />
-      <DashboardFooter />
     </DashboardShell>
   );
 }

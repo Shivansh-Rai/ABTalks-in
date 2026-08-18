@@ -14,7 +14,13 @@ import {
 } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS, SIDEBAR_BRAND_ROW_CLASS, SIDEBAR_WIDTH_CLASS, type NavIconKey } from "./nav-items";
+import {
+  NAV_ITEMS,
+  SIDEBAR_BRAND_ROW_CLASS,
+  SIDEBAR_FOOTER_ROW_CLASS,
+  SIDEBAR_WIDTH_CLASS,
+  type NavIconKey,
+} from "./nav-items";
 
 const ICON_MAP: Record<
   NavIconKey,
@@ -91,7 +97,7 @@ export function DashboardSidebar({
         })}
       </nav>
 
-      <div className="mt-auto border-t border-neutral-200 p-4">
+      <div className={`mt-auto ${SIDEBAR_FOOTER_ROW_CLASS}`}>
         <div className="flex items-center gap-3">
           {user.image ? (
             // eslint-disable-next-line @next/next/no-img-element
