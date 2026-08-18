@@ -2,10 +2,6 @@ import "server-only";
 import type { ProgramMissionType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getMissionHeatmap, type MissionHeatmapCell } from "@/features/program/progression";
-import {
-  getInterviewSignal,
-  getInterviewSignals,
-} from "@/features/interview/read-model";
 
 const PAGE_SIZE = 30;
 
@@ -226,6 +222,9 @@ export async function getTalentPool(
         projectPoints: true,
         totalScore: true,
         cleanPassCount: true,
+        interview: {
+          select: { overallScore: true, status: true },
+        },
       },
     }),
     prisma.recruiterShortlistItem.findMany({
@@ -238,10 +237,6 @@ export async function getTalentPool(
   const total = allMembers.length;
   const offset = (page - 1) * PAGE_SIZE;
   const pageMembers = allMembers.slice(offset, offset + PAGE_SIZE);
-
-  // Resolved through the interview read model: DAY_31 → DAY_15 → legacy
-  // ProgramInterview. Batched to the visible page only — one query, no N+1.
-  const signals = await getInterviewSignals(pageMembers.map((m) => m.id));
 
   const members: TalentPoolRow[] = pageMembers.map((m, i) => ({
     rank: offset + i + 1,
@@ -257,7 +252,8 @@ export async function getTalentPool(
     commitPoints: m.commitPoints,
     projectPoints: m.projectPoints,
     cleanPassPct: computeCleanPassPct(m.missionPoints, m.cleanPassCount),
-    interviewOverall: signals.get(m.id)?.overallScore ?? null,
+    interviewOverall:
+      m.interview?.status === "COMPLETED" ? m.interview.overallScore : null,
     shortlisted: shortlistSet.has(m.id),
   }));
 
@@ -392,6 +388,16 @@ export async function getTalentProfile(
         },
         orderBy: { moduleNumber: "asc" },
       },
+      interview: {
+        select: {
+          status: true,
+          overallScore: true,
+          commScore: true,
+          techScore: true,
+          problemScore: true,
+          summary: true,
+        },
+      },
     },
   });
 
@@ -413,8 +419,7 @@ export async function getTalentProfile(
   });
   const rank = ranked.findIndex((m) => m.id === memberId) + 1;
 
-  const [missionHeatmap, missionPortfolio, shortlistItem, interviewSignal] =
-    await Promise.all([
+  const [missionHeatmap, missionPortfolio, shortlistItem] = await Promise.all([
     getMissionHeatmap(memberId),
     buildMissionPortfolio(memberId, member.highestUnlockedDay),
     prisma.recruiterShortlistItem.findUnique({
@@ -426,7 +431,6 @@ export async function getTalentProfile(
       },
       select: { note: true },
     }),
-    getInterviewSignal(memberId),
   ]);
 
   return {
@@ -467,17 +471,14 @@ export async function getTalentProfile(
           p.status === "GRADED" ? (p.adminScore ?? p.aiScore) : null,
         feedback: p.aiFeedback,
       })),
-      // Payload keys deliberately unchanged so the recruiter profile UI needs no
-      // edit: comm/tech/problem now come from the new competency fields, or from
-      // the legacy row while it is still the only result a member has.
-      interview: interviewSignal
+      interview: member.interview
         ? {
-            status: interviewSignal.status,
-            overallScore: interviewSignal.overallScore,
-            commScore: interviewSignal.communicationScore,
-            techScore: interviewSignal.technicalDepthScore,
-            problemScore: interviewSignal.problemSolvingScore,
-            summary: interviewSignal.summary,
+            status: member.interview.status,
+            overallScore: member.interview.overallScore,
+            commScore: member.interview.commScore,
+            techScore: member.interview.techScore,
+            problemScore: member.interview.problemScore,
+            summary: member.interview.summary,
             transcript: [] as { role: string; text: string }[],
           }
         : null,
