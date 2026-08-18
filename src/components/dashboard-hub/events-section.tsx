@@ -100,15 +100,17 @@ function EventCard({
         {event.desc}
       </p>
       <p className="mt-3 text-xs text-[#555555]">{event.location}</p>
-      <Link
-        href={href}
-        {...(event.href
-          ? { target: "_blank", rel: "noopener noreferrer" }
-          : {})}
-        className="mt-4 inline-flex text-sm font-medium text-black hover:text-[#e05226]"
-      >
-        {ctaLabel} →
-      </Link>
+      {past ? null : (
+        <Link
+          href={href}
+          {...(event.href
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : {})}
+          className="mt-4 inline-flex text-sm font-medium text-black hover:text-[#e05226]"
+        >
+          {ctaLabel} →
+        </Link>
+      )}
     </article>
   );
 }

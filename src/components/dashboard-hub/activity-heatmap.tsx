@@ -52,7 +52,7 @@ function monthLabelForColumn(
 }
 
 const CELL_CLASS =
-  "rounded-[2px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-400";
+  "rounded-[4px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-400";
 
 function HeatmapCell({
   cell,
@@ -143,7 +143,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
                 <HeatmapCell
                   key={cell?.date ?? `empty-${col}-${rowIdx}`}
                   cell={cell}
-                  className="aspect-square w-full min-w-0"
+                  className="aspect-square w-[88%] min-w-0 justify-self-center"
                   onHover={setTooltipFromCell}
                   onLeave={clearTooltip}
                 />
@@ -168,7 +168,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
           {([0, 1, 2, 3, 4] as const).map((level) => (
             <span
               key={level}
-              className={cn("size-[10px] rounded-[2px] sm:size-[11px]", LEVEL_CLASS[level])}
+              className={cn("size-[9px] rounded-[4px] sm:size-[10px]", LEVEL_CLASS[level])}
               aria-hidden
             />
           ))}
