@@ -23,7 +23,7 @@ export function StreakCard({
   const ringPct = Math.min(100, (streak.current / milestone) * 100);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-neutral-200 bg-#FBF9F9 p-5 shadow-sm">
       <div className="flex items-center gap-4">
         <div
           className="relative flex size-20 shrink-0 items-center justify-center"
@@ -43,7 +43,7 @@ export function StreakCard({
               cy="18"
               r="15.5"
               fill="none"
-              stroke="#171717"
+              stroke="#e05226"
               strokeWidth="3"
               strokeDasharray={`${ringPct} ${100 - ringPct}`}
               strokeLinecap="round"
@@ -54,7 +54,7 @@ export function StreakCard({
           </span>
         </div>
         <div>
-          <p className="text-xs font-semibold tracking-widest text-black uppercase">
+          <p className="text-xs font-semibold tracking-widest text-[#e05226] uppercase">
             Day streak
           </p>
           <p className="mt-1 text-sm text-[#555555]">
@@ -69,7 +69,7 @@ export function StreakCard({
             <span
               className={
                 weekTicks[i]
-                  ? "flex size-6 items-center justify-center rounded-full bg-neutral-900 text-white"
+                  ? "flex size-6 items-center justify-center rounded-full bg-[#e05226] text-white"
                   : "flex size-6 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50"
               }
               aria-hidden
@@ -79,7 +79,7 @@ export function StreakCard({
                   className="size-3.5"
                   viewBox="0 0 12 12"
                   fill="none"
-                  stroke="currentColor"
+                  stroke="white"
                   strokeWidth="2"
                 >
                   <path d="M2 6l3 3 5-5" />
