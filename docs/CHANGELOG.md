@@ -11,6 +11,9 @@
 - 2026-08-18 [schema] Reverted PR #168 AI cohort interview foundation from master (code + unused 20260813000000 migration file; do not apply/drop that schema on production)
 
 - 2026-08-18 [convention] New UI follows docs/design-system.md (plan 071 orange/cream); modernist/pre-modernist retired as templates, existing screens unchanged
+
+- 2026-08-18 [schema|convention] Plan 067 notification bell: Notification + NotificationRead models (read state keyed by opaque string, NOT an FK) and /admin/notifications composer; automated workshop/hackathon/cohort notifications are DERIVED at read time from EVENTS, HACKATHON config and ENROLLING ProgramCohort rows — no rows, no cron, read path stays write-free. NotificationProvider sits above SynergyProvider in the root layout (BottomNavGate needs it) and fetches only when a bell trigger mounts; one NotificationBellButton renders desktop-only in AppHeader and mobile-only as a 6th item in the bottom pill (deliberately outside the `tabs` array so the sliding indicator still measures correctly). Event notifications are suppressed for users they no longer apply to: an existing WorkshopRegistration for that eventId, an existing HackathonParticipant row (which also inverts the hackathon set — "register now" for non-participants, kickoff/deadline for participants only), or an existing ProgramMember row for that cohort. The bell shows only the newest 5 items (FEED_LIMIT in get-notifications.ts) — older ones fall off on their own, so there is deliberately no dismiss/remove control and no dismissed state in the schema
+
 - 2026-08-17 [schema] College catalog table (54,651 institutions) + StudentProfile.collegeId (nullable, no FK) so registration/profile can store a canonical pick while college stays the display string
 
 - 2026-08-13 [rule] Hackathon ViCoDathon 2026 participation certificates (ABT-HK-XXXXX); HACKATHON_CERTIFICATE_TEMPLATE_URL/PATH per-type template
