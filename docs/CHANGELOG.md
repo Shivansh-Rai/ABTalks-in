@@ -2,6 +2,8 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-18 [schema|rule|convention] Synergy became one User-level wallet for challenge and hackathon students (with a temporary StudentProfile rollback mirror and ledger reconciliation); all Neon mutations must target a production child branch unless that exact production write is explicitly authorized
+
 - 2026-08-17 [schema] College catalog table (54,651 institutions) + StudentProfile.collegeId (nullable, no FK) so registration/profile can store a canonical pick while college stays the display string
 
 - 2026-08-13 [rule] Hackathon ViCoDathon 2026 participation certificates (ABT-HK-XXXXX); HACKATHON_CERTIFICATE_TEMPLATE_URL/PATH per-type template

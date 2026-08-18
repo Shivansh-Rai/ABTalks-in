@@ -242,6 +242,7 @@ model StudentProfile {
   isCampusAmbassadorCandidate Boolean   @default(false)
   ambassadorAppliedAt         DateTime?
   ambassadorDismissedAt       DateTime?
+  /// Temporary rollback mirror. User.synergyPoints is the account-level balance.
   synergyPoints               Int       @default(0)
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
@@ -281,6 +282,7 @@ model User {
   image                 String?
   password              String?
   role                  Role                     @default(STUDENT)
+  synergyPoints         Int                      @default(0)
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @updatedAt
   accounts              Account[]
@@ -313,6 +315,7 @@ model User {
   dataRightsRequests    DataRightsRequest[]
 
   @@index([createdAt(sort: Desc)])
+  @@index([synergyPoints(sort: Desc)])
 }
 
 enum LegalDocument {

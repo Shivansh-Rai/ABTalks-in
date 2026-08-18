@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { Role } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin-auth";
+import { isAdminEmail, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { computeStreakStats } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
@@ -25,6 +26,8 @@ function revalidateAdminViews(targetUserId: string) {
   revalidatePath("/challenge");
   revalidatePath("/quiz");
   revalidatePath("/register");
+  revalidatePath("/marketplace");
+  revalidatePath("/hackathon/dashboard");
 }
 
 export async function resetProgressAction(input: {
@@ -46,6 +49,33 @@ export async function resetProgressAction(input: {
       });
       if (!enrollment) throw new Error("No enrollment");
       resetDomain = enrollment.domain;
+
+      // Serialize reset against every balance writer before reading the ledger.
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: { synergyPoints: { increment: 0 } },
+        select: { id: true },
+      });
+
+      const removedSynergy = await tx.synergyEvent.aggregate({
+        where: {
+          enrollmentId: enrollment.id,
+          type: "SUBMISSION",
+        },
+        _sum: { points: true },
+      });
+      const pointsToRemove = removedSynergy._sum.points ?? 0;
+
+      if (pointsToRemove > 0) {
+        await tx.user.update({
+          where: { id: targetUserId },
+          data: { synergyPoints: { decrement: pointsToRemove } },
+        });
+        await tx.studentProfile.updateMany({
+          where: { userId: targetUserId },
+          data: { synergyPoints: { decrement: pointsToRemove } },
+        });
+      }
 
       await tx.submission.deleteMany({
         where: { enrollmentId: enrollment.id },
@@ -261,6 +291,10 @@ export async function rejectSubmissionAction(input: {
         select: { points: true },
       });
       if (event) {
+        await tx.user.update({
+          where: { id: submission.userId },
+          data: { synergyPoints: { decrement: event.points } },
+        });
         await tx.studentProfile.updateMany({
           where: { userId: submission.userId },
           data: { synergyPoints: { decrement: event.points } },
@@ -353,6 +387,25 @@ export async function grantSynergyAction(input: {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const target = await tx.user.findUnique({
+        where: { id: targetUserId },
+        select: {
+          email: true,
+          role: true,
+          studentProfile: { select: { id: true } },
+          hackathonParticipant: { select: { id: true } },
+        },
+      });
+      const targetIsAdmin = await isAdminEmail(target?.email);
+      if (
+        !target ||
+        target.role !== Role.STUDENT ||
+        targetIsAdmin ||
+        (!target.studentProfile && !target.hackathonParticipant)
+      ) {
+        throw new Error("Registered student not found");
+      }
+
       await tx.synergyEvent.create({
         data: {
           userId: targetUserId,
@@ -361,6 +414,10 @@ export async function grantSynergyAction(input: {
           reason,
           createdByAdminId: admin.userId,
         },
+      });
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: { synergyPoints: { increment: points } },
       });
       await tx.studentProfile.updateMany({
         where: { userId: targetUserId },
@@ -378,7 +435,14 @@ export async function grantSynergyAction(input: {
     });
     revalidateAdminViews(targetUserId);
     return { ok: true as const };
-  } catch {
-    return { ok: false as const, message: "Grant failed" };
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message === "Registered student not found"
+        ? error.message
+        : "Grant failed";
+    return {
+      ok: false as const,
+      message,
+    };
   }
 }
