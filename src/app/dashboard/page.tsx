@@ -38,16 +38,16 @@ export default async function DashboardPage() {
     >
       <section className="px-4 py-8 sm:px-6">
         <div className="mx-auto max-w-[1020px]">
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
-            <div className="min-w-0 space-y-4">
-              <HeroGreeting firstName={firstName} />
-              <ActivityHeatmap cells={data.heatmap.cells} embedded />
+          <HeroGreeting firstName={firstName} />
+          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-center">
+            <ActivityHeatmap cells={data.heatmap.cells} embedded />
+            <div className="lg:pl-10 mt-9">
+              <StreakCard
+                streak={data.streak}
+                weekTicks={data.heatmap.weekTicks}
+                totalActiveDays={data.heatmap.totalActiveDays}
+              />
             </div>
-            <StreakCard
-              streak={data.streak}
-              weekTicks={data.heatmap.weekTicks}
-              totalActiveDays={data.heatmap.totalActiveDays}
-            />
           </div>
         </div>
       </section>

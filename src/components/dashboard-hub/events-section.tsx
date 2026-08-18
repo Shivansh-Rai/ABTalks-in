@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatInTimeZone } from "date-fns-tz";
 import { IST } from "@/lib/date-utils";
 import { EVENTS } from "@/components/workshop/events-data";
+import { cn } from "@/lib/utils";
 
 function todayIstKey(): string {
   return formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
@@ -24,31 +25,36 @@ export function EventsSection() {
       <h2 className="font-display text-xl font-semibold text-black">Events</h2>
 
       {upcoming.length > 0 ? (
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold tracking-wide text-neutral-500 uppercase">
-            Upcoming events
-          </h3>
-          <ul className="mt-3 space-y-3">
-            {upcoming.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </ul>
-        </div>
+        <EventRail title="Upcoming events" events={upcoming} />
       ) : null}
 
       {past.length > 0 ? (
-        <div className="mt-8">
-          <h3 className="text-sm font-semibold tracking-wide text-neutral-500 uppercase">
-            Past events
-          </h3>
-          <ul className="mt-3 space-y-3">
-            {past.map((event) => (
-              <EventCard key={event.id} event={event} past />
-            ))}
-          </ul>
-        </div>
+        <EventRail title="Past events" events={past} past />
       ) : null}
     </section>
+  );
+}
+
+function EventRail({
+  title,
+  events,
+  past = false,
+}: {
+  title: string;
+  events: (typeof EVENTS)[number][];
+  past?: boolean;
+}) {
+  return (
+    <div className={cn("mt-6", past && "mt-8")}>
+      <h3 className="text-sm font-semibold tracking-wide text-neutral-500 uppercase">
+        {title}
+      </h3>
+      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
+        {events.map((event) => (
+          <EventCard key={event.id} event={event} past={past} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -66,37 +72,43 @@ function EventCard({
   const ctaLabel = event.ctaLabel ?? (event.register ? "Register" : "View");
 
   return (
-    <li
-      className={
-        past
-          ? "rounded-2xl border border-neutral-200 bg-neutral-50 p-5 opacity-80"
-          : "rounded-2xl border border-neutral-200 bg-white p-5"
-      }
+    <article
+      className={cn(
+        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 p-5 sm:w-[300px]",
+        past ? "bg-neutral-50 opacity-90" : "bg-white shadow-sm",
+      )}
     >
-      <div className="flex gap-4">
+      <div className="flex items-start justify-between gap-3">
         <span
           className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-700"
           aria-hidden
         >
           <Icon className="size-5" />
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-display font-semibold text-black">{event.title}</p>
-          <p className="mt-1 text-sm text-neutral-500">
-            {event.date} · {event.time}
-          </p>
-          <p className="mt-2 text-sm text-neutral-600">{event.desc}</p>
-          <Link
-            href={href}
-            {...(event.href
-              ? { target: "_blank", rel: "noopener noreferrer" }
-              : {})}
-            className="mt-3 inline-block text-sm font-medium text-black hover:underline"
-          >
-            {ctaLabel} →
-          </Link>
-        </div>
+        <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-neutral-600 uppercase">
+          {event.tag}
+        </span>
       </div>
-    </li>
+
+      <h4 className="mt-4 font-display text-base font-semibold leading-snug text-black">
+        {event.title}
+      </h4>
+      <p className="mt-2 text-xs text-neutral-500">
+        {event.date} · {event.time}
+      </p>
+      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-neutral-600">
+        {event.desc}
+      </p>
+      <p className="mt-3 text-xs text-neutral-400">{event.location}</p>
+      <Link
+        href={href}
+        {...(event.href
+          ? { target: "_blank", rel: "noopener noreferrer" }
+          : {})}
+        className="mt-4 inline-flex text-sm font-medium text-black hover:underline"
+      >
+        {ctaLabel} →
+      </Link>
+    </article>
   );
 }
