@@ -423,7 +423,7 @@ export async function grantSynergyAction(input: {
   const parsed = z
     .object({
       targetUserId: z.string().min(1),
-      points: z.coerce.number().int().min(1).max(2000),
+      points: z.coerce.number().int().min(1).max(3000),
       reason: z.string().max(500).optional(),
     })
     .safeParse(input);
