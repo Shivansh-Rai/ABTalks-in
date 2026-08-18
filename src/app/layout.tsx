@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Fredoka, Instrument_Serif, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -25,6 +25,19 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  variable: "--font-fredoka",
+  weight: ["400", "500", "600", "700"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  weight: ["400"],
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
   title: "ABTalks | 60 Days Challenge",
   description: "Build your coding habit. Get discovered.",
@@ -38,10 +51,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${inter.variable} ${fredoka.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`${jakarta.variable} ${inter.variable} min-h-full flex flex-col font-sans`}>
+      <body className={`${jakarta.variable} ${inter.variable} ${fredoka.variable} ${instrumentSerif.variable} min-h-full flex flex-col font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

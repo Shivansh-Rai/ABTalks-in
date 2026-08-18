@@ -17,7 +17,7 @@ export function HeroGreeting({ firstName }: HeroGreetingProps) {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-bold tracking-tight text-[#e05226] sm:text-4xl">
+      <h1 className="font-inter text-3xl font-bold tracking-tight text-[#111111] sm:text-4xl">
         {firstName ? `${greeting}, ${firstName}` : "Welcome"}
       </h1>
       <p className="mt-2 text-[#555555]">

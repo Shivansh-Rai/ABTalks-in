@@ -26,7 +26,7 @@ type ContinueJourneyProps = {
 export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
   return (
     <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-[#e05226]">
+      <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
         Continue your journey
       </h2>
 
@@ -56,7 +56,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-display font-semibold text-black">
+                    <p className="font-heading font-semibold text-black">
                       {DOMAIN_LABEL[e.domain]}
                     </p>
                     <p className="mt-1 text-sm text-[#555555]">

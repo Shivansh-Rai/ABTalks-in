@@ -55,11 +55,11 @@ export default async function DashboardPage() {
       </section>
 
       <ContinueJourney enrollments={data.enrollments} />
-      <OtherChallenges
-        hasProgramMembership={data.hasProgramMembership}
+      <OtherChallenges enrolledDomains={data.allEnrollmentDomains} />
+      <Roadmaps
         enrolledDomains={data.allEnrollmentDomains}
+        hasProgramMembership={data.hasProgramMembership}
       />
-      <Roadmaps enrolledDomains={data.allEnrollmentDomains} />
       <EventsSection />
       <TestimonialsSection />
       <FaqSection />

@@ -49,7 +49,7 @@ export function StreakCard({
               strokeLinecap="round"
             />
           </svg>
-          <span className="absolute font-display text-2xl font-bold tabular-nums text-black">
+          <span className="absolute font-inter text-2xl font-bold tabular-nums text-black">
             {streak.current}
           </span>
         </div>

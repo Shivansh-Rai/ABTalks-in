@@ -21,8 +21,8 @@ export function EventsSection() {
   );
 
   return (
-    <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="font-display text-xl font-semibold text-[#e05226]">Events</h2>
+    <section id="events" className="scroll-mt-20 ml-4 px-4 py-8 sm:px-6">
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226]">Events</h2>
 
       {upcoming.length > 0 ? (
         <EventRail title="Upcoming events" events={upcoming} />
@@ -90,7 +90,7 @@ function EventCard({
         </span>
       </div>
 
-      <h4 className="mt-4 font-display text-base font-semibold leading-snug text-black">
+      <h4 className="mt-4 font-heading text-base font-semibold leading-snug text-black">
         {event.title}
       </h4>
       <p className="mt-2 text-xs text-[#555555]">

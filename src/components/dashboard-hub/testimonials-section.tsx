@@ -17,7 +17,7 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
   return (
     <figure className="flex h-auto w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:w-[360px]">
       <span
-        className="font-display text-4xl leading-none text-neutral-300"
+        className="font-heading text-4xl leading-none text-neutral-300"
         aria-hidden
       >
         &rdquo;
@@ -37,14 +37,14 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
           />
         ) : (
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 font-display text-sm font-bold text-neutral-700"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 font-heading text-sm font-bold text-neutral-700"
             aria-hidden
           >
             {initials(name)}
           </span>
         )}
         <div className="min-w-0">
-          <p className="truncate font-display text-sm font-bold text-black">
+          <p className="truncate font-inter text-sm font-bold text-black">
             {name}
           </p>
           {org ? (
@@ -59,9 +59,9 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
 export function TestimonialsSection() {
   return (
     <section id="testimonials" className="scroll-mt-20 py-8">
-      <div className="px-4 sm:px-6">
-        <h2 className="font-display text-xl font-semibold text-[#e05226]">
-          What students say
+      <div className="px-4 sm:px-6 ml-4">
+        <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
+          WHAT STUDENTS SAY
         </h2>
       </div>
       <TestimonialsScroller>

@@ -29,6 +29,12 @@ function formatTooltipDate(dateKey: string): string {
   return formatInTimeZone(d, IST, "d MMM yyyy");
 }
 
+function getTooltipText(count: number, dateKey: string): string {
+  return count === 0
+    ? `No submissions on ${formatTooltipDate(dateKey)}`
+    : `${count} submission${count === 1 ? "" : "s"} on ${formatTooltipDate(dateKey)}`;
+}
+
 function monthLabelForColumn(
   cells: ActivityCell[],
   colIndex: number,
@@ -52,37 +58,43 @@ function monthLabelForColumn(
 }
 
 const CELL_CLASS =
-  "rounded-[4px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-400";
+  "rounded-[4px] border border-neutral-200/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-400";
 
 function HeatmapCell({
   cell,
   className,
+  active,
   onHover,
   onLeave,
 }: {
   cell: ActivityCell | null;
   className?: string;
+  active: boolean;
   onHover: (count: number, date: string) => void;
   onLeave: () => void;
 }) {
   if (!cell) {
     return <span className={className} aria-hidden />;
   }
-  const label =
-    cell.count === 0
-      ? `No submissions on ${formatTooltipDate(cell.date)}`
-      : `${cell.count} submission${cell.count === 1 ? "" : "s"} on ${formatTooltipDate(cell.date)}`;
+  const label = getTooltipText(cell.count, cell.date);
   return (
-    <button
-      type="button"
-      aria-label={label}
-      className={cn(CELL_CLASS, LEVEL_CLASS[cell.level], className)}
-      onMouseEnter={() => onHover(cell.count, cell.date)}
-      onMouseLeave={onLeave}
-      onFocus={() => onHover(cell.count, cell.date)}
-      onBlur={onLeave}
-      onTouchStart={() => onHover(cell.count, cell.date)}
-    />
+    <div className="relative flex items-center justify-center">
+      {active ? (
+        <div className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[10px] font-medium text-white shadow-sm">
+          {label}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        aria-label={label}
+        className={cn(CELL_CLASS, LEVEL_CLASS[cell.level], className)}
+        onMouseEnter={() => onHover(cell.count, cell.date)}
+        onMouseLeave={onLeave}
+        onFocus={() => onHover(cell.count, cell.date)}
+        onBlur={onLeave}
+        onTouchStart={() => onHover(cell.count, cell.date)}
+      />
+    </div>
   );
 }
 
@@ -108,7 +120,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
     <Wrapper className={wrapperClass}>
       <h2
         className={cn(
-          "font-display font-semibold text-[#e05226]",
+          "ml-4 font-heading font-semibold uppercase text-[#e05226]",
           embedded ? "text-base" : "text-xl",
         )}
       >
@@ -144,6 +156,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
                   key={cell?.date ?? `empty-${col}-${rowIdx}`}
                   cell={cell}
                   className="aspect-square w-[88%] min-w-0 justify-self-center"
+                  active={tooltip?.date === cell?.date}
                   onHover={setTooltipFromCell}
                   onLeave={clearTooltip}
                 />
@@ -153,16 +166,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
         ))}
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        {tooltip ? (
-          <p className="min-w-0 text-xs text-[#555555]">
-            {tooltip.count === 0
-              ? `No submissions on ${formatTooltipDate(tooltip.date)}`
-              : `${tooltip.count} submission${tooltip.count === 1 ? "" : "s"} on ${formatTooltipDate(tooltip.date)}`}
-          </p>
-        ) : (
-          <span className="hidden sm:block" />
-        )}
+      <div className="mt-3 flex justify-end">
         <div className="flex shrink-0 items-center gap-1 self-end text-[10px] text-neutral-400 sm:self-auto">
           <span>Less</span>
           {([0, 1, 2, 3, 4] as const).map((level) => (
