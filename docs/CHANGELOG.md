@@ -4,6 +4,9 @@
 
 - 2026-08-18 [schema|rule|convention] Synergy became one User-level wallet for challenge and hackathon students (with a temporary StudentProfile rollback mirror and ledger reconciliation); all Neon mutations must target a production child branch unless that exact production write is explicitly authorized
 
+- 2026-08-18 [schema] Reverted PR #168 AI cohort interview foundation from master (code + unused 20260813000000 migration file; do not apply/drop that schema on production)
+
+- 2026-08-18 [convention] New UI follows docs/design-system.md (plan 071 orange/cream); modernist/pre-modernist retired as templates, existing screens unchanged
 - 2026-08-17 [schema] College catalog table (54,651 institutions) + StudentProfile.collegeId (nullable, no FK) so registration/profile can store a canonical pick while college stays the display string
 
 - 2026-08-13 [rule] Hackathon ViCoDathon 2026 participation certificates (ABT-HK-XXXXX); HACKATHON_CERTIFICATE_TEMPLATE_URL/PATH per-type template
