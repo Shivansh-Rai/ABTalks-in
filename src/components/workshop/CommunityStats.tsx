@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const STATS = [
-  { value: 3000, suffix: "+", label: "AI Learners", sub: "From 20+ Countries", accent: "#6366f1" },
+  { value: 11000, suffix: "+", label: "AI Learners", sub: "From 25+ Countries", accent: "#6366f1" },
   { value: 550, suffix: "+", label: "Institutions", sub: "Students enrolled", accent: "#a855f7" },
   { value: 300, suffix: "+", label: "Organisations", sub: "Working professionals", accent: "#818cf8" },
 ];
