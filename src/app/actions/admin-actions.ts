@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { Role } from "@prisma/client";
+import { Role, type Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { isAdminEmail, requireAdmin } from "@/lib/admin-auth";
@@ -14,6 +14,53 @@ const baseInput = z.object({
   targetUserId: z.string().min(1),
   reason: z.string().max(500).optional(),
 });
+
+async function debitSynergyNotBelowZero(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  pointsToRemove: number,
+): Promise<number> {
+  const locked = await tx.user.update({
+    where: { id: userId },
+    data: { synergyPoints: { increment: 0 } },
+    select: { synergyPoints: true },
+  });
+  const actualDebit = Math.min(pointsToRemove, Math.max(locked.synergyPoints, 0));
+  if (actualDebit > 0) {
+    await tx.user.update({
+      where: { id: userId },
+      data: { synergyPoints: { decrement: actualDebit } },
+    });
+    const profile = await tx.studentProfile.findUnique({
+      where: { userId },
+      select: { synergyPoints: true },
+    });
+    if (profile) {
+      await tx.studentProfile.update({
+        where: { userId },
+        data: { synergyPoints: Math.max(0, profile.synergyPoints - actualDebit) },
+      });
+    }
+  }
+  return Math.max(pointsToRemove - actualDebit, 0);
+}
+
+async function recordSpentSynergyClamp(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  shortfall: number,
+  reason: string,
+) {
+  if (shortfall <= 0) return;
+  await tx.synergyEvent.create({
+    data: {
+      userId,
+      points: shortfall,
+      type: "BALANCE_RECONCILIATION",
+      reason,
+    },
+  });
+}
 
 function revalidateAdminViews(targetUserId: string) {
   revalidatePath(`/admin/students/${targetUserId}`);
@@ -65,21 +112,20 @@ export async function resetProgressAction(input: {
         _sum: { points: true },
       });
       const pointsToRemove = removedSynergy._sum.points ?? 0;
-
-      if (pointsToRemove > 0) {
-        await tx.user.update({
-          where: { id: targetUserId },
-          data: { synergyPoints: { decrement: pointsToRemove } },
-        });
-        await tx.studentProfile.updateMany({
-          where: { userId: targetUserId },
-          data: { synergyPoints: { decrement: pointsToRemove } },
-        });
-      }
+      const spentShortfall =
+        pointsToRemove > 0
+          ? await debitSynergyNotBelowZero(tx, targetUserId, pointsToRemove)
+          : 0;
 
       await tx.submission.deleteMany({
         where: { enrollmentId: enrollment.id },
       });
+      await recordSpentSynergyClamp(
+        tx,
+        targetUserId,
+        spentShortfall,
+        "Clamped synergy to 0 after reset removed submission points that were already spent.",
+      );
 
       await tx.enrollment.update({
         where: { id: enrollment.id },
@@ -290,18 +336,18 @@ export async function rejectSubmissionAction(input: {
         where: { submissionId },
         select: { points: true },
       });
-      if (event) {
-        await tx.user.update({
-          where: { id: submission.userId },
-          data: { synergyPoints: { decrement: event.points } },
-        });
-        await tx.studentProfile.updateMany({
-          where: { userId: submission.userId },
-          data: { synergyPoints: { decrement: event.points } },
-        });
-      }
+      const spentShortfall =
+        event && event.points > 0
+          ? await debitSynergyNotBelowZero(tx, submission.userId, event.points)
+          : 0;
 
       await tx.submission.delete({ where: { id: submissionId } });
+      await recordSpentSynergyClamp(
+        tx,
+        submission.userId,
+        spentShortfall,
+        "Clamped synergy to 0 after reject removed submission points that were already spent.",
+      );
 
       const remainingCount = await tx.submission.count({
         where: { enrollmentId: submission.enrollmentId },
