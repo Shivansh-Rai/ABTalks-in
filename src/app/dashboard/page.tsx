@@ -8,7 +8,6 @@ import { ContinueJourney } from "@/components/dashboard-hub/continue-journey";
 import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
-import { TestimonialsSection } from "@/components/dashboard-hub/testimonials-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
 import { getHubData } from "@/features/dashboard/get-hub-data";
 
@@ -37,7 +36,7 @@ export default async function DashboardPage() {
       isAdmin={session.user.isAdmin ?? false}
     >
       <section className="px-4 py-8 sm:px-6">
-        <div className="mx-auto max-w-[1020px]">
+        <div className="ml-5 max-w-[1020px]">
           <HeroGreeting firstName={firstName} />
           <div className="mt-4 grid min-w-0 gap-6 lg:grid-cols-[1fr_320px] lg:items-center lg:gap-8">
             <div className="min-w-0 lg:pr-6">
@@ -61,7 +60,7 @@ export default async function DashboardPage() {
         hasProgramMembership={data.hasProgramMembership}
       />
       <EventsSection />
-      <TestimonialsSection />
+      
       <FaqSection />
     </DashboardShell>
   );

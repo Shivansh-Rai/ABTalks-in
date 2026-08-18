@@ -57,7 +57,7 @@ export function DashboardHeader({
           {isAdmin ? (
             <Link
               href="/admin"
-              className="rounded-full border border-[#e05226] bg-[#e05226] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#c44720]"
+              className="rounded-full border border-[#E05226] bg-[#E05226] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#C9411C]"
             >
               Admin
             </Link>

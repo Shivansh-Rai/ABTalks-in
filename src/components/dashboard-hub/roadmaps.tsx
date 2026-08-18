@@ -27,7 +27,7 @@ export function Roadmaps({
     <>
       <section className="scroll-mt-20 ml-4 px-4 py-8 sm:px-6">
         <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
-          Roadmaps
+          CHALLENGE TRACKS
         </h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
           {ROADMAPS.map(({ domain, label, path }) => {
@@ -74,7 +74,7 @@ export function Roadmaps({
                 href="/program"
                 className={cn(
                   buttonVariants({ variant: "default" }),
-                  "shrink-0 bg-[#e05226] text-white hover:bg-[#c44720]",
+                  "shrink-0 bg-[#E05226] text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
                 )}
               >
                 {hasProgramMembership ? "Continue" : "Start"}

@@ -17,7 +17,7 @@ type WaitlistTrackCardProps = {
 };
 
 const CARD_CLASS =
-  "group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border bg-card/80 p-6 shadow-card backdrop-blur-md transition-all duration-1000 ease-out hover:-translate-y-1 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "group relative flex min-h-72 flex-col overflow-hidden rounded-3xl border bg-card/80 p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)] backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-4";
 
 function WaitlistTrackCardBody({
   accent,
@@ -48,7 +48,7 @@ function WaitlistTrackCardBody({
         >
           {pill}
         </span>
-        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform duration-1000 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
       </div>
 
       <h2 className="relative mt-8 font-display text-2xl font-bold tracking-tight text-foreground">

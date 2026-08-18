@@ -38,7 +38,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
             href="/challenges"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "mt-4 inline-flex bg-[#e05226] text-white hover:bg-[#c44720]",
+              "mt-4 inline-flex bg-[#E05226] text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
             )}
           >
             Browse challenges
@@ -67,7 +67,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                     href={TRACK_PATH[e.domain]}
                     className={cn(
                       buttonVariants({ variant: "default" }),
-                      "shrink-0 self-start bg-[#e05226] text-white hover:bg-[#c44720] sm:self-auto",
+                      "shrink-0 self-start bg-[#E05226] text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100 sm:self-auto",
                     )}
                   >
                     Continue
