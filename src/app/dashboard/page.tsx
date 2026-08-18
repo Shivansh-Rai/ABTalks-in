@@ -39,9 +39,11 @@ export default async function DashboardPage() {
       <section className="px-4 py-8 sm:px-6">
         <div className="mx-auto max-w-[1020px]">
           <HeroGreeting firstName={firstName} />
-          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-center">
-            <ActivityHeatmap cells={data.heatmap.cells} embedded />
-            <div className="lg:pl-10 mt-9">
+          <div className="mt-4 grid min-w-0 gap-6 lg:grid-cols-[1fr_320px] lg:items-center">
+            <div className="min-w-0">
+              <ActivityHeatmap cells={data.heatmap.cells} embedded />
+            </div>
+            <div className="mt-2 lg:mt-0 lg:pl-10">
               <StreakCard
                 streak={data.streak}
                 weekTicks={data.heatmap.weekTicks}

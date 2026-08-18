@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import {
@@ -81,34 +81,27 @@ function HeatmapCell({
       onMouseLeave={onLeave}
       onFocus={() => onHover(cell.count, cell.date)}
       onBlur={onLeave}
+      onTouchStart={() => onHover(cell.count, cell.date)}
     />
   );
 }
 
 export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{
     count: number;
     date: string;
   } | null>(null);
 
   const weekCount = Math.ceil(cells.length / 7);
-  const gridCols = `1.75rem repeat(${weekCount}, minmax(0, 1fr))`;
+  const gridCols = `1.5rem repeat(${weekCount}, minmax(0, 1fr))`;
 
   const setTooltipFromCell = (count: number, date: string) =>
     setTooltip({ count, date });
   const clearTooltip = () => setTooltip(null);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (window.matchMedia("(min-width: 1024px)").matches) return;
-    el.scrollLeft = el.scrollWidth;
-  }, [cells]);
-
   const Wrapper = embedded ? "div" : "section";
   const wrapperClass = embedded
-    ? "w-full min-h-[350px] flex flex-col"
+    ? "w-full min-w-0 flex flex-col lg:min-h-[350px]"
     : "scroll-mt-20 px-4 py-8 sm:px-6";
 
   return (
@@ -122,73 +115,18 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
         Last {HEATMAP_MONTHS} months activity
       </h2>
 
-      {/* Mobile: fixed-size cells + horizontal scroll */}
       <div
         className={cn(
-          "mt-3 overflow-x-auto lg:hidden",
-          embedded && "flex-1 min-h-0",
-        )}
-        ref={scrollRef}
-      >
-        <div className="flex w-max gap-[3px]">
-          <div className="flex w-7 shrink-0 flex-col gap-[3px] pt-4">
-            <span className="h-4 shrink-0" aria-hidden />
-            {ROW_LABELS.map((label, i) => (
-              <span
-                key={i}
-                className="flex h-[11px] items-center text-[10px] text-neutral-400"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <div className="flex gap-[3px]">
-            {Array.from({ length: weekCount }, (_, col) => {
-              const monthLabel = monthLabelForColumn(cells, col);
-              const weekCells = cells.slice(col * 7, col * 7 + 7);
-              return (
-                <div key={col} className="flex shrink-0 flex-col gap-[3px]">
-                  <span className="h-4 shrink-0 text-[10px] text-neutral-400">
-                    {monthLabel ?? ""}
-                  </span>
-                  {weekCells.map((cell) => (
-                    <HeatmapCell
-                      key={cell.date}
-                      cell={cell}
-                      className="size-[11px] shrink-0"
-                      onHover={setTooltipFromCell}
-                      onLeave={clearTooltip}
-                    />
-                  ))}
-                  {weekCells.length < 7
-                    ? Array.from({ length: 7 - weekCells.length }, (_, i) => (
-                        <span
-                          key={`pad-${col}-${i}`}
-                          className="size-[11px] shrink-0"
-                          aria-hidden
-                        />
-                      ))
-                    : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop: fluid square cells, full width, no scroll */}
-      <div
-        className={cn(
-          "mt-3 hidden w-full gap-[3px] lg:grid",
-          embedded && "flex-1 min-h-0",
+          "mt-3 grid w-full min-w-0 gap-[2px] sm:gap-[3px]",
+          embedded && "flex-1 lg:min-h-0",
         )}
         style={{ gridTemplateColumns: gridCols }}
       >
-        <span className="h-4" aria-hidden />
+        <span className="h-3 sm:h-4" aria-hidden />
         {Array.from({ length: weekCount }, (_, col) => (
           <span
             key={`month-${col}`}
-            className="h-4 text-[10px] leading-4 text-neutral-400"
+            className="h-3 truncate text-[9px] leading-3 text-neutral-400 sm:h-4 sm:text-[10px] sm:leading-4"
           >
             {monthLabelForColumn(cells, col) ?? ""}
           </span>
@@ -196,7 +134,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
 
         {ROW_LABELS.map((label, rowIdx) => (
           <div key={`row-${rowIdx}`} className="contents">
-            <span className="flex items-center text-[10px] text-neutral-400">
+            <span className="flex items-center text-[9px] text-neutral-400 sm:text-[10px]">
               {label}
             </span>
             {Array.from({ length: weekCount }, (_, col) => {
@@ -215,22 +153,22 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
         ))}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-4">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         {tooltip ? (
-          <p className="text-xs text-[#555555]">
+          <p className="min-w-0 text-xs text-[#555555]">
             {tooltip.count === 0
               ? `No submissions on ${formatTooltipDate(tooltip.date)}`
               : `${tooltip.count} submission${tooltip.count === 1 ? "" : "s"} on ${formatTooltipDate(tooltip.date)}`}
           </p>
         ) : (
-          <span />
+          <span className="hidden sm:block" />
         )}
-        <div className="flex items-center gap-1 text-[10px] text-neutral-400">
+        <div className="flex shrink-0 items-center gap-1 self-end text-[10px] text-neutral-400 sm:self-auto">
           <span>Less</span>
           {([0, 1, 2, 3, 4] as const).map((level) => (
             <span
               key={level}
-              className={cn("size-[11px] rounded-[2px]", LEVEL_CLASS[level])}
+              className={cn("size-[10px] rounded-[2px] sm:size-[11px]", LEVEL_CLASS[level])}
               aria-hidden
             />
           ))}
