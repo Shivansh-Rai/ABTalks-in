@@ -2,6 +2,7 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-18 [convention] New UI follows docs/design-system.md (plan 071 orange/cream); modernist/pre-modernist retired as templates, existing screens unchanged
 - 2026-08-17 [schema] College catalog table (54,651 institutions) + StudentProfile.collegeId (nullable, no FK) so registration/profile can store a canonical pick while college stays the display string
 
 - 2026-08-13 [rule] Hackathon ViCoDathon 2026 participation certificates (ABT-HK-XXXXX); HACKATHON_CERTIFICATE_TEMPLATE_URL/PATH per-type template
