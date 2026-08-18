@@ -32,7 +32,7 @@ export function FaqSection() {
             return (
               <div
                 key={item.q}
-                className="overflow-hidden rounded-xl bg-neutral-100"
+                className="overflow-hidden rounded-xl bg-[#F7E9E3]"
               >
                 <button
                   type="button"
