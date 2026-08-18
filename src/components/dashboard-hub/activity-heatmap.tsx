@@ -120,7 +120,7 @@ export function ActivityHeatmap({ cells, embedded = false }: ActivityHeatmapProp
     <Wrapper className={wrapperClass}>
       <h2
         className={cn(
-          "ml-4 font-heading font-semibold uppercase text-[#e05226]",
+          "text-center font-heading font-semibold uppercase text-[#e05226]",
           embedded ? "text-base" : "text-xl",
         )}
       >

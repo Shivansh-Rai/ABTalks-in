@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import type { UserEnrollmentSummary } from "@/features/enrollment/get-user-enrollments";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,8 +24,8 @@ type ContinueJourneyProps = {
 
 export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
   return (
-    <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
+    <section className="scroll-mt-20 ml-4 px-4 py-8 sm:px-6">
+      <h2 className=" font-heading text-xl font-semibold uppercase text-[#e05226]">
         Continue your journey
       </h2>
 
@@ -54,9 +53,9 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                 key={e.id}
                 className="rounded-2xl border border-neutral-200 bg-white p-5"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-heading font-semibold text-black">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-inter font-bold text-black">
                       {DOMAIN_LABEL[e.domain]}
                     </p>
                     <p className="mt-1 text-sm text-[#555555]">
@@ -66,10 +65,12 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                   </div>
                   <Link
                     href={TRACK_PATH[e.domain]}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "shrink-0 self-start bg-[#e05226] text-white hover:bg-[#c44720] sm:self-auto",
+                    )}
                   >
                     Continue
-                    <ArrowRight className="size-4" aria-hidden />
                   </Link>
                 </div>
                 <div
@@ -78,7 +79,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                   aria-valuemax={100}
                   aria-valuenow={pct}
                   aria-label={`${DOMAIN_LABEL[e.domain]} progress`}
-                  className="mt-4 h-1.5 overflow-hidden rounded-full bg-neutral-100"
+                  className="mt-4 h-1.5 w-full overflow-hidden rounded-lg bg-neutral-100"
                 >
                   <div
                     className="h-full bg-[#e05226] transition-all"

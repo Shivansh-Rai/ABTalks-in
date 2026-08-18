@@ -25,8 +25,8 @@ export function Roadmaps({
 
   return (
     <>
-      <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-        <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
+      <section className="scroll-mt-20 ml-4 px-4 py-8 sm:px-6">
+        <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
           Roadmaps
         </h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -55,8 +55,8 @@ export function Roadmaps({
       </section>
 
       {showProgramPrepKit ? (
-        <section className="px-4 py-2 sm:px-6 sm:py-4">
-          <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
+        <section className="ml-4 px-4 py-2 sm:px-6 sm:py-4">
+          <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
             AI Prep Kit
           </h2>
           <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6">

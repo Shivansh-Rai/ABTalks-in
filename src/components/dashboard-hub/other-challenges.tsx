@@ -18,11 +18,11 @@ export function OtherChallenges({ enrolledDomains }: OtherChallengesProps) {
   }
 
   return (
-    <section className="scroll-mt-20 px-4 py-8 sm:px-6">
-      <h2 className="ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]">
+    <section className="ml-4 scroll-mt-20 px-4 py-8 sm:px-6">
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226]">
         Other challenges
       </h2>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+      <ul className="mt-4 ml-4 grid gap-3 sm:grid-cols-2">
         {showClaude ? (
           <li className="rounded-2xl border border-neutral-200 bg-white p-5">
             <p className="font-heading font-semibold text-black">
