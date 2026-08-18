@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SynergyChip } from "@/components/shared/synergy-chip";
+import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 import {
   ChallengeSwitcher,
   type ChallengeSwitcherEnrollment,
@@ -147,6 +148,9 @@ export function AppHeader({
               Admin
             </Link>
           ) : null}
+          {/* All breakpoints. On mobile this lands between the challenge
+              switcher and the hamburger, which are the only other visible items. */}
+          <NotificationBellButton className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-card transition-colors hover:bg-muted" />
           <div className="hidden md:block">
             <SynergyChip />
           </div>
