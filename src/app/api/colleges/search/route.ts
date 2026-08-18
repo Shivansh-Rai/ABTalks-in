@@ -32,6 +32,6 @@ export async function GET(request: Request) {
   const data = await searchColleges(parsed.data);
   return NextResponse.json(
     { ok: true as const, data },
-    { headers: { "Cache-Control": "private, max-age=300" } },
+    { headers: { "Cache-Control": "private, no-store" } },
   );
 }

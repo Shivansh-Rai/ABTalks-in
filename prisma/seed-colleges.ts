@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { config } from "dotenv";
 import { prisma } from "../src/lib/db";
+
+config({ path: ".env.local" });
+config();
 
 type CollegeJsonRow = {
   name: string;

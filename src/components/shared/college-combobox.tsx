@@ -17,7 +17,6 @@ type Props = {
   onChange: (name: string, collegeId: string | null) => void;
   placeholder?: string;
   "aria-invalid"?: boolean;
-  autoComplete?: string;
 };
 
 const INPUT_CLASS =
@@ -44,7 +43,6 @@ export function CollegeCombobox({
   onChange,
   placeholder,
   "aria-invalid": ariaInvalid,
-  autoComplete,
 }: Props) {
   const [results, setResults] = useState<CollegeOption[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -68,6 +66,7 @@ export function CollegeCombobox({
 
       fetch(`/api/colleges/search?q=${encodeURIComponent(q)}`, {
         signal: controller.signal,
+        cache: "no-store",
       })
         .then(async (res) => {
           const json: unknown = await res.json();
@@ -109,7 +108,12 @@ export function CollegeCombobox({
         id={id}
         placeholder={placeholder}
         aria-invalid={ariaInvalid}
-        autoComplete={autoComplete}
+        autoComplete="nope"
+        autoCorrect="off"
+        autoCapitalize="none"
+        spellCheck={false}
+        data-lpignore="true"
+        data-1p-ignore=""
         className={INPUT_CLASS}
       />
       <Autocomplete.Portal>

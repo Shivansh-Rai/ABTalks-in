@@ -425,7 +425,6 @@ export function RegistrationForm({
                     <CollegeCombobox
                       value={field.value}
                       onChange={(name) => field.onChange(name)}
-                      autoComplete="organization"
                     />
                   </FormControl>
                   <FormMessage />
