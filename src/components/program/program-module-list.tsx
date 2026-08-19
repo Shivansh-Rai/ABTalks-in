@@ -136,8 +136,8 @@ function DayRow({ day }: { day: CurriculumDay }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-5 py-4",
-        locked && "opacity-70",
+        "flex items-center justify-between gap-4 rounded-[12px] border border-transparent bg-[#FBF9F7] px-5 py-4 transition-colors",
+        locked ? "opacity-70" : "hover:border-[#E05226] hover:bg-[#FFECE3]",
       )}
     >
       <div className="min-w-0">
