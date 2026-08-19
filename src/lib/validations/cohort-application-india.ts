@@ -102,6 +102,9 @@ export const cohortApplicationIndiaSchema = z.object({
   understandPreCall: confirmed,
   readyForChallenge: confirmed,
   preferredStartWindow: z.enum(START_WINDOWS, { error: "Select an option" }),
+  acceptLegal: confirmed,
+  // Pre-checked marketing opt-in — not a required confirmation.
+  newsletterOptIn: z.boolean(),
 });
 
 export type CohortApplicationIndiaInput = z.infer<

@@ -55,6 +55,10 @@ export async function completeRegistrationAction(formData: FormData) {
   const college =
     typeof collegeRaw === "string" ? collegeRaw.trim() : collegeRaw;
 
+  const collegeIdRaw = formData.get("collegeId");
+  const collegeId =
+    typeof collegeIdRaw === "string" ? collegeIdRaw.trim() : collegeIdRaw;
+
   const organizationRaw = formData.get("organization");
   const organization =
     typeof organizationRaw === "string"
@@ -77,6 +81,7 @@ export async function completeRegistrationAction(formData: FormData) {
   const parsed = registerPayloadSchema.safeParse({
     fullName,
     college,
+    collegeId,
     graduationYear: Number.isFinite(graduationYear) ? graduationYear : undefined,
     userType,
     organization,
@@ -89,6 +94,8 @@ export async function completeRegistrationAction(formData: FormData) {
     phoneNumber,
     githubUsername: formData.get("githubUsername") || "",
     referralCode,
+    acceptLegal: formData.get("acceptLegal") === "true",
+    newsletterOptIn: formData.get("newsletterOptIn") === "true",
   });
 
   if (!parsed.success) {
@@ -102,7 +109,9 @@ export async function completeRegistrationAction(formData: FormData) {
     return { ok: false as const, message: "That track is not open." };
   }
 
-  const result = await completeRegistration(session.user.id, parsed.data);
+  const result = await completeRegistration(session.user.id, parsed.data, {
+    email: session.user.email,
+  });
   if (!result.ok) {
     return { ok: false as const, message: result.message };
   }

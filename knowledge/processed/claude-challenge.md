@@ -54,6 +54,8 @@ Missing any one of the three steps means that day's submission may not count.
 
 - A verified Certificate of Completion is issued when a participant completes the final **Day 60** submission AND has completed **at least 50 days** in total throughout the challenge.
 - Certificates include a unique ID (`ABT-XX-XXXXX`) and a QR code for public verification.
+- Missing a day does not remove a participant from the challenge — the streak resets, but participation continues; the goal is to keep going
+- Consistency is weighed when the team considers: certificates, goodies, community recognition, and special opportunities
 
 ### What makes a strong participant
 

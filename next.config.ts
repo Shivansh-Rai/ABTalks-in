@@ -23,7 +23,15 @@ function localNetworkHosts(): string[] {
 }
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  // React Compiler runs a Babel pass over all 169 client components, which costs
+  // ~2 min per route on cold dev compiles. Production builds compile once ahead
+  // of time, so keep it on there and skip it in dev.
+  reactCompiler: process.env.NODE_ENV === "production",
+  // Parent ~/package-lock.json confuses Turbopack into using the wrong workspace
+  // root, which breaks env loading (AUTH_SECRET) and can hang compiles.
+  turbopack: {
+    root: process.cwd(),
+  },
   // Next 16 blocks /_next/* from non-localhost origins unless listed here.
   // Without this, LAN/phone pages never hydrate → login form does a dead GET.
   allowedDevOrigins: localNetworkHosts(),

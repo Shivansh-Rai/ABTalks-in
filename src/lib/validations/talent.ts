@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { optionalPhoneSchema } from "./phone";
+import { legalAcceptanceSchema } from "./legal";
 
-export const recruiterRegisterSchema = z.object({
-  fullName: z.string().trim().min(1, "Full name is required").max(120),
-  company: z.string().trim().min(1, "Company is required").max(120),
-  phone: optionalPhoneSchema,
-});
+export const recruiterRegisterSchema = z
+  .object({
+    fullName: z.string().trim().min(1, "Full name is required").max(120),
+    company: z.string().trim().min(1, "Company is required").max(120),
+    phone: optionalPhoneSchema,
+  })
+  .merge(legalAcceptanceSchema);
 
 export type RecruiterRegisterInput = z.infer<typeof recruiterRegisterSchema>;
 

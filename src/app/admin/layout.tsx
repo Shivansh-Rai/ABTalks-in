@@ -13,6 +13,11 @@ export default async function AdminLayout({
   const navItems = [
     { href: "/admin", label: "Overview", icon: "overview" as const },
     { href: "/admin/actions", label: "Activity", icon: "submissions" as const },
+    {
+      href: "/admin/notifications",
+      label: "Notifications",
+      icon: "notifications" as const,
+    },
     { href: "/admin/students", label: "Students", icon: "students" as const },
     { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" as const },
     { href: "/admin/hackathon", label: "Hackathon", icon: "hackathon" as const },
@@ -34,6 +39,11 @@ export default async function AdminLayout({
       icon: "hackathonLinks" as const,
     },
     { href: "/admin/redemptions", label: "Redemptions", icon: "redemptions" as const },
+    {
+      href: "/admin/data-requests",
+      label: "Data Requests",
+      icon: "dataRequests" as const,
+    },
   ];
 
   return (

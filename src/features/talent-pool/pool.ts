@@ -181,6 +181,7 @@ export async function getTalentPool(
   const where = {
     cohortId: access.cohort.id,
     status: { in: ["ENROLLED", "COMPLETED"] as ("ENROLLED" | "COMPLETED")[] },
+    recruiterVisibilityConsentAt: { not: null },
     ...(filters.minYears !== undefined
       ? { yearsExperience: { gte: filters.minYears } }
       : {}),
@@ -350,6 +351,7 @@ export async function getTalentProfile(
       id: memberId,
       cohortId: access.cohort.id,
       status: { in: ["ENROLLED", "COMPLETED"] },
+      recruiterVisibilityConsentAt: { not: null },
     },
     select: {
       id: true,
@@ -394,7 +396,6 @@ export async function getTalentProfile(
           techScore: true,
           problemScore: true,
           summary: true,
-          transcript: true,
         },
       },
     },
@@ -406,6 +407,7 @@ export async function getTalentProfile(
     where: {
       cohortId: access.cohort.id,
       status: { in: ["ENROLLED", "COMPLETED"] },
+      recruiterVisibilityConsentAt: { not: null },
     },
     orderBy: [
       { totalScore: "desc" },
@@ -430,12 +432,6 @@ export async function getTalentProfile(
       select: { note: true },
     }),
   ]);
-
-  const transcript =
-    member.interview?.transcript &&
-    Array.isArray(member.interview.transcript)
-      ? (member.interview.transcript as { role: string; text: string }[])
-      : [];
 
   return {
     ok: true,
@@ -483,7 +479,7 @@ export async function getTalentProfile(
             techScore: member.interview.techScore,
             problemScore: member.interview.problemScore,
             summary: member.interview.summary,
-            transcript,
+            transcript: [] as { role: string; text: string }[],
           }
         : null,
       aiRecommendation: member.aiRecommendation,

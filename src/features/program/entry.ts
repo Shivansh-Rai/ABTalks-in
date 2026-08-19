@@ -11,6 +11,8 @@ import {
 } from "@/lib/program-auth";
 import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
+import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 export const ENTRY_DURATION_MIN = 25;
 export const ENTRY_PER_SECTION = 10;
@@ -303,6 +305,9 @@ export async function createApplication(
     phone: emptyToNull(profile.phone),
     githubUsername: profile.githubUsername,
     githubRepoUrl: profile.githubRepoUrl,
+    recruiterVisibilityConsentAt: profile.recruiterVisibilityConsent
+      ? new Date()
+      : null,
   };
 
   await prisma.$transaction(
@@ -319,6 +324,23 @@ export async function createApplication(
     // Neon pooler drops idle interactive txs (~5s). Bootstrap needs headroom.
     { maxWait: 10_000, timeout: 20_000 },
   );
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  await recordLegalConsents({
+    userId,
+    email: user?.email,
+    source: "program_apply",
+  });
+
+  await recordNewsletterOptIn({
+    userId,
+    email: user?.email,
+    source: "program_apply",
+    optIn: profile.newsletterOptIn === true,
+  });
 
   return { ok: true, cohortId: cohort.id };
 }

@@ -6,6 +6,9 @@ import {
   cohortApplicationSchema,
   type CohortApplicationInput,
 } from "@/lib/validations/cohort-application";
+import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 
 export async function submitCohortApplicationAction(input: CohortApplicationInput) {
   const parsed = cohortApplicationSchema.safeParse(input);
@@ -52,5 +55,25 @@ export async function submitCohortApplicationAction(input: CohortApplicationInpu
     logger.error("cohort application insert failed", { error });
     return { ok: false as const, message: "Something went wrong. Please try again." };
   }
+
+  try {
+    await recordLegalConsents({
+      email: d.email,
+      source: "cohort_us",
+    });
+  } catch (consentErr) {
+    logger.error("cohort US legal consent log failed", {
+      error: consentErr instanceof Error ? consentErr.message : String(consentErr),
+      terms: TERMS_VERSION,
+      privacy: PRIVACY_VERSION,
+    });
+  }
+
+  await recordNewsletterOptIn({
+    email: d.email,
+    source: "cohort_us",
+    optIn: d.newsletterOptIn === true,
+  });
+
   return { ok: true as const };
 }

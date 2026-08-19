@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bell,
   BookOpen,
   Briefcase,
   Code2,
@@ -16,6 +17,7 @@ import {
   Megaphone,
   Menu,
   Package,
+  ShieldCheck,
   Presentation,
   Users,
   X,
@@ -24,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 type IconName =
   | "overview"
+  | "notifications"
   | "students"
   | "submissions"
   | "jobs"
@@ -33,6 +36,7 @@ type IconName =
   | "referrals"
   | "hackathonLinks"
   | "redemptions"
+  | "dataRequests"
   | "program"
   | "cohort"
   | "hackathon"
@@ -40,6 +44,7 @@ type IconName =
 
 const iconMap = {
   overview: LayoutDashboard,
+  notifications: Bell,
   students: Users,
   submissions: FileText,
   jobs: Briefcase,
@@ -49,6 +54,7 @@ const iconMap = {
   referrals: Gift,
   hackathonLinks: Link2,
   redemptions: Package,
+  dataRequests: ShieldCheck,
   program: GraduationCap,
   cohort: GraduationCap,
   hackathon: Code2,

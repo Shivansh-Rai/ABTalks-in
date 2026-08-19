@@ -197,12 +197,34 @@ model Session {
   @@index([userId])
 }
 
+model College {
+  id         String   @id @default(cuid())
+  /// upper(alnum(name)) + "|" + upper(alnum(district)) — dedupe + idempotent seed
+  nameKey    String   @unique
+  name       String
+  state      String?
+  district   String?
+  city       String?
+  /// Common names and acronyms students type ("IIT Bombay", "IITB").
+  aliases    String[] @default([])
+  /// 1 = top-of-mind, 2 = well-known, 3 = everything else. Primary search sort.
+  tier       Int      @default(3)
+  /// Space-padded, uppercased, alphanumeric-only haystack. See seed script.
+  searchText String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
 model StudentProfile {
   id                          String    @id @default(cuid())
   userId                      String    @unique
   fullName                    String
   userType                    UserType  @default(STUDENT)
   college                     String?
+  /// Set when the student picked a listed college. Null = free-text ("Other").
+  /// Deliberately a plain column, not a relation — `college` stays the display
+  /// value everywhere, so no read path has to join.
+  collegeId                   String?
   graduationYear              Int?
   organization                String?
   role                        String?
@@ -220,6 +242,7 @@ model StudentProfile {
   isCampusAmbassadorCandidate Boolean   @default(false)
   ambassadorAppliedAt         DateTime?
   ambassadorDismissedAt       DateTime?
+  /// Temporary rollback mirror. User.synergyPoints is the account-level balance.
   synergyPoints               Int       @default(0)
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
@@ -259,6 +282,7 @@ model User {
   image                 String?
   password              String?
   role                  Role                     @default(STUDENT)
+  synergyPoints         Int                      @default(0)
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @updatedAt
   accounts              Account[]
@@ -284,10 +308,93 @@ model User {
   shortlistItems        RecruiterShortlistItem[]
   hackathonParticipant  HackathonParticipant?
   hackathonRemovals     HackathonRemoval[]
+  newsletterSubscriptions NewsletterSubscription[]
   certificates          Certificate[]
   workshopRegistrations WorkshopRegistration[]
+  legalConsents         LegalConsent[]
+  dataRightsRequests    DataRightsRequest[]
+  notificationReads     NotificationRead[]
 
   @@index([createdAt(sort: Desc)])
+  @@index([synergyPoints(sort: Desc)])
+}
+
+enum LegalDocument {
+  TERMS
+  PRIVACY
+}
+
+/// Versioned acceptance of Terms / Privacy (signup funnels + pre-auth cohort apps).
+model LegalConsent {
+  id         String        @id @default(cuid())
+  userId     String?
+  email      String?
+  document   LegalDocument
+  version    String
+  source     String
+  ip         String?
+  userAgent  String?
+  acceptedAt DateTime      @default(now())
+  user       User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, document, acceptedAt(sort: Desc)])
+  @@index([email, acceptedAt(sort: Desc)])
+  @@index([source, acceptedAt(sort: Desc)])
+}
+
+enum DataRightsRequestType {
+  ACCESS
+  CORRECTION
+  ERASURE
+  OTHER
+}
+
+enum DataRightsRequestStatus {
+  PENDING
+  DONE
+  REJECTED
+}
+
+/// Marketing-email opt-in, presented on every signup funnel.
+///
+/// Deliberately its own model rather than a StudentProfile column: the
+/// checkbox also appears on the workshop, hackathon, program and cohort
+/// funnels, where no StudentProfile exists. Keyed on `email` rather than
+/// `userId` because the cohort funnels write to Supabase and may have no
+/// User row at all.
+///
+/// `subscribed` is the source of truth for whether to send — unsubscribing
+/// flips it to false and stamps `unsubscribedAt`, keeping the record so a
+/// later opt-in is distinguishable from a never-subscribed address.
+model NewsletterSubscription {
+  id             String    @id @default(cuid())
+  /// Not unique: the same person may subscribe a second address through a
+  /// different funnel (e.g. a workshop signup with a work email).
+  userId         String?
+  email          String    @unique
+  subscribed     Boolean   @default(true)
+  /// Which funnel the opt-in came from (register, workshop, hackathon, …).
+  source         String
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([subscribed, subscribedAt(sort: Desc)])
+  @@index([userId])
+}
+
+model DataRightsRequest {
+  id        String                   @id @default(cuid())
+  userId    String?
+  email     String
+  type      DataRightsRequestType
+  message   String?
+  status    DataRightsRequestStatus  @default(PENDING)
+  createdAt DateTime                 @default(now())
+  user      User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([email, createdAt(sort: Desc)])
 }
 
 /// One-time phone OTP verification record (MSG91 OTP widget).
@@ -605,6 +712,8 @@ model ProgramMember {
   phone               String? // admin-only, NEVER shown to recruiters
   githubUsername      String
   githubRepoUrl       String // dedicated public repo for the program
+  /// Set when the member opts in to `/talent` recruiter visibility.
+  recruiterVisibilityConsentAt DateTime?
   // progression + denormalized scores
   highestUnlockedDay  Int                         @default(1)
   skipTokensUsed      Int                         @default(0) // max 2 per member
@@ -1024,3 +1133,65 @@ model WorkshopRegistration {
 
 // NOTE: `workshop_config` deliberately stays in Supabase — only registrations
 // migrated. See src/lib/workshop-supabase.ts for the config reader.
+
+enum NotificationAudience {
+  ALL
+  CHALLENGE
+  PROGRAM
+  HACKATHON
+}
+
+enum NotificationCategory {
+  GENERAL
+  WORKSHOP
+  HACKATHON
+  COHORT
+  CHALLENGE
+}
+
+/// Admin-authored broadcast announcements, pushed from /admin/notifications.
+///
+/// Automated event notifications (workshops, hackathon milestones, cohort
+/// enrolment) are deliberately NOT stored here — they are derived at read time
+/// from the code-defined EVENTS / HACKATHON config and ProgramCohort rows in
+/// src/features/notification/derive-event-notifications.ts. That keeps read
+/// paths write-free and means adding a workshop to events-data.ts needs no
+/// database work. See docs/plans/067-notification-bell.md.
+model Notification {
+  id               String               @id @default(cuid())
+  title            String
+  body             String?
+  /// Internal path ("/hackathon") or absolute URL. Optional.
+  href             String?
+  category         NotificationCategory @default(GENERAL)
+  audience         NotificationAudience @default(ALL)
+  publishedAt      DateTime             @default(now())
+  /// After this instant the item stops appearing in the bell. Null = no expiry.
+  expiresAt        DateTime?
+  isActive         Boolean              @default(true)
+  createdByAdminId String?
+  createdAt        DateTime             @default(now())
+
+  @@index([isActive, publishedAt(sort: Desc)])
+}
+
+/// Per-user read state for BOTH admin and derived notifications.
+///
+/// There is no "dismissed" state on purpose: the feed shows only the newest
+/// few notifications (NOTIFICATION_FEED_LIMIT), so older ones fall off by
+/// themselves and never need removing by hand.
+///
+/// `notificationKey` is deliberately NOT a foreign key: derived event
+/// notifications have no row to point at. Keys are stable and never reused
+/// ("admin:<id>", "workshop:<eventId>", "hackathon:kickoff", …).
+model NotificationRead {
+  id              String   @id @default(cuid())
+  userId          String
+  notificationKey String
+  readAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationKey])
+  @@index([userId])
+}

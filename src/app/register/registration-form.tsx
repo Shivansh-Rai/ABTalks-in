@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CollegeCombobox } from "@/components/shared/college-combobox";
 import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -31,6 +32,11 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
+import {
   type RegisterPayloadInput,
   registerPayloadSchema,
 } from "@/lib/validations/register";
@@ -40,6 +46,7 @@ type RegistrationFormValues = {
   userType: "STUDENT" | "PROFESSIONAL";
   fullName: string;
   college: string;
+  collegeId: string;
   graduationYear: number;
   organization: string;
   role: string;
@@ -51,6 +58,8 @@ type RegistrationFormValues = {
   phoneNumber: string;
   githubUsername: string;
   referralCode: string;
+  acceptLegal: boolean;
+  newsletterOptIn: boolean;
 };
 
 const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035] as const;
@@ -112,6 +121,10 @@ export function RegistrationForm({
   const router = useRouter();
   const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
+    acceptLegal: false,
+    newsletterOptIn: true,
+  });
   const [phoneVerified, setPhoneVerified] = useState(!otpVerificationRequired);
 
   const domainCardList = useMemo(
@@ -129,6 +142,7 @@ export function RegistrationForm({
       userType: "STUDENT",
       fullName: initialName,
       college: "",
+      collegeId: "",
       graduationYear: 2026,
       organization: "",
       role: "",
@@ -140,6 +154,8 @@ export function RegistrationForm({
       phoneNumber: "",
       githubUsername: "",
       referralCode: initialRef,
+      acceptLegal: false,
+      newsletterOptIn: true,
     },
   });
 
@@ -171,9 +187,11 @@ export function RegistrationForm({
       setValue("organization", "");
       setValue("role", "");
       setValue("yearsExperience", undefined);
+      setValue("collegeId", "");
       clearErrors(["college", "graduationYear"]);
     } else {
       setValue("college", "");
+      setValue("collegeId", "");
       setValue("graduationYear", 2026);
       clearErrors(["organization", "role", "yearsExperience"]);
     }
@@ -204,6 +222,10 @@ export function RegistrationForm({
   }
 
   async function onSubmit(values: RegistrationFormValues) {
+    if (!legalConsentAccepted(legalConsent)) {
+      toast.error("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
     if (
       otpVerificationRequired &&
       values.countryCode === "+91" &&
@@ -224,9 +246,12 @@ export function RegistrationForm({
       fd.append("phoneNumber", values.phoneNumber ?? "");
       fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
+      fd.append("acceptLegal", String(legalConsent.acceptLegal));
+      fd.append("newsletterOptIn", String(legalConsent.newsletterOptIn));
 
       if (values.userType === "STUDENT") {
         fd.append("college", values.college);
+        fd.append("collegeId", values.collegeId);
         fd.append("graduationYear", String(values.graduationYear));
       } else {
         fd.append("organization", values.organization);
@@ -356,11 +381,21 @@ export function RegistrationForm({
           >
             <div className="space-y-2">
               <Label htmlFor="college">College</Label>
-              <Input
-                id="college"
-                placeholder="e.g. IIT Delhi"
-                {...register("college")}
-                aria-invalid={!!errors.college}
+              <Controller
+                name="college"
+                control={control}
+                render={({ field }) => (
+                  <CollegeCombobox
+                    id="college"
+                    value={field.value}
+                    onChange={(name, collegeId) => {
+                      field.onChange(name);
+                      setValue("collegeId", collegeId ?? "");
+                    }}
+                    placeholder="e.g. IIT Delhi"
+                    aria-invalid={!!errors.college}
+                  />
+                )}
               />
               {errors.college ? (
                 <p className="text-sm text-destructive">
@@ -687,10 +722,21 @@ export function RegistrationForm({
         ) : null}
       </div>
 
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={(next) => {
+          setLegalConsent(next);
+          setValue("acceptLegal", next.acceptLegal, { shouldValidate: true });
+          setValue("newsletterOptIn", next.newsletterOptIn, {
+            shouldValidate: true,
+          });
+        }}
+      />
+
       <Button
         type="submit"
         className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !legalConsentAccepted(legalConsent)}
       >
         {isSubmitting ? (
           <>

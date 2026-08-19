@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { LandingUserMenu } from "./landing-user-menu";
 import { TrackCard } from "./track-card";
 import { TestimonialsCarousel } from "./testimonials-carousel";
+import { WaitlistTrackCard } from "./waitlist-track-card";
 
 const WHATSAPP_LINK = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
 
@@ -65,6 +66,41 @@ const CLAUDE_TRACK = {
   href: "/claude-signup",
   ctaLabel: "Join the Claude track",
 };
+
+const WAITLIST_TRACKS = [
+  {
+    accent: "orange" as const,
+    title: "Databricks",
+    blurb: "Lakehouse, Spark, Unity Catalog, and production data pipelines.",
+    pill: "New",
+    chips: ["Cohort"],
+    ctaLabel: "Enroll now",
+  },
+  {
+    accent: "indigo" as const,
+    title: "Google Cloud (GCP)",
+    blurb: "BigQuery, Cloud Run, and cloud data engineering.",
+    pill: "New",
+    chips: ["Cohort"],
+    ctaLabel: "Enroll now",
+  },
+  {
+    accent: "violet" as const,
+    title: "Snowflake",
+    blurb: "Cloud data warehouse skills — SQL, pipelines, and analytics.",
+    pill: "New",
+    chips: ["Cohort"],
+    ctaLabel: "Enroll now",
+  },
+  {
+    accent: "amber" as const,
+    title: "Cyber Security",
+    blurb: "Practical security fundamentals — threats, hardening, and defense.",
+    pill: "New",
+    chips: ["Cohort"],
+    ctaLabel: "Enroll now",
+  },
+];
 
 const STATS = [
   { value: "10,000+", label: "members" },
@@ -158,10 +194,7 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
 
         <section
           aria-label="Choose an ABTalks track"
-          className={cn(
-            "mx-auto grid max-w-7xl gap-5 px-5 md:grid-cols-3 md:px-8",
-            claudeEnabled && "lg:grid-cols-4",
-          )}
+          className="mx-auto grid max-w-7xl gap-5 px-5 md:grid-cols-3 md:px-8 lg:grid-cols-4"
         >
           {TRACKS.map(({ key, ...track }) => (
             <TrackCard key={track.title} {...track} {...(ctaByKey[key] ?? {})} />
@@ -169,6 +202,13 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
           {claudeEnabled ? (
             <TrackCard {...claudeTrackProps} {...(ctaByKey.claude ?? {})} />
           ) : null}
+          {WAITLIST_TRACKS.map((track) => (
+            <WaitlistTrackCard
+              key={track.title}
+              {...track}
+              isAuthenticated={Boolean(state.user)}
+            />
+          ))}
         </section>
 
         <section className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
@@ -265,22 +305,31 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
         <TestimonialsCarousel />
       </main>
 
-      {/* <footer className="relative z-10 border-t border-border/60">
+      <footer className="relative z-10 border-t border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-8">
           <p>© 2026 ABTalks. Build in public.</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/cookies" className="hover:text-foreground">
+              Cookies
+            </Link>
+            <Link href="/contact" className="hover:text-foreground">
+              Contact
+            </Link>
             <Link href="/mission" className="hover:text-foreground">
               Mission
             </Link>
             <Link href="/jobs" className="hover:text-foreground">
               Jobs
             </Link>
-            <Link href="/talent" className="hover:text-foreground">
-              Talent
-            </Link>
           </nav>
         </div>
-      </footer> */}
+      </footer>
     </div>
   );
 }

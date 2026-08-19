@@ -186,7 +186,6 @@ export function ChatWidget() {
 
   async function streamApiMessage(text: string) {
     if (!currentSessionId) return;
-
     const id = generateId();
     // Add placeholder streaming message
     setSessions(prev => {
@@ -257,7 +256,6 @@ export function ChatWidget() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || ""; // Keep the incomplete line in the buffer
@@ -358,7 +356,6 @@ export function ChatWidget() {
 
     // Try local matching first (Hybrid RAG approach)
     const localMatch = matchQuestion(trimmed);
-
     if (localMatch) {
       if (currentSessionId) {
         const userMsg: Message = { id: generateId(), text: trimmed, isUser: true, timestamp: Date.now() };
@@ -389,7 +386,6 @@ export function ChatWidget() {
       // Dragging UP (negative deltaY) increases height
       const deltaY = moveEvent.clientY - startY;
       const newHeight = Math.max(400, Math.min(window.innerHeight - 128, startH - deltaY));
-
       // Top-right corner: typically if right is anchored, dragging right shouldn't expand width,
       // but to preserve 'resize both' behavior, dragging left (negative deltaX) increases width
       const deltaX = moveEvent.clientX - startX;

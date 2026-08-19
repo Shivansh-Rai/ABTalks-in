@@ -6,6 +6,8 @@ import {
   cohortApplicationIndiaSchema,
   type CohortApplicationIndiaInput,
 } from "@/lib/validations/cohort-application-india";
+import { recordLegalConsents } from "@/features/legal/record-consent";
+import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 export async function submitCohortApplicationIndiaAction(
   input: CohortApplicationIndiaInput,
@@ -53,5 +55,23 @@ export async function submitCohortApplicationIndiaAction(
     logger.error("cohort india application insert failed", { error });
     return { ok: false as const, message: "Something went wrong. Please try again." };
   }
+
+  try {
+    await recordLegalConsents({
+      email: d.email,
+      source: "cohort_india",
+    });
+  } catch (consentErr) {
+    logger.error("cohort India legal consent log failed", {
+      error: consentErr instanceof Error ? consentErr.message : String(consentErr),
+    });
+  }
+
+  await recordNewsletterOptIn({
+    email: d.email,
+    source: "cohort_india",
+    optIn: d.newsletterOptIn === true,
+  });
+
   return { ok: true as const };
 }

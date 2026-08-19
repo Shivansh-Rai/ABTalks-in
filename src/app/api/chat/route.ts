@@ -245,7 +245,7 @@ export async function POST(req: Request) {
     // 1. Resolve Topic-Aware Search Query across conversation turns
     let searchQuery = resolveTopicAwareQuery(messages);
     let isTopicInjected = (searchQuery !== trimmedLast);
-    
+
     if (pathname) {
       if (pathname.includes('/claude')) { searchQuery = `Claude Challenge ${searchQuery}`; isTopicInjected = true; }
       else if (pathname.includes('/ai-cohort')) { searchQuery = `AI Cohort ${searchQuery}`; isTopicInjected = true; }
@@ -292,8 +292,8 @@ export async function POST(req: Request) {
       }
       if (/\b(how many|what is my|my)\b.*\b(sp|synergy points|points)\b/i.test(q)) {
         if (q.includes("xp") && !q.includes("sp")) {
-           // Trap for XP hallucination/confusion
-           return sseTextResponse(`ABTalks uses Synergy Points (SP), not XP. You earn SP for completing tasks and challenges.`);
+          // Trap for XP hallucination/confusion
+          return sseTextResponse(`ABTalks uses Synergy Points (SP), not XP. You earn SP for completing tasks and challenges.`);
         }
         const profile = await prisma.studentProfile.findUnique({ where: { userId }, select: { synergyPoints: true } });
         return sseTextResponse(`You currently have ${profile?.synergyPoints || 0} Synergy Points (SP).`);
@@ -323,7 +323,7 @@ export async function POST(req: Request) {
       // If no accessLevel specified, assume public
       const accessLevel = (chunk as any).accessLevel || 'public';
       if (accessLevel === 'public') return true;
-      
+
       // If gated, check if user is authorized for the programId
       const programId = (chunk as any).programId;
       if (!programId) return false; // Gated but no programId -> deny

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Lock } from "lucide-react";
-import { LiteYoutube } from "@/components/program/lite-youtube";
+import { LiteYoutube } from "@/components/shared/lite-youtube";
 import { cn } from "@/lib/utils";
 
 type VideoItem = {

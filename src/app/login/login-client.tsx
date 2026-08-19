@@ -3,10 +3,25 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import {
+  DEFAULT_LEGAL_CONSENT,
+  LegalConsentFields,
+  legalConsentAccepted,
+  type LegalConsentValues,
+} from "@/components/legal/legal-consent-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+/** Cookie read by auth createUser so newsletter opt-out survives OAuth redirect. */
+const NEWSLETTER_PREF_COOKIE = "abtalks_newsletter_pref";
+
+function writeNewsletterPrefCookie(optIn: boolean) {
+  // Short-lived: only needs to survive the OAuth round-trip.
+  const maxAge = 60 * 15;
+  document.cookie = `${NEWSLETTER_PREF_COOKIE}=${optIn ? "1" : "0"}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+}
 
 function GoogleMark({ className }: { className?: string }) {
   return (
@@ -60,10 +75,21 @@ export function LoginClient({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  const [legalConsent, setLegalConsent] =
+    useState<LegalConsentValues>(DEFAULT_LEGAL_CONSENT);
 
   const target = safeRedirectPath(redirectTo, "/dashboard");
+  const canSignIn = legalConsentAccepted(legalConsent);
+
+  function ensureLegalAccepted(): boolean {
+    if (legalConsentAccepted(legalConsent)) return true;
+    toast.error("Please accept the Terms of Service and Privacy Policy.");
+    return false;
+  }
 
   async function handleGoogleSignIn() {
+    if (!ensureLegalAccepted()) return;
+    writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
       await signIn("google", { callbackUrl: target });
@@ -75,6 +101,8 @@ export function LoginClient({
 
   async function handleCredentialsSignIn(e: React.FormEvent) {
     e.preventDefault();
+    if (!ensureLegalAccepted()) return;
+    writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
       const result = await signIn("credentials", {
@@ -130,13 +158,15 @@ export function LoginClient({
         </div>
       ) : null}
 
+      {/* Standard order: auth controls first, legal checkboxes under them
+          (every major app puts "I agree…" below the primary action). */}
       {showGoogle ? (
         <div className="flex flex-col gap-2">
           <Button
             type="button"
             variant="outline"
             className="h-11 w-full gap-3 font-medium"
-            disabled={pending}
+            disabled={pending || !canSignIn}
             onClick={handleGoogleSignIn}
           >
             <GoogleMark className="size-5 shrink-0" />
@@ -190,13 +220,27 @@ export function LoginClient({
               disabled={pending}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={pending}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={pending || !canSignIn}
+          >
             Sign in
           </Button>
           <p className="text-xs text-muted-foreground">
             Dev mode: use test accounts from seed script
           </p>
         </form>
+      ) : null}
+
+      <LegalConsentFields
+        values={legalConsent}
+        onChange={setLegalConsent}
+      />
+      {!canSignIn ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Accept the Terms of Service and Privacy Policy to enable Sign in.
+        </p>
       ) : null}
     </div>
   );

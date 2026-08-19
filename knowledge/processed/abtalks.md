@@ -22,13 +22,13 @@ The core operating loop is: learn daily, build and showcase, then get hired. Par
 
 ## Proof-of-work concept
 
-"Proof of work" on ABTalks means a public, dated, externally-verifiable trail of what a participant built and learned. The specific requirements vary by program, but can include:
-- A GitHub repository showing real commits over time
+"Proof of work" on ABTalks means a public, dated, externally-verifiable trail of what a participant built and learned:
+- A GitHub repository (for the Claude Challenge, a dedicated repo organized `Day1/` … `Day60/`) showing real commits over time
 - LinkedIn posts describing what was built, key learnings, and a demo/screenshot
 - Tracked streaks and completion counts that make consistency visible
 - Certificates (some with QR-based verification) as a portable credential of completion
 
-This proof-of-work trail — not a private grade or credential — is what's meant to make a participant discoverable to recruiters. Check each specific program's rules for its exact submission requirements.
+This proof-of-work trail — not a private grade or credential — is what's meant to make a participant discoverable to recruiters.
 
 ## Audience
 
