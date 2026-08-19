@@ -1,25 +1,51 @@
-# 60-Day Coding Challenge — Live Page Content ("/challenges")
+---
+title: 60-Day Coding Challenge | ABTalks
+route: /challenges
+url: http://localhost:3000/challenges
+source_type: site
+ingested_at: 2026-08-19T11:42:34.891Z
+---
 
-## Domains
-- **Software Engineering** — Build apps, APIs, and production-ready systems.
-- **Data Science** — Turn raw data into useful analysis and insight.
-- **Artificial Intelligence** — Create practical AI workflows and applications.
+# 60-Day Coding Challenge | ABTalks
+
+# 60 Days. One task a day.A portfolio that speaks.
+
+Code consistently. Post publicly. Get noticed.
+
+## Pick your domain
+
+Choose one track for your 60-day journey.
+
+Selected: Software Engineering. You can change it during registration.
 
 ## How a day works
-- Open today’s task
-- Build it
-- Push to GitHub
-- Post on LinkedIn
+
+- 01Open today’s task
+- 02Build it
+- 03Push to GitHub
+- 04Post on LinkedIn
+
+Day 23
+
+### Current streak
+
+## Finish and get discovered
+
+Top portfolios get exclusive visibility to our network of tech recruiters.
+
+## Community rules
+
+ABTalks is a place to grow with serious learners. Read these carefully.
+
+### Foul Language or Harassment
+
+Any abusive language, harassment, or harmful messaging will lead to permanent ban from ABTalks.
+
+### Cheating or Platform Misuse
+
+Submitting plagiarized work or misusing the platform will result in a 60-day challenge ban.
+
+By continuing, you agree to follow these rules. Be real, be respectful, and ship real work.
 
 ## FAQ
-**Q: Do I need prior experience?**
-A: No. Pick the domain that matches what you want to learn. Tasks build progressively, and each day includes a focused problem and learning resources.
 
-**Q: What if I miss a day?**
-A: You can continue the challenge, but a missed day breaks your current streak. Submissions follow IST day boundaries.
-
-**Q: How do I submit my work?**
-A: Push your solution to GitHub, then publish your progress on LinkedIn. Both links become proof of work on your ABTalks profile.
-
-**Q: Do I get a certificate?**
-A: Completing the challenge gives you a finished public portfolio and completion recognition. The core outcome is visible proof of consistent work.

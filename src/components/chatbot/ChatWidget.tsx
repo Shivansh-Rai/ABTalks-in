@@ -74,12 +74,12 @@ export function ChatWidget() {
   const hydrated = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initialize and hydrate from localStorage
+  // Initialize and hydrate from sessionStorage
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
     try {
-      const saved = localStorage.getItem(SESSION_KEY);
+      const saved = sessionStorage.getItem(SESSION_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Record<string, Session>;
         setSessions(parsed);
@@ -101,9 +101,9 @@ export function ChatWidget() {
   useEffect(() => {
     if (!hydrated.current) return;
     try {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
     } catch (e) {
-      console.warn("localStorage unavailable for chat sessions", e);
+      console.warn("sessionStorage unavailable for chat sessions", e);
     }
   }, [sessions]);
 
@@ -273,6 +273,8 @@ export function ChatWidget() {
                 chunkText = data.delta.text; // Anthropic format
               } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                 chunkText = data.candidates[0].content.parts[0].text; // Gemini format
+              } else if (data.choices?.[0]?.delta?.content) {
+                chunkText = data.choices[0].delta.content; // OpenAI / Groq format
               }
 
               if (chunkText) {
@@ -405,7 +407,17 @@ export function ChatWidget() {
   };
 
   if (!open && !minimized) {
-    return <ChatLauncher open={false} onToggle={() => setOpen(true)} />;
+    return (
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="relative rounded-2xl rounded-br-none bg-background border px-4 py-3 text-sm shadow-lg">
+          <p className="font-medium">Hey! Need help?</p>
+          <p className="text-muted-foreground text-xs mt-0.5">I can answer any questions about ABTalks.</p>
+          {/* Arrow pointing down to the launcher */}
+          <div className="absolute -bottom-2 right-4 h-4 w-4 rotate-45 border-b border-r bg-background"></div>
+        </div>
+        <ChatLauncher open={false} onToggle={() => setOpen(true)} />
+      </div>
+    );
   }
 
   const sortedSessions = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
@@ -425,7 +437,9 @@ export function ChatWidget() {
   return (
     <>
       {(!open && minimized) && (
-        <ChatLauncher open={false} onToggle={() => { setOpen(true); setMinimized(false); }} />
+        <div className="fixed bottom-4 right-4 z-50">
+          <ChatLauncher open={false} onToggle={() => { setOpen(true); setMinimized(false); }} />
+        </div>
       )}
 
       {open && (

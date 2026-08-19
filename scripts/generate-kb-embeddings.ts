@@ -14,12 +14,10 @@ type EmbeddedChunk = {
   text: string;
   source: string;
   /**
-   * 'generated' = machine-produced from live app source (scripts/extract-public-content.ts),
+   * 'generated' = machine-produced from live app source,
    * 'processed' = hand-maintained supplementary facts. Retrieval in route.ts
-   * uses this to break near-ties in favor of 'generated' — see
-   * docs/plans/063-chatbot-dynamic-knowledge-ingestion.md §4 and the 062
-   * follow-up: this used to be a documented convention only, with nothing
-   * enforcing it at query time.
+   * uses this to break near-ties in favor of 'processed' (curated) to ensure
+   * manually verified knowledge overrides scraped UI data.
    */
   tier: KnowledgeTier;
   programId?: string;
@@ -39,7 +37,7 @@ function readMarkdownDir(dir: string): { file: string; rawText: string }[] {
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
-    .filter((f) => f.endsWith('.md'))
+    .filter((f) => f.endsWith('.md') && f !== 'implementation.md' && f !== 'abtalks-chatbot-kb.md' && f !== 'faq.md')
     .sort()
     .map((file) => ({
       file,
@@ -169,9 +167,8 @@ function ingestComprehensiveCurriculum(): Omit<EmbeddedChunk, 'embedding'>[] {
 }
 
 async function main() {
-  // knowledge/generated/*.md is the machine-produced tier (scripts/extract-public-content.ts,
-  // always wins on conflict — see docs/plans/063-chatbot-dynamic-knowledge-ingestion.md §4).
-  // knowledge/processed/*.md is the small, hand-maintained supplementary tier.
+  // knowledge/generated/*.md is the machine-produced tier (scripts/ingest-site.ts).
+  // knowledge/processed/*.md is the hand-maintained supplementary tier (wins on conflict).
   const files: { file: string; rawText: string; tier: KnowledgeTier }[] = [
     ...readMarkdownDir(GENERATED_DIR).map((f) => ({ ...f, tier: 'generated' as const })),
     ...readMarkdownDir(PROCESSED_DIR).map((f) => ({ ...f, tier: 'processed' as const })),

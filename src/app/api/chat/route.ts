@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pipeline } from '@xenova/transformers';
-import kbEmbeddingsData from '@/data/kb-embeddings.json';
+
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 
@@ -14,13 +14,23 @@ type EmbeddedChunk = {
   embedding: number[];
 };
 
+
 // How close two chunks' scores need to be to count as a "near-tie" for
 // precedence purposes. Tuned loosely against this corpus's score spread
 // (~0.03-0.05 typically separates a genuinely-better match from noise) —
 // not empirically fit against a large query set, revisit if it misfires.
 const TIER_TIE_EPSILON = 0.03;
 
-const kbEmbeddings: EmbeddedChunk[] = kbEmbeddingsData as EmbeddedChunk[];
+function getKbEmbeddings(): EmbeddedChunk[] {
+  try {
+    const dataPath = path.join(process.cwd(), 'src', 'data', 'kb-embeddings.json');
+    const data = fs.readFileSync(dataPath, 'utf-8');
+    return JSON.parse(data) as EmbeddedChunk[];
+  } catch (err) {
+    console.error('[chat-api] Failed to load kb-embeddings.json', err);
+    return [];
+  }
+}
 
 // Singleton pipeline for feature extraction
 let extractorPromise: Promise<any> | null = null;
@@ -160,7 +170,7 @@ function buildRagFallbackText(chunks: { heading?: string; text: string }[]): str
 
   const mainBody = formattedSections.join('\n\n---\n\n');
 
-  return `${mainBody}\n\nFor any additional questions or support, feel free to reach out to team@abtalks.in.`;
+  return `*(I am currently experiencing extremely high demand, so I'm sharing this information directly from my knowledge base without AI formatting)*\n\n${mainBody}\n\nFor any additional questions or support, feel free to reach out to team@abtalks.in.`;
 }
 
 function sseTextResponse(text: string): Response {
@@ -319,7 +329,8 @@ export async function POST(req: Request) {
     }
 
     // Filter knowledge base based on accessLevel
-    const authorizedKb = kbEmbeddings.filter(chunk => {
+    const kbEmbeddings = getKbEmbeddings();
+    const authorizedKb = kbEmbeddings.filter((chunk: EmbeddedChunk) => {
       // If no accessLevel specified, assume public
       const accessLevel = (chunk as any).accessLevel || 'public';
       if (accessLevel === 'public') return true;
@@ -337,22 +348,20 @@ export async function POST(req: Request) {
     const queryEmbedding = Array.from(output.data) as number[];
 
     // 3. Cosine Similarity Vector Search
-    const scoredChunks = authorizedKb.map(chunk => ({
+    const scoredChunks = authorizedKb.map((chunk: EmbeddedChunk) => ({
       ...chunk,
       score: cosineSimilarity(queryEmbedding, chunk.embedding),
     }));
 
     // Rank by score, but enforce tier precedence on near-ties: when two
-    // chunks are within TIER_TIE_EPSILON of each other, the 'generated'
-    // (live app source) chunk wins regardless of which scored a hair
-    // higher — this is a real ranking rule, not just a documented
-    // convention (see docs/plans/063-chatbot-dynamic-knowledge-ingestion.md §4
-    // and the 062 follow-up that added this enforcement). Clear, non-tied
-    // score differences still win on merit.
-    scoredChunks.sort((a, b) => {
+    // chunks are within TIER_TIE_EPSILON of each other, the 'processed'
+    // (manually curated) chunk wins regardless of which scored a hair
+    // higher — ensuring verified manual facts override scraped UI facts.
+    // Clear, non-tied score differences still win on merit.
+    scoredChunks.sort((a: any, b: any) => {
       const diff = b.score - a.score;
       if (Math.abs(diff) < TIER_TIE_EPSILON && a.tier !== b.tier) {
-        return a.tier === 'generated' ? -1 : 1;
+        return a.tier === 'processed' ? -1 : 1;
       }
       return diff;
     });
@@ -368,20 +377,20 @@ export async function POST(req: Request) {
       return sseTextResponse(FALLBACK_MESSAGE);
     }
 
-    const topChunks = scoredChunks.filter(c => c.score >= 0.18).slice(0, 5);
+    const topChunks = scoredChunks.filter((c: any) => c.score >= 0.18).slice(0, 5);
 
     // If the top match is very strong, bypass Gemini entirely to avoid hallucination and improve latency.
     // However, we ONLY bypass if the user typed a substantive query (>= 3 words) AND we didn't inject a topic prefix.
     // If a topic prefix was injected (e.g., via pathname or conversation history), it artificially inflates the score 
     // against the topic's chunks. We must send those to Gemini so Gemini can decide if the chunk actually answers the user's raw question.
-    if (topScore >= 0.35 && !isTopicInjected && trimmedLast.split(/\s+/).length >= 3) {
+    if (topScore >= 0.85 && !isTopicInjected && trimmedLast.split(/\s+/).length >= 3) {
       // Exception: If the query explicitly asks to "compare" or "synthesize", we should still use Gemini.
       if (!/\b(compare|difference between|summarize both)\b/i.test(trimmedLast)) {
         return sseTextResponse(buildRagFallbackText(topChunks));
       }
     }
 
-    const contextText = topChunks.map(c => `[Source: ${c.source} | Section: ${c.heading}]\n${c.text}`).join('\n\n---\n\n');
+    const contextText = topChunks.map((c: any) => `[Source: ${c.source} | Section: ${c.heading}]\n${c.text}`).join('\n\n---\n\n');
 
     let systemWithContext = `${SYSTEM_PROMPT}\n\nHere is the verified context:\n<context>\n${contextText}\n</context>`;
     if (topScore < 0.28) {
@@ -404,36 +413,101 @@ export async function POST(req: Request) {
     // to a plain-text answer built directly from the retrieved chunks rather
     // than erroring out — retrieval doesn't depend on Gemini, so we still
     // have real, grounded content to hand back.
-    try {
-      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: geminiMessages,
-          generationConfig: {
+    let fetchResponse: Response | null = null;
+    let finalErrorStr = '';
+
+    // Attempt 1: Gemini
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro-latest:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: geminiMessages,
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+          })
+        });
+        if (geminiRes.ok) {
+          fetchResponse = geminiRes;
+        } else {
+          finalErrorStr += `Gemini failed: ${await geminiRes.text()}\n`;
+        }
+      } catch (err: any) { finalErrorStr += `Gemini fetch failed: ${err.message}\n`; }
+    }
+
+    // Attempt 2: Groq
+    if (!fetchResponse && process.env.GROQ_API_KEY) {
+      try {
+        const groqMessages = [
+          { role: 'system', content: systemWithContext },
+          ...messages.map((m: any) => ({
+            role: m.role === 'assistant' || m.role === 'model' ? 'assistant' : 'user',
+            content: m.content
+          }))
+        ];
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'llama3-70b-8192',
+            messages: groqMessages,
             temperature: 0.1,
-            maxOutputTokens: 1024,
-          }
-        })
-      });
+            max_tokens: 1024,
+            stream: true
+          })
+        });
+        if (groqRes.ok) {
+          fetchResponse = groqRes;
+        } else {
+          finalErrorStr += `Groq failed: ${await groqRes.text()}\n`;
+        }
+      } catch (err: any) { finalErrorStr += `Groq fetch failed: ${err.message}\n`; }
+    }
 
-      if (!geminiRes.ok) {
-        const err = await geminiRes.text();
-        console.error('Gemini API error, falling back to RAG-only answer:', err);
-        return sseTextResponse(buildRagFallbackText(topChunks));
-      }
+    // Attempt 3: Anthropic (Claude)
+    if (!fetchResponse && process.env.ANTHROPIC_API_KEY) {
+      try {
+        const anthropicMessages = messages.map((m: any) => ({
+          role: m.role === 'assistant' || m.role === 'model' ? 'assistant' : 'user',
+          content: m.content
+        }));
+        const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-haiku-20240307',
+            system: systemWithContext,
+            messages: anthropicMessages,
+            max_tokens: 1024,
+            temperature: 0.1,
+            stream: true
+          })
+        });
+        if (claudeRes.ok) {
+          fetchResponse = claudeRes;
+        } else {
+          finalErrorStr += `Claude failed: ${await claudeRes.text()}\n`;
+        }
+      } catch (err: any) { finalErrorStr += `Claude fetch failed: ${err.message}\n`; }
+    }
 
-      return new Response(geminiRes.body, {
+    if (fetchResponse) {
+      return new Response(fetchResponse.body, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection': 'keep-alive'
         }
       });
-    } catch (genErr) {
-      console.error('Gemini call threw, falling back to RAG-only answer:', genErr);
+    } else {
+      console.error('All AI providers failed, falling back to RAG-only answer:\n', finalErrorStr);
       return sseTextResponse(buildRagFallbackText(topChunks));
     }
 

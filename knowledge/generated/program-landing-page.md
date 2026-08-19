@@ -1,35 +1,101 @@
-# AI Cohort (Program) — Live Landing Page Content ("/program")
+---
+title: AI Cohort — ABTalks
+route: /program
+url: http://localhost:3000/program
+source_type: site
+ingested_at: 2026-08-19T11:42:44.823Z
+---
 
-Note: this is the public marketing landing page only. It is separate from
-/ai-cohort-register and /ai-cohort-india's application-funnel content (see
-the ai-cohort-application-pages source) — different day count (31 here vs.
-30 there). Do not merge them.
+# AI Cohort — ABTalks
+
+# AI Cohort
+
+Build and deploy a production-grade enterprise AI chatbot in 31 days RAG, agents, MCP, guardrails, Docker, Kubernetes and get in front of recruiters.
 
 ## Requirements
+
+Laptop with at least 8 GB RAM
+
+~2–4 hours per day for 31 days
+
+A GitHub account
+
+Ollama / Groq / Chroma - no paid API keys needed
+
 - Laptop with at least 8 GB RAM
 - ~2–4 hours per day for 31 days
 - A GitHub account
 - Ollama / Groq / Chroma - no paid API keys needed
 
 ## Prerequisites
+
+Python Programming Fundamentals
+
+SQL & Database Fundamentals
+
+Git, GitHub & Command Line Basics
+
+REST APIs & Backend Development Basics
+
+JavaScript & React Fundamentals
+
 - Python Programming Fundamentals
 - SQL & Database Fundamentals
 - Git, GitHub & Command Line Basics
 - REST APIs & Backend Development Basics
 - JavaScript & React Fundamentals
 
-## 8-phase / 31-day roadmap
-- **Env & Tooling** (Days 1–3) — Local AI stack, Git, Ollama
-- **Data** (Days 4–6) — Coverage data & structured queries
-- **Embeddings & Vector** (Days 7–10) — Knowledge base + retrieval
-- **LLM & Prompting** (Days 11–15) — Prompting, fine-tune basics
-- **App Build** (Days 16–20) — Streamlit chatbot + FastAPI
-- **Agentic + MCP** (Days 21–24) — Tools, agents, MCP servers
-- **Governance & Eval** (Days 25–27) — Guardrails, evals, safety
-- **Docker / K8s / Prod** (Days 28–31) — Ship to production
+## Course Roadmap
+
+- 01Phase 1Days 1–3Env & ToolingLocal AI stack, Git, Ollama
+- 02Phase 2Days 4–6DataCoverage data & structured queries
+- 03Phase 3Days 7–10Embeddings & VectorKnowledge base + retrieval
+- 04Phase 4Days 11–15LLM & PromptingPrompting, fine-tune basics
+- 05Phase 5Days 16–20App BuildStreamlit chatbot + FastAPI
+- 06Phase 6Days 21–24Agentic + MCPTools, agents, MCP servers
+- 07Phase 7Days 25–27Governance & EvalGuardrails, evals, safety
+- 08Phase 8Days 28–31Docker / K8s / ProdShip to production
+
+### Env & Tooling
+
+### Data
+
+### Embeddings & Vector
+
+### LLM & Prompting
+
+### App Build
+
+### Agentic + MCP
+
+### Governance & Eval
+
+### Docker / K8s / Prod
 
 ## How it works
-- **Apply** — Confirm your laptop and GitHub setup.
-- **31 days of missions** — Build locally; we verify your GitHub artifacts.
-- **AI interview** — A real-time voice interview to close it out.
-- **Recruiter visibility** — Ranked profile + your build portfolio.
+
+Apply
+
+Confirm your laptop and GitHub setup.
+
+31 days of missions
+
+Build locally; we verify your GitHub artifacts.
+
+AI interview
+
+A real-time voice interview to close it out.
+
+Recruiter visibility
+
+Ranked profile + your build portfolio.
+
+- 1ApplyConfirm your laptop and GitHub setup.
+- 231 days of missionsBuild locally; we verify your GitHub artifacts.
+- 3AI interviewA real-time voice interview to close it out.
+- 4Recruiter visibilityRanked profile + your build portfolio.
+
+## Ready to build?
+
+Free for participants. Use your cohort join code to apply when enrollment is open.
+
