@@ -150,7 +150,10 @@ export function AppFooter() {
 
   if (pathname === "/dashboard") return null;
 
-  if (pathname === "/program/dashboard") {
+  if (
+    pathname === "/program/dashboard" ||
+    pathname.startsWith("/program/day")
+  ) {
     const year = new Date().getFullYear();
     return (
       <footer className="mt-auto border-t border-[#E0E0E0] bg-[#FBF9F7]">
