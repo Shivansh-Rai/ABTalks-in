@@ -285,9 +285,9 @@ export function MissionPanel({
               {githubRepoUrl}
             </a>
             .{" "}
-            <mark className="rounded bg-[#FFECE3] px-1.5 py-0.5 font-semibold text-[#C9411C]">
-              We verify the repo against the mission checklist.
-            </mark>
+           
+            <p className="text-[#4B4B4B]">We verify the repo against the mission checklist.</p>
+            
           </p>
           {missionState.shipItHints && missionState.shipItHints.length > 0 && (
             <ul className="space-y-2 text-sm">
