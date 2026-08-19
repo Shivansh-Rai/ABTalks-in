@@ -75,7 +75,7 @@ export function ProgramStatsPanel({ data, atRisk, projects, aiRec }: Props) {
   return (
     <div className="space-y-6">
       {atRisk.atRisk && (
-        <div className="flex items-start gap-3 rounded-[12px] border border-[#E05226] bg-[#FFECE3] px-4 py-3">
+        <div className="flex items-start gap-3 rounded-[20px] border border-[#E05226] bg-[#FFECE3] px-4 py-3 w-full max-w-sm">
           <AlertTriangle
             className="mt-0.5 size-5 shrink-0 text-[#E05226]"
             aria-hidden

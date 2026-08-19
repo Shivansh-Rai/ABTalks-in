@@ -10,7 +10,7 @@ import {
   Monitor,
   SkipForward,
 } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { dsButtonVariants } from "@/components/design/ds-button";
 import type {
   CurriculumDay,
   CurriculumModule,
@@ -32,10 +32,7 @@ const MISSION_LABEL: Record<ProgramMissionType, string> = {
   BOSS_BUILD: "Boss Build",
 };
 
-const startChallengeClass = cn(
-  buttonVariants({ variant: "default" }),
-  "h-9 rounded-lg bg-[#E05226] px-4 text-sm font-semibold text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
-);
+const startChallengeClass = dsButtonVariants({ size: "sm" });
 
 function seedOpenModule(
   modules: CurriculumModule[],
@@ -109,13 +106,7 @@ export function ProgramModuleList({
                 aria-controls={panelId}
                 onClick={() => toggle(mod.number)}
               >
-                <span className="flex min-w-0 items-start gap-2.5">
-                  <span
-                    className="mt-2 size-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: mod.color }}
-                    aria-hidden
-                  />
-                  <span className="min-w-0">
+                <span className="min-w-0">
                     <span className="block font-heading text-xl leading-[26px] font-semibold text-[#111111]">
                       Module {mod.number} · {mod.title}
                     </span>
@@ -125,7 +116,6 @@ export function ProgramModuleList({
                     <span className="mt-0.5 block text-[12px] leading-4 text-[#8F8F8F]">
                       Day {mod.startDay}–{mod.endDay}
                     </span>
-                  </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
                   <span className="text-[14px] leading-[21px] text-[#4B4B4B]">

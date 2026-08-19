@@ -26,19 +26,10 @@ export default async function ProgramAppLayout({
               alt="ABTalks"
               width={160}
               height={42}
-              className="h-8 w-auto md:h-9"
+              className="h-8 w-auto brightness-0 md:h-9"
               priority
             />
           </Link>
-          <div className="hidden items-center gap-2 sm:flex">
-            <Link
-              href="/program/dashboard"
-              className="shrink-0 text-base font-semibold tracking-tight"
-            >
-              <span className="text-[#E05226]">AI</span>{" "}
-              <span className="text-[#111111]">Cohort</span>
-            </Link>
-          </div>
           <ProgramNav items={navItems} />
         </div>
       </header>

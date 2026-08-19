@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import { isProgramEnabled } from "@/lib/feature-flags";
-import { buttonVariants } from "@/components/ui/button";
+import { dsButtonVariants } from "@/components/design/ds-button";
 import { cn } from "@/lib/utils";
 
 const ROADMAPS: { domain: Domain; label: string; path: string }[] = [
@@ -71,11 +71,8 @@ export function Roadmaps({
                 </p>
               </div>
               <Link
-                href="/program"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "shrink-0 bg-[#E05226] text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
-                )}
+                href={hasProgramMembership ? "/program/dashboard" : "/program"}
+                className={cn(dsButtonVariants(), "shrink-0")}
               >
                 {hasProgramMembership ? "Continue" : "Start"}
               </Link>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BarChart3, ChevronDown, Lock, Mic } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { dsButtonVariants } from "@/components/design/ds-button";
 import { ProgramModuleList } from "@/components/program/program-module-list";
 import { ProgramStatsPanel } from "@/components/program/program-stats-panel";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
@@ -35,10 +35,7 @@ const MISSION_LABEL: Record<string, string> = {
   BOSS_BUILD: "Boss Build",
 };
 
-const ctaClass = cn(
-  buttonVariants({ variant: "default" }),
-  "h-12 rounded-lg bg-[#E05226] px-4 text-sm font-semibold text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
-);
+const ctaClass = dsButtonVariants({ size: "lg" });
 
 export function ProgramDashboardView({
   data,
@@ -71,6 +68,15 @@ export function ProgramDashboardView({
             </li>
           </ol>
         </nav>
+
+        <header>
+          <h1 className="ml-3 font-heading text-[32px] leading-9 font-semibold text-[#111111] md:text-[40px] md:leading-[48px]">
+            AI Cohort
+          </h1>
+          <p className="font-fredoka ml-3 mt-2 text-[17px] leading-7 text-[#4B4B4B]">
+            Build and deploy a production-grade enterprise AI chatbot in 31 days
+          </p>
+        </header>
 
         <ContinueCard data={data} />
 
