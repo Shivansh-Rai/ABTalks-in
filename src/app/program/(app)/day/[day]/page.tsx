@@ -60,7 +60,6 @@ export default async function ProgramDayPage({ params }: Props) {
   const brief = parseBriefMd(day.briefMd);
   const hasObjectives =
     day.objectives.length > 0 || day.tools.length > 0;
-  const hasRepo = !!brief.repoLayoutMd;
 
   return (
     <ProgramDayClient
@@ -73,65 +72,61 @@ export default async function ProgramDayPage({ params }: Props) {
       estimatedMin={day.estimatedMin}
       missionPoints={day.missionPoints}
     >
-      <DaySectionCard title="Mission" icon="mission">
-        {(brief.missionTitle || day.title) && (
-          <h3 className="mb-2 font-heading text-base font-semibold text-[#111111] md:text-lg">
-            {brief.missionTitle ?? day.title}
-          </h3>
+      <div
+        className={cn(
+          "grid min-w-0 gap-6",
+          hasObjectives ? "md:grid-cols-2" : "grid-cols-1",
         )}
-        <div className={dayMdClassName}>
-          <ReactMarkdown components={programMdComponents}>
-            {brief.missionBodyMd}
-          </ReactMarkdown>
-        </div>
-      </DaySectionCard>
-
-      {(hasRepo || hasObjectives) && (
-        <div
-          className={cn(
-            "grid gap-6",
-            hasRepo && hasObjectives
-              ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
-              : "grid-cols-1",
+      >
+        <DaySectionCard title="Mission" icon="mission" className="min-w-0">
+          {(brief.missionTitle || day.title) && (
+            <h3 className="mb-2 font-heading text-base font-semibold text-[#111111] md:text-lg">
+              {brief.missionTitle ?? day.title}
+            </h3>
           )}
-        >
-          {brief.repoLayoutMd && (
-            <DaySectionCard title="Your Repo Layout (set this up first!)" icon="repo">
-              <div
-                className={cn(
-                  dayMdClassName,
-                  "rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
-                )}
-              >
-                <ReactMarkdown components={programMdComponents}>
-                  {brief.repoLayoutMd}
-                </ReactMarkdown>
+          <div className={dayMdClassName}>
+            <ReactMarkdown components={programMdComponents}>
+              {brief.missionBodyMd}
+            </ReactMarkdown>
+          </div>
+        </DaySectionCard>
+
+        {hasObjectives && (
+          <DaySectionCard title="Objectives" icon="objectives" className="min-w-0">
+            {day.objectives.length > 0 && (
+              <ul className={cn(dayMdClassName, "mb-4 space-y-1.5")}>
+                {day.objectives.map((o, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-[#E05226]">-</span>
+                    <span>{o}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {day.tools.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {day.tools.map((t) => (
+                  <ToolChip key={t} label={t} />
+                ))}
               </div>
-            </DaySectionCard>
-          )}
+            )}
+          </DaySectionCard>
+        )}
+      </div>
 
-          {hasObjectives && (
-            <DaySectionCard title="Objectives" icon="objectives">
-              {day.objectives.length > 0 && (
-                <ul className={cn(dayMdClassName, "mb-4 space-y-1.5")}>
-                  {day.objectives.map((o, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="text-[#E05226]">-</span>
-                      <span>{o}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {day.tools.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {day.tools.map((t) => (
-                    <ToolChip key={t} label={t} />
-                  ))}
-                </div>
-              )}
-            </DaySectionCard>
-          )}
-        </div>
+      {brief.repoLayoutMd && (
+        <DaySectionCard title="Your Repo Layout (set this up first!)" icon="repo">
+          <div
+            className={cn(
+              dayMdClassName,
+              "min-w-0 overflow-x-auto rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
+            )}
+          >
+            <ReactMarkdown components={programMdComponents}>
+              {brief.repoLayoutMd}
+            </ReactMarkdown>
+          </div>
+        </DaySectionCard>
       )}
 
       {brief.buildSteps.length > 0 && (
