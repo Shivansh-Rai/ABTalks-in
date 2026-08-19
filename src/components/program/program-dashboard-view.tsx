@@ -61,7 +61,7 @@ export function ProgramDashboardView({
               </Link>
             </li>
             <li aria-hidden className="text-[#8F8F8F]">
-              /
+             &gt;
             </li>
             <li aria-current="page" className="font-semibold text-[#111111]">
               AI Cohort

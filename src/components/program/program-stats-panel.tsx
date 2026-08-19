@@ -37,7 +37,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#8F8F8F]">
         {label}
       </p>
-      <p className="mt-1 font-heading text-[32px] leading-9 font-bold text-[#111111]">
+      <p className="mt-1 font-inter text-[32px] leading-9 font-bold text-[#111111]">
         {value}
       </p>
     </div>

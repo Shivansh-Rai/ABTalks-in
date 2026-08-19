@@ -53,7 +53,7 @@ export function ProgramModuleList({ modules, days }: Props) {
     <div className="overflow-hidden rounded-[12px] border border-[#E0E0E0] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="flex items-center gap-2.5 px-6 py-5">
         <Monitor className="size-5 shrink-0 text-[#4B4B4B]" aria-hidden />
-        <h3 className="font-heading text-xl leading-[26px] font-semibold text-[#E05226]">
+        <h3 className="ml-2 font-heading text-xl leading-[26px] font-semibold text-[#E05226]">
           Modules
         </h3>
       </div>
@@ -76,8 +76,9 @@ export function ProgramModuleList({ modules, days }: Props) {
                 onClick={() => toggle(mod.number)}
               >
                 <span className="min-w-0">
-                    <span className="block font-heading text-xl leading-[26px] font-semibold text-[#111111]">
-                      Module {mod.number} · {mod.title}
+                    <span className="block font-heading text-xl leading-[26px] font-semibold">
+                      <span className="text-[#E05226]">Module {mod.number}</span>
+                      <span className="text-[#111111]"> · {mod.title}</span>
                     </span>
                     <span className="mt-0.5 block text-[14px] leading-[21px] text-[#8F8F8F]">
                       {mod.subtitle}
