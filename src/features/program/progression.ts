@@ -39,6 +39,14 @@ export function isSkippedPayload(payload: unknown): boolean {
   );
 }
 
+export function isWaivedPayload(payload: unknown): boolean {
+  return (
+    !!payload &&
+    typeof payload === "object" &&
+    (payload as { waived?: unknown }).waived === true
+  );
+}
+
 /**
  * Calendar unlock ceiling from cohort pace + start-day offset.
  * Cohort calendar day 1 → content day PROGRAM_MEMBER_START_DAY.

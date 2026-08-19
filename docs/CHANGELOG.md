@@ -2,6 +2,8 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-19 [convention] Program /dashboard rebuilt as collapsible module view on cream/orange design system; /program (app) shell is light; Curriculum nav hidden (route kept); heatmap kept for talent
+
 - 2026-08-18 [rule] ViCoDathon placement certs issuable on production via --all --allow-production on issue-hackathon-award-certificates.ts
 - 2026-08-18 [rule] ViCoDathon placement certs (winner/2nd/3rd/top5) as extra HACKATHON rows with metadata.hackathonVariant; same overlay layout
 - 2026-08-18 [rule] Admin community synergy grant cap raised from 2000 to 3000
