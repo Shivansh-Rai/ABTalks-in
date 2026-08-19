@@ -168,9 +168,13 @@ function buildRagFallbackText(chunks: { heading?: string; text: string }[]): str
     return text;
   }).filter(t => t.length > 0);
 
-  const mainBody = formattedSections.join('\n\n---\n\n');
+  const mainBody = formattedSections.map(text => {
+    // If the text looks like a list, keep it as is, otherwise add bullet points to sentences
+    if (text.includes('- ')) return text;
+    return text.split('. ').filter(s => s.trim().length > 0).map(s => `• ${s.trim()}`).join('\n');
+  }).join('\n\n');
 
-  return `*(I am currently experiencing extremely high demand, so I'm sharing this information directly from my knowledge base without AI formatting)*\n\n${mainBody}\n\nFor any additional questions or support, feel free to reach out to team@abtalks.in.`;
+  return `Here is the information I found for you:\n\n${mainBody}\n\nLet me know if you need more specific details or email team@abtalks.in!`;
 }
 
 function sseTextResponse(text: string): Response {
@@ -231,6 +235,33 @@ export async function POST(req: Request) {
     }
     if (HARASSMENT_ESCALATION_RE.test(trimmedLast)) {
       return sseTextResponse(HARASSMENT_ESCALATION_REPLY);
+    }
+
+    // Keyword interceptor for upcoming hackathons
+    if (/\b(next|upcoming|future|new)\s*hackathons?\b/i.test(trimmedLast)) {
+      const { upcomingEvents, istTodayKey } = await import('@/components/workshop/events-data');
+      const upcoming = upcomingEvents(istTodayKey()).filter(e => e.tag.toLowerCase().includes('hackathon'));
+      
+      if (upcoming.length === 0) {
+        return sseTextResponse("There are currently no upcoming hackathons scheduled, but we host the Vibe Code Hackathon regularly! Check back soon or follow our social channels for announcements.");
+      }
+      
+      const eventList = upcoming.map(e => `• ${e.title} (${e.date} at ${e.time}) - ${e.location}`).join('\n');
+      return sseTextResponse(`Here are our upcoming hackathons:\n\n${eventList}\n\nLet me know if you want details on any of these!`);
+    }
+
+    // Keyword interceptor for upcoming workshops and general events
+    if (/\b(next|upcoming|future|new)\s*(workshops?|events?|sessions?)\b/i.test(trimmedLast)) {
+      const { upcomingEvents, istTodayKey } = await import('@/components/workshop/events-data');
+      // Filter out hackathons so they are distinct
+      const upcoming = upcomingEvents(istTodayKey()).filter(e => !e.tag.toLowerCase().includes('hackathon'));
+      
+      if (upcoming.length === 0) {
+        return sseTextResponse("There are currently no upcoming workshops scheduled, but we regularly host new sessions! Check back soon or follow our social channels for announcements.");
+      }
+      
+      const eventList = upcoming.map(e => `• ${e.title} (${e.date} at ${e.time}) - ${e.location}`).join('\n');
+      return sseTextResponse(`Here are our upcoming workshops and events:\n\n${eventList}\n\nLet me know if you want details on any of these!`);
     }
 
     if (/^(hi+|hello+|hey+|yo|sup|namaste|good\s?(morning|afternoon|evening))[\s!.,]*$/i.test(trimmedLast)) {
@@ -379,16 +410,8 @@ export async function POST(req: Request) {
 
     const topChunks = scoredChunks.filter((c: any) => c.score >= 0.18).slice(0, 5);
 
-    // If the top match is very strong, bypass Gemini entirely to avoid hallucination and improve latency.
-    // However, we ONLY bypass if the user typed a substantive query (>= 3 words) AND we didn't inject a topic prefix.
-    // If a topic prefix was injected (e.g., via pathname or conversation history), it artificially inflates the score 
-    // against the topic's chunks. We must send those to Gemini so Gemini can decide if the chunk actually answers the user's raw question.
-    if (topScore >= 0.85 && !isTopicInjected && trimmedLast.split(/\s+/).length >= 3) {
-      // Exception: If the query explicitly asks to "compare" or "synthesize", we should still use Gemini.
-      if (!/\b(compare|difference between|summarize both)\b/i.test(trimmedLast)) {
-        return sseTextResponse(buildRagFallbackText(topChunks));
-      }
-    }
+    // Let the LLM always generate the response. We no longer bypass the LLM for high-scoring chunks,
+    // as the user prefers the formatted AI response over the raw text dump.
 
     const contextText = topChunks.map((c: any) => `[Source: ${c.source} | Section: ${c.heading}]\n${c.text}`).join('\n\n---\n\n');
 

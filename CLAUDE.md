@@ -80,6 +80,7 @@ wrapped at the consumption site (`hsl(var(--primary))`). Never paste hex into
 - Buttons: use `buttonVariants` directly on `<Link>`; never `<Button asChild>`
   or `<Button render={<Link>}>` (Base UI button semantics).
 - Logging via `lib/logger.ts`, never `console.error`.
+- When updating core platform data, marketing copy, or curriculum details (e.g. adding a new program, event, or changing FAQ answers), you MUST update `src/lib/chatbot-matcher.ts` to ensure the zero-LLM chatbot intent matcher stays in sync with the new data, and update the markdown files in `knowledge/` and run `npx tsx scripts/ingest-site.ts` to update the RAG embeddings.
 
 ## Project layout
 - `src/features/<domain>/` — business logic. 19 modules: registration, enrollment,
