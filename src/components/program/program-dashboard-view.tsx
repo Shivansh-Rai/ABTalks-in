@@ -91,7 +91,6 @@ export function ProgramDashboardView({
             <ProgramModuleList
               modules={data.modules}
               days={data.days}
-              currentDayNumber={data.currentDay?.dayNumber ?? null}
             />
           </div>
         </section>

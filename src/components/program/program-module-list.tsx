@@ -20,8 +20,6 @@ import { cn } from "@/lib/utils";
 type Props = {
   modules: CurriculumModule[];
   days: CurriculumDay[];
-  /** dayNumber of the first AVAILABLE day, used to auto-open its module. */
-  currentDayNumber: number | null;
 };
 
 const MISSION_LABEL: Record<ProgramMissionType, string> = {
@@ -34,37 +32,8 @@ const MISSION_LABEL: Record<ProgramMissionType, string> = {
 
 const startChallengeClass = dsButtonVariants({ size: "sm" });
 
-function seedOpenModule(
-  modules: CurriculumModule[],
-  days: CurriculumDay[],
-  currentDayNumber: number | null,
-): number | null {
-  if (currentDayNumber !== null) {
-    const current = modules.find(
-      (m) =>
-        currentDayNumber >= m.startDay && currentDayNumber <= m.endDay,
-    );
-    if (current) return current.number;
-  }
-
-  const unfinished = modules.find((m) =>
-    days.some(
-      (d) => d.moduleNumber === m.number && d.state !== "PASSED",
-    ),
-  );
-  if (unfinished) return unfinished.number;
-
-  return modules[0]?.number ?? null;
-}
-
-export function ProgramModuleList({
-  modules,
-  days,
-  currentDayNumber,
-}: Props) {
-  const [open, setOpen] = useState<number | null>(() =>
-    seedOpenModule(modules, days, currentDayNumber),
-  );
+export function ProgramModuleList({ modules, days }: Props) {
+  const [open, setOpen] = useState<number | null>(null);
 
   function toggle(moduleNumber: number) {
     setOpen((prev) => (prev === moduleNumber ? null : moduleNumber));
