@@ -1,6 +1,4 @@
-## Pending reconcile
-
-<!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
+- 2026-08-19 [convention] /program/day restyled to cream/orange design system (behavior unchanged)
 
 - 2026-08-19 [convention] Program /dashboard rebuilt as collapsible module view on cream/orange design system; /program (app) shell is light; Curriculum nav hidden (route kept); heatmap kept for talent
 

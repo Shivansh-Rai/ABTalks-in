@@ -75,7 +75,7 @@ export default async function ProgramDayPage({ params }: Props) {
     >
       <DaySectionCard title="Mission" icon="mission">
         {(brief.missionTitle || day.title) && (
-          <h3 className="mb-2 text-base font-semibold text-white md:text-lg">
+          <h3 className="mb-2 font-heading text-base font-semibold text-[#111111] md:text-lg">
             {brief.missionTitle ?? day.title}
           </h3>
         )}
@@ -100,7 +100,7 @@ export default async function ProgramDayPage({ params }: Props) {
               <div
                 className={cn(
                   dayMdClassName,
-                  "rounded-[20px] border border-[#8365E3] bg-[#110528] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
+                  "rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
                 )}
               >
                 <ReactMarkdown components={programMdComponents}>
@@ -116,7 +116,7 @@ export default async function ProgramDayPage({ params }: Props) {
                 <ul className={cn(dayMdClassName, "mb-4 space-y-1.5")}>
                   {day.objectives.map((o, i) => (
                     <li key={i} className="flex gap-2">
-                      <span className="text-[#968BEC]">-</span>
+                      <span className="text-[#E05226]">-</span>
                       <span>{o}</span>
                     </li>
                   ))}
@@ -145,10 +145,10 @@ export default async function ProgramDayPage({ params }: Props) {
               <div key={video.id} className="max-w-md space-y-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block size-0 shrink-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#970000]"
+                    className="inline-block size-0 shrink-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#E05226]"
                     aria-hidden
                   />
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-[#111111]">
                     {video.title}
                   </p>
                 </div>
@@ -156,7 +156,7 @@ export default async function ProgramDayPage({ params }: Props) {
                   youtubeId={video.youtubeId}
                   title={video.title}
                   compact
-                  className="border-[#8365E3]/40"
+                  className="border-[#E0E0E0]"
                 />
               </div>
             ))}
