@@ -23,7 +23,7 @@ export function StreakCard({
   const ringPct = Math.min(100, (streak.current / milestone) * 100);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-#FBF9F9 p-5 shadow-sm">
+    <div className="rounded-2xl border border-neutral-200 bg-[#FBF9F7] p-5 shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ease-[var(--ease-spark)] motion-safe:hover:-translate-y-0.5 hover:border-[#E05226] hover:bg-[#FFECE3] hover:shadow-[0_8px_24px_rgba(17,17,17,0.06)]">
       <div className="flex items-center gap-4">
         <div
           className="relative flex size-20 shrink-0 items-center justify-center"

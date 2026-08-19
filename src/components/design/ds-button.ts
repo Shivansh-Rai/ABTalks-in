@@ -13,6 +13,7 @@ export const dsButtonVariants = cva(
   cn(
     buttonVariants({ variant: "default" }),
     "rounded-lg border-transparent bg-[#E05226] font-semibold text-white shadow-none",
+    "transition-colors duration-200 ease-[var(--ease-spark)]",
     "hover:scale-100 hover:!bg-[#C9411C] hover:!text-white hover:shadow-none",
     "active:scale-100 active:!bg-[#A93617]",
     "[a]:hover:!bg-[#C9411C] [a]:hover:!text-white",

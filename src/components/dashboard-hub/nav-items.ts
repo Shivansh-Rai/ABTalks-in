@@ -22,7 +22,17 @@ export const HUB_CONTENT_CLASS = "text-[#555555]";
 export const HUB_TAB_HOVER_CLASS = "hover:text-[#e05226]";
 export const HUB_NAV_ACTIVE_CLASS = "bg-[#e05226]/10 text-[#e05226]";
 export const HUB_NAV_IDLE_CLASS =
-  "text-[#555555] hover:bg-[#e05226]/10 hover:text-[#e05226]";
+  "text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#e05226]/10 hover:text-[#e05226]";
+
+/** Card hover — peach fill, orange border, 2px lift (design-system §2 + spark settle). */
+export const HUB_CARD_HOVER_CLASS =
+  "transition-[transform,box-shadow,border-color,background-color] duration-200 ease-[var(--ease-spark)] motion-safe:hover:-translate-y-0.5 hover:border-[#E05226] hover:bg-[#FFECE3] hover:shadow-[0_8px_24px_rgba(17,17,17,0.06)]";
+
+export const HUB_TEXT_LINK_CLASS =
+  "group inline-flex items-center gap-1 text-sm font-medium text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]";
+
+export const HUB_ARROW_HOVER_CLASS =
+  "size-4 transition-transform duration-200 ease-[var(--ease-spark)] group-hover:translate-x-0.5";
 
 export const SIDEBAR_WIDTH_CLASS = "w-64";
 export const SIDEBAR_BRAND_ROW_CLASS =

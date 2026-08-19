@@ -2,6 +2,12 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import { isClaudeEnabled } from "@/lib/feature-flags";
+import {
+  HUB_ARROW_HOVER_CLASS,
+  HUB_CARD_HOVER_CLASS,
+  HUB_TEXT_LINK_CLASS,
+} from "@/components/dashboard-hub/nav-items";
+import { cn } from "@/lib/utils";
 
 type OtherChallengesProps = {
   enrolledDomains: Domain[];
@@ -24,19 +30,21 @@ export function OtherChallenges({ enrolledDomains }: OtherChallengesProps) {
       </h2>
       <ul className="mt-4 ml-4 grid gap-3 sm:grid-cols-2">
         {showClaude ? (
-          <li className="rounded-2xl border border-neutral-200 bg-white p-5">
+          <li
+            className={cn(
+              "rounded-2xl border border-neutral-200 bg-white p-5",
+              HUB_CARD_HOVER_CLASS,
+            )}
+          >
             <p className="font-heading font-semibold text-black">
               Claude Challenge
             </p>
             <p className="mt-1 text-sm text-[#555555]">
               Build with Claude · 60 days
             </p>
-            <Link
-              href="/claude-signup"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
-            >
+            <Link href="/claude-signup" className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}>
               Join
-              <ArrowRight className="size-4" aria-hidden />
+              <ArrowRight className={HUB_ARROW_HOVER_CLASS} aria-hidden />
             </Link>
           </li>
         ) : null}

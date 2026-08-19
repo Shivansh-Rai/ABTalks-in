@@ -58,7 +58,7 @@ function monthLabelForColumn(
 }
 
 const CELL_CLASS =
-  "rounded-[4px] border border-neutral-200/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-400";
+  "rounded-[4px] border border-neutral-200/80 transition-transform duration-200 ease-[var(--ease-spark)] motion-safe:hover:z-10 motion-safe:hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E05226]";
 
 function HeatmapCell({
   cell,

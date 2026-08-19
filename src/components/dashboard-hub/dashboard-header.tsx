@@ -11,7 +11,7 @@ type DashboardHeaderProps = {
 };
 
 const bellClassName =
-  "inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]";
+  "inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 transition-[border-color,background-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226] motion-safe:hover:scale-[1.04]";
 
 export function DashboardHeader({
   isAdmin,
@@ -24,7 +24,7 @@ export function DashboardHeader({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 hover:border-[#e05226] hover:text-[#e05226] md:hidden"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 transition-[border-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:text-[#e05226] motion-safe:hover:scale-[1.04] md:hidden"
             aria-label="Open menu"
             aria-expanded={menuOpen}
             onClick={onMenuClick}
@@ -38,19 +38,19 @@ export function DashboardHeader({
           >
             <a
               href="#events"
-              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
             >
               Events
             </a>
             <a
               href="#faq"
-              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
             >
               FAQs
             </a>
             <a
               href="#testimonials"
-              className="text-sm font-medium text-[#555555] hover:text-[#e05226]"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
             >
               Testimonials
             </a>
@@ -62,7 +62,7 @@ export function DashboardHeader({
           {isAdmin ? (
             <Link
               href="/admin"
-              className="rounded-full border border-[#E05226] bg-[#E05226] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#C9411C]"
+              className="rounded-full border border-[#E05226] bg-[#E05226] px-4 py-1.5 text-xs font-semibold text-white transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#C9411C]"
             >
               Admin
             </Link>

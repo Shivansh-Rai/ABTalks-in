@@ -3,6 +3,11 @@ import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { dsButtonVariants } from "@/components/design/ds-button";
+import {
+  HUB_ARROW_HOVER_CLASS,
+  HUB_CARD_HOVER_CLASS,
+  HUB_TEXT_LINK_CLASS,
+} from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
 const ROADMAPS: { domain: Domain; label: string; path: string }[] = [
@@ -35,7 +40,10 @@ export function Roadmaps({
             return (
               <li
                 key={domain}
-                className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-5"
+                className={cn(
+                  "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5",
+                  HUB_CARD_HOVER_CLASS,
+                )}
               >
                 <p className="font-heading font-semibold text-black">{label}</p>
                 <p className="mt-1 flex-1 text-sm text-[#555555]">
@@ -43,10 +51,10 @@ export function Roadmaps({
                 </p>
                 <Link
                   href={isEnrolled ? path : "/challenges"}
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:text-[#e05226]"
+                  className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}
                 >
                   {isEnrolled ? "Continue" : "Join"}
-                  <ArrowRight className="size-4" aria-hidden />
+                  <ArrowRight className={HUB_ARROW_HOVER_CLASS} aria-hidden />
                 </Link>
               </li>
             );
@@ -59,7 +67,12 @@ export function Roadmaps({
           <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
             AI Prep Kit
           </h2>
-          <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6">
+          <div
+            className={cn(
+              "mt-4 rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6",
+              HUB_CARD_HOVER_CLASS,
+            )}
+          >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="font-heading text-lg font-semibold text-black">

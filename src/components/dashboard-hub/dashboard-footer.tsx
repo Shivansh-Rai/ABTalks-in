@@ -120,7 +120,7 @@ export function DashboardFooter() {
               <Link
                 key={href}
                 href={href}
-                className="hover:text-[#e05226] hover:underline"
+                className="transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226] hover:underline"
               >
                 {label}
               </Link>
@@ -138,7 +138,7 @@ export function DashboardFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="inline-flex size-8 items-center justify-center rounded-full text-[#555555] transition-colors hover:bg-[#e05226]/10 hover:text-[#e05226]"
+              className="inline-flex size-8 items-center justify-center rounded-full text-[#555555] transition-[background-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:bg-[#e05226]/10 hover:text-[#e05226] motion-safe:hover:scale-110"
             >
               <Icon className="size-4" />
             </a>

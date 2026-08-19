@@ -86,7 +86,7 @@ export function DashboardSidebar({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-[var(--ease-spark)]",
                 active ? HUB_NAV_ACTIVE_CLASS : HUB_NAV_IDLE_CLASS,
               )}
             >
@@ -124,7 +124,7 @@ export function DashboardSidebar({
         <form action={signOutAction} className="mt-3">
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-[#555555] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-[#555555] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]"
           >
             <LogOut className="size-4" aria-hidden />
             Sign out

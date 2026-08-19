@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Domain } from "@prisma/client";
 import type { UserEnrollmentSummary } from "@/features/enrollment/get-user-enrollments";
 import { dsButtonVariants } from "@/components/design/ds-button";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
 const TRACK_PATH: Record<Domain, string> = {
@@ -30,7 +31,12 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
       </h2>
 
       {enrollments.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-6 text-center">
+        <div
+          className={cn(
+            "mt-4 rounded-2xl border border-neutral-200 bg-white p-6 text-center",
+            HUB_CARD_HOVER_CLASS,
+          )}
+        >
           <p className="text-[#555555]">
             You haven&apos;t started a challenge yet
           </p>
@@ -48,7 +54,10 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
             return (
               <li
                 key={e.id}
-                className="rounded-2xl border border-neutral-200 bg-white p-5"
+                className={cn(
+                  "rounded-2xl border border-neutral-200 bg-white p-5",
+                  HUB_CARD_HOVER_CLASS,
+                )}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">

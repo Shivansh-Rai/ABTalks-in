@@ -32,19 +32,19 @@ export function FaqSection() {
             return (
               <div
                 key={item.q}
-                className="overflow-hidden rounded-xl bg-[#F7E9E3]"
+                className="overflow-hidden rounded-xl bg-[#F7E9E3] transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#FFECE3]"
               >
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   aria-controls={panelId}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold font-inter text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-400"
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold font-inter text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#C9411C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#E05226]"
                 >
                   {item.q}
                   <span
                     className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e05226] text-white transition-transform",
+                      "flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e05226] text-white transition-transform duration-200 ease-[var(--ease-spark)]",
                       isOpen && "rotate-45",
                     )}
                     aria-hidden

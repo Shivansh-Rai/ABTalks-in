@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatInTimeZone } from "date-fns-tz";
 import { IST } from "@/lib/date-utils";
 import { EVENTS } from "@/components/workshop/events-data";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
 function todayIstKey(): string {
@@ -49,7 +50,7 @@ function EventRail({
       <h3 className="text-sm font-semibold tracking-wide text-black uppercase">
         {title}
       </h3>
-      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
+      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
         {events.map((event) => (
           <EventCard key={event.id} event={event} past={past} />
         ))}
@@ -75,6 +76,7 @@ function EventCard({
     <article
       className={cn(
         "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 p-5 sm:w-[300px]",
+        HUB_CARD_HOVER_CLASS,
         past ? "bg-neutral-50 opacity-90" : "bg-white shadow-sm",
       )}
     >
@@ -106,7 +108,7 @@ function EventCard({
           {...(event.href
             ? { target: "_blank", rel: "noopener noreferrer" }
             : {})}
-          className="mt-4 inline-flex text-sm font-medium text-black hover:text-[#e05226]"
+          className="mt-4 inline-flex text-sm font-medium text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
         >
           {ctaLabel} →
         </Link>
