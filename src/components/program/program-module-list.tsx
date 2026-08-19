@@ -144,7 +144,9 @@ function DayRow({ day }: { day: CurriculumDay }) {
         <p className="text-[12px] leading-4 font-semibold uppercase text-[#8F8F8F]">
           Day {day.dayNumber}
         </p>
-        <p className="text-[17px] leading-7 text-[#111111]">{day.title}</p>
+        <p className="text-[17px] leading-7 font-semibold text-[#111111]">
+          {day.title}
+        </p>
         <span className="mt-1 inline-flex rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
           {MISSION_LABEL[day.missionType]}
         </span>

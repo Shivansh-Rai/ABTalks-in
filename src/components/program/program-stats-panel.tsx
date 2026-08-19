@@ -87,7 +87,7 @@ export function ProgramStatsPanel({ data, atRisk, projects, aiRec }: Props) {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label="Total score" value={String(data.totalScore)} />
         <StatCard label="Rank" value={data.rank ? `#${data.rank}` : "—"} />
         <StatCard
