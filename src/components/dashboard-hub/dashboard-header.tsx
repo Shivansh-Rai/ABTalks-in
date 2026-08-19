@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 
 type DashboardHeaderProps = {
   isAdmin: boolean;
   menuOpen: boolean;
   onMenuClick: () => void;
 };
+
+const bellClassName =
+  "inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]";
 
 export function DashboardHeader({
   isAdmin,
@@ -54,6 +58,7 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationBellButton className={bellClassName} />
           {isAdmin ? (
             <Link
               href="/admin"
