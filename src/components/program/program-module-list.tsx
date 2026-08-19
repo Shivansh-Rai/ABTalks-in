@@ -37,17 +37,17 @@ const startChallengeClass = cn(
   "h-9 rounded-lg bg-[#E05226] px-4 text-sm font-semibold text-white hover:scale-100 hover:bg-[#C9411C] hover:shadow-none active:scale-100",
 );
 
-function seedOpenModules(
+function seedOpenModule(
   modules: CurriculumModule[],
   days: CurriculumDay[],
   currentDayNumber: number | null,
-): Set<number> {
+): number | null {
   if (currentDayNumber !== null) {
     const current = modules.find(
       (m) =>
         currentDayNumber >= m.startDay && currentDayNumber <= m.endDay,
     );
-    if (current) return new Set([current.number]);
+    if (current) return current.number;
   }
 
   const unfinished = modules.find((m) =>
@@ -55,9 +55,9 @@ function seedOpenModules(
       (d) => d.moduleNumber === m.number && d.state !== "PASSED",
     ),
   );
-  if (unfinished) return new Set([unfinished.number]);
+  if (unfinished) return unfinished.number;
 
-  return new Set([1]);
+  return modules[0]?.number ?? null;
 }
 
 export function ProgramModuleList({
@@ -65,17 +65,12 @@ export function ProgramModuleList({
   days,
   currentDayNumber,
 }: Props) {
-  const [open, setOpen] = useState<Set<number>>(() =>
-    seedOpenModules(modules, days, currentDayNumber),
+  const [open, setOpen] = useState<number | null>(() =>
+    seedOpenModule(modules, days, currentDayNumber),
   );
 
   function toggle(moduleNumber: number) {
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(moduleNumber)) next.delete(moduleNumber);
-      else next.add(moduleNumber);
-      return next;
-    });
+    setOpen((prev) => (prev === moduleNumber ? null : moduleNumber));
   }
 
   if (modules.length === 0) {
@@ -102,7 +97,7 @@ export function ProgramModuleList({
           const total = moduleDays.length;
           const passed = moduleDays.filter((d) => d.state === "PASSED").length;
           const pct = total ? Math.round((passed / total) * 100) : 0;
-          const isOpen = open.has(mod.number);
+          const isOpen = open === mod.number;
           const panelId = `program-module-${mod.number}`;
 
           return (
@@ -160,11 +155,8 @@ export function ProgramModuleList({
               </button>
 
               {isOpen && (
-                <div
-                  id={panelId}
-                  className="border-t border-[#E0E0E0]"
-                >
-                  <div className="divide-y divide-[#E0E0E0]">
+                <div id={panelId} className="px-6 pt-3 pb-5">
+                  <div className="space-y-3">
                     {moduleDays.map((day) => (
                       <DayRow key={day.dayNumber} day={day} />
                     ))}
@@ -185,7 +177,7 @@ function DayRow({ day }: { day: CurriculumDay }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 px-6 py-4",
+        "flex items-center justify-between gap-4 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-5 py-4",
         locked && "opacity-70",
       )}
     >

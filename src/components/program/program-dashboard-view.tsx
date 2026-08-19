@@ -75,12 +75,12 @@ export function ProgramDashboardView({
         <ContinueCard data={data} />
 
         <section>
-          <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
+          {/* <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
             MODULES
-          </p>
-          <h2 className="mt-3 font-heading text-[32px] leading-9 font-bold text-[#111111] md:text-[40px] md:leading-[48px]">
+          </p> */}
+          {/* <h2 className="mt-3 font-heading text-[32px] leading-9 font-bold text-[#111111] md:text-[40px] md:leading-[48px]">
             Your 31-day path
-          </h2>
+          </h2> */}
           <div className="mt-6">
             <ProgramModuleList
               modules={data.modules}
