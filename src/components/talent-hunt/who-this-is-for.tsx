@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const audiences = [
+const audiences = [
   { icon: Code2, label: "Software Engineers" },
   { icon: LineChart, label: "Data & Analytics" },
   { icon: Briefcase, label: "Product Managers" },

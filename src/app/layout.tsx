@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -14,10 +14,16 @@ import { ChatWidget } from "@/components/chatbot/ChatWidget";
 import { isChatbotEnabled } from "@/lib/feature-flags";
 import "./globals.css";
 
-const archivo = Archivo({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-archivo",
-  weight: ["400", "600", "800"],
+  variable: "--font-jakarta",
+  weight: ["500", "600", "700", "800"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,13 +39,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivo.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`${archivo.variable} min-h-full flex flex-col font-sans`}>
+      <body className={`${jakarta.variable} ${inter.variable} min-h-full flex flex-col font-sans`}>
         <ThemeProvider
           attribute="class"
-          forcedTheme="light"
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
         >
           <CookieConsentProvider>
@@ -58,8 +65,8 @@ export default function RootLayout({
               {isChatbotEnabled() && <ChatWidget />}
             </NotificationProvider>
           </CookieConsentProvider>
-        </ThemeProvider >
-      </body >
-    </html >
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

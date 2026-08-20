@@ -123,25 +123,6 @@ export async function requireProgramMember() {
 }
 
 /**
- * Non-redirecting check for whether the current request comes from an
- * approved recruiter. Unlike `requireRecruiter()`, this never redirects —
- * used to conditionally show/hide sensitive content (e.g. compensation and
- * logistics on the public /r/[token] candidate share page) without gating
- * the whole page behind login.
- */
-export async function isApprovedRecruiterSession(): Promise<boolean> {
-  const session = await auth();
-  if (!session?.user?.id) return false;
-
-  const profile = await prisma.recruiterProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { approved: true },
-  });
-
-  return !!profile?.approved;
-}
-
-/**
  * Require an approved recruiter. DB-checked (approval flips aren't in the JWT).
  * Redirects to the pending page otherwise.
  */

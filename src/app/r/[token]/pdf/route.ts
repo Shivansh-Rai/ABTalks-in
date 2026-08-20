@@ -1,7 +1,6 @@
 import { createElement, type ReactElement } from "react";
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { getRecruiterProfileByToken } from "@/features/recruiter/get-recruiter-profile";
-import { isApprovedRecruiterSession } from "@/lib/program-auth";
 import { RecruiterPdf } from "@/features/recruiter/recruiter-pdf";
 
 export const runtime = "nodejs";
@@ -22,8 +21,7 @@ export async function GET(
   context: { params: Promise<{ token: string }> },
 ) {
   const { token } = await context.params;
-  const viewerIsApprovedRecruiter = await isApprovedRecruiterSession();
-  const profile = await getRecruiterProfileByToken(token, viewerIsApprovedRecruiter);
+  const profile = await getRecruiterProfileByToken(token);
   if (!profile) {
     return new Response("Not found", { status: 404 });
   }

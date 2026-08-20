@@ -3,13 +3,6 @@
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
-export const WELCOME_FACTS = {
-  headline: "Master Claude AI in 60 Days",
-  tagline:
-    "A structured journey to master Claude AI, build real projects, and future-proof your career. Not a course. A build challenge.",
-  launchDate: "June 1, 2026",
-};
-
 export function ClaudeWelcomeSlide() {
   return (
     <motion.div
@@ -46,7 +39,8 @@ export function ClaudeWelcomeSlide() {
         transition={{ delay: 0.4, duration: 0.5 }}
         className="mt-2 text-sm text-muted-foreground md:text-base"
       >
-        {WELCOME_FACTS.tagline}
+        A structured journey to master Claude AI, build real projects, and
+        future-proof your career. Not a course. A build challenge.
       </motion.p>
 
       <motion.p
@@ -55,7 +49,7 @@ export function ClaudeWelcomeSlide() {
         transition={{ delay: 0.5, duration: 0.5 }}
         className="mt-2 text-xs text-muted-foreground md:text-sm"
       >
-        Launching {WELCOME_FACTS.launchDate}
+        Launching June 1, 2026
       </motion.p>
     </motion.div>
   );
