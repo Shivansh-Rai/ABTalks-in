@@ -9,6 +9,7 @@ import {
   Trophy,
   UsersRound,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import type { LandingState } from "@/features/landing/get-landing-state";
 import { cn } from "@/lib/utils";
@@ -158,6 +159,7 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
             />
           </Link>
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             {state.user ? (
               <LandingUserMenu user={state.user} />
             ) : (
@@ -218,7 +220,7 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
                 key={stat.label}
                 className="flex items-center justify-center gap-3 py-4 sm:py-0"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-none bg-primary/10 text-primary">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   {index === 0 ? (
                     <UsersRound className="h-5 w-5" />
                   ) : index === 1 ? (
@@ -275,7 +277,7 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
         <section className="mx-auto max-w-7xl px-5 pb-20 md:px-8 md:pb-24">
           <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-emerald-500/15 p-7 backdrop-blur-md md:flex md:items-center md:justify-between md:gap-8 md:p-10">
             <div className="relative z-10 flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
                 <MessageCircle className="h-6 w-6" />
               </span>
               <div>
@@ -296,7 +298,7 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
               Join now
             </a>
             <div
-              className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-none bg-emerald-400/20 blur-3xl"
+              className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl"
               aria-hidden
             />
           </div>
@@ -337,9 +339,9 @@ export function LandingHub({ claudeEnabled, state }: LandingHubProps) {
 function BackgroundBlobs() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
-      <div className="absolute -right-32 top-20 h-96 w-96 rounded-none bg-violet-500/15 blur-3xl" />
-      <div className="absolute -left-40 top-[34rem] h-96 w-96 rounded-none bg-indigo-500/15 blur-3xl" />
-      <div className="absolute right-0 top-[62rem] h-80 w-80 rounded-none bg-orange-500/10 blur-3xl" />
+      <div className="absolute -right-32 top-20 h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
+      <div className="absolute -left-40 top-[34rem] h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl" />
+      <div className="absolute right-0 top-[62rem] h-80 w-80 rounded-full bg-orange-500/10 blur-3xl" />
     </div>
   );
 }

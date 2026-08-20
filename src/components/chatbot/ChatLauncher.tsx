@@ -17,9 +17,9 @@ export function ChatLauncher({ open, onToggle }: ChatLauncherProps) {
       onClick={onToggle}
       aria-label={open ? "Close chat" : "Open chat"}
       aria-expanded={open}
-      className="size-14 rounded-full shadow-xl bg-blue-500 hover:bg-blue-600 text-white transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
+      className="fixed bottom-4 right-4 z-50 size-12 rounded-full shadow-lg"
     >
-      {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
+      {open ? <X className="size-5" /> : <MessageCircle className="size-5" />}
     </Button>
   );
 }

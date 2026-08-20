@@ -65,8 +65,6 @@ export type RecruiterProfileView = {
   abtalksId: string;
   logistics: Logistics;
   compensation: Compensation;
-  /** True when real logistics/compensation data exists but was withheld because the viewer isn't an approved recruiter. */
-  sensitiveDataRedacted: boolean;
   assessmentComposite: number | null;
   assessmentMax: number;
 };
@@ -79,10 +77,6 @@ function deriveAbtalksId(userId: string, override: string | null | undefined) {
 function formatAssessmentDate(date: Date | null | undefined): string | null {
   if (!date) return null;
   return date.toISOString().slice(0, 10);
-}
-
-function hasAnyValue(obj: Record<string, string>): boolean {
-  return Object.values(obj).some((v) => v.trim().length > 0);
 }
 
 function computeAssessmentComposite(
@@ -102,7 +96,6 @@ function computeAssessmentComposite(
 
 export async function getRecruiterProfileByToken(
   token: string,
-  viewerIsApprovedRecruiter: boolean,
 ): Promise<RecruiterProfileView | null> {
   const review = await prisma.recruiterReview.findUnique({
     where: { shareToken: token },
@@ -175,10 +168,6 @@ export async function getRecruiterProfileByToken(
 
   if (!review || !review.isPublished || !review.user.studentProfile) return null;
   const p = review.user.studentProfile;
-
-  const realLogistics = parseLogistics(review.logistics);
-  const realCompensation = parseCompensation(review.compensation);
-  const hasSensitiveData = hasAnyValue(realLogistics) || hasAnyValue(realCompensation);
   const enr =
     review.user.enrollments.find(
       (e) => e.domain === p.domain && e.status === "ACTIVE",
@@ -232,9 +221,8 @@ export async function getRecruiterProfileByToken(
     interviewerName: review.interviewerName,
     challengeRound: review.challengeRound,
     abtalksId: deriveAbtalksId(review.user.id, review.abtalksId),
-    logistics: viewerIsApprovedRecruiter ? realLogistics : parseLogistics(null),
-    compensation: viewerIsApprovedRecruiter ? realCompensation : parseCompensation(null),
-    sensitiveDataRedacted: hasSensitiveData && !viewerIsApprovedRecruiter,
+    logistics: parseLogistics(review.logistics),
+    compensation: parseCompensation(review.compensation),
     assessmentComposite: computeAssessmentComposite(
       review.communicationScore,
       review.programmingScore,

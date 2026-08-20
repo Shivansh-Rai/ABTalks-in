@@ -9,28 +9,13 @@
  * independent part of RAG and is worth getting right before any embedding
  * provider is chosen.
  */
-export type Chunk = { heading: string; text: string; programId?: string; accessLevel?: 'public' | 'gated' };
+export type Chunk = { heading: string; text: string };
 
 export function chunkMarkdown(raw: string, fallbackHeading: string): Chunk[] {
-  let textToParse = raw;
-  let programId: string | undefined;
-  let accessLevel: 'public' | 'gated' | undefined;
-
-  // Simple frontmatter extraction
-  const fmMatch = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(raw);
-  if (fmMatch) {
-    const fm = fmMatch[1];
-    textToParse = raw.slice(fmMatch[0].length);
-    const pidMatch = /^programId:\s*(.+)$/m.exec(fm);
-    const alMatch = /^accessLevel:\s*(.+)$/m.exec(fm);
-    if (pidMatch) programId = pidMatch[1].trim();
-    if (alMatch) accessLevel = alMatch[1].trim() as 'public' | 'gated';
-  }
-
   // Normalize CRLF first — some knowledge files (Windows-saved) use \r\n,
   // and a trailing \r on a line otherwise breaks the heading regexes below
   // (`.` doesn't match \r, so `$` never lands where expected).
-  const lines = textToParse.replace(/\r\n/g, "\n").split("\n");
+  const lines = raw.replace(/\r\n/g, "\n").split("\n");
   const chunks: Chunk[] = [];
   let currentHeading = fallbackHeading;
   let currentLines: string[] = [];
@@ -38,8 +23,7 @@ export function chunkMarkdown(raw: string, fallbackHeading: string): Chunk[] {
   const flush = () => {
     const text = currentLines.join("\n").trim();
     if (text.length > 0) {
-      const fullText = currentHeading && currentHeading !== fallbackHeading ? `## ${currentHeading}\n${text}` : text;
-      chunks.push({ heading: currentHeading, text: fullText, programId, accessLevel });
+      chunks.push({ heading: currentHeading, text });
     }
     currentLines = [];
   };
