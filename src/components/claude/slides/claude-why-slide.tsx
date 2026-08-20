@@ -15,41 +15,43 @@ function BuildersBadge({ totalCount }: { totalCount: number }) {
     : `🔥 Join ${displayCount}+ builders already enrolled`;
 
   return (
-    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1">
-      <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+    <div className="mb-3 inline-flex items-center gap-2 rounded-none border border-orange-500/20 bg-orange-500/10 px-3 py-1">
+      <span className="text-xs font-semibold text-orange-600">
         {badgeText}
       </span>
     </div>
   );
 }
 
+export const CLAUDE_WHY_ITEMS = [
+  {
+    icon: Clock,
+    stat: "5 hrs/wk",
+    label: "saved by power users on avg",
+    sub: "through workflows & automation",
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+  },
+  {
+    icon: Zap,
+    stat: "10x",
+    label: "faster output",
+    sub: "with AI-powered workflows",
+    color: "text-pink-500",
+    bg: "bg-pink-500/10",
+  },
+  {
+    icon: TrendingUp,
+    stat: "0→1",
+    label: "zero to hero",
+    sub: "no prior AI needed",
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+  },
+] as const;
+
 export function ClaudeWhySlide({ totalCount }: Props) {
-  const items = [
-    {
-      icon: Clock,
-      stat: "5 hrs/wk",
-      label: "saved by power users on avg",
-      sub: "through workflows & automation",
-      color: "text-orange-500",
-      bg: "bg-orange-500/10",
-    },
-    {
-      icon: Zap,
-      stat: "10x",
-      label: "faster output",
-      sub: "with AI-powered workflows",
-      color: "text-pink-500",
-      bg: "bg-pink-500/10",
-    },
-    {
-      icon: TrendingUp,
-      stat: "0→1",
-      label: "zero to hero",
-      sub: "no prior AI needed",
-      color: "text-violet-500",
-      bg: "bg-violet-500/10",
-    },
-  ] as const;
+  const items = CLAUDE_WHY_ITEMS;
 
   return (
     <motion.div className="rounded-3xl border bg-card/80 p-5 shadow-lg backdrop-blur-sm md:p-6">

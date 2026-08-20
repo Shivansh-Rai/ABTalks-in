@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const modules = [
+export const modules = [
   {
     icon: Sparkles,
     title: "AI Enterprise & Ecosystem",
@@ -88,7 +88,7 @@ export function WhatYouWillBuild({ compact = false }: Props) {
                   {bullets.map((bullet) => (
                     <li key={bullet} className="flex gap-2">
                       <span
-                        className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"
+                        className="mt-1.5 size-1.5 shrink-0 rounded-none bg-primary"
                         aria-hidden
                       />
                       <span>{bullet}</span>

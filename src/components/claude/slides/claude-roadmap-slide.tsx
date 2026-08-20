@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-const PHASES = [
+export const PHASES = [
   {
     number: "01",
     title: "Foundations & Productivity",

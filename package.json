@@ -10,6 +10,10 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
+    "kb:extract": "tsx scripts/extract-public-content.ts",
+    "kb:embed": "tsx scripts/generate-kb-embeddings.ts",
+    "kb:build": "npm run kb:extract && npm run kb:embed",
+    "ingest:site": "tsx scripts/ingest-site.ts && npm run kb:embed",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:content": "tsx prisma/seed-content.ts",
     "db:seed:program": "tsx prisma/seed-program.ts",
@@ -31,7 +35,11 @@
     "db:issue:hackathon-awards": "tsx prisma/scripts/issue-hackathon-award-certificates.ts",
     "hackathon:migrate": "tsx scripts/migrate-hackathon-to-neon.ts",
     "hackathon:verify": "tsx scripts/migrate-hackathon-to-neon.ts --verify",
-    "hackathon:preflight": "tsx scripts/migrate-hackathon-to-neon.ts --preflight"
+    "hackathon:preflight": "tsx scripts/migrate-hackathon-to-neon.ts --preflight",
+    "test:interview": "tsx scripts/verify-cohort-interview.ts && tsx scripts/verify-interview-domain.ts && tsx scripts/verify-interview-agent.ts && tsx scripts/verify-single-node-agent.ts",
+    "test:interview:agent": "tsx scripts/verify-interview-agent.ts",
+    "test:interview:single": "tsx scripts/verify-single-node-agent.ts",
+    "test:interview:db": "node scripts/db-preflight.mjs && tsx --conditions=react-server scripts/smoke-cohort-interview.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -80,6 +88,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "^1.0.0",
+    "cheerio": "^1.0.0",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",
