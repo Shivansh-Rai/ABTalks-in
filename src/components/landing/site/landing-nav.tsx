@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { LandingUser } from "@/features/landing/get-landing-state";
 import { LandingUserMenu } from "@/components/landing/landing-user-menu";
@@ -85,8 +86,14 @@ export function LandingNav({ user }: Props) {
     >
       <div className="container">
         <nav className="nav" aria-label="Primary" ref={navRef}>
-          <Link href="/" className="nav__logo">
-            AB TALKS
+          <Link href="/" className="nav__logo" aria-label="ABTalks home">
+            <Image
+              src="/landing/abtalks-logo-mark.png"
+              alt="ABTalks"
+              width={561}
+              height={168}
+              priority
+            />
           </Link>
 
           <ul

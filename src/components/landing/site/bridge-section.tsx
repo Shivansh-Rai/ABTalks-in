@@ -24,11 +24,13 @@ type Anchor = {
   ey: number;
 };
 
+const DEFAULT_TRAVEL = { x: 122, y: 72 };
+
 function travel() {
   const w = window.innerWidth;
   if (w <= 720) return { x: 54, y: 34 };
   if (w <= 1080) return { x: 86, y: 52 };
-  return { x: 122, y: 72 };
+  return DEFAULT_TRAVEL;
 }
 
 export function BridgeSection() {
@@ -49,7 +51,7 @@ export function BridgeSection() {
     3: null,
   });
   const anchorsRef = useRef<Record<number, Anchor> | null>(null);
-  const moveRef = useRef(travel());
+  const moveRef = useRef(DEFAULT_TRAVEL);
   const valueRef = useRef(0);
 
   function applySlab(el: HTMLElement | null, out: number) {
