@@ -2,6 +2,7 @@
 
 <!-- Reconciled through 2026-08-05 (commit 519cc34) into docs/project-context.md. -->
 
+- 2026-08-20 [rule] US AI cohort (name "AI Cohort USA") stays unfrozen until every ENROLLED/COMPLETED member has passed Day 31; India still freezes on endsAt
 - 2026-08-18 [rule] Admin community synergy grant cap raised from 2000 to 3000
 
 - 2026-08-18 [rule] Admin reset/reject clamps User and StudentProfile synergy at 0 and writes BALANCE_RECONCILIATION for already-spent submission points so the ledger cannot go negative
