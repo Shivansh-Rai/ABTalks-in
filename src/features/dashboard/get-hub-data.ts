@@ -1,8 +1,6 @@
 import type { Domain } from "@prisma/client";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { prisma } from "@/lib/db";
-import { getUserActiveEnrollments } from "@/features/enrollment/get-user-enrollments";
-import type { UserEnrollmentSummary } from "@/features/enrollment/get-user-enrollments";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
 import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import {
@@ -14,11 +12,21 @@ export type HubDataNoUser = {
   hasUser: false;
 };
 
+export type HubEnrollment = {
+  id: string;
+  domain: Domain;
+  status: "ACTIVE" | "COMPLETED";
+  challengeTitle: string;
+  daysCompleted: number;
+  currentStreak: number;
+};
+
 export type HubData = {
   hasUser: true;
   profile: { fullName: string; referralCode: string } | null;
-  enrollments: UserEnrollmentSummary[];
-  allEnrollmentDomains: Domain[];
+  enrollments: HubEnrollment[];
+  joinedDomains: Domain[];
+  abandonedDomains: Domain[];
   hasProgramMembership: boolean;
   isHackathonRegistered: boolean;
   heatmap: ActivityHeatmap;
@@ -32,9 +40,7 @@ export async function getHubData(
 
   const [
     user,
-    enrollments,
-    allEnrollments,
-    streakRows,
+    rows,
     hasProgramMembership,
     isHackathonRegistered,
     heatmap,
@@ -47,14 +53,18 @@ export async function getHubData(
         },
       },
     }),
-    getUserActiveEnrollments(userId),
     prisma.enrollment.findMany({
       where: { userId },
-      select: { domain: true },
-    }),
-    prisma.enrollment.findMany({
-      where: { userId },
-      select: { currentStreak: true, longestStreak: true },
+      orderBy: { startedAt: "asc" },
+      select: {
+        id: true,
+        domain: true,
+        status: true,
+        daysCompleted: true,
+        currentStreak: true,
+        longestStreak: true,
+        challenge: { select: { title: true } },
+      },
     }),
     programEnabled
       ? resolveProgramMemberForUser(userId).then((m) => m !== null)
@@ -74,22 +84,41 @@ export async function getHubData(
       }
     : null;
 
-  const allEnrollmentDomains = [
-    ...new Set(allEnrollments.map((e) => e.domain)),
+  const joined = rows.filter(
+    (r) => r.status === "ACTIVE" || r.status === "COMPLETED",
+  );
+
+  // ACTIVE first, then COMPLETED; startedAt asc within each group.
+  const enrollments: HubEnrollment[] = [
+    ...joined.filter((r) => r.status === "ACTIVE"),
+    ...joined.filter((r) => r.status === "COMPLETED"),
+  ].map((r) => ({
+    id: r.id,
+    domain: r.domain,
+    status: r.status as "ACTIVE" | "COMPLETED",
+    challengeTitle: r.challenge.title,
+    daysCompleted: r.daysCompleted,
+    currentStreak: r.currentStreak,
+  }));
+
+  const joinedDomains = [...new Set(joined.map((r) => r.domain))];
+  const abandonedDomains = [
+    ...new Set(rows.filter((r) => r.status === "ABANDONED").map((r) => r.domain)),
   ];
 
   let current = 0;
   let longest = 0;
-  for (const row of streakRows) {
-    current = Math.max(current, row.currentStreak);
-    longest = Math.max(longest, row.longestStreak);
+  for (const r of joined) {
+    current = Math.max(current, r.currentStreak);
+    longest = Math.max(longest, r.longestStreak);
   }
 
   return {
     hasUser: true,
     profile,
     enrollments,
-    allEnrollmentDomains,
+    joinedDomains,
+    abandonedDomains,
     hasProgramMembership,
     isHackathonRegistered,
     heatmap,

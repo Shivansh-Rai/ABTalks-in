@@ -1,23 +1,24 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import { isClaudeEnabled } from "@/lib/feature-flags";
-import {
-  HUB_ARROW_HOVER_CLASS,
-  HUB_CARD_HOVER_CLASS,
-  HUB_TEXT_LINK_CLASS,
-} from "@/components/dashboard-hub/nav-items";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
+import { JoinClaudeButton } from "@/components/dashboard-hub/join-claude-button";
 import { cn } from "@/lib/utils";
 
 type OtherChallengesProps = {
-  enrolledDomains: Domain[];
+  joinedDomains: Domain[];
+  abandonedDomains: Domain[];
 };
 
-export function OtherChallenges({ enrolledDomains }: OtherChallengesProps) {
+export function OtherChallenges({
+  joinedDomains,
+  abandonedDomains,
+}: OtherChallengesProps) {
   const claudeEnabled = isClaudeEnabled();
-  const hasClaude = enrolledDomains.includes("CLAUDE");
+  const joined = new Set(joinedDomains);
+  const abandoned = new Set(abandonedDomains);
 
-  const showClaude = claudeEnabled && !hasClaude;
+  const showClaude =
+    claudeEnabled && !joined.has("CLAUDE") && !abandoned.has("CLAUDE");
 
   if (!showClaude) {
     return null;
@@ -42,10 +43,7 @@ export function OtherChallenges({ enrolledDomains }: OtherChallengesProps) {
             <p className="mt-1 text-sm text-[#555555]">
               Build with Claude · 60 days
             </p>
-            <Link href="/claude-signup" className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}>
-              Join
-              <ArrowRight className={HUB_ARROW_HOVER_CLASS} aria-hidden />
-            </Link>
+            <JoinClaudeButton />
           </li>
         ) : null}
       </ul>

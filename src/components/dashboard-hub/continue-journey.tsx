@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Domain } from "@prisma/client";
-import type { UserEnrollmentSummary } from "@/features/enrollment/get-user-enrollments";
+import type { HubEnrollment } from "@/features/dashboard/get-hub-data";
 import { dsButtonVariants } from "@/components/design/ds-button";
 import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ const DOMAIN_LABEL: Record<Domain, string> = {
 };
 
 type ContinueJourneyProps = {
-  enrollments: UserEnrollmentSummary[];
+  enrollments: HubEnrollment[];
 };
 
 export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
@@ -50,7 +50,13 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
       ) : (
         <ul className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
           {enrollments.map((e) => {
-            const pct = Math.min(100, Math.round((e.daysCompleted / 60) * 100));
+            const isCompleted = e.status === "COMPLETED";
+            const pct = isCompleted
+              ? 100
+              : Math.min(100, Math.round((e.daysCompleted / 60) * 100));
+            const subtitle = isCompleted
+              ? "Completed · 60 of 60"
+              : `Day ${e.daysCompleted + 1} of 60 · ${e.currentStreak}-day streak`;
             return (
               <li
                 key={e.id}
@@ -65,8 +71,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                       {DOMAIN_LABEL[e.domain]}
                     </p>
                     <p className="mt-1 text-sm text-[#555555]">
-                      Day {e.daysCompleted + 1} of 60 · {e.currentStreak}-day
-                      streak
+                      {subtitle}
                     </p>
                   </div>
                   <div
@@ -87,7 +92,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                   href={TRACK_PATH[e.domain]}
                   className={cn(dsButtonVariants(), "mt-4 w-full justify-center")}
                 >
-                  Continue
+                  {isCompleted ? "View" : "Continue"}
                 </Link>
               </li>
             );

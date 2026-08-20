@@ -34,3 +34,6 @@
 - 2026-08-09 [rule] Adjusted hackathon submission deadline to Sun 9 Aug 8:45 PM IST
 - 2026-08-10 [convention] /admin/submissions gains Hackathon sub-tab for HackathonSubmission feed + CSV
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
+
+## Pending reconcile
+- 2026-08-20 [rule] Multi-enrollment routing is now status-aware: explicit track ids render that track at any status, ABANDONED blocks only its own re-join path, dashboard join/continue cards and streaks ignore ABANDONED rows, Claude dashboard join now enrolls via server action, and /program/apply legacy in-progress states render a terminal card instead of self-redirecting

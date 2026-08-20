@@ -1,5 +1,6 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export type CreateClaudeEnrollmentResult =
   | { ok: true }
@@ -10,6 +11,7 @@ export type CreateClaudeEnrollmentResult =
         | "no_user"
         | "no_challenge"
         | "already_enrolled"
+        | "abandoned"
         | "internal_error";
       message: string;
     };
@@ -50,8 +52,15 @@ export async function createClaudeEnrollment(
       userId,
       challengeId: challenge.id,
     },
-    select: { id: true },
+    select: { id: true, status: true },
   });
+  if (existing?.status === EnrollmentStatus.ABANDONED) {
+    return {
+      ok: false,
+      reason: "abandoned",
+      message: "You were removed from the Claude Challenge and cannot re-join it.",
+    };
+  }
   if (existing) {
     return {
       ok: false,
@@ -74,7 +83,9 @@ export async function createClaudeEnrollment(
     });
     return { ok: true };
   } catch (e) {
-    console.error("[enrollment] createClaudeEnrollment:", e);
+    logger.error("[enrollment] createClaudeEnrollment failed", {
+      error: String(e),
+    });
     return {
       ok: false,
       reason: "internal_error",

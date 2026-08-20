@@ -9,20 +9,40 @@ import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
 
-export default async function DashboardPage() {
+const JOIN_ERROR_MESSAGE: Record<string, string> = {
+  no_user: "Your session expired. Please sign in again.",
+  no_challenge: "That track isn't open yet. Please try again later.",
+  internal_error: "We couldn't add that track. Please try again.",
+};
+
+type PageProps = {
+  searchParams: Promise<{ joinError?: string; joinBlocked?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
+  const params = await searchParams;
   const data = await getHubData(session.user.id);
   if (!data.hasUser) {
     redirect("/api/auth/signout?callbackUrl=/login");
   }
 
   const firstName = data.profile?.fullName.split(/\s+/)[0] ?? null;
+  const blockedDomain = params.joinBlocked?.trim().toUpperCase();
+  const joinError = params.joinError?.trim();
+  const notice =
+    blockedDomain && ["AI", "DS", "SE", "CLAUDE"].includes(blockedDomain)
+      ? `You were removed from the ${blockedDomain} track and can't re-join it.`
+      : joinError
+        ? JOIN_ERROR_MESSAGE[joinError] ?? null
+        : null;
 
   const shellUser = {
     name: data.profile?.fullName ?? session.user.name ?? "",
@@ -53,10 +73,24 @@ export default async function DashboardPage() {
         </div>
       </section>
 
+      {notice ? (
+        <section className="ml-4 px-4 py-2 sm:px-6">
+          <div
+            className={`rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm text-[#555555] ${HUB_CARD_HOVER_CLASS}`}
+          >
+            {notice}
+          </div>
+        </section>
+      ) : null}
+
       <ContinueJourney enrollments={data.enrollments} />
-      <OtherChallenges enrolledDomains={data.allEnrollmentDomains} />
+      <OtherChallenges
+        joinedDomains={data.joinedDomains}
+        abandonedDomains={data.abandonedDomains}
+      />
       <Roadmaps
-        enrolledDomains={data.allEnrollmentDomains}
+        joinedDomains={data.joinedDomains}
+        abandonedDomains={data.abandonedDomains}
         hasProgramMembership={data.hasProgramMembership}
       />
       <EventsSection />

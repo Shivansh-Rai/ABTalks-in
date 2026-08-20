@@ -113,8 +113,12 @@ export async function TrackPage({ domain, searchParams }: TrackPageProps) {
     redirect("/login");
   }
 
+  // @@unique([userId, challengeId]) + unique Challenge.domain => at most one row
+  // per domain. Any status: COMPLETED renders its finished track, ABANDONED
+  // renders EnrollmentEndedScreen below.
   const enrollmentForDomain = await prisma.enrollment.findFirst({
     where: { userId: session.user.id, domain },
+    orderBy: { startedAt: "desc" },
     select: { id: true },
   });
 

@@ -43,28 +43,32 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     where: { userId: session.user.id },
     select: { id: true },
   });
-  const enrollment = await prisma.enrollment.findFirst({
+  // Registration completeness gate: "has the user ever enrolled in anything",
+  // ANY status. Narrowing this would delete the profile of removed users.
+  const enrollmentCount = await prisma.enrollment.count({
     where: { userId: session.user.id },
-    select: { id: true, status: true },
   });
 
-  if (enrollment?.status === "ABANDONED") {
-    redirect("/dashboard");
-  }
-
-  if (profile && enrollment) {
+  if (profile && enrollmentCount > 0) {
     if (isCoreDomain(requestedDomain)) {
-      const existingForDomain = await prisma.enrollment.findFirst({
-        where: {
-          userId: session.user.id,
-          domain: requestedDomain,
-          status: { not: "ABANDONED" },
-        },
-        select: { id: true },
+      const existing = await prisma.enrollment.findFirst({
+        where: { userId: session.user.id, domain: requestedDomain },
+        select: { id: true, status: true },
       });
 
-      if (!existingForDomain) {
-        await createCoreEnrollment(session.user.id, requestedDomain);
+      // ABANDONED blocks this track only — other tracks stay joinable.
+      if (existing?.status === "ABANDONED") {
+        redirect(`/dashboard?joinBlocked=${requestedDomain}`);
+      }
+
+      if (!existing) {
+        const result = await createCoreEnrollment(session.user.id, requestedDomain);
+        if (!result.ok && result.reason === "abandoned") {
+          redirect(`/dashboard?joinBlocked=${requestedDomain}`);
+        }
+        if (!result.ok && result.reason !== "already_enrolled") {
+          redirect(`/dashboard?joinError=${result.reason}`);
+        }
       }
 
       redirect(CORE_TRACK_PATH[requestedDomain]);
@@ -73,7 +77,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     redirect("/dashboard");
   }
 
-  if (profile && !enrollment) {
+  if (profile && enrollmentCount === 0) {
     await prisma.studentProfile.delete({
       where: { userId: session.user.id },
     });

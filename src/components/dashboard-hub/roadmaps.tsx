@@ -17,15 +17,18 @@ const ROADMAPS: { domain: Domain; label: string; path: string }[] = [
 ];
 
 type RoadmapsProps = {
-  enrolledDomains: Domain[];
+  joinedDomains: Domain[];
+  abandonedDomains: Domain[];
   hasProgramMembership: boolean;
 };
 
 export function Roadmaps({
-  enrolledDomains,
+  joinedDomains,
+  abandonedDomains,
   hasProgramMembership,
 }: RoadmapsProps) {
-  const enrolled = new Set(enrolledDomains);
+  const joined = new Set(joinedDomains);
+  const abandoned = new Set(abandonedDomains);
   const showProgramPrepKit = isProgramEnabled();
 
   return (
@@ -36,7 +39,18 @@ export function Roadmaps({
         </h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
           {ROADMAPS.map(({ domain, label, path }) => {
-            const isEnrolled = enrolled.has(domain);
+            const isJoined = joined.has(domain);
+            const isAbandoned = abandoned.has(domain);
+            const href = isJoined
+              ? path
+              : isAbandoned
+                ? path
+                : `/register?domain=${domain}`;
+            const ctaLabel = isJoined
+              ? "Continue"
+              : isAbandoned
+                ? "View status"
+                : "Join";
             return (
               <li
                 key={domain}
@@ -49,11 +63,8 @@ export function Roadmaps({
                 <p className="mt-1 flex-1 text-sm text-[#555555]">
                   60-day challenge track
                 </p>
-                <Link
-                  href={isEnrolled ? path : "/challenges"}
-                  className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}
-                >
-                  {isEnrolled ? "Continue" : "Join"}
+                <Link href={href} className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}>
+                  {ctaLabel}
                   <ArrowRight className={HUB_ARROW_HOVER_CLASS} aria-hidden />
                 </Link>
               </li>

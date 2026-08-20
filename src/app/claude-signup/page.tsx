@@ -39,7 +39,7 @@ export default async function ClaudeSignupPage() {
       });
 
       if (claudeEnrollment) {
-        redirect(`/dashboard?challenge=${claudeEnrollment.id}`);
+        redirect("/claude");
       }
       redirect("/dashboard");
     }

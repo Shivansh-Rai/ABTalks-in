@@ -1,5 +1,6 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export type CoreDomain = Extract<Domain, "AI" | "DS" | "SE">;
 
@@ -17,7 +18,12 @@ export type CreateCoreEnrollmentResult =
   | { ok: true }
   | {
       ok: false;
-      reason: "no_user" | "no_challenge" | "already_enrolled" | "internal_error";
+      reason:
+        | "no_user"
+        | "no_challenge"
+        | "already_enrolled"
+        | "abandoned"
+        | "internal_error";
       message: string;
     };
 
@@ -54,13 +60,16 @@ export async function createCoreEnrollment(
   }
 
   const existing = await prisma.enrollment.findFirst({
-    where: {
-      userId,
-      challengeId: challenge.id,
-      status: { not: EnrollmentStatus.ABANDONED },
-    },
-    select: { id: true },
+    where: { userId, challengeId: challenge.id },
+    select: { id: true, status: true },
   });
+  if (existing?.status === EnrollmentStatus.ABANDONED) {
+    return {
+      ok: false,
+      reason: "abandoned",
+      message: "You were removed from this track and cannot re-join it.",
+    };
+  }
   if (existing) {
     return {
       ok: false,
@@ -83,7 +92,9 @@ export async function createCoreEnrollment(
     });
     return { ok: true };
   } catch (e) {
-    console.error("[enrollment] createCoreEnrollment:", e);
+    logger.error("[enrollment] createCoreEnrollment failed", {
+      error: String(e),
+    });
     return {
       ok: false,
       reason: "internal_error",
