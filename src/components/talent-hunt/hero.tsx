@@ -7,6 +7,14 @@ type Props = {
   country?: string;
 };
 
+export const PROGRAM_FACTS = {
+  tagline: "Learn. Build. Ship AI.",
+  launchDate: "15 Jul 2026",
+  completionDate: "30 Aug 2026",
+  durationDays: 30,
+  requiresPreAssessment: true,
+};
+
 export function Hero({ compact = false, country = "USA" }: Props) {
   return (
     <section
@@ -23,10 +31,10 @@ export function Hero({ compact = false, country = "USA" }: Props) {
           AI Cohort Training Program for Working Professionals
         </h1>
         <p className="mt-4 font-display text-xl font-semibold text-primary sm:text-2xl">
-          Learn. Build. Ship AI.
+          {PROGRAM_FACTS.tagline}
         </p>
         <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-          A 30-day intensive cohort designed for {country}-based working
+          A {PROGRAM_FACTS.durationDays}-day intensive cohort designed for {country}-based working
           professionals who want to transition into high-impact AI roles with
           live projects, mentorship, and enterprise-grade skills.
         </p>
@@ -37,7 +45,7 @@ export function Hero({ compact = false, country = "USA" }: Props) {
               <CalendarDays className="size-4 text-primary" aria-hidden />
             </div>
             <span className="text-sm font-medium text-foreground">
-              Launch: 15 Jul 2026
+              Launch: {PROGRAM_FACTS.launchDate}
             </span>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-[var(--shadow-card)]">
@@ -45,7 +53,7 @@ export function Hero({ compact = false, country = "USA" }: Props) {
               <CalendarDays className="size-4 text-primary" aria-hidden />
             </div>
             <span className="text-sm font-medium text-foreground">
-              Completion: 30 Aug 2026
+              Completion: {PROGRAM_FACTS.completionDate}
             </span>
           </div>
         </div>

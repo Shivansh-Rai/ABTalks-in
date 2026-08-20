@@ -16,7 +16,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-const TOPICS = [
+export const TOPICS = [
   {
     title: "LinkedIn Fundamentals & Personal Branding",
     desc: "Understand how LinkedIn works, why personal branding matters, and how to use your profile to showcase your skills, achievements, projects, and career goals.",
@@ -231,7 +231,7 @@ function TiltCard({ topic, num }: { topic: (typeof TOPICS)[0]; num: number }) {
       {/* mouse-follow glow */}
       {hovered && (
         <div
-          className="pointer-events-none absolute rounded-full"
+          className="pointer-events-none absolute rounded-none"
           style={{
             width: 220,
             height: 220,

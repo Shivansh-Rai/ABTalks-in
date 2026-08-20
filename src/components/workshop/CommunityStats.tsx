@@ -73,7 +73,7 @@ export default function CommunityStats() {
 
         {/* Heading */}
         <div className="text-center">
-          
+
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-[38px]">
             The ABTalks AI Learners Community
           </h2>
@@ -100,7 +100,7 @@ export default function CommunityStats() {
                 <span
                   className="font-mono text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl"
                   style={{
-                    background: `linear-gradient(135deg, #ffffff, ${s.accent})`,
+                    background: `linear-gradient(135deg, hsl(var(--background)), ${s.accent})`,
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -136,7 +136,7 @@ export default function CommunityStats() {
             href={CLAUDE_SIGNUP}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-7 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            className="mt-7 inline-flex items-center gap-2 rounded-none px-7 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             style={{
               background: "var(--wk-grad)",
               boxShadow:

@@ -7,6 +7,13 @@ interface Props {
   totalCount: number;
 }
 
+export const CHALLENGE_RULES = [
+  "60 days = 60 individual daily posts on LinkedIn",
+  "Each day requires its own submission (no batching)",
+  "Posting 3 days of work in one post doesn't count as 3 days",
+  "Consistency is the win: missed days break your streak",
+];
+
 function BuildersBadge({ totalCount }: { totalCount: number }) {
   const isEarly = totalCount < 50;
   const displayCount = Math.max(50, Math.floor(totalCount / 50) * 50);
@@ -15,8 +22,8 @@ function BuildersBadge({ totalCount }: { totalCount: number }) {
     : `🔥 Join ${displayCount}+ builders already enrolled`;
 
   return (
-    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1">
-      <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+    <div className="mb-3 inline-flex items-center gap-2 rounded-none border border-orange-500/20 bg-orange-500/10 px-3 py-1">
+      <span className="text-xs font-semibold text-orange-600">
         {badgeText}
       </span>
     </div>
@@ -50,10 +57,9 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
           📋 Challenge Rules
         </h3>
         <ul className="space-y-1 text-xs text-muted-foreground">
-          <li>• 60 days = 60 individual daily posts on LinkedIn</li>
-          <li>• Each day requires its own submission (no batching)</li>
-          <li>• Posting 3 days of work in one post doesn&apos;t count as 3 days</li>
-          <li>• Consistency is the win: missed days break your streak</li>
+          {CHALLENGE_RULES.map((rule) => (
+            <li key={rule}>• {rule}</li>
+          ))}
         </ul>
       </motion.div>
 
@@ -70,7 +76,7 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
           href="https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10"
         >
           Join WhatsApp Group
         </a>

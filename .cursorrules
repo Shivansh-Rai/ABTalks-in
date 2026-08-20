@@ -19,3 +19,7 @@ if missing):
 - YYYY-MM-DD [schema|rule|env|convention] what changed and why, in one line
 Do NOT append for cosmetic changes or bug fixes. One line only — never prose,
 never edit existing entries, never touch any other doc.
+
+When updating core platform data, marketing copy, or curriculum details (e.g. adding a new program, event, or changing FAQ answers):
+- You MUST update `src/lib/chatbot-matcher.ts` to ensure the zero-LLM chatbot intent matcher stays in sync with the new data.
+- You MUST update the markdown files in `knowledge/` and run `npx tsx scripts/ingest-site.ts` to update the RAG embeddings.

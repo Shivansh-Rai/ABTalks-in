@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getRecruiterProfileByToken } from "@/features/recruiter/get-recruiter-profile";
+import { isApprovedRecruiterSession } from "@/lib/program-auth";
 import { cn } from "@/lib/utils";
 import { PrintButton } from "./print-button";
 
@@ -96,9 +97,9 @@ function toRows(
 
 function ScoreProgressBar({ score, color }: { score: number; color: string }) {
   return (
-    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+    <div className="mt-2 h-1.5 overflow-hidden rounded-none bg-muted">
       <div
-        className="h-full rounded-full"
+        className="h-full rounded-none"
         style={{
           width: `${Math.min(100, Math.max(0, score))}%`,
           backgroundColor: color,
@@ -114,7 +115,8 @@ export default async function RecruiterProfilePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const profile = await getRecruiterProfileByToken(token);
+  const viewerIsApprovedRecruiter = await isApprovedRecruiterSession();
+  const profile = await getRecruiterProfileByToken(token, viewerIsApprovedRecruiter);
   if (!profile) notFound();
 
   const hasFullAssessmentScores =
@@ -215,7 +217,7 @@ export default async function RecruiterProfilePage({
   return (
     <div
       className={cn(
-        "report-light min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
+        "min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
         "[print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
       )}
     >
@@ -251,7 +253,7 @@ export default async function RecruiterProfilePage({
 
           {/* Light sidebar + white main */}
           <div className="grid grid-cols-1 md:grid-cols-[32%_1fr] print:grid-cols-[30%_minmax(0,1fr)]">
-            <aside className="min-w-0 space-y-6 border-r border-[#e5e7eb] bg-[#f3f4f6] px-5 py-6 print:space-y-3 print:bg-[#f3f4f6] print:py-4 print:text-[11px] print:leading-snug">
+            <aside className="min-w-0 space-y-6 border-r border-ink-200 bg-ink-100 px-5 py-6 print:space-y-3 print:bg-ink-100 print:py-4 print:text-[11px] print:leading-snug">
               <div className="aspect-square w-full max-w-[200px] break-inside-avoid print:max-w-[120px]">
                 <Avatar className="size-full rounded-lg">
                   {profile.image ? (
@@ -662,6 +664,18 @@ export default async function RecruiterProfilePage({
                   <section className="break-inside-avoid">
                     <SectionHeading title="Compensation Details" />
                     <MetaList rows={compensationRows} />
+                  </section>
+                ) : null}
+
+                {profile.sensitiveDataRedacted ? (
+                  <section className="break-inside-avoid rounded-xl border border-dashed p-4 text-sm text-muted-foreground print:hidden">
+                    <p className="font-medium text-foreground">
+                      Logistics &amp; compensation details are available
+                    </p>
+                    <p className="mt-1">
+                      Sign in as an approved ABTalks recruiter to view this
+                      candidate&apos;s logistics and compensation details.
+                    </p>
                   </section>
                 ) : null}
 

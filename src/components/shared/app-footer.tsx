@@ -83,7 +83,9 @@ type SocialLink = {
   icon: ComponentType<{ className?: string }>;
 };
 
-const SOCIAL_LINKS: SocialLink[] = [
+export const SUPPORT_EMAIL = "team@abtalks.in";
+
+export const SOCIAL_LINKS: SocialLink[] = [
   {
     label: "Instagram",
     href: "https://www.instagram.com/abtalksonai/",
@@ -119,7 +121,7 @@ const LEGAL_LINKS = [
 ] as const;
 
 const socialIconClassName = cn(
-  "inline-flex size-9 items-center justify-center rounded-full text-primary",
+  "inline-flex size-9 items-center justify-center rounded-none text-primary",
   "transition-all duration-200 ease-out",
   "hover:-translate-y-0.5 hover:scale-110 hover:bg-primary/10 hover:text-primary",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
@@ -142,7 +144,9 @@ export function AppFooter() {
   const isTalent = pathname === "/talent" || pathname.startsWith("/talent/");
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
-  const supportEmail = "team@abtalks.in";
+  // the Modernist landing ships its own footer
+  const isLanding = pathname === "/";
+  const supportEmail = SUPPORT_EMAIL;
 
   // The workshop pages carry their own branded footer, which links legal
   // inline — anything here would duplicate their copyright line.
@@ -179,7 +183,7 @@ export function AppFooter() {
       className={cn(
         "mt-auto border-t pb-16 backdrop-blur-sm md:pb-0",
         isMarketplace
-          ? "border-[#030712] bg-[#050C1D] text-white/80"
+          ? "border-ink-900 bg-ink-900 text-white/80"
           : "bg-card/50 text-muted-foreground",
       )}
     >
