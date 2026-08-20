@@ -48,18 +48,18 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
           </Link>
         </div>
       ) : (
-        <ul className="mt-4 space-y-3">
+        <ul className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
           {enrollments.map((e) => {
             const pct = Math.min(100, Math.round((e.daysCompleted / 60) * 100));
             return (
               <li
                 key={e.id}
                 className={cn(
-                  "rounded-2xl border border-neutral-200 bg-white p-5",
+                  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:w-[300px]",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-h-0 flex-1 flex-col gap-4">
                   <div className="min-w-0">
                     <p className="font-inter font-bold text-black">
                       {DOMAIN_LABEL[e.domain]}
@@ -69,29 +69,26 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                       streak
                     </p>
                   </div>
-                  <Link
-                    href={TRACK_PATH[e.domain]}
-                    className={cn(
-                      dsButtonVariants(),
-                      "shrink-0 self-start sm:self-auto",
-                    )}
-                  >
-                    Continue
-                  </Link>
-                </div>
-                <div
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={pct}
-                  aria-label={`${DOMAIN_LABEL[e.domain]} progress`}
-                  className="mt-4 h-1.5 w-full overflow-hidden rounded-lg bg-neutral-100"
-                >
                   <div
-                    className="h-full bg-[#e05226] transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={pct}
+                    aria-label={`${DOMAIN_LABEL[e.domain]} progress`}
+                    className="h-1.5 w-full overflow-hidden rounded-lg bg-neutral-100"
+                  >
+                    <div
+                      className="h-full bg-[#e05226] transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
+                <Link
+                  href={TRACK_PATH[e.domain]}
+                  className={cn(dsButtonVariants(), "mt-4 w-full justify-center")}
+                >
+                  Continue
+                </Link>
               </li>
             );
           })}
