@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Fredoka, Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
+import { Fredoka, Instrument_Serif, Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { SynergyProvider } from "@/components/shared/synergy-provider";
@@ -205,6 +205,12 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "ABTalks | 60 Days Challenge",
   description: "Build your coding habit. Get discovered.",
@@ -222,6 +228,7 @@ const fontVars = [
   jakarta.variable,
   fredoka.variable,
   instrumentSerif.variable,
+  outfit.variable,
 ].join(" ");
 
 export default function RootLayout({

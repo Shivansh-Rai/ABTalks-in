@@ -149,6 +149,7 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard") return null;
+  if (pathname === "/") return null;
 
   if (
     pathname === "/program/dashboard" ||

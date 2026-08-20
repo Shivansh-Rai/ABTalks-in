@@ -11,11 +11,17 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   const isDashboard = pathname === "/dashboard";
+  const isLanding = pathname === "/";
 
   useEffect(() => {
     document.body.classList.toggle("marketplace-page", isMarketplace);
     return () => document.body.classList.remove("marketplace-page");
   }, [isMarketplace]);
+
+  useEffect(() => {
+    document.body.classList.toggle("landing-page", isLanding);
+    return () => document.body.classList.remove("landing-page");
+  }, [isLanding]);
 
   return (
     <main

@@ -405,6 +405,7 @@
   body.marketplace-page {
     background-color: #030712;
   }
+  body.landing-page { overflow-x: hidden; }
   body.not-found-page footer {
     display: none;
   }
