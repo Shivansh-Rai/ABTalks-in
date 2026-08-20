@@ -74,9 +74,9 @@ export function LandingPage({
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <LandingNav user={state.user} />
+      <LandingNav user={state.user} getStartedHref={state.getStartedHref} />
       <main id="main">
-        <HeroSection />
+        <HeroSection getStartedHref={state.getStartedHref} />
         <StatsStrip />
         <BridgeSection />
         <HowItWorksSection />

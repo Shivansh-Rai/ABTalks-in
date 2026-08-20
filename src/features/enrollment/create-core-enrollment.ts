@@ -29,7 +29,7 @@ export type CreateCoreEnrollmentResult =
 
 /**
  * Adds an AI / DS / SE challenge enrollment for an existing user joining a
- * second (or third) core track. Does not modify StudentProfile.domain.
+ * second (or third) core track. First track joined backfills a null profile domain.
  */
 export async function createCoreEnrollment(
   userId: string,
@@ -79,16 +79,23 @@ export async function createCoreEnrollment(
   }
 
   try {
-    await prisma.enrollment.create({
-      data: {
-        userId,
-        challengeId: challenge.id,
-        domain,
-        status: EnrollmentStatus.ACTIVE,
-        daysCompleted: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.enrollment.create({
+        data: {
+          userId,
+          challengeId: challenge.id,
+          domain,
+          status: EnrollmentStatus.ACTIVE,
+          daysCompleted: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+        },
+      });
+      // First track joined becomes the profile's primary domain. Never overwrite.
+      await tx.studentProfile.updateMany({
+        where: { userId, domain: null },
+        data: { domain },
+      });
     });
     return { ok: true };
   } catch (e) {

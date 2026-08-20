@@ -36,6 +36,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-08-20 [schema|rule] Registration is now profile-only (no domain pick, no enrollment); StudentProfile.domain and ProgramMember.jobRole/company/yearsExperience are nullable; registered = has a StudentProfile; first joined track backfills domain
 - 2026-08-20 [convention] Landing page rebuilt from the final static build as `src/components/landing/site/` (page-scoped `--lp-*` CSS, shared ScrollEngine, contact form emails team@abtalks.in); previous hub landing retired
 - 2026-08-20 [convention] Landing hub from dev on feature/student-dashboard: selective checkout of hub UI/assets plus local font vars in root layout while keeping NotificationProvider and dashboard jakarta/fredoka tokens
 - 2026-08-20 [rule] Multi-enrollment routing is now status-aware: explicit track ids render that track at any status, ABANDONED blocks only its own re-join path, dashboard join/continue cards and streaks ignore ABANDONED rows, Claude dashboard join now enrolls via server action, and /program/apply legacy in-progress states render a terminal card instead of self-redirecting

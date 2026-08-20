@@ -95,7 +95,7 @@ export function Roadmaps({
                 </p>
               </div>
               <Link
-                href={hasProgramMembership ? "/program/dashboard" : "/program"}
+                href={hasProgramMembership ? "/program/dashboard" : "/program/apply"}
                 className={cn(dsButtonVariants(), "shrink-0")}
               >
                 {hasProgramMembership ? "Continue" : "Start"}

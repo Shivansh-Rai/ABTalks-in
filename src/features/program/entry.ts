@@ -11,8 +11,6 @@ import {
 } from "@/lib/program-auth";
 import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
-import { recordLegalConsents } from "@/features/legal/record-consent";
-import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
 export const ENTRY_DURATION_MIN = 25;
 export const ENTRY_PER_SECTION = 10;
@@ -277,6 +275,23 @@ export async function createApplication(
     return { ok: false, message: "You are already enrolled in a program cohort." };
   }
 
+  const studentProfile = await prisma.studentProfile.findUnique({
+    where: { userId },
+    select: {
+      fullName: true,
+      role: true,
+      organization: true,
+      yearsExperience: true,
+      college: true,
+      graduationYear: true,
+      phone: true,
+      resumeUrl: true,
+    },
+  });
+  if (!studentProfile) {
+    return { ok: false, message: "Complete your registration before applying." };
+  }
+
   const existing = await prisma.programMember.findUnique({
     where: { userId_cohortId: { userId, cohortId: cohort.id } },
     select: { status: true },
@@ -291,18 +306,17 @@ export async function createApplication(
   }
 
   const data = {
-    fullName: profile.fullName,
-    jobRole: profile.jobRole,
-    company: profile.company,
-    yearsExperience: profile.yearsExperience,
-    education: emptyToNull(profile.education),
-    university: emptyToNull(profile.university),
-    graduationYear:
-      typeof profile.graduationYear === "number" ? profile.graduationYear : null,
+    fullName: studentProfile.fullName,
+    jobRole: studentProfile.role,
+    company: studentProfile.organization,
+    yearsExperience: studentProfile.yearsExperience,
+    education: null,
+    university: studentProfile.college,
+    graduationYear: studentProfile.graduationYear,
     skills: profile.skills,
     linkedinUrl: emptyToNull(profile.linkedinUrl),
-    resumeUrl: emptyToNull(profile.resumeUrl),
-    phone: emptyToNull(profile.phone),
+    resumeUrl: studentProfile.resumeUrl,
+    phone: studentProfile.phone,
     githubUsername: profile.githubUsername,
     githubRepoUrl: profile.githubRepoUrl,
     recruiterVisibilityConsentAt: profile.recruiterVisibilityConsent
@@ -324,23 +338,6 @@ export async function createApplication(
     // Neon pooler drops idle interactive txs (~5s). Bootstrap needs headroom.
     { maxWait: 10_000, timeout: 20_000 },
   );
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-  await recordLegalConsents({
-    userId,
-    email: user?.email,
-    source: "program_apply",
-  });
-
-  await recordNewsletterOptIn({
-    userId,
-    email: user?.email,
-    source: "program_apply",
-    optIn: profile.newsletterOptIn === true,
-  });
 
   return { ok: true, cohortId: cohort.id };
 }

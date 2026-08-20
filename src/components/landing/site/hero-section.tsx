@@ -23,7 +23,7 @@ function getPhoneServerSnapshot() {
   return false;
 }
 
-export function HeroSection() {
+export function HeroSection({ getStartedHref }: { getStartedHref: string }) {
   const reduce = useSafeReducedMotion();
   const isMobile = useSyncExternalStore(
     subscribePhone,
@@ -201,7 +201,7 @@ export function HeroSection() {
           </p>
 
           <div className="hero__actions">
-            <Link href="/program" className="btn btn--primary btn--lg">
+            <Link href={getStartedHref} className="btn btn--primary btn--lg">
               Get Started
             </Link>
             <Link href="/talent" className="btn btn--ghost-light btn--lg">

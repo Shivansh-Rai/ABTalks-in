@@ -8,13 +8,14 @@ import { NAV_LINKS } from "./landing-content";
 
 type Props = {
   user: LandingUser | null;
+  getStartedHref: string;
 };
 
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
-export function LandingNav({ user }: Props) {
+export function LandingNav({ user, getStartedHref }: Props) {
   const wrapRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const linksRef = useRef<HTMLUListElement>(null);
@@ -113,7 +114,7 @@ export function LandingNav({ user }: Props) {
               {user ? (
                 <LandingUserMenu user={user} />
               ) : (
-                <Link href="/program" className="btn btn--primary btn--sm">
+                <Link href={getStartedHref} className="btn btn--primary btn--sm">
                   Get Started
                 </Link>
               )}
@@ -133,7 +134,7 @@ export function LandingNav({ user }: Props) {
             </div>
           ) : (
             <Link
-              href="/program"
+              href={getStartedHref}
               className="btn btn--primary btn--nav nav__cta"
             >
               Get Started
