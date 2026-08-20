@@ -210,9 +210,13 @@
 }
 
 .abtalks-landing .nav__logo {
-  font-family: var(--lp-font-display);
-  font-size: 22px; font-weight: 700; letter-spacing: .02em;
-  color: var(--lp-color-text-primary);
+  display: flex; align-items: center; flex-shrink: 0;
+}
+.abtalks-landing .nav__logo img {
+  height: 32px; width: auto; object-fit: contain;
+}
+.abtalks-landing .nav-wrap.is-stuck .nav__logo img {
+  height: 28px;
 }
 .abtalks-landing .nav__links {
   display: flex; align-items: center; gap: var(--lp-space-24);
