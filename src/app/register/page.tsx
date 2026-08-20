@@ -4,6 +4,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isClaudeEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import {
+  CORE_TRACK_PATH,
+  createCoreEnrollment,
+  isCoreDomain,
+} from "@/features/enrollment/create-core-enrollment";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -21,6 +26,9 @@ export default async function RegisterPage({ searchParams }: PageProps) {
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  const params = await searchParams;
+  const requestedDomain = params.domain;
 
   const userExists = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -45,6 +53,23 @@ export default async function RegisterPage({ searchParams }: PageProps) {
   }
 
   if (profile && enrollment) {
+    if (isCoreDomain(requestedDomain)) {
+      const existingForDomain = await prisma.enrollment.findFirst({
+        where: {
+          userId: session.user.id,
+          domain: requestedDomain,
+          status: { not: "ABANDONED" },
+        },
+        select: { id: true },
+      });
+
+      if (!existingForDomain) {
+        await createCoreEnrollment(session.user.id, requestedDomain);
+      }
+
+      redirect(CORE_TRACK_PATH[requestedDomain]);
+    }
+
     redirect("/dashboard");
   }
 
@@ -54,7 +79,6 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     });
   }
 
-  const params = await searchParams;
   const claudeEnabled = isClaudeEnabled();
   const requested = params.domain;
   const initialDomain =

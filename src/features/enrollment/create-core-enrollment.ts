@@ -1,0 +1,93 @@
+import { Domain, EnrollmentStatus } from "@prisma/client";
+import { prisma } from "@/lib/db";
+
+export type CoreDomain = Extract<Domain, "AI" | "DS" | "SE">;
+
+export const CORE_TRACK_PATH: Record<CoreDomain, string> = {
+  AI: "/ai",
+  DS: "/ds",
+  SE: "/se",
+};
+
+export function isCoreDomain(value: string | undefined): value is CoreDomain {
+  return value === "AI" || value === "DS" || value === "SE";
+}
+
+export type CreateCoreEnrollmentResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: "no_user" | "no_challenge" | "already_enrolled" | "internal_error";
+      message: string;
+    };
+
+/**
+ * Adds an AI / DS / SE challenge enrollment for an existing user joining a
+ * second (or third) core track. Does not modify StudentProfile.domain.
+ */
+export async function createCoreEnrollment(
+  userId: string,
+  domain: CoreDomain,
+): Promise<CreateCoreEnrollmentResult> {
+  const userExists = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  if (!userExists) {
+    return {
+      ok: false,
+      reason: "no_user",
+      message: "Session expired. Please sign in again.",
+    };
+  }
+
+  const challenge = await prisma.challenge.findUnique({
+    where: { domain },
+    select: { id: true },
+  });
+  if (!challenge) {
+    return {
+      ok: false,
+      reason: "no_challenge",
+      message: "Challenge for this track is not available yet.",
+    };
+  }
+
+  const existing = await prisma.enrollment.findFirst({
+    where: {
+      userId,
+      challengeId: challenge.id,
+      status: { not: EnrollmentStatus.ABANDONED },
+    },
+    select: { id: true },
+  });
+  if (existing) {
+    return {
+      ok: false,
+      reason: "already_enrolled",
+      message: "You are already enrolled in this track.",
+    };
+  }
+
+  try {
+    await prisma.enrollment.create({
+      data: {
+        userId,
+        challengeId: challenge.id,
+        domain,
+        status: EnrollmentStatus.ACTIVE,
+        daysCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+      },
+    });
+    return { ok: true };
+  } catch (e) {
+    console.error("[enrollment] createCoreEnrollment:", e);
+    return {
+      ok: false,
+      reason: "internal_error",
+      message: "Something went wrong. Please try again.",
+    };
+  }
+}
