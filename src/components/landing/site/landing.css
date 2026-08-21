@@ -425,10 +425,20 @@
   margin-top: 0px;
 }
 .abtalks-landing .stats__grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--lp-gutter);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--lp-gutter);
   padding-block: var(--lp-space-48);
-  /* Stats-only: content sits 20px further in from the left edge */
-  padding-left: calc(var(--lp-pad) + 20px);
+  text-align: center;
+  justify-items: center;
+  align-items: start;
+}
+.abtalks-landing .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 28ch;
+  width: 100%;
 }
 .abtalks-landing .stat__num {
   font-family: var(--lp-font-display);
@@ -439,6 +449,7 @@
   font-size: 12px; line-height: 18px; font-weight: 600;
   letter-spacing: .06em; text-transform: uppercase;
   color: rgba(255,255,255,.88); margin: 0;
+  max-width: 22ch;
 }
 
 /* =========================================================
@@ -1436,14 +1447,10 @@
     grid-template-columns: 1fr;
     gap: var(--lp-space-32);
     padding-block: var(--lp-space-40);
-    padding-inline: var(--lp-pad);     /* cancels the desktop-only 20px left inset */
-    text-align: center;
-    justify-items: center;
   }
   .abtalks-landing .stat { max-width: 32ch; }
-  /* Number keeps its full desktop weight so it stays dominant over the label */
   .abtalks-landing .stat__num { margin-bottom: var(--lp-space-8); }
-  .abtalks-landing .stat__label { max-width: 28ch; margin-inline: auto; }
+  .abtalks-landing .stat__label { max-width: 28ch; }
 
   /* ---------- BRIDGE — vertical mobile composition ----------
      Stack becomes the primary object, centred and sized against the viewport;

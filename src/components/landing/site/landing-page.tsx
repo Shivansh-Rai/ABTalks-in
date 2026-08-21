@@ -87,7 +87,7 @@ export function LandingPage({
         <TestimonialsSection />
         <FaqSection />
         <CommunitySection />
-        <ContactSection />
+        {/* <ContactSection /> */}
         <CtaBand />
       </main>
       <SiteFooter />

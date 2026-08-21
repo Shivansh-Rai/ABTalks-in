@@ -18,7 +18,7 @@ function LogoGroup({ hidden }: { hidden?: boolean }) {
           width={120}
           height={32}
         />
-      ))}
+      ))}               
     </div>
   );
 }
