@@ -194,10 +194,8 @@ export function HeroSection({ getStartedHref }: { getStartedHref: string }) {
           </h1>
 
           <p className="hero__desc">
-            ABTalks runs hackathons, cohorts and challenges where people build
-            in public. Companies see the work, not a rehearsed answer. We sit
-            in the middle: matching real output to real requirements, and never
-            sharing a profile without the candidate saying yes first.
+          We help students build real-world skills and help companies discover talent through the work they actually do.
+
           </p>
 
           <div className="hero__actions">
