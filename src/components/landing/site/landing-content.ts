@@ -308,20 +308,20 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/challenges",
     order: 0,
     bullets: [
-      "Ship one feature every day",
-      "Weekly peer code review",
-      "Public build log",
+      "Three Domains: AI, SE and DS",
+      "Build daily in public",
+      "Project-based learning",
     ],
   },
   {
     key: "hackathon",
-    title: "ABTalks Vicodathon",
-    href: "/hackathon",
+    title: "Databricks Cohort",
+    href: "/t",
     order: 2,
     bullets: [
-      "48-hour build sprint",
-      "Live demo to recruiters",
-      "Team or solo entry",
+      "Build a data pipeline",
+      "Mentor office hours",
+      "Capstone with a real brief",
     ],
   },
   {
@@ -330,7 +330,7 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/program",
     order: 1,
     bullets: [
-      "From prompts to production",
+      "Build a healthcare chatbot",
       "Mentor office hours",
       "Capstone with a real brief",
     ],
@@ -341,9 +341,9 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/claude-signup",
     order: 3,
     bullets: [
-      "Agent-first problem sets",
-      "Evaluated on real output",
-      "Open to all levels",
+      "Master Prompt Engineering",
+      "Learn to Master Claude AI applications",
+      "Daily builds in public",
     ],
   },
 ];
