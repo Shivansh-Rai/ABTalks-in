@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { Domain } from "@prisma/client";
 import type { HubEnrollment } from "@/features/dashboard/get-hub-data";
-import { dsButtonVariants } from "@/components/design/ds-button";
-import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
+import { HUB_BUTTON_CLASS, HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
 const TRACK_PATH: Record<Domain, string> = {
@@ -42,7 +41,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
           </p>
           <Link
             href="/challenges"
-            className={cn(dsButtonVariants(), "mt-4 inline-flex")}
+            className={cn(HUB_BUTTON_CLASS, "mt-4 inline-flex")}
           >
             Browse challenges
           </Link>
@@ -90,7 +89,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                 </div>
                 <Link
                   href={TRACK_PATH[e.domain]}
-                  className={cn(dsButtonVariants(), "mt-4 w-full justify-center")}
+                  className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
                 >
                   {isCompleted ? "View" : "Continue"}
                 </Link>

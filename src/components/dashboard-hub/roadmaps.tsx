@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { Domain } from "@prisma/client";
 import { isProgramEnabled } from "@/lib/feature-flags";
-import { dsButtonVariants } from "@/components/design/ds-button";
 import {
-  HUB_ARROW_HOVER_CLASS,
+  HUB_BUTTON_CLASS,
   HUB_CARD_HOVER_CLASS,
-  HUB_TEXT_LINK_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +31,7 @@ export function Roadmaps({
   return (
     <>
       <section className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4">
-        <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
           CHALLENGE TRACKS
         </h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -63,9 +60,8 @@ export function Roadmaps({
                 <p className="mt-1 flex-1 text-sm text-[#555555]">
                   60-day challenge track
                 </p>
-                <Link href={href} className={cn(HUB_TEXT_LINK_CLASS, "mt-4")}>
+                <Link href={href} className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}>
                   {ctaLabel}
-                  <ArrowRight className={HUB_ARROW_HOVER_CLASS} aria-hidden />
                 </Link>
               </li>
             );
@@ -75,7 +71,7 @@ export function Roadmaps({
 
       {showProgramPrepKit ? (
         <section className="px-4 py-2 sm:px-6 sm:py-4 lg:ml-4">
-          <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
+          <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
             AI Prep Kit
           </h2>
           <div
@@ -96,7 +92,7 @@ export function Roadmaps({
               </div>
               <Link
                 href={hasProgramMembership ? "/program/dashboard" : "/program/apply"}
-                className={cn(dsButtonVariants(), "shrink-0")}
+                className={cn(HUB_BUTTON_CLASS, "shrink-0")}
               >
                 {hasProgramMembership ? "Continue" : "Start"}
               </Link>

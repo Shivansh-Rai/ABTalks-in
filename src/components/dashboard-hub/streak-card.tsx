@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Flame } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Flag,
+  Flame,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import {
   HUB_ARROW_HOVER_CLASS,
   HUB_CARD_HOVER_CLASS,
@@ -38,7 +45,7 @@ function milestoneCopy(streak: ActivityStreak): string {
     return "Every day is a new chance to improve.";
   }
   if (!streak.todayCompleted) {
-    return "Complete today's task to keep your streak alive.";
+    return "Make a submission to keep your streak alive.";
   }
   if (streak.currentStreak === 1) {
     return "Your streak starts today.";
@@ -212,13 +219,23 @@ function XIcon() {
 function StreakStats({ streak }: { streak: ActivityStreak }) {
   return (
     <ul className="mt-5 space-y-2 border-t border-neutral-100 pt-4 text-sm">
-      <StatRow label="Current streak" value={formatDayCount(streak.currentStreak)} />
-      <StatRow label="Longest streak" value={formatDayCount(streak.longestStreak)} />
       <StatRow
+        icon={Flame}
+        label="Current streak"
+        value={formatDayCount(streak.currentStreak)}
+      />
+      <StatRow
+        icon={Trophy}
+        label="Longest streak"
+        value={formatDayCount(streak.longestStreak)}
+      />
+      <StatRow
+        icon={CalendarDays}
         label="Total active days"
         value={formatDayCount(streak.totalActiveDays)}
       />
       <StatRow
+        icon={Flag}
         label="Next milestone"
         value={formatDayCount(streak.nextMilestone)}
       />
@@ -226,10 +243,21 @@ function StreakStats({ streak }: { streak: ActivityStreak }) {
   );
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
+function StatRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   return (
     <li className="flex justify-between gap-3">
-      <span className="text-[#555555]">{label}</span>
+      <span className="inline-flex min-w-0 items-center gap-2 text-[#555555]">
+        <Icon className="size-3.5 shrink-0 text-[#e05226]" strokeWidth={1.75} aria-hidden />
+        {label}
+      </span>
       <span className="font-medium tabular-nums text-black">{value}</span>
     </li>
   );

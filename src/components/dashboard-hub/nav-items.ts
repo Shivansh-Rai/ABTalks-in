@@ -31,6 +31,10 @@ export const HUB_CARD_HOVER_CLASS =
 export const HUB_TEXT_LINK_CLASS =
   "group inline-flex items-center gap-1 text-sm font-medium text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]";
 
+/** Outline CTA — orange border, no fill, black text → orange on hover. */
+export const HUB_BUTTON_CLASS =
+  "inline-flex h-10 items-center justify-center rounded-lg border border-[#E05226] bg-transparent px-4 text-sm font-semibold text-black shadow-none transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-transparent hover:text-[#E05226] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E05226] disabled:opacity-60";
+
 export const HUB_ARROW_HOVER_CLASS =
   "size-4 transition-transform duration-200 ease-[var(--ease-spark)] motion-safe:group-hover:translate-x-0.5";
 

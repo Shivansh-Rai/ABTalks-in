@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
+import { HUB_BUTTON_CLASS } from "@/components/dashboard-hub/nav-items";
+import { cn } from "@/lib/utils";
 
 type DashboardHeaderProps = {
   isAdmin: boolean;
@@ -62,7 +64,7 @@ export function DashboardHeader({
           {isAdmin ? (
             <Link
               href="/admin"
-              className="rounded-full border border-[#E05226] bg-[#E05226] px-4 py-1.5 text-xs font-semibold text-white transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#C9411C]"
+              className={cn(HUB_BUTTON_CLASS, "h-9 px-4 text-xs")}
             >
               Admin
             </Link>
