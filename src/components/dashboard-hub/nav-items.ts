@@ -17,7 +17,7 @@ export const HUB_BG = "#FBF9F7";
 export const HUB_CONTENT = "#555555";
 
 export const HUB_HEADING_CLASS =
-  "ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]";
+  "lg:ml-4 font-heading text-xl font-semibold uppercase text-[#e05226]";
 export const HUB_CONTENT_CLASS = "text-[#555555]";
 export const HUB_TAB_HOVER_CLASS = "hover:text-[#e05226]";
 export const HUB_NAV_ACTIVE_CLASS = "bg-[#e05226]/10 text-[#e05226]";

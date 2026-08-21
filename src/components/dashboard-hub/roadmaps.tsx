@@ -33,7 +33,7 @@ export function Roadmaps({
 
   return (
     <>
-      <section className="scroll-mt-20 ml-4 px-4 py-8 sm:px-6">
+      <section className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4">
         <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
           CHALLENGE TRACKS
         </h2>
@@ -74,7 +74,7 @@ export function Roadmaps({
       </section>
 
       {showProgramPrepKit ? (
-        <section className="ml-4 px-4 py-2 sm:px-6 sm:py-4">
+        <section className="px-4 py-2 sm:px-6 sm:py-4 lg:ml-4">
           <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">
             AI Prep Kit
           </h2>

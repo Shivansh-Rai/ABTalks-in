@@ -22,7 +22,7 @@ export function EventsSection() {
   );
 
   return (
-    <section id="events" className="scroll-mt-20 ml-5 px-4 py-8 sm:px-6">
+    <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-5">
       <h2 className="ml-2 font-heading text-xl font-semibold uppercase text-[#e05226]">Events</h2>
 
       {upcoming.length > 0 ? (

@@ -15,9 +15,9 @@ export const STATS = [
 ] as const;
 
 export const BRIDGE_SLABS = [
-  { key: "top", slab: 3, label: "20+ companies" },
+  { key: "top", slab: 3, label: "100+ companies" },
   { key: "middle", slab: 2, label: "ABTalks" },
-  { key: "bottom", slab: 1, label: "500+ users" },
+  { key: "bottom", slab: 1, label: "12k+ users" },
 ] as const;
 
 export const COMPANY_LOGOS = [
@@ -175,16 +175,16 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pill: "Longlist",
     cards: [
       {
-        title: "#1 Aarav Mehta",
+        title: "#1 Sohail Khan",
         titleEm: "· 8 yrs",
-        role: "Senior Backend Engineer · Razorpay",
+        role: "Senior Backend Engineer",
       },
       {
-        title: "#2 Nikhil Reddy",
+        title: "#2 Shivansh Rai",
         titleEm: "· 6 yrs",
-        role: "Platform Engineer · Swiggy",
+        role: "Platform Engineer",
       },
-      { title: "#3 Ishita Rao", titleEm: "· 5 yrs", fade: true },
+      { title: "#3 Ishita ", titleEm: "· 5 yrs", fade: true },
     ],
   },
   {
@@ -193,10 +193,10 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pill: "2 shortlisted",
     cards: [
       {
-        title: "#1 Aarav Mehta",
+        title: "#1 Sohail Khan",
         titleEm: "· 8 yrs",
         star: true,
-        role: "Senior Backend Engineer · Razorpay",
+        role: "Senior Backend Engineer",
         chips: [
           "Python",
           "Distributed Systems",
@@ -210,10 +210,10 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
         scoreNote: "86% clean passes",
       },
       {
-        title: "#2 Nikhil Reddy",
+        title: "#2 Shivansh Rai",
         titleEm: "· 6 yrs",
         star: true,
-        role: "Platform Engineer · Swiggy",
+        role: "Platform Engineer",
         chips: ["Python", "Kubernetes", "gRPC", "Redis", "Terraform"],
         meters: [78, 71],
         score: "902",
@@ -227,16 +227,16 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pill: "3 booked",
     cards: [
       {
-        title: "Aarav Mehta",
+        title: "Sohail Khan",
         when: "Tue · 11:00",
         role: "System design · 60 min",
       },
       {
-        title: "Nikhil Reddy",
+        title: "Shivansh Rai",
         when: "Wed · 15:30",
         role: "Platform deep dive · 45 min",
       },
-      { title: "Ishita Rao", when: "Fri · 10:00", fade: true },
+      { title: "Ishita ", when: "Fri · 10:00", fade: true },
     ],
   },
   {
@@ -245,12 +245,12 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pill: "Scored",
     cards: [
       {
-        title: "Aarav Mehta",
+        title: "Sohail Khan",
         score: "943",
         meters: [94, 88, 81],
       },
       {
-        title: "Nikhil Reddy",
+        title: "Shivansh Rai",
         score: "902",
         meters: [80, 74, 69],
       },
@@ -262,7 +262,7 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pill: "1 of 5",
     cards: [
       {
-        title: "Aarav Mehta",
+        title: "Sohail Khan",
         titleEm: "· closest fit",
         star: true,
         role: "Shipped an event-driven payments service in the 60-day cohort — same stack, same load profile as your brief.",
@@ -277,7 +277,7 @@ export const DASHBOARD_STAGES: readonly DashStage[] = [
     pillOk: true,
     cards: [
       {
-        title: "Aarav Mehta",
+        title: "Sohail Khan",
         when: "Offer accepted",
         role: "Senior Backend Engineer · start in 4 weeks",
         meters: [100],
