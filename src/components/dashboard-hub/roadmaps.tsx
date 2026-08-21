@@ -30,7 +30,10 @@ export function Roadmaps({
 
   return (
     <>
-      <section className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4">
+      <section
+        id="domains"
+        className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
+      >
         <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
           CHALLENGE TRACKS
         </h2>
@@ -70,9 +73,12 @@ export function Roadmaps({
       </section>
 
       {showProgramPrepKit ? (
-        <section className="px-4 py-2 sm:px-6 sm:py-4 lg:ml-4">
+        <section
+          id="prep-kit"
+          className="scroll-mt-20 px-4 py-2 sm:px-6 sm:py-4 lg:ml-4"
+        >
           <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
-            AI Prep Kit
+            Prep Kit
           </h2>
           <div
             className={cn(
@@ -86,15 +92,14 @@ export function Roadmaps({
                   31 Days AI Cohort
                 </p>
                 <p className="mt-1 text-sm text-[#555555]">
-                  Live cohort roadmap, projects, and guided prep for working
-                  professionals.
+                Build and deploy a production-grade enterprise AI chatbot in 31 days.
                 </p>
               </div>
               <Link
                 href={hasProgramMembership ? "/program/dashboard" : "/program/apply"}
                 className={cn(HUB_BUTTON_CLASS, "shrink-0")}
               >
-                {hasProgramMembership ? "Continue" : "Start"}
+                {hasProgramMembership ? "Continue" : "Start Challenge"}
               </Link>
             </div>
           </div>

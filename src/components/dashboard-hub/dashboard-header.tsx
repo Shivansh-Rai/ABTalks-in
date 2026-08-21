@@ -39,22 +39,28 @@ export function DashboardHeader({
             aria-label="Page sections"
           >
             <a
+              href="#your-challenge"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
+            >
+              Your Challenges
+            </a>
+            <a
+              href="#prep-kit"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
+            >
+              Prep Kit
+            </a>
+            <a
+              href="#domains"
+              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
+            >
+              Domains
+            </a>
+            <a
               href="#events"
               className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
             >
               Events
-            </a>
-            <a
-              href="#faq"
-              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
-            >
-              FAQs
-            </a>
-            <a
-              href="#testimonials"
-              className="text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]"
-            >
-              Testimonials
             </a>
           </nav>
         </div>
