@@ -466,8 +466,8 @@ export const FOOTER_COLUMNS = [
       { href: "/terms", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
       { href: "/cookies", label: "Cookies" },
-      { href: "/contact", label: "Contact" },
-      { href: "/login", label: "Sign in" },
+      ,
+      
     ],
   },
 ] as const;
