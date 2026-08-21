@@ -308,9 +308,9 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/challenges",
     order: 0,
     bullets: [
-      "Three Domains: AI, SE and DS",
-      "Build daily in public",
-      "Project-based learning",
+      "Choose AI, Data Science, or Software Engineering",
+      "One task a day for 60 days",
+      "Proof of work on GitHub and LinkedIn",
     ],
   },
   {
@@ -319,9 +319,9 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/t",
     order: 2,
     bullets: [
-      "Build a data pipeline",
-      "Mentor office hours",
-      "Capstone with a real brief",
+      "Spark, lakehouse, and production pipelines",
+      "Build against a real data brief",
+      "Dates announced to the waitlist",
     ],
   },
   {
@@ -330,9 +330,9 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/program",
     order: 1,
     bullets: [
-      "Build a healthcare chatbot",
-      "Mentor office hours",
-      "Capstone with a real brief",
+      "Ship a production-grade healthcare chatbot",
+      "RAG, agents, MCP, and deploy",
+      "Recruiter-visible after you finish",
     ],
   },
   {
@@ -341,9 +341,9 @@ export const COHORT_DEFAULTS: readonly Omit<
     href: "/claude-signup",
     order: 3,
     bullets: [
-      "Master Prompt Engineering",
-      "Learn to Master Claude AI applications",
-      "Daily builds in public",
+      "60 days building with Claude",
+      "Prompt engineering through real projects",
+      "Daily public builds",
     ],
   },
 ];

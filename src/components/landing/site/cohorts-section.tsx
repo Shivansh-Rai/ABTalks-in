@@ -26,7 +26,7 @@ export function CohortsSection({ cards }: Props) {
           Open right now
         </Reveal>
         <Reveal as="h2" className="h2">
-        Pick something. Start building.
+          Four live tracks. One habit: ship.
         </Reveal>
 
         <div
