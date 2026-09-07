@@ -153,6 +153,8 @@ export function virtualCandidateToCard(
     rationale: null,
     gaps: [],
     availabilityUnknown: true,
+    // There is no person here to be open to anything — see the note above.
+    openToWork: false,
     shortlisted: false,
     engagementStatus: null,
     locationLabel: profile.locationLabel,

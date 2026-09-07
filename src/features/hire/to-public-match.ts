@@ -200,6 +200,9 @@ export function toPublicMatch(
     rationale: match.rationale ?? null,
     gaps: match.gaps,
     availabilityUnknown: match.availabilityUnknown,
+    // A status, not logistics: the recruiter may see that the candidate is
+    // looking. What they expect to be paid stays admin-only, above.
+    openToWork: match.openToWork === true,
     shortlisted: opts?.shortlisted ?? false,
     engagementStatus: null,
     scores: pickPublicScores(match.scoreBreakdown),

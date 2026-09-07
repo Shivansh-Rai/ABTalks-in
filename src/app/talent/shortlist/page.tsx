@@ -56,6 +56,7 @@ export default async function TalentShortlistPage() {
     totalScore: r.totalScore,
     note: r.note,
     displayName: r.displayName,
+    openToWork: r.openToWork,
     revealedName: r.revealedName,
     engagementStatus: engagements.get(r.userId)?.status ?? null,
   }));

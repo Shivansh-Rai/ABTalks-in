@@ -6,6 +6,7 @@ import { requireRecruiter } from "@/lib/program-auth";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { candidatePublicId } from "@/features/hire/public-id";
 import { getTalentProfile } from "@/features/talent-pool/pool";
+import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import { MissionHeatmap } from "@/components/program/mission-heatmap";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { ShortlistNoteForm } from "@/components/talent/shortlist-note-form";
@@ -61,6 +62,7 @@ export default async function TalentMemberPage({ params }: Props) {
           <h1 className="font-display text-3xl font-bold tracking-tight">
             {candidatePublicId(profile.memberId)}
           </h1>
+          <OpenToWorkBadge openToWork={profile.openToWork} />
         </div>
         <p className="text-muted-foreground">
           {profile.jobRole ?? "—"} · {profile.yearsExperience ?? "—"} years

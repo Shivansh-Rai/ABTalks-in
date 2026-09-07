@@ -16,7 +16,10 @@ import {
   useUpgradePrompt,
 } from "@/components/hire/locked-field";
 import { cn } from "@/lib/utils";
-import { buildCardPills } from "@/components/hire/hire-card-facts";
+import {
+  buildCardPills,
+  OpenToWorkBadge,
+} from "@/components/hire/hire-card-facts";
 
 /**
  * Tags shown on a Scout result card.
@@ -282,7 +285,8 @@ export function DeskMatchCard({
                 <MaskedName name={match.displayName} />
               ) : (
                 match.jobRole
-              )}
+              )}{" "}
+              <OpenToWorkBadge openToWork={match.openToWork} />
               {rank === 1 && <span className="desk-card__top">Top match</span>}
             </p>
             {(skills.length > 0 || match.displayName) && (

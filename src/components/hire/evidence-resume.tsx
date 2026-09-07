@@ -8,6 +8,7 @@ import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref
 import {
   recallEvidence,
 } from "@/components/hire/evidence-cache";
+import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import type { MatchCardData } from "@/components/hire/match-card";
 
 function trackLabel(source?: CandidateSource): string | null {
@@ -150,7 +151,9 @@ export function EvidenceResume({ lookup }: { lookup: string }) {
 
       <div className="hire-sheet__top">
         <div>
-          <h1 className="hire-sheet__name">{match.jobRole}</h1>
+          <h1 className="hire-sheet__name">
+            {match.jobRole} <OpenToWorkBadge openToWork={match.openToWork} />
+          </h1>
           <p className="hire-sheet__sub">
             {sample
               ? "Sample profile — not a person in the pool"

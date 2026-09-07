@@ -104,6 +104,38 @@ export function MatchMetaTags({ match }: { match: Pick<MatchCardData, "evidence"
   );
 }
 
+/**
+ * "Open to work", beside the candidate's name.
+ *
+ * One component, seven call sites: the alternative is seven copies of the same
+ * conditional, which is exactly how the pill rows drifted apart before
+ * `buildCardPills` pulled them together.
+ *
+ * It renders nothing unless the answer is a definite yes — `false` and a missing
+ * value are the same thing here, and neither is a claim about the candidate. The
+ * null return lives inside the component so every call site stays a bare tag
+ * with no surrounding conditional to forget.
+ *
+ * Deliberately NOT part of `buildCardPills`: every surface that draws that row
+ * also prints a name, so a pill would be a duplicate and would spend one of the
+ * four or five slots that carry matched skills and the evidence headline.
+ *
+ * This says the candidate is *looking*. It says nothing about whether a
+ * recruiter may find them — that is `CandidateVisibility.searchableByRecruiters`,
+ * enforced in `repositories/talent.ts`, and the two must never be wired together.
+ */
+export function OpenToWorkBadge({ openToWork }: { openToWork?: boolean }) {
+  if (openToWork !== true) return null;
+  return (
+    <span
+      className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-900 dark:text-emerald-100"
+      title="This candidate has told us they are actively looking. It does not change who can find them."
+    >
+      Open to work
+    </span>
+  );
+}
+
 /** Evidence + skill pills used on list cards. */
 /**
  * Three skill pills, everywhere.

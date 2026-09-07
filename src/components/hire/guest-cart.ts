@@ -23,6 +23,9 @@ export type GuestCartItem = {
   workMode?: string | null;
   educationLevel?: string | null;
   availabilityUnknown?: boolean;
+  /** Optional, not required: a cart written before this field existed has no
+   *  such key, and an absent value is read as "not looking / unknown". */
+  openToWork?: boolean;
   compensationBand?: string | null;
 };
 
@@ -44,6 +47,7 @@ export function cartItemFromMatch(match: MatchCardData): GuestCartItem {
     workMode: e.workMode ?? null,
     educationLevel: e.educationLevel ?? null,
     availabilityUnknown: match.availabilityUnknown,
+    openToWork: match.openToWork,
     compensationBand: match.compensationBand ?? null,
   };
 }
@@ -76,6 +80,7 @@ export function normalizeGuestCartItem(raw: unknown): GuestCartItem | null {
     workMode?: unknown;
     educationLevel?: unknown;
     availabilityUnknown?: unknown;
+    openToWork?: unknown;
     compensationBand?: unknown;
   };
   const jobRole = typeof row.jobRole === "string" ? row.jobRole : "Candidate";
@@ -117,6 +122,8 @@ export function normalizeGuestCartItem(raw: unknown): GuestCartItem | null {
       typeof row.availabilityUnknown === "boolean"
         ? row.availabilityUnknown
         : undefined,
+    openToWork:
+      typeof row.openToWork === "boolean" ? row.openToWork : undefined,
     compensationBand:
       typeof row.compensationBand === "string" ? row.compensationBand : null,
   };

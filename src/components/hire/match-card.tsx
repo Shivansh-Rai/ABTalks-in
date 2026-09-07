@@ -13,7 +13,10 @@ import {
 } from "@/components/hire/sample-card-notice";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { cn } from "@/lib/utils";
-import { SKILL_PILL_CAP } from "@/components/hire/hire-card-facts";
+import {
+  OpenToWorkBadge,
+  SKILL_PILL_CAP,
+} from "@/components/hire/hire-card-facts";
 
 /** One ranking dimension as the inspector chart reads it. Null ≠ 0. */
 export type PublicScoreSlice = {
@@ -59,6 +62,12 @@ export type MatchCardData = {
   rationale: string | null;
   gaps: string[];
   availabilityUnknown: boolean;
+  /**
+   * The candidate has said they are open to work. Shown as a badge beside the
+   * name. Never a filter, and never a reason to hide or demote a card — see
+   * `OpenToWorkBadge` in hire-card-facts.tsx.
+   */
+  openToWork: boolean;
   shortlisted?: boolean;
   /** Status of this recruiter's live engagement request, if any. */
   engagementStatus?: string | null;
@@ -259,6 +268,7 @@ function RealMatchCard({
                 {track.label}
               </span>
             )}
+            <OpenToWorkBadge openToWork={match.openToWork} />
             {isTop && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">
                 Top match
