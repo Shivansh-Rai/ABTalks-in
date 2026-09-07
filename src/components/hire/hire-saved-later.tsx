@@ -18,7 +18,11 @@ import {
   toggleGuestCart,
 } from "@/components/hire/guest-cart";
 import { hydrateMatch } from "@/components/hire/evidence-cache";
-import { MatchMetaTags, MatchPills } from "@/components/hire/hire-card-facts";
+import {
+  MatchMetaTags,
+  MatchPills,
+  OpenToWorkBadge,
+} from "@/components/hire/hire-card-facts";
 import { PodEmptyArt } from "@/components/hire/pod-empty-art";
 import type { MatchCardData } from "@/components/hire/match-card";
 
@@ -36,6 +40,7 @@ function savedToMatch(row: DeskShortlistItem): MatchCardData {
     rationale: row.rationale ?? null,
     gaps: [],
     availabilityUnknown: row.availabilityUnknown ?? false,
+    openToWork: row.openToWork ?? false,
     compensationBand: row.compensationBand,
     compensationDeclared: row.compensationDeclared,
     evidence: {
@@ -196,7 +201,8 @@ export function HireSavedLater() {
                       </span>
                       <div>
                         <p className="hire-pod__name">
-                          {match.displayName || row.jobRole}
+                          {match.displayName || row.jobRole}{" "}
+                          <OpenToWorkBadge openToWork={match.openToWork} />
                         </p>
                         {stack && <p className="desk-card__stack">{stack}</p>}
                         <p className="hire-pod__ref">{publicId}</p>

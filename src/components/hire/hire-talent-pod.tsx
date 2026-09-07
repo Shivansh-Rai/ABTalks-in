@@ -19,7 +19,11 @@ import { savePendingCheckout } from "@/components/hire/pending-checkout";
 import { decodeCandidateRef, refPublicId } from "@/features/hire/candidate-ref";
 import type { CartRow } from "@/components/hire/shortlist-cart";
 import { hydrateMatch } from "@/components/hire/evidence-cache";
-import { MatchMetaTags, MatchPills } from "@/components/hire/hire-card-facts";
+import {
+  MatchMetaTags,
+  MatchPills,
+  OpenToWorkBadge,
+} from "@/components/hire/hire-card-facts";
 import { PodEmptyArt } from "@/components/hire/pod-empty-art";
 import type { MatchCardData } from "@/components/hire/match-card";
 import { cn } from "@/lib/utils";
@@ -37,6 +41,7 @@ function cartRowToMatch(row: CartRow): MatchCardData {
     rationale: row.rationale ?? null,
     gaps: [],
     availabilityUnknown: row.availabilityUnknown ?? false,
+    openToWork: row.openToWork ?? false,
     shortlisted: true,
     engagementStatus: row.engagementStatus,
     compensationBand: row.compensationBand,
@@ -90,6 +95,7 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
           workMode: i.workMode,
           educationLevel: i.educationLevel,
           availabilityUnknown: i.availabilityUnknown,
+          openToWork: i.openToWork,
           compensationBand: i.compensationBand,
           revealedName: null,
           engagementStatus: null,
@@ -291,7 +297,8 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
                       )}
                       <div>
                         <p className="hire-pod__name">
-                          {row.displayName || row.revealedName || row.jobRole}
+                          {row.displayName || row.revealedName || row.jobRole}{" "}
+                          <OpenToWorkBadge openToWork={match.openToWork} />
                         </p>
                         {stack && <p className="desk-card__stack">{stack}</p>}
                         <p className="hire-pod__ref">{publicId}</p>

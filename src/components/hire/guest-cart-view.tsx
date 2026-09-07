@@ -12,6 +12,7 @@ function toRow(item: {
   candidateRef: string;
   jobRole: string;
   totalScore: number;
+  openToWork?: boolean;
 }): CartRow {
   const ref = decodeCandidateRef(item.candidateRef);
   return {
@@ -20,6 +21,9 @@ function toRow(item: {
     jobRole: item.jobRole,
     totalScore: item.totalScore,
     note: null,
+    // Carried from the device-local cart so a signed-out recruiter sees the same
+    // badge here that they saw on the card they added.
+    openToWork: item.openToWork,
     revealedName: null,
     engagementStatus: null,
   };

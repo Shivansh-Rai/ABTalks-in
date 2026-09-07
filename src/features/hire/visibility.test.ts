@@ -69,6 +69,30 @@ suite("the gate is not openToWork", () => {
   );
 });
 
+suite("the pool clause is not openToWork either", () => {
+  // The gate above is one of two places a "looking for work" flag could quietly
+  // become a discovery rule. This is the other one.
+  assert(
+    !JSON.stringify(memberEligibilityWhere(["cohort_1"])).includes("openToWork"),
+    "the pool clause must not filter on openToWork",
+  );
+});
+
+suite("the open-to-work badge did not smuggle salary onto a card", () => {
+  // `CandidatePreference` carries openToWork and the candidate's expected salary
+  // on the same row, and the recruiter badge reads that row. The badge is fine;
+  // the number beside it is admin-only and must never make the same trip.
+  const src = readFileSync(
+    join(process.cwd(), "src/features/hire/to-public-match.ts"),
+    "utf8",
+  );
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  assert(
+    !code.includes("expectedSalary"),
+    "the candidate's declared salary must never reach MatchCardData",
+  );
+});
+
 suite("the pool clause describes the pool and nothing else", () => {
   // The gate is added by repositories/hire.ts on the way out, so a caller cannot
   // forget it and a second `user:` key cannot overwrite it. This clause must

@@ -125,6 +125,9 @@ export function buildLockedPreviewCards(
       rationale: null,
       gaps: [],
       availabilityUnknown: false,
+      // Never true here. A format preview is fabricated, and "open to work" is a
+      // claim about a real person's intent — the one thing this card must not make.
+      openToWork: false,
       shortlisted: false,
       engagementStatus: null,
       highlightSkills: stack.length ? stack : undefined,

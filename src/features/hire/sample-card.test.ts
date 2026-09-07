@@ -506,3 +506,15 @@ suite("previewed identity is fabricated, never a real candidate field", () => {
     );
   }
 });
+
+suite("a fabricated card never claims someone is open to work", () => {
+  // "Open to work" is a statement about a real person's intent — the one claim
+  // a generated card must never make. Both card builders say false explicitly
+  // rather than leaving the field off, so the compiler keeps them honest.
+  for (const c of buildSampleCards(pythonSpec, 3)) {
+    assert(c.openToWork === false, "a sample card must not claim open to work");
+  }
+  for (const c of buildLockedPreviewCards(pythonSpec)) {
+    assert(c.openToWork === false, "a preview card must not claim open to work");
+  }
+});

@@ -18,7 +18,11 @@ import {
 } from "@/components/hire/evidence-cache";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { HireScoreChart } from "@/components/hire/hire-score-chart";
-import { skillTint, trackLabel } from "@/components/hire/hire-card-facts";
+import {
+  OpenToWorkBadge,
+  skillTint,
+  trackLabel,
+} from "@/components/hire/hire-card-facts";
 import type { MatchCardData } from "@/components/hire/match-card";
 import { cn } from "@/lib/utils";
 import { MaskedName } from "@/components/hire/desk-match-card";
@@ -145,7 +149,8 @@ export function CandidateInspector({
                 ) : (
                   match.jobRole
                 )
-              )}
+              )}{" "}
+              <OpenToWorkBadge openToWork={match.openToWork} />
             </h3>
             <p className="hire-detail__ref">
               {preview ? (

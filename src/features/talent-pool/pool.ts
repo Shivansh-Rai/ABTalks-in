@@ -7,6 +7,7 @@ import {
 } from "@/features/interview/read-model";
 import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
+import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   filterSearchableUserIds,
   loadRecruiterIdentities,
@@ -43,6 +44,14 @@ export type TalentProfile = {
    * accepted engagement request, handled by the ABTalks team.
    */
   contactReleased: false;
+  /**
+   * The candidate says they are actively looking (`CandidatePreference.openToWork`).
+   *
+   * Shown as a badge, and that is all it does. Whether a recruiter may see this
+   * profile at all is `searchableUserWhere()`, applied above — the two are
+   * different questions and must stay that way.
+   */
+  openToWork: boolean;
   rank: number;
   scoreBreakdown: {
     missionPoints: number;
@@ -77,6 +86,8 @@ export type TalentProfile = {
 export type ShortlistRow = {
   memberId: string;
   userId: string;
+  /** Status badge only — never a filter on who is in the cart. */
+  openToWork: boolean;
   jobRole: string | null;
   totalScore: number;
   note: string | null;
@@ -314,10 +325,18 @@ export async function getTalentProfile(
     ? (await loadRecruiterIdentities([member.userId])).get(member.userId)
     : undefined;
 
+  // Only the boolean is read out of this row. The same table carries the
+  // candidate's expected salary, which is admin-only and must not reach a
+  // recruiter surface — see the note in features/hire/to-public-match.ts.
+  const openToWork =
+    (await listCandidateAvailability([member.userId])).get(member.userId)
+      ?.openToWork === true;
+
   return {
     ok: true,
     data: {
       memberId: member.id,
+      openToWork,
       fullName: useNew ? (idn?.fullName || member.fullName) : member.fullName,
       jobRole: useNew ? (idn?.role ?? member.jobRole) : member.jobRole,
       company:
@@ -519,6 +538,12 @@ export async function getShortlist(
     ? await loadRecruiterIdentities(shown.map((i) => i.member.userId))
     : new Map();
 
+  // Read for the "Open to work" badge only. The salary columns on the same row
+  // stay admin-only and must not be mapped onto ShortlistRow.
+  const availability = await listCandidateAvailability(
+    shown.map((i) => i.member.userId),
+  );
+
   const released = new Set(
     (
       await prisma.talentEngagementRequest.findMany({
@@ -542,6 +567,7 @@ export async function getShortlist(
       return {
         memberId: i.member.id,
         userId: i.member.userId,
+        openToWork: availability.get(i.member.userId)?.openToWork === true,
         jobRole: idn?.role ?? i.member.jobRole,
         totalScore: i.member.totalScore,
         note: i.note,

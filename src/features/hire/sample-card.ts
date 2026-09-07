@@ -39,6 +39,8 @@ export function buildSampleCards(
       rationale: null,
       gaps: [],
       availabilityUnknown: false,
+      // A fabricated card never claims a person is looking for a job.
+      openToWork: false,
       shortlisted: false,
       engagementStatus: null,
       highlightSkills: skills.length ? skills : undefined,

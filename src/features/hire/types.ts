@@ -269,6 +269,16 @@ export type ScoredCandidate = {
   evidence: CandidateEvidence;
   gaps: string[];
   availabilityUnknown: boolean;
+  /**
+   * The candidate says they are actively looking (`CandidatePreference.openToWork`).
+   *
+   * A *status*, never a gate. Discoverability is
+   * `CandidateVisibility.searchableByRecruiters` and lives only in
+   * `repositories/talent.ts` — searchable-and-not-looking is a normal state and
+   * must keep ranking normally. False when there is no preference row, which is
+   * also `availabilityUnknown`.
+   */
+  openToWork: boolean;
   hardFiltered: boolean;
   hardFilterReasons: string[];
   /** Present when the caller assembled one. Carries no identity by
