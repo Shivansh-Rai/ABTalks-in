@@ -468,6 +468,19 @@ model MarketplaceItem {
   imagePath   String?
   active      Boolean      @default(true)
   sortOrder   Int          @default(0)
+
+  /// Sizes the student must pick from when redeeming, e.g.
+  /// ["S", "M", "L", "XL", "XXL"] on the Classic Tee. Empty — the default, and
+  /// the case for most of the catalog — means the item has no size and the
+  /// redeem dialog shows no size control.
+  ///
+  /// Seeded from `prisma/content/marketplace.json`, so adding sizes to another
+  /// item is a JSON edit plus `npm run db:seed:marketplace`, not a migration.
+  /// `redeemItem` validates the chosen size against THIS list at redeem time
+  /// and `Redemption.selectedSize` stores the answer, so changing the list
+  /// later never rewrites or invalidates an order already placed.
+  sizeOptions String[]     @default([])
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   redemptions Redemption[]
@@ -476,14 +489,41 @@ model MarketplaceItem {
 }
 
 model Redemption {
-  id              String           @id @default(cuid())
-  userId          String
-  itemId          String
-  costSP          Int
-  itemTitle       String
-  status          RedemptionStatus @default(PENDING)
+  id       String           @id @default(cuid())
+  userId   String
+  itemId   String
+  costSP   Int
+  itemTitle String
+
+  /// The size chosen at redeem time, or null when the item has none (and for
+  /// every redemption predating sizes). Copied from the item's `sizeOptions`
+  /// rather than referencing them, for the same reason `itemTitle` and `costSP`
+  /// are copied: the order must still read correctly after the catalog moves on.
+  selectedSize String?
+
+  status   RedemptionStatus @default(PENDING)
+
+  /// The address as one printable block. Still the only field guaranteed to be
+  /// populated: redemptions made before the structured fields existed have this
+  /// and nothing else, so admin UI and shipping labels read THIS, not the parts.
+  /// New redemptions compose it from the structured columns below.
   shippingAddress String
   recipientPhone  String
+
+  /// Structured address, captured since the redeem dialog replaced its free-form
+  /// textarea. Nullable because legacy rows have no parts to fill them with —
+  /// they are not optional for new writes, which always set every one except
+  /// `addressLine2`. `state` is a name from `src/data/india-locations.ts`;
+  /// `city` is free text (no city list is complete) and `country` is "India",
+  /// the only destination we ship to today.
+  recipientName String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  pincode       String?
+  country       String?
+
   trackingNote    String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
