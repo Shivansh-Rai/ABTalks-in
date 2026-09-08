@@ -472,7 +472,7 @@ export function RegistrationForm({
           aria-invalid={!!errors.headline}
         />
         <p className="text-xs text-muted-foreground">
-          One line. What you do, or what you are working toward.
+          Define yourself in one line. What you do, or what you are working toward.
         </p>
         {errors.headline ? (
           <p className="text-sm text-destructive">{errors.headline.message}</p>
@@ -561,7 +561,7 @@ export function RegistrationForm({
       </Button>
       {!resumeUploaded ? (
         <p className="text-xs text-muted-foreground">
-          Upload your resume above to enable Complete Registration.
+          Upload your resume above to complete registration.
         </p>
       ) : null}
     </form>
