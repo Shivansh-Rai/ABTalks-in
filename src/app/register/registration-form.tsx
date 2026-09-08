@@ -505,7 +505,7 @@ export function RegistrationForm({
             <Input
               id="referralCode"
               maxLength={6}
-              placeholder="ABC123"
+              placeholder="XXXXXX"
               className="font-mono uppercase"
               value={field.value}
               onChange={(e) => {
