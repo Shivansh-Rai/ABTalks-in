@@ -58,8 +58,8 @@ export function InvitePanel({ teamCode, spotsLeft }: Props) {
       </div>
 
       <p className="mt-3 text-sm text-zinc-400">
-        Teammates register at abtalks.in/hackathon/register and enter
-        this code.
+        Teammates register at abtalks.in/hackathon and enter this code in the
+        popup.
       </p>
     </section>
   );

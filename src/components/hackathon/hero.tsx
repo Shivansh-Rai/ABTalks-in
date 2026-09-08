@@ -1,8 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { auth } from "@/auth";
 import { Countdown } from "@/components/hackathon/countdown";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { HACKATHON, isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
+import { HeroCta } from "@/components/hackathon/hero-cta";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 
 export async function Hero() {
@@ -12,6 +12,10 @@ export async function Hero() {
     const reg = await getMyRegistration(session.user.id);
     registered = reg !== null;
   }
+  const registrationOpen = isHackathonRegistrationOpen();
+  const email = session?.user?.email ?? null;
+  const name = session?.user?.name ?? "";
+  const isAuthed = Boolean(session?.user?.id);
 
   return (
     <section className="relative bg-black">
@@ -82,37 +86,13 @@ export async function Hero() {
 
           {/* CTA — mobile near bottom of 80vh; desktop normal flow */}
           <div className="mt-6 flex w-full shrink-0 flex-col items-center pb-2 md:mt-6 md:pb-0">
-            <div className="flex w-full flex-row items-center justify-center gap-2 sm:gap-3 md:w-auto">
-              {registered ? (
-                <Link
-                  href="/hackathon/dashboard"
-                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
-                  }}
-                >
-                  Go to your dashboard →
-                </Link>
-              ) : (
-                <Link
-                  href="/hackathon/register"
-                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
-                  }}
-                >
-                  Register free →
-                </Link>
-              )}
-              <Link
-                href="#how-it-works"
-                className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-[#2C1BA9] bg-[#100A3D] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-              >
-                How it works
-              </Link>
-            </div>
+            <HeroCta
+              registered={registered}
+              registrationOpen={registrationOpen}
+              isAuthed={isAuthed}
+              initialEmail={email}
+              initialName={name}
+            />
 
             <p className="mt-2 w-full text-center text-[12px] leading-6 text-[#BCBCBC] sm:mt-3 sm:text-[15px] sm:leading-8">
               {HACKATHON.registrationClosesLabel}

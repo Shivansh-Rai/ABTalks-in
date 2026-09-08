@@ -11,18 +11,23 @@ professionals, plus the `/talent` recruiter portal), the **Hackathon**
 `/ai-cohort-register`, `/ai-cohort-india`). Solo-developer build, free-tier hosting
 (Vercel + Neon), live in production.
 
-## Your role here: ARCHITECT, not executor
-You handle PLANNING and ARCHITECTURE. A separate tool (Cursor) writes the code.
-- You DO: read the codebase, make architectural decisions, break features into
-  precise implementation plans written to `docs/plans/`, and keep this file and
-  `docs/project-context.md` current.
-- You DO NOT: modify, create, or delete application code (`src/`,
-  `prisma/schema.prisma`, migrations, config), and you do NOT run
-  build/migration/seed/deploy commands that change state.
-- The ONLY files you ever write or edit: `CLAUDE.md`, `docs/project-context.md`,
-  and files under `docs/plans/`.
-If a request needs application code changed, stop at the plan and hand it off.
-Never implement.
+## Your role here
+You handle PLANNING and ARCHITECTURE by default, and IMPLEMENTATION when I
+explicitly ask.
+- Default mode (planning): read the codebase, make architectural decisions,
+  and break features into precise implementation plans written to
+  `docs/plans/` for Cursor to execute. Keep this file and
+  `docs/project-context.md` current. Write NO application code.
+- Implementation mode: when I explicitly say "implement", "build it", "code
+  it", "just do it", or similar, you write the application code directly —
+  editing `src/`, config, and Prisma files as the task requires. A vague
+  "make this work" is NOT an implement request; ask if unclear. When you
+  implement, follow every rule under "Non-negotiable rules" and every
+  Standing Cursor guardrail, and append the change to `docs/CHANGELOG.md`
+  under `## Pending reconcile` the same way Cursor would.
+- You do NOT run build/migration/seed/deploy commands that touch shared
+  state (production DB, deploys, `git push`) without explicit approval,
+  regardless of mode.
 
 ## Full context
 `docs/project-context.md` is the single source of truth — stack, full domain
@@ -37,12 +42,27 @@ here, to keep this file lean.)
 - Split auth config: `auth.config.ts` is edge-safe (no Prisma); `auth.ts` has
   PrismaAdapter + Credentials. Keep them split.
 - Prisma pinned to 6.x (NOT 7).
-- **Plan 078 migration is in flight.** The new 078 tables exist in production and
-  receive dual-writes (`ENABLE_DUAL_WRITE` on), but every `ENABLE_NEW_*` flag is
-  OFF and **legacy tables are authoritative for all reads**. Never plan as if the
-  cutover happened. New code reaches candidate/learning/progress/talent/points/
-  credential data through `src/repositories/`, not through fresh
-  `prisma.studentProfile` / `prisma.programMember` calls.
+- **Plan 078 migration is PAUSED AFTER PHASE 6 + W1-A** (corrected 2026-09-04 —
+  this block previously said all `ENABLE_NEW_*` were off, which stopped being
+  true on 2026-08-26). Production today: **every Phase 6 read flag is ON**
+  (`ENABLE_NEW_CREDENTIAL`, `_POINTS`, `_CANDIDATE`, `_LEARNING`, `_PROGRESS`,
+  `_TALENT`), `ENABLE_NEW_POINTS_WRITES` is ON so `PointsAccount` +
+  `PointsTransaction` are **write-authoritative**, and `ENABLE_DUAL_WRITE` is
+  still on. Legacy tables are **mirrors, not read sources** — `User.synergyPoints`
+  and `SynergyEvent` included. Phase 7 W1-B onward has **not** started and is
+  **frozen for September 2026** (see `docs/plans/112-september-execution-plan.md`
+  §13 D-1); nothing legacy has been dropped.
+  New code reaches candidate/learning/progress/talent/points/credential data
+  through `src/repositories/`, never through fresh `prisma.studentProfile` /
+  `prisma.programMember` calls. **New features are built 078-native** — a new
+  cohort or surface writes `ProgramEnrollment` / `ActivityAttempt` /
+  `ActivityEvaluation` with plain cuids and no legacy row, the way
+  `/program/databricks` and `/program/ds-architect` already do.
+- **`SkillEvidence` has no live writer** (verified 2026-09-04). Only
+  `prisma/scripts/migrate-2i-achievements.ts` writes it, so
+  `CandidateSkill.evidenceScore` / `.verified` are frozen at backfill time.
+  Any plan that depends on evidence-based ranking, candidate insights or skill
+  strength must account for this. Fixing it is P0-0 in plan 112.
 - IST (Asia/Kolkata) for all CHALLENGE day boundaries. Day 1 = reference start day
   in IST. Use `lib/date-utils.ts`. `getCurrentDayNumber` caps at 60 (display,
   unlocking, streaks); `getElapsedDayNumber` is uncapped and is the ONLY correct

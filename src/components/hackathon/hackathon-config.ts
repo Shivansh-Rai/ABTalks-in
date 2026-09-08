@@ -2,27 +2,29 @@ export const HACKATHON = {
   name: "ABTalks Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
   // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
-  registrationOpen: false,
+  registrationOpen: true,
   maxTeamSize: 3,
 
-  // TODO(organizer): replace the three date values below before launch.
-  kickoffUtc: "2026-08-07T14:30:00Z", // Fri 8:00 PM IST
-  deadlineUtc: "2026-08-09T15:15:00Z", // Sun 8:45 PM IST
-  kickoffLabel: "Friday, 7 Aug · 8:00 PM IST",
-  deadlineLabel: "Sunday, 9 Aug · 8:45 PM IST",
-  resultsLabel: "Winners announced: Friday, 14 Aug",
-  // Open while now < this instant (Fri 7 Aug 6:00 PM IST).
-  registrationClosesUtc: "2026-08-07T12:30:00Z",
-  registrationClosesLabel: "Registration closes Friday, 7 Aug · 6:00 PM IST",
+  // Event: Fri 25 Sep 2026 → Sun 27 Sep 2026 (IST). All UTC instants below
+  // are Kolkata local time minus 5:30.
+  kickoffUtc: "2026-09-25T14:30:00Z", // Fri 25 Sep · 8:00 PM IST
+  deadlineUtc: "2026-09-27T15:15:00Z", // Sun 27 Sep · 8:45 PM IST
+  kickoffLabel: "Friday, 25 Sep · 8:00 PM IST",
+  deadlineLabel: "Sunday, 27 Sep · 8:45 PM IST",
+  resultsLabel: "Winners announced: Friday, 2 Oct",
+  // Open while now < this instant (Fri 25 Sep 6:00 PM IST).
+  registrationClosesUtc: "2026-09-25T12:30:00Z",
+  registrationClosesLabel: "Registration closes Friday, 25 Sep · 6:00 PM IST",
   briefsHeading: "Problem Statements",
 
   // Leaders can edit the roster (remove a teammate) up to and including
-  // Tue 4 Aug IST — 3 days before kickoff. This instant is 5 Aug 00:00 IST, so
-  // the whole of 4 Aug is still open. Admins are never subject to this lock.
-  rosterLockUtc: "2026-08-04T18:30:00Z", // Tue 4 Aug 11:59 PM IST (= 5 Aug 00:00 IST)
-  rosterLockLabel: "Tuesday, 4 Aug · 11:59 PM IST",
+  // Tue 22 Sep IST — 3 days before kickoff. This instant is 23 Sep 00:00 IST,
+  // so the whole of 22 Sep is still open. Admins are never subject to this lock.
+  rosterLockUtc: "2026-09-22T18:30:00Z", // Tue 22 Sep 11:59 PM IST (= 23 Sep 00:00 IST)
+  rosterLockLabel: "Tuesday, 22 Sep · 11:59 PM IST",
 
   whatsappLink: "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1",
+  discordLink: "https://discord.gg/Zk8XRJ3J7",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 
   // TODO(organizer): paste the real Breeth redeem URL before kickoff.

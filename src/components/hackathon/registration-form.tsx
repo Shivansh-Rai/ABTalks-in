@@ -88,9 +88,11 @@ const ENTRY_OPTIONS: { value: EntryType; title: string; body: string }[] = [
 export function RegistrationForm({
   initialEmail,
   initialName = "",
+  onSuccess,
 }: {
   initialEmail: string;
   initialName?: string;
+  onSuccess?: (data: SuccessState) => void;
 }) {
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -240,11 +242,13 @@ export function RegistrationForm({
         toast.error(result.message);
         return;
       }
-      setSuccess({
+      const next: SuccessState = {
         entryType: result.data.entryType,
         teamCode: result.data.teamCode,
         teamName: result.data.teamName,
-      });
+      };
+      setSuccess(next);
+      onSuccess?.(next);
     });
   }
 

@@ -3,12 +3,12 @@
 import { signIn, signOut } from "@/auth";
 
 // Force Google's account chooser, scoped to THIS call only (no global provider change).
-// After re-auth, land on /hackathon/register; that page forwards already-registered
-// users to /hackathon/dashboard (plan 042, step 12) — this is the "smart" destination.
+// After re-auth, land on /hackathon; the landing shows Register (modal) for the
+// new account, or the dashboard CTA when that account is already registered.
 export async function switchHackathonAccountAction() {
   await signIn(
     "google",
-    { redirectTo: "/hackathon/register" },
+    { redirectTo: "/hackathon" },
     { prompt: "select_account" },
   );
 }

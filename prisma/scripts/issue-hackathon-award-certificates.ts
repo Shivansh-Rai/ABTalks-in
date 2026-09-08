@@ -174,7 +174,7 @@ async function main() {
     });
     if (!participant) {
       console.error(
-        `❌ ${user.email} is not a hackathon participant. Register at /hackathon/register first.`,
+        `❌ ${user.email} is not a hackathon participant. Register at /hackathon first.`,
       );
       process.exit(1);
     }
