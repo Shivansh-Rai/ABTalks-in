@@ -10,7 +10,10 @@ import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin"
 import { generateUniqueReferralCode } from "./generate-referral-code";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findUserIdByReferralCode } from "@/repositories/candidate";
-import { dualWriteCandidateIdentity } from "@/repositories/dual-write";
+import {
+  dualWriteCandidateBasicInfo,
+  dualWriteCandidateIdentity,
+} from "@/repositories/dual-write";
 import { lockWalletBalance, withLegacyPointsMirrorFlush } from "@/repositories/points";
 
 export type CompleteRegistrationResult =
@@ -73,20 +76,16 @@ export async function completeRegistration(
     };
   }
 
-  const linkedinUrl =
-    input.linkedinUrl === "" ? null : input.linkedinUrl;
-  const githubUsername =
-    input.githubUsername === "" ? null : input.githubUsername;
   const phone =
     input.phoneNumber && input.phoneNumber.trim() !== ""
-      ? toE164(input.countryCode, input.phoneNumber)
+      ? toE164(input.phoneCountryCode, input.phoneNumber)
       : null;
 
   // India (+91) requires a phone that has been OTP-verified (production).
   // Under next dev, OTP is skipped — persist the phone as unverified.
   // Re-check the verification server-side — never trust the client.
   let phoneVerified = false;
-  if (input.countryCode === INDIA_DIALING_CODE) {
+  if (input.phoneCountryCode === INDIA_DIALING_CODE) {
     if (!phone) {
       return {
         ok: false,
@@ -116,6 +115,11 @@ export async function completeRegistration(
       // so a simultaneous grant cannot leave the two balances out of sync.
       const synergyPoints = await lockWalletBalance(tx, userId);
 
+      // `graduationYear`, `skills`, `linkedinUrl` and `githubUsername` are left
+      // empty on purpose: the form no longer asks for them and the résumé merge
+      // fills them in straight after this, through the candidate tables. Writing
+      // a placeholder here would make the merge think the candidate had already
+      // answered — the merge only ever fills what is empty.
       const profile = await tx.studentProfile.create({
         data:
           input.userType === UserType.STUDENT
@@ -125,16 +129,16 @@ export async function completeRegistration(
                 userType: UserType.STUDENT,
                 college: input.college,
                 collegeId: input.collegeId || null,
-                graduationYear: input.graduationYear,
+                graduationYear: null,
                 organization: null,
                 role: null,
                 yearsExperience: null,
                 domain: null,
-                skills: input.skills ?? [],
-                linkedinUrl,
+                skills: [],
+                linkedinUrl: null,
                 phone,
                 phoneVerified,
-                githubUsername,
+                githubUsername: null,
                 referralCode: newReferralCode,
                 synergyPoints,
               }
@@ -149,17 +153,25 @@ export async function completeRegistration(
                 role: input.role,
                 yearsExperience: input.yearsExperience,
                 domain: null,
-                skills: input.skills ?? [],
-                linkedinUrl,
+                skills: [],
+                linkedinUrl: null,
                 phone,
                 phoneVerified,
-                githubUsername,
+                githubUsername: null,
                 referralCode: newReferralCode,
                 synergyPoints,
               },
       });
 
       await dualWriteCandidateIdentity(tx, userId);
+      // Runs second: the identity dual-write is what creates the
+      // CandidateProfile row these four columns live on.
+      await dualWriteCandidateBasicInfo(tx, userId, {
+        headline: input.headline,
+        locationCity: input.locationCity,
+        locationRegion: input.locationRegion,
+        countryCode: input.countryCode,
+      });
 
       return profile.id;
     }, {
