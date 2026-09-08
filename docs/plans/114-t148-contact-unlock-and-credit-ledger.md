@@ -2,7 +2,7 @@
 
 > ⛔ **STOP — DO NOT WRITE PRODUCT CODE OR PRISMA MIGRATIONS.**
 > Written plan and architectural contract for T-148 (P0, HIGH RISK — money path and candidate contact privacy).
-> Reviewed and signed by Sohail **before any product code or migration is written**.
+> Reviewed and approved by Sohail **before any product code or migration is written**.
 > Unblocks Wave 1 build tasks: T-030 (unlock build), T-032 / T-033 (R2 limits & entitlements), T-095 (org admin credits view), T-105 (purchase/topup), T-128 (cost preview).
 
 **Owner:** Zainab · **Task:** T-148 (Tue 08 Sep) · Stream: `G0 Decisions & Foundations`  
@@ -92,55 +92,81 @@ enum CreditTransactionType {
 
 ---
 
-## 4. The Two Critical Proofs for Sohail
+## 4. The Approved Four Core Architecture Elements & Proofs
 
-### 4.1 Proof 1: The Ten-Concurrent-Unlock Case (Affording Five)
-
-**Problem:** An organisation has a balance of **50 credits**. Unlock cost is **10 credits** (affording 5 unlocks). **10 concurrent unlock requests** arrive simultaneously from different tabs or team members.
-
-**Mechanism:** Atomic conditional decrement (`debit_strict` from `src/repositories/points.ts:284-291` & `428-440`):
-```sql
-UPDATE "CreditAccount"
-SET "balance" = "balance" - 10,
-    "lifetimeSpent" = "lifetimeSpent" + 10,
-    "version" = "version" + 1,
-    "reconciledAt" = NOW()
-WHERE "organizationId" = :orgId
-  AND "balance" >= 10;
-```
-
-**Step-by-step Execution:**
-1. All 10 requests initiate a Prisma interactive transaction.
-2. PostgreSQL row-level locking serializes updates to the `CreditAccount` row for this `organizationId`.
-3. Request 1: `balance` = 50 -> `50 >= 10` is TRUE -> balance updated to 40, `count = 1`. Transaction commits.
-4. Request 2: `balance` = 40 -> `40 >= 10` is TRUE -> balance updated to 30, `count = 1`. Transaction commits.
-5. Request 3: `balance` = 30 -> `30 >= 10` is TRUE -> balance updated to 20, `count = 1`. Transaction commits.
-6. Request 4: `balance` = 20 -> `20 >= 10` is TRUE -> balance updated to 10, `count = 1`. Transaction commits.
-7. Request 5: `balance` = 10 -> `10 >= 10` is TRUE -> balance updated to 0, `count = 1`. Transaction commits.
-8. Request 6: `balance` = 0 -> `0 >= 10` is **FALSE** -> update matches 0 rows, `count = 0`.
-9. Requests 7, 8, 9, 10: `balance` = 0 -> update matches 0 rows, `count = 0`.
-10. For Requests 6 through 10, the application observes `debit.count === 0`, issues an immediate transaction rollback, and returns:
-    `{ ok: false, reason: "INSUFFICIENT_CREDITS", remaining: 0 }`.
-
-**Conclusion:** Exactly 5 succeed; exactly 5 fail cleanly. Negative balance is mathematically impossible.
+### 4.1 Approved Item 1: Ledger Shape
+- `CreditAccount`: Cached account summary with version column for optimistic locking.
+- `CreditTransaction`: Immutable, append-only history of every credit grant and debit.
+- True balance ground truth: `SUM(CreditTransaction.amount) WHERE organizationId = :orgId`.
 
 ---
 
-### 4.2 Proof 2: The Double-Charge & Repeat Unlock Case
+### 4.2 Approved Item 2: Idempotency & Double-Charge Prevention
 
-**Problem:** A recruiter clicks unlock on an already unlocked candidate, or network latency causes a retry of the same click.
+```
+Recruiter has 10 credits
+       ↓
+Unlock candidate
+       ↓
+Debit 10
+       ↓
+Ledger entry created
+       ↓
+Network/request retries
+       ↓
+Same idempotency key
+       ↓
+NO second debit
+```
 
-**Mechanism:**
-1. **Access Check First:**
-   Before checking credits or creating a transaction, call `hasContactAccess(recruiterUserId, candidateUserId)`.
-   - If `true`: Candidate is already unlocked (`status === "CONTACT_SHARED"`).
-   - **Immediately return candidate details:** `{ ok: true, charged: false, cost: 0, reason: "ALREADY_UNLOCKED" }`.
-   - **Spend nothing. Create zero ledger records.**
-2. **Idempotency Key Database Guarantee:**
-   - Key shape: `unlock:<organizationId>:<candidateUserId>`
-   - `CreditTransaction.idempotencyKey` has a `@unique` index.
-   - If two requests for the same candidate slip through the access check concurrently, the second insert fails with Prisma `P2002` (unique constraint violation), triggering an automatic transaction rollback.
-   - The handler catches `P2002`, confirms existing access, and returns success with `cost: 0`.
+- **Format:** `unlock:<organizationId>:<candidateUserId>`
+- **Database Unique Constraint:** `@unique` index on `CreditTransaction.idempotencyKey`.
+- **Pre-check:** `hasContactAccess(recruiterUserId, candidateUserId)` checks if access already exists (`status === "CONTACT_SHARED"`). If true, returns immediately with `cost: 0` and `charged: false`. Zero credits debited, zero ledger entries added.
+- **Retry Safety:** A duplicate request with the same idempotency key hits the unique index, triggering rollback and safely returning existing access without a second charge.
+
+---
+
+### 4.3 Approved Item 3: Concurrency & Overspending Prevention
+
+```
+50 credits
+       ↓
+10 simultaneous unlock attempts
+       ↓
+Atomic balance >= 10 check
+       ↓
+5 succeed = 50 credits spent
+5 fail = insufficient credits
+       ↓
+Balance can never go below 0
+```
+
+- **Mechanism:** `debit_strict` atomic conditional decrement (`src/repositories/points.ts:284-291` & `428-440`):
+  ```sql
+  UPDATE "CreditAccount"
+  SET "balance" = "balance" - 10,
+      "lifetimeSpent" = "lifetimeSpent" + 10,
+      "version" = "version" + 1,
+      "reconciledAt" = NOW()
+  WHERE "organizationId" = :orgId
+    AND "balance" >= 10;
+  ```
+- **PostgreSQL Row-Lock Serialization:**
+  - 10 simultaneous requests against 50 credits queue on the `CreditAccount` row lock.
+  - Requests 1 through 5 evaluate `balance >= 10` as TRUE, decrement balance by 10 each, and update `count = 1`.
+  - At Request 6, `balance = 0`. The predicate `0 >= 10` evaluates to FALSE. `count = 0`.
+  - Requests 6 through 10 match 0 rows (`count = 0`), rolling back safely and returning `{ ok: false, reason: "INSUFFICIENT_CREDITS", remaining: 0 }`.
+  - **Result:** Exactly 5 succeed, exactly 5 fail. Overdraft is impossible.
+
+---
+
+### 4.4 Approved Item 4: Unlock Transaction Boundary
+
+All steps of an unlock commit inside a single atomic database transaction (`prisma.$transaction`):
+1. **Debit Credit:** Execute atomic conditional decrement (`WHERE balance >= 10`). If `count === 0`, abort with `INSUFFICIENT_CREDITS`.
+2. **Create Ledger Transaction:** Insert `CreditTransaction` row with deterministic `idempotencyKey` and candidate attribution.
+3. **Grant Access:** Upsert `TalentEngagementRequest` for `(recruiterUserId, candidateUserId)` with `status: "CONTACT_SHARED"`, `decidedAt: new Date()`, `decidedByAdminId: null` (released by credit).
+4. **Commit Boundary:** All three actions commit atomically. If any step fails (insufficient credits, unique key conflict, DB failure), **everything rolls back**. No orphan spends, no unbilled reveals.
 
 ---
 
@@ -192,4 +218,10 @@ Access continues to be derived solely from `TalentEngagementRequest.status === "
 - **Author:** Zainab (Developer)
 - **Technical Reviewer:** Sohail (Architect & Tech Lead)
 - **Status:** **APPROVED & SIGNED**
+- **Approved Items:**
+  1. Ledger shape (`CreditAccount` + `CreditTransaction`)
+  2. Idempotency & double-charge prevention (`unlock:<organizationId>:<candidateUserId>`)
+  3. Concurrency / overspending prevention (`UPDATE ... WHERE balance >= cost`)
+  4. Unlock transaction boundary (debit + ledger + `CONTACT_SHARED` atomic commit)
+  5. D-17 Database Configuration (100 free initial credits / 10 credits per unlock)
 - **Date:** 2026-09-08

@@ -131,15 +131,51 @@ WHERE "organizationId" = :orgId
    ```json
    { "ok": false, "reason": "INSUFFICIENT_CREDITS", "remaining": 0 }
    ```
-5. **Result:** Exactly 5 succeed. Exactly 5 fail with a clean, readable error. The balance ends at exactly 0. Overspending or negative balances are impossible.
+
+50 credits
+       ↓
+10 simultaneous unlock attempts
+       ↓
+Atomic balance >= 10 check
+       ↓
+5 succeed = 50 credits spent
+5 fail = insufficient credits
+       ↓
+Balance can never go below 0
 
 ---
 
 ## 6. The Repeat Unlock Path (Double-Charge Protection)
 
-**Scenario:** A recruiter clicks unlock on a candidate they have already unlocked, or double-clicks the unlock button.
+**Scenario:** A recruiter clicks unlock on a candidate they have already unlocked, or network latency causes a retry of the same click.
 
-### Execution Flow:
+```
+Recruiter has 10 credits
+       ↓
+Unlock candidate
+       ↓
+Debit 10
+       ↓
+Ledger entry created
+       ↓
+Network/request retries
+       ↓
+Same idempotency key
+       ↓
+NO second debit
+```
+
+---
+
+## 7. Unlock Transaction Boundary
+
+All steps of a contact unlock are executed within an atomic database transaction (`prisma.$transaction`):
+1. **Debit Credit:** Atomic conditional update (`WHERE balance >= cost`). Failure aborts with `INSUFFICIENT_CREDITS`.
+2. **Create Ledger Transaction:** Append `CreditTransaction` row with deterministic `idempotencyKey`.
+3. **Grant Access:** Upsert `TalentEngagementRequest` with `status: "CONTACT_SHARED"`.
+4. **Commit Boundary:** Commit as one atomic operation. Any failure (e.g. insufficient credits, duplicate unique key, database error) **rolls everything back**.
+
+### Transaction Flow:
 ```mermaid
 sequenceDiagram
     autonumber
