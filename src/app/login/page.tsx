@@ -7,13 +7,15 @@ import {
 } from "@/components/ui/card";
 import { setReferralCookie } from "@/app/actions/referral-actions";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { hackathonRedirectForProfilelessUser } from "@/features/hackathon/registration-status";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LoginClient } from "./login-client";
 import { studentProfile } from "@/repositories/legacy/student-profile";
+import {
+  postRegisterDestination,
+  registerHref,
+} from "@/features/registration/registration-gate";
 
 type Props = {
   searchParams: Promise<{ from?: string; ref?: string; as?: string }>;
@@ -23,22 +25,6 @@ type Props = {
 function safeFrom(from: string | undefined): string | null {
   if (!from || !from.startsWith("/") || from.startsWith("//")) return null;
   return from;
-}
-
-/** Preserve invite ref in URL when sending OAuth-incomplete users to register. */
-function registerHrefWithRef(refRaw: string | undefined): string {
-  if (typeof refRaw !== "string" || refRaw.trim() === "") {
-    return "/register";
-  }
-  const normalized = refRaw
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 6);
-  if (normalized.length === 6 && /^[A-Z0-9]{6}$/.test(normalized)) {
-    return `/register?ref=${encodeURIComponent(normalized)}`;
-  }
-  return "/register";
 }
 
 export default async function LoginPage({ searchParams }: Props) {
@@ -57,15 +43,13 @@ export default async function LoginPage({ searchParams }: Props) {
   if (session?.user?.id) {
     if (!from) redirect("/");
 
-    // Program applicants, recruiters, and hackathon registrants must never hit
-    // the student /register redirect below — send them straight to their destination.
+    // Recruiters and program applicants have their own funnels and their own
+    // profile rows — a recruiter has no StudentProfile and never will, so the
+    // candidate check below would loop them forever.
     if (
       redirectTo.startsWith("/program") ||
       redirectTo.startsWith("/hire") ||
-      redirectTo.startsWith("/talent") ||
-      redirectTo.startsWith("/hackathon") ||
-      redirectTo === "/dashboard" ||
-      redirectTo.startsWith("/dashboard?")
+      redirectTo.startsWith("/talent")
     ) {
       redirect(redirectTo);
     }
@@ -81,9 +65,11 @@ export default async function LoginPage({ searchParams }: Props) {
       redirect(redirectTo);
     }
 
-    const hx = await hackathonRedirectForProfilelessUser(session.user.id);
-    if (hx) redirect(hx);
-    redirect(registerHrefWithRef(params.ref));
+    // Not registered. `/dashboard` and `/hackathon/*` used to be waved through
+    // above, which is how a Google sign-in could complete without ever reaching
+    // /register. They go to the form now, and `next` remembers where they were
+    // actually headed so the form can send them on afterwards.
+    redirect(registerHref(postRegisterDestination(redirectTo), params.ref));
   }
 
   const refRaw = params.ref;

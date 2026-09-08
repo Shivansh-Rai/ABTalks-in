@@ -15,6 +15,7 @@ import { WinnerCard } from "@/components/hackathon/dashboard/winner-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getSubmissionWindow } from "@/features/hackathon/submission-window";
+import { registrationRedirect } from "@/features/registration/registration-gate";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -29,6 +30,15 @@ export default async function HackathonDashboardPage() {
   if (!session?.user?.id) {
     redirect("/login?from=/hackathon/dashboard");
   }
+
+  // Google's callback lands here directly, so this is where the hackathon route
+  // asks the same question every candidate surface asks: registered yet? `next`
+  // brings them back here once they are.
+  const needsRegistration = await registrationRedirect(
+    session.user.id,
+    "/hackathon/dashboard",
+  );
+  if (needsRegistration) redirect(needsRegistration);
 
   if (!SHOW_LIVE_DASHBOARD) {
     return (
