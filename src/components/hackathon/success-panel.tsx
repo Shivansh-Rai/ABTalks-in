@@ -45,9 +45,10 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
             {teamName ? `, ${teamName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Share this code with your teammates, they each register at{" "}
+            Share this code with your teammates, they each open the Register
+            popup on{" "}
             <span className="font-medium text-foreground">
-              abtalks.in/hackathon/register
+              abtalks.in/hackathon
             </span>{" "}
             and enter it.
           </p>
@@ -90,15 +91,26 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
         </h3>
         <p className="text-sm text-muted-foreground">
           Kickoff is {HACKATHON.kickoffLabel}. The problem statement drops at
-          kickoff, be in the WhatsApp group so you don&apos;t miss it.
+          kickoff on Discord — every participant is required to join.
         </p>
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Link
-          href="/hackathon/dashboard"
+          href={HACKATHON.discordLink}
+          target="_blank"
+          rel="noopener noreferrer"
           className={cn(
             buttonVariants({ size: "lg" }),
+            "w-full shrink-0 sm:w-auto",
+          )}
+        >
+          Join the Discord →
+        </Link>
+        <Link
+          href="/hackathon/dashboard"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
             "w-full shrink-0 sm:w-auto",
           )}
         >
@@ -114,15 +126,6 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
           )}
         >
           Join the WhatsApp group
-        </Link>
-        <Link
-          href="/hackathon"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "w-full shrink-0 sm:w-auto",
-          )}
-        >
-          Back to landing
         </Link>
       </div>
     </div>

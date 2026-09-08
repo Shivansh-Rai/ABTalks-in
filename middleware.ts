@@ -53,7 +53,6 @@ const protectedPaths = [
   "/program/powerbi",
   "/talent",
   "/hire",
-  "/hackathon/register",
   "/hackathon/dashboard",
   "/hackathon/submission",
 ];

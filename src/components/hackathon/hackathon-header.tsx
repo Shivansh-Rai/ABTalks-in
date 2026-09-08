@@ -29,7 +29,7 @@ export async function HackathonHeader() {
           </div>
         ) : (
           <Link
-            href="/login?from=/hackathon/register"
+            href="/login?from=/hackathon"
             className="inline-flex h-8 items-center justify-center rounded-[8px] bg-[#403880] px-4 text-center text-[11px] font-bold leading-none text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:rounded-[10px] sm:px-8 sm:text-[16px]"
           >
             Log In / Sign Up

@@ -1,5 +1,6 @@
 import "server-only";
 import { BrevoClient } from "@getbrevo/brevo";
+import { HACKATHON_UNLOCK_CODE } from "@/lib/hackathon-unlock";
 
 const brevoApiKey = process.env.BREVO_API_KEY!;
 const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
@@ -93,6 +94,28 @@ function whatsappLine(): string {
   return `Join our official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a>`;
 }
 
+/**
+ * Unlock code block — matches the padlock UX on /hackathon. The user types
+ * this code on the landing to reveal the full details (timeline, rules,
+ * Discord). It is a fixed non-secret token; treat it as "did you read the
+ * email?" confirmation, not access control.
+ */
+function unlockCodeBlock(): string {
+  const url = `${appUrl}/hackathon`;
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:20px 0;">
+    <tr><td style="padding:22px 24px;">
+      <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Your unlock code</p>
+      <p style="margin:0 0 8px;font-size:15px;line-height:1.7;color:${C.text};">
+        Type this on the padlock at
+        <a href="${url}" style="color:${C.accent};text-decoration:none;">${url.replace(/^https?:\/\//, "")}</a>
+        to reveal the timeline, rules and Discord invite:
+      </p>
+      <p style="margin:6px 0 0;font-family:monospace;font-size:28px;font-weight:800;letter-spacing:8px;color:${C.text};">${HACKATHON_UNLOCK_CODE}</p>
+    </td></tr>
+  </table>`;
+}
+
 async function send(
   toEmail: string,
   toName: string,
@@ -117,6 +140,7 @@ export async function sendSoloWelcomeEmail(
     <p style="margin:0 0 12px;">You're officially registered for the 48-Hour AI Hackathon!</p>
     <p style="margin:0 0 12px;">Get ready for 48 hours of building, learning, and pushing your creativity with AI.</p>
     ${eventDetailsBlock()}
+    ${unlockCodeBlock()}
     ${sectionTitle("You're Participating Solo!")}
     <p style="margin:0 0 12px;">You've registered as a solo participant, so you'll begin the hackathon independently. But don't worry, you'll still have access to mentors, technical support, resources, and a community of builders throughout the event.</p>
     ${sectionTitle("Before the Hackathon")}
@@ -158,6 +182,7 @@ export async function sendLeaderWelcomeEmail(
     </table>
     <p style="margin:0 0 12px;">Share this Team Code with your teammates. Once they register and enter the code from their dashboard, they'll automatically be added to your team.</p>
     ${eventDetailsBlock()}
+    ${unlockCodeBlock()}
     ${sectionTitle("As the Team Leader")}
     <p style="margin:0 0 6px;">Here's what you should do before the hackathon begins:</p>
     <ul style="margin:0 0 12px;padding-left:20px;">
@@ -200,6 +225,7 @@ export async function sendMemberWelcomeEmail(
     </table>
     <p style="margin:0 0 12px;">Your Team Lead will coordinate with the team before and throughout the hackathon, so be sure to stay connected and communicate regularly.</p>
     ${eventDetailsBlock()}
+    ${unlockCodeBlock()}
     ${sectionTitle("Before the Hackathon")}
     <p style="margin:0 0 6px;">Please complete these quick steps:</p>
     <ul style="margin:0 0 12px;padding-left:20px;">
@@ -269,7 +295,7 @@ export async function sendMemberRemovedEmail(
     ${heading(`Hi ${name},`)}
     <p style="margin:0 0 12px;">You've been removed from <strong>${teamLabel}</strong> on the 48-Hour AI Hackathon roster.</p>
     <p style="margin:0 0 12px;">You can register again at any time — solo, as your own team, or by rejoining with a team code (including the same one if your leader invites you back).</p>
-    <p style="margin:0;"><a href="${appUrl}/hackathon/register" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
+    <p style="margin:0;"><a href="${appUrl}/hackathon" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
   await send(
     email,
     name,

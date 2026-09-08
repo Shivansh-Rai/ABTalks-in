@@ -27,7 +27,7 @@ export default async function HackathonSubmissionPage() {
 
   const reg = await getMyRegistration(session.user.id);
   if (!reg) {
-    redirect("/hackathon/register");
+    redirect("/hackathon");
   }
 
   const window = getSubmissionWindow();

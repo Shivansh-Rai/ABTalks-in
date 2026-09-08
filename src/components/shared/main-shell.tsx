@@ -39,7 +39,6 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         isLightOnlyRoute && "theme-abtalks-light theme-abtalks-orange",
         !isHackathon && !isDashboardShellRoute && !isWorkshop && "pb-16 md:pb-0",
         isMarketplace && "bg-[#030712]",
-        isHackathon && "bg-black",
       )}
     >
       {children}
