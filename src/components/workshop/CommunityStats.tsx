@@ -44,7 +44,7 @@ const ON_SCREEN_MARGIN = "0px 0px -20% 0px";
 
 /** Nodes 1:319-1:324. `x` is the number's left edge, `cx` the label's centre. */
 const STATS = [
-  { value: 11000, suffix: "+", label: "AI Learners", sub: "From 25+ Countries", x: 123, cx: 227 },
+  { value: 12000, suffix: "+", label: "AI Learners", sub: "From 25+ Countries", x: 123, cx: 227 },
   { value: 550, suffix: "+", label: "Institutions", sub: "Students enrolled", x: 453, cx: 519.5 },
   { value: 300, suffix: "+", label: "Organizations", sub: "Working professionals", x: 747, cx: 810.5 },
 ] as const;
