@@ -4,11 +4,10 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { type Resolver, Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { completeRegistrationAction } from "@/app/actions/registration-actions";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,13 +15,6 @@ import { Label } from "@/components/ui/label";
 import { CollegeCombobox } from "@/components/shared/college-combobox";
 import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { HUB_BUTTON_CLASS } from "@/components/dashboard-hub/nav-items";
 import {
@@ -30,9 +22,18 @@ import {
   legalConsentAccepted,
   type LegalConsentValues,
 } from "@/components/legal/legal-consent-fields";
-import {
-  registerPayloadSchema,
-} from "@/lib/validations/register";
+import { registerPayloadSchema } from "@/lib/validations/register";
+import { ResumeUploadField } from "./resume-upload-field";
+
+/**
+ * Registration, slimmed to what only the candidate can tell us.
+ *
+ * Graduation year, LinkedIn, GitHub and the skills chips are gone. Every one of
+ * them is something the résumé parser extracts and merges into the profile
+ * additively (`features/resume/merge/plan.ts`), so asking for them here made the
+ * form longer and the answer worse. What is left is identity, where they study
+ * or work, where they are, one line about themselves, and the résumé itself.
+ */
 
 /** RHF model includes fields from both branches; Zod still validates via `registerPayloadSchema`. */
 type RegistrationFormValues = {
@@ -40,25 +41,28 @@ type RegistrationFormValues = {
   fullName: string;
   college: string;
   collegeId: string;
-  graduationYear: number;
   organization: string;
   role: string;
   yearsExperience: number | undefined;
-  skills: string[];
-  linkedinUrl: string;
+  headline: string;
+  locationCity: string;
+  locationRegion: string;
   countryCode: string;
+  phoneCountryCode: string;
   phoneNumber: string;
-  githubUsername: string;
   referralCode: string;
   acceptLegal: boolean;
   newsletterOptIn: boolean;
 };
 
-const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035] as const;
-
 type Props = {
   initialName: string;
   initialRef: string;
+  /** Where a successful registration lands. Already validated same-origin. */
+  nextPath: string;
+  /** True when a READY `CandidateResume` already exists for this user. */
+  resumeReady: boolean;
+  resumeFileName: string | null;
   /** When false (local `next dev`), OTP is not required to submit. */
   otpVerificationRequired: boolean;
 };
@@ -66,11 +70,14 @@ type Props = {
 export function RegistrationForm({
   initialName,
   initialRef,
+  nextPath,
+  resumeReady,
+  resumeFileName,
   otpVerificationRequired,
 }: Props) {
   const router = useRouter();
-  const [skillDraft, setSkillDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resumeUploaded, setResumeUploaded] = useState(resumeReady);
   const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
     acceptLegal: false,
     newsletterOptIn: true,
@@ -85,15 +92,15 @@ export function RegistrationForm({
       fullName: initialName,
       college: "",
       collegeId: "",
-      graduationYear: 2026,
       organization: "",
       role: "",
       yearsExperience: undefined,
-      skills: [],
-      linkedinUrl: "",
-      countryCode: "+91",
+      headline: "",
+      locationCity: "",
+      locationRegion: "",
+      countryCode: "IN",
+      phoneCountryCode: "+91",
       phoneNumber: "",
-      githubUsername: "",
       referralCode: initialRef,
       acceptLegal: false,
       newsletterOptIn: true,
@@ -110,12 +117,11 @@ export function RegistrationForm({
     formState: { errors },
   } = form;
 
-  const skills = watch("skills") ?? [];
   const userType = watch("userType");
 
   const handlePhoneChange = useCallback(
     (v: { countryCode: string; phoneNumber: string; e164: string }) => {
-      setValue("countryCode", v.countryCode);
+      setValue("phoneCountryCode", v.countryCode);
       setValue("phoneNumber", v.phoneNumber);
     },
     [setValue],
@@ -128,37 +134,12 @@ export function RegistrationForm({
       setValue("role", "");
       setValue("yearsExperience", undefined);
       setValue("collegeId", "");
-      clearErrors(["college", "graduationYear"]);
+      clearErrors(["college"]);
     } else {
       setValue("college", "");
       setValue("collegeId", "");
-      setValue("graduationYear", 2026);
       clearErrors(["organization", "role", "yearsExperience"]);
     }
-  }
-
-  function addSkillsFromDraft() {
-    const parts = skillDraft
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (parts.length === 0) return;
-    const next = [...skills];
-    for (const p of parts) {
-      if (next.length >= 10) break;
-      const trimmed = p.slice(0, 50);
-      if (trimmed && !next.includes(trimmed)) next.push(trimmed);
-    }
-    setValue("skills", next, { shouldValidate: true });
-    setSkillDraft("");
-  }
-
-  function removeSkill(index: number) {
-    setValue(
-      "skills",
-      skills.filter((_, i) => i !== index),
-      { shouldValidate: true },
-    );
   }
 
   async function onSubmit(values: RegistrationFormValues) {
@@ -166,9 +147,13 @@ export function RegistrationForm({
       toast.error("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
+    if (!resumeUploaded) {
+      toast.error("Please upload your resume to continue.");
+      return;
+    }
     if (
       otpVerificationRequired &&
-      values.countryCode === "+91" &&
+      values.phoneCountryCode === "+91" &&
       !phoneVerified
     ) {
       toast.error("Please verify your phone number first.");
@@ -179,11 +164,12 @@ export function RegistrationForm({
       const fd = new FormData();
       fd.append("fullName", values.fullName);
       fd.append("userType", values.userType);
-      fd.append("skills", values.skills.join(","));
-      fd.append("linkedinUrl", values.linkedinUrl ?? "");
+      fd.append("headline", values.headline);
+      fd.append("locationCity", values.locationCity);
+      fd.append("locationRegion", values.locationRegion);
       fd.append("countryCode", values.countryCode);
+      fd.append("phoneCountryCode", values.phoneCountryCode);
       fd.append("phoneNumber", values.phoneNumber ?? "");
-      fd.append("githubUsername", values.githubUsername ?? "");
       fd.append("referralCode", values.referralCode ?? "");
       fd.append("acceptLegal", String(legalConsent.acceptLegal));
       fd.append("newsletterOptIn", String(legalConsent.newsletterOptIn));
@@ -191,7 +177,6 @@ export function RegistrationForm({
       if (values.userType === "STUDENT") {
         fd.append("college", values.college);
         fd.append("collegeId", values.collegeId);
-        fd.append("graduationYear", String(values.graduationYear));
       } else {
         fd.append("organization", values.organization);
         fd.append("role", values.role);
@@ -207,7 +192,9 @@ export function RegistrationForm({
         return;
       }
       toast.success("Welcome to ABTalks!");
-      router.push("/dashboard");
+      // Wherever they were headed before Google sent them here — the hackathon
+      // dashboard, the hub, a track — carried through as `next`.
+      router.push(nextPath);
       router.refresh();
     } finally {
       setIsSubmitting(false);
@@ -335,42 +322,6 @@ export function RegistrationForm({
                 </p>
               ) : null}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="graduationYear">Graduation year</Label>
-              <Controller
-                name="graduationYear"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={String(field.value)}
-                    onValueChange={(v) => {
-                      if (v != null) field.onChange(Number(v));
-                    }}
-                  >
-                    <SelectTrigger
-                      id="graduationYear"
-                      className="w-full min-w-0"
-                      aria-invalid={!!errors.graduationYear}
-                    >
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GRADUATION_YEARS.map((y) => (
-                        <SelectItem key={y} value={String(y)}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.graduationYear ? (
-                <p className="text-sm text-destructive">
-                  {errors.graduationYear.message}
-                </p>
-              ) : null}
-            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -382,7 +333,7 @@ export function RegistrationForm({
             className="space-y-6"
           >
             <div className="space-y-2">
-              <Label htmlFor="organization">Organization</Label>
+              <Label htmlFor="organization">Company</Label>
               <Input
                 id="organization"
                 placeholder="Company or institution name"
@@ -447,73 +398,89 @@ export function RegistrationForm({
         )}
       </AnimatePresence>
 
-      <div className="space-y-2">
-        <Label htmlFor="skills">Skills</Label>
-        <p className="text-xs text-muted-foreground">
-          Comma-separated. Examples: Python, React, SQL (up to 10)
-        </p>
-        <Input
-          id="skills"
-          value={skillDraft}
-          onChange={(e) => setSkillDraft(e.target.value)}
-          onBlur={() => addSkillsFromDraft()}
-          onKeyDown={(e) => {
-            if (e.key === ",") {
-              e.preventDefault();
-              addSkillsFromDraft();
-            }
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addSkillsFromDraft();
-            }
-          }}
-          placeholder="Type a skill, then comma or Enter"
-          disabled={skills.length >= 10}
-        />
-        {skills.length > 0 ? (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {skills.map((s, i) => (
-              <Badge
-                key={`${s}-${i}`}
-                variant="secondary"
-                className="gap-1 pr-1 font-normal"
-              >
-                {s}
-                <button
-                  type="button"
-                  className="rounded-sm p-0.5 hover:bg-muted"
-                  onClick={() => removeSkill(i)}
-                  aria-label={`Remove ${s}`}
-                >
-                  <X className="size-3.5" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : null}
-        {errors.skills ? (
-          <p className="text-sm text-destructive">{errors.skills.message}</p>
-        ) : null}
+      <ResumeUploadField
+        initialFileName={resumeFileName}
+        uploaded={resumeUploaded}
+        onUploadedChange={setResumeUploaded}
+        disabled={isSubmitting}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="locationCity">City</Label>
+          <Input
+            id="locationCity"
+            placeholder="e.g. Mumbai"
+            autoComplete="address-level2"
+            maxLength={120}
+            {...register("locationCity")}
+            aria-invalid={!!errors.locationCity}
+          />
+          {errors.locationCity ? (
+            <p className="text-sm text-destructive">
+              {errors.locationCity.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="locationRegion">State / region</Label>
+          <Input
+            id="locationRegion"
+            placeholder="e.g. Maharashtra"
+            autoComplete="address-level1"
+            maxLength={120}
+            {...register("locationRegion")}
+            aria-invalid={!!errors.locationRegion}
+          />
+          {errors.locationRegion ? (
+            <p className="text-sm text-destructive">
+              {errors.locationRegion.message}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="linkedinUrl">LinkedIn URL (optional)</Label>
+        <Label htmlFor="countryCode">Country Code</Label>
         <Input
-          id="linkedinUrl"
-          type="url"
-          placeholder="https://www.linkedin.com/in/yourname"
-          {...register("linkedinUrl")}
-          aria-invalid={!!errors.linkedinUrl}
+          id="countryCode"
+          maxLength={2}
+          placeholder="IN"
+          autoComplete="country"
+          className="max-w-[8rem] uppercase"
+          {...register("countryCode")}
+          aria-invalid={!!errors.countryCode}
         />
-        {errors.linkedinUrl ? (
+        <p className="text-xs text-muted-foreground">
+          Two-letter country code: IN India, US United States.
+        </p>
+        {errors.countryCode ? (
           <p className="text-sm text-destructive">
-            {errors.linkedinUrl.message}
+            {errors.countryCode.message}
           </p>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <input type="hidden" {...register("countryCode")} />
+        <Label htmlFor="headline">Profile headline</Label>
+        <Input
+          id="headline"
+          maxLength={160}
+          placeholder="ex: Final-year CSE student building ML systems"
+          {...register("headline")}
+          aria-invalid={!!errors.headline}
+        />
+        <p className="text-xs text-muted-foreground">
+          One line. What you do, or what you are working toward.
+        </p>
+        {errors.headline ? (
+          <p className="text-sm text-destructive">{errors.headline.message}</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <input type="hidden" {...register("phoneCountryCode")} />
         <input type="hidden" {...register("phoneNumber")} />
         <PhoneVerifyField
           defaultCountryCode="+91"
@@ -525,21 +492,6 @@ export function RegistrationForm({
         {errors.phoneNumber ? (
           <p className="text-sm text-destructive">
             {errors.phoneNumber.message}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="githubUsername">GitHub username (optional)</Label>
-        <Input
-          id="githubUsername"
-          placeholder="yourname"
-          {...register("githubUsername")}
-          aria-invalid={!!errors.githubUsername}
-        />
-        {errors.githubUsername ? (
-          <p className="text-sm text-destructive">
-            {errors.githubUsername.message}
           </p>
         ) : null}
       </div>
@@ -594,7 +546,9 @@ export function RegistrationForm({
           HUB_BUTTON_CLASS,
           "inline-flex h-11 w-full items-center justify-center gap-2 sm:w-auto",
         )}
-        disabled={isSubmitting || !legalConsentAccepted(legalConsent)}
+        disabled={
+          isSubmitting || !resumeUploaded || !legalConsentAccepted(legalConsent)
+        }
       >
         {isSubmitting ? (
           <>
@@ -605,6 +559,11 @@ export function RegistrationForm({
           "Complete Registration"
         )}
       </Button>
+      {!resumeUploaded ? (
+        <p className="text-xs text-muted-foreground">
+          Upload your resume above to enable Complete Registration.
+        </p>
+      ) : null}
     </form>
   );
 }

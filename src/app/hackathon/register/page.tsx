@@ -8,6 +8,7 @@ import { RegistrationForm } from "@/components/hackathon/registration-form";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getLastRemovalForUser } from "@/features/hackathon/remove-participant";
+import { registrationRedirect } from "@/features/registration/registration-gate";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -21,6 +22,15 @@ export default async function HackathonRegisterPage() {
   if (!session?.user?.id || !session.user.email) {
     redirect("/login?from=/hackathon/register");
   }
+
+  // The hackathon CTAs point here, so this is the other door Google's callback
+  // can open. Candidate registration comes first; `next` sends them to the
+  // hackathon dashboard afterwards rather than back to this team form.
+  const needsRegistration = await registrationRedirect(
+    session.user.id,
+    "/hackathon/dashboard",
+  );
+  if (needsRegistration) redirect(needsRegistration);
 
   const existing = await getMyRegistration(session.user.id);
   if (existing) redirect("/hackathon/dashboard");

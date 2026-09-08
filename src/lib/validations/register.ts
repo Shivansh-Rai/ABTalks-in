@@ -33,17 +33,25 @@ export const registerSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+/**
+ * Registration collects the ONE fact the résumé cannot be trusted to give us —
+ * where the candidate studies or works — and nothing else about their history.
+ *
+ * Graduation year, LinkedIn, GitHub and skills used to be asked for here. They
+ * are all things the résumé parser fills in (`features/resume/merge/plan.ts`),
+ * additively and without overwriting anything the candidate later types, so
+ * asking twice bought a longer form and a worse answer.
+ */
 const studentFields = z.object({
   userType: z.literal("STUDENT"),
-  college: z.string().min(1, "College is required").max(200),
+  college: z.string().trim().min(1, "College is required").max(200),
   collegeId: z.union([z.literal(""), z.string().cuid()]).default(""),
-  graduationYear: z.number().int().min(2020).max(2035),
 });
 
 const professionalFields = z.object({
   userType: z.literal("PROFESSIONAL"),
-  organization: z.string().min(1, "Organization is required").max(200),
-  role: z.string().min(1, "Role is required").max(200),
+  organization: z.string().trim().min(1, "Company is required").max(200),
+  role: z.string().trim().min(1, "Role is required").max(200),
   yearsExperience: z
     .number({ error: "Years of experience is required" })
     .int()
@@ -53,16 +61,35 @@ const professionalFields = z.object({
 
 const registerPayloadBase = z
   .object({
-    fullName: z.string().min(1, "Name is required").max(200),
-    /** Dialing code, e.g. "+91". Drives whether OTP verification is required. */
-    countryCode: z.string().default(INDIA_DIALING_CODE),
-    /** National number (no country code). Required + valid when countryCode is +91. */
+    fullName: z.string().trim().min(1, "Name is required").max(200),
+    /**
+     * The basic-info block. Same fields, same limits and same storage as
+     * `basicInfoSchema` in `validations/candidate-profile.ts` — registration
+     * writes them once and the profile editor edits them afterwards. Required
+     * here where that schema allows null, because a candidate with no city and
+     * no headline is not findable on `/hire`.
+     */
+    headline: z.string().trim().min(1, "Headline is required").max(160),
+    locationCity: z.string().trim().min(1, "City is required").max(120),
+    locationRegion: z
+      .string()
+      .trim()
+      .min(1, "State / region is required")
+      .max(120),
+    /** ISO-3166-1 alpha-2, as stored on `CandidateProfile.countryCode` (char(2)). */
+    countryCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{2}$/, "Use a 2-letter country code"),
+    /**
+     * Dialing code, e.g. "+91". Drives whether OTP verification is required.
+     * Named apart from `countryCode` on purpose: one is "+91" and the other is
+     * "IN", and they were the same key until the basic-info fields moved here.
+     */
+    phoneCountryCode: z.string().default(INDIA_DIALING_CODE),
+    /** National number (no dialing code). Required + valid when +91. */
     phoneNumber: z.string().default(""),
-    skills: z.array(z.string().min(1).max(50)).max(10).default([]),
-    linkedinUrl: z.union([empty, z.string().url()]).default(""),
-    githubUsername: z
-      .union([empty, z.string().regex(/^[a-zA-Z0-9-]+$/).max(50)])
-      .default(""),
     referralCode: z
       .union([empty, z.string().length(6).regex(/^[A-Z0-9]{6}$/)])
       .default(""),
@@ -72,6 +99,10 @@ const registerPayloadBase = z
 /**
  * Server-side registration payload (students + professionals).
  * `completeRegistrationAction` builds this from `FormData` (including default `userType`).
+ *
+ * The résumé is NOT in here. It is uploaded by its own action before submit, so
+ * the mandatory-résumé check reads the stored row rather than a flag the client
+ * could simply omit — see `completeRegistrationAction`.
  */
 export const registerPayloadSchema = z
   .discriminatedUnion("userType", [
@@ -81,7 +112,7 @@ export const registerPayloadSchema = z
   .superRefine((val, ctx) => {
     // India (+91) numbers are mandatory and must be a valid 10-digit mobile.
     // OTP verification itself is enforced server-side in completeRegistration.
-    if (val.countryCode === INDIA_DIALING_CODE) {
+    if (val.phoneCountryCode === INDIA_DIALING_CODE) {
       if (!val.phoneNumber || val.phoneNumber.trim() === "") {
         ctx.addIssue({
           code: "custom",
