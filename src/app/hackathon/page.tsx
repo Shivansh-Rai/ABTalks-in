@@ -90,7 +90,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What will I win from ViCodathon 2.0?",
-    a: "Participants can compete for a prize pool up to ₹35,000, receive a certificate for every valid submission, and may get internship & hiring opportunities.",
+    a: "Participants can compete for a prize pool up to ₹30,000, receive a certificate for every valid submission, and may get internship & hiring opportunities.",
   },
   {
     q: "Can we use AI tools during the hackathon?",
@@ -156,7 +156,15 @@ export default async function HackathonPage() {
 
   return (
     <UnlockProvider registered={registered}>
-      <HackathonShell headerCta={headerCta} userName={name}>
+      <HackathonShell
+        headerCta={headerCta}
+        isAuthed={isAuthed}
+        user={{
+          name,
+          email: session?.user?.email ?? "",
+          image: session?.user?.image ?? null,
+        }}
+      >
         <a className="ab-skip" href="#hk-hero-title">
           Skip to main content
         </a>

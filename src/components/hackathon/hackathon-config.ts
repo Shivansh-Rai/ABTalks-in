@@ -24,7 +24,7 @@ export const HACKATHON = {
   rosterLockUtc: "2026-09-22T18:30:00Z", // Tue 22 Sep 11:59 PM IST (= 23 Sep 00:00 IST)
   rosterLockLabel: "Tuesday, 22 Sep · 11:59 PM IST",
 
-  whatsappLink: "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1",
+  whatsappLink: "https://chat.whatsapp.com/EOLFgfatwID1mZNtHj4WCv?s=cl&p=a&mlu=0&ilr=4",
   discordLink: "https://discord.gg/Zk8XRJ3J7",
   prizes: [] as { place: string; reward: string }[], // empty ⇒ "announced soon" state
 
