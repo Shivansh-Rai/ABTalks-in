@@ -1671,6 +1671,9 @@ button { font: inherit; color: inherit; }
 .hk-team__code {
   flex: 1;
   min-width: 0;
+  /* Six characters — without a cap this stretches the full card width on
+     desktop and reads as an empty input rather than a code. */
+  max-width: 320px;
   padding: 11px 14px;
   border: 1px dashed var(--ab-orange-light);
   border-radius: var(--ab-r-xs);
@@ -1773,6 +1776,7 @@ button { font: inherit; color: inherit; }
   .hk-reg__actions .ab-btn { width: 100%; }
   .hk-done__links .ab-btn { flex: 1 1 100%; }
   .hk-team__code-row { flex-direction: column; align-items: stretch; }
+  .hk-team__code { max-width: none; }
   .hk-team__copy { width: 100%; }
 }
 
