@@ -53,7 +53,7 @@ export function ExperienceSection({
   initial: ExperienceFormRow[];
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveExperienceAction, "Experience");
+  const { save } = useSectionSave(saveExperienceAction, "Experience", "experience");
   const { control, register, handleSubmit, watch, setValue, formState } =
     useForm<FormValues>({
       defaultValues: {

@@ -7,6 +7,8 @@ import {
   saveSkillsAction,
 } from "@/app/actions/candidate-profile-actions";
 import { PROFILE_QUICK_SKILLS, PROFICIENCY_LABELS } from "@/lib/candidate-vocab";
+import { ANALYTICS_EVENTS, skillCountBucket } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { SkillCombobox, type SkillOption } from "./skill-combobox";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
@@ -54,7 +56,8 @@ export function SkillsSection({
   catalog: SkillOption[];
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveSkillsAction, "Skills");
+  const { save } = useSectionSave(saveSkillsAction, "Skills", "skills");
+  const track = useTrack();
   const [rows, setRows] = useState<SkillRow[]>(initial);
   const [persistedIds, setPersistedIds] = useState(
     () => new Set(initial.map((r) => r.skillId)),
@@ -167,6 +170,12 @@ export function SkillsSection({
       id={formId}
       onSubmit={async (e) => {
         e.preventDefault();
+        // Read against the ids the server already has, before the save moves
+        // that line. A save that only re-rated or removed skills added nothing.
+        const submittedIds = rows.map((r) => r.skillId);
+        const addedCount = submittedIds.filter(
+          (id) => !persistedIds.has(id),
+        ).length;
         const ok = await save({
           claims: rows.map((r) => ({
             skillId: r.skillId,
@@ -174,7 +183,15 @@ export function SkillsSection({
           })),
         });
         if (ok) {
-          setPersistedIds(new Set(rows.map((r) => r.skillId)));
+          // One event per save that added something — not one per skill. The
+          // names never leave the browser; only the size of the list does, and
+          // only as a band.
+          if (addedCount > 0) {
+            track(ANALYTICS_EVENTS.siteSkillAdded, {
+              skill_count_bucket: skillCountBucket(submittedIds.length),
+            });
+          }
+          setPersistedIds(new Set(submittedIds));
           onSaved();
         }
       }}

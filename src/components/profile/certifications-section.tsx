@@ -42,7 +42,11 @@ export function CertificationsSection({
   initial: CertificationFormRow[];
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveCertificationsAction, "Certifications");
+  const { save } = useSectionSave(
+    saveCertificationsAction,
+    "Certifications",
+    "certifications",
+  );
   const { control, register, handleSubmit, formState } = useForm<FormValues>({
     defaultValues: {
       rows:

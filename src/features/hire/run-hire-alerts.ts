@@ -15,6 +15,20 @@ export type HireAlertsResult = {
 /**
  * For ACTIVE requests with alertWhenAvailable, re-run search and email recruiter
  * when at least one STRONG/PARTIAL match exists.
+ *
+ * Deliberately NOT instrumented for GA4 (T-253).
+ *
+ * This runs on a Vercel cron with no browser and no viewer. ABTalks sends GA4
+ * events one way only — `window.gtag`, loaded by the T-252 GA4Loader and gated
+ * on the recipient's own consent cookie (src/lib/analytics/use-track.ts). None
+ * of that exists here. Reaching GA from this function would mean adding the
+ * Measurement Protocol: a second transport, a second credential, and events
+ * sent about a recruiter with no consent signal of theirs to attach.
+ *
+ * A "job alert sent" count is available today from the return value below
+ * (`alerted`), which the cron route returns in its JSON response and logs on a
+ * partial failure. If it is ever needed in GA, the decision to add the
+ * Measurement Protocol is a plan of its own.
  */
 export async function runHireAlertsCron(): Promise<HireAlertsResult> {
   const failures: string[] = [];

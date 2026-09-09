@@ -8,6 +8,8 @@ import {
   registerRecruiterWithOtpAction,
   requestRecruiterOtpAction,
 } from "@/app/actions/recruiter-auth-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +24,7 @@ import { cn } from "@/lib/utils";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm() {
+  const track = useTrack();
   const [step, setStep] = useState<"form" | "code" | "done">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
@@ -71,6 +74,11 @@ export function RecruiterRegisterForm() {
         setCode("");
         return;
       }
+      // The recruiter profile row exists by the time this returns ok — the OTP
+      // was verified server-side first, so this is the completed signup and not
+      // the "send me a code" step. `method` is the only parameter: no name, no
+      // company, no email, no phone, and not the approval decision either.
+      track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
       setApproved(res.data.approved);
       setStep("done");
     });

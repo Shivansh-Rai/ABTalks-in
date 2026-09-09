@@ -35,7 +35,7 @@ export const emptyProjectRow: ProjectFormRow = {
 
 export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveProjectsAction, "Projects");
+  const { save } = useSectionSave(saveProjectsAction, "Projects", "projects");
   const { control, register, handleSubmit, formState } = useForm<FormValues>({
     defaultValues: {
       rows: initial.length > 0 ? initial : [{ ...emptyProjectRow }],
