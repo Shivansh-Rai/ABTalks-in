@@ -20,6 +20,10 @@ import {
   registerRecruiterSchema,
   requestRecruiterOtpSchema,
 } from "@/lib/validations/recruiter-auth";
+import {
+  WORK_EMAIL_REQUIRED_MESSAGE,
+  isPersonalEmailDomain,
+} from "@/lib/validations/work-email";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -68,6 +72,14 @@ export async function requestRecruiterOtpAction(
     };
   }
   const intent: OtpIntent = parsed.data.intent;
+
+  // Registering a personal mailbox is refused here rather than after the code
+  // is typed, so nobody spends a round trip on an address that can never become
+  // an account. Signing in is left alone: it needs an existing registration,
+  // and that registration already had to pass this rule.
+  if (intent === "register" && isPersonalEmailDomain(parsed.data.email)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
 
   try {
     void purgeExpiredOtps();
@@ -130,6 +142,13 @@ export async function registerRecruiterWithOtpAction(
   const { fullName, company, phone, email, code, newsletterOptIn } =
     parsed.data;
   const normalised = normaliseEmail(email);
+
+  // Checked again on the normalised address, at the boundary that actually
+  // creates the account. The schema above already refuses this, so reaching
+  // here means the schema was bypassed — which is exactly when it matters.
+  if (isPersonalEmailDomain(normalised)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
 
   try {
     const verified = await verifyRecruiterOtp(normalised, code);

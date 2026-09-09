@@ -5,11 +5,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/admin-auth";
+import {
+  WORK_EMAIL_REQUIRED_MESSAGE,
+  workEmailSchema,
+} from "@/lib/validations/work-email";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
 const addSeatSchema = z.object({
-  email: z.string().trim().email().max(200),
+  // A seat is a pre-verification, so it is the one place an admin could have
+  // waved a personal mailbox past T-225. Same rule as registration, deliberately.
+  email: workEmailSchema,
   company: z.string().trim().min(1).max(200),
   contactName: z.string().trim().max(200).optional(),
   notes: z.string().trim().max(1000).optional(),
@@ -27,7 +33,15 @@ export async function addRecruiterSeatAction(
 
   const parsed = addSeatSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Check the email and company." };
+    const domainIssue = parsed.error.issues.some(
+      (issue) => issue.message === WORK_EMAIL_REQUIRED_MESSAGE,
+    );
+    return {
+      ok: false,
+      message: domainIssue
+        ? WORK_EMAIL_REQUIRED_MESSAGE
+        : "Check the email and company.",
+    };
   }
   // Lowercased at write time, because the login lookup matches exactly.
   const email = parsed.data.email.toLowerCase();
