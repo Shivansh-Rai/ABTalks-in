@@ -1637,6 +1637,134 @@ button { font: inherit; color: inherit; }
 .hk-done__links { display: flex; flex-wrap: wrap; gap: 10px; }
 .hk-done__links .ab-btn { flex: 1 1 auto; }
 
+/* --- your team (landing) ------------------------------------------------ */
+.hk-team {
+  margin-inline: clamp(16px, 2.6cqw, 42px);
+  margin-top: clamp(18px, 2.4cqw, 34px);
+}
+.hk-team__sub {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ab-ink-2);
+}
+.hk-team__panel {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--ab-peach-line);
+  border-radius: var(--ab-r-md);
+  background: linear-gradient(180deg, #FEFAF7 0%, #FDEFEA 100%);
+}
+.hk-team__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ab-orange-deep);
+}
+.hk-team__code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.hk-team__code {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px dashed var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  font-family: var(--ab-font-ui);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-align: center;
+  color: var(--ab-navy);
+}
+.hk-team__copy {
+  flex: none;
+  height: 40px;
+  min-width: 0;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.hk-team__note {
+  margin-top: 9px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ab-muted);
+}
+.hk-team__list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hk-team__member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--ab-border);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface);
+}
+.hk-team__member--open {
+  border-style: dashed;
+  background: transparent;
+}
+.hk-team__avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.hk-team__avatar--open {
+  background: transparent;
+  border: 1px dashed var(--ab-border);
+  color: var(--ab-muted-2);
+}
+.hk-team__who { min-width: 0; }
+.hk-team__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ab-ink);
+  overflow-wrap: anywhere;
+}
+.hk-team__chip {
+  padding: 2px 8px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.hk-team__college {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+  /* College names are free text; a long unbroken token must not push the row
+     wider than the card on a 375px screen. */
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 520px) {
   .hk-dialog__head { padding: 18px 48px 15px 18px; }
   .hk-dialog__body { padding: 18px; }
@@ -1644,6 +1772,8 @@ button { font: inherit; color: inherit; }
   .hk-reg__actions { flex-direction: column-reverse; align-items: stretch; }
   .hk-reg__actions .ab-btn { width: 100%; }
   .hk-done__links .ab-btn { flex: 1 1 100%; }
+  .hk-team__code-row { flex-direction: column; align-items: stretch; }
+  .hk-team__copy { width: 100%; }
 }
 
 /* ==========================================================================
