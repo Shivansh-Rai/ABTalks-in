@@ -14,6 +14,8 @@ export default async function TalentPendingPage() {
 
   const state = await getRecruiterState(session.user.id);
   if (state.status === "none") redirect("/talent/register");
+  // Not yet under review — they are still waiting on themselves.
+  if (state.status === "setup_incomplete") redirect("/talent/setup");
   // /hire, not /talent: the pool browser was removed, so an approved
   // recruiter was being sent to a 404 — which reads exactly like this
   // page having been deleted. Scout is where they actually work.

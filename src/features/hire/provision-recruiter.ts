@@ -12,6 +12,16 @@ import type { Prisma } from "@prisma/client";
  * rows are already correct when authorization moves, instead of needing a
  * backfill for a population that is still small enough to get right for free.
  *
+ * **One organization per recruiter (T-226).** This used to slug the org on the
+ * company name so that colleagues landed in the same `Organization` and could
+ * share talent lists. That is no longer the product: every recruiter works
+ * alone, two recruiters on one email domain get separate workspaces, and
+ * multi-user company hiring is Phase 2 / Contact Sales. The slug now carries the
+ * recruiter's own id, so an `Organization` row means one workspace belonging to
+ * one person. The table stays because `TalentList.organizationId` is a required
+ * FK and Plan 078 Phase 7 is frozen for September — what changed is what a row
+ * means, not the shape of the model. Do not "fix" this back to a company slug.
+ *
  * `VerifiedRecruiterSeat` stays, narrowed to what 078 genuinely cannot express:
  * an invite for an email address that has **no `User` row yet**.
  * `OrganizationMember` already models invitations — it has `status: INVITED` and
@@ -31,11 +41,11 @@ export async function provisionRecruiterIdentity(
   },
 ): Promise<{ organizationId: string }> {
   const company = input.company.trim();
-  const slug = orgSlug(company);
+  const slug = recruiterWorkspaceSlug(input.userId, company);
 
-  // Find-or-create by slug. Two recruiters from the same company must land in
-  // the same Organization — that is the whole point of the model: it is what
-  // lets teammates share talent lists and jobs.
+  // Find-or-create by slug. The slug is per recruiter, so this only ever
+  // matches this recruiter's own workspace — re-provisioning is idempotent and
+  // no second person can be routed into it.
   const organization = await tx.organization.upsert({
     where: { slug },
     create: { slug, name: company },
@@ -89,13 +99,21 @@ export async function provisionRecruiterIdentity(
   return { organizationId: organization.id };
 }
 
-/** Stable, collision-tolerant slug. Same company name always resolves the same. */
-function orgSlug(company: string): string {
-  const base = company
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return base || "org";
+/**
+ * Stable slug for one recruiter's own workspace.
+ *
+ * Readable half from the company so the row is recognisable in the database,
+ * unique half from the recruiter's user id so two people at the same company
+ * can never collide into one workspace. Stable for a given user: re-running
+ * provisioning resolves the same row rather than creating a second one.
+ */
+export function recruiterWorkspaceSlug(userId: string, company: string): string {
+  const base =
+    company
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "org";
+  return `${base}-${userId.slice(-8).toLowerCase()}`;
 }
