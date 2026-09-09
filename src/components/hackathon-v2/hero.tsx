@@ -601,12 +601,6 @@ export function Hero(props: Props) {
           </div>
         </div>
       </div>
-
-      <button className="ab-chat" type="button" aria-label="Open chat support">
-        <svg viewBox="0 0 24 24" aria-hidden focusable="false">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      </button>
     </section>
   );
 }
