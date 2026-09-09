@@ -25,13 +25,27 @@ import {
 import { runScoutTurn } from "@/features/hire/scout-conversation";
 import { searchCandidates } from "@/features/hire/search-candidates";
 import { persistableSource } from "@/features/hire/track-loaders";
-import { explainMatches } from "@/features/hire/explain-matches";
+import {
+  explainMatches,
+  explainMatchesDeterministic,
+} from "@/features/hire/explain-matches";
+import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
 import { toPublicMatch } from "@/features/hire/to-public-match";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 
 type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
 type ActionResult<T> = ActionOk<T> | ActionErr;
+
+/**
+ * How deep the adoption re-run looks for the candidates a guest saw.
+ *
+ * The guest search itself used `limit: 20`. If the pool shifts between that
+ * search and sign-in, a candidate the recruiter saw can fall past 20 and be
+ * silently dropped, so adoption looks further. This narrows the window; it does
+ * not close it, and the shortfall is logged rather than hidden.
+ */
+const ADOPTION_SEARCH_LIMIT = 100;
 
 async function requireApprovedRecruiter(): Promise<
   ActionResult<{ userId: string }>
@@ -658,12 +672,121 @@ export async function recordSampleDemandAction(
 }
 
 /**
+ * Persist the candidates a guest actually saw onto a request they now own.
+ *
+ * Called AFTER the adoption transaction has committed, never inside it: this
+ * runs a full search, and slow work in an interactive transaction holds a
+ * connection open for the length of it.
+ *
+ * The refs arrive from the browser and are treated as a *hint about which
+ * candidates*, never as authority about them. `resolveEligibleCandidates`
+ * re-tests every one against its own pool's visibility and eligibility rules,
+ * and the scoring is recomputed here — so a forged, stale or edited ref buys
+ * nothing that an ordinary signed-in search would not already return.
+ *
+ * The search is re-run and then INTERSECTED with those refs rather than taken
+ * wholesale. A plain re-run is not the same promise: the guest saw A, B, C, and
+ * a fresh search minutes later may rank a D into the top 20. D was never their
+ * work, so it is not adopted.
+ */
+async function adoptGuestMatches(
+  requestId: string,
+  spec: JobSpec,
+  candidateRefs: string[],
+): Promise<{ adopted: number; skipped: number }> {
+  const entitled = await resolveEligibleCandidates(candidateRefs);
+  if (entitled.length === 0) return { adopted: 0, skipped: candidateRefs.length };
+  const entitledRefs = new Set(entitled.map((c) => c.candidateRef));
+
+  // Wider than the guest search's own limit of 20. The pool can shift between
+  // the guest search and sign-in, and a candidate who has slipped to 30th must
+  // still be found. It narrows the window rather than closing it — see the
+  // shortfall log below.
+  const search = await searchCandidates(spec, { limit: ADOPTION_SEARCH_LIMIT });
+  if (!search.ok) return { adopted: 0, skipped: candidateRefs.length };
+
+  const kept = search.data.matches.filter((m) => entitledRefs.has(m.candidateRef));
+
+  // Deterministic only. `explainMatches` calls a model to upgrade the prose;
+  // that is slow, costs money and returns different words each time. The
+  // deterministic pass is what it computes first anyway, and `gaps` come from
+  // the scorer rather than the model, so nothing of substance is lost.
+  const explained = explainMatchesDeterministic(kept, [], spec, {
+    totalEligible: search.data.totalEligible,
+    belowEvidenceFloor: search.data.belowEvidenceFloor,
+    coverageNote: search.data.coverage.note,
+    stage: search.data.stage,
+  });
+
+  const rows = explained.matches
+    .filter((m) => Boolean(persistableSource(m.source)))
+    .map((m) => {
+      const card = toPublicMatch(m, {
+        coverageNote: search.data.coverage.note,
+        highlightSkills: spec.mustHaveStack,
+      });
+      return {
+        requestId,
+        source: persistableSource(m.source)!,
+        candidateUserId: m.userId,
+        programMemberId: m.programMemberId,
+        score: m.score,
+        tier: m.tier as TalentMatchTier,
+        scoreBreakdown: m.scoreBreakdown as unknown as Prisma.InputJsonValue,
+        evidence: {
+          ...card.evidence,
+          locationLabel: card.locationLabel ?? null,
+          compensationBand: card.compensationBand ?? null,
+          compensationDeclared: card.compensationDeclared ?? false,
+        } as unknown as Prisma.InputJsonValue,
+        rationale: m.rationale,
+        gaps: m.gaps,
+        availabilityUnknown: m.availabilityUnknown,
+      };
+    });
+
+  if (rows.length > 0) {
+    // Upsert, not createMany: adoption can be retried, and a retry must not
+    // duplicate a candidate or reset the state T-044 preserves.
+    await prisma.$transaction(
+      rows.map(({ requestId: rid, candidateUserId, ...scoring }) =>
+        prisma.talentRequestMatch.upsert({
+          where: {
+            requestId_candidateUserId: { requestId: rid, candidateUserId },
+          },
+          create: { requestId: rid, candidateUserId, ...scoring },
+          update: scoring,
+        }),
+      ),
+    );
+  }
+
+  // Entitled, but the re-run did not reach them — the pool moved further than
+  // ADOPTION_SEARCH_LIMIT covers. Raising the limit shrinks this; it cannot
+  // eliminate it. Logged so the real rate is knowable rather than guessed at.
+  const missing = entitled.length - rows.length;
+  if (missing > 0) {
+    logger.error("[hire] guest matches entitled but not returned by the re-run", {
+      requestId,
+      entitled: entitled.length,
+      adopted: rows.length,
+      missing,
+      limit: ADOPTION_SEARCH_LIMIT,
+    });
+  }
+
+  return { adopted: rows.length, skipped: candidateRefs.length - rows.length };
+}
+
+/**
  * After sign-in, write the guest Scout transcript onto a TalentRequest so the
  * brief and chat are not trapped in the browser and lost on the next page.
  */
 export async function adoptGuestScoutSessionAction(
   input: unknown,
-): Promise<ActionResult<{ requestId: string }>> {
+): Promise<
+  ActionResult<{ requestId: string; adopted: number; skipped: number }>
+> {
   const gate = await requireApprovedRecruiter();
   if (!gate.ok) return gate;
   const parsed = adoptGuestScoutSessionSchema.safeParse(input);
@@ -671,7 +794,7 @@ export async function adoptGuestScoutSessionAction(
     return { ok: false, message: "Could not save that conversation." };
   }
 
-  const { spec, messages, searched } = parsed.data;
+  const { spec, messages, searched, candidateRefs = [] } = parsed.data;
   const userId = gate.data.userId;
   const last = messages[messages.length - 1]?.content ?? "";
 
@@ -692,19 +815,43 @@ export async function adoptGuestScoutSessionAction(
         },
       },
     });
+    // A retry lands here. The request and its messages already exist, so only
+    // the match step is repeated — which is exactly what makes recovery from a
+    // half-done adoption possible without duplicating anything.
     const already = recent.find((r) => r.messages[0]?.content === last);
     if (already) {
-      return { ok: true, data: { requestId: already.id } };
+      const retry =
+        searched && candidateRefs.length > 0
+          ? await adoptGuestMatches(already.id, spec, candidateRefs)
+          : { adopted: 0, skipped: 0 };
+      if (retry.adopted > 0) {
+        await prisma.talentRequest.update({
+          where: { id: already.id },
+          data: { status: TalentRequestStatus.MATCHED },
+          select: { id: true },
+        });
+        revalidatePath("/hire");
+        revalidatePath(`/hire/${already.id}`);
+      }
+      return { ok: true, data: { requestId: already.id, ...retry } };
     }
 
     const dbFields = specToDb(spec);
+
+    // Only the two fast writes live in the transaction. The match step runs
+    // after it commits: it performs a full search, and holding an interactive
+    // transaction open across that would pin a connection for its whole
+    // duration.
     const created = await prisma.$transaction(async (tx) => {
       const row = await tx.talentRequest.create({
         data: {
           recruiterUserId: userId,
-          status: searched
-            ? TalentRequestStatus.MATCHED
-            : TalentRequestStatus.DRAFT,
+          // Deliberately NOT `searched ? MATCHED : DRAFT`. Status followed the
+          // guest's intent, so a request whose matches were never written still
+          // claimed MATCHED — the "MATCHED with zero matches" state the
+          // investigation found in production. It is set from the outcome below
+          // instead, which makes that state unreachable.
+          status: TalentRequestStatus.DRAFT,
           ...dbFields,
           extra: dbFields.extra ?? Prisma.JsonNull,
         },
@@ -723,9 +870,30 @@ export async function adoptGuestScoutSessionAction(
       return row;
     });
 
+    const { adopted, skipped } =
+      searched && candidateRefs.length > 0
+        ? await adoptGuestMatches(created.id, spec, candidateRefs)
+        : { adopted: 0, skipped: 0 };
+
+    // ACTIVE, not MATCHED, when nothing survived: the requirement is real and
+    // belongs on the demand board, but claiming a match it does not have is the
+    // bug this replaces.
+    if (searched) {
+      await prisma.talentRequest.update({
+        where: { id: created.id },
+        data: {
+          status:
+            adopted > 0
+              ? TalentRequestStatus.MATCHED
+              : TalentRequestStatus.ACTIVE,
+        },
+        select: { id: true },
+      });
+    }
+
     revalidatePath("/hire");
     revalidatePath(`/hire/${created.id}`);
-    return { ok: true, data: { requestId: created.id } };
+    return { ok: true, data: { requestId: created.id, adopted, skipped } };
   } catch (error) {
     logger.error("[hire] adoptGuestScoutSessionAction", { error: String(error) });
     return { ok: false, message: "Could not save that conversation." };
