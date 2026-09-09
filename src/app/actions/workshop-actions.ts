@@ -7,6 +7,7 @@ import {
   fullDate,
   getRegistrableEvent,
 } from "@/components/workshop/events-data";
+import { getWorkshopEvents } from "@/features/workshop/get-events";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { sendWorkshopConfirmationEmail } from "@/lib/workshop-email";
@@ -71,7 +72,7 @@ export async function submitWorkshopRegistrationAction(
   // The argument is now an instant rather than an IST day key: registration
   // rolls to the next workshop the moment the current one ends, instead of at
   // IST midnight, and never falls to "closed" because a flag went unedited.
-  const event = getRegistrableEvent();
+  const event = getRegistrableEvent(await getWorkshopEvents());
   if (!event) {
     return { ok: false, message: CLOSED_MESSAGE };
   }

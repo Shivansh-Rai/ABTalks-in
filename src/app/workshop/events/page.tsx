@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import EventsTimeline from "@/components/workshop/EventsTimeline";
+import { getWorkshopEvents } from "@/features/workshop/get-events";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 import WorkshopThemeStyles from "@/components/workshop/WorkshopThemeStyles";
+
+/**
+ * Dynamic, not prerendered.
+ *
+ * This page lists workshops, and workshops are database rows now. Static
+ * prerendering would freeze the list at build time, so an admin editing a
+ * workshop would not see it here until the next deploy — which is exactly the
+ * split this work exists to remove.
+ */
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Upcoming Events | ABTalks Workshop",
@@ -10,7 +21,9 @@ export const metadata: Metadata = {
     "All upcoming ABTalks live workshops and events — UI/UX design, AI tools, agents, content, SaaS, data and careers.",
 };
 
-export default function WorkshopEventsPage() {
+export default async function WorkshopEventsPage() {
+  const allEvents = await getWorkshopEvents();
+
   return (
     <div
       className="wk-root relative min-h-screen"
@@ -61,7 +74,7 @@ export default function WorkshopEventsPage() {
           </div>
         </header>
 
-        <EventsTimeline />
+        <EventsTimeline allEvents={allEvents} />
 
         {/* bottom CTA */}
         <div className="mx-auto max-w-3xl px-4 pb-16 text-center">

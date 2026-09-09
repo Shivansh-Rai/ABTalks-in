@@ -1,6 +1,6 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
-import { EVENTS } from "@/components/workshop/events-data";
+import type { WorkshopEvent } from "@/components/workshop/events-data";
 import { IST, addCalendarDaysToKey } from "@/lib/date-utils";
 import type { AppNotification } from "./types";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
@@ -36,6 +36,11 @@ export type DeriveEventNotificationsInput = {
   isHackathonRegistered: boolean;
   /** `ProgramMember.cohortId`s this user already belongs to (any status). */
   joinedCohortIds: Set<string>;
+  /**
+   * Merged event list from `getWorkshopEvents()`. Passed in because workshop
+   * events are database rows now and this function stays synchronous.
+   */
+  events: WorkshopEvent[];
 };
 
 /** How many days before a workshop its notification starts showing. */
@@ -70,7 +75,7 @@ export function deriveEventNotifications(
   // Visible from 7 IST days before the event until the end of the event's own
   // IST day. Keys are `yyyy-MM-dd`, which sorts chronologically as plain
   // strings — the same comparison `isPastEvent` uses in events-data.ts.
-  for (const ev of EVENTS) {
+  for (const ev of input.events) {
     if (!ev.register || !ev.registrationOpen) continue;
     // Already signed up for this exact workshop → nothing to tell them.
     if (registeredWorkshopEventIds.has(ev.id)) continue;

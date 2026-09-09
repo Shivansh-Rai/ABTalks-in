@@ -6,8 +6,16 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholde
 export const workshopSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Workshop REGISTRATIONS moved to Neon/Prisma (see src/features/workshop/).
-// `workshop_config` deliberately stayed here — it is a single hand-edited row,
-// not user-generated data, so it gained nothing from the move.
+// `workshop_config` stays here, but it no longer states when a workshop is.
+//
+// Its webinarDate / webinarTime / webinarTargetUtc fields are NOT read by any
+// public surface any more. Workshop dates come from the `WorkshopEvent` table
+// via `getWorkshopEvents()`, because this row being a second, hand-edited
+// source is precisely what let the hero title advance to the next workshop
+// while the countdown stayed pointed at the one that had already finished.
+// Only `zoomLink` and `whatsappLink` are still consumed. The three date fields
+// are kept on the type because the row still has the columns and the
+// confirmation email's config object is spread from it.
 
 export interface WorkshopConfig {
   zoomLink: string;
