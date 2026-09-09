@@ -28,10 +28,8 @@
       "skills": [
         { "name": "Prompt Engineering", "category": "ai-ml" },
         { "name": "Claude", "category": "ai-ml" },
-        { "name": "AI-Assisted Development", "category": "ai-ml" },
         { "name": "Context Engineering", "category": "ai-ml" },
-        { "name": "Generative AI", "category": "ai-ml" },
-        { "name": "AI Agents", "category": "ai-ml" }
+        { "name": "Generative AI", "category": "ai-ml" }
       ]
     },
     {
@@ -53,9 +51,7 @@
       "skills": [
         { "name": "Python", "category": "programming" },
         { "name": "Pandas", "category": "data" },
-        { "name": "Exploratory Data Analysis", "category": "data" },
         { "name": "Machine Learning", "category": "ai-ml" },
-        { "name": "Feature Engineering", "category": "ai-ml" },
         { "name": "Model Evaluation", "category": "ai-ml" },
         { "name": "Data Visualization", "category": "data" }
       ]
@@ -67,11 +63,9 @@
       "skills": [
         { "name": "Python", "category": "programming" },
         { "name": "Retrieval-Augmented Generation (RAG)", "category": "ai-ml" },
-        { "name": "Embeddings", "category": "ai-ml" },
         { "name": "Vector Databases", "category": "data" },
         { "name": "Prompt Engineering", "category": "ai-ml" },
-        { "name": "AI Agents", "category": "ai-ml" },
-        { "name": "LLM Application Development", "category": "ai-ml" }
+        { "name": "AI Agents", "category": "ai-ml" }
       ]
     },
     {
@@ -81,7 +75,6 @@
       "skills": [
         { "name": "Python", "category": "programming" },
         { "name": "Retrieval-Augmented Generation (RAG)", "category": "ai-ml" },
-        { "name": "Embeddings", "category": "ai-ml" },
         { "name": "Vector Databases", "category": "data" },
         { "name": "Prompt Engineering", "category": "ai-ml" },
         { "name": "LangChain", "category": "ai-ml" },

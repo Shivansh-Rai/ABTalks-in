@@ -193,12 +193,12 @@ export function BasicInfoSection({
         <PwField
           label="Profile Headline"
           htmlFor="bi-headline"
-          helper="Describe yourself in one line."
+          helper=""
         >
           <PwInput
             id="bi-headline"
             maxLength={160}
-            placeholder="ex: Final-year CSE student building ML systems"
+            placeholder="Describe yourself in one line"
             {...register("headline")}
           />
         </PwField>

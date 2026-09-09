@@ -22,7 +22,6 @@ export function ProfileCard({
     <section className="pw-profile-card">
       <div className="pw-quick-head">
         <h2 className="pw-quick-title">Quick Links</h2>
-        <p className="pw-quick-sub">Jump to any section to edit it.</p>
       </div>
 
       <ul className="pw-checklist">
