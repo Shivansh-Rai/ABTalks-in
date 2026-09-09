@@ -165,8 +165,9 @@ async function main() {
       process.exit(1);
     }
 
-    const participant = await prisma.hackathonParticipant.findUnique({
+    const participant = await prisma.hackathonParticipant.findFirst({
       where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
       select: {
         fullName: true,
         team: { select: { teamName: true } },
@@ -222,8 +223,9 @@ async function main() {
       console.log(`  LOOKUP FAIL ${row.email}: no user`);
       continue;
     }
-    const participant = await prisma.hackathonParticipant.findUnique({
+    const participant = await prisma.hackathonParticipant.findFirst({
       where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
       select: { id: true },
     });
     if (!participant) {

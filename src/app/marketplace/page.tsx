@@ -23,7 +23,11 @@ export default async function MarketplacePage() {
     prisma.user.findUnique({
       where: { id: userId },
       select: {
-        hackathonParticipant: { select: { phone: true } },
+        hackathonParticipants: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { phone: true },
+        },
       },
     }),
   ]);
@@ -51,7 +55,7 @@ export default async function MarketplacePage() {
           balance={balance}
           defaultPhone={
             candidate?.phone ??
-            contact?.hackathonParticipant?.phone ??
+            contact?.hackathonParticipants[0]?.phone ??
             ""
           }
           defaultName={candidate?.fullName?.trim() || session.user.name || ""}

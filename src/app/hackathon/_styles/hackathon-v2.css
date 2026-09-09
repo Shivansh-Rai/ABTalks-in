@@ -14,6 +14,7 @@
    Section 5  Hackathon: timeline     (the one entrance animation)
    Section 6  Hackathon: FAQ
    Section 7  Hackathon: rules
+   Section 7.5 Register popup        (dialog + form, in this page's palette)
    Section 8  Responsive
    Section 9  Reduced motion / print
    ========================================================================== */
@@ -348,13 +349,6 @@ button { font: inherit; color: inherit; }
 }
 .ab-user__meta { min-width: 0; flex: 1; }
 .ab-user__name { font-size: 14px; font-weight: 600; line-height: normal; color: var(--ab-navy); }
-.ab-user__mail {
-  margin-top: 2px;
-  font-size: 12px; font-weight: 400; line-height: normal;
-  color: var(--ab-muted);
-  max-width: 156px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 
 .ab-signout {
   margin-top: 16px;
@@ -639,6 +633,16 @@ button { font: inherit; color: inherit; }
   width: min(100%, var(--hk-scene-w, 100%));
   aspect-ratio: 1611 / 393;
 }
+.hk-hero__lock-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(100%, var(--hk-scene-w, 100%));
+  aspect-ratio: 1611 / 393;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 3;
+}
 
 /* z-order: grid (-1) · circuit (1) · particles (2) · lock (3) · chat (5) */
 .hk-circuit {
@@ -683,12 +687,14 @@ button { font: inherit; color: inherit; }
   border: 0;
   background: none;
   cursor: pointer;
+  pointer-events: auto;
   z-index: 3;
   transition: transform .2s ease, filter .2s ease;
 }
 .hk-lock {
   width: 100%;
   height: auto;
+  overflow: visible;
   transform-origin: 50% 88%;          /* pivots on its base, like a real object */
   animation: hk-lock-jitter 2.6s ease-in-out infinite;
   will-change: transform;
@@ -705,6 +711,7 @@ button { font: inherit; color: inherit; }
 /* It has the viewer's attention already — stop nudging. */
 .hk-lock-btn:hover .hk-lock,
 .hk-lock-btn:focus-visible .hk-lock,
+.hk-lock-btn[data-state="unlocked"] .hk-lock,
 .hk-hero.is-msg-open .hk-lock { animation: none; }
 .hk-lock-btn:hover,
 .hk-lock-btn:focus-visible {
@@ -713,8 +720,26 @@ button { font: inherit; color: inherit; }
 }
 .hk-lock-btn:focus-visible { outline: 2px solid var(--ab-orange); outline-offset: 8px; border-radius: 10px; }
 
-.hk-lock__leds circle { fill: #6FD62A; }
-.hk-lock-btn[data-state="unlocked"] .hk-lock__leds circle { fill: var(--ab-orange); }
+/* Status LEDs. Orange while the page is locked, green once it opens — the
+   colours used to be the other way round, so an unlocked page still read as
+   shut. Green is the only "you're through" signal the lock has, so it also
+   gets a glow. */
+.hk-lock__leds circle { fill: var(--ab-orange); transition: fill .3s ease; }
+.hk-lock-btn[data-state="unlocked"] .hk-lock__leds circle { fill: #6FD62A; }
+.hk-lock-btn[data-state="unlocked"] .hk-lock__leds {
+  filter: drop-shadow(0 0 6px rgba(111, 214, 42, .75));
+}
+
+/* The shackle stays seated on its left leg and swings the right leg clear of
+   the body, which reads as a real open padlock instead of a floating U-shape. */
+.hk-lock__shackle {
+  transform-box: view-box;
+  transform-origin: 84px 175px;
+  transition: transform .55s cubic-bezier(.2, .85, .25, 1);
+}
+.hk-lock-btn[data-state="unlocked"] .hk-lock__shackle {
+  transform: rotate(-24deg);
+}
 
 /* --- the message the lock emits -------------------------------------------
    Deliberately loud: the brand's clay surface rather than a quiet white
@@ -857,6 +882,34 @@ button { font: inherit; color: inherit; }
   font-size: 12px;
   font-weight: 600;
   color: #FFE4DE;
+}
+
+/* The unlock code itself, handed to the registrant inside the message. This is
+   where they get it — it is deliberately not emailed. */
+.hk-lock-msg__code {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--ab-r-xs);
+  background: rgba(0, 0, 0, .22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+}
+.hk-lock-msg__code-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .78);
+}
+.hk-lock-msg__code-value {
+  margin-left: auto;
+  font-family: var(--ab-font-ui);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  color: #FFFFFF;
 }
 
 /* Placeholder shown below the hero while the page is still locked. */
@@ -1347,6 +1400,365 @@ button { font: inherit; color: inherit; }
 }
 
 /* ==========================================================================
+   7.5 · REGISTER POPUP
+   --------------------------------------------------------------------------
+   The popup used to inherit the app-wide shadcn theme, so an indigo, generic
+   form opened on top of an orange, clay-shaded page. Everything below dresses
+   the shared form primitives in this page's palette instead. It is scoped to
+   .hk-dialog, which only the hackathon dialog carries, so no other surface
+   moves — including the dropdown popups these controls portal to body, which
+   are matched by their own data-slot rules further down.
+   ========================================================================== */
+.hk-dialog {
+  width: 100%;
+  max-width: min(560px, calc(100% - 1.5rem));
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  gap: 0;
+  border-radius: var(--ab-r-lg);
+  background: var(--ab-surface);
+  color: var(--ab-ink);
+  font-family: var(--ab-font);
+  box-shadow:
+    0 32px 64px -18px rgba(88, 52, 40, .38),
+    0 12px 26px -12px rgba(88, 52, 40, .28);
+  --ring: var(--ab-orange);
+}
+/* The popup takes focus when it opens; it is a container, not a control, so
+   the global focus ring on it is just a stray orange box. Fields inside keep
+   theirs — that is what --ring above is for. */
+.hk-dialog:focus,
+.hk-dialog:focus-visible { outline: none; }
+
+.hk-dialog__head {
+  position: relative;
+  padding: 22px 52px 18px 24px;
+  border-bottom: 1px solid var(--ab-border-soft);
+  background: linear-gradient(180deg, #FFFDFC 0%, var(--ab-app-bg) 100%);
+}
+.hk-dialog__title {
+  font-family: var(--ab-font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  color: var(--ab-navy);
+}
+.hk-dialog__title em { font-style: normal; color: var(--ab-orange); }
+.hk-dialog__sub {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+.hk-dialog__body { padding: 22px 24px 24px; }
+
+/* The shared close button is a neutral ghost square; make it match the page. */
+.hk-dialog [data-slot="dialog-close"] {
+  top: 14px;
+  right: 14px;
+  color: var(--ab-muted);
+  border-radius: var(--ab-r-xs);
+}
+.hk-dialog [data-slot="dialog-close"]:hover {
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+}
+
+/* --- progress --------------------------------------------------------- */
+.hk-reg { display: flex; flex-direction: column; gap: 20px; }
+
+.hk-reg__meter { display: flex; flex-direction: column; gap: 8px; }
+.hk-reg__meter-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ab-muted);
+}
+.hk-reg__meter-row b {
+  font-weight: 700;
+  color: var(--ab-orange-deep);
+  font-variant-numeric: tabular-nums;
+}
+.hk-reg__track {
+  height: 5px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-peach-line);
+  overflow: hidden;
+}
+.hk-reg__fill {
+  height: 100%;
+  border-radius: var(--ab-r-pill);
+  background: linear-gradient(90deg, var(--ab-orange) 0%, #F5814F 100%);
+  transition: width .35s var(--ab-ease-ui);
+}
+
+/* --- step heading ----------------------------------------------------- */
+.hk-reg__legend {
+  font-family: var(--ab-font-heading);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ab-navy);
+}
+.hk-reg__hint {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+
+/* --- entry-type cards -------------------------------------------------- */
+.hk-reg__choices { display: grid; gap: 10px; margin-top: 12px; }
+.hk-reg__choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 1px solid var(--ab-border-hair);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface);
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease,
+              box-shadow .18s ease, transform .14s ease;
+}
+.hk-reg__choice:hover { border-color: var(--ab-orange-light); background: #FFFCFB; }
+.hk-reg__choice.is-selected {
+  border-color: var(--ab-orange);
+  background: var(--ab-orange-soft);
+  box-shadow: 0 1px 2px rgba(229, 86, 54, .10), 0 8px 20px -12px rgba(229, 86, 54, .45);
+}
+.hk-reg__choice-title {
+  font-family: var(--ab-font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ab-navy);
+}
+.hk-reg__choice-body {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+
+/* --- fields ------------------------------------------------------------ */
+.hk-reg__fields { display: grid; gap: 16px; }
+/* A button in the field grid (the team-code check) sizes to its label rather
+   than stretching across the column like an input. */
+.hk-reg__fields > .ab-btn { justify-self: start; }
+.hk-reg label { font-weight: 600; }
+.hk-reg [data-slot="form-label"] {
+  font-family: var(--ab-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--ab-ink-2);
+}
+.hk-reg [data-slot="form-message"] { color: var(--ab-orange-deep); font-size: 12.5px; }
+
+/* Inputs and the select trigger, including the college autocomplete, which
+   ships its own utility classes — matched on the element, not the class. */
+.hk-dialog input[type="text"],
+.hk-dialog input[type="tel"],
+.hk-dialog input:not([type]),
+.hk-dialog [data-slot="select-trigger"] {
+  height: 42px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--ab-border);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  color: var(--ab-ink);
+  font-family: var(--ab-font);
+  font-size: 14.5px;
+  box-shadow: none;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.hk-dialog input::placeholder { color: var(--ab-muted-2); }
+.hk-dialog input:focus,
+.hk-dialog input:focus-visible,
+.hk-dialog [data-slot="select-trigger"]:focus-visible,
+.hk-dialog [data-slot="select-trigger"][data-popup-open] {
+  border-color: var(--ab-orange);
+  box-shadow: 0 0 0 3px rgba(229, 86, 54, .16);
+  outline: none;
+}
+.hk-dialog input[aria-invalid="true"] {
+  border-color: var(--ab-orange-deep);
+  box-shadow: 0 0 0 3px rgba(214, 74, 44, .14);
+}
+.hk-reg__code-input {
+  font-family: var(--ab-font-ui) !important;
+  font-weight: 800 !important;
+  letter-spacing: .28em !important;
+  text-transform: uppercase;
+}
+
+/* Checkbox + radio. Unchecked, the shared primitives pick up a dark tinted
+   fill here, which reads as a filled-in control on this light surface. */
+.hk-dialog [data-slot="checkbox"],
+.hk-dialog [data-slot="radio-group-item"] {
+  background: var(--ab-surface);
+  border-color: var(--ab-muted-2);
+}
+/* Checked, they paint themselves --primary (indigo). */
+.hk-dialog [data-slot="checkbox"][data-checked],
+.hk-dialog [data-slot="radio-group-item"][data-checked] {
+  border-color: var(--ab-orange);
+  background: var(--ab-orange);
+  color: #FFFFFF;
+}
+.hk-dialog [data-slot="radio-group-item"] { margin-top: 2px; }
+.hk-dialog [data-slot="checkbox"]:focus-visible,
+.hk-dialog [data-slot="radio-group-item"]:focus-visible {
+  border-color: var(--ab-orange);
+  box-shadow: 0 0 0 3px rgba(229, 86, 54, .22);
+}
+
+/* --- legal block -------------------------------------------------------- */
+.hk-reg__legal {
+  border: 1px solid var(--ab-border-soft);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface-2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-ink-2);
+}
+.hk-reg__legal a { color: var(--ab-orange-deep); font-weight: 600; }
+
+/* --- team lookup feedback ---------------------------------------------- */
+.hk-reg__lookup {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ab-muted);
+}
+.hk-reg__lookup.is-ok { color: #1F7A3D; }
+.hk-reg__lookup.is-bad { color: var(--ab-orange-deep); }
+
+.hk-reg__error {
+  padding: 10px 12px;
+  border: 1px solid var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-orange-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: #A8341A;
+}
+
+/* --- footer actions ----------------------------------------------------- */
+.hk-reg__actions {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+.hk-reg__actions .ab-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--ab-clay-rest);
+}
+.hk-reg__spinner {
+  width: 15px; height: 15px;
+  animation: hk-reg-spin .9s linear infinite;
+}
+@keyframes hk-reg-spin { to { transform: rotate(360deg); } }
+
+.hk-btn--outline {
+  background: var(--ab-surface);
+  color: var(--ab-ink-2);
+  box-shadow: inset 0 0 0 1px var(--ab-border);
+}
+.hk-btn--outline:hover { background: #FAF8F6; color: var(--ab-ink); }
+.hk-btn--outline:active { transform: translateY(1px); }
+
+/* --- success ------------------------------------------------------------ */
+.hk-done { display: flex; flex-direction: column; gap: 18px; }
+.hk-done__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.hk-done__title {
+  font-family: var(--ab-font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ab-navy);
+}
+.hk-done__text { font-size: 14px; line-height: 1.6; color: var(--ab-ink-2); }
+.hk-done__panel {
+  padding: 16px;
+  border: 1px solid var(--ab-peach-line);
+  border-radius: var(--ab-r-md);
+  background: linear-gradient(180deg, #FEFAF7 0%, #FDEFEA 100%);
+}
+.hk-done__panel + .hk-done__panel { margin-top: 12px; }
+.hk-done__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ab-orange-deep);
+}
+.hk-done__code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.hk-done__code {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px dashed var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  font-family: var(--ab-font-ui);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-align: center;
+  color: var(--ab-navy);
+}
+.hk-done__copy {
+  flex: none;
+  height: 40px;
+  min-width: 0;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.hk-done__note { margin-top: 9px; font-size: 12.5px; line-height: 1.55; color: var(--ab-muted); }
+.hk-done__links { display: flex; flex-wrap: wrap; gap: 10px; }
+.hk-done__links .ab-btn { flex: 1 1 auto; }
+
+@media (max-width: 520px) {
+  .hk-dialog__head { padding: 18px 48px 15px 18px; }
+  .hk-dialog__body { padding: 18px; }
+  .hk-dialog__title { font-size: 18px; }
+  .hk-reg__actions { flex-direction: column-reverse; align-items: stretch; }
+  .hk-reg__actions .ab-btn { width: 100%; }
+  .hk-done__links .ab-btn { flex: 1 1 100%; }
+}
+
+/* ==========================================================================
    8 · RESPONSIVE
    ========================================================================== */
 
@@ -1355,27 +1767,6 @@ button { font: inherit; color: inherit; }
 @container content (max-width: 720px) {
   .hk-hero { min-height: 0; }        /* let the hero flow on small screens */
   .hk-hero__scene { width: 200%; margin-left: -50%; }
-  /* The scene is twice the viewport and centred, so only 25%–75% of it is
-     on screen: the message is placed inside that window and drops below
-     the lock, with its tail pointing back up at it. */
-  .hk-lock-msg {
-    left: 29%; right: auto;
-    top: 64%; bottom: auto;
-    width: 42%;
-    padding: 10px 12px;
-    font-size: 12px;
-    transform-origin: 50% 0;
-    transform: translate3d(0, -4px, 0) scale(.97);
-  }
-  .hk-lock-msg::before,
-  .hk-lock-msg::after {
-    left: 50%; top: -9px;
-    border: 9px solid transparent;
-    border-top: 0;
-    border-bottom-color: rgba(185, 63, 23, .45);
-    transform: translateX(-50%);
-  }
-  .hk-lock-msg::after { top: -8px; border-bottom-color: var(--msg-face); }
 }
 
 @container content (max-width: 1023px) {
@@ -1504,6 +1895,75 @@ button { font: inherit; color: inherit; }
 @media (max-width: 640px) {
   .hk-how__grid { grid-template-columns: minmax(0, 1fr); }
   .hiw { min-height: 0; }
+
+  /* On a phone, the circuit is decoration only. The lock has its own flow
+     stage, so it remains centred even while the background is intentionally
+     cropped and the message can expand below it without covering the lock. */
+  .hk-hero__stage {
+    flex: none;
+    min-height: 260px;
+    margin-top: 18px;
+    overflow: visible;
+  }
+  .hk-hero__scene {
+    position: absolute;
+    inset: 0 auto auto 50%;
+    width: 200%;
+    height: 100%;
+    margin-left: 0;
+    aspect-ratio: auto;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hk-hero__lock-stage {
+    position: relative;
+    left: auto;
+    top: auto;
+    display: flex;
+    width: 100%;
+    min-height: 260px;
+    aspect-ratio: auto;
+    align-items: center;
+    justify-content: center;
+    transform: none;
+  }
+  .hk-lock-btn {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: min(62vw, 220px);
+  }
+  .hk-lock-msg {
+    position: relative;
+    left: auto;
+    top: auto;
+    display: none;
+    width: min(calc(100% - 32px), 340px);
+    margin: 12px auto 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    transform: none;
+    transform-origin: 50% 0;
+  }
+  .hk-lock-msg::before,
+  .hk-lock-msg::after {
+    left: 50%;
+    top: -9px;
+    border: 9px solid transparent;
+    border-top: 0;
+    border-bottom-color: rgba(185, 63, 23, .45);
+    transform: translateX(-50%);
+  }
+  .hk-lock-msg::after { top: -8px; border-bottom-color: var(--msg-face); }
+  .hk-hero.is-msg-open .hk-hero__lock-stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .hk-hero.is-msg-open .hk-lock-msg {
+    display: flex;
+    transform: none;
+  }
 
   .hk-count { gap: 3px; }
   .hk-cta {

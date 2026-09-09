@@ -13,6 +13,7 @@ import {
   Presentation,
   Store,
   User,
+  Zap,
 } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const ICON_MAP: Record<
   store: Store,
   briefcase: Briefcase,
   award: Award,
+  zap: Zap,
   user: User,
 };
 

@@ -1,4 +1,5 @@
 import { Domain, EnrollmentStatus, Prisma } from "@prisma/client";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type StudentTrack = "ALL" | "CHALLENGE" | "HACKATHON";
@@ -122,8 +123,10 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
       : Promise.resolve([]),
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
-          where: q
-            ? {
+          where: {
+            eventId: HACKATHON.eventId,
+            ...(q
+              ? {
                 OR: [
                   { fullName: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
@@ -137,7 +140,8 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
                   },
                 ],
               }
-            : undefined,
+              : {}),
+          },
           orderBy: { createdAt: "desc" },
           take: 100,
           select: {
@@ -323,8 +327,10 @@ export async function getStudentTrackCounts(input?: {
     prisma.enrollment.count({ where: challengeWhere }),
     hackathonAllowed
       ? prisma.hackathonParticipant.count({
-          where: q
-            ? {
+          where: {
+            eventId: HACKATHON.eventId,
+            ...(q
+              ? {
                 OR: [
                   { fullName: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
@@ -338,7 +344,8 @@ export async function getStudentTrackCounts(input?: {
                   },
                 ],
               }
-            : undefined,
+              : {}),
+          },
         })
       : Promise.resolve(0),
   ]);

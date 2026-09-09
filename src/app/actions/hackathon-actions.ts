@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { HACKATHON, isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
+import { getParticipantIdentity } from "@/features/hackathon/registration-identity";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
 import {
   getTeamByCode,
@@ -18,6 +19,7 @@ import {
   sendSoloWelcomeEmail,
 } from "@/lib/hackathon-email";
 import { logger } from "@/lib/logger";
+import { requiredPhoneSchema } from "@/lib/validations/phone";
 import {
   hackathonRegistrationSchema,
   sourceSlugSchema,
@@ -144,7 +146,32 @@ export async function submitHackathonRegistrationAction(
       message: parsed.error.issues[0]?.message ?? "Invalid input",
     };
   }
-  const d = { ...parsed.data, email };
+  const d = parsed.data;
+
+  // Identity comes from the account, never from the payload — the popup stopped
+  // asking for it, and taking it from the client would let a crafted request
+  // register someone under another name or number.
+  const identity = await getParticipantIdentity(userId, session.user.name ?? "");
+  const fullName = identity.fullName;
+  if (fullName.length < 2) {
+    return {
+      ok: false as const,
+      message: "Add your name to your profile, then register again.",
+    };
+  }
+
+  // The profile's number wins; `d.phone` is only filled in when the popup had
+  // to ask because there was none on file.
+  const phoneParsed = requiredPhoneSchema.safeParse(identity.phone || d.phone);
+  if (!phoneParsed.success) {
+    return {
+      ok: false as const,
+      message:
+        phoneParsed.error.issues[0]?.message ??
+        "Add a WhatsApp number to your profile, then register again.",
+    };
+  }
+  const phone = phoneParsed.data;
 
   const sourceSlug = await readSourceSlug();
 
@@ -174,6 +201,7 @@ export async function submitHackathonRegistrationAction(
         const team = await prisma.$transaction(async (tx) => {
           const created = await tx.hackathonTeam.create({
             data: {
+              eventId: HACKATHON.eventId,
               entryType: entryTypeDb,
               teamName,
               teamCode: candidate,
@@ -182,13 +210,14 @@ export async function submitHackathonRegistrationAction(
           });
           await tx.hackathonParticipant.create({
             data: {
+              eventId: HACKATHON.eventId,
               teamId: created.id,
               userId,
               slotIndex: 1,
               isLeader: true,
-              fullName: d.fullName,
-              email: d.email,
-              phone: d.phone,
+              fullName,
+              email,
+              phone,
               college: d.college,
               graduationYear: d.graduationYear,
               sourceSlug,
@@ -232,11 +261,11 @@ export async function submitHackathonRegistrationAction(
 
     try {
       if (d.entryType === "SOLO") {
-        await sendSoloWelcomeEmail(d.fullName, d.email);
+        await sendSoloWelcomeEmail(fullName, email);
       } else {
         await sendLeaderWelcomeEmail(
-          d.fullName,
-          d.email,
+          fullName,
+          email,
           teamName ?? "your team",
           teamCode,
         );
@@ -249,12 +278,12 @@ export async function submitHackathonRegistrationAction(
 
     await recordLegalConsents({
       userId,
-      email: d.email,
+      email,
       source: "hackathon",
     });
     await recordNewsletterOptIn({
       userId,
-      email: d.email,
+      email,
       source: "hackathon",
       optIn: d.newsletterOptIn === true,
     });
@@ -294,7 +323,7 @@ export async function submitHackathonRegistrationAction(
     try {
       return await prisma.$transaction(async (tx) => {
         const taken = await tx.hackathonParticipant.findMany({
-          where: { teamId },
+          where: { eventId: HACKATHON.eventId, teamId },
           select: { slotIndex: true },
         });
         const used = new Set(taken.map((r) => r.slotIndex));
@@ -311,20 +340,21 @@ export async function submitHackathonRegistrationAction(
         // share-link attribution, so a remove/re-add cycle can't re-attribute the
         // signup to a different link. Fresh joiners use the current visit cookie.
         const priorRemoval = await tx.hackathonRemoval.findFirst({
-          where: { userId, teamId },
+          where: { eventId: HACKATHON.eventId, userId, teamId },
           orderBy: { createdAt: "desc" },
           select: { sourceSlug: true },
         });
 
         await tx.hackathonParticipant.create({
           data: {
+            eventId: HACKATHON.eventId,
             teamId,
             userId,
             slotIndex,
             isLeader: false,
-            fullName: d.fullName,
-            email: d.email,
-            phone: d.phone,
+            fullName,
+            email,
+            phone,
             college: d.college,
             graduationYear: d.graduationYear,
             sourceSlug: priorRemoval ? priorRemoval.sourceSlug : sourceSlug,
@@ -375,19 +405,19 @@ export async function submitHackathonRegistrationAction(
   await sendTeamJoinEmails({
     teamId: team.id,
     teamName: team.teamName,
-    memberName: d.fullName,
-    memberEmail: d.email,
+    memberName: fullName,
+    memberEmail: email,
     teamCode: d.teamCode,
   });
   (await cookies()).delete(SRC_COOKIE_NAME);
   await recordLegalConsents({
     userId,
-    email: d.email,
+    email,
     source: "hackathon",
   });
   await recordNewsletterOptIn({
     userId,
-    email: d.email,
+    email,
     source: "hackathon",
     optIn: d.newsletterOptIn === true,
   });

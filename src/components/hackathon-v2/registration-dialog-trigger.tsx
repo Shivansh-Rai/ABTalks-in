@@ -12,16 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { RegistrationForm } from "@/components/hackathon/registration-form";
+import type { RegistrationPrefill } from "@/features/hackathon/registration-identity";
 
 type Props = {
   registered: boolean;
   registrationOpen: boolean;
   isAuthed: boolean;
-  initialEmail: string | null;
-  initialName: string;
+  /** What the popup still has to ask. Null when nobody is signed in. */
+  prefill: RegistrationPrefill | null;
   className?: string;
   labelWhenRegister?: ReactNode;
-  labelWhenRegistered?: ReactNode;
   labelWhenClosed?: ReactNode;
 };
 
@@ -29,11 +29,9 @@ export function RegistrationDialogTrigger({
   registered,
   registrationOpen,
   isAuthed,
-  initialEmail,
-  initialName,
+  prefill,
   className = "ab-btn ab-btn--primary",
   labelWhenRegister = "Register",
-  labelWhenRegistered = "Open dashboard →",
   labelWhenClosed = "Registration closed",
 }: Props) {
   const router = useRouter();
@@ -43,12 +41,10 @@ export function RegistrationDialogTrigger({
     router.refresh();
   }
 
-  if (registered) {
-    return (
-      <Link href="/hackathon/dashboard" className={className}>
-        {labelWhenRegistered}
-      </Link>
-    );
+  // Keep the success panel mounted while the dialog is open. Once it closes,
+  // the registration CTA disappears because the dashboard is not ready yet.
+  if (registered && !open) {
+    return null;
   }
 
   if (!registrationOpen) {
@@ -59,7 +55,7 @@ export function RegistrationDialogTrigger({
     );
   }
 
-  if (!isAuthed || !initialEmail) {
+  if (!isAuthed || !prefill) {
     return (
       <Link href="/login?from=/hackathon" className={className}>
         {labelWhenRegister}
@@ -73,22 +69,18 @@ export function RegistrationDialogTrigger({
         {labelWhenRegister}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[92vh] w-full max-w-[calc(100%-1.25rem)] overflow-y-auto border-border bg-background p-0 text-foreground sm:max-w-lg">
-          <DialogHeader className="border-b border-border px-5 pt-5 pb-4 sm:px-6">
-            <DialogTitle className="font-display text-lg font-semibold text-foreground sm:text-xl">
-              Register — {HACKATHON.name}
+        <DialogContent className="hk-dialog">
+          <DialogHeader className="hk-dialog__head">
+            <DialogTitle className="hk-dialog__title">
+              Register — <em>{HACKATHON.name}</em>
             </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
+            <DialogDescription className="hk-dialog__sub">
               Solo, create a team of up to {HACKATHON.maxTeamSize}, or join an
               existing team with a code.
             </DialogDescription>
           </DialogHeader>
-          <div className="px-5 py-5 sm:px-6 sm:py-6">
-            <RegistrationForm
-              initialEmail={initialEmail}
-              initialName={initialName}
-              onSuccess={handleSuccess}
-            />
+          <div className="hk-dialog__body">
+            <RegistrationForm prefill={prefill} onSuccess={handleSuccess} />
           </div>
         </DialogContent>
       </Dialog>

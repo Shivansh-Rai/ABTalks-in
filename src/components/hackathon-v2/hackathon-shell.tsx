@@ -16,7 +16,6 @@ const NAV_ITEMS = [
 type Props = {
   headerCta: ReactNode;
   userName: string;
-  userEmail: string | null;
   children: ReactNode;
   onSignOut?: () => void;
 };
@@ -83,7 +82,6 @@ function Icon({ name }: { name: string }) {
 export function HackathonShell({
   headerCta,
   userName,
-  userEmail,
   children,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -115,7 +113,7 @@ export function HackathonShell({
   }, []);
 
   return (
-    <div className="ab-shell">
+    <div className="theme-abtalks-light theme-abtalks-orange ab-shell">
       <aside
         className={`ab-sidebar${sidebarOpen ? " is-open" : ""}`}
         id="ab-sidebar"
@@ -165,9 +163,6 @@ export function HackathonShell({
             <span className="ab-user__avatar" aria-hidden />
             <span className="ab-user__meta">
               <span className="ab-user__name">{userName || "Guest"}</span>
-              <span className="ab-user__mail">
-                {userEmail ?? "Sign in for personalised details"}
-              </span>
             </span>
           </div>
         </div>

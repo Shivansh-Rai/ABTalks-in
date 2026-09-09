@@ -13,6 +13,10 @@ import { LockedSections } from "@/components/hackathon-v2/locked-sections";
 import { RegistrationDialogTrigger } from "@/components/hackathon-v2/registration-dialog-trigger";
 import { UnlockProvider } from "@/components/hackathon-v2/unlock-provider";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
+import {
+  getRegistrationPrefill,
+  type RegistrationPrefill,
+} from "@/features/hackathon/registration-identity";
 import "./_styles/hackathon-v2.css";
 
 export const metadata: Metadata = {
@@ -123,12 +127,19 @@ const RULES = [
 
 export default async function HackathonPage() {
   const session = await auth();
-  const email = session?.user?.email ?? null;
   const name = session?.user?.name ?? "";
-  const isAuthed = Boolean(session?.user?.id);
-  const registered = session?.user?.id
-    ? (await getMyRegistration(session.user.id)) !== null
+  const userId = session?.user?.id ?? null;
+  const isAuthed = Boolean(userId);
+  const registered = userId
+    ? (await getMyRegistration(userId)) !== null
     : false;
+  // Everything the popup no longer asks for comes from here. Computed for any
+  // signed-in visitor, registered or not: the refresh that follows a successful
+  // registration re-runs this while the dialog is still open on its success
+  // panel, and returning null there would unmount the panel mid-read.
+  const prefill: RegistrationPrefill | null = userId
+    ? await getRegistrationPrefill(userId)
+    : null;
   const registrationOpen = isHackathonRegistrationOpen();
 
   const headerCta = (
@@ -136,18 +147,16 @@ export default async function HackathonPage() {
       registered={registered}
       registrationOpen={registrationOpen}
       isAuthed={isAuthed}
-      initialEmail={email}
-      initialName={name}
+      prefill={prefill}
       className="ab-btn ab-btn--primary ab-header__cta"
       labelWhenRegister="Register"
-      labelWhenRegistered="Dashboard"
       labelWhenClosed="Closed"
     />
   );
 
   return (
     <UnlockProvider registered={registered}>
-      <HackathonShell headerCta={headerCta} userName={name} userEmail={email}>
+      <HackathonShell headerCta={headerCta} userName={name}>
         <a className="ab-skip" href="#hk-hero-title">
           Skip to main content
         </a>
@@ -155,8 +164,7 @@ export default async function HackathonPage() {
         <Hero
           registrationOpen={registrationOpen}
           isAuthed={isAuthed}
-          initialEmail={email}
-          initialName={name}
+          prefill={prefill}
         />
 
         <LockedSections>

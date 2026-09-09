@@ -9,4 +9,5 @@
  * have the code but aren't signed-in on this browser yet.
  */
 export const HACKATHON_UNLOCK_CODE = "VC20";
-export const HACKATHON_UNLOCK_STORAGE_KEY = "abtalks:hackathon:unlocked";
+export const HACKATHON_UNLOCK_STORAGE_KEY =
+  "abtalks:hackathon:vicodathon-2-2026:unlocked";

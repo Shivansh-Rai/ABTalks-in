@@ -1,3 +1,4 @@
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type HackathonSubmissionFeedRow = {
@@ -45,7 +46,10 @@ export async function getHackathonSubmissionsFeed(input?: {
       : undefined;
 
   const rows = await prisma.hackathonSubmission.findMany({
-    where: problemId ? { problemId } : {},
+    where: {
+      team: { eventId: HACKATHON.eventId },
+      ...(problemId ? { problemId } : {}),
+    },
     orderBy: { updatedAt: "desc" },
     take: input?.take ?? 500,
     select: {
@@ -62,6 +66,7 @@ export async function getHackathonSubmissionsFeed(input?: {
           teamName: true,
           entryType: true,
           participants: {
+            where: { eventId: HACKATHON.eventId },
             orderBy: { slotIndex: "asc" },
             select: {
               userId: true,

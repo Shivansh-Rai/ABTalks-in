@@ -47,6 +47,7 @@ export type AdminHackathonData = {
 export async function getAdminData(): Promise<AdminHackathonData> {
   const [teams, event, recentRemovals] = await Promise.all([
     prisma.hackathonTeam.findMany({
+      where: { eventId: HACKATHON.eventId },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -55,6 +56,7 @@ export async function getAdminData(): Promise<AdminHackathonData> {
         entryType: true,
         createdAt: true,
         participants: {
+          where: { eventId: HACKATHON.eventId },
           orderBy: { slotIndex: "asc" },
           select: {
             id: true,
@@ -75,6 +77,7 @@ export async function getAdminData(): Promise<AdminHackathonData> {
       select: { problemStatement: true },
     }),
     prisma.hackathonRemoval.findMany({
+      where: { eventId: HACKATHON.eventId },
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {

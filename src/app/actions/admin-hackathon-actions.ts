@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { removeParticipant } from "@/features/hackathon/remove-participant";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
@@ -73,8 +74,8 @@ export async function adminRemoveHackathonTeamMemberAction(
     };
   }
 
-  const participant = await prisma.hackathonParticipant.findUnique({
-    where: { id: parsed.data.participantId },
+  const participant = await prisma.hackathonParticipant.findFirst({
+    where: { id: parsed.data.participantId, eventId: HACKATHON.eventId },
     select: { teamId: true },
   });
   if (!participant) {

@@ -5,7 +5,8 @@ import { useUnlock } from "@/components/hackathon-v2/unlock-provider";
 
 /**
  * Wraps every landing section below the hero. Children render only after
- * the visitor has unlocked the page (registered, or entered the code).
+ * the visitor has unlocked the page — registering does that on its own, and
+ * the code is the way back in from a signed-out browser or another device.
  * A quiet placeholder tells them what to do while it's still locked.
  */
 export function LockedSections({ children }: { children: ReactNode }) {
@@ -21,8 +22,9 @@ export function LockedSections({ children }: { children: ReactNode }) {
           Details locked
         </p>
         <p className="hk-locked-placeholder__text">
-          Register and enter your <b>VC20</b> code on the padlock above to
-          reveal how it works, the timeline, the rules and the Discord.
+          Register above and this opens straight away — how it works, the
+          timeline, the rules and the Discord. Already have your{" "}
+          <b>unlock code</b>? Type it on the padlock.
         </p>
       </section>
     );

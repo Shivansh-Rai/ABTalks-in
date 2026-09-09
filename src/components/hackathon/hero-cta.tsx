@@ -34,7 +34,6 @@ export function HeroCta({
   registrationOpen,
   isAuthed,
   initialEmail,
-  initialName,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -102,11 +101,10 @@ export function HeroCta({
               </DialogDescription>
             </DialogHeader>
             <div className="px-5 py-5 sm:px-6 sm:py-6">
-              <RegistrationForm
-                initialEmail={initialEmail}
-                initialName={initialName}
-                onSuccess={handleSuccess}
-              />
+              {/* The form reads name/email/phone from the account itself now,
+                  and falls back to asking for everything when no prefill is
+                  passed — which is all this legacy v1 surface can offer. */}
+              <RegistrationForm onSuccess={handleSuccess} />
             </div>
           </DialogContent>
         </Dialog>

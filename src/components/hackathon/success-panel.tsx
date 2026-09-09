@@ -3,11 +3,8 @@
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import Link from "next/link";
-import { Check, Copy } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
-import { cn } from "@/lib/utils";
+import { HACKATHON_UNLOCK_CODE } from "@/lib/hackathon-unlock";
 
 type Props = {
   entryType: "SOLO" | "TEAM_CREATE" | "TEAM_JOIN";
@@ -16,7 +13,7 @@ type Props = {
 };
 
 export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"team" | "unlock" | null>(null);
 
   useEffect(() => {
     void confetti({
@@ -26,106 +23,114 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
     });
   }, []);
 
-  async function copyCode() {
+  async function copy(value: string, which: "team" | "unlock") {
     try {
-      await navigator.clipboard.writeText(teamCode);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(value);
+      setCopied(which);
+      window.setTimeout(() => setCopied(null), 2000);
     } catch {
-      setCopied(false);
+      setCopied(null);
     }
   }
 
+  const title =
+    entryType === "TEAM_CREATE"
+      ? `Team created${teamName ? `, ${teamName}` : ""}`
+      : entryType === "TEAM_JOIN"
+        ? `You're in${teamName ? `, ${teamName}` : ""}.`
+        : "You're registered.";
+
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <div className="hk-done">
+      <div>
+        <span className="hk-done__badge">
+          <svg
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          Registered
+        </span>
+        <h2 className="hk-done__title mt-3">{title}</h2>
+        <p className="hk-done__text mt-2">
+          The page is unlocked — the timeline, the rules and the Discord invite
+          are waiting for you below.
+        </p>
+      </div>
+
+      {/* The unlock code lives here, not in an email. It only matters if you
+          open the page signed out or on another device. */}
+      <div className="hk-done__panel">
+        <span className="hk-done__label">Your unlock code</span>
+        <div className="hk-done__code-row">
+          <code className="hk-done__code">{HACKATHON_UNLOCK_CODE}</code>
+          <button
+            type="button"
+            className="ab-btn hk-btn--outline hk-done__copy"
+            onClick={() => copy(HACKATHON_UNLOCK_CODE, "unlock")}
+          >
+            {copied === "unlock" ? "Copied!" : "Copy"}
+          </button>
+        </div>
+        <p className="hk-done__note">
+          Type it on the padlock if you ever open this page signed out or on
+          another device. It&rsquo;s also shown on the padlock message any time
+          you&rsquo;re signed in.
+        </p>
+      </div>
+
       {entryType === "TEAM_CREATE" ? (
-        <div className="space-y-4">
-          <h2 className="font-display text-xl font-bold text-foreground">
-            Team created
-            {teamName ? `, ${teamName}` : ""}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Share this code with your teammates, they each open the Register
-            popup on{" "}
-            <span className="font-medium text-foreground">
-              abtalks.in/hackathon
-            </span>{" "}
-            and enter it.
-          </p>
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <code className="flex-1 rounded-lg border border-border bg-muted/50 px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.2em] text-foreground">
-              {teamCode}
-            </code>
-            <Button type="button" variant="outline" onClick={copyCode} className="gap-2">
-              {copied ? (
-                <>
-                  <Check className="size-4" aria-hidden />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="size-4" aria-hidden />
-                  Copy code
-                </>
-              )}
-            </Button>
+        <div className="hk-done__panel">
+          <span className="hk-done__label">Your team code</span>
+          <div className="hk-done__code-row">
+            <code className="hk-done__code">{teamCode}</code>
+            <button
+              type="button"
+              className="ab-btn hk-btn--outline hk-done__copy"
+              onClick={() => copy(teamCode, "team")}
+            >
+              {copied === "team" ? "Copied!" : "Copy"}
+            </button>
           </div>
+          <p className="hk-done__note">
+            Share this with your teammates. They open the Register popup on
+            abtalks.in/hackathon and enter it to join you.
+          </p>
         </div>
       ) : null}
 
-      {entryType === "TEAM_JOIN" ? (
-        <h2 className="font-display text-xl font-bold text-foreground">
-          You&apos;re in{teamName ? `, ${teamName}` : ""}.
-        </h2>
-      ) : null}
-
-      {entryType === "SOLO" ? (
-        <h2 className="font-display text-xl font-bold text-foreground">
-          You&apos;re registered.
-        </h2>
-      ) : null}
-
-      <div className="mt-8 space-y-3">
-        <h3 className="font-display text-base font-semibold text-foreground">
-          What happens next
-        </h3>
-        <p className="text-sm text-muted-foreground">
+      <div>
+        <p className="hk-done__label">What happens next</p>
+        <p className="hk-done__text mt-2">
           Kickoff is {HACKATHON.kickoffLabel}. The problem statement drops at
           kickoff on Discord — every participant is required to join.
         </p>
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className="hk-done__links">
         <Link
           href={HACKATHON.discordLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            buttonVariants({ size: "lg" }),
-            "w-full shrink-0 sm:w-auto",
-          )}
+          className="ab-btn ab-btn--primary"
         >
           Join the Discord →
-        </Link>
-        <Link
-          href="/hackathon/dashboard"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "w-full shrink-0 sm:w-auto",
-          )}
-        >
-          Go to your dashboard →
         </Link>
         <Link
           href={HACKATHON.whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "w-full shrink-0 sm:w-auto",
-          )}
+          className="ab-btn hk-btn--outline"
         >
-          Join the WhatsApp group
+          WhatsApp group
         </Link>
       </div>
     </div>

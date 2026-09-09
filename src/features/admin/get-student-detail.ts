@@ -1,4 +1,5 @@
 import type { StudentProfile, UserType } from "@prisma/client";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { getBalance } from "@/repositories/points";
 import { getCandidateProfile } from "@/repositories/candidate";
@@ -115,7 +116,9 @@ export async function getStudentDetail(
           challenge: { select: { totalDays: true } },
         },
       },
-      hackathonParticipant: {
+      hackathonParticipants: {
+        where: { eventId: HACKATHON.eventId },
+        take: 1,
         select: {
           fullName: true,
           email: true,
@@ -143,11 +146,11 @@ export async function getStudentDetail(
   const candidate = await getCandidateProfile(user.id);
 
   if (!user.studentProfile) {
-    if (!user.hackathonParticipant) {
+    const participant = user.hackathonParticipants[0];
+    if (!participant) {
       return null;
     }
 
-    const participant = user.hackathonParticipant;
     const entryType = participant.team.entryType === "SOLO" ? "SOLO" : "TEAM";
 
     return {

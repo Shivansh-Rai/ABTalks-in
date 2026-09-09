@@ -1,9 +1,12 @@
 import "server-only";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export async function isUserRegistered(userId: string): Promise<boolean> {
   const row = await prisma.hackathonParticipant.findUnique({
-    where: { userId },
+    where: {
+      eventId_userId: { eventId: HACKATHON.eventId, userId },
+    },
     select: { id: true },
   });
   return row !== null;

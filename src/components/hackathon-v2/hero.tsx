@@ -7,12 +7,13 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { CountdownV2 } from "@/components/hackathon-v2/countdown-v2";
 import { RegistrationDialogTrigger } from "@/components/hackathon-v2/registration-dialog-trigger";
 import { useUnlock } from "@/components/hackathon-v2/unlock-provider";
+import type { RegistrationPrefill } from "@/features/hackathon/registration-identity";
+import { HACKATHON_UNLOCK_CODE } from "@/lib/hackathon-unlock";
 
 type Props = {
   registrationOpen: boolean;
   isAuthed: boolean;
-  initialEmail: string | null;
-  initialName: string;
+  prefill: RegistrationPrefill | null;
 };
 
 const CELLS = [
@@ -42,7 +43,7 @@ const SPARK_PATHS = [
 ];
 
 export function Hero(props: Props) {
-  const { registrationOpen, isAuthed, initialEmail, initialName } = props;
+  const { registrationOpen, isAuthed, prefill } = props;
   const { unlocked, registered, tryCode } = useUnlock();
 
   const heroRef = useRef<HTMLElement | null>(null);
@@ -57,7 +58,7 @@ export function Hero(props: Props) {
     e.preventDefault();
     const ok = tryCode(codeInput);
     if (!ok) {
-      setCodeError("That code isn't quite right — check your inbox.");
+      setCodeError("That code isn't quite right. Register to get yours.");
       return;
     }
     setCodeError(null);
@@ -92,7 +93,7 @@ export function Hero(props: Props) {
       ro.disconnect();
       window.removeEventListener("resize", syncFade);
     };
-  }, []);
+  }, [msgOpen]);
 
   // Escape closes the lock message.
   useEffect(() => {
@@ -106,7 +107,24 @@ export function Hero(props: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [msgOpen]);
 
-  const openMsg = () => setMsgOpen(true);
+  const hasFinePointer = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  function revealMessage(focusCode = false) {
+    setMsgOpen(true);
+    if (focusCode && !unlocked) {
+      window.setTimeout(() => codeInputRef.current?.focus(), 0);
+    }
+  }
+
+  function toggleMessageOnPhone() {
+    const willOpen = !msgOpen;
+    setMsgOpen(willOpen);
+    if (willOpen && !unlocked) {
+      window.setTimeout(() => codeInputRef.current?.focus(), 0);
+    }
+  }
 
   return (
     <section
@@ -179,11 +197,9 @@ export function Hero(props: Props) {
             registered={registered}
             registrationOpen={registrationOpen}
             isAuthed={isAuthed}
-            initialEmail={initialEmail}
-            initialName={initialName}
+            prefill={prefill}
             className="ab-btn ab-btn--primary hk-cta__primary"
             labelWhenRegister="Register"
-            labelWhenRegistered="Open dashboard →"
             labelWhenClosed="Registration closed"
           />
           <Link
@@ -249,7 +265,9 @@ export function Hero(props: Props) {
               ))}
             </g>
           </svg>
+        </div>
 
+        <div className="hk-hero__lock-stage">
           <button
             className="hk-lock-btn"
             type="button"
@@ -262,15 +280,21 @@ export function Hero(props: Props) {
                 : "The hackathon details are locked. Show why."
             }
             ref={lockBtnRef}
-            onPointerEnter={openMsg}
-            onFocus={openMsg}
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse" && hasFinePointer()) {
+                revealMessage();
+              }
+            }}
+            onFocus={() => {
+              if (hasFinePointer()) revealMessage();
+            }}
             onClick={(e) => {
               e.preventDefault();
-              openMsg();
-              // If the code input is showing, focus it so the user can type.
-              window.setTimeout(() => {
-                codeInputRef.current?.focus();
-              }, 0);
+              if (hasFinePointer()) {
+                revealMessage(true);
+                return;
+              }
+              toggleMessageOnPhone();
             }}
           >
             <svg
@@ -409,7 +433,7 @@ export function Hero(props: Props) {
                 filter="url(#hkBlurLg)"
               />
 
-              <g>
+              <g className="hk-lock__shackle">
                 <path
                   d="M84 192V109a86 86 0 0 1 172 0v83"
                   fill="none"
@@ -498,29 +522,40 @@ export function Hero(props: Props) {
             </span>
             <div className="hk-lock-msg__body">
               {unlocked ? (
-                <p className="hk-lock-msg__text">
+                <>
+                  <p className="hk-lock-msg__text">
+                    {registered ? (
+                      <>
+                        You&rsquo;re registered and everything below is open.
+                      </>
+                    ) : (
+                      <>
+                        Unlocked. Register any time to keep your spot on the
+                        roster.
+                      </>
+                    )}
+                  </p>
+                  {/* Registering is what hands over the code — it is never
+                      emailed. Shown here so a registrant can still get in from
+                      a signed-out browser or a second device. */}
                   {registered ? (
-                    <>
-                      You&rsquo;re registered and unlocked. The full details
-                      are below and your{" "}
-                      <Link href="/hackathon/dashboard">
-                        <strong>dashboard is open</strong>
-                      </Link>
-                      .
-                    </>
-                  ) : (
-                    <>
-                      Unlocked. Register any time to keep your spot on the
-                      roster.
-                    </>
-                  )}
-                </p>
+                    <p className="hk-lock-msg__code">
+                      <span className="hk-lock-msg__code-label">
+                        Your unlock code
+                      </span>
+                      <span className="hk-lock-msg__code-value">
+                        {HACKATHON_UNLOCK_CODE}
+                      </span>
+                    </p>
+                  ) : null}
+                </>
               ) : (
                 <>
                   <p className="hk-lock-msg__text">
-                    You&rsquo;ll get a <b>4-character secret code</b> in your
-                    email after registering. Enter it here to unlock how it
-                    works, the timeline, the rules and the Discord.
+                    <b>Register to unlock</b>{" "}
+                    how it works, the timeline, the rules and the Discord —
+                    your code appears right here the moment you&rsquo;re in.
+                    Already have it? Type it below.
                   </p>
                   <form
                     className="hk-code-form"

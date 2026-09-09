@@ -1,14 +1,9 @@
 import "server-only";
-import { BrevoClient } from "@getbrevo/brevo";
-import { HACKATHON_UNLOCK_CODE } from "@/lib/hackathon-unlock";
+import { sendEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
-const brevoApiKey = process.env.BREVO_API_KEY!;
-const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
-const fromName = process.env.FROM_NAME || "ABTalks";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
 const logoUrl = `${appUrl}/abtalks-logo.png`;
-
-const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
 
 const WHATSAPP_LINK =
   "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1";
@@ -95,39 +90,54 @@ function whatsappLine(): string {
 }
 
 /**
- * Unlock code block — matches the padlock UX on /hackathon. The user types
- * this code on the landing to reveal the full details (timeline, rules,
- * Discord). It is a fixed non-secret token; treat it as "did you read the
- * email?" confirmation, not access control.
+ * Plain-text alternative. These messages used to go out as HTML only, which
+ * mailbox providers score as more spam-like — a plausible reason a registrant
+ * finds nothing in their inbox even when Brevo reports the send as accepted.
  */
-function unlockCodeBlock(): string {
-  const url = `${appUrl}/hackathon`;
-  return `
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:20px 0;">
-    <tr><td style="padding:22px 24px;">
-      <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Your unlock code</p>
-      <p style="margin:0 0 8px;font-size:15px;line-height:1.7;color:${C.text};">
-        Type this on the padlock at
-        <a href="${url}" style="color:${C.accent};text-decoration:none;">${url.replace(/^https?:\/\//, "")}</a>
-        to reveal the timeline, rules and Discord invite:
-      </p>
-      <p style="margin:6px 0 0;font-family:monospace;font-size:28px;font-weight:800;letter-spacing:8px;color:${C.text};">${HACKATHON_UNLOCK_CODE}</p>
-    </td></tr>
-  </table>`;
+function toPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&rsquo;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
+/**
+ * All hackathon mail goes through the shared Brevo transport rather than a
+ * second client built here. That one logs a missing `BREVO_API_KEY`, skips
+ * seed addresses, sets a Reply-To and returns a result instead of throwing —
+ * so a send that does not happen says so in the logs, which is exactly what
+ * this path was missing when registrants reported no welcome email.
+ */
 async function send(
   toEmail: string,
   toName: string,
   subject: string,
   html: string,
 ): Promise<void> {
-  await brevoClient.transactionalEmails.sendTransacEmail({
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email: toEmail, name: toName }],
+  const result = await sendEmail({
+    to: toEmail,
     subject,
-    htmlContent: html,
+    html,
+    text: toPlainText(html),
   });
+  if (!result.ok) {
+    logger.error("[hackathon-email] not delivered", {
+      subject,
+      to: toEmail,
+      name: toName,
+      skipped: result.skipped === true,
+    });
+  }
 }
 
 // 1. Solo participant welcome
@@ -140,7 +150,6 @@ export async function sendSoloWelcomeEmail(
     <p style="margin:0 0 12px;">You're officially registered for the 48-Hour AI Hackathon!</p>
     <p style="margin:0 0 12px;">Get ready for 48 hours of building, learning, and pushing your creativity with AI.</p>
     ${eventDetailsBlock()}
-    ${unlockCodeBlock()}
     ${sectionTitle("You're Participating Solo!")}
     <p style="margin:0 0 12px;">You've registered as a solo participant, so you'll begin the hackathon independently. But don't worry, you'll still have access to mentors, technical support, resources, and a community of builders throughout the event.</p>
     ${sectionTitle("Before the Hackathon")}
@@ -182,7 +191,6 @@ export async function sendLeaderWelcomeEmail(
     </table>
     <p style="margin:0 0 12px;">Share this Team Code with your teammates. Once they register and enter the code from their dashboard, they'll automatically be added to your team.</p>
     ${eventDetailsBlock()}
-    ${unlockCodeBlock()}
     ${sectionTitle("As the Team Leader")}
     <p style="margin:0 0 6px;">Here's what you should do before the hackathon begins:</p>
     <ul style="margin:0 0 12px;padding-left:20px;">
@@ -225,7 +233,6 @@ export async function sendMemberWelcomeEmail(
     </table>
     <p style="margin:0 0 12px;">Your Team Lead will coordinate with the team before and throughout the hackathon, so be sure to stay connected and communicate regularly.</p>
     ${eventDetailsBlock()}
-    ${unlockCodeBlock()}
     ${sectionTitle("Before the Hackathon")}
     <p style="margin:0 0 6px;">Please complete these quick steps:</p>
     <ul style="margin:0 0 12px;padding-left:20px;">
