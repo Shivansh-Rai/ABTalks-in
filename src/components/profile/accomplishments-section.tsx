@@ -137,7 +137,7 @@ export function AccomplishmentsSection({
       {/* ---- B. Certifications — the candidate's own external certs ---- */}
       <h3 className="pw-sub-title pw-sub-spaced">Certifications</h3>
       <p className="pw-sub-text pw-sub-spaced">
-            Add details of your certification. You can add up to 10 in your profile.
+            Add details of your certification. 
           </p>
     
 
@@ -153,14 +153,14 @@ export function AccomplishmentsSection({
               <PwField label="Name" required htmlFor={`crt-name-${index}`}>
                 <PwInput
                   id={`crt-name-${index}`}
-                  placeholder="e.g. UX Design"
+                  placeholder="Enter your certification name"
                   {...register(`rows.${index}.name`, { required: true })}
                 />
               </PwField>
               <PwField label="Issuer" required htmlFor={`crt-issuer-${index}`}>
                 <PwInput
                   id={`crt-issuer-${index}`}
-                  placeholder="e.g. Google"
+                  placeholder="Enter your certification issuer"
                   {...register(`rows.${index}.issuer`, { required: true })}
                 />
               </PwField>

@@ -108,7 +108,7 @@ export function ExperienceSection({
                 >
                   <PwInput
                     id={`exp-company-${index}`}
-                    placeholder="e.g. ABTalks"
+                    placeholder="Enter your company name"
                     autoComplete="off"
                     {...register(`rows.${index}.companyName`, {
                       required: true,
@@ -118,7 +118,7 @@ export function ExperienceSection({
                 <PwField label="Role" required htmlFor={`exp-title-${index}`}>
                   <PwSuggest
                     id={`exp-title-${index}`}
-                    placeholder="e.g. UI/UX Designer"
+                    placeholder="Enter your role"
                     suggestions={COMMON_ROLES}
                     {...register(`rows.${index}.title`, { required: true })}
                   />
@@ -148,7 +148,7 @@ export function ExperienceSection({
                 <PwField label="Location" htmlFor={`exp-loc-${index}`}>
                   <PwInput
                     id={`exp-loc-${index}`}
-                    placeholder="e.g. Gurugram"
+                    placeholder="Enter your city"
                     {...register(`rows.${index}.locationCity`)}
                   />
                 </PwField>
@@ -236,7 +236,7 @@ export function ExperienceSection({
                   <PwTextarea
                     id={`exp-desc-${index}`}
                     maxLength={4000}
-                    placeholder="What you owned, what you shipped, and the impact it had."
+                    placeholder="Describe your role and responsibilities"
                     {...register(`rows.${index}.description`)}
                   />
                 </PwField>

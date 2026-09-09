@@ -112,7 +112,7 @@ export function BasicInfoSection({
           />
         </PwField>
         <PwField
-          label="Phone"
+          label="Phone Number"
           required={otpRequired}
           htmlFor="bi-phone"
           verified={phoneVerified}
@@ -161,15 +161,15 @@ export function BasicInfoSection({
         <PwField label="City" htmlFor="bi-city">
           <PwInput
             id="bi-city"
-            placeholder="e.g. Mumbai"
+            placeholder="Enter your city"
             autoComplete="address-level2"
             {...register("locationCity")}
           />
         </PwField>
-        <PwField label="State / region" htmlFor="bi-region">
+        <PwField label="State / Region" htmlFor="bi-region">
           <PwInput
             id="bi-region"
-            placeholder="e.g. Maharashtra"
+            placeholder="Enter your state "
             autoComplete="address-level1"
             {...register("locationRegion")}
           />
@@ -178,22 +178,22 @@ export function BasicInfoSection({
 
       <PwRow cols={2}>
         <PwField
-          label="Country code"
+          label="Country Code"
           htmlFor="bi-country"
           
         >
           <PwInput
             id="bi-country"
             maxLength={2}
-            placeholder="IN"
+            placeholder="Enter your country code(e.g. IN)"
             className="uppercase"
             {...register("countryCode")}
           />
         </PwField>
         <PwField
-          label="Headline"
+          label="Profile Headline"
           htmlFor="bi-headline"
-          helper="One line. What you do, or what you are working toward."
+          helper="Describe yourself in one line."
         >
           <PwInput
             id="bi-headline"

@@ -123,7 +123,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                           f.onChange(name);
                           setValue(`rows.${index}.collegeId`, collegeId ?? "");
                         }}
-                        placeholder="e.g. Banasthali Vidyapith"
+                        placeholder="Enter your school or college name"
                       />
                     )}
                   />
@@ -145,7 +145,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                 >
                   <PwSuggest
                     id={`edu-field-${index}`}
-                    placeholder="e.g. Computer Science and Engineering"
+                    placeholder="Enter your field of study"
                     suggestions={FIELDS_OF_STUDY}
                     {...register(`rows.${index}.fieldOfStudy`)}
                   />
@@ -259,7 +259,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                   <PwTextarea
                     id={`edu-desc-${index}`}
                     maxLength={4000}
-                    placeholder="Coursework, thesis, societies, or anything else worth knowing."
+                    placeholder="Describe your coursework, thesis, societies, or anything else worth knowing."
                     {...register(`rows.${index}.description`)}
                   />
                 </PwField>

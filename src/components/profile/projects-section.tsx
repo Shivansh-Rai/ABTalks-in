@@ -81,7 +81,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
               >
                 <PwInput
                   id={`prj-title-${index}`}
-                  placeholder="e.g. Campus Ride Sharing App"
+                  placeholder="Enter your project name"
                   {...register(`rows.${index}.title`, { required: true })}
                 />
               </PwField>
@@ -112,7 +112,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                       id={`prj-tech-${index}`}
                       values={f.value}
                       onChange={f.onChange}
-                      placeholder="ex: Next.js, Postgres"
+                      placeholder="Enter your tech stack"
                       helper="Descriptive only — this does not add to your skills."
                     />
                   )}
@@ -126,7 +126,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   id={`prj-repo-${index}`}
                   type="url"
                   inputMode="url"
-                  placeholder="https://github.com/..."
+                  placeholder="Enter your GitHub repository URL"
                   {...register(`rows.${index}.repoUrl`)}
                 />
               </PwField>
@@ -135,7 +135,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   id={`prj-live-${index}`}
                   type="url"
                   inputMode="url"
-                  placeholder="https://www.example.com/"
+                  placeholder="Enter your live URL"
                   {...register(`rows.${index}.liveUrl`)}
                 />
               </PwField>
