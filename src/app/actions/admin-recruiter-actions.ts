@@ -118,6 +118,9 @@ export async function approveRecruiterAction(
       process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "https://abtalks.in";
     await sendEmail({
       to: email,
+      kind: "recruiter.approved",
+      subjectType: "recruiterProfile",
+      subjectId: profile.id,
       subject: "Your ABTalks recruiter access is approved",
       html: `<p>Hi ${profile.fullName},</p><p>Your recruiter application has been approved. Sign in at <a href="${appUrl}/talent/login">${appUrl}/talent/login</a> and open <a href="${appUrl}/hire">${appUrl}/hire</a>.</p><p>— ABTalks</p>`,
       text: `Hi ${profile.fullName},\n\nYour recruiter application has been approved. Sign in at ${appUrl}/talent/login and open ${appUrl}/hire.\n\n— ABTalks`,
@@ -166,6 +169,9 @@ export async function rejectRecruiterAction(
 
   await sendEmail({
     to: profile.user.email,
+    kind: "recruiter.rejected",
+    subjectType: "recruiterProfile",
+    subjectId: profile.id,
     subject: "Update on your ABTalks recruiter application",
     html: `<p>Hi ${profile.fullName},</p><p>Thank you for your interest in recruiting through ABTalks. We are unable to approve your application at this time. You are welcome to re-apply later with an updated profile.</p><p>— ABTalks</p>`,
     text: `Hi ${profile.fullName},\n\nThank you for your interest. We are unable to approve your recruiter application at this time.\n\n— ABTalks`,

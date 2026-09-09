@@ -9,7 +9,8 @@ import {
 } from "@/components/workshop/events-data";
 import { getWorkshopEvents } from "@/features/workshop/get-events";
 import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { logger, safeErrorMessage } from "@/lib/logger";
+import { hashRecipient } from "@/lib/observability/notification-delivery";
 import { sendWorkshopConfirmationEmail } from "@/lib/workshop-email";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 import { recordLegalConsents } from "@/features/legal/record-consent";
@@ -156,11 +157,18 @@ export async function submitWorkshopRegistrationAction(
       webinarTime: event.time,
     });
   } catch (emailErr) {
-    logger.error("Workshop confirmation email failed", {
-      eventId: event.id,
-      email,
-      message: emailErr instanceof Error ? emailErr.message : String(emailErr),
-    });
+    // T-259: the registrant's address used to be on this line. The hash is what
+    // identifies them now - it matches `NotificationDelivery.recipientHash`, so
+    // a support question about one person is still answerable.
+    logger.error(
+      {
+        event: "workshop.confirmation.failed",
+        eventId: event.id,
+        recipientHash: hashRecipient(email),
+        reason: safeErrorMessage(emailErr),
+      },
+      "workshop confirmation email failed",
+    );
   }
 
   return { ok: true, data: { whatsappLink: config.whatsappLink } };

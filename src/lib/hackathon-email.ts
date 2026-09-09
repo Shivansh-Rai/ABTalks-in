@@ -120,7 +120,8 @@ function toPlainText(html: string): string {
  */
 async function send(
   toEmail: string,
-  toName: string,
+  /** Kept in the signature for call-site readability; not logged (T-259). */
+  _toName: string,
   subject: string,
   html: string,
 ): Promise<void> {
@@ -129,14 +130,21 @@ async function send(
     subject,
     html,
     text: toPlainText(html),
+    kind: "hackathon.transactional",
   });
   if (!result.ok) {
-    logger.error("[hackathon-email] not delivered", {
-      subject,
-      to: toEmail,
-      name: toName,
-      skipped: result.skipped === true,
-    });
+    // The recipient address and name used to be in this line. `deliveryId` is
+    // what identifies the send now: it is on the NotificationDelivery row
+    // (which holds the address hash) and on the Sentry event.
+    logger.error(
+      {
+        event: "hackathon.email.not_delivered",
+        deliveryId: result.deliveryId,
+        skipped: result.skipped === true,
+        reason: result.reason,
+      },
+      "hackathon email not delivered",
+    );
   }
 }
 
