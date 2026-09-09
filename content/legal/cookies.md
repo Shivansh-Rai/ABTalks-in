@@ -1,7 +1,7 @@
 # Cookie Policy
 
-**Version:** 2026-08-10  
-**Effective date:** 2026-08-10
+**Version:** 2026-09-09  
+**Effective date:** 2026-09-09
 
 This Cookie Policy explains what cookies and similar technologies ABTalks uses, why, and how you control them. It supplements our [Privacy Policy](/privacy).
 
@@ -40,10 +40,11 @@ Your choice is itself stored in a cookie (`abtalks_consent`) so we don't ask aga
 - **Video embeds (YouTube).** All videos use the privacy-extended `youtube-nocookie.com` domain, which does not set advertising cookies.
   - On **program mission pages and the video library**, videos are click-to-load. We show a placeholder and request nothing from Google until you press play. The video's preview thumbnail is fetched from YouTube only if you chose **Allow all**.
   - On **challenge day pages**, the tutorial player loads together with the page, so Google is contacted when you open that page. We disclose this rather than hide it; if you would rather it did not, avoid opening those pages or block the domain in your browser.
+- **Google Analytics 4.** We use Google Analytics 4 to measure aggregate usage of the Service — page views, sign-ups, submissions and similar counts. GA4 loads **only** on the production Service and **only** after you choose **Allow all** or **Limited**. If you choose **Deny**, or before you have chosen, the Google Analytics script is not loaded at all and **no request is made to any Google endpoint** (`googletagmanager.com` or `google-analytics.com`). Under **Limited**, only the analytics signal is granted — advertising-cookie and ad-personalisation signals are marked as denied via Google **Consent Mode v2**. We do not send your email, phone, name, free-text notes, referral codes, or any internal record ID to GA; IP addresses are anonymised at the platform level. GA retains data for **14 months**. Changing your choice from **Allow all** or **Limited** back to **Deny** reloads the page so the analytics script is fully unloaded — future collection stops immediately, in this and every later tab. Events Google has already recorded are **not** deleted; those age out on GA's 14-month retention window.
 
 ## 5. What we do not use
 
-We do **not** use Google Analytics, PostHog, Meta Pixel, advertising cookies, cross-site tracking, or any third-party analytics SDK in the product. We do not sell personal data. If this changes, we will update this Policy and add the relevant category to the choice in §2 before setting anything.
+We do **not** use PostHog, Meta Pixel, advertising cookies, cross-site tracking, or any third-party analytics SDK beyond Google Analytics 4 as described in §4. We do not sell personal data. If any of this changes, we will update this Policy and add the relevant category to the choice in §2 before setting anything.
 
 **Do Not Track.** We do not currently alter our cookie practices in response to browser “Do Not Track” signals. Use the choice above (or Manage preferences) to control optional cookies.
 
