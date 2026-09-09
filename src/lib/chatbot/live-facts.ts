@@ -58,6 +58,12 @@ async function readEvents(todayKey: string): Promise<{
 }> {
   try {
     const mod = await import("@/components/workshop/events-data");
+    const { getWorkshopEvents } = await import(
+      "@/features/workshop/get-events"
+    );
+    // Workshop events are rows now, so the list has to be fetched rather than
+    // read off a module-level array.
+    const allEvents = await getWorkshopEvents();
     const toLive = (e: {
       title: string;
       date: string;
@@ -73,9 +79,9 @@ async function readEvents(todayKey: string): Promise<{
       registrationOpen: Boolean(e.register && e.registrationOpen),
     });
 
-    const upcoming = mod.upcomingEvents(todayKey);
-    const registrable = mod.getRegistrableEvent();
-    const past = mod.pastEvents(todayKey);
+    const upcoming = mod.upcomingEvents(allEvents, todayKey);
+    const registrable = mod.getRegistrableEvent(allEvents);
+    const past = mod.pastEvents(allEvents, todayKey);
 
     return {
       next: upcoming[0] ? toLive(upcoming[0]) : null,
@@ -108,16 +114,25 @@ async function readHackathon(): Promise<string | null> {
 }
 
 /**
- * The workshop date/time row an organiser edits without shipping code. This is
- * the fact most likely to be wrong in the corpus at any given moment.
+ * The next workshop's date and time, read from the same place every public
+ * surface reads them.
+ *
+ * This used to quote the Supabase `workshop_config` row, which is a SEPARATE
+ * hand-edited source: it kept naming a workshop that had already finished, so
+ * the chatbot confidently stated a stale date. Workshops are database rows
+ * now, and there is one source for this fact.
  */
 async function readWorkshopConfig(): Promise<string | null> {
   try {
-    const { getWorkshopConfig } = await import("@/lib/workshop-supabase");
-    const config = await getWorkshopConfig();
-    return `- Currently configured webinar: ${config.webinarDate} at ${config.webinarTime}.`;
+    const [{ getWorkshopEvents }, mod] = await Promise.all([
+      import("@/features/workshop/get-events"),
+      import("@/components/workshop/events-data"),
+    ]);
+    const event = mod.getRegistrableEvent(await getWorkshopEvents());
+    if (!event) return "- No workshop is currently open for registration.";
+    return `- Next workshop: ${event.title} on ${mod.fullDate(event.date)} at ${event.time}.`;
   } catch (error) {
-    logger.warn("Chatbot live facts: workshop config unavailable", {
+    logger.warn("Chatbot live facts: workshop unavailable", {
       error: String(error),
     });
     return null;

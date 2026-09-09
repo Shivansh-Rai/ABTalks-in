@@ -13,9 +13,9 @@
  *     are built from those plus neutrals;
  *   - only four font weights (400/500/600/700).
  *
- * `.dark` is placed on <html> by next-themes (`attribute="class"`, see
- * src/app/layout.tsx), so `.dark .wk-root` is all that is needed to flip.
- * The spec defines no dark mode; this is a derived warm-neutral counterpart.
+ * The page is light-only: it defines no dark counterpart and carries no theme
+ * toggle, so `.dark` on <html> (placed by next-themes) deliberately has no
+ * effect here.
  *
  * Rendered by both `/workshop` and `/workshop/events`.
  */
@@ -107,33 +107,11 @@ export default function WorkshopThemeStyles() {
         background-attachment: fixed;
       }
 
-      .dark .wk-root {
-        --wk-page-grad: linear-gradient(180deg, #141110 0%, #1c1a19 55%, #241f1c 100%);
-        --wk-bg: #141110;
-        --wk-bg-alt: #241f1c;
-        --wk-surface: #1c1a19;
-        --wk-text: #faf7f5;
-        --wk-text-dim: #d6cfca;
-        --wk-text-faint: #b3aaa4;
-        --wk-card-bg: #1c1a19;
-        --wk-card-border: #3a3330;
-        --wk-hairline: #302a27;
-        --wk-chip: rgba(224, 82, 38, 0.16);
-        --wk-chip-strong: rgba(255, 255, 255, 0.12);
-        --wk-header-bg: rgba(20, 17, 16, 0.84);
-        --wk-cta-shadow: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.45));
-        --wk-ink-a: 0, 0, 0;
-        --wk-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
-        --wk-shadow-lg: 0 40px 100px -20px rgba(0, 0, 0, 0.85);
-        --wk-grid-line: #302a27;
-        --wk-cell-text: #faf7f5;
-        --wk-cell-muted: #8a807a;
-        --wk-muted: #b3aaa4;
-        --wk-heading: #faf7f5;
-        --wk-placeholder: #8a807a;
-        --wk-scrim: rgba(10, 8, 7, 0.78);
-        --wk-inset-hi: rgba(255, 255, 255, 0.06);
-      }
+      /* No .dark .wk-root block by design. The workshop page is a single
+         light-palette marketing surface and ships without a theme switch, so
+         it must not follow the app-wide theme — a visitor whose account is in
+         dark mode would otherwise get a dark workshop page with no control to
+         change it. (No backticks in here: this is inside a template literal.) */
 
       /* ---------- colour utilities ----------
          Two-class specificity (0,2,0) so they win over a bare Tailwind
@@ -201,9 +179,6 @@ export default function WorkshopThemeStyles() {
         box-shadow: 0 0 0 3px rgba(var(--wk-a1-rgb), 0.35);
       }
 
-      /* ThemeToggle is a shared ghost Button that takes its colour from the
-         app-wide foreground — dark-on-dark once it sits on the charcoal bar.
-         Scoped here rather than forking the component. */
       /* The one interactive date in the calendar. A ring that expands and
          fades, plus a small press — no colour change, no confetti. */
       .wk-root .wk-bday {
@@ -345,14 +320,11 @@ export default function WorkshopThemeStyles() {
         .wk-root .wk-live-dot { animation: none; }
       }
 
-      /* Shared by the theme toggle and the notification bell, so the two
-         icon buttons in the charcoal bar cannot drift apart. */
-      .wk-root .wk-bar-toggle button,
+      /* The notification bell, the one icon button left in the charcoal bar. */
       .wk-root .wk-bar-icon button {
         color: var(--wk-bar-text);
         border-radius: 9999px;
       }
-      .wk-root .wk-bar-toggle button:hover,
       .wk-root .wk-bar-icon button:hover {
         background: rgba(255, 255, 255, 0.1);
         color: #ffffff;

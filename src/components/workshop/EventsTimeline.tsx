@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CalendarClock, CalendarX2, Check, MapPin } from "lucide-react";
 import ComingSoonCard from "@/components/workshop/ComingSoonCard";
 import {
-  EVENTS,
+  type WorkshopEvent,
   dayNum,
   fullDate,
   getRegistrableEvent,
@@ -15,8 +15,14 @@ import {
   upcomingEvents,
   weekday,
 } from "@/components/workshop/events-data";
+import { resolveIcon } from "@/components/workshop/workshop-icons";
 
-export default function EventsTimeline() {
+export default function EventsTimeline({
+  allEvents,
+}: {
+  /** Merged list from `getWorkshopEvents()`, resolved on the server. */
+  allEvents: WorkshopEvent[];
+}) {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
 
   // Resolved on the client only: this page is statically prerendered, so a
@@ -41,14 +47,19 @@ export default function EventsTimeline() {
 
   const { upcoming, past, openEventId } = useMemo(() => {
     if (!todayKey) {
-      return { upcoming: EVENTS, past: [] as typeof EVENTS, openEventId: undefined };
+      return {
+        upcoming: allEvents,
+        past: [] as WorkshopEvent[],
+        openEventId: undefined,
+      };
     }
     return {
-      upcoming: upcomingEvents(todayKey),
-      past: pastEvents(todayKey),
-      openEventId: nowMs === null ? undefined : getRegistrableEvent(nowMs)?.id,
+      upcoming: upcomingEvents(allEvents, todayKey),
+      past: pastEvents(allEvents, todayKey),
+      openEventId:
+        nowMs === null ? undefined : getRegistrableEvent(allEvents, nowMs)?.id,
     };
-  }, [todayKey, nowMs]);
+  }, [allEvents, todayKey, nowMs]);
 
   const isPastTab = tab === "past";
   const list = isPastTab ? past : upcoming;
@@ -290,7 +301,16 @@ export default function EventsTimeline() {
                         border: `1px solid ${ev.accent}30`,
                       }}
                     >
-                      <ev.Icon size={30} strokeWidth={1.5} style={{ color: ev.accent }} />
+                      {(() => {
+                        const EvIcon = resolveIcon(ev.icon);
+                        return (
+                          <EvIcon
+                            size={30}
+                            strokeWidth={1.5}
+                            style={{ color: ev.accent }}
+                          />
+                        );
+                      })()}
                       <span
                         className="mt-1.5 text-[9px] font-bold uppercase tracking-widest"
                         style={{ color: ev.accent }}
