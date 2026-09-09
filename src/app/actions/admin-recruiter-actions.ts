@@ -7,6 +7,10 @@ import { prisma } from "@/lib/db";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
 import { logger } from "@/lib/logger";
 import { adminRecruiterActionSchema } from "@/lib/validations/talent";
+import {
+  WORK_EMAIL_REQUIRED_MESSAGE,
+  isPersonalEmailDomain,
+} from "@/lib/validations/work-email";
 
 type ActionResult =
   | { ok: true }
@@ -35,6 +39,13 @@ export async function approveRecruiterAction(
   if (profile.approved) return { ok: false, message: "Already approved." };
 
   const email = profile.user.email?.trim().toLowerCase() ?? "";
+
+  // Approval is the last place a personal mailbox could still be let in — an
+  // application predating T-225, or one written straight to the database. An
+  // admin cannot approve it, and approving is also what would mint the seat.
+  if (isPersonalEmailDomain(email)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
 
   // Batched, not interactive.
   //
