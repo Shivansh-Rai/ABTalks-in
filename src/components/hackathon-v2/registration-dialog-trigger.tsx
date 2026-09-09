@@ -41,6 +41,15 @@ export function RegistrationDialogTrigger({
     router.refresh();
   }
 
+  // Closing the dialog is the moment the "Your team" panel should already be
+  // on the page behind it. The refresh in handleSuccess fires while the dialog
+  // is still open, so without this a fresh registrant sees nothing until they
+  // reload by hand.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) router.refresh();
+  }
+
   // Keep the success panel mounted while the dialog is open. Once it closes,
   // the registration CTA disappears because the dashboard is not ready yet.
   if (registered && !open) {
@@ -68,7 +77,7 @@ export function RegistrationDialogTrigger({
       <button type="button" className={className} onClick={() => setOpen(true)}>
         {labelWhenRegister}
       </button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="hk-dialog">
           <DialogHeader className="hk-dialog__head">
             <DialogTitle className="hk-dialog__title">
