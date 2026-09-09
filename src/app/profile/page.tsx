@@ -9,6 +9,7 @@ import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { getProfileEvidence } from "@/features/profile/get-evidence";
 import { getResumeView } from "@/features/resume/service";
 import { computeCompleteness } from "@/features/profile/completeness";
+import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
 import { PROFILE_QUICK_SKILLS } from "@/lib/candidate-vocab";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
@@ -28,16 +29,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { PERSONA_LABELS } from "@/lib/candidate-vocab";
 import { isOtpVerificationRequired } from "@/lib/feature-flags";
 import { isAvatarStorageConfigured } from "@/features/profile/avatar-storage";
-
-/**
- * Placeholder figures — nothing measures these yet.
- *
- * Search appearances needs a write when a candidate is returned by a /hire
- * search; recruiter actions needs one when a recruiter opens or shortlists
- * them. Neither exists. When that tracking lands, replace this constant with
- * the real read and delete this comment — no other file needs to change.
- */
-const PROFILE_PERFORMANCE = { searchAppearances: 1, recruiterActions: 0 } as const;
 
 /**
  * Résumé parsing runs inline in a Server Action invoked from this route, and one
@@ -382,25 +373,39 @@ export default async function ProfilePage() {
   const firstIncomplete = steps.findIndex((step) => !step.complete);
   const initialIndex = firstIncomplete === -1 ? 0 : firstIncomplete;
 
+  // The report card links back into the wizard by index, so the mapping is
+  // derived from `steps` rather than restated — reordering a step here moves
+  // its Add / Edit button with it.
+  const stepIndexByKey = Object.fromEntries(
+    steps.map((step, i) => [step.key, i]),
+  );
+
+  const review = buildProfileReview({
+    detail,
+    personaLabel:
+      PERSONA_LABELS[detail.primaryPersona] ?? detail.primaryPersona,
+    score: completeness.score,
+    resume,
+    mockInterviewCount: mockInterviews.length,
+    stepIndexByKey,
+  });
+
   return (
     <DashboardShell
       user={{ ...shellUser, name: detail.fullName || shellUser.name }}
       isAdmin={session.user.isAdmin ?? false}
       showSectionNav={false}
+      collapsible
+      contentClassName="min-h-0"
     >
       <ProfileWizard
         steps={steps}
         initialIndex={initialIndex}
         score={completeness.score}
         fullName={detail.fullName}
-        personaLabel={
-          PERSONA_LABELS[detail.primaryPersona] ?? detail.primaryPersona
-        }
         imageUrl={user.image ?? null}
-        updatedAtIso={detail.updatedAt.toISOString()}
-        performance={PROFILE_PERFORMANCE}
+        review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
-        openToWork={detail.preference?.openToWork ?? false}
       />
     </DashboardShell>
   );

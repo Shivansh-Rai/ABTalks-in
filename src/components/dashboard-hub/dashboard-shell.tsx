@@ -99,7 +99,7 @@ export function DashboardShell({
         />
       ) : null}
 
-      <div className="flex min-h-svh min-w-0 flex-1 flex-col">
+      <div className="flex h-svh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardHeader
           isAdmin={isAdmin}
           menuOpen={mobileOpen}
@@ -110,7 +110,7 @@ export function DashboardShell({
         />
         <div
           className={cn(
-            "flex-1 overflow-x-hidden scroll-smooth",
+            "min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
             contentClassName,
           )}
         >
