@@ -167,6 +167,8 @@ export function buildProfileReview({
   score,
   resume,
   mockInterviewCount,
+  verifiedAccomplishments,
+  verifiedSkills,
   stepIndexByKey,
 }: {
   detail: CandidateDetail;
@@ -174,6 +176,15 @@ export function buildProfileReview({
   score: number;
   resume: ResumeView | null;
   mockInterviewCount: number;
+  /** Platform-derived; read-only on the report card as in the section. */
+  verifiedAccomplishments: readonly {
+    key: string;
+    title: string;
+    detail: string | null;
+    outcomeLabel: string;
+  }[];
+  /** Derived from curriculum + completion; shown beside the claimed skills. */
+  verifiedSkills: readonly { skillId: string; name: string }[];
   /** The wizard's own ordering, so Add / Edit always opens the right step. */
   stepIndexByKey: Record<string, number>;
 }): ProfileReview {
@@ -261,10 +272,17 @@ export function buildProfileReview({
 
   /* ---- skills ---- */
   const claimed = detail.skills.filter((s) => s.claimedByCandidate);
-  const skillBlocks: ReviewBlock[] =
-    claimed.length > 0
-      ? [{ kind: "chips", items: claimed.map((s) => s.name) }]
-      : [];
+  const skillBlocks: ReviewBlock[] = [];
+  if (claimed.length > 0) {
+    skillBlocks.push({ kind: "chips", items: claimed.map((s) => s.name) });
+  }
+  if (verifiedSkills.length > 0) {
+    skillBlocks.push({ kind: "sub", text: "Verified by ABTalks" });
+    skillBlocks.push({
+      kind: "chips",
+      items: verifiedSkills.map((s) => s.name),
+    });
+  }
 
   /* ---- certifications ---- */
   const certificationItems: ReviewItem[] = detail.certifications.map((c) => ({
@@ -279,6 +297,32 @@ export function buildProfileReview({
       ? [{ label: "Credential", url: c.credentialUrl }]
       : [],
   }));
+
+  /* ---- accomplishments: verified + certifications + awards ---- */
+  const accomplishmentBlocks: ReviewBlock[] = [];
+  if (verifiedAccomplishments.length > 0) {
+    accomplishmentBlocks.push({ kind: "sub", text: "Verified by ABTalks" });
+    accomplishmentBlocks.push({
+      kind: "items",
+      items: verifiedAccomplishments.map((v) => ({
+        title: v.title,
+        sub: v.detail,
+        meta: v.outcomeLabel,
+        body: null,
+        chips: [],
+        links: [],
+      })),
+    });
+  }
+  if (certificationItems.length > 0) {
+    accomplishmentBlocks.push({ kind: "sub", text: "Certifications" });
+    accomplishmentBlocks.push({ kind: "items", items: certificationItems });
+  }
+  const awards = nonEmpty(detail.awards);
+  if (awards) {
+    accomplishmentBlocks.push({ kind: "sub", text: "Awards" });
+    accomplishmentBlocks.push({ kind: "text", text: awards });
+  }
 
   /* ---- resume ---- */
   const resumeBlocks: ReviewBlock[] = [];
@@ -418,17 +462,15 @@ export function buildProfileReview({
       "skills",
       "Add the skills you want to be found for.",
       skillBlocks,
-      { count: claimed.length },
+      { count: claimed.length + verifiedSkills.length },
     ),
     card(
-      at("certifications"),
-      "Certifications",
+      at("accomplishments"),
+      "Accomplishments",
       "certifications",
-      "Add certifications you hold — they carry weight with recruiters.",
-      certificationItems.length > 0
-        ? [{ kind: "items", items: certificationItems }]
-        : [],
-      { count: certificationItems.length },
+      "Add the certifications you hold and the awards you have won.",
+      accomplishmentBlocks,
+      { count: verifiedAccomplishments.length + certificationItems.length },
     ),
     card(
       at("resume"),

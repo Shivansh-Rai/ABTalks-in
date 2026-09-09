@@ -9,6 +9,8 @@ import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { getProfileEvidence } from "@/features/profile/get-evidence";
 import { getResumeView } from "@/features/resume/service";
 import { computeCompleteness } from "@/features/profile/completeness";
+import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
+import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
 import { PROFILE_QUICK_SKILLS } from "@/lib/candidate-vocab";
@@ -21,7 +23,7 @@ import { EducationSection } from "@/components/profile/education-section";
 import { ProjectsSection } from "@/components/profile/projects-section";
 import { MockInterviewsSection } from "@/components/profile/mock-interviews-section";
 import { SkillsSection } from "@/components/profile/skills-section";
-import { CertificationsSection } from "@/components/profile/certifications-section";
+import { AccomplishmentsSection } from "@/components/profile/accomplishments-section";
 import { LinksSection } from "@/components/profile/links-section";
 import { ResumeSection } from "@/components/profile/resume-section";
 import { PreferencesSection } from "@/components/profile/preferences-section";
@@ -99,6 +101,8 @@ export default async function ProfilePage() {
     mockInterviewHistory,
     activeMockInterview,
     resume,
+    verifiedAccomplishments,
+    verifiedSkills,
   ] = await Promise.all([
     getProfileEvidence(userId),
     getSkillsByNames(PROFILE_QUICK_SKILLS),
@@ -130,6 +134,24 @@ export default async function ProfilePage() {
         message: e instanceof Error ? e.message : String(e),
       });
       return null;
+    }),
+    // Read-only derivation across Credential / Enrollment / ProgramEnrollment /
+    // HackathonParticipant. Never issues a certificate — unlike /achievements,
+    // opening the profile must not have write side effects. Degrades to an
+    // empty list on any environment where one of those tables is not migrated.
+    getVerifiedAccomplishments(userId).catch((e: unknown) => {
+      logger.warn("[profile] verified accomplishments unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return [];
+    }),
+    // Curriculum (ProgramSkill) × completion. Read-only and unstored, so a new
+    // cohort's skills reach everyone already past the bar with no backfill.
+    getVerifiedSkills(userId).catch((e: unknown) => {
+      logger.warn("[profile] verified skills unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return [];
     }),
   ]);
 
@@ -277,32 +299,44 @@ export default async function ProfilePage() {
             skillId: sk.skillId,
             name: sk.name,
             categoryName: sk.categoryName,
-            selfRated: sk.selfRated,
-            verified: sk.verified,
-            evidenceCount: sk.evidenceCount,
           }))}
+          verified={verifiedSkills}
         />
       ),
     },
     {
-      key: "certifications",
-      title: "Certifications",
-      description: "External certifications you hold.",
-      checklist: "certifications",
-      complete: sectionOf("certifications")?.complete ?? false,
+      key: "accomplishments",
+      title: "Accomplishments",
+      description:
+        "What you have earned here, the certifications you hold, and your awards.",
+      checklist: "accomplishments",
+      // Scoring still keys off "certifications" — completeness weights are a
+      // separate concern from what the tab is called.
+      complete:
+        (sectionOf("certifications")?.complete ?? false) ||
+        verifiedAccomplishments.length > 0,
       attention: false,
       savable: true,
       node: (
-        <CertificationsSection
-          initial={detail.certifications.map((c) => ({
-            name: c.name,
-            issuer: c.issuer,
-            issuedMonth: c.issuedMonth,
-            issuedYear: c.issuedYear,
-            expiresMonth: c.expiresMonth,
-            expiresYear: c.expiresYear,
-            credentialUrl: s(c.credentialUrl),
+        <AccomplishmentsSection
+          verified={verifiedAccomplishments.map((v) => ({
+            key: v.key,
+            title: v.title,
+            detail: v.detail,
+            outcomeLabel: v.outcomeLabel,
           }))}
+          initial={{
+            rows: detail.certifications.map((c) => ({
+              name: c.name,
+              issuer: c.issuer,
+              issuedMonth: c.issuedMonth,
+              issuedYear: c.issuedYear,
+              expiresMonth: c.expiresMonth,
+              expiresYear: c.expiresYear,
+              credentialUrl: s(c.credentialUrl),
+            })),
+            awards: s(detail.awards),
+          }}
         />
       ),
     },
@@ -387,6 +421,8 @@ export default async function ProfilePage() {
     score: completeness.score,
     resume,
     mockInterviewCount: mockInterviews.length,
+    verifiedAccomplishments,
+    verifiedSkills,
     stepIndexByKey,
   });
 

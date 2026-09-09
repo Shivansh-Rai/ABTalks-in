@@ -5,7 +5,6 @@ import {
   GradeType,
   OpportunityType,
   Prisma,
-  SkillProficiency,
   UserType,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
@@ -95,7 +94,6 @@ export type SkillClaimView = {
   name: string;
   slug: string;
   categoryName: string | null;
-  selfRated: SkillProficiency | null;
   claimedByCandidate: boolean;
   /** Derived from `SkillEvidence` only. Never influenced by `selfRated`. */
   verified: boolean;
@@ -129,6 +127,8 @@ export type CandidateDetail = {
   fullName: string;
   headline: string | null;
   summary: string | null;
+  /** Candidate-authored awards prose. Null when never written. */
+  awards: string | null;
   primaryPersona: CandidatePersona;
   phone: string | null;
   phoneVerified: boolean;
@@ -163,6 +163,7 @@ export async function getCandidateDetail(
       fullName: true,
       headline: true,
       summary: true,
+      awards: true,
       primaryPersona: true,
       phone: true,
       phoneVerified: true,
@@ -245,7 +246,6 @@ export async function getCandidateDetail(
         orderBy: [{ evidenceScore: "desc" }, { createdAt: "asc" }],
         select: {
           skillId: true,
-          selfRated: true,
           claimedByCandidate: true,
           verified: true,
           evidenceScore: true,
@@ -284,6 +284,7 @@ export async function getCandidateDetail(
     fullName: row.fullName,
     headline: row.headline,
     summary: row.summary,
+    awards: row.awards,
     primaryPersona: row.primaryPersona,
     phone: row.phone,
     phoneVerified: row.phoneVerified,
@@ -336,7 +337,6 @@ export async function getCandidateDetail(
       name: s.skill.name,
       slug: s.skill.slug,
       categoryName: s.skill.category?.name ?? null,
-      selfRated: s.selfRated,
       claimedByCandidate: s.claimedByCandidate,
       verified: s.verified,
       evidenceScore: s.evidenceScore,
@@ -659,12 +659,33 @@ export type CertificationWrite = {
   credentialUrl: string | null;
 };
 
-export async function saveCertifications(
+/**
+ * The Accomplishments section: the external certification list and the awards
+ * prose, written together because the section is one form with one Save.
+ *
+ * `awards: undefined` leaves the stored prose untouched.
+ *
+ * Verified Accomplishments are absent on purpose: they are derived in
+ * features/profile/get-verified-accomplishments.ts and have no write path.
+ */
+export async function saveAccomplishments(
   userId: string,
-  rows: readonly CertificationWrite[],
+  value: {
+    rows: readonly CertificationWrite[];
+    /** `undefined` leaves the stored awards text untouched. */
+    awards?: string | null;
+  },
 ): Promise<void> {
+  const { rows, awards } = value;
   await runInTransaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
+    if (awards !== undefined) {
+      await tx.candidateProfile.update({
+        where: { userId },
+        data: { awards },
+        select: { userId: true },
+      });
+    }
     await tx.candidateCertification.deleteMany({ where: { userId } });
     if (rows.length > 0) {
       await tx.candidateCertification.createMany({
@@ -797,7 +818,6 @@ export async function savePreferences(
 
 export type SkillClaimWrite = {
   skillId: string;
-  selfRated: SkillProficiency | null;
 };
 
 /**
@@ -817,15 +837,15 @@ export async function saveSkillClaims(
   await runInTransaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
 
-    const wanted = new Map(claims.map((c) => [c.skillId, c.selfRated]));
+    const wanted = new Set(claims.map((c) => c.skillId));
 
     const valid = await tx.skill.findMany({
-      where: { id: { in: [...wanted.keys()] }, isActive: true },
+      where: { id: { in: [...wanted] }, isActive: true },
       select: { id: true },
     });
     const validIds = new Set(valid.map((s) => s.id));
 
-    for (const [skillId, selfRated] of wanted) {
+    for (const skillId of wanted) {
       if (!validIds.has(skillId)) {
         // Unknown or deactivated: not written, and not withdrawn either.
         logger.warn("[profile] skill not in active catalog", { userId, skillId });
@@ -833,8 +853,8 @@ export async function saveSkillClaims(
       }
       await tx.candidateSkill.upsert({
         where: { userId_skillId: { userId, skillId } },
-        create: { userId, skillId, selfRated, claimedByCandidate: true },
-        update: { selfRated, claimedByCandidate: true },
+        create: { userId, skillId, claimedByCandidate: true },
+        update: { claimedByCandidate: true },
       });
     }
 
@@ -866,7 +886,7 @@ export async function saveSkillClaims(
     if (keepIds.length > 0) {
       await tx.candidateSkill.updateMany({
         where: { id: { in: keepIds } },
-        data: { claimedByCandidate: false, selfRated: null },
+        data: { claimedByCandidate: false },
       });
     }
     if (dropIds.length > 0) {

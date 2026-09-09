@@ -4,7 +4,6 @@ import {
   CandidatePersona,
   GradeType,
   OpportunityType,
-  SkillProficiency,
 } from "@prisma/client";
 import { optionalPhoneSchema } from "@/lib/validations/phone";
 
@@ -223,16 +222,15 @@ export type ProjectRowInput = z.infer<typeof projectRowSchema>;
 /* ─── Skills ─────────────────────────────────────────────────────────────── */
 
 /**
- * A claim is a skill id plus an optional self-rating. `selfRated` is the
- * candidate's own assessment and is never mixed with `evidenceScore` /
- * `verified`, which are derived from `SkillEvidence` alone.
+ * A claim is a skill id and nothing else.
+ *
+ * Self-rating was removed: it was the candidate grading themselves, it was
+ * never evidence, and it competed for meaning with ABTalks Verified Skills —
+ * which are derived from curriculum + completion in
+ * features/profile/get-verified-skills.ts.
  */
 const skillClaimSchema = z.object({
   skillId: z.string().cuid(),
-  selfRated: z.preprocess(
-    emptyToNull,
-    z.enum(SkillProficiency).nullable().default(null),
-  ),
 });
 
 export const skillSectionSchema = z.object({
@@ -276,11 +274,21 @@ const certificationRowSchema = z
     }
   });
 
-export const certificationSectionSchema = z.object({
+export type CertificationRowInput = z.infer<typeof certificationRowSchema>;
+
+/**
+ * Accomplishments saves the certification list and the awards prose together —
+ * the section is one form with one Save, so it is one boundary.
+ *
+ * Verified Accomplishments are NOT in here: they are derived from platform
+ * records and there is no write path for them by design.
+ */
+export const accomplishmentsSchema = z.object({
   rows: z.array(certificationRowSchema).max(30, "At most 30 certifications"),
+  awards: nullableText(4000),
 });
 
-export type CertificationRowInput = z.infer<typeof certificationRowSchema>;
+export type AccomplishmentsInput = z.infer<typeof accomplishmentsSchema>;
 
 /* ─── Links ──────────────────────────────────────────────────────────────── */
 

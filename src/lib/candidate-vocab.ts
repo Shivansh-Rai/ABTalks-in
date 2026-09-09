@@ -137,12 +137,6 @@ export const OPPORTUNITY_TYPE_LABELS: Record<string, string> = {
   FREELANCE: "Freelance",
 };
 
-export const PROFICIENCY_LABELS: Record<string, string> = {
-  BEGINNER: "Beginner",
-  INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
-  EXPERT: "Expert",
-};
 
 export const LINK_TYPE_LABELS: Record<string, string> = {
   PORTFOLIO: "Portfolio",

@@ -1620,6 +1620,153 @@ body.pw-sheet-open {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Secondary weight: sits beside a heading, so it must not outshout Save. */
+.pw-btn-action.pw-btn-quiet {
+  background: #ffffff;
+  color: var(--pw-orange);
+  box-shadow: inset 0 0 0 1px #f5d3c8;
+  padding: 9px 14px;
+  font-size: 13px;
+  flex: none;
+  white-space: nowrap;
+}
+.pw-btn-action.pw-btn-quiet:hover {
+  background: var(--pw-orange-tint);
+  color: var(--pw-orange);
+  box-shadow: inset 0 0 0 1px #f0c0b1;
+}
+.pw-btn-action.pw-btn-quiet svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.9;
+}
+
+/* ---------- Accomplishments: sub-headings inside one section ---------- */
+.pw-sub-title {
+  margin: 0;
+  font-family: var(--pw-font-display);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+  color: #111111;
+  letter-spacing: -0.005em;
+}
+.pw-sub-title.pw-sub-spaced {
+  margin-top: 26px;
+}
+.pw-sub-text {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 17px;
+  color: #8a8f98;
+  font-weight: 400;
+}
+
+.pw-verified-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.pw-verified-copy {
+  min-width: 0;
+}
+
+/* ---------- Verified Accomplishments: read-only platform records ----------
+   Deliberately NOT styled as fields. Nothing here is editable, so nothing
+   here gets a border, a caret or a focus ring. */
+.pw-verified-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pw-verified-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8f6f4;
+  border: 1px solid #efeae6;
+}
+.pw-verified-tick {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #8cee93 0%, #4cd46c 45%, #22a94f 100%);
+  box-shadow: 1px 1.5px 3px rgba(25, 146, 71, 0.22),
+    inset 1px 1.5px 2px rgba(255, 255, 255, 0.5);
+}
+.pw-verified-tick svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-verified-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pw-verified-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--pw-navy);
+  line-height: 1.4;
+}
+.pw-verified-detail {
+  font-size: 12px;
+  color: #7a7d84;
+  line-height: 1.4;
+}
+.pw-verified-pill {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--pw-green-deep);
+  background: #ffffff;
+  border: 1px solid #cfebd8;
+  border-radius: 999px;
+  padding: 4px 11px;
+  line-height: 15px;
+  white-space: nowrap;
+}
+.pw-verified-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed #e3e0dc;
+  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #a9a5a1;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .pw-verified-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pw-verified-item {
+    flex-wrap: wrap;
+  }
+  .pw-verified-pill {
+    margin-left: 34px;
+  }
+}
 
 /* ---------- chip / tag input ---------- */
 .pw-tag-input-row {
@@ -1756,6 +1903,69 @@ body.pw-sheet-open {
   border-radius: 8px;
   padding: 6px 8px 6px 12px;
 }
+/* ---------- Skills: compact chips ----------
+   Sized to match .pw-quick-chip so a claimed skill reads as the same object
+   as the quick-add that created it, and many fit on a row. */
+.pw-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 17px;
+  color: var(--pw-orange);
+  background: var(--pw-orange-soft);
+  border: 1px solid #f5d3c8;
+  border-radius: 50px;
+  padding: 5px 8px 5px 13px;
+}
+.pw-skill-chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-skill-chip .pw-tag-remove {
+  color: var(--pw-orange);
+  opacity: 0.65;
+}
+.pw-skill-chip .pw-tag-remove:hover {
+  opacity: 1;
+}
+
+/* Verified: green, and with no remove control at all — the user cannot edit
+   these, so the affordance must not exist rather than be disabled. */
+.pw-skill-verified-list {
+  margin-top: 12px;
+}
+.pw-skill-chip-verified {
+  padding: 5px 13px;
+  color: var(--pw-green-deep);
+  background: #f1faf2;
+  border-color: #cfebd8;
+  cursor: default;
+}
+.pw-skill-verified-tick {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #8cee93 0%, #4cd46c 45%, #22a94f 100%);
+}
+.pw-skill-verified-tick svg {
+  width: 9px;
+  height: 9px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .pw-skill-saved-tick {
   width: 14px;
   height: 14px;

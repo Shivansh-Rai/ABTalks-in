@@ -1,0 +1,134 @@
+{
+  "_readme": [
+    "Curriculum → core skills. Seeded into the EXISTING ProgramSkill join table",
+    "(LearningProgram → Skill) by `npm run db:seed:curriculum-skills`.",
+    "",
+    "`program` is LearningProgram.slug. Every ABTalks track already has one:",
+    "the four 60-day challenges and the AI cohort were given LearningProgram",
+    "rows by the 078 migration (migrate-2d-learning-content.ts), and the newer",
+    "cohorts create their own in their seed scripts.",
+    "",
+    "Only CORE skills belong here — what a recruiter would accept as 'this",
+    "person was taught that'. Not every tool, lesson or minor topic. Each list",
+    "was read off the real content in prisma/content/, not invented.",
+    "",
+    "TO ADD A NEW COHORT/CHALLENGE: add an entry with its LearningProgram slug",
+    "and re-run the seed. Anyone who already meets the completion bar picks the",
+    "new skills up on their next profile load — nothing is copied per user.",
+    "",
+    "`category` is a SkillCategory slug and is only applied when the seed has",
+    "to CREATE the skill; an existing catalog row keeps its own category."
+  ],
+
+  "programs": [
+    {
+      "program": "claude-challenge",
+      "label": "60-Day Claude Challenge",
+      "source": "prisma/content/claude-problems.json",
+      "skills": [
+        { "name": "Prompt Engineering", "category": "ai-ml" },
+        { "name": "Claude", "category": "ai-ml" },
+        { "name": "AI-Assisted Development", "category": "ai-ml" },
+        { "name": "Context Engineering", "category": "ai-ml" },
+        { "name": "Generative AI", "category": "ai-ml" },
+        { "name": "AI Agents", "category": "ai-ml" }
+      ]
+    },
+    {
+      "program": "software-engineering-challenge",
+      "label": "60-Day Software Engineering Challenge",
+      "source": "prisma/content/problems.json (domain SE)",
+      "skills": [
+        { "name": "Python", "category": "programming" },
+        { "name": "Data Structures & Algorithms", "category": "programming" },
+        { "name": "Problem Solving", "category": "professional" },
+        { "name": "Dynamic Programming", "category": "programming" },
+        { "name": "Recursion", "category": "programming" }
+      ]
+    },
+    {
+      "program": "data-science-challenge",
+      "label": "60-Day Data Science Challenge",
+      "source": "prisma/content/problems.json (domain DS)",
+      "skills": [
+        { "name": "Python", "category": "programming" },
+        { "name": "Pandas", "category": "data" },
+        { "name": "Exploratory Data Analysis", "category": "data" },
+        { "name": "Machine Learning", "category": "ai-ml" },
+        { "name": "Feature Engineering", "category": "ai-ml" },
+        { "name": "Model Evaluation", "category": "ai-ml" },
+        { "name": "Data Visualization", "category": "data" }
+      ]
+    },
+    {
+      "program": "ai-engineering-challenge",
+      "label": "60-Day AI Engineering Challenge",
+      "source": "prisma/content/problems.json (domain AI)",
+      "skills": [
+        { "name": "Python", "category": "programming" },
+        { "name": "Retrieval-Augmented Generation (RAG)", "category": "ai-ml" },
+        { "name": "Embeddings", "category": "ai-ml" },
+        { "name": "Vector Databases", "category": "data" },
+        { "name": "Prompt Engineering", "category": "ai-ml" },
+        { "name": "AI Agents", "category": "ai-ml" },
+        { "name": "LLM Application Development", "category": "ai-ml" }
+      ]
+    },
+    {
+      "program": "ai-cohort-program",
+      "label": "AI Cohort Program",
+      "source": "prisma/content/program/{modules,days}.json",
+      "skills": [
+        { "name": "Python", "category": "programming" },
+        { "name": "Retrieval-Augmented Generation (RAG)", "category": "ai-ml" },
+        { "name": "Embeddings", "category": "ai-ml" },
+        { "name": "Vector Databases", "category": "data" },
+        { "name": "Prompt Engineering", "category": "ai-ml" },
+        { "name": "LangChain", "category": "ai-ml" },
+        { "name": "Model Context Protocol (MCP)", "category": "ai-ml" },
+        { "name": "Fine-Tuning", "category": "ai-ml" },
+        { "name": "Docker", "category": "tools" },
+        { "name": "Kubernetes", "category": "cloud" }
+      ]
+    },
+    {
+      "program": "databricks",
+      "label": "Databricks Data Engineering Cohort",
+      "source": "prisma/content/Databricks/{modules,days}.json",
+      "skills": [
+        { "name": "Databricks", "category": "data" },
+        { "name": "PySpark", "category": "data" },
+        { "name": "Spark SQL", "category": "data" },
+        { "name": "Delta Lake", "category": "data" },
+        { "name": "Data Engineering", "category": "data" },
+        { "name": "Dimensional Modeling", "category": "data" },
+        { "name": "Unity Catalog", "category": "data" }
+      ]
+    },
+    {
+      "program": "powerbi",
+      "label": "Power BI Cohort",
+      "source": "prisma/content/powerbi-cohort/{modules,days}.json",
+      "skills": [
+        { "name": "Power BI", "category": "data" },
+        { "name": "DAX", "category": "data" },
+        { "name": "Data Modeling", "category": "data" },
+        { "name": "Data Visualization", "category": "data" },
+        { "name": "Business Intelligence", "category": "data" }
+      ]
+    },
+    {
+      "program": "ds-architect",
+      "label": "Data Solution Architect Cohort",
+      "source": "prisma/content/Data-Sol-Architect/{modules,days}.json",
+      "skills": [
+        { "name": "Data Architecture", "category": "data" },
+        { "name": "AWS", "category": "cloud" },
+        { "name": "Amazon Redshift", "category": "cloud" },
+        { "name": "Data Warehousing", "category": "data" },
+        { "name": "Solution Architecture", "category": "professional" },
+        { "name": "Data Modeling", "category": "data" }
+      ]
+    }
+  ]
+}

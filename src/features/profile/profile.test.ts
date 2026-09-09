@@ -10,7 +10,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CandidatePersona, GradeType, SkillProficiency } from "@prisma/client";
+import { CandidatePersona, GradeType } from "@prisma/client";
 import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
 import {
   pickPrimaryEducation,
@@ -255,7 +255,6 @@ suite("removing a skill withdraws the claim but keeps the evidence", () => {
   const src = source("src/repositories/candidate-detail.ts");
   const fn = src.slice(src.indexOf("export async function saveSkillClaims"));
   assert(fn.includes("claimedByCandidate: false"), "claim withdrawn");
-  assert(fn.includes("selfRated: null"), "rating cleared");
   assert(
     fn.includes("evidenceCount > 0 || row._count.evidence > 0"),
     "evidence-bearing rows are detected",
@@ -441,6 +440,156 @@ suite("preferences never touch CandidateVisibility", () => {
   assert(src.includes("candidatePreference.upsert"), "preferences still saved");
 });
 
+suite("verified accomplishments are derived, never stored", () => {
+  const src = source("src/features/profile/get-verified-accomplishments.ts");
+  // The whole point of the section: the platform attests, the user cannot edit.
+  for (const write of ["create", "update", "upsert", "delete", "createMany"]) {
+    assert(!src.includes(`.${write}(`), `derivation never writes (.${write})`);
+  }
+  // Opening the profile must not issue a certificate as a side effect —
+  // that is /achievements' job, and it is a write.
+  assert(
+    !src.includes("ensureClaudeCertificate") &&
+      !src.includes("ensureHackathonCertificate"),
+    "reading the profile never issues a certificate",
+  );
+  // Credentials go through the flag-aware repository, not a raw table read.
+  assert(src.includes("listForUser"), "credentials read via the repository");
+  assert(
+    !src.includes("prisma.certificate.") && !src.includes("prisma.credential."),
+    "no direct certificate/credential table read",
+  );
+  // Each rule reads the source of truth the rest of the platform already writes.
+  assert(src.includes("CHALLENGE_ELIGIBLE_DAYS = 50"), "50-day gate is explicit");
+  assert(src.includes("prisma.enrollment.findMany"), "challenge days from Enrollment");
+  assert(
+    src.includes("prisma.programEnrollment.findMany"),
+    "cohort completion from ProgramEnrollment",
+  );
+  assert(
+    src.includes("prisma.hackathonParticipant.findFirst"),
+    "hackathon from HackathonParticipant",
+  );
+  assert(src.includes("CertificateStatus.REVOKED"), "revoked credentials excluded");
+});
+
+suite("the accomplishments write path cannot forge a verified row", () => {
+  const schema = source("src/lib/validations/candidate-profile.ts");
+  const idx = schema.indexOf("export const accomplishmentsSchema");
+  assert(idx !== -1, "accomplishments schema exists");
+  const block = schema.slice(idx, idx + 400);
+  // Only the two candidate-authored parts are accepted at the boundary.
+  assert(block.includes("rows:") && block.includes("awards:"), "rows + awards only");
+  assert(!block.includes("verified"), "no verified field crosses the boundary");
+
+  const repo = source("src/repositories/candidate-detail.ts");
+  assert(
+    repo.includes("export async function saveAccomplishments"),
+    "one writer for the section",
+  );
+  // Awards live on the profile row, NOT on the platform-evidence table.
+  assert(
+    !repo.includes("candidateAchievement"),
+    "awards never written to CandidateAchievement",
+  );
+});
+
+suite("self-rating is gone from the whole skills path", () => {
+  const ui = code("src/components/profile/skills-section.tsx");
+  const schema = code("src/lib/validations/candidate-profile.ts");
+  const repo = code("src/repositories/candidate-detail.ts");
+  const vocab = code("src/lib/candidate-vocab.ts");
+  for (const [label, src] of [
+    ["the section UI", ui],
+    ["the boundary schema", schema],
+    ["the write path", repo],
+    ["the vocabulary", vocab],
+  ] as const) {
+    assert(!src.includes("selfRated"), `no selfRated in ${label}`);
+    assert(!src.includes("SkillProficiency"), `no SkillProficiency in ${label}`);
+  }
+  assert(!vocab.includes("PROFICIENCY_LABELS"), "rating labels removed");
+  // The removed copy must not creep back in.
+  assert(
+    !ui.includes("Pick from the catalog") && !ui.includes("Self-rating"),
+    "removed helper copy stays removed",
+  );
+});
+
+suite("verified skills are derived from curriculum and completion", () => {
+  const src = code("src/features/profile/get-verified-skills.ts");
+  // Derived, never stored: no write of any kind, so the user cannot edit them.
+  for (const write of ["create", "update", "upsert", "delete", "createMany"]) {
+    assert(!src.includes(`.${write}(`), `derivation never writes (.${write})`);
+  }
+  // Curriculum → skills comes from the EXISTING join table, not a new one.
+  assert(src.includes("skills:"), "reads ProgramSkill through the program");
+  assert(
+    src.includes("learningProgram.findMany"),
+    "challenge skills hang off the challenge's LearningProgram",
+  );
+  // Enrolment alone must never be enough.
+  assert(src.includes("CHALLENGE_ELIGIBLE_DAYS = 50"), "50-day bar is explicit");
+  assert(
+    src.includes("daysCompleted >= CHALLENGE_ELIGIBLE_DAYS"),
+    "challenge bar is days completed, not enrolment",
+  );
+  assert(
+    src.includes("EnrollmentStatusV2.COMPLETED"),
+    "cohort bar is a completed run",
+  );
+  // A challenge is mirrored into ProgramEnrollment as a legacy-<domain> cohort;
+  // counting that too would let it in under the cohort bar instead of the 50-day one.
+  assert(
+    src.includes("CHALLENGE_MIRROR_COHORT_SLUGS"),
+    "challenge mirror cohorts excluded from the cohort rule",
+  );
+});
+
+suite("the same mirror exclusion guards verified accomplishments", () => {
+  const src = code("src/features/profile/get-verified-accomplishments.ts");
+  assert(
+    src.includes("CHALLENGE_MIRROR_COHORT_SLUGS"),
+    "a finished challenge is not also listed as a cohort",
+  );
+});
+
+suite("curriculum skills are data, not a hardcoded frontend list", () => {
+  const content = JSON.parse(
+    source("prisma/content/curriculum-skills.json"),
+  ) as { programs: { program: string; skills: { name: string }[] }[] };
+  const slugs = content.programs.map((p) => p.program);
+  // Every track the platform runs is covered.
+  for (const slug of [
+    "claude-challenge",
+    "software-engineering-challenge",
+    "data-science-challenge",
+    "ai-engineering-challenge",
+    "ai-cohort-program",
+    "databricks",
+    "powerbi",
+    "ds-architect",
+  ]) {
+    assert(slugs.includes(slug), `${slug} has curriculum skills`);
+  }
+  assert(new Set(slugs).size === slugs.length, "no duplicate program entries");
+  for (const entry of content.programs) {
+    assert(entry.skills.length > 0, `${entry.program} lists skills`);
+    const names = entry.skills.map((s) => s.name);
+    assert(
+      new Set(names).size === names.length,
+      `${entry.program} has no duplicate skills`,
+    );
+    // "Only meaningful core skills, not every minor topic."
+    assert(entry.skills.length <= 12, `${entry.program} stays a core list`);
+  }
+  // The UI must not carry its own copy of any of this.
+  const ui = code("src/components/profile/skills-section.tsx");
+  for (const name of ["PySpark", "Delta Lake", "Kubernetes", "LangChain"]) {
+    assert(!ui.includes(name), `${name} is not hardcoded in the UI`);
+  }
+});
+
 suite("evidence is read from real rows only", () => {
   const src = code("src/features/profile/get-evidence.ts");
   assert(src.includes("evidence: { some: {} }"), "verified means it has evidence");
@@ -457,6 +606,7 @@ function detailFixture(over: Partial<CandidateDetail> = {}): CandidateDetail {
     fullName: "Test User",
     headline: null,
     summary: null,
+    awards: null,
     primaryPersona: CandidatePersona.STUDENT,
     phone: null,
     phoneVerified: false,
@@ -486,7 +636,6 @@ const skill = (id: string, claimed = true) => ({
   name: id,
   slug: id,
   categoryName: null,
-  selfRated: SkillProficiency.INTERMEDIATE,
   claimedByCandidate: claimed,
   verified: false,
   evidenceScore: 0,

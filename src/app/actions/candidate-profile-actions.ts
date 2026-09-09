@@ -7,8 +7,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import {
+  accomplishmentsSchema,
   basicInfoSchema,
-  certificationSectionSchema,
   educationSectionSchema,
   experienceSectionSchema,
   linksSectionSchema,
@@ -18,8 +18,8 @@ import {
   skillSectionSchema,
 } from "@/lib/validations/candidate-profile";
 import {
+  saveAccomplishments,
   saveBasicInfo,
-  saveCertifications,
   saveEducation,
   saveExperience,
   saveLinks,
@@ -206,14 +206,22 @@ export async function resolveSkillAction(
   }
 }
 
-export async function saveCertificationsAction(
+/**
+ * Accomplishments: the external certification list and the awards prose, saved
+ * together because the section is one form.
+ *
+ * Verified Accomplishments are derived from platform records and deliberately
+ * have no write path — nothing in this payload can add, edit or remove one.
+ */
+export async function saveAccomplishmentsAction(
   raw: unknown,
 ): Promise<ActionResult> {
   return runSection(
-    certificationSectionSchema,
+    accomplishmentsSchema,
     raw,
-    "certifications",
-    (userId, value) => saveCertifications(userId, value.rows),
+    "accomplishments",
+    (userId, value) =>
+      saveAccomplishments(userId, { rows: value.rows, awards: value.awards }),
   );
 }
 
