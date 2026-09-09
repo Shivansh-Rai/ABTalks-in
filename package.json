@@ -56,6 +56,8 @@
     "check:chatbot": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/check-chatbot-providers.ts",
     "test:chatbot-retrieval": "tsx scripts/test-chatbot-retrieval.ts",
     "test:chatbot-edgecases": "tsx scripts/test-chatbot-edgecases.ts",
+    "test:analytics-consent": "tsx src/lib/analytics/consent.test.ts",
+    "test:analytics-loader": "tsx src/components/analytics/ga4-loader-logic.test.ts",
     "test:hire-score": "tsx src/features/hire/score-candidate.test.ts",
     "test:scout": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/scout-agent.test.ts",
     "test:sample": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/sample-card.test.ts",
