@@ -136,6 +136,9 @@ export function AccomplishmentsSection({
 
       {/* ---- B. Certifications — the candidate's own external certs ---- */}
       <h3 className="pw-sub-title pw-sub-spaced">Certifications</h3>
+      <p className="pw-sub-text pw-sub-spaced">
+            Add details of your certification. You can add up to 10 in your profile.
+          </p>
     
 
       <div className="pw-entries">
