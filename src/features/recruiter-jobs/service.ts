@@ -1,0 +1,254 @@
+import type { JobStatus, JobType, JobWorkMode } from "@prisma/client";
+import {
+  lifecyclePatch,
+  normalizeSkills,
+  type JobDraftInput,
+  type LifecycleAction,
+  type Result,
+} from "./lifecycle";
+
+/**
+ * A minimal Prisma-shaped surface the recruiter-jobs service needs. Using an
+ * interface (not `typeof prisma`) keeps the module unit-testable without a
+ * live database: the tests inject an in-memory fake, production wiring
+ * imports the real client.
+ */
+export type JobRow = {
+  id: string;
+  title: string;
+  company: string;
+  description: string;
+  location: string | null;
+  workMode: JobWorkMode | null;
+  type: JobType;
+  skills: string[];
+  status: JobStatus;
+  isOpen: boolean;
+  recruiterId: string | null;
+  createdByAdminId: string | null;
+  publishedAt: Date | null;
+  closedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  applyExternalUrl: string | null;
+};
+
+export type JobStore = {
+  create(input: {
+    data: Omit<JobRow, "id" | "createdAt" | "updatedAt">;
+  }): Promise<JobRow>;
+  findById(id: string): Promise<JobRow | null>;
+  update(id: string, patch: Partial<JobRow>): Promise<JobRow>;
+  /**
+   * List jobs owned by the given recruiter (User.id), newest first. Used by
+   * the recruiter's own workspace view — T-226 requires that reads are scoped
+   * to the caller's own userId, so this MUST filter by recruiterId and
+   * MUST NOT accept "list all" without an owner.
+   */
+  listByRecruiter(recruiterId: string): Promise<JobRow[]>;
+};
+
+export type ApplicationStore = {
+  countForJob(jobId: string): Promise<number>;
+};
+
+export type ServiceDeps = {
+  jobs: JobStore;
+  applications?: ApplicationStore;
+  now?: () => Date;
+};
+
+const OK = <T>(data: T): Result<T> => ({ ok: true, data });
+const FORBIDDEN = (msg: string): Result<never> => ({
+  ok: false,
+  code: "FORBIDDEN",
+  message: msg,
+});
+const NOT_FOUND = (msg: string): Result<never> => ({
+  ok: false,
+  code: "NOT_FOUND",
+  message: msg,
+});
+const INVALID = (msg: string): Result<never> => ({
+  ok: false,
+  code: "INVALID",
+  message: msg,
+});
+
+export type CreateJobInput = JobDraftInput & { applyExternalUrl?: string | null };
+
+export async function createRecruiterJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  input: CreateJobInput,
+): Promise<Result<{ id: string; status: JobStatus }>> {
+  const title = input.title?.trim();
+  const company = input.company?.trim();
+  const description = input.description?.trim();
+  if (!title || !company || !description) {
+    return INVALID("title, company, and description are required");
+  }
+  const now = (deps.now ?? (() => new Date()))();
+  const row = await deps.jobs.create({
+    data: {
+      title,
+      company,
+      description,
+      location: input.location?.trim() || null,
+      workMode: input.workMode,
+      type: input.opportunityType,
+      skills: normalizeSkills(input.skills),
+      status: "DRAFT",
+      isOpen: false,
+      recruiterId: actor.userId,
+      createdByAdminId: actor.isAdmin ? actor.userId : null,
+      publishedAt: null,
+      closedAt: null,
+      applyExternalUrl: input.applyExternalUrl?.trim() || null,
+    },
+  });
+  void now;
+  return OK({ id: row.id, status: row.status });
+}
+
+/**
+ * Owner-scoped fetch used by every mutation. Returns the row when the actor
+ * owns it (or is admin); refuses with 403 otherwise. A missing row is 404 for
+ * everyone — no signal about whether the id ever existed.
+ */
+async function loadOwned(
+  deps: ServiceDeps,
+  jobId: string,
+  actor: { userId: string; isAdmin?: boolean },
+): Promise<Result<JobRow>> {
+  const row = await deps.jobs.findById(jobId);
+  if (!row) return NOT_FOUND("Job not found");
+  if (!actor.isAdmin && row.recruiterId !== actor.userId) {
+    return FORBIDDEN("You do not own this job");
+  }
+  return OK(row);
+}
+
+export async function transitionJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  jobId: string,
+  action: LifecycleAction,
+): Promise<Result<{ id: string; status: JobStatus }>> {
+  const loaded = await loadOwned(deps, jobId, actor);
+  if (!loaded.ok) return loaded;
+  const now = (deps.now ?? (() => new Date()))();
+  const patch = lifecyclePatch(loaded.data, action, now);
+  if (!patch.ok) return patch;
+  const updated = await deps.jobs.update(jobId, patch.data);
+  return OK({ id: updated.id, status: updated.status });
+}
+
+export type UpdateJobInput = Partial<Omit<CreateJobInput, "opportunityType">> & {
+  opportunityType?: JobType;
+};
+
+export async function updateRecruiterJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  jobId: string,
+  input: UpdateJobInput,
+): Promise<Result<{ id: string }>> {
+  const loaded = await loadOwned(deps, jobId, actor);
+  if (!loaded.ok) return loaded;
+  const patch: Partial<JobRow> = {};
+  if (input.title !== undefined) patch.title = input.title.trim();
+  if (input.company !== undefined) patch.company = input.company.trim();
+  if (input.description !== undefined) patch.description = input.description.trim();
+  if (input.location !== undefined) patch.location = input.location.trim() || null;
+  if (input.workMode !== undefined) patch.workMode = input.workMode;
+  if (input.opportunityType !== undefined) patch.type = input.opportunityType;
+  if (input.skills !== undefined) patch.skills = normalizeSkills(input.skills);
+  if (input.applyExternalUrl !== undefined) {
+    patch.applyExternalUrl = input.applyExternalUrl?.trim() || null;
+  }
+  const updated = await deps.jobs.update(jobId, patch);
+  return OK({ id: updated.id });
+}
+
+/**
+ * List every job owned by the calling recruiter. T-226 rule: two recruiters
+ * on the same email domain remain independent, so this filters strictly on
+ * `recruiterId === actor.userId` — the caller cannot pass another user's id
+ * (the workspace resolver stamps it from the session). Admins bypass the
+ * owner filter and see everything, matching how the existing admin listing
+ * works.
+ */
+export async function listRecruiterJobs(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+): Promise<Result<JobRow[]>> {
+  if (actor.isAdmin) {
+    // Admin needs all rows including those of other recruiters — but this
+    // function is the recruiter-scoped read, so even admins get only their
+    // own rows here. Cross-recruiter admin views should hit getJobsAdmin.
+    return OK(await deps.jobs.listByRecruiter(actor.userId));
+  }
+  return OK(await deps.jobs.listByRecruiter(actor.userId));
+}
+
+/**
+ * Single-job fetch for the recruiter's own management view — returns any
+ * status (DRAFT included). Uses NOT_FOUND (not FORBIDDEN) when the row is
+ * owned by another recruiter so this endpoint cannot be used to enumerate
+ * another recruiter's job ids either. Admin bypasses ownership.
+ */
+export async function getRecruiterJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  jobId: string,
+): Promise<Result<JobRow>> {
+  const row = await deps.jobs.findById(jobId);
+  if (!row) return NOT_FOUND("Job not found");
+  if (!actor.isAdmin && row.recruiterId !== actor.userId) {
+    return NOT_FOUND("Job not found");
+  }
+  return OK(row);
+}
+
+/**
+ * Candidate-facing lookup. DRAFT jobs are 404 (never 403) so recruiters cannot
+ * leak the existence of a draft opening via id enumeration. CLOSED jobs stay
+ * visible so applicants who followed a stale link see the closed message.
+ */
+export async function getJobForCandidate(
+  deps: ServiceDeps,
+  jobId: string,
+): Promise<Result<JobRow>> {
+  const row = await deps.jobs.findById(jobId);
+  if (!row) return NOT_FOUND("Job not found");
+  if (row.status === "DRAFT") return NOT_FOUND("Job not found");
+  return OK(row);
+}
+
+export const CLOSED_JOB_MESSAGE =
+  "This position is closed and no longer accepting applications";
+
+/**
+ * Enforces the closed-job guard on apply. Returns the guard result — the
+ * caller performs the actual application write so this stays free of side
+ * effects and easy to test.
+ */
+export async function assertApplyAllowed(
+  deps: ServiceDeps,
+  jobId: string,
+): Promise<Result<JobRow>> {
+  const visible = await getJobForCandidate(deps, jobId);
+  if (!visible.ok) return visible;
+  if (visible.data.status === "CLOSED") {
+    return {
+      ok: false,
+      code: "CONFLICT",
+      message: CLOSED_JOB_MESSAGE,
+    };
+  }
+  if (visible.data.status !== "PUBLISHED") {
+    return { ok: false, code: "CONFLICT", message: "This role is not open." };
+  }
+  return OK(visible.data);
+}
