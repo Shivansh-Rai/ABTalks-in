@@ -183,7 +183,11 @@ export function AccomplishmentsSection({
   initial: { rows: CertificationFormRow[]; awards: string };
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveAccomplishmentsAction, "Accomplishments");
+  const { save } = useSectionSave(
+    saveAccomplishmentsAction,
+    "Accomplishments",
+    "certifications",
+  );
   const { control, register, handleSubmit, setValue, formState } =
     useForm<FormValues>({
     defaultValues: {

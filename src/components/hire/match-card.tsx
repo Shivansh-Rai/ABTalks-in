@@ -29,6 +29,16 @@ export type PublicScoreSlice = {
   experience: number | null;
 };
 
+/** Project-scoped triage. Not the outreach cart / RecruiterShortlistItem. */
+export type MatchDecision = "UNDECIDED" | "SHORTLISTED" | "REJECTED";
+
+export type MatchTriage = {
+  candidateUserId: string;
+  viewedAt: string | null;
+  decision: MatchDecision;
+  isNew: boolean;
+};
+
 export type MatchCardData = {
   /** `PROGRAM:<id>` / `CLAUDE:<id>` — what every action on this card addresses. */
   candidateRef: string;

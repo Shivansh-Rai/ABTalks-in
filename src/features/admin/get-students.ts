@@ -81,21 +81,25 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
           where: {
             ...(domainFilter ? { domain: domainFilter } : {}),
             ...(statusFilter ? { status: statusFilter } : {}),
-            ...(q
-              ? {
-                  user: {
+            user: {
+              deletedAt: null,
+              ...(q
+                ? {
                     OR: [
-                      { name: { contains: q, mode: "insensitive" } },
-                      { email: { contains: q, mode: "insensitive" } },
+                      { name: { contains: q, mode: "insensitive" as const } },
+                      { email: { contains: q, mode: "insensitive" as const } },
                       {
                         studentProfile: {
-                          fullName: { contains: q, mode: "insensitive" },
+                          fullName: {
+                            contains: q,
+                            mode: "insensitive" as const,
+                          },
                         },
                       },
                     ],
-                  },
-                }
-              : {}),
+                  }
+                : {}),
+            },
           },
           orderBy: challengeOrderBy,
           // Fetch enough to merge; final cap applied after merge+sort.
@@ -125,6 +129,7 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
       ? prisma.hackathonParticipant.findMany({
           where: {
             eventId: HACKATHON.eventId,
+            user: { deletedAt: null },
             ...(q
               ? {
                 OR: [
@@ -264,7 +269,10 @@ export async function getStudentDomainCounts(
 
   const grouped = await prisma.enrollment.groupBy({
     by: ["domain"],
-    where: statusFilter ? { status: statusFilter } : undefined,
+    where: {
+      user: { deletedAt: null },
+      ...(statusFilter ? { status: statusFilter } : {}),
+    },
     _count: { _all: true },
   });
 
@@ -303,21 +311,22 @@ export async function getStudentTrackCounts(input?: {
   const challengeWhere: Prisma.EnrollmentWhereInput = {
     ...(domainFilter ? { domain: domainFilter } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(q
-      ? {
-          user: {
+    user: {
+      deletedAt: null,
+      ...(q
+        ? {
             OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
+              { name: { contains: q, mode: "insensitive" as const } },
+              { email: { contains: q, mode: "insensitive" as const } },
               {
                 studentProfile: {
-                  fullName: { contains: q, mode: "insensitive" },
+                  fullName: { contains: q, mode: "insensitive" as const },
                 },
               },
             ],
-          },
-        }
-      : {}),
+          }
+        : {}),
+    },
   };
 
   const hackathonAllowed =
@@ -329,6 +338,7 @@ export async function getStudentTrackCounts(input?: {
       ? prisma.hackathonParticipant.count({
           where: {
             eventId: HACKATHON.eventId,
+            user: { deletedAt: null },
             ...(q
               ? {
                 OR: [

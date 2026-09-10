@@ -101,7 +101,13 @@ export async function getStudentDetail(
 ): Promise<StudentDetail | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      deletedAt: true,
       studentProfile: true,
       enrollments: {
         orderBy: { createdAt: "desc" },
@@ -138,7 +144,7 @@ export async function getStudentDetail(
     },
   });
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     return null;
   }
 

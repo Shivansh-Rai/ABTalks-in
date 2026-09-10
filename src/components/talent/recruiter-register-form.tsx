@@ -8,6 +8,8 @@ import {
   registerRecruiterWithOtpAction,
   requestRecruiterOtpAction,
 } from "@/app/actions/recruiter-auth-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +24,7 @@ import { cn } from "@/lib/utils";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm() {
+  const track = useTrack();
   const [step, setStep] = useState<"form" | "code">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
@@ -70,6 +73,7 @@ export function RecruiterRegisterForm() {
         setCode("");
         return;
       }
+      track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
       // Registration is the start of setup, not the end of it (T-226), but it
       // does NOT create a session — the account is written and nothing is
       // signed in. So the next step is signing in, and /talent/login carries on

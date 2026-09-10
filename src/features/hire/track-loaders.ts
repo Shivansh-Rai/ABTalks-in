@@ -10,6 +10,7 @@ import {
   buildChallengeDossierSet,
 } from "@/features/hire/challenge-dossier";
 import { buildHackathonDossierSet } from "@/features/hire/hackathon-dossier";
+import { buildProfileDossierSet } from "@/features/hire/profile-dossier";
 import {
   clearsEvidenceFloor,
   memberEligibilityWhere,
@@ -33,18 +34,17 @@ import { findTrack } from "@/features/hire/track-registry";
  */
 
 /**
- * The one place the world is still closed, and it is the database.
+ * Persist only sources the Prisma enum already knows.
  *
- * `TalentRequestMatch.source` and `TalentEngagementRequest.source` are a Prisma
- * enum with exactly four values, so a track added to the registry can be
- * described, filtered, searched and ranked — but its matches cannot be WRITTEN
- * until that enum gains a value, which is a migration.
+ * `TalentRequestMatch.source` and `TalentEngagementRequest.source` are
+ * `TalentCandidateSource` (PROGRAM, CHALLENGE_60, CLAUDE, HACKATHON, PROFILE).
+ * A track can be described, filtered, searched and ranked from the registry,
+ * but its matches cannot be WRITTEN until that enum includes the slug — which
+ * is a migration (PROFILE landed in plan 117).
  *
- * This narrows explicitly and returns null rather than casting, so the limit
- * surfaces as a logged, handled case at the two write sites instead of a runtime
- * Prisma error a recruiter would meet as a failed intro request. Completing the
- * future-proofing means widening the enum; that is plan 094's job, and it needs
- * a schema change nobody should make silently.
+ * This narrows explicitly and returns null rather than casting, so an unknown
+ * slug surfaces as a logged, handled case at the two write sites instead of a
+ * runtime Prisma error a recruiter would meet as a failed intro request.
  */
 export function persistableSource(slug: string): TalentCandidateSource | null {
   const hit = (
@@ -275,6 +275,62 @@ async function loadHackathon(): Promise<TrackLoad> {
   };
 }
 
+/* ── PROFILE: discoverable from profile state alone ───────────────────────── */
+
+/**
+ * Everyone whose profile is usable, regardless of ABTalks activity.
+ *
+ * `belowEvidenceFloor` is 0 and `clearsEvidenceFloor` is never called: these
+ * candidates have no missions by definition, and the floor has never been an
+ * eligibility condition — it demotes and it counts. Reporting a floor here
+ * would be reporting a bar nobody was being measured against.
+ */
+async function loadProfile(opts: TrackLoadOpts): Promise<TrackLoad> {
+  const set = await buildProfileDossierSet({ limit: opts.limit });
+  const dossiers = set.dossiers;
+
+  return {
+    slug: "PROFILE",
+    coverage: set.coverage,
+    belowEvidenceFloor: 0,
+    cohortName: null,
+    stage: null,
+    members: dossiers.map((d): ScoreableMember => ({
+      id: d.userId ?? "",
+      source: "PROFILE",
+      candidateRef: d.candidateRef,
+      userId: d.userId ?? "",
+      fullName: (d.userId && set.nameByUser.get(d.userId)) || "",
+      jobRole: d.rawRoleLabel.value,
+      company: "",
+      yearsExperience: d.yearsExperience.value,
+      skills: d.declaredSkills.value,
+      missionPoints: 0,
+      missionsPassed: 0,
+      missionsAttempted: 0,
+      cleanPassCount: 0,
+      totalScore: 0,
+      commitDayCount: 0,
+      projectScores: [],
+      interview: null,
+      // The discovery gate already ran in `listProfileCandidates` via
+      // `searchableUserWhere()`. These two are the scorer's own preconditions,
+      // and a profile-only candidate has no cohort to publish or enrol in.
+      hasVisibilityConsent: true,
+      cohortPublished: true,
+      status: "ENROLLED",
+      availability: d.availability,
+      // No cohort calendar: there is no elapsed time to judge output against,
+      // so nothing here should be scaled by a day count.
+      cohortDay: 0,
+      maxEarnableMissions: 0,
+      consistencyWindow: 0,
+      coverage: set.coverage,
+      dossier: d,
+    })),
+  };
+}
+
 /**
  * Load one track by slug.
  *
@@ -298,6 +354,8 @@ export async function loadTrack(
         return await loadChallenge(track.slug, opts);
       case "HACKATHON":
         return await loadHackathon();
+      case "PROFILE":
+        return await loadProfile(opts);
       default:
         return emptyLoad(track.slug);
     }

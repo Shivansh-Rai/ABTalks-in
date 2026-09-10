@@ -158,9 +158,7 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
 }
 
 /* ============================================================
-   PROFILE CARD — Quick Links
-   The card hugs its content: there is nothing below the list, so a
-   fixed height would leave dead space under the last tab.
+   PROFILE CARD — Quick Links + Profile performance
    ============================================================ */
 .pw-profile-card {
   width: var(--pw-profile-card-w);
@@ -173,7 +171,7 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
   border: 1px solid #e0e0e0;
   border-radius: var(--pw-card-radius);
   box-shadow: var(--pw-shadow-card);
-  padding: 0 0 20px;
+  padding: 0 0 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -271,6 +269,104 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
   color: var(--pw-primary);
 }
 
+/* ---- Profile performance (plan 120) ---- */
+.pw-performance-section {
+  margin: 18px 16px 0;
+  background: #eef6f6;
+  border-radius: 18px;
+  padding: 16px;
+  flex: none;
+}
+.pw-performance-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pw-performance-section .pw-section-title {
+  font-weight: 700;
+  color: #000000;
+  font-size: 14.5px;
+  line-height: 18px;
+}
+.pw-performance-caption {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 14px;
+  color: #8f8f8f;
+  font-weight: 400;
+}
+/* Outranks `.pw-root svg.pw-ico` (0,2,1), which would otherwise force 20px. */
+.pw-root .pw-performance-header svg.pw-info {
+  width: 15px;
+  height: 15px;
+  color: #787878;
+  stroke-width: 1.7;
+  margin-top: 1px;
+  flex: none;
+  cursor: help;
+}
+.pw-performance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  column-gap: 16px;
+  margin-top: 10px;
+  align-items: start;
+}
+.pw-grid-divider {
+  background: #e9e9e9;
+  width: 1px;
+  height: 100%;
+  border-radius: 1px;
+  align-self: stretch;
+}
+.pw-col-label {
+  font-size: 12.5px;
+  line-height: 17px;
+  color: #4b4b4b;
+  white-space: nowrap;
+}
+.pw-col-value {
+  margin-top: 2px;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 800;
+  color: var(--pw-primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.pw-col-value .pw-dot,
+.pw-col-value .pw-chev {
+  flex: none;
+}
+.pw-col-value .pw-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4b4b4b;
+  margin-left: 7px;
+}
+.pw-col-value .pw-chev {
+  width: 11px;
+  height: 11px;
+  margin-left: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--pw-primary);
+}
+.pw-col-value .pw-chev svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* ============================================================
    REPORT CARD — the profile as a recruiter sees it
@@ -2644,6 +2740,10 @@ body.pw-sheet-open .abt-content-scroll {
   .pw-checklist {
     margin-left: 20px;
     margin-right: 20px;
+  }
+  .pw-performance-section {
+    margin-left: 12px;
+    margin-right: 12px;
   }
   .pw-quick-head {
     padding-left: 20px;

@@ -59,7 +59,7 @@ function GlobeIcon() {
 
 export function LinksSection({ initial }: { initial: LinksFormValues }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveLinksAction, "Links");
+  const { save } = useSectionSave(saveLinksAction, "Links", "links");
   const { control, register, handleSubmit, watch, setValue, formState } =
     useForm<LinksFormValues>({ defaultValues: initial });
   const { fields, append, remove } = useFieldArray({

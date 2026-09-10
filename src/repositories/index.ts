@@ -49,3 +49,13 @@ export {
   listCandidateAvailability,
   upsertCandidateAvailability,
 } from "./candidate";
+export {
+  applyCreditChange,
+  getCreditBalance,
+  grantOnboardingCredits,
+  grantOnboardingCreditsAtomic,
+  listCreditTransactions,
+  onboardingGrantKey,
+  reconcileCreditAccount,
+  sumLedgerBalance,
+} from "./credits";

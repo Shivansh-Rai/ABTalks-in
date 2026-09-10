@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RejectSubmissionButton } from "@/components/admin/reject-submission-button";
 import { StudentActionPanel } from "@/components/admin/student-action-panel";
 import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
+import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
 import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
@@ -81,6 +82,10 @@ export default async function AdminStudentDetailPage({
             <GrantSynergyDialog
               studentId={data.user.id}
               studentName={data.user.name}
+            />
+            <DeleteUserAccountDialog
+              userId={data.user.id}
+              userName={data.user.name}
             />
           </div>
         </div>
