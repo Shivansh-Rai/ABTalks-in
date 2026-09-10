@@ -29,7 +29,7 @@ export async function getJobDetail(jobId: string, userId: string) {
   if (job.status === "DRAFT") return null;
 
   const applied = await prisma.jobApplication.findUnique({
-    where: { jobId_userId: { jobId, userId } },
+    where: { userId_jobId: { userId, jobId } },
     select: { id: true },
   });
 
