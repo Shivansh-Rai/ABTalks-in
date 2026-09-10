@@ -12,6 +12,7 @@ import {
   PwEntryCard,
   PwField,
   PwInput,
+  CURRENT_YEAR,
   PwMonthYear,
   PwRow,
   PwSelect,
@@ -87,6 +88,7 @@ export function ExperienceSection({
       <div className="pw-entries">
         {fields.map((field, index) => {
           const isCurrent = watch(`rows.${index}.isCurrent`);
+          const startYear = watch(`rows.${index}.startYear`);
           const employment = watch(`rows.${index}.employmentType`);
           const extraType =
             employment &&
@@ -103,7 +105,6 @@ export function ExperienceSection({
               <PwRow cols={2}>
                 <PwField
                   label="Company"
-                  required
                   htmlFor={`exp-company-${index}`}
                 >
                   <PwInput
@@ -111,16 +112,15 @@ export function ExperienceSection({
                     placeholder="Enter your company name"
                     autoComplete="off"
                     {...register(`rows.${index}.companyName`, {
-                      required: true,
                     })}
                   />
                 </PwField>
-                <PwField label="Role" required htmlFor={`exp-title-${index}`}>
+                <PwField label="Role" htmlFor={`exp-title-${index}`}>
                   <PwSuggest
                     id={`exp-title-${index}`}
                     placeholder="Enter your role"
                     suggestions={COMMON_ROLES}
-                    {...register(`rows.${index}.title`, { required: true })}
+                    {...register(`rows.${index}.title`)}
                   />
                 </PwField>
               </PwRow>
@@ -177,7 +177,7 @@ export function ExperienceSection({
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Starting from" required>
+                <PwField label="Starting from">
                   <Controller
                     control={control}
                     name={`rows.${index}.startMonth`}
@@ -191,6 +191,7 @@ export function ExperienceSection({
                             year={year.value}
                             onMonthChange={month.onChange}
                             onYearChange={year.onChange}
+                            toYear={CURRENT_YEAR}
                           />
                         )}
                       />
@@ -203,7 +204,7 @@ export function ExperienceSection({
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in" required={!isCurrent}>
+                  <PwField label="Ending in">
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}
@@ -218,6 +219,8 @@ export function ExperienceSection({
                               onMonthChange={month.onChange}
                               onYearChange={year.onChange}
                               disabled={isCurrent}
+                              fromYear={startYear ?? 1975}
+                              toYear={CURRENT_YEAR}
                             />
                           )}
                         />

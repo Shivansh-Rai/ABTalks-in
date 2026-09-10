@@ -5,7 +5,11 @@ import {
   resolveSkillAction,
   saveSkillsAction,
 } from "@/app/actions/candidate-profile-actions";
-import { PROFILE_QUICK_SKILLS } from "@/lib/candidate-vocab";
+import {
+  CANONICAL_SKILL_NAMES,
+  PROFILE_QUICK_SKILLS,
+  canonicalSkillName,
+} from "@/lib/skill-catalog";
 import { SkillCombobox, type SkillOption } from "./skill-combobox";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
@@ -29,7 +33,7 @@ function mergeCatalog(resolved: readonly SkillOption[]): SkillOption[] {
     resolved.map((s) => [s.name.toLowerCase(), s] as const),
   );
   const bySlug = new Map(resolved.map((s) => [s.slug, s] as const));
-  return PROFILE_QUICK_SKILLS.map((name) => {
+  return CANONICAL_SKILL_NAMES.map((name) => {
     const slug = name
       .trim()
       .toLowerCase()
@@ -76,7 +80,9 @@ export function SkillsSection({
   const selectedIds = rows.map((r) => r.skillId).filter((id) => id.length > 0);
   const selectedNames = rows.map((r) => r.name);
   const selectedNameSet = new Set(selectedNames.map((n) => n.toLowerCase()));
-  const quickAdds = options.filter(
+  const quickAdds = options
+    .filter((s) => PROFILE_QUICK_SKILLS.includes(s.name))
+    .filter(
     (s) =>
       !(s.id && selectedIds.includes(s.id)) &&
       !selectedNameSet.has(s.name.toLowerCase()),
@@ -110,7 +116,9 @@ export function SkillsSection({
     setOtherBusy(true);
     setOtherError(null);
     try {
-      const result = await resolveSkillAction({ name: skill.name });
+      const result = await resolveSkillAction({
+        name: canonicalSkillName(skill.name),
+      });
       if (!result.ok) {
         setOtherError(result.message);
         return;
@@ -122,7 +130,7 @@ export function SkillsSection({
   }
 
   async function submitOther() {
-    const name = otherDraft.trim();
+    const name = canonicalSkillName(otherDraft);
     if (!name) return;
     if (selectedNameSet.has(name.toLowerCase())) {
       setOtherDraft("");
@@ -177,6 +185,14 @@ export function SkillsSection({
               excludeIds={selectedIds}
               excludeNames={selectedNames}
               onSelect={(skill) => void addOrResolve(skill)}
+              onEnterFreeText={(name) =>
+                void addOrResolve({
+                  id: "",
+                  name,
+                  slug: "",
+                  categoryName: null,
+                })
+              }
               onOther={() => {
                 setOtherOpen(true);
                 setOtherError(null);

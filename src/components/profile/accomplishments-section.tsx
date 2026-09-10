@@ -2,17 +2,32 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+  type Control,
+} from "react-hook-form";
+import {
+  CERTIFICATE_PROVIDERS,
+  KNOWN_COURSE_NAMES,
+  providerForCourse,
+} from "@/lib/certification-catalog";
+import { MAX_CERTIFICATIONS } from "@/lib/validations/candidate-profile";
 import { saveAccomplishmentsAction } from "@/app/actions/candidate-profile-actions";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
+  CURRENT_YEAR,
   PwAddMore,
+  PwCheckbox,
   PwEntryCard,
   PwField,
   PwInput,
   PwMonthYear,
   PwRow,
+  PwSuggest,
   PwTextarea,
 } from "./wizard-fields";
 
@@ -24,6 +39,12 @@ export type CertificationFormRow = {
   expiresMonth: number | null;
   expiresYear: number | null;
   credentialUrl: string;
+  /**
+   * UI-only. A certificate that does not expire simply has no expiry date, so
+   * this is derived on load and collapses back to nulls on save — there is no
+   * column for it and none is needed.
+   */
+  noExpiry: boolean;
 };
 
 /** Platform-derived; rendered read-only and never posted back. */
@@ -44,12 +65,115 @@ export const emptyCertificationRow: CertificationFormRow = {
   expiresMonth: null,
   expiresYear: null,
   credentialUrl: "",
+  noExpiry: false,
 };
+
+/** This month, so an issue date can never be picked in the future. */
+const CURRENT_MONTH = new Date().getMonth() + 1;
 
 const AWARDS_HELP =
   "Adding awards & accomplishments helps you stand out";
 const AWARDS_PLACEHOLDER =
   "Mention your academic or extracurricular achievements where you were recognised for your performance";
+
+/**
+ * Issue and expiry for one certification.
+ *
+ * The issue date cannot be in the future — the year list stops at this year and
+ * the month list stops at this month once that year is picked. Expiry collapses
+ * entirely behind "This certificate does not expire", because a date input the
+ * answer has made meaningless should not stay on screen.
+ */
+function CertificationDates({
+  control,
+  index,
+}: {
+  control: Control<FormValues>;
+  index: number;
+}) {
+  const issuedYear = useWatch({
+    control,
+    name: `rows.${index}.issuedYear`,
+  });
+  const noExpiry = useWatch({ control, name: `rows.${index}.noExpiry` });
+
+  return (
+    <>
+      <PwRow cols={2}>
+        <PwField label="Issued">
+          <Controller
+            control={control}
+            name={`rows.${index}.issuedMonth`}
+            render={({ field: month }) => (
+              <Controller
+                control={control}
+                name={`rows.${index}.issuedYear`}
+                render={({ field: year }) => (
+                  <PwMonthYear
+                    month={month.value}
+                    year={year.value}
+                    onMonthChange={month.onChange}
+                    onYearChange={year.onChange}
+                    fromYear={1975}
+                    toYear={CURRENT_YEAR}
+                    maxMonth={
+                      year.value === CURRENT_YEAR ? CURRENT_MONTH : undefined
+                    }
+                  />
+                )}
+              />
+            )}
+          />
+        </PwField>
+        {noExpiry ? (
+          <PwField label="Expires">
+            <p className="pw-note-muted">This certificate does not expire.</p>
+          </PwField>
+        ) : (
+          <PwField label="Expires">
+            <Controller
+              control={control}
+              name={`rows.${index}.expiresMonth`}
+              render={({ field: month }) => (
+                <Controller
+                  control={control}
+                  name={`rows.${index}.expiresYear`}
+                  render={({ field: year }) => (
+                    <PwMonthYear
+                      month={month.value}
+                      year={year.value}
+                      onMonthChange={month.onChange}
+                      onYearChange={year.onChange}
+                      fromYear={issuedYear ?? 1975}
+                    />
+                  )}
+                />
+              )}
+            />
+          </PwField>
+        )}
+      </PwRow>
+
+      <PwRow cols={1}>
+        <PwField>
+          <Controller
+            control={control}
+            name={`rows.${index}.noExpiry`}
+            render={({ field }) => (
+              <PwCheckbox
+                id={`crt-noexpiry-${index}`}
+                checked={Boolean(field.value)}
+                onChange={field.onChange}
+              >
+                This certificate does not expire
+              </PwCheckbox>
+            )}
+          />
+        </PwField>
+      </PwRow>
+    </>
+  );
+}
 
 export function AccomplishmentsSection({
   verified,
@@ -60,7 +184,8 @@ export function AccomplishmentsSection({
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveAccomplishmentsAction, "Accomplishments");
-  const { control, register, handleSubmit, formState } = useForm<FormValues>({
+  const { control, register, handleSubmit, setValue, formState } =
+    useForm<FormValues>({
     defaultValues: {
       rows:
         initial.rows.length > 0 ? initial.rows : [{ ...emptyCertificationRow }],
@@ -88,7 +213,15 @@ export function AccomplishmentsSection({
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        const payload = {
+          ...v,
+          rows: v.rows.map(({ noExpiry, ...row }) => ({
+            ...row,
+            expiresMonth: noExpiry ? null : row.expiresMonth,
+            expiresYear: noExpiry ? null : row.expiresYear,
+          })),
+        };
+        if (await save(payload)) onSaved();
       })}
     >
       {/* ---- A. Verified — platform records, not editable ---- */}
@@ -150,64 +283,35 @@ export function AccomplishmentsSection({
             onRemove={() => removeOrClear(index)}
           >
             <PwRow cols={2}>
-              <PwField label="Name" required htmlFor={`crt-name-${index}`}>
-                <PwInput
+              <PwField label="Name" htmlFor={`crt-name-${index}`}>
+                <PwSuggest
                   id={`crt-name-${index}`}
-                  placeholder="Enter your certification name"
-                  {...register(`rows.${index}.name`, { required: true })}
+                  suggestions={KNOWN_COURSE_NAMES}
+                  placeholder="Start typing your certification"
+                  {...register(`rows.${index}.name`, {
+                    onChange: (e: { target: { value: string } }) => {
+                      // Picking a course we recognise fills its provider in.
+                      const provider = providerForCourse(e.target.value);
+                      if (provider) {
+                        setValue(`rows.${index}.issuer`, provider, {
+                          shouldDirty: true,
+                        });
+                      }
+                    },
+                  })}
                 />
               </PwField>
-              <PwField label="Issuer" required htmlFor={`crt-issuer-${index}`}>
-                <PwInput
+              <PwField label="Issuer" htmlFor={`crt-issuer-${index}`}>
+                <PwSuggest
                   id={`crt-issuer-${index}`}
-                  placeholder="Enter your certification issuer"
-                  {...register(`rows.${index}.issuer`, { required: true })}
+                  suggestions={CERTIFICATE_PROVIDERS}
+                  placeholder="e.g. NPTEL, Coursera, Udemy"
+                  {...register(`rows.${index}.issuer`)}
                 />
               </PwField>
             </PwRow>
 
-            <PwRow cols={2}>
-              <PwField label="Issued">
-                <Controller
-                  control={control}
-                  name={`rows.${index}.issuedMonth`}
-                  render={({ field: month }) => (
-                    <Controller
-                      control={control}
-                      name={`rows.${index}.issuedYear`}
-                      render={({ field: year }) => (
-                        <PwMonthYear
-                          month={month.value}
-                          year={year.value}
-                          onMonthChange={month.onChange}
-                          onYearChange={year.onChange}
-                        />
-                      )}
-                    />
-                  )}
-                />
-              </PwField>
-              <PwField label="Expires">
-                <Controller
-                  control={control}
-                  name={`rows.${index}.expiresMonth`}
-                  render={({ field: month }) => (
-                    <Controller
-                      control={control}
-                      name={`rows.${index}.expiresYear`}
-                      render={({ field: year }) => (
-                        <PwMonthYear
-                          month={month.value}
-                          year={year.value}
-                          onMonthChange={month.onChange}
-                          onYearChange={year.onChange}
-                        />
-                      )}
-                    />
-                  )}
-                />
-              </PwField>
-            </PwRow>
+            <CertificationDates control={control} index={index} />
 
             <PwRow cols={1}>
               <PwField label="Credential URL" htmlFor={`crt-url-${index}`}>
@@ -223,7 +327,13 @@ export function AccomplishmentsSection({
           </PwEntryCard>
         ))}
       </div>
-      <PwAddMore onClick={() => append({ ...emptyCertificationRow })} />
+      {fields.length < MAX_CERTIFICATIONS ? (
+        <PwAddMore onClick={() => append({ ...emptyCertificationRow })} />
+      ) : (
+        <p className="pw-sub-text">
+          You have added the maximum of {MAX_CERTIFICATIONS} certifications.
+        </p>
+      )}
 
       {/* ---- C. Awards — one prose field, not repeatable entries ---- */}
       <h3 className="pw-sub-title pw-sub-spaced">Awards</h3>

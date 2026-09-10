@@ -607,6 +607,7 @@ function detailFixture(over: Partial<CandidateDetail> = {}): CandidateDetail {
     headline: null,
     summary: null,
     awards: null,
+    gender: null,
     primaryPersona: CandidatePersona.STUDENT,
     phone: null,
     phoneVerified: false,
@@ -644,12 +645,45 @@ const skill = (id: string, claimed = true) => ({
 });
 
 suite("completeness is deterministic and bounded", () => {
-  const empty = computeCompleteness(detailFixture(), { hasAny: false });
-  assert(empty.score === 0, `empty profile scores 0, got ${empty.score}`);
+  const blank = computeCompleteness(detailFixture({ fullName: "" }), {
+    hasAny: false,
+  });
+  assert(blank.score === 0, `blank profile scores 0, got ${blank.score}`);
 
-  const again = computeCompleteness(detailFixture(), { hasAny: false });
-  assert(again.score === empty.score, "same input, same score");
-  assert(empty.sections.length === 9, "every section reported");
+  const again = computeCompleteness(detailFixture({ fullName: "" }), {
+    hasAny: false,
+  });
+  assert(again.score === blank.score, "same input, same score");
+  assert(blank.sections.length === 9, "every section reported");
+});
+
+suite("every field moves the number, not just whole sections", () => {
+  const nameOnly = computeCompleteness(detailFixture(), { hasAny: false });
+  // The fixture carries a full name and nothing else: partial credit, not zero
+  // and not a whole section's worth.
+  assert(nameOnly.score > 0, `a filled field scores something, got ${nameOnly.score}`);
+  assert(
+    nameOnly.score < 20,
+    `one field is not a whole section, got ${nameOnly.score}`,
+  );
+
+  // Adding a second field in the same section must strictly increase the score.
+  const withHeadline = computeCompleteness(
+    detailFixture({ headline: "Final-year CSE student" }),
+    { hasAny: false },
+  );
+  assert(
+    withHeadline.score > nameOnly.score,
+    "a second field raises the score",
+  );
+
+  // And a partially filled section is still reported incomplete.
+  const basic = withHeadline.sections.find((x) => x.key === "basic");
+  assert(basic !== undefined && !basic.complete, "partial section not complete");
+  assert(
+    basic !== undefined && basic.fraction > 0 && basic.fraction < 1,
+    "partial section reports a fraction",
+  );
 });
 
 suite("completeness reaches 100 without every optional section", () => {

@@ -40,15 +40,38 @@ import type { SkillOption } from "@/features/skill/search-skills";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
+/** "expiresYear" → "Expires year", so an error never shows a code name. */
+function humanField(field: string): string {
+  const spaced = field
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * One readable sentence for the toast.
+ *
+ * Messages written in the schema already read as sentences ("This certificate
+ * cannot expire before it was issued"), so bolting the field name onto the
+ * front of them produced "expiresYear — This certificate…". The field name is
+ * only added when the message is a bare Zod default that would otherwise say
+ * nothing about what to fix.
+ */
 function firstIssue(error: z.ZodError): string {
   const issue = error.issues[0];
-  if (!issue) return "Invalid input";
+  if (!issue) return "Something in this section is not valid.";
+
   // Row index is far more useful than a bare field name in a repeatable list.
   const rowIndex = issue.path.find((p) => typeof p === "number");
   const field = [...issue.path].reverse().find((p) => typeof p === "string");
-  const where =
-    typeof rowIndex === "number" ? `Entry ${rowIndex + 1}: ` : "";
-  return field ? `${where}${String(field)} — ${issue.message}` : `${where}${issue.message}`;
+  const where = typeof rowIndex === "number" ? `Entry ${rowIndex + 1}: ` : "";
+
+  const message = issue.message.trim();
+  const readsAsSentence = /^[A-Z]/.test(message) && message.includes(" ");
+  if (readsAsSentence || !field) return `${where}${message}`;
+  return `${where}${humanField(String(field))} — ${message}`;
 }
 
 /**
@@ -134,6 +157,7 @@ export async function saveBasicInfoAction(raw: unknown): Promise<ActionResult> {
       locationCity: value.locationCity,
       locationRegion: value.locationRegion,
       countryCode: value.countryCode,
+      gender: value.gender,
       primaryPersona: value.primaryPersona,
     });
   } catch (error) {

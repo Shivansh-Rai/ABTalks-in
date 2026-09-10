@@ -6,7 +6,6 @@ import type { ProfileReview } from "@/features/profile/build-review";
 import { ProfileCard } from "./profile-card";
 import { ProfileReviewCard } from "./profile-review";
 import { IdentityMedia } from "./identity-media";
-import { LeaveDialog } from "./leave-dialog";
 import { ProfileWizardProvider, PW_FORM_ID } from "./wizard-context";
 
 export type WizardChecklistKey =
@@ -108,6 +107,12 @@ export function ProfileWizard({
   }, [open]);
 
   useEffect(() => () => window.clearTimeout(exitTimer.current), []);
+
+  // Marks the route for the scoped scrollbar-hiding rule in profile-wizard.css.
+  useEffect(() => {
+    document.body.classList.add("pw-profile-page");
+    return () => document.body.classList.remove("pw-profile-page");
+  }, []);
 
   // Lock the page behind the sheet. Reserving the scrollbar's width keeps the
   // workspace from jolting sideways as the sheet slides in.
@@ -286,6 +291,49 @@ export function ProfileWizard({
             </div>
 
             <div className="pw-form-actions">
+              {pendingTarget !== null ? (
+                <div className="pw-leave-pop" role="alertdialog" aria-live="polite">
+                  <p className="pw-leave-copy">
+                    You have unsaved changes in this section.
+                  </p>
+                  <div className="pw-leave-actions">
+                    <button
+                      type="button"
+                      className="pw-leave-btn"
+                      onClick={() => setPendingTarget(null)}
+                    >
+                      Keep editing
+                    </button>
+                    <button
+                      type="button"
+                      className="pw-leave-btn"
+                      onClick={() => {
+                        const target = pendingTarget;
+                        setDirty(false);
+                        setPendingTarget(null);
+                        if (typeof target === "number") openSheet(target);
+                        else if (target === "close") closeSheet();
+                      }}
+                    >
+                      Discard
+                    </button>
+                    <button
+                      type="button"
+                      className="pw-leave-btn pw-leave-primary"
+                      autoFocus
+                      onClick={() => {
+                        pendingRef.current = pendingTarget;
+                        closeAfterSaveRef.current = false;
+                        setPendingTarget(null);
+                        const form = document.getElementById(PW_FORM_ID);
+                        if (form instanceof HTMLFormElement) form.requestSubmit();
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <button
                 type="button"
                 className="pw-btn pw-btn-ghost"
@@ -322,27 +370,6 @@ export function ProfileWizard({
         </ProfileWizardProvider>
       ) : null}
 
-      <LeaveDialog
-        open={pendingTarget !== null}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setPendingTarget(null);
-        }}
-        onCancel={() => setPendingTarget(null)}
-        onDiscard={() => {
-          const target = pendingTarget;
-          setDirty(false);
-          setPendingTarget(null);
-          if (typeof target === "number") openSheet(target);
-          else if (target === "close") closeSheet();
-        }}
-        onSave={() => {
-          pendingRef.current = pendingTarget;
-          closeAfterSaveRef.current = false;
-          setPendingTarget(null);
-          const form = document.getElementById(PW_FORM_ID);
-          if (form instanceof HTMLFormElement) form.requestSubmit();
-        }}
-      />
     </div>
   );
 }

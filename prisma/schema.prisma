@@ -2002,6 +2002,14 @@ enum PointsSourceType {
   LEGACY
 }
 
+/// Legally recognised categories in India. Nullable on the profile — "not
+/// stated" is the absence of a row value, not a fourth option.
+enum CandidateGender {
+  MALE
+  FEMALE
+  TRANSGENDER
+}
+
 enum AchievementSourceType {
   PROGRAM_ENROLLMENT
   HACKATHON_TEAM
@@ -2095,6 +2103,7 @@ model CandidateProfile {
   /// derived from Certificate / Enrollment / ProgramEnrollment / Hackathon and
   /// are never written here.
   awards                      String?
+  gender                      CandidateGender?
   /// Soft display label only — never a schema branch.
   primaryPersona              CandidatePersona @default(STUDENT)
   phone                       String?

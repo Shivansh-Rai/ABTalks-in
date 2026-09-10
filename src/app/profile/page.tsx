@@ -13,7 +13,7 @@ import { getVerifiedAccomplishments } from "@/features/profile/get-verified-acco
 import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
-import { PROFILE_QUICK_SKILLS } from "@/lib/candidate-vocab";
+import { CANONICAL_SKILL_NAMES } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
@@ -105,7 +105,7 @@ export default async function ProfilePage() {
     verifiedSkills,
   ] = await Promise.all([
     getProfileEvidence(userId),
-    getSkillsByNames(PROFILE_QUICK_SKILLS),
+    getSkillsByNames(CANONICAL_SKILL_NAMES),
     // The MockInterview tables exist on demo but the migration has not been
     // applied to production, so this query throws there until it is. The
     // profile must not 500 over it — it degrades to an empty list, which
@@ -191,6 +191,7 @@ export default async function ProfilePage() {
             locationCity: s(detail.locationCity),
             locationRegion: s(detail.locationRegion),
             countryCode: s(detail.countryCode),
+            gender: detail.gender ?? "",
             primaryPersona: detail.primaryPersona ?? CandidatePersona.STUDENT,
           }}
         />
@@ -334,6 +335,8 @@ export default async function ProfilePage() {
               expiresMonth: c.expiresMonth,
               expiresYear: c.expiresYear,
               credentialUrl: s(c.credentialUrl),
+              // No expiry stored means the certificate does not expire.
+              noExpiry: c.expiresYear === null,
             })),
             awards: s(detail.awards),
           }}

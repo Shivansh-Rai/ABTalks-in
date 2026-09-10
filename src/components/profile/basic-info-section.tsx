@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { CandidatePersona } from "@prisma/client";
+import { CandidateGender, CandidatePersona } from "@prisma/client";
 import { saveBasicInfoAction } from "@/app/actions/candidate-profile-actions";
 import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
-import { PERSONA_LABELS } from "@/lib/candidate-vocab";
+import { PERSONA_LABELS, GENDER_LABELS } from "@/lib/candidate-vocab";
+import { COUNTRY_NAMES, countryCodeForName, countryNameForCode } from "@/lib/country-catalog";
 import {
   INDIA_DIALING_CODE,
   isIndianPhone,
@@ -18,6 +19,7 @@ import {
   PwInput,
   PwRow,
   PwSelect,
+  PwSuggest,
   PwTextarea,
 } from "./wizard-fields";
 
@@ -29,8 +31,24 @@ export type BasicInfoValues = {
   locationCity: string;
   locationRegion: string;
   countryCode: string;
+  gender: CandidateGender | "";
   primaryPersona: CandidatePersona;
 };
+
+/** Form shape: the candidate picks a country NAME, storage keeps the code. */
+type FormValues = Omit<BasicInfoValues, "countryCode"> & { country: string };
+
+/**
+ * Letters, spaces and the punctuation real names carry. Mirrors the server
+ * guard in validations/candidate-profile.ts so the message arrives before the
+ * round trip rather than after it.
+ */
+const LETTERS_ONLY = /^[\p{L}][\p{L}\s.'\-&]*$/u;
+
+const lettersOnly = (label: string) => (value: string) =>
+  value.trim() === "" || LETTERS_ONLY.test(value.trim())
+    ? true
+    : `${label} cannot contain numbers or symbols`;
 
 function splitPhone(e164: string): {
   countryCode: string;
@@ -68,7 +86,12 @@ export function BasicInfoSection({
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<BasicInfoValues>({ defaultValues: initial });
+  } = useForm<FormValues>({
+    defaultValues: {
+      ...initial,
+      country: countryNameForCode(initial.countryCode),
+    },
+  });
 
   const summary = watch("summary") ?? "";
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -92,7 +115,10 @@ export function BasicInfoSection({
           setPhoneError("Please verify your phone number to continue.");
           return;
         }
-        if (await save(v)) onSaved();
+        const { country, ...rest } = v;
+        if (await save({ ...rest, countryCode: countryCodeForName(country) })) {
+          onSaved();
+        }
       })}
     >
       <PwRow cols={2}>
@@ -108,7 +134,10 @@ export function BasicInfoSection({
             placeholder="Your full name"
             aria-invalid={Boolean(errors.fullName)}
             className={errors.fullName ? "pw-invalid" : undefined}
-            {...register("fullName", { required: "Full name is required" })}
+            {...register("fullName", {
+              required: "Full name is required",
+              validate: lettersOnly("Full name"),
+            })}
           />
         </PwField>
         <PwField
@@ -158,43 +187,70 @@ export function BasicInfoSection({
             ))}
           </PwSelect>
         </PwField>
-        <PwField label="City" htmlFor="bi-city">
+        <PwField
+          label="City"
+          htmlFor="bi-city"
+          error={errors.locationCity?.message}
+        >
           <PwInput
             id="bi-city"
             placeholder="Enter your city"
             autoComplete="address-level2"
-            {...register("locationCity")}
+            aria-invalid={Boolean(errors.locationCity)}
+            className={errors.locationCity ? "pw-invalid" : undefined}
+            {...register("locationCity", { validate: lettersOnly("City") })}
           />
         </PwField>
-        <PwField label="State / Region" htmlFor="bi-region">
+        <PwField
+          label="State / Region"
+          htmlFor="bi-region"
+          error={errors.locationRegion?.message}
+        >
           <PwInput
             id="bi-region"
-            placeholder="Enter your state "
+            placeholder="Enter your state"
             autoComplete="address-level1"
-            {...register("locationRegion")}
+            aria-invalid={Boolean(errors.locationRegion)}
+            className={errors.locationRegion ? "pw-invalid" : undefined}
+            {...register("locationRegion", {
+              validate: lettersOnly("State / region"),
+            })}
           />
         </PwField>
       </PwRow>
 
-      <PwRow cols={2}>
+      <PwRow cols={3}>
         <PwField
-          label="Country Code"
+          label="Country"
           htmlFor="bi-country"
-          
+          error={errors.country?.message}
         >
-          <PwInput
+          <PwSuggest
             id="bi-country"
-            maxLength={2}
-            placeholder="Enter your country code(e.g. IN)"
-            className="uppercase"
-            {...register("countryCode")}
+            suggestions={COUNTRY_NAMES}
+            placeholder="Start typing your country"
+            autoComplete="country-name"
+            aria-invalid={Boolean(errors.country)}
+            className={errors.country ? "pw-invalid" : undefined}
+            {...register("country", {
+              validate: (v) =>
+                v.trim() === "" || countryCodeForName(v) !== ""
+                  ? true
+                  : "Pick a country from the list",
+            })}
           />
         </PwField>
-        <PwField
-          label="Profile Headline"
-          htmlFor="bi-headline"
-          helper=""
-        >
+        <PwField label="Gender" htmlFor="bi-gender">
+          <PwSelect id="bi-gender" {...register("gender")}>
+            <option value="">Prefer not to say</option>
+            {Object.values(CandidateGender).map((g) => (
+              <option key={g} value={g}>
+                {GENDER_LABELS[g] ?? g}
+              </option>
+            ))}
+          </PwSelect>
+        </PwField>
+        <PwField label="Profile Headline" htmlFor="bi-headline">
           <PwInput
             id="bi-headline"
             maxLength={160}
@@ -204,15 +260,15 @@ export function BasicInfoSection({
         </PwField>
       </PwRow>
 
-      <PwRow cols={1} grow>
+      <PwRow cols={1}>
         <PwField
           label="About"
           htmlFor="bi-summary"
           counter={`${summary.length}/2000`}
-          area
         >
           <PwTextarea
             id="bi-summary"
+            rows={4}
             maxLength={2000}
             placeholder="Tell recruiters who you are."
             {...register("summary")}

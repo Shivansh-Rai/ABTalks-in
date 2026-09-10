@@ -2,6 +2,7 @@
 
 import { Autocomplete } from "@base-ui/react/autocomplete";
 import { useEffect, useRef, useState } from "react";
+import { canonicalSkillName } from "@/lib/skill-catalog";
 
 export type SkillOption = {
   id: string;
@@ -59,6 +60,7 @@ export function SkillCombobox({
   excludeNames,
   onSelect,
   onOther,
+  onEnterFreeText,
   placeholder = "Search for skills",
 }: {
   id?: string;
@@ -67,6 +69,8 @@ export function SkillCombobox({
   excludeNames: readonly string[];
   onSelect: (skill: SkillOption) => void;
   onOther: () => void;
+  /** Enter with no match: add what was typed rather than submitting the form. */
+  onEnterFreeText?: (name: string) => void;
   placeholder?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -87,18 +91,17 @@ export function SkillCombobox({
         !isExcluded(s, idSet, nameSet) &&
         s.name.toLowerCase().includes(q),
     );
-    const fromApi = results.filter((s) => !isExcluded(s, idSet, nameSet));
+    const fromApi = results
+      .filter((s) => !isExcluded(s, idSet, nameSet))
+      // The `Skill` table was seeded from free text, so it holds several
+      // spellings of one technology. Show the canonical one.
+      .map((s) => ({ ...s, name: canonicalSkillName(s.name) }))
+      .filter((s) => !isExcluded(s, idSet, nameSet));
     const out: SkillOption[] = [];
-    const seenIds = new Set<string>();
     const seenNames = new Set<string>();
-    for (const s of [...fromApi, ...fromCatalog]) {
+    for (const s of [...fromCatalog, ...fromApi]) {
       const nameKey = s.name.toLowerCase();
-      if (s.id) {
-        if (seenIds.has(s.id)) continue;
-        seenIds.add(s.id);
-      } else if (seenNames.has(nameKey)) {
-        continue;
-      }
+      if (seenNames.has(nameKey)) continue;
       seenNames.add(nameKey);
       out.push(s);
     }
@@ -176,6 +179,24 @@ export function SkillCombobox({
         spellCheck={false}
         data-1p-ignore=""
         className="pw-skill-search"
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          // Without this the keypress reaches the section <form> and saves the
+          // section — reporting "Skills saved" for a skill never added.
+          event.preventDefault();
+          event.stopPropagation();
+          const typed = query.trim();
+          const first = listed[0];
+          if (first) {
+            choose(first);
+            return;
+          }
+          if (typed) {
+            onEnterFreeText?.(canonicalSkillName(typed));
+            setQuery("");
+            setResults([]);
+          }
+        }}
       />
       <Autocomplete.Portal>
         <Autocomplete.Positioner

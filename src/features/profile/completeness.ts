@@ -35,6 +35,8 @@ export type SectionStatus = {
   complete: boolean;
   /** 0 for sections that are earned rather than filled in. */
   weight: number;
+  /** 0–1. How much of this section's own checklist is filled in. */
+  fraction: number;
   /** Shown when incomplete. Null when there is nothing to ask for. */
   hint: string | null;
 };
@@ -60,6 +62,26 @@ const WEIGHTS: Record<SectionKey, number> = {
 };
 
 const MIN_SKILLS = 1;
+
+/**
+ * Every field moves the number.
+ *
+ * Sections used to score all-or-nothing, so typing four of a section's five
+ * fields earned exactly nothing and the bar sat still while real work went in.
+ * Each section now reports a FRACTION of its own checklist and earns that
+ * share of its weight. `complete` still means "all of it", so the tab ticks
+ * and the hints behave as before.
+ */
+function ratio(checks: readonly boolean[]): number {
+  if (checks.length === 0) return 0;
+  return checks.filter(Boolean).length / checks.length;
+}
+
+/** Repeatable sections: the first row is most of the value, a second adds depth. */
+function rowsRatio(count: number, idealRows = 2): number {
+  if (count <= 0) return 0;
+  return Math.min(1, count / idealRows);
+}
 
 export function computeCompleteness(
   detail: CandidateDetail,
@@ -96,11 +118,40 @@ export function computeCompleteness(
         pref.availableFromYear !== null),
   );
 
+  // Per-field checklists. These are what the percentage is actually made of.
+  const basicChecks = [
+    detail.fullName.trim().length > 0,
+    Boolean(detail.headline?.trim()),
+    Boolean(detail.summary?.trim()),
+    Boolean(detail.locationCity?.trim()),
+    Boolean(detail.locationRegion?.trim()),
+    Boolean(detail.countryCode?.trim()),
+    detail.gender !== null,
+    !isOtpVerificationRequired() || detail.phoneVerified,
+  ];
+
+  const prefChecks = [
+    Boolean(pref?.openToWork),
+    (pref?.preferredRoles.length ?? 0) > 0,
+    (pref?.preferredLocations.length ?? 0) > 0,
+    (pref?.opportunityTypes.length ?? 0) > 0,
+    Boolean(pref?.remotePreference),
+    pref?.noticePeriodDays !== null && pref?.noticePeriodDays !== undefined,
+    pref?.availableFromYear !== null && pref?.availableFromYear !== undefined,
+  ];
+
+  const linkChecks = [
+    Boolean(detail.linkedinUrl),
+    Boolean(detail.githubUsername),
+    Boolean(detail.portfolioUrl),
+  ];
+
   const sections: SectionStatus[] = [
     {
       key: "basic",
       label: "Basic information",
       complete: basicComplete,
+      fraction: ratio(basicChecks),
       weight: WEIGHTS.basic,
       hint: !detail.phoneVerified && isOtpVerificationRequired()
         ? "Verify your phone number"
@@ -110,6 +161,7 @@ export function computeCompleteness(
       key: "experience",
       label: "Experience",
       complete: detail.experience.length > 0,
+      fraction: rowsRatio(detail.experience.length),
       weight: WEIGHTS.experience,
       hint: "Add a role, internship, or freelance work",
     },
@@ -117,6 +169,7 @@ export function computeCompleteness(
       key: "education",
       label: "Education",
       complete: detail.education.length > 0,
+      fraction: rowsRatio(detail.education.length, 1),
       weight: WEIGHTS.education,
       hint: "Add your college or school",
     },
@@ -124,6 +177,7 @@ export function computeCompleteness(
       key: "projects",
       label: "Projects",
       complete: detail.projects.length > 0,
+      fraction: rowsRatio(detail.projects.length),
       weight: WEIGHTS.projects,
       hint: "Add something you have built",
     },
@@ -131,6 +185,7 @@ export function computeCompleteness(
       key: "skills",
       label: "Skills",
       complete: claimedSkills.length >= MIN_SKILLS,
+      fraction: rowsRatio(claimedSkills.length, 5),
       weight: WEIGHTS.skills,
       hint: "Add at least one skill",
     },
@@ -138,6 +193,7 @@ export function computeCompleteness(
       key: "certifications",
       label: "Certifications",
       complete: detail.certifications.length > 0,
+      fraction: rowsRatio(detail.certifications.length),
       weight: WEIGHTS.certifications,
       hint: "Add any external certifications you hold",
     },
@@ -145,6 +201,7 @@ export function computeCompleteness(
       key: "links",
       label: "Links",
       complete: linksComplete,
+      fraction: ratio(linkChecks),
       weight: WEIGHTS.links,
       hint: "Add LinkedIn, GitHub, or a portfolio",
     },
@@ -152,6 +209,7 @@ export function computeCompleteness(
       key: "preferences",
       label: "Career preferences",
       complete: preferencesComplete,
+      fraction: ratio(prefChecks),
       weight: WEIGHTS.preferences,
       hint: "Tell us what you are looking for, or mark Open to work",
     },
@@ -159,15 +217,19 @@ export function computeCompleteness(
       key: "evidence",
       label: "Evidence & achievements",
       complete: evidence.hasAny,
+      fraction: evidence.hasAny ? 1 : 0,
       weight: WEIGHTS.evidence,
       hint: null,
     },
   ];
 
+  // Partial credit, so every saved field is visible in the number. A finished
+  // section still earns its whole weight, and the 125-point spread still caps
+  // at 100 so nobody is punished for having no employment history.
   const earned = sections.reduce(
-    (sum, s) => sum + (s.complete ? s.weight : 0),
+    (sum, s) => sum + s.weight * (s.complete ? 1 : s.fraction),
     0,
   );
 
-  return { score: Math.min(100, earned), sections };
+  return { score: Math.min(100, Math.round(earned)), sections };
 }

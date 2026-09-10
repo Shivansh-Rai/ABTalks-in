@@ -10,6 +10,10 @@ import {
   FIELDS_OF_STUDY,
   GRADE_TYPE_LABELS,
 } from "@/lib/candidate-vocab";
+import {
+  EDUCATION_MAX_SPAN_YEARS,
+  EDUCATION_MIN_YEAR,
+} from "@/lib/validations/candidate-profile";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -18,6 +22,7 @@ import {
   PwEntryCard,
   PwField,
   PwInput,
+  CURRENT_YEAR,
   PwMonthYear,
   PwRow,
   PwSelect,
@@ -101,6 +106,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
       <div className="pw-entries">
         {fields.map((field, index) => {
           const isCurrent = watch(`rows.${index}.isCurrent`);
+          const startYear = watch(`rows.${index}.startYear`);
           const gradeType = watch(`rows.${index}.gradeType`);
           return (
             <PwEntryCard
@@ -110,11 +116,10 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               onRemove={() => removeOrClear(index)}
             >
               <PwRow cols={1}>
-                <PwField label="School / College" required>
+                <PwField label="School / College">
                   <Controller
                     control={control}
                     name={`rows.${index}.institutionName`}
-                    rules={{ required: true }}
                     render={({ field: f }) => (
                       <CollegeCombobox
                         id={`edu-college-${index}`}
@@ -189,6 +194,8 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                             year={year.value}
                             onMonthChange={month.onChange}
                             onYearChange={year.onChange}
+                            fromYear={EDUCATION_MIN_YEAR}
+                            toYear={CURRENT_YEAR}
                           />
                         )}
                       />
@@ -201,7 +208,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in" required={!isCurrent}>
+                  <PwField label="Ending in">
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}
@@ -216,6 +223,11 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                               onMonthChange={month.onChange}
                               onYearChange={year.onChange}
                               disabled={isCurrent}
+                              fromYear={startYear ?? EDUCATION_MIN_YEAR}
+                              toYear={
+                                (startYear ?? CURRENT_YEAR) +
+                                EDUCATION_MAX_SPAN_YEARS
+                              }
                             />
                           )}
                         />

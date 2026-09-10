@@ -108,15 +108,22 @@ export function DashboardShell({
           sectionNavItems={sectionNavItems}
           searchItems={searchItems}
         />
+        {/* The footer lives INSIDE the scroller. Outside it, the column is
+            viewport-height and the footer sits below the fold forever — which
+            is why it read as pinned in place. `min-h-full` keeps it at the
+            bottom when a page is short, and lets it scroll into view when the
+            page is long. */}
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
+            "abt-content-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
             contentClassName,
           )}
         >
-          {children}
+          <div className="flex min-h-full flex-col">
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <DashboardFooter />
+          </div>
         </div>
-        <DashboardFooter />
       </div>
     </div>
   );
