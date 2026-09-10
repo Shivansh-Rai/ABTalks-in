@@ -2012,6 +2012,24 @@ model UserRoleAssignment {
   @@index([grantedByUserId])
 }
 
+enum RateLimitBucket {
+  UNLOCK
+  OUTREACH
+  SEARCH
+  EXPORT
+}
+
+/// Sliding-window hits for unlock / outreach / search / export (T-258).
+/// subjectId is a user id, or `ip:<addr>` for guests.
+model RateLimitEvent {
+  id        String          @id @default(cuid())
+  bucket    RateLimitBucket
+  subjectId String
+  createdAt DateTime        @default(now())
+
+  @@index([bucket, subjectId, createdAt])
+}
+
 /// THE canonical candidate identity. Nothing else stores a candidate's name,
 /// phone, links or resume.
 model CandidateProfile {

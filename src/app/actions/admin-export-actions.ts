@@ -4,6 +4,7 @@ import { Domain } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
+import { assertRateLimit } from "@/lib/rate-limit";
 import {
   getAnalyticsData,
   type TimeRange,
@@ -15,12 +16,24 @@ import { getHackathonSubmissionsFeed } from "@/features/admin/get-hackathon-subm
 
 const SUBMISSIONS_EXPORT_CAP = 10_000;
 
+async function requireAdminExport() {
+  const admin = await requireAdmin();
+  const limited = await assertRateLimit({
+    bucket: "EXPORT",
+    subjectId: admin.userId,
+  });
+  if (!limited.ok) {
+    throw new Error(limited.message);
+  }
+  return admin;
+}
+
 export async function getStudentsForExport(filters: {
   domain?: Domain | "ALL";
   search?: string;
   track?: "ALL" | "CHALLENGE" | "HACKATHON";
 }) {
-  await requireAdmin();
+  await requireAdminExport();
 
   const q = filters.search?.trim();
   const track = filters.track ?? "ALL";
@@ -202,7 +215,7 @@ export async function getStudentsForExport(filters: {
 }
 
 export async function getAnalyticsForExport(range: TimeRange = "daily") {
-  await requireAdmin();
+  await requireAdminExport();
 
   const data = await getAnalyticsData(range);
   const rows: Record<string, string | number>[] = [];
@@ -280,7 +293,7 @@ export async function getSubmissionsForExport(filters: {
   minDay?: number;
   maxDay?: number;
 }) {
-  await requireAdmin();
+  await requireAdminExport();
 
   const rows = await getSubmissionsFeed({
     domain: filters.domain ?? "ALL",
@@ -305,7 +318,7 @@ export async function getMissingStudentsForExport(
   day: number,
   filters: { domain?: Domain | "ALL" },
 ) {
-  await requireAdmin();
+  await requireAdminExport();
 
   const rows = await getMissingStudentsForDay(day, {
     domain: filters.domain,
@@ -325,7 +338,7 @@ export async function getMissingStudentsForExport(
 export async function getHackathonSubmissionsForExport(filters?: {
   problemId?: string;
 }) {
-  await requireAdmin();
+  await requireAdminExport();
 
   const rows = await getHackathonSubmissionsFeed({
     problemId: filters?.problemId,
@@ -351,7 +364,7 @@ export async function getReferrersForExport(range: {
   startKey?: string;
   endKey?: string;
 }) {
-  await requireAdmin();
+  await requireAdminExport();
   const rows = await getReferrersInRange(range);
   return rows.map((r) => ({
     Name: r.fullName,

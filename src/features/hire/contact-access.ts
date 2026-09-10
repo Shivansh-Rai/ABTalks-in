@@ -56,6 +56,63 @@ export async function contactAccessFor(
   );
 }
 
+export type ProtectedContact = {
+  email: string | null;
+  phone: string | null;
+};
+
+/**
+ * Email and phone for one pair, or null if this recruiter has not unlocked
+ * them. Callers must not select those columns themselves.
+ */
+export async function loadProtectedContact(
+  recruiterUserId: string,
+  candidateUserId: string,
+): Promise<ProtectedContact | null> {
+  const allowed = await hasContactAccess(recruiterUserId, candidateUserId);
+  if (!allowed) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: candidateUserId },
+    select: {
+      email: true,
+      candidateProfile: { select: { phone: true } },
+    },
+  });
+  if (!user) return null;
+  return {
+    email: user.email,
+    phone: user.candidateProfile?.phone ?? null,
+  };
+}
+
+/** Batch twin — only queries identity for ids that already have access. */
+export async function loadProtectedContacts(
+  recruiterUserId: string,
+  candidateUserIds: string[],
+): Promise<Map<string, ProtectedContact>> {
+  const allowed = await contactAccessFor(recruiterUserId, candidateUserIds);
+  const ids = [...allowed];
+  const out = new Map<string, ProtectedContact>();
+  if (ids.length === 0) return out;
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      email: true,
+      candidateProfile: { select: { phone: true } },
+    },
+  });
+  for (const u of users) {
+    out.set(u.id, {
+      email: u.email,
+      phone: u.candidateProfile?.phone ?? null,
+    });
+  }
+  return out;
+}
+
 /** What the recruiter has already asked about, so the UI never offers twice. */
 export async function existingEngagements(
   recruiterUserId: string,

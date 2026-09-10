@@ -39,7 +39,8 @@ type IconName =
   | "cohort"
   | "hackathon"
   | "workshop"
-  | "recruiters";
+  | "recruiters"
+  | "platformAdmins";
 
 const iconMap = {
   overview: LayoutDashboard,
@@ -59,6 +60,7 @@ const iconMap = {
   hackathon: Code2,
   workshop: Presentation,
   recruiters: UserPlus,
+  platformAdmins: ShieldCheck,
 } as const;
 
 type NavItem = {

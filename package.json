@@ -60,6 +60,7 @@
     "test:scout": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/scout-agent.test.ts",
     "test:sample": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/sample-card.test.ts",
     "test:visibility": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/visibility.test.ts",
+    "test:demo1-security": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/isolation.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/features/hire/contact-payload.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/lib/rate-limit-policy.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/lib/admin-auth.test.ts",
     "test:interview:grounding": "tsx --conditions=react-server scripts/verify-interview-grounding.ts",
     "test:078-dual-write": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/dual-write.test.ts",
     "test:078-points-writes": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/points-writes.test.ts",

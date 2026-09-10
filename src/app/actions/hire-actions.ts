@@ -12,6 +12,11 @@ import {
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import {
+  requireApprovedRecruiterAction,
+  requireRegisteredRecruiterAction,
+} from "@/lib/recruiter-gate";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { upsertCandidateAvailability } from "@/repositories/candidate";
 import {
   candidateAvailabilitySchema,
@@ -33,64 +38,8 @@ type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
 type ActionResult<T> = ActionOk<T> | ActionErr;
 
-async function requireApprovedRecruiter(): Promise<
-  ActionResult<{ userId: string }>
-> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Sign in as an approved recruiter." };
-  }
-  let profile;
-  try {
-    profile = await prisma.recruiterProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { approved: true },
-    });
-  } catch (error) {
-    logger.error("[hire] requireApprovedRecruiter", { error: String(error) });
-    return {
-      ok: false,
-      message: "Could not reach the server. Try again in a moment.",
-    };
-  }
-  if (!profile?.approved) {
-    return { ok: false, message: "Recruiter access not approved yet." };
-  }
-  return { ok: true, data: { userId: session.user.id } };
-}
-
-/**
- * Registered as a recruiter — approved or still waiting.
- *
- * Sample-card demand is how we learn what a recruiter wanted when the pool
- * had nobody. A pending recruiter is exactly who we want to hear from; gating
- * this on approval would drop the ask they signed up to place.
- */
-async function requireRegisteredRecruiter(): Promise<
-  ActionResult<{ userId: string }>
-> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Sign in to save this requirement." };
-  }
-  let profile;
-  try {
-    profile = await prisma.recruiterProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { approved: true },
-    });
-  } catch (error) {
-    logger.error("[hire] requireRegisteredRecruiter", { error: String(error) });
-    return {
-      ok: false,
-      message: "Could not reach the server. Try again in a moment.",
-    };
-  }
-  if (!profile) {
-    return { ok: false, message: "Register as a recruiter first." };
-  }
-  return { ok: true, data: { userId: session.user.id } };
-}
+const requireApprovedRecruiter = requireApprovedRecruiterAction;
+const requireRegisteredRecruiter = requireRegisteredRecruiterAction;
 
 function specToDb(spec: JobSpec) {
   return {
@@ -181,6 +130,11 @@ export async function sendScoutMessageAction(
 > {
   const gate = await requireApprovedRecruiter();
   if (!gate.ok) return gate;
+  const limited = await assertRateLimit({
+    bucket: "SEARCH",
+    subjectId: gate.data.userId,
+  });
+  if (!limited.ok) return limited;
   const parsed = sendScoutMessageSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Invalid message." };
@@ -326,6 +280,11 @@ export async function runMatchAction(
 > {
   const gate = await requireApprovedRecruiter();
   if (!gate.ok) return gate;
+  const limited = await assertRateLimit({
+    bucket: "SEARCH",
+    subjectId: gate.data.userId,
+  });
+  if (!limited.ok) return limited;
   const parsed = runMatchSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Invalid request." };
 
