@@ -12,8 +12,7 @@ import { loadAvailabilityByUserId } from "@/features/hire/dossier";
 import { estimateCompensation, formatBandLpa } from "@/features/hire/compensation";
 import { roleFamilyFor, tidyRoleLabel } from "@/features/hire/role-family";
 import type { MatchTier } from "@/features/hire/types";
-import type { TalentMatchDecision } from "@prisma/client";
-import type { MatchCardData } from "@/components/hire/match-card";
+import type { MatchCardData, MatchTriage } from "@/components/hire/match-card";
 import {
   pickPublicEvidence,
   pickPublicScores,
@@ -23,11 +22,7 @@ import {
  * What the recruiter has already done with a match, as opposed to how the
  * match scored. Preserved across match runs by the upsert in `runMatchAction`.
  */
-export type MatchState = {
-  firstSeenAt: Date;
-  viewedAt: Date | null;
-  decision: TalentMatchDecision;
-};
+export type MatchState = MatchTriage;
 
 /**
  * Matches for one requirement, ready to render, for one recruiter.
@@ -56,7 +51,7 @@ export async function loadRequestMatches(
   // Per-match triage state travels alongside the card data rather than inside
   // `MatchCardData`, so the card component's props are unchanged until the
   // T-045 / T-042 UI lands and its shape is decided.
-  matches: (MatchCardData & MatchState)[];
+  matches: (MatchCardData & MatchTriage)[];
   cartCount: number;
 } | null> {
   const request = await prisma.talentRequest.findFirst({
@@ -141,7 +136,7 @@ export async function loadRequestMatches(
     lastViewedAt: request.lastViewedAt,
     archivedAt: request.archivedAt,
     cartCount,
-    matches: visibleMatches.map((m): MatchCardData & MatchState => {
+    matches: visibleMatches.map((m): MatchCardData & MatchTriage => {
       const raw =
         m.evidence && typeof m.evidence === "object"
           ? (m.evidence as Record<string, unknown>)
@@ -230,9 +225,12 @@ export async function loadRequestMatches(
           ? request.mustHaveStack
           : undefined,
         evidence,
-        firstSeenAt: m.firstSeenAt,
-        viewedAt: m.viewedAt,
+        candidateUserId: m.candidateUserId,
+        viewedAt: m.viewedAt ? m.viewedAt.toISOString() : null,
         decision: m.decision,
+        isNew:
+          m.firstSeenAt.getTime() >
+          (request.lastViewedAt ?? m.firstSeenAt).getTime(),
       };
     }),
   };

@@ -46,6 +46,8 @@
 
 ## Pending reconcile
 
+- 2026-09-10 [schema|rule|convention] T-149 / TC-R-004 talent project persistence (plan 125): TalentRequest.name + lastViewedAt + TalentRequestMatch.viewedAt/decision writers in talent-project-actions.ts (updateMany scoped by recruiterUserId). Match-run upsert from T-044 is unchanged and still does not assign those state columns. Temporary desk UI for name / viewed / new / shortlist / reject; outreach cart relabelled "Add to request list". TalentList / RecruiterShortlistItem / T-027 untouched.
+
 _(Cleared 2026-08-24 — the 17 entries that were under this heading were folded into `docs/project-context.md`,
 reconciled against `3b040d8`. The un-headed block above (2026-08-06 → 2026-08-20) was logged outside this
 heading and was never reconciled; its facts were folded into the same pass, but the lines were left in place

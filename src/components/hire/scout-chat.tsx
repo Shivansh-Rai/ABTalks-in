@@ -23,6 +23,12 @@ import {
   sendScoutMessageAction,
 } from "@/app/actions/hire-actions";
 import {
+  markMatchViewedAction,
+  markProjectOpenedAction,
+  renameTalentProjectAction,
+  setMatchDecisionAction,
+} from "@/app/actions/talent-project-actions";
+import {
   runGuestMatchAction,
   sendGuestScoutMessageAction,
 } from "@/app/actions/hire-guest-actions";
@@ -38,7 +44,10 @@ import {
   virtualCandidateToCard,
 } from "@/features/hire/virtual-candidate";
 import { buildLockedPreviewCards } from "@/features/hire/locked-preview";
-import type { MatchCardData } from "@/components/hire/match-card";
+import type {
+  MatchCardData,
+  MatchTriage,
+} from "@/components/hire/match-card";
 import { SearchTabs } from "@/components/hire/search-tabs";
 import {
   appendGuestSearch,
@@ -79,9 +88,11 @@ type Props = {
   initialSpec: JobSpec;
   initialSummary: string;
   /** Signed-in matches from the request page. Rendered inside the desk. */
-  results?: MatchCardData[];
+  results?: (MatchCardData & Partial<MatchTriage>)[];
   resultsCartCount?: number;
   recent?: RecentRequest[];
+  /** Recruiter label for this TalentRequest; falls back to the role title. */
+  projectName?: string | null;
   alertWhenAvailable?: boolean;
   /** True when this TalentRequest has already been searched. */
   initialSearched?: boolean;
@@ -283,6 +294,7 @@ export function ScoutChat({
   results,
   resultsCartCount = 0,
   recent = [],
+  projectName = null,
   alertWhenAvailable = false,
   initialSearched = false,
   proPreview = false,
@@ -317,6 +329,32 @@ export function ScoutChat({
   );
   const { setDesk, view, inspect, clearInspect } = useHireDesk();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const visitStamped = useRef(false);
+  const [projectLabel, setProjectLabel] = useState(
+    projectName?.trim() || initialSummary || "",
+  );
+  const [hideRejected, setHideRejected] = useState(false);
+  const [triageByRef, setTriageByRef] = useState<Record<string, MatchTriage>>(
+    () => {
+      const next: Record<string, MatchTriage> = {};
+      for (const m of results ?? []) {
+        if (!m.candidateUserId || !m.decision) continue;
+        next[m.candidateRef] = {
+          candidateUserId: m.candidateUserId,
+          viewedAt: m.viewedAt ?? null,
+          decision: m.decision,
+          isNew: Boolean(m.isNew),
+        };
+      }
+      return next;
+    },
+  );
+
+  useEffect(() => {
+    if (!persist || !initialRequestId || visitStamped.current) return;
+    visitStamped.current = true;
+    void markProjectOpenedAction({ requestId: initialRequestId });
+  }, [persist, initialRequestId]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const criteriaRef = useRef<HTMLUListElement>(null);
@@ -336,8 +374,15 @@ export function ScoutChat({
     null;
   const guestMatches = activeSearch?.matches ?? [];
   const guestGap = activeSearch?.overallGap ?? null;
-  const deskMatches =
+  const deskMatchesRaw =
     persist && (results?.length ?? 0) > 0 ? (results ?? []) : guestMatches;
+  const deskMatches = deskMatchesRaw.map((m) => ({
+    ...m,
+    ...(triageByRef[m.candidateRef] ?? {}),
+  }));
+  const visibleDeskMatches = hideRejected
+    ? deskMatches.filter((m) => m.decision !== "REJECTED")
+    : deskMatches;
   const deskGap = persist && (results?.length ?? 0) > 0 ? null : guestGap;
   // An empty desk gets one of two things. With the Pro preview on, blurred
   // example profiles showing the format Pro fills in; otherwise the original
@@ -818,6 +863,27 @@ export function ScoutChat({
             {detailsOpen && (
               <div className="hire-req__menu" role="menu">
                 <p className="hire-req__label">Requirement</p>
+                {persist && requestId && (
+                  <label className="hire-req__name">
+                    <span className="hire-req__label">Name this project</span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={projectLabel}
+                      onChange={(e) => setProjectLabel(e.target.value)}
+                      onBlur={() => {
+                        const name = projectLabel.trim();
+                        if (!name) return;
+                        void renameTalentProjectAction({ requestId, name }).then(
+                          (res) => {
+                            if (!res.ok) toast.error(res.message);
+                          },
+                        );
+                      }}
+                      className="hire-req__name-input"
+                    />
+                  </label>
+                )}
                 {criteria.map((c) => (
                   <button
                     key={c.key}
@@ -1015,12 +1081,22 @@ export function ScoutChat({
                           the candidate agrees.
                         </p>
                       )}
+                      {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
+                        <label className="hire-hide-rejected">
+                          <input
+                            type="checkbox"
+                            checked={hideRejected}
+                            onChange={(e) => setHideRejected(e.target.checked)}
+                          />
+                          Hide rejected
+                        </label>
+                      )}
                       {deskGap && (
                         <p className="scout-gap">{deskGap}</p>
                       )}
                       <MatchResults
                         desk
-                        matches={deskMatches}
+                        matches={visibleDeskMatches}
                         samples={deskSamples}
                         sampleDemand={{
                           spec,
@@ -1030,7 +1106,54 @@ export function ScoutChat({
                         cartCount={
                           persist ? resultsCartCount : readGuestCart().length
                         }
-                        onOpen={setOpenMatch}
+                        requestId={persist ? requestId : null}
+                        onOpen={(m) => {
+                          setOpenMatch(m);
+                          const userId =
+                            m.candidateUserId ??
+                            triageByRef[m.candidateRef]?.candidateUserId;
+                          if (!persist || !requestId || !userId) return;
+                          setTriageByRef((prev) => ({
+                            ...prev,
+                            [m.candidateRef]: {
+                              candidateUserId: userId,
+                              viewedAt:
+                                prev[m.candidateRef]?.viewedAt ??
+                                new Date().toISOString(),
+                              decision:
+                                prev[m.candidateRef]?.decision ??
+                                m.decision ??
+                                "UNDECIDED",
+                              isNew: false,
+                            },
+                          }));
+                          void markMatchViewedAction({
+                            requestId,
+                            candidateUserId: userId,
+                          });
+                        }}
+                        onDecision={(m, decision) => {
+                          const userId =
+                            m.candidateUserId ??
+                            triageByRef[m.candidateRef]?.candidateUserId;
+                          if (!persist || !requestId || !userId) return;
+                          setTriageByRef((prev) => ({
+                            ...prev,
+                            [m.candidateRef]: {
+                              candidateUserId: userId,
+                              viewedAt: prev[m.candidateRef]?.viewedAt ?? m.viewedAt ?? null,
+                              decision,
+                              isNew: false,
+                            },
+                          }));
+                          void setMatchDecisionAction({
+                            requestId,
+                            candidateUserId: userId,
+                            decision,
+                          }).then((res) => {
+                            if (!res.ok) toast.error(res.message);
+                          });
+                        }}
                         selectedRef={openMatch?.candidateRef}
                       />
                       {persist && requestId && matchCount === 0 && (

@@ -413,3 +413,29 @@ export const adoptGuestScoutSessionSchema = z.object({
    */
   candidateRefs: z.array(z.string().min(1).max(120)).max(20).optional(),
 });
+
+export const renameTalentProjectSchema = z.object({
+  requestId: z.string().cuid(),
+  name: z.string().trim().min(1).max(80),
+});
+
+export const markProjectOpenedSchema = z.object({
+  requestId: z.string().cuid(),
+});
+
+export const markMatchViewedSchema = z.object({
+  requestId: z.string().cuid(),
+  candidateUserId: z.string().cuid(),
+});
+
+export const talentMatchDecisionSchema = z.enum([
+  "UNDECIDED",
+  "SHORTLISTED",
+  "REJECTED",
+]);
+
+export const setMatchDecisionSchema = z.object({
+  requestId: z.string().cuid(),
+  candidateUserId: z.string().cuid(),
+  decision: talentMatchDecisionSchema,
+});

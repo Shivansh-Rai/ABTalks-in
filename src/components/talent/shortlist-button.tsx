@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 // BookmarkPlus, not ShoppingCart: this is a shortlist, not a basket, and
-// nothing downstream is a purchase. The label already says "Add to Shortlist".
+// nothing downstream is a purchase. The desk podLabel says "Add to request list".
 import { BookmarkPlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
@@ -84,7 +84,7 @@ export function ShortlistButton({
     // else. Removal still speaks, because the bar only shrinks and has no way
     // to say which row left.
     if (!next) {
-      toast.success(podLabel ? "Removed from Shortlist" : "Removed from cart");
+      toast.success(podLabel ? "Removed from request list" : "Removed from cart");
     }
   }
 
@@ -102,15 +102,15 @@ export function ShortlistButton({
       setInCart(result.data.shortlisted);
       onToggle?.(result.data.shortlisted);
       if (!result.data.shortlisted) {
-        toast.success(podLabel ? "Removed from Shortlist" : "Removed from cart");
+        toast.success(podLabel ? "Removed from request list" : "Removed from cart");
       }
     });
   }
 
   const label = podLabel
     ? inCart
-      ? "In Shortlist"
-      : "Add to Shortlist"
+      ? "In request list"
+      : "Add to request list"
     : inCart
       ? "Remove from cart"
       : "Add to cart";

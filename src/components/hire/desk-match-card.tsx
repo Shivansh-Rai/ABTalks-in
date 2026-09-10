@@ -8,7 +8,11 @@ import {
   SampleCardNotice,
   type SampleDemand,
 } from "@/components/hire/sample-card-notice";
-import type { MatchCardData } from "@/components/hire/match-card";
+import type {
+  MatchCardData,
+  MatchDecision,
+  MatchTriage,
+} from "@/components/hire/match-card";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
   LockedField,
@@ -117,16 +121,28 @@ export function DeskMatchCard({
   onOpen,
   onCartToggle,
   sampleDemand,
+  onDecision,
+  requestId,
 }: {
-  match: MatchCardData;
+  match: MatchCardData & Partial<MatchTriage>;
   rank?: number;
   selected?: boolean;
   onOpen?: () => void;
   onCartToggle?: (inCart: boolean) => void;
   sampleDemand?: SampleDemand;
+  onDecision?: (decision: MatchDecision) => void;
+  requestId?: string | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
   const preview = isLockedPreview(match) ? match.preview : null;
+  const decision = match.decision ?? "UNDECIDED";
+  const rejected = decision === "REJECTED";
+  const showTriage = Boolean(requestId && match.candidateUserId && onDecision);
+
+  function pickDecision(next: MatchDecision) {
+    if (!onDecision) return;
+    onDecision(decision === next ? "UNDECIDED" : next);
+  }
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const e = match.evidence ?? {};
   const skills = e.skills ?? [];
@@ -271,6 +287,7 @@ export function DeskMatchCard({
         rank === 1 && "desk-card--top",
         selected && "is-selected",
         onOpen && "desk-card--clickable",
+        rejected && "desk-card--rejected",
       )}
       onClick={openFromCard}
     >
@@ -343,6 +360,7 @@ export function DeskMatchCard({
         availability landed inside the slice, i.e. a dropped pill rather than a
         hidden one.
       */}
+      {!rejected && (
       <div className="desk-card__facts">
         {buildCardPills(match, DESK_CARD_PILLS + 2)
           .filter((pill) => pill.key !== "availability")
@@ -353,8 +371,51 @@ export function DeskMatchCard({
             </span>
           ))}
       </div>
+      )}
 
-      {match.rationale && <p className="desk-card__why">{match.rationale}</p>}
+      {match.rationale && !rejected && (
+        <p className="desk-card__why">{match.rationale}</p>
+      )}
+
+      {showTriage && (
+        <div className="desk-card__triage" onClick={(e) => e.stopPropagation()}>
+          {match.viewedAt ? (
+            <span className="desk-badge desk-badge--viewed">Viewed</span>
+          ) : match.isNew ? (
+            <span className="desk-badge desk-badge--new">New</span>
+          ) : null}
+          {rejected ? (
+            <button
+              type="button"
+              className="desk-ghost"
+              onClick={() => pickDecision("REJECTED")}
+            >
+              Undo
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={cn(
+                  "desk-ghost",
+                  decision === "SHORTLISTED" && "is-on",
+                )}
+                aria-pressed={decision === "SHORTLISTED"}
+                onClick={() => pickDecision("SHORTLISTED")}
+              >
+                Shortlist
+              </button>
+              <button
+                type="button"
+                className="desk-ghost"
+                onClick={() => pickDecision("REJECTED")}
+              >
+                Reject
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="desk-card__cta">
         <button type="button" className="desk-ghost" onClick={onOpen}>

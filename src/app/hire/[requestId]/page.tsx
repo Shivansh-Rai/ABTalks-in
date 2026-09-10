@@ -93,6 +93,7 @@ export default async function HireRequestPage({ params }: Props) {
 
   const matchData = await loadRequestMatches(requestId, userId);
   const matches = matchData?.matches ?? [];
+  const projectName = matchData?.name ?? request.title;
 
   const messages = request.messages.map((m) => ({
     role: (m.role === "assistant" ? "assistant" : "user") as
@@ -119,6 +120,7 @@ export default async function HireRequestPage({ params }: Props) {
       initialMessages={messages}
       initialSpec={spec}
       initialSummary={summary || request.title}
+      projectName={projectName}
       results={matches}
       resultsCartCount={matchData?.cartCount ?? 0}
       alertWhenAvailable={request.alertWhenAvailable}
