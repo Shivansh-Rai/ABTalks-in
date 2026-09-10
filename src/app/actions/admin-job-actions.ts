@@ -57,6 +57,9 @@ export async function createJobAction(input: {
         description,
         applyExternalUrl: applyExternalUrl?.trim() || null,
         createdByAdminId: admin.userId,
+        status: "PUBLISHED",
+        isOpen: true,
+        publishedAt: new Date(),
       },
       select: { id: true },
     });
@@ -122,9 +125,12 @@ export async function toggleJobOpenAction(input: {
   }
 
   try {
+    const now = new Date();
     await prisma.job.update({
       where: { id: parsed.data.jobId },
-      data: { isOpen: parsed.data.isOpen },
+      data: parsed.data.isOpen
+        ? { isOpen: true, status: "PUBLISHED", publishedAt: now, closedAt: null }
+        : { isOpen: false, status: "CLOSED", closedAt: now },
     });
     revalidateJobViews(parsed.data.jobId);
     return { ok: true as const };
