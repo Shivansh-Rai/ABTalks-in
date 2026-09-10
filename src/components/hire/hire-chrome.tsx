@@ -196,7 +196,7 @@ export function HireChrome({
       {desk ? (
         <main className="hire-workspace">
           {isResults && (
-            <HireSidebar account={account} pendingName={pendingName} />
+            <HireSidebar account={account} />
           )}
           {/* On desktop the results screen hides this rail behind the nav card;
               phones keep its compact step strip. */}
