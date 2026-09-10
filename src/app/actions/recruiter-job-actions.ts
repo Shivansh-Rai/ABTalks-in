@@ -1,0 +1,234 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { JobType, JobWorkMode } from "@prisma/client";
+import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
+import { logger } from "@/lib/logger";
+import {
+  createRecruiterJob,
+  getRecruiterJob,
+  listRecruiterJobs,
+  transitionJob,
+  updateRecruiterJob,
+  type CreateJobInput,
+  type JobRow,
+  type UpdateJobInput,
+} from "@/features/recruiter-jobs/service";
+import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+import type { LifecycleAction } from "@/features/recruiter-jobs/lifecycle";
+
+type ActionOk<T = undefined> = T extends undefined
+  ? { ok: true }
+  : { ok: true; data: T };
+type ActionErr = { ok: false; message: string; status?: number };
+
+const workModeSchema = z.nativeEnum(JobWorkMode);
+const opportunityTypeSchema = z.nativeEnum(JobType);
+
+const createSchema = z.object({
+  title: z.string().min(1).max(200),
+  company: z.string().min(1).max(200),
+  description: z.string().min(1).max(20000),
+  location: z.string().max(200).optional().default(""),
+  workMode: workModeSchema,
+  opportunityType: opportunityTypeSchema,
+  skills: z.array(z.string().max(60)).max(25).optional().default([]),
+  applyExternalUrl: z
+    .union([z.literal(""), z.string().url()])
+    .optional()
+    .default(""),
+});
+
+const updateSchema = createSchema
+  .partial()
+  .extend({ jobId: z.string().min(1) });
+
+const transitionSchema = z.object({
+  jobId: z.string().min(1),
+});
+
+function revalidateJobViews(jobId?: string) {
+  revalidatePath("/jobs");
+  revalidatePath("/recruiter/jobs");
+  if (jobId) {
+    revalidatePath(`/jobs/${jobId}`);
+    revalidatePath(`/recruiter/jobs/${jobId}`);
+  }
+}
+
+export async function createRecruiterJobAction(
+  input: unknown,
+): Promise<ActionOk<{ id: string }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = createSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid input" };
+  }
+
+  try {
+    // T-226: stamp the job with the recruiter's own registered company so a
+    // recruiter cannot post under a different brand than their approved
+    // workspace. The service still records recruiterId as the owner.
+    const payload: CreateJobInput = {
+      title: parsed.data.title,
+      company: workspace.data.company,
+      description: parsed.data.description,
+      location: parsed.data.location,
+      workMode: parsed.data.workMode,
+      opportunityType: parsed.data.opportunityType,
+      skills: parsed.data.skills,
+      applyExternalUrl: parsed.data.applyExternalUrl,
+    };
+    const result = await createRecruiterJob(
+      { jobs: prismaJobStore() },
+      { userId: workspace.data.userId },
+      payload,
+    );
+    if (!result.ok) return { ok: false, message: result.message };
+    revalidateJobViews();
+    return { ok: true, data: { id: result.data.id } };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] create", { error: String(error) });
+    return { ok: false, message: "Failed to create job" };
+  }
+}
+
+export async function updateRecruiterJobAction(
+  input: unknown,
+): Promise<ActionOk | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = updateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid input" };
+  }
+  const { jobId, ...rest } = parsed.data;
+
+  try {
+    // Company on the update payload is ignored — the workspace owns it.
+    const { company: _ignoreCompany, ...safeRest } = rest;
+    void _ignoreCompany;
+    const payload: UpdateJobInput = safeRest;
+    const result = await updateRecruiterJob(
+      { jobs: prismaJobStore() },
+      { userId: workspace.data.userId },
+      jobId,
+      payload,
+    );
+    if (!result.ok) {
+      const status =
+        result.code === "FORBIDDEN"
+          ? 403
+          : result.code === "NOT_FOUND"
+            ? 404
+            : undefined;
+      return { ok: false, message: result.message, status };
+    }
+    revalidateJobViews(jobId);
+    return { ok: true };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] update", { error: String(error) });
+    return { ok: false, message: "Failed to update job" };
+  }
+}
+
+async function runTransition(
+  input: unknown,
+  action: LifecycleAction,
+): Promise<ActionOk<{ id: string; status: string }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = transitionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+
+  try {
+    const result = await transitionJob(
+      { jobs: prismaJobStore() },
+      { userId: workspace.data.userId },
+      parsed.data.jobId,
+      action,
+    );
+    if (!result.ok) {
+      const status =
+        result.code === "FORBIDDEN"
+          ? 403
+          : result.code === "NOT_FOUND"
+            ? 404
+            : undefined;
+      return { ok: false, message: result.message, status };
+    }
+    revalidateJobViews(parsed.data.jobId);
+    return { ok: true, data: result.data };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] transition", {
+      action,
+      error: String(error),
+    });
+    return { ok: false, message: `Failed to ${action} job` };
+  }
+}
+
+export async function publishRecruiterJobAction(input: unknown) {
+  return runTransition(input, "publish");
+}
+
+export async function closeRecruiterJobAction(input: unknown) {
+  return runTransition(input, "close");
+}
+
+export async function reopenRecruiterJobAction(input: unknown) {
+  return runTransition(input, "reopen");
+}
+
+/**
+ * Workspace-scoped list. Callers never pass a userId — the workspace resolves
+ * the caller from the session and the service filters by that id. Same-domain
+ * independence (T-226) is therefore an argument the caller cannot get wrong.
+ */
+export async function listMyJobsAction(): Promise<
+  ActionOk<{ jobs: JobRow[] }> | ActionErr
+> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+  try {
+    const result = await listRecruiterJobs(
+      { jobs: prismaJobStore() },
+      { userId: workspace.data.userId },
+    );
+    if (!result.ok) return { ok: false, message: result.message };
+    return { ok: true, data: { jobs: result.data } };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] list", { error: String(error) });
+    return { ok: false, message: "Failed to load jobs" };
+  }
+}
+
+/** Workspace-scoped single fetch — a foreign row returns NOT_FOUND, not 403. */
+export async function getMyJobAction(
+  input: unknown,
+): Promise<ActionOk<{ job: JobRow }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+  const parsed = transitionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+  try {
+    const result = await getRecruiterJob(
+      { jobs: prismaJobStore() },
+      { userId: workspace.data.userId },
+      parsed.data.jobId,
+    );
+    if (!result.ok) {
+      const status = result.code === "NOT_FOUND" ? 404 : undefined;
+      return { ok: false, message: result.message, status };
+    }
+    return { ok: true, data: { job: result.data } };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] get", { error: String(error) });
+    return { ok: false, message: "Failed to load job" };
+  }
+}
