@@ -1936,6 +1936,14 @@ enum PointsSourceType {
   LEGACY
 }
 
+/// Legally recognised categories in India. Nullable on the profile — "not
+/// stated" is the absence of a row value, not a fourth option.
+enum CandidateGender {
+  MALE
+  FEMALE
+  TRANSGENDER
+}
+
 enum AchievementSourceType {
   PROGRAM_ENROLLMENT
   HACKATHON_TEAM
@@ -2031,6 +2039,13 @@ model CandidateProfile {
   fullName                    String
   headline                    String?
   summary                     String?
+  /// Free-text awards & recognitions, authored by the candidate. Deliberately
+  /// ONE prose field rather than repeatable rows: it is a stand-out narrative,
+  /// not structured data anything queries or ranks. Platform-earned results are
+  /// derived from Certificate / Enrollment / ProgramEnrollment / Hackathon and
+  /// are never written here.
+  awards                      String?
+  gender                      CandidateGender?
   /// Soft display label only — never a schema branch.
   primaryPersona              CandidatePersona @default(STUDENT)
   phone                       String?

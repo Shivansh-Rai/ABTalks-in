@@ -23,6 +23,8 @@
     "db:seed:hackathon-problems": "tsx prisma/seed-hackathon-problems.ts",
     "db:seed:colleges": "tsx prisma/seed-colleges.ts",
     "db:seed:platform-taxonomy": "tsx prisma/seed-platform-taxonomy.ts",
+    "db:seed:curriculum-skills": "tsx prisma/seed-curriculum-skills.ts",
+    "db:dedupe:skills": "tsx prisma/scripts/dedupe-skills.ts",
     "db:seed:databricks": "tsx prisma/seed-databricks.ts",
     "db:seed:ds-architect": "tsx prisma/seed-ds-architect.ts",
     "db:seed:powerbi": "tsx prisma/seed-powerbi.ts",

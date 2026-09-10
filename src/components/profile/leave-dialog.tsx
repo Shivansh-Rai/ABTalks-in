@@ -31,7 +31,9 @@ export function LeaveDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent showCloseButton={false}>
+      {/* Raised over the profile form sheet (z-46) so the question is never
+          hidden behind the section it is asking about. */}
+      <DialogContent showCloseButton={false} className="z-[60]">
         <DialogHeader>
           <DialogTitle>Save your changes?</DialogTitle>
           <DialogDescription>
