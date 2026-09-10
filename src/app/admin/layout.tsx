@@ -1,6 +1,4 @@
 import { requireAdmin } from "@/lib/admin-auth";
-import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
 import { AppHeader } from "@/components/shared/app-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
@@ -11,17 +9,6 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const admin = await requireAdmin();
-  // Badge only — a down Neon must not take the whole admin chrome with it.
-  let pendingRecruiterCount = 0;
-  try {
-    pendingRecruiterCount = await prisma.recruiterProfile.count({
-      where: { approved: false },
-    });
-  } catch (error) {
-    logger.error("[admin] pending recruiter count failed", {
-      error: String(error),
-    });
-  }
 
   const navItems = [
     { href: "/admin", label: "Overview", icon: "overview" as const },
@@ -69,14 +56,8 @@ export default async function AdminLayout({
       label: "Platform Admins",
       icon: "platformAdmins" as const,
     },
-    {
-      href: "/admin/recruiters",
-      label:
-        pendingRecruiterCount > 0
-          ? `Recruiters (${pendingRecruiterCount})`
-          : "Recruiters",
-      icon: "recruiters" as const,
-    },
+    // No count badge: there is no approval queue to be behind on.
+    { href: "/admin/recruiters", label: "Recruiters", icon: "recruiters" as const },
   ];
 
   return (

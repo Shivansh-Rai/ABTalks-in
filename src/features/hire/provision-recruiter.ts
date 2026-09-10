@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { grantOnboardingCredits } from "@/repositories/credits";
 
 /**
@@ -197,6 +198,99 @@ export function recruiterIdentityWrites(
         ]
       : []),
   ];
+}
+
+export type EnsuredRecruiterWorkspace = {
+  organizationId: string;
+  recruiterProfileId: string;
+  company: string;
+  fullName: string;
+};
+
+/**
+ * The workspace a registered recruiter is entitled to, created if it is missing.
+ *
+ * This replaces `completeRecruiterSetupAction`. A workspace used to be brought
+ * into existence by a person finishing a two-step wizard and then an admin
+ * approving the application behind it; a recruiter who did neither had a
+ * `RecruiterProfile` and nothing else, and every recruiter surface refused
+ * them. Registration now provisions up front, so in practice this only ever
+ * finds an existing workspace — but it still heals, because rows written under
+ * the old flow are still in the database.
+ *
+ * Idempotent and safe to call on every gated request. The two reads on the
+ * happy path are the same two `requireRecruiterWorkspace` already performed, so
+ * healing costs nothing once it has run.
+ *
+ * Returns `null` when the account is not a recruiter at all. That is the only
+ * refusal left: there is no approval to wait for.
+ */
+export async function ensureRecruiterWorkspace(
+  userId: string,
+): Promise<EnsuredRecruiterWorkspace | null> {
+  const profile = await prisma.recruiterProfile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      fullName: true,
+      company: true,
+      approved: true,
+      approvedAt: true,
+      setupCompletedAt: true,
+    },
+  });
+  if (!profile) return null;
+
+  const membership = await prisma.organizationMember.findFirst({
+    where: { userId, status: "ACTIVE" },
+    select: { organizationId: true },
+  });
+
+  // `approved` gates nothing any more, but a row left false is a trap for
+  // anyone who later reintroduces a gate by reading it — so a stale one is
+  // corrected here rather than left to disagree with reality. Provisioning is
+  // idempotent, so taking the slow path to fix it costs one commit, once.
+  if (membership && profile.setupCompletedAt && profile.approved) {
+    return {
+      organizationId: membership.organizationId,
+      recruiterProfileId: profile.id,
+      company: profile.company,
+      fullName: profile.fullName,
+    };
+  }
+
+  const { organizationId } = await prisma.$transaction(
+    async (tx) => {
+      const provisioned = await provisionRecruiterIdentity(tx, {
+        userId,
+        company: profile.company,
+      });
+      await tx.recruiterProfile.update({
+        where: { id: profile.id },
+        data: {
+          // Kept in the schema and written true, read as a gate nowhere. Plan
+          // 078 Phase 7 is frozen, so the column stays; the wait it encoded
+          // does not.
+          approved: true,
+          approvedAt: profile.approvedAt ?? new Date(),
+          setupStep: "COMPLETE",
+          setupCompletedAt: profile.setupCompletedAt ?? new Date(),
+        },
+        select: { id: true },
+      });
+      return provisioned;
+    },
+    // The same window grantOnboardingCreditsAtomic uses: provisioning takes the
+    // credit lock, and Neon's default 5s is not enough for a queued request.
+    { maxWait: 20_000, timeout: 20_000 },
+  );
+
+  return {
+    organizationId,
+    recruiterProfileId: profile.id,
+    company: profile.company,
+    fullName: profile.fullName,
+  };
 }
 
 /**

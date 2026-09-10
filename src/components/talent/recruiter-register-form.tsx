@@ -74,11 +74,11 @@ export function RecruiterRegisterForm() {
         return;
       }
       track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
-      // Registration is the start of setup, not the end of it (T-226), but it
-      // does NOT create a session — the account is written and nothing is
-      // signed in. So the next step is signing in, and /talent/login carries on
-      // to /talent/setup once the code is verified. Sending them straight to
-      // /talent/setup would only bounce off its session guard.
+      // The account and its workspace are both written by now, but this action
+      // does NOT create a session — nothing is signed in. So the next step is
+      // signing in, and /talent/login goes on to /hire once the code is
+      // verified. Sending them straight to /hire would only bounce off the
+      // middleware's session guard.
       //
       // A full navigation rather than router.push: an App Router transition
       // that lands on a server redirect leaves useTransition pending forever,

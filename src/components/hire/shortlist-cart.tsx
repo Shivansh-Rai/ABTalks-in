@@ -58,7 +58,7 @@ const STATUS_COPY: Record<string, string> = {
 
 export function ShortlistCart({ rows }: { rows: CartRow[] }) {
   const router = useRouter();
-  const { approved, pending: approvalPending, openAuth } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -86,10 +86,6 @@ export function ShortlistCart({ rows }: { rows: CartRow[] }) {
 
   function place() {
     if (!approved) {
-      if (approvalPending) {
-        toast.error("Your recruiter application is still being reviewed.");
-        return;
-      }
       savePendingCheckout({
         candidateRefs: [...selected],
         note: note.trim() || undefined,

@@ -70,7 +70,6 @@ export async function registerRecruiterAction(
   });
 
   revalidatePath("/talent/register");
-  revalidatePath("/talent/pending");
   return { ok: true };
 }
 

@@ -19,7 +19,7 @@ export default async function TalentShortlistPage() {
   const userId = session?.user?.id ?? null;
   const state = userId ? await getRecruiterState(userId) : { status: "none" as const };
 
-  if (state.status !== "approved" || !userId) {
+  if (state.status !== "active" || !userId) {
     return (
       <div className="space-y-6">
         <header className="space-y-2">

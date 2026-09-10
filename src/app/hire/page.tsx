@@ -17,7 +17,7 @@ export default async function HirePage() {
   const recruiter = userId
     ? await getRecruiterState(userId)
     : { status: "none" as const };
-  const persist = recruiter.status === "approved";
+  const persist = recruiter.status === "active";
 
   let recent: {
     id: string;

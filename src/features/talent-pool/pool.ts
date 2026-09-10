@@ -108,12 +108,13 @@ export type ShortlistRow = {
 async function assertPoolAccess(recruiterUserId: string) {
   const profile = await prisma.recruiterProfile.findUnique({
     where: { userId: recruiterUserId },
-    select: { approved: true },
+    select: { id: true },
   });
-  // Same rule as the page and Server Action gates — see
-  // honoured the bypass, so /hire rendered but the pool still refused.
-  if (!profile?.approved) {
-    return { ok: false as const, message: "Recruiter access not approved." };
+  // Same rule as the page and Server Action gates: a RecruiterProfile is what
+  // makes someone a recruiter. This used to also require `approved`, which is
+  // how /hire could render while the pool underneath it still refused.
+  if (!profile) {
+    return { ok: false as const, message: "Register as a recruiter first." };
   }
 
   const cohort = await prisma.programCohort.findFirst({
