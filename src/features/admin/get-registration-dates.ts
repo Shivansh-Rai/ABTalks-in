@@ -1,5 +1,6 @@
 import "server-only";
 
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 
@@ -20,7 +21,7 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
       select: { userId: true },
     }),
     prisma.hackathonParticipant.findMany({
-      where: { createdAt: { gte: since } },
+      where: { eventId: HACKATHON.eventId, createdAt: { gte: since } },
       select: { userId: true },
     }),
     prisma.workshopRegistration.findMany({
@@ -44,7 +45,7 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
       select: { userId: true, createdAt: true },
     }),
     prisma.hackathonParticipant.findMany({
-      where: { userId: { in: userIds } },
+      where: { eventId: HACKATHON.eventId, userId: { in: userIds } },
       select: { userId: true, createdAt: true },
     }),
     // A person can hold many workshop rows — only their first one matters here.
@@ -82,7 +83,7 @@ export async function countRegisteredUsers(): Promise<number> {
     where: {
       OR: [
         { studentProfile: { isNot: null } },
-        { hackathonParticipant: { isNot: null } },
+        { hackathonParticipants: { some: { eventId: HACKATHON.eventId } } },
         { workshopRegistrations: { some: {} } },
       ],
     },

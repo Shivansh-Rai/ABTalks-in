@@ -224,7 +224,7 @@ it survives; the accumulated answer is now backed by code, production `SELECT`s,
 fresh-browser observation:
 
 - persistence matrix — [117](117-t022-control-test.md), verified two-browser
-- guest-adoption root cause — [116](116-t022-two-browser-forensics.md)
+- guest-adoption root cause — [126](126-t022-two-browser-forensics.md)
 - schema drift / P2022 — [115](115-talent-request-schema-drift-investigation.md)
 - **inclusion / eligibility — this report**
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { Domain } from "@prisma/client";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import {
@@ -89,8 +90,10 @@ export async function getStudentsForExport(filters: {
       : Promise.resolve([]),
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
-          where: q
-            ? {
+          where: {
+            eventId: HACKATHON.eventId,
+            ...(q
+              ? {
                 OR: [
                   { fullName: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
@@ -104,7 +107,8 @@ export async function getStudentsForExport(filters: {
                   },
                 ],
               }
-            : undefined,
+              : {}),
+          },
           select: {
             fullName: true,
             email: true,

@@ -23,6 +23,8 @@
     "db:seed:hackathon-problems": "tsx prisma/seed-hackathon-problems.ts",
     "db:seed:colleges": "tsx prisma/seed-colleges.ts",
     "db:seed:platform-taxonomy": "tsx prisma/seed-platform-taxonomy.ts",
+    "db:seed:curriculum-skills": "tsx prisma/seed-curriculum-skills.ts",
+    "db:dedupe:skills": "tsx prisma/scripts/dedupe-skills.ts",
     "db:seed:databricks": "tsx prisma/seed-databricks.ts",
     "db:seed:ds-architect": "tsx prisma/seed-ds-architect.ts",
     "db:seed:powerbi": "tsx prisma/seed-powerbi.ts",
@@ -56,6 +58,8 @@
     "check:chatbot": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/check-chatbot-providers.ts",
     "test:chatbot-retrieval": "tsx scripts/test-chatbot-retrieval.ts",
     "test:chatbot-edgecases": "tsx scripts/test-chatbot-edgecases.ts",
+    "test:analytics-consent": "tsx src/lib/analytics/consent.test.ts",
+    "test:analytics-loader": "tsx src/components/analytics/ga4-loader-logic.test.ts",
     "test:hire-score": "tsx src/features/hire/score-candidate.test.ts",
     "test:scout": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/scout-agent.test.ts",
     "test:sample": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/sample-card.test.ts",
@@ -96,7 +100,11 @@
     "verify:hire-pool": "tsx scripts/verify-hire-pool.ts",
     "test:guest-adoption": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/guest-adoption.test.ts",
     "test:match-persistence": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/match-persistence.test.ts",
-    "test:virtual": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/virtual-candidate.test.ts"
+    "test:virtual": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/virtual-candidate.test.ts",
+    "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
+    "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
+    "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",
+    "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

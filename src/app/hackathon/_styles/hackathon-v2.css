@@ -1,0 +1,2046 @@
+/* ==========================================================================
+   ABTalks — Student Dashboard
+   Hackathon page stylesheet
+   --------------------------------------------------------------------------
+   The dashboard shell (tokens, sidebar, header, buttons, clay) is taken from
+   the Student Profile implementation and is the source of truth here. The
+   Hackathon sections keep their own Figma geometry.
+
+   Section 0  Tokens                  (Profile palette + clay)
+   Section 1  Base / utilities
+   Section 2  Dashboard shell         (sidebar + header + buttons)
+   Section 3  Hackathon: hero         (grid drift · lock · circuit · message)
+   Section 4  Hackathon: discover how it works
+   Section 5  Hackathon: timeline     (the one entrance animation)
+   Section 6  Hackathon: FAQ
+   Section 7  Hackathon: rules
+   Section 7.5 Register popup        (dialog + form, in this page's palette)
+   Section 8  Responsive
+   Section 9  Reduced motion / print
+   ========================================================================== */
+
+/* ==========================================================================
+   0 · TOKENS  — lifted from the Student Profile stylesheet
+   ========================================================================== */
+:root {
+  /* --- brand (Profile palette) ------------------------------------------ */
+  --ab-orange:        #E55636;
+  --ab-orange-hover:  #EA6244;
+  --ab-orange-deep:   #DE4E30;
+  --ab-orange-press:  #D64A2C;
+  --ab-orange-light:  #FFD8D0;
+  --ab-orange-soft:   #FEEFEA;
+
+  /* --- ink -------------------------------------------------------------- */
+  --ab-navy:          #111827;
+  --ab-ink:           #111827;
+  --ab-ink-2:         #374151;
+  --ab-muted:         #6B7280;
+  --ab-muted-2:       #9CA3AF;
+
+  /* --- hackathon accents (Hackathon Figma) ------------------------------ */
+  --ab-peach-bg:      #F4E6DF;  /* timeline + rules container            */
+  --ab-peach-fill:    #F4B5A7;  /* rules inner note                      */
+  --ab-peach-line:    #F9DAD3;  /* card borders / number tab             */
+  --ab-peach-soft:    #F9E0D8;  /* hero grid cells (stronger)            */
+  --ab-peach-faint:   #FBF4F2;  /* hero grid cells (faint)               */
+  --ab-peach-ghost:   #DCD2CE;  /* oversized "RULES" wordmark            */
+
+  /* --- surfaces --------------------------------------------------------- */
+  --ab-app-bg:        #FBF9F7;  /* shell, sidebar, header  (Profile)     */
+  --ab-surface:       #FFFFFF;
+  --ab-surface-2:     #FFFCFB;
+  --ab-border:        #E5E7EB;
+  --ab-border-soft:   #F0ECE8;
+  --ab-border-hair:   #E4E7EC;
+  --ab-grid-line:     #F1E7E3;
+  --ab-rule-line:     #BCBCBC;
+  --ab-count-bg:      #D2D2D2;
+
+  /* --- shape / elevation (Profile) -------------------------------------- */
+  --ab-r-xs: 8px;
+  --ab-r-sm: 9px;      /* buttons                                        */
+  --ab-r-nav: 12px;    /* navigation tiles                               */
+  --ab-r-md: 12px;
+  --ab-r-card: 15px;   /* --card-radius                                  */
+  --ab-r-lg: 18px;
+  --ab-r-xl: 24px;
+  --ab-r-pill: 999px;
+
+  --ab-shadow-card: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px rgba(16, 24, 40, .05);
+  --ab-shadow-lg:   0 0 40px rgba(16, 24, 40, .15);
+  --ab-shadow-paper:
+    22px 34px 62px -12px rgba(88, 52, 40, .54),
+    8px  15px 28px -6px  rgba(88, 52, 40, .36),
+    0    2px  4px         rgba(88, 52, 40, .16);
+  --ab-shadow-paper-hover:
+    30px 46px 82px -12px rgba(88, 52, 40, .62),
+    12px 22px 38px -6px  rgba(88, 52, 40, .44),
+    0    2px  4px        rgba(88, 52, 40, .18);
+
+  /* --- clay ------------------------------------------------------------
+     The Profile's moulded surface: a flat orange face, a darker inner
+     shade pooling at the bottom, a hairline highlight on the top edge and
+     a soft shadow underneath. Hover lifts 1px and deepens; press settles
+     1px and the inner shade takes over.                                   */
+  --ab-clay-rest:
+    0 4px 12px rgba(241, 90, 58, .26),
+    inset 0 -4px 12px rgba(0, 0, 0, .15),
+    inset 0 1px 1px rgba(255, 255, 255, .22);
+  --ab-clay-hover:
+    0 8px 18px rgba(241, 90, 58, .30),
+    inset 0 -4px 12px rgba(0, 0, 0, .13),
+    inset 0 1px 1px rgba(255, 255, 255, .26);
+  --ab-clay-press:
+    0 2px 6px rgba(241, 90, 58, .20),
+    inset 0 -2px 8px rgba(0, 0, 0, .22),
+    inset 0 3px 8px rgba(0, 0, 0, .14);
+
+  /* --- shell metrics ---------------------------------------------------- */
+  --ab-header-h: 59px;        /* desktop header height — exact           */
+  --ab-pad-left: 16px;
+  --ab-pad-right: 57px;
+
+  /* --- type -------------------------------------------------------------
+     Project fonts are loaded once by the root layout as CSS variables.
+     --font-inter, --font-outfit and --font-hub-instrument-sans are always
+     available on <html>. Sora isn't in the project — Outfit 800 stands in
+     for the logo (visually similar geometric sans). */
+  --ab-font: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ab-font-ui: var(--font-hub-instrument-sans), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ab-font-heading: var(--font-outfit), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ab-font-logo: var(--font-outfit), var(--font-inter), sans-serif;
+
+  /* --- motion ----------------------------------------------------------- */
+  --ab-ease-ui: cubic-bezier(.2, .6, .3, 1);
+  --tl-ease-card: cubic-bezier(.16, .84, .24, 1);   /* long cinematic glide  */
+  --tl-ease-tab:  cubic-bezier(.85, 0, .12, 1);     /* photon: whoosh → stop */
+  --tl-card-dur: 1050ms;
+  --tl-card-stagger: 130ms;
+  --tl-tab-dur: 520ms;
+  --tl-tab-stagger: 105ms;
+  --tl-tab-start: calc(var(--tl-card-dur) + (3 * var(--tl-card-stagger)) + 200ms);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --ab-navy:        #F4F6F8;
+  --ab-ink:         #F2F3F5;
+  --ab-ink-2:       #D9DBDE;
+  --ab-muted:       #A5AAB2;
+  --ab-muted-2:     #8A8F97;
+  --ab-app-bg:      #16181C;
+  --ab-surface:     #14161A;
+  --ab-surface-2:   #191C21;
+  --ab-border:      #2C3038;
+  --ab-border-soft: #262A31;
+  --ab-border-hair: #2C3038;
+  --ab-grid-line:   #23262C;
+  --ab-peach-bg:    #22201F;
+  --ab-peach-line:  #3A2B25;
+  --ab-peach-soft:  #2A2220;
+  --ab-peach-faint: #201D1C;
+  --ab-peach-ghost: #2C2A28;
+  --ab-count-bg:    #2B2F36;
+  --ab-rule-line:   #40454D;
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   1 · BASE / UTILITIES
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--ab-font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ab-ink-2);
+  background: var(--ab-app-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, p, ul, ol, figure { margin: 0; }
+
+/* Outfit carries the hackathon headings; Inter carries everything else. */
+h1, h2, h3,
+.hk-h2,
+.hk-hero__title,
+.hiw__title,
+.tl__title,
+.tl-card__title,
+.tl-tab,
+.hk-faq__title,
+.faq__q,
+.rule__title,
+.hk-count__value {
+  font-family: var(--ab-font-heading);
+}
+ul, ol { padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--ab-orange);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.ab-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+.ab-skip {
+  position: absolute;
+  left: 12px; top: -60px;
+  z-index: 200;
+  padding: 10px 18px;
+  border-radius: var(--ab-r-sm);
+  background: var(--ab-orange);
+  color: #fff;
+  font-weight: 600;
+  transition: top .18s ease;
+}
+.ab-skip:focus { top: 12px; }
+
+/* --- buttons (Profile .btn) ----------------------------------------------- */
+.ab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  min-width: 96px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: var(--ab-r-sm);
+  font-family: var(--ab-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .2s ease, color .2s ease,
+              box-shadow .2s ease, transform .18s ease;
+}
+.ab-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Clay — the same moulded surface as the Profile's active tile. */
+.ab-btn--primary {
+  background: var(--ab-orange);
+  color: #fff;
+  box-shadow: var(--ab-clay-rest);
+}
+.ab-btn--primary:hover { background: var(--ab-orange-hover); box-shadow: var(--ab-clay-hover); transform: translateY(-1px); }
+.ab-btn--primary:active { background: var(--ab-orange-press); box-shadow: var(--ab-clay-press); transform: translateY(1px); }
+
+.ab-btn--ghost { background: transparent; color: var(--ab-ink); }
+.ab-btn--ghost:hover { background: #F3F1EE; color: #4B5563; }
+.ab-btn--ghost:active { transform: translateY(1px); }
+
+.ab-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px; height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ab-muted);
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
+}
+.ab-icon-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ab-icon-btn:hover { background: #F7F7F7; color: var(--ab-ink); }
+
+/* ==========================================================================
+   2 · DASHBOARD SHELL — mirrors the Student Profile
+   ========================================================================== */
+.ab-shell {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--ab-app-bg);
+}
+
+/* The nav column is the shared ABTalks `DashboardSidebar` (Tailwind, w-64,
+   sticky, md: breakpoint). Nothing here styles it — keeping a second copy of
+   those rules is exactly how this route drifted from the rest of the app. */
+
+/* --- header — exactly 59px on desktop ------------------------------------- */
+.ab-body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+
+.ab-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex: 0 0 var(--ab-header-h);
+  height: var(--ab-header-h);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 var(--ab-pad-right) 0 var(--ab-pad-left);
+  background: var(--ab-app-bg);
+}
+/* Hamburger mirrors the shared sidebar's `md` breakpoint (768px): shown only
+   where `DashboardSidebar` collapses to its off-canvas drawer. */
+.ab-header__menu { display: none; margin-right: auto; }
+@media (max-width: 767px) {
+  .ab-header__menu { display: inline-grid; }
+}
+.ab-header__right { display: flex; align-items: center; gap: 8px; }
+
+.ab-header__link {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--ab-r-xs);
+  color: var(--ab-muted);
+  font-size: 13px; font-weight: 500;
+  transition: color .18s ease, background-color .18s ease;
+}
+.ab-header__link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ab-header__link:hover { color: var(--ab-ink); background: #F7F7F7; }
+
+.ab-header__cta { height: 34px; min-width: 0; padding: 0 20px; font-size: 13px; }
+
+/* --- content area --------------------------------------------------------- */
+.ab-content {
+  container-type: inline-size;
+  container-name: content;
+  flex: 1;
+  min-width: 0;
+  background: var(--ab-surface);
+  padding-bottom: clamp(48px, 5cqw, 88px);
+}
+
+.hk-timeline,
+.hk-faq,
+.hk-rules {
+  margin-inline: clamp(16px, 2.6cqw, 42px);
+  margin-top: clamp(40px, 5cqw, 82px);
+}
+/* Hero and "Discover" belong together — a short, deliberate gap. */
+.hk-how {
+  margin-inline: clamp(16px, 2.6cqw, 42px);
+  margin-top: clamp(10px, 1.4cqw, 22px);
+}
+
+.hk-h2 {
+  font-size: clamp(1.35rem, 2.6cqw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -.015em;
+  color: var(--ab-navy);
+}
+
+/* ==========================================================================
+   3 · HERO
+   ========================================================================== */
+/* The hero occupies exactly one screen: it fills the space under the header,
+   the headline block takes what it needs, and the lock scene takes the rest.
+   --hk-scene-w (written by JS) is the widest the scene can be and still let
+   the whole composition sit inside the viewport. */
+.hk-hero {
+  /* One vertical scale for the whole text block, so sponsor → headline →
+     supporting line → countdown → CTA read as steps of the same rhythm
+     rather than four unrelated gaps. */
+  --hk-gap-sponsor: 22px;
+  --hk-gap-sub: 23px;
+  --hk-gap-count: 37px;
+  --hk-gap-cta: 26px;
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--ab-header-h));
+  min-height: calc(100svh - var(--ab-header-h));
+  padding: clamp(20px, 2.2cqw, 40px) clamp(16px, 2.6cqw, 42px) clamp(16px, 3cqw, 48px);
+  overflow: hidden;
+}
+
+/* --- technical background grid -------------------------------------------
+   The grid itself never moves. Only the peach cells animate: they fade out,
+   hop to a free cell and fade back in, which is the hero's one piece of
+   motion.                                                                  */
+.hk-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  --cell: clamp(52px, 7.26cqw, 118px);
+  /* Full strength through the headline and the lock, then dissolves into the
+     section below. --hk-fade-start is the lock's bottom edge, set by JS. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 var(--hk-fade-start, 76%), transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0, #000 var(--hk-fade-start, 76%), transparent 100%);
+}
+
+.hk-hero__lines {
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(to right, var(--ab-grid-line) 0 1px, transparent 1px var(--cell)),
+    repeating-linear-gradient(to bottom, var(--ab-grid-line) 0 1px, transparent 1px var(--cell));
+}
+
+.hk-hero__cells {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--cell));
+  grid-auto-columns: var(--cell);
+  grid-auto-rows: var(--cell);
+}
+.cell {
+  grid-column: var(--c);
+  grid-row: var(--r);
+  opacity: 1;
+  transition: opacity var(--tile-fade, .38s) var(--ab-ease-ui);
+}
+.cell--soft  { background: var(--ab-peach-soft); }
+.cell--faint { background: var(--ab-peach-faint); }
+
+/* --- headline ------------------------------------------------------------- */
+.hk-hero__head { position: relative; flex: none; text-align: center; }
+
+/* --- sponsor credit -------------------------------------------------------
+   The label belongs to this page; the brand mark sits in its own black
+   field with a soft violet glow, which is how Breeth's own kit presents it. */
+.hk-sponsor {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--hk-gap-sponsor);
+}
+.hk-sponsor__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ab-muted);
+  white-space: nowrap;
+}
+.hk-sponsor__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 17px 5px 6px;
+  border-radius: var(--ab-r-pill);
+  background: #000000;
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, .32),
+    0 6px 18px -8px rgba(137, 90, 246, .55);
+  transition: box-shadow .2s ease, transform .18s ease;
+}
+.hk-sponsor__brand:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, .60),
+    0 10px 24px -8px rgba(137, 90, 246, .75);
+}
+.hk-sponsor__brand:focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
+.hk-sponsor__mark { width: 30px; height: 30px; }
+.hk-sponsor__word { height: 15px; width: auto; }
+
+.hk-hero__title {
+  font-size: clamp(2.15rem, 4.95cqw, 5.15rem);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -.025em;
+  color: var(--ab-navy);
+  text-wrap: balance;
+}
+.hk-hero__title em { font-style: normal; color: var(--ab-orange); }
+
+.hk-hero__sub {
+  margin: var(--hk-gap-sub) auto 0;
+  max-width: 100%;
+  white-space: nowrap;          /* one line — see 820px breakpoint for small screens */
+  overflow-wrap: normal;
+  font-size: clamp(.85rem, 1.12cqw, 1.125rem);
+  line-height: 1.55;
+  color: var(--ab-ink-2);
+}
+
+/* --- countdown ------------------------------------------------------------ */
+.hk-count {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(4px, .55cqw, 9px);
+  margin-top: var(--hk-gap-count);
+}
+.hk-count__unit { display: flex; flex-direction: column; align-items: center; gap: .4em; }
+
+.hk-count__value {
+  display: grid;
+  place-items: center;
+  min-width: clamp(44px, 4.15cqw, 68px);
+  padding: clamp(6px, .62cqw, 11px) clamp(8px, .8cqw, 14px);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-count-bg);
+  color: var(--ab-navy);
+  font-size: clamp(1rem, 1.72cqw, 1.8rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.hk-count__label {
+  font-size: clamp(.5rem, .68cqw, .7rem);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ab-muted);
+}
+.hk-count__sep {
+  margin-top: clamp(10px, 1.1cqw, 18px);
+  font-size: clamp(.8rem, 1.1cqw, 1.15rem);
+  font-weight: 700;
+  color: var(--ab-muted-2);
+}
+
+/* --- CTA pill group ------------------------------------------------------- */
+.hk-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--hk-gap-cta);
+  padding: 5px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-surface);
+  box-shadow: var(--ab-shadow-card);
+}
+.hk-cta__primary,
+.hk-cta__secondary { border-radius: var(--ab-r-pill); }
+
+/* --- the scene: circuit → particles → lock -------------------------------
+   The lines and the lock share one coordinate space (the Figma hero frame,
+   1611 × 393), so the polylines meet the lock body exactly and their ends
+   are hidden behind it.                                                    */
+.hk-hero__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(18px, 2.4cqw, 40px);
+  margin-inline: calc(-1 * clamp(16px, 2.6cqw, 42px));
+  overflow: hidden;
+}
+.hk-hero__scene {
+  position: relative;
+  width: min(100%, var(--hk-scene-w, 100%));
+  aspect-ratio: 1611 / 393;
+}
+.hk-hero__lock-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(100%, var(--hk-scene-w, 100%));
+  aspect-ratio: 1611 / 393;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* z-order: grid (-1) · circuit (1) · particles (2) · lock (3) · chat (5) */
+.hk-circuit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: #A0A0A0;
+  z-index: 1;
+}
+.hk-sparks { z-index: 2; }
+
+/* particles: emitted from behind the lock, travelling outward along the
+   real path geometry. offset-path keeps them on the line at every size. */
+.hk-spark {
+  fill: var(--ab-orange);
+  offset-path: var(--path);
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  opacity: 0;
+  animation: hk-spark var(--dur, 2.4s) linear var(--delay, 0s) infinite;
+  animation-direction: var(--dir, normal);
+}
+@keyframes hk-spark {
+  0%   { offset-distance: 0%;   opacity: 0; }
+  7%   { opacity: .95; }
+  88%  { opacity: .95; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+/* No motion-path support → no particles, rather than a pile-up at the lock. */
+@supports not (offset-path: path("M0 0")) {
+  .hk-sparks { display: none; }
+}
+
+/* --- the lock ------------------------------------------------------------- */
+.hk-lock-btn {
+  position: absolute;
+  left: 40.01%;
+  top: 16.85%;
+  width: 18.76%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 3;
+  transition: transform .2s ease, filter .2s ease;
+}
+.hk-lock {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 88%;          /* pivots on its base, like a real object */
+  animation: hk-lock-jitter 2.6s ease-in-out infinite;
+  will-change: transform;
+}
+/* One short shake at the end of each cycle, then it sits still again. */
+@keyframes hk-lock-jitter {
+  0%, 85%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  87%   { transform: translate3d(-2.5px, 0, 0) rotate(-1.2deg); }
+  89.5% { transform: translate3d(2.5px, 0, 0)  rotate(1.2deg); }
+  92%   { transform: translate3d(-1.8px, 0, 0) rotate(-.8deg); }
+  94.5% { transform: translate3d(1.6px, 0, 0)  rotate(.7deg); }
+  97%   { transform: translate3d(-.7px, 0, 0)  rotate(-.3deg); }
+}
+/* It has the viewer's attention already — stop nudging. */
+.hk-lock-btn:hover .hk-lock,
+.hk-lock-btn:focus-visible .hk-lock,
+.hk-lock-btn[data-state="unlocked"] .hk-lock,
+.hk-hero.is-msg-open .hk-lock { animation: none; }
+.hk-lock-btn:hover,
+.hk-lock-btn:focus-visible {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 10px 16px rgba(16, 24, 40, .22));
+}
+.hk-lock-btn:focus-visible { outline: 2px solid var(--ab-orange); outline-offset: 8px; border-radius: 10px; }
+
+/* Status LEDs. Orange while the page is locked, green once it opens — the
+   colours used to be the other way round, so an unlocked page still read as
+   shut. Green is the only "you're through" signal the lock has, so it also
+   gets a glow. */
+.hk-lock__leds circle { fill: var(--ab-orange); transition: fill .3s ease; }
+.hk-lock-btn[data-state="unlocked"] .hk-lock__leds circle { fill: #6FD62A; }
+.hk-lock-btn[data-state="unlocked"] .hk-lock__leds {
+  filter: drop-shadow(0 0 6px rgba(111, 214, 42, .75));
+}
+
+/* The shackle stays seated on its left leg and swings the right leg clear of
+   the body, which reads as a real open padlock instead of a floating U-shape. */
+.hk-lock__shackle {
+  transform-box: view-box;
+  transform-origin: 84px 175px;
+  transition: transform .55s cubic-bezier(.2, .85, .25, 1);
+}
+.hk-lock-btn[data-state="unlocked"] .hk-lock__shackle {
+  transform: rotate(-24deg);
+}
+
+/* --- the message the lock emits -------------------------------------------
+   Deliberately loud: the brand's clay surface rather than a quiet white
+   card, a lock badge, and the call to action set as a solid chip.         */
+.hk-lock-msg {
+  --msg-face: #CF4A1F;                /* ≥ 4.5:1 against white text        */
+  position: absolute;
+  left: 60.5%;
+  top: 8%;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  width: min(330px, 28cqw);
+  padding: 14px 16px 15px;
+  border-radius: var(--ab-r-card);
+  background: linear-gradient(180deg, var(--msg-face) 0%, #B93F17 100%);
+  color: #FFFFFF;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow:
+    0 18px 34px -12px rgba(185, 63, 23, .55),
+    0 6px 14px -6px rgba(185, 63, 23, .38),
+    inset 0 -4px 12px rgba(0, 0, 0, .18),
+    inset 0 1px 1px rgba(255, 255, 255, .28);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(-10px, 4px, 0) scale(.94);
+  transform-origin: 0 58%;
+  transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1.05), visibility .22s;
+  pointer-events: none;
+  z-index: 4;
+}
+.hk-lock-msg__badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+}
+.hk-lock-msg__badge svg {
+  width: 15px; height: 15px;
+  fill: none; stroke: #FFFFFF;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.hk-lock-msg__text { margin: 0; }
+/* the call to action reads as a chip, not just bold text */
+.hk-lock-msg strong {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 2px 9px;
+  border-radius: var(--ab-r-pill);
+  background: #FFFFFF;
+  color: #C8451B;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* the tail, pointing back at the lock */
+.hk-lock-msg::before,
+.hk-lock-msg::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 58%;
+  width: 0; height: 0;
+  border: 9px solid transparent;
+  border-left: 0;
+  border-right-color: rgba(185, 63, 23, .45);
+}
+.hk-lock-msg::after {
+  left: -8px;
+  border-right-color: var(--msg-face);
+}
+.hk-hero.is-msg-open .hk-lock-msg {
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0) scale(1);
+  pointer-events: auto;
+}
+
+/* Body wraps the copy + optional code form so the badge stays aligned. */
+.hk-lock-msg__body { min-width: 0; flex: 1; }
+
+/* Code entry form inside the lock message. Shown only while locked. */
+.hk-code-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.hk-code-form__input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--ab-r-xs);
+  border: 1px solid rgba(255, 255, 255, .35);
+  background: rgba(0, 0, 0, .22);
+  color: #FFFFFF;
+  font-family: var(--ab-font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.hk-code-form__input::placeholder {
+  color: rgba(255, 255, 255, .55);
+  letter-spacing: .18em;
+}
+.hk-code-form__input:focus {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 1px;
+  background: rgba(0, 0, 0, .3);
+}
+.hk-code-form__input[aria-invalid="true"] {
+  border-color: #FFD8D0;
+  background: rgba(255, 216, 208, .18);
+}
+.hk-code-form__btn {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--ab-r-xs);
+  background: #FFFFFF;
+  color: #C8451B;
+  font-family: var(--ab-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .18s ease, transform .12s ease, opacity .18s ease;
+}
+.hk-code-form__btn:hover { background: #FFF3EF; }
+.hk-code-form__btn:active { transform: translateY(1px); }
+.hk-code-form__btn:disabled { opacity: .5; cursor: not-allowed; }
+.hk-code-form__error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFE4DE;
+}
+
+/* The unlock code itself, handed to the registrant inside the message. This is
+   where they get it — it is deliberately not emailed. */
+.hk-lock-msg__code {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--ab-r-xs);
+  background: rgba(0, 0, 0, .22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+}
+.hk-lock-msg__code-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .78);
+}
+.hk-lock-msg__code-value {
+  margin-left: auto;
+  font-family: var(--ab-font-ui);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  color: #FFFFFF;
+}
+
+/* Placeholder shown below the hero while the page is still locked. */
+.hk-locked-placeholder {
+  margin: clamp(28px, 4cqw, 64px) auto clamp(40px, 5cqw, 88px);
+  padding: clamp(20px, 2.4cqw, 34px) clamp(20px, 2.6cqw, 34px);
+  max-width: 640px;
+  border: 1px dashed var(--ab-peach-line);
+  border-radius: var(--ab-r-lg);
+  background: linear-gradient(180deg, #FEFAF7 0%, #FDEFEA 100%);
+  text-align: center;
+}
+.hk-locked-placeholder__title {
+  font-family: var(--ab-font-heading);
+  font-size: clamp(1rem, 1.4cqw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -.005em;
+  color: var(--ab-navy);
+}
+.hk-locked-placeholder__text {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ab-ink-2);
+}
+.hk-locked-placeholder__text b {
+  font-weight: 800;
+  color: var(--ab-orange);
+  letter-spacing: .12em;
+}
+
+/* ==========================================================================
+   4 · DISCOVER HOW IT WORKS
+   ========================================================================== */
+.hk-how__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.68cqw, 27px);
+  margin-top: clamp(16px, 2.4cqw, 38px);
+}
+
+.hiw {
+  position: relative;
+  display: flex;
+  min-height: clamp(180px, 14.6cqw, 236px);
+  border: 1px solid var(--ab-peach-line);
+  border-radius: var(--ab-r-lg);
+  background: var(--ab-surface-2);
+  overflow: hidden;
+}
+
+.hiw__tab {
+  position: absolute;
+  top: 0; left: 0;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 4.35cqw, 71px);
+  height: clamp(42px, 3.85cqw, 63px);
+  padding-right: .18em;
+  border-radius: var(--ab-r-lg) 0 60% 0;
+  background: linear-gradient(140deg, #FDEEE9 0%, #F9DAD3 55%, #F3C0B2 100%);
+  box-shadow: 3px 5px 9px -4px rgba(200, 96, 60, .35);
+  color: var(--ab-orange);
+  font-size: clamp(1.1rem, 1.55cqw, 1.6rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hiw__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(6px, .55cqw, 10px);
+  padding: clamp(58px, 5cqw, 82px) clamp(16px, 1.7cqw, 28px) clamp(16px, 1.5cqw, 24px);
+  width: 100%;
+}
+.hiw__title {
+  /* Matches .tl-card__title exactly. The timeline resolves cqw against its own
+     `timeline` container; this resolves against the wider `content` container,
+     so the 1.56cqw there becomes 1.56 x 0.948 = 1.479cqw here. The floor and
+     ceiling are shared verbatim. */
+  font-size: clamp(.95rem, 1.479cqw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ab-navy);
+}
+.hiw__text {
+  font-size: clamp(.82rem, 1cqw, 1rem);
+  line-height: 1.5;
+  color: var(--ab-ink-2);
+}
+/* ==========================================================================
+   4b · DISCORD CALLOUT  (added — every participant must join Discord)
+   ========================================================================== */
+.hk-discord {
+  margin-inline: clamp(16px, 2.6cqw, 42px);
+  margin-top: clamp(24px, 3cqw, 46px);
+}
+.hk-discord__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(20px, 3cqw, 44px);
+  padding: clamp(22px, 2.6cqw, 38px) clamp(24px, 3.4cqw, 46px);
+  border-radius: var(--ab-r-xl);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(88, 101, 242, .12), transparent 60%),
+    linear-gradient(180deg, #0F1030 0%, #1A1F4D 100%);
+  color: #FFFFFF;
+  box-shadow:
+    0 20px 40px -18px rgba(15, 16, 48, .55),
+    0 6px 14px -6px rgba(15, 16, 48, .35),
+    inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+.hk-discord__eyebrow {
+  display: inline-block;
+  font-family: var(--ab-font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #A5B4FC;
+}
+.hk-discord__title {
+  margin-top: .55em;
+  font-family: var(--ab-font-heading);
+  font-size: clamp(1.35rem, 2.4cqw, 2.15rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #FFFFFF;
+}
+.hk-discord__text {
+  margin-top: .75em;
+  font-size: clamp(.9rem, 1.05cqw, 1.02rem);
+  line-height: 1.55;
+  color: #D6DAFB;
+}
+.hk-discord__cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hk-discord__btn {
+  background: #5865F2;
+  color: #FFFFFF;
+  height: 48px;
+  padding: 0 26px;
+  box-shadow:
+    0 8px 22px rgba(88, 101, 242, .34),
+    inset 0 -4px 12px rgba(0, 0, 0, .18),
+    inset 0 1px 1px rgba(255, 255, 255, .28);
+}
+.hk-discord__btn:hover {
+  background: #6B75FF;
+  box-shadow:
+    0 12px 26px rgba(88, 101, 242, .40),
+    inset 0 -4px 12px rgba(0, 0, 0, .16),
+    inset 0 1px 1px rgba(255, 255, 255, .32);
+}
+.hk-discord__note {
+  font-size: 12px;
+  color: #B4BBE8;
+}
+@container content (max-width: 720px) {
+  .hk-discord__card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 24px 22px;
+  }
+  .hk-discord__cta { align-items: stretch; }
+  .hk-discord__btn { width: 100%; padding: 0 20px; }
+}
+
+/* ==========================================================================
+   5 · TIMELINE
+   ========================================================================== */
+.hk-timeline { container-type: inline-size; container-name: timeline; }
+
+.tl {
+  position: relative;
+  padding: 3.1cqw 3.45cqw 5.2cqw;
+  border-radius: var(--ab-r-xl);
+  background: var(--ab-peach-bg);
+  overflow: hidden;
+}
+.tl__title { font-size: clamp(1.3rem, 2.6cqw, 2.6rem); }
+
+.tl__cards {
+  display: flex;
+  align-items: flex-end;
+  gap: .85cqw;
+  margin-top: 1.2cqw;
+  counter-reset: tl;
+}
+
+.tl-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 2.1cqw;
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface);
+  overflow: hidden;
+  counter-increment: tl;
+}
+.tl-card:nth-child(1) { aspect-ratio: 348 / 263; }
+.tl-card:nth-child(2) { aspect-ratio: 348 / 303; }
+.tl-card:nth-child(3) { aspect-ratio: 348 / 333; }
+.tl-card:nth-child(4) { aspect-ratio: 348 / 363; }
+
+.tl-card__title {
+  font-size: clamp(.95rem, 1.56cqw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ab-navy);
+}
+.tl-card__text {
+  margin-top: .5em;
+  font-size: clamp(.78rem, 1.04cqw, 1rem);
+  line-height: 1.5;
+  color: var(--ab-ink-2);
+}
+.tl-card__art {
+  position: absolute;
+  right: 0; bottom: 0;
+  width: var(--art-w, 36%);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tl__rail {
+  position: relative;
+  height: 3.25cqw;
+  min-height: 34px;
+  margin: 3.84cqw -3.45cqw 0;
+}
+.tl__line {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--ab-rule-line);
+}
+.tl-tab {
+  position: absolute;
+  left: var(--x);
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 5.72cqw;
+  min-width: 56px;
+  height: 100%;
+  border-radius: var(--ab-r-sm);
+  background: var(--ab-orange);
+  box-shadow: var(--ab-clay-rest);
+  color: #fff;
+  font-size: clamp(.9rem, 1.95cqw, 1.9rem);
+  font-weight: 800;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+/* --- the signature entrance ---------------------------------------------- */
+.hk-timeline.is-armed .tl-card {
+  opacity: .55;
+  transform: translate3d(var(--tl-enter, 62cqw), 0, 0);
+}
+.hk-timeline.is-armed .tl-tab {
+  transform: translate(-50%, -50%) translate3d(var(--tab-enter, 0px), 0, 0);
+}
+.hk-timeline.is-armed.is-in .tl-card {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--tl-card-dur) var(--tl-ease-card) calc(var(--i) * var(--tl-card-stagger)),
+    opacity   calc(var(--tl-card-dur) * .55) linear calc(var(--i) * var(--tl-card-stagger));
+}
+.hk-timeline.is-armed.is-in .tl-tab {
+  transform: translate(-50%, -50%) translate3d(0, 0, 0);
+  transition: transform var(--tl-tab-dur) var(--tl-ease-tab)
+              calc(var(--tl-tab-start) + var(--i) * var(--tl-tab-stagger));
+}
+
+/* ==========================================================================
+   6 · FAQ
+   ========================================================================== */
+.hk-faq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: clamp(24px, 4cqw, 64px);
+  align-items: center;
+}
+/* The heading block sits 50px further in than the accordion column. */
+.hk-faq__intro { padding-left: 50px; }
+
+.hk-faq__title {
+  font-size: clamp(1.4rem, 2.6cqw, 2.6rem);
+  line-height: 1.14;
+}
+.hk-faq__title em { font-style: normal; color: var(--ab-orange); }
+.hk-faq__sub {
+  margin-top: .9em;
+  font-size: clamp(.85rem, 1.12cqw, 1.1rem);
+  color: var(--ab-muted);
+}
+
+/* The column reserves its tallest state (JS writes min-height), so opening an
+   answer never pushes the Rules section down the page. */
+.hk-faq__list { display: grid; gap: 8px; align-content: start; }
+.hk-faq__list.is-measuring .faq__panel { transition: none !important; }
+
+.faq {
+  background: #F2EFEC;
+  border: 1px solid transparent;
+  border-radius: var(--ab-r-md);
+  transition: background-color .2s ease, border-color .2s ease;
+}
+.faq.is-open { background: #EFEBE8; border-color: var(--ab-border); }
+
+.faq__h { font: inherit; margin: 0; }
+
+.faq__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 20px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.faq__btn:focus-visible { outline: 2px solid var(--ab-orange); outline-offset: 4px; border-radius: var(--ab-r-md); }
+
+.faq__q {
+  font-size: 18px;
+  line-height: 27px;
+  font-weight: 600;
+  color: var(--ab-navy);
+}
+
+.faq__icon {
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--ab-orange);
+}
+.faq__icon i {
+  position: absolute;
+  left: 50%; top: 50%;
+  background: #fff;
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+  transition: transform .22s ease, opacity .22s ease;
+}
+.faq__icon i:first-child { width: 10px; height: 2px; }
+.faq__icon i:last-child  { width: 2px;  height: 10px; }
+.faq.is-open .faq__icon i:last-child { transform: translate(-50%, -50%) rotate(90deg); opacity: 0; }
+
+.faq__panel { overflow: hidden; height: 0; transition: height .28s ease; }
+.faq__inner p {
+  padding: 0 20px 16px;
+  font-size: 16px;
+  line-height: 25px;
+  color: var(--ab-ink-2);
+}
+
+/* ==========================================================================
+   7 · RULES
+   ========================================================================== */
+.hk-rules { container-type: inline-size; container-name: rules; }
+
+.rules {
+  position: relative;
+  aspect-ratio: 1537 / 614;
+  border-radius: var(--ab-r-xl);
+  background: var(--ab-peach-bg);
+  overflow: hidden;
+  font-size: 1cqw;
+}
+
+/* Fitted to the reference: cap height 405/1537 of the container width,
+   cropped by roughly half a letter each side, first glyph origin -137/1537. */
+.rules__word {
+  position: absolute;
+  left: -8.914cqw;
+  top: .578cqw;
+  font-family: var(--ab-font-heading);
+  font-size: 36.13cqw;
+  font-weight: 800;
+  letter-spacing: .0189em;
+  line-height: 1;
+  color: var(--ab-peach-ghost);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.rule {
+  position: absolute;
+  width: 17.05em;
+  aspect-ratio: 262 / 316;
+  padding: 3.9em 1.43em 2.93em;
+  border-radius: 1.05em;
+  background: var(--ab-surface);
+  box-shadow: var(--ab-shadow-paper);
+  transform: translate(-50%, -50%) rotate(var(--rot));
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+/* Nudged like a pinned paper note — each card keeps its own rotation. */
+.rule:hover,
+.rule:focus-within {
+  transform: translate(-50%, -50%) translateY(-2px) rotate(var(--rot-h));
+  box-shadow: var(--ab-shadow-paper-hover);
+}
+.rule--1 { --rot:   9.6deg; --rot-h:  12deg; left: 13.28%; top: 37.38%; }
+.rule--2 { --rot: -18.2deg; --rot-h: -15deg; left: 36.97%; top: 59.57%; }
+.rule--3 { --rot:  19.5deg; --rot-h:  22deg; left: 61.78%; top: 37.50%; }
+.rule--4 { --rot:  -6.3deg; --rot-h:  -9deg; left: 84.13%; top: 62.99%; }
+
+.rule__note {
+  height: 100%;
+  padding: 1.1em 1.1em 1.2em;
+  border-radius: .8em;
+  background: var(--ab-peach-fill);
+  overflow: hidden;
+}
+.rule__title {
+  font-size: 1.28em;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  color: #111;
+}
+/* The rule number is part of the headline, not a prefix. */
+.rule__title b {
+  color: var(--ab-orange);
+  font-weight: 800;
+  font-size: 1.5em;
+  letter-spacing: -.03em;
+  margin-right: .04em;
+}
+.rule__text {
+  margin-top: .5em;
+  font-size: .98em;
+  line-height: 1.34;
+  color: #3B3B3B;
+}
+
+.rule__pin {
+  position: absolute;
+  top: -.8em;
+  left: 50%;
+  width: 3.1em;
+  height: auto;
+  transform: translateX(-55%);
+  filter:
+    drop-shadow(.10em .16em .10em rgba(120, 34, 18, .42))
+    drop-shadow(.22em .34em .34em rgba(88, 40, 24, .28));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ==========================================================================
+   7.5 · REGISTER POPUP
+   --------------------------------------------------------------------------
+   The popup used to inherit the app-wide shadcn theme, so an indigo, generic
+   form opened on top of an orange, clay-shaded page. Everything below dresses
+   the shared form primitives in this page's palette instead. It is scoped to
+   .hk-dialog, which only the hackathon dialog carries, so no other surface
+   moves — including the dropdown popups these controls portal to body, which
+   are matched by their own data-slot rules further down.
+   ========================================================================== */
+.hk-dialog {
+  width: 100%;
+  max-width: min(560px, calc(100% - 1.5rem));
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  gap: 0;
+  border-radius: var(--ab-r-lg);
+  background: var(--ab-surface);
+  color: var(--ab-ink);
+  font-family: var(--ab-font);
+  box-shadow:
+    0 32px 64px -18px rgba(88, 52, 40, .38),
+    0 12px 26px -12px rgba(88, 52, 40, .28);
+  --ring: var(--ab-orange);
+}
+/* The popup takes focus when it opens; it is a container, not a control, so
+   the global focus ring on it is just a stray orange box. Fields inside keep
+   theirs — that is what --ring above is for. */
+.hk-dialog:focus,
+.hk-dialog:focus-visible { outline: none; }
+
+.hk-dialog__head {
+  position: relative;
+  padding: 22px 52px 18px 24px;
+  border-bottom: 1px solid var(--ab-border-soft);
+  background: linear-gradient(180deg, #FFFDFC 0%, var(--ab-app-bg) 100%);
+}
+.hk-dialog__title {
+  font-family: var(--ab-font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  color: var(--ab-navy);
+}
+.hk-dialog__title em { font-style: normal; color: var(--ab-orange); }
+.hk-dialog__sub {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+.hk-dialog__body { padding: 22px 24px 24px; }
+
+/* The shared close button is a neutral ghost square; make it match the page. */
+.hk-dialog [data-slot="dialog-close"] {
+  top: 14px;
+  right: 14px;
+  color: var(--ab-muted);
+  border-radius: var(--ab-r-xs);
+}
+.hk-dialog [data-slot="dialog-close"]:hover {
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+}
+
+/* --- progress --------------------------------------------------------- */
+.hk-reg { display: flex; flex-direction: column; gap: 20px; }
+
+.hk-reg__meter { display: flex; flex-direction: column; gap: 8px; }
+.hk-reg__meter-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ab-muted);
+}
+.hk-reg__meter-row b {
+  font-weight: 700;
+  color: var(--ab-orange-deep);
+  font-variant-numeric: tabular-nums;
+}
+.hk-reg__track {
+  height: 5px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-peach-line);
+  overflow: hidden;
+}
+.hk-reg__fill {
+  height: 100%;
+  border-radius: var(--ab-r-pill);
+  background: linear-gradient(90deg, var(--ab-orange) 0%, #F5814F 100%);
+  transition: width .35s var(--ab-ease-ui);
+}
+
+/* --- step heading ----------------------------------------------------- */
+.hk-reg__legend {
+  font-family: var(--ab-font-heading);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ab-navy);
+}
+.hk-reg__hint {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+
+/* --- entry-type cards -------------------------------------------------- */
+.hk-reg__choices { display: grid; gap: 10px; margin-top: 12px; }
+.hk-reg__choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 1px solid var(--ab-border-hair);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface);
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease,
+              box-shadow .18s ease, transform .14s ease;
+}
+.hk-reg__choice:hover { border-color: var(--ab-orange-light); background: #FFFCFB; }
+.hk-reg__choice.is-selected {
+  border-color: var(--ab-orange);
+  background: var(--ab-orange-soft);
+  box-shadow: 0 1px 2px rgba(229, 86, 54, .10), 0 8px 20px -12px rgba(229, 86, 54, .45);
+}
+.hk-reg__choice-title {
+  font-family: var(--ab-font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ab-navy);
+}
+.hk-reg__choice-body {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+}
+
+/* --- fields ------------------------------------------------------------ */
+.hk-reg__fields { display: grid; gap: 16px; }
+/* A button in the field grid (the team-code check) sizes to its label rather
+   than stretching across the column like an input. */
+.hk-reg__fields > .ab-btn { justify-self: start; }
+.hk-reg label { font-weight: 600; }
+.hk-reg [data-slot="form-label"] {
+  font-family: var(--ab-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--ab-ink-2);
+}
+.hk-reg [data-slot="form-message"] { color: var(--ab-orange-deep); font-size: 12.5px; }
+
+/* Inputs and the select trigger, including the college autocomplete, which
+   ships its own utility classes — matched on the element, not the class. */
+.hk-dialog input[type="text"],
+.hk-dialog input[type="tel"],
+.hk-dialog input:not([type]),
+.hk-dialog [data-slot="select-trigger"] {
+  height: 42px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--ab-border);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  color: var(--ab-ink);
+  font-family: var(--ab-font);
+  font-size: 14.5px;
+  box-shadow: none;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.hk-dialog input::placeholder { color: var(--ab-muted-2); }
+.hk-dialog input:focus,
+.hk-dialog input:focus-visible,
+.hk-dialog [data-slot="select-trigger"]:focus-visible,
+.hk-dialog [data-slot="select-trigger"][data-popup-open] {
+  border-color: var(--ab-orange);
+  box-shadow: 0 0 0 3px rgba(229, 86, 54, .16);
+  outline: none;
+}
+.hk-dialog input[aria-invalid="true"] {
+  border-color: var(--ab-orange-deep);
+  box-shadow: 0 0 0 3px rgba(214, 74, 44, .14);
+}
+.hk-reg__code-input {
+  font-family: var(--ab-font-ui) !important;
+  font-weight: 800 !important;
+  letter-spacing: .28em !important;
+  text-transform: uppercase;
+}
+
+/* Checkbox + radio. Unchecked, the shared primitives pick up a dark tinted
+   fill here, which reads as a filled-in control on this light surface. */
+.hk-dialog [data-slot="checkbox"],
+.hk-dialog [data-slot="radio-group-item"] {
+  background: var(--ab-surface);
+  border-color: var(--ab-muted-2);
+}
+/* Checked, they paint themselves --primary (indigo). */
+.hk-dialog [data-slot="checkbox"][data-checked],
+.hk-dialog [data-slot="radio-group-item"][data-checked] {
+  border-color: var(--ab-orange);
+  background: var(--ab-orange);
+  color: #FFFFFF;
+}
+.hk-dialog [data-slot="radio-group-item"] { margin-top: 2px; }
+.hk-dialog [data-slot="checkbox"]:focus-visible,
+.hk-dialog [data-slot="radio-group-item"]:focus-visible {
+  border-color: var(--ab-orange);
+  box-shadow: 0 0 0 3px rgba(229, 86, 54, .22);
+}
+
+/* --- legal block -------------------------------------------------------- */
+.hk-reg__legal {
+  border: 1px solid var(--ab-border-soft);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface-2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ab-ink-2);
+}
+.hk-reg__legal a { color: var(--ab-orange-deep); font-weight: 600; }
+
+/* --- team lookup feedback ---------------------------------------------- */
+.hk-reg__lookup {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ab-muted);
+}
+.hk-reg__lookup.is-ok { color: #1F7A3D; }
+.hk-reg__lookup.is-bad { color: var(--ab-orange-deep); }
+
+.hk-reg__error {
+  padding: 10px 12px;
+  border: 1px solid var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-orange-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: #A8341A;
+}
+
+/* --- footer actions ----------------------------------------------------- */
+.hk-reg__actions {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+.hk-reg__actions .ab-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--ab-clay-rest);
+}
+.hk-reg__spinner {
+  width: 15px; height: 15px;
+  animation: hk-reg-spin .9s linear infinite;
+}
+@keyframes hk-reg-spin { to { transform: rotate(360deg); } }
+
+.hk-btn--outline {
+  background: var(--ab-surface);
+  color: var(--ab-ink-2);
+  box-shadow: inset 0 0 0 1px var(--ab-border);
+}
+.hk-btn--outline:hover { background: #FAF8F6; color: var(--ab-ink); }
+.hk-btn--outline:active { transform: translateY(1px); }
+
+/* --- success ------------------------------------------------------------ */
+.hk-done { display: flex; flex-direction: column; gap: 18px; }
+.hk-done__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.hk-done__title {
+  font-family: var(--ab-font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ab-navy);
+}
+.hk-done__text { font-size: 14px; line-height: 1.6; color: var(--ab-ink-2); }
+.hk-done__panel {
+  padding: 16px;
+  border: 1px solid var(--ab-peach-line);
+  border-radius: var(--ab-r-md);
+  background: linear-gradient(180deg, #FEFAF7 0%, #FDEFEA 100%);
+}
+.hk-done__panel + .hk-done__panel { margin-top: 12px; }
+.hk-done__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ab-orange-deep);
+}
+.hk-done__code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.hk-done__code {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px dashed var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  font-family: var(--ab-font-ui);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-align: center;
+  color: var(--ab-navy);
+}
+.hk-done__copy {
+  flex: none;
+  height: 40px;
+  min-width: 0;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.hk-done__note { margin-top: 9px; font-size: 12.5px; line-height: 1.55; color: var(--ab-muted); }
+.hk-done__links { display: flex; flex-wrap: wrap; gap: 10px; }
+.hk-done__links .ab-btn { flex: 1 1 auto; }
+
+/* --- your team (landing) ------------------------------------------------ */
+.hk-team {
+  margin-inline: clamp(16px, 2.6cqw, 42px);
+  margin-top: clamp(18px, 2.4cqw, 34px);
+}
+.hk-team__sub {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ab-ink-2);
+}
+.hk-team__panel {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--ab-peach-line);
+  border-radius: var(--ab-r-md);
+  background: linear-gradient(180deg, #FEFAF7 0%, #FDEFEA 100%);
+}
+.hk-team__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ab-orange-deep);
+}
+.hk-team__code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.hk-team__code {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px dashed var(--ab-orange-light);
+  border-radius: var(--ab-r-xs);
+  background: var(--ab-surface);
+  font-family: var(--ab-font-ui);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-align: center;
+  color: var(--ab-navy);
+}
+.hk-team__copy {
+  flex: none;
+  height: 40px;
+  min-width: 0;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.hk-team__note {
+  margin-top: 9px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ab-muted);
+}
+.hk-team__list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hk-team__member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--ab-border);
+  border-radius: var(--ab-r-md);
+  background: var(--ab-surface);
+}
+.hk-team__member--open {
+  border-style: dashed;
+  background: transparent;
+}
+.hk-team__avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.hk-team__avatar--open {
+  background: transparent;
+  border: 1px dashed var(--ab-border);
+  color: var(--ab-muted-2);
+}
+.hk-team__who { min-width: 0; }
+.hk-team__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ab-ink);
+  overflow-wrap: anywhere;
+}
+.hk-team__chip {
+  padding: 2px 8px;
+  border-radius: var(--ab-r-pill);
+  background: var(--ab-orange-soft);
+  color: var(--ab-orange-deep);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.hk-team__college {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ab-muted);
+  /* College names are free text; a long unbroken token must not push the row
+     wider than the card on a 375px screen. */
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .hk-dialog__head { padding: 18px 48px 15px 18px; }
+  .hk-dialog__body { padding: 18px; }
+  .hk-dialog__title { font-size: 18px; }
+  .hk-reg__actions { flex-direction: column-reverse; align-items: stretch; }
+  .hk-reg__actions .ab-btn { width: 100%; }
+  .hk-done__links .ab-btn { flex: 1 1 100%; }
+  .hk-team__code-row { flex-direction: column; align-items: stretch; }
+  .hk-team__copy { width: 100%; }
+}
+
+/* ==========================================================================
+   8 · RESPONSIVE
+   ========================================================================== */
+
+/* Narrow content: zoom into the middle of the scene rather than shrinking
+   the lock to a thumbnail. The outer linework crops away. */
+@container content (max-width: 720px) {
+  .hk-hero { min-height: 0; }        /* let the hero flow on small screens */
+  .hk-hero__scene { width: 200%; margin-left: -50%; }
+}
+
+@container content (max-width: 1023px) {
+  .hk-how__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hk-faq { grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 3cqw, 34px); }
+  .hk-faq__intro { padding-left: 0; }   /* the 50px offset would overflow */
+}
+
+@container timeline (max-width: 1023px) {
+  .tl { padding: 26px 22px 30px; }
+  .tl__title { font-size: 1.55rem; }
+
+  .tl__cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+  }
+  .tl-card,
+  .tl-card:nth-child(1),
+  .tl-card:nth-child(2),
+  .tl-card:nth-child(3),
+  .tl-card:nth-child(4) {
+    aspect-ratio: auto;
+    padding: 52px 20px 26px;
+  }
+  .tl-card::before {
+    content: counter(tl);
+    position: absolute;
+    top: 16px; left: 20px;
+    display: grid;
+    place-items: center;
+    width: 42px; height: 26px;
+    border-radius: var(--ab-r-sm);
+    background: var(--ab-orange);
+    box-shadow: var(--ab-clay-rest);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 800;
+  }
+  .tl-card__art { display: none; }
+  .tl__rail { display: none; }
+}
+
+@container timeline (max-width: 619px) {
+  .tl__cards { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- Rules: stack while keeping each note's own tilt --------------------- */
+@container rules (max-width: 899px) {
+  .rules {
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 34px 26px;
+    padding: 46px 34px 54px;
+    font-size: 16px;
+  }
+  .rules__word { font-size: 22rem; left: -10%; top: 12%; }
+  .rule {
+    position: relative;
+    left: auto; top: auto;
+    width: auto;
+    max-width: 320px;
+    aspect-ratio: auto;
+    justify-self: center;
+    padding: 42px 15px 26px;
+    border-radius: 16px;
+    transform: rotate(var(--rot));
+  }
+  .rule:hover,
+  .rule:focus-within { transform: translateY(-2px) rotate(var(--rot-h)); }
+  .rule__note { padding: 16px 16px 18px; border-radius: 12px; }
+  .rule__title { font-size: 1.1rem; }
+  .rule__text { font-size: .9rem; }
+  .rule__pin {
+    top: -10px; width: 40px;
+    filter: drop-shadow(1px 2px 2px rgba(120, 34, 18, .42))
+            drop-shadow(3px 5px 6px rgba(88, 40, 24, .26));
+  }
+}
+
+@container rules (max-width: 559px) {
+  .rules { grid-template-columns: minmax(0, 1fr); gap: 30px; padding: 38px 24px 46px; }
+  .rules__word { font-size: 13rem; }
+  .rule--1 { --rot:  5deg; --rot-h:  8deg; }
+  .rule--2 { --rot: -6deg; --rot-h: -3deg; }
+  .rule--3 { --rot:  6deg; --rot-h:  9deg; }
+  .rule--4 { --rot: -4deg; --rot-h: -1deg; }
+}
+
+/* ---- Shell: off-canvas sidebar, as on the Profile ----------------------- */
+@media (max-width: 1280px) {
+  :root { --ab-pad-right: 32px; --ab-pad-left: 28px; }
+}
+
+@media (max-width: 820px) {
+  :root { --ab-header-h: 56px; }   /* desktop stays 59px; this is mobile   */
+
+  .ab-header__link span { display: none; }
+  .ab-header__link { padding: 0 8px; }
+
+}
+
+/* Below this the supporting line no longer fits on one line, and `nowrap`
+   would let the hero's overflow:hidden cut the sentence off — so wrap it. */
+@media (max-width: 960px) {
+  .hk-hero__sub { white-space: normal; max-width: min(100%, 52ch); }
+}
+
+@media (max-width: 640px) {
+  .hk-how__grid { grid-template-columns: minmax(0, 1fr); }
+  .hiw { min-height: 0; }
+
+  /* On a phone, the circuit is decoration only. The lock has its own flow
+     stage, so it remains centred even while the background is intentionally
+     cropped and the message can expand below it without covering the lock. */
+  .hk-hero__stage {
+    flex: none;
+    min-height: 260px;
+    margin-top: 18px;
+    overflow: visible;
+  }
+  .hk-hero__scene {
+    position: absolute;
+    inset: 0 auto auto 50%;
+    width: 200%;
+    height: 100%;
+    margin-left: 0;
+    aspect-ratio: auto;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hk-hero__lock-stage {
+    position: relative;
+    left: auto;
+    top: auto;
+    display: flex;
+    width: 100%;
+    min-height: 260px;
+    aspect-ratio: auto;
+    align-items: center;
+    justify-content: center;
+    transform: none;
+  }
+  .hk-lock-btn {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: min(62vw, 220px);
+  }
+  .hk-lock-msg {
+    position: relative;
+    left: auto;
+    top: auto;
+    display: none;
+    width: min(calc(100% - 32px), 340px);
+    margin: 12px auto 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    transform: none;
+    transform-origin: 50% 0;
+  }
+  .hk-lock-msg::before,
+  .hk-lock-msg::after {
+    left: 50%;
+    top: -9px;
+    border: 9px solid transparent;
+    border-top: 0;
+    border-bottom-color: rgba(185, 63, 23, .45);
+    transform: translateX(-50%);
+  }
+  .hk-lock-msg::after { top: -8px; border-bottom-color: var(--msg-face); }
+  .hk-hero.is-msg-open .hk-hero__lock-stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .hk-hero.is-msg-open .hk-lock-msg {
+    display: flex;
+    transform: none;
+  }
+
+  .hk-count { gap: 3px; }
+  .hk-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: min(100%, 300px);
+    border-radius: var(--ab-r-lg);
+    padding: 6px;
+    gap: 6px;
+  }
+  .hk-cta__primary, .hk-cta__secondary { width: 100%; }
+
+  .ab-header__cta { padding: 0 14px; }
+}
+
+/* Short viewports: tighten the hero's own rhythm first, so the scene keeps
+   its full width and the circuit lines still run edge to edge. Only if that
+   is not enough does the JS width cap shrink the scene. */
+@media (max-height: 900px) {
+  .hk-hero {
+    --hk-gap-sponsor: 16px;
+    --hk-gap-sub: 19px;
+    --hk-gap-count: 29px;
+    --hk-gap-cta: 19px;
+    padding-top: 18px;
+    padding-bottom: 24px;
+  }
+  .hk-hero__stage { margin-top: 18px; }
+}
+
+@media (max-height: 760px) {
+  .hk-hero {
+    --hk-gap-sponsor: 12px;
+    --hk-gap-sub: 16px;
+    --hk-gap-count: 23px;
+    --hk-gap-cta: 14px;
+    padding-top: 12px;
+    padding-bottom: 16px;
+  }
+  .hk-hero__title { font-size: clamp(1.95rem, 4.15cqw, 3.85rem); }
+  .hk-hero__stage { margin-top: 12px; }
+}
+
+@media (max-width: 400px) {
+  .hk-sponsor { flex-direction: column; gap: 6px; }
+  .hk-count__value { min-width: 40px; padding: 5px 6px; }
+  .hk-count__sep { margin-top: 8px; }
+}
+
+/* ==========================================================================
+   9 · REDUCED MOTION / PRINT
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* the hero stops moving entirely */
+  .hk-sparks { display: none; }
+  .hk-lock { animation: none; }
+  /* the timeline shows its final state (JS also refuses to arm it) */
+  .hk-timeline.is-armed .tl-card { opacity: 1; transform: none; }
+  .hk-timeline.is-armed .tl-tab { transform: translate(-50%, -50%); }
+  /* notes keep their rotation but stop being nudged */
+  .rule:hover, .rule:focus-within { transform: translate(-50%, -50%) rotate(var(--rot)); }
+  .hk-lock-btn:hover, .hk-lock-btn:focus-visible { transform: none; }
+  /* the message stays available — it carries information, not decoration */
+  .hk-hero.is-msg-open .hk-lock-msg { opacity: 1; visibility: visible; transform: none; }
+}
+
+@media print {
+  .ab-header, .hk-lock-msg { display: none !important; }
+  .ab-shell { display: block; }
+}

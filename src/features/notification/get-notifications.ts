@@ -1,4 +1,6 @@
 import "server-only";
+
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { deriveEventNotifications } from "./derive-event-notifications";
@@ -94,7 +96,7 @@ export async function getNotificationsForUser(
       select: { cohortId: true },
     }),
     prisma.hackathonParticipant.findFirst({
-      where: { userId },
+      where: { eventId: HACKATHON.eventId, userId },
       select: { id: true },
     }),
     prisma.workshopRegistration.findMany({

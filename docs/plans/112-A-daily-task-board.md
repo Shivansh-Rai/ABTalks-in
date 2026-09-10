@@ -1,1734 +1,1777 @@
-# 112-A — Daily Task Board · 5–30 September 2026
+# 112-A — Daily Task Board · 5–19 September 2026
 
-> **Companion to** [`112-september-execution-plan.md`](112-september-execution-plan.md) and
-> [`assets/ABTalks-September-Execution-Tracker.xlsx`](assets/ABTalks-September-Execution-Tracker.xlsx).
-> Same 217 tasks, same ids — laid out by day so every person knows what they own each morning.
-> **Tick the box when the acceptance criterion passes**, not when the code compiles.
->
-> Task ids (`T-001`) match the Activity Tracker exactly. Update `Status` there; use this for standup.
+> **Deadline: Sunday 20 September — which is a Sunday, so the product goes LIVE on Saturday 19 September.**
+> **Sundays 6, 13 and 20 September are HOLIDAYS. Nobody works them.**
+> 13 working days, of which 10 are build days. FULL committed scope is in this plan - nothing was deferred.
 
-## How to run a day
+## Before your first task
 
-1. **09:30 standup, 10 minutes.** Each person reads out their box for today: what they finished yesterday, what they are on now, what is blocking them.
-2. **Blocked more than 3 hours — post in the channel and tag Sohail.** A day lost is 1/21st of the build window.
-3. **A task is done when its acceptance criterion passes** — the line under the task, written as something you can demonstrate. Not when the code compiles, not when it looks right.
-4. **Every developer is junior and pairs with Claude.** Read the `Where to start` note in the tracker before opening an editor — most of these tasks extend something that already exists rather than creating something new.
-5. **If an acceptance criterion cannot be demonstrated in a browser or a test, the task is badly written.** Raise it at standup rather than guessing.
+1. **Investigate → Plan → Review → Implement → Test → Regression → Done.** Start every task with prompt **P1**, never P3.
+2. **Check your design first.** If your row has a Design dependency, confirm it is *Approved* on the UI-UX sheet before writing frontend code.
+3. **HIGH RISK means stop after the plan** and send it to Sohail. Do not start coding.
+4. **Do the Regression Check** — that is testing what you did *not* build.
+5. **Shallika reviews the running app**, not screenshots. Blockers get fixed; minor cosmetic issues become October bugs.
 
-## The team
-
-| Person | Owns | Load |
+| Person | Role | Load |
 |---|---|---|
-| **Shivansh** | Recruiter onboarding · Jobs · Workspace UI · Candidate profile | 108% |
-| **Zainab** | Evidence spine · Outreach · Assessments · Interview & cohort verification | 95% |
-| **shashank** | Talent projects · Insights · Pipeline · Analytics · Non-tech | 104% |
-| **Manuvrtti** | Recruiter notifications · Notifications & email · Analytics · External links | 107% (part-time) |
-| **Sohail** | Decisions & contracts · Entitlements · Security & testing · Release | 104% |
+| **Shallika** | UI/UX Designer — full time, no code | 105% of design days |
+| **Shivansh** | Developer — full time | 154% |
+| **Zainab** | Developer — full time | 148% |
+| **shashank** | Developer — full time | 145% |
+| **Manuvrtti** | Developer — part time | 165% |
+| **Sohail** | Architect + builder + release | 152% |
 
-> **Zainab is the designated absorber at 95%.** If Shivansh is behind at the 16 September checkpoint, his remaining profile fixes move to her **before** any release valve is called.
-
----
-
-# P1 FOUNDATION
-
-*Architecture, contracts, blockers, schema*
-
-## Saturday 05 September
-
-**Shivansh**
-
-- [ ] `T-017` **AUDIT: walk the current recruiter registration and first-run experience end to end** *(day 1 of 3)*
-      - *Done when:* A written walk-through of what a new recruiter sees today, screen by screen, from /hire to first search. Names every point where they are dropped into a surface with no explanation. This audit sizes the rest of R1.
-      - *Start here:* src/app/hire/page.tsx, layout.tsx, src/components/hire/hire-chrome.tsx, src/features/talent-pool/recruiter-registration.ts
-- [ ] `T-122` **AUDIT: map every profile section to its editor, action, repository and recruiter renderer** *(day 1 of 4)*
-      - *Done when:* One table covering identity, contact, education, experience, internships, projects, skills, certifications, achievements, resume, portfolio, links, role/domain, preferences, availability, participation, evidence, visibility and preview - each with its file paths. Then a 12-point check per section: create, read, update, delete, validation, persistence, empty, error, loading, mobile, privacy, recruiter render.
-      - *Start here:* src/components/profile/ has 9 section components; src/features/profile/update-profile.ts; src/repositories/candidate.ts
-
-**Zainab**
-
-- [ ] `T-146` **Design emitSkillEvidence and publish the C1 stub** *(day 1 of 2)*
-      - *Done when:* A file exports emitSkillEvidence(input), idempotent on (sourceType, sourceKey, skillId). It typechecks and no-ops. Merged 5 Sep so R9, C4 and C5 can import it. The signature is reviewed by all four consumers before it lands.
-      - *Start here:* prisma SkillEvidence (~2318) exists; grep confirms NOTHING in src/ writes it - only prisma/scripts/migrate-2i-achievements.ts
-
-**shashank**
-
-- [ ] `T-039` **AUDIT: does TalentRequest today save a SEARCH, or a PROJECT?** *(day 1 of 2)*
-      - *Done when:* A written answer naming exactly what persists between two visits and what does not. Must state whether criteria, matches, viewed state, shortlist and notes each survive a sign-out - with the file and column that proves each answer.
-      - *Start here:* prisma TalentRequest (line ~1052), TalentRequestMatch (~1110), src/features/hire/load-request-matches.ts, run-match action
-
-**Manuvrtti**
-
-- [ ] `T-152` **Publish the C3 notify() stub and freeze the type list** *(day 1 of 3)*
-      - *Done when:* notify({userId, type, payload, channels}) typechecks and no-ops, merged 6 Sep. The candidate and recruiter type lists are named and circulated; no renames after 8 Sep.
-      - **Waits on:** D-9
-
-**Sohail**
-
-- [ ] `T-001` **D-2: prove prisma migrate deploy against a Neon child branch and record the outcome**
-      - *Done when:* Run migrate deploy on a child branch. PASS = migrate status reports every migration applied. FAIL = the exact error is pasted into the decision record and resolved with migrate resolve --applied before any migration merges.
-      - **Security:** Child branch only - never the default branch
-      - *Start here:* prisma/migrations/, .neon, AGENTS.md Neon safety rule
-- [ ] `T-002` **D-1: freeze 078 Phase 7 (W1-B onward) through September**
-      - *Done when:* One paragraph in the decision record stating: dual-write stays ON, no legacy table is dropped, every new model is 078-native with plain cuids.
-      - *Start here:* lib/feature-flags.ts, docs/plans/099, docs/plans/101
-- [ ] `T-003` **D-3: plan tiers, their limits and what each gates** *(day 1 of 2)*
-      - *Done when:* A table naming Starter/Prime/Scale, the monthly USD price, and a NUMBER for each of: searches, profile unlocks, contact unlocks, outreach emails, active talent projects, active jobs, assessments, seats. Seeded as SubscriptionPlan rows, not hard-coded.
-      - **Waits on:** Prices confirmed USD per the reference design
-      - *Start here:* src/components/hire/subscription-gate.tsx - the PLANS array is the starting copy; its own header says the split needs sign-off
-- [ ] `T-015` **Write the Cursor implementation plans, one per P0 workstream** *(day 1 of 4)*
-      - *Done when:* Every P0 workstream has a numbered plan in docs/plans/ using the CLAUDE.md 9-part template, including its Guardrails and DB safety sections. A developer can start Tuesday without asking a design question.
-      - *Start here:* docs/plans/ - next free number is 113; follow the template in CLAUDE.md
+> **Everyone is scheduled at ~150% of capacity.** This is stated, not hidden — see Delivery Risk at the end. Build in priority order so that whatever slips is the least critical work.
 
 ---
 
-## Sunday 06 September
+## Saturday 05 September — FOUNDATION
 
-**Shivansh**
+*Decisions, contracts and finding out what already exists.*
 
-- [ ] `T-017` **AUDIT: walk the current recruiter registration and first-run experience end to end** *(day 2 of 3)*
-      - *Done when:* A written walk-through of what a new recruiter sees today, screen by screen, from /hire to first search. Names every point where they are dropped into a surface with no explanation. This audit sizes the rest of R1.
-      - *Start here:* src/app/hire/page.tsx, layout.tsx, src/components/hire/hire-chrome.tsx, src/features/talent-pool/recruiter-registration.ts
-- [ ] `T-079` **AUDIT: every Job and JobApplication read and write path** *(day 1 of 2)*
-      - *Done when:* A gap list naming every missing column, surface and transition with a file path. Must state explicitly how an applicant reaches the recruiter's hiring pipeline today (answer: they do not).
-      - *Start here:* prisma Job (~552) has no organizationId and no status; JobApplication (~571) has no stage; src/app/actions/job-actions.ts, admin-job-actions.ts
-- [ ] `T-122` **AUDIT: map every profile section to its editor, action, repository and recruiter renderer** *(day 2 of 4)*
-      - *Done when:* One table covering identity, contact, education, experience, internships, projects, skills, certifications, achievements, resume, portfolio, links, role/domain, preferences, availability, participation, evidence, visibility and preview - each with its file paths. Then a 12-point check per section: create, read, update, delete, validation, persistence, empty, error, loading, mobile, privacy, recruiter render.
-      - *Start here:* src/components/profile/ has 9 section components; src/features/profile/update-profile.ts; src/repositories/candidate.ts
+### Shallika · *designer*
 
-**Zainab**
+- [ ] `T-005` **As the team, we need to know where the product currently looks and feels inconsistent - but only on the journeys we are shipping.** *(day 1 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** A short written audit of the recruiter and candidate journeys in the 20 Sep scope: inconsistent buttons, forms, cards, spacing, typography, navigation, missing states, confusing steps, responsive breakages. NOT a whole-platform review.
+    - **Find out first:** Walk the live product as a real recruiter and a real candidate. Note what confuses you. Stay inside the September journeys - do not audit pages we are not shipping.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk both journeys end to end. Screenshot every inconsistency.
+    - **Done when:** A written list, grouped by journey, ranked by how much it hurts the user. Anything not on a September journey is marked P2 and parked.
+- [ ] `T-007` **As a recruiter, signing up and landing in my workspace should feel like a real product.** *(day 1 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for recruiter signup, the five onboarding steps, the workspace shell and Home - including every state and how they behave on a phone.
+    - **Find out first:** Read the recruiter journey on the User Journeys sheet first. Design the FLOW, not five separate screens.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk a developer through the flow. They can describe what happens at every step without asking you a question.
+    - **Done when:** Every screen and every state: loading, empty, error, success, disabled. Desktop and mobile. Handoff includes the user goal, the flow, what each component does, validation behaviour and interaction notes. APPROVED before Wednesday so R1 and R12 can start.
 
-- [ ] `T-146` **Design emitSkillEvidence and publish the C1 stub** *(day 2 of 2)*
-      - *Done when:* A file exports emitSkillEvidence(input), idempotent on (sourceType, sourceKey, skillId). It typechecks and no-ops. Merged 5 Sep so R9, C4 and C5 can import it. The signature is reviewed by all four consumers before it lands.
-      - *Start here:* prisma SkillEvidence (~2318) exists; grep confirms NOTHING in src/ writes it - only prisma/scripts/migrate-2i-achievements.ts
+### Shivansh
 
-**shashank**
+- [ ] `T-013` **As the team, we must stop assuming the candidate profile works because the code exists.** *(day 1 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every profile section checked against: add, read, change, remove, validate, survives a logout, has empty/error/loading states, works on a phone, is private when it should be, shows correctly to a recruiter. Every failure written down.
+    - **Find out first:** Use the profile with a fresh account, section by section, BEFORE reading code.
+    - **Prompts:** P1 Investigate.
+    - **Manual test:** Fresh account. Each section: add, save, reload, log out, log in, edit, remove. Note every failure.
+    - **Done when:** A written gap list with severities. This sizes the rest of C1 - if it is bigger than 3 days of fixes, we cut sections rather than slipping.
 
-- [ ] `T-039` **AUDIT: does TalentRequest today save a SEARCH, or a PROJECT?** *(day 2 of 2)*
-      - *Done when:* A written answer naming exactly what persists between two visits and what does not. Must state whether criteria, matches, viewed state, shortlist and notes each survive a sign-out - with the file and column that proves each answer.
-      - *Start here:* prisma TalentRequest (line ~1052), TalentRequestMatch (~1110), src/features/hire/load-request-matches.ts, run-match action
-- [ ] `T-040` **Design the persistent project model and hand the migration to Sohail for review** *(day 1 of 2)*
-      - *Done when:* A reviewed schema diff adding: TalentRequest.name, and TalentRequestMatch.firstSeenAt / viewedAt / decision. Sohail signs it before 9 Sep.
-      - **Needs:** D-2
-      - *Start here:* Extend the existing models - do NOT create a parallel Project table
-- [ ] `T-102` **Name every metric and the exact query behind it** *(day 1 of 3)*
-      - *Done when:* A table with one row per metric: the recruiter question it answers, the source table or AnalyticsEvent, and its period. Any metric with no traceable source is struck out rather than estimated.
-      - *Start here:* Do this AFTER D-9 so the event names are fixed
+### Zainab
 
-**Manuvrtti**
+- [ ] `T-029` **As the team, we must be certain how a recruiter earns the right to see contact details.** *(day 1 of 3)*
+    - **🔴 HIGH RISK** · P0 · waits on D-5, D-8
+    - **What needs to work:** A written flow: click contact, check the plan allowance, record that access was granted, show the details - plus what happens at zero allowance and what the candidate is told.
+    - **Find out first:** Today a human admin approves each release. It moves to a plan allowance. Ask Claude to find the ONE function that decides whether a recruiter may see contact details - it must keep deciding, unchanged.
+    - **Prompts:** P1 Investigate -> STOP for Sohail. This releases personal data.
+    - **Manual test:** Walk the flow with Sohail. Confirm the privacy wording matches what the site publicly promises.
+    - **Done when:** Flow approved by Sohail. The single access-deciding function is unchanged. Candidate-facing wording agreed.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-- [ ] `T-152` **Publish the C3 notify() stub and freeze the type list** *(day 2 of 3)*
-      - *Done when:* notify({userId, type, payload, channels}) typechecks and no-ops, merged 6 Sep. The candidate and recruiter type lists are named and circulated; no renames after 8 Sep.
-      - **Waits on:** D-9
-- [ ] `T-157` **Publish the C2 track() stub and name the event taxonomy** *(day 1 of 3)*
-      - *Done when:* track(event, userId, props) typechecks and no-ops, merged 6 Sep. The event list is circulated and frozen after 8 Sep.
+### shashank
 
-**Sohail**
+- [ ] `T-022` **As the team, we need to know whether saving a search today actually saves a recruiter's WORK.** *(day 1 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** A written answer: after signing out and returning, what survives - criteria, matched candidates, who was viewed, who was shortlisted? Each backed by the code that proves it.
+    - **Find out first:** Use the product first: create a search, sign out, come back, see what is lost. Then ask Claude why.
+    - **Prompts:** P1 Investigate, scoped to the search module.
+    - **Manual test:** Create a search, note three candidates, sign out, sign back in. Write down exactly what disappeared.
+    - **Done when:** A written answer per item with the field that proves it. This sizes the rest of R3.
 
-- [ ] `T-003` **D-3: plan tiers, their limits and what each gates** *(day 2 of 2)*
-      - *Done when:* A table naming Starter/Prime/Scale, the monthly USD price, and a NUMBER for each of: searches, profile unlocks, contact unlocks, outreach emails, active talent projects, active jobs, assessments, seats. Seeded as SubscriptionPlan rows, not hard-coded.
-      - **Waits on:** Prices confirmed USD per the reference design
-      - *Start here:* src/components/hire/subscription-gate.tsx - the PLANS array is the starting copy; its own header says the split needs sign-off
-- [ ] `T-004` **D-4: payment gateway is OUT of September - record the decision and the October seam**
-      - *Done when:* Decision states: no Razorpay/Stripe in September. Plan selection creates an OrganizationSubscription in PENDING; an admin activates it. The activation function is the single seam a gateway webhook will later call - named in the record.
-      - **Waits on:** D-4 - already DECIDED by product direction before kickoff: payment integration deferred
-      - *Start here:* No payment dependency exists in package.json today - this is a deferral, not a removal
-- [ ] `T-005` **D-5: contact unlock becomes a PLAN CREDIT, not an admin approval**
-      - *Done when:* Decision states: a paying recruiter spends one contact-unlock entitlement and gets details immediately. TalentEngagementRequest is kept as the audit record and written with status CONTACT_SHARED at unlock time, so hasContactAccess needs no change. Names the privacy basis and the exact candidate-facing copy.
-      - **Waits on:** D-5 - already DECIDED by product direction before kickoff: plan credit, instant unlock · **Security:** Changes who releases PII - the privacy copy must move with it
-      - *Start here:* src/features/hire/contact-access.ts (hasContactAccess derives from status - keep that), prisma TalentEngagementRequest
-- [ ] `T-006` **D-6: recruiter access stays allow-listed for September**
-      - *Done when:* Decision states: VerifiedRecruiterSeat still gates registration; self-serve open signup waits for the payment gateway in October. Recorded so R1 does not build an open funnel that cannot be charged.
-      - *Start here:* prisma VerifiedRecruiterSeat, src/features/talent-pool/recruiter-registration.ts
-- [ ] `T-007` **D-7: company verification is NOT a gate on search**
-      - *Done when:* Decision states: company details are collected at onboarding and shown to candidates; nothing blocks search on them. Recorded so R1 does not build an admin verification queue.
-      - **Waits on:** D-7 - already DECIDED by product direction before kickoff: no company verification gate
-- [ ] `T-008` **D-8: resolve the privacy copy vs searchableByRecruiters default, now that contact unlock is paid**
-      - *Done when:* Either the published Privacy/Terms copy is corrected, or the default changes. Recorded BEFORE R1, R3 or the C1 visibility control merges. Open since 2026-08-24 and now higher stakes because money changes hands for contact.
-      - **Security:** Published copy says opt-in; the column defaults true
-      - *Start here:* docs/legal/, prisma CandidateVisibility, docs/project-context.md section 5
-- [ ] `T-014` **Publish the C5 assertEntitlement stub**
-      - *Done when:* A file exports assertEntitlement(orgId, key, n) returning {ok:true}. It typechecks, is imported by one caller, and master builds. R3, R6, R8 and R9 can import it from 6 Sep.
-      - *Start here:* new src/features/entitlement/assert.ts, mirror the Result envelope in lib/validations
-- [ ] `T-015` **Write the Cursor implementation plans, one per P0 workstream** *(day 2 of 4)*
-      - *Done when:* Every P0 workstream has a numbered plan in docs/plans/ using the CLAUDE.md 9-part template, including its Guardrails and DB safety sections. A developer can start Tuesday without asking a design question.
-      - *Start here:* docs/plans/ - next free number is 113; follow the template in CLAUDE.md
+### Sohail
 
----
-
-## Monday 07 September
-
-**Shivansh**
-
-- [ ] `T-017` **AUDIT: walk the current recruiter registration and first-run experience end to end** *(day 3 of 3)*
-      - *Done when:* A written walk-through of what a new recruiter sees today, screen by screen, from /hire to first search. Names every point where they are dropped into a surface with no explanation. This audit sizes the rest of R1.
-      - *Start here:* src/app/hire/page.tsx, layout.tsx, src/components/hire/hire-chrome.tsx, src/features/talent-pool/recruiter-registration.ts
-- [ ] `T-079` **AUDIT: every Job and JobApplication read and write path** *(day 2 of 2)*
-      - *Done when:* A gap list naming every missing column, surface and transition with a file path. Must state explicitly how an applicant reaches the recruiter's hiring pipeline today (answer: they do not).
-      - *Start here:* prisma Job (~552) has no organizationId and no status; JobApplication (~571) has no stage; src/app/actions/job-actions.ts, admin-job-actions.ts
-- [ ] `T-113` **Design the recruiter information architecture and get it signed off** *(day 1 of 2)*
-      - *Done when:* One agreed nav list with a route per item and a rule for which items appear before a plan is active. R12 builds exactly this; no nav item is invented inside a component.
-      - **Waits on:** D-13
-      - *Start here:* src/components/hire/hire-chrome.tsx holds today's nav; /hire has only 5 routes
-- [ ] `T-122` **AUDIT: map every profile section to its editor, action, repository and recruiter renderer** *(day 3 of 4)*
-      - *Done when:* One table covering identity, contact, education, experience, internships, projects, skills, certifications, achievements, resume, portfolio, links, role/domain, preferences, availability, participation, evidence, visibility and preview - each with its file paths. Then a 12-point check per section: create, read, update, delete, validation, persistence, empty, error, loading, mobile, privacy, recruiter render.
-      - *Start here:* src/components/profile/ has 9 section components; src/features/profile/update-profile.ts; src/repositories/candidate.ts
-
-**Zainab**
-
-- [ ] `T-065` **Design the contact-unlock-to-email flow on the plan-credit model**
-      - *Done when:* A written flow: recruiter clicks Contact -> assertEntitlement('contact_unlock') -> on success write a TalentEngagementRequest at status CONTACT_SHARED -> contact details render. Names what happens when the entitlement is exhausted and what the candidate is told.
-      - **Waits on:** D-5, D-8 · **Security:** This is the moment PII is released - the privacy copy must match
-      - *Start here:* src/features/hire/contact-access.ts derives access from status; keep that function unchanged
-- [ ] `T-091` **Design the V1 assessment model on the existing question tables** *(day 1 of 2)*
-      - *Done when:* A reviewed schema: RecruiterAssessment, AssessmentQuestion, AssessmentAssignment, AssessmentAttempt. Results write to the EXISTING AssessmentReport / AssessmentScore. The design names why each new table is needed and what it does not duplicate.
-      - **Waits on:** D-10
-      - *Start here:* prisma Question (~2558) / QuestionOption (~2572) already model MCQ; AssessmentReport (~3011) / AssessmentScore (~3036) exist unused by application code
-
-**shashank**
-
-- [ ] `T-040` **Design the persistent project model and hand the migration to Sohail for review** *(day 2 of 2)*
-      - *Done when:* A reviewed schema diff adding: TalentRequest.name, and TalentRequestMatch.firstSeenAt / viewedAt / decision. Sohail signs it before 9 Sep.
-      - **Needs:** D-2
-      - *Start here:* Extend the existing models - do NOT create a parallel Project table
-- [ ] `T-051` **Define the insight contract: what is a fact, what is inference, what is 'not enough evidence'** *(day 1 of 2)*
-      - *Done when:* A written spec listing every signal the panel may show, its source table, and its class (FACT or INFERENCE). Any signal with no source row is deleted from the spec rather than estimated.
-      - **Waits on:** D-11
-      - *Start here:* prisma SkillEvidence, CandidateSkill, CandidateProjectEntry, AssessmentScore, MockInterviewReport, CandidateAchievement, JobApplication
-- [ ] `T-102` **Name every metric and the exact query behind it** *(day 2 of 3)*
-      - *Done when:* A table with one row per metric: the recruiter question it answers, the source table or AnalyticsEvent, and its period. Any metric with no traceable source is struck out rather than estimated.
-      - *Start here:* Do this AFTER D-9 so the event names are fixed
-
-**Manuvrtti**
-
-- [ ] `T-152` **Publish the C3 notify() stub and freeze the type list** *(day 3 of 3)*
-      - *Done when:* notify({userId, type, payload, channels}) typechecks and no-ops, merged 6 Sep. The candidate and recruiter type lists are named and circulated; no renames after 8 Sep.
-      - **Waits on:** D-9
-- [ ] `T-157` **Publish the C2 track() stub and name the event taxonomy** *(day 2 of 3)*
-      - *Done when:* track(event, userId, props) typechecks and no-ops, merged 6 Sep. The event list is circulated and frozen after 8 Sep.
-
-**Sohail**
-
-- [ ] `T-009` **D-9: recruiter notification taxonomy and which events earn an email**
-      - *Done when:* A table of recruiter events with a channel decision each: in-app only, or in-app + email. At most three earn email. Recorded so R7 does not ship a spam engine.
-      - *Start here:* prisma Notification / NotificationRead key scheme, docs/plans/067
-- [ ] `T-010` **D-10: assessment V1 question types**
-      - *Done when:* Decision states MCQ + multiple-select only, on the existing Question / QuestionOption models. Descriptive deferred (needs a grading surface). Coding excluded - no execution sandbox exists. Names the entitlement key that gates publish.
-      - *Start here:* prisma Question, QuestionOption, QuizActivityConfig, CodingActivityConfig (models coding but nothing executes it)
-- [ ] `T-011` **D-11: the candidate-insight methodology - what is a fact and what is inference**
-      - *Done when:* Decision defines two visual classes: FACTS (a row exists: SkillEvidence, CandidateSkill, project, assessment score, application) and INFERENCE (a derived judgement). Names the exact rule for 'Strong / Possible / Not enough evidence' and forbids any score the platform cannot cite.
-      - *Start here:* prisma SkillEvidence, CandidateSkill.evidenceScore, src/features/hire/explain-matches.ts, score-candidate.ts
-- [ ] `T-012` **D-12: the role-family taxonomy including non-technical families** *(day 1 of 2)*
-      - *Done when:* Final list agreed and frozen: the existing AI_ML, DATA, BACKEND, FRONTEND, FULLSTACK, ANALYST, MANAGER, STUDENT plus PRODUCT, SALES, MARKETING, BUSINESS_DEVELOPMENT, OPERATIONS, DESIGN, FINANCE, HR, BUSINESS_ANALYST. No renames after Mon 8 Sep.
-      - *Start here:* src/features/hire/role-family.ts - RULES is ordered most-specific-first; extend it, do not replace it
-- [ ] `T-013` **D-13: recruiter information architecture - the workspace navigation**
-      - *Done when:* The final left-nav list is agreed and written down, with the route for each item and which are visible before a plan is active. R12 builds exactly this list; no nav item is invented in a component.
-      - *Start here:* src/components/hire/hire-chrome.tsx - the nav lives here today with 5 destinations
-- [ ] `T-015` **Write the Cursor implementation plans, one per P0 workstream** *(day 3 of 4)*
-      - *Done when:* Every P0 workstream has a numbered plan in docs/plans/ using the CLAUDE.md 9-part template, including its Guardrails and DB safety sections. A developer can start Tuesday without asking a design question.
-      - *Start here:* docs/plans/ - next free number is 113; follow the template in CLAUDE.md
+- [ ] `T-001` **As the team, we need the decisions that block everyone settled before Wednesday.** *(day 1 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every blocking decision is written down with a one-line reason. Nobody builds against a guess.
+    - **Find out first:** Three are already agreed (payments deferred, contact unlock by plan allowance, no company verification) - just record them. The rest need a call.
+    - **Prompts:** No AI. Product judgement.
+    - **Manual test:** Open the decision record. Every question has an answer, not a question.
+    - **Done when:** All decisions marked Decided with a reason and the tasks each unblocks. No task starts Wednesday against an open decision.
+    - **⛔ Sohail owns and signs this himself.**
+- [ ] `T-002` **As the team, we must know that database changes can reach production before we write any.**
+    - **🔴 HIGH RISK** · P0 · waits on D-2
+    - **What needs to work:** Either the path is proven on a copy of the database, or the blocker is understood and resolved. Written down either way.
+    - **Find out first:** The docs contradict each other. Settle it with a real run against a COPY of the database, never production.
+    - **Prompts:** P11 Database review. Ask Claude to explain the blocker, not fix it.
+    - **Manual test:** Run it against a copy. Read the output. Paste it into the decision record.
+    - **Done when:** Output recorded. If it failed, the resolution is written down and tested. No database change merges until this is done.
+    - **⛔ Sohail owns and signs this himself.**
 
 ---
 
-## Tuesday 08 September
+## Sunday 06 September — HOLIDAY
 
-> **GATE — Foundation exit, this evening.** Sohail signs: C1–C5 stubs on master, migration path proven on a Neon child branch, D-1…D-13 all Decided, every workstream has a numbered plan. **If D-2 is unresolved, no migration merges tomorrow.**
-
-**Shivansh**
-
-- [ ] `T-113` **Design the recruiter information architecture and get it signed off** *(day 2 of 2)*
-      - *Done when:* One agreed nav list with a route per item and a rule for which items appear before a plan is active. R12 builds exactly this; no nav item is invented inside a component.
-      - **Waits on:** D-13
-      - *Start here:* src/components/hire/hire-chrome.tsx holds today's nav; /hire has only 5 routes
-- [ ] `T-122` **AUDIT: map every profile section to its editor, action, repository and recruiter renderer** *(day 4 of 4)*
-      - *Done when:* One table covering identity, contact, education, experience, internships, projects, skills, certifications, achievements, resume, portfolio, links, role/domain, preferences, availability, participation, evidence, visibility and preview - each with its file paths. Then a 12-point check per section: create, read, update, delete, validation, persistence, empty, error, loading, mobile, privacy, recruiter render.
-      - *Start here:* src/components/profile/ has 9 section components; src/features/profile/update-profile.ts; src/repositories/candidate.ts
-
-**Zainab**
-
-- [ ] `T-091` **Design the V1 assessment model on the existing question tables** *(day 2 of 2)*
-      - *Done when:* A reviewed schema: RecruiterAssessment, AssessmentQuestion, AssessmentAssignment, AssessmentAttempt. Results write to the EXISTING AssessmentReport / AssessmentScore. The design names why each new table is needed and what it does not duplicate.
-      - **Waits on:** D-10
-      - *Start here:* prisma Question (~2558) / QuestionOption (~2572) already model MCQ; AssessmentReport (~3011) / AssessmentScore (~3036) exist unused by application code
-
-**shashank**
-
-- [ ] `T-051` **Define the insight contract: what is a fact, what is inference, what is 'not enough evidence'** *(day 2 of 2)*
-      - *Done when:* A written spec listing every signal the panel may show, its source table, and its class (FACT or INFERENCE). Any signal with no source row is deleted from the spec rather than estimated.
-      - **Waits on:** D-11
-      - *Start here:* prisma SkillEvidence, CandidateSkill, CandidateProjectEntry, AssessmentScore, MockInterviewReport, CandidateAchievement, JobApplication
-- [ ] `T-102` **Name every metric and the exact query behind it** *(day 3 of 3)*
-      - *Done when:* A table with one row per metric: the recruiter question it answers, the source table or AnalyticsEvent, and its period. Any metric with no traceable source is struck out rather than estimated.
-      - *Start here:* Do this AFTER D-9 so the event names are fixed
-
-**Manuvrtti**
-
-- [ ] `T-157` **Publish the C2 track() stub and name the event taxonomy** *(day 3 of 3)*
-      - *Done when:* track(event, userId, props) typechecks and no-ops, merged 6 Sep. The event list is circulated and frozen after 8 Sep.
-
-**Sohail**
-
-- [ ] `T-012` **D-12: the role-family taxonomy including non-technical families** *(day 2 of 2)*
-      - *Done when:* Final list agreed and frozen: the existing AI_ML, DATA, BACKEND, FRONTEND, FULLSTACK, ANALYST, MANAGER, STUDENT plus PRODUCT, SALES, MARKETING, BUSINESS_DEVELOPMENT, OPERATIONS, DESIGN, FINANCE, HR, BUSINESS_ANALYST. No renames after Mon 8 Sep.
-      - *Start here:* src/features/hire/role-family.ts - RULES is ordered most-specific-first; extend it, do not replace it
-- [ ] `T-015` **Write the Cursor implementation plans, one per P0 workstream** *(day 4 of 4)*
-      - *Done when:* Every P0 workstream has a numbered plan in docs/plans/ using the CLAUDE.md 9-part template, including its Guardrails and DB safety sections. A developer can start Tuesday without asking a design question.
-      - *Start here:* docs/plans/ - next free number is 113; follow the template in CLAUDE.md
-- [ ] `T-016` **GATE: Foundation exit - contracts published, migration path proven, 13 decisions closed**
-      - *Done when:* All of: C1-C5 stubs on master; migrate deploy proven on a child branch; D-1 to D-13 all marked Decided; every P0 workstream has a numbered plan. If D-2 is unresolved, no migration merges on 9 Sep.
-- [ ] `T-028` **Enumerate every gated recruiter action and name its entitlement key**
-      - *Done when:* A list with one row per gated action: the Server Action file, the function, the key string, and the plan limit. Handed to shashank, Shivansh and Zainab on 5 Sep so they build against real key names.
-      - **Waits on:** D-3
-      - *Start here:* Walk src/app/actions/hire-actions.ts, talent-actions.ts, job-actions.ts for every mutation
-- [ ] `T-166` **Install Playwright, its config and the CI workflow** *(day 1 of 2)*
-      - *Done when:* npm run test:e2e runs in CI on every pull request and fails the build on a red spec.
+> No work. No development, design, QA, review or testing.
 
 ---
 
-# P2 CORE BUILD
+## Monday 07 September — FOUNDATION
 
-*Core implementation*
+*Decisions close. Wave-1 designs must be approved by tomorrow evening.*
 
-## Wednesday 09 September
+### Shallika · *designer*
 
-**Shivansh**
+- [ ] `T-005` **As the team, we need to know where the product currently looks and feels inconsistent - but only on the journeys we are shipping.** *(day 3 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** A short written audit of the recruiter and candidate journeys in the 20 Sep scope: inconsistent buttons, forms, cards, spacing, typography, navigation, missing states, confusing steps, responsive breakages. NOT a whole-platform review.
+    - **Find out first:** Walk the live product as a real recruiter and a real candidate. Note what confuses you. Stay inside the September journeys - do not audit pages we are not shipping.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk both journeys end to end. Screenshot every inconsistency.
+    - **Done when:** A written list, grouped by journey, ranked by how much it hurts the user. Anything not on a September journey is marked P2 and parked.
+- [ ] `T-006` **As a developer, I need agreed patterns so I am not inventing a button style at 11pm.** *(day 1 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** The handful of patterns these journeys need are defined and named: buttons, inputs, dropdowns, cards, tables, badges, modals, navigation, alerts/toasts, plus loading, empty, error and success states.
+    - **Find out first:** A design system document already exists in the repo. EXTEND it - do not start a new one, and do not redesign components that already work.
+    - **Prompts:** No AI needed.
+    - **Manual test:** A developer can point at any element in the September journeys and find its pattern.
+    - **Done when:** Patterns documented and referenced from the design files. Small enough to be usable this month - this is consistency, not an enterprise system.
+- [ ] `T-007` **As a recruiter, signing up and landing in my workspace should feel like a real product.** *(day 3 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for recruiter signup, the five onboarding steps, the workspace shell and Home - including every state and how they behave on a phone.
+    - **Find out first:** Read the recruiter journey on the User Journeys sheet first. Design the FLOW, not five separate screens.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk a developer through the flow. They can describe what happens at every step without asking you a question.
+    - **Done when:** Every screen and every state: loading, empty, error, success, disabled. Desktop and mobile. Handoff includes the user goal, the flow, what each component does, validation behaviour and interaction notes. APPROVED before Wednesday so R1 and R12 can start.
 
-- [ ] `T-018` **Migration: extend Organization with website, industry, sizeBucket, logoUrl, locationCity, and the recruiter's designation + hiring need**
-      - *Done when:* npx prisma migrate dev creates one additive migration. Every new column is nullable or defaulted so existing Organization rows keep loading. Rehearsed on a Neon child branch before it merges.
-      - **Needs:** D-2
-      - *Start here:* prisma/schema.prisma model Organization (line ~2893) and OrganizationMember
-- [ ] `T-019` **Step 1 of onboarding: Create account - registration + email OTP** *(day 1 of 2)*
-      - *Done when:* A fresh allow-listed email registers, receives a 6-digit code by email, enters it, and lands on step 2 - not on a search screen. A wrong code shows a readable error and does not consume the attempt budget silently.
-      - **Needs:** D-6 · **Security:** Role comes from VerifiedRecruiterSeat lookup, never from anything the user submits
-      - *Start here:* src/app/actions/recruiter-auth-actions.ts, prisma RecruiterEmailOtp, src/lib/email.ts
-- [ ] `T-080` **Migration: Job.organizationId, status DRAFT/PUBLISHED/CLOSED, workMode, experience range**
-      - *Done when:* Applied on a child branch with live Job rows intact. Existing jobs backfill to PUBLISHED and to the ABTalks organisation so nothing disappears from /jobs on deploy.
-      - **Needs:** D-2
-- [ ] `T-081` **Migration: JobApplication.stage + stageChangedAt**
-      - *Done when:* Applied on a child branch. Every existing application backfills to SOURCED. Uses the same PipelineStage enum as TalentListItem so a job applicant and a sourced candidate sit in one pipeline vocabulary.
-      - **Needs:** R5 stages
-- [ ] `T-123` **Fix identity and contact: name, avatar, headline, bio, phone, location** *(day 1 of 2)*
-      - *Done when:* Each field saves, survives a reload and a logout/login, rejects invalid input with a readable message, and appears on the recruiter side only where the privacy flag allows. Phone is absent from the recruiter payload unless showPhone is true.
-      - **Security:** Verified by inspecting the recruiter network payload, not the screen
-- [ ] `T-127` **Cut /register to five fields and route straight to the dashboard**
-      - *Done when:* A fresh account reaches the dashboard in under 90 seconds on a mid-range Android, having filled five fields.
+### Shivansh
 
-**Zainab**
+- [ ] `T-013` **As the team, we must stop assuming the candidate profile works because the code exists.** *(day 3 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every profile section checked against: add, read, change, remove, validate, survives a logout, has empty/error/loading states, works on a phone, is private when it should be, shows correctly to a recruiter. Every failure written down.
+    - **Find out first:** Use the profile with a fresh account, section by section, BEFORE reading code.
+    - **Prompts:** P1 Investigate.
+    - **Manual test:** Fresh account. Each section: add, save, reload, log out, log in, edit, remove. Note every failure.
+    - **Done when:** A written gap list with severities. This sizes the rest of C1 - if it is bigger than 3 days of fixes, we cut sections rather than slipping.
 
-- [ ] `T-092` **Migration: the four assessment tables, org-scoped** *(day 1 of 2)*
-      - *Done when:* Applied on a child branch. Every table carries the organisation scope so a cross-org assessment id can 404.
-      - **Needs:** D-2
-- [ ] `T-147` **Implement the idempotent upsert and recomputeCandidateSkill in one transaction** *(day 1 of 3)*
-      - *Done when:* Calling the emitter three times for the same activity produces exactly one row. evidenceScore moves on the first call and is unchanged on the second and third. Both writes happen inside one prisma.$transaction.
+### Zainab
 
-**shashank**
+- [ ] `T-003` **As a developer, I need the shared helpers to exist so I am not blocked by someone else's feature.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Four shared helpers exist as no-op stubs that type-check: check a plan limit, send a notification, record a candidate signal, add someone to a shortlist.
+    - **Find out first:** None exist. Check for anything similar before creating new files.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Import each from a test file. The project builds.
+    - **Done when:** All four on the main branch by Tuesday evening so every consumer can keep moving.
+- [ ] `T-029` **As the team, we must be certain how a recruiter earns the right to see contact details.** *(day 3 of 3)*
+    - **🔴 HIGH RISK** · P0 · waits on D-5, D-8
+    - **What needs to work:** A written flow: click contact, check the plan allowance, record that access was granted, show the details - plus what happens at zero allowance and what the candidate is told.
+    - **Find out first:** Today a human admin approves each release. It moves to a plan allowance. Ask Claude to find the ONE function that decides whether a recruiter may see contact details - it must keep deciding, unchanged.
+    - **Prompts:** P1 Investigate -> STOP for Sohail. This releases personal data.
+    - **Manual test:** Walk the flow with Sohail. Confirm the privacy wording matches what the site publicly promises.
+    - **Done when:** Flow approved by Sohail. The single access-deciding function is unchanged. Candidate-facing wording agreed.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-- [ ] `T-041` **Migration: TalentRequest.name + TalentRequestMatch state columns**
-      - *Done when:* Migration applies on a child branch with existing TalentRequest rows intact. firstSeenAt defaults to now() for existing matches so nothing is falsely flagged NEW on the first load after deploy.
-- [ ] `T-042` **Named talent projects: create, rename, list, archive** *(day 1 of 3)*
-      - *Done when:* A recruiter creates 'Senior Backend Engineer - Delhi NCR', sees it in a project list with its criteria summary and last-activity date, renames it, and archives it. Archived projects leave the default list but are not deleted.
-      - **Security:** Org-scoped: another organisation's projectId must 404
-      - *Start here:* src/app/hire/[requestId]/page.tsx is the current single-project surface; add the list above it
-- [ ] `T-058` **TalentList / TalentListItem become the live shortlist, keyed on candidateUserId** *(day 1 of 3)*
-      - *Done when:* Shortlist a candidate in Browser A, sign out, open Browser B, sign in, and the candidate is still shortlisted in the correct project. Nothing about the shortlist is read from localStorage.
-      - **Security:** Org-scoped reads and writes; another org's listId must 404
-      - *Start here:* prisma TalentList (~2937) and TalentListItem (~2958) exist and are referenced by ZERO application code; RecruiterShortlistItem is FK'd to ProgramMember which is why non-cohort candidates cannot be shortlisted today
-- [ ] `T-107` **Extend role-family.ts with the nine non-technical families** *(day 1 of 2)*
-      - *Done when:* roleFamilyFor('Marketing Manager') returns MARKETING, not OTHER. A unit test covers one real job title per new family, taken from live ProgramMember.jobRole values. Existing technical titles return the same family they did before.
-      - **Waits on:** D-12
-      - *Start here:* src/features/hire/role-family.ts - RULES is ordered most-specific-first and that order carries meaning; add new rules without reordering the existing ones
+### shashank
 
-**Manuvrtti**
+- [ ] `T-022` **As the team, we need to know whether saving a search today actually saves a recruiter's WORK.** *(day 3 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** A written answer: after signing out and returning, what survives - criteria, matched candidates, who was viewed, who was shortlisted? Each backed by the code that proves it.
+    - **Find out first:** Use the product first: create a search, sign out, come back, see what is lost. Then ask Claude why.
+    - **Prompts:** P1 Investigate, scoped to the search module.
+    - **Manual test:** Create a search, note three candidates, sign out, sign back in. Write down exactly what disappeared.
+    - **Done when:** A written answer per item with the field that proves it. This sizes the rest of R3.
 
-- [ ] `T-153` **In-app delivery through the existing NotificationRead key scheme** *(day 1 of 3)*
-      - *Done when:* A test notification appears in the bell with a stable key, and marking it read persists. Re-sending the same event does not create a second unread item.
-      - *Start here:* prisma Notification (~1637) / NotificationRead (~1666); notificationKey is a string with no FK by design
-- [ ] `T-158` **Migration: AnalyticsEvent, and track() that never blocks** *(day 1 of 3)*
-      - *Done when:* track() called from a Server Action writes a row and does not delay the response. A forced database error inside track() does not fail the calling action - proven by a unit test that injects the failure.
+### Manuvrtti
 
-**Sohail**
+- [ ] `T-036` **As a developer, I need one agreed way to notify someone.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** One shared helper sends a notification in the app and by email, honouring preferences. A stub exists by Tuesday.
+    - **Find out first:** A notification system already exists for admin broadcasts. Ask Claude how it identifies each notification and follow the same approach.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Import it from a test file. It builds.
+    - **Done when:** Stub merged by Tuesday. Type names agreed and frozen after Wednesday.
 
-- [ ] `T-029` **Migration: SubscriptionPlan, OrganizationSubscription, EntitlementUsage** *(day 1 of 2)*
-      - *Done when:* Three tables created on a child branch. SubscriptionPlan is SEED DATA holding the limits - no limit is a constant in TypeScript. EntitlementUsage is keyed (organizationId, key, periodStart) with a unique constraint.
-      - **Waits on:** D-3 · **Needs:** D-2
-      - *Start here:* prisma/schema.prisma; seed the three plans in prisma/seed alongside the existing per-track seeds
-- [ ] `T-166` **Install Playwright, its config and the CI workflow** *(day 2 of 2)*
-      - *Done when:* npm run test:e2e runs in CI on every pull request and fails the build on a red spec.
-- [ ] `T-167` **db:seed:e2e fixtures: technical candidate, non-technical candidate, recruiter with an active plan, admin** *(day 1 of 3)*
-      - *Done when:* Every E2E spec can start from a genuinely fresh account with production-like reference data: skills, an open cohort, an open hackathon, a published job, a published assessment.
-      - *Start here:* Follow the existing per-track seed scripts in prisma/
+### Sohail
 
----
-
-## Thursday 10 September
-
-**Shivansh**
-
-- [ ] `T-019` **Step 1 of onboarding: Create account - registration + email OTP** *(day 2 of 2)*
-      - *Done when:* A fresh allow-listed email registers, receives a 6-digit code by email, enters it, and lands on step 2 - not on a search screen. A wrong code shows a readable error and does not consume the attempt budget silently.
-      - **Needs:** D-6 · **Security:** Role comes from VerifiedRecruiterSeat lookup, never from anything the user submits
-      - *Start here:* src/app/actions/recruiter-auth-actions.ts, prisma RecruiterEmailOtp, src/lib/email.ts
-- [ ] `T-020` **Step 2 of onboarding: Tell us about your company** *(day 1 of 2)*
-      - *Done when:* Company name, website, logo upload, industry, size and location save to Organization. Reloading the page shows the saved values. Skipping the step is not possible; the Continue button stays disabled until name and website are valid.
-      - **Needs:** D-7 · **Security:** requireRecruiter; the write is scoped to the recruiter's own organizationId
-      - *Start here:* Vercel Blob for the logo - the avatar store pattern is in src/features/profile/avatar-storage.ts
-- [ ] `T-082` **Recruiter job create and edit, with skills** *(day 1 of 3)*
-      - *Done when:* A recruiter creates a job with title, description, skills, location, work mode and type; reopens it and sees every value; edits the skills and the change persists. Skills write JobSkill rows, which is what the candidate skill filter matches on.
-      - **Security:** requireRecruiter + organizationId scoping on every read and write
-      - *Start here:* prisma JobSkill (~2996) exists unused; src/app/actions/job-actions.ts
-- [ ] `T-123` **Fix identity and contact: name, avatar, headline, bio, phone, location** *(day 2 of 2)*
-      - *Done when:* Each field saves, survives a reload and a logout/login, rejects invalid input with a readable message, and appears on the recruiter side only where the privacy flag allows. Phone is absent from the recruiter payload unless showPhone is true.
-      - **Security:** Verified by inspecting the recruiter network payload, not the screen
-- [ ] `T-124` **Fix education, experience and internships, with delete** *(day 1 of 2)*
-      - *Done when:* An internship is expressible without a workaround and renders as an internship to a recruiter. Deleting one row removes it from the editor, the public profile and the recruiter preview in the same request cycle.
-      - *Start here:* prisma CandidateEducation, CandidateExperience
-
-**Zainab**
-
-- [ ] `T-092` **Migration: the four assessment tables, org-scoped** *(day 2 of 2)*
-      - *Done when:* Applied on a child branch. Every table carries the organisation scope so a cross-org assessment id can 404.
-      - **Needs:** D-2
-- [ ] `T-093` **Create an assessment: title, instructions, sections, duration, marks, passing mark** *(day 1 of 3)*
-      - *Done when:* A recruiter sets all six, saves a draft, reopens it and sees all six. Duration is stored in seconds and is later enforced by the server, not the browser.
-      - **Security:** requireRecruiter + organizationId scoping
-      - *Start here:* Sections are an ordered label on the question in V1, not a separate builder surface
-- [ ] `T-147` **Implement the idempotent upsert and recomputeCandidateSkill in one transaction** *(day 2 of 3)*
-      - *Done when:* Calling the emitter three times for the same activity produces exactly one row. evidenceScore moves on the first call and is unchanged on the second and third. Both writes happen inside one prisma.$transaction.
-
-**shashank**
-
-- [ ] `T-042` **Named talent projects: create, rename, list, archive** *(day 2 of 3)*
-      - *Done when:* A recruiter creates 'Senior Backend Engineer - Delhi NCR', sees it in a project list with its criteria summary and last-activity date, renames it, and archives it. Archived projects leave the default list but are not deleted.
-      - **Security:** Org-scoped: another organisation's projectId must 404
-      - *Start here:* src/app/hire/[requestId]/page.tsx is the current single-project surface; add the list above it
-- [ ] `T-058` **TalentList / TalentListItem become the live shortlist, keyed on candidateUserId** *(day 2 of 3)*
-      - *Done when:* Shortlist a candidate in Browser A, sign out, open Browser B, sign in, and the candidate is still shortlisted in the correct project. Nothing about the shortlist is read from localStorage.
-      - **Security:** Org-scoped reads and writes; another org's listId must 404
-      - *Start here:* prisma TalentList (~2937) and TalentListItem (~2958) exist and are referenced by ZERO application code; RecruiterShortlistItem is FK'd to ProgramMember which is why non-cohort candidates cannot be shortlisted today
-- [ ] `T-107` **Extend role-family.ts with the nine non-technical families** *(day 2 of 2)*
-      - *Done when:* roleFamilyFor('Marketing Manager') returns MARKETING, not OTHER. A unit test covers one real job title per new family, taken from live ProgramMember.jobRole values. Existing technical titles return the same family they did before.
-      - **Waits on:** D-12
-      - *Start here:* src/features/hire/role-family.ts - RULES is ordered most-specific-first and that order carries meaning; add new rules without reordering the existing ones
-- [ ] `T-108` **Seed non-technical skill categories** *(day 1 of 2)*
-      - *Done when:* SkillCategory and Skill rows exist for each new family, enough that a recruiter filtering a Marketing project on skills gets a usable list rather than an empty dropdown.
-      - *Start here:* prisma SkillCategory (~2256) / Skill (~2265); follow the existing per-track seed scripts
-
-**Manuvrtti**
-
-- [ ] `T-153` **In-app delivery through the existing NotificationRead key scheme** *(day 2 of 3)*
-      - *Done when:* A test notification appears in the bell with a stable key, and marking it read persists. Re-sending the same event does not create a second unread item.
-      - *Start here:* prisma Notification (~1637) / NotificationRead (~1666); notificationKey is a string with no FK by design
-- [ ] `T-158` **Migration: AnalyticsEvent, and track() that never blocks** *(day 2 of 3)*
-      - *Done when:* track() called from a Server Action writes a row and does not delay the response. A forced database error inside track() does not fail the calling action - proven by a unit test that injects the failure.
-
-**Sohail**
-
-- [ ] `T-029` **Migration: SubscriptionPlan, OrganizationSubscription, EntitlementUsage** *(day 2 of 2)*
-      - *Done when:* Three tables created on a child branch. SubscriptionPlan is SEED DATA holding the limits - no limit is a constant in TypeScript. EntitlementUsage is keyed (organizationId, key, periodStart) with a unique constraint.
-      - **Waits on:** D-3 · **Needs:** D-2
-      - *Start here:* prisma/schema.prisma; seed the three plans in prisma/seed alongside the existing per-track seeds
-- [ ] `T-030` **Implement assertEntitlement with transactional usage counters** *(day 1 of 3)*
-      - *Done when:* Calling it 10 times concurrently against a limit of 5 lets exactly 5 through. The 6th returns {ok:false, message} rather than throwing. A unit test proves the concurrency case with Promise.all.
-      - **Security:** Server-side only. A React dialog is never the enforcement point.
-      - *Start here:* src/features/entitlement/assert.ts (the C5 stub); wrap the read-check-increment in prisma.$transaction
-- [ ] `T-167` **db:seed:e2e fixtures: technical candidate, non-technical candidate, recruiter with an active plan, admin** *(day 2 of 3)*
-      - *Done when:* Every E2E spec can start from a genuinely fresh account with production-like reference data: skills, an open cohort, an open hackathon, a published job, a published assessment.
-      - *Start here:* Follow the existing per-track seed scripts in prisma/
+- [ ] `T-001` **As the team, we need the decisions that block everyone settled before Wednesday.** *(day 3 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every blocking decision is written down with a one-line reason. Nobody builds against a guess.
+    - **Find out first:** Three are already agreed (payments deferred, contact unlock by plan allowance, no company verification) - just record them. The rest need a call.
+    - **Prompts:** No AI. Product judgement.
+    - **Manual test:** Open the decision record. Every question has an answer, not a question.
+    - **Done when:** All decisions marked Decided with a reason and the tasks each unblocks. No task starts Wednesday against an open decision.
+    - **⛔ Sohail owns and signs this himself.**
 
 ---
 
-## Friday 11 September
+## Tuesday 08 September — FOUNDATION
 
-**Shivansh**
+*Go/no-go gate tonight.*
 
-- [ ] `T-020` **Step 2 of onboarding: Tell us about your company** *(day 2 of 2)*
-      - *Done when:* Company name, website, logo upload, industry, size and location save to Organization. Reloading the page shows the saved values. Skipping the step is not possible; the Continue button stays disabled until name and website are valid.
-      - **Needs:** D-7 · **Security:** requireRecruiter; the write is scoped to the recruiter's own organizationId
-      - *Start here:* Vercel Blob for the logo - the avatar store pattern is in src/features/profile/avatar-storage.ts
-- [ ] `T-021` **Step 3 of onboarding: Tell us what you are hiring for**
-      - *Done when:* The recruiter's designation and their hiring need save and are visible to admin. The answers pre-fill the first talent project's criteria in R3, so the recruiter is not asked the same question twice.
-      - *Start here:* Store on OrganizationMember or Organization per the R1 migration; hand the shape to shashank for R3
-- [ ] `T-082` **Recruiter job create and edit, with skills** *(day 2 of 3)*
-      - *Done when:* A recruiter creates a job with title, description, skills, location, work mode and type; reopens it and sees every value; edits the skills and the change persists. Skills write JobSkill rows, which is what the candidate skill filter matches on.
-      - **Security:** requireRecruiter + organizationId scoping on every read and write
-      - *Start here:* prisma JobSkill (~2996) exists unused; src/app/actions/job-actions.ts
-- [ ] `T-124` **Fix education, experience and internships, with delete** *(day 2 of 2)*
-      - *Done when:* An internship is expressible without a workaround and renders as an internship to a recruiter. Deleting one row removes it from the editor, the public profile and the recruiter preview in the same request cycle.
-      - *Start here:* prisma CandidateEducation, CandidateExperience
-- [ ] `T-125` **Fix projects, certifications, skills and resume, with delete** *(day 1 of 3)*
-      - *Done when:* Adding, editing and removing an item in each of the four persists across a logout/login. A replaced resume re-parses; a removed resume disappears from the recruiter surface immediately.
-      - **Security:** showResume gates every recruiter read of the resume URL
+> **GATE tonight.** Decisions closed · shared stubs merged · database path proven · **wave-1 designs APPROVED**. If designs are not approved, Wednesday's frontend work cannot start.
 
-**Zainab**
+### Shallika · *designer*
 
-- [ ] `T-093` **Create an assessment: title, instructions, sections, duration, marks, passing mark** *(day 2 of 3)*
-      - *Done when:* A recruiter sets all six, saves a draft, reopens it and sees all six. Duration is stored in seconds and is later enforced by the server, not the browser.
-      - **Security:** requireRecruiter + organizationId scoping
-      - *Start here:* Sections are an ordered label on the question in V1, not a separate builder surface
-- [ ] `T-147` **Implement the idempotent upsert and recomputeCandidateSkill in one transaction** *(day 3 of 3)*
-      - *Done when:* Calling the emitter three times for the same activity produces exactly one row. evidenceScore moves on the first call and is unchanged on the second and third. Both writes happen inside one prisma.$transaction.
-- [ ] `T-148` **Wire the six learning call sites** *(day 1 of 4)*
-      - *Done when:* Challenge submission accepted, program mission passed, Databricks/DS-Architect activity passed, quiz passed, project graded and hackathon result published each write evidence in the SAME transaction as the action. Six integration tests, one per site.
+- [ ] `T-006` **As a developer, I need agreed patterns so I am not inventing a button style at 11pm.** *(day 2 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** The handful of patterns these journeys need are defined and named: buttons, inputs, dropdowns, cards, tables, badges, modals, navigation, alerts/toasts, plus loading, empty, error and success states.
+    - **Find out first:** A design system document already exists in the repo. EXTEND it - do not start a new one, and do not redesign components that already work.
+    - **Prompts:** No AI needed.
+    - **Manual test:** A developer can point at any element in the September journeys and find its pattern.
+    - **Done when:** Patterns documented and referenced from the design files. Small enough to be usable this month - this is consistency, not an enterprise system.
+- [ ] `T-007` **As a recruiter, signing up and landing in my workspace should feel like a real product.** *(day 4 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for recruiter signup, the five onboarding steps, the workspace shell and Home - including every state and how they behave on a phone.
+    - **Find out first:** Read the recruiter journey on the User Journeys sheet first. Design the FLOW, not five separate screens.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk a developer through the flow. They can describe what happens at every step without asking you a question.
+    - **Done when:** Every screen and every state: loading, empty, error, success, disabled. Desktop and mobile. Handoff includes the user goal, the flow, what each component does, validation behaviour and interaction notes. APPROVED before Wednesday so R1 and R12 can start.
 
-**shashank**
+### Shivansh
 
-- [ ] `T-042` **Named talent projects: create, rename, list, archive** *(day 3 of 3)*
-      - *Done when:* A recruiter creates 'Senior Backend Engineer - Delhi NCR', sees it in a project list with its criteria summary and last-activity date, renames it, and archives it. Archived projects leave the default list but are not deleted.
-      - **Security:** Org-scoped: another organisation's projectId must 404
-      - *Start here:* src/app/hire/[requestId]/page.tsx is the current single-project surface; add the list above it
-- [ ] `T-043` **Hiring criteria panel: the project stores WHAT it is looking for** *(day 1 of 3)*
-      - *Done when:* Role, skills, experience range, location, work mode, education, graduation year, candidate type, role family and open-to-work all save on the project. Reopening the project shows every value the recruiter set, editable in place.
-      - **Waits on:** D-12
-      - *Start here:* TalentRequest already carries mustHaveStack, seniority, workMode, locationCity, minExperience, maxExperience - extend, do not duplicate; jobSpecSchema is in src/lib/validations/hire.ts
-- [ ] `T-058` **TalentList / TalentListItem become the live shortlist, keyed on candidateUserId** *(day 3 of 3)*
-      - *Done when:* Shortlist a candidate in Browser A, sign out, open Browser B, sign in, and the candidate is still shortlisted in the correct project. Nothing about the shortlist is read from localStorage.
-      - **Security:** Org-scoped reads and writes; another org's listId must 404
-      - *Start here:* prisma TalentList (~2937) and TalentListItem (~2958) exist and are referenced by ZERO application code; RecruiterShortlistItem is FK'd to ProgramMember which is why non-cohort candidates cannot be shortlisted today
-- [ ] `T-059` **Multi-track shortlist: cohort, challenge, hackathon and Claude candidates** *(day 1 of 2)*
-      - *Done when:* One candidate from each of the four tracks is shortlisted and all four persist. This closes a live defect where only ProgramMember rows could be saved.
-      - *Start here:* TalentListItem keys on candidateUserId - the one key every track shares
-- [ ] `T-108` **Seed non-technical skill categories** *(day 2 of 2)*
-      - *Done when:* SkillCategory and Skill rows exist for each new family, enough that a recruiter filtering a Marketing project on skills gets a usable list rather than an empty dropdown.
-      - *Start here:* prisma SkillCategory (~2256) / Skill (~2265); follow the existing per-track seed scripts
-- [ ] `T-109` **Role-family selection drives which optional signals a candidate is offered** *(day 1 of 3)*
-      - *Done when:* A candidate choosing Design is offered portfolio, Behance, Dribbble and Figma. A candidate choosing Marketing is offered campaigns and work samples. Neither is offered GitHub as a required field, and none of the optional fields blocks profile completion.
-      - **Needs:** C1
-      - *Start here:* prisma CandidateLinkType already carries BEHANCE and DRIBBBLE
+- [ ] `T-013` **As the team, we must stop assuming the candidate profile works because the code exists.** *(day 4 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every profile section checked against: add, read, change, remove, validate, survives a logout, has empty/error/loading states, works on a phone, is private when it should be, shows correctly to a recruiter. Every failure written down.
+    - **Find out first:** Use the profile with a fresh account, section by section, BEFORE reading code.
+    - **Prompts:** P1 Investigate.
+    - **Manual test:** Fresh account. Each section: add, save, reload, log out, log in, edit, remove. Note every failure.
+    - **Done when:** A written gap list with severities. This sizes the rest of C1 - if it is bigger than 3 days of fixes, we cut sections rather than slipping.
 
-**Manuvrtti**
+### Zainab
 
-- [ ] `T-153` **In-app delivery through the existing NotificationRead key scheme** *(day 3 of 3)*
-      - *Done when:* A test notification appears in the bell with a stable key, and marking it read persists. Re-sending the same event does not create a second unread item.
-      - *Start here:* prisma Notification (~1637) / NotificationRead (~1666); notificationKey is a string with no FK by design
-- [ ] `T-154` **Email delivery through sendEmail with a preference check and a send log** *(day 1 of 3)*
-      - *Done when:* An email arrives in a real inbox. Switching the preference off stops that email and logs the suppression rather than failing silently. @abtalks.dev addresses are suppressed in production.
-      - *Start here:* src/lib/email.ts - Brevo is the one configured provider; SendEmailResult already distinguishes ok from skipped
-- [ ] `T-158` **Migration: AnalyticsEvent, and track() that never blocks** *(day 3 of 3)*
-      - *Done when:* track() called from a Server Action writes a row and does not delay the response. A forced database error inside track() does not fail the calling action - proven by a unit test that injects the failure.
-- [ ] `T-159` **Sentry wired into lib/logger.ts with team-channel alerting** *(day 1 of 2)*
-      - *Done when:* A deliberate error reaches Sentry and the team channel within a minute. No console.error is introduced anywhere.
-      - *Start here:* src/lib/logger.ts is the single logging seam
+- [ ] `T-003` **As a developer, I need the shared helpers to exist so I am not blocked by someone else's feature.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Four shared helpers exist as no-op stubs that type-check: check a plan limit, send a notification, record a candidate signal, add someone to a shortlist.
+    - **Find out first:** None exist. Check for anything similar before creating new files.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Import each from a test file. The project builds.
+    - **Done when:** All four on the main branch by Tuesday evening so every consumer can keep moving.
 
-**Sohail**
+### shashank
 
-- [ ] `T-030` **Implement assertEntitlement with transactional usage counters** *(day 2 of 3)*
-      - *Done when:* Calling it 10 times concurrently against a limit of 5 lets exactly 5 through. The 6th returns {ok:false, message} rather than throwing. A unit test proves the concurrency case with Promise.all.
-      - **Security:** Server-side only. A React dialog is never the enforcement point.
-      - *Start here:* src/features/entitlement/assert.ts (the C5 stub); wrap the read-check-increment in prisma.$transaction
-- [ ] `T-167` **db:seed:e2e fixtures: technical candidate, non-technical candidate, recruiter with an active plan, admin** *(day 3 of 3)*
-      - *Done when:* Every E2E spec can start from a genuinely fresh account with production-like reference data: skills, an open cohort, an open hackathon, a published job, a published assessment.
-      - *Start here:* Follow the existing per-track seed scripts in prisma/
-- [ ] `T-168` **Get the first journey green in CI so every owner has a pattern to copy** *(day 1 of 2)*
-      - *Done when:* One spec green on master, with a documented one-page 'how to write a spec here' note for the four builders.
+- [ ] `T-022` **As the team, we need to know whether saving a search today actually saves a recruiter's WORK.** *(day 4 of 4)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** A written answer: after signing out and returning, what survives - criteria, matched candidates, who was viewed, who was shortlisted? Each backed by the code that proves it.
+    - **Find out first:** Use the product first: create a search, sign out, come back, see what is lost. Then ask Claude why.
+    - **Prompts:** P1 Investigate, scoped to the search module.
+    - **Manual test:** Create a search, note three candidates, sign out, sign back in. Write down exactly what disappeared.
+    - **Done when:** A written answer per item with the field that proves it. This sizes the rest of R3.
+
+### Manuvrtti
+
+- [ ] `T-036` **As a developer, I need one agreed way to notify someone.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** One shared helper sends a notification in the app and by email, honouring preferences. A stub exists by Tuesday.
+    - **Find out first:** A notification system already exists for admin broadcasts. Ask Claude how it identifies each notification and follow the same approach.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Import it from a test file. It builds.
+    - **Done when:** Stub merged by Tuesday. Type names agreed and frozen after Wednesday.
+
+### Sohail
+
+- [ ] `T-001` **As the team, we need the decisions that block everyone settled before Wednesday.** *(day 4 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every blocking decision is written down with a one-line reason. Nobody builds against a guess.
+    - **Find out first:** Three are already agreed (payments deferred, contact unlock by plan allowance, no company verification) - just record them. The rest need a call.
+    - **Prompts:** No AI. Product judgement.
+    - **Manual test:** Open the decision record. Every question has an answer, not a question.
+    - **Done when:** All decisions marked Decided with a reason and the tasks each unblocks. No task starts Wednesday against an open decision.
+    - **⛔ Sohail owns and signs this himself.**
+- [ ] `T-004` **As the project lead, I need to know on Tuesday evening whether we can safely start building.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** A go/no-go call, written down.
+    - **Find out first:** Check: decisions closed, stubs merged, database path proven, designs approved for wave 1.
+    - **Prompts:** None.
+    - **Manual test:** Read the four criteria. Sign or don't.
+    - **Done when:** Signed. If the database path is unproven, no database change merges Wednesday - we re-sequence instead.
 
 ---
 
-## Saturday 12 September
+## Wednesday 09 September — BUILD WAVE 1
 
-**Shivansh**
+*The main build window opens. Continuous testing from today.*
 
-- [ ] `T-082` **Recruiter job create and edit, with skills** *(day 3 of 3)*
-      - *Done when:* A recruiter creates a job with title, description, skills, location, work mode and type; reopens it and sees every value; edits the skills and the change persists. Skills write JobSkill rows, which is what the candidate skill filter matches on.
-      - **Security:** requireRecruiter + organizationId scoping on every read and write
-      - *Start here:* prisma JobSkill (~2996) exists unused; src/app/actions/job-actions.ts
-- [ ] `T-083` **Draft, publish, close and reopen** *(day 1 of 2)*
-      - *Done when:* A DRAFT job returns 404 for a signed-in candidate hitting its URL directly. Publishing makes it visible. Closing stops new applications with a readable message. Reopening restores it. Publish calls assertEntitlement first.
-      - **Needs:** R2 · **Security:** Draft invisibility verified by direct URL, not by absence from a list
-- [ ] `T-125` **Fix projects, certifications, skills and resume, with delete** *(day 2 of 3)*
-      - *Done when:* Adding, editing and removing an item in each of the four persists across a logout/login. A replaced resume re-parses; a removed resume disappears from the recruiter surface immediately.
-      - **Security:** showResume gates every recruiter read of the resume URL
+### Shallika · *designer*
 
-**Zainab**
+- [ ] `T-008` **As a recruiter, finding and choosing candidates should feel considered, not like a database query.** *(day 1 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for the talent project, the criteria panel, search results, the candidate card, the shortlist and the pipeline board - designed as ONE connected flow.
+    - **Find out first:** This is the heart of the product. Think through the whole journey: enter project, set criteria, search, understand a candidate card, shortlist, come back next week and still understand where you were.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk the flow with Sohail and shashank. It makes sense without explanation.
+    - **Done when:** Complete flow with all states, including what a recruiter sees with zero results and with a brand-new empty project. Approved before the search build starts on the 11th.
 
-- [ ] `T-093` **Create an assessment: title, instructions, sections, duration, marks, passing mark** *(day 3 of 3)*
-      - *Done when:* A recruiter sets all six, saves a draft, reopens it and sees all six. Duration is stored in seconds and is later enforced by the server, not the browser.
-      - **Security:** requireRecruiter + organizationId scoping
-      - *Start here:* Sections are an ordered label on the question in V1, not a separate builder surface
-- [ ] `T-094` **Question authoring: MCQ and multiple-select, with reorder, edit and delete** *(day 1 of 3)*
-      - *Done when:* Adding four questions, reordering them, editing one and deleting one all persist across a reload. Saving a question with no correct option is refused with a readable message.
-      - **Waits on:** D-10
-- [ ] `T-148` **Wire the six learning call sites** *(day 2 of 4)*
-      - *Done when:* Challenge submission accepted, program mission passed, Databricks/DS-Architect activity passed, quiz passed, project graded and hackathon result published each write evidence in the SAME transaction as the action. Six integration tests, one per site.
+### Shivansh
 
-**shashank**
+- [ ] `T-014` **As a candidate, everything I type into my profile is still there tomorrow.** *(day 1 of 4)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The profile sections in September scope save, survive a logout, and can be edited and removed.
+    - **Find out first:** Fix ONLY what the audit found broken. Do not rebuild working sections.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every section. Save, reload, LOG OUT, LOG BACK IN - all still there. Edit four sections. Remove one item from three sections - each disappears everywhere including the recruiter view.
+    - **Done when:** Every in-scope section passes all twelve checks. Removals propagate everywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+- [ ] `T-017` **As a new recruiter, I create my account and verify my email without confusion.** *(day 1 of 2)*
+    - **🔴 HIGH RISK** · P0 · waits on D-6
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Signup and the emailed code work reliably, and a wrong code gives a readable message rather than a dead end.
+    - **Find out first:** Signup exists but is gated behind a flag and an invite list. Ask Claude how the code decides who may register - that must not change.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (who is allowed in) -> P3 Implement -> P10 Security review.
+    - **Manual test:** Register with an invited email. Check the real inbox. Enter a WRONG code - read the message. Enter the right one. You land on the company step, not a search screen.
+    - **Done when:** Fresh recruiter registers, receives a real code, wrong codes fail readably, right codes proceed.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-020` **As a recruiter, every screen feels like part of the same product.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P0 · waits on D-13
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Every recruiter screen sits inside one shell with a persistent menu, and moving between sections does not reload the whole page.
+    - **Find out first:** A recruiter shell already exists with a smaller menu. EXTEND it - do not create a second layout.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Visit five recruiter sections in a row. The menu stays, the current section is highlighted, and the page does not fully reload.
+    - **Done when:** One shell across every recruiter screen, with the active section always visible.
+    - **Regression check:** MANDATORY: every existing recruiter screen still renders inside the shell.
+- [ ] `T-077` **As a recruiter, I write a job posting and control when it goes live.** *(day 1 of 4)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a job with title, description, skills, location, work mode and type; saves it as a draft; and can publish, close and reopen it.
+    - **Find out first:** Jobs today are admin-created only, with no owning company and no draft state. Skills-per-job storage EXISTS and is unused - find it. Existing live jobs must keep working.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (changes live job records) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Create a job, save as draft. As a CANDIDATE open the draft URL directly - not found. Publish - the candidate sees it. Close - no new applications, readable message. Reopen.
+    - **Done when:** Full draft/publish/close/reopen. Draft invisibility proven by direct URL. Every job live before the change is still live and applyable.
+    - **Regression check:** MANDATORY: open /jobs as a candidate - existing jobs still list, open and accept applications.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-- [ ] `T-043` **Hiring criteria panel: the project stores WHAT it is looking for** *(day 2 of 3)*
-      - *Done when:* Role, skills, experience range, location, work mode, education, graduation year, candidate type, role family and open-to-work all save on the project. Reopening the project shows every value the recruiter set, editable in place.
-      - **Waits on:** D-12
-      - *Start here:* TalentRequest already carries mustHaveStack, seniority, workMode, locationCity, minExperience, maxExperience - extend, do not duplicate; jobSpecSchema is in src/lib/validations/hire.ts
-- [ ] `T-059` **Multi-track shortlist: cohort, challenge, hackathon and Claude candidates** *(day 2 of 2)*
-      - *Done when:* One candidate from each of the four tracks is shortlisted and all four persist. This closes a live defect where only ProgramMember rows could be saved.
-      - *Start here:* TalentListItem keys on candidateUserId - the one key every track shares
-- [ ] `T-060` **Pipeline stages on each candidate in a project** *(day 1 of 3)*
-      - *Done when:* A candidate can be moved through NEW, VIEWED, SHORTLISTED, CONTACT_REQUESTED, CONTACTED, ASSESSMENT_SENT, ASSESSMENT_COMPLETED, SCREENING, INTERVIEWING, OFFER, HIRED, REJECTED. The stage survives a sign-out. Moving a stage records who moved it and when.
-      - *Start here:* PipelineStage enum already exists on TalentListItem - use it; extend only if D-11 stages are genuinely missing
-- [ ] `T-109` **Role-family selection drives which optional signals a candidate is offered** *(day 2 of 3)*
-      - *Done when:* A candidate choosing Design is offered portfolio, Behance, Dribbble and Figma. A candidate choosing Marketing is offered campaigns and work samples. Neither is offered GitHub as a required field, and none of the optional fields blocks profile completion.
-      - **Needs:** C1
-      - *Start here:* prisma CandidateLinkType already carries BEHANCE and DRIBBBLE
+### shashank
 
-**Manuvrtti**
+- [ ] `T-023` **As a recruiter, I create a named hiring project so my work has somewhere to live.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a project, sees it in a list, renames it and archives it.
+    - **Find out first:** A search-brief record already exists. EXTEND it - do not create a parallel project table.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement. Extend the existing record; do not add a parallel model.
+    - **Manual test:** Create a project with a name. See it listed with its last-activity date. Rename it. Archive it - it leaves the list but is not deleted. Sign out and back in - all still true.
+    - **Done when:** Projects create, list, rename and archive. Another company's project id returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-027` **As a recruiter, when I shortlist someone it is still there tomorrow, on any device.** *(day 1 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Shortlisting saves against the person in the database, not the browser. Today part of it lives only in the browser and is lost when site data is cleared.
+    - **Find out first:** There are TWO shortlists today: one in the database that only works for one candidate group, and one in the browser that works for everyone. Ask Claude to confirm, and to find the unused tables that already have the right shape.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (existing recruiter data) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Shortlist in Browser A. Sign out. Open Browser B, sign in. Still shortlisted, in the right project. Then shortlist one candidate from EACH group - all persist.
+    - **Done when:** Database-backed, keyed on the person, works for every candidate group. Nothing read from browser storage. Another company's list returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged. MANDATORY: an existing recruiter's current shortlist must not disappear.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-- [ ] `T-154` **Email delivery through sendEmail with a preference check and a send log** *(day 2 of 3)*
-      - *Done when:* An email arrives in a real inbox. Switching the preference off stops that email and logs the suppression rather than failing silently. @abtalks.dev addresses are suppressed in production.
-      - *Start here:* src/lib/email.ts - Brevo is the one configured provider; SendEmailResult already distinguishes ok from skipped
-- [ ] `T-159` **Sentry wired into lib/logger.ts with team-channel alerting** *(day 2 of 2)*
-      - *Done when:* A deliberate error reaches Sentry and the team channel within a minute. No console.error is introduced anywhere.
-      - *Start here:* src/lib/logger.ts is the single logging seam
+### Manuvrtti
 
-**Sohail**
+- [ ] `T-037` **As a user, notifications reach me reliably and stop when I switch them off.** *(day 1 of 6)*
+    - **🟡 MEDIUM** · P0 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The notifications these September journeys need appear in the bell and, where appropriate, arrive as a real email - and switching one off genuinely stops it.
+    - **Find out first:** Email sending already works - reuse it, do NOT add a second provider. Scope is only the notifications the September journeys need, not the full set.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a notification - it appears in the bell. Mark it read - it stays read after a reload. Check a REAL inbox. Switch the preference off, trigger again - bell only, no email. Confirm test addresses are suppressed.
+    - **Done when:** Bell and real email both work. Preferences honoured. Every send logged. Repeat events do not duplicate.
+    - **Regression check:** MANDATORY: trigger an existing admin broadcast and confirm it still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
 
-- [ ] `T-030` **Implement assertEntitlement with transactional usage counters** *(day 3 of 3)*
-      - *Done when:* Calling it 10 times concurrently against a limit of 5 lets exactly 5 through. The 6th returns {ok:false, message} rather than throwing. A unit test proves the concurrency case with Promise.all.
-      - **Security:** Server-side only. A React dialog is never the enforcement point.
-      - *Start here:* src/features/entitlement/assert.ts (the C5 stub); wrap the read-check-increment in prisma.$transaction
-- [ ] `T-031` **Enforce on search run and profile unlock** *(day 1 of 2)*
-      - *Done when:* With the UI removed, calling the search Server Action past the monthly limit returns {ok:false}. Same for profile unlock. Both counters increment by exactly one per successful call.
-      - *Start here:* src/app/actions/hire-actions.ts, src/features/hire/search-candidates.ts
-- [ ] `T-168` **Get the first journey green in CI so every owner has a pattern to copy** *(day 2 of 2)*
-      - *Done when:* One spec green on master, with a documented one-page 'how to write a spec here' note for the four builders.
+### Sohail
 
----
-
-## Sunday 13 September
-
-**Shivansh**
-
-- [ ] `T-083` **Draft, publish, close and reopen** *(day 2 of 2)*
-      - *Done when:* A DRAFT job returns 404 for a signed-in candidate hitting its URL directly. Publishing makes it visible. Closing stops new applications with a readable message. Reopening restores it. Publish calls assertEntitlement first.
-      - **Needs:** R2 · **Security:** Draft invisibility verified by direct URL, not by absence from a list
-- [ ] `T-084` **Candidate job browse with search and filters** *(day 1 of 3)*
-      - *Done when:* Filtering by one skill on a seeded pool returns exactly the jobs carrying that JobSkill. Filters cover skills, role, location, work mode and job type. Filters run in SQL - the network response contains only the filtered rows.
-      - *Start here:* src/app/jobs/page.tsx, src/app/jobs/[id]/page.tsx
-- [ ] `T-114` **Build the workspace shell: persistent left nav, header, active state** *(day 1 of 3)*
-      - *Done when:* Every recruiter surface renders inside one shell. The current section is visibly active. Moving between sections does not reload the page or lose scroll position on the nav.
-      - **Needs:** D-13
-      - *Start here:* Extend HireChrome rather than creating a second layout; src/app/hire/layout.tsx is the entry
-- [ ] `T-125` **Fix projects, certifications, skills and resume, with delete** *(day 3 of 3)*
-      - *Done when:* Adding, editing and removing an item in each of the four persists across a logout/login. A replaced resume re-parses; a removed resume disappears from the recruiter surface immediately.
-      - **Security:** showResume gates every recruiter read of the resume URL
-- [ ] `T-126` **Fix links and preferences: role/domain, opportunity types, work mode, locations, availability** *(day 1 of 2)*
-      - *Done when:* Every CandidateLinkType the schema supports is reachable from the UI. Empty opportunityTypes renders as 'unstated', never as 'any'. Expected salary never appears in any recruiter payload.
-      - *Start here:* prisma CandidatePreference, CandidateLink; CandidateLinkType already has PORTFOLIO, LEETCODE, CODECHEF, BEHANCE, DRIBBBLE, KAGGLE
-
-**Zainab**
-
-- [ ] `T-066` **Contact unlock spends a plan credit and reveals details** *(day 1 of 3)*
-      - *Done when:* A recruiter with credits clicks Unlock and sees the candidate's email immediately; the counter decrements by one. A recruiter with zero credits sees the limit-reached message and NO contact details anywhere in the response payload.
-      - **Waits on:** D-5 · **Needs:** R2 assertEntitlement · **Security:** Verified by inspecting the network payload, not the screen
-      - *Start here:* Write TalentEngagementRequest with status CONTACT_SHARED inside the same transaction as the usage increment
-- [ ] `T-094` **Question authoring: MCQ and multiple-select, with reorder, edit and delete** *(day 2 of 3)*
-      - *Done when:* Adding four questions, reordering them, editing one and deleting one all persist across a reload. Saving a question with no correct option is refused with a readable message.
-      - **Waits on:** D-10
-- [ ] `T-148` **Wire the six learning call sites** *(day 3 of 4)*
-      - *Done when:* Challenge submission accepted, program mission passed, Databricks/DS-Architect activity passed, quiz passed, project graded and hackathon result published each write evidence in the SAME transaction as the action. Six integration tests, one per site.
-
-**shashank**
-
-- [ ] `T-043` **Hiring criteria panel: the project stores WHAT it is looking for** *(day 3 of 3)*
-      - *Done when:* Role, skills, experience range, location, work mode, education, graduation year, candidate type, role family and open-to-work all save on the project. Reopening the project shows every value the recruiter set, editable in place.
-      - **Waits on:** D-12
-      - *Start here:* TalentRequest already carries mustHaveStack, seniority, workMode, locationCity, minExperience, maxExperience - extend, do not duplicate; jobSpecSchema is in src/lib/validations/hire.ts
-- [ ] `T-044` **Convert the match run from delete+create to an upsert that preserves firstSeenAt** *(day 1 of 2)*
-      - *Done when:* Run a match, note a candidate's firstSeenAt, run it again, and firstSeenAt is unchanged. A candidate who did not match before and matches now has a firstSeenAt later than the previous run.
-      - *Start here:* The current runMatchAction deletes all TalentRequestMatch rows then recreates them - that is what loses history
-- [ ] `T-052` **Assemble top signals from real rows** *(day 1 of 3)*
-      - *Done when:* Opening a candidate with 3 verified Node.js evidence rows shows 'Node.js - verified through 3 activities'. A candidate with zero evidence rows shows 'Not enough evidence yet' and NO skill line. The panel never renders a skill it cannot count.
-      - **Needs:** P1 emitter
-      - *Start here:* Read SkillEvidence grouped by skillId for the candidate; CandidateSkill.evidenceScore is the existing rollup
-- [ ] `T-060` **Pipeline stages on each candidate in a project** *(day 2 of 3)*
-      - *Done when:* A candidate can be moved through NEW, VIEWED, SHORTLISTED, CONTACT_REQUESTED, CONTACTED, ASSESSMENT_SENT, ASSESSMENT_COMPLETED, SCREENING, INTERVIEWING, OFFER, HIRED, REJECTED. The stage survives a sign-out. Moving a stage records who moved it and when.
-      - *Start here:* PipelineStage enum already exists on TalentListItem - use it; extend only if D-11 stages are genuinely missing
-- [ ] `T-109` **Role-family selection drives which optional signals a candidate is offered** *(day 3 of 3)*
-      - *Done when:* A candidate choosing Design is offered portfolio, Behance, Dribbble and Figma. A candidate choosing Marketing is offered campaigns and work samples. Neither is offered GitHub as a required field, and none of the optional fields blocks profile completion.
-      - **Needs:** C1
-      - *Start here:* prisma CandidateLinkType already carries BEHANCE and DRIBBBLE
-- [ ] `T-110` **No coding signal affects a non-technical candidate's standing** *(day 1 of 2)*
-      - *Done when:* A complete Marketing profile with zero GitHub, LeetCode and CodeChef reaches the same profile-strength band as an equivalently complete engineering profile. Removing GitHub from an engineering profile does not change a Marketing candidate's rank.
-      - *Start here:* src/features/profile/completeness.ts and src/features/hire/score-candidate.ts both need the role-family branch
-- [ ] `T-162` **Migration: CandidateProfileView with a dedupe window** *(day 1 of 2)*
-      - *Done when:* One additive table. A unique or windowed constraint means five refreshes of the same candidate by the same recruiter inside the window record one row, proven by an integration test.
-      - **Waits on:** D-8
-
-**Manuvrtti**
-
-- [ ] `T-074` **Recruiter notification types wired to the existing key scheme** *(day 1 of 4)*
-      - *Done when:* Seven recruiter events write a notification the recruiter sees in a bell: candidate applied, candidate replied, assessment completed, new project matches, contact request status, subscription near limit, subscription expired. Each key is stable and unique per event instance.
-      - **Waits on:** D-9 · **Needs:** P2 notify()
-      - *Start here:* prisma NotificationRead uses a notificationKey string with no FK - follow the existing 'admin:<id>' / 'hackathon:kickoff' convention
-- [ ] `T-154` **Email delivery through sendEmail with a preference check and a send log** *(day 3 of 3)*
-      - *Done when:* An email arrives in a real inbox. Switching the preference off stops that email and logs the suppression rather than failing silently. @abtalks.dev addresses are suppressed in production.
-      - *Start here:* src/lib/email.ts - Brevo is the one configured provider; SendEmailResult already distinguishes ok from skipped
-
-**Sohail**
-
-- [ ] `T-031` **Enforce on search run and profile unlock** *(day 2 of 2)*
-      - *Done when:* With the UI removed, calling the search Server Action past the monthly limit returns {ok:false}. Same for profile unlock. Both counters increment by exactly one per successful call.
-      - *Start here:* src/app/actions/hire-actions.ts, src/features/hire/search-candidates.ts
-- [ ] `T-032` **Enforce on contact unlock, outreach email, talent project create, job publish and assessment publish** *(day 1 of 4)*
-      - *Done when:* Each of the five, called directly with the client bypassed at its limit, is refused server-side. Five separate assertions in the E-R7 spec, not one.
-      - **Waits on:** D-5 · **Needs:** R3, R6, R8, R9
-      - *Start here:* Add the assertEntitlement call as the FIRST statement inside each Server Action, before any read
+- [ ] `T-032` **As the business, plan limits live as data we can change, not numbers in code.** *(day 1 of 3)*
+    - **🔴 HIGH RISK** · P0 · waits on D-3
+    - **What needs to work:** Plans and their limits are stored records. Changing a limit is a data edit, not a deployment.
+    - **Find out first:** Nothing exists. Ask Claude to check whether ANY subscription storage exists before creating it. An existing plans dialog hard-codes prices - match the agreed numbers.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P11 Database review -> P3 Implement.
+    - **Manual test:** Change a limit in the stored plan. Reload the plans page - the new number shows. No deploy.
+    - **Done when:** Plans stored with every limit as data. Applied to a copy of the database first. Existing recruiters keep working.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-039` **As a developer, I can run the journey tests on my machine and in CI.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** A test setup runs the journey tests on every pull request, with one green example and a one-page how-to.
+    - **Find out first:** No journey-test framework exists today, only hand-written scripts. Pick the standard one for this stack.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a pull request with a deliberately broken journey - CI goes red.
+    - **Done when:** Tests run on every pull request. One green example plus a how-to a junior can follow.
 
 ---
 
-## Monday 14 September
+## Thursday 10 September — BUILD WAVE 1
 
-**Shivansh**
+### Shallika · *designer*
 
-- [ ] `T-084` **Candidate job browse with search and filters** *(day 2 of 3)*
-      - *Done when:* Filtering by one skill on a seeded pool returns exactly the jobs carrying that JobSkill. Filters cover skills, role, location, work mode and job type. Filters run in SQL - the network response contains only the filtered rows.
-      - *Start here:* src/app/jobs/page.tsx, src/app/jobs/[id]/page.tsx
-- [ ] `T-114` **Build the workspace shell: persistent left nav, header, active state** *(day 2 of 3)*
-      - *Done when:* Every recruiter surface renders inside one shell. The current section is visibly active. Moving between sections does not reload the page or lose scroll position on the nav.
-      - **Needs:** D-13
-      - *Start here:* Extend HireChrome rather than creating a second layout; src/app/hire/layout.tsx is the entry
-- [ ] `T-126` **Fix links and preferences: role/domain, opportunity types, work mode, locations, availability** *(day 2 of 2)*
-      - *Done when:* Every CandidateLinkType the schema supports is reachable from the UI. Empty opportunityTypes renders as 'unstated', never as 'any'. Expected salary never appears in any recruiter payload.
-      - *Start here:* prisma CandidatePreference, CandidateLink; CandidateLinkType already has PORTFOLIO, LEETCODE, CODECHEF, BEHANCE, DRIBBBLE, KAGGLE
+- [ ] `T-008` **As a recruiter, finding and choosing candidates should feel considered, not like a database query.** *(day 2 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for the talent project, the criteria panel, search results, the candidate card, the shortlist and the pipeline board - designed as ONE connected flow.
+    - **Find out first:** This is the heart of the product. Think through the whole journey: enter project, set criteria, search, understand a candidate card, shortlist, come back next week and still understand where you were.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk the flow with Sohail and shashank. It makes sense without explanation.
+    - **Done when:** Complete flow with all states, including what a recruiter sees with zero results and with a brand-new empty project. Approved before the search build starts on the 11th.
 
-**Zainab**
+### Shivansh
 
-- [ ] `T-066` **Contact unlock spends a plan credit and reveals details** *(day 2 of 3)*
-      - *Done when:* A recruiter with credits clicks Unlock and sees the candidate's email immediately; the counter decrements by one. A recruiter with zero credits sees the limit-reached message and NO contact details anywhere in the response payload.
-      - **Waits on:** D-5 · **Needs:** R2 assertEntitlement · **Security:** Verified by inspecting the network payload, not the screen
-      - *Start here:* Write TalentEngagementRequest with status CONTACT_SHARED inside the same transaction as the usage increment
-- [ ] `T-094` **Question authoring: MCQ and multiple-select, with reorder, edit and delete** *(day 3 of 3)*
-      - *Done when:* Adding four questions, reordering them, editing one and deleting one all persist across a reload. Saving a question with no correct option is refused with a readable message.
-      - **Waits on:** D-10
-- [ ] `T-095` **AI-drafted questions that the recruiter must approve** *(day 1 of 3)*
-      - *Done when:* The recruiter asks for draft questions on a topic, reviews them, edits two and approves. Nothing AI-generated can be assigned without an explicit approval action. An unapproved draft cannot be published.
-      - *Start here:* src/lib/anthropic.ts is the existing model client; approval is a boolean on AssessmentQuestion
-- [ ] `T-148` **Wire the six learning call sites** *(day 4 of 4)*
-      - *Done when:* Challenge submission accepted, program mission passed, Databricks/DS-Architect activity passed, quiz passed, project graded and hackathon result published each write evidence in the SAME transaction as the action. Six integration tests, one per site.
-- [ ] `T-149` **Emitter failure isolation**
-      - *Done when:* A forced throw inside the emitter leaves the candidate's submission successful and logs the failure. Evidence emission can never fail a user's action.
-- [ ] `T-150` **Backfill script: batched, checkpointed, restartable** *(day 1 of 3)*
-      - *Done when:* Runs over ~15k historical attempts to completion, survives a kill and resumes, and reports zero MigrationConflict rows on a child-branch rehearsal. Uses batched INSERT ON CONFLICT, not per-row upserts.
-      - **Security:** Child branch rehearsal before production
-      - *Start here:* prisma/scripts/migrate-078-bulk.ts is the batching pattern; the 078 Phase 2 rehearsal died at 4.5h from per-row upserts
+- [ ] `T-014` **As a candidate, everything I type into my profile is still there tomorrow.** *(day 2 of 4)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The profile sections in September scope save, survive a logout, and can be edited and removed.
+    - **Find out first:** Fix ONLY what the audit found broken. Do not rebuild working sections.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every section. Save, reload, LOG OUT, LOG BACK IN - all still there. Edit four sections. Remove one item from three sections - each disappears everywhere including the recruiter view.
+    - **Done when:** Every in-scope section passes all twelve checks. Removals propagate everywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+- [ ] `T-015` **As a candidate, I can say what I am good at without needing ABTalks to verify it first.** *(day 1 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate adds their own skills and becomes discoverable on them. Self-declared skills are clearly distinct from verified ones everywhere they appear - never presented as proven.
+    - **Find out first:** KEY PRODUCT RULE: verified evidence must NOT be required for discovery. Ask Claude how skills and search currently work, and whether anything today requires verification before a candidate appears.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (honesty of candidate claims) -> P3 Implement.
+    - **Manual test:** Fresh candidate adds three self-declared skills. A recruiter searching that skill FINDS them. On the recruiter's screen those skills are clearly marked as self-declared, not verified.
+    - **Done when:** Self-declared skills make a candidate discoverable. They are visually and semantically distinct from verified skills. Nothing claims a self-declared skill is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-017` **As a new recruiter, I create my account and verify my email without confusion.** *(day 2 of 2)*
+    - **🔴 HIGH RISK** · P0 · waits on D-6
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Signup and the emailed code work reliably, and a wrong code gives a readable message rather than a dead end.
+    - **Find out first:** Signup exists but is gated behind a flag and an invite list. Ask Claude how the code decides who may register - that must not change.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (who is allowed in) -> P3 Implement -> P10 Security review.
+    - **Manual test:** Register with an invited email. Check the real inbox. Enter a WRONG code - read the message. Enter the right one. You land on the company step, not a search screen.
+    - **Done when:** Fresh recruiter registers, receives a real code, wrong codes fail readably, right codes proceed.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-018` **As a recruiter, I tell ABTalks about my company once and it is remembered.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Company name, website, logo, industry, size and location save and are still there on return.
+    - **Find out first:** Ask Claude what the company record already stores versus what signup collects today (far less). Reuse the existing file-upload approach for the logo.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every field including a logo. Save. Reload - still there. Sign out and back in - still there.
+    - **Done when:** All six fields persist across a reload and a re-login. Continue stays disabled until name and website are valid.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+- [ ] `T-020` **As a recruiter, every screen feels like part of the same product.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P0 · waits on D-13
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Every recruiter screen sits inside one shell with a persistent menu, and moving between sections does not reload the whole page.
+    - **Find out first:** A recruiter shell already exists with a smaller menu. EXTEND it - do not create a second layout.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Visit five recruiter sections in a row. The menu stays, the current section is highlighted, and the page does not fully reload.
+    - **Done when:** One shell across every recruiter screen, with the active section always visible.
+    - **Regression check:** MANDATORY: every existing recruiter screen still renders inside the shell.
+- [ ] `T-077` **As a recruiter, I write a job posting and control when it goes live.** *(day 2 of 4)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a job with title, description, skills, location, work mode and type; saves it as a draft; and can publish, close and reopen it.
+    - **Find out first:** Jobs today are admin-created only, with no owning company and no draft state. Skills-per-job storage EXISTS and is unused - find it. Existing live jobs must keep working.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (changes live job records) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Create a job, save as draft. As a CANDIDATE open the draft URL directly - not found. Publish - the candidate sees it. Close - no new applications, readable message. Reopen.
+    - **Done when:** Full draft/publish/close/reopen. Draft invisibility proven by direct URL. Every job live before the change is still live and applyable.
+    - **Regression check:** MANDATORY: open /jobs as a candidate - existing jobs still list, open and accept applications.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**shashank**
+### Zainab
 
-- [ ] `T-044` **Convert the match run from delete+create to an upsert that preserves firstSeenAt** *(day 2 of 2)*
-      - *Done when:* Run a match, note a candidate's firstSeenAt, run it again, and firstSeenAt is unchanged. A candidate who did not match before and matches now has a firstSeenAt later than the previous run.
-      - *Start here:* The current runMatchAction deletes all TalentRequestMatch rows then recreates them - that is what loses history
-- [ ] `T-052` **Assemble top signals from real rows** *(day 2 of 3)*
-      - *Done when:* Opening a candidate with 3 verified Node.js evidence rows shows 'Node.js - verified through 3 activities'. A candidate with zero evidence rows shows 'Not enough evidence yet' and NO skill line. The panel never renders a skill it cannot count.
-      - **Needs:** P1 emitter
-      - *Start here:* Read SkillEvidence grouped by skillId for the candidate; CandidateSkill.evidenceScore is the existing rollup
-- [ ] `T-060` **Pipeline stages on each candidate in a project** *(day 3 of 3)*
-      - *Done when:* A candidate can be moved through NEW, VIEWED, SHORTLISTED, CONTACT_REQUESTED, CONTACTED, ASSESSMENT_SENT, ASSESSMENT_COMPLETED, SCREENING, INTERVIEWING, OFFER, HIRED, REJECTED. The stage survives a sign-out. Moving a stage records who moved it and when.
-      - *Start here:* PipelineStage enum already exists on TalentListItem - use it; extend only if D-11 stages are genuinely missing
-- [ ] `T-110` **No coding signal affects a non-technical candidate's standing** *(day 2 of 2)*
-      - *Done when:* A complete Marketing profile with zero GitHub, LeetCode and CodeChef reaches the same profile-strength band as an equivalently complete engineering profile. Removing GitHub from an engineering profile does not change a Marketing candidate's rank.
-      - *Start here:* src/features/profile/completeness.ts and src/features/hire/score-candidate.ts both need the role-family branch
-- [ ] `T-162` **Migration: CandidateProfileView with a dedupe window** *(day 2 of 2)*
-      - *Done when:* One additive table. A unique or windowed constraint means five refreshes of the same candidate by the same recruiter inside the window record one row, proven by an integration test.
-      - **Waits on:** D-8
-- [ ] `T-163` **Record the view, and refuse unauthorised callers** *(day 1 of 3)*
-      - *Done when:* An approved entitled recruiter opening a candidate records one view. A candidate, an anonymous caller and a recruiter from another organisation each record nothing and are refused server-side.
-      - **Security:** Three negative cases tested explicitly, not assumed
+- [ ] `T-030` **As a recruiter with allowance left, I unlock a candidate's contact details and see them immediately.** *(day 1 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Unlocking spends one allowance and reveals the details. A recruiter with none left sees a clear message and NO contact details anywhere in the response.
+    - **Find out first:** Confirm the existing access-deciding function is reused, not bypassed. The allowance check comes from R2.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** With allowance: unlock - details appear, counter drops by one. With NONE: refused. Open the browser network tab on the refused case - NO email, phone or CV link anywhere in the response.
+    - **Done when:** Allowance spends correctly. The refused case leaks nothing - checked in the network response, not on screen.
+    - **Regression check:** MANDATORY: a recruiter already granted contact for a candidate must still see it.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-074` **As a recruiter, when a candidate has actually done the work I want to see that, not just their word for it.** *(day 1 of 5)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Completing a verified activity records proof once, and the recruiter sees that skill marked as evidence-backed rather than self-declared.
+    - **Find out first:** A proof table exists but NOTHING writes to it - confirm that first. Self-declared skills already make a candidate discoverable (C1); this is purely about showing stronger confidence where it is earned.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement.
+    - **Manual test:** Complete a verified activity. The skill shows as evidence-backed on the recruiter's view, with a count. Trigger it twice more - still ONE record. A self-declared skill with no activity still shows, marked self-declared.
+    - **Done when:** One proof record per activity. Skill strength moves once. Self-declared and evidence-backed are visibly distinct and never confused. If recording fails, the candidate's own submission still succeeds.
+    - **Regression check:** MANDATORY: complete one existing challenge task and one programme mission - points, streaks and progress all still work.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Manuvrtti**
+### shashank
 
-- [ ] `T-074` **Recruiter notification types wired to the existing key scheme** *(day 2 of 4)*
-      - *Done when:* Seven recruiter events write a notification the recruiter sees in a bell: candidate applied, candidate replied, assessment completed, new project matches, contact request status, subscription near limit, subscription expired. Each key is stable and unique per event instance.
-      - **Waits on:** D-9 · **Needs:** P2 notify()
-      - *Start here:* prisma NotificationRead uses a notificationKey string with no FK - follow the existing 'admin:<id>' / 'hackathon:kickoff' convention
+- [ ] `T-023` **As a recruiter, I create a named hiring project so my work has somewhere to live.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a project, sees it in a list, renames it and archives it.
+    - **Find out first:** A search-brief record already exists. EXTEND it - do not create a parallel project table.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement. Extend the existing record; do not add a parallel model.
+    - **Manual test:** Create a project with a name. See it listed with its last-activity date. Rename it. Archive it - it leaves the list but is not deleted. Sign out and back in - all still true.
+    - **Done when:** Projects create, list, rename and archive. Another company's project id returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-027` **As a recruiter, when I shortlist someone it is still there tomorrow, on any device.** *(day 2 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Shortlisting saves against the person in the database, not the browser. Today part of it lives only in the browser and is lost when site data is cleared.
+    - **Find out first:** There are TWO shortlists today: one in the database that only works for one candidate group, and one in the browser that works for everyone. Ask Claude to confirm, and to find the unused tables that already have the right shape.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (existing recruiter data) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Shortlist in Browser A. Sign out. Open Browser B, sign in. Still shortlisted, in the right project. Then shortlist one candidate from EACH group - all persist.
+    - **Done when:** Database-backed, keyed on the person, works for every candidate group. Nothing read from browser storage. Another company's list returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged. MANDATORY: an existing recruiter's current shortlist must not disappear.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Sohail**
+### Manuvrtti
 
-- [ ] `T-032` **Enforce on contact unlock, outreach email, talent project create, job publish and assessment publish** *(day 2 of 4)*
-      - *Done when:* Each of the five, called directly with the client bypassed at its limit, is refused server-side. Five separate assertions in the E-R7 spec, not one.
-      - **Waits on:** D-5 · **Needs:** R3, R6, R8, R9
-      - *Start here:* Add the assertEntitlement call as the FIRST statement inside each Server Action, before any read
+- [ ] `T-037` **As a user, notifications reach me reliably and stop when I switch them off.** *(day 2 of 6)*
+    - **🟡 MEDIUM** · P0 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The notifications these September journeys need appear in the bell and, where appropriate, arrive as a real email - and switching one off genuinely stops it.
+    - **Find out first:** Email sending already works - reuse it, do NOT add a second provider. Scope is only the notifications the September journeys need, not the full set.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a notification - it appears in the bell. Mark it read - it stays read after a reload. Check a REAL inbox. Switch the preference off, trigger again - bell only, no email. Confirm test addresses are suppressed.
+    - **Done when:** Bell and real email both work. Preferences honoured. Every send logged. Repeat events do not duplicate.
+    - **Regression check:** MANDATORY: trigger an existing admin broadcast and confirm it still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
 
----
+### Sohail
 
-## Tuesday 15 September
-
-**Shivansh**
-
-- [ ] `T-084` **Candidate job browse with search and filters** *(day 3 of 3)*
-      - *Done when:* Filtering by one skill on a seeded pool returns exactly the jobs carrying that JobSkill. Filters cover skills, role, location, work mode and job type. Filters run in SQL - the network response contains only the filtered rows.
-      - *Start here:* src/app/jobs/page.tsx, src/app/jobs/[id]/page.tsx
-- [ ] `T-114` **Build the workspace shell: persistent left nav, header, active state** *(day 3 of 3)*
-      - *Done when:* Every recruiter surface renders inside one shell. The current section is visibly active. Moving between sections does not reload the page or lose scroll position on the nav.
-      - **Needs:** D-13
-      - *Start here:* Extend HireChrome rather than creating a second layout; src/app/hire/layout.tsx is the entry
-- [ ] `T-115` **Recruiter Home: what should I do next** *(day 1 of 3)*
-      - *Done when:* Home shows: continue your work (each project with its new-match count), hiring activity (shortlisted, contacted, assessments pending, replies), jobs (active, applicants), and an action list. Every line links to the exact surface that resolves it. A brand-new recruiter sees a first-run version with one call to action, not empty tiles.
-      - **Needs:** R3, R5, R8, R10
-      - *Start here:* This replaces the current /hire landing; read counts from the R10 queries rather than writing new ones
-
-**Zainab**
-
-- [ ] `T-066` **Contact unlock spends a plan credit and reveals details** *(day 3 of 3)*
-      - *Done when:* A recruiter with credits clicks Unlock and sees the candidate's email immediately; the counter decrements by one. A recruiter with zero credits sees the limit-reached message and NO contact details anywhere in the response payload.
-      - **Waits on:** D-5 · **Needs:** R2 assertEntitlement · **Security:** Verified by inspecting the network payload, not the screen
-      - *Start here:* Write TalentEngagementRequest with status CONTACT_SHARED inside the same transaction as the usage increment
-- [ ] `T-067` **Migration: OutreachMessage (recruiter, candidate, project, subject, body, status, sentAt)** *(day 1 of 2)*
-      - *Done when:* One additive table on a child branch. Indexed for the per-candidate history read and the per-project analytics read.
-      - **Needs:** D-2
-      - *Start here:* Do NOT reuse TalentEngagementMessage - that is the admin ticket thread, a different thing
-- [ ] `T-095` **AI-drafted questions that the recruiter must approve** *(day 2 of 3)*
-      - *Done when:* The recruiter asks for draft questions on a topic, reviews them, edits two and approves. Nothing AI-generated can be assigned without an explicit approval action. An unapproved draft cannot be published.
-      - *Start here:* src/lib/anthropic.ts is the existing model client; approval is a boolean on AssessmentQuestion
-- [ ] `T-136` **AUDIT: walk the mock interview journey on production with a fresh account** *(day 1 of 2)*
-      - *Done when:* A written walk-through of catalogue, domain choice, start, questions, answers, completion, report and history - every break recorded with a severity and a file path. Nothing is marked working because the code exists.
-      - *Start here:* src/app/mock-interviews/, src/features/interview/platform/ (domains.ts, service.ts, report.ts)
-- [ ] `T-141` **AUDIT: walk the cohort journey on production with a fresh account** *(day 1 of 2)*
-      - *Done when:* Discover, details, enrol, enter, activity, submit, evaluate, progress - every break recorded with a severity and an owner. Walked on the live 078-native cohorts.
-      - *Start here:* /program/databricks and /program/ds-architect are the 078-native cohorts
-- [ ] `T-150` **Backfill script: batched, checkpointed, restartable** *(day 2 of 3)*
-      - *Done when:* Runs over ~15k historical attempts to completion, survives a kill and resumes, and reports zero MigrationConflict rows on a child-branch rehearsal. Uses batched INSERT ON CONFLICT, not per-row upserts.
-      - **Security:** Child branch rehearsal before production
-      - *Start here:* prisma/scripts/migrate-078-bulk.ts is the batching pattern; the 078 Phase 2 rehearsal died at 4.5h from per-row upserts
-
-**shashank**
-
-- [ ] `T-052` **Assemble top signals from real rows** *(day 3 of 3)*
-      - *Done when:* Opening a candidate with 3 verified Node.js evidence rows shows 'Node.js - verified through 3 activities'. A candidate with zero evidence rows shows 'Not enough evidence yet' and NO skill line. The panel never renders a skill it cannot count.
-      - **Needs:** P1 emitter
-      - *Start here:* Read SkillEvidence grouped by skillId for the candidate; CandidateSkill.evidenceScore is the existing rollup
-- [ ] `T-163` **Record the view, and refuse unauthorised callers** *(day 2 of 3)*
-      - *Done when:* An approved entitled recruiter opening a candidate records one view. A candidate, an anonymous caller and a recruiter from another organisation each record nothing and are refused server-side.
-      - **Security:** Three negative cases tested explicitly, not assumed
-
-**Manuvrtti**
-
-- [ ] `T-074` **Recruiter notification types wired to the existing key scheme** *(day 3 of 4)*
-      - *Done when:* Seven recruiter events write a notification the recruiter sees in a bell: candidate applied, candidate replied, assessment completed, new project matches, contact request status, subscription near limit, subscription expired. Each key is stable and unique per event instance.
-      - **Waits on:** D-9 · **Needs:** P2 notify()
-      - *Start here:* prisma NotificationRead uses a notificationKey string with no FK - follow the existing 'admin:<id>' / 'hackathon:kickoff' convention
-
-**Sohail**
-
-- [ ] `T-032` **Enforce on contact unlock, outreach email, talent project create, job publish and assessment publish** *(day 3 of 4)*
-      - *Done when:* Each of the five, called directly with the client bypassed at its limit, is refused server-side. Five separate assertions in the E-R7 spec, not one.
-      - **Waits on:** D-5 · **Needs:** R3, R6, R8, R9
-      - *Start here:* Add the assertEntitlement call as the FIRST statement inside each Server Action, before any read
-
----
-
-## Wednesday 16 September
-
-> **CHECKPOINT 1, this evening.** Each owner demos on a preview. A recruiter must be able to register, onboard, create a project and search. **First release-valve decision** — Sohail calls it, dropped whole.
-
-**Shivansh**
-
-- [ ] `T-115` **Recruiter Home: what should I do next** *(day 2 of 3)*
-      - *Done when:* Home shows: continue your work (each project with its new-match count), hiring activity (shortlisted, contacted, assessments pending, replies), jobs (active, applicants), and an action list. Every line links to the exact surface that resolves it. A brand-new recruiter sees a first-run version with one call to action, not empty tiles.
-      - **Needs:** R3, R5, R8, R10
-      - *Start here:* This replaces the current /hire landing; read counts from the R10 queries rather than writing new ones
-
-**Zainab**
-
-- [ ] `T-067` **Migration: OutreachMessage (recruiter, candidate, project, subject, body, status, sentAt)** *(day 2 of 2)*
-      - *Done when:* One additive table on a child branch. Indexed for the per-candidate history read and the per-project analytics read.
-      - **Needs:** D-2
-      - *Start here:* Do NOT reuse TalentEngagementMessage - that is the admin ticket thread, a different thing
-- [ ] `T-095` **AI-drafted questions that the recruiter must approve** *(day 3 of 3)*
-      - *Done when:* The recruiter asks for draft questions on a topic, reviews them, edits two and approves. Nothing AI-generated can be assigned without an explicit approval action. An unapproved draft cannot be published.
-      - *Start here:* src/lib/anthropic.ts is the existing model client; approval is a boolean on AssessmentQuestion
-- [ ] `T-136` **AUDIT: walk the mock interview journey on production with a fresh account** *(day 2 of 2)*
-      - *Done when:* A written walk-through of catalogue, domain choice, start, questions, answers, completion, report and history - every break recorded with a severity and a file path. Nothing is marked working because the code exists.
-      - *Start here:* src/app/mock-interviews/, src/features/interview/platform/ (domains.ts, service.ts, report.ts)
-- [ ] `T-141` **AUDIT: walk the cohort journey on production with a fresh account** *(day 2 of 2)*
-      - *Done when:* Discover, details, enrol, enter, activity, submit, evaluate, progress - every break recorded with a severity and an owner. Walked on the live 078-native cohorts.
-      - *Start here:* /program/databricks and /program/ds-architect are the 078-native cohorts
-- [ ] `T-142` **AUDIT: walk the hackathon journey on production, solo and team**
-      - *Done when:* Discover, register, create team, join team, submit, duplicate submission, result - every break recorded. Duplicate-submission behaviour recorded explicitly rather than assumed.
-      - *Start here:* src/app/hackathon/, src/features/hackathon/
-- [ ] `T-150` **Backfill script: batched, checkpointed, restartable** *(day 3 of 3)*
-      - *Done when:* Runs over ~15k historical attempts to completion, survives a kill and resumes, and reports zero MigrationConflict rows on a child-branch rehearsal. Uses batched INSERT ON CONFLICT, not per-row upserts.
-      - **Security:** Child branch rehearsal before production
-      - *Start here:* prisma/scripts/migrate-078-bulk.ts is the batching pattern; the 078 Phase 2 rehearsal died at 4.5h from per-row upserts
-
-**shashank**
-
-- [ ] `T-163` **Record the view, and refuse unauthorised callers** *(day 3 of 3)*
-      - *Done when:* An approved entitled recruiter opening a candidate records one view. A candidate, an anonymous caller and a recruiter from another organisation each record nothing and are refused server-side.
-      - **Security:** Three negative cases tested explicitly, not assumed
-
-**Manuvrtti**
-
-- [ ] `T-074` **Recruiter notification types wired to the existing key scheme** *(day 4 of 4)*
-      - *Done when:* Seven recruiter events write a notification the recruiter sees in a bell: candidate applied, candidate replied, assessment completed, new project matches, contact request status, subscription near limit, subscription expired. Each key is stable and unique per event instance.
-      - **Waits on:** D-9 · **Needs:** P2 notify()
-      - *Start here:* prisma NotificationRead uses a notificationKey string with no FK - follow the existing 'admin:<id>' / 'hackathon:kickoff' convention
-
-**Sohail**
-
-- [ ] `T-032` **Enforce on contact unlock, outreach email, talent project create, job publish and assessment publish** *(day 4 of 4)*
-      - *Done when:* Each of the five, called directly with the client bypassed at its limit, is refused server-side. Five separate assertions in the E-R7 spec, not one.
-      - **Waits on:** D-5 · **Needs:** R3, R6, R8, R9
-      - *Start here:* Add the assertEntitlement call as the FIRST statement inside each Server Action, before any read
+- [ ] `T-032` **As the business, plan limits live as data we can change, not numbers in code.** *(day 2 of 3)*
+    - **🔴 HIGH RISK** · P0 · waits on D-3
+    - **What needs to work:** Plans and their limits are stored records. Changing a limit is a data edit, not a deployment.
+    - **Find out first:** Nothing exists. Ask Claude to check whether ANY subscription storage exists before creating it. An existing plans dialog hard-codes prices - match the agreed numbers.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P11 Database review -> P3 Implement.
+    - **Manual test:** Change a limit in the stored plan. Reload the plans page - the new number shows. No deploy.
+    - **Done when:** Plans stored with every limit as data. Applied to a copy of the database first. Existing recruiters keep working.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-039` **As a developer, I can run the journey tests on my machine and in CI.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** A test setup runs the journey tests on every pull request, with one green example and a one-page how-to.
+    - **Find out first:** No journey-test framework exists today, only hand-written scripts. Pick the standard one for this stack.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a pull request with a deliberately broken journey - CI goes red.
+    - **Done when:** Tests run on every pull request. One green example plus a how-to a junior can follow.
 
 ---
 
-# P3 INTEGRATION
+## Friday 11 September — BUILD WAVE 1
 
-*Feature completion + integration*
+### Shallika · *designer*
 
-## Thursday 17 September
+- [ ] `T-008` **As a recruiter, finding and choosing candidates should feel considered, not like a database query.** *(day 3 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for the talent project, the criteria panel, search results, the candidate card, the shortlist and the pipeline board - designed as ONE connected flow.
+    - **Find out first:** This is the heart of the product. Think through the whole journey: enter project, set criteria, search, understand a candidate card, shortlist, come back next week and still understand where you were.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk the flow with Sohail and shashank. It makes sense without explanation.
+    - **Done when:** Complete flow with all states, including what a recruiter sees with zero results and with a brand-new empty project. Approved before the search build starts on the 11th.
+- [ ] `T-009` **As a candidate, building my profile should feel quick and worth doing.** *(day 1 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for candidate signup, the profile sections, adding self-declared skills, and the privacy/visibility control - including what a recruiter sees.
+    - **Find out first:** Key product rule: a candidate does NOT need verified evidence to be discoverable. Self-declared skills must feel legitimate, while staying visibly different from verified ones.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk it with Shivansh. The difference between self-declared and verified is obvious without a legend.
+    - **Done when:** All sections and states. Self-declared and verified are visually distinct and honestly labelled. Mobile covered. Approved before the profile build finishes.
 
-**Shivansh**
+### Shivansh
 
-- [ ] `T-022` **Step 4 of onboarding: choose a plan**
-      - *Done when:* The three seeded plans render with their real limits. Choosing one creates an OrganizationSubscription with status PENDING and shows 'we will activate this shortly'. No payment is taken and none is implied.
-      - **Waits on:** D-3, D-4 · **Needs:** R2 plan catalogue
-      - *Start here:* Reuse the copy and layout of src/components/hire/subscription-gate.tsx; it is presentation-only today
-- [ ] `T-023` **Step 5: workspace initialization - land the recruiter somewhere useful** *(day 1 of 2)*
-      - *Done when:* On completing onboarding the recruiter lands on the recruiter Home, not a blank search. Home shows their company name, their plan status, and one obvious next action: 'Create your first talent project'.
-      - **Needs:** R12 Home
-      - *Start here:* src/app/hire/page.tsx is the current entry; R12 builds the Home surface
-- [ ] `T-085` **Apply once, with duplicate prevention**
-      - *Done when:* A candidate applies and sees a confirmation. Replaying the Server Action directly returns a friendly {ok:false} - no 500, and the JobApplication count for that pair stays at one.
-      - *Start here:* JobApplication already has @@unique([jobId, userId]) - catch the constraint, do not let it 500
-- [ ] `T-086` **My Applications with a stage timeline** *(day 1 of 2)*
-      - *Done when:* Each application shows its current stage and when it last changed. A stage change made by the recruiter appears here on the candidate's next load.
-- [ ] `T-115` **Recruiter Home: what should I do next** *(day 3 of 3)*
-      - *Done when:* Home shows: continue your work (each project with its new-match count), hiring activity (shortlisted, contacted, assessments pending, replies), jobs (active, applicants), and an action list. Every line links to the exact surface that resolves it. A brand-new recruiter sees a first-run version with one call to action, not empty tiles.
-      - **Needs:** R3, R5, R8, R10
-      - *Start here:* This replaces the current /hire landing; read counts from the R10 queries rather than writing new ones
-- [ ] `T-116` **Design consistency pass across every recruiter surface** *(day 1 of 3)*
-      - *Done when:* Typography, spacing, cards, tables, filters, badges, buttons and pipeline chips all come from docs/design-system.md tokens. A reviewer opening five recruiter screens in sequence cannot tell they were built by different people.
-      - *Start here:* docs/design-system.md is binding; tokens are bare HSL triplets in globals.css wrapped at the consumption site; do not fork src/components/ui/
-- [ ] `T-128` **Dashboard completion checklist driven by real persistence** *(day 1 of 2)*
-      - *Done when:* A checklist item flips to complete only when that section actually holds saved data. Completing every item moves profile strength above 60%.
-      - *Start here:* src/features/profile/completeness.ts
+- [ ] `T-014` **As a candidate, everything I type into my profile is still there tomorrow.** *(day 3 of 4)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The profile sections in September scope save, survive a logout, and can be edited and removed.
+    - **Find out first:** Fix ONLY what the audit found broken. Do not rebuild working sections.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every section. Save, reload, LOG OUT, LOG BACK IN - all still there. Edit four sections. Remove one item from three sections - each disappears everywhere including the recruiter view.
+    - **Done when:** Every in-scope section passes all twelve checks. Removals propagate everywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+- [ ] `T-015` **As a candidate, I can say what I am good at without needing ABTalks to verify it first.** *(day 2 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate adds their own skills and becomes discoverable on them. Self-declared skills are clearly distinct from verified ones everywhere they appear - never presented as proven.
+    - **Find out first:** KEY PRODUCT RULE: verified evidence must NOT be required for discovery. Ask Claude how skills and search currently work, and whether anything today requires verification before a candidate appears.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (honesty of candidate claims) -> P3 Implement.
+    - **Manual test:** Fresh candidate adds three self-declared skills. A recruiter searching that skill FINDS them. On the recruiter's screen those skills are clearly marked as self-declared, not verified.
+    - **Done when:** Self-declared skills make a candidate discoverable. They are visually and semantically distinct from verified skills. Nothing claims a self-declared skill is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-018` **As a recruiter, I tell ABTalks about my company once and it is remembered.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Company name, website, logo, industry, size and location save and are still there on return.
+    - **Find out first:** Ask Claude what the company record already stores versus what signup collects today (far less). Reuse the existing file-upload approach for the logo.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every field including a logo. Save. Reload - still there. Sign out and back in - still there.
+    - **Done when:** All six fields persist across a reload and a re-login. Continue stays disabled until name and website are valid.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+- [ ] `T-020` **As a recruiter, every screen feels like part of the same product.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P0 · waits on D-13
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Every recruiter screen sits inside one shell with a persistent menu, and moving between sections does not reload the whole page.
+    - **Find out first:** A recruiter shell already exists with a smaller menu. EXTEND it - do not create a second layout.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Visit five recruiter sections in a row. The menu stays, the current section is highlighted, and the page does not fully reload.
+    - **Done when:** One shell across every recruiter screen, with the active section always visible.
+    - **Regression check:** MANDATORY: every existing recruiter screen still renders inside the shell.
+- [ ] `T-077` **As a recruiter, I write a job posting and control when it goes live.** *(day 3 of 4)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a job with title, description, skills, location, work mode and type; saves it as a draft; and can publish, close and reopen it.
+    - **Find out first:** Jobs today are admin-created only, with no owning company and no draft state. Skills-per-job storage EXISTS and is unused - find it. Existing live jobs must keep working.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (changes live job records) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Create a job, save as draft. As a CANDIDATE open the draft URL directly - not found. Publish - the candidate sees it. Close - no new applications, readable message. Reopen.
+    - **Done when:** Full draft/publish/close/reopen. Draft invisibility proven by direct URL. Every job live before the change is still live and applyable.
+    - **Regression check:** MANDATORY: open /jobs as a candidate - existing jobs still list, open and accept applications.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Zainab**
+### Zainab
 
-- [ ] `T-068` **Compose and send an email to an unlocked candidate** *(day 1 of 3)*
-      - *Done when:* From a shortlisted, unlocked candidate the recruiter enters a subject and a body, sends, and the candidate receives it in a real inbox within 60 seconds. Sending without an unlock is refused server-side.
-      - **Needs:** P2 email · **Security:** assertEntitlement('outreach_email') then hasContactAccess - both, in that order
-      - *Start here:* src/lib/email.ts sendEmail() is the Brevo path already used by OTP and hire alerts
-- [ ] `T-096` **Preview, publish and assign to shortlisted candidates** *(day 1 of 2)*
-      - *Done when:* Preview renders the real attempt surface read-only. Publishing calls assertEntitlement. Assigning to three shortlisted candidates creates exactly three assignments and cannot duplicate one.
-      - **Needs:** R2, R5
+- [ ] `T-030` **As a recruiter with allowance left, I unlock a candidate's contact details and see them immediately.** *(day 2 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Unlocking spends one allowance and reveals the details. A recruiter with none left sees a clear message and NO contact details anywhere in the response.
+    - **Find out first:** Confirm the existing access-deciding function is reused, not bypassed. The allowance check comes from R2.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** With allowance: unlock - details appear, counter drops by one. With NONE: refused. Open the browser network tab on the refused case - NO email, phone or CV link anywhere in the response.
+    - **Done when:** Allowance spends correctly. The refused case leaks nothing - checked in the network response, not on screen.
+    - **Regression check:** MANDATORY: a recruiter already granted contact for a candidate must still see it.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-074` **As a recruiter, when a candidate has actually done the work I want to see that, not just their word for it.** *(day 2 of 5)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Completing a verified activity records proof once, and the recruiter sees that skill marked as evidence-backed rather than self-declared.
+    - **Find out first:** A proof table exists but NOTHING writes to it - confirm that first. Self-declared skills already make a candidate discoverable (C1); this is purely about showing stronger confidence where it is earned.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement.
+    - **Manual test:** Complete a verified activity. The skill shows as evidence-backed on the recruiter's view, with a count. Trigger it twice more - still ONE record. A self-declared skill with no activity still shows, marked self-declared.
+    - **Done when:** One proof record per activity. Skill strength moves once. Self-declared and evidence-backed are visibly distinct and never confused. If recording fails, the candidate's own submission still succeeds.
+    - **Regression check:** MANDATORY: complete one existing challenge task and one programme mission - points, streaks and progress all still work.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**shashank**
+### shashank
 
-- [ ] `T-045` **New since last visit**
-      - *Done when:* Returning to a project shows a NEW badge on exactly the candidates whose firstSeenAt is after the recruiter's last visit to that project, and on no others. Opening the project updates the last-visit timestamp.
-      - *Start here:* Store lastViewedAt on TalentRequest per recruiter; compare against TalentRequestMatch.firstSeenAt
-- [ ] `T-046` **Push hard filters into SQL** *(day 1 of 3)*
-      - *Done when:* The skills, experience, location, work-mode and role-family filters run as Prisma where clauses ANDed onto the visibility fragment. EXPLAIN on the generated query shows index scans, not a sequential scan of the whole candidate table.
-      - *Start here:* src/features/hire/search-candidates.ts loads CHALLENGE_POOL_CAP=600 rows per track then ranks in memory; repositories/talent.ts holds visibleProgramMemberWhere()
-- [ ] `T-053` **Assemble possible gaps against the project's criteria** *(day 1 of 2)*
-      - *Done when:* For a project requiring AWS and 2 years, a candidate with no AWS evidence and 1.3 years shows exactly two gap lines naming both. A candidate meeting every criterion shows no gap section at all.
-      - **Needs:** R3 criteria
-      - *Start here:* Compare the project criteria object against the candidate's evidence and CandidateExperience totals
-- [ ] `T-061` **Org-scoped candidate notes** *(day 1 of 2)*
-      - *Done when:* A note written by one recruiter is visible to their colleague in the same organisation and returns 404 for a recruiter in another organisation. Editing a note preserves its author and updates its timestamp.
-      - **Security:** Cross-org note id must 404, tested explicitly
-      - *Start here:* prisma CandidateNote (~2979) exists unused - it already has the org scope
-- [ ] `T-103` **Overall metrics: jobs, projects, candidates discovered / viewed / shortlisted / contacted, response rate, assessments, applications, conversion** *(day 1 of 3)*
-      - *Done when:* Every number reconciles against a hand-run SQL count on seeded data. Numbers are org-scoped: a second organisation's activity never appears.
-      - **Needs:** R5, R6, R8, P4 · **Security:** Org scoping verified by querying as a second organisation
-- [ ] `T-111` **Recruiter searches by role family and its relevant skills** *(day 1 of 3)*
-      - *Done when:* Creating a Product project and filtering returns non-technical candidates who can be shortlisted like anyone else. Their insight panel shows their real experience and work, not an empty engineering panel.
-      - **Needs:** R3, R4 · **Security:** Role family is a filter, never a protected-attribute proxy - the existing hard gate stays in front of Scout
+- [ ] `T-023` **As a recruiter, I create a named hiring project so my work has somewhere to live.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a project, sees it in a list, renames it and archives it.
+    - **Find out first:** A search-brief record already exists. EXTEND it - do not create a parallel project table.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement. Extend the existing record; do not add a parallel model.
+    - **Manual test:** Create a project with a name. See it listed with its last-activity date. Rename it. Archive it - it leaves the list but is not deleted. Sign out and back in - all still true.
+    - **Done when:** Projects create, list, rename and archive. Another company's project id returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-024` **As a recruiter, my project remembers what kind of person I am looking for.** *(day 1 of 4)*
+    - **🟡 MEDIUM** · P0 · waits on D-12
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Everything the recruiter says about the role is saved on the project and shown again, editable, when they return.
+    - **Find out first:** Several of these fields already exist on the search-brief record. Ask Claude which, so you extend rather than duplicate.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Set the criteria on a project. Save. Sign out, sign back in IN A DIFFERENT BROWSER. Open the project - every criterion is exactly as you left it and editable in place.
+    - **Done when:** Every criterion persists across a session and a browser change.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-027` **As a recruiter, when I shortlist someone it is still there tomorrow, on any device.** *(day 3 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Shortlisting saves against the person in the database, not the browser. Today part of it lives only in the browser and is lost when site data is cleared.
+    - **Find out first:** There are TWO shortlists today: one in the database that only works for one candidate group, and one in the browser that works for everyone. Ask Claude to confirm, and to find the unused tables that already have the right shape.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (existing recruiter data) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Shortlist in Browser A. Sign out. Open Browser B, sign in. Still shortlisted, in the right project. Then shortlist one candidate from EACH group - all persist.
+    - **Done when:** Database-backed, keyed on the person, works for every candidate group. Nothing read from browser storage. Another company's list returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged. MANDATORY: an existing recruiter's current shortlist must not disappear.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Manuvrtti**
+### Manuvrtti
 
-- [ ] `T-075` **Only three types send email** *(day 1 of 2)*
-      - *Done when:* Candidate replied, assessment completed and subscription expired send email. The other four are in-app only. A recruiter moving ten candidates through stages receives zero emails from those moves.
-      - **Waits on:** D-9
-      - *Start here:* Channel selection belongs in the notify() call site, not in the email layer
-- [ ] `T-155` **Migration: NotificationPreference, per type and per channel** *(day 1 of 2)*
-      - *Done when:* A user can switch off one type on one channel. The toggle silences exactly that and nothing else, verified by triggering every type after switching one off.
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 1 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
+- [ ] `T-037` **As a user, notifications reach me reliably and stop when I switch them off.** *(day 3 of 6)*
+    - **🟡 MEDIUM** · P0 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The notifications these September journeys need appear in the bell and, where appropriate, arrive as a real email - and switching one off genuinely stops it.
+    - **Find out first:** Email sending already works - reuse it, do NOT add a second provider. Scope is only the notifications the September journeys need, not the full set.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a notification - it appears in the bell. Mark it read - it stays read after a reload. Check a REAL inbox. Switch the preference off, trigger again - bell only, no email. Confirm test addresses are suppressed.
+    - **Done when:** Bell and real email both work. Preferences honoured. Every send logged. Repeat events do not duplicate.
+    - **Regression check:** MANDATORY: trigger an existing admin broadcast and confirm it still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
 
-**Sohail**
+### Sohail
 
-- [ ] `T-033` **Plan catalogue: view and compare plans**
-      - *Done when:* The three seeded plans render from the database with their real limits. Changing a limit in SubscriptionPlan changes the page without a code change. The recruiter's current plan is marked.
-      - **Waits on:** D-3
-      - *Start here:* src/components/hire/subscription-gate.tsx holds the copy; replace its hard-coded PLANS array with a server read
-- [ ] `T-034` **Admin plan activation - the seam a payment webhook will later call** *(day 1 of 2)*
-      - *Done when:* One function activateSubscription(orgId, planId) flips PENDING to ACTIVE, sets periodStart/periodEnd, and resets usage counters. Admin UI calls it. It is the ONLY way a subscription becomes active, so a gateway webhook can call the same function in October.
-      - **Waits on:** D-4 · **Security:** requireAdmin
-      - *Start here:* Keep it in one file so October's webhook has a single target
-- [ ] `T-169` **Tighten /hire/* to requireRecruiter, including /hire/evidence**
-      - *Done when:* Every /hire route refuses a signed-in candidate and an anonymous caller. Login, logout and the Auth.js handler are explicitly left public and verified still working.
-      - **Security:** Public surfaces must NOT get requireRole - that is a known Cursor failure mode
-- [ ] `T-170` **Cross-org isolation sweep across seven recruiter surfaces** *(day 1 of 3)*
-      - *Done when:* Requesting another organisation's project, talent list, note, applicant, assessment, outreach message and profile-view id each returns 404 or a refusal. Seven cases, each asserted separately.
-
----
-
-## Friday 18 September
-
-**Shivansh**
-
-- [ ] `T-023` **Step 5: workspace initialization - land the recruiter somewhere useful** *(day 2 of 2)*
-      - *Done when:* On completing onboarding the recruiter lands on the recruiter Home, not a blank search. Home shows their company name, their plan status, and one obvious next action: 'Create your first talent project'.
-      - **Needs:** R12 Home
-      - *Start here:* src/app/hire/page.tsx is the current entry; R12 builds the Home surface
-- [ ] `T-024` **Onboarding is resumable and shows progress**
-      - *Done when:* Closing the browser at step 3 and signing back in returns the recruiter to step 3 with steps 1 and 2 still complete. A step indicator shows which of the five steps they are on.
-      - *Start here:* Derive the current step from what is persisted; do not keep wizard state in the client only
-- [ ] `T-025` **Admin approval and plan activation path** *(day 1 of 2)*
-      - *Done when:* An admin sees the pending recruiter and the pending subscription, approves both, and the recruiter's entitlements are live on their next page load without a redeploy.
-      - **Needs:** R2 activation · **Security:** requireAdmin on every approval and activation route
-      - *Start here:* src/app/actions/admin-recruiter-actions.ts, src/app/admin/
-- [ ] `T-086` **My Applications with a stage timeline** *(day 2 of 2)*
-      - *Done when:* Each application shows its current stage and when it last changed. A stage change made by the recruiter appears here on the candidate's next load.
-- [ ] `T-087` **Recruiter applicant list with stage transitions** *(day 1 of 3)*
-      - *Done when:* The recruiter opens a job, sees its applicants, and moves one to SCREENING. The candidate sees the new stage and receives one in-app notification and one email within 60 seconds.
-      - **Needs:** P2 notify · **Security:** Cross-org applicant ids must 404
-- [ ] `T-116` **Design consistency pass across every recruiter surface** *(day 2 of 3)*
-      - *Done when:* Typography, spacing, cards, tables, filters, badges, buttons and pipeline chips all come from docs/design-system.md tokens. A reviewer opening five recruiter screens in sequence cannot tell they were built by different people.
-      - *Start here:* docs/design-system.md is binding; tokens are bare HSL triplets in globals.css wrapped at the consumption site; do not fork src/components/ui/
-- [ ] `T-128` **Dashboard completion checklist driven by real persistence** *(day 2 of 2)*
-      - *Done when:* A checklist item flips to complete only when that section actually holds saved data. Completing every item moves profile strength above 60%.
-      - *Start here:* src/features/profile/completeness.ts
-- [ ] `T-129` **Visibility control and preview as a recruiter sees me** *(day 1 of 3)*
-      - *Done when:* Turning visibility off removes the candidate from a live recruiter search AND from a re-read of a stored TalentRequestMatch. The preview renders from the same component the recruiter desk uses, so a field hidden by a toggle is absent from the preview too.
-      - **Waits on:** D-8 · **Security:** The preview must apply the same gating as the real read, not a relaxed copy
-
-**Zainab**
-
-- [ ] `T-068` **Compose and send an email to an unlocked candidate** *(day 2 of 3)*
-      - *Done when:* From a shortlisted, unlocked candidate the recruiter enters a subject and a body, sends, and the candidate receives it in a real inbox within 60 seconds. Sending without an unlock is refused server-side.
-      - **Needs:** P2 email · **Security:** assertEntitlement('outreach_email') then hasContactAccess - both, in that order
-      - *Start here:* src/lib/email.ts sendEmail() is the Brevo path already used by OTP and hire alerts
-- [ ] `T-096` **Preview, publish and assign to shortlisted candidates** *(day 2 of 2)*
-      - *Done when:* Preview renders the real attempt surface read-only. Publishing calls assertEntitlement. Assigning to three shortlisted candidates creates exactly three assignments and cannot duplicate one.
-      - **Needs:** R2, R5
-- [ ] `T-097` **Candidate attempt: notified, timed, resumable, submitted** *(day 1 of 3)*
-      - *Done when:* The candidate's notification opens the right assessment. A mid-attempt refresh keeps their answers and does not grant extra time. Submitting after the server-side duration is refused. Correct answers never appear in any network response before submission.
-      - **Security:** A candidate may open only their own assignment
-
-**shashank**
-
-- [ ] `T-046` **Push hard filters into SQL** *(day 2 of 3)*
-      - *Done when:* The skills, experience, location, work-mode and role-family filters run as Prisma where clauses ANDed onto the visibility fragment. EXPLAIN on the generated query shows index scans, not a sequential scan of the whole candidate table.
-      - *Start here:* src/features/hire/search-candidates.ts loads CHALLENGE_POOL_CAP=600 rows per track then ranks in memory; repositories/talent.ts holds visibleProgramMemberWhere()
-- [ ] `T-053` **Assemble possible gaps against the project's criteria** *(day 2 of 2)*
-      - *Done when:* For a project requiring AWS and 2 years, a candidate with no AWS evidence and 1.3 years shows exactly two gap lines naming both. A candidate meeting every criterion shows no gap section at all.
-      - **Needs:** R3 criteria
-      - *Start here:* Compare the project criteria object against the candidate's evidence and CandidateExperience totals
-- [ ] `T-054` **Every claim opens its evidence** *(day 1 of 2)*
-      - *Done when:* Clicking 'verified through 3 activities' opens the three underlying items - the submission, the project, the assessment - each naming what it was and when. A claim with no openable source is a defect, not a design choice.
-      - **Security:** Evidence detail respects showAssessmentScores and showInterviewResults
-      - *Start here:* src/app/hire/evidence/page.tsx already renders an evidence surface - reuse it rather than building a second one
-- [ ] `T-061` **Org-scoped candidate notes** *(day 2 of 2)*
-      - *Done when:* A note written by one recruiter is visible to their colleague in the same organisation and returns 404 for a recruiter in another organisation. Editing a note preserves its author and updates its timestamp.
-      - **Security:** Cross-org note id must 404, tested explicitly
-      - *Start here:* prisma CandidateNote (~2979) exists unused - it already has the org scope
-- [ ] `T-062` **The Talent Hub board: who needs action** *(day 1 of 3)*
-      - *Done when:* The hub groups candidates by stage and shows an 'awaiting action' count. A recruiter returning after three days can answer, without clicking into anything: who did I look at, who replied, who finished the test, who is advancing.
-      - *Start here:* src/components/hire/ - the desk has a Shortlist view today; this replaces it with a staged board
-- [ ] `T-103` **Overall metrics: jobs, projects, candidates discovered / viewed / shortlisted / contacted, response rate, assessments, applications, conversion** *(day 2 of 3)*
-      - *Done when:* Every number reconciles against a hand-run SQL count on seeded data. Numbers are org-scoped: a second organisation's activity never appears.
-      - **Needs:** R5, R6, R8, P4 · **Security:** Org scoping verified by querying as a second organisation
-- [ ] `T-111` **Recruiter searches by role family and its relevant skills** *(day 2 of 3)*
-      - *Done when:* Creating a Product project and filtering returns non-technical candidates who can be shortlisted like anyone else. Their insight panel shows their real experience and work, not an empty engineering panel.
-      - **Needs:** R3, R4 · **Security:** Role family is a filter, never a protected-attribute proxy - the existing hard gate stays in front of Scout
-
-**Manuvrtti**
-
-- [ ] `T-075` **Only three types send email** *(day 2 of 2)*
-      - *Done when:* Candidate replied, assessment completed and subscription expired send email. The other four are in-app only. A recruiter moving ten candidates through stages receives zero emails from those moves.
-      - **Waits on:** D-9
-      - *Start here:* Channel selection belongs in the notify() call site, not in the email layer
-- [ ] `T-076` **Recruiter notification centre** *(day 1 of 2)*
-      - *Done when:* The centre shows what happened, which candidate/project/job/assessment it concerns, when, and a working link. Clicking a 'candidate applied' item opens that applicant, not a list.
-      - *Start here:* src/components/ - the candidate notification bell from plan 067 is the pattern to follow
-- [ ] `T-155` **Migration: NotificationPreference, per type and per channel** *(day 2 of 2)*
-      - *Done when:* A user can switch off one type on one channel. The toggle silences exactly that and nothing else, verified by triggering every type after switching one off.
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 2 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
-
-**Sohail**
-
-- [ ] `T-034` **Admin plan activation - the seam a payment webhook will later call** *(day 2 of 2)*
-      - *Done when:* One function activateSubscription(orgId, planId) flips PENDING to ACTIVE, sets periodStart/periodEnd, and resets usage counters. Admin UI calls it. It is the ONLY way a subscription becomes active, so a gateway webhook can call the same function in October.
-      - **Waits on:** D-4 · **Security:** requireAdmin
-      - *Start here:* Keep it in one file so October's webhook has a single target
-- [ ] `T-035` **Usage meter - the recruiter can see what they have used** *(day 1 of 2)*
-      - *Done when:* A panel shows each limit as used/total. Running one search increments the search figure on the next load. A recruiter at 90% of any limit sees a warning state.
-      - *Start here:* Read EntitlementUsage for the current period; render with the design-system stat pattern
-- [ ] `T-170` **Cross-org isolation sweep across seven recruiter surfaces** *(day 2 of 3)*
-      - *Done when:* Requesting another organisation's project, talent list, note, applicant, assessment, outreach message and profile-view id each returns 404 or a refusal. Seven cases, each asserted separately.
+- [ ] `T-032` **As the business, plan limits live as data we can change, not numbers in code.** *(day 3 of 3)*
+    - **🔴 HIGH RISK** · P0 · waits on D-3
+    - **What needs to work:** Plans and their limits are stored records. Changing a limit is a data edit, not a deployment.
+    - **Find out first:** Nothing exists. Ask Claude to check whether ANY subscription storage exists before creating it. An existing plans dialog hard-codes prices - match the agreed numbers.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P11 Database review -> P3 Implement.
+    - **Manual test:** Change a limit in the stored plan. Reload the plans page - the new number shows. No deploy.
+    - **Done when:** Plans stored with every limit as data. Applied to a copy of the database first. Existing recruiters keep working.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-033` **As the business, a recruiter who has used up their plan must not be able to do the restricted thing - even bypassing the screen.** *(day 1 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** One shared check decides whether a recruiter may do a restricted action, and counts usage correctly when several requests arrive at once.
+    - **Find out first:** Today every premium restriction is a dialog in the browser. There is NO server-side check at all. Confirm that before building.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review. Do NOT let Claude put the check only in the UI.
+    - **Manual test:** Use up a limit through the UI. Then call the same action DIRECTLY with the browser bypassed - still refused. Repeat for a recruiter with allowance left - it succeeds.
+    - **Done when:** Refused server-side with the client removed. Counters never over-count. The refusal is a readable message, not a crash.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-039` **As a developer, I can run the journey tests on my machine and in CI.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** A test setup runs the journey tests on every pull request, with one green example and a one-page how-to.
+    - **Find out first:** No journey-test framework exists today, only hand-written scripts. Pick the standard one for this stack.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a pull request with a deliberately broken journey - CI goes red.
+    - **Done when:** Tests run on every pull request. One green example plus a how-to a junior can follow.
 
 ---
 
-## Saturday 19 September
+## Saturday 12 September — BUILD WAVE 1
 
-**Shivansh**
+*Wave 1 must be demoable tonight. Scope decision.*
 
-- [ ] `T-025` **Admin approval and plan activation path** *(day 2 of 2)*
-      - *Done when:* An admin sees the pending recruiter and the pending subscription, approves both, and the recruiter's entitlements are live on their next page load without a redeploy.
-      - **Needs:** R2 activation · **Security:** requireAdmin on every approval and activation route
-      - *Start here:* src/app/actions/admin-recruiter-actions.ts, src/app/admin/
-- [ ] `T-087` **Recruiter applicant list with stage transitions** *(day 2 of 3)*
-      - *Done when:* The recruiter opens a job, sees its applicants, and moves one to SCREENING. The candidate sees the new stage and receives one in-app notification and one email within 60 seconds.
-      - **Needs:** P2 notify · **Security:** Cross-org applicant ids must 404
-- [ ] `T-116` **Design consistency pass across every recruiter surface** *(day 3 of 3)*
-      - *Done when:* Typography, spacing, cards, tables, filters, badges, buttons and pipeline chips all come from docs/design-system.md tokens. A reviewer opening five recruiter screens in sequence cannot tell they were built by different people.
-      - *Start here:* docs/design-system.md is binding; tokens are bare HSL triplets in globals.css wrapped at the consumption site; do not fork src/components/ui/
-- [ ] `T-117` **Interaction quality pass** *(day 1 of 3)*
-      - *Done when:* Skeleton loaders on every list, empty states that name the next action, readable errors, confirmation on destructive actions, toasts only on background success, and no unnecessary full-page reload on a filter change.
-      - *Start here:* sonner is already the toast library; Base UI button semantics mean buttonVariants on a Link, never Button asChild
-- [ ] `T-129` **Visibility control and preview as a recruiter sees me** *(day 2 of 3)*
-      - *Done when:* Turning visibility off removes the candidate from a live recruiter search AND from a re-read of a stored TalentRequestMatch. The preview renders from the same component the recruiter desk uses, so a field hidden by a toggle is absent from the preview too.
-      - **Waits on:** D-8 · **Security:** The preview must apply the same gating as the real read, not a relaxed copy
+> **Wave 1 must be demoable on a preview tonight.** SCOPE DECISION: anything behind drops a P1 whole rather than half-shipping.
 
-**Zainab**
+### Shallika · *designer*
 
-- [ ] `T-068` **Compose and send an email to an unlocked candidate** *(day 3 of 3)*
-      - *Done when:* From a shortlisted, unlocked candidate the recruiter enters a subject and a body, sends, and the candidate receives it in a real inbox within 60 seconds. Sending without an unlock is refused server-side.
-      - **Needs:** P2 email · **Security:** assertEntitlement('outreach_email') then hasContactAccess - both, in that order
-      - *Start here:* src/lib/email.ts sendEmail() is the Brevo path already used by OTP and hire alerts
-- [ ] `T-069` **Four outreach templates with variable substitution and preview** *(day 1 of 2)*
-      - *Done when:* Initial outreach, interview invite, assessment invite and follow-up. Choosing one fills the subject and body with the candidate's name, the company and the role. The preview shows the substituted text, not the raw variables.
-      - *Start here:* Keep templates as a plain TypeScript map; this is hiring outreach, not marketing automation
-- [ ] `T-097` **Candidate attempt: notified, timed, resumable, submitted** *(day 2 of 3)*
-      - *Done when:* The candidate's notification opens the right assessment. A mid-attempt refresh keeps their answers and does not grant extra time. Submitting after the server-side duration is refused. Correct answers never appear in any network response before submission.
-      - **Security:** A candidate may open only their own assignment
+- [ ] `T-009` **As a candidate, building my profile should feel quick and worth doing.** *(day 2 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for candidate signup, the profile sections, adding self-declared skills, and the privacy/visibility control - including what a recruiter sees.
+    - **Find out first:** Key product rule: a candidate does NOT need verified evidence to be discoverable. Self-declared skills must feel legitimate, while staying visibly different from verified ones.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk it with Shivansh. The difference between self-declared and verified is obvious without a legend.
+    - **Done when:** All sections and states. Self-declared and verified are visually distinct and honestly labelled. Mobile covered. Approved before the profile build finishes.
+- [ ] `T-010` **As a recruiter, unlocking and contacting a candidate should feel deliberate and clear.** *(day 1 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for the contact unlock, the allowance indicator, the message composer and the outreach history - including what a recruiter with no allowance left sees.
+    - **Find out first:** This is where money meets privacy. The recruiter must understand what they are spending and the candidate must be treated respectfully.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk it with Zainab. What happens at zero allowance is obvious.
+    - **Done when:** Unlock, spend, compose, send, history, and the zero-allowance state all designed. Approved before the outreach build starts.
 
-**shashank**
+### Shivansh
 
-- [ ] `T-046` **Push hard filters into SQL** *(day 3 of 3)*
-      - *Done when:* The skills, experience, location, work-mode and role-family filters run as Prisma where clauses ANDed onto the visibility fragment. EXPLAIN on the generated query shows index scans, not a sequential scan of the whole candidate table.
-      - *Start here:* src/features/hire/search-candidates.ts loads CHALLENGE_POOL_CAP=600 rows per track then ranks in memory; repositories/talent.ts holds visibleProgramMemberWhere()
-- [ ] `T-047` **Migration: search indexes via CREATE INDEX CONCURRENTLY** *(day 1 of 2)*
-      - *Done when:* Indexes on the columns the SQL filters now use. Applied without locking the table. Search p95 measured before and after and both numbers recorded.
-      - *Start here:* CandidateSkill, CandidatePreference (GIN), CandidateEducation - see plan 112 section 8
-- [ ] `T-054` **Every claim opens its evidence** *(day 2 of 2)*
-      - *Done when:* Clicking 'verified through 3 activities' opens the three underlying items - the submission, the project, the assessment - each naming what it was and when. A claim with no openable source is a defect, not a design choice.
-      - **Security:** Evidence detail respects showAssessmentScores and showInterviewResults
-      - *Start here:* src/app/hire/evidence/page.tsx already renders an evidence surface - reuse it rather than building a second one
-- [ ] `T-055` **Facts and inference are visually and semantically distinct**
-      - *Done when:* Facts and inference use different treatments, and a screen reader announces which is which. A reviewer given the panel with no training can say which lines the platform can prove.
-      - **Waits on:** D-11
-      - *Start here:* docs/design-system.md - state which existing pattern carries each class; flag a new pattern if you need one
-- [ ] `T-056` **Overall match verdict, computed from the same rows** *(day 1 of 2)*
-      - *Done when:* The Strong / Possible / Not enough evidence verdict follows the rule written in D-11 exactly. Two reviewers reading the same candidate reach the same verdict by hand. No hidden weighting.
-      - *Start here:* src/features/hire/score-candidate.ts already scores; make the verdict a pure function with a unit test
-- [ ] `T-062` **The Talent Hub board: who needs action** *(day 2 of 3)*
-      - *Done when:* The hub groups candidates by stage and shows an 'awaiting action' count. A recruiter returning after three days can answer, without clicking into anything: who did I look at, who replied, who finished the test, who is advancing.
-      - *Start here:* src/components/hire/ - the desk has a Shortlist view today; this replaces it with a staged board
-- [ ] `T-103` **Overall metrics: jobs, projects, candidates discovered / viewed / shortlisted / contacted, response rate, assessments, applications, conversion** *(day 3 of 3)*
-      - *Done when:* Every number reconciles against a hand-run SQL count on seeded data. Numbers are org-scoped: a second organisation's activity never appears.
-      - **Needs:** R5, R6, R8, P4 · **Security:** Org scoping verified by querying as a second organisation
-- [ ] `T-104` **Per-project metrics** *(day 1 of 2)*
-      - *Done when:* Each project shows matched, new, viewed, shortlisted, contacted, assessment-completed, interviewing and hired. Shortlisting one candidate moves exactly one number.
-      - **Needs:** R3, R5
-- [ ] `T-111` **Recruiter searches by role family and its relevant skills** *(day 3 of 3)*
-      - *Done when:* Creating a Product project and filtering returns non-technical candidates who can be shortlisted like anyone else. Their insight panel shows their real experience and work, not an empty engineering panel.
-      - **Needs:** R3, R4 · **Security:** Role family is a filter, never a protected-attribute proxy - the existing hard gate stays in front of Scout
-- [ ] `T-164` **Views feed the recruiter's own analytics**
-      - *Done when:* The 'candidates viewed' number on the analytics surface equals a hand-run count of CandidateProfileView rows for that organisation and period.
-      - **Needs:** R10
+- [ ] `T-014` **As a candidate, everything I type into my profile is still there tomorrow.** *(day 4 of 4)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The profile sections in September scope save, survive a logout, and can be edited and removed.
+    - **Find out first:** Fix ONLY what the audit found broken. Do not rebuild working sections.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every section. Save, reload, LOG OUT, LOG BACK IN - all still there. Edit four sections. Remove one item from three sections - each disappears everywhere including the recruiter view.
+    - **Done when:** Every in-scope section passes all twelve checks. Removals propagate everywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+- [ ] `T-015` **As a candidate, I can say what I am good at without needing ABTalks to verify it first.** *(day 3 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate adds their own skills and becomes discoverable on them. Self-declared skills are clearly distinct from verified ones everywhere they appear - never presented as proven.
+    - **Find out first:** KEY PRODUCT RULE: verified evidence must NOT be required for discovery. Ask Claude how skills and search currently work, and whether anything today requires verification before a candidate appears.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (honesty of candidate claims) -> P3 Implement.
+    - **Manual test:** Fresh candidate adds three self-declared skills. A recruiter searching that skill FINDS them. On the recruiter's screen those skills are clearly marked as self-declared, not verified.
+    - **Done when:** Self-declared skills make a candidate discoverable. They are visually and semantically distinct from verified skills. Nothing claims a self-declared skill is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-018` **As a recruiter, I tell ABTalks about my company once and it is remembered.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Company name, website, logo, industry, size and location save and are still there on return.
+    - **Find out first:** Ask Claude what the company record already stores versus what signup collects today (far less). Reuse the existing file-upload approach for the logo.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fill every field including a logo. Save. Reload - still there. Sign out and back in - still there.
+    - **Done when:** All six fields persist across a reload and a re-login. Continue stays disabled until name and website are valid.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+- [ ] `T-077` **As a recruiter, I write a job posting and control when it goes live.** *(day 4 of 4)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a job with title, description, skills, location, work mode and type; saves it as a draft; and can publish, close and reopen it.
+    - **Find out first:** Jobs today are admin-created only, with no owning company and no draft state. Skills-per-job storage EXISTS and is unused - find it. Existing live jobs must keep working.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (changes live job records) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Create a job, save as draft. As a CANDIDATE open the draft URL directly - not found. Publish - the candidate sees it. Close - no new applications, readable message. Reopen.
+    - **Done when:** Full draft/publish/close/reopen. Draft invisibility proven by direct URL. Every job live before the change is still live and applyable.
+    - **Regression check:** MANDATORY: open /jobs as a candidate - existing jobs still list, open and accept applications.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Manuvrtti**
+### Zainab
 
-- [ ] `T-076` **Recruiter notification centre** *(day 2 of 2)*
-      - *Done when:* The centre shows what happened, which candidate/project/job/assessment it concerns, when, and a working link. Clicking a 'candidate applied' item opens that applicant, not a list.
-      - *Start here:* src/components/ - the candidate notification bell from plan 067 is the pattern to follow
-- [ ] `T-077` **Recruiter notification preferences** *(day 1 of 2)*
-      - *Done when:* Each of the seven types can be switched off per channel. Switching off 'assessment completed' email stops that email and nothing else. Verified by triggering all seven after switching one off.
-      - *Start here:* prisma NotificationPreference from P3 - reuse it, do not add a recruiter-only table
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 3 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
+- [ ] `T-030` **As a recruiter with allowance left, I unlock a candidate's contact details and see them immediately.** *(day 3 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Unlocking spends one allowance and reveals the details. A recruiter with none left sees a clear message and NO contact details anywhere in the response.
+    - **Find out first:** Confirm the existing access-deciding function is reused, not bypassed. The allowance check comes from R2.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** With allowance: unlock - details appear, counter drops by one. With NONE: refused. Open the browser network tab on the refused case - NO email, phone or CV link anywhere in the response.
+    - **Done when:** Allowance spends correctly. The refused case leaks nothing - checked in the network response, not on screen.
+    - **Regression check:** MANDATORY: a recruiter already granted contact for a candidate must still see it.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-074` **As a recruiter, when a candidate has actually done the work I want to see that, not just their word for it.** *(day 3 of 5)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Completing a verified activity records proof once, and the recruiter sees that skill marked as evidence-backed rather than self-declared.
+    - **Find out first:** A proof table exists but NOTHING writes to it - confirm that first. Self-declared skills already make a candidate discoverable (C1); this is purely about showing stronger confidence where it is earned.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement.
+    - **Manual test:** Complete a verified activity. The skill shows as evidence-backed on the recruiter's view, with a count. Trigger it twice more - still ONE record. A self-declared skill with no activity still shows, marked self-declared.
+    - **Done when:** One proof record per activity. Skill strength moves once. Self-declared and evidence-backed are visibly distinct and never confused. If recording fails, the candidate's own submission still succeeds.
+    - **Regression check:** MANDATORY: complete one existing challenge task and one programme mission - points, streaks and progress all still work.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Sohail**
+### shashank
 
-- [ ] `T-035` **Usage meter - the recruiter can see what they have used** *(day 2 of 2)*
-      - *Done when:* A panel shows each limit as used/total. Running one search increments the search figure on the next load. A recruiter at 90% of any limit sees a warning state.
-      - *Start here:* Read EntitlementUsage for the current period; render with the design-system stat pattern
-- [ ] `T-036` **Limit-reached experience: refusal, explanation and an upgrade path** *(day 1 of 2)*
-      - *Done when:* Hitting a limit in the UI shows what was blocked, which limit was hit, and a link to the plans page - not a generic error toast. The refusal message comes from the server's {ok:false} envelope.
-      - *Start here:* Surface the message field from the Result envelope; do not invent client-side copy
-- [ ] `T-170` **Cross-org isolation sweep across seven recruiter surfaces** *(day 3 of 3)*
-      - *Done when:* Requesting another organisation's project, talent list, note, applicant, assessment, outreach message and profile-view id each returns 404 or a refusal. Seven cases, each asserted separately.
+- [ ] `T-024` **As a recruiter, my project remembers what kind of person I am looking for.** *(day 2 of 4)*
+    - **🟡 MEDIUM** · P0 · waits on D-12
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Everything the recruiter says about the role is saved on the project and shown again, editable, when they return.
+    - **Find out first:** Several of these fields already exist on the search-brief record. Ask Claude which, so you extend rather than duplicate.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Set the criteria on a project. Save. Sign out, sign back in IN A DIFFERENT BROWSER. Open the project - every criterion is exactly as you left it and editable in place.
+    - **Done when:** Every criterion persists across a session and a browser change.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-025` **As a recruiter, re-running my search must not lose track of who I already looked at.** *(day 1 of 3)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Re-running a search keeps the history of when each candidate first appeared, so people I have seen are not shown as new.
+    - **Find out first:** Today re-running a search DELETES all previous matches and recreates them - which is why history is lost. Confirm this before changing it. This is data-loss shaped.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (rewrites existing rows) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Run a match. Note when candidate X first appeared. Run it again. X's first-seen date is UNCHANGED. A genuinely new candidate has a later date.
+    - **Done when:** First-seen dates survive a re-run. Only genuinely new candidates are marked new.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-027` **As a recruiter, when I shortlist someone it is still there tomorrow, on any device.** *(day 4 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Shortlisting saves against the person in the database, not the browser. Today part of it lives only in the browser and is lost when site data is cleared.
+    - **Find out first:** There are TWO shortlists today: one in the database that only works for one candidate group, and one in the browser that works for everyone. Ask Claude to confirm, and to find the unused tables that already have the right shape.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (existing recruiter data) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Shortlist in Browser A. Sign out. Open Browser B, sign in. Still shortlisted, in the right project. Then shortlist one candidate from EACH group - all persist.
+    - **Done when:** Database-backed, keyed on the person, works for every candidate group. Nothing read from browser storage. Another company's list returns not-found.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged. MANDATORY: an existing recruiter's current shortlist must not disappear.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
----
+### Manuvrtti
 
-## Sunday 20 September
+- [ ] `T-037` **As a user, notifications reach me reliably and stop when I switch them off.** *(day 4 of 6)*
+    - **🟡 MEDIUM** · P0 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The notifications these September journeys need appear in the bell and, where appropriate, arrive as a real email - and switching one off genuinely stops it.
+    - **Find out first:** Email sending already works - reuse it, do NOT add a second provider. Scope is only the notifications the September journeys need, not the full set.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a notification - it appears in the bell. Mark it read - it stays read after a reload. Check a REAL inbox. Switch the preference off, trigger again - bell only, no email. Confirm test addresses are suppressed.
+    - **Done when:** Bell and real email both work. Preferences honoured. Every send logged. Repeat events do not duplicate.
+    - **Regression check:** MANDATORY: trigger an existing admin broadcast and confirm it still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
 
-**Shivansh**
+### Sohail
 
-- [ ] `T-087` **Recruiter applicant list with stage transitions** *(day 3 of 3)*
-      - *Done when:* The recruiter opens a job, sees its applicants, and moves one to SCREENING. The candidate sees the new stage and receives one in-app notification and one email within 60 seconds.
-      - **Needs:** P2 notify · **Security:** Cross-org applicant ids must 404
-- [ ] `T-088` **Move an applicant into a talent project - one candidate, no duplicate record** *(day 1 of 2)*
-      - *Done when:* From the applicant list the recruiter adds an applicant to a talent project. The candidate appears in that project's Talent Hub keyed on the SAME candidateUserId, with their application history visible. No second candidate record is created.
-      - **Needs:** R5
-      - *Start here:* This is the C4 seam: addApplicantToTalentList(talentListId, candidateUserId, source)
-- [ ] `T-117` **Interaction quality pass** *(day 2 of 3)*
-      - *Done when:* Skeleton loaders on every list, empty states that name the next action, readable errors, confirmation on destructive actions, toasts only on background success, and no unnecessary full-page reload on a filter change.
-      - *Start here:* sonner is already the toast library; Base UI button semantics mean buttonVariants on a Link, never Button asChild
-- [ ] `T-129` **Visibility control and preview as a recruiter sees me** *(day 3 of 3)*
-      - *Done when:* Turning visibility off removes the candidate from a live recruiter search AND from a re-read of a stored TalentRequestMatch. The preview renders from the same component the recruiter desk uses, so a field hidden by a toggle is absent from the preview too.
-      - **Waits on:** D-8 · **Security:** The preview must apply the same gating as the real read, not a relaxed copy
-- [ ] `T-130` **Persistence and removal sweep across every section** *(day 1 of 2)*
-      - *Done when:* Fill every section, save, log out, log back in: nothing is lost. Then remove one item from three different sections: each disappears from the editor, the public profile, the recruiter preview and recruiter search.
-
-**Zainab**
-
-- [ ] `T-069` **Four outreach templates with variable substitution and preview** *(day 2 of 2)*
-      - *Done when:* Initial outreach, interview invite, assessment invite and follow-up. Choosing one fills the subject and body with the candidate's name, the company and the role. The preview shows the substituted text, not the raw variables.
-      - *Start here:* Keep templates as a plain TypeScript map; this is hiring outreach, not marketing automation
-- [ ] `T-070` **Send status, timestamp and per-candidate outreach history** *(day 1 of 2)*
-      - *Done when:* After sending, the candidate shows 'Contacted <date>' and the message is readable in a history list. A failed Brevo send shows FAILED with a retry, never a silent success.
-      - *Start here:* Record the sendEmail result; SendEmailResult already distinguishes ok from skipped
-- [ ] `T-097` **Candidate attempt: notified, timed, resumable, submitted** *(day 3 of 3)*
-      - *Done when:* The candidate's notification opens the right assessment. A mid-attempt refresh keeps their answers and does not grant extra time. Submitting after the server-side duration is refused. Correct answers never appear in any network response before submission.
-      - **Security:** A candidate may open only their own assignment
-- [ ] `T-098` **Deterministic auto-evaluation writing AssessmentReport and AssessmentScore** *(day 1 of 2)*
-      - *Done when:* A paper with four known answers scores exactly as hand-calculated. Re-running evaluation on the same attempt produces the same score and no second report row.
-
-**shashank**
-
-- [ ] `T-047` **Migration: search indexes via CREATE INDEX CONCURRENTLY** *(day 2 of 2)*
-      - *Done when:* Indexes on the columns the SQL filters now use. Applied without locking the table. Search p95 measured before and after and both numbers recorded.
-      - *Start here:* CandidateSkill, CandidatePreference (GIN), CandidateEducation - see plan 112 section 8
-- [ ] `T-056` **Overall match verdict, computed from the same rows** *(day 2 of 2)*
-      - *Done when:* The Strong / Possible / Not enough evidence verdict follows the rule written in D-11 exactly. Two reviewers reading the same candidate reach the same verdict by hand. No hidden weighting.
-      - *Start here:* src/features/hire/score-candidate.ts already scores; make the verdict a pure function with a unit test
-- [ ] `T-062` **The Talent Hub board: who needs action** *(day 3 of 3)*
-      - *Done when:* The hub groups candidates by stage and shows an 'awaiting action' count. A recruiter returning after three days can answer, without clicking into anything: who did I look at, who replied, who finished the test, who is advancing.
-      - *Start here:* src/components/hire/ - the desk has a Shortlist view today; this replaces it with a staged board
-- [ ] `T-104` **Per-project metrics** *(day 2 of 2)*
-      - *Done when:* Each project shows matched, new, viewed, shortlisted, contacted, assessment-completed, interviewing and hired. Shortlisting one candidate moves exactly one number.
-      - **Needs:** R3, R5
-- [ ] `T-105` **The analytics surface, built on the design-system stat pattern** *(day 1 of 2)*
-      - *Done when:* Every tile states the question it answers. There is no chart present that a recruiter cannot act on. Empty, loading and error states exist for a recruiter with no activity yet.
-      - *Start here:* docs/design-system.md - reuse the existing stat pattern in src/components/design/, do not add a chart library
-
-**Manuvrtti**
-
-- [ ] `T-077` **Recruiter notification preferences** *(day 2 of 2)*
-      - *Done when:* Each of the seven types can be switched off per channel. Switching off 'assessment completed' email stops that email and nothing else. Verified by triggering all seven after switching one off.
-      - *Start here:* prisma NotificationPreference from P3 - reuse it, do not add a recruiter-only table
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 4 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
-
-**Sohail**
-
-- [ ] `T-036` **Limit-reached experience: refusal, explanation and an upgrade path** *(day 2 of 2)*
-      - *Done when:* Hitting a limit in the UI shows what was blocked, which limit was hit, and a link to the plans page - not a generic error toast. The refusal message comes from the server's {ok:false} envelope.
-      - *Start here:* Surface the message field from the Result envelope; do not invent client-side copy
-- [ ] `T-037` **Expiry and renewal handling** *(day 1 of 2)*
-      - *Done when:* A subscription past periodEnd stops satisfying assertEntitlement on the next call - not on a cron delay. The recruiter sees an expired banner and their data is still there, read-only where appropriate.
-      - **Needs:** R7
-      - *Start here:* Check periodEnd inside assertEntitlement itself, so nothing can be reached through a stale flag
-- [ ] `T-171` **PII and contact leak sweep across every recruiter payload** *(day 1 of 3)*
-      - *Done when:* For a candidate whose contact has not been unlocked, no email, phone or resume URL appears in any network response on the desk, the inspector, the analytics surface or /hire/evidence.
-      - **Security:** Inspect the raw payload, not the rendered screen
+- [ ] `T-033` **As the business, a recruiter who has used up their plan must not be able to do the restricted thing - even bypassing the screen.** *(day 2 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** One shared check decides whether a recruiter may do a restricted action, and counts usage correctly when several requests arrive at once.
+    - **Find out first:** Today every premium restriction is a dialog in the browser. There is NO server-side check at all. Confirm that before building.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review. Do NOT let Claude put the check only in the UI.
+    - **Manual test:** Use up a limit through the UI. Then call the same action DIRECTLY with the browser bypassed - still refused. Repeat for a recruiter with allowance left - it succeeds.
+    - **Done when:** Refused server-side with the client removed. Counters never over-count. The refusal is a readable message, not a crash.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
 ---
 
-## Monday 21 September
+## Sunday 13 September — HOLIDAY
 
-**Shivansh**
-
-- [ ] `T-088` **Move an applicant into a talent project - one candidate, no duplicate record** *(day 2 of 2)*
-      - *Done when:* From the applicant list the recruiter adds an applicant to a talent project. The candidate appears in that project's Talent Hub keyed on the SAME candidateUserId, with their application history visible. No second candidate record is created.
-      - **Needs:** R5
-      - *Start here:* This is the C4 seam: addApplicantToTalentList(talentListId, candidateUserId, source)
-- [ ] `T-117` **Interaction quality pass** *(day 3 of 3)*
-      - *Done when:* Skeleton loaders on every list, empty states that name the next action, readable errors, confirmation on destructive actions, toasts only on background success, and no unnecessary full-page reload on a filter change.
-      - *Start here:* sonner is already the toast library; Base UI button semantics mean buttonVariants on a Link, never Button asChild
-- [ ] `T-118` **The search surface specifically: filters, active criteria, project context** *(day 1 of 3)*
-      - *Done when:* Filters are grouped and labelled, active filters are visible and individually removable, the project name is prominent, candidate cards are scannable at a glance, and the shortlist action is obvious without a tooltip.
-      - **Needs:** R3
-- [ ] `T-130` **Persistence and removal sweep across every section** *(day 2 of 2)*
-      - *Done when:* Fill every section, save, log out, log back in: nothing is lost. Then remove one item from three different sections: each disappears from the editor, the public profile, the recruiter preview and recruiter search.
-
-**Zainab**
-
-- [ ] `T-070` **Send status, timestamp and per-candidate outreach history** *(day 2 of 2)*
-      - *Done when:* After sending, the candidate shows 'Contacted <date>' and the message is readable in a history list. A failed Brevo send shows FAILED with a retry, never a silent success.
-      - *Start here:* Record the sendEmail result; SendEmailResult already distinguishes ok from skipped
-- [ ] `T-071` **Sending moves the candidate to CONTACTED**
-      - *Done when:* Sending the first email moves that candidate's pipeline stage to CONTACTED automatically. Sending a second email does not move an already-advanced candidate backwards.
-      - **Needs:** R5 pipeline
-- [ ] `T-098` **Deterministic auto-evaluation writing AssessmentReport and AssessmentScore** *(day 2 of 2)*
-      - *Done when:* A paper with four known answers scores exactly as hand-calculated. Re-running evaluation on the same attempt produces the same score and no second report row.
-- [ ] `T-099` **The score emits SkillEvidence for the assessment's tagged skills** *(day 1 of 2)*
-      - *Done when:* A completed assessment writes one SkillEvidence row per tagged skill through emitSkillEvidence. Re-evaluating creates no duplicate. The score then appears in the candidate's insights panel.
-      - **Needs:** P1, R4
-- [ ] `T-137` **Fix every S1 the audit found in entry, run and report** *(day 1 of 2)*
-      - *Done when:* Every S1 from the audit is closed or descoped in writing. A fresh account reaches a running interview, answers by text, completes it, and reads a report with strengths, weaknesses and improvements.
-
-**shashank**
-
-- [ ] `T-048` **Project analytics strip** *(day 1 of 2)*
-      - *Done when:* Each project shows matched, new, viewed, shortlisted, contacted and assessment-completed counts. Shortlisting one candidate moves the shortlisted number by exactly one on reload.
-      - **Needs:** R5, R10
-- [ ] `T-105` **The analytics surface, built on the design-system stat pattern** *(day 2 of 2)*
-      - *Done when:* Every tile states the question it answers. There is no chart present that a recruiter cannot act on. Empty, loading and error states exist for a recruiter with no activity yet.
-      - *Start here:* docs/design-system.md - reuse the existing stat pattern in src/components/design/, do not add a chart library
-
-**Manuvrtti**
-
-- [ ] `T-133` **One connector UI for GitHub, LeetCode and CodeChef - declared links with trust labels** *(day 1 of 3)*
-      - *Done when:* Each of the three can be connected with a handle or URL, validated for format, disconnected and reconnected. A malformed handle is refused with a readable message. Nothing is fetched from an external API in September.
-      - *Start here:* prisma CandidateLink already carries GITHUB, LEETCODE, CODECHEF - store there; CandidateProfile.githubUsername already exists
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 5 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
-
-**Sohail**
-
-- [ ] `T-037` **Expiry and renewal handling** *(day 2 of 2)*
-      - *Done when:* A subscription past periodEnd stops satisfying assertEntitlement on the next call - not on a cron delay. The recruiter sees an expired banner and their data is still there, read-only where appropriate.
-      - **Needs:** R7
-      - *Start here:* Check periodEnd inside assertEntitlement itself, so nothing can be reached through a stale flag
-- [ ] `T-171` **PII and contact leak sweep across every recruiter payload** *(day 2 of 3)*
-      - *Done when:* For a candidate whose contact has not been unlocked, no email, phone or resume URL appears in any network response on the desk, the inspector, the analytics surface or /hire/evidence.
-      - **Security:** Inspect the raw payload, not the rendered screen
-- [ ] `T-172` **Rate limits on OTP request, job apply, outreach send and assessment submit** *(day 1 of 3)*
-      - *Done when:* Each throttles with a readable message rather than a 500, and the limit resets as documented.
+> No work. No development, design, QA, review or testing.
 
 ---
 
-## Tuesday 22 September
+## Monday 14 September — BUILD WAVE 2
 
-**Shivansh**
+*Last build day but one.*
 
-- [ ] `T-118` **The search surface specifically: filters, active criteria, project context** *(day 2 of 3)*
-      - *Done when:* Filters are grouped and labelled, active filters are visible and individually removable, the project name is prominent, candidate cards are scannable at a glance, and the shortlist action is obvious without a tooltip.
-      - **Needs:** R3
+### Shallika · *designer*
 
-**Zainab**
+- [ ] `T-010` **As a recruiter, unlocking and contacting a candidate should feel deliberate and clear.** *(day 3 of 3)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Approved designs for the contact unlock, the allowance indicator, the message composer and the outreach history - including what a recruiter with no allowance left sees.
+    - **Find out first:** This is where money meets privacy. The recruiter must understand what they are spending and the candidate must be treated respectfully.
+    - **Prompts:** No AI needed.
+    - **Manual test:** Walk it with Zainab. What happens at zero allowance is obvious.
+    - **Done when:** Unlock, spend, compose, send, history, and the zero-allowance state all designed. Approved before the outreach build starts.
+- [ ] `T-011` **As the designer, I need to check what was actually built, not what was designed.** *(day 1 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every feature from build wave 1 is reviewed in the running application - not from screenshots.
+    - **Find out first:** Open the preview and use it. Compare against the approved design.
+    - **Prompts:** No AI needed.
+    - **Manual test:** For each wave-1 feature check: does it match the design, does it work on a phone, hover and focus states, loading, errors, empty states, spacing, typography, consistency, and anything confusing.
+    - **Done when:** Every wave-1 feature has a recorded UI/UX SIGN-OFF of PASS or NEEDS FIX. Issues are ranked BLOCKER / MAJOR / MINOR. Minor cosmetic issues become P2 bugs - they do NOT block the release.
 
-- [ ] `T-099` **The score emits SkillEvidence for the assessment's tagged skills** *(day 2 of 2)*
-      - *Done when:* A completed assessment writes one SkillEvidence row per tagged skill through emitSkillEvidence. Re-evaluating creates no duplicate. The score then appears in the candidate's insights panel.
-      - **Needs:** P1, R4
-- [ ] `T-137` **Fix every S1 the audit found in entry, run and report** *(day 2 of 2)*
-      - *Done when:* Every S1 from the audit is closed or descoped in writing. A fresh account reaches a running interview, answers by text, completes it, and reads a report with strengths, weaknesses and improvements.
-- [ ] `T-138` **The report emits SkillEvidence and reaches the recruiter card** *(day 1 of 2)*
-      - *Done when:* A completed interview writes exactly one SkillEvidence row through emitSkillEvidence. Re-generating the report creates no duplicate. The signal appears on the recruiter card where showInterviewResults allows.
-      - **Needs:** P1
-- [ ] `T-143` **Fix every S1 from both audits** *(day 1 of 2)*
-      - *Done when:* Every S1 closed or descoped in writing. A fresh user can complete both journeys end to end.
+### Shivansh
 
-**shashank**
+- [ ] `T-015` **As a candidate, I can say what I am good at without needing ABTalks to verify it first.** *(day 5 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate adds their own skills and becomes discoverable on them. Self-declared skills are clearly distinct from verified ones everywhere they appear - never presented as proven.
+    - **Find out first:** KEY PRODUCT RULE: verified evidence must NOT be required for discovery. Ask Claude how skills and search currently work, and whether anything today requires verification before a candidate appears.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (honesty of candidate claims) -> P3 Implement.
+    - **Manual test:** Fresh candidate adds three self-declared skills. A recruiter searching that skill FINDS them. On the recruiter's screen those skills are clearly marked as self-declared, not verified.
+    - **Done when:** Self-declared skills make a candidate discoverable. They are visually and semantically distinct from verified skills. Nothing claims a self-declared skill is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-016` **As a candidate, I control what recruiters see and can check it myself.** *(day 1 of 2)*
+    - **🔴 HIGH RISK** · P0 · waits on D-8
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate can turn recruiter visibility off and preview exactly what a recruiter sees - rendered by the same code the recruiter uses, so the preview cannot lie.
+    - **Find out first:** Privacy control. Confirm the preview reuses the REAL recruiter rendering, not a copy. Sohail must confirm the wording matches what the site publicly promises.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (privacy) -> P3 Implement -> P10 Security review.
+    - **Manual test:** Turn visibility OFF. Have a recruiter re-run a search that matched you - you are gone. Also have them re-open a SAVED list - still gone. Turn a field's privacy off - it vanishes from the preview too.
+    - **Done when:** Visibility off removes the candidate everywhere including saved results. Preview matches the real recruiter view field for field.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-019` **As a recruiter, if I am interrupted halfway I carry on where I left off, and I land somewhere useful.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Onboarding resumes at the right step after a browser close, and finishing puts the recruiter on Home with one obvious next action.
+    - **Find out first:** The current step must come from what is saved, not from the browser. Coordinate with R12 - Home is built there.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Complete steps 1 and 2. CLOSE THE BROWSER at step 3. Reopen and sign in - you are on step 3 with 1 and 2 done. Finish - you land on Home, not search.
+    - **Done when:** Resumes correctly every time. A progress indicator shows where you are. Finishing lands on Home.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+- [ ] `T-021` **As a recruiter opening ABTalks, I know what to do next.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Home shows my projects with new matches, what is waiting on me, and one clear action for a brand-new recruiter - each linking to the exact place that resolves it.
+    - **Find out first:** Read counts from the project and pipeline work. Do not write new queries for the same numbers.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** As an established recruiter: Home tells you what needs attention and every link works. As a BRAND NEW recruiter: one obvious action, not five empty tiles.
+    - **Done when:** Home answers 'what should I do next'. The new-recruiter state is designed, not empty.
+- [ ] `T-078` **As a candidate, I find jobs that suit me, apply once, and see what happened.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Candidates search and filter jobs by skill, role, location, work mode and type, apply once with a friendly refusal on a repeat, and track each application's stage.
+    - **Find out first:** A jobs list exists with no search and no filters. A uniqueness rule already exists in the database - catch it and turn it into a readable message rather than a server error.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Filter by one skill matching exactly one job - only that job. Apply - confirmation. Replay the apply action - friendly refusal, still ONE application. Have a recruiter move you forward - your applications list shows the new stage.
+    - **Done when:** All five filters correct and run in the backend. One application per person per job. Stage and date visible to the candidate.
+    - **Regression check:** MANDATORY: existing jobs still list and still accept applications.
 
-- [ ] `T-048` **Project analytics strip** *(day 2 of 2)*
-      - *Done when:* Each project shows matched, new, viewed, shortlisted, contacted and assessment-completed counts. Shortlisting one candidate moves the shortlisted number by exactly one on reload.
-      - **Needs:** R5, R10
-- [ ] `T-063` **Migrate existing RecruiterShortlistItem rows onto TalentListItem** *(day 1 of 2)*
-      - *Done when:* Row count in RecruiterShortlistItem before equals row count created in TalentListItem after. Any discrepancy blocks the cutover. Rehearsed on a child branch first.
-      - **Security:** Child branch rehearsal first
+### Zainab
 
-**Manuvrtti**
+- [ ] `T-030` **As a recruiter with allowance left, I unlock a candidate's contact details and see them immediately.** *(day 5 of 5)*
+    - **🔴 HIGH RISK** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Unlocking spends one allowance and reveals the details. A recruiter with none left sees a clear message and NO contact details anywhere in the response.
+    - **Find out first:** Confirm the existing access-deciding function is reused, not bypassed. The allowance check comes from R2.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** With allowance: unlock - details appear, counter drops by one. With NONE: refused. Open the browser network tab on the refused case - NO email, phone or CV link anywhere in the response.
+    - **Done when:** Allowance spends correctly. The refused case leaks nothing - checked in the network response, not on screen.
+    - **Regression check:** MANDATORY: a recruiter already granted contact for a candidate must still see it.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-031` **As a recruiter, I email a candidate without leaving ABTalks, and can see who I already contacted.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The recruiter writes a subject and message, sends it, the candidate receives a real email, and the history and pipeline record that it happened.
+    - **Find out first:** Email sending already works elsewhere in the product. Find it and reuse it - do not add a second provider. Check how it reports success versus failure.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Unlock a candidate. Write and send. CHECK A REAL INBOX - it arrived within a minute. Try sending WITHOUT unlocking - refused. Force a failure - it shows as failed with a retry, never as sent. The candidate is now marked contacted.
+    - **Done when:** A real email arrives. Sending without unlock is refused server-side. History readable. Failures visible. The pipeline moves to contacted and never moves someone backwards.
+    - **Regression check:** MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-034` **As a recruiter, I see the plans, know what I have used, and understand it when I run out.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Plans render from stored data with the current one marked, usage shows as used-out-of-total and moves after real actions, and hitting a limit explains what was blocked and where to upgrade.
+    - **Find out first:** An existing plans dialog has the layout and copy. Reuse it. Show the SERVER's refusal message - do not write new copy in the browser.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open plans - three plans, real limits, yours marked. Note your search count, run one search, reload - up by one. Exhaust a limit - the message names the action and the limit, with a link to plans.
+    - **Done when:** Plans from data. Usage accurate. The limit message is specific, never a generic toast.
+- [ ] `T-074` **As a recruiter, when a candidate has actually done the work I want to see that, not just their word for it.** *(day 5 of 5)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Completing a verified activity records proof once, and the recruiter sees that skill marked as evidence-backed rather than self-declared.
+    - **Find out first:** A proof table exists but NOTHING writes to it - confirm that first. Self-declared skills already make a candidate discoverable (C1); this is purely about showing stronger confidence where it is earned.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement.
+    - **Manual test:** Complete a verified activity. The skill shows as evidence-backed on the recruiter's view, with a count. Trigger it twice more - still ONE record. A self-declared skill with no activity still shows, marked self-declared.
+    - **Done when:** One proof record per activity. Skill strength moves once. Self-declared and evidence-backed are visibly distinct and never confused. If recording fails, the candidate's own submission still succeeds.
+    - **Regression check:** MANDATORY: complete one existing challenge task and one programme mission - points, streaks and progress all still work.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-075` **As a candidate who has been on ABTalks for months, my past work should count too.** *(day 1 of 2)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Historic completed work is backfilled so long-standing candidates are not outranked by newer ones.
+    - **Find out first:** ~15,000 historic records. A previous similar job ran 4.5 hours and died. Find the existing batched script pattern and reuse it. This RUNS on release day, with Sohail present.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P11 Database review -> P3 Implement.
+    - **Manual test:** Run it against a copy. Kill it halfway. Restart - it resumes and finishes. Counts reconcile.
+    - **Done when:** Completes on a copy, restartable, zero conflicts, counts reconcile. Not run against production without Sohail.
+    - **Regression check:** MANDATORY: points and progress unchanged for a sample of existing candidates.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-080` **As a recruiter, I build a test and send it to the candidates I shortlisted.** *(day 1 of 3)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a test with a title, instructions, time limit and pass mark, writes multiple-choice questions, reorders and edits them, previews it, publishes and assigns it - and each candidate is notified once.
+    - **Find out first:** Question storage and result storage BOTH already exist unused - find them and use them. Do not create a second question model. Everything scoped to the recruiter's own company.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (new data + company isolation) -> P11 Database review -> P3 Implement.
+    - **Manual test:** Create a test with four questions. Reorder, edit one, delete one. Reload - all stuck. Try saving a question with no correct answer - refused. Preview - it looks like the candidate's view. Publish and assign to three shortlisted candidates - exactly three assignments, no duplicates, each notified. As another company, open its id - not found.
+    - **Done when:** Full builder CRUD persists. Preview reuses the real candidate screen. Assignment is one per candidate. Company isolation proven.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-- [ ] `T-133` **One connector UI for GitHub, LeetCode and CodeChef - declared links with trust labels** *(day 2 of 3)*
-      - *Done when:* Each of the three can be connected with a handle or URL, validated for format, disconnected and reconnected. A malformed handle is refused with a readable message. Nothing is fetched from an external API in September.
-      - *Start here:* prisma CandidateLink already carries GITHUB, LEETCODE, CODECHEF - store there; CandidateProfile.githubUsername already exists
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 6 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
+### shashank
 
-**Sohail**
+- [ ] `T-024` **As a recruiter, my project remembers what kind of person I am looking for.** *(day 4 of 4)*
+    - **🟡 MEDIUM** · P0 · waits on D-12
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Everything the recruiter says about the role is saved on the project and shown again, editable, when they return.
+    - **Find out first:** Several of these fields already exist on the search-brief record. Ask Claude which, so you extend rather than duplicate.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Set the criteria on a project. Save. Sign out, sign back in IN A DIFFERENT BROWSER. Open the project - every criterion is exactly as you left it and editable in place.
+    - **Done when:** Every criterion persists across a session and a browser change.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-025` **As a recruiter, re-running my search must not lose track of who I already looked at.** *(day 3 of 3)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Re-running a search keeps the history of when each candidate first appeared, so people I have seen are not shown as new.
+    - **Find out first:** Today re-running a search DELETES all previous matches and recreates them - which is why history is lost. Confirm this before changing it. This is data-loss shaped.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (rewrites existing rows) -> P3 Implement -> P5 Regression analysis.
+    - **Manual test:** Run a match. Note when candidate X first appeared. Run it again. X's first-seen date is UNCHANGED. A genuinely new candidate has a later date.
+    - **Done when:** First-seen dates survive a re-run. Only genuinely new candidates are marked new.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-026` **As a recruiter, my searches stay fast and return the right people.** *(day 1 of 2)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Candidate filtering is done efficiently by the backend and stays responsive with realistic numbers. Today it loads a capped batch and filters in memory, which silently drops results.
+    - **Find out first:** Ask Claude to explain how search loads and filters candidates today, and what the row cap does to results when a filter is applied. Understand it before proposing a fix.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P11 Database review -> P5 Regression analysis.
+    - **Manual test:** Filter to something you know matches exactly one candidate - that candidate comes back. Time twenty searches with realistic data, before and after.
+    - **Done when:** Filters return correct results at realistic volumes. Timings recorded before and after. The existing safety cap stays until the new path is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: re-run three previously working searches and confirm identical results.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-028` **As a recruiter, I move candidates through my process and see who needs me.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate can be moved through the hiring stages, the stage sticks, and one board shows who is waiting on the recruiter.
+    - **Find out first:** A set of pipeline stages already exists in the database, unused. Find it and use it rather than inventing stage names.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Move three candidates to three stages. Sign out, sign back in - all three as you left them. The board shows how many are waiting on you.
+    - **Done when:** Stages move, persist and record who changed them. The board answers 'who needs me' at a glance.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-076` **As a recruiter, I want to see why this candidate came up, and where they fall short.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Opening a candidate shows their strongest signals with a count behind each, the gaps against this project's criteria, and an honest statement when there is not enough information.
+    - **Find out first:** Existing scoring and match-explanation code already exists - reuse it rather than writing a scoring engine. Facts are records that exist; anything else is our judgement and must look different.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a candidate with several verified activities - counted signals. Set a project needing AWS and 2 years, open someone with neither - exactly two gap lines. Open a brand-new candidate - it says there is not enough information and shows NO score.
+    - **Done when:** Signals counted from real records. Gaps specific and correct. Empty candidates handled honestly. Self-declared and evidence-backed visually distinct. No invented score.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+- [ ] `T-084` **As a recruiter hiring for sales or marketing, I search for those people the same way I search for engineers.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** The product recognises the non-technical role families alongside the technical ones, with enough skills seeded that a filter returns something useful - and no coding signal affects a non-technical candidate's standing.
+    - **Find out first:** Role grouping already exists but only covers engineering-shaped roles. EXTEND the rules - the existing ordering carries meaning, so do not reorder it. Search already filters on skills, so this is taxonomy, not new search.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Check a real marketing job title is recognised as marketing, not 'other'. Check three existing engineering titles still return what they did. Complete a marketing profile with NO coding links - it is not weaker than an equivalent engineering profile, and it appears in a marketing search.
+    - **Done when:** The non-technical families are recognised and searchable. Existing families unchanged. Coding signals never lower a non-technical candidate.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
 
-- [ ] `T-171` **PII and contact leak sweep across every recruiter payload** *(day 3 of 3)*
-      - *Done when:* For a candidate whose contact has not been unlocked, no email, phone or resume URL appears in any network response on the desk, the inspector, the analytics surface or /hire/evidence.
-      - **Security:** Inspect the raw payload, not the rendered screen
-- [ ] `T-172` **Rate limits on OTP request, job apply, outreach send and assessment submit** *(day 2 of 3)*
-      - *Done when:* Each throttles with a readable message rather than a 500, and the limit resets as documented.
+### Manuvrtti
+
+- [ ] `T-037` **As a user, notifications reach me reliably and stop when I switch them off.** *(day 6 of 6)*
+    - **🟡 MEDIUM** · P0 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The notifications these September journeys need appear in the bell and, where appropriate, arrive as a real email - and switching one off genuinely stops it.
+    - **Find out first:** Email sending already works - reuse it, do NOT add a second provider. Scope is only the notifications the September journeys need, not the full set.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a notification - it appears in the bell. Mark it read - it stays read after a reload. Check a REAL inbox. Switch the preference off, trigger again - bell only, no email. Confirm test addresses are suppressed.
+    - **Done when:** Bell and real email both work. Preferences honoured. Every send logged. Repeat events do not duplicate.
+    - **Regression check:** MANDATORY: trigger an existing admin broadcast and confirm it still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-038` **As the team, we hear about production errors before users report them.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Errors reach an error-tracking tool and the team channel within a minute.
+    - **Find out first:** Today a production error is invisible unless someone reads deployment logs. There is one logging helper - wire into that.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a deliberate error. It appears in the tool and the channel within a minute.
+    - **Done when:** Errors visible within a minute. No raw console logging introduced.
+- [ ] `T-082` **As a recruiter, I am told when something needs me - and only then.** *(day 1 of 3)*
+    - **🟡 MEDIUM** · P1 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The recruiter events produce a notification each, only the important ones send email, and a notification centre links straight to the thing it is about.
+    - **Find out first:** Build on the shared notification helper - this is mostly configuration, not new infrastructure. Follow the candidate bell as the pattern.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger each recruiter event. Each appears once in the bell and its link opens THAT candidate, job or test - never a list. Count your emails: only the important ones. Switch one off and re-trigger - it stops, nothing else does.
+    - **Done when:** Every event notifies once. Only the agreed few email. Every link opens the right thing. Preferences work per type and channel.
+    - **Regression check:** MANDATORY: an existing admin broadcast still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-086` **As the project lead, I can answer what happened this week with a query instead of a guess.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** One shared helper records that something happened. It never slows down or breaks the thing the user was doing, and the recruiter analytics read these records.
+    - **Find out first:** No analytics of any kind today. Keep it simple - one table and one helper, no external vendor. Each feature owner adds their own events as part of their own task.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Call it from a real action - the action is not slowed. Force it to fail internally - the user's action STILL succeeds. Walk the recruiter journey; every agreed event is recorded with the right person and time.
+    - **Done when:** Never blocks, never breaks a user action. Events queryable by person and date. The analytics page reads these records.
+    - **Regression check:** MANDATORY: every action you instrument still behaves exactly as before.
+
+### Sohail
+
+- [ ] `T-033` **As the business, a recruiter who has used up their plan must not be able to do the restricted thing - even bypassing the screen.** *(day 4 of 4)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** One shared check decides whether a recruiter may do a restricted action, and counts usage correctly when several requests arrive at once.
+    - **Find out first:** Today every premium restriction is a dialog in the browser. There is NO server-side check at all. Confirm that before building.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review. Do NOT let Claude put the check only in the UI.
+    - **Manual test:** Use up a limit through the UI. Then call the same action DIRECTLY with the browser bypassed - still refused. Repeat for a recruiter with allowance left - it succeeds.
+    - **Done when:** Refused server-side with the client removed. Counters never over-count. The refusal is a readable message, not a crash.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen. MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-040` **As the business, a candidate must never reach a recruiter screen, and one company must never see another's data.** *(day 1 of 2)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every recruiter and admin screen refuses candidates and signed-out visitors, and requesting another company's records by id fails.
+    - **Find out first:** One recruiter screen currently requires only a login, not an approved recruiter. Check every recruiter and admin route. Sign-in and sign-out must STAY public.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** As a candidate, open every recruiter and admin address - all refused. Signed out, same. As company A, request company B's project, shortlist, note and candidate records by id - all refused. Confirm sign-in still works.
+    - **Done when:** All refused. Each cross-company case asserted separately. Public pages still public.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
 ---
 
-## Wednesday 23 September
+## Tuesday 15 September — BUILD WAVE 3
 
-> **CHECKPOINT 2, this evening.** The WHOLE recruiter journey must be walkable on a preview, even if rough. **Final valve decision.** Anything not walkable today is descoped in writing — it does not get carried into the last two days.
+### Shallika · *designer*
 
-**Shivansh**
+- [ ] `T-011` **As the designer, I need to check what was actually built, not what was designed.** *(day 2 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every feature from build wave 1 is reviewed in the running application - not from screenshots.
+    - **Find out first:** Open the preview and use it. Compare against the approved design.
+    - **Prompts:** No AI needed.
+    - **Manual test:** For each wave-1 feature check: does it match the design, does it work on a phone, hover and focus states, loading, errors, empty states, spacing, typography, consistency, and anything confusing.
+    - **Done when:** Every wave-1 feature has a recorded UI/UX SIGN-OFF of PASS or NEEDS FIX. Issues are ranked BLOCKER / MAJOR / MINOR. Minor cosmetic issues become P2 bugs - they do NOT block the release.
 
-- [ ] `T-118` **The search surface specifically: filters, active criteria, project context** *(day 3 of 3)*
-      - *Done when:* Filters are grouped and labelled, active filters are visible and individually removable, the project name is prominent, candidate cards are scannable at a glance, and the shortlist action is obvious without a tooltip.
-      - **Needs:** R3
+### Shivansh
 
-**Zainab**
+- [ ] `T-016` **As a candidate, I control what recruiters see and can check it myself.** *(day 2 of 2)*
+    - **🔴 HIGH RISK** · P0 · waits on D-8
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate can turn recruiter visibility off and preview exactly what a recruiter sees - rendered by the same code the recruiter uses, so the preview cannot lie.
+    - **Find out first:** Privacy control. Confirm the preview reuses the REAL recruiter rendering, not a copy. Sohail must confirm the wording matches what the site publicly promises.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (privacy) -> P3 Implement -> P10 Security review.
+    - **Manual test:** Turn visibility OFF. Have a recruiter re-run a search that matched you - you are gone. Also have them re-open a SAVED list - still gone. Turn a field's privacy off - it vanishes from the preview too.
+    - **Done when:** Visibility off removes the candidate everywhere including saved results. Preview matches the real recruiter view field for field.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-019` **As a recruiter, if I am interrupted halfway I carry on where I left off, and I land somewhere useful.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Onboarding resumes at the right step after a browser close, and finishing puts the recruiter on Home with one obvious next action.
+    - **Find out first:** The current step must come from what is saved, not from the browser. Coordinate with R12 - Home is built there.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Complete steps 1 and 2. CLOSE THE BROWSER at step 3. Reopen and sign in - you are on step 3 with 1 and 2 done. Finish - you land on Home, not search.
+    - **Done when:** Resumes correctly every time. A progress indicator shows where you are. Finishing lands on Home.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+- [ ] `T-021` **As a recruiter opening ABTalks, I know what to do next.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Home shows my projects with new matches, what is waiting on me, and one clear action for a brand-new recruiter - each linking to the exact place that resolves it.
+    - **Find out first:** Read counts from the project and pipeline work. Do not write new queries for the same numbers.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** As an established recruiter: Home tells you what needs attention and every link works. As a BRAND NEW recruiter: one obvious action, not five empty tiles.
+    - **Done when:** Home answers 'what should I do next'. The new-recruiter state is designed, not empty.
+- [ ] `T-078` **As a candidate, I find jobs that suit me, apply once, and see what happened.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Candidates search and filter jobs by skill, role, location, work mode and type, apply once with a friendly refusal on a repeat, and track each application's stage.
+    - **Find out first:** A jobs list exists with no search and no filters. A uniqueness rule already exists in the database - catch it and turn it into a readable message rather than a server error.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Filter by one skill matching exactly one job - only that job. Apply - confirmation. Replay the apply action - friendly refusal, still ONE application. Have a recruiter move you forward - your applications list shows the new stage.
+    - **Done when:** All five filters correct and run in the backend. One application per person per job. Stage and date visible to the candidate.
+    - **Regression check:** MANDATORY: existing jobs still list and still accept applications.
 
-- [ ] `T-138` **The report emits SkillEvidence and reaches the recruiter card** *(day 2 of 2)*
-      - *Done when:* A completed interview writes exactly one SkillEvidence row through emitSkillEvidence. Re-generating the report creates no duplicate. The signal appears on the recruiter card where showInterviewResults allows.
-      - **Needs:** P1
-- [ ] `T-143` **Fix every S1 from both audits** *(day 2 of 2)*
-      - *Done when:* Every S1 closed or descoped in writing. A fresh user can complete both journeys end to end.
-- [ ] `T-144` **Both journeys write evidence, and the recruiter can see it** *(day 1 of 2)*
-      - *Done when:* A completed cohort activity and a published hackathon result each write a SkillEvidence row, update the profile, and produce a signal the recruiter side can shortlist on. 'The emitter fired' is not sufficient - the recruiter view is checked.
-      - **Needs:** P1, R5
+### Zainab
 
-**shashank**
+- [ ] `T-031` **As a recruiter, I email a candidate without leaving ABTalks, and can see who I already contacted.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The recruiter writes a subject and message, sends it, the candidate receives a real email, and the history and pipeline record that it happened.
+    - **Find out first:** Email sending already works elsewhere in the product. Find it and reuse it - do not add a second provider. Check how it reports success versus failure.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Unlock a candidate. Write and send. CHECK A REAL INBOX - it arrived within a minute. Try sending WITHOUT unlocking - refused. Force a failure - it shows as failed with a retry, never as sent. The candidate is now marked contacted.
+    - **Done when:** A real email arrives. Sending without unlock is refused server-side. History readable. Failures visible. The pipeline moves to contacted and never moves someone backwards.
+    - **Regression check:** MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-034` **As a recruiter, I see the plans, know what I have used, and understand it when I run out.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Plans render from stored data with the current one marked, usage shows as used-out-of-total and moves after real actions, and hitting a limit explains what was blocked and where to upgrade.
+    - **Find out first:** An existing plans dialog has the layout and copy. Reuse it. Show the SERVER's refusal message - do not write new copy in the browser.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open plans - three plans, real limits, yours marked. Note your search count, run one search, reload - up by one. Exhaust a limit - the message names the action and the limit, with a link to plans.
+    - **Done when:** Plans from data. Usage accurate. The limit message is specific, never a generic toast.
+- [ ] `T-075` **As a candidate who has been on ABTalks for months, my past work should count too.** *(day 2 of 2)*
+    - **🔴 HIGH RISK** · P1
+    - **What needs to work:** Historic completed work is backfilled so long-standing candidates are not outranked by newer ones.
+    - **Find out first:** ~15,000 historic records. A previous similar job ran 4.5 hours and died. Find the existing batched script pattern and reuse it. This RUNS on release day, with Sohail present.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P11 Database review -> P3 Implement.
+    - **Manual test:** Run it against a copy. Kill it halfway. Restart - it resumes and finishes. Counts reconcile.
+    - **Done when:** Completes on a copy, restartable, zero conflicts, counts reconcile. Not run against production without Sohail.
+    - **Regression check:** MANDATORY: points and progress unchanged for a sample of existing candidates.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-080` **As a recruiter, I build a test and send it to the candidates I shortlisted.** *(day 2 of 3)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a test with a title, instructions, time limit and pass mark, writes multiple-choice questions, reorders and edits them, previews it, publishes and assigns it - and each candidate is notified once.
+    - **Find out first:** Question storage and result storage BOTH already exist unused - find them and use them. Do not create a second question model. Everything scoped to the recruiter's own company.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (new data + company isolation) -> P11 Database review -> P3 Implement.
+    - **Manual test:** Create a test with four questions. Reorder, edit one, delete one. Reload - all stuck. Try saving a question with no correct answer - refused. Preview - it looks like the candidate's view. Publish and assign to three shortlisted candidates - exactly three assignments, no duplicates, each notified. As another company, open its id - not found.
+    - **Done when:** Full builder CRUD persists. Preview reuses the real candidate screen. Assignment is one per candidate. Company isolation proven.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-088` **As a candidate, I can finish a mock interview and get a report I can act on.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** The journey is walked on production with a fresh account, every blocking break is fixed, and the finished report records proof and reaches the recruiter's view.
+    - **Find out first:** Substantial code exists but nobody has proven it works for a NEW user. Walk it as a real user FIRST, then fix only what blocks. Do not extend the interview engine.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fresh account: open mock interviews, pick a domain, start, answer, finish, read the report, check history. Force a provider failure - readable message, no lost attempt. Then check the recruiter view of the signal.
+    - **Done when:** Every blocking break closed or written off in writing. Report shows strengths, weaknesses and improvements. One proof record, visible to recruiters where privacy allows. Failure paths degrade rather than dead-end.
+    - **Regression check:** MANDATORY: an existing candidate's past interview reports still open.
 
-- [ ] `T-063` **Migrate existing RecruiterShortlistItem rows onto TalentListItem** *(day 2 of 2)*
-      - *Done when:* Row count in RecruiterShortlistItem before equals row count created in TalentListItem after. Any discrepancy blocks the cutover. Rehearsed on a child branch first.
-      - **Security:** Child branch rehearsal first
+### shashank
 
-**Manuvrtti**
+- [ ] `T-026` **As a recruiter, my searches stay fast and return the right people.** *(day 2 of 2)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Candidate filtering is done efficiently by the backend and stays responsive with realistic numbers. Today it loads a capped batch and filters in memory, which silently drops results.
+    - **Find out first:** Ask Claude to explain how search loads and filters candidates today, and what the row cap does to results when a filter is applied. Understand it before proposing a fix.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P11 Database review -> P5 Regression analysis.
+    - **Manual test:** Filter to something you know matches exactly one candidate - that candidate comes back. Time twenty searches with realistic data, before and after.
+    - **Done when:** Filters return correct results at realistic volumes. Timings recorded before and after. The existing safety cap stays until the new path is proven.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: re-run three previously working searches and confirm identical results.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-028` **As a recruiter, I move candidates through my process and see who needs me.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A candidate can be moved through the hiring stages, the stage sticks, and one board shows who is waiting on the recruiter.
+    - **Find out first:** A set of pipeline stages already exists in the database, unused. Find it and use it rather than inventing stage names.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Move three candidates to three stages. Sign out, sign back in - all three as you left them. The board shows how many are waiting on you.
+    - **Done when:** Stages move, persist and record who changed them. The board answers 'who needs me' at a glance.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-076` **As a recruiter, I want to see why this candidate came up, and where they fall short.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Opening a candidate shows their strongest signals with a count behind each, the gaps against this project's criteria, and an honest statement when there is not enough information.
+    - **Find out first:** Existing scoring and match-explanation code already exists - reuse it rather than writing a scoring engine. Facts are records that exist; anything else is our judgement and must look different.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a candidate with several verified activities - counted signals. Set a project needing AWS and 2 years, open someone with neither - exactly two gap lines. Open a brand-new candidate - it says there is not enough information and shows NO score.
+    - **Done when:** Signals counted from real records. Gaps specific and correct. Empty candidates handled honestly. Self-declared and evidence-backed visually distinct. No invented score.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+- [ ] `T-084` **As a recruiter hiring for sales or marketing, I search for those people the same way I search for engineers.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** The product recognises the non-technical role families alongside the technical ones, with enough skills seeded that a filter returns something useful - and no coding signal affects a non-technical candidate's standing.
+    - **Find out first:** Role grouping already exists but only covers engineering-shaped roles. EXTEND the rules - the existing ordering carries meaning, so do not reorder it. Search already filters on skills, so this is taxonomy, not new search.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Check a real marketing job title is recognised as marketing, not 'other'. Check three existing engineering titles still return what they did. Complete a marketing profile with NO coding links - it is not weaker than an equivalent engineering profile, and it appears in a marketing search.
+    - **Done when:** The non-technical families are recognised and searchable. Existing families unchanged. Coding signals never lower a non-technical candidate.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back. MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
 
-- [ ] `T-133` **One connector UI for GitHub, LeetCode and CodeChef - declared links with trust labels** *(day 3 of 3)*
-      - *Done when:* Each of the three can be connected with a handle or URL, validated for format, disconnected and reconnected. A malformed handle is refused with a readable message. Nothing is fetched from an external API in September.
-      - *Start here:* prisma CandidateLink already carries GITHUB, LEETCODE, CODECHEF - store there; CandidateProfile.githubUsername already exists
-- [ ] `T-160` **Instrument every named event, pairing with each stream owner** *(day 7 of 7)*
-      - *Done when:* Every event in the frozen taxonomy fires during a manual walkthrough and is queryable by userId and time. The recruiter analytics numbers in R10 read these rows.
+### Manuvrtti
 
-**Sohail**
+- [ ] `T-038` **As the team, we hear about production errors before users report them.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Errors reach an error-tracking tool and the team channel within a minute.
+    - **Find out first:** Today a production error is invisible unless someone reads deployment logs. There is one logging helper - wire into that.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger a deliberate error. It appears in the tool and the channel within a minute.
+    - **Done when:** Errors visible within a minute. No raw console logging introduced.
+- [ ] `T-082` **As a recruiter, I am told when something needs me - and only then.** *(day 2 of 3)*
+    - **🟡 MEDIUM** · P1 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The recruiter events produce a notification each, only the important ones send email, and a notification centre links straight to the thing it is about.
+    - **Find out first:** Build on the shared notification helper - this is mostly configuration, not new infrastructure. Follow the candidate bell as the pattern.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger each recruiter event. Each appears once in the bell and its link opens THAT candidate, job or test - never a list. Count your emails: only the important ones. Switch one off and re-trigger - it stops, nothing else does.
+    - **Done when:** Every event notifies once. Only the agreed few email. Every link opens the right thing. Preferences work per type and channel.
+    - **Regression check:** MANDATORY: an existing admin broadcast still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-086` **As the project lead, I can answer what happened this week with a query instead of a guess.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** One shared helper records that something happened. It never slows down or breaks the thing the user was doing, and the recruiter analytics read these records.
+    - **Find out first:** No analytics of any kind today. Keep it simple - one table and one helper, no external vendor. Each feature owner adds their own events as part of their own task.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Call it from a real action - the action is not slowed. Force it to fail internally - the user's action STILL succeeds. Walk the recruiter journey; every agreed event is recorded with the right person and time.
+    - **Done when:** Never blocks, never breaks a user action. Events queryable by person and date. The analytics page reads these records.
+    - **Regression check:** MANDATORY: every action you instrument still behaves exactly as before.
+- [ ] `T-087` **As a candidate, I add my GitHub, LeetCode and CodeChef profiles.** *(day 1 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** All three can be added, checked for a sensible format, removed and re-added - and every one is shown to a recruiter as self-reported, never as verified.
+    - **Find out first:** Link storage for all three ALREADY EXISTS in the database - find it before creating anything. Nothing is fetched from those sites this month; these are declared links.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Add all three. Enter a nonsense handle - refused readably. Remove one and add it back. View as a recruiter - each clearly marked self-reported, with no score anywhere.
+    - **Done when:** All three connect, validate, disconnect and reconnect. Every external signal labelled self-reported. No invented score exists anywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
 
-- [ ] `T-172` **Rate limits on OTP request, job apply, outreach send and assessment submit** *(day 3 of 3)*
-      - *Done when:* Each throttles with a readable message rather than a 500, and the limit resets as documented.
+### Sohail
+
+- [ ] `T-035` **As an admin, I switch a recruiter's plan on - and a payment system can later do the same.**
+    - **🔴 HIGH RISK** · P0 · waits on D-4
+    - **What needs to work:** One function turns a subscription on. The admin screen calls it. Nothing else can.
+    - **Find out first:** No payment provider exists and none is being added. Build so a payment webhook can call the SAME function later without rework.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** As admin, activate a plan. As the recruiter, reload - limits are live. Confirm no other path can activate a plan.
+    - **Done when:** One admin-only activation function, setting period and resetting usage. It is the only way a plan becomes active.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-040` **As the business, a candidate must never reach a recruiter screen, and one company must never see another's data.** *(day 2 of 2)*
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every recruiter and admin screen refuses candidates and signed-out visitors, and requesting another company's records by id fails.
+    - **Find out first:** One recruiter screen currently requires only a login, not an approved recruiter. Check every recruiter and admin route. Sign-in and sign-out must STAY public.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** As a candidate, open every recruiter and admin address - all refused. Signed out, same. As company A, request company B's project, shortlist, note and candidate records by id - all refused. Confirm sign-in still works.
+    - **Done when:** All refused. Each cross-company case asserted separately. Public pages still public.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-041` **As a candidate, my email, phone and CV must not leak to a recruiter who has not unlocked me.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** No recruiter screen returns contact details in its data unless that recruiter has unlocked them - checked in the raw response, not on screen.
+    - **Find out first:** Data can be present in a response even when it is not displayed. Check the network tab, not the page.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement -> P10 Security review.
+    - **Manual test:** Open the network tab. Visit search results, a candidate card and the project view for a candidate you have NOT unlocked. Search every response for their email, phone and CV link. Zero hits.
+    - **Done when:** Zero contact data in any response for a non-unlocked candidate, verified in the raw payload.
+    - **Regression check:** MANDATORY: a recruiter who HAS unlocked a candidate still sees the details.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-042` **As the team, we need somewhere realistic to test, and the journey tests green before we freeze.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** A test environment with every database change applied and fresh data, and the whole test suite passing on the release branch.
+    - **Find out first:** Use a copy of the database, never production.
+    - **Prompts:** P11 Database review. Copy only.
+    - **Manual test:** Sign in to the test environment as a recruiter, a candidate and an admin. All three work.
+    - **Done when:** Test environment clean. All journey tests and existing suites green on the release branch.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-043` **As the project lead, I need to know on Tuesday evening whether we can stop building.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** The feature freeze is signed against six criteria, or it is not signed and we say why.
+    - **Find out first:** Check all six honestly. A criterion that is nearly true is not true.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement
+    - **Manual test:** Read the six criteria aloud with the team. Sign or don't.
+    - **Done when:** Signed only when: the build is clean; journey tests green; test environment ready; no P0 knowingly unfinished without a written note; anything unfinished switched off; every journey has a named person for Saturday.
+    - **⛔ Sohail owns and signs this himself.**
 
 ---
 
-# P4 FINAL
+## Wednesday 16 September — BUILD WAVE 3
 
-*Final feature completion*
+*Last build day. Testing has been continuous throughout.*
 
-## Thursday 24 September
+> **FEATURE FREEZE — 20:00 tonight.** All committed functionality must be implemented. After tonight: blocker fixes, integration fixes, UAT fixes, regression and release prep only. No scope expansion — and no committed feature quietly dropped.
 
-**Shivansh**
+### Shallika · *designer*
 
-- [ ] `T-026` **Empty, loading and error states across all five onboarding steps**
-      - *Done when:* Each step has a designed loading state, a readable error on a failed save, and no step shows a spinner that never resolves. Verified at 390px.
-- [ ] `T-089` **Write E2E E-R5 and E-C3** *(day 1 of 2)*
-      - *Done when:* E-R5: recruiter posts a job, candidate applies, recruiter shortlists, emails, moves stage, candidate notified. E-C3: candidate browses, filters, applies, tracks. Both green in CI.
-- [ ] `T-119` **Responsive pass: tablet and 390px mobile across every recruiter surface** *(day 1 of 2)*
-      - *Done when:* No horizontal scroll, no clipped CTA, tap targets 44px or larger, and the left nav collapses to something usable rather than disappearing.
-- [ ] `T-131` **States and 390px pass across the profile editor and public profile**
-      - *Done when:* Every section has a designed empty state and a readable error. No spinner that never resolves. No horizontal scroll at 390px.
-- [ ] `T-177` **Write E2E E-R1, E-C1 and E-C2** *(day 1 of 2)*
-      - *Done when:* Three specs green in CI on the release branch: recruiter onboarding through to the workspace; candidate signup to discoverable; and the full profile lifecycle across a logout, an edit and a removal.
+- [ ] `T-012` **As the designer, I need to check the whole product one final time before we ship.** *(day 1 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every September journey reviewed end to end in the running application on desktop and mobile.
+    - **Find out first:** This is the last chance to catch something that makes the product feel unfinished.
+    - **Prompts:** None.
+    - **Manual test:** Walk the recruiter journey and the candidate journey end to end, on a laptop and on a phone. Log every issue with a rank.
+    - **Done when:** Both journeys signed off. Blockers fixed before release; majors fixed if time allows; minors logged for October. A minor cosmetic issue never blocks the release.
 
-**Zainab**
+### Shivansh
 
-- [ ] `T-072` **Write E2E E-R3: search, insights, shortlist, unlock, email, CONTACTED** *(day 1 of 2)*
-      - *Done when:* One spec covering the whole chain, asserting the email was queued, the pipeline moved, the outreach row exists and the entitlement counter decremented.
-- [ ] `T-100` **Recruiter result review, assessment history and the candidate's own result** *(day 1 of 2)*
-      - *Done when:* The recruiter sees a per-question report matching the candidate's answers. The candidate sees their own score. Both sides list past assessments. showAssessmentScores gates what the recruiter sees on the candidate card.
-      - **Security:** showAssessmentScores gates the recruiter card, independently of the recruiter's own report
-- [ ] `T-139` **Failure paths degrade rather than dead-end**
-      - *Done when:* A forced provider failure, a voice failure and a timeout each leave the candidate a usable path forward with a readable message. No failure loses a completed attempt.
-- [ ] `T-144` **Both journeys write evidence, and the recruiter can see it** *(day 2 of 2)*
-      - *Done when:* A completed cohort activity and a published hackathon result each write a SkillEvidence row, update the profile, and produce a signal the recruiter side can shortlist on. 'The emitter fired' is not sufficient - the recruiter view is checked.
-      - **Needs:** P1, R5
-- [ ] `T-178` **Write E2E E-R4, E-C4, E-C5, E-C6 and E-C7** *(day 1 of 2)*
-      - *Done when:* Five specs green in CI: assessment build-to-review, the candidate attempt, mock interview to evidence, cohort to evidence, hackathon to evidence.
+- [ ] `T-079` **As a recruiter, I see who applied, move them forward, and pull the good ones into my hiring project.**
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter opens their job, sees applicants, moves one forward with the candidate notified, and adds an applicant to a talent project as the SAME person - no duplicate record.
+    - **Find out first:** This does not exist today. Reuse the pipeline stages from R5 so an applicant and a sourced candidate share one vocabulary. Use the shared add-to-shortlist helper.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open your job's applicants. Move one to screening - the candidate sees it and gets a notification. Add them to a talent project - they appear there as the same person, with only ONE record of them. As a recruiter from ANOTHER company, request that applicant id - not found.
+    - **Done when:** Applicants list, stages move, candidate notified, applicant enters the project on the same identity. Cross-company refused.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
 
-**shashank**
+### Zainab
 
-- [ ] `T-049` **Write E2E E-R2: create project, define criteria, search, leave, return, everything preserved** *(day 1 of 2)*
-      - *Done when:* The spec creates a project, sets six criteria, runs a search, records three candidate states, signs out, signs in in a fresh browser context, reopens the project, and asserts every criterion and every state is unchanged and only genuinely new candidates carry NEW.
-- [ ] `T-179` **Write E2E E-R6, E-R8 and E-C9** *(day 1 of 2)*
-      - *Done when:* Three specs green in CI: a recruiter notification opening the right context; the four privacy cases failing server-side; and a non-technical candidate discovered and shortlisted.
+- [ ] `T-080` **As a recruiter, I build a test and send it to the candidates I shortlisted.** *(day 3 of 3)*
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** A recruiter creates a test with a title, instructions, time limit and pass mark, writes multiple-choice questions, reorders and edits them, previews it, publishes and assigns it - and each candidate is notified once.
+    - **Find out first:** Question storage and result storage BOTH already exist unused - find them and use them. Do not create a second question model. Everything scoped to the recruiter's own company.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (new data + company isolation) -> P11 Database review -> P3 Implement.
+    - **Manual test:** Create a test with four questions. Reorder, edit one, delete one. Reload - all stuck. Try saving a question with no correct answer - refused. Preview - it looks like the candidate's view. Publish and assign to three shortlisted candidates - exactly three assignments, no duplicates, each notified. As another company, open its id - not found.
+    - **Done when:** Full builder CRUD persists. Preview reuses the real candidate screen. Assignment is one per candidate. Company isolation proven.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-081` **As a candidate, I take the test without losing my answers, and both sides see the result.**
+    - **🔴 HIGH RISK** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The candidate opens the test from their notification, answers within the time limit, can refresh without losing work or gaining time, submits, and it is marked automatically - with the recruiter reading a question-by-question report.
+    - **Find out first:** The time limit MUST be enforced by the server, and correct answers must NEVER reach the browser before submission. Verify both in the network response, not on the screen.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (cheat vectors) -> P3 Implement -> P10 Security review.
+    - **Manual test:** Open from the notification - the right test. Answer two questions. REFRESH - answers kept, timer did NOT reset. Open the network tab - NO correct answers anywhere. Wait past the limit and submit - refused. Open another candidate's test id - refused. Submit properly - the score matches a hand calculation. As the recruiter, read the report.
+    - **Done when:** Server-enforced timer. No answer leakage. Refresh-safe. Deterministic marking, repeatable, no duplicate result. Recruiter report matches the candidate's answers. The result records proof for the tested skills.
+    - **Regression check:** MANDATORY: sign in as an existing recruiter, an existing candidate and an admin. All three still reach their own home screen.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
+- [ ] `T-088` **As a candidate, I can finish a mock interview and get a report I can act on.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** The journey is walked on production with a fresh account, every blocking break is fixed, and the finished report records proof and reaches the recruiter's view.
+    - **Find out first:** Substantial code exists but nobody has proven it works for a NEW user. Walk it as a real user FIRST, then fix only what blocks. Do not extend the interview engine.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fresh account: open mock interviews, pick a domain, start, answer, finish, read the report, check history. Force a provider failure - readable message, no lost attempt. Then check the recruiter view of the signal.
+    - **Done when:** Every blocking break closed or written off in writing. Report shows strengths, weaknesses and improvements. One proof record, visible to recruiters where privacy allows. Failure paths degrade rather than dead-end.
+    - **Regression check:** MANDATORY: an existing candidate's past interview reports still open.
+- [ ] `T-089` **As a new candidate, I can join a cohort or a hackathon and have it count.**
+    - **🟡 MEDIUM** · P2
+    - **What needs to work:** Both journeys are walked on production with fresh accounts, every blocking break is fixed, and completing work records proof a recruiter can see.
+    - **Find out first:** Live for months but never proven for a NEW user. Walk both as a real user FIRST. Record what duplicate submission actually does rather than assuming. Do not rebuild the infrastructure.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fresh account: find a cohort, enrol, complete an activity, submit, see it marked. Fresh participant: find a hackathon, register alone AND in a team, submit, try a duplicate, see the result. Then check a recruiter can see the resulting signal.
+    - **Done when:** Both journeys complete for a genuinely new user. Proof recorded and visible to a recruiter - 'the record was written' is not enough, the recruiter view is checked.
+    - **Regression check:** MANDATORY: complete one existing challenge task - points and progress still work.
 
-**Manuvrtti**
+### shashank
 
-- [ ] `T-134` **Recruiter rendering with an explicit trust badge on every external signal**
-      - *Done when:* Every external link on a recruiter surface is labelled Self-reported. There is no number anywhere claiming to be verified, and no invented score. showGithub gates the GitHub link.
-      - **Security:** A recruiter must never be able to mistake a declared link for a synced one
-- [ ] `T-180` **Write E2E E-C8** *(day 1 of 2)*
-      - *Done when:* One spec green in CI: all three providers connect, a malformed handle is refused, and every recruiter-facing signal reads Self-reported.
+- [ ] `T-076` **As a recruiter, I want to see why this candidate came up, and where they fall short.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P1
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** Opening a candidate shows their strongest signals with a count behind each, the gaps against this project's criteria, and an honest statement when there is not enough information.
+    - **Find out first:** Existing scoring and match-explanation code already exists - reuse it rather than writing a scoring engine. Facts are records that exist; anything else is our judgement and must look different.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Open a candidate with several verified activities - counted signals. Set a project needing AWS and 2 years, open someone with neither - exactly two gap lines. Open a brand-new candidate - it says there is not enough information and shows NO score.
+    - **Done when:** Signals counted from real records. Gaps specific and correct. Empty candidates handled honestly. Self-declared and evidence-backed visually distinct. No invented score.
+    - **Regression check:** MANDATORY: run a recruiter search that worked before and confirm the same candidates come back.
+- [ ] `T-083` **As a recruiter, I can see whether my hiring is actually working.**
+    - **🟡 MEDIUM** · P2
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** One page showing active jobs and projects, candidates discovered, viewed, shortlisted and contacted, applications, tests assigned and completed - for my company only.
+    - **Find out first:** These are straightforward counts over tables the other workstreams already write. Do NOT add new counters or a reporting layer.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Write down every number. Do a real search, view, shortlist, unlock and stage change. Re-read - each corresponding number moved and nothing else did. Sign in as a different company - none of your activity appears.
+    - **Done when:** Every number reconciles against a hand count and is company-scoped. No chart a recruiter cannot act on.
+    - **Regression check:** MANDATORY: open an existing talent project and confirm its criteria, matches and shortlist are unchanged.
+- [ ] `T-085` **As a candidate, I can see that real recruiters are looking at me.**
+    - **🔴 HIGH RISK** · P2 · waits on D-8
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** An approved recruiter opening a candidate is recorded once however many times they refresh, unauthorised viewers record nothing, and the candidate sees the count.
+    - **Find out first:** Nothing like this exists. Ask Claude how a recruiter is identified as approved so unauthorised callers record nothing. Agree the candidate-facing wording with Sohail first.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail (privacy + new data) -> P3 Implement -> P10 Security review.
+    - **Manual test:** As an approved recruiter, open a candidate and REFRESH FIVE TIMES - exactly one view recorded. As a candidate, as an anonymous visitor, and as a recruiter from another company - each records nothing and is refused.
+    - **Done when:** One view per recruiter per candidate per window. Three unauthorised cases refused and tested explicitly. The candidate sees an accurate count.
+    - **Regression check:** MANDATORY: opening a candidate profile still works normally for an approved recruiter.
+    - **⛔ STOP - Sohail reviews the Claude plan BEFORE any code and approves again before production. Junior must not self-merge.**
 
-**Sohail**
+### Manuvrtti
 
-- [ ] `T-173` **Write E2E E-R7 and E-R8, then get the whole suite green on the release branch** *(day 1 of 2)*
-      - *Done when:* E-R7 asserts six gated actions refused with the client removed. E-R8 asserts four privacy cases fail server-side. All 17 journeys and every existing tsx suite green on the release branch.
-- [ ] `T-174` **Stand up the UAT environment: migrations applied and seeded** *(day 1 of 2)*
-      - *Done when:* The UAT Neon child branch has every September migration applied and db:seed:e2e runs clean against it.
-      - **Security:** Child branch only
-
----
-
-## Friday 25 September
-
-> **FEATURE FREEZE — 20:00 IST.** Six criteria signed by Sohail. **No feature commit after tonight.** Fixes only, and only against UAT defects.
-
-**Shivansh**
-
-- [ ] `T-089` **Write E2E E-R5 and E-C3** *(day 2 of 2)*
-      - *Done when:* E-R5: recruiter posts a job, candidate applies, recruiter shortlists, emails, moves stage, candidate notified. E-C3: candidate browses, filters, applies, tracks. Both green in CI.
-- [ ] `T-119` **Responsive pass: tablet and 390px mobile across every recruiter surface** *(day 2 of 2)*
-      - *Done when:* No horizontal scroll, no clipped CTA, tap targets 44px or larger, and the left nav collapses to something usable rather than disappearing.
-- [ ] `T-120` **Performance targets on the four heaviest recruiter surfaces**
-      - *Done when:* 20 timed samples each on candidate search, the Talent Hub, Home and analytics. p95 under 1.5s / 1.2s / 1.0s / 1.5s. No surface blocks on an AI call where a deterministic query would do.
-      - **Needs:** R3 indexes
-- [ ] `T-177` **Write E2E E-R1, E-C1 and E-C2** *(day 2 of 2)*
-      - *Done when:* Three specs green in CI on the release branch: recruiter onboarding through to the workspace; candidate signup to discoverable; and the full profile lifecycle across a logout, an edit and a removal.
-
-**Zainab**
-
-- [ ] `T-072` **Write E2E E-R3: search, insights, shortlist, unlock, email, CONTACTED** *(day 2 of 2)*
-      - *Done when:* One spec covering the whole chain, asserting the email was queued, the pipeline moved, the outreach row exists and the entitlement counter decremented.
-- [ ] `T-100` **Recruiter result review, assessment history and the candidate's own result** *(day 2 of 2)*
-      - *Done when:* The recruiter sees a per-question report matching the candidate's answers. The candidate sees their own score. Both sides list past assessments. showAssessmentScores gates what the recruiter sees on the candidate card.
-      - **Security:** showAssessmentScores gates the recruiter card, independently of the recruiter's own report
-- [ ] `T-178` **Write E2E E-R4, E-C4, E-C5, E-C6 and E-C7** *(day 2 of 2)*
-      - *Done when:* Five specs green in CI: assessment build-to-review, the candidate attempt, mock interview to evidence, cohort to evidence, hackathon to evidence.
-
-**shashank**
-
-- [ ] `T-049` **Write E2E E-R2: create project, define criteria, search, leave, return, everything preserved** *(day 2 of 2)*
-      - *Done when:* The spec creates a project, sets six criteria, runs a search, records three candidate states, signs out, signs in in a fresh browser context, reopens the project, and asserts every criterion and every state is unchanged and only genuinely new candidates carry NEW.
-- [ ] `T-179` **Write E2E E-R6, E-R8 and E-C9** *(day 2 of 2)*
-      - *Done when:* Three specs green in CI: a recruiter notification opening the right context; the four privacy cases failing server-side; and a non-technical candidate discovered and shortlisted.
-
-**Manuvrtti**
-
-- [ ] `T-180` **Write E2E E-C8** *(day 2 of 2)*
-      - *Done when:* One spec green in CI: all three providers connect, a malformed handle is refused, and every recruiter-facing signal reads Self-reported.
-
-**Sohail**
-
-- [ ] `T-173` **Write E2E E-R7 and E-R8, then get the whole suite green on the release branch** *(day 2 of 2)*
-      - *Done when:* E-R7 asserts six gated actions refused with the client removed. E-R8 asserts four privacy cases fail server-side. All 17 journeys and every existing tsx suite green on the release branch.
-- [ ] `T-174` **Stand up the UAT environment: migrations applied and seeded** *(day 2 of 2)*
-      - *Done when:* The UAT Neon child branch has every September migration applied and db:seed:e2e runs clean against it.
-      - **Security:** Child branch only
-- [ ] `T-175` **GATE: FEATURE FREEZE, Thu 25 Sep 20:00 IST**
-      - *Done when:* Six criteria verified and signed: (1) build clean, zero TS errors, zero new lint errors. (2) 17 E2E journeys and every tsx suite green on the release branch. (3) migrations applied to the UAT branch and seeded. (4) no P0 knowingly incomplete without a written descope. (5) every incomplete P1 behind an OFF flag. (6) every workstream has a named production-smoke owner for 30 Sep.
-
----
-
-# U1 UAT PASS
-
-*Execute every script. FIND ONLY - no fixing.*
-
-## Saturday 26 September
-
-> **No fixing today.** The point of U1 is to learn the true defect count. Log everything, fix nothing.
-
-**Shivansh**
-
-- [ ] `T-182` **U1: execute the sourcing scripts (U-R3, U-R4, U-R5, U-R6)**
-      - *Done when:* All four executed with fresh accounts, including a real return visit in a second browser. Findings only.
-
-**Zainab**
-
-- [ ] `T-181` **U1: execute the recruiter onboarding and plan scripts (U-R1, U-R2, U-R12)**
-      - *Done when:* All three executed with a FRESH allow-listed recruiter account. Every defect logged and triaged. No fixing on U1.
-
-**shashank**
-
-- [ ] `T-184` **U1: execute the candidate scripts (U-C1 to U-C9)**
-      - *Done when:* All nine executed with fresh accounts. Findings only.
-
-**Manuvrtti**
-
-- [ ] `T-183` **U1: execute the jobs, assessment, analytics and notification scripts (U-R7, U-R8, U-R9, U-R10)**
-      - *Done when:* All four executed with fresh accounts on both sides. Findings only.
-
-**Sohail**
-
-- [ ] `T-185` **U1: execute the security, performance and polish scripts (U-R11, U-R12)**
-      - *Done when:* Executed with the client bypassed where the script says so. Findings only.
-- [ ] `T-186` **U1: triage every logged defect into S1 / S2 / S3 / S4 and assign it**
-      - *Done when:* Every defect triaged and assigned the same evening. Nobody is assigned to retest their own fix.
+- [ ] `T-082` **As a recruiter, I am told when something needs me - and only then.** *(day 3 of 3)*
+    - **🟡 MEDIUM** · P1 · waits on D-9
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** The recruiter events produce a notification each, only the important ones send email, and a notification centre links straight to the thing it is about.
+    - **Find out first:** Build on the shared notification helper - this is mostly configuration, not new infrastructure. Follow the candidate bell as the pattern.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Trigger each recruiter event. Each appears once in the bell and its link opens THAT candidate, job or test - never a list. Count your emails: only the important ones. Switch one off and re-trigger - it stops, nothing else does.
+    - **Done when:** Every event notifies once. Only the agreed few email. Every link opens the right thing. Preferences work per type and channel.
+    - **Regression check:** MANDATORY: an existing admin broadcast still reaches the bell. MANDATORY: trigger an existing email (recruiter sign-in code) and confirm it still arrives.
+- [ ] `T-087` **As a candidate, I add my GitHub, LeetCode and CodeChef profiles.** *(day 2 of 2)*
+    - **🟡 MEDIUM** · P2
+    - **🎨 Approved design required before frontend work starts (see UI/UX sheet).**
+    - **What needs to work:** All three can be added, checked for a sensible format, removed and re-added - and every one is shown to a recruiter as self-reported, never as verified.
+    - **Find out first:** Link storage for all three ALREADY EXISTS in the database - find it before creating anything. Nothing is fetched from those sites this month; these are declared links.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Add all three. Enter a nonsense handle - refused readably. Remove one and add it back. View as a recruiter - each clearly marked self-reported, with no score anywhere.
+    - **Done when:** All three connect, validate, disconnect and reconnect. Every external signal labelled self-reported. No invented score exists anywhere.
+    - **Regression check:** MANDATORY: open an existing candidate profile, edit a section you did not touch, save, reload.
 
 ---
 
-# U2 S1 FIXES
+## Thursday 17 September — UAT - FIND ONLY
 
-*Fix every S1. Retested by the reporter, never the fixer.*
+*Run every script. Fix nothing.*
 
-## Sunday 27 September
+> **Find only.** Log every problem. Fix nothing today.
 
-> **GATE — U2 exit.** Zero S1 open by end of day.
+### Shallika · *designer*
 
-**Shivansh**
+- [ ] `T-012` **As the designer, I need to check the whole product one final time before we ship.** *(day 2 of 2)*
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every September journey reviewed end to end in the running application on desktop and mobile.
+    - **Find out first:** This is the last chance to catch something that makes the product feel unfinished.
+    - **Prompts:** None.
+    - **Manual test:** Walk the recruiter journey and the candidate journey end to end, on a laptop and on a phone. Log every issue with a rank.
+    - **Done when:** Both journeys signed off. Blockers fixed before release; majors fixed if time allows; minors logged for October. A minor cosmetic issue never blocks the release.
+- [ ] `T-049` **As the project lead, I need Shallika to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts Full UI/UX pass, both journeys executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
 
-- [ ] `T-187` **U2: fix assigned S1 defects (Shivansh)**
-      - *Done when:* Every assigned S1 fixed and handed back to its original reporter for retest. A fix the reporter cannot reproduce as fixed stays open.
+### Shivansh
 
-**Zainab**
+- [ ] `T-045` **As the project lead, I need Shivansh to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts UAT-3, UAT-4, UAT-5 executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
 
-- [ ] `T-188` **U2: fix assigned S1 defects (Zainab)**
-      - *Done when:* Every assigned S1 fixed and handed back to its original reporter for retest. A fix the reporter cannot reproduce as fixed stays open.
+### Zainab
 
-**shashank**
+- [ ] `T-044` **As the project lead, I need Zainab to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts UAT-1, UAT-2 executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
 
-- [ ] `T-189` **U2: fix assigned S1 defects (shashank)**
-      - *Done when:* Every assigned S1 fixed and handed back to its original reporter for retest. A fix the reporter cannot reproduce as fixed stays open.
+### shashank
 
-**Manuvrtti**
+- [ ] `T-047` **As the project lead, I need shashank to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts UAT-8, UAT-9, UAT-10 executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
 
-- [ ] `T-190` **U2: fix assigned S1 defects (Manuvrtti)**
-      - *Done when:* Every assigned S1 fixed and handed back to its original reporter for retest. A fix the reporter cannot reproduce as fixed stays open.
+### Manuvrtti
 
-**Sohail**
+- [ ] `T-046` **As the project lead, I need Manuvrtti to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts UAT-6, UAT-7 executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
 
-- [ ] `T-191` **U2: fix assigned S1 defects (Sohail)**
-      - *Done when:* Every assigned S1 fixed and handed back to its original reporter for retest. A fix the reporter cannot reproduce as fixed stays open.
-- [ ] `T-192` **GATE: U2 exit - zero S1 defects open**
-      - *Done when:* Zero S1 open, every fix retested by its reporter.
+### Sohail
 
----
-
-# U3 S2 & POLISH
-
-*Fix every S2. Mobile, states, first-impression review.*
-
-## Monday 28 September
-
-> **GATE — U3 exit.** Zero S2 open, mobile and states passes complete, first-impression findings closed.
-
-**Shivansh**
-
-- [ ] `T-193` **U3: fix S2 defects and complete the polish pass (Shivansh)**
-      - *Done when:* S2 defects closed. Every screen this owner touched passes at 390px and has loading, empty, error and success states.
-
-**Zainab**
-
-- [ ] `T-194` **U3: fix S2 defects and complete the polish pass (Zainab)**
-      - *Done when:* S2 defects closed. Every screen this owner touched passes at 390px and has loading, empty, error and success states.
-
-**shashank**
-
-- [ ] `T-195` **U3: fix S2 defects and complete the polish pass (shashank)**
-      - *Done when:* S2 defects closed. Every screen this owner touched passes at 390px and has loading, empty, error and success states.
-
-**Manuvrtti**
-
-- [ ] `T-196` **U3: fix S2 defects and complete the polish pass (Manuvrtti)**
-      - *Done when:* S2 defects closed. Every screen this owner touched passes at 390px and has loading, empty, error and success states.
-
-**Sohail**
-
-- [ ] `T-197` **U3: fix S2 defects and complete the polish pass (Sohail)**
-      - *Done when:* S2 defects closed. Every screen this owner touched passes at 390px and has loading, empty, error and success states.
-- [ ] `T-198` **U3: recruiter first-impression review with someone who has not seen the product**
-      - *Done when:* A person who has never used ABTalks is asked to reach candidate search, shortlist someone and email them, unaided. Every hesitation is logged as an S2 UI defect. This is the test that decides whether it feels like one workspace.
-- [ ] `T-199` **GATE: U3 exit - zero S2 open, polish and mobile passes complete**
-      - *Done when:* Zero S2 open. Every new surface has all four states and passes at 390px.
-
----
-
-# U4 REGRESSION
-
-*Re-run everything. Sign-off 18:00 IST.*
-
-## Tuesday 29 September
-
-> **GATE — UAT SIGN-OFF, 18:00 IST.** Five signatures. Zero S1, zero S2, all 21 scripts passed on the re-run.
-
-**Shivansh**
-
-- [ ] `T-201` **U4: re-run your U1 scripts clean (Shivansh: U-R3, U-R4, U-R5, U-R6)**
-      - *Done when:* Every script this tester ran on U1 is re-run end to end and passes. A script that passed on U1 but not on U4 has NOT passed - it goes back to the defect log. Same tester as U1, same fresh-account discipline.
-
-**Zainab**
-
-- [ ] `T-200` **U4: re-run your U1 scripts clean (Zainab: U-R1, U-R2, U-R12)**
-      - *Done when:* Every script this tester ran on U1 is re-run end to end and passes. A script that passed on U1 but not on U4 has NOT passed - it goes back to the defect log. Same tester as U1, same fresh-account discipline.
-
-**shashank**
-
-- [ ] `T-203` **U4: re-run your U1 scripts clean (shashank: U-C1 to U-C9)**
-      - *Done when:* Every script this tester ran on U1 is re-run end to end and passes. A script that passed on U1 but not on U4 has NOT passed - it goes back to the defect log. Same tester as U1, same fresh-account discipline.
-
-**Manuvrtti**
-
-- [ ] `T-202` **U4: re-run your U1 scripts clean (Manuvrtti: U-R7, U-R8, U-R9, U-R10)**
-      - *Done when:* Every script this tester ran on U1 is re-run end to end and passes. A script that passed on U1 but not on U4 has NOT passed - it goes back to the defect log. Same tester as U1, same fresh-account discipline.
-
-**Sohail**
-
-- [ ] `T-204` **U4: re-run your U1 scripts clean (Sohail: U-R11, U-R12)**
-      - *Done when:* Every script this tester ran on U1 is re-run end to end and passes. A script that passed on U1 but not on U4 has NOT passed - it goes back to the defect log. Same tester as U1, same fresh-account discipline.
-- [ ] `T-205` **U4: re-run all 17 E2E journeys and every existing tsx suite in CI**
-      - *Done when:* All green on the release branch: test:hire-score, test:scout, test:visibility, test:078-dual-write, test:078-points-writes, test:078-progress, test:profile, test:resume, test:synergy-cap.
-- [ ] `T-206` **U4: manual regression across every pre-existing journey**
-      - *Done when:* Challenge submission, program mission, hackathon submission, certificate issue, marketplace redeem, workshop registration and points award all still work. Nothing September built broke something August shipped.
-- [ ] `T-207` **U4: p95 performance measurement on the four heaviest surfaces**
-      - *Done when:* 20 timed samples each on candidate search, Talent Hub, recruiter Home and analytics. Numbers recorded whether or not they pass.
-- [ ] `T-208` **U4: log S3 and S4 defects to the October backlog with named owners**
-      - *Done when:* Nothing is silently dropped. Every deferred defect has an owner and a one-line reason.
-- [ ] `T-209` **GATE: UAT SIGN-OFF, Tue 29 Sep 18:00 IST - five signatures**
-      - *Done when:* Zero S1 and zero S2. All 21 scripts passed on the U4 re-run. 17 E2E journeys green. Regression clean. Sentry quiet four hours. Five signatures collected.
+- [ ] `T-048` **As the project lead, I need Sohail to test somebody else's work with a fresh account.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Scripts UAT-11, UAT-12 executed and every failure written down.
+    - **Find out first:** You are testing work you did NOT build. Follow the script exactly.
+    - **Prompts:** No AI. Human testing.
+    - **Manual test:** Execute each assigned script with FRESH accounts. Log every failure with a rank. DO NOT FIX ANYTHING TODAY - we need the real number first.
+    - **Done when:** Every assigned script executed with fresh accounts. Every failure logged and ranked. Nothing fixed today.
+- [ ] `T-050` **As the project lead, I need to know by Wednesday evening how bad it is.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every logged defect has a rank and an owner, and nobody retests their own fix.
+    - **Find out first:** Triage together at end of day.
+    - **Prompts:** None.
+    - **Manual test:** Read every bug. Assign rank and owner.
+    - **Done when:** All defects triaged and assigned. The finder is recorded for retesting.
 
 ---
 
-# RELEASE DAY
+## Friday 18 September — FIX + REGRESSION + SIGN-OFF
 
-*Deploy, smoke every journey step, sign.*
+*Blockers, majors, regression, six signatures.*
 
-## Wednesday 30 September
+> **Six signatures tonight.** Zero blockers, zero majors, UI/UX signed off, regression clean.
 
-> **RELEASE.** Sohail declares only when all 30 rows of the Recruiter Journey sheet read PROD VERIFIED.
+### Shallika · *designer*
 
-**Shivansh**
+- [ ] `T-056` **As the designer, I check the fixes did not break the experience.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Every UI fix from today is re-checked in the running app.
+    - **Find out first:** Fixes made under time pressure are where states get dropped.
+    - **Prompts:** P14 UI review.
+    - **Manual test:** Re-walk every screen that changed today. Check states, spacing and mobile.
+    - **Done when:** Every changed screen re-checked. New issues ranked; minors go to October.
+- [ ] `T-063` **As the designer, I give the final UI/UX verdict.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Both September journeys signed off in the running application, on desktop and mobile.
+    - **Find out first:** Last chance to catch something that makes the product feel unfinished.
+    - **Prompts:** P14 UI review.
+    - **Manual test:** Walk the recruiter journey and the candidate journey end to end, laptop and phone.
+    - **Done when:** UI/UX SIGN-OFF recorded as PASS or NEEDS FIX per journey. Blockers must be fixed before release; minors go to October and never block it.
 
-- [ ] `T-027` **PRODUCTION SMOKE: fresh recruiter completes all five onboarding steps**
-      - *Done when:* Owner registers a real allow-listed recruiter on production, completes company details, hiring need and plan selection, is activated by admin, and reaches Home. organizationId recorded in the release checklist.
-- [ ] `T-090` **PRODUCTION SMOKE: full job hiring loop**
-      - *Done when:* Owner posts a job on production, applies from a fresh candidate account, moves the applicant to SCREENING, confirms the candidate notification, and pushes the applicant into a talent project.
-- [ ] `T-121` **PRODUCTION SMOKE: a first-time recruiter navigates unaided**
-      - *Done when:* Owner asks someone who has never seen ABTalks to reach candidate search from the recruiter home on production, without being told where to click. If they cannot, that is an S2.
-- [ ] `T-132` **PRODUCTION SMOKE: complete profile lifecycle on a fresh account**
-      - *Done when:* Owner completes every section on production, logs out and back in, edits four sections, removes one item, opens the recruiter preview, and is then found by a real recruiter search showing exactly the allowed fields.
+### Shivansh
 
-**Zainab**
+- [ ] `T-051` **As Shivansh, I fix every blocker assigned to me.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every assigned blocker is fixed and handed back to whoever found it.
+    - **Find out first:** Use P4 to find the cause before changing anything.
+    - **Prompts:** P4 Bug investigation -> P3 Implement -> P7 Self-review.
+    - **Manual test:** Fix it, then have the ORIGINAL finder confirm it - not yourself.
+    - **Done when:** Every assigned blocker fixed, confirmed by its finder, covered by a new test.
+    - **Regression check:** Re-run the manual test of the feature you touched.
+- [ ] `T-057` **As Shivansh, I fix the majors and re-run my scripts clean.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Major defects closed and every assigned script passes on a clean re-run.
+    - **Find out first:** A script that passed on Thursday but not today has NOT passed.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fix majors, then re-run every script you ran on Wednesday, start to finish.
+    - **Done when:** Majors closed. Every script passes on the re-run.
+    - **Regression check:** Re-run the manual test of anything you touched.
 
-- [ ] `T-073` **PRODUCTION SMOKE: unlock and email a real candidate**
-      - *Done when:* Owner unlocks one real candidate on production and sends one real email, confirms it arrives in the inbox, and confirms the pipeline moved to CONTACTED.
-- [ ] `T-101` **PRODUCTION SMOKE: build, publish, assign, attempt, evaluate, review**
-      - *Done when:* Owner runs the whole loop live with a fresh recruiter and a fresh candidate, and confirms the score reached the report, the candidate result, the evidence row and the analytics number.
-- [ ] `T-140` **PRODUCTION SMOKE: full mock interview journey plus one forced failure**
-      - *Done when:* Owner completes a real interview on production, forces a provider failure, and reads the recruiter-visible signal.
-- [ ] `T-145` **PRODUCTION SMOKE: fresh user completes both journeys**
-      - *Done when:* Owner enrols a fresh account in a cohort and completes one activity, and registers a fresh participant for a hackathon and submits. Both ids recorded.
-- [ ] `T-151` **PRODUCTION: run the backfill, then smoke a live emit**
-      - *Done when:* Backfill completes on production with zero conflicts and a reconciled row count. Then one real activity is completed and writes exactly one new row.
+### Zainab
 
-**shashank**
+- [ ] `T-052` **As Zainab, I fix every blocker assigned to me.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every assigned blocker is fixed and handed back to whoever found it.
+    - **Find out first:** Use P4 to find the cause before changing anything.
+    - **Prompts:** P4 Bug investigation -> P3 Implement -> P7 Self-review.
+    - **Manual test:** Fix it, then have the ORIGINAL finder confirm it - not yourself.
+    - **Done when:** Every assigned blocker fixed, confirmed by its finder, covered by a new test.
+    - **Regression check:** Re-run the manual test of the feature you touched.
+- [ ] `T-058` **As Zainab, I fix the majors and re-run my scripts clean.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Major defects closed and every assigned script passes on a clean re-run.
+    - **Find out first:** A script that passed on Thursday but not today has NOT passed.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fix majors, then re-run every script you ran on Wednesday, start to finish.
+    - **Done when:** Majors closed. Every script passes on the re-run.
+    - **Regression check:** Re-run the manual test of anything you touched.
 
-- [ ] `T-050` **PRODUCTION SMOKE: project survives a real return visit**
-      - *Done when:* Owner creates a project on production, records states, signs out, signs in from a different browser, and confirms criteria, matches and states are intact. Project id recorded.
-- [ ] `T-057` **PRODUCTION SMOKE: insights on a real candidate trace to real rows**
-      - *Done when:* Owner opens a real candidate on production, opens two evidence claims, and confirms both resolve to rows that exist. Candidate public id recorded.
-- [ ] `T-064` **PRODUCTION SMOKE: shortlist and pipeline survive a real device change**
-      - *Done when:* Owner shortlists three candidates from three different tracks on production, sets three different stages, signs out, signs in on another browser, and confirms all three.
-- [ ] `T-106` **PRODUCTION SMOKE: real actions move the real numbers**
-      - *Done when:* Owner records every number on production, performs a search, a view, a shortlist, an unlock and a stage change, and confirms each corresponding number moved and nothing else did.
-- [ ] `T-112` **PRODUCTION SMOKE: non-technical candidate discovered and shortlisted**
-      - *Done when:* Owner creates a real Marketing candidate and a real Marketing project on production, finds the candidate, reads their insights and shortlists them - with no coding signal anywhere in the journey.
-- [ ] `T-165` **PRODUCTION SMOKE: one view per refresh window**
-      - *Done when:* Owner opens a real candidate on production, refreshes five times, and confirms exactly one view row and one increment in analytics.
+### shashank
 
-**Manuvrtti**
+- [ ] `T-053` **As shashank, I fix every blocker assigned to me.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every assigned blocker is fixed and handed back to whoever found it.
+    - **Find out first:** Use P4 to find the cause before changing anything.
+    - **Prompts:** P4 Bug investigation -> P3 Implement -> P7 Self-review.
+    - **Manual test:** Fix it, then have the ORIGINAL finder confirm it - not yourself.
+    - **Done when:** Every assigned blocker fixed, confirmed by its finder, covered by a new test.
+    - **Regression check:** Re-run the manual test of the feature you touched.
+- [ ] `T-059` **As shashank, I fix the majors and re-run my scripts clean.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Major defects closed and every assigned script passes on a clean re-run.
+    - **Find out first:** A script that passed on Thursday but not today has NOT passed.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fix majors, then re-run every script you ran on Wednesday, start to finish.
+    - **Done when:** Majors closed. Every script passes on the re-run.
+    - **Regression check:** Re-run the manual test of anything you touched.
 
-- [ ] `T-078` **PRODUCTION SMOKE: trigger all seven recruiter notifications**
-      - *Done when:* Owner triggers each of the seven on production, confirms the bell item and its link, and confirms exactly three arrived by email.
-- [ ] `T-135` **PRODUCTION SMOKE: connect all three and read the recruiter view**
-      - *Done when:* Owner connects three real handles on production and confirms all three render to a recruiter as Self-reported.
-- [ ] `T-156` **PRODUCTION SMOKE: deliverability across every notification type**
-      - *Done when:* Owner triggers every candidate and recruiter type on production and confirms bell plus inbox, and that a disabled preference stays quiet.
-- [ ] `T-161` **PRODUCTION SMOKE: crons ran and events landed**
-      - *Done when:* Owner confirms every Vercel cron ran and that events exist for the day's smoke journeys. Sentry quiet.
+### Manuvrtti
 
-**Sohail**
+- [ ] `T-054` **As Manuvrtti, I fix every blocker assigned to me.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every assigned blocker is fixed and handed back to whoever found it.
+    - **Find out first:** Use P4 to find the cause before changing anything.
+    - **Prompts:** P4 Bug investigation -> P3 Implement -> P7 Self-review.
+    - **Manual test:** Fix it, then have the ORIGINAL finder confirm it - not yourself.
+    - **Done when:** Every assigned blocker fixed, confirmed by its finder, covered by a new test.
+    - **Regression check:** Re-run the manual test of the feature you touched.
+- [ ] `T-060` **As Manuvrtti, I fix the majors and re-run my scripts clean.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Major defects closed and every assigned script passes on a clean re-run.
+    - **Find out first:** A script that passed on Thursday but not today has NOT passed.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fix majors, then re-run every script you ran on Wednesday, start to finish.
+    - **Done when:** Majors closed. Every script passes on the re-run.
+    - **Regression check:** Re-run the manual test of anything you touched.
 
-- [ ] `T-038` **PRODUCTION SMOKE: exhaust one limit on production with the client bypassed**
-      - *Done when:* Owner calls a gated Server Action directly against production, past its limit, with the UI removed, and records the refusal. If it is not refused, the release does not proceed.
-- [ ] `T-176` **PRODUCTION SMOKE: re-run the cross-org, PII, authorization and rate-limit sweeps live**
-      - *Done when:* Every sweep re-run against the production deployment, not the UAT branch, and every refusal recorded.
-- [ ] `T-210` **09:00 Take a Neon snapshot branch from production**
-      - *Done when:* Snapshot branch id recorded in the release checklist before any write touches production.
-      - **Security:** Snapshot before any write
-- [ ] `T-211` **09:30 Run final migrations against production and verify each applied**
-      - *Done when:* prisma migrate status reports every migration applied. The deployed commit hash is recorded.
-- [ ] `T-212` **10:30 Deploy the release branch, not master**
-      - *Done when:* Deployment green and the deployed commit matches the branch signed off at UAT.
-- [ ] `T-213` **14:00 Set production flags, including ENABLE_RECRUITER_AUTH for the allow-list**
-      - *Done when:* Flag state matches the decision record. Every incomplete P1 is OFF.
-      - **Security:** An incomplete P1 left ON is an S1
-- [ ] `T-214` **15:00 Two-hour Sentry observation window**
-      - *Done when:* No new error class in two hours. A new S1 in this window blocks the declaration.
-- [ ] `T-215` **16:30 Confirm every row on Recruiter Journey Coverage reads PROD VERIFIED**
-      - *Done when:* Every capability on the coverage matrix is green. Anything short is flagged OFF with its owner named, not waved through.
-- [ ] `T-216` **17:00 Sign the release checklist and declare the release**
-      - *Done when:* Five signatures collected. Each means: I personally walked the journeys I own, on production, with fresh accounts.
-- [ ] `T-217` **Post-release: reconcile project-context.md and CHANGELOG through 2026-09-30**
-      - *Done when:* The reconciled-through date is updated and every pending CHANGELOG line is folded in and verified against code.
+### Sohail
+
+- [ ] `T-055` **As Sohail, I fix every blocker assigned to me.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every assigned blocker is fixed and handed back to whoever found it.
+    - **Find out first:** Use P4 to find the cause before changing anything.
+    - **Prompts:** P4 Bug investigation -> P3 Implement -> P7 Self-review.
+    - **Manual test:** Fix it, then have the ORIGINAL finder confirm it - not yourself.
+    - **Done when:** Every assigned blocker fixed, confirmed by its finder, covered by a new test.
+    - **Regression check:** Re-run the manual test of the feature you touched.
+- [ ] `T-061` **As Sohail, I fix the majors and re-run my scripts clean.**
+    - **🟢 LOW** · P0
+    - **What needs to work:** Major defects closed and every assigned script passes on a clean re-run.
+    - **Find out first:** A script that passed on Thursday but not today has NOT passed.
+    - **Prompts:** P1 Investigate -> P2 Plan -> P3 Implement
+    - **Manual test:** Fix majors, then re-run every script you ran on Wednesday, start to finish.
+    - **Done when:** Majors closed. Every script passes on the re-run.
+    - **Regression check:** Re-run the manual test of anything you touched.
+- [ ] `T-062` **As the project lead, I need to know nothing we built broke something that already worked.**
+    - **🟡 MEDIUM** · P0
+    - **What needs to work:** Every pre-existing journey still works: challenge submissions, programme missions, hackathon submissions, certificates, marketplace, workshop signup and points.
+    - **Find out first:** These worked before September and nobody has been testing them.
+    - **Prompts:** P5 Regression analysis if something has broken.
+    - **Manual test:** Walk each of the seven as a real user.
+    - **Done when:** All seven still work. All existing suites green.
+    - **Regression check:** This IS the regression check.
+- [ ] `T-064` **As the project lead, I need everyone to say out loud that their part works.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Six signatures, each meaning: I walked the journeys I own, with fresh accounts, and I am willing to be woken up about them.
+    - **Find out first:** Check the exit conditions honestly before asking anyone to sign.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement
+    - **Manual test:** Read the exit criteria. Collect six signatures.
+    - **Done when:** Zero blockers, zero majors, every script passed on the re-run, journey tests green, regression clean, UI/UX signed off. Six signatures.
+    - **⛔ Sohail owns and signs this himself.**
 
 ---
+
+## Saturday 19 September — RELEASE DAY
+
+*Go live and verify on production.*
+
+> **GO LIVE.** Everyone verifies their own journeys on production. Sunday 20th is the deadline date — nobody works it.
+
+### Shallika · *designer*
+
+- [ ] `T-072` **As Shallika, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Walk both journeys on the live site, on a laptop and a phone. Confirm the shipped product matches what was approved.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+
+### Shivansh
+
+- [ ] `T-067` **As Shivansh, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Sign up as a fresh recruiter, onboard the company, reach Home. Then as a fresh candidate: build a full profile, add self-declared skills, log out, log in, edit, remove an item, check the recruiter preview, and confirm you appear in a recruiter search.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+
+### Zainab
+
+- [ ] `T-069` **As Zainab, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Unlock a candidate and send them a REAL email - confirm it arrives. Confirm the pipeline moved to contacted and the outreach history shows it.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+
+### shashank
+
+- [ ] `T-068` **As shashank, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Create a talent project, set criteria, search, shortlist people from different groups, move stages. Sign out and back in FROM ANOTHER BROWSER and confirm everything survived.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+
+### Manuvrtti
+
+- [ ] `T-070` **As Manuvrtti, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Trigger the September notifications - confirm the bell and a real inbox, and that a switched-off preference stays quiet. Confirm errors reach the tracking tool.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+
+### Sohail
+
+- [ ] `T-065` **As the team, we can undo the release if it goes wrong.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** A snapshot of production is taken before anything changes.
+    - **Find out first:** Snapshot FIRST, before any change.
+    - **Prompts:** None - Sohail does this personally.
+    - **Manual test:** Take it. Write down its id.
+    - **Done when:** Snapshot taken and its id on the checklist before any change.
+    - **⛔ Sohail only.**
+- [ ] `T-066` **As the team, the database changes reach production safely and we deploy what was tested.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every change applied and confirmed, then the release branch deployed - not the main branch.
+    - **Find out first:** Already rehearsed on a copy. Confirm the deployed version matches what was signed off.
+    - **Prompts:** P11 Database review.
+    - **Manual test:** Apply changes. Confirm each. Deploy. Compare the deployed version to the signed-off one.
+    - **Done when:** Every change applied and confirmed. Deployed version matches the signed-off release branch exactly.
+    - **⛔ Sohail only.**
+- [ ] `T-071` **As Sohail, I confirm my part works on the live site.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** Every journey this person owns is walked on production with fresh accounts, and the created record ids are written down.
+    - **Find out first:** Production, not the test environment. Fresh accounts, not your own.
+    - **Prompts:** None. Human verification.
+    - **Manual test:** Exhaust a plan limit and call the action directly with the browser bypassed - it must be refused. Re-run the company-isolation and contact-leak checks against production.
+    - **Done when:** Every journey completed on production. Record ids on the checklist. A failure here is a blocker and stops the release.
+    - **Regression check:** This IS the production regression check.
+    - **⛔ Owner walks it; Sohail records it.**
+- [ ] `T-073` **As the project lead, I decide whether we are live.**
+    - **🔴 HIGH RISK** · P0
+    - **What needs to work:** The release is declared only when every P0 journey step has a passed production check. Anything unverified is switched off, not shipped hopefully.
+    - **Find out first:** Read the checklist. Count the passed checks.
+    - **Prompts:** P1 Investigate -> P2 Plan -> STOP for Sohail -> P3 Implement
+    - **Manual test:** Confirm every P0 journey row is verified. Watch errors for two hours. Sign, or switch the unverified part off.
+    - **Done when:** Declared only at full P0 coverage. No new error type in the two-hour watch. Anything unverified is flagged off with its owner named. Sunday 20 September is the stated deadline date - the product is already live from Saturday.
+    - **⛔ Sohail only.**
+
+---
+
+## Sunday 20 September — HOLIDAY
+
+> No work. No development, design, QA, review or testing.  
+> **This is the stated deadline date. The product has been live and verified since Saturday.**
+
+---
+
+# DELIVERY RISK - read this
+
+The full committed product is in this plan. Nothing was deferred. But the arithmetic does not close:
+
+| | Days |
+|---|---|
+| Committed scope, after every simplification | **60.4** |
+| Capacity: 10 build days x 4.0 developer FTE, less overhead | **34.0** |
+| **Gap** | **26.4 developer-days** |
+
+That is roughly **2.6 additional full-time developers** for the whole window. Parallelisation cannot recover it - everyone is already scheduled at ~150%.
+
+**Priority here is EXECUTION ORDER, not a deferral list.** Build P0 first, then P1, then P2 — so that if something is unfinished on the 19th it is the least critical work, not the most recent. That call belongs to the product lead at the Saturday 12 September gate, not to whoever runs out of time.
+

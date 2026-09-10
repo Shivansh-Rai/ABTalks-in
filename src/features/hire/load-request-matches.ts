@@ -8,6 +8,7 @@ import {
 import { filterSearchableUserIds } from "@/repositories/talent";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { existingEngagements } from "@/features/hire/contact-access";
+import { loadAvailabilityByUserId } from "@/features/hire/dossier";
 import { estimateCompensation, formatBandLpa } from "@/features/hire/compensation";
 import { roleFamilyFor, tidyRoleLabel } from "@/features/hire/role-family";
 import type { MatchTier } from "@/features/hire/types";
@@ -117,14 +118,20 @@ export async function loadRequestMatches(
     ),
   ];
 
-  const [engagements, cartCount, nameByUser, members] = await Promise.all([
-    existingEngagements(recruiterUserId, candidateUserIds),
-    prisma.recruiterShortlistItem.count({ where: { recruiterUserId } }),
-    listUserDisplayNames(candidateUserIds),
-    listProgramMemberLabels(provenanceMemberIds, {
-      shortlistedByRecruiterUserId: recruiterUserId,
-    }),
-  ]);
+  const [engagements, cartCount, nameByUser, members, availabilityByUser] =
+    await Promise.all([
+      existingEngagements(recruiterUserId, candidateUserIds),
+      prisma.recruiterShortlistItem.count({ where: { recruiterUserId } }),
+      listUserDisplayNames(candidateUserIds),
+      listProgramMemberLabels(provenanceMemberIds, {
+        shortlistedByRecruiterUserId: recruiterUserId,
+      }),
+      // Read live, exactly like the compensation band below is recomputed
+      // rather than read back: the stored row is a snapshot from match time, and
+      // a candidate who has since switched "open to work" off would otherwise
+      // keep the badge on this page forever.
+      loadAvailabilityByUserId(candidateUserIds),
+    ]);
   const memberById = new Map(members.map((m) => [m.id, m]));
   return {
     title: request.title,
@@ -208,6 +215,8 @@ export async function loadRequestMatches(
         rationale: m.rationale,
         gaps: m.gaps,
         availabilityUnknown: m.availabilityUnknown,
+        openToWork:
+          availabilityByUser.get(m.candidateUserId)?.openToWork === true,
         shortlisted: (member?.shortlistedBy?.length ?? 0) > 0,
         engagementStatus: engagements.get(m.candidateUserId)?.status ?? null,
         scores: pickPublicScores(m.scoreBreakdown),

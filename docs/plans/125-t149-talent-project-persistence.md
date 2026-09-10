@@ -2,7 +2,7 @@
 
 > **Plan 125.** Belongs on branch `feat/talent-request-persistence` (where the
 > foundation lives). Number 116 is already used: this branch has
-> `116-t022-two-browser-forensics.md`, and `upstream/master` has
+> `126-t022-two-browser-forensics.md` (was 116-t022), and `upstream/master` has
 > `116-hackathon-team-code-and-roster.md`. This branch already carries 117–124.
 
 ---
@@ -32,7 +32,7 @@ is required.
 | `upstream` = byteninjaa0/ABtalksapp; fast-forward from `upstream/master` | **No `upstream` remote.** Only `origin` = shashank-mishra08/ABtalksapp. §3 0c–0e fail. |
 | "Branch off synced master, merge the foundation, **exactly four files conflict**" | **`origin/master` has no hire feature** (no `src/features/hire/`, no `src/app/hire/`, 0× `model TalentRequest`, newest migration July `20260731153045`). The persistence branch is **506 ahead / 0 behind** master. The foundation is not on master at all. |
 | Master carries `20260908190000_*` / `20260909120000_*` | Don't exist; master tops out in July 2026. |
-| "master is at 116 … this plan is **125**" | That numbering is now correct. This file was briefly `116-t149-…` and has been renamed to **125** so it does not collide with `116-t022-…` (this branch) or `116-hackathon-…` (`upstream/master`). |
+| "master is at 116 … this plan is **125**" | Plan file is **125**. Persistence-only `116-t022` was later renamed to **126** because `upstream/master` already has two 116s (hackathon + T-226). |
 | PR #254, DO NOT MERGE | Repo PRs are in the **#123–125** range; no #254. Branch is unmerged but not as #254. |
 | Work from a clean `master` | Current checkout is `feat/abtalks-dev` with uncommitted changes. |
 

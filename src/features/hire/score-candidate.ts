@@ -374,6 +374,9 @@ export function scoreCandidate(
 
   const { ok, reasons, missingMust } = evaluateHardFilters(member, spec);
   const availabilityUnknown = member.availability == null;
+  // A status carried to the card, not an input to anything below. Nobody is
+  // ranked up for looking or down for not — see the note on ScoredCandidate.
+  const openToWork = member.availability?.openToWork === true;
 
   const stack = stackScore(member.skills, spec);
   // Prefer hard-filter missing list when present; stackScore missing aligns.
@@ -447,6 +450,7 @@ export function scoreCandidate(
       evidence: toEvidence(member),
       gaps: [...reasons, ...missing.map((m) => `Missing stack: ${m}`)],
       availabilityUnknown,
+      openToWork,
       hardFiltered: true,
       hardFilterReasons: reasons,
       dossier: member.dossier,
@@ -496,6 +500,7 @@ export function scoreCandidate(
     evidence: toEvidence(member),
     gaps,
     availabilityUnknown,
+    openToWork,
     hardFiltered: false,
     hardFilterReasons: [],
     dossier: member.dossier,

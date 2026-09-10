@@ -39,6 +39,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         skills: r.skills,
         yearsExperience: r.yearsExperience ?? undefined,
         source: "PROGRAM" as const,
+        openToWork: r.openToWork,
         revealedName: r.revealedName,
         engagementStatus: engagements.get(r.userId)?.status ?? null,
       }));

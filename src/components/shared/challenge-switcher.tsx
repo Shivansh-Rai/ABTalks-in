@@ -69,9 +69,7 @@ export function ChallengeSwitcher({
 
   function handleHackathon() {
     router.push(
-      isHackathonRegistered
-        ? "/hackathon/dashboard"
-        : "/hackathon/register?s=shr",
+      isHackathonRegistered ? "/hackathon/dashboard" : "/hackathon?s=shr",
     );
     router.refresh();
   }

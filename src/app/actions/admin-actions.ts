@@ -429,7 +429,7 @@ export async function grantSynergyAction(input: {
           email: true,
           role: true,
           studentProfile: { select: { id: true } },
-          hackathonParticipant: { select: { id: true } },
+          hackathonParticipants: { take: 1, select: { id: true } },
         },
       });
       const targetIsAdmin = await isAdminEmail(target?.email);
@@ -437,7 +437,7 @@ export async function grantSynergyAction(input: {
         !target ||
         target.role !== Role.STUDENT ||
         targetIsAdmin ||
-        (!target.studentProfile && !target.hackathonParticipant)
+        (!target.studentProfile && target.hackathonParticipants.length === 0)
       ) {
         throw new Error("Registered student not found");
       }

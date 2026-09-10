@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type HackathonMasterCohort = "all" | "old" | "new";
@@ -38,7 +39,10 @@ export async function getHackathonMasterStudents(input?: {
   cohort?: HackathonMasterCohort;
 }) {
   const cohort = input?.cohort ?? "all";
-  const where = cohortWhere(cohort);
+  const where: Prisma.HackathonParticipantWhereInput = {
+    eventId: HACKATHON.eventId,
+    ...cohortWhere(cohort),
+  };
 
   const rows = await prisma.hackathonParticipant.findMany({
     where,

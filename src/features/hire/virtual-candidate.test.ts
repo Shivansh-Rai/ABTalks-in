@@ -291,5 +291,21 @@ suite("a request can always be cancelled while it is open", () => {
   }
 });
 
+suite("a requirement card never claims someone is open to work", () => {
+  // There is no person on this card, so there is nobody to be open to anything.
+  // A green "Open to work" badge on a requirement would be the exact misreading
+  // — card as inventory — that this whole module is built to prevent.
+  const profile = generateVirtualCandidate({
+    title: "Backend engineer",
+    mustHaveStack: ["python"],
+    evidencePriority: [],
+  });
+  assert(profile !== null, "the fixture spec should produce a profile");
+  assert(
+    virtualCandidateToCard(profile!).openToWork === false,
+    "a virtual card must not claim open to work",
+  );
+});
+
 console.log(`\n${passed} passed${failed ? `, ${failed} failed` : ""}\n`);
 if (failed) process.exit(1);

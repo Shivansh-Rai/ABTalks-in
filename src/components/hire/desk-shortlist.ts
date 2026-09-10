@@ -20,6 +20,8 @@ export type DeskShortlistItem = {
   workMode?: string | null;
   educationLevel?: string | null;
   availabilityUnknown?: boolean;
+  /** Optional: a list saved before this field existed has no such key. */
+  openToWork?: boolean;
   compensationBand?: string | null;
   compensationDeclared?: boolean;
 };
@@ -42,6 +44,7 @@ export function itemFromMatch(match: MatchCardData): DeskShortlistItem {
     workMode: e.workMode ?? null,
     educationLevel: e.educationLevel ?? null,
     availabilityUnknown: match.availabilityUnknown,
+    openToWork: match.openToWork,
     compensationBand: match.compensationBand ?? null,
     compensationDeclared: match.compensationDeclared,
   };

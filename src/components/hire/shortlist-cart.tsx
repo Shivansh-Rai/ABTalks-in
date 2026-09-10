@@ -9,6 +9,7 @@ import { placeBulkEngagementRequestAction } from "@/app/actions/hire-request-act
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { savePendingCheckout } from "@/components/hire/pending-checkout";
 import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref";
+import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,9 @@ export type CartRow = {
   workMode?: string | null;
   educationLevel?: string | null;
   availabilityUnknown?: boolean;
+  /** The candidate says they are actively looking. Status only — it has never
+   *  decided who appears in this cart. */
+  openToWork?: boolean;
   compensationBand?: string | null;
 };
 
@@ -160,18 +164,21 @@ export function ShortlistCart({ rows }: { rows: CartRow[] }) {
                 className="size-4 shrink-0 accent-[var(--color-primary)] disabled:opacity-40"
               />
               <div className="min-w-0 flex-1">
-                {approved && r.memberId ? (
-                  <Link
-                    href={`/talent/members/${r.memberId}`}
-                    className="font-medium hover:underline"
-                  >
-                    {r.revealedName ?? publicId}
-                  </Link>
-                ) : (
-                  <span className="font-medium">
-                    {r.revealedName ?? publicId}
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {approved && r.memberId ? (
+                    <Link
+                      href={`/talent/members/${r.memberId}`}
+                      className="font-medium hover:underline"
+                    >
+                      {r.revealedName ?? publicId}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">
+                      {r.revealedName ?? publicId}
+                    </span>
+                  )}
+                  <OpenToWorkBadge openToWork={r.openToWork} />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {r.jobRole} · {r.totalScore} pts
                   {r.note ? ` · ${r.note}` : ""}

@@ -263,13 +263,13 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
 /* --- The eight places ABTalks operates in --- */
 export const GC_LOCATIONS: readonly GcLocation[] = [
   { id: "india",       name: "India",           short: "India",       flag: "in",   builders: "9,200+", lat:  22.00, lng:   78.90, card: { place: "above",         gap: 30 } },
-  { id: "singapore",   name: "Singapore",       short: "Singapore",   flag: "sg",   builders: "2,300+", lat:   1.35, lng:  103.82, card: { place: "below",         gap: 12, w: 122 } },
-  { id: "dubai",       name: "Dubai",           short: "Dubai",       flag: "ae",   builders: "1,900+", lat:  25.20, lng:   55.27, card: { place: "below",         gap: 26 } },
-  { id: "switzerland", name: "Switzerland",     short: "Switzerland", flag: "ch",   builders: "950+",   lat:  46.95, lng:    7.45, card: { place: "below-right",   gap: 12, w: 136 } },
-  { id: "germany",     name: "Germany",         short: "Germany",     flag: "de",   builders: "2,100+", lat:  52.52, lng:   13.40, card: { place: "above-right",   gap: 14 } },
-  { id: "uk",          name: "United Kingdom",  short: "UK",          flag: "gb",   builders: "2,600+", lat:  51.51, lng:   -0.13, card: { place: "below-left",    gap: 14 } },
-  { id: "scotland",    name: "Scotland",        short: "Scotland",    flag: "sct",  builders: "1,150+", lat:  55.95, lng:   -3.19, card: { place: "above-left",    gap: 14, w: 118 } },
-  { id: "us",          name: "United States",   short: "USA",         flag: "us",   builders: "4,800+", lat:  39.00, lng:  -98.00, card: { place: "above",         gap: 12 } },
+  { id: "singapore",   name: "Singapore",       short: "Singapore",   flag: "sg",   builders: "230+",   lat:   1.35, lng:  103.82, card: { place: "below",         gap: 12, w: 122 } },
+  { id: "dubai",       name: "Dubai",           short: "Dubai",       flag: "ae",   builders: "190+",   lat:  25.20, lng:   55.27, card: { place: "below",         gap: 26 } },
+  { id: "switzerland", name: "Switzerland",     short: "Switzerland", flag: "ch",   builders: "95+",    lat:  46.95, lng:    7.45, card: { place: "below-right",   gap: 12, w: 136 } },
+  { id: "germany",     name: "Germany",         short: "Germany",     flag: "de",   builders: "210+",   lat:  52.52, lng:   13.40, card: { place: "above-right",   gap: 14 } },
+  { id: "uk",          name: "United Kingdom",  short: "UK",          flag: "gb",   builders: "260+",   lat:  51.51, lng:   -0.13, card: { place: "below-left",    gap: 14 } },
+  { id: "scotland",    name: "Scotland",        short: "Scotland",    flag: "sct",  builders: "115+",   lat:  55.95, lng:   -3.19, card: { place: "above-left",    gap: 14, w: 118 } },
+  { id: "us",          name: "United States",   short: "USA",         flag: "us",   builders: "480+",   lat:  39.00, lng:  -98.00, card: { place: "above",         gap: 12 } },
 ];
 
 /* Order the network is built in. `lift` is how far the arc rises off the

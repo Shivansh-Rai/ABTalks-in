@@ -1,16 +1,12 @@
 import "server-only";
-import { BrevoClient } from "@getbrevo/brevo";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { sendEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
-const brevoApiKey = process.env.BREVO_API_KEY!;
-const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
-const fromName = process.env.FROM_NAME || "ABTalks";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
 const logoUrl = `${appUrl}/abtalks-logo.png`;
 
-const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
-
-const WHATSAPP_LINK =
-  "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1";
+const WHATSAPP_LINK = HACKATHON.whatsappLink;
 const SOCIALS = {
   linkedin: "https://www.linkedin.com/company/abtalks-on-ai",
   youtube: "https://youtube.com/@abtalksonai",
@@ -93,18 +89,55 @@ function whatsappLine(): string {
   return `Join our official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a>`;
 }
 
+/**
+ * Plain-text alternative. These messages used to go out as HTML only, which
+ * mailbox providers score as more spam-like — a plausible reason a registrant
+ * finds nothing in their inbox even when Brevo reports the send as accepted.
+ */
+function toPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&rsquo;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * All hackathon mail goes through the shared Brevo transport rather than a
+ * second client built here. That one logs a missing `BREVO_API_KEY`, skips
+ * seed addresses, sets a Reply-To and returns a result instead of throwing —
+ * so a send that does not happen says so in the logs, which is exactly what
+ * this path was missing when registrants reported no welcome email.
+ */
 async function send(
   toEmail: string,
   toName: string,
   subject: string,
   html: string,
 ): Promise<void> {
-  await brevoClient.transactionalEmails.sendTransacEmail({
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email: toEmail, name: toName }],
+  const result = await sendEmail({
+    to: toEmail,
     subject,
-    htmlContent: html,
+    html,
+    text: toPlainText(html),
   });
+  if (!result.ok) {
+    logger.error("[hackathon-email] not delivered", {
+      subject,
+      to: toEmail,
+      name: toName,
+      skipped: result.skipped === true,
+    });
+  }
 }
 
 // 1. Solo participant welcome
@@ -269,7 +302,7 @@ export async function sendMemberRemovedEmail(
     ${heading(`Hi ${name},`)}
     <p style="margin:0 0 12px;">You've been removed from <strong>${teamLabel}</strong> on the 48-Hour AI Hackathon roster.</p>
     <p style="margin:0 0 12px;">You can register again at any time — solo, as your own team, or by rejoining with a team code (including the same one if your leader invites you back).</p>
-    <p style="margin:0;"><a href="${appUrl}/hackathon/register" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
+    <p style="margin:0;"><a href="${appUrl}/hackathon" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
   await send(
     email,
     name,

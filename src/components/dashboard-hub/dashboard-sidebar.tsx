@@ -9,10 +9,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid3X3,
+  LogIn,
   LogOut,
   Presentation,
   Store,
   User,
+  Zap,
 } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { cn } from "@/lib/utils";
@@ -35,6 +37,7 @@ const ICON_MAP: Record<
   store: Store,
   briefcase: Briefcase,
   award: Award,
+  zap: Zap,
   user: User,
 };
 
@@ -47,6 +50,12 @@ type DashboardSidebarProps = {
   collapsible?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  /**
+   * False on the public routes that render this sidebar to signed-out
+   * visitors (`/hackathon`). Every other DashboardShell route is gated by
+   * middleware, so it stays true and nothing about them changes.
+   */
+  signedIn?: boolean;
 };
 
 function initials(name: string) {
@@ -64,6 +73,7 @@ export function DashboardSidebar({
   collapsible = false,
   collapsed = false,
   onToggleCollapse,
+  signedIn = true,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const displayName = user.name.trim() || user.email || "User";
@@ -107,6 +117,35 @@ export function DashboardSidebar({
   }
 
   function renderFooter(compact: boolean) {
+    // A signed-out visitor has no name, no avatar and nothing to sign out of —
+    // showing the tile would render a stranger back to themselves as "User".
+    if (!signedIn) {
+      return (
+        <div
+          className={cn(
+            "mt-auto",
+            compact
+              ? "flex shrink-0 flex-col items-center gap-3 border-t border-neutral-200 p-3"
+              : "flex shrink-0 flex-col justify-center border-t border-neutral-200 p-4",
+          )}
+        >
+          <Link
+            href="/login"
+            onClick={onNavigate}
+            title={compact ? "Log in" : undefined}
+            aria-label={compact ? "Log in" : undefined}
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-lg border border-neutral-200 text-sm font-medium text-[#555555] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]",
+              compact ? "size-9 p-0" : "w-full px-3 py-2",
+            )}
+          >
+            <LogIn className="size-4" aria-hidden />
+            <span className={cn(compact && "sr-only")}>Log in</span>
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(

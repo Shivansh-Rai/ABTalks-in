@@ -1,4 +1,5 @@
 import "server-only";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type HackathonLinkStat = {
@@ -46,6 +47,7 @@ export async function getHackathonLinkStats(): Promise<HackathonLinkStats> {
       orderBy: { label: "asc" },
     }),
     prisma.hackathonParticipant.findMany({
+      where: { eventId: HACKATHON.eventId },
       select: {
         id: true,
         sourceSlug: true,

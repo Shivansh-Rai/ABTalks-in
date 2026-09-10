@@ -15,6 +15,7 @@ import { WinnerCard } from "@/components/hackathon/dashboard/winner-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import { getSubmissionWindow } from "@/features/hackathon/submission-window";
+import { registrationRedirect } from "@/features/registration/registration-gate";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -30,11 +31,40 @@ export default async function HackathonDashboardPage() {
     redirect("/login?from=/hackathon/dashboard");
   }
 
+  // Google's callback lands here directly, so this is where the hackathon route
+  // asks the same question every candidate surface asks: registered yet? `next`
+  // brings them back here once they are.
+  const needsRegistration = await registrationRedirect(
+    session.user.id,
+    "/hackathon/dashboard",
+  );
+  if (needsRegistration) redirect(needsRegistration);
+
+  const reg = await getMyRegistration(session.user.id);
+
   if (!SHOW_LIVE_DASHBOARD) {
+    // Four separate surfaces route registered users here (landing CTA, event
+    // notifications, `postRegisterDestination`, `hackathonRedirectForProfilelessUser`).
+    // Between events this page is a coming-soon card, so the team code and
+    // roster ride along rather than leaving all four at a dead end.
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
         <div className="space-y-6">
           <ComingSoonCard />
+          {reg && reg.team.entryType === "TEAM" ? (
+            <>
+              <TeamRoster
+                entryType={reg.team.entryType}
+                teamName={reg.team.name}
+                members={reg.members}
+                canManage={false}
+              />
+              <InvitePanel
+                teamCode={reg.team.code}
+                spotsLeft={reg.spotsLeft}
+              />
+            </>
+          ) : null}
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
               Vicodathon Winners
@@ -50,7 +80,6 @@ export default async function HackathonDashboardPage() {
     );
   }
 
-  const reg = await getMyRegistration(session.user.id);
   if (!reg) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
@@ -120,7 +149,7 @@ export default async function HackathonDashboardPage() {
               : `You can add or remove teammates until ${HACKATHON.rosterLockLabel}.`}
           </p>
         ) : null}
-        {reg.team.entryType === "TEAM" && reg.spotsLeft > 0 ? (
+        {reg.team.entryType === "TEAM" ? (
           <InvitePanel teamCode={reg.team.code} spotsLeft={reg.spotsLeft} />
         ) : null}
         <SubmissionChecklist submissionOpen={submissionWindow.unlocked} />

@@ -15,14 +15,29 @@ import {
 
 const MONTHS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
-function yearOptions(): string[] {
+const MONTH_LABELS: Record<string, string> = {
+  "1": "Jan",
+  "2": "Feb",
+  "3": "Mar",
+  "4": "Apr",
+  "5": "May",
+  "6": "Jun",
+  "7": "Jul",
+  "8": "Aug",
+  "9": "Sep",
+  "10": "Oct",
+  "11": "Nov",
+  "12": "Dec",
+};
+
+export const CURRENT_YEAR = new Date().getFullYear();
+
+/** Descending, newest first — nobody scrolls up from 1975 to find last year. */
+function yearRange(from: number, to: number): string[] {
   const out: string[] = [];
-  const y = new Date().getFullYear() + 6;
-  for (let i = y; i >= 1975; i--) out.push(String(i));
+  for (let y = to; y >= from; y--) out.push(String(y));
   return out;
 }
-
-const YEARS = yearOptions();
 
 function CloseIcon() {
   return (
@@ -314,6 +329,7 @@ function PwMenuSelect({
   value,
   onChange,
   options,
+  labels,
   placeholder,
   disabled,
   invalid,
@@ -324,6 +340,8 @@ function PwMenuSelect({
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  /** Optional display text per option value. Falls back to the value itself. */
+  labels?: Record<string, string>;
   placeholder: string;
   disabled?: boolean;
   invalid?: boolean;
@@ -347,7 +365,7 @@ function PwMenuSelect({
     };
   }, [open]);
 
-  const label = value || placeholder;
+  const label = value ? (labels?.[value] ?? value) : placeholder;
 
   return (
     <div
@@ -395,7 +413,7 @@ function PwMenuSelect({
                   setOpen(false);
                 }}
               >
-                {opt}
+                {labels?.[opt] ?? opt}
               </button>
             </li>
           ))}
@@ -416,6 +434,9 @@ export function PwMonthYear({
   onYearChange,
   disabled,
   invalid,
+  fromYear = 1975,
+  toYear = CURRENT_YEAR + 6,
+  maxMonth,
 }: {
   monthId?: string;
   yearId?: string;
@@ -427,7 +448,15 @@ export function PwMonthYear({
   onYearChange: (v: number | null) => void;
   disabled?: boolean;
   invalid?: boolean;
+  /** Inclusive year window. Callers narrow this so impossible dates cannot be picked. */
+  fromYear?: number;
+  toYear?: number;
+  /** Caps the month list — used to stop "this year, next month". */
+  maxMonth?: number;
 }) {
+  const years = yearRange(Math.min(fromYear, toYear), toYear);
+  const months =
+    maxMonth === undefined ? MONTHS : MONTHS.filter((m) => Number(m) <= maxMonth);
   return (
     <div className="pw-date-pair">
       <PwMenuSelect
@@ -436,9 +465,10 @@ export function PwMonthYear({
         aria-label="Month"
         disabled={disabled}
         invalid={invalid}
-        placeholder="MM"
+        placeholder="Month"
         value={month === null ? "" : String(month)}
-        options={MONTHS}
+        options={months}
+        labels={MONTH_LABELS}
         onChange={(v) => onMonthChange(v === "" ? null : Number(v))}
       />
       <PwMenuSelect
@@ -447,9 +477,9 @@ export function PwMonthYear({
         aria-label="Year"
         disabled={disabled}
         invalid={invalid}
-        placeholder="YYYY"
+        placeholder="Year"
         value={year === null ? "" : String(year)}
-        options={YEARS}
+        options={years}
         onChange={(v) => onYearChange(v === "" ? null : Number(v))}
       />
     </div>
@@ -566,6 +596,8 @@ export function PwTags({
   helper,
   noAddButton,
   quickAdds,
+  suggestions,
+  normalize,
   emptyText,
 }: {
   id?: string;
@@ -575,12 +607,16 @@ export function PwTags({
   helper?: string;
   noAddButton?: boolean;
   quickAdds?: readonly string[];
+  /** Offered in a dropdown as you type. Free text is still accepted. */
+  suggestions?: readonly string[];
+  /** Folds a typed value onto a canonical spelling before it is added. */
+  normalize?: (raw: string) => string;
   emptyText?: string;
 }) {
   const [draft, setDraft] = useState("");
 
   function add(raw: string) {
-    const v = raw.trim();
+    const v = (normalize ? normalize(raw) : raw).trim();
     if (!v) return;
     if (!values.some((x) => x.toLowerCase() === v.toLowerCase())) {
       onChange([...values, v]);
@@ -591,19 +627,40 @@ export function PwTags({
   return (
     <div>
       <div className="pw-tag-input-row">
-        <input
-          id={id}
-          type="text"
-          value={draft}
-          placeholder={placeholder}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === ",") {
-              e.preventDefault();
-              add(draft);
-            }
-          }}
-        />
+        {suggestions && suggestions.length > 0 ? (
+          <PwSuggest
+            id={id}
+            value={draft}
+            suggestions={suggestions.filter(
+              (s) => !values.some((v) => v.toLowerCase() === s.toLowerCase()),
+            )}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                // Enter here must add a tag, never submit the section.
+                e.preventDefault();
+                e.stopPropagation();
+                add(draft);
+              }
+            }}
+          />
+        ) : (
+          <input
+            id={id}
+            type="text"
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                e.stopPropagation();
+                add(draft);
+              }
+            }}
+          />
+        )}
         {noAddButton ? null : (
           <button
             type="button"
@@ -676,10 +733,18 @@ export function PwEntryCard({
         <button
           type="button"
           className="pw-entry-remove"
+          title="Delete this entry"
           aria-label={`Remove ${title.toLowerCase()} ${index + 1}`}
           onClick={onRemove}
         >
-          <CloseIcon />
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <path d="M3 6h18" />
+            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+            <path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+          <span>Delete</span>
         </button>
       </div>
       {children}

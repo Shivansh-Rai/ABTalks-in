@@ -18,6 +18,7 @@ import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
 import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
+import { GA4Loader } from "@/components/analytics/ga4-loader";
 import { ChatWidget } from "@/components/chatbot/ChatWidget";
 import { isChatbotEnabled } from "@/lib/feature-flags";
 import "./globals.css";
@@ -278,6 +279,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <CookieConsentProvider>
+            <GA4Loader />
             {/* Above SynergyProvider on purpose: BottomNavGate renders one of
                 the two bell triggers and sits outside SynergyProvider. */}
             <NotificationProvider>

@@ -8,6 +8,7 @@ import {
   pickSearchMatches,
   __test,
 } from "@/features/hire/score-candidate";
+import { toPublicMatch } from "@/features/hire/to-public-match";
 import type {
   EvidenceCoverage,
   ScoreableMember,
@@ -169,7 +170,54 @@ console.log("score-candidate tests");
     baseSpec,
   );
   assert(!notLooking.hardFiltered, "openToWork false is not a discovery gate");
-  ok("openToWork false stays searchable");
+  assert(notLooking.openToWork === false, "and it carries through as false");
+  assert(
+    toPublicMatch(notLooking).openToWork === false,
+    "a card for someone not looking must not show the badge",
+  );
+  ok("openToWork false stays searchable and shows no badge");
+}
+
+{
+  // The whole point of the feature: the candidate said yes in /profile, and a
+  // recruiter can see it. Nothing else about the card changes.
+  const looking = scoreCandidate(
+    baseMember({
+      availability: {
+        openToWork: true,
+        expectedSalaryMin: 1_200_000,
+        expectedSalaryMax: 1_800_000,
+        salaryCurrency: "INR",
+        noticePeriodDays: 30,
+        preferredWorkMode: "HYBRID",
+        preferredCities: ["Bengaluru"],
+        openToRelocate: true,
+      },
+    }),
+    baseSpec,
+  );
+  assert(looking.openToWork === true, "openToWork true reaches ScoredCandidate");
+  assert(!looking.availabilityUnknown, "a preference row means availability known");
+  assert(!looking.hardFiltered, "being open to work changes no filter");
+  const card = toPublicMatch(looking);
+  assert(card.openToWork === true, "and reaches the card");
+  // The same row carries the salary they typed. It is admin-only and must not
+  // ride along with the badge.
+  assert(
+    !JSON.stringify(card).includes("1200000") &&
+      !JSON.stringify(card).includes("1800000"),
+    "declared salary must never appear on a recruiter card",
+  );
+  ok("openToWork true reaches the card without dragging salary along");
+}
+
+{
+  // No preference row at all — the two states stay distinguishable. "We do not
+  // know" is not "they said no".
+  const silent = scoreCandidate(baseMember(), baseSpec);
+  assert(silent.availabilityUnknown === true, "no row → availability unknown");
+  assert(silent.openToWork === false, "no row → not claimed as open to work");
+  ok("no preference row is unknown, not a claim");
 }
 
 {

@@ -30,7 +30,11 @@ export async function removeParticipant(args: {
   try {
     return await prisma.$transaction(async (tx) => {
       const target = await tx.hackathonParticipant.findFirst({
-        where: { id: args.participantId, teamId: args.teamId },
+        where: {
+          id: args.participantId,
+          teamId: args.teamId,
+          eventId: HACKATHON.eventId,
+        },
         select: {
           id: true,
           userId: true,
@@ -75,6 +79,7 @@ export async function removeParticipant(args: {
 
       await tx.hackathonRemoval.create({
         data: {
+          eventId: HACKATHON.eventId,
           teamId: target.team.id,
           teamCode: target.team.teamCode,
           teamName: target.team.teamName,
@@ -113,7 +118,7 @@ export async function removeParticipant(args: {
       }
 
       const remaining = await tx.hackathonParticipant.count({
-        where: { teamId: args.teamId },
+        where: { eventId: HACKATHON.eventId, teamId: args.teamId },
       });
 
       return {
@@ -146,7 +151,7 @@ export async function getLastRemovalForUser(userId: string): Promise<{
 } | null> {
   try {
     const row = await prisma.hackathonRemoval.findFirst({
-      where: { userId },
+      where: { eventId: HACKATHON.eventId, userId },
       orderBy: { createdAt: "desc" },
       select: { teamName: true, teamCode: true, createdAt: true },
     });

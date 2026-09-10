@@ -1,5 +1,6 @@
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { getRegistrationDatesSince } from "@/features/admin/get-registration-dates";
@@ -103,7 +104,9 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
       by: ["domain"],
       _count: { _all: true },
     }),
-    prisma.hackathonParticipant.count(),
+    prisma.hackathonParticipant.count({
+      where: { eventId: HACKATHON.eventId },
+    }),
     prisma.enrollment.findMany({
       select: { daysCompleted: true },
     }),

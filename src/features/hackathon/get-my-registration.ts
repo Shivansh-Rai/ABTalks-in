@@ -26,7 +26,9 @@ export async function getMyRegistration(
   userId: string,
 ): Promise<MyRegistration | null> {
   const participant = await prisma.hackathonParticipant.findUnique({
-    where: { userId },
+    where: {
+      eventId_userId: { eventId: HACKATHON.eventId, userId },
+    },
     select: {
       fullName: true,
       isLeader: true,
@@ -37,6 +39,7 @@ export async function getMyRegistration(
           teamName: true,
           entryType: true,
           participants: {
+            where: { eventId: HACKATHON.eventId },
             orderBy: { slotIndex: "asc" },
             select: {
               id: true,

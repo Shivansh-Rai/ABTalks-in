@@ -12,6 +12,7 @@ import { EventsSection } from "@/components/dashboard-hub/events-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
 import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
+import { registrationRedirect } from "@/features/registration/registration-gate";
 import { buildHubSearchIndex } from "@/features/dashboard/hub-search-index";
 import { getHistory } from "@/features/interview/platform/service";
 import {
@@ -169,6 +170,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  // Signed in is not registered: OAuth creates the User row before any form is
+  // reached, and Google's callback lands here directly. Before the hub is even
+  // queried, a candidate with no StudentProfile goes and makes one.
+  const needsRegistration = await registrationRedirect(
+    session.user.id,
+    "/dashboard",
+  );
+  if (needsRegistration) redirect(needsRegistration);
 
   const params = await searchParams;
   const data = await getHubData(session.user.id);

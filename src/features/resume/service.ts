@@ -11,7 +11,10 @@ import {
 } from "@/repositories/candidate-resume";
 import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { applyResumeMergeSafely } from "@/repositories/candidate-merge";
-import { planResumeMerge } from "@/features/resume/merge/plan";
+import {
+  planResumeMerge,
+  type MergeSection,
+} from "@/features/resume/merge/plan";
 import {
   fetchResumeFromUrl,
   validateResumeBytes,
@@ -241,13 +244,40 @@ async function processDocument(
  * the résumé row is already READY and cannot fail the upload: a candidate whose
  * profile could not be merged still gets their résumé and their score.
  */
-async function mergeIntoProfile(userId: string, parsed: ParsedResumeInput) {
+async function mergeIntoProfile(
+  userId: string,
+  parsed: ParsedResumeInput,
+): Promise<MergeSection[]> {
   const detail = await getCandidateDetail(userId);
   if (!detail) return [];
   const plan = planResumeMerge(parsed, detail);
   if (plan.sections.length === 0) return [];
   const applied = await applyResumeMergeSafely(userId, plan);
   if (applied.length > 0) await markMergeApplied(userId, applied, plan.decisions);
+  return applied;
+}
+
+/**
+ * Run the merge again from the résumé already stored for this user.
+ *
+ * There is one caller and one reason for it: registration takes the résumé
+ * BEFORE the profile exists, so the merge at upload time has nothing to merge
+ * into — `getCandidateDetail` returns null and the branch above returns an empty
+ * list. This is that same merge, run once `completeRegistration` has created the
+ * profile.
+ *
+ * Nothing is re-parsed and no model is called: the structured document was
+ * stored on upload and is read straight back. Additive, like every other path
+ * through the planner, so running it a second time on an already-merged résumé
+ * adds nothing rather than duplicating anything.
+ */
+export async function applyStoredResumeToProfile(
+  userId: string,
+): Promise<MergeSection[]> {
+  const row = await getResumeRow(userId);
+  if (!row || row.status !== "READY" || !row.parsedData) return [];
+  const applied = await mergeIntoProfile(userId, row.parsedData);
+  logger.info("[resume] deferred merge", { userId, enriched: applied });
   return applied;
 }
 
