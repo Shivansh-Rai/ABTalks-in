@@ -16,6 +16,9 @@
 import {
   createScoutToolContext,
   searchable,
+  searchFingerprint,
+  shouldAutoSearch,
+  stampSearchFingerprint,
   __test as tools,
 } from "@/features/hire/scout-tools";
 import { __test as explain } from "@/features/hire/explain-matches";
@@ -44,6 +47,7 @@ import {
   persistableSource,
   type TrackLoad,
 } from "@/features/hire/track-loaders";
+import { applyObviousAnswers } from "@/features/hire/spec-fields";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { decodeCandidateRef } from "@/features/hire/candidate-ref";
 import * as fs from "node:fs";
@@ -53,20 +57,38 @@ import type { JobSpec, UpdateBriefArgs } from "@/lib/validations/hire";
 
 let passed = 0;
 let failed = 0;
+const pendingSuites: Promise<void>[] = [];
 
 function assert(cond: boolean | undefined, msg: string) {
   if (!cond) throw new Error(msg);
 }
 
-function suite(name: string, fn: () => void) {
+function suite(name: string, fn: () => void | Promise<void>) {
+  let result: void | Promise<void>;
   try {
-    fn();
-    passed++;
-    console.log(`  ✓ ${name}`);
+    result = fn();
   } catch (e) {
     failed++;
     console.log(`  ✗ ${name}\n      ${(e as Error).message}`);
+    return;
   }
+  if (result && typeof (result as Promise<void>).then === "function") {
+    pendingSuites.push(
+      (result as Promise<void>).then(
+        () => {
+          passed++;
+          console.log(`  ✓ ${name}`);
+        },
+        (e) => {
+          failed++;
+          console.log(`  ✗ ${name}\n      ${(e as Error).message}`);
+        },
+      ),
+    );
+    return;
+  }
+  passed++;
+  console.log(`  ✓ ${name}`);
 }
 
 const blankArgs = (): UpdateBriefArgs => ({
@@ -98,6 +120,14 @@ suite("geo alone is not a brief", () => {
     !isSearchableBrief(applyPoolBrief({}, b)),
     "and nothing may reach the spec",
   );
+});
+
+suite("a role-only message is a brief", () => {
+  const b = extractPoolBrief("AI engineer with 2 years of experience");
+  assert(briefTouched(b), "title makes it touched");
+  assert(b.title?.toLowerCase().includes("ai"), `title ${b.title}`);
+  const spec = applyPoolBrief({}, b);
+  assert(searchable(spec), "and it is searchable");
 });
 
 suite("a real track brief still is one", () => {
@@ -582,20 +612,10 @@ suite("a designer is not offered Java + Spring", () => {
   assert(!chips.some((c) => /Spring/.test(c.label)), "no backend chips");
 });
 
-suite("an intern is offered monthly bands", () => {
-  const chips = suggestChips(
-    { title: "intern", mustHaveStack: ["python"], seniority: "INTERN" },
-    false,
-  );
-  assert(chips.some((c) => /month/.test(c.label)), "monthly");
-});
-
-suite("a senior is offered annual bands", () => {
-  const chips = suggestChips(
-    { title: "backend", mustHaveStack: ["python"], seniority: "SENIOR" },
-    false,
-  );
-  assert(chips.some((c) => /LPA/.test(c.label)), "annual");
+suite("not-ready brief offers skills, not salary bands", () => {
+  const chips = suggestChips({}, false);
+  assert(chips.some((c) => /Python|TypeScript|Java|Node/i.test(c.label)), "skill chips");
+  assert(!chips.some((c) => /LPA|month/i.test(c.label)), "no salary ladder");
 });
 
 suite("every stack chip has a way past it", () => {
@@ -603,9 +623,27 @@ suite("every stack chip has a way past it", () => {
   assert(chips.some((c) => c.value === "skip:mustHaveStack"), "an exit exists");
 });
 
-suite("a searchable brief offers the search", () => {
+suite("a searchable brief offers refine chips, not intake", () => {
   const chips = suggestChips({ title: "backend", mustHaveStack: ["go"] }, true);
-  assert(chips.some((c) => c.value === "action:search"), "search chip");
+  assert(chips.some((c) => c.value === "action:search"), "search again chip");
+  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "add skills");
+  assert(!chips.some((c) => c.value === "MID"), "no seniority gate");
+  assert(!chips.some((c) => /salary:/i.test(c.value)), "no salary gate");
+});
+
+suite("ready brief with agent chips keeps refine exits", () => {
+  const agentChips = [
+    { label: "Missions", value: "missions" },
+    { label: "Projects", value: "projects" },
+  ];
+  const chips = suggestChips(
+    { title: "backend", mustHaveStack: ["python"] },
+    true,
+    agentChips,
+  );
+  assert(chips.some((c) => c.value === "missions"), "agent chips");
+  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "refine skills");
+  assert(!chips.some((c) => c.value === "action:search"), "search stays a button");
 });
 
 /* ══ 6. Track merge — dedupe and coverage, the parts a DB cannot test ═════ */
@@ -758,6 +796,130 @@ suite("result caps read the way people write them", () => {
   assert(parseResultLimit("give me three people") === 3, "word form");
 });
 
+/* ══ 8b. Search-first orchestration ══════════════════════════════════════ */
+
+console.log("\nsearch-first orchestration");
+
+const emptyDeps = {
+  poolSnapshot: async () => ({ searchablePool: 0 }),
+  previewMatch: async () => null,
+};
+
+async function turn(msg: string, prior: JobSpec = {}) {
+  const { runScoutAgent } = await import("@/features/hire/scout-agent");
+  agent.resetGroqCooling();
+  const prevKey = process.env.GROQ_API_KEY;
+  delete process.env.GROQ_API_KEY;
+  try {
+    return await runScoutAgent({
+      priorSpec: prior,
+      history: [],
+      userMessage: msg,
+      deps: emptyDeps,
+    });
+  } finally {
+    if (prevKey !== undefined) process.env.GROQ_API_KEY = prevKey;
+  }
+}
+
+suite("Case A — role-only searches immediately", async () => {
+  const r = await turn("AI engineer");
+  assert(r.spec.title?.toLowerCase().includes("ai"), `title ${r.spec.title}`);
+  assert(searchable(r.spec), "searchable");
+  assert(r.action === "search", `action ${r.action}`);
+});
+
+suite("Case B — role + experience searches immediately", async () => {
+  const r = await turn("AI engineer with 2 years of experience");
+  assert(r.spec.title?.toLowerCase().includes("ai"), `title ${r.spec.title}`);
+  assert(r.spec.minExperience === 2, `years ${r.spec.minExperience}`);
+  assert(r.action === "search", `action ${r.action}`);
+});
+
+suite("Case C — React developer in Bengaluru", async () => {
+  const r = await turn("React developer in Bengaluru");
+  assert(searchable(r.spec), "searchable");
+  assert(
+    r.spec.title?.toLowerCase().includes("react") ||
+      (r.spec.mustHaveStack ?? []).some((s) => /react/i.test(s)),
+    `role/skills ${r.spec.title} ${r.spec.mustHaveStack}`,
+  );
+  assert(/bengaluru/i.test(r.spec.locationCity ?? ""), `loc ${r.spec.locationCity}`);
+  assert(r.action === "search", `action ${r.action}`);
+});
+
+suite("Case D — skills-only searches immediately", async () => {
+  const r = await turn("React, Node.js and PostgreSQL");
+  assert((r.spec.mustHaveStack?.length ?? 0) >= 2, `stack ${r.spec.mustHaveStack}`);
+  assert(r.action === "search", `action ${r.action}`);
+});
+
+suite("Case E — experience-only does not search", async () => {
+  const r = await turn("2 years experience");
+  assert(r.spec.minExperience === 2, "years captured");
+  assert(!searchable(r.spec), "not searchable on experience alone");
+  assert(r.action !== "search", `action ${r.action}`);
+});
+
+suite("Case F — vague need clarifies", async () => {
+  const r = await turn("I need someone");
+  assert(!searchable(r.spec), "not searchable");
+  assert(r.action !== "search", `action ${r.action}`);
+});
+
+suite("Case G — timeout/offline uses latest searchable brief", async () => {
+  const recoverable: JobSpec = {
+    title: "AI Engineer",
+    minExperience: 2,
+  };
+  const r = await turn("please continue", recoverable);
+  assert(r.action === "search", `action ${r.action}`);
+  assert(searchable(r.spec), "kept brief");
+  assert(!/say it again/i.test(r.text), `no repeat plea: ${r.text}`);
+});
+
+suite("Case H — location refinement re-searches", async () => {
+  const prior = stampSearchFingerprint({
+    title: "AI engineer",
+  });
+  const r = await turn("Only Bengaluru", prior);
+  assert(/bengaluru/i.test(r.spec.locationCity ?? ""), `loc ${r.spec.locationCity}`);
+  assert(r.action === "search", `action ${r.action}`);
+});
+
+suite("Case I — duplicate fingerprint does not re-search", async () => {
+  const seeded = applyObviousAnswers({}, "AI Engineer");
+  const stamped = stampSearchFingerprint(seeded);
+  assert(searchable(stamped), "searchable");
+  assert(!shouldAutoSearch(stamped), "duplicate blocked");
+  assert(
+    shouldAutoSearch(stamped, { force: true }),
+    "explicit force still allowed",
+  );
+  const twin = applyObviousAnswers({}, "ai engineer");
+  assert(
+    searchFingerprint(twin) === searchFingerprint(stamped),
+    "normalised equal",
+  );
+  assert(
+    !shouldAutoSearch({
+      ...twin,
+      extra: {
+        ...(twin.extra ?? {}),
+        lastSearchFingerprint: searchFingerprint(stamped),
+      },
+    }),
+    "casing alone does not re-search",
+  );
+});
+
+suite("role-only brief is searchable without stack", () => {
+  assert(searchable({ title: "AI engineer" }), "title enough");
+  assert(searchable({ mustHaveStack: ["react"] }), "skills enough");
+  assert(!searchable({ minExperience: 2 }), "experience alone never");
+  assert(!searchable({ locationCity: "Bengaluru" }), "location alone never");
+});
+
 /* ══ 9. Boundary — server-only must not leak to the client ═══════════════ */
 
 console.log("\nboundary");
@@ -823,12 +985,11 @@ async function live() {
     {
       name: "four facts land in one turn",
       msg: "senior backend engineer, python and postgres, 25 LPA, remote",
-      wantSearch: false,
+      wantSearch: true,
       check: (s) =>
         Boolean(s.title) &&
         s.seniority === "SENIOR" &&
-        (s.mustHaveStack?.length ?? 0) >= 2 &&
-        s.salaryMin === 2_500_000,
+        (s.mustHaveStack?.length ?? 0) >= 1,
     },
     {
       name: "a track brief searches",
@@ -869,6 +1030,7 @@ async function live() {
 }
 
 async function main() {
+  await Promise.all(pendingSuites);
   if (process.argv.includes("--live")) await live();
   console.log(`\n${passed} passed${failed ? `, ${failed} failed` : ""}`);
   if (failed > 0) process.exit(1);

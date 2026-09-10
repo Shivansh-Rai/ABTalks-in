@@ -27,6 +27,10 @@ export type HireDeskState = {
   inspect: MatchCardData | null;
   /** Full-bleed Figma search landing on `/hire` before the first query. */
   landing: boolean;
+  /** Name of the open talent project, shown in the nav card. Null off-project. */
+  projectName: string | null;
+  /** Bumped by the nav card's "+ Create New Project"; ScoutChat resets on change. */
+  newSearchNonce: number;
 };
 
 type HireDeskValue = HireDeskState & {
@@ -36,6 +40,7 @@ type HireDeskValue = HireDeskState & {
   openSaved: () => void;
   openInspect: (match: MatchCardData) => void;
   clearInspect: () => void;
+  requestNewSearch: () => void;
 };
 
 const HireDeskContext = createContext<HireDeskValue | null>(null);
@@ -48,6 +53,8 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
     view: "scout",
     inspect: null,
     landing: true,
+    projectName: null,
+    newSearchNonce: 0,
   });
   const setDesk = useCallback((next: Partial<HireDeskState>) => {
     setState((s) => ({ ...s, ...next }));
@@ -79,6 +86,14 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
   const clearInspect = useCallback(() => {
     setState((s) => ({ ...s, inspect: null }));
   }, []);
+  const requestNewSearch = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      view: "scout",
+      inspect: null,
+      newSearchNonce: s.newSearchNonce + 1,
+    }));
+  }, []);
   const value = useMemo(
     () => ({
       ...state,
@@ -88,8 +103,18 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
       openSaved,
       openInspect,
       clearInspect,
+      requestNewSearch,
     }),
-    [state, setDesk, openPod, closePod, openSaved, openInspect, clearInspect],
+    [
+      state,
+      setDesk,
+      openPod,
+      closePod,
+      openSaved,
+      openInspect,
+      clearInspect,
+      requestNewSearch,
+    ],
   );
   return (
     <HireDeskContext.Provider value={value}>{children}</HireDeskContext.Provider>
@@ -106,12 +131,15 @@ export function useHireDesk(): HireDeskValue {
       view: "scout",
       inspect: null,
       landing: true,
+      projectName: null,
+      newSearchNonce: 0,
       setDesk: () => {},
       openPod: () => {},
       closePod: () => {},
       openSaved: () => {},
       openInspect: () => {},
       clearInspect: () => {},
+      requestNewSearch: () => {},
     };
   }
   return ctx;

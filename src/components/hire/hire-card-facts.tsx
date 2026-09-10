@@ -258,3 +258,44 @@ export function MatchPills({
     </div>
   );
 }
+
+function joinList(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/**
+ * Which of the seven evidence dimensions this ranking actually used.
+ *
+ * The result card's AI Summary falls back to this when Scout wrote no
+ * rationale, and the profile panel prints it under its own summary — so it
+ * lives here, beside the other card facts, rather than in either component.
+ */
+export function coverageLede(match: MatchCardData): string {
+  if (match.coverageNote?.trim()) return match.coverageNote.trim();
+  const e = match.evidence ?? {};
+  const have: string[] = [];
+  const missing: string[] = [];
+  const push = (label: string, on: boolean) => {
+    (on ? have : missing).push(label);
+  };
+  push("completed missions", typeof e.missionsPassed === "number");
+  push("first-attempt review outcome", typeof e.cleanPassCount === "number");
+  push("verified commits", typeof e.commitDayCount === "number");
+  push("graded projects", Boolean(e.projectScores?.length));
+  push(
+    "exit interviews",
+    typeof e.interviewOverall === "number" && e.interviewOverall !== null,
+  );
+  push("availability", !match.availabilityUnknown);
+  push("compensation expectation", Boolean(match.compensationDeclared));
+  if (missing.length === 0) {
+    return `Ranked on ${have.length} of 7 evidence dimensions.`;
+  }
+  const verb = missing.length === 1 ? "has" : "have";
+  const they = missing.length === 1 ? "it is" : "they are";
+  return (
+    `Ranked on ${have.length} of 7 evidence dimensions — ${joinList(missing)} ` +
+    `${verb} not been recorded for this candidate yet, so ${they} excluded rather than counted as zero.`
+  );
+}

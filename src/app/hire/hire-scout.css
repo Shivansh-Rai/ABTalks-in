@@ -5927,3 +5927,1585 @@ html.dark .vc-card {
   }
 }
 
+/* ------------------------------------------------------------------
+   Recruiter search results (Figma 1585:46)
+   The desk once the landing hands over: #F4F4F5 ground, the nav card on
+   the left, results over the composer in the middle, the candidate
+   profile on the right. Scoped to `.hire-app--results` (hire-chrome).
+   ------------------------------------------------------------------ */
+
+.hire-app--results {
+  background: #f4f4f5;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.hire-app--results .hire-app__brand {
+  gap: 12px;
+}
+
+.hire-app--results .hire-app__logo {
+  width: auto;
+}
+
+/* The design crops the 346x81 export into a 140x27 box (object-fit: cover). */
+.hire-app--results .hire-app__logo img {
+  width: 140px;
+  height: 27px;
+  object-fit: cover;
+}
+
+.hire-app--results .hire-app__badge {
+  height: auto;
+  padding: 4px 8px;
+  border: 1px solid #626262;
+  border-radius: 6px;
+  background: #d2d2d2;
+  color: #1e1e1e;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 12px;
+  letter-spacing: 0;
+}
+
+@media (min-width: 901px) {
+  .hire-app--results .hire-app__header {
+    height: 64px;
+    padding: 0 80px 0 90px;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 0;
+    box-shadow: none;
+  }
+
+  .hire-app--results .hire-app__logo {
+    height: 27px;
+  }
+
+  .hire-app--results .hire-app__nav {
+    gap: 7px;
+  }
+
+  .hire-app--results .hire-hbtn {
+    height: 32px;
+    padding: 0 16px;
+    border-color: #e4e4e7;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    color: #18181b;
+  }
+
+  .hire-app--results .hire-hbtn.has-count {
+    padding-right: 30px;
+  }
+
+  .hire-app--results .hire-hbtn:hover {
+    border-color: #d2d2d2;
+  }
+
+  .hire-app--results .hire-signin {
+    height: 36px;
+    padding: 0 20px;
+    border: 2px solid #03535f;
+    border-radius: 100px;
+    background: #076573;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 16px;
+  }
+
+  .hire-app--results .hire-signin:hover {
+    background: #03535f;
+  }
+
+  .hire-app--results .hire-workspace {
+    padding: 20px 36px 20px 45px;
+  }
+
+  .hire-app--results .hire-journey {
+    display: none;
+  }
+
+  .hire-app--results .hire-scout-region {
+    padding: 0;
+  }
+
+  .hire-app--results .hire-pod-region {
+    padding: 36px 0 0;
+  }
+}
+
+/* Nav card (1585:76) */
+.hire-side {
+  flex: none;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 281px;
+  max-height: calc(100% - 36px);
+  margin: 36px 31px 0 0;
+  padding: 22px 16px;
+  overflow-y: auto;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: inset -5px -4px 10px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-outfit), var(--font-inter), sans-serif;
+}
+
+.hire-side__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hire-app .hire-side__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  width: 242px;
+  height: 33px;
+  padding: 0 0 0 17px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.64px;
+  color: #4b4b4b;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hire-app a.hire-side__item:hover {
+  background: #f4f4f5;
+}
+
+.hire-app .hire-side__item.is-current {
+  background: #e9e9e9;
+}
+
+.hire-side__item.is-disabled {
+  cursor: default;
+}
+
+.hire-side__icon {
+  flex: none;
+  width: 23px;
+  height: 23px;
+  background: #d9d9d9;
+}
+
+.hire-side__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hire-side__spacer {
+  flex: none;
+}
+
+.hire-side__spacer--a {
+  height: 37px;
+}
+
+.hire-side__spacer--b {
+  height: 43px;
+}
+
+.hire-side__project {
+  display: flex;
+  flex-direction: column;
+  height: 65px;
+  flex: none;
+}
+
+.hire-side__new {
+  position: relative;
+  align-self: flex-start;
+  margin: 0 0 0 65px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 15px;
+  letter-spacing: 0.48px;
+  color: #8f8f8f;
+  cursor: pointer;
+}
+
+.hire-side__new::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 0;
+  height: 19px;
+  border-left: 0.5px solid #a5a5a5;
+}
+
+.hire-side__new:hover {
+  color: #03535f;
+}
+
+.hire-side__upgrade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 242px;
+  height: 33px;
+  border: 0;
+  border-radius: 5px;
+  background: #03535f;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: 0.64px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.hire-side__upgrade:hover {
+  background: #076573;
+}
+
+.hire-side__me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  width: 242px;
+  height: 68px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+button.hire-side__me {
+  cursor: pointer;
+}
+
+.hire-side__avatar {
+  display: block;
+  flex: none;
+  width: 45px;
+  height: 44px;
+}
+
+.hire-side__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  letter-spacing: 0.96px;
+}
+
+.hire-side__name,
+.hire-side__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 17px;
+}
+
+.hire-side__name {
+  font-size: 16px;
+  color: #4b4b4b;
+}
+
+.hire-side__sub {
+  font-size: 12px;
+  color: #787878;
+}
+
+/* Results column + profile panel */
+.hire-app--results .scout {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* One grid: Filters, the thread and the composer stack in the left column;
+   the profile panel takes the right column from the card line down.
+
+   Deliberately not scoped to `.hire-app--results`: the chrome only gets that
+   class a frame after the first query, and without named areas the composer
+   auto-places into the zero-width panel column for that frame — long enough
+   for the textarea to measure itself 132px tall and keep it. */
+.scout__body {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "bar panel"
+    "chat panel"
+    "composer panel";
+}
+
+.scout__body > .chat-output {
+  grid-area: chat;
+}
+
+.scout__body > .scout-composer {
+  grid-area: composer;
+}
+
+.scout__body > .hire-detail {
+  grid-area: panel;
+}
+
+.scout__toolbar {
+  grid-area: bar;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 18px 10px 0;
+}
+
+.scout-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 20px 0 10px;
+  border: 1px solid #e9e9e9;
+  border-radius: 5px;
+  background: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b4b4b;
+  cursor: pointer;
+}
+
+.scout-filters:hover {
+  border-color: #d2d2d2;
+}
+
+.scout-filters__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 16px;
+}
+
+/* The exported glyph is a left chevron; the design turns it to point down. */
+.scout-filters__icon img {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 15px;
+  max-width: none;
+  object-fit: cover;
+  transform: rotate(-90deg) scaleY(-1);
+  transition: transform 200ms var(--ease);
+}
+
+.scout-filters[aria-expanded="true"] .scout-filters__icon img {
+  transform: rotate(90deg) scaleY(-1);
+}
+
+@media (min-width: 1101px) {
+  .hire-app--results .scout__body.is-open {
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 484px);
+    column-gap: 15px;
+  }
+
+  /* The panel tops out on the card line, below the Filters row. */
+  .hire-app--results .scout__body > .hire-detail {
+    margin-top: 36px;
+  }
+}
+
+.hire-app--results .chat-output {
+  padding: 0 2px 4px;
+}
+
+.hire-app--results .scout-thread {
+  gap: 20px;
+  padding: 0 0 4px;
+}
+
+.hire-app--results .scout-thread__results,
+.hire-app--results .scout-results {
+  gap: 20px;
+}
+
+.hire-app--results .scout-results {
+  margin-top: 0;
+}
+
+/* Composer */
+.hire-app--results .scout-composer {
+  padding: 20px 0 0;
+}
+
+.hire-app--results .scout-composer__row {
+  align-items: stretch;
+  gap: 16px;
+}
+
+.hire-app--results .scout-field {
+  align-items: center;
+  min-height: 53px;
+  padding: 12px 24px;
+  border: 2px solid #03535f;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.hire-app--results .scout-field:focus-within {
+  background: #ffffff;
+  border-color: #03535f;
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.12);
+}
+
+.hire-app--results .scout-field textarea {
+  min-height: 25px;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 25px;
+  color: #353535;
+}
+
+.hire-app--results .scout-field textarea::placeholder {
+  color: #787878;
+}
+
+.hire-app--results .scout-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 166px;
+  height: 53px;
+  padding: 0 0 0 25px;
+  border-radius: 15px;
+  background: #03535f;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #ffffff;
+  box-shadow: inset -3px -4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.hire-app--results .scout-send:hover:not(:disabled) {
+  background: #076573;
+}
+
+/* The exported magnifier carries its own padding; this is the design's crop. */
+.scout-send__icon {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 31px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scout-send__icon img {
+  position: absolute;
+  left: -53.85%;
+  top: -58.97%;
+  width: 215.38%;
+  height: 215.38%;
+  max-width: none;
+}
+
+.hire-app--results .scout-criteria {
+  gap: 4px 16px;
+  margin: 11px 0 0;
+  padding: 0 0 0 24px;
+}
+
+.hire-app--results .scout-criterion {
+  gap: 4px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  color: #a5a5a5;
+}
+
+.hire-app--results .scout-criterion.is-on {
+  color: #27ca37;
+  font-weight: 600;
+}
+
+.hire-app--results .scout-criterion.is-on .scout-criterion__box {
+  transform: none;
+}
+
+/* Result card (1646:209) */
+.hire-app .desk-card.desk-card--result {
+  padding: 24px 21px;
+  border: 0;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 5px 4px rgba(228, 228, 231, 0.3);
+}
+
+.hire-app .desk-card.desk-card--result:hover {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 8px 22px rgba(3, 83, 95, 0.12);
+}
+
+.hire-app .desk-card.desk-card--result.is-selected {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 0 0 2px #03535f;
+}
+
+.desk-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.desk-card__photo {
+  display: block;
+  flex: none;
+  width: 55px;
+  height: 55px;
+}
+
+.desk-card__body {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.desk-card__namerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 57px;
+}
+
+.desk-card__nameblock {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.desk-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.desk-card__name {
+  margin: 0;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 30px;
+  color: #18181b;
+}
+
+.desk-card__badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: #ffedb0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 13px;
+  color: #aa821d;
+}
+
+.desk-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-card__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21px;
+  color: #03535f;
+  white-space: nowrap;
+}
+
+.desk-card__meta svg {
+  flex: none;
+}
+
+.desk-card__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.desk-card__skills-h {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 17px;
+  color: #18181b;
+}
+
+.desk-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-chip {
+  display: inline-flex;
+  padding: 6px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  background: #f4f4f5;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 15px;
+  color: #18181b;
+}
+
+.desk-card__ai {
+  position: relative;
+  margin-top: 46px;
+}
+
+.desk-card__ai-tab {
+  position: absolute;
+  left: 3px;
+  top: -28px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 5.5px;
+  width: 155px;
+  height: 30px;
+  margin: 0;
+  padding: 7px 0 0 31px;
+  background: url("/hire/ai-summary-tab.svg") 0 0 / 155px 30px no-repeat;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  color: #03535f;
+}
+
+.desk-card__ai-tab img {
+  display: block;
+  flex: none;
+  width: 15.34px;
+  height: 15.34px;
+  margin-top: 1px;
+}
+
+.desk-card__ai-text {
+  margin: 0;
+  min-height: 72px;
+  padding: 12px 21px;
+  border-radius: 10px;
+  background: #f7fcfd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #4b4b4b;
+}
+
+.desk-card--result .desk-card__cta {
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.desk-card--rejected .desk-card__skills,
+.desk-card--rejected .desk-card__ai {
+  display: none;
+}
+
+/* Project triage (New / Viewed / Reject) shares the actions row, pinned left. */
+.desk-card--result .desk-card__triage {
+  margin: 0 auto 0 0;
+}
+
+.hire-app .desk-card--result .desk-ghost {
+  height: 36px;
+  padding: 0 16px;
+  gap: 8px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.hire-app .desk-card--result .desk-ghost:hover {
+  border-color: #b1b1b3;
+}
+
+.hire-app .desk-card--result .desk-pod {
+  height: 36px;
+  padding: 0 16px;
+  gap: 8px;
+  border: 1px solid #03535f;
+  border-radius: 8px;
+  background: #03535f;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: inset -2px -4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.hire-app .desk-card--result .desk-pod:hover {
+  background: #076573;
+  border-color: #076573;
+  color: #ffffff;
+}
+
+.hire-app .desk-card--result .desk-pod.desk-pod--on {
+  background: #ffffff;
+  border-color: #03535f;
+  color: #03535f;
+  box-shadow: none;
+}
+
+.desk-card--result .desk-shortlist {
+  height: 36px;
+  padding: 0 20px;
+  gap: 8px;
+  border: 1px solid #b1b1b3;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.desk-card--result .desk-shortlist:hover {
+  border-color: #03535f;
+  color: #18181b;
+}
+
+.desk-card--result .desk-shortlist__box {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #626262;
+  border-radius: 3px;
+  background: #ffffff;
+}
+
+.desk-card--result .desk-shortlist__box svg {
+  width: 10px;
+  height: 10px;
+}
+
+.desk-card--result .desk-shortlist.is-on {
+  background: #ffffff;
+  border-color: #03535f;
+  color: #03535f;
+}
+
+.desk-card--result .desk-shortlist.is-on .desk-shortlist__box {
+  background: #03535f;
+  border-color: #03535f;
+  color: #ffffff;
+}
+
+/* Candidate profile panel (1585:189) */
+.hire-app--results .hire-detail.hire-profile {
+  position: relative;
+  border-left: 0;
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.hire-profile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset -4px -4px 10px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.hire-profile .hire-detail__scroll {
+  padding: 0 0 24px;
+  color: #18181b;
+}
+
+.hire-profile__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 20px;
+}
+
+.hire-profile__history {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.hire-profile__window {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.hire-profile__ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #71717a;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.hire-profile__window .hire-profile__ctl {
+  color: #18181b;
+}
+
+.hire-profile__ctl:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.hire-app a.hire-profile__more {
+  font-size: 18px;
+  line-height: 22px;
+  color: #18181b;
+  text-decoration: none;
+}
+
+.hire-profile__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 4px 20px 0;
+}
+
+.hire-profile__namerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hire-profile__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #18181b;
+}
+
+.hire-profile__in {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #0a66c2;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.hire-profile__loc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: #71717a;
+}
+
+.hire-profile__orgs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hire-profile__org {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #18181b;
+}
+
+.hire-profile__org > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hire-profile__orglogo {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.hire-profile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 20px 12px;
+}
+
+.hire-app .hire-profile__actions .desk-pod {
+  height: 34px;
+  padding: 0 11px;
+  gap: 7px;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #18181b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hire-app .hire-profile__actions .desk-pod:hover {
+  border-color: #b1b1b3;
+  background: #ffffff;
+  color: #18181b;
+}
+
+.hire-app .hire-profile__actions .desk-pod.desk-pod--on {
+  border-color: #03535f;
+  color: #03535f;
+}
+
+.hire-profile__actions .desk-shortlist {
+  height: 34px;
+  padding: 0 12px;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: #03535f;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hire-profile__actions .desk-shortlist:hover {
+  background: #076573;
+  color: #ffffff;
+}
+
+.hire-profile__actions .desk-shortlist__box {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #ffffff;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.hire-profile__actions .desk-shortlist.is-on .desk-shortlist__box {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #03535f;
+}
+
+.hire-profile__view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #71717a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.hire-profile__view:hover {
+  border-color: #b1b1b3;
+}
+
+.hire-profile__tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 8px;
+  border-bottom: 1px solid #e4e4e7;
+  background: #ffffff;
+}
+
+.hire-profile__tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: #a1a1aa;
+  cursor: pointer;
+}
+
+.hire-profile__tab.is-active {
+  padding: 0 12px;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.hire-profile__tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: #03535f;
+}
+
+.hire-profile__overview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 24px;
+  scroll-margin-top: 44px;
+}
+
+.hire-profile__row {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+.hire-profile__label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 116px;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #71717a;
+}
+
+.hire-profile__label svg {
+  flex: none;
+}
+
+.hire-profile__value {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #18181b;
+}
+
+.hire-profile__value.is-muted {
+  color: #a1a1aa;
+}
+
+.hire-profile__reveal {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: #03535f;
+  white-space: pre;
+  cursor: pointer;
+}
+
+.hire-profile__reveal:hover {
+  text-decoration: underline;
+}
+
+.hire-profile__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.hire-profile__rule {
+  height: 0;
+  margin-top: 4px;
+  border-top: 1px solid #e4e4e7;
+}
+
+.hire-profile__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 24px;
+  scroll-margin-top: 44px;
+}
+
+.hire-profile__section--ruled {
+  border-top: 1px solid #e4e4e7;
+}
+
+.hire-profile__section--wide {
+  gap: 24px;
+  padding: 20px 28px 28px;
+}
+
+.hire-profile__section--cred {
+  padding: 20px 22px 28px;
+}
+
+.hire-profile__h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  color: #18181b;
+}
+
+.hire-profile__h small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #71717a;
+}
+
+.hire-profile__block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-margin-top: 60px;
+}
+
+.hire-profile__org-block {
+  display: flex;
+  gap: 12px;
+}
+
+.hire-profile__tile {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.hire-profile__tile--school {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+}
+
+.hire-profile__org-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-profile__org-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.hire-profile__org-name--lg {
+  font-size: 14px;
+}
+
+.hire-profile__org-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #71717a;
+}
+
+.hire-profile__roles {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hire-profile__role {
+  display: flex;
+  gap: 12px;
+}
+
+.hire-profile__timeline {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 25px;
+}
+
+.hire-profile__timeline::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e4e4e7;
+}
+
+.hire-profile__timeline::after {
+  content: "";
+  width: 25px;
+  border-top: 1px solid #e4e4e7;
+}
+
+.hire-profile__role-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 16px;
+}
+
+.hire-profile__role-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hire-profile__role-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #18181b;
+}
+
+.hire-profile__promo {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid #10b981;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 13px;
+  color: #10b981;
+}
+
+.hire-profile__meta {
+  margin: 0;
+  font-size: 12px;
+  color: #71717a;
+}
+
+.hire-profile__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #18181b;
+}
+
+.hire-profile__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-profile__group-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.hire-profile__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hire-profile__chip {
+  display: inline-flex;
+  padding: 4px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 15px;
+  color: #18181b;
+}
+
+.hire-profile__count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #03535f;
+}
+
+.hire-profile__card {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.hire-profile__card-head {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.hire-profile__card-head small {
+  font-size: 13px;
+  font-weight: 400;
+  color: #71717a;
+}
+
+.hire-profile__cert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 50px;
+  padding: 8px 12px;
+}
+
+.hire-profile__cert + .hire-profile__cert {
+  border-top: 1px solid #e4e4e7;
+}
+
+.hire-profile__cert svg {
+  flex: none;
+}
+
+.hire-profile__cert-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.25;
+}
+
+.hire-profile__cert-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.hire-profile__cert-sub,
+.hire-profile__cert-date {
+  font-size: 11px;
+  color: #71717a;
+}
+
+.hire-profile__cert-date {
+  flex: none;
+  width: 70px;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.hire-profile__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: #71717a;
+}
+
+/* Below 1366 the nav card would squeeze the results column under ~550px once
+   the profile panel is open, so it gives way; phones hide it further down. */
+@media (max-width: 1365px) and (min-width: 901px) {
+  .hire-side {
+    display: none;
+  }
+
+  .hire-app--results .hire-workspace {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .hire-side {
+    display: none;
+  }
+
+  .hire-app--results .hire-app__logo {
+    height: 22px;
+  }
+
+  .hire-app--results .hire-app__logo img {
+    width: 114px;
+    height: 22px;
+  }
+
+  .hire-app--results .hire-scout-region {
+    padding: 8px 12px 12px;
+  }
+
+  .scout__toolbar {
+    padding: 0 4px 8px 0;
+  }
+
+  .hire-app .desk-card.desk-card--result {
+    padding: 18px 16px;
+  }
+
+  .desk-card__row {
+    gap: 12px;
+  }
+
+  .desk-card__photo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .desk-card__namerow {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .desk-card__name {
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .desk-card__meta li {
+    font-size: 13px;
+  }
+
+  .desk-card__ai-text {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .desk-card--result .desk-card__cta {
+    margin-top: 20px;
+  }
+
+  .hire-app--results .scout-composer {
+    padding-top: 12px;
+  }
+
+  .hire-app--results .scout-composer__row {
+    gap: 8px;
+  }
+
+  .hire-app--results .scout-field {
+    min-height: 48px;
+    padding: 10px 16px;
+    border-radius: 12px;
+  }
+
+  .hire-app--results .scout-field textarea {
+    min-height: 22px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .hire-app--results .scout-send {
+    width: auto;
+    min-width: 0;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+
+  .scout-send__icon {
+    display: none;
+  }
+
+  .hire-app--results .scout-criteria {
+    padding-left: 4px;
+  }
+
+  .hire-app--results .hire-detail.hire-profile {
+    border-radius: 0;
+  }
+
+  .scout__body.is-open .hire-profile .hire-detail__scroll {
+    padding: 0 0 calc(28px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Phones: the wordmark takes the 88px the old mark had, so the header's
+   icon buttons do not ride over it. */
+@media (max-width: 640px) {
+  .hire-app--results .hire-app__logo {
+    height: 17px;
+  }
+
+  .hire-app--results .hire-app__logo img {
+    width: 88px;
+    height: 17px;
+  }
+}
+

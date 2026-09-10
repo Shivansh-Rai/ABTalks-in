@@ -169,6 +169,7 @@ const ROLE_HINTS: { re: RegExp; title: string }[] = [
   { re: /\bfront[-\s]?end\b/, title: "Frontend engineer" },
   { re: /\bdata\s*\/?\s*ml\b|\bdata engineer|\bml engineer\b/, title: "Data / ML engineer" },
   { re: /\bai engineer\b/, title: "AI engineer" },
+  { re: /\breact\s+(?:developer|engineer|dev)\b/, title: "React developer" },
 ];
 
 const STACK_HINTS = [
@@ -179,6 +180,8 @@ const STACK_HINTS = [
   "react",
   "node",
   "nodejs",
+  "postgresql",
+  "postgres",
   "sql",
   "golang",
   "go",
@@ -210,7 +213,13 @@ function extractRoleStack(msg: string): {
         ? /\bgo\b(?!lang)/
         : new RegExp(`\\b${token.replace(/\+/g, "\\+")}\\b`, "i");
     if (re.test(msg)) {
-      mustHaveStack.push(token === "nodejs" ? "node" : token);
+      mustHaveStack.push(
+        token === "nodejs"
+          ? "node"
+          : token === "postgres"
+            ? "postgresql"
+            : token,
+      );
     }
   }
   return { title, mustHaveStack: dedupeStack(mustHaveStack) };
@@ -243,7 +252,11 @@ export function briefTouched(brief: PoolBrief): boolean {
   return (
     brief.sources.length > 0 ||
     brief.minEvidenceDays !== null ||
-    brief.resultLimit !== null
+    brief.resultLimit !== null ||
+    // A stated role or stack is a brief on its own. Geo alone still is not —
+    // that guard stays above; title/skills are what make a search meaningful.
+    Boolean(brief.title) ||
+    brief.mustHaveStack.length > 0
   );
 }
 

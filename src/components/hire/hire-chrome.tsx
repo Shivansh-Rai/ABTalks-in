@@ -9,6 +9,7 @@ import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
+import { HireSidebar } from "@/components/hire/hire-sidebar";
 import { HireTalentPod } from "@/components/hire/hire-talent-pod";
 import { HireSavedLater } from "@/components/hire/hire-saved-later";
 import type { CartRow } from "@/components/hire/shortlist-cart";
@@ -72,6 +73,9 @@ export function HireChrome({
       pathname !== "/hire/create-test" &&
       pathname !== "/hire/assessments");
   const isLanding = pathname === "/hire" && landing && view === "scout";
+  // Everything on the desk after the landing is the results screen (Figma
+  // 1585:46): nav card left, results over the composer, profile panel right.
+  const isResults = desk && !isLanding;
 
   const [seenCartCount, setSeenCartCount] = useState(cartCount);
   if (cartCount !== seenCartCount) {
@@ -87,12 +91,23 @@ export function HireChrome({
         "hire-app",
         desk && "hire-app--desk",
         isLanding && "hire-app--landing",
+        isResults && "hire-app--results",
       )}
     >
       <header className="hire-app__header">
         <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
           <span className="hire-app__logo">
-            {isLanding ? (
+            {isResults ? (
+              // The results header is light, so it takes the design's dark
+              // wordmark; the landing's is white on forest green.
+              <Image
+                src="/hire/abtalks-wordmark-dark.png"
+                alt="ABTalks"
+                width={346}
+                height={81}
+                priority
+              />
+            ) : isLanding ? (
               <Image
                 src="/hire/abtalks-wordmark.png"
                 alt="ABTalks"
@@ -194,6 +209,11 @@ export function HireChrome({
 
       {desk ? (
         <main className="hire-workspace">
+          {isResults && (
+            <HireSidebar account={account} pendingName={pendingName} />
+          )}
+          {/* On desktop the results screen hides this rail behind the nav card;
+              phones keep its compact step strip. */}
           {!isLanding && <HireJourney />}
           <div
             className={cn(

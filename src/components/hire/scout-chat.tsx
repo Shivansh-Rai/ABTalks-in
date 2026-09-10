@@ -9,13 +9,7 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  Maximize2,
-  Minimize2,
-  Search,
-  Sparkles,
-} from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { toast } from "sonner";
 import {
@@ -322,7 +316,6 @@ export function ScoutChat({
   const [searchTabs, setSearchTabs] = useState<GuestSearchTab[]>([]);
   const [activeSearchId, setActiveSearchId] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [openMatch, setOpenMatch] = useState<MatchCardData | null>(null);
   /** Open the inspector and fire-and-forget a detail-view record (plan 120). */
   function openMatchPanel(match: MatchCardData) {
@@ -335,7 +328,7 @@ export function ScoutChat({
       ? Math.max(0, (initialMessages.length || 1) - 1)
       : null,
   );
-  const { setDesk, view, inspect, clearInspect } = useHireDesk();
+  const { setDesk, view, inspect, clearInspect, newSearchNonce } = useHireDesk();
   const scrollRef = useRef<HTMLDivElement>(null);
   const visitStamped = useRef(false);
   const [projectLabel, setProjectLabel] = useState(
@@ -465,6 +458,14 @@ export function ScoutChat({
     });
   }, [searched, matchCount, deskGap, setDesk, view, messages, initialRequestId]);
 
+  // The nav card names the open project; off-project it keeps its own
+  // "Current Project" label.
+  useEffect(() => {
+    setDesk({
+      projectName: persist && requestId ? projectLabel.trim() || null : null,
+    });
+  }, [persist, requestId, projectLabel, setDesk]);
+
   useEffect(() => {
     if (hydratedRef.current) return;
     if (persist && (initialMessages.length > 0 || initialRequestId)) return;
@@ -513,7 +514,6 @@ export function ScoutChat({
     searched,
     deskMatches.length,
     resultsPin,
-    expanded,
     detailsOpen,
   ]);
 
@@ -540,6 +540,27 @@ export function ScoutChat({
   // A search now happens for exactly two reasons, both explicit: the recruiter
   // tapped the button (`action:search`, handled in `send`), or the agent called
   // its own search tool and the turn came back with `action === "search"`.
+
+  /** Open a candidate from a card or the panel's arrows, stamping it viewed. */
+  function openFromList(m: MatchCardData & Partial<MatchTriage>) {
+    openMatchPanel(m);
+    const userId =
+      m.candidateUserId ?? triageByRef[m.candidateRef]?.candidateUserId;
+    if (!persist || !requestId || !userId) return;
+    setTriageByRef((prev) => ({
+      ...prev,
+      [m.candidateRef]: {
+        candidateUserId: userId,
+        viewedAt: prev[m.candidateRef]?.viewedAt ?? new Date().toISOString(),
+        decision: prev[m.candidateRef]?.decision ?? m.decision ?? "UNDECIDED",
+        isNew: false,
+      },
+    }));
+    void markMatchViewedAction({
+      requestId,
+      candidateUserId: userId,
+    });
+  }
 
   /**
    * `label` is what the recruiter read on the chip, when that differs from the
@@ -856,8 +877,32 @@ export function ScoutChat({
     setOpenMatch(null);
   }
 
-  // The strip shows all nine criteria from the first render, muted until each
-  // one is captured.
+  // "+ Create New Project" lives in the nav card, outside this component. It
+  // bumps a counter in the desk context and the reset happens here, where the
+  // conversation state is.
+  const seenNonce = useRef(newSearchNonce);
+  useEffect(() => {
+    if (newSearchNonce === seenNonce.current) return;
+    seenNonce.current = newSearchNonce;
+    resetDesk();
+    // resetDesk reads state at call time; the counter is the only trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newSearchNonce]);
+
+  // The panel's arrows walk the same list the cards are drawn from.
+  const panelList: (MatchCardData & Partial<MatchTriage>)[] =
+    visibleDeskMatches.length > 0 ? visibleDeskMatches : deskSamples;
+  const openIndex = openMatch
+    ? panelList.findIndex((m) => m.candidateRef === openMatch.candidateRef)
+    : -1;
+  const openDecision = openMatch
+    ? (deskMatches.find((m) => m.candidateRef === openMatch.candidateRef)
+        ?.decision ?? null)
+    : null;
+
+  // The strip shows the five criteria of the results design (Figma 1585:46),
+  // in its order, muted until each one is captured. The other four are still
+  // tracked and still listed in the Filters menu.
   //
   // It used to render only `criteria.filter(c => c.on)` and stay collapsed
   // until one was — the idea being that grey labels under an empty composer
@@ -870,7 +915,16 @@ export function ScoutChat({
   // `is-open` is permanent for the same reason: the slot animates
   // grid-template-rows between 0fr and 1fr, and there is no longer a state
   // where the strip should be closed.
-  const stripItems = criteria;
+  const STRIP_KEYS = [
+    "Location",
+    "Years of Experience",
+    "Role",
+    "Education Qualification",
+    "Skills",
+  ] as const;
+  const stripItems = STRIP_KEYS.map(
+    (key) => criteria.find((c) => c.key === key)!,
+  );
 
   if (!talked && view === "scout" && !initialRequestId) {
     return (
@@ -891,34 +945,30 @@ export function ScoutChat({
   }
 
   return (
-    <section className={cn("scout", expanded && "is-expanded")} aria-label="Scout assistant">
-      <div className="scout__bar">
-        <div className="scout__id">
-          <span className="scout__avatar" aria-hidden="true">
-            <Sparkles className="size-4" />
-          </span>
-          <div className="scout__meta">
-            <span className="scout__name">Scout</span>
-            <span className="scout__status">
-              {summary || "Not started"}
-            </span>
-          </div>
-        </div>
-        <div className="scout__tools">
-          <button type="button" className="scout-tbtn" onClick={resetDesk}>
-            New search
-          </button>
+    <section className="scout" aria-label="Scout assistant">
+      {/* One grid (see `.hire-app--results .scout__body`): Filters, the
+          thread and the composer stack on the left, the profile panel takes
+          the right column. "New search" moved to the nav card's
+          "+ Create New Project"; the Requirement menu is behind Filters. */}
+      <div className={cn("scout__body", openMatch && "is-open")}>
+        <div className="scout__toolbar">
           <div className="hire-req" ref={reqMenuRef}>
             <button
               type="button"
-              className="scout-tbtn"
+              className="scout-filters"
               aria-expanded={detailsOpen}
+              aria-haspopup="menu"
               onClick={() => setDetailsOpen((o) => !o)}
             >
-              Requirement
-              <ChevronDown
-                className={cn("size-3.5", detailsOpen && "rotate-180")}
-              />
+              <span className="scout-filters__icon" aria-hidden="true">
+                <img
+                  src="/hire/filters-chevron.png"
+                  alt=""
+                  width={16}
+                  height={15}
+                />
+              </span>
+              Filters
             </button>
             {detailsOpen && (
               <div className="hire-req__menu" role="menu">
@@ -1019,22 +1069,8 @@ export function ScoutChat({
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className={cn("scout-tbtn scout-tbtn--icon", expanded && "is-on")}
-            aria-label={expanded ? "Exit full screen" : "Expand Scout"}
-            onClick={() => setExpanded((e) => !e)}
-          >
-            {expanded ? (
-              <Minimize2 className="size-3.5" />
-            ) : (
-              <Maximize2 className="size-3.5" />
-            )}
-          </button>
         </div>
-      </div>
 
-      <div className={cn("scout__body", openMatch && "is-open")}>
         <div ref={scrollRef} className="chat-output" id="hire-results">
           {!talked && (
             <div className="scout-empty">
@@ -1167,31 +1203,7 @@ export function ScoutChat({
                           persist ? resultsCartCount : readGuestCart().length
                         }
                         requestId={persist ? requestId : null}
-                        onOpen={(m) => {
-                          openMatchPanel(m);
-                          const userId =
-                            m.candidateUserId ??
-                            triageByRef[m.candidateRef]?.candidateUserId;
-                          if (!persist || !requestId || !userId) return;
-                          setTriageByRef((prev) => ({
-                            ...prev,
-                            [m.candidateRef]: {
-                              candidateUserId: userId,
-                              viewedAt:
-                                prev[m.candidateRef]?.viewedAt ??
-                                new Date().toISOString(),
-                              decision:
-                                prev[m.candidateRef]?.decision ??
-                                m.decision ??
-                                "UNDECIDED",
-                              isNew: false,
-                            },
-                          }));
-                          void markMatchViewedAction({
-                            requestId,
-                            candidateUserId: userId,
-                          });
-                        }}
+                        onOpen={openFromList}
                         onDecision={(m, decision) => {
                           const userId =
                             m.candidateUserId ??
@@ -1248,82 +1260,96 @@ export function ScoutChat({
 
         {openMatch && (
           <CandidateInspector
+            // Keyed so each candidate opens at the top of the panel, on the
+            // Overview tab, rather than wherever the last one was scrolled.
+            key={openMatch.candidateRef}
             match={openMatch}
+            decision={openDecision}
             onClose={() => setOpenMatch(null)}
+            onPrev={
+              openIndex > 0
+                ? () => openFromList(panelList[openIndex - 1]!)
+                : undefined
+            }
+            onNext={
+              openIndex >= 0 && openIndex < panelList.length - 1
+                ? () => openFromList(panelList[openIndex + 1]!)
+                : undefined
+            }
             onCartToggle={(inCart) =>
               setOpenMatch((m) => (m ? { ...m, shortlisted: inCart } : m))
             }
           />
         )}
-      </div>
 
-      <form
-        className="scout-composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (text.trim()) send(text);
-          else runSearch();
-        }}
-      >
-        <div className="scout-composer__row">
-          <div className="scout-field">
-            <label className="sr-only" htmlFor="scout-prompt">
-              Your answer to Scout
-            </label>
-            <textarea
-              id="scout-prompt"
-              ref={promptRef}
-              rows={1}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (text.trim()) send(text);
-                  else runSearch();
-                }
-              }}
-              /* No placeholder by request — the field reads empty. The
-                 accessible name comes from aria-label below, so screen readers
-                 still get one. */
-              placeholder=""
-              disabled={pending}
-              maxLength={2000}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={pending || (persist && !requestId && !text.trim())}
-            className="scout-send"
-          >
-            {pending ? "…" : "Search"}
-          </button>
-        </div>
-        <div className="scout-criteria-slot is-open">
-          <div className="scout-criteria-slot__clip">
-            <ul
-              className="scout-criteria"
-              aria-label="Requirements"
-              ref={criteriaRef}
+        <form
+          className="scout-composer"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (text.trim()) send(text);
+            else runSearch();
+          }}
+        >
+          <div className="scout-composer__row">
+            <div className="scout-field">
+              <label className="sr-only" htmlFor="scout-prompt">
+                Your answer to Scout
+              </label>
+              <textarea
+                id="scout-prompt"
+                ref={promptRef}
+                rows={1}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (text.trim()) send(text);
+                    else runSearch();
+                  }
+                }}
+                placeholder="Type here...."
+                disabled={pending}
+                maxLength={2000}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={pending || (persist && !requestId && !text.trim())}
+              className="scout-send"
             >
-              {stripItems.map((c) => (
-                <li
-                  key={c.key}
-                  className={cn("scout-criterion", c.on && "is-on")}
-                >
-                  {/* The tick is drawn for every item so the row does not
-                      re-measure when one turns on; `.scout-criterion` already
-                      carries the muted colour and `.is-on` the green. */}
-                  <span className="scout-criterion__box" aria-hidden="true">
-                    ✓
-                  </span>
-                  <span>{c.key}</span>
-                </li>
-              ))}
-            </ul>
+              <span className="scout-send__icon" aria-hidden="true">
+                <img src="/hire/search-glass.png" alt="" width={500} height={500} />
+              </span>
+              {pending ? "Searching" : "Search"}
+            </button>
           </div>
-        </div>
-      </form>
+          <div className="scout-criteria-slot is-open">
+            <div className="scout-criteria-slot__clip">
+              <ul
+                className="scout-criteria"
+                aria-label="Requirements"
+                ref={criteriaRef}
+              >
+                {stripItems.map((c) => (
+                  <li
+                    key={c.key}
+                    className={cn("scout-criterion", c.on && "is-on")}
+                  >
+                    {/* The tick is drawn for every item so the row does not
+                        re-measure when one turns on; `.scout-criterion` already
+                        carries the muted colour and `.is-on` the green. */}
+                    <span className="scout-criterion__box" aria-hidden="true">
+                      ✓
+                    </span>
+                    <span>{c.key}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </form>
+      </div>
     </section>
   );
 }

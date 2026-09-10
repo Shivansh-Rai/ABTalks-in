@@ -1,7 +1,17 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { BookmarkPlus, ChevronRight, UserRound, X } from "lucide-react";
+import {
+  Briefcase,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  GraduationCap,
+  MapPin,
+  ShoppingCart,
+  UserRound,
+  X,
+} from "lucide-react";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,18 +32,19 @@ import {
 } from "@/components/hire/locked-field";
 import { cn } from "@/lib/utils";
 import {
-  buildCardPills,
+  coverageLede,
   OpenToWorkBadge,
 } from "@/components/hire/hire-card-facts";
 
-/**
- * Tags shown on a Scout result card.
- *
- * Four, not the shared `MAX_CARD_PILLS` of five: the row sits beside the score
- * column and a fifth tag is what pushed it onto a second line. Saved for later
- * and the shortlist pod keep the shared cap — they have the full width.
- */
-const DESK_CARD_PILLS = 4;
+/** Skill chips on a result card before the rest collapse into "+N". */
+const CARD_SKILLS = 8;
+
+const WORK_MODE: Record<string, string> = {
+  ONSITE: "Onsite",
+  HYBRID: "Hybrid",
+  REMOTE: "Remote",
+  FLEXIBLE: "Flexible",
+};
 
 /**
  * A stable tint index for a skill name.
@@ -281,10 +292,32 @@ export function DeskMatchCard({
     );
   }
 
+  // The result card (Figma 1646:209). Score and evidence pills are not on it —
+  // the profile panel carries both; the card is who, where, which skills, and
+  // Scout's reason. A missing fact drops out of the meta row rather than
+  // printing a placeholder.
+  const years =
+    typeof e.yearsExperience === "number" && e.yearsExperience > 0
+      ? `${e.yearsExperience} yr${e.yearsExperience === 1 ? "" : "s"} experience`
+      : null;
+  const meta = [
+    { key: "location", Icon: MapPin, label: match.locationLabel },
+    {
+      key: "mode",
+      Icon: Clock,
+      label: e.workMode ? (WORK_MODE[e.workMode] ?? e.workMode) : null,
+    },
+    { key: "experience", Icon: Briefcase, label: years },
+    { key: "education", Icon: GraduationCap, label: e.educationLevel },
+  ].filter((m) => Boolean(m.label));
+  const shownSkills = skills.slice(0, CARD_SKILLS);
+  const summary = match.rationale?.trim() || coverageLede(match);
+
   return (
     <article
       className={cn(
         "desk-card",
+        "desk-card--result",
         rank === 1 && "desk-card--top",
         selected && "is-selected",
         onOpen && "desk-card--clickable",
@@ -292,127 +325,126 @@ export function DeskMatchCard({
       )}
       onClick={openFromCard}
     >
-      <header className="desk-card__head">
-        <div className="desk-card__who">
-          <span className="desk-card__avatar" aria-hidden="true">
-            <UserRound className="size-7" />
-          </span>
-          <div>
-            <p className="desk-card__role">
-              {match.displayName ? (
-                <MaskedName name={match.displayName} />
-              ) : (
-                match.jobRole
-              )}{" "}
-              <OpenToWorkBadge openToWork={match.openToWork} />
-              {rank === 1 && <span className="desk-card__top">Top match</span>}
-            </p>
-            {(skills.length > 0 || match.displayName) && (
-              <p className="desk-card__stack">
-                {skills.length > 0
-                  ? skills.slice(0, 6).join(" · ")
-                  : match.jobRole}
-              </p>
-            )}
-            {/* The public id (AB-xxxx) is not shown on this card. `refPublicId`
-                is untouched and every other surface still uses it — the
-                inspector derives its own, and the shortlist and evidence cache
-                key on it. The filter already drops empties, so a card with no
-                location renders nothing rather than a stray separator. */}
-            <p className="desk-card__ref">
-              {[match.locationLabel].filter(Boolean).join(" · ")}
-            </p>
-          </div>
-        </div>
-        <div className="desk-card__right">
-          <div className="desk-card__score">
-            {/* The tier label (PARTIAL / NONE) is not printed. `match.tier`
-                is untouched and still drives ordering, the gap report and the
-                inspector — the number and its denominator are what the card
-                shows. */}
-            <div>
-              <b>{match.score}</b>
+      <div className="desk-card__row">
+        <img
+          src="/hire/avatar-card.png"
+          alt=""
+          width={55}
+          height={55}
+          className="desk-card__photo"
+        />
+        <div className="desk-card__body">
+          <header className="desk-card__namerow">
+            <div className="desk-card__nameblock">
+              <div className="desk-card__header">
+                <h3 className="desk-card__name">
+                  {match.displayName ? (
+                    <MaskedName name={match.displayName} />
+                  ) : (
+                    match.jobRole
+                  )}
+                </h3>
+                <OpenToWorkBadge openToWork={match.openToWork} />
+                {rank === 1 && <span className="desk-card__badge">Top match</span>}
+              </div>
+              {meta.length > 0 && (
+                <ul className="desk-card__meta">
+                  {meta.map(({ key, Icon, label }) => (
+                    <li key={key}>
+                      <Icon
+                        size={16}
+                        strokeWidth={2}
+                        absoluteStrokeWidth
+                        aria-hidden="true"
+                      />
+                      {label}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <span>out of 100</span>
-          </div>
-          <DeskShortlistButton
-            candidateRef={match.candidateRef}
-            jobRole={match.jobRole}
-            match={match}
-          />
-        </div>
-      </header>
+            {/* Save for later keeps its own label: "Shortlist" on this button
+                as well as on the cart button below would be two controls with
+                one name writing to different stores (TC-R-004). */}
+            <DeskShortlistButton
+              candidateRef={match.candidateRef}
+              jobRole={match.jobRole}
+              match={match}
+            />
+          </header>
 
-      {/*
-        The "Availability unconfirmed" pill is dropped here rather than in
-        `buildCardPills`, which is shared: `MatchPills` draws the same row in
-        Saved for later and in the shortlist pod, and both should keep the
-        warning. Filtering on the builder's own `key` — the same string it
-        pushes — keeps the two in step without a second copy of the list.
-
-        The underlying `match.availabilityUnknown` is untouched, so the gap it
-        drives in the inspector and the outreach note still say it.
-
-        The row is capped at four here rather than the shared MAX_CARD_PILLS of
-        five — the reference card carries four tags and the fifth is what made
-        the row wrap on a narrow column. The builder is asked for more than four
-        and re-capped after the filter, because it slices to its own cap first:
-        filtering its result alone would leave four minus one whenever
-        availability landed inside the slice, i.e. a dropped pill rather than a
-        hidden one.
-      */}
-      {!rejected && (
-      <div className="desk-card__facts">
-        {buildCardPills(match, DESK_CARD_PILLS + 2)
-          .filter((pill) => pill.key !== "availability")
-          .slice(0, DESK_CARD_PILLS)
-          .map((pill) => (
-            <span key={pill.key} className={pill.className}>
-              {pill.label}
-            </span>
-          ))}
-      </div>
-      )}
-
-      {match.rationale && !rejected && (
-        <p className="desk-card__why">{match.rationale}</p>
-      )}
-
-      {showTriage && (
-        <div className="desk-card__triage" onClick={(e) => e.stopPropagation()}>
-          {match.viewedAt ? (
-            <span className="desk-badge desk-badge--viewed">Viewed</span>
-          ) : match.isNew ? (
-            <span className="desk-badge desk-badge--new">New</span>
-          ) : null}
-          {rejected ? (
-            <button
-              type="button"
-              className="desk-ghost"
-              onClick={() => pickDecision("REJECTED")}
-            >
-              Undo
-            </button>
-          ) : (
-            // Only Reject here. The shortlist action is the labelled button in
-            // the CTA row below — two controls both reading "Shortlist" on one
-            // card, writing to different stores, is what made the first
-            // TC-R-004 run untestable.
-            <button
-              type="button"
-              className="desk-ghost"
-              onClick={() => pickDecision("REJECTED")}
-            >
-              Reject
-            </button>
+          {skills.length > 0 && (
+            <section className="desk-card__skills" aria-label="Skills">
+              <h4 className="desk-card__skills-h">Skills</h4>
+              <ul className="desk-card__chips">
+                {shownSkills.map((s) => (
+                  <li key={s} className="desk-chip">
+                    {s}
+                  </li>
+                ))}
+                {skills.length > shownSkills.length && (
+                  <li className="desk-chip">
+                    +{skills.length - shownSkills.length}
+                  </li>
+                )}
+              </ul>
+            </section>
           )}
+
+          <div className="desk-card__ai">
+            <p className="desk-card__ai-tab">
+              <img
+                src="/hire/ai-summary-sparkle.svg"
+                alt=""
+                width={15}
+                height={15}
+              />
+              AI Summary
+            </p>
+            <p className="desk-card__ai-text">{summary}</p>
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="desk-card__cta">
+        {showTriage && (
+          <div className="desk-card__triage" onClick={(e) => e.stopPropagation()}>
+            {match.viewedAt ? (
+              <span className="desk-badge desk-badge--viewed">Viewed</span>
+            ) : match.isNew ? (
+              <span className="desk-badge desk-badge--new">New</span>
+            ) : null}
+            {rejected ? (
+              <button
+                type="button"
+                className="desk-ghost"
+                onClick={() => pickDecision("REJECTED")}
+              >
+                Undo
+              </button>
+            ) : (
+              // Only Reject here. The shortlist action is the labelled button
+              // beside it — two controls both reading "Shortlist" on one card,
+              // writing to different stores, is what made the first TC-R-004
+              // run untestable.
+              <button
+                type="button"
+                className="desk-ghost"
+                onClick={() => pickDecision("REJECTED")}
+              >
+                Reject
+              </button>
+            )}
+          </div>
+        )}
         <button type="button" className="desk-ghost" onClick={onOpen}>
-          View more details
-          <ChevronRight className="size-3.5" aria-hidden="true" />
+          View More Details
+          <ChevronDown
+            size={12}
+            strokeWidth={2}
+            absoluteStrokeWidth
+            aria-hidden="true"
+          />
         </button>
         {showTriage ? (
           // PROJECT CONTEXT (T-149). This writes TalentRequestMatch.decision
@@ -444,7 +476,12 @@ export function DeskMatchCard({
             {decision === "SHORTLISTED" ? (
               <X className="size-3.5" aria-hidden="true" />
             ) : (
-              <BookmarkPlus className="size-3.5" aria-hidden="true" />
+              <ShoppingCart
+                size={14}
+                strokeWidth={2}
+                absoluteStrokeWidth
+                aria-hidden="true"
+              />
             )}
             {decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"}
           </button>
@@ -469,14 +506,11 @@ export function DeskMatchCard({
           "Request an intro" is deliberately not on this card.
 
           The button, its server action and the whole engagement flow are
-          untouched — `RequestIntroButton` still renders in `CandidateInspector`
-          (behind "View more details") and in `MatchCard`, which is what the
-          guest-matches and request pages use. Only the Scout desk's own card
-          stops offering it, so the recruiter reads the profile before asking
-          for an introduction rather than firing one off the results list.
-
-          `desk-card__cta` is flex with `justify-content: flex-end`, so the two
-          remaining actions close up on their own; no spacing to adjust.
+          untouched — `RequestIntroButton` still renders in `MatchCard`, which
+          is what the guest-matches and request pages use. Only the Scout
+          desk's own card stops offering it, so the recruiter reads the profile
+          before asking for an introduction rather than firing one off the
+          results list.
         */}
       </div>
     </article>
