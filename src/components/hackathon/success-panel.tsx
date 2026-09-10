@@ -87,7 +87,7 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
         </p>
       </div>
 
-      {entryType === "TEAM_CREATE" ? (
+      {entryType !== "SOLO" ? (
         <div className="hk-done__panel">
           <span className="hk-done__label">Your team code</span>
           <div className="hk-done__code-row">
@@ -101,8 +101,17 @@ export function SuccessPanel({ entryType, teamCode, teamName }: Props) {
             </button>
           </div>
           <p className="hk-done__note">
-            Share this with your teammates. They open the Register popup on
-            abtalks.in/hackathon and enter it to join you.
+            {entryType === "TEAM_CREATE" ? (
+              <>
+                Share this with your teammates. They open the Register popup on
+                abtalks.in/hackathon and enter it to join you.
+              </>
+            ) : (
+              <>
+                This is your team&rsquo;s code — it&rsquo;s also on the
+                hackathon page any time you need it.
+              </>
+            )}
           </p>
         </div>
       ) : null}

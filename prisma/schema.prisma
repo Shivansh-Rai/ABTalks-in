@@ -1343,6 +1343,12 @@ model WorkshopRegistration {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // `eventId` is intentionally NOT a foreign key to `WorkshopEvent`. Rosters
+  // outlive their workshop rows: registrations exist for events that predate
+  // the table, and adding the constraint would make the migration fail on any
+  // environment holding an eventId the seed does not create. The id is the
+  // contract; referential integrity here would cost history.
+  //
   // No separate [eventId, email] constraint: User.email is already unique and
   // userId is required, so this single constraint fully prevents duplicates.
   @@unique([eventId, userId])
@@ -1350,8 +1356,71 @@ model WorkshopRegistration {
   @@index([userId])
 }
 
-// NOTE: `workshop_config` deliberately stays in Supabase — only registrations
-// migrated. See src/lib/workshop-supabase.ts for the config reader.
+/// A workshop session, admin-editable at /admin/workshop.
+///
+/// THE source of truth for every workshop-track event on /workshop: the hero
+/// title, poster, countdown target, calendar tile, sticky date marker and the
+/// Register Now / Upcoming banner all read this table. Nothing about a
+/// workshop is stated in code any more, which is what previously let the hero
+/// title advance to the next session while the hand-edited countdown stayed
+/// pointed at the one that had already finished.
+///
+/// The other three tracks (challenge / cohort / hackathon) are permanent links
+/// rather than weekly content, so they stay in `STATIC_EVENTS` in
+/// src/components/workshop/events-data.ts and are merged in on read.
+model WorkshopEvent {
+  /// Literal slug, e.g. `workshop-2026-09-12`. NEVER regenerated: this is the
+  /// value written to `WorkshopRegistration.eventId` on every signup, and it is
+  /// the only thing keeping a roster attached to its workshop. The seed inserts
+  /// the ids that were already in the code array, verbatim.
+  ///
+  /// Deliberately NOT a cuid and deliberately NOT a foreign key target for
+  /// `WorkshopRegistration` — see the note on that model.
+  id               String   @id
+  /// IST calendar day, `yyyy-MM-dd`.
+  date             String
+  /// Free text, e.g. "7:00 PM IST". Parsed for a clock by `eventStartMs`;
+  /// anything without one is treated as an all-day entry.
+  time             String
+  tag              String
+  /// Hex, drives the calendar tile and timeline marker.
+  accent           String
+  /// Key into ICON_MAP in src/components/workshop/workshop-icons.ts. A
+  /// LucideIcon component reference cannot be stored in a column or crossed
+  /// over the Server→Client boundary, so events carry a string instead.
+  icon             String
+  title            String
+  desc             String
+  host             String
+  location         String
+  /// Explicit kill switch. `getRegistrableEvent` picks the soonest unfinished
+  /// workshop whose flag is not false, so leaving this true is the normal case
+  /// and setting it false closes signups for that session without deleting it.
+  registrationOpen Boolean  @default(true)
+  durationMinutes  Int?
+  /// Public URL. A Vercel Blob URL once uploaded through the admin editor;
+  /// the seeded rows still carry their original `/workshop/posters/*` paths.
+  posterSrc        String?
+  youtubeId        String?
+  /// Runtime of the recording, e.g. "01:02:18".
+  duration         String?
+  titleAccents     String[]
+  topics           String[]
+  takeaways        String[]
+  /// `{ label, href, kind: "youtube" | "link" }[]` — shape mirrors
+  /// `WorkshopResource`. Json rather than a child table: it is a short ordered
+  /// list edited only as a whole, and a relation would buy nothing.
+  resources        Json     @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([date])
+}
+
+// NOTE: `workshop_config` deliberately stays in Supabase. It no longer feeds
+// the countdown (that derives from WorkshopEvent now) — only the zoom and
+// WhatsApp links, plus the fallback labels used when no workshop is open.
+// See src/lib/workshop-supabase.ts.
 
 /// General AB Talks AI Interview — a standardized, comparable talent signal
 /// built from a candidate's own verified challenge work. Separate from

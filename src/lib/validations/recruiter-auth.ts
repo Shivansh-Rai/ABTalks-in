@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { workEmailSchema } from "@/lib/validations/work-email";
 
 export const requestRecruiterOtpSchema = z.object({
   email: z.string().trim().email().max(200),
@@ -9,7 +10,8 @@ export const requestRecruiterOtpSchema = z.object({
 export const registerRecruiterSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name.").max(120),
   company: z.string().trim().min(2, "Enter your company.").max(200),
-  email: z.string().trim().email("Enter a valid work email.").max(200),
+  /** Work domains only — a free consumer mailbox never becomes a recruiter. */
+  email: workEmailSchema,
   /** Optional, and not verified — it is a contact detail, not a credential. */
   phone: z.string().trim().max(20).optional(),
   code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code."),

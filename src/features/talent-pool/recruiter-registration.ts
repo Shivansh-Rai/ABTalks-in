@@ -2,6 +2,10 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
 import { studentProfile } from "@/repositories/legacy/student-profile";
+import {
+  WORK_EMAIL_REQUIRED_MESSAGE,
+  isPersonalEmailDomain,
+} from "@/lib/validations/work-email";
 
 export type RecruiterState =
   | { status: "none" }
@@ -132,6 +136,15 @@ export async function registerRecruiter(
   // account that posted this form was switched to role RECRUITER (unapproved,
   // but a recruiter nonetheless).
   const email = user.email?.trim().toLowerCase();
+
+  // The account signing in here may have arrived through Google, which will
+  // happily authenticate a personal mailbox. Authenticating is not the same as
+  // being a recruiter: a free consumer domain is refused before the seat is
+  // even looked at, so a seat can never be the way around it.
+  if (isPersonalEmailDomain(email)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
+
   const seat = email
     ? await prisma.verifiedRecruiterSeat.findFirst({
         where: { email, active: true, revokedAt: null },

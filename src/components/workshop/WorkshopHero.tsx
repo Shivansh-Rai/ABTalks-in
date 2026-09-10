@@ -184,13 +184,19 @@ export default function WorkshopHero({
   eventDesc,
   eventPoster,
 }: {
-  webinarDate: string;
-  webinarTime: string;
-  webinarTargetUtc: string;
+  /**
+   * All three describe the SAME workshop as `eventTitle`, and all three are
+   * null when no workshop is open. They are never sourced separately: a second
+   * source is exactly what let the title advance while the countdown stayed on
+   * a session that had already finished.
+   */
+  webinarDate: string | null;
+  webinarTime: string | null;
+  webinarTargetUtc: string | null;
   /**
    * The current workshop, resolved on the SERVER by `getRegistrableEvent`.
    *
-   * It used to be found here with `EVENTS.find(e => e.register &&
+   * It used to be found here with a module-array find on `e.register &&
    * e.registrationOpen)` — a third copy of "which event is current", on static
    * flags, so the hero stayed on a finished workshop until someone edited the
    * data file. Deriving it from the clock in this component instead would mean
@@ -312,8 +318,12 @@ export default function WorkshopHero({
                   of room and spilled 10px past the background, while the time
                   pill left 28px of empty pill trailing its text. */}
               <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
-                <Chip text={webinarDate} Icon={CalendarDays} />
-                <Chip text={webinarTime} Icon={Clock} />
+                {webinarDate ? (
+                  <Chip text={webinarDate} Icon={CalendarDays} />
+                ) : null}
+                {webinarTime ? (
+                  <Chip text={webinarTime} Icon={Clock} />
+                ) : null}
               </div>
 
               <h1
@@ -355,9 +365,14 @@ export default function WorkshopHero({
               </p>
 
               {/* countdown — node 1:140 */}
-              <div style={{ marginTop: GAP_DESC_COUNT }}>
-                <CountdownExact targetUtc={webinarTargetUtc} />
-              </div>
+              {/* No open workshop means no honest target. Showing a countdown
+                  anyway is what produced a hero announcing one session above a
+                  timer frozen at zero for another. */}
+              {webinarTargetUtc ? (
+                <div style={{ marginTop: GAP_DESC_COUNT }}>
+                  <CountdownExact targetUtc={webinarTargetUtc} />
+                </div>
+              ) : null}
 
               {/* Background, shadow and hover live in `.wk-cta` — a :hover rule
                   cannot be expressed inline. */}
@@ -405,8 +420,12 @@ export default function WorkshopHero({
               content box on a 320px phone, so the type scales with the
               viewport instead of wrapping. */}
           <div className="flex flex-nowrap items-center gap-2">
-            <FlowChip text={webinarDate} Icon={CalendarDays} />
-            <FlowChip text={webinarTime} Icon={Clock} />
+            {webinarDate ? (
+              <FlowChip text={webinarDate} Icon={CalendarDays} />
+            ) : null}
+            {webinarTime ? (
+              <FlowChip text={webinarTime} Icon={Clock} />
+            ) : null}
           </div>
 
           {/* Trimmed one step alongside the canvas title (64→56), so the
@@ -422,9 +441,11 @@ export default function WorkshopHero({
             {desc}
           </p>
 
-          <div className="mt-8">
-            <CountdownTimer targetUtc={webinarTargetUtc} />
-          </div>
+          {webinarTargetUtc ? (
+            <div className="mt-8">
+              <CountdownTimer targetUtc={webinarTargetUtc} />
+            </div>
+          ) : null}
 
           {/* One row. Measured at 390px the content box is 310px and the pair
               came to 321, so it wrapped and left "View Details" stranded on a
