@@ -34,18 +34,17 @@ import { findTrack } from "@/features/hire/track-registry";
  */
 
 /**
- * The one place the world is still closed, and it is the database.
+ * Persist only sources the Prisma enum already knows.
  *
- * `TalentRequestMatch.source` and `TalentEngagementRequest.source` are a Prisma
- * enum with exactly four values, so a track added to the registry can be
- * described, filtered, searched and ranked — but its matches cannot be WRITTEN
- * until that enum gains a value, which is a migration.
+ * `TalentRequestMatch.source` and `TalentEngagementRequest.source` are
+ * `TalentCandidateSource` (PROGRAM, CHALLENGE_60, CLAUDE, HACKATHON, PROFILE).
+ * A track can be described, filtered, searched and ranked from the registry,
+ * but its matches cannot be WRITTEN until that enum includes the slug — which
+ * is a migration (PROFILE landed in plan 117).
  *
- * This narrows explicitly and returns null rather than casting, so the limit
- * surfaces as a logged, handled case at the two write sites instead of a runtime
- * Prisma error a recruiter would meet as a failed intro request. Completing the
- * future-proofing means widening the enum; that is plan 094's job, and it needs
- * a schema change nobody should make silently.
+ * This narrows explicitly and returns null rather than casting, so an unknown
+ * slug surfaces as a logged, handled case at the two write sites instead of a
+ * runtime Prisma error a recruiter would meet as a failed intro request.
  */
 export function persistableSource(slug: string): TalentCandidateSource | null {
   const hit = (

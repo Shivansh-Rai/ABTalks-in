@@ -148,7 +148,7 @@ export const TRACKS: readonly TrackDescriptor[] = [
     label: "Profile only",
     // Recruiters do not ask for this track by name — it is what an unscoped
     // search should already include. The aliases are for the rare explicit ask.
-    aliases: [/profile[-\s]?only/i, /no cohort/i, /open pool/i],
+    aliases: [/\bprofile[-\s]?only\b/i, /\bno cohort\b/i, /\bopen pool\b/i],
     evidenceKinds: ["declared skills"],
     // Profile-only candidates are not tied to a geography.
     geo: null,
