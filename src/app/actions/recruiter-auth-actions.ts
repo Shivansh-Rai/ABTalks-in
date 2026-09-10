@@ -36,11 +36,19 @@ async function deliverCode(
   // The code leaves the server exactly one way: by email in production, or on
   // screen in development when there is no mail provider configured.
   if (otpDevFallbackEnabled()) {
-    logger.warn("[recruiter-auth] dev OTP", { email, code });
+    // The code is returned to the caller, which is how the dev flow surfaces
+    // it. It used to be logged next to the address as well - a one-time
+    // credential and a private email on one line, which T-259 forbids and
+    // which the return value already made redundant.
+    logger.warn(
+      { event: "recruiter.otp.dev_fallback" },
+      "OTP returned to the caller instead of emailed (dev fallback)",
+    );
     return { devCode: code };
   }
   await sendEmail({
     to: email,
+    kind: "recruiter.otp",
     subject: "Your ABTalks verification code",
     html: `<p>Your ABTalks code is:</p>
 <p style="font-size:28px;font-weight:700;letter-spacing:6px;">${code}</p>

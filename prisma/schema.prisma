@@ -3743,3 +3743,60 @@ enum VirtualCandidateRequestStatus {
   CANCELLED
   EXPIRED
 }
+
+// =============================================================================
+// T-259 — observability. One send attempt, one row.
+//
+// This is the database view of the "one incident, three views" rule: the same
+// `id` appears in the structured log line (`deliveryId`) and on the Sentry
+// event (tag `deliveryId`), and the row carries the `requestId` and
+// `sentryEventId` that lead to the other two.
+//
+// It deliberately stores NO contact detail. `recipientHash` is a SHA-256 of the
+// lowercased address, which is enough to answer "did this person's mail fail?"
+// (hash the address and look it up) without the table itself becoming a mailing
+// list — this row is read by admins and reachable from exports.
+// =============================================================================
+
+enum OutboundDeliveryChannel {
+  EMAIL
+}
+
+enum OutboundDeliveryStatus {
+  /// Provider not configured, or a seed/test address — nothing was attempted.
+  SKIPPED
+  SENT
+  FAILED
+}
+
+/// T-259 observability side-table for outbound mail. Distinct from
+/// T-248 `NotificationDelivery`, which tracks UserNotification channels.
+model OutboundDelivery {
+  id      String                   @id @default(cuid())
+  channel OutboundDeliveryChannel  @default(EMAIL)
+
+  /// What this send is, e.g. "recruiter.otp", "hire.alert", "contact.form".
+  /// Free text so a new caller needs no migration.
+  kind String
+
+  /// SHA-256 of the lowercased recipient address. Never the address.
+  recipientHash String
+
+  /// The domain entity this send belongs to, when there is one.
+  subjectType String?
+  subjectId   String?
+
+  status        OutboundDeliveryStatus
+  /// Output of safeErrorMessage() — already redacted.
+  failureReason String?
+
+  /// Correlation. Same values as the log line and the Sentry event.
+  requestId     String?
+  sentryEventId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([kind, createdAt(sort: Desc)])
+  @@index([recipientHash])
+}
