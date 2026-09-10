@@ -65,6 +65,11 @@ export default async function AdminLayout({
       icon: "jobs" as const,
     },
     {
+      href: "/admin/platform-admins",
+      label: "Platform Admins",
+      icon: "platformAdmins" as const,
+    },
+    {
       href: "/admin/recruiters",
       label:
         pendingRecruiterCount > 0

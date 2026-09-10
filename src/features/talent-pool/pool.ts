@@ -13,6 +13,7 @@ import {
   loadRecruiterIdentities,
   searchableUserWhere,
 } from "@/repositories/talent";
+import { contactAccessFor } from "@/features/hire/contact-access";
 
 export type MissionPortfolioDay = {
   dayNumber: number;
@@ -544,19 +545,9 @@ export async function getShortlist(
     shown.map((i) => i.member.userId),
   );
 
-  const released = new Set(
-    (
-      await prisma.talentEngagementRequest.findMany({
-        where: {
-          recruiterUserId,
-          status: "CONTACT_SHARED",
-          programMemberId: { in: shown.map((i) => i.member.id) },
-        },
-        select: { programMemberId: true },
-      })
-    )
-      .map((r) => r.programMemberId)
-      .filter((id): id is string => id !== null),
+  const released = await contactAccessFor(
+    recruiterUserId,
+    shown.map((i) => i.member.userId),
   );
 
   return {
@@ -574,7 +565,7 @@ export async function getShortlist(
         displayName: name.trim() ? name.trim() : null,
         skills: idn?.skills.length ? idn.skills : i.member.skills,
         yearsExperience: idn?.yearsExperience ?? i.member.yearsExperience,
-        revealedName: released.has(i.member.id) ? name : null,
+        revealedName: released.has(i.member.userId) ? name : null,
         shortlistedAt: i.createdAt.toISOString(),
       };
     }),

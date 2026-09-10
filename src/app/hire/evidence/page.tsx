@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireRecruiter } from "@/lib/program-auth";
 import { EvidenceResume } from "@/components/hire/evidence-resume";
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export default async function HireEvidencePage({
 }: {
   searchParams: Promise<{ ref?: string | string[] }>;
 }) {
+  await requireRecruiter();
   const raw = (await searchParams).ref;
   const lookup = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "");
   return <EvidenceResume lookup={lookup} />;
