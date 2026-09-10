@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 
 /**
@@ -57,6 +58,10 @@ export default function WorkshopHeader({ isSignedIn }: { isSignedIn: boolean }) 
               <NotificationBellButton className="inline-flex size-7 items-center justify-center transition-colors" />
             </span>
           )}
+
+          <span className="wk-bar-toggle inline-flex">
+            <ThemeToggle />
+          </span>
 
           {/*
             `whitespace-nowrap` and `shrink-0` are the whole fix for the phone

@@ -2,20 +2,16 @@ import Link from "next/link";
 import { WorkshopAnalyticsPanel } from "@/components/admin/workshop-analytics";
 import { WorkshopEventPicker } from "@/components/admin/workshop-event-picker";
 import { WorkshopRegistrationsView } from "@/components/admin/workshop-registrations-view";
+import { EVENTS } from "@/components/workshop/events-data";
 import {
   getWorkshopEventCounts,
   getWorkshopRegistrations,
 } from "@/features/workshop/get-admin-data";
-import { getWorkshopEvents } from "@/features/workshop/get-events";
-import { WorkshopEventCalendar } from "@/components/admin/workshop-event-calendar";
-import type { EditableWorkshopEvent } from "@/components/admin/workshop-event-editor";
-import { istTodayKey } from "@/components/workshop/events-data";
 import { getWorkshopAnalytics } from "@/features/workshop/get-workshop-analytics";
 import { requireAdmin } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { value: "events", label: "Events" },
   { value: "registrations", label: "Registrations" },
   { value: "analytics", label: "Analytics" },
 ] as const;
@@ -34,39 +30,9 @@ export default async function AdminWorkshopPage({
     ? (sp.tab as TabValue)
     : "registrations";
 
-  const [counts, allEvents] = await Promise.all([
-    getWorkshopEventCounts(),
-    getWorkshopEvents(),
-  ]);
+  const counts = await getWorkshopEventCounts();
 
-  const titleById = new Map(allEvents.map((e) => [e.id, e.title] as const));
-
-  // Only workshop-track events are rows this editor can write. The three
-  // static entries (challenge / cohort / hackathon) live in code and are
-  // deliberately not exposed here.
-  const editableEvents: EditableWorkshopEvent[] = allEvents
-    .filter((e) => e.track === "workshop" && !e.placeholder)
-    .map((e) => ({
-      id: e.id,
-      date: e.date,
-      time: e.time,
-      tag: e.tag,
-      accent: e.accent,
-      icon: e.icon,
-      title: e.title,
-      desc: e.desc,
-      host: e.host,
-      location: e.location,
-      registrationOpen: e.registrationOpen !== false,
-      durationMinutes: e.durationMinutes ?? null,
-      posterSrc: e.posterSrc ?? null,
-      youtubeId: e.youtubeId ?? null,
-      duration: e.duration ?? null,
-      titleAccents: e.titleAccents ?? [],
-      topics: e.topics ?? [],
-      takeaways: e.takeaways ?? [],
-      resources: e.resources ?? [],
-    }));
+  const titleById = new Map(EVENTS.map((e) => [e.id, e.title]));
   const pickerEvents = counts.map((c) => ({
     eventId: c.eventId,
     label: titleById.get(c.eventId) ?? c.eventId,
@@ -81,7 +47,7 @@ export default async function AdminWorkshopPage({
       <div>
         <h1 className="font-display text-2xl font-bold md:text-3xl">Workshop</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Create and edit workshops, and review registrations and analytics.
+          Registrations, analytics and share links across every workshop.
         </p>
       </div>
 
@@ -110,10 +76,6 @@ export default async function AdminWorkshopPage({
           );
         })}
       </div>
-
-      {tab === "events" && (
-        <WorkshopEventCalendar events={editableEvents} todayKey={istTodayKey()} />
-      )}
 
       {tab === "registrations" && (
         <RegistrationsTab
