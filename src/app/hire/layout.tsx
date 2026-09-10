@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { getRecruiterAccountSnapshot } from "@/features/hire/recruiter-account";
+import { getWorkspaceCredits } from "@/features/hire/credits";
 import { existingEngagements } from "@/features/hire/contact-access";
 import { getShortlist } from "@/features/talent-pool/pool";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
@@ -20,6 +21,20 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   const approved = state.status === "approved";
   const pending = state.status === "pending";
   const account = userId && approved ? await getRecruiterAccountSnapshot(userId) : null;
+
+  // The header balance, shown only once the recruiter is approved.
+  //
+  // The $200 exists earlier than this — it is granted when setup completes,
+  // before an admin sees the application — but a balance is only worth showing
+  // to someone allowed to spend it, and `unlockContact` refuses an unapproved
+  // recruiter. Displaying credits beside a "Pending" badge would advertise
+  // spending power the product does not yet grant. So the backend holds it and
+  // the UI waits, which is why this goes through `getWorkspaceCredits` and its
+  // existing workspace boundary rather than a looser read.
+  //
+  // Resolved server-side because this layout already resolves the recruiter,
+  // so the figure needs no client fetch and therefore no loading state.
+  const credits = account ? await getWorkspaceCredits() : null;
 
   let podRows: CartRow[] = [];
   if (userId && approved) {
@@ -61,6 +76,14 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
       <HireDeskProvider>
         <HireChrome
           account={account}
+          credits={
+            credits?.ok
+              ? {
+                  balanceMinor: credits.data.balanceMinor,
+                  currency: credits.data.currency,
+                }
+              : null
+          }
           serverCartCount={account?.cartCount ?? 0}
           pendingName={pending && state.status === "pending" ? state.fullName : null}
           podRows={podRows}

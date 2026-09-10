@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
+import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
@@ -26,12 +27,15 @@ import { cn } from "@/lib/utils";
 
 export function HireChrome({
   account,
+  credits,
   serverCartCount,
   pendingName,
   podRows,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
+  /** Null when this visitor has no recruiter workspace to have a balance in. */
+  credits: { balanceMinor: number; currency: string } | null;
   serverCartCount: number;
   pendingName: string | null;
   podRows: CartRow[];
@@ -132,6 +136,12 @@ export function HireChrome({
               <span className="hire-hbtn__count">{cartCount}</span>
             )}
           </button>
+          {credits ? (
+            <CreditBalancePill
+              balanceMinor={credits.balanceMinor}
+              currency={credits.currency}
+            />
+          ) : null}
           {account ? (
             <RecruiterAccountMenu account={account} />
           ) : pendingName ? (
