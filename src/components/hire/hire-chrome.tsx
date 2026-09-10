@@ -38,7 +38,7 @@ export function HireChrome({
   children: React.ReactNode;
 }) {
   const { approved, openAuth } = useHireAuth();
-  const { view, openPod, closePod, openSaved } = useHireDesk();
+  const { view, landing, openPod, closePod, openSaved } = useHireDesk();
   const [guestCount, setGuestCount] = useState(0);
   const [overlayCount, setOverlayCount] = useState(0);
   const [starCount, setStarCount] = useState(0);
@@ -71,6 +71,7 @@ export function HireChrome({
       pathname !== "/hire/matches" &&
       pathname !== "/hire/create-test" &&
       pathname !== "/hire/assessments");
+  const isLanding = pathname === "/hire" && landing && view === "scout";
 
   const [seenCartCount, setSeenCartCount] = useState(cartCount);
   if (cartCount !== seenCartCount) {
@@ -81,70 +82,91 @@ export function HireChrome({
   }
 
   return (
-    <div className={cn("hire-app", desk && "hire-app--desk")}>
+    <div
+      className={cn(
+        "hire-app",
+        desk && "hire-app--desk",
+        isLanding && "hire-app--landing",
+      )}
+    >
       <header className="hire-app__header">
         <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
           <span className="hire-app__logo">
-            <Image
-              src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
-              width={561}
-              height={168}
-              priority
-            />
+            {isLanding ? (
+              <Image
+                src="/hire/abtalks-wordmark.png"
+                alt="ABTalks"
+                width={342}
+                height={67}
+                priority
+                style={{ width: "auto", height: "100%" }}
+              />
+            ) : (
+              <Image
+                src="/landing/abtalks-logo-mark.png"
+                alt="ABTalks"
+                width={561}
+                height={168}
+                priority
+              />
+            )}
           </span>
-          <span className="hire-app__badge">Hire</span>
+          {!isLanding && <span className="hire-app__badge">Hire</span>}
         </Link>
 
         <nav className="hire-app__nav">
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              starCount > 0 && "has-count",
-              view === "saved" && "is-current",
-            )}
-            aria-current={view === "saved" ? "page" : undefined}
-            title="Kept on this device — nothing is sent to our team from here"
-            onClick={() => (view === "saved" ? closePod() : openSaved())}
-          >
-            <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
-              <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
-            </span>
-            <span>Save for Later</span>
-            {starCount > 0 && (
-              <span className="hire-hbtn__count">{starCount}</span>
-            )}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              cartCount > 0 && "has-count",
-              view === "pod" && "is-current",
-            )}
-            aria-current={view === "pod" ? "page" : undefined}
-            onClick={() => (view === "pod" ? closePod() : openPod())}
-          >
-            <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
-              <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
-            </span>
-            <span>Shortlist</span>
-            {cartCount > 0 && (
-              <span className="hire-hbtn__count">{cartCount}</span>
-            )}
-          </button>
-          <Link
-            href="/hire/assessments"
-            className={cn(
-              "hire-hbtn",
-              "hire-hbtn--label",
-              pathname === "/hire/assessments" && "is-current",
-            )}
-            aria-current={pathname === "/hire/assessments" ? "page" : undefined}
-          >
-            <span>Assessments</span>
-          </Link>
+          {!isLanding && (
+            <>
+              <button
+                type="button"
+                className={cn(
+                  "hire-hbtn",
+                  starCount > 0 && "has-count",
+                  view === "saved" && "is-current",
+                )}
+                aria-current={view === "saved" ? "page" : undefined}
+                title="Kept on this device — nothing is sent to our team from here"
+                onClick={() => (view === "saved" ? closePod() : openSaved())}
+              >
+                <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
+                  <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
+                </span>
+                <span>Save for Later</span>
+                {starCount > 0 && (
+                  <span className="hire-hbtn__count">{starCount}</span>
+                )}
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "hire-hbtn",
+                  cartCount > 0 && "has-count",
+                  view === "pod" && "is-current",
+                )}
+                aria-current={view === "pod" ? "page" : undefined}
+                onClick={() => (view === "pod" ? closePod() : openPod())}
+              >
+                <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
+                  <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
+                </span>
+                <span>Shortlist</span>
+                {cartCount > 0 && (
+                  <span className="hire-hbtn__count">{cartCount}</span>
+                )}
+              </button>
+              <Link
+                href="/hire/assessments"
+                className={cn(
+                  "hire-hbtn",
+                  "hire-hbtn--label",
+                  pathname === "/hire/assessments" && "is-current",
+                )}
+                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+              >
+                <span>Assessments</span>
+              </Link>
+            </>
+          )}
           {account ? (
             <RecruiterAccountMenu account={account} />
           ) : pendingName ? (
@@ -172,7 +194,7 @@ export function HireChrome({
 
       {desk ? (
         <main className="hire-workspace">
-          <HireJourney />
+          {!isLanding && <HireJourney />}
           <div
             className={cn(
               "hire-scout-region",
@@ -196,7 +218,7 @@ export function HireChrome({
         <div className="hire-plain">{children}</div>
       )}
 
-      {cartCount > 0 && !podDismissed && view === "scout" && (
+      {cartCount > 0 && !podDismissed && view === "scout" && !isLanding && (
         <div className="hire-podbar" role="status">
           <span className="hire-podbar__icon" aria-hidden="true">
             <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />

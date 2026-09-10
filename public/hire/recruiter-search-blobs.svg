@@ -1,0 +1,52 @@
+<svg width="1964" height="878" viewBox="0 0 1964 878" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_g_1570_438)">
+<g clip-path="url(#clip0_1570_438)">
+<rect width="1956" height="870" transform="translate(4 4)" fill="black"/>
+<g filter="url(#filter1_fg_1570_438)">
+<g clip-path="url(#clip1_1570_438)">
+<rect width="1920" height="900" transform="translate(4 4)" fill="#B4FFE9"/>
+<ellipse cx="147.5" cy="207" rx="263.5" ry="283" fill="#18D39B"/>
+<ellipse cx="693.5" cy="235.5" rx="171.5" ry="167.5" fill="#18D39B"/>
+<ellipse cx="779.5" cy="755.5" rx="368.5" ry="234.5" fill="#18D39B"/>
+<ellipse cx="1867.5" cy="372" rx="263.5" ry="283" fill="#287B62"/>
+<ellipse cx="521.5" cy="46" rx="263.5" ry="283" fill="#053D45"/>
+<ellipse cx="1292.5" cy="351" rx="263.5" ry="283" fill="#055560"/>
+<ellipse cx="258.5" cy="711" rx="263.5" ry="283" fill="#02525D"/>
+<ellipse cx="1742" cy="46" rx="126" ry="114" fill="#02525D"/>
+<ellipse cx="1659" cy="708" rx="177" ry="187" fill="#18D39B"/>
+<ellipse cx="1846" cy="803" rx="177" ry="187" fill="#03535F"/>
+<ellipse cx="1116" cy="842" rx="177" ry="187" fill="#0A444C"/>
+<ellipse cx="1488" cy="843.5" rx="108" ry="106.5" fill="#18D39B"/>
+<ellipse cx="974" cy="114.5" rx="189" ry="182.5" fill="#115B5A"/>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<filter id="filter0_g_1570_438" x="0" y="0" width="1964" height="878" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.039999999105930328 0.039999999105930328" numOctaves="3" seed="825" />
+<feDisplacementMap in="shape" scale="8" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+<feMerge result="effect1_texture_1570_438">
+<feMergeNode in="displacedImage"/>
+</feMerge>
+</filter>
+<filter id="filter1_fg_1570_438" x="-296" y="-296" width="2520" height="1500" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="150" result="effect1_foregroundBlur_1570_438"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.10000000149011612 0.10000000149011612" numOctaves="3" seed="4765" />
+<feDisplacementMap in="effect1_foregroundBlur_1570_438" scale="8" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+<feMerge result="effect2_texture_1570_438">
+<feMergeNode in="displacedImage"/>
+</feMerge>
+</filter>
+<clipPath id="clip0_1570_438">
+<rect width="1956" height="870" fill="white" transform="translate(4 4)"/>
+</clipPath>
+<clipPath id="clip1_1570_438">
+<rect width="1920" height="900" fill="white" transform="translate(4 4)"/>
+</clipPath>
+</defs>
+</svg>

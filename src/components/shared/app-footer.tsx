@@ -155,6 +155,7 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard" || pathname === "/profile") return null;
+  if (pathname === "/hire" || pathname.startsWith("/hire/")) return null;
   if (pathname === "/jobs" || pathname.startsWith("/jobs/")) return null;
   if (pathname === "/achievements") return null;
   // Challenge tracks render inside DashboardShell, which ships DashboardFooter.

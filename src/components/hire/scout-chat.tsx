@@ -50,6 +50,7 @@ import type {
   MatchTriage,
 } from "@/components/hire/match-card";
 import { SearchTabs } from "@/components/hire/search-tabs";
+import { RecruiterSearchLanding } from "@/components/hire/recruiter-search-landing";
 import {
   appendGuestSearch,
   clearGuestMatches,
@@ -456,8 +457,13 @@ export function ScoutChat({
       step: searched ? 2 : 1,
       matchCount,
       gap: deskGap,
+      landing:
+        view === "scout" &&
+        !initialRequestId &&
+        !searched &&
+        !messages.some((m) => m.role === "user"),
     });
-  }, [searched, matchCount, deskGap, setDesk, view]);
+  }, [searched, matchCount, deskGap, setDesk, view, messages, initialRequestId]);
 
   useEffect(() => {
     if (hydratedRef.current) return;
@@ -865,6 +871,24 @@ export function ScoutChat({
   // grid-template-rows between 0fr and 1fr, and there is no longer a state
   // where the strip should be closed.
   const stripItems = criteria;
+
+  if (!talked && view === "scout" && !initialRequestId) {
+    return (
+      <RecruiterSearchLanding
+        value={text}
+        pending={pending}
+        spoken={{
+          location: spoken.location,
+          experience: spoken.experience,
+          role: spoken.role,
+          education: spoken.education,
+          skills: spoken.skills,
+        }}
+        onChange={setText}
+        onSubmit={(query) => send(query)}
+      />
+    );
+  }
 
   return (
     <section className={cn("scout", expanded && "is-expanded")} aria-label="Scout assistant">

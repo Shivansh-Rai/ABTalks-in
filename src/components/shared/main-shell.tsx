@@ -18,6 +18,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
    */
   const isWorkshop =
     pathname === "/workshop" || pathname.startsWith("/workshop/");
+  const isHire = pathname === "/hire" || pathname.startsWith("/hire/");
 
   useEffect(() => {
     document.body.classList.toggle("landing-page", isLanding);
@@ -30,7 +31,11 @@ export function MainShell({ children }: { children: React.ReactNode }) {
     <main
       className={cn(
         "theme-abtalks-light theme-abtalks-brand flex-1",
-        !isHackathon && !isDashboardShellRoute && !isWorkshop && "pb-16 md:pb-0",
+        !isHackathon &&
+          !isDashboardShellRoute &&
+          !isWorkshop &&
+          !isHire &&
+          "pb-16 md:pb-0",
       )}
     >
       {children}

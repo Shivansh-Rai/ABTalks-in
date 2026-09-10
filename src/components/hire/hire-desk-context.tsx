@@ -25,6 +25,8 @@ export type HireDeskState = {
   gap: string | null;
   view: HireDeskView;
   inspect: MatchCardData | null;
+  /** Full-bleed Figma search landing on `/hire` before the first query. */
+  landing: boolean;
 };
 
 type HireDeskValue = HireDeskState & {
@@ -45,6 +47,7 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
     gap: null,
     view: "scout",
     inspect: null,
+    landing: true,
   });
   const setDesk = useCallback((next: Partial<HireDeskState>) => {
     setState((s) => ({ ...s, ...next }));
@@ -102,6 +105,7 @@ export function useHireDesk(): HireDeskValue {
       gap: null,
       view: "scout",
       inspect: null,
+      landing: true,
       setDesk: () => {},
       openPod: () => {},
       closePod: () => {},
