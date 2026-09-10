@@ -519,6 +519,57 @@ const HACKATHON_EVIDENCE_SELECT = {
   user: { select: { name: true } },
 } satisfies Prisma.HackathonParticipantSelect;
 
+export type ProfileCandidateRow = {
+  userId: string;
+  user: { name: string | null };
+  recruiterIdentity: RecruiterPublicIdentity;
+};
+
+/**
+ * Candidates who are discoverable from their PROFILE alone.
+ *
+ * "Usable profile" is deliberately narrow and deliberately not a toggle:
+ *
+ *   - `searchableUserWhere()` — searchable, not withdrawn, not deleted. The one
+ *     discovery gate, shared with every other track. NOT `openToWork`, which is
+ *     a different question (plan 113).
+ *   - at least one skill the candidate claimed by hand. Every search is
+ *     stack-matching, so a profile with no skills can never match a requirement;
+ *     including it would be noise, not reach. This is NOT an evidence floor —
+ *     no cohort, challenge, hackathon or mission is required or consulted.
+ *   - a non-blank name, because a card with no name is not a candidate.
+ *
+ * Nothing here reads `CandidateVisibility` a second time: the gate is merged in
+ * via `searchableUserWhere()` so it cannot be forgotten or overwritten.
+ */
+export async function listProfileCandidates(
+  take = 200,
+): Promise<ProfileCandidateRow[]> {
+  const rows = await prisma.user.findMany({
+    where: {
+      ...searchableUserWhere(),
+      candidateProfile: {
+        is: {
+          fullName: { not: "" },
+          skills: { some: { claimedByCandidate: true } },
+        },
+      },
+    },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "desc" },
+    take,
+  });
+  if (rows.length === 0) return [];
+
+  const identities = await loadRecruiterIdentities(rows.map((r) => r.id));
+  return rows.map((r) => ({
+    userId: r.id,
+    user: { name: r.name },
+    recruiterIdentity:
+      identities.get(r.id) ?? identityFromLegacyProfile(null),
+  }));
+}
+
 export type HackathonCandidateRow = {
   userId: string;
   user: { name: string | null };
@@ -711,6 +762,34 @@ export async function resolveHackathonRefs(
     },
     select: { userId: true },
   });
+}
+
+/**
+ * Re-test profile-only refs against the SAME usable-profile condition
+ * `listProfileCandidates` searches on.
+ *
+ * A ref is a name, not a capability: it arrives from the client, so a candidate
+ * who has since withdrawn, been deleted, or removed their last skill must stop
+ * being shortlistable even though the recruiter still holds the string.
+ */
+export async function resolveProfileRefs(
+  userIds: string[],
+): Promise<{ userId: string }[]> {
+  if (userIds.length === 0) return [];
+  const rows = await prisma.user.findMany({
+    where: {
+      ...searchableUserWhere(),
+      id: { in: userIds },
+      candidateProfile: {
+        is: {
+          fullName: { not: "" },
+          skills: { some: { claimedByCandidate: true } },
+        },
+      },
+    },
+    select: { id: true },
+  });
+  return rows.map((r) => ({ userId: r.id }));
 }
 
 export type SubmissionActivityRow = Awaited<

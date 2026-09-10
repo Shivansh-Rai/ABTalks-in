@@ -1,5 +1,10 @@
 import "server-only";
-import { CandidatePersona, UserType, type Prisma } from "@prisma/client";
+import {
+  CandidatePersona,
+  OpportunityType,
+  UserType,
+  type Prisma,
+} from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
 import {
@@ -350,6 +355,13 @@ export type CandidateAvailabilityView = {
   preferredWorkMode: string | null;
   preferredCities: string[];
   openToRelocate: boolean;
+  /**
+   * What the candidate is open to: INTERNSHIP / FULL_TIME / PART_TIME /
+   * CONTRACT / FREELANCE. EMPTY MEANS UNSTATED, never "open to nothing" — a
+   * filter must not exclude on it. The column has always existed; nothing read
+   * it until the recruiter engagement-type filter (plan 117).
+   */
+  opportunityTypes: OpportunityType[];
 };
 
 export type CandidateAvailabilityWrite = {
@@ -386,6 +398,7 @@ export async function listCandidateAvailability(
       remotePreference: true,
       preferredLocations: true,
       willingToRelocate: true,
+      opportunityTypes: true,
     },
   });
 
@@ -402,6 +415,7 @@ export async function listCandidateAvailability(
         preferredWorkMode: r.remotePreference,
         preferredCities: r.preferredLocations,
         openToRelocate: r.willingToRelocate,
+        opportunityTypes: r.opportunityTypes,
       },
     ]),
   );

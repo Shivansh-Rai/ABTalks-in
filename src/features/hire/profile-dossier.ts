@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listHackathonCandidates } from "@/repositories/hire";
+import { listProfileCandidates } from "@/repositories/hire";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { computeCoverage, loadAvailabilityByUserId } from "@/features/hire/dossier";
 import { declared, derived, verified } from "@/features/hire/dossier-provenance";
@@ -9,13 +9,32 @@ import { tidyRoleLabel } from "@/features/hire/role-family";
 import { splitSkills } from "@/features/hire/challenge-dossier";
 import type { CandidateDossier, EvidenceCoverage } from "@/features/hire/types";
 
-export type HackathonDossierSet = {
+/**
+ * Candidates who are searchable because their PROFILE is usable — and for no
+ * other reason.
+ *
+ * This is the track that makes discoverability derive from profile state alone.
+ * Everyone here has zero ABTalks activity by construction: no cohort, no
+ * challenge, no hackathon, no missions, no interview. That is not a defect to
+ * be papered over, so every evidence figure below is an honest zero rather than
+ * an invented one, and `provenance` marks the profile facts `declared` — they
+ * are the candidate's word, and the card must not imply otherwise.
+ *
+ * Consequences that are deliberate:
+ *   - `computeCoverage` will report almost every dimension false for a
+ *     profile-only pool, which is exactly right: there is nothing to rank on but
+ *     the declared stack, and the recruiter should be told that.
+ *   - the evidence floor is never consulted here. It ranks and counts elsewhere;
+ *     it has never been an eligibility condition and must not become one.
+ */
+
+export type ProfileDossierSet = {
   dossiers: CandidateDossier[];
   coverage: EvidenceCoverage;
   nameByUser: Map<string, string>;
 };
 
-const EMPTY: HackathonDossierSet = {
+const EMPTY: ProfileDossierSet = {
   dossiers: [],
   coverage: {
     dimensions: {
@@ -27,67 +46,69 @@ const EMPTY: HackathonDossierSet = {
       interview: false,
       experience: false,
     },
-    note: "No hackathon submissions in the pool yet.",
+    note: "No profile-only candidates in the pool yet.",
   },
   nameByUser: new Map(),
 };
 
-/**
- * People who actually shipped a hackathon repo. Thin evidence: one shipped
- * project, optional profile skills. No 60-day denominator.
- */
-export async function buildHackathonDossierSet(): Promise<HackathonDossierSet> {
-  const rows = await listHackathonCandidates();
+export async function buildProfileDossierSet(
+  opts?: { limit?: number },
+): Promise<ProfileDossierSet> {
+  const rows = await listProfileCandidates(opts?.limit ?? 200);
   if (rows.length === 0) return EMPTY;
 
-  // This used to be hard-coded null, which meant a hackathon candidate who had
-  // filled in their preferences was permanently "availability unconfirmed" and
-  // could never show as open to work. The row exists; the read was missing.
   const availability = await loadAvailabilityByUserId(rows.map((r) => r.userId));
 
   const nameByUser = new Map<string, string>();
   const dossiers: CandidateDossier[] = rows.map((row) => {
     const p = row.recruiterIdentity;
     const skills = splitSkills(p.skills);
-    const given = row.user.name?.trim();
+    const given = row.user.name?.trim() || p.fullName.trim();
     if (given) nameByUser.set(row.userId, given);
     const av = availability.get(row.userId) ?? null;
+
     return {
       publicId: candidatePublicId(row.userId),
-      source: "HACKATHON",
-      candidateRef: encodeCandidateRef("HACKATHON", row.userId),
+      source: "PROFILE",
+      candidateRef: encodeCandidateRef("PROFILE", row.userId),
       programMemberId: null,
       userId: row.userId,
       roleFamily: derived("OTHER"),
       rawRoleLabel: p.role
         ? declared(tidyRoleLabel(p.role))
-        : derived("Hackathon builder"),
+        : derived("Candidate"),
       yearsExperience: declared(p.yearsExperience ?? 0),
       education: declared({
-        level: null,
-        university: null,
+        level: p.education,
+        university: p.university,
         gradYear: p.graduationYear ?? null,
       }),
       declaredSkills: declared(skills),
+      // Booleans only. The addresses are contact data and never leave the server.
       links: declared({
         linkedin: p.hasLinkedin,
         github: p.hasGithub,
         resume: p.hasResume,
       }),
       evidence: {
-        missionsPassed: verified(1),
-        missionsAttempted: verified(1),
+        // Honest zeros: this track exists precisely for people with no ABTalks
+        // record. Nothing here is a floor — it is an absence, and the scorer
+        // reads it as one.
+        missionsPassed: verified(0),
+        missionsAttempted: verified(0),
         missionsWaived: verified(0),
         cleanPassCount: verified(0),
         cleanPassPct: derived(0),
-        commitDays: verified(1),
-        activeDaysSpan: verified(1),
+        commitDays: verified(0),
+        activeDaysSpan: verified(0),
         lastActiveAt: verified(null),
         projectScores: verified([]),
         interview: verified(null),
-        workingLanguages: verified(skills.slice(0, 4)),
-        missionTypesPassed: verified(["HACKATHON"]),
-        cohortProgress: derived({ day: 1, ofDays: 1 }),
+        // Working languages are the languages of missions actually passed.
+        // There are none, and the declared stack is not a substitute for them.
+        workingLanguages: verified([]),
+        missionTypesPassed: verified([]),
+        cohortProgress: derived({ day: 0, ofDays: 0 }),
         certificateIssued: verified(false),
         quizAverage: verified(null),
       },

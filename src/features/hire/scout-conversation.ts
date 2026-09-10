@@ -172,7 +172,13 @@ function mergeIntoSlot(spec: JobSpec, slot: HireSlot, raw: string): JobSpec {
 
     case "employmentType": {
       const hit = (
-        ["FULL_TIME", "CONTRACT", "INTERNSHIP", "PART_TIME"] as const
+        [
+          "FULL_TIME",
+          "CONTRACT",
+          "INTERNSHIP",
+          "PART_TIME",
+          "FREELANCE",
+        ] as const
       ).find((s) => lower === s.toLowerCase());
       return hit ? { ...next, employmentType: hit } : next;
     }
@@ -399,7 +405,7 @@ function enumChipSlot(raw: string): HireSlot | null {
   const m = raw.trim();
   if (/^(INTERN|JUNIOR|MID|SENIOR|LEAD)$/i.test(m)) return "seniority";
   if (/^(ONSITE|HYBRID|REMOTE|FLEXIBLE)$/i.test(m)) return "workMode";
-  if (/^(FULL_TIME|CONTRACT|INTERNSHIP|PART_TIME)$/i.test(m)) {
+  if (/^(FULL_TIME|CONTRACT|INTERNSHIP|PART_TIME|FREELANCE)$/i.test(m)) {
     return "employmentType";
   }
   return null;
