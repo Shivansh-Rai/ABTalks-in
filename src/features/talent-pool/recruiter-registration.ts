@@ -1,4 +1,5 @@
 import "server-only";
+import type { RecruiterSetupStep } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
 import { studentProfile } from "@/repositories/legacy/student-profile";
@@ -9,6 +10,17 @@ import {
 
 export type RecruiterState =
   | { status: "none" }
+  /**
+   * Registered, but the setup wizard was never finished. Ordered ahead of
+   * `pending` on purpose: an admin should be approving a completed application,
+   * not a half-filled one.
+   */
+  | {
+      status: "setup_incomplete";
+      step: RecruiterSetupStep;
+      fullName: string;
+      company: string;
+    }
   | { status: "pending"; fullName: string; company: string }
   | { status: "approved"; fullName: string; company: string };
 
@@ -74,9 +86,26 @@ export async function listPendingRecruiterApplications(): Promise<
 export async function getRecruiterState(userId: string): Promise<RecruiterState> {
   const profile = await prisma.recruiterProfile.findUnique({
     where: { userId },
-    select: { fullName: true, company: true, approved: true },
+    select: {
+      fullName: true,
+      company: true,
+      approved: true,
+      setupStep: true,
+      setupCompletedAt: true,
+    },
   });
   if (!profile) return { status: "none" };
+  // Setup before approval. A recruiter who stopped halfway is not waiting on
+  // ABTalks, they are waiting on themselves, and telling them "under review"
+  // would be a lie they cannot act on.
+  if (!profile.setupCompletedAt) {
+    return {
+      status: "setup_incomplete",
+      step: profile.setupStep,
+      fullName: profile.fullName,
+      company: profile.company,
+    };
+  }
   if (!profile.approved) {
     return {
       status: "pending",

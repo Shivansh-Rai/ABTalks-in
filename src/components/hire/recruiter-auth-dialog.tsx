@@ -24,11 +24,6 @@ export function RecruiterAuthDialog({
   authEnabled: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const stayHere =
-    typeof window !== "undefined"
-      ? `${window.location.pathname}${window.location.search}`
-      : "/hire";
-
   // Checkout opens register. Nav "Sign in" opens sign-in. Never both forms.
   const [panel, setPanel] = useState<HireAuthPanel>(
     reason === "nav" ? "signin" : "register",
@@ -78,7 +73,7 @@ export function RecruiterAuthDialog({
           </>
         ) : (
           <>
-            <RecruiterLoginForm redirectTo={stayHere} />
+            <RecruiterLoginForm />
             <p className="hire-auth__switch">
               New here?{" "}
               <button type="button" onClick={() => setPanel("register")}>

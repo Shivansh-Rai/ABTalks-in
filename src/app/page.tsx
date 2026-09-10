@@ -13,6 +13,7 @@ export default async function HomePage() {
     // to its home surface, and pending recruiters can still use Scout's
     // existing non-persistent experience.
     const recruiter = await getRecruiterState(session.user.id);
+    if (recruiter.status === "setup_incomplete") redirect("/talent/setup");
     redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
   }
 

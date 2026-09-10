@@ -1024,17 +1024,20 @@ model ProgramInterview {
 }
 
 model RecruiterProfile {
-  id                String       @id @default(cuid())
-  userId            String       @unique
+  id                String             @id @default(cuid())
+  userId            String             @unique
   fullName          String
   company           String
   phone             String?
-  approved          Boolean      @default(false)
+  approved          Boolean            @default(false)
   approvedAt        DateTime?
   approvedByAdminId String?
-  createdAt         DateTime     @default(now())
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  approvedByAdmin   User?        @relation("RecruiterApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  createdAt         DateTime           @default(now())
+  /// Where an interrupted setup resumes. COMPLETE means the workspace is usable.
+  setupStep         RecruiterSetupStep @default(PROFILE)
+  setupCompletedAt  DateTime?
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedByAdmin   User?              @relation("RecruiterApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
   talentLists       TalentList[]
 }
 
@@ -2030,6 +2033,14 @@ enum OrgMemberStatus {
   INVITED
   ACTIVE
   SUSPENDED
+}
+
+/// Recruiter setup, in the order the wizard runs. A recruiter is only counted
+/// as set up at COMPLETE, which is also when their workspace is provisioned.
+enum RecruiterSetupStep {
+  PROFILE
+  COMPANY
+  COMPLETE
 }
 
 enum PipelineStage {
