@@ -6,7 +6,7 @@ import type {
 } from "@/components/dashboard-hub/mock-interviews";
 import { NAV_ITEMS } from "@/components/dashboard-hub/nav-items";
 import { DASHBOARD_FAQ } from "@/components/dashboard-hub/faq-content";
-import type { WorkshopEvent } from "@/components/workshop/events-data";
+import { EVENTS } from "@/components/workshop/events-data";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 
 export const HUB_SEARCH_GROUPS = [
@@ -72,12 +72,6 @@ export type HubSearchIndexInput = {
   programEnabled: boolean;
   mock: AvailableMockInterview[];
   cohort: AvailableCohortInterview[];
-  /**
-   * Merged event list from `getWorkshopEvents()`. Passed in rather than
-   * imported: workshop events are database rows now, and this module is
-   * synchronous and shared with the client bundle.
-   */
-  events: WorkshopEvent[];
 };
 
 function trackHref(
@@ -307,7 +301,7 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
     });
   }
 
-  for (const event of input.events) {
+  for (const event of EVENTS) {
     items.push({
       id: `event:${event.id}`,
       group: "Events",

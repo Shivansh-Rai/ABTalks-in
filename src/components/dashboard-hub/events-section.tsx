@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { formatInTimeZone } from "date-fns-tz";
 import { IST } from "@/lib/date-utils";
-import type { WorkshopEvent } from "@/components/workshop/events-data";
+import { EVENTS } from "@/components/workshop/events-data";
 import {
   HUB_BUTTON_CLASS,
   HUB_CARD_HOVER_CLASS,
@@ -14,20 +14,15 @@ function todayIstKey(): string {
   return formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
 }
 
-export function EventsSection({
-  allEvents,
-}: {
-  /** Merged list from `getWorkshopEvents()`, resolved on the server. */
-  allEvents: WorkshopEvent[];
-}) {
+export function EventsSection() {
   const today = todayIstKey();
 
-  const upcoming = allEvents
-    .filter((e) => e.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const past = allEvents
-    .filter((e) => e.date < today)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const upcoming = EVENTS.filter((e) => e.date >= today).sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+  const past = EVENTS.filter((e) => e.date < today).sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
 
   return (
     <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-5">
@@ -50,7 +45,7 @@ function EventRail({
   past = false,
 }: {
   title: string;
-  events: WorkshopEvent[];
+  events: (typeof EVENTS)[number][];
   past?: boolean;
 }) {
   return (
@@ -71,7 +66,7 @@ function EventCard({
   event,
   past = false,
 }: {
-  event: WorkshopEvent;
+  event: (typeof EVENTS)[number];
   past?: boolean;
 }) {
   const href =

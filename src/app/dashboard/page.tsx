@@ -9,7 +9,6 @@ import { MockInterviews } from "@/components/dashboard-hub/mock-interviews";
 import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
-import { getWorkshopEvents } from "@/features/workshop/get-events";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
 import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
@@ -188,7 +187,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   const availableInterviews = await loadAvailableInterviews(session.user.id);
-  const allEvents = await getWorkshopEvents();
 
   const firstName =
     data.profile?.fullName.split(/\s+/)[0] ??
@@ -226,7 +224,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     programEnabled: isProgramEnabled(),
     mock: availableInterviews.mock,
     cohort: availableInterviews.cohort,
-    events: allEvents,
   });
 
   return (
@@ -281,7 +278,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         showDsArchitect={data.hasDsArchitectAccess}
         showPowerBi={data.hasPowerBiAccess}
       />
-      <EventsSection allEvents={allEvents} />
+      <EventsSection />
       
       <FaqSection />
     </DashboardShell>

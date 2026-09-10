@@ -1,5 +1,4 @@
 import "server-only";
-import { getWorkshopEvents } from "@/features/workshop/get-events";
 
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
@@ -133,7 +132,6 @@ export async function getNotificationsForUser(
     ),
     isHackathonRegistered: Boolean(hackathonMembership),
     joinedCohortIds: new Set(programMemberships.map((m) => m.cohortId)),
-    events: await getWorkshopEvents(),
   });
 
   const items: AppNotification[] = [...adminItems, ...derivedItems]

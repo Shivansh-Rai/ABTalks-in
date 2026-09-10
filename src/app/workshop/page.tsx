@@ -9,11 +9,8 @@ import EventsCalendar from "@/components/workshop/EventsCalendar";
 import WorkshopThemeStyles from "@/components/workshop/WorkshopThemeStyles";
 import { auth } from "@/auth";
 import {
-  eventStartMs,
-  fullDate,
   getRegistrableEvent,
 } from "@/components/workshop/events-data";
-import { getWorkshopEvents } from "@/features/workshop/get-events";
 import { getWorkshopPrefill } from "@/features/workshop/get-prefill";
 import { getMyRegistration } from "@/features/workshop/registration-status";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
@@ -34,35 +31,10 @@ export const metadata: Metadata = {
 export default async function AIWorkshopPage() {
   // This page stays PUBLIC — the marketing content, countdown and calendar must
   // render for logged-out cold traffic. Only the form overlay is gated.
-  const [config, session, allEvents] = await Promise.all([
-    getWorkshopConfig(),
-    auth(),
-    getWorkshopEvents(),
-  ]);
+  const [config, session] = await Promise.all([getWorkshopConfig(), auth()]);
 
-  const event = getRegistrableEvent(allEvents);
+  const event = getRegistrableEvent();
   const userId = session?.user?.id ?? null;
-
-  // The countdown, the date chip and the time chip are ALL derived from the
-  // same event as the title — the one `getRegistrableEvent` just resolved.
-  //
-  // They used to come from `workshop_config`, a single hand-edited Supabase
-  // row, while the title, poster and topics came from the event. Those two
-  // sources advance on different schedules: when a workshop finished, the
-  // clock-derived half moved on by itself and the hand-edited half stayed put,
-  // so the hero announced the next workshop above a countdown still pointing
-  // at the one that had already run. Past targets clamp to zero in
-  // `useCountdown`, which reads as a timer that never started.
-  //
-  // When no workshop is open these are null and the hero renders no countdown
-  // at all. Falling back to the config row here would reintroduce the same bug
-  // in the one state where it is guaranteed to be stale: that row still names
-  // a workshop that has already finished.
-  const targetUtc = event
-    ? new Date(eventStartMs(event)).toISOString()
-    : null;
-  const webinarDate = event ? fullDate(event.date) : null;
-  const webinarTime = event ? event.time : null;
 
   const [alreadyRegistered, prefill] = userId
     ? await Promise.all([
@@ -91,9 +63,9 @@ export default async function AIWorkshopPage() {
           down as primitives keeps that true and keeps the LucideIcon on the
           event off the Server→Client boundary. */}
       <WorkshopHero
-        webinarDate={webinarDate}
-        webinarTime={webinarTime}
-        webinarTargetUtc={targetUtc}
+        webinarDate={config.webinarDate}
+        webinarTime={config.webinarTime}
+        webinarTargetUtc={config.webinarTargetUtc}
         eventTitle={event?.title ?? null}
         eventAccents={event?.titleAccents ?? null}
         eventDesc={event?.desc ?? null}
@@ -109,7 +81,7 @@ export default async function AIWorkshopPage() {
       {/* `scroll-mt-16` clears the 54px sticky header so the calendar's
           heading is not hidden under it when "Discover events" jumps here. */}
       <div id="events" className="scroll-mt-16">
-        <EventsCalendar allEvents={allEvents} />
+        <EventsCalendar />
       </div>
 
       {/* Charcoal bar, matching the header and the hero card, so the cream

@@ -13,7 +13,6 @@ import {
 } from "@/components/workshop/events-data";
 import WorkshopDetailsModal from "@/components/workshop/WorkshopDetailsModal";
 import UpcomingWorkshops from "@/components/workshop/UpcomingWorkshops";
-import { resolveIcon } from "@/components/workshop/workshop-icons";
 import { useCanvasScale } from "@/components/workshop/use-canvas-scale";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -336,23 +335,10 @@ function NavButton({ dir, onClick }: { dir: -1 | 1; onClick: () => void }) {
  * Month-grid calendar of every ABTalks activity — workshops, the hackathon,
  * and the challenge / cohort start days. Figma node 1:192.
  *
- * Takes its events as a prop: workshop events are database rows now, and a
- * Client Component cannot query the database. Events carry `icon` as a string
- * key rather than a component, so the list crosses the boundary cleanly.
+ * Takes no props and reads EVENTS itself, so nothing crosses the Server→Client
+ * boundary (events carry a LucideIcon, which cannot be serialized).
  */
-export default function EventsCalendar({
-  allEvents,
-}: {
-  /**
-   * The merged event list, resolved on the server by `getWorkshopEvents()`.
-   *
-   * This component used to import EVENTS itself. It cannot any more: workshop
-   * events live in the database, and a Client Component cannot query it. The
-   * page reads them once and threads them down, which also keeps this grid and
-   * the Upcoming column reading the exact same array.
-   */
-  allEvents: WorkshopEvent[];
-}) {
+export default function EventsCalendar() {
   // Resolved on the client only. This page is statically prerendered, so a
   // build-time date would freeze the calendar on whatever month shipped.
   const [todayKey, setTodayKey] = useState<string | null>(null);
@@ -445,11 +431,8 @@ export default function EventsCalendar({
   }, []);
 
   const byDate = useMemo(
-    () =>
-      cursor
-        ? eventsForMonth(allEvents, cursor.y, cursor.m)
-        : new Map<string, WorkshopEvent[]>(),
-    [allEvents, cursor],
+    () => (cursor ? eventsForMonth(cursor.y, cursor.m) : new Map<string, WorkshopEvent[]>()),
+    [cursor],
   );
 
   const closeModal = useCallback(() => {
@@ -908,7 +891,7 @@ export default function EventsCalendar({
             cell is just a wrapper and the aside flows normally.
           */}
           <div className="relative min-w-0">
-            <UpcomingWorkshops allEvents={allEvents} nowMs={nowMs} />
+            <UpcomingWorkshops nowMs={nowMs} />
           </div>
         </div>
       </div>
@@ -989,7 +972,7 @@ function EventBar({
   onOpen: (ev: WorkshopEvent, el: HTMLElement) => void;
   compact?: boolean;
 }) {
-  const Icon = resolveIcon(event.icon);
+  const Icon = event.Icon;
   const label = `${event.title} — ${fullDate(event.date)}`;
   const fill = TRACK_FILL[event.track];
 

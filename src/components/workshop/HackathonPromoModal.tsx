@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
 import {
-  STATIC_EVENTS,
+  EVENTS,
   fullDate,
   isPastEvent,
   istTodayKey,
 } from "@/components/workshop/events-data";
-import { resolveIcon } from "@/components/workshop/workshop-icons";
 
 // Bump the version suffix to show the popup again after changing its content.
 const SEEN_KEY = "abtalks_hackathon_promo_v1";
@@ -25,9 +24,7 @@ const EVENT_ID = "ai-hackathon-48h";
 export default function HackathonPromoModal() {
   const [open, setOpen] = useState(false);
 
-  // The hackathon is a STATIC event, not an admin-managed workshop row, so
-  // this still reads from the module and needs no prop.
-  const event = STATIC_EVENTS.find((e) => e.id === EVENT_ID);
+  const event = EVENTS.find((e) => e.id === EVENT_ID);
 
   useEffect(() => {
     if (!event?.href) return;
@@ -120,10 +117,7 @@ export default function HackathonPromoModal() {
                 border: `1px solid ${event.accent}45`,
               }}
             >
-              {(() => {
-                const EvIcon = resolveIcon(event.icon);
-                return <EvIcon size={12} strokeWidth={2.25} />;
-              })()}
+              <event.Icon size={12} strokeWidth={2.25} />
               {event.tag}
             </span>
 
