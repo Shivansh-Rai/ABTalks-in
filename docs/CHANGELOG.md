@@ -46,6 +46,7 @@
 
 ## Pending reconcile
 
+- 2026-09-10 [rule] T-149: markProjectOpenedAction no longer revalidates the request page (that recomputed isNew against now() and killed New badges). runMatchAction deleteMany is UNDECIDED-only so SHORTLISTED/REJECTED survive a rerun even when outside the latest top set.
 - 2026-09-10 [schema|rule|convention] T-149 / TC-R-004 talent project persistence (plan 125): TalentRequest.name + lastViewedAt + TalentRequestMatch.viewedAt/decision writers in talent-project-actions.ts (updateMany scoped by recruiterUserId). Match-run upsert from T-044 is unchanged and still does not assign those state columns. Temporary desk UI for name / viewed / new / shortlist / reject; outreach cart relabelled "Add to request list". TalentList / RecruiterShortlistItem / T-027 untouched.
 
 _(Cleared 2026-08-24 — the 17 entries that were under this heading were folded into `docs/project-context.md`,

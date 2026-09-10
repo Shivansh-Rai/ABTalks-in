@@ -110,10 +110,24 @@ suite("decision is persisted in talent-project-actions, not hire-actions", () =>
     "decision writer belongs in talent-project-actions.ts",
   );
   assert(
-    !hireActions.includes("viewedAt:") &&
-      !hireActions.includes("decision:") &&
-      !hireActions.includes("firstSeenAt:"),
-    "runMatchAction must not assign state columns",
+    !hireActions.includes("viewedAt:") && !hireActions.includes("firstSeenAt:"),
+    "runMatchAction must not assign viewedAt or firstSeenAt",
+  );
+});
+
+suite("project-open does not revalidate the request page", () => {
+  const fn = writers.match(
+    /export async function markProjectOpenedAction[\s\S]*?(?=export async function )/,
+  );
+  assert(fn != null, "markProjectOpenedAction is missing");
+  const body = stripComments(fn![0]);
+  assert(
+    body.includes("lastViewedAt"),
+    "open must still write lastViewedAt",
+  );
+  assert(
+    !body.includes("revalidateHire") && !body.includes("revalidatePath"),
+    "revalidating /hire/${id} after the stamp recomputes isNew against now() and kills New badges",
   );
 });
 

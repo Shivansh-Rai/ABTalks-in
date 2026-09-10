@@ -94,7 +94,12 @@ export async function markProjectOpenedAction(
     if (result.count === 0) {
       return { ok: false, message: "Request not found." };
     }
-    revalidateHire(parsed.data.requestId);
+    // Persistence only. Revalidating `/hire/${id}` would reload matches with
+    // lastViewedAt = now() and recompute isNew against this visit, so every
+    // New badge would die on the page that should show them. The already
+    // rendered result keeps the previous timestamp; the next full load uses
+    // this write. The project list does not display lastViewedAt, so /hire
+    // is not revalidated either.
     return { ok: true, data: { lastViewedAt: lastViewedAt.toISOString() } };
   } catch (error) {
     logger.error("[hire] markProjectOpenedAction", { error: String(error) });

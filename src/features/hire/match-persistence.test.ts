@@ -67,27 +67,39 @@ suite("the match run no longer recreates every row", () => {
   );
 });
 
-suite("only candidates that dropped out are deleted", () => {
+suite("only UNDECIDED dropouts are deleted; decided rows survive", () => {
   const deletes = actionCode.match(
-    /talentRequestMatch\.deleteMany\(\{[\s\S]*?\n\s{6}\}\)/g,
+    /talentRequestMatch\.deleteMany\(\{[\s\S]*?\}\)/,
   );
-  assert(deletes != null && deletes.length === 1, "expected exactly one deleteMany");
+  if (!deletes) throw new Error("expected a deleteMany on TalentRequestMatch");
+  const del = deletes[0];
   assert(
-    deletes![0].includes("notIn"),
-    "the delete must spare candidates still in the results (notIn the kept ids)",
+    del.includes("UNDECIDED"),
+    "cleanup must restrict to UNDECIDED so SHORTLISTED and REJECTED survive a rerun",
+  );
+  assert(
+    del.includes("notIn"),
+    "UNDECIDED rows still in this run must be spared (notIn the kept ids)",
+  );
+  assert(
+    !/\{\s*requestId:\s*req\.id\s*\}/.test(del),
+    "an empty run must not delete every row for the request; decided rows stay",
   );
 });
 
 suite("the upsert's update branch never touches match state", () => {
-  // `update: scoring` is the whole point: `scoring` is the row minus its keys,
-  // and the three state columns are never members of it because nothing in the
-  // action ever assigns them.
-  for (const col of STATE_COLUMNS) {
-    assert(
-      !actionCode.includes(`${col}:`),
-      `runMatchAction assigns ${col}; it must be left to the DB default / the recruiter`,
-    );
-  }
+  assert(
+    /upsert\(\{[\s\S]*?update:\s*scoring/.test(actionCode),
+    "upsert update must be `scoring` only, not an object that assigns state columns",
+  );
+  assert(
+    !actionCode.includes("firstSeenAt:"),
+    "runMatchAction must not assign firstSeenAt (DB default on create)",
+  );
+  assert(
+    !actionCode.includes("viewedAt:"),
+    "runMatchAction must not assign viewedAt",
+  );
 });
 
 suite("schema carries the state columns and the key the upsert needs", () => {

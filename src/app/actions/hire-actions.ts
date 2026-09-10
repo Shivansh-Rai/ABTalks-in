@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   Prisma,
+  TalentMatchDecision,
   TalentMatchTier,
   TalentRequestStatus,
   type TalentEmploymentType,
@@ -438,14 +439,15 @@ export async function runMatchAction(
       };
     });
 
-    // T-044: a match run must not forget what the recruiter already did.
+    // T-044 / T-149: a match run must not forget what the recruiter already did.
     //
     // This used to delete every row for the request and recreate it, which made
-    // firstSeenAt / viewedAt / decision impossible to keep: every run handed
-    // back a brand-new row. Now rows for candidates who dropped out of the
-    // results are deleted, and the survivors are upserted with an `update`
-    // branch that touches ONLY the scoring fields. The three state columns are
-    // absent from `update` on purpose — that omission is the whole feature.
+    // firstSeenAt / viewedAt / decision impossible to keep. Now only UNDECIDED
+    // rows that dropped out of this run are deleted. SHORTLISTED and REJECTED
+    // stay even when the candidate is outside the latest top set. Survivors
+    // (and returning decided rows) are upserted with an `update` branch that
+    // touches ONLY the scoring fields. The three state columns are absent
+    // from `update` on purpose — that omission is the whole feature.
     //
     // One $transaction([...]) batch rather than an interactive callback, so
     // this stays on `prisma` exactly as before and needs no direct Neon
@@ -454,10 +456,13 @@ export async function runMatchAction(
     const keptCandidateIds = rows.map((row) => row.candidateUserId);
     await prisma.$transaction([
       prisma.talentRequestMatch.deleteMany({
-        where:
-          keptCandidateIds.length > 0
-            ? { requestId: req.id, candidateUserId: { notIn: keptCandidateIds } }
-            : { requestId: req.id },
+        where: {
+          requestId: req.id,
+          decision: TalentMatchDecision.UNDECIDED,
+          ...(keptCandidateIds.length > 0
+            ? { candidateUserId: { notIn: keptCandidateIds } }
+            : {}),
+        },
       }),
       ...rows.map(({ requestId, candidateUserId, ...scoring }) =>
         prisma.talentRequestMatch.upsert({
