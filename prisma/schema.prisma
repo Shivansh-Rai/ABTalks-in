@@ -359,6 +359,8 @@ model User {
   engagementMessages         TalentEngagementMessage[]
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
+  /// Plan 121 — recruiter-authored assessments (builder drafts).
+  assessmentsAuthored        RecruiterAssessment[]     @relation("RecruiterAssessmentsCreated")
 
   // credits (T-228) — the recruiter credit ledger. Restrict, like pointsLedger:
   // financial history outlives the convenience of deleting a row.
@@ -2153,6 +2155,18 @@ enum AssessmentReportStatus {
   ARCHIVED
 }
 
+enum RecruiterAssessmentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssessmentQuestionType {
+  MULTIPLE_CHOICE
+  PARAGRAPH
+  FILE_UPLOAD
+}
+
 enum RecommendationLevelV2 {
   STRONGLY_RECOMMEND
   RECOMMEND
@@ -3175,6 +3189,11 @@ model Organization {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  members              OrganizationMember[]
+  talentLists          TalentList[]
+  notes                CandidateNote[]
+  experience           CandidateExperience[]
+  recruiterAssessments RecruiterAssessment[]
   members            OrganizationMember[]
   talentLists        TalentList[]
   notes              CandidateNote[]
@@ -3207,6 +3226,81 @@ model OrganizationMember {
   @@index([organizationId, role])
 }
 
+/// A recruiter-authored test. Owned by one workspace (T-226): reads and writes
+/// go through requireRecruiterWorkspace() and are scoped by organizationId.
+///
+/// Deliberately NOT built on Question/QuestionOption: those are reachable only
+/// through QuizActivityConfig -> Activity -> Module -> LearningProgram, which
+/// would mean inventing a learning program for every recruiter test.
+model RecruiterAssessment {
+  id              String                    @id @default(cuid())
+  organizationId  String
+  createdByUserId String
+  title           String
+  subheading      String?
+  instructions    String?
+  status          RecruiterAssessmentStatus @default(DRAFT)
+  /// Null = untimed. Whole minutes; the candidate screen renders the chip.
+  durationMinutes Int?
+  /// Percentage of auto-gradeable points needed to pass.
+  passMarkPercent Int                       @default(60)
+  /// Read-only provenance: which shortlisted candidates this was drafted for.
+  /// Public AB-#### refs, never user ids. Nothing reads this yet — the assign
+  /// ticket does. It is captured at draft time because the shortlist changes.
+  shortlistRefs   String[]                  @default([])
+  publishedAt     DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User                 @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  questions    AssessmentQuestion[]
+
+  @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
+  @@index([status])
+}
+
+model AssessmentQuestion {
+  id                   String                 @id @default(cuid())
+  assessmentId         String
+  position             Int
+  type                 AssessmentQuestionType
+  /// The question text the candidate reads.
+  title                String
+  helpText             String?
+  isRequired           Boolean                @default(true)
+  points               Int                    @default(1)
+  /// MULTIPLE_CHOICE only. False = radio group, true = checkbox group.
+  allowMultipleCorrect Boolean                @default(false)
+  /// PARAGRAPH only. Word cap enforced on the candidate screen.
+  maxWords             Int?
+  /// FILE_UPLOAD only. Where the recruiter expects the file to be uploaded.
+  /// ABTalks stores no files; the candidate answers with their own link.
+  uploadDestinationUrl String?
+  /// RESERVED for a later sections ticket. Never written in v1 — always null.
+  /// No relation and no FK on purpose: the AssessmentSection table does not
+  /// exist yet, and a dangling FK is worse than a documented placeholder.
+  sectionId            String?
+
+  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options    AssessmentQuestionOption[]
+
+  @@unique([assessmentId, position])
+  @@index([assessmentId, position])
+}
+
+model AssessmentQuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  position   Int
+  body       String
+  isCorrect  Boolean @default(false)
+
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, position])
+  @@index([questionId, isCorrect])
 /// Runtime, admin-editable platform configuration (T-148 D-17, T-228).
 ///
 /// The point of this table is that changing what a recruiter starts with, or
