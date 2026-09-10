@@ -186,6 +186,11 @@ export type AvailabilitySnapshot = {
   preferredWorkMode: string | null;
   preferredCities: string[];
   openToRelocate: boolean;
+  /**
+   * Engagement types the candidate is open to. EMPTY MEANS UNSTATED — the
+   * engagement filter in `evaluateHardFilters` must never exclude on it.
+   */
+  opportunityTypes: string[];
 } | null;
 
 export type ScoreableMember = {

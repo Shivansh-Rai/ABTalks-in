@@ -13,6 +13,7 @@ import {
   listPoolCohorts,
   resolveChallengeRefs,
   resolveHackathonRefs,
+  resolveProfileRefs,
   resolveProgramRefs,
 } from "@/repositories/hire";
 
@@ -151,11 +152,19 @@ export async function resolveEligibleCandidates(
   const hackathonUserIds = parsed
     .filter((r) => r.ref.source === "HACKATHON")
     .map((r) => r.ref.id);
+  const profileUserIds = parsed
+    .filter((r) => r.ref.source === "PROFILE")
+    .map((r) => r.ref.id);
 
   const flag = hireChallengePool();
 
-  const [members, claudeEnrollments, sixtyEnrollments, hackathonRows] =
-    await Promise.all([
+  const [
+    members,
+    claudeEnrollments,
+    sixtyEnrollments,
+    hackathonRows,
+    profileRows,
+  ] = await Promise.all([
       resolveProgramRefs(programIds),
       flag.enabled
         ? resolveChallengeRefs(claudeUserIds, [Domain.CLAUDE])
@@ -164,6 +173,9 @@ export async function resolveEligibleCandidates(
         ? resolveChallengeRefs(sixtyUserIds, [Domain.SE, Domain.DS, Domain.AI])
         : [],
       resolveHackathonRefs(hackathonUserIds),
+      // Profile-only candidates carry no evidence condition — the re-test is
+      // the usable-profile rule itself, and nothing else.
+      resolveProfileRefs(profileUserIds),
     ]);
 
   const out: EligibleCandidate[] = [];
@@ -194,6 +206,15 @@ export async function resolveEligibleCandidates(
       userId: e.userId,
       programMemberId: null,
       publicId: candidatePublicId(e.userId),
+    });
+  }
+  for (const p of profileRows) {
+    out.push({
+      candidateRef: encodeCandidateRef("PROFILE", p.userId),
+      source: "PROFILE",
+      userId: p.userId,
+      programMemberId: null,
+      publicId: candidatePublicId(p.userId),
     });
   }
   for (const h of hackathonRows) {

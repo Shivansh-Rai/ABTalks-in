@@ -1103,6 +1103,7 @@ enum TalentEmploymentType {
   CONTRACT
   INTERNSHIP
   PART_TIME
+  FREELANCE
 }
 
 enum TalentSeniority {
@@ -3315,6 +3316,8 @@ enum TalentCandidateSource {
   CHALLENGE_60
   CLAUDE
   HACKATHON
+  /// Discoverable from profile state alone — no cohort, challenge or hackathon.
+  PROFILE
 }
 
 /// One recruiter's ask about one candidate.

@@ -345,6 +345,7 @@ export async function buildChallengeDossierSet(opts: {
             preferredWorkMode: av.preferredWorkMode,
             preferredCities: av.preferredCities,
             openToRelocate: av.openToRelocate,
+            opportunityTypes: av.opportunityTypes,
           }
         : null,
     });
