@@ -126,6 +126,7 @@ const EMPLOYMENT_LABEL: Record<string, string> = {
   CONTRACT: "Contract",
   INTERNSHIP: "Internship",
   PART_TIME: "Part-time",
+  FREELANCE: "Freelance",
 };
 
 const WORK_MODE_LABEL: Record<string, string> = {
@@ -764,7 +765,7 @@ export function ScoutChat({
     Skills: "Which skills are must-haves?",
     Availability: "Remote, hybrid or onsite?",
     Compensation: "What's the budget for this role?",
-    "Type of Employment": "Full-time, part-time, internship or contract?",
+    "Type of Employment": "Full-time, part-time, internship, contract or freelance?",
     "ABtalks Recommended": "Should we rank on ABTalks verified evidence first?",
   };
 
@@ -774,6 +775,7 @@ export function ScoutChat({
     { label: "Part-time", value: "PART_TIME" as const, prompt: "This is a part-time role." },
     { label: "Internship", value: "INTERNSHIP" as const, prompt: "This is an internship." },
     { label: "Contract", value: "CONTRACT" as const, prompt: "This is a contract role." },
+    { label: "Freelance", value: "FREELANCE" as const, prompt: "This is a freelance role." },
   ];
 
   function pickRequirement(key: (typeof criteria)[number]["key"], already: boolean) {

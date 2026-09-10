@@ -108,6 +108,7 @@ export type AvailabilityRow = {
   preferredWorkMode: string | null;
   preferredCities: string[];
   openToRelocate: boolean;
+  opportunityTypes: string[];
 };
 
 /**
@@ -353,6 +354,7 @@ export async function buildDossierSet(
             preferredWorkMode: av.preferredWorkMode,
             preferredCities: av.preferredCities,
             openToRelocate: av.openToRelocate,
+            opportunityTypes: av.opportunityTypes,
           }
         : null,
     });

@@ -432,7 +432,7 @@ export function createScoutTools(
     {
       name: "update_brief",
       description:
-        "Record what the recruiter stated about the role — title, seniority, skills, budget, work mode, notice, experience. This is the common case: \"senior backend engineer, python and postgres, 25 LPA, remote\" is four stated facts, not a question. salaryText must be the recruiter's own words for the money and nothing else (\"20k\", \"25 LPA\", \"1.2 crore\") — never a figure you computed, and never a whole sentence. Pass only what they actually said; a value they did not state is omitted, not guessed. Anything returned under `rejected` was NOT applied — tell the recruiter, using the reason given, and never restate it as accepted.",
+        "Record what the recruiter stated about the role — title, seniority, skills, budget, work mode, employment type, notice, experience. Employment type is one of FULL_TIME, CONTRACT, INTERNSHIP, PART_TIME, FREELANCE (freelance / contractor gigs use FREELANCE). This is the common case: \"senior backend engineer, python and postgres, 25 LPA, remote\" is four stated facts, not a question. salaryText must be the recruiter's own words for the money and nothing else (\"20k\", \"25 LPA\", \"1.2 crore\") — never a figure you computed, and never a whole sentence. Pass only what they actually said; a value they did not state is omitted, not guessed. Anything returned under `rejected` was NOT applied — tell the recruiter, using the reason given, and never restate it as accepted.",
       schema: updateBriefArgsSchema,
     },
   );

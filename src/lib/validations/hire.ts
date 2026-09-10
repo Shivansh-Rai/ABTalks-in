@@ -20,6 +20,9 @@ export const talentEmploymentTypeSchema = z.enum([
   "CONTRACT",
   "INTERNSHIP",
   "PART_TIME",
+  // The candidate side (OpportunityType) always had all five; leaving this one
+  // out meant a recruiter asking for freelancers was parsed to nothing.
+  "FREELANCE",
 ]);
 
 export const talentMatchTierSchema = z.enum(["STRONG", "PARTIAL", "NONE"]);
