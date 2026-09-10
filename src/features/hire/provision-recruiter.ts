@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { grantOnboardingCredits } from "@/repositories/credits";
 
 /**
  * Give a verified recruiter their 078 identity.
@@ -31,6 +32,10 @@ import type { Prisma } from "@prisma/client";
  *
  * Called inside the caller's transaction. Idempotent: re-provisioning an
  * existing recruiter updates rather than duplicating.
+ *
+ * **T-228:** creating the workspace also funds it with its starting credits.
+ * That is here, and not on a credit read, because this is the one place a
+ * recruiter workspace comes into existence.
  */
 export async function provisionRecruiterIdentity(
   tx: Prisma.TransactionClient,
@@ -96,7 +101,102 @@ export async function provisionRecruiterIdentity(
     });
   }
 
+  // T-228: a workspace is created here, so this is where it is funded.
+  //
+  // Putting the grant at the point of creation rather than at the point of
+  // first read is what keeps credits out of the read path: every recruiter
+  // Organization in this codebase comes from this function, so every workspace
+  // is funded exactly once, deterministically, by the same act that made it.
+  // Exactly-once is the unique index on `idempotencyKey`, not this call site,
+  // so re-provisioning an existing recruiter grants nothing a second time.
+  await grantOnboardingCredits(tx, {
+    organizationId: organization.id,
+    recruiterUserId: input.userId,
+    createdByUserId: input.grantedByUserId ?? null,
+  });
+
   return { organizationId: organization.id };
+}
+
+/**
+ * The same identity writes, as a batch.
+ *
+ * `provisionRecruiterIdentity` above is sequential because it has to be: it
+ * resolves the organization before it can reference it. That costs a network
+ * round trip per statement, which is fine for an admin approving one
+ * application and is not fine for the recruiter sitting in front of the setup
+ * wizard — the interactive form took ~8.6s against Neon.
+ *
+ * This returns the same writes as an array for `prisma.$transaction([…])`: one
+ * round trip, one transaction, same atomicity. It can only do that because the
+ * caller has already resolved the two things the sequential version discovers
+ * as it goes — the organization's id, and whether a live role assignment
+ * exists. See `completeRecruiterSetupAction`, which is the only caller.
+ *
+ * The onboarding grant is deliberately **not** in here. A batched transaction
+ * cannot contain a statement whose parameters depend on reading a row in the
+ * same batch, and the grant's ledger row needs the balance it produced. The
+ * caller funds the workspace separately; see that action for how.
+ */
+export function recruiterIdentityWrites(
+  client: Pick<
+    Prisma.TransactionClient,
+    "organization" | "organizationMember" | "userRoleAssignment"
+  >,
+  input: {
+    userId: string;
+    company: string;
+    /** Resolved by the caller: the existing row's id, or one to create with. */
+    organizationId: string;
+    /** False when the caller already found a live RECRUITER assignment. */
+    needsRoleAssignment: boolean;
+    grantedByUserId?: string | null;
+  },
+): Prisma.PrismaPromise<unknown>[] {
+  const company = input.company.trim();
+  const slug = recruiterWorkspaceSlug(input.userId, company);
+  const now = new Date();
+
+  return [
+    client.organization.upsert({
+      where: { slug },
+      create: { id: input.organizationId, slug, name: company },
+      update: {},
+      select: { id: true },
+    }),
+    client.organizationMember.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: input.organizationId,
+          userId: input.userId,
+        },
+      },
+      create: {
+        organizationId: input.organizationId,
+        userId: input.userId,
+        role: "RECRUITER",
+        status: "ACTIVE",
+        invitedByUserId: input.grantedByUserId ?? null,
+        joinedAt: now,
+      },
+      update: { status: "ACTIVE", joinedAt: now },
+      select: { id: true },
+    }),
+    ...(input.needsRoleAssignment
+      ? [
+          client.userRoleAssignment.create({
+            data: {
+              userId: input.userId,
+              role: "RECRUITER",
+              scopeType: "ORGANIZATION",
+              scopeId: input.organizationId,
+              grantedByUserId: input.grantedByUserId ?? null,
+            },
+            select: { id: true },
+          }),
+        ]
+      : []),
+  ];
 }
 
 /**

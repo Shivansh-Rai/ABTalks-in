@@ -2,21 +2,48 @@
 
 import type { WizardStep } from "./profile-wizard";
 
+const PERFORMANCE_TOOLTIP =
+  "How often recruiters opened your details and unlocked your resume on Hire, over the last 90 days.";
+
 /**
- * The left card: Quick Links into the profile.
+ * One half of the Profile performance panel.
  *
- * The identity block lives in the report card hero, so this card is purely
- * navigation. A tab moves the active section and opens the form sheet, which
- * is always editable — there is no locked state and no edit pencil.
+ * Order matches the design: value, then the charcoal dot, then the orange
+ * chevron. The dot is a separator, not a status light.
+ */
+function PerfColumn({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="pw-perf-column">
+      <div className="pw-col-label">{label}</div>
+      <div className="pw-col-value">
+        {value}
+        <span className="pw-dot" aria-hidden />
+        <span className="pw-chev" aria-hidden>
+          <svg viewBox="0 0 24 24">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The left card: Quick Links into the profile, plus Profile performance.
+ *
+ * The identity block lives in the report card hero, so this card is navigation
+ * plus the candidate's own recruiter-activity numbers (plan 120).
  */
 export function ProfileCard({
   steps,
   activeIndex,
   onJump,
+  performance,
 }: {
   steps: Pick<WizardStep, "title" | "complete" | "attention">[];
   activeIndex: number;
   onJump: (index: number) => void;
+  performance: { searchAppearances: number; recruiterActions: number };
 }) {
   return (
     <section className="pw-profile-card">
@@ -53,6 +80,35 @@ export function ProfileCard({
           );
         })}
       </ul>
+
+      <div className="pw-performance-section">
+        <div className="pw-performance-header">
+          <span className="pw-section-title">Profile performance</span>
+          <svg
+            viewBox="0 0 24 24"
+            className="pw-ico pw-info"
+            role="img"
+            aria-label={PERFORMANCE_TOOLTIP}
+          >
+            <title>{PERFORMANCE_TOOLTIP}</title>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+        </div>
+        <p className="pw-performance-caption">Last 90 days</p>
+        <div className="pw-performance-grid">
+          <PerfColumn
+            label="Search appearances"
+            value={performance.searchAppearances}
+          />
+          <div className="pw-grid-divider" aria-hidden />
+          <PerfColumn
+            label="Recruiter actions"
+            value={performance.recruiterActions}
+          />
+        </div>
+      </div>
     </section>
   );
 }

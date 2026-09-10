@@ -26,6 +26,7 @@ import {
   runGuestMatchAction,
   sendGuestScoutMessageAction,
 } from "@/app/actions/hire-guest-actions";
+import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
@@ -310,6 +311,11 @@ export function ScoutChat({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [openMatch, setOpenMatch] = useState<MatchCardData | null>(null);
+  /** Open the inspector and fire-and-forget a detail-view record (plan 120). */
+  function openMatchPanel(match: MatchCardData) {
+    setOpenMatch(match);
+    void recordCandidateViewAction(match.candidateRef);
+  }
   /** Cards sit under this message index so a later turn starts below them. */
   const [resultsPin, setResultsPin] = useState<number | null>(
     initialSearched || (results?.length ?? 0) > 0
@@ -367,8 +373,10 @@ export function ScoutChat({
 
   useEffect(() => {
     if (!inspect) return;
-    setOpenMatch(inspect);
+    openMatchPanel(inspect);
     clearInspect();
+    // openMatchPanel is stable for this render; inspect is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- plan 120: record on open
   }, [inspect, clearInspect]);
 
   useEffect(() => {
@@ -1032,7 +1040,7 @@ export function ScoutChat({
                         cartCount={
                           persist ? resultsCartCount : readGuestCart().length
                         }
-                        onOpen={setOpenMatch}
+                        onOpen={openMatchPanel}
                         selectedRef={openMatch?.candidateRef}
                       />
                       {persist && requestId && matchCount === 0 && (
