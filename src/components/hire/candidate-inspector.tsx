@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ExternalLink, Lock } from "lucide-react";
 import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref";
@@ -26,6 +26,9 @@ import {
 import type { MatchCardData } from "@/components/hire/match-card";
 import { cn } from "@/lib/utils";
 import { MaskedName } from "@/components/hire/desk-match-card";
+import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
+import { revealContactAction } from "@/app/actions/hire-unlock-actions";
+import type { RevealedContact } from "@/features/hire/unlock-contact";
 import {
   SubscriptionGate,
   type GateReason,
@@ -120,10 +123,37 @@ export function CandidateInspector({
     : null;
   const resumeHref = evidenceResumeHref(match.candidateRef);
   const [gate, setGate] = useState<GateReason | null>(null);
+  const [contact, setContact] = useState<RevealedContact | null>(null);
+
+  // Asks the server what this recruiter has already paid for. Returns null
+  // unless a CONTACT_SHARED row exists, so it reveals nothing on its own.
+  const loadContact = useCallback(async () => {
+    if (sample) return;
+    const found = await revealContactAction({
+      candidateRef: match.candidateRef,
+    });
+    setContact(found);
+  }, [match.candidateRef, sample]);
 
   useEffect(() => {
     rememberEvidence([match]);
   }, [match]);
+
+  // No synchronous reset in the effect body — that is a cascading render, and
+  // the `alive` flag is what stops a slow response for the previous candidate
+  // landing on the one now open.
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const found = sample
+        ? null
+        : await revealContactAction({ candidateRef: match.candidateRef });
+      if (alive) setContact(found);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [match.candidateRef, sample]);
 
   return (
     <aside className="hire-detail" aria-label="Candidate details">
@@ -256,17 +286,59 @@ export function CandidateInspector({
             document. `evidenceResumeHref` and the route behind it are
             untouched — nothing about the evidence data changed, only what this
             control does. */}
+        {/* Two locks, side by side, and they are not the same lock. Resume
+            opens the Pro plan dialog; Unlock contact spends credits on this
+            candidate's email and phone (T-229). Keeping them adjacent is the
+            only way a recruiter can tell which one they just paid for. */}
         {!sample && (
-          <button
-            type="button"
-            className="hire-detail__resume"
-            onClick={() => setGate("resume")}
-            aria-haspopup="dialog"
-          >
-            <Lock className="size-3.5" aria-hidden="true" />
-            Resume
-          </button>
+          <div className="hire-detail__locks">
+            <button
+              type="button"
+              className="hire-detail__resume"
+              onClick={() => setGate("resume")}
+              aria-haspopup="dialog"
+            >
+              <Lock className="size-3.5" aria-hidden="true" />
+              Resume
+            </button>
+            {contact ? null : (
+              <UnlockContactDialog
+                candidateRef={match.candidateRef}
+                publicId={publicId}
+                onUnlocked={loadContact}
+              />
+            )}
+          </div>
         )}
+
+        {/* What the $10 actually bought. Rendered here, next to the control
+            that bought it, because it was previously only on /hire/requests —
+            a different page from the one the recruiter spent on, which made a
+            successful unlock look like it had done nothing. */}
+        {contact ? (
+          <dl className="hire-detail__contact">
+            <div>
+              <dt>Email</dt>
+              <dd>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Phone</dt>
+              <dd>
+                {contact.phone ? (
+                  <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </dd>
+            </div>
+          </dl>
+        ) : null}
 
         <p className="hire-detail__lede">
           {sample

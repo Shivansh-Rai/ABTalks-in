@@ -3271,6 +3271,54 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
 
+/* Resume and Unlock contact sit on one row — two different locks, and a
+   recruiter has to be able to tell them apart. */
+.hire-detail__locks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* What the unlock bought. */
+.hire-detail__contact {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--h-border);
+  border-radius: 10px;
+  background: var(--h-peach-wash);
+  display: grid;
+  gap: 6px;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-detail__contact {
+  background: rgba(255, 176, 140, 0.08);
+}
+
+.hire-detail__contact > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.hire-detail__contact dt {
+  color: var(--h-gray-600);
+}
+
+.hire-detail__contact dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--h-ink);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.hire-detail__contact a {
+  color: var(--h-primary);
+}
+
 /* ── Contact unlock (T-229) ──────────────────────────────────────────────
    Temporary presentation pending T-202. Reuses the auth dialog's token scope
    and overlay; adds only what the three figures need. Kept in one block so it

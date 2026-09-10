@@ -5,7 +5,9 @@ import { logger } from "@/lib/logger";
 import { unlockContactSchema } from "@/lib/validations/hire-unlock";
 import {
   previewUnlock,
+  revealUnlockedContact,
   unlockContact,
+  type RevealedContact,
   type UnlockPreview,
   type UnlockResult,
 } from "@/features/hire/unlock-contact";
@@ -66,4 +68,26 @@ export async function unlockContactAction(
   }
 
   return result;
+}
+
+/**
+ * The contact details this recruiter has already paid for.
+ *
+ * Read-only, and it grants nothing: `loadProtectedContact` refuses before it
+ * selects an email or a phone unless a `CONTACT_SHARED` row already exists for
+ * this pair. Calling it without an unlock returns null, which is what the
+ * inspector renders as "still locked".
+ */
+export async function revealContactAction(
+  input: unknown,
+): Promise<RevealedContact | null> {
+  const parsed = unlockContactSchema.safeParse(input);
+  if (!parsed.success) return null;
+
+  try {
+    return await revealUnlockedContact(parsed.data.candidateRef);
+  } catch (error) {
+    logger.error("[hire] revealContactAction", { error: String(error) });
+    return null;
+  }
 }

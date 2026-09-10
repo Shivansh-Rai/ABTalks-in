@@ -107,6 +107,7 @@
     "test:credits": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/credits.test.ts",
     "test:unlock": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/unlock-contact.test.ts",
     "db:seed:platform-config": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-platform-config.ts",
+    "db:seed:demo-recruiter": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-demo-recruiter.ts",
     "db:check:credit-ledger": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/check-credit-ledger.ts",
     "db:backfill:credit-grants": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/backfill-credit-grants.ts",
     "test:notification-dispatch": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-service.test.ts",

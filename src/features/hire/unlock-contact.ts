@@ -2,7 +2,10 @@ import "server-only";
 
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
-import { hasContactAccess } from "@/features/hire/contact-access";
+import {
+  hasContactAccess,
+  loadProtectedContact,
+} from "@/features/hire/contact-access";
 import { getCreditBalance } from "@/repositories/credits";
 import {
   REFUSAL_MESSAGE,
@@ -195,4 +198,29 @@ async function safeBalance(candidateRef: string): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+export type RevealedContact = { email: string | null; phone: string | null };
+
+/**
+ * What the recruiter bought, for the surface they bought it on.
+ *
+ * T-229 says contact details appear after a successful unlock. They were
+ * appearing — on `/hire/requests`, which is a different page from the one the
+ * recruiter spent on, so from the desk the $10 looked like it bought nothing.
+ * This reads the same protected loader that page uses.
+ *
+ * It authorises nothing. `loadProtectedContact` checks `hasContactAccess`
+ * before it selects a single protected column, so an unpaid caller gets null
+ * and no query for an email ever runs.
+ */
+export async function revealUnlockedContact(
+  candidateRef: string,
+): Promise<RevealedContact | null> {
+  const resolved = await resolve(candidateRef);
+  if (!resolved.ok) return null;
+  return loadProtectedContact(
+    resolved.data.recruiterUserId,
+    resolved.data.candidateUserId,
+  );
 }
