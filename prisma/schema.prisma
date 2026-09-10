@@ -636,17 +636,30 @@ model Job {
   @@index([recruiterId, createdAt(sort: Desc)])
 }
 
-model JobApplication {
-  id        String   @id @default(cuid())
-  jobId     String
-  userId    String
-  note      String?
-  createdAt DateTime @default(now())
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+/// T-246 candidate application status. Default APPLIED; recruiter workflow
+/// for the remaining transitions ships in a later ticket.
+enum JobApplicationStatus {
+  APPLIED
+  REVIEWING
+  ACCEPTED
+  REJECTED
+}
 
-  @@unique([jobId, userId])
-  @@index([userId])
+model JobApplication {
+  id          String               @id @default(cuid())
+  jobId       String
+  userId      String // candidateId alias — one User.id per candidate
+  status      JobApplicationStatus @default(APPLIED)
+  resumeUrl   String?
+  coverLetter String?
+  note        String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  job         Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([jobId])
 }
 
