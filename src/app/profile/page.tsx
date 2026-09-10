@@ -11,6 +11,7 @@ import { getResumeView } from "@/features/resume/service";
 import { computeCompleteness } from "@/features/profile/completeness";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
+import { getProfilePerformance } from "@/features/profile/get-profile-performance";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
 import { CANONICAL_SKILL_NAMES } from "@/lib/skill-catalog";
@@ -103,6 +104,7 @@ export default async function ProfilePage() {
     resume,
     verifiedAccomplishments,
     verifiedSkills,
+    performance,
   ] = await Promise.all([
     getProfileEvidence(userId),
     getSkillsByNames(CANONICAL_SKILL_NAMES),
@@ -152,6 +154,14 @@ export default async function ProfilePage() {
         message: e instanceof Error ? e.message : String(e),
       });
       return [];
+    }),
+    // Plan 120 — CandidateProfileEvent counts. Degrades to zeros until the
+    // migration is applied (or if the read fails for any other reason).
+    getProfilePerformance(userId).catch((e: unknown) => {
+      logger.warn("[profile] performance unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return { searchAppearances: 0, recruiterActions: 0 };
     }),
   ]);
 
@@ -445,6 +455,7 @@ export default async function ProfilePage() {
         imageUrl={user.image ?? null}
         review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
+        performance={performance}
       />
     </DashboardShell>
   );

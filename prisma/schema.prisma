@@ -357,6 +357,8 @@ model User {
   engagementsAsCandidate     TalentEngagementRequest[] @relation("CandidateEngagements")
   candidateMatches           TalentRequestMatch[]      @relation("CandidateMatches")
   engagementMessages         TalentEngagementMessage[]
+  /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
+  profileEvents              CandidateProfileEvent[]
 
   @@index([deletedAt, createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
@@ -2135,6 +2137,32 @@ model RateLimitEvent {
   createdAt DateTime        @default(now())
 
   @@index([bucket, subjectId, createdAt])
+}
+
+/// Recruiter interest in a candidate (plan 120). DETAIL_VIEW = opened the
+/// inspector on /hire; RESUME_UNLOCK = a genuine resume unlock (today:
+/// CONTACT_SHARED). Deduped once per viewer per candidate per IST day via the
+/// unique constraint — an upsert that hits it is a no-op.
+enum CandidateProfileEventType {
+  DETAIL_VIEW
+  RESUME_UNLOCK
+}
+
+model CandidateProfileEvent {
+  id              String                    @id @default(cuid())
+  candidateUserId String
+  type            CandidateProfileEventType
+  /// `u:<userId>` for signed-in recruiters, or `g:` + daily rotating digest
+  /// for guests. Never a raw IP or user agent.
+  viewerKey       String
+  /// YYYY-MM-DD in Asia/Kolkata — part of the per-day dedupe key.
+  dayKey          String
+  occurredAt      DateTime                  @default(now())
+
+  candidate User @relation(fields: [candidateUserId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateUserId, type, viewerKey, dayKey])
+  @@index([candidateUserId, type, occurredAt(sort: Desc)])
 }
 
 /// THE canonical candidate identity. Nothing else stores a candidate's name,

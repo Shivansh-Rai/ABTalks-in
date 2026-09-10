@@ -17,6 +17,10 @@ import {
   dualWriteDeleteSubmissionAttempt,
 } from "@/repositories/dual-write";
 import {
+  anonymizeUser,
+  AnonymizeUserError,
+} from "@/features/admin/anonymize-user";
+import {
   applyPointsChange,
   lockWalletBalance,
   submissionAwardTotal,
@@ -268,6 +272,67 @@ export async function removeFromChallengeAction(input: {
       ok: false as const,
       message:
         e instanceof Error ? e.message : "Failed to remove from challenge",
+    };
+  }
+}
+
+const deleteUserAccountInput = z.object({
+  targetUserId: z.string().min(1),
+  confirm: z.literal("delete"),
+});
+
+export async function deleteUserAccountAction(input: {
+  targetUserId: string;
+  confirm: string;
+}) {
+  const admin = await requireAdmin();
+  const parsed = deleteUserAccountInput.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      message: 'Type "delete" to confirm account deletion',
+    };
+  }
+
+  const { targetUserId } = parsed.data;
+
+  if (targetUserId === admin.userId) {
+    return {
+      ok: false as const,
+      message: "You cannot delete your own account",
+    };
+  }
+
+  if (await hasPlatformAdmin(targetUserId)) {
+    return {
+      ok: false as const,
+      message: "Cannot delete a platform admin account",
+    };
+  }
+
+  try {
+    await writeClient().$transaction(
+      async (tx) => {
+        await anonymizeUser(tx, {
+          userId: targetUserId,
+          adminUserId: admin.userId,
+        });
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      },
+    );
+
+    revalidateAdminViews(targetUserId);
+    return { ok: true as const };
+  } catch (e) {
+    if (e instanceof AnonymizeUserError) {
+      return { ok: false as const, message: e.message };
+    }
+    return {
+      ok: false as const,
+      message: e instanceof Error ? e.message : "Failed to delete user account",
     };
   }
 }

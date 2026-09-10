@@ -42,6 +42,7 @@ export function ProfileWizard({
   imageUrl,
   review,
   avatarUploadEnabled,
+  performance,
 }: {
   steps: WizardStep[];
   initialIndex: number;
@@ -50,6 +51,7 @@ export function ProfileWizard({
   imageUrl: string | null;
   review: ProfileReview;
   avatarUploadEnabled: boolean;
+  performance: { searchAppearances: number; recruiterActions: number };
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [open, setOpen] = useState(false);
@@ -214,7 +216,12 @@ export function ProfileWizard({
   return (
     <div className={`pw-root${open ? " pw-sheet-open" : ""}`}>
       <div className="pw-workspace">
-        <ProfileCard steps={steps} activeIndex={index} onJump={jump} />
+        <ProfileCard
+          steps={steps}
+          activeIndex={index}
+          onJump={jump}
+          performance={performance}
+        />
 
         <ProfileReviewCard
           review={review}
