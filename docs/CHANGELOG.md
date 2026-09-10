@@ -50,6 +50,7 @@ _(Cleared 2026-08-24 — the 17 entries that were under this heading were folded
 reconciled against `3b040d8`. The un-headed block above (2026-08-06 → 2026-08-20) was logged outside this
 heading and was never reconciled; its facts were folded into the same pass, but the lines were left in place
 rather than deleted without authorization. Cursor appends new lines below.)_
+- 2026-09-10 [rule] Admin soft-delete user account via deletedAt/anonymizedAt scrub (plan 119)
 - 2026-09-09 [convention] T-283 Wave-1 architecture guardrails locked (recruiter isolation, server-side authorization, database as source of truth, idempotency) in docs/plans/115-t283-demo1-security.md with a per-developer sign-off.
 - 2026-09-09 [schema|rule] Demo 1 security: Platform Admin is UserRoleAssignment (GLOBAL ADMIN; ADMIN_EMAILS is bootstrap-only); RateLimitEvent added for unlock/outreach/search/export; recruiter contact payloads go through hasContactAccess/loadProtectedContact; guest Scout in-memory rate Map removed.
 - 2026-09-08 [schema|rule] Hackathon registrations are now event-scoped: ViCodathon 2 uses `eventId = "vicodathon-2-2026"`, while all existing teams, participants, and removal records migrate to `legacy`; participant and team-code uniqueness are per event so historic registrations never grant current-event access.
