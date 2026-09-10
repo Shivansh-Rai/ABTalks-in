@@ -2,7 +2,8 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { logger, safeErrorMessage } from "@/lib/logger";
+import { hashRecipient } from "@/lib/observability/notification-delivery";
 
 type Args = {
   email?: string | null;
@@ -57,10 +58,17 @@ export async function recordNewsletterOptIn(
       data: { subscribed: false, unsubscribedAt: new Date() },
     });
   } catch (error) {
-    logger.error("[legal] newsletter opt-in not recorded", {
-      email,
-      source: args.source,
-      error: String(error),
-    });
+    // T-259: the subscriber's address used to be on this line. The hash is the
+    // identifier now - it matches NotificationDelivery.recipientHash, so one
+    // person's failure is still findable without the log holding a mailing list.
+    logger.error(
+      {
+        event: "newsletter.optin.failed",
+        recipientHash: hashRecipient(email),
+        source: args.source,
+        reason: safeErrorMessage(error),
+      },
+      "newsletter opt-in not recorded",
+    );
   }
 }

@@ -75,7 +75,7 @@ export default async function DatabricksDayPage({ params }: Props) {
       >
         <DaySectionCard title="Mission" icon="mission" className="min-w-0">
           {(brief.missionTitle || day.title) && (
-            <h3 className="mb-2 font-heading text-base font-semibold text-[#111111] md:text-lg">
+            <h3 className="mb-2 font-heading text-base font-semibold text-[#000000] md:text-lg">
               {brief.missionTitle ?? day.title}
             </h3>
           )}
@@ -92,7 +92,7 @@ export default async function DatabricksDayPage({ params }: Props) {
               <ul className={cn(dayMdClassName, "mb-4 space-y-1.5")}>
                 {day.objectives.map((o, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="text-[#E05226]">-</span>
+                    <span className="text-[#03535F]">-</span>
                     <span>{o}</span>
                   </li>
                 ))}
@@ -114,7 +114,7 @@ export default async function DatabricksDayPage({ params }: Props) {
           <div
             className={cn(
               dayMdClassName,
-              "min-w-0 overflow-x-auto rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
+              "min-w-0 overflow-x-auto rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-5 [&_pre]:border-0 [&_pre]:bg-transparent [&_pre]:p-0",
             )}
           >
             <ReactMarkdown components={programMdComponents}>
@@ -135,10 +135,10 @@ export default async function DatabricksDayPage({ params }: Props) {
               <div key={video.id} className="max-w-md space-y-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block size-0 shrink-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#E05226]"
+                    className="inline-block size-0 shrink-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#03535F]"
                     aria-hidden
                   />
-                  <p className="text-sm font-medium text-[#111111]">
+                  <p className="text-sm font-medium text-[#000000]">
                     {video.title}
                   </p>
                 </div>

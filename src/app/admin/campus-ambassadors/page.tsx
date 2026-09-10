@@ -113,7 +113,7 @@ export default async function CampusAmbassadorsPage({
                         ` • Class of ${candidate.graduationYear}`}
                     </CardDescription>
                   </div>
-                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#FFECE3] text-[#C9411C] px-2 py-0.5 text-xs font-medium">
+                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#E7F2F3] text-[#076573] px-2 py-0.5 text-xs font-medium">
                     {candidate.domain ?? "—"}
                   </span>
                 </div>

@@ -23,11 +23,11 @@ export function EarningPills() {
       {pills.map(({ label, Icon, points }) => (
         <div
           key={label}
-          className="flex items-center gap-2 rounded-full border border-white/10 bg-[#0B1228] px-3.5 py-2 text-xs text-zinc-100 sm:text-sm"
+          className="flex items-center gap-2 rounded-full border border-[#E0E0E0] bg-white px-3.5 py-2 text-sm text-[#353535]"
         >
-          <Icon className="size-4 text-[#7364E6]" aria-hidden />
+          <Icon className="size-4 text-[#03535F]" aria-hidden />
           <span className="whitespace-nowrap">{label}</span>
-          <span className="whitespace-nowrap font-semibold text-[#7364E6]">
+          <span className="whitespace-nowrap font-semibold text-[#03535F]">
             +{points} SP
           </span>
         </div>

@@ -26,11 +26,11 @@ import {
 import type { TimeRange } from "@/features/admin/get-analytics-data";
 
 const domainColors: Record<string, string> = {
-  SE: "#10B981",
-  DS: "#0891B2",
-  AI: "#E05226",
-  CLAUDE: "#F97316",
-  Hackathon: "#EF4444",
+  SE: "#18D39B",
+  DS: "#03535F",
+  AI: "#03535F",
+  CLAUDE: "#03535F",
+  Hackathon: "#D92D20",
 };
 
 type AnalyticsData = {

@@ -32,13 +32,13 @@ export function DaySection({
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
           aria-controls={panelId}
-          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-[#FBF9F7] focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-inset md:px-5 md:py-5"
+          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-[#F4F4F4] focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-inset md:px-5 md:py-5"
         >
           <span className="flex min-w-0 items-center gap-2.5">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#FFECE3] [&_svg]:size-4 [&_svg]:text-[#E05226]">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#E7F2F3] [&_svg]:size-4 [&_svg]:text-[#03535F]">
               {icon}
             </span>
-            <span className="font-heading text-base font-semibold text-[#111111] md:text-lg">
+            <span className="font-heading text-base font-semibold text-[#000000] md:text-lg">
               {title}
             </span>
           </span>

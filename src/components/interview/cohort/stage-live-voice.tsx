@@ -288,18 +288,18 @@ export function StageLiveVoice({
   const isListening = sessionState === "listening" && recorderRef.current != null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[600px] w-full max-w-4xl mx-auto font-sans text-[#111111] bg-[#FFFFFF] rounded-xl overflow-hidden border border-[#E0E0E0] shadow-[0_2px_8px_rgba(0,0,0,0.06)] relative">
+    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[600px] w-full max-w-4xl mx-auto font-sans text-[#000000] bg-[#FFFFFF] rounded-xl overflow-hidden border border-[#E0E0E0] shadow-[0_2px_8px_rgba(0,0,0,0.06)] relative">
       
       {/* Top Header */}
       <div className="pt-8 pb-4 shrink-0 px-6 md:px-12 flex justify-between items-center relative z-10">
-        <h2 className="text-[11px] font-bold tracking-[0.2em] text-[#E05226] uppercase">
+        <h2 className="text-[11px] font-bold tracking-[0.2em] text-[#03535F] uppercase">
           AI INTERVIEWER
         </h2>
         
         <Button 
           variant="outline" 
           size="sm" 
-          className="border-[#E0E0E0] bg-transparent text-[#8F8F8F] hover:text-[#111111] hover:bg-[#FFF5F0] h-8 text-xs px-3" 
+          className="border-[#E0E0E0] bg-transparent text-[#8F8F8F] hover:text-[#000000] hover:bg-[#EEF6F6] h-8 text-xs px-3" 
           onClick={onAbandonedAction}
         >
           End Session
@@ -309,7 +309,7 @@ export function StageLiveVoice({
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative z-10">
         <div className="max-w-3xl w-full text-center">
-          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-[#111111] leading-relaxed transition-opacity duration-500">
+          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-[#000000] leading-relaxed transition-opacity duration-500">
             {displayText}
           </h1>
         </div>
@@ -317,7 +317,7 @@ export function StageLiveVoice({
 
       {/* Error Banner */}
       {error && (
-        <div className="mx-auto max-w-lg mb-8 text-sm font-medium text-[#9A6700] bg-[#C9282B]/20 border border-[#C9282B]/50 px-4 py-2 rounded-[8px] text-center backdrop-blur-sm relative z-10">
+        <div className="mx-auto max-w-lg mb-8 text-sm font-medium text-[#AA821D] bg-[#D92D20]/20 border border-[#D92D20]/50 px-4 py-2 rounded-[8px] text-center backdrop-blur-sm relative z-10">
           {error}
         </div>
       )}
@@ -328,12 +328,12 @@ export function StageLiveVoice({
         {/* Your Turn Status */}
         <div className="text-center h-12">
           {sessionState === "speaking" || sessionState === "processing" || sessionState === "connecting" ? (
-             <p className="text-sm font-semibold text-[#E05226] animate-pulse">
+             <p className="text-sm font-semibold text-[#03535F] animate-pulse">
                 {sessionState === 'connecting' ? 'CONNECTING...' : sessionState === 'speaking' ? 'INTERVIEWER SPEAKING' : 'THINKING...'}
              </p>
           ) : (
              <>
-                <p className="text-sm font-semibold text-[#111111] mb-1">Your turn</p>
+                <p className="text-sm font-semibold text-[#000000] mb-1">Your turn</p>
                 <p className="text-xs text-[#8F8F8F]">
                   {sessionState === "mic-check" ? "Tap the microphone to test your audio." : "Tap the microphone and answer out loud."}
                 </p>
@@ -346,7 +346,7 @@ export function StageLiveVoice({
           {/* Audio Visualizer Ring */}
           {isListening && audioLevel > 0 && (
             <div 
-              className="absolute rounded-full bg-[#E05226]/20 transition-transform duration-75 ease-out"
+              className="absolute rounded-full bg-[#03535F]/20 transition-transform duration-75 ease-out"
               style={{ 
                   width: '120px', 
                   height: '120px',
@@ -361,8 +361,8 @@ export function StageLiveVoice({
             className={cn(
               "relative z-10 flex size-20 items-center justify-center rounded-full border transition-all duration-300",
               isListening
-                ? "bg-[#C9282B] border-[#C9282B] text-[#111111]"
-                : "bg-[#E0E0E0]/50 border-[#8F8F8F]/50 text-[#8F8F8F] hover:bg-[#E0E0E0] hover:border-[#8F8F8F] hover:text-[#111111]",
+                ? "bg-[#D92D20] border-[#D92D20] text-[#000000]"
+                : "bg-[#E0E0E0]/50 border-[#8F8F8F]/50 text-[#8F8F8F] hover:bg-[#E0E0E0] hover:border-[#8F8F8F] hover:text-[#000000]",
               (sessionState === "processing" || sessionState === "connecting" || sessionState === "speaking") && "opacity-50 cursor-not-allowed"
             )}
           >
@@ -402,13 +402,13 @@ export function StageLiveVoice({
                 onChange={(e) => setTyped(e.target.value)}
                 disabled={sessionState === "processing" || sessionState === "connecting" || sessionState === "speaking"}
                 placeholder="Type your answer..."
-                className="w-full bg-[#FFFFFF] border border-[#E0E0E0] rounded-[8px] pl-10 pr-4 py-3 text-sm text-[#111111] placeholder:text-[#8F8F8F] focus:outline-none focus:border-[#E05226]/50 transition-colors"
+                className="w-full bg-[#FFFFFF] border border-[#E0E0E0] rounded-[8px] pl-10 pr-4 py-3 text-sm text-[#000000] placeholder:text-[#8F8F8F] focus:outline-none focus:border-[#03535F]/50 transition-colors"
               />
             </div>
             <Button 
               type="submit"
               disabled={!typed.trim() || sessionState === "processing" || sessionState === "connecting" || sessionState === "speaking"}
-              className="h-[46px] px-6 bg-transparent border border-[#E0E0E0] rounded-[8px] text-[#8F8F8F] hover:text-[#111111] hover:bg-[#E0E0E0]"
+              className="h-[46px] px-6 bg-transparent border border-[#E0E0E0] rounded-[8px] text-[#8F8F8F] hover:text-[#000000] hover:bg-[#E0E0E0]"
             >
               Send
             </Button>

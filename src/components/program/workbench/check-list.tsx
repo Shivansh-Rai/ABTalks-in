@@ -29,10 +29,10 @@ function StatusIcon({
     return <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />;
   }
   if (passed === true) {
-    return <Check className="size-4 shrink-0 text-emerald-500" />;
+    return <Check className="size-4 shrink-0 text-[#197E23]" />;
   }
   if (passed === false) {
-    return <X className="size-4 shrink-0 text-rose-500" />;
+    return <X className="size-4 shrink-0 text-[#D92D20]" />;
   }
   return <Circle className="size-3 shrink-0 text-muted-foreground/50" />;
 }

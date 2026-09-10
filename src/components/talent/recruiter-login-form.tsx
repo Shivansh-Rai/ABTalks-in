@@ -124,7 +124,7 @@ export function RecruiterLoginForm({ initialEmail = "" }: { initialEmail?: strin
       </div>
 
       {devCode && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3 py-2 text-xs text-[#AA821D] dark:text-[#FFEDB0]">
           <strong className="font-semibold">Development only.</strong> No mail
           provider is configured, so the code is shown here instead of emailed:{" "}
           <span className="font-mono text-sm font-bold tracking-widest">

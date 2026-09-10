@@ -90,18 +90,18 @@ export function InterviewAgentDemo() {
   const debug = view?.debug;
 
   return (
-    <div className="min-h-svh bg-slate-950 px-4 py-8 text-slate-100">
+    <div className="min-h-svh bg-[#000000] px-4 py-8 text-[#E9E9E9]">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header>
           <h1 className="text-xl font-semibold">AI Interview Agent</h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[#A5A5A5]">
             LangGraph demo · {view?.blueprintLabel ?? "loading…"} ·{" "}
             <span className="font-mono">provider: {debug?.provider ?? "—"}</span>
           </p>
         </header>
 
         {error ? (
-          <p className="rounded border border-amber-600 bg-amber-950/40 px-3 py-2 text-sm text-amber-200">
+          <p className="rounded border border-[#AA821D] bg-[#AA821D]/40 px-3 py-2 text-sm text-[#FFEDB0]">
             {error}
           </p>
         ) : null}
@@ -109,8 +109,8 @@ export function InterviewAgentDemo() {
         <div className="grid gap-6 md:grid-cols-[1fr_320px]">
           {/* ---------------------------------------------- conversation */}
           <section className="flex flex-col gap-4">
-            <div className="rounded border border-slate-800 bg-slate-900 p-4">
-              <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">
+            <div className="rounded border border-[#353535] bg-[#000000] p-4">
+              <p className="mb-1 text-xs uppercase tracking-wide text-[#626262]">
                 Interviewer
                 {view?.question
                   ? ` · question ${view.question.order} of ${view.question.total}`
@@ -123,8 +123,8 @@ export function InterviewAgentDemo() {
               </p>
             </div>
 
-            <div className="rounded border border-slate-800 bg-slate-900">
-              <p className="border-b border-slate-800 px-4 py-2 text-xs uppercase tracking-wide text-slate-500">
+            <div className="rounded border border-[#353535] bg-[#000000]">
+              <p className="border-b border-[#353535] px-4 py-2 text-xs uppercase tracking-wide text-[#626262]">
                 Conversation
               </p>
               <div className="max-h-80 overflow-y-auto px-4 py-3">
@@ -133,13 +133,13 @@ export function InterviewAgentDemo() {
                     <span
                       className={
                         line.role === "interviewer"
-                          ? "font-semibold text-sky-400"
-                          : "font-semibold text-emerald-400"
+                          ? "font-semibold text-[#076573]"
+                          : "font-semibold text-[#197E23]"
                       }
                     >
                       {line.role === "interviewer" ? "Interviewer: " : "Candidate: "}
                     </span>
-                    <span className="whitespace-pre-wrap text-slate-200">
+                    <span className="whitespace-pre-wrap text-[#E0E0E0]">
                       {line.text}
                     </span>
                   </p>
@@ -156,7 +156,7 @@ export function InterviewAgentDemo() {
               rows={4}
               disabled={pending || view?.finished}
               placeholder="Type an answer… (Ctrl+Enter to submit)"
-              className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-sky-600 disabled:opacity-50"
+              className="w-full rounded border border-[#353535] bg-[#000000] px-3 py-2 text-sm outline-none focus:border-[#02434D] disabled:opacity-50"
             />
 
             <div className="flex flex-wrap items-center gap-2">
@@ -164,7 +164,7 @@ export function InterviewAgentDemo() {
                 type="button"
                 onClick={() => send(answer)}
                 disabled={pending || answer.trim().length === 0 || view?.finished}
-                className="rounded bg-sky-600 px-4 py-2 text-sm font-medium hover:bg-sky-500 disabled:opacity-40"
+                className="rounded bg-[#02434D] px-4 py-2 text-sm font-medium hover:bg-[#03535F] disabled:opacity-40"
               >
                 {pending ? "Running graph…" : "Submit"}
               </button>
@@ -172,14 +172,14 @@ export function InterviewAgentDemo() {
                 type="button"
                 onClick={reset}
                 disabled={pending}
-                className="rounded border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-40"
+                className="rounded border border-[#353535] px-4 py-2 text-sm hover:bg-[#353535] disabled:opacity-40"
               >
                 Reset
               </button>
             </div>
 
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs uppercase tracking-wide text-[#626262]">
                 Presets — built for the question on the floor, sent through the graph
               </p>
               <div className="flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ export function InterviewAgentDemo() {
                     title={`${preset.note} — "${preset.text.slice(0, 60)}…"`}
                     onClick={() => send(preset.text)}
                     disabled={pending || view?.finished}
-                    className="rounded border border-slate-700 px-3 py-1.5 text-xs hover:bg-slate-800 disabled:opacity-40"
+                    className="rounded border border-[#353535] px-3 py-1.5 text-xs hover:bg-[#353535] disabled:opacity-40"
                   >
                     {preset.label}
                   </button>
@@ -201,8 +201,8 @@ export function InterviewAgentDemo() {
 
           {/* ----------------------------------------------------- debug */}
           <aside className="flex flex-col gap-4">
-            <div className="rounded border border-slate-800 bg-slate-900 p-4">
-              <p className="mb-3 text-xs uppercase tracking-wide text-slate-500">
+            <div className="rounded border border-[#353535] bg-[#000000] p-4">
+              <p className="mb-3 text-xs uppercase tracking-wide text-[#626262]">
                 Agent debug
               </p>
               <dl className="space-y-1.5 font-mono text-xs">
@@ -231,15 +231,15 @@ export function InterviewAgentDemo() {
               {debug?.action &&
               debug.proposed &&
               debug.action !== debug.proposed ? (
-                <p className="mt-3 rounded bg-amber-950/40 px-2 py-1.5 text-[11px] leading-snug text-amber-200">
+                <p className="mt-3 rounded bg-[#AA821D]/40 px-2 py-1.5 text-[11px] leading-snug text-[#FFEDB0]">
                   Policy overrode the model: it asked for {debug.proposed}, the
                   interview did {debug.action}.
                 </p>
               ) : null}
             </div>
 
-            <div className="rounded border border-slate-800 bg-slate-900 p-4">
-              <p className="mb-3 text-xs uppercase tracking-wide text-slate-500">
+            <div className="rounded border border-[#353535] bg-[#000000] p-4">
+              <p className="mb-3 text-xs uppercase tracking-wide text-[#626262]">
                 LangGraph nodes executed
               </p>
               <ul className="space-y-1 font-mono text-xs">
@@ -248,14 +248,14 @@ export function InterviewAgentDemo() {
                   return (
                     <li
                       key={node}
-                      className={ran ? "text-emerald-400" : "text-slate-600"}
+                      className={ran ? "text-[#197E23]" : "text-[#4B4B4B]"}
                     >
                       {ran ? "✓" : "·"} {node}
                     </li>
                   );
                 })}
               </ul>
-              <p className="mt-3 text-[11px] leading-snug text-slate-500">
+              <p className="mt-3 text-[11px] leading-snug text-[#626262]">
                 Reported by LangGraph&apos;s own update stream for the last turn —
                 not hard-coded here.
               </p>
@@ -280,14 +280,14 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-[#626262]">{label}</dt>
       <dd
         className={
           warn
-            ? "text-amber-300"
+            ? "text-[#AA821D]"
             : highlight
-              ? "font-semibold text-sky-300"
-              : "text-slate-200"
+              ? "font-semibold text-[#A6D2D5]"
+              : "text-[#E0E0E0]"
         }
       >
         {value}

@@ -5,15 +5,15 @@ import { AdminSparkline } from "@/components/admin/admin-sparkline";
 type Accent = "green" | "orange" | "blue";
 
 const accentBorder: Record<Accent, string> = {
-  green: "border-t-emerald-500",
-  orange: "border-t-[#E05226]",
-  blue: "border-t-blue-500",
+  green: "border-t-[#18D39B]",
+  orange: "border-t-[#03535F]",
+  blue: "border-t-[#03535F]",
 };
 
 const accentIconBg: Record<Accent, string> = {
-  green: "bg-emerald-500/10 text-emerald-500",
-  orange: "bg-[#FFECE3] text-[#E05226]",
-  blue: "bg-blue-500/10 text-blue-500",
+  green: "bg-[#18D39B]/10 text-[#197E23]",
+  orange: "bg-[#E7F2F3] text-[#03535F]",
+  blue: "bg-[#03535F]/10 text-[#03535F]",
 };
 
 type StatCardProps = {
@@ -67,8 +67,8 @@ export function StatCard({
           className={cn(
             "mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
             deltaPositive
-              ? "bg-emerald-500/10 text-emerald-400"
-              : "bg-red-500/10 text-red-400",
+              ? "bg-[#18D39B]/10 text-[#197E23]"
+              : "bg-[#D92D20]/10 text-[#D92D20]",
           )}
         >
           {deltaPositive ? "+" : ""}

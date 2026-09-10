@@ -104,5 +104,18 @@ suite("saveCandidateAvailabilityAction is the candidate's own userId", () => {
   );
 });
 
+suite("recruiter assessment actions go through the workspace gate", () => {
+  const src = read("src/app/actions/recruiter-assessment-actions.ts");
+  assert(
+    src.includes("requireRecruiterWorkspace"),
+    "assessment actions must call requireRecruiterWorkspace",
+  );
+  assert(
+    !/createdByUserId:\s*session\.user\.id/.test(src) &&
+      !/organizationId:\s*session\.user\.id/.test(src),
+    "must not use session.user.id as a scope value",
+  );
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

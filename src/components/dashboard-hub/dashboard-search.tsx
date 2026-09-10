@@ -134,7 +134,7 @@ export function DashboardSearch({ items }: DashboardSearchProps) {
       <div className="group relative">
         <Search
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[#8F8F8F] group-focus-within:text-[#E05226]"
+          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[#8F8F8F] group-focus-within:text-[#03535F]"
         />
         <input
           type="search"
@@ -155,7 +155,7 @@ export function DashboardSearch({ items }: DashboardSearchProps) {
             showPanel && flat[activeIndex] ? `${listId}-${flat[activeIndex].id}` : undefined
           }
           autoComplete="off"
-          className="h-9 w-[250px] appearance-none rounded-md border border-neutral-200 bg-transparent py-0 pr-3 pl-9 text-sm text-[#111111] outline-none placeholder:font-normal placeholder:text-[#8F8F8F] focus:border-[#E05226] focus:ring-0 group-focus-within:border-[#E05226] [&::-webkit-search-cancel-button]:hidden"
+          className="h-9 w-[250px] appearance-none rounded-md border border-[#E0E0E0] bg-transparent py-0 pr-3 pl-9 text-sm text-[#000000] outline-none placeholder:font-normal placeholder:text-[#8F8F8F] focus:border-[#03535F] focus:ring-0 group-focus-within:border-[#03535F] [&::-webkit-search-cancel-button]:hidden"
         />
       </div>
 
@@ -163,7 +163,7 @@ export function DashboardSearch({ items }: DashboardSearchProps) {
         <div
           id={listId}
           role="listbox"
-          className="scrollbar-program-orange absolute right-0 z-50 mt-1.5 max-h-72 min-w-[320px] overflow-y-auto rounded-lg border border-neutral-200 bg-[#FBF9F7] py-1.5 shadow-md"
+          className="scrollbar-program-brand absolute right-0 z-50 mt-1.5 max-h-72 min-w-[320px] overflow-y-auto rounded-lg border border-[#E0E0E0] bg-[#F4F4F4] py-1.5 shadow-md"
         >
           {flat.length === 0 ? (
             <p className="px-3.5 py-3 text-sm text-[#8F8F8F]">No matches</p>
@@ -187,8 +187,8 @@ export function DashboardSearch({ items }: DashboardSearchProps) {
                       onMouseEnter={() => setActiveIndex(flatIndex)}
                       onClick={() => go(item.href)}
                       className={cn(
-                        "flex w-full flex-col items-start px-3.5 py-2 text-left text-sm text-[#111111]",
-                        active && "bg-[#e05226]/10 text-[#e05226]",
+                        "flex w-full flex-col items-start px-3.5 py-2 text-left text-sm text-[#000000]",
+                        active && "bg-[#03535F]/10 text-[#03535F]",
                       )}
                     >
                       <span className="line-clamp-1 font-medium">{item.title}</span>

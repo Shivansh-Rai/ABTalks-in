@@ -70,19 +70,19 @@ Login to your dashboard: ${dashboardUrl}`;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f9f9f9;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9f9f9;padding:24px 12px;">
+<body style="margin:0;padding:0;background-color:#F4F4F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:24px 12px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
           <tr>
-            <td style="background:linear-gradient(135deg,#e16213,#e84393);padding:24px 32px;text-align:center;">
-              <span style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AB TALKS</span>
+            <td style="background:linear-gradient(135deg,#076573,#D92D20);padding:24px 32px;text-align:center;">
+              <span style="color:#ffffff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AB TALKS</span>
             </td>
           </tr>
           <tr>
-            <td style="padding:32px 32px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#3b3f44;">
-              <h3 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#1F2D3D;">Hello <strong>${firstName}</strong>,</h3>
+            <td style="padding:32px 32px 8px;font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#353535;">
+              <h3 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#02434D;">Hello <strong>${firstName}</strong>,</h3>
               <p style="margin:0 0 16px;">Thank you for submitting your Challenge Reset Request.</p>
               <p style="margin:0 0 16px;">We have reviewed your request and are pleased to inform you that your challenge progress has been successfully reset. You may now restart the <strong>ABTalks 60-Day Claude AI Challenge</strong> from <strong>Day 1</strong>.</p>
               <p style="margin:0 0 16px;">A fresh start is a valuable opportunity to rebuild momentum, strengthen your consistency, and get the most out of the challenge experience.</p>
@@ -92,7 +92,7 @@ Login to your dashboard: ${dashboardUrl}`;
               <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px;">
                 <tr>
                   <td style="background-color:#000000;border-radius:11px;">
-                    <a href="${dashboardUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">${DASHBOARD_LABEL}</a>
+                    <a href="${dashboardUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">${DASHBOARD_LABEL}</a>
                   </td>
                 </tr>
               </table>
@@ -102,7 +102,7 @@ Login to your dashboard: ${dashboardUrl}`;
           </tr>
           <tr>
             <td style="padding:0 32px 28px;">
-              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;">
+              <hr style="border:none;border-top:1px solid #E9E9E9;margin:0 0 20px;">
               <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
                 <tr>${socialCells}</tr>
               </table>

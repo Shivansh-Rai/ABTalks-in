@@ -15,9 +15,9 @@ export function FaqSection() {
           <h2 className="text-3xl font-fredoka font-bold leading-tight tracking-tight text-black sm:text-4xl">
             Frequently asked
             <br />
-            <span className="italic text-[#e05226]">questions</span>
+            <span className="italic text-[#03535F]">questions</span>
           </h2>
-          <p className="mt-4 font-fredoka text-sm leading-relaxed text-[#555555]">
+          <p className="mt-4 font-fredoka text-sm leading-relaxed text-[#4B4B4B]">
             Everything you need to know about the ABTalks 60-day challenge,
             submissions, streaks, and more.
           </p>
@@ -32,19 +32,19 @@ export function FaqSection() {
             return (
               <div
                 key={item.q}
-                className="overflow-hidden rounded-xl bg-[#F7E9E3]"
+                className="overflow-hidden rounded-xl bg-[#E7F2F3]"
               >
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   aria-controls={panelId}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold font-inter text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#E05226]"
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold font-inter text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#03535F]"
                 >
                   {item.q}
                   <span
                     className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e05226] text-white transition-transform duration-200 ease-[var(--ease-spark)]",
+                      "flex size-7 shrink-0 items-center justify-center rounded-full bg-[#03535F] text-white transition-transform duration-200 ease-[var(--ease-spark)]",
                       isOpen && "rotate-45",
                     )}
                     aria-hidden
@@ -68,7 +68,7 @@ export function FaqSection() {
                 {isOpen ? (
                   <div
                     id={panelId}
-                    className="px-5 pb-4 text-sm leading-relaxed text-[#555555]"
+                    className="px-5 pb-4 text-sm leading-relaxed text-[#4B4B4B]"
                   >
                     {item.a}
                   </div>

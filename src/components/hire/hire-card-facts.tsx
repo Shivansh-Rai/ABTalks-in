@@ -128,7 +128,7 @@ export function OpenToWorkBadge({ openToWork }: { openToWork?: boolean }) {
   if (openToWork !== true) return null;
   return (
     <span
-      className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-900 dark:text-emerald-100"
+      className="inline-flex items-center rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-xs font-semibold text-[#197E23] dark:text-[#D6F7EC]"
       title="This candidate has told us they are actively looking. It does not change who can find them."
     >
       Open to work

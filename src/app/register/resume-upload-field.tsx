@@ -98,9 +98,9 @@ export function ResumeUploadField({
           </div>
         </div>
       ) : uploaded ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#18D39B]/25 bg-[#18D39B]/5 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Check className="size-5 shrink-0 text-emerald-600" aria-hidden />
+            <Check className="size-5 shrink-0 text-[#197E23]" aria-hidden />
             <p className="min-w-0 truncate text-sm font-medium">
               {fileName ?? "Resume uploaded"}
             </p>

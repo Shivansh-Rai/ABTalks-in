@@ -26,7 +26,7 @@ const PRIMARY_BUTTON_CLASS =
 
 const PRIMARY_BUTTON_STYLE = {
   background:
-    "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
+    "linear-gradient(180deg, rgba(7, 101, 115, 1) 0%, rgba(3, 83, 95, 1) 100%)",
 } as const;
 
 export function HeroCta({
@@ -83,7 +83,7 @@ export function HeroCta({
 
         <Link
           href="#how-it-works"
-          className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-[#2C1BA9] bg-[#100A3D] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
+          className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-[#03535F] bg-[#353535] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
         >
           How it works
         </Link>

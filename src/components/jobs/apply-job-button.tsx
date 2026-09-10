@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { applyToJobAction } from "@/app/actions/job-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,7 @@ export function ApplyJobButton({
   isOpen,
 }: Props) {
   const router = useRouter();
+  const track = useTrack();
   const [applied, setApplied] = useState(initialApplied);
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState("");
@@ -48,6 +51,11 @@ export function ApplyJobButton({
     startTransition(async () => {
       const result = await applyToJobAction({ jobId, note });
       if (result.ok) {
+        // Only a created row gets here: a repeat application comes back as
+        // ok:false on the unique constraint, so re-submitting cannot double it.
+        // The job id and the note stay behind — the application's existence is
+        // the whole signal.
+        track(ANALYTICS_EVENTS.siteJobApplied);
         setApplied(true);
         setShowNote(false);
         toast.success("Application submitted!");

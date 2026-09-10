@@ -17,14 +17,14 @@ import type { AssessmentReportDocument } from "@/features/interview/platform/rep
 const CARD = "rounded-[16px] border border-[#E0E0E0] bg-white p-5";
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "#1A7F37";
-  if (score >= 60) return "#E05226";
-  return "#C9282B";
+  if (score >= 80) return "#197E23";
+  if (score >= 60) return "#03535F";
+  return "#D92D20";
 }
 
 function Bar({ score }: { score: number }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#F0F0F0]">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#F4F4F4]">
       <div
         className="h-full rounded-full"
         style={{ width: `${score}%`, backgroundColor: scoreColor(score) }}
@@ -45,13 +45,13 @@ export function MockInterviewReportView({
   return (
     <div className="space-y-8">
       {/* ------------------------------------------------------------ overall */}
-      <section className={cn(CARD, "bg-[#FFF5F0]")}>
+      <section className={cn(CARD, "bg-[#EEF6F6]")}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8F8F8F]">
               Attempt {coverage.attemptNumber}
             </p>
-            <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-[#111111]">
+            <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-[#000000]">
               {coverage.domainLabel}
             </h2>
             <p className="mt-1 text-[13px] text-[#8F8F8F]">
@@ -81,9 +81,9 @@ export function MockInterviewReportView({
         </div>
 
         {report.assessmentStatus.status !== "NORMAL" ? (
-          <div className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-[#E05226]/30 bg-[#FFECE3] p-3">
+          <div className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-[#03535F]/30 bg-[#E7F2F3] p-3">
             <AlertTriangle
-              className="mt-0.5 size-4 shrink-0 text-[#E05226]"
+              className="mt-0.5 size-4 shrink-0 text-[#03535F]"
               strokeWidth={2}
             />
             <p className="text-[13px] leading-relaxed text-[#4B4B4B]">
@@ -95,13 +95,13 @@ export function MockInterviewReportView({
 
       {/* --------------------------------------------------------- summary */}
       <section className={CARD}>
-        <h3 className="text-[15px] font-semibold text-[#111111]">Summary</h3>
+        <h3 className="text-[15px] font-semibold text-[#000000]">Summary</h3>
         <p className="mt-2 text-sm leading-relaxed text-[#4B4B4B]">
           {report.summary}
         </p>
         {report.recommendation ? (
           <>
-            <h3 className="mt-5 text-[15px] font-semibold text-[#111111]">
+            <h3 className="mt-5 text-[15px] font-semibold text-[#000000]">
               What to practise next
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#4B4B4B]">
@@ -113,14 +113,14 @@ export function MockInterviewReportView({
 
       {/* ---------------------------------------------------- competencies */}
       <section>
-        <h3 className="mb-3 text-lg font-semibold text-[#111111]">
+        <h3 className="mb-3 text-lg font-semibold text-[#000000]">
           How you scored
         </h3>
         <div className="space-y-3">
           {report.competencies.map((c) => (
             <div key={c.competencyId} className={CARD}>
               <div className="flex items-baseline justify-between gap-3">
-                <h4 className="text-[14px] font-semibold text-[#111111]">
+                <h4 className="text-[14px] font-semibold text-[#000000]">
                   {c.label}
                 </h4>
                 <span className="shrink-0 text-[13px] font-semibold text-[#4B4B4B]">
@@ -153,14 +153,14 @@ export function MockInterviewReportView({
       {/* -------------------------------------------------------- sections */}
       {report.sections.length > 0 ? (
         <section>
-          <h3 className="mb-3 text-lg font-semibold text-[#111111]">
+          <h3 className="mb-3 text-lg font-semibold text-[#000000]">
             By area
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {report.sections.map((s) => (
               <div key={s.sectionId} className={CARD}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <h4 className="text-[14px] font-semibold text-[#111111]">
+                  <h4 className="text-[14px] font-semibold text-[#000000]">
                     {s.label}
                   </h4>
                   <span className="shrink-0 text-[13px] font-semibold">
@@ -183,8 +183,8 @@ export function MockInterviewReportView({
       {/* ------------------------------------------- strengths + improvements */}
       <div className="grid gap-4 md:grid-cols-2">
         <section className={CARD}>
-          <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#111111]">
-            <CheckCircle2 className="size-4 text-[#1A7F37]" strokeWidth={2} />
+          <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#000000]">
+            <CheckCircle2 className="size-4 text-[#197E23]" strokeWidth={2} />
             Strengths
           </h3>
           <ul className="mt-3 space-y-3">
@@ -207,8 +207,8 @@ export function MockInterviewReportView({
         </section>
 
         <section className={CARD}>
-          <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#111111]">
-            <Target className="size-4 text-[#E05226]" strokeWidth={2} />
+          <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#000000]">
+            <Target className="size-4 text-[#03535F]" strokeWidth={2} />
             To work on
           </h3>
           <ul className="mt-3 space-y-3">
@@ -232,7 +232,7 @@ export function MockInterviewReportView({
       {/* ------------------------------------------------------- your answers */}
       {report.evidence.some((e) => e.answered) ? (
         <section>
-          <h3 className="mb-3 text-lg font-semibold text-[#111111]">
+          <h3 className="mb-3 text-lg font-semibold text-[#000000]">
             Your answers
           </h3>
           <div className="space-y-3">
@@ -242,7 +242,7 @@ export function MockInterviewReportView({
                 <details key={e.questionId} className={CARD}>
                   <summary className="cursor-pointer list-none">
                     <span className="flex items-baseline justify-between gap-3">
-                      <span className="text-[14px] font-medium text-[#111111]">
+                      <span className="text-[14px] font-medium text-[#000000]">
                         {e.question}
                       </span>
                       <span
@@ -263,7 +263,7 @@ export function MockInterviewReportView({
 
                     {e.matched.length > 0 ? (
                       <>
-                        <p className="mt-3 text-[12px] font-semibold uppercase tracking-wider text-[#1A7F37]">
+                        <p className="mt-3 text-[12px] font-semibold uppercase tracking-wider text-[#197E23]">
                           Covered
                         </p>
                         <ul className="mt-1 space-y-1">

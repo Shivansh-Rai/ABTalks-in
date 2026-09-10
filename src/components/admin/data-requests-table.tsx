@@ -15,8 +15,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  DONE: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  PENDING: "bg-[#AA821D]/10 text-[#AA821D] dark:text-[#AA821D]",
+  DONE: "bg-[#18D39B]/10 text-[#197E23] dark:text-[#197E23]",
   REJECTED: "bg-muted text-muted-foreground",
 };
 

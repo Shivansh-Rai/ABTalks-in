@@ -502,7 +502,7 @@ export function ChatWidget() {
       {open && (
         <div 
           ref={panelRef}
-          className="theme-abtalks-orange fixed bottom-4 right-4 z-50 flex max-h-[calc(100vh-8rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border bg-background shadow-2xl"
+          className="theme-abtalks-brand fixed bottom-4 right-4 z-50 flex max-h-[calc(100vh-8rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border bg-background shadow-2xl"
           style={{ width: size.width, height: size.height }}
         >
           {/* Header */}

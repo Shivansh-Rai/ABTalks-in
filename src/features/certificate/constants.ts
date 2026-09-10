@@ -99,7 +99,7 @@ export const CLAUDE_CERT_LAYOUT = {
     baselineYRatio: 0.085,
     fontSize: 10,
     bold: false,
-    color: { r: 0.07, g: 0.09, b: 0.15 },
+    color: { r: 0, g: 0, b: 0 }, // #000000
   },
   certificateId: {
     align: "center" as const,
@@ -108,7 +108,7 @@ export const CLAUDE_CERT_LAYOUT = {
     baselineYRatio: 0.928815,
     fontSize: 10,
     bold: true,
-    color: { r: 0.07, g: 0.09, b: 0.15 },
+    color: { r: 0, g: 0, b: 0 }, // #000000
   },
   name: {
     align: "center" as const,
@@ -122,7 +122,7 @@ export const CLAUDE_CERT_LAYOUT = {
     /** Must not run past the orange rule (which spans ~0.30–0.72 of page width). */
     maxWidthRatio: 0.55,
     bold: true,
-    color: { r: 0.07, g: 0.09, b: 0.15 },
+    color: { r: 0, g: 0, b: 0 }, // #000000
   },
   qr: {
     /** Bottom-left corner of QR. Nudged 8px right, 10px up (page 960×639.75). */
@@ -138,14 +138,14 @@ export const CLAUDE_CERT_LAYOUT = {
     baselineYRatio: 0.09,
     fontSize: 7,
     bold: false,
-    color: { r: 0.42, g: 0.45, b: 0.5 },
+    color: { r: 0.384, g: 0.384, b: 0.384 }, // #626262
   },
 } as const;
 
 /** Sampled straight out of the ViCoDathon artwork's content stream. */
 const HK_INK: RGB = { r: 1, g: 1, b: 1 };            // #FFFFFF — values
-/** Artwork palette reference — ViCoDathon label purple. */
-export const HK_ACCENT: RGB = { r: 0.549, g: 0.3216, b: 1 }; // #8C52FF — the artwork's label purple
+/** Palette reference — Primary Teal (Design System v2). */
+export const HK_ACCENT: RGB = { r: 0.0118, g: 0.3255, b: 0.3725 }; // #03535F
 
 /**
  * ViCoDathon 2026 overlay layout. Page box is 1113 × 795 pt with MediaBox y = 8.04,

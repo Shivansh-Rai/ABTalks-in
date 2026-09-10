@@ -35,41 +35,41 @@ const KEYCAPS: KeycapConfig[] = [
   {
     href: "/program/databricks",
     label: "DATABRICKS COHORT",
-    stem: "bg-[#276eb4]",
+    stem: "bg-[#03535F]",
     faceClassName:
-      "bg-gradient-to-b from-[#d7e6f5] to-[#5fa3e8] text-[#2c4970]",
+      "bg-gradient-to-b from-[#D4EBEC] to-[#076573] text-[#03535F]",
     heightClassName: "h-[88px] md:h-[110px]",
   },
   {
     href: "/program/ds-architect",
     label: "DS ARCHITECT",
-    stem: "bg-[#C9411C]",
+    stem: "bg-[#076573]",
     faceClassName:
-      "bg-gradient-to-b from-[#FFECE3] to-[#E05226] text-[#C9411C]",
+      "bg-gradient-to-b from-[#E7F2F3] to-[#03535F] text-[#076573]",
     heightClassName: "h-[88px] md:h-[110px]",
   },
   {
     href: PROGRAM_AI_COHORT_BASE,
     label: "AI COHORT",
-    stem: "bg-[#2b7851]",
+    stem: "bg-[#197E23]",
     faceClassName:
-      "bg-gradient-to-b from-[#d8f0e4] to-[#61d068] text-[#2c5a3e]",
+      "bg-gradient-to-b from-[#D6F7EC] to-[#27CA37] text-[#197E23]",
     heightClassName: "h-[88px] md:h-[110px]",
   },
   {
     href: "/claude-signup",
     label: "CLAUDE CHALLENGE",
-    stem: "bg-[#c4682f]",
+    stem: "bg-[#076573]",
     faceClassName:
-      "bg-gradient-to-b from-[#f4d8c7] to-[#d38251] text-[#6d4026]",
+      "bg-gradient-to-b from-[#D4EBEC] to-[#03535F] text-[#02434D]",
     heightClassName: "h-[88px] md:h-[110px]",
   },
   {
     href: "/workshop",
     label: "Workshops",
-    stem: "bg-[#C9411C]",
+    stem: "bg-[#076573]",
     faceClassName:
-      "bg-gradient-to-b from-[#FFECE3] to-[#E05226] text-[#C9411C] uppercase",
+      "bg-gradient-to-b from-[#E7F2F3] to-[#03535F] text-[#076573] uppercase",
     heightClassName: "h-[88px] md:h-[110px]",
   },
 ];
@@ -77,9 +77,9 @@ const KEYCAPS: KeycapConfig[] = [
 const HOMEPAGE_KEY: KeycapConfig = {
   href: "/dashboard",
   label: "DASHBOARD",
-  stem: "bg-[#a0846a]",
+  stem: "bg-[#8F8F8F]",
   faceClassName:
-    "bg-[linear-gradient(180deg,#f2e1d1_1.58%,#d6a97f_112.91%)] text-[#4c4336]",
+    "bg-[linear-gradient(180deg,#f2e1d1_1.58%,#d6a97f_112.91%)] text-[#4B4B4B]",
   heightClassName: "h-[72px] md:h-[90px]",
 };
 
@@ -155,13 +155,13 @@ export function NotFoundView() {
   }, []);
 
   return (
-    <div className="flex min-h-screen min-h-dvh items-center justify-center bg-gradient-to-b from-white to-[#efefef] px-4 py-8 md:px-10 md:py-12">
+    <div className="flex min-h-screen min-h-dvh items-center justify-center bg-gradient-to-b from-white to-[#F4F4F4] px-4 py-8 md:px-10 md:py-12">
       <div className="flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:gap-16 lg:gap-20">
         <div className="flex w-full flex-1 flex-col items-start gap-6 md:gap-8">
           <div
             className={cn(
               orbitron.className,
-              "flex flex-wrap items-center gap-2 text-[#111827] md:gap-4",
+              "flex flex-wrap items-center gap-2 text-[#353535] md:gap-4",
             )}
             aria-hidden
           >
@@ -178,15 +178,15 @@ export function NotFoundView() {
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <h1 className="font-display text-3xl font-extrabold leading-[1.2] text-[#111827] md:text-[44px]">
+            <h1 className="font-display text-3xl font-extrabold leading-[1.2] text-[#353535] md:text-[44px]">
               Oops! Page not found.
             </h1>
-            <p className="max-w-xl text-base font-medium leading-[1.6] text-[#6b7280] md:text-lg">
+            <p className="max-w-xl text-base font-medium leading-[1.6] text-[#787878] md:text-lg">
               Looks like you&apos;ve taken a wrong turn. The page you requested
               could not be found. Please try again later or reach out to{" "}
               <a
                 href="mailto:team@abtalks.in"
-                className="text-[#276eb4] underline-offset-2 hover:underline"
+                className="text-[#03535F] underline-offset-2 hover:underline"
               >
                 team@abtalks.in
               </a>
@@ -198,11 +198,11 @@ export function NotFoundView() {
           <div className="origin-center scale-[0.85] sm:scale-95 md:rotate-[8deg] md:skew-x-[-2deg] md:scale-100">
             <div
               className={cn(
-                "flex w-[min(100%,547px)] flex-col rounded-[40px] border-2 border-[#f1e6de] bg-[#f7efe9] pb-[14px] md:rounded-[56px] md:pb-[18px]",
+                "flex w-[min(100%,547px)] flex-col rounded-[40px] border-2 border-[#D4EBEC] bg-[#E7F2F3] pb-[14px] md:rounded-[56px] md:pb-[18px]",
                 "shadow-[0px_22px_24px_rgba(0,0,0,0.06),0px_10px_12px_rgba(0,0,0,0.07)]",
               )}
             >
-              <div className="flex w-full flex-col gap-4 rounded-[36px] border-2 border-[#f1e6de] bg-[#fdf8f3] px-5 py-6 md:gap-5 md:rounded-[52px] md:px-8 md:pb-10 md:pt-8">
+              <div className="flex w-full flex-col gap-4 rounded-[36px] border-2 border-[#D4EBEC] bg-[#EEF6F6] px-5 py-6 md:gap-5 md:rounded-[52px] md:px-8 md:pb-10 md:pt-8">
                 <div className="flex gap-4 md:gap-5">
                   <Keycap config={KEYCAPS[0]!} reduceMotion={reduceMotion} />
                   <Keycap config={KEYCAPS[1]!} reduceMotion={reduceMotion} />

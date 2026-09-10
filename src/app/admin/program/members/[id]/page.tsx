@@ -33,9 +33,9 @@ function initials(name: string) {
 }
 
 function dayStateClass(state: string): string {
-  if (state === "PASSED") return "bg-emerald-500/80";
-  if (state === "SKIPPED") return "bg-amber-500/80";
-  if (state === "AVAILABLE") return "bg-sky-500/50";
+  if (state === "PASSED") return "bg-[#18D39B]/80";
+  if (state === "SKIPPED") return "bg-[#AA821D]/80";
+  if (state === "AVAILABLE") return "bg-[#03535F]/50";
   return "bg-muted";
 }
 

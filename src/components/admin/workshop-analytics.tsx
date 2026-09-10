@@ -157,14 +157,14 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
                     {e.total}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    <span className="font-medium text-emerald-500">
+                    <span className="font-medium text-[#197E23]">
                       {e.newRegistrants}
                     </span>
                     <span className="ml-1 text-xs text-muted-foreground">
                       {newPct}%
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-[#E05226]">
+                  <td className="px-4 py-3 text-right tabular-nums text-[#03535F]">
                     {e.returning}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">

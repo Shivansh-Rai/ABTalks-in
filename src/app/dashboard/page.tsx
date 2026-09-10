@@ -253,7 +253,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {notice ? (
         <section className="px-4 py-2 sm:px-6 lg:ml-4">
           <div
-            className={`rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm text-[#555555] ${HUB_CARD_HOVER_CLASS}`}
+            className={`rounded-2xl border border-[#E0E0E0] bg-white px-5 py-4 text-sm text-[#4B4B4B] ${HUB_CARD_HOVER_CLASS}`}
           >
             {notice}
           </div>

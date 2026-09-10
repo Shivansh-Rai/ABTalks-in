@@ -32,7 +32,7 @@ export function StreakRing({ value, unit, progress }: StreakRingProps) {
           cy="18"
           r={RADIUS}
           fill="none"
-          stroke="#e5e5e5"
+          stroke="#E9E9E9"
           strokeWidth="3"
         />
         <circle
@@ -40,7 +40,7 @@ export function StreakRing({ value, unit, progress }: StreakRingProps) {
           cy="18"
           r={RADIUS}
           fill="none"
-          stroke="#e05226"
+          stroke="#03535F"
           strokeWidth="3"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={offset}
@@ -57,7 +57,7 @@ export function StreakRing({ value, unit, progress }: StreakRingProps) {
         >
           {value}
         </span>
-        <span className="mt-0.5 text-[9px] font-semibold tracking-wider text-[#555555] uppercase">
+        <span className="mt-0.5 text-[9px] font-semibold tracking-wider text-[#4B4B4B] uppercase">
           {unit}
         </span>
       </span>

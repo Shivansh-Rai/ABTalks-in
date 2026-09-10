@@ -71,7 +71,7 @@ export function StreakCard({ streak, restartHref }: StreakCardProps) {
   const unit = streak.currentStreak === 1 ? "day" : "days";
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-sm">
       <StreakHeader
         title={title}
         headline={headline}
@@ -119,19 +119,19 @@ function StreakHeader({
         <p
           className={cn(
             "flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase",
-            isBroken ? "text-[#C9411C]" : "text-[#e05226]",
+            isBroken ? "text-[#076573]" : "text-[#03535F]",
           )}
         >
           <Flame
             className={cn(
               "size-3.5",
-              isActive ? "text-[#e05226]" : "text-neutral-400",
+              isActive ? "text-[#03535F]" : "text-[#A5A5A5]",
             )}
             aria-hidden
           />
           {title}
         </p>
-        <p className="mt-1 text-sm text-[#555555]">{headline}</p>
+        <p className="mt-1 text-sm text-[#4B4B4B]">{headline}</p>
       </div>
     </div>
   );
@@ -145,15 +145,15 @@ function WeeklyStreak({ week }: { week: WeekDayTick[] }) {
           <span
             className={cn(
               "flex size-6 items-center justify-center rounded-full",
-              day.status === "complete" && "bg-[#e05226] text-white",
-              day.status === "broken" && "bg-[#FCE8E6] text-[#C9411C]",
+              day.status === "complete" && "bg-[#03535F] text-white",
+              day.status === "broken" && "bg-[#D92D2014] text-[#076573]",
               day.status === "idle" &&
-                "border border-neutral-200 bg-neutral-50",
+                "border border-[#E0E0E0] bg-[#F4F4F4]",
               day.status === "future" &&
-                "border border-neutral-200 bg-neutral-50",
+                "border border-[#E0E0E0] bg-[#F4F4F4]",
               day.status === "today" &&
-                "border-2 border-[#e05226] bg-white",
-              day.isToday && "ring-2 ring-[#e05226]/25 ring-offset-1",
+                "border-2 border-[#03535F] bg-white",
+              day.isToday && "ring-2 ring-[#03535F]/25 ring-offset-1",
               day.status === "complete" &&
                 day.isToday &&
                 "motion-safe:animate-[heatmap-cell_0.4s_ease-out]",
@@ -163,7 +163,7 @@ function WeeklyStreak({ week }: { week: WeekDayTick[] }) {
             {day.status === "complete" ? <CheckIcon /> : null}
             {day.status === "broken" ? <XIcon /> : null}
           </span>
-          <span className="text-[10px] text-neutral-400">{day.label}</span>
+          <span className="text-[10px] text-[#A5A5A5]">{day.label}</span>
         </div>
       ))}
     </div>
@@ -212,7 +212,7 @@ function XIcon() {
 
 function StreakStats({ streak }: { streak: ActivityStreak }) {
   return (
-    <ul className="mt-5 space-y-2 border-t border-neutral-100 pt-4 text-sm">
+    <ul className="mt-5 space-y-2 border-t border-[#E9E9E9] pt-4 text-sm">
       <StatRow
         icon={Flame}
         label="Current streak"
@@ -248,8 +248,8 @@ function StatRow({
 }) {
   return (
     <li className="flex justify-between gap-3">
-      <span className="inline-flex min-w-0 items-center gap-2 text-[#555555]">
-        <Icon className="size-3.5 shrink-0 text-[#e05226]" strokeWidth={1.75} aria-hidden />
+      <span className="inline-flex min-w-0 items-center gap-2 text-[#4B4B4B]">
+        <Icon className="size-3.5 shrink-0 text-[#03535F]" strokeWidth={1.75} aria-hidden />
         {label}
       </span>
       <span className="font-medium tabular-nums text-black">{value}</span>
@@ -267,8 +267,8 @@ function StreakMilestone({
   restartHref: string;
 }) {
   return (
-    <div className="mt-4 border-t border-neutral-100 pt-4">
-      <p className="text-sm text-[#555555]">{message}</p>
+    <div className="mt-4 border-t border-[#E9E9E9] pt-4">
+      <p className="text-sm text-[#4B4B4B]">{message}</p>
       {showCta ? (
         <Link href={restartHref} className={cn(HUB_TEXT_LINK_CLASS, "mt-2")}>
           Start again

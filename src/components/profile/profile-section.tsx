@@ -65,12 +65,12 @@ export function ProfileSection({
           <span className="size-5 shrink-0" aria-hidden />
         ) : complete ? (
           <CheckCircle2
-            className="size-5 shrink-0 text-emerald-500"
+            className="size-5 shrink-0 text-[#197E23]"
             aria-hidden
           />
         ) : (
           <AlertTriangle
-            className="size-5 shrink-0 text-amber-500"
+            className="size-5 shrink-0 text-[#AA821D]"
             aria-hidden
           />
         )}

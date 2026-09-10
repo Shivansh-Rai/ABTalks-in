@@ -235,7 +235,7 @@ export default function CommunityStats() {
               section, and what separates it from the section above. The SVG is
               2519×746 and sits 300px outside its 1919×146 box on every side:
               that overhang IS the blur, so it must not be squashed to the box.
-              Recoloured from the Figma blue to the palette's #E05226 and held
+              Recoloured from the Figma blue to the palette's #03535F and held
               at ~1/3 opacity — orange is far denser than the pale blue was, and
               at full strength it reads as a solid band rather than a wash.
 

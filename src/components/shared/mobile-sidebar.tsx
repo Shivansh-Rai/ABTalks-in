@@ -111,7 +111,7 @@ export function MobileSidebar({ user }: Props) {
                 {/* Synergy */}
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center gap-2 px-1 text-xs font-semibold text-muted-foreground">
-                    <Star className="size-3.5 text-amber-500" aria-hidden />
+                    <Star className="size-3.5 text-[#AA821D]" aria-hidden />
                     Synergy
                   </div>
                   <Link

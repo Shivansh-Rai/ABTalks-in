@@ -9,10 +9,10 @@ export default function DashboardLoading() {
     <div
       aria-busy="true"
       aria-label="Loading dashboard"
-      className="theme-abtalks-light theme-abtalks-orange flex min-h-svh bg-[#FBF9F7] font-content text-[#111111]"
+      className="theme-abtalks-light theme-abtalks-brand flex min-h-svh bg-[#F4F4F4] font-content text-[#000000]"
     >
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#E0E0E0] bg-[#FBF9F7] md:flex">
-        <div className="flex h-[72px] items-center border-b border-[#E0E0E0] px-4">
+      <aside className="hidden w-[250px] shrink-0 flex-col border-r border-[#E9E9E9] bg-white md:flex">
+        <div className="flex h-[55px] items-center border-b border-[#E9E9E9] px-5">
           <Skeleton className="h-8 w-28 bg-[#E0E0E0]" />
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4" aria-hidden>
@@ -36,7 +36,7 @@ export default function DashboardLoading() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[72px] items-center justify-between border-b border-[#E0E0E0] bg-[#FBF9F7] px-5 sm:px-8">
+        <header className="abt-header justify-between">
           <div className="flex items-center gap-3">
             <Skeleton className="size-9 rounded-md bg-[#E0E0E0] md:hidden" />
             <Skeleton className="h-4 w-24 bg-[#E0E0E0]" />

@@ -24,7 +24,7 @@ export function CopyReferralLinkButton({ link }: Props) {
     >
       {copied ? (
         <>
-          <Check className="h-4 w-4 text-emerald-500" />
+          <Check className="h-4 w-4 text-[#197E23]" />
           Copied
         </>
       ) : (

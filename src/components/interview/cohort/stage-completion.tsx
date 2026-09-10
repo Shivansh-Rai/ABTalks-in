@@ -57,7 +57,7 @@ export function StageCompletion({
           <div className="mt-8" style={{ animation: "iv-fade-in 0.4s ease-out" }}>
             <Button
               type="button"
-              className="bg-[#E05226] hover:bg-[#C9411C] text-white px-8 py-3 text-[15px] font-bold"
+              className="bg-[#03535F] hover:bg-[#076573] text-white px-8 py-3 text-[15px] font-bold"
               onClick={onViewReport}
             >
               View Assessment
