@@ -45,6 +45,12 @@ async function requireApprovedRecruiter(): Promise<
 function revalidateHire(requestId: string) {
   revalidatePath("/hire");
   revalidatePath(`/hire/${requestId}`);
+  // "layout" scope, not the bare path: the header's shortlist count and panel
+  // are built in the /hire LAYOUT (app/hire/layout.tsx), which a page-scoped
+  // revalidate leaves untouched. Without this a project shortlist landed in
+  // TalentRequestMatch correctly and the header still showed the old count
+  // until a full reload. Same reason talent-actions.ts does it for the cart.
+  revalidatePath("/hire", "layout");
 }
 
 export async function renameTalentProjectAction(

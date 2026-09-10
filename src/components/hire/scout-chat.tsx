@@ -375,8 +375,34 @@ export function ScoutChat({
     null;
   const guestMatches = activeSearch?.matches ?? [];
   const guestGap = activeSearch?.overallGap ?? null;
-  const deskMatchesRaw =
-    persist && (results?.length ?? 0) > 0 ? (results ?? []) : guestMatches;
+  // Inside an authenticated project the desk shows the PERSISTED matches and
+  // nothing else — never the localStorage guest set, not even when the
+  // persisted list is empty.
+  //
+  // This used to read `persist && results.length > 0 ? results : guestMatches`,
+  // which silently swapped in guest cards whenever `results` was empty. The
+  // /hire route passes no `results` prop at all, so an approved recruiter there
+  // rendered guest cards left over from an anonymous search. Those cards carry
+  // no `candidateUserId`, so `showTriage` was false and the card fell back to
+  // the legacy "Add to request list" button: the project shortlist was
+  // unreachable and nothing the recruiter clicked could persist.
+  //
+  // An empty project now renders as empty, which is honest and debuggable.
+  // An approved recruiter NEVER sees guest cards.
+  //
+  // `guestMatches` is the logged-OUT preview, held in localStorage. It used to
+  // render for a signed-in recruiter too, whenever `results` was empty — and
+  // the /hire route passes no `results` prop at all. So after logging in, the
+  // desk showed stale cards from a pre-login anonymous search. Those cards
+  // carry no `candidateUserId`, so `showTriage` was false and the card fell
+  // back to the legacy "Add to request list" button, whose action looks up a
+  // ProgramMember and answers "Member not found" for anyone outside the one
+  // published cohort. That is the whole reported failure.
+  //
+  // Signed in: show the project's persisted matches, or nothing. An empty desk
+  // is honest and sends the recruiter to their project; stale guest cards
+  // wearing the wrong button are not.
+  const deskMatchesRaw = persist ? (results ?? []) : guestMatches;
   const deskMatches = deskMatchesRaw.map((m) => ({
     ...m,
     ...(triageByRef[m.candidateRef] ?? {}),
@@ -384,7 +410,7 @@ export function ScoutChat({
   const visibleDeskMatches = hideRejected
     ? deskMatches.filter((m) => m.decision !== "REJECTED")
     : deskMatches;
-  const deskGap = persist && (results?.length ?? 0) > 0 ? null : guestGap;
+  const deskGap = persist ? null : guestGap;
   // An empty desk gets one of two things. With the Pro preview on, blurred
   // example profiles showing the format Pro fills in; otherwise the original
   // spec-shaped sample card. Both carry `SampleCardNotice`, which is what keeps

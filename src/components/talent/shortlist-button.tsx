@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useTransition } from "react";
 // BookmarkPlus, not ShoppingCart: this is a shortlist, not a basket, and
-// nothing downstream is a purchase. The desk podLabel says "Add to request list".
+// nothing downstream is a purchase. Both variants draw the same lucide glyph —
+// the desk used to draw a JPEG here, which rendered as a small washed-out
+// screenshot of the header mark rather than an icon.
+//
+// This is the NON-PROJECT control (outreach cart / device list). Inside a
+// project the card renders the T-149 "Add to shortlist" button instead, which
+// writes TalentRequestMatch.decision. The wording stays deliberately different
+// so the two are never mistaken for each other on the same surface.
 import { BookmarkPlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
@@ -137,25 +144,6 @@ export function ShortlistButton({
         <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
       ) : inCart ? (
         <X className="size-3.5" aria-hidden="true" />
-      ) : podLabel ? (
-        // The desk header's own Shortlist mark, reusing its markup and classes
-        // rather than pointing a bare <img> at the same file.
-        //
-        // `.hire-hbtn__icon` is a crop viewport, not a plain image slot: the
-        // JPEG carries a wide white margin, and `--pod` scales it ~180% and
-        // offsets it to frame just the glyph. Rendering the file at its natural
-        // size — which is what a bare <img> does — shows the padding too, so
-        // the mark comes out small and washed out. The same rules also carry
-        // the dark-mode invert.
-        //
-        // Only the `podLabel` (Scout desk) variant takes it; the generic cart
-        // button keeps its lucide glyph.
-        <span
-          className="hire-hbtn__icon hire-hbtn__icon--pod"
-          aria-hidden="true"
-        >
-          <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
-        </span>
       ) : (
         <BookmarkPlus className="size-3.5" aria-hidden="true" />
       )}
