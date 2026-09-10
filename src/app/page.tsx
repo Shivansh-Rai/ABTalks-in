@@ -10,10 +10,8 @@ export default async function HomePage() {
   if (session?.user?.id) {
     // RecruiterProfile is the current database-backed recruiter authority.
     // Checking it here keeps a stale JWT role from sending the wrong account
-    // to its home surface, and pending recruiters can still use Scout's
-    // existing non-persistent experience.
+    // to its home surface.
     const recruiter = await getRecruiterState(session.user.id);
-    if (recruiter.status === "setup_incomplete") redirect("/talent/setup");
     redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
   }
 

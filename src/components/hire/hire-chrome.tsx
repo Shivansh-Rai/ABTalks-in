@@ -21,20 +21,17 @@ import {
   DESK_SHORTLIST_EVENT,
   readDeskShortlist,
 } from "@/components/hire/desk-shortlist";
-import { signOutAction } from "@/app/actions/auth-actions";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 import { cn } from "@/lib/utils";
 
 export function HireChrome({
   account,
   serverCartCount,
-  pendingName,
   podRows,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
   serverCartCount: number;
-  pendingName: string | null;
   podRows: CartRow[];
   children: React.ReactNode;
 }) {
@@ -184,17 +181,6 @@ export function HireChrome({
           )}
           {account ? (
             <RecruiterAccountMenu account={account} />
-          ) : pendingName ? (
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-lg px-2 py-1 text-left text-xs"
-                title="Application pending review"
-              >
-                <span className="block font-medium">{pendingName}</span>
-                <span className="text-muted-foreground">Pending · Sign out</span>
-              </button>
-            </form>
           ) : (
             <button
               type="button"

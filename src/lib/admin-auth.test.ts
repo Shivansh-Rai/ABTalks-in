@@ -35,8 +35,29 @@ suite("requireAdmin checks UserRoleAssignment, not only env", () => {
   assert(src.includes("userRoleAssignment"), "must query UserRoleAssignment");
   assert(src.includes("revokedAt: null"), "only active assignments count");
   assert(
-    src.includes("bootstrapAdminsFromEnv"),
-    "env is bootstrap-only when no admin rows exist",
+    src.includes("bootstrapAdminFromEnv"),
+    "env is bootstrap-only, for an account that has never held the grant",
+  );
+});
+
+suite("the env bootstrap is scoped to one account, not the platform", () => {
+  const src = read("src/lib/admin-auth.ts");
+  const fn = src.slice(src.indexOf("async function bootstrapAdminFromEnv"));
+  assert(
+    fn.includes("userId,"),
+    "the bootstrap must look at the caller, not at every admin row",
+  );
+  assert(
+    !/const active[\s\S]{0,200}revokedAt: null,\s*\},\s*\}\);\s*if \(active > 0\) return;/.test(src),
+    "the platform-wide early return is the bug and must not come back",
+  );
+  // A revoked grant is never re-granted: the count that guards the create
+  // deliberately has no revokedAt filter.
+  const guard = fn.slice(fn.indexOf("everGranted"));
+  assert(guard.length > 0, "the ever-granted guard is present");
+  assert(
+    !guard.slice(0, guard.indexOf("if (everGranted")).includes("revokedAt"),
+    "revoked assignments must still count against a re-grant",
   );
 });
 

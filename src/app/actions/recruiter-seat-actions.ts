@@ -101,16 +101,10 @@ export async function setRecruiterSeatActiveAction(
       select: { id: true, email: true, active: true },
     });
 
-    const user = await prisma.user.findFirst({
-      where: { email: seat.email },
-      select: { id: true },
-    });
-    if (user) {
-      await prisma.recruiterProfile.updateMany({
-        where: { userId: user.id },
-        data: { approved: active },
-      });
-    }
+    // Deliberately does not touch RecruiterProfile. A seat is a pre-verified
+    // company name, not an access grant: recruiter approval was removed, so
+    // flipping `approved` here would write a column nothing reads and imply a
+    // revocation that does not happen.
 
     revalidatePath("/admin/recruiter-seats");
     revalidatePath("/admin/recruiters");

@@ -66,7 +66,7 @@ function isAsked(row: CartRow, requested: string[]): boolean {
 export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
-  const { approved, pending: approvalPending, openAuth } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const [extra, setExtra] = useState<CartRow[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -203,10 +203,6 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
       return;
     }
     if (!approved) {
-      if (approvalPending) {
-        toast.error("Your recruiter application is still being reviewed.");
-        return;
-      }
       savePendingCheckout({
         candidateRefs: refs,
         note: note.trim() || undefined,

@@ -21,7 +21,6 @@ export async function isAdminEmail(
 }
 
 export async function hasPlatformAdmin(userId: string): Promise<boolean> {
-  await bootstrapAdminsFromEnv();
   const row = await prisma.userRoleAssignment.findFirst({
     where: {
       userId,
@@ -31,50 +30,78 @@ export async function hasPlatformAdmin(userId: string): Promise<boolean> {
     },
     select: { id: true },
   });
-  return row !== null;
+  if (row !== null) return true;
+
+  // Only somebody who has NO live grant pays for the bootstrap, so an admin
+  // who already has their row costs one query, not three.
+  return bootstrapAdminFromEnv(userId);
 }
 
 /**
- * First-admin chicken-and-egg: if nobody has an active GLOBAL ADMIN row,
- * copy ADMIN_EMAILS onto matching User rows. After that, env is ignored.
- * A revoked admin is never re-granted from env.
+ * Chicken-and-egg bootstrap: copy ADMIN_EMAILS onto the matching User row,
+ * **per email**.
+ *
+ * This used to be a one-shot platform-wide bootstrap — it counted every active
+ * GLOBAL ADMIN row and returned early if there were any. That silently ignored
+ * every email added to ADMIN_EMAILS after the first admin existed: the account
+ * was listed in env, `auth.config.ts` set `token.isAdmin` from that same list
+ * so the header rendered the Admin button, and then `requireAdmin` found no
+ * assignment and redirected to /dashboard. Two authorities, one of them
+ * unreachable. The scope is now the person, not the platform.
+ *
+ * A revoked admin is still never re-granted from env — that is why the count
+ * below includes revoked rows. Once an account has ever held a GLOBAL ADMIN
+ * assignment, env has had its say and the decision belongs to
+ * `admin-platform-actions.ts`.
  */
-async function bootstrapAdminsFromEnv(): Promise<void> {
+async function bootstrapAdminFromEnv(userId: string): Promise<boolean> {
   const emails = getAdminEmails();
-  if (emails.length === 0) return;
+  if (emails.length === 0) return false;
 
-  const active = await prisma.userRoleAssignment.count({
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  const email = user?.email?.trim().toLowerCase();
+  if (!email || !emails.includes(email)) return false;
+
+  // Revoked rows count. A grant that was taken away must not come back.
+  const everGranted = await prisma.userRoleAssignment.count({
     where: {
+      userId,
       role: PlatformRole.ADMIN,
       scopeType: RoleScopeType.GLOBAL,
-      revokedAt: null,
     },
   });
-  if (active > 0) return;
-
-  const users = await prisma.user.findMany({
-    where: {
-      OR: emails.map((email) => ({
-        email: { equals: email, mode: "insensitive" as const },
-      })),
-    },
-    select: { id: true, email: true },
-  });
-  if (users.length === 0) return;
+  if (everGranted > 0) return false;
 
   try {
-    await prisma.userRoleAssignment.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
+    await prisma.userRoleAssignment.create({
+      data: {
+        userId,
         role: PlatformRole.ADMIN,
         scopeType: RoleScopeType.GLOBAL,
-      })),
-      skipDuplicates: true,
+      },
+      select: { id: true },
     });
+    return true;
   } catch (error) {
-    logger.error("[admin-auth] bootstrapAdminsFromEnv", {
+    // A concurrent request that won the race is not a failure: the grant this
+    // call wanted now exists either way.
+    logger.error("[admin-auth] bootstrapAdminFromEnv", {
+      userId,
       error: String(error),
     });
+    const row = await prisma.userRoleAssignment.findFirst({
+      where: {
+        userId,
+        role: PlatformRole.ADMIN,
+        scopeType: RoleScopeType.GLOBAL,
+        revokedAt: null,
+      },
+      select: { id: true },
+    });
+    return row !== null;
   }
 }
 

@@ -34,9 +34,7 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
   const session = await auth();
   if (session?.user?.id) {
     const state = await getRecruiterState(session.user.id);
-    if (state.status === "approved") redirect(redirectTo);
-    if (state.status === "setup_incomplete") redirect("/talent/setup");
-    if (state.status === "pending") redirect("/talent/pending");
+    if (state.status === "active") redirect(redirectTo);
   }
 
   if (!isRecruiterAuthEnabled()) {
@@ -61,8 +59,8 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
 
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          We verify your email, then someone from ABTalks confirms your
-          company before access opens.
+          We verify your work email with a code. Your workspace opens straight
+          away — there is nothing to wait for.
         </p>
         <RecruiterRegisterForm />
       </div>
