@@ -22,22 +22,18 @@ import { cn } from "@/lib/utils";
  */
 export function HireSidebar({
   account,
-  pendingName,
 }: {
   account: RecruiterAccountSnapshot | null;
-  pendingName: string | null;
 }) {
   const pathname = usePathname();
   const { openAuth } = useHireAuth();
   const { projectName, requestNewSearch } = useHireDesk();
   const [gate, setGate] = useState<GateReason | null>(null);
 
-  const name = account?.fullName ?? pendingName ?? "Guest";
+  const name = account?.fullName ?? "Guest";
   const sub = account
     ? `${account.company}’s Dashboard`
-    : pendingName
-      ? "Application pending review"
-      : "Sign in to save searches";
+    : "Sign in to save searches";
 
   const who = (
     <>
@@ -119,7 +115,7 @@ export function HireSidebar({
         </button>
       </nav>
 
-      {account || pendingName ? (
+      {account ? (
         <div className="hire-side__me">{who}</div>
       ) : (
         <button
