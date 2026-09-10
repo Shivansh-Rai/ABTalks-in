@@ -107,7 +107,8 @@
     "test:notification-dispatch": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-service.test.ts",
     "test:email-delivery": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/email-delivery.test.ts",
     "test:notification-acceptance": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-acceptance.test.ts",
-    "test:recruiter-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-jobs/recruiter-jobs.test.ts"
+    "test:recruiter-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-jobs/recruiter-jobs.test.ts",
+    "test:recruiter-assessments": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/recruiter-assessments.test.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

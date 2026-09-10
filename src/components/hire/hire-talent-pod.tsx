@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, Send, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { placeBulkEngagementRequestAction } from "@/app/actions/hire-request-actions";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
@@ -379,6 +380,23 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
             Place request for {selected.size} candidate
             {selected.size === 1 ? "" : "s"}
           </button>
+          <div className="hire-pod__assess-divider" aria-hidden="true" />
+          {rows.length === 0 ? (
+            <button
+              type="button"
+              disabled
+              className="hire-pod__assess is-disabled"
+              title="Add candidates to your Shortlist first"
+            >
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </button>
+          ) : (
+            <Link href="/hire/create-test" className="hire-pod__assess">
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </Link>
+          )}
         </aside>
       </div>
     </section>
