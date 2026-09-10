@@ -23,25 +23,25 @@ export function InvitePanel({ teamCode, spotsLeft }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+    <section className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
+        <h2 className="font-heading text-[13px] leading-[18px] font-semibold uppercase tracking-[0.16em] text-[#03535F]">
           Invite your team
         </h2>
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-[#626262]">
           {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left
         </p>
       </div>
 
       <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-        <code className="flex-1 rounded-lg border border-white/15 bg-black/50 px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.2em] text-white">
+        <code className="flex-1 rounded-lg border border-[#E0E0E0] bg-[#F4F4F4] px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.2em] text-black">
           {teamCode}
         </code>
         <Button
           type="button"
           variant="outline"
           onClick={copyCode}
-          className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          className="gap-2 border-[#D2D2D2] bg-transparent text-black hover:bg-[#EEF6F6] hover:text-[#03535F]"
         >
           {copied ? (
             <>
@@ -57,7 +57,7 @@ export function InvitePanel({ teamCode, spotsLeft }: Props) {
         </Button>
       </div>
 
-      <p className="mt-3 text-sm text-zinc-400">
+      <p className="mt-3 text-sm text-[#626262]">
         Teammates register at abtalks.in/hackathon and enter this code in the
         popup.
       </p>

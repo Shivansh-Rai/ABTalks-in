@@ -4,8 +4,6 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 import { DashboardSearch } from "@/components/dashboard-hub/dashboard-search";
-import { HUB_BUTTON_CLASS } from "@/components/dashboard-hub/nav-items";
-import { cn } from "@/lib/utils";
 import type { HubSearchItem } from "@/features/dashboard/hub-search-index";
 
 export type HeaderSectionNavItem = {
@@ -32,11 +30,10 @@ const HUB_SECTION_NAV: HeaderSectionNavItem[] = [
   { href: "#events", label: "Events" },
 ];
 
-const bellClassName =
-  "inline-flex size-9 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 transition-[border-color,background-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226] motion-safe:hover:scale-[1.04]";
+/* Global header parts — defined once in globals.css (Design System v2 §6). */
+const bellClassName = "abt-header-icon";
 
-const navLinkClass =
-  "text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226]";
+const navLinkClass = "abt-header-nav-link";
 
 export function DashboardHeader({
   isAdmin,
@@ -50,22 +47,22 @@ export function DashboardHeader({
   const hubNav = !customNav && showSectionNav;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-[#FBF9F7]">
-      <div className="flex h-[72px] items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+    <header className="abt-header">
+      <div className="abt-header-inner">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-neutral-200 text-neutral-900 transition-[border-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:text-[#e05226] motion-safe:hover:scale-[1.04] md:hidden"
+            className="abt-header-icon md:hidden"
             aria-label="Open menu"
             aria-expanded={menuOpen}
             onClick={onMenuClick}
           >
-            <Menu className="size-5" aria-hidden />
+            <Menu aria-hidden />
           </button>
 
           {customNav ? (
             <nav
-              className="hidden min-w-0 items-center gap-x-8 md:flex"
+              className="abt-header-nav hidden md:flex"
               aria-label="Page sections"
             >
               {sectionNavItems.map((item) => (
@@ -78,7 +75,7 @@ export function DashboardHeader({
 
           {hubNav ? (
             <nav
-              className="hidden items-center gap-6 md:flex"
+              className="abt-header-nav hidden md:flex"
               aria-label="Page sections"
             >
               {HUB_SECTION_NAV.map((item) => (
@@ -96,10 +93,7 @@ export function DashboardHeader({
           ) : null}
           <NotificationBellButton className={bellClassName} />
           {isAdmin ? (
-            <Link
-              href="/admin"
-              className={cn(HUB_BUTTON_CLASS, "h-9 px-4 text-xs")}
-            >
+            <Link href="/admin" className="abt-header-cta">
               Admin
             </Link>
           ) : null}

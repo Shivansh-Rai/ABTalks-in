@@ -53,7 +53,7 @@ export function HackathonShell({
   }, [closeSidebar]);
 
   return (
-    <div className="theme-abtalks-light theme-abtalks-orange ab-shell">
+    <div className="theme-abtalks-light theme-abtalks-brand ab-shell">
       <DashboardSidebar
         user={user}
         mobileOpen={sidebarOpen}

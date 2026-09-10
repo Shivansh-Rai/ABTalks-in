@@ -46,9 +46,9 @@ function StatusBadge({ status }: { status: EventStatus }) {
           // LIVE and UPCOMING must be told apart at a glance, and two tints of
           // the same orange cannot do that. Green for "running now" is the
           // convention every viewer already knows.
-          background: "rgba(22, 163, 74, 0.12)",
-          color: "#15803d",
-          border: "1px solid rgba(22, 163, 74, 0.3)",
+          background: "rgba(25, 126, 35, 0.12)",
+          color: "#197E23",
+          border: "1px solid rgba(25, 126, 35, 0.3)",
         }}
       >
         <span className="wk-live-dot size-1.5 rounded-full" aria-hidden />
@@ -89,7 +89,7 @@ function WorkshopCard({
       style={{
         background: "var(--wk-surface)",
         border: `1px solid ${
-          status === "LIVE" ? "rgba(22, 163, 74, 0.32)" : "var(--wk-card-border)"
+          status === "LIVE" ? "rgba(25, 126, 35, 0.32)" : "var(--wk-card-border)"
         }`,
       }}
     >

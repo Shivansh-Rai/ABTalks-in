@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { logger, reqLogger } from "@/lib/logger";
+import { captureFailure } from "@/lib/observability/capture";
+import { logContact } from "@/lib/observability/domain-log";
+import { getRequestId } from "@/lib/observability/request-id";
 import { requireAdmin } from "@/lib/admin-auth";
 import {
   requireApprovedRecruiterAction,
@@ -42,11 +45,39 @@ export async function placeEngagementRequestAction(
   if (!parsed.success) return { ok: false, message: "Invalid request." };
   const { candidateRef, requestId, note } = parsed.data;
 
+  // T-259. `requestId` here is the recruiter's TalentRequest, which is why the
+  // correlation id is bound under its own name — two different ids that would
+  // otherwise collide in the log line.
+  const correlationId = await getRequestId();
+  const log = reqLogger(correlationId, {
+    route: "action:placeEngagementRequest",
+    recruiterId: gate.data.userId,
+    talentRequestId: requestId ?? undefined,
+  });
+  // `candidateRef` is an opaque public reference, and `note` is recruiter-typed
+  // free text that may name a person - so the note is counted, never quoted.
+  logContact("unlock", {
+    outcome: "attempt",
+    recruiterId: gate.data.userId,
+    candidateRef,
+    hasNote: Boolean(note),
+    log,
+  });
+
   try {
     // The candidate must be someone this recruiter could legitimately have
     // seen: in the pool, on whichever track they came from.
     const [candidate] = await resolveEligibleCandidates([candidateRef]);
-    if (!candidate) return { ok: false, message: "Candidate not available." };
+    if (!candidate) {
+      logContact("unlock", {
+        outcome: "refused",
+        recruiterId: gate.data.userId,
+        candidateRef,
+        reason: "not_eligible",
+        log,
+      });
+      return { ok: false, message: "Candidate not available." };
+    }
 
     // One open request per recruiter/candidate pair. Asking twice is a
     // duplicate, not a second ask.
@@ -59,6 +90,15 @@ export async function placeEngagementRequestAction(
       select: { id: true, status: true },
     });
     if (open) {
+      logContact("unlock", {
+        outcome: "success",
+        recruiterId: gate.data.userId,
+        candidateId: candidate.userId,
+        unlockId: open.id,
+        status: open.status,
+        duplicate: true,
+        log,
+      });
       return { ok: true, data: { engagementId: open.id, status: open.status } };
     }
 
@@ -66,8 +106,13 @@ export async function placeEngagementRequestAction(
     // say so rather than fail inside a transaction the recruiter never sees.
     const source = persistableSource(candidate.source);
     if (!source) {
-      logger.error("[hire] intro blocked: source missing from enum", {
+      logContact("unlock", {
+        outcome: "failed",
+        recruiterId: gate.data.userId,
+        candidateId: candidate.userId,
         source: candidate.source,
+        reason: "source_missing_from_enum",
+        log,
       });
       return {
         ok: false,
@@ -106,6 +151,16 @@ export async function placeEngagementRequestAction(
       return engagement;
     });
 
+    logContact("unlock", {
+      outcome: "success",
+      recruiterId: gate.data.userId,
+      candidateId: candidate.userId,
+      unlockId: created.id,
+      status: created.status,
+      duplicate: false,
+      log,
+    });
+
     revalidatePath("/hire");
     revalidatePath("/hire/requests");
     revalidatePath("/admin/hire");
@@ -114,8 +169,16 @@ export async function placeEngagementRequestAction(
       data: { engagementId: created.id, status: created.status },
     };
   } catch (error) {
-    logger.error("[hire] placeEngagementRequestAction", {
-      error: String(error),
+    await captureFailure(error, {
+      event: "unlock.failed",
+      message: "engagement request failed",
+      log,
+      tags: {
+        requestId: correlationId,
+        recruiterId: gate.data.userId,
+        route: "action:placeEngagementRequest",
+      },
+      extra: { area: "contact", op: "unlock", outcome: "failed", candidateRef },
     });
     return { ok: false, message: "Could not place the request." };
   }
@@ -143,6 +206,21 @@ export async function placeBulkEngagementRequestAction(
   const { candidateRefs, requestId, note } = parsed.data;
   const userId = gate.data.userId;
 
+  const correlationId = await getRequestId();
+  const log = reqLogger(correlationId, {
+    route: "action:placeBulkEngagementRequest",
+    recruiterId: userId,
+    talentRequestId: requestId ?? undefined,
+  });
+  logContact("unlock", {
+    outcome: "attempt",
+    recruiterId: userId,
+    candidateCount: candidateRefs.length,
+    hasNote: Boolean(note),
+    bulk: true,
+    log,
+  });
+
   try {
     const eligible = await resolveEligibleCandidates(candidateRefs);
 
@@ -166,12 +244,25 @@ export async function placeBulkEngagementRequestAction(
       .filter((c) => !alreadyOpen.has(c.userId))
       .filter((c) => {
         if (persistableSource(c.source)) return true;
-        logger.error("[hire] intro skipped: source missing from enum", {
+        logContact("unlock", {
+          outcome: "failed",
+          recruiterId: userId,
+          candidateId: c.userId,
           source: c.source,
+          reason: "source_missing_from_enum",
+          log,
         });
         return false;
       });
     if (toPlace.length === 0) {
+      logContact("unlock", {
+        outcome: "success",
+        recruiterId: userId,
+        placed: 0,
+        skipped: candidateRefs.length,
+        bulk: true,
+        log,
+      });
       return {
         ok: true,
         data: { placed: 0, skipped: candidateRefs.length },
@@ -207,6 +298,16 @@ export async function placeBulkEngagementRequestAction(
       }
     });
 
+    logContact("unlock", {
+      outcome: "success",
+      recruiterId: userId,
+      placed: toPlace.length,
+      skipped: candidateRefs.length - toPlace.length,
+      candidateIds: toPlace.map((c) => c.userId),
+      bulk: true,
+      log,
+    });
+
     revalidatePath("/hire");
     revalidatePath("/hire/requests");
     revalidatePath("/talent/shortlist");
@@ -219,8 +320,21 @@ export async function placeBulkEngagementRequestAction(
       },
     };
   } catch (error) {
-    logger.error("[hire] placeBulkEngagementRequestAction", {
-      error: String(error),
+    await captureFailure(error, {
+      event: "unlock.failed",
+      message: "bulk engagement request failed",
+      log,
+      tags: {
+        requestId: correlationId,
+        recruiterId: userId,
+        route: "action:placeBulkEngagementRequest",
+      },
+      extra: {
+        area: "contact",
+        op: "unlock",
+        outcome: "failed",
+        candidateCount: candidateRefs.length,
+      },
     });
     return { ok: false, message: "Could not place the requests." };
   }
@@ -261,7 +375,14 @@ export async function addEngagementCommentAction(
     revalidatePath("/admin/hire");
     return { ok: true, data: { engagementId: owned.id } };
   } catch (error) {
-    logger.error("[hire] addEngagementCommentAction", { error: String(error) });
+    await captureFailure(error, {
+      event: "engagement.comment.failed",
+      message: "engagement comment failed",
+      tags: {
+        recruiterId: gate.data.userId,
+        route: "action:addEngagementComment",
+      },
+    });
     return { ok: false, message: "Could not post the comment." };
   }
 }
@@ -275,6 +396,24 @@ export async function decideEngagementAction(
   const parsed = decideEngagementSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Invalid decision." };
   const { engagementId, decision, note } = parsed.data;
+
+  // T-259: CONTACT_SHARED is the moment a candidate's real name, email and
+  // phone number become visible to a recruiter. It is the single most
+  // consequential write in the hire track, so the decision, the admin who made
+  // it and the engagement it applies to are all recorded - and none of the
+  // details being released are.
+  const correlationId = await getRequestId();
+  const log = reqLogger(correlationId, {
+    route: "action:decideEngagement",
+    engagementId,
+    adminId: admin.userId ?? undefined,
+  });
+  logContact("contact.share", {
+    outcome: "attempt",
+    unlockId: engagementId,
+    decision,
+    log,
+  });
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
@@ -307,6 +446,16 @@ export async function decideEngagementAction(
       return row;
     });
 
+    logContact("contact.share", {
+      outcome: "success",
+      unlockId: updated.id,
+      decision,
+      status: updated.status,
+      // The field an auditor filters on: this is the moment identity was released.
+      contactReleased: updated.status === "CONTACT_SHARED",
+      log,
+    });
+
     // Plan 120: CONTACT_SHARED is a genuine resume unlock today. Fire-and-
     // forget after the transaction so a recording failure cannot roll back
     // the admin decision.
@@ -327,7 +476,18 @@ export async function decideEngagementAction(
       data: { engagementId: updated.id, status: updated.status },
     };
   } catch (error) {
-    logger.error("[hire] decideEngagementAction", { error: String(error) });
+    await captureFailure(error, {
+      event: "contact.share.failed",
+      message: "engagement decision failed",
+      log,
+      tags: {
+        requestId: correlationId,
+        engagementId,
+        adminId: admin.userId,
+        route: "action:decideEngagement",
+      },
+      extra: { area: "contact", op: "contact.share", outcome: "failed", decision },
+    });
     return { ok: false, message: "Could not save the decision." };
   }
 }

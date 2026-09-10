@@ -41,7 +41,7 @@ export function Roadmaps({
         id="domains"
         className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4 2xl:mx-auto 2xl:max-w-[1600px]"
       >
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">
           CHALLENGE TRACKS
         </h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3 2xl:grid-cols-[repeat(3,minmax(0,1fr))]">
@@ -62,12 +62,12 @@ export function Roadmaps({
               <li
                 key={domain}
                 className={cn(
-                  "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5",
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
                 <p className="font-inter font-bold text-black">{label}</p>
-                <p className="mt-1 flex-1 text-sm text-[#555555]">
+                <p className="mt-1 flex-1 text-sm text-[#4B4B4B]">
                   60-day challenge track
                 </p>
                 <Link href={href} className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}>
@@ -84,7 +84,7 @@ export function Roadmaps({
           id="prep-kit"
           className="scroll-mt-20 px-4 py-2 sm:px-6 sm:py-4 lg:ml-4"
         >
-          <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">
+          <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">
             Prep Kit
           </h2>
           {/* Wraps by breakpoint — never a horizontal scroller. 1 col on
@@ -92,7 +92,7 @@ export function Roadmaps({
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <div
               className={cn(
-                "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6",
+                "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                 HUB_CARD_HOVER_CLASS,
               )}
             >
@@ -100,7 +100,7 @@ export function Roadmaps({
                 <p className="font-inter text-lg font-bold text-black">
                   31 Days AI Cohort
                 </p>
-                <p className="mt-1 text-sm text-[#555555]">
+                <p className="mt-1 text-sm text-[#4B4B4B]">
                 Build and deploy a production-grade enterprise AI chatbot in 31 days.
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function Roadmaps({
             {showDatabricks ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6",
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
@@ -126,7 +126,7 @@ export function Roadmaps({
                   <p className="font-inter text-lg font-bold text-black">
                     31 Days Databricks
                   </p>
-                  <p className="mt-1 text-sm text-[#555555]">
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
                     Build a healthcare-claims Lakehouse on Databricks
                     in 31 days.
                   </p>
@@ -142,7 +142,7 @@ export function Roadmaps({
             {showDsArchitect ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6",
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
@@ -150,7 +150,7 @@ export function Roadmaps({
                   <p className="font-inter text-lg font-bold text-black">
                     10 Days Data Solutions Architect
                   </p>
-                  <p className="mt-1 text-sm text-[#555555]">
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
                     Design AWS-first data and AI platforms in 10 days.
                   </p>
                 </div>
@@ -165,7 +165,7 @@ export function Roadmaps({
             {showPowerBi ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6",
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
@@ -173,7 +173,7 @@ export function Roadmaps({
                   <p className="font-inter text-lg font-bold text-black">
                     7 Days Power BI &amp; Analytics
                   </p>
-                  <p className="mt-1 text-sm text-[#555555]">
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
                     Ship recruiter-grade Power BI dashboards in 7 days.
                   </p>
                 </div>

@@ -37,12 +37,12 @@ export function DaySectionIcon({
   return (
     <span
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md bg-[#FFECE3]",
+        "flex size-7 shrink-0 items-center justify-center rounded-md bg-[#E7F2F3]",
         className,
       )}
       aria-hidden
     >
-      <Icon className="size-4 text-[#E05226]" strokeWidth={2} />
+      <Icon className="size-4 text-[#03535F]" strokeWidth={2} />
     </span>
   );
 }
@@ -75,11 +75,11 @@ export function DaySectionCard({
             <DaySectionIcon name={icon} />
           ) : (
             <span
-              className="size-9 shrink-0 rounded-md bg-[#FFECE3]"
+              className="size-9 shrink-0 rounded-md bg-[#E7F2F3]"
               aria-hidden
             />
           ))}
-        <h2 className="font-heading text-base font-semibold text-[#111111] md:text-lg">
+        <h2 className="font-heading text-base font-semibold text-[#000000] md:text-lg">
           {title}
         </h2>
       </div>
@@ -90,11 +90,11 @@ export function DaySectionCard({
 
 export function ToolChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
+    <span className="inline-flex items-center rounded-[4px] bg-[#E7F2F3] px-2 py-0.5 text-[12px] font-semibold text-[#03535F]">
       {label}
     </span>
   );
 }
 
 export const dayMdClassName =
-  "text-sm leading-6 text-[#4B4B4B] [&_a]:text-[#E05226] [&_a]:underline [&_code]:rounded [&_code]:bg-[#FFECE3] [&_code]:px-1 [&_code]:text-xs [&_code]:text-[#C9411C] [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#E0E0E0] [&_pre]:bg-[#FBF9F7] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-[#4B4B4B] [&_strong]:font-semibold [&_strong]:text-[#111111]";
+  "text-sm leading-6 text-[#4B4B4B] [&_a]:text-[#03535F] [&_a]:underline [&_code]:rounded [&_code]:bg-[#E7F2F3] [&_code]:px-1 [&_code]:text-xs [&_code]:text-[#076573] [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_p]:last:mb-0 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#E0E0E0] [&_pre]:bg-[#F4F4F4] [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-[#4B4B4B] [&_strong]:font-semibold [&_strong]:text-[#000000]";

@@ -107,7 +107,7 @@ export function ConsentTiltCard() {
               textTransform: "uppercase",
             }}
           >
-            <span style={{ color: "#888" }}>What a company sees</span>
+            <span style={{ color: "#8F8F8F" }}>What a company sees</span>
             <span style={{ color: "var(--hub-accent)" }}>Awaiting consent</span>
           </div>
 
@@ -143,7 +143,7 @@ export function ConsentTiltCard() {
               >
                 Candidate #4128
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: 12, color: "#555" }}>
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "#4B4B4B" }}>
                 Frontend & product · cohort 14
               </p>
             </div>
@@ -158,19 +158,19 @@ export function ConsentTiltCard() {
                   justifyContent: "space-between",
                   gap: 12,
                   padding: "10px 0",
-                  borderBottom: "1px solid #eee",
+                  borderBottom: "1px solid #E9E9E9",
                   fontSize: 13,
                   fontWeight: row.accent ? 600 : 400,
                 }}
               >
                 <span
-                  style={{ color: row.accent ? "var(--hub-text)" : "#555" }}
+                  style={{ color: row.accent ? "var(--hub-text)" : "#4B4B4B" }}
                 >
                   {row.label}
                 </span>
                 <span
                   style={{
-                    color: row.accent ? "var(--hub-accent)" : "#888",
+                    color: row.accent ? "var(--hub-accent)" : "#8F8F8F",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -204,7 +204,7 @@ export function ConsentTiltCard() {
             >
               Request access
             </span>
-            <span style={{ fontSize: 12, color: "#555" }}>
+            <span style={{ fontSize: 12, color: "#4B4B4B" }}>
               The request goes to the candidate, not to us.
             </span>
           </div>

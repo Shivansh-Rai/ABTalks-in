@@ -90,13 +90,13 @@ export default async function AdminLayout({
           isAdmin: true,
         }}
       />
-      <div className="flex md:h-[calc(100vh-3.5rem)] md:overflow-hidden">
-        <div className="scrollbar-admin-orange hidden w-64 shrink-0 border-r bg-card md:block md:h-full md:overflow-y-auto">
+      <div className="flex md:h-[calc(100vh-55px)] md:overflow-hidden">
+        <div className="scrollbar-admin-brand hidden w-[250px] shrink-0 border-r bg-card md:block md:h-full md:overflow-y-auto">
           <div className="flex min-h-full flex-col px-4 py-6">
             <AdminSidebar navItems={navItems} />
           </div>
         </div>
-        <main className="scrollbar-admin-orange min-w-0 flex-1 px-4 py-6 md:overflow-y-auto md:px-8">
+        <main className="scrollbar-admin-brand min-w-0 flex-1 px-4 py-6 md:overflow-y-auto md:px-8">
           <AdminMobileNav navItems={navItems} />
           {children}
         </main>

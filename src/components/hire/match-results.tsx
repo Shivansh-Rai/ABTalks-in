@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { rememberEvidence } from "@/components/hire/evidence-cache";
 import Link from "next/link";
 import { ArrowRight, ShoppingCart } from "lucide-react";
-import { MatchCard, type MatchCardData } from "@/components/hire/match-card";
+import {
+  MatchCard,
+  type MatchCardData,
+  type MatchDecision,
+  type MatchTriage,
+} from "@/components/hire/match-card";
 import { DeskMatchCard } from "@/components/hire/desk-match-card";
 import { VirtualCandidateCard } from "@/components/hire/virtual-candidate-card";
 import type { SampleDemand } from "@/components/hire/sample-card-notice";
@@ -28,9 +33,11 @@ export function MatchResults({
   sampleDemand,
   desk = false,
   onOpen,
+  onDecision,
+  requestId,
   selectedRef,
 }: {
-  matches: MatchCardData[];
+  matches: (MatchCardData & Partial<MatchTriage>)[];
   /**
    * Server-rendered, and correct after every toggle because the shortlist
    * action revalidates the /hire layout. A local delta on top of it counted
@@ -49,7 +56,12 @@ export function MatchResults({
   samples?: MatchCardData[];
   sampleDemand?: SampleDemand;
   desk?: boolean;
-  onOpen?: (match: MatchCardData) => void;
+  onOpen?: (match: MatchCardData & Partial<MatchTriage>) => void;
+  onDecision?: (
+    match: MatchCardData & Partial<MatchTriage>,
+    decision: MatchDecision,
+  ) => void;
+  requestId?: string | null;
   selectedRef?: string;
 }) {
   // Seeded from the server once, then owned here. Reading it from the prop on
@@ -111,6 +123,10 @@ export function MatchResults({
                   rank={i + 1}
                   selected={selectedRef === m.candidateRef}
                   onOpen={() => onOpen?.(m)}
+                  onDecision={
+                    onDecision ? (decision) => onDecision(m, decision) : undefined
+                  }
+                  requestId={requestId}
                   onCartToggle={(inCart) =>
                     setCount((c) => Math.max(0, c + (inCart ? 1 : -1)))
                   }

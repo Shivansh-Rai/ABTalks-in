@@ -1,14 +1,19 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { ChevronRight, UserRound } from "lucide-react";
+import { BookmarkPlus, ChevronRight, UserRound, X } from "lucide-react";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   SampleCardNotice,
   type SampleDemand,
 } from "@/components/hire/sample-card-notice";
-import type { MatchCardData } from "@/components/hire/match-card";
+import type {
+  MatchCardData,
+  MatchDecision,
+  MatchTriage,
+} from "@/components/hire/match-card";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
   LockedField,
@@ -117,16 +122,28 @@ export function DeskMatchCard({
   onOpen,
   onCartToggle,
   sampleDemand,
+  onDecision,
+  requestId,
 }: {
-  match: MatchCardData;
+  match: MatchCardData & Partial<MatchTriage>;
   rank?: number;
   selected?: boolean;
   onOpen?: () => void;
   onCartToggle?: (inCart: boolean) => void;
   sampleDemand?: SampleDemand;
+  onDecision?: (decision: MatchDecision) => void;
+  requestId?: string | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
   const preview = isLockedPreview(match) ? match.preview : null;
+  const decision = match.decision ?? "UNDECIDED";
+  const rejected = decision === "REJECTED";
+  const showTriage = Boolean(requestId && match.candidateUserId && onDecision);
+
+  function pickDecision(next: MatchDecision) {
+    if (!onDecision) return;
+    onDecision(decision === next ? "UNDECIDED" : next);
+  }
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const e = match.evidence ?? {};
   const skills = e.skills ?? [];
@@ -271,6 +288,7 @@ export function DeskMatchCard({
         rank === 1 && "desk-card--top",
         selected && "is-selected",
         onOpen && "desk-card--clickable",
+        rejected && "desk-card--rejected",
       )}
       onClick={openFromCard}
     >
@@ -343,6 +361,7 @@ export function DeskMatchCard({
         availability landed inside the slice, i.e. a dropped pill rather than a
         hidden one.
       */}
+      {!rejected && (
       <div className="desk-card__facts">
         {buildCardPills(match, DESK_CARD_PILLS + 2)
           .filter((pill) => pill.key !== "availability")
@@ -353,27 +372,99 @@ export function DeskMatchCard({
             </span>
           ))}
       </div>
+      )}
 
-      {match.rationale && <p className="desk-card__why">{match.rationale}</p>}
+      {match.rationale && !rejected && (
+        <p className="desk-card__why">{match.rationale}</p>
+      )}
+
+      {showTriage && (
+        <div className="desk-card__triage" onClick={(e) => e.stopPropagation()}>
+          {match.viewedAt ? (
+            <span className="desk-badge desk-badge--viewed">Viewed</span>
+          ) : match.isNew ? (
+            <span className="desk-badge desk-badge--new">New</span>
+          ) : null}
+          {rejected ? (
+            <button
+              type="button"
+              className="desk-ghost"
+              onClick={() => pickDecision("REJECTED")}
+            >
+              Undo
+            </button>
+          ) : (
+            // Only Reject here. The shortlist action is the labelled button in
+            // the CTA row below — two controls both reading "Shortlist" on one
+            // card, writing to different stores, is what made the first
+            // TC-R-004 run untestable.
+            <button
+              type="button"
+              className="desk-ghost"
+              onClick={() => pickDecision("REJECTED")}
+            >
+              Reject
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="desk-card__cta">
         <button type="button" className="desk-ghost" onClick={onOpen}>
           View more details
           <ChevronRight className="size-3.5" aria-hidden="true" />
         </button>
-        <ShortlistButton
-          candidateRef={match.candidateRef}
-          programMemberId={match.programMemberId}
-          initialShortlisted={match.shortlisted ?? false}
-          jobRole={match.jobRole}
-          totalScore={match.score}
-          displayName={match.displayName}
-          skills={skills}
-          snapshot={match}
-          onToggle={onCartToggle}
-          className={cn("desk-pod", match.shortlisted && "desk-pod--on")}
-          podLabel
-        />
+        {showTriage ? (
+          // PROJECT CONTEXT (T-149). This writes TalentRequestMatch.decision
+          // through setMatchDecisionAction, keyed on requestId +
+          // candidateUserId — no ProgramMember, no cohort, so it works for
+          // every track. `decision` is read back from the persisted row, so
+          // the state survives reload and a different browser rather than
+          // living in React.
+          //
+          // The legacy cart button below is deliberately NOT rendered here:
+          // it writes RecruiterShortlistItem (or localStorage) and would be a
+          // second, differently-persisted "shortlist" on the same card.
+          <button
+            type="button"
+            aria-pressed={decision === "SHORTLISTED"}
+            aria-label={
+              decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"
+            }
+            title={
+              decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"
+            }
+            onClick={() => pickDecision("SHORTLISTED")}
+            className={cn(
+              buttonVariants({ variant: "secondary", size: "lg" }),
+              "shrink-0 gap-1.5 desk-pod",
+              decision === "SHORTLISTED" && "desk-pod--on",
+            )}
+          >
+            {decision === "SHORTLISTED" ? (
+              <X className="size-3.5" aria-hidden="true" />
+            ) : (
+              <BookmarkPlus className="size-3.5" aria-hidden="true" />
+            )}
+            {decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"}
+          </button>
+        ) : (
+          // No project = no TalentRequestMatch row to decide on, so the desk
+          // keeps its existing device/cart behaviour untouched.
+          <ShortlistButton
+            candidateRef={match.candidateRef}
+            programMemberId={match.programMemberId}
+            initialShortlisted={match.shortlisted ?? false}
+            jobRole={match.jobRole}
+            totalScore={match.score}
+            displayName={match.displayName}
+            skills={skills}
+            snapshot={match}
+            onToggle={onCartToggle}
+            className={cn("desk-pod", match.shortlisted && "desk-pod--on")}
+            podLabel
+          />
+        )}
         {/*
           "Request an intro" is deliberately not on this card.
 

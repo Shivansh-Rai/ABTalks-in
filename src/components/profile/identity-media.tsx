@@ -52,16 +52,16 @@ export function IdentityMedia({
         <svg className="pw-ring" viewBox="0 0 112 112" aria-hidden>
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#8CEE93" />
-              <stop offset="45%" stopColor="#4CD46C" />
-              <stop offset="100%" stopColor="#22A94F" />
+              <stop offset="0%" stopColor="#18D39B" />
+              <stop offset="55%" stopColor="#27CA37" />
+              <stop offset="100%" stopColor="#197E23" />
             </linearGradient>
             <filter id={ringId} x="-60%" y="-60%" width="220%" height="220%">
               <feDropShadow
                 dx="0.8"
                 dy="1.3"
                 stdDeviation="1.2"
-                floodColor="#199247"
+                floodColor="#197E23"
                 floodOpacity="0.26"
               />
               <feDropShadow
@@ -77,7 +77,7 @@ export function IdentityMedia({
                 dx="0"
                 dy="1"
                 stdDeviation="0.9"
-                floodColor="#B9BCB6"
+                floodColor="#A5A5A5"
                 floodOpacity="0.32"
               />
               <feDropShadow

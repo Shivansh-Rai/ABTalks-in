@@ -30,7 +30,7 @@ function domainBadgeClass(domain: string): string {
   if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
   if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
   if (domain === "CLAUDE")
-    return "border-orange-500/40 bg-orange-50 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200";
+    return "border-[#03535F]/40 bg-[#EEF6F6] text-[#02434D] dark:bg-[#02434D]/40 dark:text-[#D4EBEC]";
   return "border-domains-se/50 bg-domains-se-bg text-domains-se";
 }
 
@@ -123,8 +123,8 @@ export function SubmissionsTable({ rows }: { rows: SubmissionTableRow[] }) {
                     className={cn(
                       "border-0",
                       row.status === "ON_TIME" || row.status === "LATE"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700",
+                        ? "bg-[#D6F7EC] text-[#197E23]"
+                        : "bg-[#FFEDB0] text-[#AA821D]",
                     )}
                   >
                     {row.status === "LATE" ? "ON_TIME" : row.status}

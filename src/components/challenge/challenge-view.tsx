@@ -66,14 +66,14 @@ export function ChallengeView({
       : null;
 
   return (
-    <div className="bg-[#FBF9F7] px-5 pt-3 pb-8 font-content text-[#111111] sm:px-8 sm:pt-4">
+    <div className="bg-[#F4F4F4] px-5 pt-3 pb-8 font-content text-[#000000] sm:px-8 sm:pt-4">
       <div className="mx-auto w-full max-w-[1500px] space-y-6">
         <nav aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-2 text-sm">
             <li>
               <Link
                 href="/dashboard"
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 Dashboard
               </Link>
@@ -81,14 +81,14 @@ export function ChallengeView({
             <li aria-hidden className="text-[#8F8F8F]">
               &gt;
             </li>
-            <li aria-current="page" className="font-semibold text-[#111111]">
+            <li aria-current="page" className="font-semibold text-[#000000]">
               {track.label}
             </li>
           </ol>
         </nav>
 
         <header>
-          <h1 className="font-heading text-[32px] leading-9 font-semibold text-[#111111] md:text-[40px] md:leading-[48px]">
+          <h1 className="font-heading text-[32px] leading-9 font-semibold text-[#000000] md:text-[40px] md:leading-[48px]">
             {track.label}
           </h1>
           <p className="mt-2 text-[17px] leading-7 text-[#4B4B4B]">
@@ -139,10 +139,10 @@ export function ChallengeView({
               {recentSubmissions.map((s) => (
                   <li
                     key={s.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] px-4 py-3"
                   >
                     <span>
-                      <span className="font-medium text-[#111111]">
+                      <span className="font-medium text-[#000000]">
                         Day {s.dayNumber}
                       </span>
                       <span className="text-[#8F8F8F]">
@@ -155,7 +155,7 @@ export function ChallengeView({
                     </span>
                     <Link
                       href={dayHref(track, s.dayNumber, enrollmentId)}
-                      className="text-[14px] text-[#E05226] hover:underline"
+                      className="text-[14px] text-[#03535F] hover:underline"
                     >
                       View
                     </Link>
@@ -174,8 +174,8 @@ export function ChallengeView({
         >
           <div className="space-y-4">
             {quizReady && quizAvailability.quiz ? (
-              <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-5 py-4">
-                <p className="font-heading text-lg font-semibold text-[#111111]">
+              <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] px-5 py-4">
+                <p className="font-heading text-lg font-semibold text-[#000000]">
                   Week {quizAvailability.quiz.weekNumber} quiz available
                 </p>
                 <p className="mt-1 text-sm text-[#4B4B4B]">
@@ -192,14 +192,14 @@ export function ChallengeView({
 
             {quizAvailability.reason === "already_attempted" &&
             quizAvailability.attempt?.quiz ? (
-              <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-5 py-4">
+              <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] px-5 py-4">
                 <p className="text-sm text-[#4B4B4B]">
                   Week {quizAvailability.attempt.quiz.weekNumber} quiz: scored{" "}
                   {quizAvailability.attempt.score}/10
                 </p>
                 <Link
                   href={`/quiz/${quizAvailability.attempt.quiz.id}`}
-                  className="mt-2 inline-block text-[14px] text-[#E05226] hover:underline"
+                  className="mt-2 inline-block text-[14px] text-[#03535F] hover:underline"
                 >
                   View results
                 </Link>
@@ -211,7 +211,7 @@ export function ChallengeView({
                 {quizHistory.map((row) => (
                   <li
                     key={row.attemptId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] px-4 py-3"
                   >
                     <span className="text-[#4B4B4B]">
                       Week {row.weekNumber}: scored {row.score}/10
@@ -221,7 +221,7 @@ export function ChallengeView({
                     </span>
                     <Link
                       href={`/quiz/${row.quizId}`}
-                      className="shrink-0 text-[14px] text-[#E05226] hover:underline"
+                      className="shrink-0 text-[14px] text-[#03535F] hover:underline"
                     >
                       View results
                     </Link>
@@ -290,10 +290,10 @@ function ContinueCard({
     <div className="rounded-2xl border border-[#E0E0E0] bg-white p-8 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
+          <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#03535F]">
             {eyebrow}
           </p>
-          <h2 className="mt-2 font-heading text-2xl leading-[30px] font-semibold text-[#111111]">
+          <h2 className="mt-2 font-heading text-2xl leading-[30px] font-semibold text-[#000000]">
             {title}
           </h2>
           {supporting ? (

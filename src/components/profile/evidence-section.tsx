@@ -50,7 +50,7 @@ export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
       {verifiedSkills.length > 0 ? (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <BadgeCheck className="size-4 text-emerald-500" aria-hidden />
+            <BadgeCheck className="size-4 text-[#197E23]" aria-hidden />
             Verified skills
           </h3>
           <ul className="space-y-2">
@@ -61,7 +61,7 @@ export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{skill.name}</span>
-                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
+                  <Badge className="bg-[#197E23] text-white hover:bg-[#197E23]/90">
                     {skill.evidenceCount} piece
                     {skill.evidenceCount === 1 ? "" : "s"} of evidence
                   </Badge>
@@ -122,7 +122,7 @@ export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
       {achievements.length > 0 ? (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Trophy className="size-4 text-amber-500" aria-hidden />
+            <Trophy className="size-4 text-[#AA821D]" aria-hidden />
             Achievements
           </h3>
           <ul className="space-y-2">

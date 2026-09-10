@@ -24,13 +24,13 @@ function interpolate(template: string, vars: TemplateVars): string {
     .replace(/\{\{recipientName\}\}/g, vars.recipientName);
 }
 
-const GENERIC_HTML = `<div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-  <p style="color: #333;">Hi {{recipientName}},</p>
-  <h2 style="color: #1a1a1a; margin: 16px 0 8px;">{{title}}</h2>
-  <p style="color: #333;">{{body}}</p>
-  <p><a href="{{baseUrl}}{{href}}" style="color: #2563eb;">View details on ABTalks &rarr;</a></p>
-  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-  <p style="color: #9ca3af; font-size: 12px;">
+const GENERIC_HTML = `<div style="font-family: Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <p style="color: #353535;">Hi {{recipientName}},</p>
+  <h2 style="color: #000000; margin: 16px 0 8px;">{{title}}</h2>
+  <p style="color: #353535;">{{body}}</p>
+  <p><a href="{{baseUrl}}{{href}}" style="color: #03535F;">View details on ABTalks &rarr;</a></p>
+  <hr style="border: none; border-top: 1px solid #E9E9E9; margin: 24px 0;" />
+  <p style="color: #A5A5A5; font-size: 12px;">
     You received this because of your notification settings on ABTalks.
     You can update your preferences at {{baseUrl}}/settings/notifications.
   </p>

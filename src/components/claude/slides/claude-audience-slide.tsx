@@ -22,43 +22,43 @@ const ROLES: {
     icon: Code2,
     title: "Developer / Engineer",
     desc: "Code gen, debugging, Claude API, RAG pipelines, VS Code, Claude Code CLI, GitHub",
-    iconBg: "bg-[#FFECE3]",
-    iconColor: "text-[#E05226]",
+    iconBg: "bg-[#E7F2F3]",
+    iconColor: "text-[#03535F]",
   },
   {
     icon: FileText,
     title: "Business Analyst",
     desc: "BRDs, FRDs, use cases, acceptance criteria, gap analysis, stakeholder simulations",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-500",
+    iconBg: "bg-[#AA821D]/10",
+    iconColor: "text-[#AA821D]",
   },
   {
     icon: Compass,
     title: "Product Manager",
     desc: "PRDs, roadmaps, OKRs, user stories, sprint retros, feedback synthesis",
-    iconBg: "bg-rose-500/10",
-    iconColor: "text-rose-500",
+    iconBg: "bg-[#D92D20]/10",
+    iconColor: "text-[#D92D20]",
   },
   {
     icon: ClipboardList,
     title: "Scrum Master",
     desc: "Backlogs, sprint planning, daily standups, retros, velocity reports, burndown charts",
-    iconBg: "bg-pink-500/10",
-    iconColor: "text-pink-500",
+    iconBg: "bg-[#03535F]/10",
+    iconColor: "text-[#03535F]",
   },
   {
     icon: Building2,
     title: "Leader / Architect",
     desc: "System design, ADRs, strategic plans, board decks, team benchmarking",
-    iconBg: "bg-orange-500/10",
-    iconColor: "text-orange-500",
+    iconBg: "bg-[#03535F]/10",
+    iconColor: "text-[#03535F]",
   },
   {
     icon: GraduationCap,
     title: "Students",
     desc: "B.Tech · BCA · MCA · MBA · Any Graduate. Essays, research, placement prep, projects",
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-500",
+    iconBg: "bg-[#03535F]/10",
+    iconColor: "text-[#03535F]",
   },
 ];
 
@@ -70,9 +70,9 @@ export function ClaudeAudienceSlide() {
       transition={{ delay: 0.1, duration: 0.5 }}
       className="rounded-3xl border bg-card/80 p-5 shadow-lg backdrop-blur-sm md:p-6"
     >
-      <motion.div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#E05226]/20 bg-[#FFECE3] px-3 py-1">
+      <motion.div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#03535F]/20 bg-[#E7F2F3] px-3 py-1">
         <span className="text-xs">👥</span>
-        <span className="text-xs font-semibold text-[#C9411C]">
+        <span className="text-xs font-semibold text-[#076573]">
           One challenge. Every role.
         </span>
       </motion.div>

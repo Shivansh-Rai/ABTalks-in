@@ -29,32 +29,32 @@ const CHALLENGE_CARDS = [
   {
     title: "Prompt Engineering",
     icon: "💬",
-    bg: "bg-emerald-500/10",
+    bg: "bg-[#18D39B]/10",
   },
   {
     title: "Claude Artifacts",
     icon: "✨",
-    bg: "bg-orange-500/10",
+    bg: "bg-[#03535F]/10",
   },
   {
     title: "MCP Servers & Connectors",
     icon: "🔌",
-    bg: "bg-blue-500/10",
+    bg: "bg-[#03535F]/10",
   },
   {
     title: "AI Automations",
     icon: "⚡",
-    bg: "bg-[#FFECE3]",
+    bg: "bg-[#E7F2F3]",
   },
   {
     title: "APIs & Web Apps",
     icon: "🌐",
-    bg: "bg-cyan-500/10",
+    bg: "bg-[#03535F]/10",
   },
   {
     title: "Agentic AI Workflows",
     icon: "🤖",
-    bg: "bg-pink-500/10",
+    bg: "bg-[#03535F]/10",
   },
 ];
 
@@ -184,7 +184,7 @@ export function ClaudeChallengeModal({
               Become AI-Ready
               <br />
               in{" "}
-              <span className="text-[#E05226]">
+              <span className="text-[#03535F]">
                 60 Days
               </span>
             </h2>
@@ -210,8 +210,8 @@ export function ClaudeChallengeModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 border-t border-border/60 pt-4">
-                  <div className="rounded-lg bg-emerald-500/10 p-2">
-                    <TrendingUp className="h-5 w-5 text-emerald-600" />
+                  <div className="rounded-lg bg-[#18D39B]/10 p-2">
+                    <TrendingUp className="h-5 w-5 text-[#197E23]" />
                   </div>
                   <div>
                     <div className="font-display text-2xl font-bold">324</div>
@@ -286,7 +286,7 @@ export function ClaudeChallengeModal({
                 onClick={handleRegister}
                 disabled={enrolling}
                 size="lg"
-                className="w-full bg-[#E05226] font-semibold text-white hover:bg-[#C9411C]"
+                className="w-full bg-[#03535F] font-semibold text-white hover:bg-[#076573]"
               >
                 <Rocket className="mr-2 h-4 w-4" />
                 {enrolling ? "Joining..." : "Register Now"}

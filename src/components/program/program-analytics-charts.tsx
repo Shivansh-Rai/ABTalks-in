@@ -19,14 +19,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CohortOverview } from "@/features/program/admin";
 
 const PIE_COLORS = [
-  "#E05226",
-  "#10B981",
-  "#0891B2",
-  "#F97316",
-  "#EC4899",
-  "#EAB308",
-  "#C9411C",
-  "#14B8A6",
+  "#03535F",
+  "#18D39B",
+  "#03535F",
+  "#03535F",
+  "#D92D20",
+  "#AA821D",
+  "#076573",
+  "#03535F",
 ];
 
 export function ProgramAnalyticsCharts({
@@ -64,7 +64,7 @@ export function ProgramAnalyticsCharts({
               <XAxis dataKey="title" hide />
               <YAxis domain={[0, 100]} />
               <Tooltip />
-              <Bar dataKey="avgPct" fill="#10B981" />
+              <Bar dataKey="avgPct" fill="#18D39B" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -91,7 +91,7 @@ export function ProgramAnalyticsCharts({
               <Line
                 type="monotone"
                 dataKey="commitDays"
-                stroke="#10B981"
+                stroke="#18D39B"
                 name="Commit days"
               />
             </LineChart>
@@ -136,7 +136,7 @@ export function ProgramAnalyticsCharts({
               <XAxis dataKey="dayNumber" />
               <YAxis domain={[0, 100]} />
               <Tooltip />
-              <Bar dataKey="passRate" fill="#0891B2" name="Pass rate %" />
+              <Bar dataKey="passRate" fill="#03535F" name="Pass rate %" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

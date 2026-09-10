@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import os from "node:os";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /** Hostnames browsers use when opening the Next.js Network URL (LAN testing). */
 function localNetworkHosts(): string[] {
@@ -91,4 +92,29 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * T-259. The Sentry build plugin does one thing that matters: it uploads source
+ * maps, so a production stack trace reads as `contact-access.ts:41` instead of
+ * `main-8f3a.js:1:24817`. Without that, an error tracker tells you an error
+ * happened and not where.
+ *
+ * It is inert without `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT`,
+ * which is the state of every local build and every environment until those are
+ * set in Vercel — the build succeeds either way, it just uploads nothing.
+ *
+ * `deleteSourcemapsAfterUpload` matters: the maps are uploaded to Sentry, then
+ * removed from the deployed output. Leaving them served publicly would publish
+ * the application's source, which is a bigger disclosure than anything else
+ * T-259 guards against.
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Quiet unless something actually goes wrong, and never in CI logs.
+  silent: true,
+  telemetry: false,
+  // Strips Sentry's own debug logging from the client bundle.
+  disableLogger: true,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+});

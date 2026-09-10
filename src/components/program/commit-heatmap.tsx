@@ -19,9 +19,9 @@ function formatTooltip(dateIso: string, count: number): string {
 
 function cellColor(count: number): string {
   if (count === 0) return "bg-muted";
-  if (count === 1) return "bg-emerald-400/70";
-  if (count <= 3) return "bg-emerald-500";
-  return "bg-emerald-600";
+  if (count === 1) return "bg-[#18D39B]/70";
+  if (count <= 3) return "bg-[#18D39B]";
+  return "bg-[#197E23]";
 }
 
 export function CommitHeatmap({ cells }: { cells: Cell[] }) {

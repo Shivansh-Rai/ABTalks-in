@@ -28,14 +28,14 @@ export function PowerBiDashboardView({ data }: Props) {
   const [interviewOpen, setInterviewOpen] = useState(false);
 
   return (
-    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#FBF9F7] px-5 py-8 font-content text-[#111111] md:px-[50px]">
+    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#F4F4F4] px-5 py-8 font-content text-[#000000] md:px-[50px]">
       <div className="mx-auto w-full max-w-[1500px] space-y-8">
         <nav aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-2 text-sm">
             <li>
               <Link
                 href="/dashboard"
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 Dashboard
               </Link>
@@ -43,14 +43,14 @@ export function PowerBiDashboardView({ data }: Props) {
             <li aria-hidden className="text-[#8F8F8F]">
               &gt;
             </li>
-            <li aria-current="page" className="font-semibold text-[#111111]">
+            <li aria-current="page" className="font-semibold text-[#000000]">
               Power BI &amp; Analytics
             </li>
           </ol>
         </nav>
 
         <header>
-          <h1 className="ml-3 font-heading text-[32px] leading-9 font-semibold text-[#111111] md:text-[40px] md:leading-[48px]">
+          <h1 className="ml-3 font-heading text-[32px] leading-9 font-semibold text-[#000000] md:text-[40px] md:leading-[48px]">
             Power BI &amp; Analytics
           </h1>
           <p className="font-fredoka ml-3 mt-2 text-[17px] leading-7 text-[#4B4B4B]">
@@ -73,14 +73,14 @@ export function PowerBiDashboardView({ data }: Props) {
         <div className="rounded-[12px] border border-[#E0E0E0] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-4 focus-visible:outline-none"
+            className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-4 focus-visible:outline-none"
             aria-expanded={statsOpen}
             aria-controls="powerbi-view-stats"
             onClick={() => setStatsOpen((v) => !v)}
           >
             <span className="flex items-center gap-2.5">
-              <BarChart3 className="size-5 text-[#111111]" aria-hidden />
-              <span className="font-heading text-xl leading-[26px] font-semibold text-[#111111]">
+              <BarChart3 className="size-5 text-[#000000]" aria-hidden />
+              <span className="font-heading text-xl leading-[26px] font-semibold text-[#000000]">
                 VIEW STATS
               </span>
             </span>
@@ -105,7 +105,7 @@ export function PowerBiDashboardView({ data }: Props) {
         <div className="rounded-[12px] border border-[#E0E0E0] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-4 focus-visible:outline-none"
+            className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-4 focus-visible:outline-none"
             aria-expanded={interviewOpen}
             aria-controls="powerbi-mock-interview"
             onClick={() => setInterviewOpen((v) => !v)}
@@ -115,7 +115,7 @@ export function PowerBiDashboardView({ data }: Props) {
               <span className="font-heading text-xl leading-[26px] font-semibold text-[#8F8F8F]">
                 Mock Interview
               </span>
-              <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#F5F5F5] px-2 py-0.5 text-[12px] font-semibold text-[#8F8F8F]">
+              <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#F4F4F4] px-2 py-0.5 text-[12px] font-semibold text-[#8F8F8F]">
                 <Lock className="size-4" aria-hidden />
                 Locked
               </span>
@@ -210,14 +210,14 @@ function ContinueCard({ data }: { data: PowerBiDashboard }) {
     <div className="rounded-2xl border border-[#E0E0E0] bg-white p-8 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
+          <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#03535F]">
             {eyebrow}
           </p>
-          <h1 className="mt-2 font-heading text-2xl leading-[30px] font-semibold text-[#111111]">
+          <h1 className="mt-2 font-heading text-2xl leading-[30px] font-semibold text-[#000000]">
             {title}
           </h1>
           {showMissionChip && missionType && (
-            <span className="mt-2 inline-flex items-center gap-1 rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
+            <span className="mt-2 inline-flex items-center gap-1 rounded-[4px] bg-[#E7F2F3] px-2 py-0.5 text-[12px] font-semibold text-[#03535F]">
               {lockedPreview && <Lock className="size-3.5" aria-hidden />}
               {MISSION_LABEL[missionType] ?? missionType}
               {lockedPreview ? " · Locked" : ""}

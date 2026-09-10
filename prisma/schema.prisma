@@ -362,6 +362,11 @@ model User {
   /// Plan 121 — recruiter-authored assessments (builder drafts).
   assessmentsAuthored        RecruiterAssessment[]     @relation("RecruiterAssessmentsCreated")
 
+  // credits (T-228) — the recruiter credit ledger. Restrict, like pointsLedger:
+  // financial history outlives the convenience of deleting a row.
+  recruiterCreditTransactions CreditTransaction[] @relation("RecruiterCreditTransactions")
+  candidateCreditTransactions CreditTransaction[] @relation("CandidateCreditTransactions")
+
   @@index([deletedAt, createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@index([synergyPoints(sort: Desc)])
@@ -640,17 +645,30 @@ model Job {
   @@index([recruiterId, createdAt(sort: Desc)])
 }
 
-model JobApplication {
-  id        String   @id @default(cuid())
-  jobId     String
-  userId    String
-  note      String?
-  createdAt DateTime @default(now())
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+/// T-246 candidate application status. Default APPLIED; recruiter workflow
+/// for the remaining transitions ships in a later ticket.
+enum JobApplicationStatus {
+  APPLIED
+  REVIEWING
+  ACCEPTED
+  REJECTED
+}
 
-  @@unique([jobId, userId])
-  @@index([userId])
+model JobApplication {
+  id          String               @id @default(cuid())
+  jobId       String
+  userId      String // candidateId alias — one User.id per candidate
+  status      JobApplicationStatus @default(APPLIED)
+  resumeUrl   String?
+  coverLetter String?
+  note        String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  job         Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([jobId])
 }
 
@@ -1150,6 +1168,24 @@ model TalentRequest {
   /// Free-form extras Scout captured; never used for matching.
   extra                    Json?
   alertWhenAvailable       Boolean                   @default(false)
+  /// The recruiter's own label for this piece of work, e.g. "Senior Backend
+  /// Engineer - Delhi NCR". Distinct from `title`, which is the role being
+  /// hired for: two searches for the same role are otherwise indistinguishable
+  /// in a list. Nullable so existing rows need no invented value; the UI falls
+  /// back to `title` when it is null.
+  name                     String?
+  /// When this recruiter last opened the request.
+  ///
+  /// This is what `TalentRequestMatch.firstSeenAt` is compared against to draw
+  /// the "new since your last visit" badge - firstSeenAt alone has nothing to
+  /// measure from. A request has exactly one recruiter today
+  /// (`recruiterUserId`), so one column is enough; if organisation-wide
+  /// projects arrive this must become a per-(recruiter, request) row.
+  lastViewedAt             DateTime?
+  /// Filed away by the recruiter. Deliberately NOT a TalentRequestStatus value:
+  /// status says where the request is in its lifecycle, this says the recruiter
+  /// put it aside, and a timestamp also records when.
+  archivedAt               DateTime?
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   recruiter                User                      @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
@@ -1175,6 +1211,18 @@ model TalentRequestMessage {
   @@index([requestId, createdAt])
 }
 
+/// A recruiter's triage verdict on ONE match.
+///
+/// Deliberately narrow: three values, about a candidate's fit for this search.
+/// It is not the hiring pipeline - `PipelineStage` on TalentListItem owns that
+/// once a candidate is on a talent list. Keeping them apart is a decision
+/// pending sign-off; see docs/plans/113-A-schema-review-sohail.md, question 1.
+enum TalentMatchDecision {
+  UNDECIDED
+  SHORTLISTED
+  REJECTED
+}
+
 /// Scored candidate snapshot frozen at match time for auditability.
 ///
 /// Keyed on `candidateUserId`, because a candidate is a person and not a cohort
@@ -1197,10 +1245,25 @@ model TalentRequestMatch {
   gaps                String[]              @default([])
   availabilityUnknown Boolean               @default(true)
   source              TalentCandidateSource @default(PROGRAM)
+  /// The first time this candidate appeared on this request.
+  ///
+  /// `createdAt` cannot serve: the match run used to delete every row and
+  /// recreate it, so createdAt meant "last run". The run is an upsert now
+  /// (see runMatchAction) and this column is never written on update, which is
+  /// what makes "new since your last visit" answerable.
+  firstSeenAt         DateTime              @default(now())
+  /// When the recruiter first opened this candidate on this request. Null IS
+  /// the meaning "not yet viewed", so it is nullable with no default.
+  viewedAt            DateTime?
+  decision            TalentMatchDecision   @default(UNDECIDED)
   createdAt           DateTime              @default(now())
   request             TalentRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
   candidate           User                  @relation("CandidateMatches", fields: [candidateUserId], references: [id], onDelete: Cascade)
 
+  /// A candidate appears at most once per request. This is what the match run
+  /// upserts on, and it is the one part of this migration that can FAIL on
+  /// existing data - check for duplicate pairs before applying.
+  @@unique([requestId, candidateUserId])
   @@index([requestId, score(sort: Desc)])
   @@index([candidateUserId])
 }
@@ -3131,6 +3194,12 @@ model Organization {
   notes                CandidateNote[]
   experience           CandidateExperience[]
   recruiterAssessments RecruiterAssessment[]
+  members            OrganizationMember[]
+  talentLists        TalentList[]
+  notes              CandidateNote[]
+  experience         CandidateExperience[]
+  creditAccount      CreditAccount?
+  creditTransactions CreditTransaction[]
 
   // SQL: CREATE INDEX ... USING gin (name gin_trgm_ops);
   @@index([isVerified])
@@ -3232,6 +3301,104 @@ model AssessmentQuestionOption {
 
   @@unique([questionId, position])
   @@index([questionId, isCorrect])
+/// Runtime, admin-editable platform configuration (T-148 D-17, T-228).
+///
+/// The point of this table is that changing what a recruiter starts with, or
+/// what an unlock costs, is a row edit rather than a deployment. Every value is
+/// read through `src/lib/platform-config.ts`, never with a bare Prisma call —
+/// that file owns the key registry, the bounds and the fallbacks, and it is
+/// what stops a missing row from meaning "free".
+model PlatformConfig {
+  key             String   @id
+  intValue        Int?
+  stringValue     String?
+  /// What this key controls, in words, for whoever edits the row by hand.
+  description     String?
+  updatedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum CreditTransactionType {
+  GRANT_ONBOARDING
+  PURCHASE
+  UNLOCK_CONTACT
+  ADMIN_ADJUSTMENT
+  REFUND
+}
+
+/// Cached credit projection for one recruiter workspace.
+///
+/// **Not the source of truth.** `CreditTransaction` is. This row exists for one
+/// reason: it gives a movement a single row to lock, so a debit can be one
+/// conditional UPDATE (`WHERE balance + amount >= 0`) and concurrent spenders
+/// serialise behind it instead of racing a read-then-write. The invariant
+/// `balance == SUM(CreditTransaction.amount)` holds after every successful
+/// mutation because the same statement writes both.
+///
+/// Nothing outside `src/repositories/credits.ts` may read `balance`. Reads
+/// derive the balance from the ledger — see `getCreditBalance`.
+model CreditAccount {
+  id             String    @id @default(cuid())
+  organizationId String    @unique
+  /// USD minor units (cents). 20000 = $200.00.
+  balance        Int       @default(0)
+  lifetimeEarned Int       @default(0)
+  lifetimeSpent  Int       @default(0)
+  version        Int       @default(0)
+  reconciledAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([balance(sort: Desc)])
+}
+
+/// Append-only, financial-grade credit ledger. The source of truth for what a
+/// recruiter has and where it went.
+///
+/// Rows are never updated and never deleted. A mistake is corrected with a
+/// compensating ADMIN_ADJUSTMENT or REFUND row, so the history stays true and
+/// "who spent what, on whom, when" always has an answer.
+model CreditTransaction {
+  id              String                @id @default(cuid())
+  /// Total order over the ledger. `createdAt` can tie to the millisecond;
+  /// this cannot, so "the latest balance" has exactly one answer.
+  seq             BigInt                @unique @default(autoincrement())
+  organizationId  String
+  /// Whose movement this is. Under T-226 one Organization is one recruiter;
+  /// the id is stored rather than joined so history survives a membership
+  /// change.
+  recruiterUserId String
+  candidateUserId String?
+  /// Signed, USD minor units. Positive = grant/purchase, negative = spend.
+  amount          Int
+  type            CreditTransactionType
+  /// The balance immediately before and after this movement, written by the
+  /// same statement that moved it. balanceAfter - balanceBefore == amount.
+  balanceBefore   Int
+  balanceAfter    Int
+  sourceType      String
+  sourceId        String?
+  /// Deterministic, and the reason double-spend is structurally impossible:
+  /// "grant:onboarding:<orgId>", "unlock:<orgId>:<candidateUserId>".
+  idempotencyKey  String                @unique
+  /// Required. Every credit movement says why it happened, in words.
+  reason          String
+  /// The actor when it is not the recruiter — an admin adjustment, a script.
+  createdByUserId String?
+  metadata        Json?
+  createdAt       DateTime              @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  recruiter    User         @relation("RecruiterCreditTransactions", fields: [recruiterUserId], references: [id], onDelete: Restrict)
+  candidate    User?        @relation("CandidateCreditTransactions", fields: [candidateUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, seq(sort: Desc)])
+  @@index([recruiterUserId, createdAt(sort: Desc)])
+  @@index([candidateUserId])
+  @@index([type, createdAt(sort: Desc)])
 }
 
 /// A named shortlist. Owned by an organization (shared with teammates) or by one
@@ -3669,4 +3836,61 @@ enum VirtualCandidateRequestStatus {
   FULFILLED
   CANCELLED
   EXPIRED
+}
+
+// =============================================================================
+// T-259 — observability. One send attempt, one row.
+//
+// This is the database view of the "one incident, three views" rule: the same
+// `id` appears in the structured log line (`deliveryId`) and on the Sentry
+// event (tag `deliveryId`), and the row carries the `requestId` and
+// `sentryEventId` that lead to the other two.
+//
+// It deliberately stores NO contact detail. `recipientHash` is a SHA-256 of the
+// lowercased address, which is enough to answer "did this person's mail fail?"
+// (hash the address and look it up) without the table itself becoming a mailing
+// list — this row is read by admins and reachable from exports.
+// =============================================================================
+
+enum OutboundDeliveryChannel {
+  EMAIL
+}
+
+enum OutboundDeliveryStatus {
+  /// Provider not configured, or a seed/test address — nothing was attempted.
+  SKIPPED
+  SENT
+  FAILED
+}
+
+/// T-259 observability side-table for outbound mail. Distinct from
+/// T-248 `NotificationDelivery`, which tracks UserNotification channels.
+model OutboundDelivery {
+  id      String                   @id @default(cuid())
+  channel OutboundDeliveryChannel  @default(EMAIL)
+
+  /// What this send is, e.g. "recruiter.otp", "hire.alert", "contact.form".
+  /// Free text so a new caller needs no migration.
+  kind String
+
+  /// SHA-256 of the lowercased recipient address. Never the address.
+  recipientHash String
+
+  /// The domain entity this send belongs to, when there is one.
+  subjectType String?
+  subjectId   String?
+
+  status        OutboundDeliveryStatus
+  /// Output of safeErrorMessage() — already redacted.
+  failureReason String?
+
+  /// Correlation. Same values as the log line and the Sentry event.
+  requestId     String?
+  sentryEventId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([kind, createdAt(sort: Desc)])
+  @@index([recipientHash])
 }

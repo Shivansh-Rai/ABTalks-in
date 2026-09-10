@@ -163,7 +163,7 @@ export default async function PublicStudentProfilePage({
             <CardContent className="pt-0">
               <p className="font-display text-3xl font-semibold">{publicProfile.currentStreak}</p>
               <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Flame className="size-3.5 text-orange-500" /> Ongoing streak
+                <Flame className="size-3.5 text-[#03535F]" /> Ongoing streak
               </p>
             </CardContent>
           </Card>

@@ -34,14 +34,14 @@ export function CollapsiblePanel({
     >
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-4 focus-visible:outline-none"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-4 focus-visible:outline-none"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => onOpenChange(!open)}
       >
         <span className="flex items-center gap-2.5">
-          <Icon className="size-5 text-[#111111]" aria-hidden />
-          <span className="font-heading text-xl leading-[26px] font-semibold text-[#111111]">
+          <Icon className="size-5 text-[#000000]" aria-hidden />
+          <span className="font-heading text-xl leading-[26px] font-semibold text-[#000000]">
             {title}
           </span>
         </span>

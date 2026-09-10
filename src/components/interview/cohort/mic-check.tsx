@@ -284,7 +284,7 @@ export function MicCheck({
         </div>
 
         {state === "passed" ? (
-          <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#1A7F37]/40 bg-[#1A7F37]/10 px-2.5 py-1 text-[12px] font-semibold text-[#1A7F37]">
+          <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#197E23]/40 bg-[#197E23]/10 px-2.5 py-1 text-[12px] font-semibold text-[#197E23]">
             <Check className="size-3.5" /> Ready
           </span>
         ) : (
@@ -355,7 +355,7 @@ export function MicCheck({
 
       {problem ? (
         <p
-          className="mt-3 flex items-start gap-2 text-[12px] text-[#C9282B]"
+          className="mt-3 flex items-start gap-2 text-[12px] text-[#D92D20]"
           role="status"
         >
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />

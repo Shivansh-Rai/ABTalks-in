@@ -80,7 +80,7 @@ export function DashboardShell({
   }, [mobileOpen, closeMobile]);
 
   return (
-    <div className="theme-abtalks-light theme-abtalks-orange flex min-h-svh bg-[#FBF9F7] font-content text-black">
+    <div className="theme-abtalks-light theme-abtalks-brand flex min-h-svh bg-[#F4F4F4] font-content text-black">
       <DashboardSidebar
         user={user}
         mobileOpen={mobileOpen}
@@ -100,14 +100,6 @@ export function DashboardShell({
       ) : null}
 
       <div className="flex h-svh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <DashboardHeader
-          isAdmin={isAdmin}
-          menuOpen={mobileOpen}
-          onMenuClick={() => setMobileOpen(true)}
-          showSectionNav={showSectionNav}
-          sectionNavItems={sectionNavItems}
-          searchItems={searchItems}
-        />
         {/* The footer lives INSIDE the scroller. Outside it, the column is
             viewport-height and the footer sits below the fold forever — which
             is why it read as pinned in place. `min-h-full` keeps it at the
@@ -119,7 +111,18 @@ export function DashboardShell({
             contentClassName,
           )}
         >
-          <div className="flex min-h-full flex-col">
+          {/* The header is sticky INSIDE the scroller so page content passes
+              beneath it and the frosted glass has something to blur — the
+              same treatment as the landing and workshop headers. */}
+          <DashboardHeader
+            isAdmin={isAdmin}
+            menuOpen={mobileOpen}
+            onMenuClick={() => setMobileOpen(true)}
+            showSectionNav={showSectionNav}
+            sectionNavItems={sectionNavItems}
+            searchItems={searchItems}
+          />
+          <div className="flex min-h-[calc(100%-55px)] flex-col">
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
             <DashboardFooter />
           </div>

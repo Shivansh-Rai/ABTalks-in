@@ -16,13 +16,13 @@ const PARAMS: {
   label: string;
   color: { base: string; lift: string; edge: string };
 }[] = [
-  { key: "stack", label: "Stack match", color: { base: "#EC6A42", lift: "#FFC2A3", edge: "#C04A22" } },
-  { key: "missions", label: "Missions", color: { base: "#F2AC48", lift: "#FFE0AE", edge: "#C8821F" } },
-  { key: "cleanPass", label: "First-attempt", color: { base: "#4F9DEA", lift: "#B2D9FF", edge: "#2E77BE" } },
-  { key: "projects", label: "Projects", color: { base: "#35BAA6", lift: "#9AEDE1", edge: "#1D8C7B" } },
-  { key: "consistency", label: "Commit consistency", color: { base: "#8C7FEC", lift: "#CFC8FF", edge: "#6355C6" } },
-  { key: "interview", label: "Interview", color: { base: "#E06B9A", lift: "#FFC2D6", edge: "#B54470" } },
-  { key: "experience", label: "Experience", color: { base: "#6B8AA8", lift: "#C5D7E8", edge: "#3E5C78" } },
+  { key: "stack", label: "Stack match", color: { base: "#03535F", lift: "#A6D2D5", edge: "#076573" } },
+  { key: "missions", label: "Missions", color: { base: "#AA821D", lift: "#FFEDB0", edge: "#AA821D" } },
+  { key: "cleanPass", label: "First-attempt", color: { base: "#076573", lift: "#D4EBEC", edge: "#03535F" } },
+  { key: "projects", label: "Projects", color: { base: "#03535F", lift: "#A6D2D5", edge: "#03535F" } },
+  { key: "consistency", label: "Commit consistency", color: { base: "#076573", lift: "#D4EBEC", edge: "#03535F" } },
+  { key: "interview", label: "Interview", color: { base: "#D92D20", lift: "#D92D2024", edge: "#D92D20" } },
+  { key: "experience", label: "Experience", color: { base: "#03535F", lift: "#D4EBEC", edge: "#03535F" } },
 ];
 
 function polar(r: number, deg: number) {
