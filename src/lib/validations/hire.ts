@@ -403,4 +403,42 @@ export const adoptGuestScoutSessionSchema = z.object({
     )
     .min(1)
     .max(50),
+  /**
+   * The candidates the guest actually saw — IDENTITY ONLY.
+   *
+   * Deliberately not scores, tiers, evidence, rationale or order: those are the
+   * server's to decide, and a ref is a name rather than a capability. Every one
+   * is re-tested by `resolveEligibleCandidates` against the same visibility and
+   * eligibility rules its own pool applies, so a forged or stale ref is dropped
+   * by the gate that already guards the engagement path.
+   *
+   * Capped at 20 because that is the guest search's own `limit`.
+   */
+  candidateRefs: z.array(z.string().min(1).max(120)).max(20).optional(),
+});
+
+export const renameTalentProjectSchema = z.object({
+  requestId: z.string().cuid(),
+  name: z.string().trim().min(1).max(80),
+});
+
+export const markProjectOpenedSchema = z.object({
+  requestId: z.string().cuid(),
+});
+
+export const markMatchViewedSchema = z.object({
+  requestId: z.string().cuid(),
+  candidateUserId: z.string().cuid(),
+});
+
+export const talentMatchDecisionSchema = z.enum([
+  "UNDECIDED",
+  "SHORTLISTED",
+  "REJECTED",
+]);
+
+export const setMatchDecisionSchema = z.object({
+  requestId: z.string().cuid(),
+  candidateUserId: z.string().cuid(),
+  decision: talentMatchDecisionSchema,
 });
