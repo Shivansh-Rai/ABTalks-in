@@ -3194,12 +3194,8 @@ model Organization {
   notes                CandidateNote[]
   experience           CandidateExperience[]
   recruiterAssessments RecruiterAssessment[]
-  members            OrganizationMember[]
-  talentLists        TalentList[]
-  notes              CandidateNote[]
-  experience         CandidateExperience[]
-  creditAccount      CreditAccount?
-  creditTransactions CreditTransaction[]
+  creditAccount        CreditAccount?
+  creditTransactions   CreditTransaction[]
 
   // SQL: CREATE INDEX ... USING gin (name gin_trgm_ops);
   @@index([isVerified])
@@ -3301,6 +3297,8 @@ model AssessmentQuestionOption {
 
   @@unique([questionId, position])
   @@index([questionId, isCorrect])
+}
+
 /// Runtime, admin-editable platform configuration (T-148 D-17, T-228).
 ///
 /// The point of this table is that changing what a recruiter starts with, or
