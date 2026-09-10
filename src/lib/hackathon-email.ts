@@ -1,12 +1,12 @@
 import "server-only";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
 const logoUrl = `${appUrl}/abtalks-logo.png`;
 
-const WHATSAPP_LINK =
-  "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1";
+const WHATSAPP_LINK = HACKATHON.whatsappLink;
 const SOCIALS = {
   linkedin: "https://www.linkedin.com/company/abtalks-on-ai",
   youtube: "https://youtube.com/@abtalksonai",

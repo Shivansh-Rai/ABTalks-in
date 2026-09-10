@@ -35,6 +35,7 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
   if (session?.user?.id) {
     const state = await getRecruiterState(session.user.id);
     if (state.status === "approved") redirect(redirectTo);
+    if (state.status === "setup_incomplete") redirect("/talent/setup");
     if (state.status === "pending") redirect("/talent/pending");
   }
 

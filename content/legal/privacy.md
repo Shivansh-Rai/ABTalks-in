@@ -1,7 +1,7 @@
 # Privacy Policy
 
-**Version:** 2026-08-11  
-**Effective date:** 2026-08-11
+**Version:** 2026-09-09  
+**Effective date:** 2026-09-09
 
 This Privacy Policy explains how **ABTalks** (“we”, “us”) collects, uses, shares, and protects personal data when you use our Service. It is designed around our actual product practices and India’s Digital Personal Data Protection Act, 2023 (DPDP), with disclosures relevant to US-facing cohort and program features.
 
@@ -98,7 +98,9 @@ We **acknowledge grievances within 24 hours** of receipt and aim to **resolve th
 - **Phone verification (MSG91).** If you use phone/OTP verification, your browser loads a script from `verify.msg91.com` in order to run the verification widget. That provider may set its own cookies or browser storage under its domain, governed by its own privacy policy. The script loads only when you actually use phone verification.
 - **Video embeds (YouTube).** All video embeds use the privacy-extended `youtube-nocookie.com` domain, which does not set advertising cookies. On program mission pages and the video library, videos are **click-to-load**: nothing is requested from Google until you press play, and the video’s preview thumbnail is fetched from YouTube only if you chose **Allow all**. On challenge day pages the tutorial player loads together with the page, so Google is contacted when you open that page.
 
-We do **not** currently use third-party advertising analytics SDKs (e.g. Google Analytics, PostHog) in the product. If that changes, we will update this Policy and add the relevant category to the cookie choice above.
+**Google Analytics 4.** We use Google Analytics 4 (property "ABTalks Production" under Google account "ABTalksOnAI") to measure aggregate usage of the Service — page views, sign-ups, submissions and similar counts. GA4 loads **only** on the production Service and **only** after you choose **Allow all** or **Limited**. If you choose **Deny**, or before you have chosen, the Google Analytics script is not loaded at all and **no request is made to any Google endpoint** (`googletagmanager.com` or `google-analytics.com`). When it loads under **Limited**, advertising-cookie and ad-personalisation signals are marked as denied via Google **Consent Mode v2** — only the analytics signal is granted. We do not send your email, phone, name, free-text notes, referral codes, or any internal record ID to GA; IP addresses are anonymised at the platform level. GA retains data for **14 months**. Changing your choice from **Allow all** or **Limited** back to **Deny** reloads the page so the analytics script is fully unloaded — future collection stops immediately, in this and every later tab. Events Google has already recorded are **not** deleted; those age out on GA's 14-month retention window.
+
+We do not use PostHog, Meta Pixel, cross-site advertising trackers, or any third-party analytics SDK beyond Google Analytics 4 as described above. If that changes, we will update this Policy and add the relevant category to the cookie choice above.
 
 **Do Not Track.** Some browsers send a “Do Not Track” (DNT) signal. We do **not** currently change our practices in response to DNT signals. Your cookie choice on this Service (Allow all / Limited / Deny) is the control we honour for optional cookies.
 

@@ -370,7 +370,7 @@ export function RegistrationForm({
                 inputMode="numeric"
                 min={0}
                 max={60}
-                placeholder="5"
+                placeholder="Enter your years of experience"
                 className="max-w-[12rem]"
                 aria-invalid={!!errors.yearsExperience}
                 {...register("yearsExperience", {
@@ -410,7 +410,7 @@ export function RegistrationForm({
           <Label htmlFor="locationCity">City</Label>
           <Input
             id="locationCity"
-            placeholder="e.g. Mumbai"
+            placeholder="Enter your city"
             autoComplete="address-level2"
             maxLength={120}
             {...register("locationCity")}
@@ -424,10 +424,10 @@ export function RegistrationForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="locationRegion">State / region</Label>
+          <Label htmlFor="locationRegion">State / Region</Label>
           <Input
             id="locationRegion"
-            placeholder="e.g. Maharashtra"
+            placeholder="Enter your state or region"
             autoComplete="address-level1"
             maxLength={120}
             {...register("locationRegion")}
@@ -446,7 +446,7 @@ export function RegistrationForm({
         <Input
           id="countryCode"
           maxLength={2}
-          placeholder="IN"
+          placeholder="Enter your country code(e.g. IN)"
           autoComplete="country"
           className="max-w-[8rem] uppercase"
           {...register("countryCode")}
@@ -467,7 +467,7 @@ export function RegistrationForm({
         <Input
           id="headline"
           maxLength={160}
-          placeholder="ex: Final-year CSE student building ML systems"
+          placeholder="Describe yourself in one line"
           {...register("headline")}
           aria-invalid={!!errors.headline}
         />
@@ -505,7 +505,7 @@ export function RegistrationForm({
             <Input
               id="referralCode"
               maxLength={6}
-              placeholder="XXXXXX"
+              placeholder="Enter your referral code"
               className="font-mono uppercase"
               value={field.value}
               onChange={(e) => {

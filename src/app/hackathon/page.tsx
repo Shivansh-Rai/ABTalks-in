@@ -11,6 +11,7 @@ import { HackathonShell } from "@/components/hackathon-v2/hackathon-shell";
 import { Hero } from "@/components/hackathon-v2/hero";
 import { LockedSections } from "@/components/hackathon-v2/locked-sections";
 import { RegistrationDialogTrigger } from "@/components/hackathon-v2/registration-dialog-trigger";
+import { TeamPanel } from "@/components/hackathon-v2/team-panel";
 import { UnlockProvider } from "@/components/hackathon-v2/unlock-provider";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 import {
@@ -90,7 +91,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What will I win from ViCodathon 2.0?",
-    a: "Participants can compete for a prize pool up to ₹35,000, receive a certificate for every valid submission, and may get internship & hiring opportunities.",
+    a: "Participants can compete for a prize pool up to ₹30,000, receive a certificate for every valid submission, and may get internship & hiring opportunities.",
   },
   {
     q: "Can we use AI tools during the hackathon?",
@@ -130,9 +131,10 @@ export default async function HackathonPage() {
   const name = session?.user?.name ?? "";
   const userId = session?.user?.id ?? null;
   const isAuthed = Boolean(userId);
-  const registered = userId
-    ? (await getMyRegistration(userId)) !== null
-    : false;
+  // Kept, not collapsed to a boolean: the same read feeds both the unlock gate
+  // and the "Your team" panel below the hero.
+  const registration = userId ? await getMyRegistration(userId) : null;
+  const registered = registration !== null;
   // Everything the popup no longer asks for comes from here. Computed for any
   // signed-in visitor, registered or not: the refresh that follows a successful
   // registration re-runs this while the dialog is still open on its success
@@ -156,7 +158,15 @@ export default async function HackathonPage() {
 
   return (
     <UnlockProvider registered={registered}>
-      <HackathonShell headerCta={headerCta} userName={name}>
+      <HackathonShell
+        headerCta={headerCta}
+        isAuthed={isAuthed}
+        user={{
+          name,
+          email: session?.user?.email ?? "",
+          image: session?.user?.image ?? null,
+        }}
+      >
         <a className="ab-skip" href="#hk-hero-title">
           Skip to main content
         </a>
@@ -166,6 +176,16 @@ export default async function HackathonPage() {
           isAuthed={isAuthed}
           prefill={prefill}
         />
+
+        {registration && registration.team.entryType === "TEAM" ? (
+          <TeamPanel
+            entryType={registration.team.entryType}
+            teamCode={registration.team.code}
+            teamName={registration.team.name}
+            members={registration.members}
+            maxTeamSize={HACKATHON.maxTeamSize}
+          />
+        ) : null}
 
         <LockedSections>
           {/* 2 · Discover How It Works */}

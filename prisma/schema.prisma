@@ -1024,17 +1024,20 @@ model ProgramInterview {
 }
 
 model RecruiterProfile {
-  id                String       @id @default(cuid())
-  userId            String       @unique
+  id                String             @id @default(cuid())
+  userId            String             @unique
   fullName          String
   company           String
   phone             String?
-  approved          Boolean      @default(false)
+  approved          Boolean            @default(false)
   approvedAt        DateTime?
   approvedByAdminId String?
-  createdAt         DateTime     @default(now())
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  approvedByAdmin   User?        @relation("RecruiterApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  createdAt         DateTime           @default(now())
+  /// Where an interrupted setup resumes. COMPLETE means the workspace is usable.
+  setupStep         RecruiterSetupStep @default(PROFILE)
+  setupCompletedAt  DateTime?
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedByAdmin   User?              @relation("RecruiterApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
   talentLists       TalentList[]
 }
 
@@ -1933,6 +1936,14 @@ enum PointsSourceType {
   LEGACY
 }
 
+/// Legally recognised categories in India. Nullable on the profile — "not
+/// stated" is the absence of a row value, not a fourth option.
+enum CandidateGender {
+  MALE
+  FEMALE
+  TRANSGENDER
+}
+
 enum AchievementSourceType {
   PROGRAM_ENROLLMENT
   HACKATHON_TEAM
@@ -1961,6 +1972,14 @@ enum OrgMemberStatus {
   INVITED
   ACTIVE
   SUSPENDED
+}
+
+/// Recruiter setup, in the order the wizard runs. A recruiter is only counted
+/// as set up at COMPLETE, which is also when their workspace is provisioned.
+enum RecruiterSetupStep {
+  PROFILE
+  COMPANY
+  COMPLETE
 }
 
 enum PipelineStage {
@@ -2038,6 +2057,13 @@ model CandidateProfile {
   fullName                    String
   headline                    String?
   summary                     String?
+  /// Free-text awards & recognitions, authored by the candidate. Deliberately
+  /// ONE prose field rather than repeatable rows: it is a stand-out narrative,
+  /// not structured data anything queries or ranks. Platform-earned results are
+  /// derived from Certificate / Enrollment / ProgramEnrollment / Hackathon and
+  /// are never written here.
+  awards                      String?
+  gender                      CandidateGender?
   /// Soft display label only — never a schema branch.
   primaryPersona              CandidatePersona @default(STUDENT)
   phone                       String?
