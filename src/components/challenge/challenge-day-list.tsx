@@ -32,7 +32,7 @@ function DayRowContent({
     <>
       <div className="min-w-0">
         <p className="text-[12px] leading-4 font-semibold uppercase text-[#8F8F8F]">Day {cell.dayNumber}</p>
-        <p className="text-[17px] leading-7 font-semibold text-[#111111]">
+        <p className="text-[17px] leading-7 font-semibold text-[#000000]">
           {title}
         </p>
       </div>
@@ -44,7 +44,7 @@ function DayRowContent({
         ) : null}
         {state === "completed" ? (
           <>
-            <span className="inline-flex items-center gap-1.5 text-[14px] leading-[21px] font-semibold text-[#2E7D32]">
+            <span className="inline-flex items-center gap-1.5 text-[14px] leading-[21px] font-semibold text-[#197E23]">
               <CheckCircle2 className="size-5" aria-hidden />
               Completed
             </span>
@@ -56,7 +56,7 @@ function DayRowContent({
             <span className="inline-flex items-center gap-1.5 text-[14px] leading-[21px] text-[#8F8F8F]">
               Missed submission
             </span>
-            <span className="text-[14px] leading-[21px] text-[#E05226]">
+            <span className="text-[14px] leading-[21px] text-[#03535F]">
               View
             </span>
           </>
@@ -85,7 +85,7 @@ export function ChallengeDayList({
     >
       <div className="flex items-center gap-2.5 px-6 py-5">
         <Monitor className="size-5 shrink-0 text-[#4B4B4B]" aria-hidden />
-        <h2 className="ml-2 font-heading text-xl leading-[26px] font-semibold text-[#E05226]">
+        <h2 className="ml-2 font-heading text-xl leading-[26px] font-semibold text-[#03535F]">
           Days
         </h2>
       </div>
@@ -96,10 +96,10 @@ export function ChallengeDayList({
           const href = dayHref(track, cell.dayNumber, enrollmentId);
           const locked = state === "locked";
           const rowClass = cn(
-            "flex flex-col gap-3 rounded-[12px] border border-transparent bg-[#FBF9F7] px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between",
+            "flex flex-col gap-3 rounded-[12px] border border-transparent bg-[#F4F4F4] px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between",
             locked
               ? "opacity-70"
-              : "hover:border-[#E05226] hover:bg-[#FFECE3]",
+              : "hover:border-[#03535F] hover:bg-[#E7F2F3]",
           );
 
           if (locked) {

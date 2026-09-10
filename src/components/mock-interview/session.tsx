@@ -163,7 +163,7 @@ export function MockInterviewSession({
         <MicCheck onResultAction={setMicVerified} />
 
         {error ? (
-          <p className="mt-5 text-[13px] text-[#C9282B]" role="status">
+          <p className="mt-5 text-[13px] text-[#D92D20]" role="status">
             {error}
           </p>
         ) : null}
@@ -173,7 +173,7 @@ export function MockInterviewSession({
             type="button"
             onClick={() => void begin()}
             disabled={starting || !micVerified}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#C9411C] disabled:cursor-not-allowed disabled:bg-[#E0E0E0] disabled:text-[#8F8F8F]"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#076573] disabled:cursor-not-allowed disabled:bg-[#E0E0E0] disabled:text-[#8F8F8F]"
           >
             {starting ? (
               <>
@@ -234,7 +234,7 @@ export function MockInterviewSession({
   return (
     <div className="interview-room mx-auto w-full max-w-2xl py-10">
       <div className="flex items-center gap-2.5">
-        <CheckCircle2 className="size-5 text-[#1A7F37]" strokeWidth={1.75} />
+        <CheckCircle2 className="size-5 text-[#197E23]" strokeWidth={1.75} />
         <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--iv-text)]">
           Interview complete
         </h1>

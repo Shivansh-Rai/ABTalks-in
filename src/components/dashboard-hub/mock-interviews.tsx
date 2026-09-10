@@ -54,7 +54,7 @@ function minutes(sec: number): string {
 }
 
 const CARD_CLASS =
-  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink";
+  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink";
 
 /**
  * Interviews the candidate can take, on the hub, directly under the heatmap.
@@ -80,7 +80,7 @@ export function MockInterviews({ mock, cohort }: Props) {
       className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226]">
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
           AI agent interviews
         </h2>
         <div className="flex flex-wrap items-center gap-2">
@@ -98,11 +98,11 @@ export function MockInterviews({ mock, cohort }: Props) {
       {!hasAny ? (
         <div
           className={cn(
-            "mt-4 rounded-2xl border border-neutral-200 bg-white p-6",
+            "mt-4 rounded-2xl border border-[#E0E0E0] bg-white p-6",
             HUB_CARD_HOVER_CLASS,
           )}
         >
-          <p className="text-[#555555]">
+          <p className="text-[#4B4B4B]">
             Practise a live voice interview with an AI interviewer, then read a
             scored report on how it went. Open to every ABTalks member — no
             cohort enrolment needed.
@@ -115,11 +115,11 @@ export function MockInterviews({ mock, cohort }: Props) {
           {cohort.map((c) => (
             <li key={c.key} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
               <div className="min-h-0 flex-1">
-                <span className="inline-flex rounded-[4px] border border-[#E05226]/40 bg-[#FFF5F0] px-2 py-0.5 text-[11px] font-semibold text-[#E05226]">
+                <span className="inline-flex rounded-[4px] border border-[#03535F]/40 bg-[#EEF6F6] px-2 py-0.5 text-[11px] font-semibold text-[#03535F]">
                   AI Cohort
                 </span>
                 <p className="mt-2 font-inter font-bold text-black">{c.label}</p>
-                <p className="mt-1 text-sm text-[#555555]">{c.blurb}</p>
+                <p className="mt-1 text-sm text-[#4B4B4B]">{c.blurb}</p>
               </div>
               <Link
                 href={c.href}
@@ -134,7 +134,7 @@ export function MockInterviews({ mock, cohort }: Props) {
             <li key={m.slug} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
               <div className="min-h-0 flex-1">
                 <p className="font-inter font-bold text-black">{m.label}</p>
-                <p className="mt-1 text-sm text-[#555555]">{m.blurb}</p>
+                <p className="mt-1 text-sm text-[#4B4B4B]">{m.blurb}</p>
                 <p className="mt-2 text-[13px] text-[#8F8F8F]">
                   {minutes(m.durationSec)} · {m.questionCount} questions
                   {m.completedAttempts > 0

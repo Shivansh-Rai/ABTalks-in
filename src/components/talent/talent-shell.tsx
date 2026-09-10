@@ -7,8 +7,6 @@ import { signOutAction } from "@/app/actions/auth-actions";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const NAV = [
   // The pool browser is not linked anywhere while it has nothing useful to
@@ -34,8 +32,8 @@ export function TalentShell({
 
   return (
     <div className="min-h-svh bg-background">
-      <header className="border-b">
-        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
+      <header className="abt-header">
+        <div className="abt-header-inner">
           <div className="inline-flex items-center gap-2 font-display text-base font-semibold tracking-tight">
             <Link href="/" aria-label="ABTalks home">
             <span className="logo-link">
@@ -56,15 +54,13 @@ export function TalentShell({
             </Link>
           </div>
           {showNav && (
-            <nav className="flex gap-4 text-sm">
+            <nav className="abt-header-nav">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    "text-muted-foreground hover:text-foreground",
-                    pathname === item.href && "font-medium text-foreground",
-                  )}
+                  aria-current={pathname === item.href ? "page" : undefined}
+                  className="abt-header-nav-link"
                 >
                   {item.label}
                 </Link>
@@ -73,10 +69,7 @@ export function TalentShell({
                 <RecruiterAccountMenu account={account} />
               ) : signedIn ? (
                 <form action={signOutAction}>
-                  <button
-                    type="submit"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
+                  <button type="submit" className="abt-header-nav-link">
                     {pending ? "Pending · Sign out" : "Sign out"}
                   </button>
                 </form>
@@ -84,7 +77,7 @@ export function TalentShell({
                 <button
                   type="button"
                   onClick={() => openAuth("nav")}
-                  className={cn(buttonVariants({ size: "sm" }))}
+                  className="abt-header-cta"
                 >
                   Sign in
                 </button>

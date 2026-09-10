@@ -24,7 +24,7 @@ export function CopyCodeButton({ code }: { code: string }) {
     >
       {copied ? (
         <>
-          <Check className="h-4 w-4 text-emerald-500" aria-hidden />
+          <Check className="h-4 w-4 text-[#197E23]" aria-hidden />
           Copied
         </>
       ) : (

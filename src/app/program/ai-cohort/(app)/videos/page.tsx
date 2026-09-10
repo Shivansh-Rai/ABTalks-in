@@ -17,7 +17,7 @@ export default async function ProgramVideosPage() {
   }));
 
   return (
-    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#040A12] px-4 py-6 text-white md:px-6">
+    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#000000] px-4 py-6 text-white md:px-6">
       <div className="space-y-6">
         <header>
           <h1 className="font-display text-2xl font-bold tracking-tight">Videos</h1>

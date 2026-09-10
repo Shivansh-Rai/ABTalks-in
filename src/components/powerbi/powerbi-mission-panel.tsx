@@ -124,7 +124,7 @@ export function PowerBiMissionPanel({
   if (missionState.dayState === "PASSED") {
     return (
       <div id="mission-verify" className={cn(cardClass, "space-y-4")}>
-        <p className="font-semibold text-[#2E7D32]">Mission cleared ✓</p>
+        <p className="font-semibold text-[#197E23]">Mission cleared ✓</p>
         {passedBanner?.unlockedDay &&
           passedBanner.unlockedDay <= POWERBI_TOTAL_DAYS && (
             <Link
@@ -145,14 +145,14 @@ export function PowerBiMissionPanel({
     <div id="mission-verify" className={cn(cardClass, "space-y-5")}>
       <div className="flex items-center gap-2.5">
         <DaySectionIcon name="verify" />
-        <h2 className="font-heading text-base font-semibold text-[#111111] md:text-lg">
+        <h2 className="font-heading text-base font-semibold text-[#000000] md:text-lg">
           {sectionTitle(missionType, questionCount)}
         </h2>
       </div>
 
       {passedBanner && (
-        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FFECE3] p-4">
-          <p className="font-semibold text-[#2E7D32]">
+        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#E7F2F3] p-4">
+          <p className="font-semibold text-[#197E23]">
             Day {dayNumber} cleared — +{passedBanner.points} pts
             {passedBanner.unlockedDay
               ? ` · Day ${passedBanner.unlockedDay} unlocked`
@@ -182,7 +182,7 @@ export function PowerBiMissionPanel({
               href={githubRepoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#E05226] underline-offset-4 hover:underline"
+              className="text-[#03535F] underline-offset-4 hover:underline"
             >
               {githubRepoUrl}
             </a>
@@ -195,7 +195,7 @@ export function PowerBiMissionPanel({
                   key={`${h.check}:${h.path}:${i}`}
                   className="font-mono text-[#8F8F8F]"
                 >
-                  {h.check}: <span className="text-[#111111]">{h.path}</span>
+                  {h.check}: <span className="text-[#000000]">{h.path}</span>
                 </li>
               ))}
             </ul>
@@ -213,13 +213,13 @@ export function PowerBiMissionPanel({
             return (
               <div key={i} className="space-y-3">
                 {question ? (
-                  <div className="text-sm font-semibold text-[#111111] [&_p]:mb-0 [&_strong]:font-semibold [&_strong]:text-[#111111]">
+                  <div className="text-sm font-semibold text-[#000000] [&_p]:mb-0 [&_strong]:font-semibold [&_strong]:text-[#000000]">
                     <ReactMarkdown components={programMdComponents}>
                       {`Q${i + 1}) ${question}`}
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold text-[#111111]">
+                  <p className="text-sm font-semibold text-[#000000]">
                     {`Answer ${i + 1}`}
                   </p>
                 )}
@@ -232,7 +232,7 @@ export function PowerBiMissionPanel({
                     setAnswers(next);
                   }}
                   placeholder="Type answer here..."
-                  className="h-12 rounded-[10px] border border-[#E0E0E0] bg-white px-4 text-sm text-[#111111] placeholder:text-[#8F8F8F]"
+                  className="h-12 rounded-[10px] border border-[#E0E0E0] bg-white px-4 text-sm text-[#000000] placeholder:text-[#8F8F8F]"
                 />
               </div>
             );
@@ -241,8 +241,8 @@ export function PowerBiMissionPanel({
       )}
 
       {verdict && (
-        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#E05226]">
+        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#03535F]">
             Verification
           </h3>
           <CheckList items={verdict} running={submitting} />

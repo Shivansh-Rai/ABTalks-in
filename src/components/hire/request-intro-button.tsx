@@ -53,7 +53,7 @@ export function RequestIntroButton({
             ? "bg-primary/10 text-primary"
             : status === "DECLINED"
               ? "bg-muted text-muted-foreground"
-              : "bg-amber-500/10 text-amber-900 dark:text-amber-100",
+              : "bg-[#AA821D]/10 text-[#AA821D] dark:text-[#FFEDB0]",
         )}
       >
         <Lock className="size-3" aria-hidden="true" />

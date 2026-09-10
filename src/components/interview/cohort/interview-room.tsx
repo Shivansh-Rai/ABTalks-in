@@ -1950,7 +1950,7 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
               <button
                 type="button"
                 onClick={() => void endInterview()}
-                className="inline-flex h-10 items-center rounded-[10px] border border-[#C9282B]/40 px-4 text-[14px] text-[#C9282B] transition-colors hover:bg-[#C9282B]/10"
+                className="inline-flex h-10 items-center rounded-[10px] border border-[#D92D20]/40 px-4 text-[14px] text-[#D92D20] transition-colors hover:bg-[#D92D20]/10"
               >
                 {/* The label carries the consequence too: a candidate who
                     skims the dialog still sees what the button costs. */}
@@ -1995,7 +1995,7 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
             className={cn(
               "font-mono text-[13px] tabular-nums",
               remainingSec <= 120
-                ? "text-[#C9282B]"
+                ? "text-[#D92D20]"
                 : "text-[var(--iv-text-faint)]",
             )}
             aria-label="Time remaining"
@@ -2122,7 +2122,7 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
       <div className="sticky bottom-0 border-t border-[var(--iv-border)] bg-[var(--iv-page)]/80 pt-2 pb-3 backdrop-blur-md">
         <div className="mx-auto w-full max-w-2xl">
           {error ? (
-            <p className="mb-4 text-[13px] text-[#C9282B]" role="status">
+            <p className="mb-4 text-[13px] text-[#D92D20]" role="status">
               {error}
             </p>
           ) : null}
@@ -2239,7 +2239,7 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
                   className={cn(
                     "flex size-14 items-center justify-center rounded-full border-2 transition-all duration-200",
                     phase === "listening" && !muted
-                      ? "border-[#1A7F37]/70 bg-[#1A7F37]/12 text-[#1A7F37] hover:bg-[#1A7F37]/20"
+                      ? "border-[#197E23]/70 bg-[#197E23]/12 text-[#197E23] hover:bg-[#197E23]/20"
                       : "border-[var(--iv-border)] bg-[var(--iv-surface)] text-[var(--iv-text)] hover:border-[var(--iv-accent)]/60 hover:bg-[var(--iv-accent)]/10",
                     (busy || !question || fatal) &&
                       "cursor-not-allowed opacity-40 hover:bg-transparent",

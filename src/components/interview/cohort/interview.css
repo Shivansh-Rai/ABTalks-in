@@ -5,8 +5,8 @@
  * never by globals.css, so nothing here can reach another AB Talks page.
  *
  * The palette is the ABTalks design system (docs/design-system.md, plan 071):
- * #FBF9F7 cream page, #FFFFFF cards, #E0E0E0 border, #E05226 orange accent,
- * #111111 / #4B4B4B / #8F8F8F text. It was previously a dark navy palette
+ * #F4F4F4 cream page, #FFFFFF cards, #E0E0E0 border, #03535F orange accent,
+ * #000000 / #4B4B4B / #8F8F8F text. It was previously a dark navy palette
  * copied from the old program shell — that shell has since been rebuilt on
  * cream, and an interview that looks like a different product from the
  * dashboard that launched it is a bug, not a mood.
@@ -17,20 +17,20 @@
  */
 
 .interview-room {
-  --iv-page: #fbf9f7;
+  --iv-page: #F4F4F4;
   --iv-surface: #ffffff;
-  --iv-surface-raised: #fff5f0;
+  --iv-surface-raised: #EEF6F6;
   --iv-border: #e0e0e0;
-  --iv-border-soft: #ececec;
-  --iv-text: #111111;
+  --iv-border-soft: #E9E9E9;
+  --iv-text: #000000;
   --iv-text-muted: #4b4b4b;
   --iv-text-faint: #8f8f8f;
-  --iv-accent: #e05226;
-  --iv-accent-hover: #c9411c;
-  --iv-accent-soft: #ffece3;
-  --iv-live: #1a7f37;
-  --iv-danger: #c9282b;
-  --iv-warning: #9a6700;
+  --iv-accent: #03535F;
+  --iv-accent-hover: #076573;
+  --iv-accent-soft: #E7F2F3;
+  --iv-live: #197E23;
+  --iv-danger: #D92D20;
+  --iv-warning: #AA821D;
 
   background: var(--iv-page);
   color: var(--iv-text);
@@ -43,36 +43,36 @@
  * sticker on orange-grey.
  */
 .interview-room--live {
-  --iv-page: #0a0a0c;
-  --iv-surface: #141418;
-  --iv-surface-raised: #1c1b22;
-  --iv-border: #2c2a33;
-  --iv-border-soft: #24232b;
-  --iv-text: #f3f1f6;
-  --iv-text-muted: #b7b3c0;
-  --iv-text-faint: #7d7988;
-  --iv-accent: #9b8ec4;
-  --iv-accent-hover: #b4a8d4;
-  --iv-accent-soft: #1f1c28;
-  --iv-live: #5ecf7c;
-  --iv-danger: #f07174;
-  --iv-warning: #e0b15a;
+  --iv-page: #000000;
+  --iv-surface: #000000;
+  --iv-surface-raised: #353535;
+  --iv-border: #353535;
+  --iv-border-soft: #353535;
+  --iv-text: #F4F4F4;
+  --iv-text-muted: #A5A5A5;
+  --iv-text-faint: #787878;
+  --iv-accent: #076573;
+  --iv-accent-hover: #A6D2D5;
+  --iv-accent-soft: #353535;
+  --iv-live: #27CA37;
+  --iv-danger: #D92D20;
+  --iv-warning: #AA821D;
 
   background-color: var(--iv-page);
   background-image:
     radial-gradient(
       ellipse 90% 55% at 50% 108%,
-      rgba(122, 108, 168, 0.22) 0%,
+      rgba(3, 83, 95, 0.22) 0%,
       transparent 58%
     ),
     radial-gradient(
       ellipse 45% 35% at 88% -8%,
-      rgba(196, 148, 112, 0.07) 0%,
+      rgba(7, 101, 115, 0.07) 0%,
       transparent 52%
     ),
     radial-gradient(
       ellipse 40% 30% at 8% 12%,
-      rgba(90, 78, 130, 0.1) 0%,
+      rgba(98, 98, 98, 0.1) 0%,
       transparent 48%
     );
   color: var(--iv-text);
@@ -81,8 +81,8 @@
 .interview-room--live .iv-orb-glow {
   background: radial-gradient(
     circle,
-    rgba(155, 142, 196, 0.28) 0%,
-    rgba(196, 148, 112, 0.06) 42%,
+    rgba(7, 101, 115, 0.28) 0%,
+    rgba(7, 101, 115, 0.06) 42%,
     transparent 70%
   );
 }
@@ -90,8 +90,8 @@
 .interview-room--light .iv-orb-glow {
   background: radial-gradient(
     circle,
-    rgba(224, 82, 38, 0.11) 0%,
-    rgba(224, 82, 38, 0.04) 38%,
+    rgba(3, 83, 95, 0.11) 0%,
+    rgba(3, 83, 95, 0.04) 38%,
     transparent 70%
   );
 }

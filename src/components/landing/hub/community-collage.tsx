@@ -57,7 +57,7 @@ export function CommunityCollage() {
             borderRadius: 16,
             overflow: "hidden",
             aspectRatio: "9 / 16",
-            background: "#e8e8ee",
+            background: "#E9E9E9",
           }}
         >
           <Image
@@ -108,7 +108,7 @@ export function CommunityCollage() {
             marginTop: 8,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#666" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#626262" }}>
             Active Builders
           </span>
           <span style={{ display: "flex" }}>

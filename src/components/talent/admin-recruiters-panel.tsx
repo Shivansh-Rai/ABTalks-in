@@ -77,7 +77,7 @@ export function AdminRecruitersPanel({
                 <p className="text-xs text-muted-foreground">Phone: {row.phone}</p>
               )}
               {row.pendingCandidateAsks > 0 && (
-                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-900 dark:text-amber-100">
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#AA821D]/10 px-2.5 py-1 text-xs font-medium text-[#AA821D] dark:text-[#FFEDB0]">
                   Already asked for {row.pendingCandidateAsks} candidate
                   {row.pendingCandidateAsks === 1 ? "" : "s"} — see Hire
                   requests

@@ -16,19 +16,19 @@ type Props = {
 };
 
 const figmaBtn =
-  "inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors duration-200 ease-out hover:bg-[#C9411C] focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-2 focus-visible:outline-none";
+  "inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors duration-200 ease-out hover:bg-[#076573] focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-2 focus-visible:outline-none";
 
 const cardClass =
-  "rounded-[16px] border border-[#E0E0E0] bg-[#FFF5F0] p-4 transition-colors duration-200 ease-out md:p-5 hover:border-[#E05226]/40";
+  "rounded-[16px] border border-[#E0E0E0] bg-[#EEF6F6] p-4 transition-colors duration-200 ease-out md:p-5 hover:border-[#03535F]/40";
 
 const availableBadge =
-  "inline-flex rounded-[4px] border border-[#1A7F37]/40 bg-[#1A7F37]/10 px-3 py-1 text-xs font-semibold text-[#1A7F37]";
+  "inline-flex rounded-[4px] border border-[#197E23]/40 bg-[#197E23]/10 px-3 py-1 text-xs font-semibold text-[#197E23]";
 
 const completedBadge =
-  "inline-flex rounded-[4px] border border-[#E05226]/40 bg-[#FFECE3] px-3 py-1 text-xs font-semibold text-[#E05226]";
+  "inline-flex rounded-[4px] border border-[#03535F]/40 bg-[#E7F2F3] px-3 py-1 text-xs font-semibold text-[#03535F]";
 
 const lockedBadge =
-  "inline-flex rounded-[4px] border border-[#E0E0E0] bg-[#F5F5F5] px-3 py-1 text-xs font-semibold text-[#8F8F8F]";
+  "inline-flex rounded-[4px] border border-[#E0E0E0] bg-[#F4F4F4] px-3 py-1 text-xs font-semibold text-[#8F8F8F]";
 
 /**
  * One milestone row. `unlocked` describes CURRICULUM progress (every scope day
@@ -54,7 +54,7 @@ function MilestoneRow({
   return (
     <div className="min-w-0 flex-1 flex gap-4 justify-between items-start">
       <div className="flex-1">
-        <h3 className="text-sm font-semibold text-[#111111] md:text-[15px]">
+        <h3 className="text-sm font-semibold text-[#000000] md:text-[15px]">
           {title}
         </h3>
 
@@ -76,7 +76,7 @@ function MilestoneRow({
                 <button
                   type="button"
                   onClick={() => resetDemoInterviewAction(blueprint)}
-                  className="inline-flex h-11 items-center rounded-[12px] border border-gray-300 bg-gray-100 px-5 text-[14px] font-semibold text-gray-800 transition-colors hover:bg-gray-200"
+                  className="inline-flex h-11 items-center rounded-[12px] border border-[#D2D2D2] bg-[#E9E9E9] px-5 text-[14px] font-semibold text-[#353535] transition-colors hover:bg-[#E0E0E0]"
                 >
                   Reattempt (Demo)
                 </button>
@@ -114,10 +114,10 @@ function MilestoneRow({
         // did not belong to the ABTalks palette. A lucide icon in the brand
         // orange also scales crisply and drops an image request.
         <div
-          className="flex size-[56px] shrink-0 items-center justify-center rounded-[12px] bg-[#FFECE3] sm:size-[64px]"
+          className="flex size-[56px] shrink-0 items-center justify-center rounded-[12px] bg-[#E7F2F3] sm:size-[64px]"
           aria-hidden="true"
         >
-          <Lock className="size-6 text-[#E05226] sm:size-7" strokeWidth={1.75} />
+          <Lock className="size-6 text-[#03535F] sm:size-7" strokeWidth={1.75} />
         </div>
       )}
     </div>
@@ -136,10 +136,10 @@ export function CohortInterviewCard({ state, isIshaan }: Props) {
   return (
     <section className={cn(cardClass, "group flex flex-1 flex-col")}>
       <div className="mb-2.5 flex items-center gap-2.5">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-[6px] bg-[#FFECE3] text-[#E05226] transition-colors duration-200 group-hover:bg-[#FFDBC9] md:size-7">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-[6px] bg-[#E7F2F3] text-[#03535F] transition-colors duration-200 group-hover:bg-[#D4EBEC] md:size-7">
           <Sparkles className="size-3.5 md:size-4" strokeWidth={2.25} />
         </span>
-        <h2 className="text-base font-semibold text-[#E05226] md:text-lg">
+        <h2 className="text-base font-semibold text-[#03535F] md:text-lg">
           AI Voice Interview
         </h2>
       </div>

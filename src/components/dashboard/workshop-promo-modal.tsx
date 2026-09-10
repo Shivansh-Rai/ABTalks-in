@@ -12,10 +12,10 @@ const SEEN_KEY = "abtalks_figma_workshop_promo_v2";
 const TARGET = new Date("2026-08-01T12:30:00Z").getTime();
 
 const AVATARS = [
-  { i: "A", g: "linear-gradient(135deg,#E05226,#C9411C)" },
-  { i: "R", g: "linear-gradient(135deg,#E05226,#C9411C)" },
-  { i: "P", g: "linear-gradient(135deg,#FFECE3,#E05226)" },
-  { i: "S", g: "linear-gradient(135deg,#C9411C,#E05226)" },
+  { i: "A", g: "linear-gradient(135deg,#03535F,#076573)" },
+  { i: "R", g: "linear-gradient(135deg,#03535F,#076573)" },
+  { i: "P", g: "linear-gradient(135deg,#E7F2F3,#03535F)" },
+  { i: "S", g: "linear-gradient(135deg,#076573,#03535F)" },
 ];
 
 export function WorkshopPromoModal() {
@@ -118,20 +118,20 @@ export function WorkshopPromoModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           className="wk-promo fixed inset-0 z-70 flex items-center justify-center px-4 backdrop-blur-md"
-          style={{ background: "rgba(5, 10, 23, 0.72)" }}
+          style={{ background: "rgba(0, 0, 0, 0.72)" }}
         >
           <style>{`
             .wk-promo {
-              --wk-bg: #050a17;
-              --wk-surface: #0b1120;
-              --wk-text: #f5f6fa;
-              --wk-a1: #e05226;
+              --wk-bg: #000000;
+              --wk-surface: #000000;
+              --wk-text: #F4F4F4;
+              --wk-a1: #03535F;
               --wk-a1-rgb: 224, 82, 38;
-              --wk-a1-light: #ffece3;
-              --wk-a1-deep: #c9411c;
-              --wk-a2: #e05226;
+              --wk-a1-light: #E7F2F3;
+              --wk-a1-deep: #076573;
+              --wk-a2: #03535F;
               --wk-a2-rgb: 224, 82, 38;
-              --wk-a3: #c9411c;
+              --wk-a3: #076573;
               --wk-grad: linear-gradient(135deg, var(--wk-a1) 0%, var(--wk-a2) 100%);
             }
             @keyframes wk-promo-halo { to { transform: rotate(360deg); } }
@@ -196,7 +196,7 @@ export function WorkshopPromoModal() {
               className="pointer-events-none absolute -inset-6 rounded-[42px] opacity-50 blur-2xl"
               style={{
                 background:
-                  "conic-gradient(from 0deg, #E05226, #FFECE3, #C9411C, #E05226)",
+                  "conic-gradient(from 0deg, #03535F, #E7F2F3, #076573, #03535F)",
                 animation: "wk-promo-halo 8s linear infinite",
               }}
             />
@@ -208,7 +208,7 @@ export function WorkshopPromoModal() {
               className="relative overflow-hidden rounded-[28px] p-7 sm:p-8"
               style={{
                 background:
-                  "radial-gradient(120% 90% at 50% -10%, #121a33 0%, var(--wk-bg) 58%)",
+                  "radial-gradient(120% 90% at 50% -10%, #353535 0%, var(--wk-bg) 58%)",
                 border: "1px solid rgba(255,255,255,0.09)",
                 boxShadow: "0 40px 100px -30px rgba(0,0,0,0.9)",
                 color: "var(--wk-text)",

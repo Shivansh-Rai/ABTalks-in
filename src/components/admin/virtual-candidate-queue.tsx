@@ -135,7 +135,7 @@ export function VirtualCandidateQueue({ rows }: { rows: QueueRow[] }) {
           )}
 
           {r.siblingCount > 0 && (
-            <p className="mt-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
+            <p className="mt-2 text-sm font-semibold text-[#AA821D] dark:text-[#AA821D]">
               {r.siblingCount} other recruiter{r.siblingCount === 1 ? " is" : "s are"}{" "}
               waiting on this same requirement — one search may answer them all.
             </p>

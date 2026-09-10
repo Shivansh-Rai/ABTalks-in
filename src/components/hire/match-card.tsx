@@ -312,7 +312,7 @@ function RealMatchCard({
       <ul className="mt-3 flex flex-wrap gap-1.5 text-base">
         {isHackathon && (
           <li
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-900 dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-[#197E23] dark:text-[#D6F7EC]"
             title="Shipped a hackathon repo the platform recorded."
           >
             Shipped project
@@ -320,7 +320,7 @@ function RealMatchCard({
         )}
         {!isHackathon && typeof e.missionsPassed === "number" && (
           <li
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-900 dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-[#197E23] dark:text-[#D6F7EC]"
             title={
               isChallenge
                 ? "Days of the 60-day challenge submitted and recorded, each against a GitHub URL."
@@ -333,7 +333,7 @@ function RealMatchCard({
         )}
         {e.certificateIssued && (
           <li
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-900 dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 font-medium text-[#197E23] dark:text-[#D6F7EC]"
             title="Finished the full track and had the certificate issued."
           >
             certified
@@ -341,7 +341,7 @@ function RealMatchCard({
         )}
         {typeof e.quizAverage === "number" && (
           <li
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-900 dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-[#197E23] dark:text-[#D6F7EC]"
             title="Mean score across the weekly assessments they sat. Shown for context — it is not part of the ranking, because most of the pool was never offered one."
           >
             quiz {e.quizAverage}
@@ -349,7 +349,7 @@ function RealMatchCard({
         )}
         {typeof e.cleanPassCount === "number" && e.cleanPassCount > 0 && (
           <li
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-900 dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-[#197E23] dark:text-[#D6F7EC]"
             title="Passed on the first verification run."
           >
             {e.cleanPassCount} first-attempt
@@ -359,7 +359,7 @@ function RealMatchCard({
           (e.workingLanguages ?? []).map((l) => (
           <li
             key={l}
-            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-900 lowercase dark:text-emerald-100"
+            className="rounded-full bg-[#18D39B]/10 px-2 py-0.5 text-[#197E23] lowercase dark:text-[#D6F7EC]"
             title="Language of the mission days this candidate passed."
           >
             {l.toLowerCase()}
@@ -401,7 +401,7 @@ function RealMatchCard({
         )}
         {match.availabilityUnknown && (
           <li
-            className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-900 dark:text-amber-100"
+            className="inline-flex items-center gap-1 rounded-full border border-[#AA821D]/30 bg-[#AA821D]/10 px-2 py-0.5 text-[#AA821D] dark:text-[#FFEDB0]"
             title="Salary, notice period and location are unconfirmed until the candidate shares them."
           >
             <Info className="size-3" aria-hidden="true" />

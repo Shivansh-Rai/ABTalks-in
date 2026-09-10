@@ -60,7 +60,7 @@ export default async function MockInterviewsPage() {
           detail and report pages already carry theirs. */}
       <Link
         href={signedIn ? "/dashboard" : "/"}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#111111]"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
       >
         <ArrowLeft className="size-3.5" strokeWidth={2} />
         {signedIn ? "Back to dashboard" : "Back to ABTalks"}
@@ -71,7 +71,7 @@ export default async function MockInterviewsPage() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8F8F8F]">
           ABTalks Practice
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#111111] md:text-4xl">
+        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#000000] md:text-4xl">
           AI mock interviews
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-[#4B4B4B] md:text-base">
@@ -82,11 +82,11 @@ export default async function MockInterviewsPage() {
 
         <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-sm text-[#4B4B4B]">
           <li className="flex items-center gap-2">
-            <Mic className="size-4 text-[#E05226]" strokeWidth={2} />
+            <Mic className="size-4 text-[#03535F]" strokeWidth={2} />
             Spoken, not typed
           </li>
           <li className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-[#E05226]" strokeWidth={2} />
+            <ShieldCheck className="size-4 text-[#03535F]" strokeWidth={2} />
             Scored from evidence, not vibes
           </li>
         </ul>
@@ -95,7 +95,7 @@ export default async function MockInterviewsPage() {
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link
               href="/login"
-              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#C9411C]"
+              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#076573]"
             >
               Sign in to practise
             </Link>
@@ -111,14 +111,14 @@ export default async function MockInterviewsPage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2
             id="catalogue-heading"
-            className="text-lg font-semibold text-[#111111]"
+            className="text-lg font-semibold text-[#000000]"
           >
             Choose an interview
           </h2>
           {signedIn ? (
             <Link
               href="/mock-interviews/history"
-              className="text-[13px] font-medium text-[#E05226] underline underline-offset-4 transition-colors hover:text-[#C9411C]"
+              className="text-[13px] font-medium text-[#03535F] underline underline-offset-4 transition-colors hover:text-[#076573]"
             >
               Your practice history &rarr;
             </Link>
@@ -129,7 +129,7 @@ export default async function MockInterviewsPage() {
 
       {/* ---------------------------------------------------------- how it works */}
       <section className="mt-14" aria-labelledby="how-heading">
-        <h2 id="how-heading" className="text-lg font-semibold text-[#111111]">
+        <h2 id="how-heading" className="text-lg font-semibold text-[#000000]">
           How it works
         </h2>
         <ol className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -154,10 +154,10 @@ export default async function MockInterviewsPage() {
               key={s.n}
               className="rounded-[16px] border border-[#E0E0E0] bg-white p-5"
             >
-              <span className="flex size-7 items-center justify-center rounded-[6px] bg-[#FFECE3] text-[13px] font-bold text-[#E05226]">
+              <span className="flex size-7 items-center justify-center rounded-[6px] bg-[#E7F2F3] text-[13px] font-bold text-[#03535F]">
                 {s.n}
               </span>
-              <h3 className="mt-3 text-[15px] font-semibold text-[#111111]">
+              <h3 className="mt-3 text-[15px] font-semibold text-[#000000]">
                 {s.t}
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-[#4B4B4B]">

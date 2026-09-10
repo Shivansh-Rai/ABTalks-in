@@ -23,17 +23,8 @@ export default function WorkshopEventsPage() {
 
       <div className="relative z-10">
         {/* top bar */}
-        <header
-          className="sticky top-0 z-50 w-full px-4"
-          style={{
-            background: "var(--wk-bar-bg-blur)",
-            backdropFilter: "blur(22px) saturate(170%)",
-            WebkitBackdropFilter: "blur(22px) saturate(170%)",
-            borderBottom: "1px solid var(--wk-bar-border)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
-          }}
-        >
-          <div className="mx-auto flex h-[54px] w-full max-w-6xl items-center justify-between gap-4">
+        <header className="abt-header z-50">
+          <div className="abt-header-inner">
             {/*
               The "Workshop" chip that used to sit here (logo | divider | pill)
               is gone on THIS route only. It labelled the section you were
@@ -51,11 +42,7 @@ export default function WorkshopEventsPage() {
             <div className="flex items-center gap-3">
               <WorkshopLogo />
             </div>
-            <Link
-              href="/workshop"
-              className="text-[13px] font-medium transition-colors hover:text-white"
-              style={{ color: "var(--wk-bar-muted)" }}
-            >
+            <Link href="/workshop" className="abt-header-nav-link">
               ← Back to Workshop
             </Link>
           </div>

@@ -10,11 +10,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const LEVEL_CLASS: Record<ActivityCell["level"], string> = {
-  0: "bg-neutral-100",
-  1: "bg-emerald-200",
-  2: "bg-emerald-400",
-  3: "bg-emerald-600",
-  4: "bg-emerald-800",
+  0: "bg-[#E9E9E9]",
+  1: "bg-[#D6F7EC]",
+  2: "bg-[#18D39B]",
+  3: "bg-[#197E23]",
+  4: "bg-[#197E23]",
 };
 
 const ROW_LABELS = ["Mon", "", "Wed", "", "Fri", "", ""];
@@ -63,7 +63,7 @@ function monthLabelForColumn(
 }
 
 const CELL_CLASS =
-  "rounded-[4px] border border-neutral-200/80 transition-transform duration-200 ease-[var(--ease-spark)] motion-safe:hover:z-10 motion-safe:hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E05226]";
+  "rounded-[4px] border border-[#E0E0E0]/80 transition-transform duration-200 ease-[var(--ease-spark)] motion-safe:hover:z-10 motion-safe:hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#03535F]";
 
 function HeatmapCell({
   cell,
@@ -142,7 +142,7 @@ function HeatmapGrid({
           return (
             <span key={`month-${col}`} className="relative h-4">
               {monthLabel ? (
-                <span className="absolute left-0 top-0 whitespace-nowrap text-[9px] leading-none text-neutral-400">
+                <span className="absolute left-0 top-0 whitespace-nowrap text-[9px] leading-none text-[#A5A5A5]">
                   {monthLabel}
                 </span>
               ) : null}
@@ -152,7 +152,7 @@ function HeatmapGrid({
         return (
           <span
             key={`month-${col}`}
-            className="h-3 truncate text-[9px] leading-3 text-neutral-400 sm:h-4 sm:text-[10px] sm:leading-4"
+            className="h-3 truncate text-[9px] leading-3 text-[#A5A5A5] sm:h-4 sm:text-[10px] sm:leading-4"
           >
             {monthLabel ?? ""}
           </span>
@@ -163,7 +163,7 @@ function HeatmapGrid({
         <div key={`row-${rowIdx}`} className="contents">
           <span
             className={cn(
-              "flex items-center text-neutral-400",
+              "flex items-center text-[#A5A5A5]",
               isMobile ? "text-[10px]" : "text-[9px] sm:text-[10px]",
             )}
           >
@@ -232,7 +232,7 @@ export function ActivityHeatmap({
     <Wrapper className={wrapperClass}>
       <h2
         className={cn(
-          "text-center font-heading font-semibold uppercase text-[#e05226]",
+          "text-center font-heading font-semibold uppercase text-[#03535F]",
           embedded ? "text-base" : "text-xl",
         )}
       >
@@ -242,7 +242,7 @@ export function ActivityHeatmap({
       {/* Mobile: fixed cell size + horizontal scroll with orange scrollbar */}
       <div
         ref={scrollRef}
-        className="scrollbar-admin-orange mt-3 overflow-x-auto overscroll-x-contain pb-1.5 pl-5 lg:hidden"
+        className="scrollbar-admin-brand mt-3 overflow-x-auto overscroll-x-contain pb-1.5 pl-5 lg:hidden"
       >
         <HeatmapGrid
           {...gridSharedProps}
@@ -265,13 +265,13 @@ export function ActivityHeatmap({
         )}
       />
 
-      <p className="mt-2 ml-3 font-fredoka text-sm text-[#555555]">
+      <p className="mt-2 ml-3 font-fredoka text-sm text-[#4B4B4B]">
         {totalSubmissions} submission{totalSubmissions === 1 ? "" : "s"} in the
         last {HEATMAP_MONTHS} months
       </p>
 
       <div className="mt-3 flex justify-end">
-        <div className="flex shrink-0 items-center gap-1 self-end text-[10px] text-neutral-400 sm:self-auto">
+        <div className="flex shrink-0 items-center gap-1 self-end text-[10px] text-[#A5A5A5] sm:self-auto">
           <span>Less</span>
           {([0, 1, 2, 3, 4] as const).map((level) => (
             <span

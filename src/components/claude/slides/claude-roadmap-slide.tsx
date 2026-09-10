@@ -8,28 +8,28 @@ const PHASES = [
     title: "Foundations & Productivity",
     days: "Days 1–15",
     desc: "Claude setup · Prompt engineering · Graphify · Caveman Method · Claude Counter · Business communication",
-    color: "border-[#E05226]/30 bg-[#FFF5F0]",
+    color: "border-[#03535F]/30 bg-[#EEF6F6]",
   },
   {
     number: "02",
     title: "Business Domains + Data",
     days: "Days 16–35",
     desc: "Business analysis · Scrum & Agile · PPT & presentations · Excel & financial dashboards · UI/UX wireframes",
-    color: "border-pink-500/30 bg-pink-500/5",
+    color: "border-[#03535F]/30 bg-[#03535F]/5",
   },
   {
     number: "03",
     title: "Build + Deploy + Automate",
     days: "Days 36–55",
     desc: "Web dev & code generation · QA testing · DevOps & CI/CD · Docker · GitHub Actions · MCP connectors",
-    color: "border-teal-500/30 bg-teal-500/5",
+    color: "border-[#03535F]/30 bg-[#03535F]/5",
   },
   {
     number: "04",
     title: "Career Branding & Capstone",
     days: "Days 56–60",
     desc: "Resume & ATS optimisation · LinkedIn overhaul · Portfolio building · End-to-end capstone project",
-    color: "border-orange-500/30 bg-orange-500/5",
+    color: "border-[#03535F]/30 bg-[#03535F]/5",
   },
 ] as const;
 

@@ -40,8 +40,8 @@ const cardClass =
 
 function MentorFeedbackCard({ feedback }: { feedback: string }) {
   return (
-    <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4 text-sm text-[#4B4B4B] [&_h3]:mt-2 [&_h3]:font-semibold [&_h3]:text-[#111111] [&_li]:ml-5 [&_li]:list-disc [&_p]:text-[#4B4B4B]">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#E05226]">
+    <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4 text-sm text-[#4B4B4B] [&_h3]:mt-2 [&_h3]:font-semibold [&_h3]:text-[#000000] [&_li]:ml-5 [&_li]:list-disc [&_p]:text-[#4B4B4B]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#03535F]">
         AI Mentor review
       </p>
       <ReactMarkdown components={programMdComponents}>{feedback}</ReactMarkdown>
@@ -192,7 +192,7 @@ export function MissionPanel({
         id="mission-verify"
         className={cn(cardClass, "space-y-4")}
       >
-        <p className="font-semibold text-[#2E7D32]">Mission cleared ✓</p>
+        <p className="font-semibold text-[#197E23]">Mission cleared ✓</p>
         {passedBanner?.unlockedDay &&
           passedBanner.unlockedDay <= PROGRAM_TOTAL_DAYS && (
             <Link
@@ -210,7 +210,7 @@ export function MissionPanel({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-2 border-[#E05226] bg-white text-[#E05226] hover:bg-[#FFECE3]"
+            className="gap-2 border-[#03535F] bg-white text-[#03535F] hover:bg-[#E7F2F3]"
             onClick={() => void handleMentorReview()}
             disabled={mentorLoading}
           >
@@ -249,14 +249,14 @@ export function MissionPanel({
     <div id="mission-verify" className={cn(cardClass, "space-y-5")}>
       <div className="flex items-center gap-2.5">
         <DaySectionIcon name="verify" />
-        <h2 className="font-heading text-base font-semibold text-[#111111] md:text-lg">
+        <h2 className="font-heading text-base font-semibold text-[#000000] md:text-lg">
           {sectionTitle(missionType, questionCount)}
         </h2>
       </div>
 
       {passedBanner && (
-        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FFECE3] p-4">
-          <p className="font-semibold text-[#2E7D32]">
+        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#E7F2F3] p-4">
+          <p className="font-semibold text-[#197E23]">
             Day {dayNumber} cleared — +{passedBanner.points} pts
             {passedBanner.unlockedDay
               ? ` · Day ${passedBanner.unlockedDay} unlocked`
@@ -286,7 +286,7 @@ export function MissionPanel({
               href={githubRepoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#E05226] underline-offset-4 hover:underline"
+              className="text-[#03535F] underline-offset-4 hover:underline"
             >
               {githubRepoUrl}
             </a>
@@ -302,7 +302,7 @@ export function MissionPanel({
                   key={`${h.check}:${h.path}:${i}`}
                   className="font-mono text-[#8F8F8F]"
                 >
-                  {h.check}: <span className="text-[#111111]">{h.path}</span>
+                  {h.check}: <span className="text-[#000000]">{h.path}</span>
                 </li>
               ))}
             </ul>
@@ -319,14 +319,14 @@ export function MissionPanel({
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-40 w-full rounded-[10px] border border-[#E0E0E0] bg-white p-3 font-mono text-sm text-[#111111]"
+            className="min-h-40 w-full rounded-[10px] border border-[#E0E0E0] bg-white p-3 font-mono text-sm text-[#000000]"
             placeholder="Write the prompt that satisfies the mission spec…"
           />
         </div>
       )}
 
       {missionType === "BOSS_BUILD" && (
-        <div className="space-y-4 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4">
+        <div className="space-y-4 rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4">
           <div className="space-y-2">
             <Label htmlFor="boss-repo" className="text-[#4B4B4B]">
               Project repository URL
@@ -336,7 +336,7 @@ export function MissionPanel({
               value={bossRepo}
               onChange={(e) => setBossRepo(e.target.value)}
               placeholder="https://github.com/you/project"
-              className="border-[#E0E0E0] bg-white text-[#111111]"
+              className="border-[#E0E0E0] bg-white text-[#000000]"
             />
           </div>
           <div className="space-y-2">
@@ -347,7 +347,7 @@ export function MissionPanel({
               id="boss-writeup"
               value={bossWriteup}
               onChange={(e) => setBossWriteup(e.target.value)}
-              className="min-h-32 w-full rounded-[10px] border border-[#E0E0E0] bg-white p-3 text-sm text-[#111111]"
+              className="min-h-32 w-full rounded-[10px] border border-[#E0E0E0] bg-white p-3 text-sm text-[#000000]"
               placeholder="Describe what you built and how to run it…"
             />
           </div>
@@ -364,13 +364,13 @@ export function MissionPanel({
             return (
               <div key={i} className="space-y-3">
                 {question ? (
-                  <div className="text-sm font-semibold text-[#111111] [&_p]:mb-0 [&_strong]:font-semibold [&_strong]:text-[#111111]">
+                  <div className="text-sm font-semibold text-[#000000] [&_p]:mb-0 [&_strong]:font-semibold [&_strong]:text-[#000000]">
                     <ReactMarkdown components={programMdComponents}>
                       {`Q${i + 1}) ${question}`}
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold text-[#111111]">
+                  <p className="text-sm font-semibold text-[#000000]">
                     {`Answer ${i + 1}`}
                   </p>
                 )}
@@ -383,7 +383,7 @@ export function MissionPanel({
                     setAnswers(next);
                   }}
                   placeholder="Type answer here..."
-                  className="h-12 rounded-[10px] border border-[#E0E0E0] bg-white px-4 text-sm text-[#111111] placeholder:text-[#8F8F8F]"
+                  className="h-12 rounded-[10px] border border-[#E0E0E0] bg-white px-4 text-sm text-[#000000] placeholder:text-[#8F8F8F]"
                 />
               </div>
             );
@@ -392,15 +392,15 @@ export function MissionPanel({
       )}
 
       {missionType === "CODE_SPRINT" && (
-        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4 text-sm text-[#4B4B4B]">
+        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4 text-sm text-[#4B4B4B]">
           In-browser Workbench was removed. CODE_SPRINT days are not used in the
           current curriculum — build and verify via SHIP_IT repo checks instead.
         </div>
       )}
 
       {verdict && (
-        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#E05226]">
+        <div className="rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#03535F]">
             Verification
           </h3>
           <CheckList items={verdict} running={submitting} />

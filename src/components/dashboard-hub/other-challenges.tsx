@@ -29,21 +29,21 @@ export function OtherChallenges({
       id="other-challenges"
       className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
     >
-      <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226]">
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
         Other challenges
       </h2>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:ml-4">
         {showClaude ? (
           <li
             className={cn(
-              "rounded-2xl border border-neutral-200 bg-white p-5",
+              "rounded-2xl border border-[#E0E0E0] bg-white p-5",
               HUB_CARD_HOVER_CLASS,
             )}
           >
             <p className="font-inter font-bold text-black">
               Claude Challenge
             </p>
-            <p className="mt-1 text-sm text-[#555555]">
+            <p className="mt-1 text-sm text-[#4B4B4B]">
               Build with Claude · 60 days
             </p>
             <JoinClaudeButton />

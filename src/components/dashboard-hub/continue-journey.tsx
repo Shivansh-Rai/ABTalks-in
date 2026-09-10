@@ -28,18 +28,18 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
       id="your-challenge"
       className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
     >
-      <h2 className=" font-heading text-xl font-semibold uppercase text-[#e05226]">
+      <h2 className=" font-heading text-xl font-semibold uppercase text-[#03535F]">
         Continue your journey
       </h2>
 
       {enrollments.length === 0 ? (
         <div
           className={cn(
-            "mt-4 rounded-2xl border border-neutral-200 bg-white p-6 text-center",
+            "mt-4 rounded-2xl border border-[#E0E0E0] bg-white p-6 text-center",
             HUB_CARD_HOVER_CLASS,
           )}
         >
-          <p className="text-[#555555]">
+          <p className="text-[#4B4B4B]">
             You haven&apos;t started a challenge yet
           </p>
           <Link
@@ -63,7 +63,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
               <li
                 key={e.id}
                 className={cn(
-                  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink",
+                  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
@@ -72,7 +72,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                     <p className="font-inter font-bold text-black">
                       {DOMAIN_LABEL[e.domain]}
                     </p>
-                    <p className="mt-1 text-sm text-[#555555]">
+                    <p className="mt-1 text-sm text-[#4B4B4B]">
                       {subtitle}
                     </p>
                   </div>
@@ -82,10 +82,10 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                     aria-valuemax={100}
                     aria-valuenow={pct}
                     aria-label={`${DOMAIN_LABEL[e.domain]} progress`}
-                    className="h-1.5 w-full overflow-hidden rounded-lg bg-neutral-100"
+                    className="h-1.5 w-full overflow-hidden rounded-lg bg-[#E9E9E9]"
                   >
                     <div
-                      className="h-full bg-[#e05226] transition-all"
+                      className="h-full bg-[#03535F] transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

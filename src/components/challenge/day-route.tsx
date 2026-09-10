@@ -80,7 +80,7 @@ export async function ChallengeDayRoute({
     return (
       <DashboardShell user={shellUser} isAdmin={isAdmin} collapsible>
         <div className="mx-auto max-w-lg px-5 py-12">
-          <h1 className="font-heading text-2xl font-semibold text-[#111111]">
+          <h1 className="font-heading text-2xl font-semibold text-[#000000]">
             Day not available
           </h1>
           <p className="mt-2 text-sm text-[#4B4B4B]">
@@ -118,7 +118,7 @@ export async function ChallengeDayRoute({
         sectionNavItems={sectionNavItems}
       >
         <div className="mx-auto max-w-2xl px-5 py-8">
-          <h1 className="font-heading text-2xl font-semibold text-[#111111]">
+          <h1 className="font-heading text-2xl font-semibold text-[#000000]">
             Day {day} is not yet unlocked
           </h1>
           <p className="mt-2 text-sm text-[#4B4B4B]">
@@ -134,7 +134,7 @@ export async function ChallengeDayRoute({
             </Link>
             <Link
               href={backHref}
-              className="inline-flex h-9 items-center rounded-lg border border-[#E0E0E0] px-4 text-sm font-medium text-[#555555] hover:border-[#E05226] hover:text-[#E05226]"
+              className="inline-flex h-9 items-center rounded-lg border border-[#E0E0E0] px-4 text-sm font-medium text-[#4B4B4B] hover:border-[#03535F] hover:text-[#03535F]"
             >
               {track.label}
             </Link>

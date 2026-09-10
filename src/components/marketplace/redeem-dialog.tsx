@@ -48,20 +48,21 @@ type Props = {
   sizeOptions: string[];
 };
 
-// The dialog portals out of the page's `dark` wrapper, so every field states
-// its own colours rather than inheriting them. `dark:bg-` is repeated because
-// the primitives carry their own `dark:` background, which outranks a bare one.
+// Design System v2 form fields: 48px, 8px radius, 1px #E0E0E0 on white,
+// Inter 16/24 with 16px horizontal padding. The dialog portals to <body>, so
+// every field states its own colours rather than inheriting them.
 const FIELD_CLASS =
-  "h-10 w-full min-w-0 rounded-xl border border-[#1C283D] bg-[#050C1D] px-3 py-2 text-base text-white transition-colors outline-none placeholder:text-zinc-500 focus-visible:border-[#7166F0] focus-visible:ring-2 focus-visible:ring-[#7166F0]/30 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-[#050C1D]";
+  "h-12 w-full min-w-0 rounded-lg border border-[#E0E0E0] bg-white px-4 py-3 text-base leading-6 text-black transition-colors outline-none placeholder:text-[#8F8F8F] focus-visible:border-[#03535F] focus-visible:ring-2 focus-visible:ring-[#03535F]/20 disabled:cursor-not-allowed disabled:opacity-50";
 
 // SelectTrigger sets its height through `data-[size=default]:h-8`, which
-// tailwind-merge cannot dedupe against a plain `h-10` — so match the variant,
+// tailwind-merge cannot dedupe against a plain `h-12` — so match the variant,
 // or the two dropdowns sit shorter than the inputs beside them.
-const SELECT_TRIGGER_CLASS = `${FIELD_CLASS} justify-between data-[size=default]:h-10 dark:hover:bg-[#050C1D]`;
+const SELECT_TRIGGER_CLASS = `${FIELD_CLASS} justify-between data-[size=default]:h-12`;
 
-const POPUP_CLASS = "border border-[#1C283D] bg-[#0B1124] text-white";
+const POPUP_CLASS = "border border-[#E0E0E0] bg-white text-black";
 
-const LABEL_CLASS = "text-sm font-medium text-zinc-200";
+// Form label — Inter 14/20/500.
+const LABEL_CLASS = "text-sm leading-5 font-medium text-black";
 
 export function RedeemDialog({
   open,
@@ -184,21 +185,21 @@ export function RedeemDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto border border-[#1C283D] bg-[#0B1124] text-white ring-1 ring-white/10 sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[16px] border border-[#E0E0E0] bg-white text-black sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-white">{itemTitle}</DialogTitle>
-          <DialogDescription className="text-[#BCBCBC]">
+          <DialogTitle className="text-xl font-semibold text-black">{itemTitle}</DialogTitle>
+          <DialogDescription className="text-sm text-[#626262]">
             This will deduct {costSP} SP from your {balance} SP balance. Address
             and phone are used only for fulfillment (admins only — not public).
           </DialogDescription>
         </DialogHeader>
 
-        <p className="rounded-lg border border-[#1C283D] bg-[#050C1D] px-3 py-2 text-xs text-[#BCBCBC]">
+        <p className="rounded-lg border border-[#E0E0E0] bg-[#F4F4F4] px-3 py-2 text-xs text-[#626262]">
           We currently deliver only within India. For delivery to any other
           country, write to{" "}
           <a
             href={`mailto:${SHIPPING_SUPPORT_EMAIL}`}
-            className="font-medium text-[#9C93F5] underline underline-offset-2"
+            className="font-medium text-[#03535F] underline underline-offset-2"
           >
             {SHIPPING_SUPPORT_EMAIL}
           </a>
@@ -226,7 +227,7 @@ export function RedeemDialog({
                     key={size}
                     value={size}
                     disabled={pending}
-                    className="flex h-10 min-w-14 items-center justify-center rounded-xl border border-[#1C283D] bg-[#050C1D] px-3 text-sm font-medium text-zinc-300 transition-colors outline-none select-none hover:border-[#7166F0]/60 focus-visible:ring-2 focus-visible:ring-[#7166F0]/40 disabled:cursor-not-allowed disabled:opacity-50 data-checked:border-[#7166F0] data-checked:bg-[#7166F0]/20 data-checked:text-white"
+                    className="flex h-11 min-w-14 items-center justify-center rounded-lg border border-[#E0E0E0] bg-white px-4 text-sm font-medium text-[#353535] transition-colors outline-none select-none hover:border-[#03535F]/60 focus-visible:ring-2 focus-visible:ring-[#03535F]/30 disabled:cursor-not-allowed disabled:opacity-50 data-checked:border-[#03535F] data-checked:bg-[#E7F2F3] data-checked:text-[#03535F]"
                   >
                     {size}
                   </Radio.Root>
@@ -272,7 +273,7 @@ export function RedeemDialog({
           <div className="space-y-2">
             <label htmlFor="addressLine2" className={LABEL_CLASS}>
               Address line 2{" "}
-              <span className="font-normal text-zinc-500">(optional)</span>
+              <span className="font-normal text-[#8F8F8F]">(optional)</span>
             </label>
             <Input
               id="addressLine2"
@@ -300,7 +301,7 @@ export function RedeemDialog({
               >
                 <SelectTrigger
                   id="state"
-                  className={`${SELECT_TRIGGER_CLASS} data-placeholder:text-zinc-500`}
+                  className={`${SELECT_TRIGGER_CLASS} data-placeholder:text-[#8F8F8F]`}
                 >
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
@@ -396,11 +397,12 @@ export function RedeemDialog({
             </p>
           ) : null}
 
-          <DialogFooter className="border-[#1C283D] bg-transparent sm:justify-stretch">
+          <DialogFooter className="border-[#E0E0E0] bg-transparent sm:justify-stretch">
+            {/* Clay button, Default size (44 / 20 / 12). */}
             <Button
               type="submit"
               disabled={pending}
-              className="w-full bg-gradient-to-t from-[#2B1D8C] to-[#7166F0] text-white shadow-[inset_0_4px_4px_rgba(0,0,0,0.25)] hover:opacity-95"
+              className="h-11 w-full rounded-[12px] bg-[#03535F] px-5 text-base font-semibold text-white hover:scale-100 hover:bg-[#076573] hover:shadow-[0_4px_12px_rgba(3,83,95,0.26)] disabled:bg-[#E0E0E0] disabled:text-[#8F8F8F] disabled:opacity-100"
             >
               {pending ? "Processing…" : "Confirm Redemption"}
             </Button>

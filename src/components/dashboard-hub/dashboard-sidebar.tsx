@@ -82,7 +82,7 @@ export function DashboardSidebar({
   function renderNav(compact: boolean) {
     return (
       <nav
-        className={cn("flex-1 space-y-1 py-4", compact ? "px-2" : "px-3")}
+        className={cn("flex-1 space-y-1 py-4", compact ? "px-2" : "px-4")}
         aria-label="Main"
       >
         {NAV_ITEMS.map(({ label, href, icon }) => {
@@ -100,10 +100,8 @@ export function DashboardSidebar({
               aria-label={compact ? label : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center rounded-lg text-sm font-medium transition-colors duration-200 ease-[var(--ease-spark)]",
-                compact
-                  ? "justify-center px-2 py-2.5"
-                  : "gap-3 px-3 py-2.5",
+                "abt-nav-item",
+                compact ? "justify-center px-2" : "gap-3 px-4",
                 active ? HUB_NAV_ACTIVE_CLASS : HUB_NAV_IDLE_CLASS,
               )}
             >
@@ -125,8 +123,8 @@ export function DashboardSidebar({
           className={cn(
             "mt-auto",
             compact
-              ? "flex shrink-0 flex-col items-center gap-3 border-t border-neutral-200 p-3"
-              : "flex shrink-0 flex-col justify-center border-t border-neutral-200 p-4",
+              ? "flex shrink-0 flex-col items-center gap-3 border-t border-[#E0E0E0] p-3"
+              : "flex shrink-0 flex-col justify-center border-t border-[#E0E0E0] p-4",
           )}
         >
           <Link
@@ -135,7 +133,7 @@ export function DashboardSidebar({
             title={compact ? "Log in" : undefined}
             aria-label={compact ? "Log in" : undefined}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg border border-neutral-200 text-sm font-medium text-[#555555] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]",
+              "flex items-center justify-center gap-2 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#4B4B4B] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:bg-[#03535F]/10 hover:text-[#03535F]",
               compact ? "size-9 p-0" : "w-full px-3 py-2",
             )}
           >
@@ -151,7 +149,7 @@ export function DashboardSidebar({
         className={cn(
           "mt-auto",
           compact
-            ? "flex shrink-0 flex-col items-center gap-3 border-t border-neutral-200 p-3"
+            ? "flex shrink-0 flex-col items-center gap-3 border-t border-[#E0E0E0] p-3"
             : SIDEBAR_FOOTER_ROW_CLASS,
         )}
       >
@@ -170,7 +168,7 @@ export function DashboardSidebar({
             />
           ) : (
             <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-700"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#E9E9E9] text-xs font-semibold text-[#353535]"
               aria-hidden
             >
               {initials(displayName)}
@@ -181,7 +179,7 @@ export function DashboardSidebar({
               <p className="truncate text-sm font-medium text-black">
                 {displayName}
               </p>
-              <p className="truncate text-xs text-[#555555]">{user.email}</p>
+              <p className="truncate text-xs text-[#4B4B4B]">{user.email}</p>
             </div>
           ) : null}
         </div>
@@ -191,7 +189,7 @@ export function DashboardSidebar({
             title={compact ? "Sign out" : undefined}
             aria-label={compact ? "Sign out" : undefined}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg border border-neutral-200 text-sm font-medium text-[#555555] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:bg-[#e05226]/10 hover:text-[#e05226]",
+              "flex items-center justify-center gap-2 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#4B4B4B] transition-[border-color,background-color,color] duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:bg-[#03535F]/10 hover:text-[#03535F]",
               compact ? "size-9 p-0" : "w-full px-3 py-2",
             )}
           >
@@ -218,13 +216,13 @@ export function DashboardSidebar({
       </div>
       {renderNav(false)}
       {collapsible && onToggleCollapse ? (
-        <div className="hidden border-t border-neutral-200 px-3 py-2 md:block">
+        <div className="hidden border-t border-[#E0E0E0] px-3 py-2 md:block">
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-expanded={!isCollapsed}
             aria-label="Collapse sidebar"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:text-[#e05226]"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E0E0E0] px-3 py-2 text-sm font-medium text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:text-[#03535F]"
           >
             <ChevronLeft className="size-4" aria-hidden />
             <span>Collapse</span>
@@ -237,7 +235,7 @@ export function DashboardSidebar({
 
   const collapsedContent = (
     <>
-      <div className="flex h-[72px] items-center justify-center border-b border-neutral-200">
+      <div className="flex h-[55px] shrink-0 items-center justify-center border-b border-[#E9E9E9]">
         <Link
           href="/dashboard"
           onClick={onNavigate}
@@ -254,13 +252,13 @@ export function DashboardSidebar({
       </div>
       {renderNav(true)}
       {onToggleCollapse ? (
-        <div className="border-t border-neutral-200 p-2">
+        <div className="border-t border-[#E0E0E0] p-2">
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-expanded={false}
             aria-label="Expand sidebar"
-            className="flex w-full items-center justify-center rounded-lg border border-neutral-200 py-2 text-[#555555] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#e05226] hover:text-[#e05226]"
+            className="flex w-full items-center justify-center rounded-lg border border-[#E0E0E0] py-2 text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:text-[#03535F]"
           >
             <ChevronRight className="size-4" aria-hidden />
           </button>
@@ -278,7 +276,7 @@ export function DashboardSidebar({
     <>
       <aside
         className={cn(
-          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-y-auto border-r border-neutral-200 bg-[#FBF9F7] transition-[width] duration-200 ease-[var(--ease-spark)] md:flex",
+          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-y-auto border-r border-[#E9E9E9] bg-white transition-[width] duration-200 ease-[var(--ease-spark)] md:flex",
           desktopWidth,
         )}
       >
@@ -290,7 +288,7 @@ export function DashboardSidebar({
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-y-auto border-r border-neutral-200 bg-[#FBF9F7] transition-transform duration-200 md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-y-auto border-r border-[#E9E9E9] bg-white transition-transform duration-200 md:hidden",
           SIDEBAR_WIDTH_CLASS,
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}

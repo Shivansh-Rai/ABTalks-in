@@ -8,7 +8,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#8F8F8F]">
         {label}
       </p>
-      <p className="mt-1 font-inter text-[32px] leading-9 font-bold text-[#111111]">
+      <p className="mt-1 font-inter text-[32px] leading-9 font-bold text-[#000000]">
         {value}
       </p>
     </div>
@@ -34,7 +34,7 @@ function ScoreBar({
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-[#E0E0E0]">
         <div
-          className="h-full rounded-full bg-[#E05226]"
+          className="h-full rounded-full bg-[#03535F]"
           style={{ width: `${max ? Math.min(100, (value / max) * 100) : 0}%` }}
         />
       </div>
@@ -77,14 +77,14 @@ export function PowerBiStatsPanel({ data }: { data: PowerBiDashboard }) {
               key={`${v.dayNumber}-${v.createdAt}-${i}`}
               className="rounded-[12px] border border-[#E0E0E0] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
             >
-              <span className="text-[14px] leading-[21px] font-medium text-[#111111]">
+              <span className="text-[14px] leading-[21px] font-medium text-[#000000]">
                 Day {v.dayNumber}
               </span>{" "}
               <span
                 className={
                   v.passed
-                    ? "text-[14px] leading-[21px] text-[#2E7D32]"
-                    : "text-[14px] leading-[21px] text-[#C9411C]"
+                    ? "text-[14px] leading-[21px] text-[#197E23]"
+                    : "text-[14px] leading-[21px] text-[#076573]"
                 }
               >
                 {v.passed ? "passed" : "failed"}

@@ -15,8 +15,8 @@ function BuildersBadge({ totalCount }: { totalCount: number }) {
     : `🔥 Join ${displayCount}+ builders already enrolled`;
 
   return (
-    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1">
-      <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#03535F]/20 bg-[#03535F]/10 px-3 py-1">
+      <span className="text-xs font-semibold text-[#02434D] dark:text-[#076573]">
         {badgeText}
       </span>
     </div>
@@ -31,9 +31,9 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10"
+        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#03535F]/10"
       >
-        <Rocket className="h-8 w-8 text-orange-500" />
+        <Rocket className="h-8 w-8 text-[#03535F]" />
       </motion.div>
 
       <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
@@ -45,7 +45,7 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
         Starting June 1, 2026.
       </p>
 
-      <motion.div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-left">
+      <motion.div className="mt-4 rounded-lg border border-[#AA821D]/20 bg-[#AA821D]/5 p-3 text-left">
         <h3 className="mb-1.5 font-display text-sm font-semibold">
           📋 Challenge Rules
         </h3>
@@ -57,9 +57,9 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
         </ul>
       </motion.div>
 
-      <div className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
-        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-          <MessageCircle className="h-5 w-5 text-emerald-500" />
+      <div className="mt-4 rounded-lg border border-[#18D39B]/20 bg-[#18D39B]/5 p-3 text-center">
+        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#18D39B]/10">
+          <MessageCircle className="h-5 w-5 text-[#197E23]" />
         </div>
         <h3 className="text-sm font-semibold">Join the WhatsApp Community</h3>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -70,7 +70,7 @@ export function ClaudeCtaSlide({ totalCount }: Props) {
           href="https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#18D39B]/30 px-3 py-1.5 text-xs font-medium text-[#197E23] hover:bg-[#18D39B]/10 dark:text-[#197E23]"
         >
           Join WhatsApp Group
         </a>

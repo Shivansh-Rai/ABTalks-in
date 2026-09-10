@@ -44,8 +44,8 @@ function HowItWorksConnector() {
           x2={lastDotX}
           y2={midY}
         >
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#E05226" />
+          <stop offset="0%" stopColor="#03535F" />
+          <stop offset="100%" stopColor="#03535F" />
         </linearGradient>
         <filter
           id={glowId}
@@ -76,7 +76,7 @@ function HowItWorksConnector() {
         {/* Chevron > — ~90° tip, stroke ~2× dot thickness, rounded caps */}
         <path
           d={`M${chevronX} ${midY - 7.5} L${chevronX + 10} ${midY} L${chevronX} ${midY + 7.5}`}
-          stroke="#E05226"
+          stroke="#03535F"
           strokeWidth={3.1}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -207,7 +207,7 @@ function BranchTree({
                 }
               >
                 {item.text}
-                <span className="text-[#4C9EEB]">{item.highlight}</span>
+                <span className="text-[#076573]">{item.highlight}</span>
                 {item.suffix}
               </p>
             </div>
@@ -231,7 +231,7 @@ function BranchTreeMobile({
           className="text-center text-sm font-semibold leading-snug text-white"
         >
           {item.text}
-          <span className="text-[#4C9EEB]">{item.highlight}</span>
+          <span className="text-[#076573]">{item.highlight}</span>
           {item.suffix}
         </li>
       ))}
@@ -256,22 +256,22 @@ function PrerequisitesMobile() {
 }
 
 const primaryBtnClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#C9411C] md:h-12 md:text-base";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573] md:h-12 md:text-base";
 
 const outlineBtnClass =
-  "inline-flex h-11 items-center justify-center rounded-lg border border-[#E05226]/70 bg-transparent px-6 text-sm font-semibold text-white transition-colors hover:border-[#FFECE3] hover:bg-white/5 md:h-12 md:text-base";
+  "inline-flex h-11 items-center justify-center rounded-lg border border-[#03535F]/70 bg-transparent px-6 text-sm font-semibold text-white transition-colors hover:border-[#E7F2F3] hover:bg-white/5 md:h-12 md:text-base";
 
 export function ProgramLanding({ cta }: { cta: Cta }) {
   return (
-    <main className="min-h-svh overflow-x-hidden bg-[#030712] text-white">
+    <main className="min-h-svh overflow-x-hidden bg-[#000000] text-white">
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#030712] to-[#030712]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000] to-[#000000]" />
         <div
           className="absolute inset-0 opacity-50"
           style={{
             backgroundImage:
-              "radial-gradient(ellipse 60% 50% at 75% 40%, rgba(224,82,38,0.22), transparent 70%)",
+              "radial-gradient(ellipse 60% 50% at 75% 40%, rgba(3, 83, 95, 0.22), transparent 70%)",
           }}
         />
 
@@ -290,7 +290,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-5 pb-12 pt-10 md:grid-cols-2 md:gap-6 md:px-10 md:pb-16 md:pt-12 lg:gap-10">
           <div className="max-w-xl text-left">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#E05226]/40 bg-[#111111]/80 px-3 py-1.5 text-xs font-medium text-[#FFECE3] md:text-sm">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#03535F]/40 bg-[#000000]/80 px-3 py-1.5 text-xs font-medium text-[#E7F2F3] md:text-sm">
               <Users className="size-3.5 shrink-0" aria-hidden />
               For students &amp; recent grads · ~2–4 hrs/day
             </span>
@@ -300,7 +300,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
             </h1> */}
             <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
               AI{" "}
-              <span className="bg-gradient-to-r from-[#FFECE3] via-[#FFECE3] to-[#F8F8FC] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#E7F2F3] via-[#E7F2F3] to-[#FFFFFF] bg-clip-text text-transparent">
                 Cohort
               </span>
             </h1>
@@ -329,7 +329,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
       {/* Requirements */}
       <section className="relative px-4 pb-6 md:px-8 md:pb-10">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-2xl font-bold text-[#FFECE3] md:text-[32px]">
+          <h2 className="text-center text-2xl font-bold text-[#E7F2F3] md:text-[32px]">
             Requirements
           </h2>
           <div className="mt-1">
@@ -342,7 +342,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
       {/* Prerequisites */}
       <section className="relative px-4 pb-10 md:mt-20 md:px-8 md:pb-25">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-2xl font-bold text-[#FFECE3] md:text-[32px]">
+          <h2 className="text-center text-2xl font-bold text-[#E7F2F3] md:text-[32px]">
             Prerequisites
           </h2>
           <div className="mt-1">
@@ -356,14 +356,14 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
       <section className="flex flex-wrap items-end justify-center gap-x-2 gap-y-1 px-4 pb-8 md:gap-x-4 md:pb-12">
         <span
           className="font-semibold leading-none"
-          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#F0AA5B" }}
+          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#076573" }}
         >
           8
         </span>
         <span className="mb-2 text-xl font-medium md:text-5xl">Phases</span>
         <span
           className="ml-8 font-semibold leading-none md:ml-12"
-          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#6AE276" }}
+          style={{ fontSize: "clamp(3.2rem, 9.6vw, 6.4rem)", color: "#197E23" }}
         >
           31
         </span>
@@ -375,7 +375,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
 
       {/* How it works */}
       <section className="px-4 py-12 md:px-8 md:py-12">
-        <h2 className="mb-10 text-center text-2xl font-bold text-[#FFECE3] underline decoration-[#FFECE3]/50 underline-offset-8 md:text-[32px]">
+        <h2 className="mb-10 text-center text-2xl font-bold text-[#E7F2F3] underline decoration-[#E7F2F3]/50 underline-offset-8 md:text-[32px]">
           How it works
         </h2>
         <div className="mx-auto max-w-6xl">
@@ -386,9 +386,9 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
                   <div
                     className="relative z-10 flex size-16 items-center justify-center rounded-full border-[3px] text-xl font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.25)]"
                     style={{
-                      borderColor: "#111111",
+                      borderColor: "#000000",
                       background:
-                        "radial-gradient(circle, rgba(224,82,38,1) 0%, rgba(0,0,0,1) 100%)",
+                        "radial-gradient(circle, rgba(3, 83, 95, 1) 0%, rgba(0,0,0,1) 100%)",
                     }}
                   >
                     {step.step}
@@ -417,12 +417,12 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
                 key={step.step}
                 className="flex gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[#111111] bg-[radial-gradient(circle,rgba(224,82,38,1)_0%,rgba(0,0,0,1)_100%)] text-sm font-semibold">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[#000000] bg-[radial-gradient(circle,rgba(3, 83, 95, 1)_0%,rgba(0,0,0,1)_100%)] text-sm font-semibold">
                   {step.step}
                 </span>
                 <div>
                   <p className="font-semibold">{step.title}</p>
-                  <p className="mt-1 text-sm text-[#BCBCBC]">{step.detail}</p>
+                  <p className="mt-1 text-sm text-[#D2D2D2]">{step.detail}</p>
                 </div>
               </li>
             ))}
@@ -436,7 +436,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
           className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 rounded-[15px] px-6 py-8 md:flex-row md:items-center md:px-10 md:py-10"
           style={{
             background:
-              "linear-gradient(0deg, rgba(31, 14, 65, 1) 0%, rgba(17, 5, 40, 1) 100%)",
+              "linear-gradient(0deg, rgba(53, 53, 53, 1) 0%, rgba(0, 0, 0, 1) 100%)",
           }}
         >
           <div>

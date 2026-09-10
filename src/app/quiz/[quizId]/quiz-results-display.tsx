@@ -92,10 +92,10 @@ export function QuizResultsDisplay({
                       key={o.key}
                       className={cn(
                         "rounded-md border px-3 py-2 text-sm",
-                        greenUser && "border-green-600 bg-green-600/15",
+                        greenUser && "border-[#197E23] bg-[#197E23]/15",
                         redUser && "border-destructive bg-destructive/10",
                         greenOutline &&
-                          "border-2 border-green-600 bg-transparent",
+                          "border-2 border-[#197E23] bg-transparent",
                         !greenUser &&
                           !redUser &&
                           !greenOutline &&

@@ -312,21 +312,21 @@ export function Hero(props: Props) {
                   x2="273"
                   y2="0"
                 >
-                  <stop offset="0%" stopColor="#6E747A" />
-                  <stop offset="3%" stopColor="#9AA1A7" />
-                  <stop offset="8.3%" stopColor="#FAFCFD" />
-                  <stop offset="12%" stopColor="#E2E7EA" />
-                  <stop offset="17%" stopColor="#AEB5BB" />
-                  <stop offset="24%" stopColor="#868D94" />
-                  <stop offset="38%" stopColor="#767D84" />
-                  <stop offset="50%" stopColor="#8B9299" />
-                  <stop offset="62%" stopColor="#767D84" />
-                  <stop offset="76%" stopColor="#868D94" />
-                  <stop offset="83%" stopColor="#AEB5BB" />
-                  <stop offset="88%" stopColor="#E2E7EA" />
-                  <stop offset="91.7%" stopColor="#FAFCFD" />
-                  <stop offset="97%" stopColor="#9AA1A7" />
-                  <stop offset="100%" stopColor="#6E747A" />
+                  <stop offset="0%" stopColor="#787878" />
+                  <stop offset="3%" stopColor="#A5A5A5" />
+                  <stop offset="8.3%" stopColor="#FFFFFF" />
+                  <stop offset="12%" stopColor="#E9E9E9" />
+                  <stop offset="17%" stopColor="#A5A5A5" />
+                  <stop offset="24%" stopColor="#8F8F8F" />
+                  <stop offset="38%" stopColor="#787878" />
+                  <stop offset="50%" stopColor="#8F8F8F" />
+                  <stop offset="62%" stopColor="#787878" />
+                  <stop offset="76%" stopColor="#8F8F8F" />
+                  <stop offset="83%" stopColor="#A5A5A5" />
+                  <stop offset="88%" stopColor="#E9E9E9" />
+                  <stop offset="91.7%" stopColor="#FFFFFF" />
+                  <stop offset="97%" stopColor="#A5A5A5" />
+                  <stop offset="100%" stopColor="#787878" />
                 </linearGradient>
                 <linearGradient
                   id="hkShackleRim"
@@ -336,9 +336,9 @@ export function Hero(props: Props) {
                   x2="273"
                   y2="0"
                 >
-                  <stop offset="0%" stopColor="#4A5057" />
-                  <stop offset="50%" stopColor="#5E656C" />
-                  <stop offset="100%" stopColor="#464C53" />
+                  <stop offset="0%" stopColor="#4B4B4B" />
+                  <stop offset="50%" stopColor="#626262" />
+                  <stop offset="100%" stopColor="#4B4B4B" />
                 </linearGradient>
                 <linearGradient
                   id="hkSpec"
@@ -354,33 +354,33 @@ export function Hero(props: Props) {
                   <stop offset="100%" stopColor="#FFFFFF" stopOpacity=".35" />
                 </linearGradient>
                 <linearGradient id="hkPlate" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FBFCFD" />
-                  <stop offset="16%" stopColor="#E4E8EB" />
-                  <stop offset="46%" stopColor="#C3C9CE" />
-                  <stop offset="78%" stopColor="#A0A7AD" />
-                  <stop offset="100%" stopColor="#7C8389" />
+                  <stop offset="0%" stopColor="#FFFFFF" />
+                  <stop offset="16%" stopColor="#E9E9E9" />
+                  <stop offset="46%" stopColor="#D2D2D2" />
+                  <stop offset="78%" stopColor="#A5A5A5" />
+                  <stop offset="100%" stopColor="#787878" />
                 </linearGradient>
                 <linearGradient id="hkPlateSide" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#3B4147" stopOpacity=".40" />
-                  <stop offset="12%" stopColor="#3B4147" stopOpacity="0" />
-                  <stop offset="88%" stopColor="#3B4147" stopOpacity="0" />
-                  <stop offset="100%" stopColor="#3B4147" stopOpacity=".40" />
+                  <stop offset="0%" stopColor="#4B4B4B" stopOpacity=".40" />
+                  <stop offset="12%" stopColor="#4B4B4B" stopOpacity="0" />
+                  <stop offset="88%" stopColor="#4B4B4B" stopOpacity="0" />
+                  <stop offset="100%" stopColor="#4B4B4B" stopOpacity=".40" />
                 </linearGradient>
                 <linearGradient id="hkBody" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3D3F43" />
-                  <stop offset="22%" stopColor="#2A2C30" />
-                  <stop offset="62%" stopColor="#1D1F22" />
-                  <stop offset="100%" stopColor="#0D0E10" />
+                  <stop offset="0%" stopColor="#353535" />
+                  <stop offset="22%" stopColor="#353535" />
+                  <stop offset="62%" stopColor="#353535" />
+                  <stop offset="100%" stopColor="#000000" />
                 </linearGradient>
                 <linearGradient id="hkSide" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#6A6E74" />
-                  <stop offset="45%" stopColor="#4C5056" />
-                  <stop offset="100%" stopColor="#33373C" />
+                  <stop offset="0%" stopColor="#787878" />
+                  <stop offset="45%" stopColor="#4B4B4B" />
+                  <stop offset="100%" stopColor="#353535" />
                 </linearGradient>
                 <linearGradient id="hkSideR" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#33373C" />
-                  <stop offset="55%" stopColor="#4C5056" />
-                  <stop offset="100%" stopColor="#5C6066" />
+                  <stop offset="0%" stopColor="#353535" />
+                  <stop offset="55%" stopColor="#4B4B4B" />
+                  <stop offset="100%" stopColor="#626262" />
                 </linearGradient>
                 <linearGradient id="hkAO" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#000000" stopOpacity="0" />
@@ -428,7 +428,7 @@ export function Hero(props: Props) {
                 cy="313"
                 rx="126"
                 ry="11"
-                fill="#0F172A"
+                fill="#353535"
                 opacity=".22"
                 filter="url(#hkBlurLg)"
               />
@@ -449,7 +449,7 @@ export function Hero(props: Props) {
                 <path
                   d="M100.5 192V109a69.5 69.5 0 0 1 139 0v83"
                   fill="none"
-                  stroke="#2E343A"
+                  stroke="#353535"
                   strokeWidth="4.5"
                   opacity=".42"
                 />
@@ -465,13 +465,13 @@ export function Hero(props: Props) {
                 <rect x="10" y="178" width="320" height="130" fill="url(#hkBody)" />
                 <rect x="10" y="178" width="54" height="130" fill="url(#hkSide)" />
                 <rect x="276" y="178" width="54" height="130" fill="url(#hkSideR)" />
-                <rect x="58" y="178" width="7" height="130" fill="#08090A" opacity=".85" />
-                <rect x="275" y="178" width="7" height="130" fill="#08090A" opacity=".85" />
+                <rect x="58" y="178" width="7" height="130" fill="#000000" opacity=".85" />
+                <rect x="275" y="178" width="7" height="130" fill="#000000" opacity=".85" />
                 <rect x="10" y="178" width="320" height="130" fill="url(#hkBrush)" opacity=".55" />
                 <rect x="10" y="178" width="320" height="130" fill="url(#hkSheen)" />
                 <rect x="10" y="248" width="320" height="60" fill="url(#hkAO)" />
-                <rect x="10" y="178" width="320" height="3.5" fill="#8A8E94" opacity=".55" />
-                <rect x="10" y="303" width="320" height="3" fill="#4A4E54" opacity=".5" />
+                <rect x="10" y="178" width="320" height="3.5" fill="#8F8F8F" opacity=".55" />
+                <rect x="10" y="303" width="320" height="3" fill="#4B4B4B" opacity=".5" />
               </g>
               <rect
                 x="10.6"
@@ -486,27 +486,27 @@ export function Hero(props: Props) {
 
               <rect x="6" y="146" width="328" height="46" rx="13" fill="url(#hkPlate)" />
               <rect x="6" y="146" width="328" height="46" rx="13" fill="url(#hkPlateSide)" />
-              <rect x="9" y="147.5" width="322" height="5" rx="2.5" fill="#FDFEFE" opacity=".92" />
-              <rect x="8" y="183" width="324" height="8" rx="4" fill="#6E747A" opacity=".5" />
-              <ellipse cx="84" cy="150" rx="23" ry="6" fill="#0B0E12" opacity=".38" filter="url(#hkBlurSm)" />
-              <ellipse cx="256" cy="150" rx="23" ry="6" fill="#0B0E12" opacity=".38" filter="url(#hkBlurSm)" />
+              <rect x="9" y="147.5" width="322" height="5" rx="2.5" fill="#FFFFFF" opacity=".92" />
+              <rect x="8" y="183" width="324" height="8" rx="4" fill="#787878" opacity=".5" />
+              <ellipse cx="84" cy="150" rx="23" ry="6" fill="#000000" opacity=".38" filter="url(#hkBlurSm)" />
+              <ellipse cx="256" cy="150" rx="23" ry="6" fill="#000000" opacity=".38" filter="url(#hkBlurSm)" />
               <rect x="12" y="190" width="316" height="12" fill="#000000" opacity=".38" filter="url(#hkBlurSm)" clipPath="url(#hkBodyClip)" />
 
               <g className="hk-lock__leds">
                 <g>
-                  <circle cx="134" cy="243" r="7" fill="#08090A" opacity=".8" />
+                  <circle cx="134" cy="243" r="7" fill="#000000" opacity=".8" />
                   <circle cx="134" cy="243" r="5" />
                 </g>
                 <g>
-                  <circle cx="158" cy="243" r="7" fill="#08090A" opacity=".8" />
+                  <circle cx="158" cy="243" r="7" fill="#000000" opacity=".8" />
                   <circle cx="158" cy="243" r="5" />
                 </g>
                 <g>
-                  <circle cx="182" cy="243" r="7" fill="#08090A" opacity=".8" />
+                  <circle cx="182" cy="243" r="7" fill="#000000" opacity=".8" />
                   <circle cx="182" cy="243" r="5" />
                 </g>
                 <g>
-                  <circle cx="206" cy="243" r="7" fill="#08090A" opacity=".8" />
+                  <circle cx="206" cy="243" r="7" fill="#000000" opacity=".8" />
                   <circle cx="206" cy="243" r="5" />
                 </g>
               </g>

@@ -66,7 +66,7 @@ export default async function MockInterviewDomainPage({
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 md:py-14">
       <Link
         href="/mock-interviews"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#111111]"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
       >
         <ArrowLeft className="size-3.5" strokeWidth={2} />
         All mock interviews
@@ -78,7 +78,7 @@ export default async function MockInterviewDomainPage({
           {" · "}
           Practice
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#111111]">
+        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#000000]">
           {domain.label}
         </h1>
         {/*
@@ -111,12 +111,12 @@ export default async function MockInterviewDomainPage({
 
       {domain.purpose ? (
         <section
-          className="mt-7 rounded-[16px] border border-[#E0E0E0] bg-[#FFF5F0] p-5"
+          className="mt-7 rounded-[16px] border border-[#E0E0E0] bg-[#EEF6F6] p-5"
           aria-labelledby="purpose"
         >
           <h2
             id="purpose"
-            className="text-[15px] font-semibold text-[#111111]"
+            className="text-[15px] font-semibold text-[#000000]"
           >
             What this interview is for
           </h2>
@@ -127,9 +127,9 @@ export default async function MockInterviewDomainPage({
       ) : null}
 
       {!startable ? (
-        <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#F5F5F5] p-5">
+        <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#F4F4F4] p-5">
 
-          <h2 className="text-[15px] font-semibold text-[#111111]">
+          <h2 className="text-[15px] font-semibold text-[#000000]">
             Not available yet
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-[#4B4B4B]">
@@ -141,7 +141,7 @@ export default async function MockInterviewDomainPage({
         <>
           {pack ? (
             <section className="mt-9" aria-labelledby="covers">
-              <h2 id="covers" className="text-lg font-semibold text-[#111111]">
+              <h2 id="covers" className="text-lg font-semibold text-[#000000]">
                 What it covers
               </h2>
               <ul className="mt-3 space-y-2">
@@ -150,7 +150,7 @@ export default async function MockInterviewDomainPage({
                     key={s.id}
                     className="flex items-start gap-2.5 text-sm text-[#4B4B4B]"
                   >
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#E05226]" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#03535F]" />
                     {s.label}
                   </li>
                 ))}
@@ -160,20 +160,20 @@ export default async function MockInterviewDomainPage({
 
           {rubric ? (
             <section className="mt-9" aria-labelledby="assessed">
-              <h2 id="assessed" className="text-lg font-semibold text-[#111111]">
+              <h2 id="assessed" className="text-lg font-semibold text-[#000000]">
                 What you&rsquo;re assessed on
               </h2>
               <div className="mt-3 space-y-3">
                 {rubric.competencies.map((c) => (
                   <div
                     key={c.id}
-                    className="rounded-[12px] border border-[#E0E0E0] bg-[#FFF5F0] p-4"
+                    className="rounded-[12px] border border-[#E0E0E0] bg-[#EEF6F6] p-4"
                   >
                     <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-[14px] font-semibold text-[#111111]">
+                      <h3 className="text-[14px] font-semibold text-[#000000]">
                         {c.label}
                       </h3>
-                      <span className="shrink-0 text-[12px] font-semibold text-[#E05226]">
+                      <span className="shrink-0 text-[12px] font-semibold text-[#03535F]">
                         {c.weight}%
                       </span>
                     </div>
@@ -187,7 +187,7 @@ export default async function MockInterviewDomainPage({
           ) : null}
 
           <section className="mt-9 rounded-[16px] border border-[#E0E0E0] bg-white p-5">
-            <h2 className="text-[15px] font-semibold text-[#111111]">
+            <h2 className="text-[15px] font-semibold text-[#000000]">
               Before you start
             </h2>
             <ul className="mt-2.5 space-y-1.5 text-sm leading-relaxed text-[#4B4B4B]">
@@ -222,7 +222,7 @@ export default async function MockInterviewDomainPage({
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/login"
-                  className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#C9411C]"
+                  className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
                 >
                   Sign in to practise
                 </Link>

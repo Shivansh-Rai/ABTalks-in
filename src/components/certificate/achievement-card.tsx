@@ -36,7 +36,7 @@ export function AchievementCard({ achievement, verifyBaseUrl }: Props) {
               {isRevoked ? (
                 <Badge variant="destructive">Revoked</Badge>
               ) : (
-                <Badge className="bg-green-600 text-white hover:bg-green-600/90">
+                <Badge className="bg-[#197E23] text-white hover:bg-[#197E23]/90">
                   {achievement.statusLabel}
                 </Badge>
               )}

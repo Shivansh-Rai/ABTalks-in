@@ -39,10 +39,10 @@ function RelaxationBanner({ dayNumber }: { dayNumber: number }) {
   return (
     <div
       role="status"
-      className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
+      className="rounded-lg border border-[#FFEDB0] bg-[#FFEDB0] px-4 py-3 text-sm text-[#AA821D] dark:border-[#AA821D]/50 dark:bg-[#AA821D]/40 dark:text-[#FFEDB0]"
     >
       <p className="font-medium">Catch-up day</p>
-      <p className="mt-1 text-amber-900/90 dark:text-amber-100/90">
+      <p className="mt-1 text-[#AA821D]/90 dark:text-[#FFEDB0]/90">
         You&apos;re submitting for Day {dayNumber}, a past day inside your
         5-day relaxation window. This will mark Day {dayNumber} green on your
         heatmap and heal your current streak.
@@ -70,7 +70,7 @@ export function SubmissionFlow({
 
   useEffect(() => {
     if (step !== "success") return;
-    const colors = ["#E05226", "#C9411C", "#FFECE3", "#34d399", "#fbbf24"];
+    const colors = ["#03535F", "#076573", "#E7F2F3", "#18D39B", "#AA821D"];
     void confetti({
       particleCount: 72,
       spread: 70,
@@ -152,7 +152,7 @@ export function SubmissionFlow({
         <div className="w-full space-y-10 py-4">
           <div className="flex flex-col items-center space-y-6 text-center">
             <div
-              className="flex size-28 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50"
+              className="flex size-28 items-center justify-center rounded-full bg-[#FFEDB0] dark:bg-[#AA821D]/50"
               aria-hidden
             >
               <span className="text-6xl leading-none">🏆</span>
@@ -189,10 +189,10 @@ export function SubmissionFlow({
       <div className="w-full space-y-10 py-2">
         <div className="flex flex-col items-center space-y-6 text-center">
           <div
-            className="flex size-28 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50"
+            className="flex size-28 items-center justify-center rounded-full bg-[#D6F7EC] dark:bg-[#197E23]/50"
             aria-hidden
           >
-            <CheckCircle2 className="size-20 text-emerald-500" strokeWidth={1.75} />
+            <CheckCircle2 className="size-20 text-[#197E23]" strokeWidth={1.75} />
           </div>
           <div className="space-y-3">
             <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">
@@ -208,7 +208,7 @@ export function SubmissionFlow({
           <Card className="border-border/50 p-0 shadow-sm">
             <CardContent className="space-y-3 p-8">
               <Flame
-                className="size-8 text-orange-500"
+                className="size-8 text-[#03535F]"
                 strokeWidth={2}
                 aria-hidden
               />
@@ -223,7 +223,7 @@ export function SubmissionFlow({
           <Card className="border-border/50 p-0 shadow-sm">
             <CardContent className="space-y-3 p-8">
               <CheckCircle
-                className="size-8 text-emerald-500"
+                className="size-8 text-[#197E23]"
                 strokeWidth={2}
                 aria-hidden
               />
@@ -242,7 +242,7 @@ export function SubmissionFlow({
           <Card className="border-border/50 p-0 shadow-sm">
             <CardContent className="space-y-3 p-8">
               <Calendar
-                className="size-8 text-blue-500"
+                className="size-8 text-[#03535F]"
                 strokeWidth={2}
                 aria-hidden
               />

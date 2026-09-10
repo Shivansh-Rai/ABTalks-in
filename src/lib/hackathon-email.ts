@@ -14,12 +14,12 @@ const SOCIALS = {
 };
 
 const C = {
-  text: "#1f2430",
-  muted: "#5b6472",
-  soft: "#8a93a2",
-  accent: "#6366f1",
-  border: "#e6e8ee",
-  panel: "#f5f3ff",
+  text: "#353535",
+  muted: "#626262",
+  soft: "#8F8F8F",
+  accent: "#076573",
+  border: "#E9E9E9",
+  panel: "#EEF6F6",
 };
 
 function eventDetailsBlock(): string {
@@ -44,12 +44,12 @@ function shell(bodyHtml: string): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#F4F4F4;font-family:Inter,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:40px 20px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(20,23,40,0.06);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(53, 53, 53, 0.06);">
         <tr>
-          <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px 32px;text-align:center;">
+          <td style="background:linear-gradient(135deg,#076573,#076573);padding:30px 32px;text-align:center;">
             <img src="${logoUrl}" alt="ABTalks" width="140" style="display:block;margin:0 auto;height:auto;max-width:140px;border:0;outline:none;text-decoration:none;" />
             <p style="color:rgba(255,255,255,0.92);font-size:13px;letter-spacing:0.5px;margin:10px 0 0;">48-Hour AI Hackathon</p>
           </td>
@@ -61,7 +61,7 @@ function shell(bodyHtml: string): string {
           </td>
         </tr>
         <tr>
-          <td style="background-color:#fafbfc;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
+          <td style="background-color:#FFFFFF;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
             <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${C.soft};">Follow ABTalks on AI</p>
             <p style="margin:0;font-size:13px;line-height:1.9;color:${C.muted};">
               LinkedIn: <a href="${SOCIALS.linkedin}" style="color:${C.accent};text-decoration:none;">${SOCIALS.linkedin}</a><br>
