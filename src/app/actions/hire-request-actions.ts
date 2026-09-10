@@ -16,6 +16,10 @@ import {
   placeBulkEngagementRequestSchema,
   placeEngagementRequestSchema,
 } from "@/lib/validations/hire-request";
+import {
+  recordResumeUnlock,
+  viewerKeyFor,
+} from "@/features/profile/profile-events";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -281,7 +285,12 @@ export async function decideEngagementAction(
           decidedAt: new Date(),
           decidedByAdminId: admin.userId ?? null,
         },
-        select: { id: true, status: true },
+        select: {
+          id: true,
+          status: true,
+          recruiterUserId: true,
+          candidateUserId: true,
+        },
       });
 
       if (note) {
@@ -297,6 +306,19 @@ export async function decideEngagementAction(
 
       return row;
     });
+
+    // Plan 120: CONTACT_SHARED is a genuine resume unlock today. Fire-and-
+    // forget after the transaction so a recording failure cannot roll back
+    // the admin decision.
+    if (updated.status === "CONTACT_SHARED" && updated.candidateUserId) {
+      await recordResumeUnlock({
+        candidateUserId: updated.candidateUserId,
+        viewerKey: viewerKeyFor({
+          kind: "user",
+          userId: updated.recruiterUserId,
+        }),
+      });
+    }
 
     revalidatePath("/admin/hire");
     revalidatePath("/hire/requests");
