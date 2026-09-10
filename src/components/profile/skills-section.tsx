@@ -1,25 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SkillProficiency } from "@prisma/client";
 import {
   resolveSkillAction,
   saveSkillsAction,
 } from "@/app/actions/candidate-profile-actions";
-import { PROFILE_QUICK_SKILLS, PROFICIENCY_LABELS } from "@/lib/candidate-vocab";
+import {
+  CANONICAL_SKILL_NAMES,
+  PROFILE_QUICK_SKILLS,
+  canonicalSkillName,
+} from "@/lib/skill-catalog";
 import { SkillCombobox, type SkillOption } from "./skill-combobox";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
-import { PwField, PwInput, PwNote, PwRow } from "./wizard-fields";
+import { PwField, PwInput, PwRow } from "./wizard-fields";
 
 export type SkillRow = {
   skillId: string;
   name: string;
   categoryName: string | null;
-  selfRated: SkillProficiency | null;
-  /** From `SkillEvidence` alone. Never derived from `selfRated`. */
-  verified: boolean;
-  evidenceCount: number;
+};
+
+/** Platform-derived; rendered read-only and never posted back. */
+export type VerifiedSkillView = {
+  skillId: string;
+  name: string;
+  sources: string[];
 };
 
 function mergeCatalog(resolved: readonly SkillOption[]): SkillOption[] {
@@ -27,7 +33,7 @@ function mergeCatalog(resolved: readonly SkillOption[]): SkillOption[] {
     resolved.map((s) => [s.name.toLowerCase(), s] as const),
   );
   const bySlug = new Map(resolved.map((s) => [s.slug, s] as const));
-  return PROFILE_QUICK_SKILLS.map((name) => {
+  return CANONICAL_SKILL_NAMES.map((name) => {
     const slug = name
       .trim()
       .toLowerCase()
@@ -49,15 +55,21 @@ function mergeCatalog(resolved: readonly SkillOption[]): SkillOption[] {
 export function SkillsSection({
   initial,
   catalog,
+  verified,
 }: {
   initial: SkillRow[];
   catalog: SkillOption[];
+  verified: VerifiedSkillView[];
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveSkillsAction, "Skills");
   const [rows, setRows] = useState<SkillRow[]>(initial);
-  const [persistedIds, setPersistedIds] = useState(
+  /* Derived, not mirrored: `initial` is the server's list, and a save calls
+     router.refresh(), so the saved tick follows the database rather than a
+     second copy of it that could drift. */
+  const persistedIds = useMemo(
     () => new Set(initial.map((r) => r.skillId)),
+    [initial],
   );
   const [otherOpen, setOtherOpen] = useState(false);
   const [otherDraft, setOtherDraft] = useState("");
@@ -68,15 +80,13 @@ export function SkillsSection({
   const selectedIds = rows.map((r) => r.skillId).filter((id) => id.length > 0);
   const selectedNames = rows.map((r) => r.name);
   const selectedNameSet = new Set(selectedNames.map((n) => n.toLowerCase()));
-  const quickAdds = options.filter(
+  const quickAdds = options
+    .filter((s) => PROFILE_QUICK_SKILLS.includes(s.name))
+    .filter(
     (s) =>
       !(s.id && selectedIds.includes(s.id)) &&
       !selectedNameSet.has(s.name.toLowerCase()),
   );
-
-  useEffect(() => {
-    setPersistedIds(new Set(initial.map((r) => r.skillId)));
-  }, [initial]);
 
   useEffect(() => {
     setDirty(JSON.stringify(rows) !== JSON.stringify(initial));
@@ -93,9 +103,6 @@ export function SkillsSection({
               skillId: skill.id,
               name: skill.name,
               categoryName: skill.categoryName,
-              selfRated: null,
-              verified: false,
-              evidenceCount: 0,
             },
           ],
     );
@@ -109,7 +116,9 @@ export function SkillsSection({
     setOtherBusy(true);
     setOtherError(null);
     try {
-      const result = await resolveSkillAction({ name: skill.name });
+      const result = await resolveSkillAction({
+        name: canonicalSkillName(skill.name),
+      });
       if (!result.ok) {
         setOtherError(result.message);
         return;
@@ -121,7 +130,7 @@ export function SkillsSection({
   }
 
   async function submitOther() {
-    const name = otherDraft.trim();
+    const name = canonicalSkillName(otherDraft);
     if (!name) return;
     if (selectedNameSet.has(name.toLowerCase())) {
       setOtherDraft("");
@@ -156,35 +165,19 @@ export function SkillsSection({
     setRows((prev) => prev.filter((r) => r.skillId !== skillId));
   }
 
-  function rate(skillId: string, selfRated: SkillProficiency | null) {
-    setRows((prev) =>
-      prev.map((r) => (r.skillId === skillId ? { ...r, selfRated } : r)),
-    );
-  }
-
   return (
     <form
       id={formId}
       onSubmit={async (e) => {
         e.preventDefault();
         const ok = await save({
-          claims: rows.map((r) => ({
-            skillId: r.skillId,
-            selfRated: r.selfRated ?? "",
-          })),
+          claims: rows.map((r) => ({ skillId: r.skillId })),
         });
-        if (ok) {
-          setPersistedIds(new Set(rows.map((r) => r.skillId)));
-          onSaved();
-        }
+        if (ok) onSaved();
       }}
     >
       <PwRow cols={1}>
-        <PwField
-          label="Add a skill"
-          htmlFor="skill-search"
-          helper="Pick from the catalog so recruiters searching that skill can find you."
-        >
+        <PwField label="Add your skills" htmlFor="skill-search">
           <div className="pw-tag-input-row">
             <SkillCombobox
               id="skill-search"
@@ -192,6 +185,14 @@ export function SkillsSection({
               excludeIds={selectedIds}
               excludeNames={selectedNames}
               onSelect={(skill) => void addOrResolve(skill)}
+              onEnterFreeText={(name) =>
+                void addOrResolve({
+                  id: "",
+                  name,
+                  slug: "",
+                  categoryName: null,
+                })
+              }
               onOther={() => {
                 setOtherOpen(true);
                 setOtherError(null);
@@ -266,7 +267,7 @@ export function SkillsSection({
               </div>
             ) : (
               rows.map((row) => (
-                <span key={row.skillId} className="pw-tag-chip">
+                <span key={row.skillId} className="pw-skill-chip">
                   {persistedIds.has(row.skillId) ? (
                     <svg
                       className="pw-skill-saved-tick"
@@ -276,29 +277,7 @@ export function SkillsSection({
                       <path d="M5 13l4 4L19 7" />
                     </svg>
                   ) : null}
-                  <span>{row.name}</span>
-                  <select
-                    aria-label={`Self-rated proficiency for ${row.name}`}
-                    value={row.selfRated ?? ""}
-                    onChange={(e) =>
-                      rate(
-                        row.skillId,
-                        e.target.value
-                          ? (e.target.value as SkillProficiency)
-                          : null,
-                      )
-                    }
-                  >
-                    <option value="">Rate</option>
-                    {Object.values(SkillProficiency).map((p) => (
-                      <option key={p} value={p}>
-                        {PROFICIENCY_LABELS[p] ?? p}
-                      </option>
-                    ))}
-                  </select>
-                  {row.verified ? (
-                    <span className="pw-verified">Verified</span>
-                  ) : null}
+                  <span className="pw-skill-chip-name">{row.name}</span>
                   <button
                     type="button"
                     className="pw-tag-remove"
@@ -316,12 +295,35 @@ export function SkillsSection({
         </PwField>
       </PwRow>
 
-      <PwNote muted>
-        Self-rating is your own assessment. <strong>Verified</strong> means the
-        platform has recorded evidence eg. a passed activity, an assessment, a
-        credential and it is never inferred from what you rate yourself.
-        Removing a skill withdraws the claim; any evidence behind it is kept.
-      </PwNote>
+      {/* ---- Derived from curriculum + completion. Not editable. ---- */}
+      <h3 className="pw-sub-title pw-sub-spaced">ABTalks Verified Skills</h3>
+      <p className="pw-sub-text">
+        These skills are added based on your enrollment and performance in
+        Cohorts and Challenges.
+      </p>
+
+      {verified.length > 0 ? (
+        <div className="pw-tag-list pw-skill-verified-list">
+          {verified.map((skill) => (
+            <span
+              key={skill.skillId}
+              className="pw-skill-chip pw-skill-chip-verified"
+              title={`Earned from ${skill.sources.join(", ")}`}
+            >
+              <span className="pw-skill-verified-tick" aria-hidden>
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <span className="pw-skill-chip-name">{skill.name}</span>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="pw-verified-empty">
+          No verified skills yet.
+        </p>
+      )}
     </form>
   );
 }

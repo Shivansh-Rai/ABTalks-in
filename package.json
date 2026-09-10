@@ -23,6 +23,8 @@
     "db:seed:hackathon-problems": "tsx prisma/seed-hackathon-problems.ts",
     "db:seed:colleges": "tsx prisma/seed-colleges.ts",
     "db:seed:platform-taxonomy": "tsx prisma/seed-platform-taxonomy.ts",
+    "db:seed:curriculum-skills": "tsx prisma/seed-curriculum-skills.ts",
+    "db:dedupe:skills": "tsx prisma/scripts/dedupe-skills.ts",
     "db:seed:databricks": "tsx prisma/seed-databricks.ts",
     "db:seed:ds-architect": "tsx prisma/seed-ds-architect.ts",
     "db:seed:powerbi": "tsx prisma/seed-powerbi.ts",
@@ -62,6 +64,7 @@
     "test:scout": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/scout-agent.test.ts",
     "test:sample": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/sample-card.test.ts",
     "test:visibility": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/visibility.test.ts",
+    "test:demo1-security": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/isolation.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/features/hire/contact-payload.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/lib/rate-limit-policy.test.ts && NODE_OPTIONS=--conditions=react-server tsx src/lib/admin-auth.test.ts",
     "test:interview:grounding": "tsx --conditions=react-server scripts/verify-interview-grounding.ts",
     "test:078-dual-write": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/dual-write.test.ts",
     "test:078-points-writes": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/points-writes.test.ts",
@@ -101,10 +104,9 @@
     "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
     "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",
     "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts",
-    "test:credits": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/credits.test.ts",
-    "db:seed:platform-config": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-platform-config.ts",
-    "db:check:credit-ledger": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/check-credit-ledger.ts",
-    "db:backfill:credit-grants": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/backfill-credit-grants.ts"
+    "test:notification-dispatch": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-service.test.ts",
+    "test:email-delivery": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/email-delivery.test.ts",
+    "test:notification-acceptance": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-acceptance.test.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

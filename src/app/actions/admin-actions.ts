@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { Role, PointsSourceType } from "@prisma/client";
 import { z } from "zod";
 import { prisma, writeClient } from "@/lib/db";
-import { isAdminEmail, requireAdmin } from "@/lib/admin-auth";
+import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { computeStreakStats } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
@@ -432,7 +432,7 @@ export async function grantSynergyAction(input: {
           hackathonParticipants: { take: 1, select: { id: true } },
         },
       });
-      const targetIsAdmin = await isAdminEmail(target?.email);
+      const targetIsAdmin = await hasPlatformAdmin(targetUserId);
       if (
         !target ||
         target.role !== Role.STUDENT ||

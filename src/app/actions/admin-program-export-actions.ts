@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { getInterviewSignals } from "@/features/interview/read-model";
 import { getAtRiskMembers } from "@/features/program/commits";
 import { getCohortCalendarDay } from "@/features/program/progression";
@@ -9,8 +10,19 @@ import { getAdminProgramCohort } from "@/features/program/admin";
 import { cohortIdSchema } from "@/lib/validations/program";
 import { programMember } from "@/repositories/legacy/program-member";
 
+async function requireAdminProgramExport() {
+  const admin = await requireAdmin();
+  const limited = await assertRateLimit({
+    bucket: "EXPORT",
+    subjectId: admin.userId,
+  });
+  if (!limited.ok) return limited;
+  return { ok: true as const, admin };
+}
+
 export async function exportProgramMembersAction(input: unknown) {
-  await requireAdmin();
+  const gate = await requireAdminProgramExport();
+  if (!gate.ok) return gate;
   const parsed = cohortIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid cohort." };
 
@@ -58,7 +70,8 @@ export async function exportProgramMembersAction(input: unknown) {
 }
 
 export async function exportProgramAtRiskAction(input: unknown) {
-  await requireAdmin();
+  const gate = await requireAdminProgramExport();
+  if (!gate.ok) return gate;
   const parsed = cohortIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid cohort." };
 
@@ -98,7 +111,8 @@ export async function exportProgramAtRiskAction(input: unknown) {
 }
 
 export async function exportProgramRecruitersAction() {
-  await requireAdmin();
+  const gate = await requireAdminProgramExport();
+  if (!gate.ok) return gate;
 
   const recruiters = await prisma.recruiterProfile.findMany({
     orderBy: { createdAt: "desc" },
@@ -128,7 +142,8 @@ export async function exportProgramRecruitersAction() {
 }
 
 export async function exportProgramInterviewsAction(input: unknown) {
-  await requireAdmin();
+  const gate = await requireAdminProgramExport();
+  if (!gate.ok) return gate;
   const parsed = cohortIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid cohort." };
 

@@ -289,6 +289,17 @@ export function evaluateHardFilters(
     ) {
       reasons.push("Notice period too long");
     }
+    // Engagement type: ANY overlap. An EMPTY list means the candidate never
+    // said, which must not exclude them — the same convention `availability ==
+    // null` already uses. Only a stated list that omits the asked-for type is a
+    // real mismatch.
+    if (
+      spec.employmentType &&
+      avail.opportunityTypes.length > 0 &&
+      !avail.opportunityTypes.includes(spec.employmentType)
+    ) {
+      reasons.push("Not open to this engagement type");
+    }
     if (
       spec.workMode &&
       avail.preferredWorkMode &&

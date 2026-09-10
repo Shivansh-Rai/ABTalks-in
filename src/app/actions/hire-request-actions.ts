@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/admin-auth";
+import {
+  requireApprovedRecruiterAction,
+  requireRegisteredRecruiterAction,
+} from "@/lib/recruiter-gate";
 import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
 import { persistableSource } from "@/features/hire/track-loaders";
 import {
@@ -16,73 +19,8 @@ import {
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
-async function requireApprovedRecruiter(): Promise<
-  ActionResult<{ userId: string }>
-> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Sign in as an approved recruiter." };
-  }
-  let profile;
-  try {
-    profile = await prisma.recruiterProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { approved: true },
-    });
-  } catch (error) {
-    logger.error("[hire] requireApprovedRecruiter", { error: String(error) });
-    return {
-      ok: false,
-      message: "Could not reach the server. Try again in a moment.",
-    };
-  }
-  if (!profile?.approved) {
-    return { ok: false, message: "Recruiter access not approved yet." };
-  }
-  return { ok: true, data: { userId: session.user.id } };
-}
-
-/**
- * Registered as a recruiter — approved or still waiting on the team.
- *
- * A recruiter who registers *because* they want two specific candidates had
- * their ask dropped on the floor: it lived in sessionStorage until approval,
- * which arrives hours later in a different browser session. The intent that
- * caused the signup was the first thing lost.
- *
- * Letting a pending recruiter record the ask is safe — an engagement request
- * reveals nothing. The candidate stays behind a reference id until an admin
- * explicitly shares contact, and that decision is unchanged. What it buys is
- * that the application and what they came for reach the team together.
- */
-async function requireRegisteredRecruiter(): Promise<
-  ActionResult<{ userId: string; approved: boolean }>
-> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Sign in to place a request." };
-  }
-  let profile;
-  try {
-    profile = await prisma.recruiterProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { approved: true },
-    });
-  } catch (error) {
-    logger.error("[hire] requireRegisteredRecruiter", { error: String(error) });
-    return {
-      ok: false,
-      message: "Could not reach the server. Try again in a moment.",
-    };
-  }
-  if (!profile) {
-    return { ok: false, message: "Register as a recruiter first." };
-  }
-  return {
-    ok: true,
-    data: { userId: session.user.id, approved: profile.approved },
-  };
-}
+const requireApprovedRecruiter = requireApprovedRecruiterAction;
+const requireRegisteredRecruiter = requireRegisteredRecruiterAction;
 
 /**
  * Ask to be introduced to one candidate.

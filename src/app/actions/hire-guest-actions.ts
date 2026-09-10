@@ -12,25 +12,18 @@ import { explainMatches } from "@/features/hire/explain-matches";
 import { toPublicMatch } from "@/features/hire/to-public-match";
 import type { MatchCardData } from "@/components/hire/match-card";
 import type { JobSpec } from "@/lib/validations/hire";
+import {
+  assertRateLimit,
+  rateLimitSubjectFromHeaders,
+} from "@/lib/rate-limit";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const RATE_WINDOW_MS = 15 * 60 * 1000;
-const RATE_MAX = 40;
-const hits = new Map<string, number[]>();
-
-async function rateLimit(): Promise<boolean> {
-  const h = await headers();
-  const ip =
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    h.get("x-real-ip") ||
-    "unknown";
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (recent.length >= RATE_MAX) return false;
-  recent.push(now);
-  hits.set(ip, recent);
-  return true;
+async function guestSearchLimit(): Promise<
+  { ok: true } | { ok: false; message: string }
+> {
+  const subjectId = await rateLimitSubjectFromHeaders(await headers());
+  return assertRateLimit({ bucket: "SEARCH", subjectId });
 }
 
 /**
@@ -52,9 +45,8 @@ export async function sendGuestScoutMessageAction(
     action: "search" | "reset" | null;
   }>
 > {
-  if (!(await rateLimit())) {
-    return { ok: false, message: "Too many questions. Try again in a few minutes." };
-  }
+  const limited = await guestSearchLimit();
+  if (!limited.ok) return limited;
   const parsed = guestScoutMessageSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Invalid message." };
 
@@ -96,9 +88,8 @@ export async function runGuestMatchAction(
 ): Promise<
   ActionResult<{ matches: MatchCardData[]; overallGap: string; matchCount: number }>
 > {
-  if (!(await rateLimit())) {
-    return { ok: false, message: "Too many searches. Try again in a few minutes." };
-  }
+  const limited = await guestSearchLimit();
+  if (!limited.ok) return limited;
   const parsed = guestMatchSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Invalid requirement." };
 
