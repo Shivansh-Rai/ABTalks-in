@@ -360,6 +360,11 @@ model User {
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
 
+  // credits (T-228) — the recruiter credit ledger. Restrict, like pointsLedger:
+  // financial history outlives the convenience of deleting a row.
+  recruiterCreditTransactions CreditTransaction[] @relation("RecruiterCreditTransactions")
+  candidateCreditTransactions CreditTransaction[] @relation("CandidateCreditTransactions")
+
   @@index([deletedAt, createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@index([synergyPoints(sort: Desc)])
@@ -3112,10 +3117,12 @@ model Organization {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  members     OrganizationMember[]
-  talentLists TalentList[]
-  notes       CandidateNote[]
-  experience  CandidateExperience[]
+  members            OrganizationMember[]
+  talentLists        TalentList[]
+  notes              CandidateNote[]
+  experience         CandidateExperience[]
+  creditAccount      CreditAccount?
+  creditTransactions CreditTransaction[]
 
   // SQL: CREATE INDEX ... USING gin (name gin_trgm_ops);
   @@index([isVerified])
@@ -3140,6 +3147,106 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([userId, status])
   @@index([organizationId, role])
+}
+
+/// Runtime, admin-editable platform configuration (T-148 D-17, T-228).
+///
+/// The point of this table is that changing what a recruiter starts with, or
+/// what an unlock costs, is a row edit rather than a deployment. Every value is
+/// read through `src/lib/platform-config.ts`, never with a bare Prisma call —
+/// that file owns the key registry, the bounds and the fallbacks, and it is
+/// what stops a missing row from meaning "free".
+model PlatformConfig {
+  key             String   @id
+  intValue        Int?
+  stringValue     String?
+  /// What this key controls, in words, for whoever edits the row by hand.
+  description     String?
+  updatedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum CreditTransactionType {
+  GRANT_ONBOARDING
+  PURCHASE
+  UNLOCK_CONTACT
+  ADMIN_ADJUSTMENT
+  REFUND
+}
+
+/// Cached credit projection for one recruiter workspace.
+///
+/// **Not the source of truth.** `CreditTransaction` is. This row exists for one
+/// reason: it gives a movement a single row to lock, so a debit can be one
+/// conditional UPDATE (`WHERE balance + amount >= 0`) and concurrent spenders
+/// serialise behind it instead of racing a read-then-write. The invariant
+/// `balance == SUM(CreditTransaction.amount)` holds after every successful
+/// mutation because the same statement writes both.
+///
+/// Nothing outside `src/repositories/credits.ts` may read `balance`. Reads
+/// derive the balance from the ledger — see `getCreditBalance`.
+model CreditAccount {
+  id             String    @id @default(cuid())
+  organizationId String    @unique
+  /// USD minor units (cents). 20000 = $200.00.
+  balance        Int       @default(0)
+  lifetimeEarned Int       @default(0)
+  lifetimeSpent  Int       @default(0)
+  version        Int       @default(0)
+  reconciledAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([balance(sort: Desc)])
+}
+
+/// Append-only, financial-grade credit ledger. The source of truth for what a
+/// recruiter has and where it went.
+///
+/// Rows are never updated and never deleted. A mistake is corrected with a
+/// compensating ADMIN_ADJUSTMENT or REFUND row, so the history stays true and
+/// "who spent what, on whom, when" always has an answer.
+model CreditTransaction {
+  id              String                @id @default(cuid())
+  /// Total order over the ledger. `createdAt` can tie to the millisecond;
+  /// this cannot, so "the latest balance" has exactly one answer.
+  seq             BigInt                @unique @default(autoincrement())
+  organizationId  String
+  /// Whose movement this is. Under T-226 one Organization is one recruiter;
+  /// the id is stored rather than joined so history survives a membership
+  /// change.
+  recruiterUserId String
+  candidateUserId String?
+  /// Signed, USD minor units. Positive = grant/purchase, negative = spend.
+  amount          Int
+  type            CreditTransactionType
+  /// The balance immediately before and after this movement, written by the
+  /// same statement that moved it. balanceAfter - balanceBefore == amount.
+  balanceBefore   Int
+  balanceAfter    Int
+  sourceType      String
+  sourceId        String?
+  /// Deterministic, and the reason double-spend is structurally impossible:
+  /// "grant:onboarding:<orgId>", "unlock:<orgId>:<candidateUserId>".
+  idempotencyKey  String                @unique
+  /// Required. Every credit movement says why it happened, in words.
+  reason          String
+  /// The actor when it is not the recruiter — an admin adjustment, a script.
+  createdByUserId String?
+  metadata        Json?
+  createdAt       DateTime              @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  recruiter    User         @relation("RecruiterCreditTransactions", fields: [recruiterUserId], references: [id], onDelete: Restrict)
+  candidate    User?        @relation("CandidateCreditTransactions", fields: [candidateUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, seq(sort: Desc)])
+  @@index([recruiterUserId, createdAt(sort: Desc)])
+  @@index([candidateUserId])
+  @@index([type, createdAt(sort: Desc)])
 }
 
 /// A named shortlist. Owned by an organization (shared with teammates) or by one
