@@ -72,7 +72,7 @@ const GRADE_PLACEHOLDER: Record<string, string> = {
 
 export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveEducationAction, "Education");
+  const { save } = useSectionSave(saveEducationAction, "Education", "education");
   const { control, register, handleSubmit, watch, setValue, formState } =
     useForm<FormValues>({
       defaultValues: {

@@ -60,6 +60,8 @@
     "test:chatbot-edgecases": "tsx scripts/test-chatbot-edgecases.ts",
     "test:analytics-consent": "tsx src/lib/analytics/consent.test.ts",
     "test:analytics-loader": "tsx src/components/analytics/ga4-loader-logic.test.ts",
+    "test:analytics-events": "tsx src/lib/analytics/events.test.ts",
+    "test:analytics-instrumentation": "tsx src/lib/analytics/instrumentation.test.ts",
     "test:observability:redaction": "tsx src/lib/observability/redaction.test.ts",
     "test:observability:notification": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/lib/observability/notification-failure.test.ts",
     "test:observability:request-id": "cross-env AUTH_SECRET=t259-test-secret tsx src/lib/observability/request-id.test.ts",

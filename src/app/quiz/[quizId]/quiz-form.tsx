@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { submitQuizAction } from "@/app/actions/quiz-actions";
+import { ANALYTICS_EVENTS, scoreBucket } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import type { QuizWithQuestionsPayload } from "@/features/quiz/get-quiz-with-questions";
 import type { QuizSubmitResultRow } from "@/features/quiz/submit-quiz";
 import { cn } from "@/lib/utils";
@@ -28,6 +30,7 @@ type QuestionWithSolution = QuizWithQuestionsPayload["questions"][number] & {
 };
 
 export function QuizForm({ quiz, questions }: Props) {
+  const track = useTrack();
   const [answers, setAnswers] = useState<
     Record<string, "A" | "B" | "C" | "D">
   >({});
@@ -63,6 +66,12 @@ export function QuizForm({ quiz, questions }: Props) {
         toast.error(res.message);
         return;
       }
+      // The server graded it, so the submission is real. Only the band goes to
+      // GA4 — never the score, never the question ids, never an answer
+      // (plan 114 §4.11: "Individual assessment question answers" are excluded).
+      track(ANALYTICS_EVENTS.siteTestCompleted, {
+        score_bucket: scoreBucket(res.score, total),
+      });
       setDone({ score: res.score, results: res.results });
       toast.success("Quiz submitted");
     } finally {
