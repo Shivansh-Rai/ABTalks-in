@@ -11,9 +11,9 @@ export function ProfileStrength({ data }: { data: ProfileCompleteness }) {
   const { score, sections } = data;
   const tone =
     score >= 80
-      ? "text-emerald-500"
+      ? "text-[#197E23]"
       : score >= 50
-        ? "text-amber-500"
+        ? "text-[#AA821D]"
         : "text-muted-foreground";
 
   return (
@@ -40,9 +40,9 @@ export function ProfileStrength({ data }: { data: ProfileCompleteness }) {
             className={cn(
               "h-full rounded-full transition-all duration-500",
               score >= 80
-                ? "bg-emerald-500"
+                ? "bg-[#18D39B]"
                 : score >= 50
-                  ? "bg-amber-500"
+                  ? "bg-[#AA821D]"
                   : "bg-muted-foreground/50",
             )}
             style={{ width: `${score}%` }}
@@ -54,12 +54,12 @@ export function ProfileStrength({ data }: { data: ProfileCompleteness }) {
             <li key={s.key} className="flex items-start gap-2 text-sm">
               {s.complete ? (
                 <CheckCircle2
-                  className="mt-0.5 size-4 shrink-0 text-emerald-500"
+                  className="mt-0.5 size-4 shrink-0 text-[#197E23]"
                   aria-hidden
                 />
               ) : (
                 <AlertTriangle
-                  className="mt-0.5 size-4 shrink-0 text-amber-500"
+                  className="mt-0.5 size-4 shrink-0 text-[#AA821D]"
                   aria-hidden
                 />
               )}

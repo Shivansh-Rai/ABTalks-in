@@ -279,7 +279,7 @@ export default async function AdminHirePage() {
                     className={cn(
                       "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
                       e.status === "SUBMITTED"
-                        ? "bg-amber-500/10 text-amber-900 dark:text-amber-100"
+                        ? "bg-[#AA821D]/10 text-[#AA821D] dark:text-[#FFEDB0]"
                         : e.status === "CONTACT_SHARED"
                           ? "bg-primary/10 text-primary"
                           : "bg-muted text-muted-foreground",

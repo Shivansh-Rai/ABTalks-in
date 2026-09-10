@@ -1,0 +1,13 @@
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "restored_prod", schema "public" at "localhost:5433"
+
+51 migrations found in prisma/migrations
+Your local migration history and the migrations table from your database are different:
+
+The last common migration is: 20260905120000_redemption_structured_address
+
+The migration have not yet been applied:
+20260905120000_talent_request_persistence
+
+The migration from the database are not found locally in prisma/migrations:
+20260908190000_event_scoped_hackathon

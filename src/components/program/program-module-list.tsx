@@ -61,7 +61,7 @@ export function ProgramModuleList({
     <div className="overflow-hidden rounded-[12px] border border-[#E0E0E0] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="flex items-center gap-2.5 px-6 py-5">
         <Monitor className="size-5 shrink-0 text-[#4B4B4B]" aria-hidden />
-        <h3 className="ml-2 font-heading text-xl leading-[26px] font-semibold text-[#E05226]">
+        <h3 className="ml-2 font-heading text-xl leading-[26px] font-semibold text-[#03535F]">
           Modules
         </h3>
       </div>
@@ -80,15 +80,15 @@ export function ProgramModuleList({
             <div key={mod.number} className="border-b border-[#E0E0E0] last:border-b-0">
               <button
                 type="button"
-                className="flex w-full flex-wrap items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-4 focus-visible:outline-none"
+                className="flex w-full flex-wrap items-center justify-between gap-4 px-6 py-5 text-left focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-4 focus-visible:outline-none"
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => toggle(mod.number)}
               >
                 <span className="min-w-0">
                     <span className="block font-heading text-xl leading-[26px] font-semibold">
-                      <span className="text-[#E05226]">Module {mod.number}</span>
-                      <span className="text-[#111111]"> · {mod.title}</span>
+                      <span className="text-[#03535F]">Module {mod.number}</span>
+                      <span className="text-[#000000]"> · {mod.title}</span>
                     </span>
                     <span className="mt-0.5 block text-[14px] leading-[21px] text-[#8F8F8F]">
                       {mod.subtitle}
@@ -110,7 +110,7 @@ export function ProgramModuleList({
                     aria-label={`${mod.title}: ${passed} of ${total} completed`}
                   >
                     <span
-                      className="block h-full rounded-full bg-[#E05226]"
+                      className="block h-full rounded-full bg-[#03535F]"
                       style={{ width: `${pct}%` }}
                     />
                   </span>
@@ -161,18 +161,18 @@ function DayRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 rounded-[12px] border border-transparent bg-[#FBF9F7] px-5 py-4 transition-colors",
-        locked ? "opacity-70" : "hover:border-[#E05226] hover:bg-[#FFECE3]",
+        "flex items-center justify-between gap-4 rounded-[12px] border border-transparent bg-[#F4F4F4] px-5 py-4 transition-colors",
+        locked ? "opacity-70" : "hover:border-[#03535F] hover:bg-[#E7F2F3]",
       )}
     >
       <div className="min-w-0">
         <p className="text-[12px] leading-4 font-semibold uppercase text-[#8F8F8F]">
           Day {day.dayNumber}
         </p>
-        <p className="text-[17px] leading-7 font-semibold text-[#111111]">
+        <p className="text-[17px] leading-7 font-semibold text-[#000000]">
           {day.title}
         </p>
-        <span className="mt-1 inline-flex rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
+        <span className="mt-1 inline-flex rounded-[4px] bg-[#E7F2F3] px-2 py-0.5 text-[12px] font-semibold text-[#03535F]">
           {MISSION_LABEL[day.missionType]}
         </span>
       </div>
@@ -187,13 +187,13 @@ function DayRow({
         )}
         {state === "PASSED" && (
           <>
-            <span className="inline-flex items-center gap-1.5 text-[14px] leading-[21px] font-semibold text-[#2E7D32]">
+            <span className="inline-flex items-center gap-1.5 text-[14px] leading-[21px] font-semibold text-[#197E23]">
               <CheckCircle2 className="size-5" aria-hidden />
               Completed
             </span>
             <Link
               href={`${basePath}/day/${day.dayNumber}`}
-              className="text-[14px] leading-[21px] text-[#E05226] hover:underline"
+              className="text-[14px] leading-[21px] text-[#03535F] hover:underline"
             >
               View
             </Link>
@@ -207,7 +207,7 @@ function DayRow({
             </span>
             <Link
               href={`${basePath}/day/${day.dayNumber}`}
-              className="text-[14px] leading-[21px] text-[#E05226] hover:underline"
+              className="text-[14px] leading-[21px] text-[#03535F] hover:underline"
             >
               View
             </Link>

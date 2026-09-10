@@ -88,10 +88,10 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-stretch">
         <Card className="min-w-0 lg:h-full">
           <CardHeader className="items-center text-center">
-            <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-green-600/10">
-              <ShieldCheck className="size-6 text-green-600" aria-hidden />
+            <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-[#197E23]/10">
+              <ShieldCheck className="size-6 text-[#197E23]" aria-hidden />
             </div>
-            <CardTitle className="text-green-700 dark:text-green-500">
+            <CardTitle className="text-[#197E23] dark:text-[#197E23]">
               Verified Certificate
             </CardTitle>
             <CardDescription>{cert.subtitle}</CardDescription>
@@ -117,7 +117,7 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
               <div>
                 <dt className="text-muted-foreground">Status</dt>
                 <dd>
-                  <Badge className="bg-green-600 text-white hover:bg-green-600/90">
+                  <Badge className="bg-[#197E23] text-white hover:bg-[#197E23]/90">
                     {cert.statusLabel}
                   </Badge>
                 </dd>

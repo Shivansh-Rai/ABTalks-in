@@ -31,7 +31,7 @@ export function RedeemButton({
       <button
         type="button"
         disabled
-        className="h-[31px] w-full rounded-[10px] bg-[#1C283D]/80 text-xs font-semibold text-[#BCBCBC]"
+        className="h-9 w-full cursor-not-allowed rounded-[10px] bg-[#E0E0E0] text-sm font-semibold text-[#8F8F8F]"
       >
         Need {shortfall} more SP
       </button>
@@ -40,10 +40,11 @@ export function RedeemButton({
 
   return (
     <>
+      {/* Clay button, Small size (36 / 16 / 10). */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="h-[31px] w-full rounded-[10px] bg-gradient-to-t from-[#2B1D8C] to-[#7166F0] text-xs font-semibold text-white shadow-[inset_0_4px_4px_rgba(0,0,0,0.25)] transition-opacity hover:opacity-95"
+        className="h-9 w-full rounded-[10px] bg-[#03535F] px-4 text-sm font-semibold text-white transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:bg-[#076573] hover:shadow-[0_4px_12px_rgba(3,83,95,0.26)] active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#03535F]"
       >
         Redeem
       </button>

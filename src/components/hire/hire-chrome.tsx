@@ -37,7 +37,7 @@ export function HireChrome({
   podRows: CartRow[];
   children: React.ReactNode;
 }) {
-  const { approved, openAuth, authEnabled } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const { view, openPod, closePod, openSaved } = useHireDesk();
   const [guestCount, setGuestCount] = useState(0);
   const [overlayCount, setOverlayCount] = useState(0);
@@ -68,7 +68,9 @@ export function HireChrome({
     (/^\/hire\/[^/]+$/.test(pathname ?? "") &&
       pathname !== "/hire/evidence" &&
       pathname !== "/hire/requests" &&
-      pathname !== "/hire/matches");
+      pathname !== "/hire/matches" &&
+      pathname !== "/hire/create-test" &&
+      pathname !== "/hire/assessments");
 
   const [seenCartCount, setSeenCartCount] = useState(cartCount);
   if (cartCount !== seenCartCount) {
@@ -132,6 +134,17 @@ export function HireChrome({
               <span className="hire-hbtn__count">{cartCount}</span>
             )}
           </button>
+          <Link
+            href="/hire/assessments"
+            className={cn(
+              "hire-hbtn",
+              "hire-hbtn--label",
+              pathname === "/hire/assessments" && "is-current",
+            )}
+            aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+          >
+            <span>Assessments</span>
+          </Link>
           {account ? (
             <RecruiterAccountMenu account={account} />
           ) : pendingName ? (
@@ -145,17 +158,15 @@ export function HireChrome({
                 <span className="text-muted-foreground">Pending · Sign out</span>
               </button>
             </form>
-          ) : authEnabled ? (
-            <>
-              <button
-                type="button"
-                onClick={() => openAuth("nav")}
-                className="hire-signin"
-              >
-                Sign in
-              </button>
-            </>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuth("nav")}
+              className="hire-signin"
+            >
+              Sign in
+            </button>
+          )}
         </nav>
       </header>
 

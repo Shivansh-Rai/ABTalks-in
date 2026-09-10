@@ -8,6 +8,8 @@ import {
   registerRecruiterWithOtpAction,
   requestRecruiterOtpAction,
 } from "@/app/actions/recruiter-auth-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +24,7 @@ import { cn } from "@/lib/utils";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm() {
+  const track = useTrack();
   const [step, setStep] = useState<"form" | "code">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
@@ -70,6 +73,7 @@ export function RecruiterRegisterForm() {
         setCode("");
         return;
       }
+      track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
       // Registration is the start of setup, not the end of it (T-226), but it
       // does NOT create a session — the account is written and nothing is
       // signed in. So the next step is signing in, and /talent/login carries on
@@ -97,7 +101,7 @@ export function RecruiterRegisterForm() {
         </div>
 
         {devCode && (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3 py-2 text-xs text-[#AA821D] dark:text-[#FFEDB0]">
             <strong className="font-semibold">Development only.</strong> No mail
             provider is configured, so the code is shown here instead of
             emailed:{" "}

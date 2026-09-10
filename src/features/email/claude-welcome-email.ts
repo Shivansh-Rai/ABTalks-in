@@ -1,6 +1,6 @@
 const WHATSAPP_URL = "https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi";
 
-const LINK_STYLE = "color:#1a56db;text-decoration:underline;";
+const LINK_STYLE = "color:#03535F;text-decoration:underline;";
 
 export function claudeWelcomeEmail(input: {
   fullName: string;
@@ -35,7 +35,7 @@ Founder, ABTalks`;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222;margin:0;padding:16px;">
+<body style="font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#353535;margin:0;padding:16px;">
   <p style="margin:0 0 16px;">Hi ${input.fullName},</p>
   <p style="margin:0 0 16px;">Welcome to ABTalks, and congratulations on joining the 60-Day Claude AI Challenge.</p>
   <p style="margin:0 0 16px;">Over the next 60 days you'll work hands-on with AI, build real projects, and document your work in public. Everything you need to begin GitHub setup, posting guidelines, submission criteria, and how standout participants are recognised is in the attached Challenge Guidelines. Please read it carefully before you start; following it is essential for your work to count.</p>

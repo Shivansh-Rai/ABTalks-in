@@ -12,8 +12,8 @@ export function RulesSlide() {
       className="rounded-3xl border bg-card/80 p-5 shadow-lg backdrop-blur-sm md:p-6"
     >
       <motion.div className="flex items-center gap-3">
-        <motion.div className="rounded-lg bg-amber-500/10 p-1.5">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
+        <motion.div className="rounded-lg bg-[#AA821D]/10 p-1.5">
+          <AlertTriangle className="h-4 w-4 text-[#AA821D]" />
         </motion.div>
         <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
           Community Rules
@@ -29,10 +29,10 @@ export function RulesSlide() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          className="rounded-xl border border-red-500/20 bg-red-500/5 p-3"
+          className="rounded-xl border border-[#D92D20]/20 bg-[#D92D20]/5 p-3"
         >
           <motion.div className="flex items-start gap-3">
-            <ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+            <ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-[#D92D20]" />
             <motion.div>
               <h3 className="font-display text-sm font-semibold">
                 Foul Language or Harassment
@@ -50,10 +50,10 @@ export function RulesSlide() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"
+          className="rounded-xl border border-[#AA821D]/20 bg-[#AA821D]/5 p-3"
         >
           <motion.div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#AA821D]" />
             <motion.div>
               <h3 className="font-display text-sm font-semibold">
                 Cheating or Platform Misuse

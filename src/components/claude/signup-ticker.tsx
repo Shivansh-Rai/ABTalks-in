@@ -32,7 +32,7 @@ export function SignupTicker({ signups, isPaused }: Props) {
   const current = signups[currentIndex];
 
   return (
-    <div className="relative z-10 shrink-0 border-b bg-[#FFF5F0] backdrop-blur-sm">
+    <div className="relative z-10 shrink-0 border-b bg-[#EEF6F6] backdrop-blur-sm">
       <div className="container mx-auto flex h-10 items-center justify-center overflow-hidden px-4 md:px-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -54,7 +54,7 @@ export function SignupTicker({ signups, isPaused }: Props) {
               </>
             ) : null}
             <span className="text-muted-foreground">just joined</span>
-            <span className="ml-2 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            <span className="ml-2 h-1.5 w-1.5 animate-pulse rounded-full bg-[#18D39B]" />
           </motion.div>
         </AnimatePresence>
       </div>

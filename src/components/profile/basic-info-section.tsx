@@ -79,7 +79,11 @@ export function BasicInfoSection({
 }) {
   const router = useRouter();
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveBasicInfoAction, "Basic information");
+  const { save } = useSectionSave(
+    saveBasicInfoAction,
+    "Basic information",
+    "basic",
+  );
   const {
     register,
     handleSubmit,

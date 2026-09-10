@@ -101,6 +101,7 @@ export async function buildHackathonDossierSet(): Promise<HackathonDossierSet> {
             preferredWorkMode: av.preferredWorkMode,
             preferredCities: av.preferredCities,
             openToRelocate: av.openToRelocate,
+            opportunityTypes: av.opportunityTypes,
           }
         : null,
       compensation: { declared: null, estimate: null },

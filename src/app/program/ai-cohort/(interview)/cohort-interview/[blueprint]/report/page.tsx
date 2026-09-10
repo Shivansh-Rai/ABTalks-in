@@ -80,7 +80,7 @@ export default async function CohortInterviewReportPage({
             <form action={reattemptAction}>
               <button
                 type="submit"
-                className="inline-flex h-10 items-center rounded-[10px] border border-gray-300 bg-gray-100 px-4 text-[14px] font-semibold text-gray-800 transition-colors hover:bg-gray-200"
+                className="inline-flex h-10 items-center rounded-[10px] border border-[#D2D2D2] bg-[#E9E9E9] px-4 text-[14px] font-semibold text-[#353535] transition-colors hover:bg-[#E0E0E0]"
               >
                 Reattempt (Demo)
               </button>
@@ -109,7 +109,7 @@ export default async function CohortInterviewReportPage({
             <form action={reattemptAction}>
               <button
                 type="submit"
-                className="inline-flex h-10 items-center rounded-[10px] border border-gray-300 bg-gray-100 px-4 text-[14px] font-semibold text-gray-800 transition-colors hover:bg-gray-200"
+                className="inline-flex h-10 items-center rounded-[10px] border border-[#D2D2D2] bg-[#E9E9E9] px-4 text-[14px] font-semibold text-[#353535] transition-colors hover:bg-[#E0E0E0]"
               >
                 Reattempt (Demo)
               </button>

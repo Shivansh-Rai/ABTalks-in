@@ -8,6 +8,8 @@ import {
   isNewPointsWritesEnabled,
 } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
+import { captureFailure } from "@/lib/observability/capture";
+import { logMoney } from "@/lib/observability/domain-log";
 import { dualWritePoints } from "@/repositories/dual-write";
 
 type PointsReadClient = Pick<typeof prisma, "pointsAccount" | "user">;
@@ -230,10 +232,37 @@ export async function hasEarnedSubmissionPointsOnIstDate(
   return hit !== null;
 }
 
+/**
+ * T-259 — the money path.
+ *
+ * Every credit and every debit in the product goes through this function, in
+ * both the legacy-authoritative and 078-authoritative modes, so this is the one
+ * place worth instrumenting: a redemption, a referral payout, an admin grant
+ * and a submission award all show up as the same lifecycle here.
+ *
+ * Logged fields are the ones needed to reconstruct a disputed balance —
+ * `userId`, signed amount, source, `idempotencyKey` (which is what makes a
+ * duplicate identifiable) and the resulting balance. `reason` is free text
+ * composed by the caller, so it is deliberately NOT logged: nothing stops a
+ * future caller putting an address or a name in it.
+ */
 export async function applyPointsChange(
   tx: Tx,
   input: ApplyPointsInput,
 ): Promise<ApplyPointsResult> {
+  // `op` without the outcome; `logMoney` appends it, so the emitted event is
+  // `credit.debit.attempt` / `.success` / `.failed`. See `domain-log.ts`.
+  const op = input.mode === "credit" ? "credit" : "credit.debit";
+  const base = {
+    userId: input.userId,
+    amount: input.amount,
+    mode: input.mode,
+    sourceType: input.sourceType,
+    sourceId: input.sourceId ?? undefined,
+    idempotencyKey: input.idempotencyKey,
+    writesAuthoritative: isNewPointsWritesEnabled() ? "new" : "legacy",
+  };
+
   if (input.mode === "credit" && input.amount < 0) {
     throw new Error("applyPointsChange credit requires a non-negative amount");
   }
@@ -241,16 +270,58 @@ export async function applyPointsChange(
     throw new Error("applyPointsChange debit requires a non-positive amount");
   }
 
-  const user = await tx.user.findUnique({
-    where: { id: input.userId },
-    select: { id: true },
-  });
-  if (!user) return { ok: false, reason: "not_found" };
+  logMoney(op, { ...base, outcome: "attempt" });
 
-  if (!isNewPointsWritesEnabled()) {
-    return applyLegacyAuthoritative(tx, input);
+  let result: ApplyPointsResult;
+  try {
+    // The existence check is inside the try as well: a connection that drops
+    // here is the same incident as one that drops mid-write, and it used to be
+    // the one money failure that escaped without a report.
+    const user = await tx.user.findUnique({
+      where: { id: input.userId },
+      select: { id: true },
+    });
+    if (!user) {
+      logMoney(op, { ...base, outcome: "failed", reason: "not_found" });
+      return { ok: false, reason: "not_found" };
+    }
+
+    result = isNewPointsWritesEnabled()
+      ? await applyNewAuthoritative(tx, input)
+      : await applyLegacyAuthoritative(tx, input);
+  } catch (error) {
+    // The transaction is about to roll back. Reporting here rather than at the
+    // caller keeps every money failure in one shape, whichever surface it came
+    // from, and the caller is free to report its own domain-level outcome too.
+    await captureFailure(error, {
+      event: `${op}.failed`,
+      message: "points change threw",
+      tags: {
+        userId: input.userId,
+        sourceType: input.sourceType,
+        idempotencyKey: input.idempotencyKey,
+      },
+      extra: { area: "money", op, outcome: "failed", ...base },
+    });
+    throw error;
   }
-  return applyNewAuthoritative(tx, input);
+
+  if (!result.ok) {
+    // A business no (insufficient balance), not a fault - `refused`, not
+    // `failed`, so an alert on money faults does not fire on a normal decline.
+    logMoney(op, { ...base, outcome: "refused", reason: result.reason });
+    return result;
+  }
+
+  logMoney(op, {
+    ...base,
+    outcome: "success",
+    appliedAmount: result.appliedAmount,
+    newBalance: result.newBalance,
+    shortfall: result.shortfall,
+    duplicate: result.duplicate,
+  });
+  return result;
 }
 
 async function applyLegacyAuthoritative(
@@ -500,18 +571,43 @@ async function insertLedger(
   amount: number,
   metadata?: Prisma.InputJsonValue,
 ): Promise<void> {
-  await tx.pointsTransaction.create({
-    data: {
+  // T-259: the append-only ledger is the financial record of the product, so
+  // its row id is logged on success - that id is what an audit follows.
+  try {
+    const row = await tx.pointsTransaction.create({
+      data: {
+        userId: input.userId,
+        amount,
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        idempotencyKey: input.idempotencyKey,
+        reason: input.reason,
+        createdByUserId: input.createdByUserId,
+        metadata: metadata ?? undefined,
+      },
+      select: { id: true },
+    });
+    logMoney("ledger.write", {
+      outcome: "success",
+      ledgerEntryId: row.id,
       userId: input.userId,
       amount,
       sourceType: input.sourceType,
-      sourceId: input.sourceId,
       idempotencyKey: input.idempotencyKey,
-      reason: input.reason,
-      createdByUserId: input.createdByUserId,
-      metadata: metadata ?? undefined,
-    },
-  });
+    });
+  } catch (error) {
+    await captureFailure(error, {
+      event: "ledger.write.failed",
+      message: "ledger write failed",
+      tags: {
+        userId: input.userId,
+        sourceType: input.sourceType,
+        idempotencyKey: input.idempotencyKey,
+      },
+      extra: { area: "money", op: "ledger.write", outcome: "failed", amount },
+    });
+    throw error;
+  }
 }
 
 async function accountBalance(tx: Tx, userId: string): Promise<number> {

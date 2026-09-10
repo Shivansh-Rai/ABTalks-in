@@ -178,15 +178,15 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
   "in": (
     <>
       <rect width="24" height="16" fill="#fff"/>
-      <rect width="24" height="5.33" fill="#FF9933"/>
-      <rect y="10.67" width="24" height="5.33" fill="#138808"/>
-      <circle cx="12" cy="8" r="2.1" fill="none" stroke="#0A3D91" strokeWidth=".9"/>
+      <rect width="24" height="5.33" fill="#076573"/>
+      <rect y="10.67" width="24" height="5.33" fill="#197E23"/>
+      <circle cx="12" cy="8" r="2.1" fill="none" stroke="#03535F" strokeWidth=".9"/>
     </>
   ),
   "us": (
     <>
       <rect width="24" height="16" fill="#fff"/>
-      <g fill="#B22234">
+      <g fill="#D92D20">
         <rect width="24" height="1.23"/>
         <rect y="2.46" width="24" height="1.23"/>
         <rect y="4.92" width="24" height="1.23"/>
@@ -195,7 +195,7 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
         <rect y="12.31" width="24" height="1.23"/>
         <rect y="14.77" width="24" height="1.23"/>
       </g>
-      <rect width="10" height="8.6" fill="#3C3B6E"/>
+      <rect width="10" height="8.6" fill="#03535F"/>
       <g fill="#fff">
         <circle cx="2" cy="2" r=".62"/>
         <circle cx="5" cy="2" r=".62"/>
@@ -210,44 +210,44 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
   ),
   "gb": (
     <>
-      <rect width="24" height="16" fill="#012169"/>
+      <rect width="24" height="16" fill="#03535F"/>
       <path d="M0 0 24 16M24 0 0 16" stroke="#fff" strokeWidth="3.2"/>
-      <path d="M0 0 24 16M24 0 0 16" stroke="#C8102E" strokeWidth="1.9"/>
+      <path d="M0 0 24 16M24 0 0 16" stroke="#D92D20" strokeWidth="1.9"/>
       <path d="M12 0v16M0 8h24" stroke="#fff" strokeWidth="5.3"/>
-      <path d="M12 0v16M0 8h24" stroke="#C8102E" strokeWidth="3.2"/>
+      <path d="M12 0v16M0 8h24" stroke="#D92D20" strokeWidth="3.2"/>
     </>
   ),
   "de": (
     <>
       <rect width="24" height="5.33" fill="#000"/>
-      <rect y="5.33" width="24" height="5.33" fill="#DD0000"/>
-      <rect y="10.67" width="24" height="5.33" fill="#FFCE00"/>
+      <rect y="5.33" width="24" height="5.33" fill="#D92D20"/>
+      <rect y="10.67" width="24" height="5.33" fill="#AA821D"/>
     </>
   ),
   "sct": (
     <>
-      <rect width="24" height="16" fill="#0065BD"/>
+      <rect width="24" height="16" fill="#03535F"/>
       <path d="M0 0 24 16M24 0 0 16" stroke="#fff" strokeWidth="3.4"/>
     </>
   ),
   "ae": (
     <>
       <rect width="24" height="16" fill="#fff"/>
-      <rect width="24" height="5.33" fill="#00732F"/>
+      <rect width="24" height="5.33" fill="#197E23"/>
       <rect y="10.67" width="24" height="5.33" fill="#000"/>
-      <rect width="6.2" height="16" fill="#FF0000"/>
+      <rect width="6.2" height="16" fill="#D92D20"/>
     </>
   ),
   "ch": (
     <>
-      <rect width="24" height="16" fill="#DA291C"/>
+      <rect width="24" height="16" fill="#D92D20"/>
       <path d="M11 4h2v3.2h3.2v2H13V12h-2V9.2H7.8v-2H11z" fill="#fff"/>
     </>
   ),
   "sg": (
     <>
       <rect width="24" height="16" fill="#fff"/>
-      <rect width="24" height="8" fill="#ED2939"/>
+      <rect width="24" height="8" fill="#D92D20"/>
       <path d="M7.9 4a2.9 2.9 0 100 5.4 3.3 3.3 0 110-5.4z" fill="#fff"/>
       <g fill="#fff">
         <circle cx="10.4" cy="3.3" r=".62"/>

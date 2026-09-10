@@ -15,19 +15,19 @@ import type { CatalogueEntry } from "@/features/interview/platform/service";
  *
  * Palette is the ABTalks interview palette, taken from
  * `components/program/cohort-interview-card.tsx` so the two interview surfaces
- * read as one product: #E05226 primary, #FFF5F0 card, #FFECE3 accent,
- * #1A7F37 available, #E0E0E0 border.
+ * read as one product: #03535F primary, #EEF6F6 card, #E7F2F3 accent,
+ * #197E23 available, #E0E0E0 border.
  */
 
 const BTN =
-  "inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors duration-200 ease-out hover:bg-[#C9411C] focus-visible:ring-2 focus-visible:ring-[#E05226] focus-visible:ring-offset-2 focus-visible:outline-none";
+  "inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors duration-200 ease-out hover:bg-[#076573] focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-2 focus-visible:outline-none";
 
 const BADGE_AVAILABLE =
-  "inline-flex items-center rounded-[4px] border border-[#1A7F37]/40 bg-[#1A7F37]/10 px-2.5 py-1 text-[11px] font-semibold text-[#1A7F37]";
+  "inline-flex items-center rounded-[4px] border border-[#197E23]/40 bg-[#197E23]/10 px-2.5 py-1 text-[11px] font-semibold text-[#197E23]";
 const BADGE_SOON =
-  "inline-flex items-center rounded-[4px] border border-[#E0E0E0] bg-[#F5F5F5] px-2.5 py-1 text-[11px] font-semibold text-[#8F8F8F]";
+  "inline-flex items-center rounded-[4px] border border-[#E0E0E0] bg-[#F4F4F4] px-2.5 py-1 text-[11px] font-semibold text-[#8F8F8F]";
 const BADGE_TAKEN =
-  "inline-flex items-center gap-1 rounded-[4px] border border-[#E05226]/40 bg-[#FFECE3] px-2.5 py-1 text-[11px] font-semibold text-[#E05226]";
+  "inline-flex items-center gap-1 rounded-[4px] border border-[#03535F]/40 bg-[#E7F2F3] px-2.5 py-1 text-[11px] font-semibold text-[#03535F]";
 
 function minutes(seconds: number): string {
   return `${Math.round(seconds / 60)} min`;
@@ -60,7 +60,7 @@ function DomainCard({
       className={cn(
         "group flex flex-col rounded-[16px] border p-5 transition-colors duration-200 ease-out",
         live
-          ? "border-[#E0E0E0] bg-[#FFF5F0] hover:border-[#E05226]/40"
+          ? "border-[#E0E0E0] bg-[#EEF6F6] hover:border-[#03535F]/40"
           : "border-[#E0E0E0] bg-white",
       )}
     >
@@ -69,8 +69,8 @@ function DomainCard({
           className={cn(
             "flex size-7 shrink-0 items-center justify-center rounded-[6px] transition-colors duration-200",
             live
-              ? "bg-[#FFECE3] text-[#E05226] group-hover:bg-[#FFDBC9]"
-              : "bg-[#F5F5F5] text-[#8F8F8F]",
+              ? "bg-[#E7F2F3] text-[#03535F] group-hover:bg-[#D4EBEC]"
+              : "bg-[#F4F4F4] text-[#8F8F8F]",
           )}
         >
           {live ? (
@@ -84,7 +84,7 @@ function DomainCard({
         </span>
       </div>
 
-      <h3 className="text-[15px] font-semibold text-[#111111] md:text-base">
+      <h3 className="text-[15px] font-semibold text-[#000000] md:text-base">
         {entry.label}
       </h3>
       <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[#4B4B4B]">
@@ -129,7 +129,7 @@ function DomainCard({
             Take interview &rarr;
           </Link>
         ) : (
-          <span className="inline-flex h-11 w-full items-center justify-center rounded-[12px] border border-[#E0E0E0] bg-[#F5F5F5] px-6 text-sm font-semibold text-[#8F8F8F]">
+          <span className="inline-flex h-11 w-full items-center justify-center rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] px-6 text-sm font-semibold text-[#8F8F8F]">
             Not available yet
           </span>
         )}
@@ -182,8 +182,8 @@ export function MockInterviewCatalog({
             className={cn(
               "inline-flex h-9 items-center rounded-[10px] border px-4 text-[13px] font-medium transition-colors duration-200",
               family === f
-                ? "border-[#E05226] bg-[#FFECE3] text-[#E05226]"
-                : "border-[#E0E0E0] bg-white text-[#4B4B4B] hover:border-[#8F8F8F] hover:text-[#111111]",
+                ? "border-[#03535F] bg-[#E7F2F3] text-[#03535F]"
+                : "border-[#E0E0E0] bg-white text-[#4B4B4B] hover:border-[#8F8F8F] hover:text-[#000000]",
             )}
           >
             {f}

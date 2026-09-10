@@ -112,13 +112,13 @@ export function StageSystemCheck({
   function StatusIcon({ status }: { status: CheckStatus }) {
     if (status === "pass")
       return (
-        <span className="flex size-6 items-center justify-center bg-emerald-500/15 text-emerald-600">
+        <span className="flex size-6 items-center justify-center bg-[#18D39B]/15 text-[#197E23]">
           <Check className="size-3.5" strokeWidth={3} />
         </span>
       );
     if (status === "fail")
       return (
-        <span className="flex size-6 items-center justify-center bg-red-500/15 text-red-500">
+        <span className="flex size-6 items-center justify-center bg-[#D92D20]/15 text-[#D92D20]">
           <X className="size-3.5" strokeWidth={3} />
         </span>
       );

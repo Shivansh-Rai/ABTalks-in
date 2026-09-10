@@ -85,14 +85,14 @@ export function ChallengeDayView({
   };
 
   return (
-    <div className="bg-[#FBF9F7] px-5 py-8 font-content text-[#111111] sm:px-8">
+    <div className="bg-[#F4F4F4] px-5 py-8 font-content text-[#000000] sm:px-8">
       <div className="mx-auto w-full max-w-[1500px] space-y-5">
         <nav aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-2 text-sm">
             <li>
               <Link
                 href="/dashboard"
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 Dashboard
               </Link>
@@ -103,7 +103,7 @@ export function ChallengeDayView({
             <li>
               <Link
                 href={backHref}
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 {track.label}
               </Link>
@@ -111,18 +111,18 @@ export function ChallengeDayView({
             <li aria-hidden className="text-[#8F8F8F]">
               &gt;
             </li>
-            <li aria-current="page" className="font-semibold text-[#111111]">
+            <li aria-current="page" className="font-semibold text-[#000000]">
               Day {dayNumber}
             </li>
           </ol>
         </nav>
 
         <header>
-          <p className="font-heading text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
+          <p className="font-heading text-[13px] leading-[18px] font-semibold uppercase text-[#03535F]">
             Day {dayNumber}
           </p>
           <p className="mt-1 text-xs text-[#8F8F8F]">{content.module}</p>
-          <h1 className="mt-1.5 max-w-3xl font-heading text-xl font-semibold tracking-tight text-[#111111] md:text-2xl">
+          <h1 className="mt-1.5 max-w-3xl font-heading text-xl font-semibold tracking-tight text-[#000000] md:text-2xl">
             {content.title}
           </h1>
           <p className="mt-2 text-[17px] leading-7 text-[#4B4B4B] italic">
@@ -130,7 +130,7 @@ export function ChallengeDayView({
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <ToolChip label={content.difficulty} />
-            <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
+            <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#E7F2F3] px-2 py-0.5 text-[12px] font-semibold text-[#03535F]">
               <Clock className="size-3" aria-hidden />~{content.estimatedMinutes}{" "}
               min
             </span>
@@ -143,11 +143,11 @@ export function ChallengeDayView({
             <button
               type="button"
               onClick={() => void handleCopyPrompt()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0E0E0] px-3 py-1.5 text-sm font-medium text-[#111111] transition-colors hover:border-[#E05226] hover:text-[#E05226]"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0E0E0] px-3 py-1.5 text-sm font-medium text-[#000000] transition-colors hover:border-[#03535F] hover:text-[#03535F]"
             >
               {copiedPrompt ? (
                 <>
-                  <Check className="h-4 w-4 text-[#2E7D32]" />
+                  <Check className="h-4 w-4 text-[#197E23]" />
                   Copied
                 </>
               ) : (
@@ -158,7 +158,7 @@ export function ChallengeDayView({
               )}
             </button>
           </div>
-          <pre className="overflow-x-auto rounded-lg border border-[#E0E0E0] bg-[#FBF9F7] p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-[#4B4B4B] md:text-sm">
+          <pre className="overflow-x-auto rounded-lg border border-[#E0E0E0] bg-[#F4F4F4] p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-[#4B4B4B] md:text-sm">
             {content.promptTemplate}
           </pre>
         </DaySection>
@@ -209,7 +209,7 @@ export function ChallengeDayView({
         {content.tool ? (
           <DaySection title="Tool of the Day" icon={<Wrench aria-hidden />}>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-[#111111]">
+              <span className="font-semibold text-[#000000]">
                 {content.tool.name}
               </span>
               <ToolChip label={content.tool.type} />
@@ -217,14 +217,14 @@ export function ChallengeDayView({
             <p className="mb-4 text-sm leading-relaxed text-[#4B4B4B]">
               {content.tool.description}
             </p>
-            <div className="mb-4 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4">
-              <h3 className="mb-3 text-sm font-semibold text-[#111111]">
+            <div className="mb-4 rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4">
+              <h3 className="mb-3 text-sm font-semibold text-[#000000]">
                 {content.tool.setupTitle}
               </h3>
               <ol className="space-y-2">
                 {content.tool.setupSteps.map((step, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFECE3] text-[10px] font-bold text-[#E05226]">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E7F2F3] text-[10px] font-bold text-[#03535F]">
                       {i + 1}
                     </span>
                     <span className="flex-1 text-sm text-[#4B4B4B]">{step}</span>
@@ -248,10 +248,10 @@ export function ChallengeDayView({
           <ol className="space-y-3">
             {content.task.steps.map((step, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFECE3] text-sm font-bold text-[#E05226]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E7F2F3] text-sm font-bold text-[#03535F]">
                   {i + 1}
                 </span>
-                <span className="pt-0.5 text-sm leading-relaxed text-[#111111]">
+                <span className="pt-0.5 text-sm leading-relaxed text-[#000000]">
                   {step}
                 </span>
               </li>
@@ -266,11 +266,11 @@ export function ChallengeDayView({
           <ol className="space-y-2.5">
             {content.learning.bullets.map((bullet, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FFECE3] text-xs font-bold text-[#E05226]">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E7F2F3] text-xs font-bold text-[#03535F]">
                   {i + 1}
                 </span>
                 <div className="flex-1 text-sm">
-                  <span className="font-semibold text-[#111111]">
+                  <span className="font-semibold text-[#000000]">
                     {bullet.label}:
                   </span>
                   <span className="text-[#4B4B4B]"> {bullet.text}</span>
@@ -298,7 +298,7 @@ export function ChallengeDayView({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-[#E05226] hover:underline"
+                      className="text-sm text-[#03535F] hover:underline"
                     >
                       <span className="break-all">{label}</span>
                     </a>
@@ -314,7 +314,7 @@ export function ChallengeDayView({
           <p className="mb-3 text-sm leading-relaxed text-[#4B4B4B]">
             {content.engagement.description}
           </p>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-[4px] bg-[#FFECE3] px-3 py-1 font-mono text-xs font-semibold text-[#E05226]">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-[4px] bg-[#E7F2F3] px-3 py-1 font-mono text-xs font-semibold text-[#03535F]">
             <Tag className="h-3 w-3" />
             {content.engagement.hashtag}
           </div>
@@ -341,7 +341,7 @@ export function ChallengeDayView({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#0A66C2" }}
+                style={{ backgroundColor: "#03535F" }}
               >
                 {chip.label}
               </a>

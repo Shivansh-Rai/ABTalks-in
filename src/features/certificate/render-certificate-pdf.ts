@@ -1,11 +1,8 @@
 import "server-only";
-import {
-  PDFDocument,
-  StandardFonts,
-  rgb,
-  type PDFFont,
-  type PDFPage,
-} from "pdf-lib";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
 import type { CertificateType } from "@prisma/client";
 import {
@@ -15,6 +12,22 @@ import {
   type HackathonCertificateVariant,
 } from "./constants";
 import { loadCertificateTemplate } from "./template-source";
+
+/**
+ * Design System v2 faces: Outfit for the stamped name / ID (headings), Inter
+ * for dates and the verify line. Loaded from public/fonts/pdf, the same place
+ * relative to the project root as the certificate templates themselves.
+ */
+const fontBytes = new Map<string, Uint8Array>();
+async function loadFont(name: string): Promise<Uint8Array> {
+  const hit = fontBytes.get(name);
+  if (hit) return hit;
+  const bytes = new Uint8Array(
+    await readFile(path.resolve(process.cwd(), "public/fonts/pdf", name)),
+  );
+  fontBytes.set(name, bytes);
+  return bytes;
+}
 
 export function toWinAnsiSafe(name: string): string {
   return name
@@ -35,14 +48,14 @@ function drawCalibrationGrid(page: PDFPage, font: PDFFont): void {
       start: { x: width * r, y: 0 },
       end: { x: width * r, y: height },
       thickness: 0.3,
-      color: rgb(1, 0, 0),
+      color: rgb(0.851, 0.176, 0.125), // #D92D20 — x axis
       opacity: 0.35,
     });
     page.drawLine({
       start: { x: 0, y: height * r },
       end: { x: width * r, y: height * r },
       thickness: 0.3,
-      color: rgb(0, 0, 1),
+      color: rgb(0.012, 0.325, 0.373), // #03535F — y axis
       opacity: 0.35,
     });
     page.drawText(r.toFixed(2), {
@@ -50,14 +63,14 @@ function drawCalibrationGrid(page: PDFPage, font: PDFFont): void {
       y: 3,
       size: 5,
       font,
-      color: rgb(1, 0, 0),
+      color: rgb(0.851, 0.176, 0.125),
     });
     page.drawText(r.toFixed(2), {
       x: 3,
       y: height * r + 1,
       size: 5,
       font,
-      color: rgb(0, 0, 1),
+      color: rgb(0.012, 0.325, 0.373),
     });
   }
 }
@@ -97,8 +110,13 @@ export async function renderCertificatePdf(input: {
   }
   const { width, height } = page.getSize();
 
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  pdfDoc.registerFontkit(fontkit);
+  const boldFont = await pdfDoc.embedFont(
+    await loadFont("outfit-latin-700-normal.woff"),
+  );
+  const regularFont = await pdfDoc.embedFont(
+    await loadFont("inter-latin-400-normal.woff"),
+  );
 
   function drawStamp(text: string, stamp: CertificateTextStamp) {
     const font = stamp.bold ? boldFont : regularFont;

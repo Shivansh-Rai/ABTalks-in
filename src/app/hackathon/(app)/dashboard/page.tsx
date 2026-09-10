@@ -66,7 +66,7 @@ export default async function HackathonDashboardPage() {
             </>
           ) : null}
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
+            <h2 className="font-heading text-[13px] leading-[18px] font-semibold uppercase tracking-[0.16em] text-[#03535F]">
               Vicodathon Winners
             </h2>
             <div className="space-y-4">
@@ -83,11 +83,11 @@ export default async function HackathonDashboardPage() {
   if (!reg) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <section className="rounded-2xl border border-[#E0E0E0] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-black">
             Registration is closed
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          <p className="mt-3 text-sm leading-relaxed text-[#626262]">
             Thanks for your interest. Registration for this hackathon has
             closed. Follow ABTalks for the next event.
           </p>
@@ -117,10 +117,10 @@ export default async function HackathonDashboardPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 pb-28 md:pb-10">
       <header className="mb-8 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-black">
           Welcome, {firstName}
         </h1>
-        <span className="rounded-md border border-[#7364E6]/40 bg-[#7364E6]/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#C4B5FD]">
+        <span className="rounded-md border border-[#03535F]/30 bg-[#E7F2F3] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#03535F]">
           {entryChip}
         </span>
       </header>
@@ -143,7 +143,7 @@ export default async function HackathonDashboardPage() {
           canManage={canManage}
         />
         {reg.me.isLeader && reg.team.entryType === "TEAM" ? (
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#626262]">
             {rosterLocked
               ? `Team changes closed on ${HACKATHON.rosterLockLabel}. Message the organizers on WhatsApp if you need a change.`
               : `You can add or remove teammates until ${HACKATHON.rosterLockLabel}.`}

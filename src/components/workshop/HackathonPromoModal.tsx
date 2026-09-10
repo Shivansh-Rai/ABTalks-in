@@ -72,7 +72,7 @@ export default function HackathonPromoModal() {
           aria-labelledby="hackathon-promo-title"
           className="fixed inset-0 z-[80] flex items-center justify-center px-4"
           style={{
-            background: "rgba(5,10,23,0.7)",
+            background: "rgba(0, 0, 0, 0.7)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
           }}
@@ -85,10 +85,10 @@ export default function HackathonPromoModal() {
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-[420px] overflow-hidden rounded-3xl p-7 sm:p-8"
             style={{
-              background: "var(--wk-surface, #0b1120)",
+              background: "var(--wk-surface, #000000)",
               border: `1px solid ${event.accent}40`,
               boxShadow: "0 30px 80px -30px rgba(0,0,0,0.85)",
-              color: "var(--wk-text, #f5f6fa)",
+              color: "var(--wk-text, #F4F4F4)",
             }}
           >
             {/* thin accent hairline */}

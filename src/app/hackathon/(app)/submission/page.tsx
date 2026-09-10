@@ -76,14 +76,14 @@ async function SubmissionContent({
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-black">
           Hello {greetingName}
         </h1>
-        <span className="rounded-md border border-[#7364E6]/40 bg-[#7364E6]/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#C4B5FD]">
+        <span className="rounded-md border border-[#03535F]/30 bg-[#E7F2F3] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#03535F]">
           {entryChip}
         </span>
         {previewing ? (
-          <span className="rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-300">
+          <span className="rounded-md border border-[#AA821D]/40 bg-[#FFEDB0] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#AA821D]">
             Preview mode - locked for everyone else.
           </span>
         ) : null}
@@ -100,8 +100,8 @@ async function SubmissionContent({
       <EvaluationRules />
 
       {briefs.length === 0 ? (
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-          <p className="text-sm text-zinc-300">
+        <section className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-6">
+          <p className="text-sm text-[#353535]">
             The briefs are being published, please check the WhatsApp group for updates.
           </p>
         </section>

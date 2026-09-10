@@ -48,7 +48,7 @@ export function GhostCursor({
   bloomThreshold = 0.025,
 
   brightness = 1,
-  color = "#B497CF",
+  color = "#076573",
   mixBlendMode = "screen",
   edgeIntensity = 0,
 

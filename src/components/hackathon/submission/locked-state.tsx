@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 
 export function LockedState() {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-      <div className="flex items-center gap-2 text-[#A78BFA]">
+    <section className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-6">
+      <div className="flex items-center gap-2 text-[#03535F]">
         <Lock className="size-4" aria-hidden />
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em]">
+        <h2 className="font-heading text-[13px] leading-[18px] font-semibold uppercase tracking-[0.16em]">
           Submission window
         </h2>
       </div>
-      <div className="mt-4 space-y-2 text-sm text-zinc-300">
+      <div className="mt-4 space-y-2 text-sm text-[#353535]">
         <p>Briefs unlock at kickoff: {HACKATHON.kickoffLabel}</p>
         <p>Submissions close: {HACKATHON.deadlineLabel}</p>
       </div>

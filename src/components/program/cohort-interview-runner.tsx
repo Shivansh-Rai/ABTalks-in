@@ -178,7 +178,7 @@ export function CohortInterviewRunner({
         </header>
         <div className="rounded-xl border p-6">
           <div className="flex items-center gap-2">
-            <Trophy className="size-5 text-amber-500" />
+            <Trophy className="size-5 text-[#AA821D]" />
             <p className="font-display text-3xl font-bold">
               {finalResult.scores.overallScore}/100
             </p>
@@ -379,7 +379,7 @@ export function CohortInterviewRunner({
 
       {eligibility.state === "taken" && (
         <div className="flex items-start gap-3 rounded-xl border p-6">
-          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#197E23]" />
           <div>
             <p className="font-medium">Already completed</p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -395,7 +395,7 @@ export function CohortInterviewRunner({
       {(eligibility.state === "ready" || eligibility.state === "in_progress") && (
         <div className="space-y-4 rounded-xl border p-6">
           {eligibility.state === "in_progress" && (
-            <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm">
+            <p className="rounded-lg border border-[#03535F]/30 bg-[#03535F]/10 px-4 py-3 text-sm">
               You have an interview open. Continuing picks up where you left off
               — it does not start a new attempt.
             </p>

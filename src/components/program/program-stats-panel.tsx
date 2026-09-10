@@ -37,7 +37,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-[13px] leading-[18px] font-semibold uppercase text-[#8F8F8F]">
         {label}
       </p>
-      <p className="mt-1 font-inter text-[32px] leading-9 font-bold text-[#111111]">
+      <p className="mt-1 font-inter text-[32px] leading-9 font-bold text-[#000000]">
         {value}
       </p>
     </div>
@@ -63,7 +63,7 @@ function ScoreBar({
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-[#E0E0E0]">
         <div
-          className="h-full rounded-full bg-[#E05226]"
+          className="h-full rounded-full bg-[#03535F]"
           style={{ width: `${max ? Math.min(100, (value / max) * 100) : 0}%` }}
         />
       </div>
@@ -75,9 +75,9 @@ export function ProgramStatsPanel({ data, atRisk, projects, aiRec }: Props) {
   return (
     <div className="space-y-6">
       {atRisk.atRisk && (
-        <div className="flex w-fit max-w-full items-start gap-3 rounded-[20px] border border-[#E05226] bg-[#FFECE3] px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex w-fit max-w-full items-start gap-3 rounded-[20px] border border-[#03535F] bg-[#E7F2F3] px-3 py-2 sm:px-4 sm:py-3">
           <AlertTriangle
-            className="mt-0.5 size-5 shrink-0 text-[#E05226]"
+            className="mt-0.5 size-5 shrink-0 text-[#03535F]"
             aria-hidden
           />
           <p className="text-[14px] leading-[21px] text-[#4B4B4B]">
@@ -152,11 +152,11 @@ export function ProgramStatsPanel({ data, atRisk, projects, aiRec }: Props) {
               return (
                 <li key={p.moduleNumber} className="py-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[17px] leading-7 text-[#111111]">
+                    <span className="text-[17px] leading-7 text-[#000000]">
                       Module {p.moduleNumber}
                     </span>
                     {p.status === "GRADED" && score !== null ? (
-                      <span className="font-heading font-bold text-[#E05226]">
+                      <span className="font-heading font-bold text-[#03535F]">
                         {score}/100
                       </span>
                     ) : (
@@ -184,14 +184,14 @@ export function ProgramStatsPanel({ data, atRisk, projects, aiRec }: Props) {
               key={i}
               className="rounded-[12px] border border-[#E0E0E0] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
             >
-              <span className="text-[14px] leading-[21px] font-medium text-[#111111]">
+              <span className="text-[14px] leading-[21px] font-medium text-[#000000]">
                 Day {v.dayNumber}
               </span>{" "}
               <span
                 className={
                   v.passed
-                    ? "text-[14px] leading-[21px] text-[#2E7D32]"
-                    : "text-[14px] leading-[21px] text-[#C9411C]"
+                    ? "text-[14px] leading-[21px] text-[#197E23]"
+                    : "text-[14px] leading-[21px] text-[#076573]"
                 }
               >
                 {v.passed ? "passed" : "failed"}

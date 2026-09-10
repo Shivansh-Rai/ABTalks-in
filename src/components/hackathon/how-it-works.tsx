@@ -13,10 +13,10 @@ function DottedArrow() {
       className="flex min-w-[2.5rem] flex-1 items-center self-center px-1 xl:min-w-[3.5rem] xl:px-2"
       aria-hidden
     >
-      <span className="h-0 w-full flex-1 border-t-2 border-dashed border-[#7364E6]" />
+      <span className="h-0 w-full flex-1 border-t-2 border-dashed border-[#076573]" />
       <span
-        className="-ml-0.5 shrink-0 text-[18px] leading-none text-[#7364E6]"
-        style={{ fontFamily: "system-ui, sans-serif" }}
+        className="-ml-0.5 shrink-0 text-[18px] leading-none text-[#076573]"
+        style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
       >
         
       </span>
@@ -31,12 +31,12 @@ export function HowItWorks() {
       className="mx-auto w-full max-w-[1897px] px-8 py-16 sm:px-9 sm:py-24"
     >
       <h2
-        className="bg-gradient-to-r from-white from-[75%] to-[#A2A2A2] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
-        style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+        className="bg-gradient-to-r from-white from-[75%] to-[#A5A5A5] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
+        style={{ fontFamily: "var(--font-inter), sans-serif" }}
       >
         How it works
       </h2>
-      <p className="mt-3 text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#BCBCBC]">
+      <p className="mt-3 text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#D2D2D2]">
         Four steps from signup to submit.
       </p>
 

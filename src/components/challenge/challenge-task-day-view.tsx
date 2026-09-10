@@ -47,14 +47,14 @@ export function ChallengeTaskDayView({
   const backHref = trackHref(track, enrollmentId);
 
   return (
-    <div className="bg-[#FBF9F7] px-5 py-8 font-content text-[#111111] sm:px-8">
+    <div className="bg-[#F4F4F4] px-5 py-8 font-content text-[#000000] sm:px-8">
       <div className="mx-auto w-full max-w-[1500px] space-y-5">
         <nav aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-2 text-sm">
             <li>
               <Link
                 href="/dashboard"
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 Dashboard
               </Link>
@@ -65,7 +65,7 @@ export function ChallengeTaskDayView({
             <li>
               <Link
                 href={backHref}
-                className="text-[#8F8F8F] hover:text-[#E05226]"
+                className="text-[#8F8F8F] hover:text-[#03535F]"
               >
                 {track.label}
               </Link>
@@ -73,22 +73,22 @@ export function ChallengeTaskDayView({
             <li aria-hidden className="text-[#8F8F8F]">
               &gt;
             </li>
-            <li aria-current="page" className="font-semibold text-[#111111]">
+            <li aria-current="page" className="font-semibold text-[#000000]">
               Day {dayNumber}
             </li>
           </ol>
         </nav>
 
         <header>
-          <p className="font-heading text-[13px] leading-[18px] font-semibold uppercase text-[#E05226]">
+          <p className="font-heading text-[13px] leading-[18px] font-semibold uppercase text-[#03535F]">
             Day {dayNumber}
           </p>
-          <h1 className="mt-1.5 max-w-3xl font-heading text-xl font-semibold tracking-tight text-[#111111] md:text-2xl">
+          <h1 className="mt-1.5 max-w-3xl font-heading text-xl font-semibold tracking-tight text-[#000000] md:text-2xl">
             {task.title}
           </h1>
           <div className="mt-4 flex flex-wrap gap-2">
             <ToolChip label={task.difficulty} />
-            <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#FFECE3] px-2 py-0.5 text-[12px] font-semibold text-[#E05226]">
+            <span className="inline-flex items-center gap-1 rounded-[4px] bg-[#E7F2F3] px-2 py-0.5 text-[12px] font-semibold text-[#03535F]">
               <Clock className="size-3" aria-hidden />~{task.estimatedMinutes} min
             </span>
           </div>
@@ -97,9 +97,9 @@ export function ChallengeTaskDayView({
         {isRelaxable ? (
           <div
             role="status"
-            className="rounded-[12px] border border-[#E05226]/30 bg-[#FFECE3]/50 px-4 py-3 text-sm"
+            className="rounded-[12px] border border-[#03535F]/30 bg-[#E7F2F3]/50 px-4 py-3 text-sm"
           >
-            <p className="font-semibold text-[#111111]">Catch-up day</p>
+            <p className="font-semibold text-[#000000]">Catch-up day</p>
             <p className="mt-1 text-[#4B4B4B]">
               You&apos;re submitting for Day {dayNumber}, a past day inside your
               5-day relaxation window. This will mark Day {dayNumber} complete
@@ -115,7 +115,7 @@ export function ChallengeTaskDayView({
               // Briefs number their steps; dayMdClassName alone renders every
               // list item as a disc. Direct children only, so a nested bullet
               // list inside a numbered step keeps its disc.
-              "[&_ol>li]:list-decimal [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:font-heading [&_h1]:text-base [&_h1]:font-semibold [&_h1]:text-[#111111] [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:font-heading [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-[#111111] [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:font-heading [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-[#111111] [&_ul]:mb-2 [&_ol]:mb-2",
+              "[&_ol>li]:list-decimal [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:font-heading [&_h1]:text-base [&_h1]:font-semibold [&_h1]:text-[#000000] [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:font-heading [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-[#000000] [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:font-heading [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-[#000000] [&_ul]:mb-2 [&_ol]:mb-2",
             )}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -129,7 +129,7 @@ export function ChallengeTaskDayView({
             <ul className="space-y-2 text-sm text-[#4B4B4B]">
               {task.learningObjectives.map((objective) => (
                 <li key={objective} className="flex gap-2">
-                  <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#E05226]" />
+                  <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#03535F]" />
                   <span>{objective}</span>
                 </li>
               ))}
@@ -146,7 +146,7 @@ export function ChallengeTaskDayView({
                     href={resource}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-[#E05226] underline-offset-4 hover:underline"
+                    className="break-all text-[#03535F] underline-offset-4 hover:underline"
                   >
                     {resource}
                   </a>
@@ -161,7 +161,7 @@ export function ChallengeTaskDayView({
             <p className="mb-3 text-sm text-[#8F8F8F]">
               Share your progress — a LinkedIn post earns bonus synergy.
             </p>
-            <pre className="overflow-x-auto rounded-[8px] border border-[#E0E0E0] bg-[#FBF9F7] p-4 font-content text-sm leading-6 whitespace-pre-wrap text-[#4B4B4B]">
+            <pre className="overflow-x-auto rounded-[8px] border border-[#E0E0E0] bg-[#F4F4F4] p-4 font-content text-sm leading-6 whitespace-pre-wrap text-[#4B4B4B]">
               {task.linkedinTemplate}
             </pre>
           </DaySection>

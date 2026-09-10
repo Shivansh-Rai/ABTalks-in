@@ -1,73 +1,73 @@
 /* Hire Scout desk — orange/cream visual language scoped to the recruiter UI. */
 .hire-app {
-  --h-primary: #e05226;
-  --h-primary-hover: #c9411c;
-  --h-toolbar: #ffb08c;
-  --h-toolbar-2: #ff8a54;
-  --h-peach: #ffece3;
-  --h-peach-wash: #fff8f4;
-  --h-ink: #18181b;
+  --h-primary: #03535F;
+  --h-primary-hover: #076573;
+  --h-toolbar: #A6D2D5;
+  --h-toolbar-2: #076573;
+  --h-peach: #E7F2F3;
+  --h-peach-wash: #EEF6F6;
+  --h-ink: #000000;
   --h-gray-700: #626262;
   --h-gray-600: #787878;
   --h-gray-500: #8f8f8f;
   --h-gray-400: #a5a5a5;
   --h-gray-200: #d2d2d2;
   --h-gray-100: #e9e9e9;
-  --h-slate: #64748b;
-  --h-border: #e4e4e7;
-  --h-border-strong: #d4d4d8;
-  --h-bubble: #faf9fb;
-  --h-avatar: #eef0fe;
-  --h-success: #00d03f;
-  --h-good: #eaf8f1;
-  --h-good-ink: #1f8a5b;
-  --h-warn: #fff6e5;
-  --h-warn-ink: #9a6216;
+  --h-slate: #787878;
+  --h-border: #E9E9E9;
+  --h-border-strong: #D2D2D2;
+  --h-bubble: #FFFFFF;
+  --h-avatar: #EEF6F6;
+  --h-success: #27CA37;
+  --h-good: #D6F7EC;
+  --h-good-ink: #18D39B;
+  --h-warn: #FFEDB0;
+  --h-warn-ink: #AA821D;
   --h-surface: #ffffff;
   --h-page: #ffffff;
-  --h-card: #fff8f4;
-  --h-card-line: #ffd2ba;
-  --h-pill: #f4f4f5;
-  --h-pill-ink: #3f3f46;
-  --h-on-orange: #18181b;
+  --h-card: #EEF6F6;
+  --h-card-line: #D4EBEC;
+  --h-pill: #F4F4F4;
+  --h-pill-ink: #4B4B4B;
+  --h-on-primary: #000000;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  /* Hire desk uses the shared ABTalks orange primary actions. */
-  --primary: 14 76% 51%;
-  --color-primary: #e05226;
+  /* Hire desk uses the shared ABTalks primary actions (Primary Teal). */
+  --primary: 188 94% 19%;
+  --color-primary: #03535F;
   min-height: 100dvh;
   background: var(--h-page);
   color: var(--h-ink);
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app {
-  --h-toolbar: #c45c32;
-  --h-toolbar-2: #a94420;
-  --h-peach: #3d241c;
-  --h-peach-wash: #2a1b16;
-  --h-ink: #f4f4f5;
-  --h-gray-700: #d4d4d8;
-  --h-gray-600: #a1a1aa;
-  --h-gray-500: #8b8b93;
-  --h-gray-400: #71717a;
-  --h-gray-200: #3f3f46;
-  --h-gray-100: #27272a;
-  --h-slate: #94a3b8;
-  --h-border: #3f3f46;
-  --h-border-strong: #52525b;
-  --h-bubble: #27272a;
-  --h-avatar: #1e1e2a;
-  --h-good: #14532d;
-  --h-good-ink: #86efac;
-  --h-warn: #3d2e12;
-  --h-warn-ink: #fbbf24;
-  --h-surface: #18181b;
-  --h-page: #09090b;
-  --h-card: #2a1b16;
-  --h-card-line: rgba(255, 176, 140, 0.38);
-  --h-pill: rgba(255, 236, 227, 0.16);
-  --h-pill-ink: #ffe8dc;
-  --h-on-orange: #18181b;
-  --color-primary: #e05226;
+  --h-toolbar: #03535F;
+  --h-toolbar-2: #02434D;
+  --h-peach: #02434D;
+  --h-peach-wash: #353535;
+  --h-ink: #F4F4F4;
+  --h-gray-700: #D2D2D2;
+  --h-gray-600: #A5A5A5;
+  --h-gray-500: #8F8F8F;
+  --h-gray-400: #787878;
+  --h-gray-200: #4B4B4B;
+  --h-gray-100: #353535;
+  --h-slate: #A5A5A5;
+  --h-border: #4B4B4B;
+  --h-border-strong: #626262;
+  --h-bubble: #353535;
+  --h-avatar: #353535;
+  --h-good: #197E23;
+  --h-good-ink: #D6F7EC;
+  --h-warn: #353535;
+  --h-warn-ink: #AA821D;
+  --h-surface: #000000;
+  --h-page: #000000;
+  --h-card: #353535;
+  --h-card-line: rgba(166, 210, 213, 0.38);
+  --h-pill: rgba(231, 242, 243, 0.16);
+  --h-pill-ink: #E7F2F3;
+  --h-on-primary: #000000;
+  --color-primary: #03535F;
   color-scheme: dark;
 }
 
@@ -88,18 +88,25 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
   color: inherit;
 }
 
-/* Header */
+/* Header — the Design System v2 global header: 55px, white frosted glass. */
 .hire-app__header {
+  position: sticky;
+  top: 0;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  height: 52px;
-  padding: 8px 24px 8px 20px;
-  background: var(--h-surface);
-  border-bottom: 1px solid var(--h-border);
+  gap: 16px;
+  height: 55px;
+  padding: 0 40px;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  backdrop-filter: saturate(160%) blur(16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   z-index: 40;
+  overflow: visible;
 }
 
 .hire-app__brand {
@@ -130,7 +137,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
   align-items: center;
   height: 22px;
   padding: 0 8px;
-  border: 1px solid rgba(224, 82, 38, 0.34);
+  border: 1px solid rgba(3, 83, 95, 0.34);
   border-radius: 6px;
   background: var(--h-peach);
   font-size: 10px;
@@ -143,15 +150,19 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
-  background: #4a2a1f;
-  border-color: rgba(255, 176, 140, 0.55);
-  color: #ffb08c;
+  background: #02434D;
+  border-color: rgba(166, 210, 213, 0.55);
+  color: #A6D2D5;
 }
 
 .hire-app__nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: visible;
 }
 
 .hire-hbtn {
@@ -159,19 +170,20 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
+  height: 36px;
   padding: 0 16px;
   border: 1px solid var(--h-border);
   border-radius: 100px;
   background: var(--h-surface);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--h-ink);
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 200ms var(--ease);
+  overflow: visible;
 }
 
 .hire-hbtn:hover {
@@ -216,13 +228,15 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
 }
 
 .hire-hbtn.has-count {
-  padding-right: 28px;
+  padding-right: 30px;
+  margin-right: 6px;
 }
 
 .hire-hbtn__count {
   position: absolute;
   top: -6px;
-  right: -4px;
+  right: 4px;
+  z-index: 2;
   display: inline-flex;
   min-width: 20px;
   height: 20px;
@@ -234,28 +248,34 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   font-size: 11px;
   font-weight: 700;
   padding: 0 5px;
-  box-shadow: 0 4px 10px rgba(224, 82, 38, 0.35);
+  box-shadow: 0 4px 10px rgba(3, 83, 95, 0.35);
 }
 
+/* Header CTA — the clay button at its Small size (36 / 16 / 10). */
 .hire-signin {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   height: 36px;
-  padding: 0 20px;
-  border: 2px solid var(--h-primary);
-  border-radius: 100px;
-  background: transparent;
-  font-size: 13px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--h-primary);
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
-  color: var(--h-ink);
+  color: #fff;
   transition:
     background-color 200ms var(--ease),
-    color 200ms var(--ease);
+    transform 200ms var(--ease),
+    box-shadow 200ms var(--ease);
 }
 
 .hire-signin:hover {
-  background: var(--h-primary);
+  background: var(--h-primary-hover);
   color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(3, 83, 95, 0.26);
 }
 
 .hire-register {
@@ -363,7 +383,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-hub-display), var(--font-inter), sans-serif;
+  font-family: var(--font-outfit), var(--font-inter), sans-serif;
   font-size: 18px;
   font-weight: 700;
 }
@@ -372,10 +392,10 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   background: var(--h-primary);
   color: #fff;
   box-shadow:
-    0 0 0 4px rgba(224, 82, 38, 0.1),
-    0 0 16px rgba(224, 82, 38, 0.2),
-    0 6px 12px rgba(224, 82, 38, 0.26),
-    inset 0 -3px 6px rgba(169, 54, 23, 0.45),
+    0 0 0 4px rgba(3, 83, 95, 0.1),
+    0 0 16px rgba(3, 83, 95, 0.2),
+    0 6px 12px rgba(3, 83, 95, 0.26),
+    inset 0 -3px 6px rgba(2, 67, 77, 0.45),
     inset 0 3px 6px rgba(255, 255, 255, 0.34);
   animation: hire-node-pulse 2.2s ease-in-out infinite;
 }
@@ -384,8 +404,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   background: var(--h-primary);
   color: #fff;
   box-shadow:
-    0 5px 10px rgba(224, 82, 38, 0.2),
-    inset 0 -3px 6px rgba(169, 54, 23, 0.45),
+    0 5px 10px rgba(3, 83, 95, 0.2),
+    inset 0 -3px 6px rgba(2, 67, 77, 0.45),
     inset 0 3px 6px rgba(255, 255, 255, 0.34);
   animation: hire-tick-pop 320ms var(--ease) both;
 }
@@ -394,8 +414,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   background: var(--h-peach);
   color: var(--h-primary);
   box-shadow:
-    0 5px 10px rgba(17, 17, 17, 0.06),
-    inset 0 -3px 6px rgba(224, 82, 38, 0.14),
+    0 5px 10px rgba(0, 0, 0, 0.06),
+    inset 0 -3px 6px rgba(3, 83, 95, 0.14),
     inset 0 3px 6px rgba(255, 255, 255, 0.75);
 }
 
@@ -433,19 +453,19 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   100% {
     transform: scale(1);
     box-shadow:
-      0 0 0 4px rgba(224, 82, 38, 0.1),
-      0 0 16px rgba(224, 82, 38, 0.2),
-      0 6px 12px rgba(224, 82, 38, 0.26),
-      inset 0 -3px 6px rgba(169, 54, 23, 0.45),
+      0 0 0 4px rgba(3, 83, 95, 0.1),
+      0 0 16px rgba(3, 83, 95, 0.2),
+      0 6px 12px rgba(3, 83, 95, 0.26),
+      inset 0 -3px 6px rgba(2, 67, 77, 0.45),
       inset 0 3px 6px rgba(255, 255, 255, 0.34);
   }
   50% {
     transform: scale(1.08);
     box-shadow:
-      0 0 0 8px rgba(224, 82, 38, 0.16),
-      0 0 24px rgba(224, 82, 38, 0.42),
-      0 8px 16px rgba(224, 82, 38, 0.3),
-      inset 0 -3px 6px rgba(169, 54, 23, 0.45),
+      0 0 0 8px rgba(3, 83, 95, 0.16),
+      0 0 24px rgba(3, 83, 95, 0.42),
+      0 8px 16px rgba(3, 83, 95, 0.3),
+      inset 0 -3px 6px rgba(2, 67, 77, 0.45),
       inset 0 3px 6px rgba(255, 255, 255, 0.34);
   }
 }
@@ -573,12 +593,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   font-weight: 700;
   line-height: 1.15;
   white-space: nowrap;
-  color: var(--h-on-orange);
+  color: var(--h-on-primary);
 }
 
 .scout__status {
   font-size: 12px;
-  color: rgba(24, 24, 27, 0.62);
+  color: rgba(0, 0, 0, 0.62);
   white-space: nowrap;
 }
 
@@ -594,12 +614,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   gap: 6px;
   height: 34px;
   padding: 0 14px;
-  border: 1px solid rgba(24, 24, 27, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   background: #fff;
   font-size: 13px;
   font-weight: 600;
-  color: #18181b;
+  color: #000000;
 }
 
 .scout-tbtn--icon {
@@ -615,8 +635,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
-  background: #4a2a1f;
-  color: #ffb08c;
+  background: #02434D;
+  color: #A6D2D5;
 }
 
 .scout__body {
@@ -711,7 +731,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 
 /* Scout's own mark beside its messages.
 
-   `.scout-mark` alone put the icon on --h-avatar (#eef0fe, a pale lavender)
+   `.scout-mark` alone put the icon on --h-avatar (#EEF6F6, a pale lavender)
    with an orange glyph, while the header's `.scout__avatar` is the reverse:
    a solid --h-primary plate with a white glyph. Same icon, opposite treatment,
    so the two did not read as the same Scout. This matches the header and keeps
@@ -734,11 +754,11 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 rgba(224, 82, 38, 0));
+    filter: drop-shadow(0 0 0 rgba(3, 83, 95, 0));
   }
   50% {
     transform: scale(1.045);
-    filter: drop-shadow(0 0 6px rgba(224, 82, 38, 0.45));
+    filter: drop-shadow(0 0 6px rgba(3, 83, 95, 0.45));
   }
 }
 
@@ -831,7 +851,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   margin: -2.5px 0 0 -2.5px;
   background: var(--h-primary);
   clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%);
-  box-shadow: 0 0 6px rgba(224, 82, 38, 0.85);
+  box-shadow: 0 0 6px rgba(3, 83, 95, 0.85);
   opacity: 0;
   animation: scout-shard-a 1.7s ease-in-out infinite;
 }
@@ -885,7 +905,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   }
   18% {
     transform: translate(-50%, -50%) scale(1.22) rotate(-12deg);
-    filter: drop-shadow(0 0 10px rgba(224, 82, 38, 0.95));
+    filter: drop-shadow(0 0 10px rgba(3, 83, 95, 0.95));
     opacity: 1;
   }
   36% {
@@ -893,7 +913,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   }
   58% {
     transform: translate(-50%, -50%) scale(1.12) rotate(-6deg);
-    filter: drop-shadow(0 0 8px rgba(224, 82, 38, 0.7));
+    filter: drop-shadow(0 0 8px rgba(3, 83, 95, 0.7));
   }
   78% {
     transform: translate(-50%, -50%) scale(0.96) rotate(3deg);
@@ -1238,14 +1258,14 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   position: relative;
   overflow: hidden;
   padding: 20px 22px;
-  /* --h-card-line is #ffd2ba, a peach. Every card was outlined in it, which is
+  /* --h-card-line is #D4EBEC, a peach. Every card was outlined in it, which is
      what read as "a prominent orange border" — the top-match rule only made the
      strongest case of a treatment the whole list already had. The token has 17
      other users and is left alone; the card takes the neutral --h-border. */
   border: 1px solid var(--h-border);
   border-radius: 16px;
   background: var(--h-surface);
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition:
     border-color 200ms var(--ease),
     box-shadow 200ms var(--ease);
@@ -1253,7 +1273,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 
 .hire-app .desk-card:hover {
   border-color: var(--h-primary);
-  box-shadow: 0 8px 22px rgba(224, 82, 38, 0.12);
+  box-shadow: 0 8px 22px rgba(3, 83, 95, 0.12);
 }
 
 /* Top match.
@@ -1270,7 +1290,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 /* Top match keeps its chip and a slightly deeper lift; no orange stroke. */
 .hire-app .desk-card.desk-card--top {
   border-color: var(--h-border-strong);
-  box-shadow: 0 6px 20px rgba(17, 17, 17, 0.07);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
 }
 
 .hire-app .desk-card.desk-card--sample {
@@ -1279,7 +1299,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 
 .hire-app .desk-card.is-selected {
   border-color: var(--h-primary);
-  box-shadow: 0 0 0 1px rgba(224, 82, 38, 0.22);
+  box-shadow: 0 0 0 1px rgba(3, 83, 95, 0.22);
 }
 
 /* The card body is a click target for the inspector (see DeskMatchCard).
@@ -1471,66 +1491,66 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 .desk-pill--good {
-  background: #eaf8f1;
-  color: #1f8a5b;
+  background: #D6F7EC;
+  color: #197E23;
   border-color: transparent;
 }
 
 .desk-pill--warn {
-  background: #fff6e5;
-  color: #9a6216;
+  background: #FFEDB0;
+  color: #AA821D;
 }
 
 /* Skill chips take a stable tint from the skill's own name, so "React" is the
    same hue on every card and in the inspector. Six soft tints; the index comes
    from `skillTint()` in desk-match-card.tsx, never from the render order. */
-.desk-pill--c0 { background: #ffede4; color: #b8431e; }
-.desk-pill--c1 { background: #e8f1fe; color: #2b6cb0; }
-.desk-pill--c2 { background: #e6f7f3; color: #1c8375; }
-.desk-pill--c3 { background: #f0edfe; color: #5b4bc4; }
-.desk-pill--c4 { background: #fff3dc; color: #96631a; }
-.desk-pill--c5 { background: #fde9f1; color: #a63b67; }
+.desk-pill--c0 { background: #E7F2F3; color: #076573; }
+.desk-pill--c1 { background: #E7F2F3; color: #03535F; }
+.desk-pill--c2 { background: #D6F7EC; color: #03535F; }
+.desk-pill--c3 { background: #EEF6F6; color: #03535F; }
+.desk-pill--c4 { background: #FFEDB0; color: #AA821D; }
+.desk-pill--c5 { background: #D92D2014; color: #D92D20; }
 
 /* The tints are light-mode inks on light-mode grounds; on dark they would sit
    at roughly 2:1. Same hue family, inverted, so a skill keeps its identity. */
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c0 { background: #4a2418; color: #ffd2bf; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c1 { background: #1b3757; color: #cfe2ff; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c2 { background: #16413b; color: #c3f0e6; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c3 { background: #2e2860; color: #ddd6ff; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c4 { background: #4a3612; color: #ffe6b8; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c5 { background: #4d1f33; color: #ffd0e2; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c0 { background: #02434D; color: #D4EBEC; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c1 { background: #03535F; color: #D4EBEC; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c2 { background: #02434D; color: #D6F7EC; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c3 { background: #03535F; color: #E7F2F3; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c4 { background: #AA821D; color: #FFEDB0; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c5 { background: #D92D20; color: #D92D2014; }
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-pill--warn {
-  background: #4a3612;
-  color: #ffe6b8;
+  background: #AA821D;
+  color: #FFEDB0;
 }
 
 .desk-pill--hit {
   background: var(--h-peach);
   color: var(--h-primary);
-  border-color: rgba(224, 82, 38, 0.28);
+  border-color: rgba(3, 83, 95, 0.28);
   font-weight: 700;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-pill--hit {
-  background: #ffb08c;
-  color: #18181b;
+  background: #A6D2D5;
+  color: #000000;
   border-color: transparent;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-pill--good {
-  background: #1f6a43;
-  color: #d8ffe8;
+  background: #197E23;
+  color: #D6F7EC;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-card__top {
-  background: #ffb08c;
-  color: #18181b;
+  background: #A6D2D5;
+  color: #000000;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-card__partial {
   background: rgba(255, 255, 255, 0.14);
-  color: #f4f4f5;
+  color: #F4F4F4;
 }
 
 .desk-card__why {
@@ -1820,8 +1840,8 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-shortlist.is-on {
   margin-top: 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: #ffe7d9;
-  color: #c9411c;
+  background: #E7F2F3;
+  color: #076573;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -1829,9 +1849,9 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-shortlist.is-on {
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app a.hire-detail__resume,
 html.dark:not(:has(.theme-abtalks-light)) .hire-detail__resume {
-  background: #4a2a1f;
-  color: #ffb08c;
-  border-color: rgba(255, 176, 140, 0.4);
+  background: #02434D;
+  color: #A6D2D5;
+  border-color: rgba(166, 210, 213, 0.4);
 }
 
 .hire-app a.hire-detail__resume:hover,
@@ -1861,7 +1881,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-detail__resume {
   align-items: center;
   gap: 14px;
   padding: 10px 10px 10px 18px;
-  background: #18181b;
+  background: #000000;
   color: #fff;
   border-radius: 999px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
@@ -1871,7 +1891,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-detail__resume {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-podbar {
-  background: #27272a;
+  background: #353535;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
@@ -1902,7 +1922,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-podbar {
   padding: 0 16px;
   align-items: center;
   border-radius: 999px;
-  background: #e05226;
+  background: #03535F;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -2058,7 +2078,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-podbar {
 .scout-privacy {
   margin: 0 0 12px;
   padding: 10px 14px;
-  border: 1px solid #ffd2ba;
+  border: 1px solid #D4EBEC;
   background: var(--h-peach-wash);
   border-radius: 10px;
   font-size: 12px;
@@ -2095,7 +2115,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-podbar {
 }
 
 .hire-app .hire-gap section {
-  border-color: rgba(224, 82, 38, 0.35);
+  border-color: rgba(3, 83, 95, 0.35);
   background: var(--h-peach-wash);
 }
 
@@ -2193,8 +2213,8 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
 
 @media (max-width: 900px) {
   .hire-app__header {
-    height: 52px;
-    padding: 8px 12px;
+    height: 55px;
+    padding: 0 20px;
     gap: 8px;
   }
 
@@ -2207,9 +2227,18 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
     display: none;
   }
 
+  /* Assessments has no icon — keep its label so the control is not a blank chip. */
+  .hire-hbtn--label > span:not(.hire-hbtn__count):not(.hire-hbtn__icon) {
+    display: inline;
+  }
+
   .hire-hbtn {
-    height: 32px;
+    height: 36px;
     padding: 0 10px;
+  }
+
+  .hire-hbtn--label {
+    flex-shrink: 0;
   }
 
   .hire-theme,
@@ -2218,9 +2247,9 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
   }
 
   .hire-signin {
-    height: 32px;
+    height: 36px;
     padding: 0 14px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .hire-journey {
@@ -2457,8 +2486,8 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
 .hire-pod__privacy {
   margin: 0;
   padding: 12px 16px;
-  background: #f1f6fe;
-  border: 1px solid #c9ddf8;
+  background: #EEF6F6;
+  border: 1px solid #D4EBEC;
   border-radius: 10px;
   font-size: 13px;
   line-height: 20px;
@@ -2466,17 +2495,17 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
 }
 
 .hire-pod__privacy strong {
-  color: #1d4ed8;
+  color: #03535F;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__privacy {
-  background: #152238;
-  border-color: #1e3a5f;
-  color: #cbd5e1;
+  background: #353535;
+  border-color: #03535F;
+  color: #A6D2D5;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__privacy strong {
-  color: #93c5fd;
+  color: #A6D2D5;
 }
 
 .hire-pod__selectall {
@@ -2563,15 +2592,15 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__privacy strong {
   height: 32px;
   padding: 0 12px;
   border-radius: 8px;
-  background: #d9f4e6;
-  color: #146c45;
+  background: #D6F7EC;
+  color: #197E23;
   font-size: 12px;
   font-weight: 700;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__status {
-  background: #1f6a43;
-  color: #d8ffe8;
+  background: #197E23;
+  color: #D6F7EC;
 }
 
 .pod-empty {
@@ -2631,12 +2660,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__status {
 
 .pe__paper rect {
   fill: var(--h-surface);
-  stroke: #c9c9cf;
+  stroke: #D2D2D2;
   stroke-width: 2;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
-  stroke: #5a5a62;
+  stroke: #626262;
 }
 
 .pe__paper--a rect,
@@ -2646,11 +2675,11 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 }
 
 .pe__paper--c rect {
-  stroke: #9a9aa2;
+  stroke: #A5A5A5;
 }
 
 .pe__paper--c path {
-  stroke: #71717a;
+  stroke: #787878;
   stroke-width: 3;
   stroke-linecap: round;
   fill: none;
@@ -2739,7 +2768,7 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 }
 
 .pe__lens {
-  fill: rgba(224, 82, 38, 0.1);
+  fill: rgba(3, 83, 95, 0.1);
   stroke: var(--h-ink);
   stroke-width: 3.4;
 }
@@ -2820,15 +2849,15 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
   display: flex;
   flex-direction: column;
   padding: 22px 22px 18px;
-  /* Neutral, per the reference: the card was a peach wash with a #ffd2ba border
+  /* Neutral, per the reference: the card was a peach wash with a #D4EBEC border
      and an orange-tinted shadow, which made the request panel read as an alert.
      It is a form; grey is the right register. The orange stays on the submit
      button, where the action is. */
-  background: #f7f7f8;
+  background: #F4F4F4;
   border: 1px solid var(--h-border);
   border-radius: 16px;
   min-height: 0;
-  box-shadow: 0 6px 18px rgba(17, 17, 17, 0.05);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
 /* The orange radial wash that used to sit over this card is gone with it. */
@@ -2842,8 +2871,8 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request {
-  background: #241814;
-  border-color: rgba(255, 176, 140, 0.32);
+  background: #353535;
+  border-color: rgba(166, 210, 213, 0.32);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
@@ -2851,10 +2880,10 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request::before {
   background:
     radial-gradient(
       90% 70% at 100% -10%,
-      rgba(255, 138, 84, 0.28) 0%,
+      rgba(7, 101, 115, 0.28) 0%,
       transparent 52%
     ),
-    linear-gradient(180deg, rgba(224, 82, 38, 0.12) 0%, transparent 40%);
+    linear-gradient(180deg, rgba(3, 83, 95, 0.12) 0%, transparent 40%);
 }
 
 .hire-pod__kicker {
@@ -2898,12 +2927,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request::before {
   line-height: 22px;
   resize: none;
   outline: none;
-  box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.04);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .hire-pod__request textarea:focus {
   border-color: var(--h-primary);
-  box-shadow: 0 0 0 3px rgba(224, 82, 38, 0.14);
+  box-shadow: 0 0 0 3px rgba(3, 83, 95, 0.14);
 }
 
 .hire-pod__request textarea::placeholder {
@@ -2911,8 +2940,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request::before {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request textarea {
-  background: #1a1412;
-  border-color: rgba(255, 176, 140, 0.22);
+  background: #000000;
+  border-color: rgba(166, 210, 213, 0.22);
   box-shadow: none;
 }
 
@@ -2946,7 +2975,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__note {
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 8px 18px rgba(224, 82, 38, 0.28);
+  box-shadow: 0 8px 18px rgba(3, 83, 95, 0.28);
 }
 
 .hire-pod__submit:hover:not(:disabled) {
@@ -2969,14 +2998,14 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__note {
 
 @keyframes hire-hbtn-ping {
   0% {
-    box-shadow: 0 0 0 0 rgba(224, 82, 38, 0.45);
+    box-shadow: 0 0 0 0 rgba(3, 83, 95, 0.45);
     border-color: var(--h-primary);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(224, 82, 38, 0);
+    box-shadow: 0 0 0 10px rgba(3, 83, 95, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(224, 82, 38, 0);
+    box-shadow: 0 0 0 0 rgba(3, 83, 95, 0);
   }
 }
 
@@ -2987,7 +3016,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__note {
   align-items: center;
   border: 0;
   border-radius: 999px;
-  background: #e05226;
+  background: #03535F;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -2995,7 +3024,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__note {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app .hire-podbar button:not(.hire-podbar__close) {
-  background: #e05226;
+  background: #03535F;
   color: #fff;
 }
 
@@ -3217,15 +3246,15 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-sheet {
 /* Sign in / Register — portaled outside the desk, so it carries .hire-app
    for the orange tokens and .hire-auth to undo the full-page shell. */
 [data-slot="dialog-overlay"]:has(+ .hire-auth) {
-  background: rgba(24, 24, 27, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 html.dark:not(:has(.theme-abtalks-light)) [data-slot="dialog-overlay"]:has(+ .hire-auth) {
-  background: rgba(9, 9, 11, 0.62);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 .hire-app.hire-auth {
-  --ring: 14 76% 51%;
+  --ring: 188 94% 19%;
   min-height: 0;
   height: auto;
   max-height: 90vh;
@@ -3235,12 +3264,12 @@ html.dark:not(:has(.theme-abtalks-light)) [data-slot="dialog-overlay"]:has(+ .hi
   color: var(--h-ink);
   border: 1px solid var(--h-card-line);
   border-radius: 16px;
-  box-shadow: 0 18px 48px rgba(224, 82, 38, 0.14);
+  box-shadow: 0 18px 48px rgba(3, 83, 95, 0.14);
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth {
-  background: #1c1614;
-  border-color: rgba(255, 176, 140, 0.28);
+  background: #000000;
+  border-color: rgba(166, 210, 213, 0.28);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
 
@@ -3292,8 +3321,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth {
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth .bg-card {
-  background: #241814;
-  border-color: rgba(255, 176, 140, 0.22);
+  background: #353535;
+  border-color: rgba(166, 210, 213, 0.22);
 }
 
 .hire-app.hire-auth .text-muted-foreground {
@@ -3314,12 +3343,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth .bg-card {
 
 .hire-app.hire-auth [data-slot="input"]:focus-visible {
   border-color: var(--h-primary);
-  box-shadow: 0 0 0 3px rgba(224, 82, 38, 0.18);
+  box-shadow: 0 0 0 3px rgba(3, 83, 95, 0.18);
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"] {
-  background: #14110f;
-  border-color: #3f322c;
+  background: #000000;
+  border-color: #353535;
 }
 
 .hire-app.hire-auth label,
@@ -3415,8 +3444,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
 
 .hire-pie__wedge {
   filter:
-    drop-shadow(0 2px 3px rgba(24, 24, 27, 0.16))
-    drop-shadow(0 6px 10px rgba(24, 24, 27, 0.08));
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.16))
+    drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
 }
 
 .hire-pie__gloss {
@@ -3429,7 +3458,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
 
 .hire-pie__hub {
   fill: var(--h-surface);
-  filter: drop-shadow(0 1px 2px rgba(24, 24, 27, 0.14));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
 }
 
 .hire-pie__hubscore {
@@ -3538,7 +3567,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
   border-radius: 4px;
   background: linear-gradient(155deg, var(--clay-lift) 0%, var(--clay) 72%);
   box-shadow:
-    0 1px 2px rgba(24, 24, 27, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.22),
     inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
@@ -3630,43 +3659,43 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
 }
 
 .hire-meta--exp {
-  background: #eaf1fd;
-  color: #2c6bae;
+  background: #E7F2F3;
+  color: #03535F;
 }
 
 .hire-meta--location {
-  background: #e7f6f2;
-  color: #1c8072;
+  background: #D6F7EC;
+  color: #03535F;
 }
 
 .hire-meta--employment {
-  background: #fff0e4;
-  color: #b0511f;
+  background: #E7F2F3;
+  color: #076573;
 }
 
 .hire-meta--education {
-  background: #f1eefd;
-  color: #5b4bc4;
+  background: #EEF6F6;
+  color: #03535F;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-meta--exp {
-  background: #1b3757;
-  color: #cfe2ff;
+  background: #03535F;
+  color: #D4EBEC;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-meta--location {
-  background: #16413b;
-  color: #c3f0e6;
+  background: #02434D;
+  color: #D6F7EC;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-meta--employment {
-  background: #4a2418;
-  color: #ffd2bf;
+  background: #02434D;
+  color: #D4EBEC;
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-meta--education {
-  background: #2e2860;
-  color: #ddd6ff;
+  background: #03535F;
+  color: #E7F2F3;
 }
 
 .hire-pod__card .desk-card__facts,
@@ -3722,7 +3751,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-meta--education {
  * popup becomes a full-viewport column.
  */
 .hire-app.hire-menu {
-  --ring: 14 76% 51%;
+  --ring: 188 94% 19%;
   min-height: 0;
   height: auto;
   width: 16rem;
@@ -3734,12 +3763,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-meta--education {
   color: var(--h-ink);
   border: 1px solid var(--h-card-line);
   border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(224, 82, 38, 0.12);
+  box-shadow: 0 12px 32px rgba(3, 83, 95, 0.12);
 }
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
-  background: #1c1614;
-  border-color: rgba(255, 176, 140, 0.28);
+  background: #000000;
+  border-color: rgba(166, 210, 213, 0.28);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
 
@@ -3800,12 +3829,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
   }
 
   .hire-app__header {
-    padding: 8px 10px;
+    padding: 0 20px;
   }
 
   .hire-signin {
-    padding: 0 10px;
-    font-size: 12px;
+    padding: 0 12px;
+    font-size: 14px;
   }
 
   .scout__status {
@@ -4274,8 +4303,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
 }
 
 html.dark .vc-card {
-  border-color: rgba(255, 176, 140, 0.34);
-  background: rgba(255, 176, 140, 0.05);
+  border-color: rgba(166, 210, 213, 0.34);
+  background: rgba(166, 210, 213, 0.05);
 }
 
 .vc-card__head {
@@ -4405,6 +4434,67 @@ html.dark .vc-card {
   background: var(--h-primary-hover);
 }
 
+/* Temporary project-triage chrome (T-149). Isolated from outreach cart. */
+.desk-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.desk-badge--new {
+  background: color-mix(in srgb, var(--h-primary) 16%, transparent);
+  color: var(--h-primary);
+}
+.desk-badge--viewed {
+  background: var(--h-card-line);
+  color: var(--h-ink-soft, #626262);
+}
+.desk-card__triage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.desk-card__triage .desk-ghost.is-on {
+  border-color: var(--h-primary);
+  color: var(--h-primary);
+  background: color-mix(in srgb, var(--h-primary) 10%, transparent);
+}
+.desk-card--rejected {
+  opacity: 0.62;
+}
+.desk-card--rejected .desk-card__facts,
+.desk-card--rejected .desk-card__why {
+  display: none;
+}
+.hire-req__name {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+.hire-req__name-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--h-card-line);
+  border-radius: 8px;
+  background: var(--h-card, #fff);
+  color: inherit;
+  font-size: 13px;
+}
+.hire-hide-rejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
 .vc-card__cta:disabled {
   opacity: 0.55;
   cursor: default;
@@ -4511,7 +4601,7 @@ html.dark .vc-card {
   justify-content: center;
   padding: 20px;
   overflow-y: auto;
-  background: rgba(17, 17, 17, 0.42);
+  background: rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -4521,10 +4611,10 @@ html.dark .vc-card {
   width: min(1080px, calc(100vw - 40px));
   margin: auto;
   padding: 26px 32px 30px;
-  background: #fbfafa;
+  background: #FFFFFF;
   border: 1px solid var(--h-border);
   border-radius: 20px;
-  box-shadow: 0 30px 70px -24px rgba(17, 17, 17, 0.3);
+  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.3);
 }
 
 .hire-gate__x {
@@ -4567,7 +4657,7 @@ html.dark .vc-card {
   width: max-content;
   margin: 18px auto 0;
   padding: 5px;
-  background: #f1f1f2;
+  background: #F4F4F4;
   border-radius: 999px;
 }
 .hire-gate__seg {
@@ -4588,10 +4678,10 @@ html.dark .vc-card {
 .hire-gate__seg.is-active {
   background: #fff;
   color: var(--h-ink);
-  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 /* Green, like the "billed annually" line it promises. */
-.hire-gate__save { color: #16a34a; font-weight: 700; }
+.hire-gate__save { color: #197E23; font-weight: 700; }
 
 .hire-gate__grid {
   display: grid;
@@ -4615,9 +4705,9 @@ html.dark .vc-card {
 .hire-plan--prime {
   margin-block: -9px;
   padding-block: 31px 28px;
-  background: linear-gradient(180deg, #ffffff 0%, #fff0e7 100%);
-  border-color: #f6c7ae;
-  box-shadow: 0 10px 26px rgba(224, 82, 38, 0.1);
+  background: linear-gradient(180deg, #ffffff 0%, #E7F2F3 100%);
+  border-color: #A6D2D5;
+  box-shadow: 0 10px 26px rgba(3, 83, 95, 0.1);
 }
 
 /* A flag notched on its left edge, hung off the card's right side. */
@@ -4629,8 +4719,8 @@ html.dark .vc-card {
   align-items: center;
   height: 20px;
   padding: 0 10px 0 16px;
-  background: #bbf7d0;
-  color: #15803d;
+  background: #D6F7EC;
+  color: #197E23;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -4677,7 +4767,7 @@ html.dark .vc-card {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #16a34a;
+  color: #197E23;
 }
 
 .hire-plan__seat {
@@ -4776,4 +4866,601 @@ html.dark .vc-card {
     justify-content: center;
   }
   .hire-pie__legend { flex-basis: 100%; }
+}
+
+/* ── Plan 121: assessment builder / preview / list ───────────────────────── */
+
+.hire-pod__assess-divider {
+  margin: 18px 0 14px;
+  height: 1px;
+  background: rgba(28, 25, 23, 0.1);
+}
+
+.hire-pod__assess {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  padding: 0 18px;
+  border: 1.5px solid var(--h-primary);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--h-primary);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hire-pod__assess:hover:not(.is-disabled) {
+  background: var(--h-peach);
+}
+
+.hire-pod__assess.is-disabled,
+.hire-pod__assess:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hire-assess,
+.hire-assess-list {
+  width: min(1120px, calc(100% - 32px));
+  margin: 24px auto 64px;
+  color: var(--h-ink, #1c1917);
+}
+
+.hire-assess__kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--h-primary);
+}
+
+.hire-assess__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.hire-assess__top h1,
+.hire-assess-list h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hire-assess__sub {
+  margin: 6px 0 0;
+  color: var(--h-gray-500, #78716c);
+  font-size: 14px;
+}
+
+.hire-assess__seg {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(28, 25, 23, 0.06);
+  gap: 4px;
+}
+
+.hire-assess__seg button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess__seg button.is-active {
+  background: #fff;
+  color: var(--h-ink, #1c1917);
+  box-shadow: 0 1px 4px rgba(28, 25, 23, 0.08);
+}
+
+.hire-assess__panes {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .hire-assess__panes {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .hire-assess__form[data-active="false"],
+  .hire-assess__preview[data-active="false"] {
+    display: block;
+  }
+}
+
+@media (max-width: 1099px) {
+  .hire-assess__form[data-active="false"],
+  .hire-assess__preview[data-active="false"] {
+    display: none;
+  }
+}
+
+.hire-assess__form,
+.hire-assess__preview {
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.hire-assess-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hire-assess-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.hire-assess-field input,
+.hire-assess-field textarea,
+.hire-assess-q__type select,
+.hire-assess-q__points input,
+.hire-assess-options input[type="text"] {
+  width: 100%;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 500;
+  background: #fff;
+}
+
+.hire-assess-field input:focus,
+.hire-assess-field textarea:focus,
+.hire-assess-q__type select:focus,
+.hire-assess-q__points input:focus,
+.hire-assess-options input[type="text"]:focus {
+  outline: 2px solid rgba(224, 82, 38, 0.35);
+  border-color: var(--h-primary);
+}
+
+.hire-assess-hint,
+.hire-assess-error {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hire-assess-hint {
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-error {
+  color: #b91c1c;
+}
+
+.hire-assess__settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 8px 0 20px;
+}
+
+.hire-assess__questions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.hire-assess__questions-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.hire-assess-q {
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fbf9f7;
+}
+
+.hire-assess-q:focus {
+  outline: 2px solid rgba(224, 82, 38, 0.4);
+}
+
+.hire-assess-q__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.hire-assess-q__type,
+.hire-assess-q__points {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hire-assess-q__points input {
+  width: 88px;
+}
+
+.hire-assess-q__required {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hire-assess-options ul {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-assess-options li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.hire-assess-options__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hire-assess-q__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hire-assess-linkbtn {
+  border: 0;
+  background: transparent;
+  color: var(--h-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+
+.hire-assess-linkbtn:disabled,
+.hire-assess-linkbtn.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hire-assess-linkbtn--danger {
+  color: #b91c1c;
+}
+
+.hire-assess__save {
+  margin-top: 18px;
+}
+
+.hire-assess__savebtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--h-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(224, 82, 38, 0.28);
+}
+
+.hire-assess__savebtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.hire-cand-assess__banner {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hire-cand-assess__header h1 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.hire-cand-assess__header > p {
+  margin: 0 0 10px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-cand-assess__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hire-cand-assess__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--h-peach, #ffe8de);
+  color: var(--h-primary);
+  font-weight: 700;
+}
+
+.hire-cand-assess__instructions {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f5f5f4;
+}
+
+.hire-cand-assess__instructions h2 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hire-cand-assess__instructions p {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hire-cand-assess__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hire-cand-assess__item {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+}
+
+.hire-cand-assess__qhead {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hire-cand-assess__num {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--h-primary);
+}
+
+.hire-cand-assess__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hire-cand-assess__help,
+.hire-cand-assess__points {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-cand-assess__options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-cand-assess__options label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hire-cand-assess__para textarea {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  resize: vertical;
+}
+
+.hire-cand-assess__counter {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--h-gray-500, #78716c);
+  text-align: right;
+}
+
+.hire-cand-assess__counter.is-over {
+  color: #b91c1c;
+}
+
+.hire-cand-assess__file {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hire-cand-assess__upload-link {
+  color: var(--h-primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.hire-cand-assess__submit {
+  margin-top: 18px;
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--h-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hire-assess-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hire-assess-list__empty {
+  padding: 40px 20px;
+  text-align: center;
+  border: 1px dashed rgba(28, 25, 23, 0.16);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.hire-assess-list__empty p {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.hire-assess-list__table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 16px;
+}
+
+.hire-assess-list__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hire-assess-list__table th,
+.hire-assess-list__table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(28, 25, 23, 0.06);
+  white-space: nowrap;
+}
+
+.hire-assess-list__table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-list__title {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hire-assess-list__title:hover {
+  color: var(--h-primary);
+}
+
+.hire-assess-list__status {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f5f5f4;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.hire-assess-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hire-assess-list__footnote {
+  margin: 12px 2px 0;
+  font-size: 12px;
+  color: var(--h-gray-500, #78716c);
+}
+
+@media (max-width: 720px) {
+  .hire-assess-list__table thead {
+    display: none;
+  }
+
+  .hire-assess-list__table,
+  .hire-assess-list__table tbody,
+  .hire-assess-list__table tr,
+  .hire-assess-list__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .hire-assess-list__table tr {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  }
+
+  .hire-assess-list__table td {
+    border: 0;
+    padding: 4px 0;
+    white-space: normal;
+  }
 }

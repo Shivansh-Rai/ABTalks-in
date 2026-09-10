@@ -176,17 +176,17 @@ export function AppFooter() {
   ) {
     const year = new Date().getFullYear();
     return (
-      <footer className="mt-auto border-t border-[#E0E0E0] bg-[#FBF9F7]">
+      <footer className="mt-auto border-t border-[#E0E0E0] bg-[#F4F4F4]">
         <div className="mx-auto grid w-full max-w-[1536px] grid-cols-1 items-center gap-4 px-4 py-5 md:grid-cols-3 md:px-6">
           <nav
-            className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1 text-xs text-[#555555]"
+            className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1 text-xs text-[#4B4B4B]"
             aria-label="Legal"
           >
             {LEGAL_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className="hover:text-[#E05226] hover:underline"
+                className="hover:text-[#03535F] hover:underline"
               >
                 {label}
               </Link>
@@ -203,7 +203,7 @@ export function AppFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="inline-flex size-8 items-center justify-center rounded-full text-[#555555] transition-colors hover:bg-[#E05226]/10 hover:text-[#E05226]"
+                className="inline-flex size-8 items-center justify-center rounded-full text-[#4B4B4B] transition-colors hover:bg-[#03535F]/10 hover:text-[#03535F]"
               >
                 <Icon className="size-4" />
               </a>
@@ -245,7 +245,7 @@ export function AppFooter() {
       className={cn(
         "mt-auto border-t pb-16 backdrop-blur-sm md:pb-0",
         isMarketplace
-          ? "border-[#030712] bg-[#050C1D] text-white/80"
+          ? "border-[#000000] bg-[#000000] text-white/80"
           : "bg-card/50 text-muted-foreground",
       )}
     >
