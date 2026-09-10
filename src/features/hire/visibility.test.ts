@@ -22,6 +22,9 @@ import {
   visibleProgramMemberWhere,
 } from "@/repositories/talent";
 import { memberEligibilityWhere } from "@/features/hire/pool-policy";
+import { evaluateHardFilters } from "@/features/hire/score-candidate";
+import { findTrack } from "@/features/hire/track-registry";
+import type { JobSpec, ScoreableMember } from "@/features/hire/types";
 
 let passed = 0;
 let failed = 0;
@@ -249,6 +252,251 @@ suite("no hire file builds its own visibility clause", () => {
     `these build their own gate instead of importing it: ${offenders.join(", ")}`,
   );
 });
+
+/* ─── Plan 117: discoverability from profile state alone ─────────────────── */
+
+const hireSrc = (f: string) =>
+  readFileSync(join(process.cwd(), "src/features/hire", f), "utf8");
+const repoSrc = (f: string) =>
+  readFileSync(join(process.cwd(), "src/repositories", f), "utf8");
+
+/** Comments may name a forbidden field; code may not. */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
+suite("a usable profile is enough to be searchable", () => {
+  const src = repoSrc("hire.ts");
+  const i = src.indexOf("export async function listProfileCandidates");
+  assert(i !== -1, "the profile pool query exists");
+  const fn = src.slice(i, i + 900);
+
+  // The shared gate, not a hand-rolled copy.
+  assert(fn.includes("searchableUserWhere()"), "uses the one discovery gate");
+  // Usable = at least one hand-claimed skill + a real name.
+  assert(
+    fn.includes("claimedByCandidate: true"),
+    "requires a skill the candidate claimed",
+  );
+  assert(fn.includes('fullName: { not: "" }'), "requires a name");
+
+  // And nothing else. No toggle, no evidence, no ABTalks activity.
+  for (const forbidden of [
+    "openToWork",
+    "enrollment",
+    "programMember",
+    "hackathonParticipant",
+    "missionsPassed",
+    "clearsEvidenceFloor",
+  ]) {
+    assert(!fn.includes(forbidden), `eligibility must not depend on ${forbidden}`);
+  }
+});
+
+suite("the PROFILE track is registered and carries no evidence bar", () => {
+  const track = findTrack("PROFILE");
+  assert(track !== null, "PROFILE is a known track");
+  assert(
+    track?.supportsEvidenceDays === false,
+    "a day floor on a profile is meaningless and would empty the result",
+  );
+  assert(
+    (track?.dedupePriority ?? 99) < 30,
+    "real evidence must win the card over a bare profile",
+  );
+
+  const loader = hireSrc("track-loaders.ts");
+  const i = loader.indexOf("async function loadProfile");
+  assert(i !== -1, "loadProfile exists");
+  const fn = loader.slice(i, loader.indexOf("export async function loadTrack"));
+  assert(
+    !fn.includes("clearsEvidenceFloor"),
+    "the profile track must never consult the evidence floor",
+  );
+  assert(fn.includes("belowEvidenceFloor: 0"), "no floor is reported");
+});
+
+suite("REGRESSION: a zero-evidence candidate is not filtered out", () => {
+  // Exactly what the PROFILE loader produces: no missions, no passes, no
+  // commits, no interview. Evidence may rank; it must never exclude.
+  const member = {
+    id: "u1",
+    source: "PROFILE",
+    candidateRef: "PROFILE:u1",
+    userId: "u1",
+    fullName: "Fresh Candidate",
+    jobRole: "Candidate",
+    company: "",
+    yearsExperience: 0,
+    skills: ["React", "TypeScript"],
+    missionPoints: 0,
+    missionsPassed: 0,
+    missionsAttempted: 0,
+    missionsWaived: 0,
+    cleanPassCount: 0,
+    totalScore: 0,
+    commitDayCount: 0,
+    projectScores: [],
+    interview: null,
+    hasVisibilityConsent: true,
+    cohortPublished: true,
+    status: "ENROLLED",
+    availability: null,
+  } as unknown as ScoreableMember;
+
+  const spec = { mustHaveStack: ["React"] } as unknown as JobSpec;
+  const result = evaluateHardFilters(member, spec);
+  assert(
+    result.ok,
+    `zero-evidence candidate excluded: ${result.reasons.join(", ")}`,
+  );
+  assert(
+    !result.reasons.some((r) => /mission|evidence|floor/i.test(r)),
+    `no evidence-shaped exclusion: ${result.reasons.join(", ")}`,
+  );
+});
+
+/* ─── Plan 117: opportunity types as a recruiter filter ──────────────────── */
+
+function memberWithTypes(types: string[]): ScoreableMember {
+  return {
+    id: "u2",
+    userId: "u2",
+    fullName: "T",
+    jobRole: "Dev",
+    company: "",
+    yearsExperience: 1,
+    skills: ["React"],
+    missionPoints: 0,
+    missionsPassed: 0,
+    missionsAttempted: 0,
+    cleanPassCount: 0,
+    totalScore: 0,
+    commitDayCount: 0,
+    projectScores: [],
+    interview: null,
+    hasVisibilityConsent: true,
+    cohortPublished: true,
+    status: "ENROLLED",
+    availability: {
+      openToWork: true,
+      expectedSalaryMin: null,
+      expectedSalaryMax: null,
+      salaryCurrency: "INR",
+      noticePeriodDays: null,
+      preferredWorkMode: null,
+      preferredCities: [],
+      openToRelocate: false,
+      opportunityTypes: types,
+    },
+  } as unknown as ScoreableMember;
+}
+
+const engagementSpec = (t: string) => ({ employmentType: t }) as unknown as JobSpec;
+
+suite("engagement type filters on ANY overlap", () => {
+  const both = memberWithTypes(["INTERNSHIP", "FREELANCE"]);
+  assert(
+    evaluateHardFilters(both, engagementSpec("FREELANCE")).ok,
+    "a stated overlap must pass",
+  );
+  const miss = evaluateHardFilters(both, engagementSpec("FULL_TIME"));
+  assert(!miss.ok, "a stated list that omits the type must be excluded");
+  assert(
+    miss.reasons.some((r) => /engagement/i.test(r)),
+    `reason names the engagement type: ${miss.reasons.join(", ")}`,
+  );
+});
+
+suite("an unstated list never excludes", () => {
+  const silent = memberWithTypes([]);
+  for (const t of [
+    "FULL_TIME",
+    "INTERNSHIP",
+    "PART_TIME",
+    "CONTRACT",
+    "FREELANCE",
+  ]) {
+    assert(
+      evaluateHardFilters(silent, engagementSpec(t)).ok,
+      `empty opportunityTypes must not exclude for ${t}`,
+    );
+  }
+});
+
+suite("all five engagement types are speakable by a recruiter", () => {
+  const convo = hireSrc("scout-conversation.ts");
+  const schema = readFileSync(
+    join(process.cwd(), "src/lib/validations/hire.ts"),
+    "utf8",
+  );
+  for (const t of [
+    "FULL_TIME",
+    "CONTRACT",
+    "INTERNSHIP",
+    "PART_TIME",
+    "FREELANCE",
+  ]) {
+    assert(schema.includes(`"${t}"`), `${t} is accepted by the spec schema`);
+    assert(convo.includes(t), `${t} is parseable from a recruiter message`);
+  }
+});
+
+suite("the candidate side offers all five opportunity types", () => {
+  const schema = readFileSync(
+    join(process.cwd(), "src/lib/validations/candidate-profile.ts"),
+    "utf8",
+  );
+  assert(
+    schema.includes("opportunityTypes: z.array(z.enum(OpportunityType))"),
+    "the profile accepts the whole enum rather than a hand-listed subset",
+  );
+  const repo = repoSrc("candidate.ts");
+  assert(
+    repo.includes("opportunityTypes: true"),
+    "availability actually reads the column — this was the whole Task 2 gap",
+  );
+});
+
+/* ─── Plan 117: payload audit ────────────────────────────────────────────── */
+
+suite("no contact field can reach the browser payload", () => {
+  const code = stripComments(hireSrc("to-public-match.ts"));
+  for (const forbidden of [
+    "phone",
+    "email",
+    "resumeUrl",
+    "linkedinUrl",
+    "githubUsername",
+    "expectedSalary",
+  ]) {
+    assert(!code.includes(forbidden), `toPublicMatch must never carry ${forbidden}`);
+  }
+  // Links are booleans, and that is the whole contract.
+  assert(
+    code.includes("githubConnected") && code.includes("linkedinConnected"),
+    "links stay booleans on the card",
+  );
+});
+
+suite("dossiers carry link booleans, never addresses", () => {
+  for (const f of [
+    "profile-dossier.ts",
+    "hackathon-dossier.ts",
+    "challenge-dossier.ts",
+  ]) {
+    const code = stripComments(hireSrc(f));
+    for (const forbidden of [
+      "linkedinUrl",
+      "githubUsername",
+      "resumeUrl",
+      "phone",
+    ]) {
+      assert(!code.includes(forbidden), `${f} must not read ${forbidden}`);
+    }
+  }
+});
+
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
 if (failed > 0) process.exitCode = 1;
