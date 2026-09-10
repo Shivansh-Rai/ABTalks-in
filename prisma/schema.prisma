@@ -1166,6 +1166,24 @@ model TalentRequest {
   /// Free-form extras Scout captured; never used for matching.
   extra                    Json?
   alertWhenAvailable       Boolean                   @default(false)
+  /// The recruiter's own label for this piece of work, e.g. "Senior Backend
+  /// Engineer - Delhi NCR". Distinct from `title`, which is the role being
+  /// hired for: two searches for the same role are otherwise indistinguishable
+  /// in a list. Nullable so existing rows need no invented value; the UI falls
+  /// back to `title` when it is null.
+  name                     String?
+  /// When this recruiter last opened the request.
+  ///
+  /// This is what `TalentRequestMatch.firstSeenAt` is compared against to draw
+  /// the "new since your last visit" badge - firstSeenAt alone has nothing to
+  /// measure from. A request has exactly one recruiter today
+  /// (`recruiterUserId`), so one column is enough; if organisation-wide
+  /// projects arrive this must become a per-(recruiter, request) row.
+  lastViewedAt             DateTime?
+  /// Filed away by the recruiter. Deliberately NOT a TalentRequestStatus value:
+  /// status says where the request is in its lifecycle, this says the recruiter
+  /// put it aside, and a timestamp also records when.
+  archivedAt               DateTime?
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   recruiter                User                      @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
@@ -1191,6 +1209,18 @@ model TalentRequestMessage {
   @@index([requestId, createdAt])
 }
 
+/// A recruiter's triage verdict on ONE match.
+///
+/// Deliberately narrow: three values, about a candidate's fit for this search.
+/// It is not the hiring pipeline - `PipelineStage` on TalentListItem owns that
+/// once a candidate is on a talent list. Keeping them apart is a decision
+/// pending sign-off; see docs/plans/113-A-schema-review-sohail.md, question 1.
+enum TalentMatchDecision {
+  UNDECIDED
+  SHORTLISTED
+  REJECTED
+}
+
 /// Scored candidate snapshot frozen at match time for auditability.
 ///
 /// Keyed on `candidateUserId`, because a candidate is a person and not a cohort
@@ -1213,10 +1243,25 @@ model TalentRequestMatch {
   gaps                String[]              @default([])
   availabilityUnknown Boolean               @default(true)
   source              TalentCandidateSource @default(PROGRAM)
+  /// The first time this candidate appeared on this request.
+  ///
+  /// `createdAt` cannot serve: the match run used to delete every row and
+  /// recreate it, so createdAt meant "last run". The run is an upsert now
+  /// (see runMatchAction) and this column is never written on update, which is
+  /// what makes "new since your last visit" answerable.
+  firstSeenAt         DateTime              @default(now())
+  /// When the recruiter first opened this candidate on this request. Null IS
+  /// the meaning "not yet viewed", so it is nullable with no default.
+  viewedAt            DateTime?
+  decision            TalentMatchDecision   @default(UNDECIDED)
   createdAt           DateTime              @default(now())
   request             TalentRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
   candidate           User                  @relation("CandidateMatches", fields: [candidateUserId], references: [id], onDelete: Cascade)
 
+  /// A candidate appears at most once per request. This is what the match run
+  /// upserts on, and it is the one part of this migration that can FAIL on
+  /// existing data - check for duplicate pairs before applying.
+  @@unique([requestId, candidateUserId])
   @@index([requestId, score(sort: Desc)])
   @@index([candidateUserId])
 }
@@ -3697,4 +3742,61 @@ enum VirtualCandidateRequestStatus {
   FULFILLED
   CANCELLED
   EXPIRED
+}
+
+// =============================================================================
+// T-259 — observability. One send attempt, one row.
+//
+// This is the database view of the "one incident, three views" rule: the same
+// `id` appears in the structured log line (`deliveryId`) and on the Sentry
+// event (tag `deliveryId`), and the row carries the `requestId` and
+// `sentryEventId` that lead to the other two.
+//
+// It deliberately stores NO contact detail. `recipientHash` is a SHA-256 of the
+// lowercased address, which is enough to answer "did this person's mail fail?"
+// (hash the address and look it up) without the table itself becoming a mailing
+// list — this row is read by admins and reachable from exports.
+// =============================================================================
+
+enum OutboundDeliveryChannel {
+  EMAIL
+}
+
+enum OutboundDeliveryStatus {
+  /// Provider not configured, or a seed/test address — nothing was attempted.
+  SKIPPED
+  SENT
+  FAILED
+}
+
+/// T-259 observability side-table for outbound mail. Distinct from
+/// T-248 `NotificationDelivery`, which tracks UserNotification channels.
+model OutboundDelivery {
+  id      String                   @id @default(cuid())
+  channel OutboundDeliveryChannel  @default(EMAIL)
+
+  /// What this send is, e.g. "recruiter.otp", "hire.alert", "contact.form".
+  /// Free text so a new caller needs no migration.
+  kind String
+
+  /// SHA-256 of the lowercased recipient address. Never the address.
+  recipientHash String
+
+  /// The domain entity this send belongs to, when there is one.
+  subjectType String?
+  subjectId   String?
+
+  status        OutboundDeliveryStatus
+  /// Output of safeErrorMessage() — already redacted.
+  failureReason String?
+
+  /// Correlation. Same values as the log line and the Sentry event.
+  requestId     String?
+  sentryEventId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([kind, createdAt(sort: Desc)])
+  @@index([recipientHash])
 }

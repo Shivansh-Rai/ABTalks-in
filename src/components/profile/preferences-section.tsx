@@ -42,7 +42,11 @@ export function PreferencesSection({
   initial: PreferencesFormValues;
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(savePreferencesAction, "Career preferences");
+  const { save } = useSectionSave(
+    savePreferencesAction,
+    "Career preferences",
+    "preferences",
+  );
   const { control, register, handleSubmit, formState } =
     useForm<PreferencesFormValues>({ defaultValues: initial });
 

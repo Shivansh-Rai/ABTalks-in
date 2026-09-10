@@ -39,6 +39,14 @@ export type CartRow = {
    *  decided who appears in this cart. */
   openToWork?: boolean;
   compensationBand?: string | null;
+  /**
+   * Set ONLY on rows that came from a T-149 talent project. Their removal must
+   * flip `TalentRequestMatch.decision` back to UNDECIDED — the legacy
+   * RecruiterShortlistItem path cannot name them and answers "Member not
+   * found" for anything outside the one published cohort.
+   */
+  projectRequestId?: string | null;
+  candidateUserId?: string | null;
 };
 
 const STATUS_COPY: Record<string, string> = {

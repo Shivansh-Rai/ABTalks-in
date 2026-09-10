@@ -1,5 +1,9 @@
 import { RedemptionStatus, PointsSourceType } from "@prisma/client";
 import { writeClient } from "@/lib/db";
+import { reqLogger } from "@/lib/logger";
+import { captureFailure } from "@/lib/observability/capture";
+import { logMoney } from "@/lib/observability/domain-log";
+import { getRequestId } from "@/lib/observability/request-id";
 import { applyPointsChange, getBalance, withLegacyPointsMirrorFlush } from "@/repositories/points";
 import {
   composeShippingAddress,
@@ -15,7 +19,64 @@ export type RedeemResult =
       message: string;
     };
 
+/**
+ * T-259 — a money path that is also a contact path.
+ *
+ * `input` carries a shipping address, a recipient name and a phone number. None
+ * of them are logged: the `redemptionId` is the handle, and the address lives
+ * only on the Redemption row where the shipping team reads it. The points side
+ * emits its own `credit.debit.*` and `ledger.write.*` events from
+ * `applyPointsChange`, so this layer logs the redemption lifecycle only.
+ */
 export async function redeemItem(
+  input: RedeemItemInput & { userId: string },
+): Promise<RedeemResult> {
+  const requestId = await getRequestId();
+  const log = reqLogger(requestId, {
+    route: "marketplace:redeemItem",
+    userId: input.userId,
+    itemId: input.itemId,
+  });
+
+  logMoney("redemption", { outcome: "attempt", userId: input.userId, log });
+
+  try {
+    const result = await runRedemption(input);
+    if (result.ok) {
+      logMoney("redemption", {
+        outcome: "success",
+        userId: input.userId,
+        sourceId: result.redemptionId,
+        newBalance: result.newBalance,
+        log,
+      });
+    } else {
+      logMoney("redemption", {
+        outcome: "refused",
+        userId: input.userId,
+        reason: result.reason,
+        log,
+      });
+    }
+    return result;
+  } catch (error) {
+    await captureFailure(error, {
+      event: "redemption.failed",
+      message: "redemption threw",
+      log,
+      tags: {
+        requestId,
+        userId: input.userId,
+        itemId: input.itemId,
+        route: "marketplace:redeemItem",
+      },
+      extra: { area: "money", op: "redemption", outcome: "failed" },
+    });
+    throw error;
+  }
+}
+
+function runRedemption(
   input: RedeemItemInput & { userId: string },
 ): Promise<RedeemResult> {
   return withLegacyPointsMirrorFlush(() =>

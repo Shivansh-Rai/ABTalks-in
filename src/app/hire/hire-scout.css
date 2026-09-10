@@ -4405,6 +4405,67 @@ html.dark .vc-card {
   background: var(--h-primary-hover);
 }
 
+/* Temporary project-triage chrome (T-149). Isolated from outreach cart. */
+.desk-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.desk-badge--new {
+  background: color-mix(in srgb, var(--h-primary) 16%, transparent);
+  color: var(--h-primary);
+}
+.desk-badge--viewed {
+  background: var(--h-card-line);
+  color: var(--h-ink-soft, #6b625c);
+}
+.desk-card__triage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.desk-card__triage .desk-ghost.is-on {
+  border-color: var(--h-primary);
+  color: var(--h-primary);
+  background: color-mix(in srgb, var(--h-primary) 10%, transparent);
+}
+.desk-card--rejected {
+  opacity: 0.62;
+}
+.desk-card--rejected .desk-card__facts,
+.desk-card--rejected .desk-card__why {
+  display: none;
+}
+.hire-req__name {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+.hire-req__name-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--h-card-line);
+  border-radius: 8px;
+  background: var(--h-card, #fff);
+  color: inherit;
+  font-size: 13px;
+}
+.hire-hide-rejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
 .vc-card__cta:disabled {
   opacity: 0.55;
   cursor: default;

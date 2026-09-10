@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { decideEngagementAction } from "@/app/actions/hire-request-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ export function EngagementDecision({
   status: string;
 }) {
   const router = useRouter();
+  const track = useTrack();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -49,6 +52,13 @@ export function EngagementDecision({
       if (!res.ok) {
         toast.error(res.message);
         return;
+      }
+      // The unlock is the CONTACT_SHARED transition the server just persisted —
+      // not the button press, and not the other three decisions, which share
+      // this handler. The button for the current status is filtered out below,
+      // so the same row cannot be shared twice from here.
+      if (res.data.status === "CONTACT_SHARED") {
+        track(ANALYTICS_EVENTS.recruiterContactUnlocked);
       }
       setNote("");
       toast.success(`Marked ${res.data.status.toLowerCase().replace("_", " ")}.`);
