@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   registerRecruiterWithOtpAction,
@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm() {
-  const [step, setStep] = useState<"form" | "code" | "done">("form");
+  const [step, setStep] = useState<"form" | "code">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +31,6 @@ export function RecruiterRegisterForm() {
   const [newsletterOptIn, setNewsletterOptIn] = useState(true);
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
-  const [approved, setApproved] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const canSubmitForm =
@@ -71,36 +70,18 @@ export function RecruiterRegisterForm() {
         setCode("");
         return;
       }
-      setApproved(res.data.approved);
-      setStep("done");
+      // Registration is the start of setup, not the end of it (T-226), but it
+      // does NOT create a session — the account is written and nothing is
+      // signed in. So the next step is signing in, and /talent/login carries on
+      // to /talent/setup once the code is verified. Sending them straight to
+      // /talent/setup would only bounce off its session guard.
+      //
+      // A full navigation rather than router.push: an App Router transition
+      // that lands on a server redirect leaves useTransition pending forever,
+      // which is exactly how this button ended up spinning after the write had
+      // already succeeded. The email rides along so they do not retype it.
+      window.location.href = `/talent/login?email=${encodeURIComponent(email)}`;
     });
-  }
-
-  if (step === "done") {
-    return (
-      <div className="space-y-3 rounded-xl border bg-card p-6 text-center">
-        <CheckCircle2
-          className="mx-auto size-8 text-primary"
-          aria-hidden="true"
-        />
-        <h3 className="font-display text-lg font-semibold">
-          {approved ? "You're all set" : "Thank you — we'll reach out soon"}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {approved
-            ? "Your company was already verified, so you can sign in straight away."
-            : "We've got your details. Someone from ABTalks will contact you to confirm, and you'll be able to sign in once that's done."}
-        </p>
-        {approved && (
-          <Link
-            href="/talent/login"
-            className={cn(buttonVariants({ size: "sm" }), "mt-1")}
-          >
-            Sign in
-          </Link>
-        )}
-      </div>
-    );
   }
 
   if (step === "code") {

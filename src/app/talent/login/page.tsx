@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     "Sign in to ABTalks Hire with your work email. No password, no Google account.",
 };
 
-type Props = { searchParams: Promise<{ from?: string }> };
+type Props = { searchParams: Promise<{ from?: string; email?: string }> };
 
 function safeFrom(from: string | undefined): string {
   if (!from || !from.startsWith("/") || from.startsWith("//")) return "/hire";
@@ -34,6 +34,7 @@ export default async function RecruiterLoginPage({ searchParams }: Props) {
   if (session?.user?.id) {
     const state = await getRecruiterState(session.user.id);
     if (state.status === "approved") redirect(redirectTo);
+    if (state.status === "setup_incomplete") redirect("/talent/setup");
     if (state.status === "pending") redirect("/talent/pending");
   }
 
@@ -58,7 +59,7 @@ export default async function RecruiterLoginPage({ searchParams }: Props) {
       </header>
 
       <div className="rounded-xl border bg-card p-5">
-        <RecruiterLoginForm redirectTo={redirectTo} />
+        <RecruiterLoginForm initialEmail={params.email ?? ""} />
       </div>
 
       <p className="text-center text-sm text-muted-foreground">

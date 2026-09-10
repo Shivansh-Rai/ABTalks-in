@@ -22,7 +22,6 @@
     "db:seed:hackathon-links": "tsx prisma/seed-hackathon-links.ts",
     "db:seed:hackathon-problems": "tsx prisma/seed-hackathon-problems.ts",
     "db:seed:colleges": "tsx prisma/seed-colleges.ts",
-    "db:seed:workshop-events": "tsx prisma/seed-workshop-events.ts",
     "db:seed:platform-taxonomy": "tsx prisma/seed-platform-taxonomy.ts",
     "db:seed:curriculum-skills": "tsx prisma/seed-curriculum-skills.ts",
     "db:dedupe:skills": "tsx prisma/scripts/dedupe-skills.ts",
@@ -102,7 +101,8 @@
     "test:virtual": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/virtual-candidate.test.ts",
     "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
     "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
-    "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts"
+    "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",
+    "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
