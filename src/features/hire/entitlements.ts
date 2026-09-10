@@ -1,5 +1,7 @@
 import "server-only";
 
+import { hasContactAccess } from "@/features/hire/contact-access";
+
 /**
  * THE server-side entitlement check for recruiter plan limits.
  *
@@ -59,4 +61,22 @@ export async function checkPlanLimit(
   void recruiterUserId;
   void key;
   return { allowed: false, remaining: null, reason: "NOT_IMPLEMENTED" };
+}
+
+/**
+ * Whether this recruiter may open this candidate's resume.
+ *
+ * Plan 120 seam. Today the only honest unlock is the admin CONTACT_SHARED
+ * grant (`hasContactAccess`). When a plan/billing system lands, change this
+ * function and call `recordResumeUnlock()` from the resume-view path — the
+ * Profile Performance counter needs no other work.
+ *
+ * Deliberately does not open a resume to anyone who cannot already see contact
+ * details: a resume carries the phone and email `contact-access.ts` protects.
+ */
+export async function canViewResume(
+  recruiterUserId: string,
+  candidateUserId: string,
+): Promise<boolean> {
+  return hasContactAccess(recruiterUserId, candidateUserId);
 }

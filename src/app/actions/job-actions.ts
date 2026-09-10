@@ -3,11 +3,18 @@
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import {
+  assertApplyAllowed,
+  CLOSED_JOB_MESSAGE,
+} from "@/features/recruiter-jobs/service";
+import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
 
 const applySchema = z.object({
   jobId: z.string().min(1),
   note: z.string().max(1000).optional().default(""),
 });
+
+export { CLOSED_JOB_MESSAGE };
 
 export async function applyToJobAction(input: { jobId: string; note?: string }) {
   const session = await auth();
@@ -20,15 +27,15 @@ export async function applyToJobAction(input: { jobId: string; note?: string }) 
     return { ok: false as const, message: "Invalid input" };
   }
 
-  try {
-    const job = await prisma.job.findUnique({
-      where: { id: parsed.data.jobId },
-      select: { isOpen: true },
-    });
-    if (!job || !job.isOpen) {
-      return { ok: false as const, message: "This role is closed." };
-    }
+  const guard = await assertApplyAllowed(
+    { jobs: prismaJobStore() },
+    parsed.data.jobId,
+  );
+  if (!guard.ok) {
+    return { ok: false as const, message: guard.message };
+  }
 
+  try {
     await prisma.jobApplication.create({
       data: {
         jobId: parsed.data.jobId,
