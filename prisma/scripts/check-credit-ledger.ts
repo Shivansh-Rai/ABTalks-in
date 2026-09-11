@@ -22,10 +22,15 @@
 import { PrismaClient } from "@prisma/client";
 import type { CreditChangeResult } from "../../src/repositories/credits";
 import {
+  unlockResolvedContact,
+  type ResolvedUnlock,
+} from "../../src/features/hire/unlock-transaction";
+import {
   applyCreditChange,
   getCreditBalance,
   grantOnboardingCreditsAtomic,
   onboardingGrantKey,
+  unlockIdempotencyKey,
   reconcileCreditAccount,
   sumLedgerBalance,
 } from "../../src/repositories/credits";
@@ -181,6 +186,16 @@ async function cleanupStrays() {
       organizationId: org.id,
       recruiterUserId: org.members[0]?.userId ?? "",
     }).catch(() => {});
+  }
+
+  // The unlock proofs create their own candidate. A crash leaves one behind
+  // holding an engagement row, which then blocks the next run's teardown.
+  const orphanCandidates = await prisma.user.findMany({
+    where: { email: { startsWith: "unlock-proof-cand-" } },
+    select: { id: true },
+  });
+  for (const c of orphanCandidates) {
+    await dropCandidate(c.id).catch(() => {});
   }
 }
 
@@ -492,6 +507,186 @@ async function proveConfigDrivesTheGrant() {
   }
 }
 
+
+/* ─── T-230: unlock safety, at the unlock level ──────────────────────────── */
+
+/**
+ * A scratch candidate. Unlock writes a TalentEngagementRequest against a real
+ * User row, so the proofs need one that is disposable.
+ */
+async function makeCandidate(stamp: number): Promise<string> {
+  const user = await prisma.user.create({
+    data: {
+      email: `unlock-proof-cand-${stamp}@abtalks.dev`,
+      name: "Unlock proof candidate",
+      role: "STUDENT",
+    },
+    select: { id: true },
+  });
+  return user.id;
+}
+
+async function dropCandidate(userId: string) {
+  await prisma.talentEngagementRequest.deleteMany({
+    where: { candidateUserId: userId },
+  });
+  await prisma.creditTransaction.deleteMany({ where: { candidateUserId: userId } });
+  await prisma.user.delete({ where: { id: userId } });
+}
+
+function resolvedFor(s: Scratch, candidateUserId: string): ResolvedUnlock {
+  return {
+    organizationId: s.organizationId,
+    recruiterUserId: s.recruiterUserId,
+    candidateUserId,
+    candidatePublicId: "AB-9999",
+    programMemberId: null,
+    source: "CHALLENGE_60",
+  };
+}
+
+async function proveUnlockChargesOnce() {
+  console.log("\nAn unlock charges once, and the repeat is free\n");
+  const s = await makeScratch();
+  const candidateUserId = await makeCandidate(Date.now());
+  try {
+    await grantOnboardingCreditsAtomic(s);
+
+    const first = await unlockResolvedContact(resolvedFor(s, candidateUserId));
+    check(
+      "the first unlock charges $10.00 and leaves $190.00",
+      first.ok && first.charged && first.costMinor === 1_000 && first.balanceMinor === 19_000,
+      JSON.stringify(first),
+    );
+
+    const shared = await prisma.talentEngagementRequest.findFirst({
+      where: { recruiterUserId: s.recruiterUserId, candidateUserId, status: "CONTACT_SHARED" },
+      select: { id: true, decidedByAdminId: true },
+    });
+    check("access exists, released by credit rather than an admin",
+      shared !== null && shared.decidedByAdminId === null, JSON.stringify(shared));
+
+    const second = await unlockResolvedContact(resolvedFor(s, candidateUserId));
+    check(
+      "unlocking the same candidate again is free (TC-R-011)",
+      second.ok && !second.charged && second.costMinor === 0 && second.balanceMinor === 19_000,
+      JSON.stringify(second),
+    );
+
+    const rows = await prisma.creditTransaction.count({
+      where: { organizationId: s.organizationId, type: "UNLOCK_CONTACT" },
+    });
+    check("exactly one debit row exists", rows === 1, `found ${rows}`);
+
+    const engagements = await prisma.talentEngagementRequest.count({
+      where: { recruiterUserId: s.recruiterUserId, candidateUserId },
+    });
+    check("exactly one engagement row exists", engagements === 1, `found ${engagements}`);
+    await assertReconciled(s, "after an unlock");
+  } finally {
+    await dropCandidate(candidateUserId);
+    await dropScratch(s);
+  }
+}
+
+async function proveConcurrentUnlocksChargeOnce() {
+  console.log("\nFour simultaneous unlocks of the same candidate\n");
+  const s = await makeScratch();
+  const candidateUserId = await makeCandidate(Date.now() + 1);
+  try {
+    await grantOnboardingCreditsAtomic(s);
+
+    const settled = await Promise.allSettled(
+      Array.from({ length: 4 }, () =>
+        unlockResolvedContact(resolvedFor(s, candidateUserId)),
+      ),
+    );
+    const threw = settled.filter((r) => r.status === "rejected");
+    check(
+      "no attempt threw",
+      threw.length === 0,
+      threw.map((r) => String((r as PromiseRejectedResult).reason)).join(" | "),
+    );
+
+    const results = settled
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => (r as PromiseFulfilledResult<Awaited<ReturnType<typeof unlockResolvedContact>>>).value);
+    const charged = results.filter((r) => r.ok && r.charged).length;
+    check(`exactly one attempt charged (got ${charged}) — TC-R-012`, charged === 1);
+    check("every attempt succeeded", results.every((r) => r.ok), JSON.stringify(results));
+
+    const debits = await prisma.creditTransaction.count({
+      where: { organizationId: s.organizationId, type: "UNLOCK_CONTACT" },
+    });
+    check(`exactly one debit row (got ${debits})`, debits === 1);
+
+    const balance = await getCreditBalance(s.organizationId);
+    check("the balance fell by exactly $10.00", balance === 19_000, `got ${balance}`);
+
+    const engagements = await prisma.talentEngagementRequest.count({
+      where: { recruiterUserId: s.recruiterUserId, candidateUserId },
+    });
+    check(`exactly one engagement row (got ${engagements})`, engagements === 1);
+    await assertReconciled(s, "after concurrent unlocks");
+  } finally {
+    await dropCandidate(candidateUserId);
+    await dropScratch(s);
+  }
+}
+
+async function proveUnlockRefusedWhenBroke() {
+  console.log("\nAn unlock nobody can afford writes nothing (TC-R-013)\n");
+  const s = await makeScratch();
+  const candidateUserId = await makeCandidate(Date.now() + 2);
+  try {
+    // Fund with less than one unlock costs.
+    await prisma.$transaction(
+      (tx) =>
+        applyCreditChange(tx, {
+          organizationId: s.organizationId,
+          recruiterUserId: s.recruiterUserId,
+          amount: 500,
+          type: "ADMIN_ADJUSTMENT",
+          sourceType: "PROOF",
+          idempotencyKey: `proof:thin:${s.organizationId}`,
+          reason: "Proof: not enough for one unlock",
+        }),
+      TX_OPTIONS,
+    );
+
+    const result = await unlockResolvedContact(resolvedFor(s, candidateUserId));
+    check(
+      "it is refused, and names credits as the reason",
+      !result.ok && result.reason === "INSUFFICIENT_CREDITS",
+      JSON.stringify(result),
+    );
+
+    const debits = await prisma.creditTransaction.count({
+      where: { organizationId: s.organizationId, type: "UNLOCK_CONTACT" },
+    });
+    check("no ledger row was written", debits === 0, `found ${debits}`);
+
+    const engagements = await prisma.talentEngagementRequest.count({
+      where: { recruiterUserId: s.recruiterUserId, candidateUserId },
+    });
+    check("no access was granted", engagements === 0, `found ${engagements}`);
+
+    const balance = await getCreditBalance(s.organizationId);
+    check("the balance is untouched", balance === 500, `got ${balance}`);
+
+    const key = unlockIdempotencyKey(s.organizationId, candidateUserId);
+    const stray = await prisma.creditTransaction.findUnique({
+      where: { idempotencyKey: key },
+      select: { id: true },
+    });
+    check("the unlock key was not consumed by the refusal", stray === null);
+    await assertReconciled(s, "after a refused unlock");
+  } finally {
+    await dropCandidate(candidateUserId);
+    await dropScratch(s);
+  }
+}
+
 /* ─── run ────────────────────────────────────────────────────────────────── */
 
 async function main() {
@@ -521,6 +716,9 @@ async function main() {
     await proveNoOverspend();
     await proveInsufficientIsClean();
     await proveConfigDrivesTheGrant();
+    await proveUnlockChargesOnce();
+    await proveConcurrentUnlocksChargeOnce();
+    await proveUnlockRefusedWhenBroke();
   }
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

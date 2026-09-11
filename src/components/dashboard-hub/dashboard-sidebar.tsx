@@ -8,6 +8,7 @@ import {
   Briefcase,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Grid3X3,
   LogIn,
   LogOut,
@@ -39,6 +40,7 @@ const ICON_MAP: Record<
   award: Award,
   zap: Zap,
   user: User,
+  clipboard: ClipboardCheck,
 };
 
 const SIDEBAR_COLLAPSED_WIDTH_CLASS = "w-[72px]";

@@ -94,7 +94,7 @@ export default async function HireAssessmentsPage() {
                   <tr key={row.id}>
                     <td>
                       <Link
-                        href={`/hire/create-test?id=${row.id}`}
+                        href={`/hire/assessments/${row.id}`}
                         className="hire-assess-list__title"
                       >
                         {row.title}
@@ -112,9 +112,9 @@ export default async function HireAssessmentsPage() {
                         {row.status}
                       </span>
                     </td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
+                    <td>{row.results ? row.results.students : "—"}</td>
+                    <td>{row.results ? row.results.passed : "—"}</td>
+                    <td>{row.results ? row.results.failed : "—"}</td>
                     <td>
                       {row.updatedAt.toLocaleString("en-IN", {
                         timeZone: "Asia/Kolkata",
@@ -129,19 +129,21 @@ export default async function HireAssessmentsPage() {
                       >
                         Open builder
                       </Link>
-                      <form action={deleteAssessmentFormAction}>
-                        <input
-                          type="hidden"
-                          name="assessmentId"
-                          value={row.id}
-                        />
-                        <button
-                          type="submit"
-                          className="hire-assess-linkbtn hire-assess-linkbtn--danger"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      {row.status === "DRAFT" && (
+                        <form action={deleteAssessmentFormAction}>
+                          <input
+                            type="hidden"
+                            name="assessmentId"
+                            value={row.id}
+                          />
+                          <button
+                            type="submit"
+                            className="hire-assess-linkbtn hire-assess-linkbtn--danger"
+                          >
+                            Delete
+                          </button>
+                        </form>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -149,7 +151,9 @@ export default async function HireAssessmentsPage() {
             </table>
           </div>
           <p className="hire-assess-list__footnote">
-            Results appear once you publish an assessment and assign it.
+            Students counts candidates you assigned. Passed and Failed count
+            completed attempts against the pass mark. Drafts show — until
+            they&apos;re published.
           </p>
         </>
       )}

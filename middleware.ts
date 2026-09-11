@@ -63,6 +63,7 @@ const protectedPaths = [
   "/register",
   "/admin",
   "/jobs",
+  "/assessments",
   "/mission",
   "/program/ai-cohort/apply",
   "/program/ai-cohort/assessment",

@@ -1,4 +1,4 @@
-# Plan 128 — Recruiter assessment presets (templates)
+# Plan 130 — Recruiter assessment presets (templates)
 
 **Status:** planned (2026-09-11). Not started.
 **Builds on:** Plan 121 (recruiter assessment builder). Same tables, same

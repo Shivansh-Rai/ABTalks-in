@@ -347,20 +347,22 @@ model User {
   hackathonRemovalsPerformed HackathonRemoval[]     @relation("HackathonRemover")
 
   // hire — Scout engagements, requests and availability
-  virtualCandidateRequests   VirtualCandidateRequest[] @relation("VirtualCandidateRequester")
-  virtualCandidatesAssigned  VirtualCandidateRequest[] @relation("VirtualCandidateAssignee")
-  virtualCandidatesLinked    VirtualCandidateRequest[] @relation("VirtualCandidateLinked")
-  virtualCandidatesConverted VirtualCandidate[]        @relation("VirtualCandidateConverted")
-  virtualCandidateEvents     VirtualCandidateEvent[]   @relation("VirtualCandidateActor")
+  virtualCandidateRequests   VirtualCandidateRequest[]       @relation("VirtualCandidateRequester")
+  virtualCandidatesAssigned  VirtualCandidateRequest[]       @relation("VirtualCandidateAssignee")
+  virtualCandidatesLinked    VirtualCandidateRequest[]       @relation("VirtualCandidateLinked")
+  virtualCandidatesConverted VirtualCandidate[]              @relation("VirtualCandidateConverted")
+  virtualCandidateEvents     VirtualCandidateEvent[]         @relation("VirtualCandidateActor")
   talentRequests             TalentRequest[]
-  engagementsAsRecruiter     TalentEngagementRequest[] @relation("RecruiterEngagements")
-  engagementsAsCandidate     TalentEngagementRequest[] @relation("CandidateEngagements")
-  candidateMatches           TalentRequestMatch[]      @relation("CandidateMatches")
+  engagementsAsRecruiter     TalentEngagementRequest[]       @relation("RecruiterEngagements")
+  engagementsAsCandidate     TalentEngagementRequest[]       @relation("CandidateEngagements")
+  candidateMatches           TalentRequestMatch[]            @relation("CandidateMatches")
   engagementMessages         TalentEngagementMessage[]
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
   /// Plan 121 — recruiter-authored assessments (builder drafts).
-  assessmentsAuthored        RecruiterAssessment[]     @relation("RecruiterAssessmentsCreated")
+  assessmentsAuthored        RecruiterAssessment[]           @relation("RecruiterAssessmentsCreated")
+  /// Plan 128 (T-244) — recruiter assessments assigned to this candidate.
+  assessmentAssignments      RecruiterAssessmentAssignment[] @relation("AssessmentAssignee")
 
   // credits (T-228) — the recruiter credit ledger. Restrict, like pointsLedger:
   // financial history outlives the convenience of deleting a row.
@@ -3249,9 +3251,10 @@ model RecruiterAssessment {
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
 
-  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy    User                 @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  organization Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User                            @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
   questions    AssessmentQuestion[]
+  assignments  RecruiterAssessmentAssignment[]
 
   @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
   @@index([status])
@@ -3281,6 +3284,8 @@ model AssessmentQuestion {
 
   assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   options    AssessmentQuestionOption[]
+  /// Plan 129 (T-218) — candidates' answers. Virtual; no column.
+  answers    AssessmentAnswer[]
 
   @@unique([assessmentId, position])
   @@index([assessmentId, position])
@@ -3297,6 +3302,85 @@ model AssessmentQuestionOption {
 
   @@unique([questionId, position])
   @@index([questionId, isCorrect])
+}
+
+enum AssessmentAssignmentStatus {
+  ASSIGNED
+  STARTED
+  SUBMITTED
+}
+
+/// T-244: one row per (recruiter assessment, candidate). Created when a
+/// recruiter assigns a PUBLISHED assessment to a candidate on their Shortlist.
+///
+/// T-244 writes: id, assessmentId, candidateUserId, candidateRef, assignedAt.
+/// T-218 writes: status, startedAt, submittedAt, scorePercent, passed — and
+/// nothing else. See docs/plans/128-t244-assessment-publish-assign-results.md §10.
+///
+/// RESTRICT on the assessment: a published assessment holds candidates'
+/// results and must not vanish with a delete. deleteAssessment is DRAFT-only,
+/// and a DRAFT can never have assignments, so this never blocks a real delete.
+/// CASCADE on the candidate: a candidate deleting their account takes their
+/// assignments with them.
+model RecruiterAssessmentAssignment {
+  id              String                     @id @default(cuid())
+  assessmentId    String
+  candidateUserId String
+  /// The Shortlist handle the recruiter assigned from ("PROGRAM:<memberId>",
+  /// "CLAUDE:<userId>", …). Stored so the monitor prints the same AB-#### label
+  /// the desk shows. A name, never a capability.
+  candidateRef    String
+  status          AssessmentAssignmentStatus @default(ASSIGNED)
+  assignedAt      DateTime                   @default(now())
+  /// T-218 only.
+  startedAt       DateTime?
+  /// T-218 only.
+  submittedAt     DateTime?
+  /// T-218 only. 0–100, share of auto-gradeable points earned.
+  scorePercent    Int?
+  /// T-218 only. scorePercent >= RecruiterAssessment.passMarkPercent.
+  passed          Boolean?
+  updatedAt       DateTime                   @updatedAt
+
+  assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  candidate  User                @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  /// Plan 129 (T-218) — the candidate's answers. Virtual; no column.
+  answers    AssessmentAnswer[]
+
+  @@unique([assessmentId, candidateUserId])
+  @@index([candidateUserId, assignedAt(sort: Desc)])
+  @@index([assessmentId, status])
+}
+
+/// T-218: one candidate's answer to one question on one assignment.
+///
+/// Written only while the assignment is STARTED: every save first takes the
+/// assignment row lock with a guarded no-op update, so no answer can land after
+/// a submission. Frozen once the assignment is SUBMITTED.
+/// ABTalks stores no files — FILE_UPLOAD answers are a link the candidate pasted.
+///
+/// CASCADE on the assignment: answers go with the attempt they belong to.
+/// RESTRICT on the question: a PUBLISHED assessment's questions never change
+/// (saveAssessmentDraft is DRAFT-only and a DRAFT has no assignments), so this
+/// never blocks a real delete; it stops an answer silently losing its question.
+model AssessmentAnswer {
+  id                String   @id @default(cuid())
+  assignmentId      String
+  questionId        String
+  /// MULTIPLE_CHOICE only. AssessmentQuestionOption ids, stable once published.
+  selectedOptionIds String[] @default([])
+  /// PARAGRAPH only. Stored exactly as typed — never trimmed.
+  text              String?
+  /// FILE_UPLOAD only. An http(s) link. Null = cleared.
+  fileUrl           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  assignment RecruiterAssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion            @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, questionId])
+  @@index([questionId])
 }
 
 /// Runtime, admin-editable platform configuration (T-148 D-17, T-228).

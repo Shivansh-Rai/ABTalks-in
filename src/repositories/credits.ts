@@ -106,6 +106,22 @@ export function onboardingGrantKey(organizationId: string): string {
   return `grant:onboarding:${organizationId}`;
 }
 
+/**
+ * One unlock, one key, forever.
+ *
+ * Scoped to the workspace rather than the recruiter user so it keeps meaning
+ * the same thing if a workspace ever gains a second member — the credits are
+ * the workspace's, so the thing that must not happen twice is a workspace
+ * paying twice. T-148 §4.2 reserved this namespace; T-228 deliberately left it
+ * unused.
+ */
+export function unlockIdempotencyKey(
+  organizationId: string,
+  candidateUserId: string,
+): string {
+  return `unlock:${organizationId}:${candidateUserId}`;
+}
+
 /* ─── reads: always from the ledger ──────────────────────────────────────── */
 
 /**
@@ -395,8 +411,14 @@ export async function grantOnboardingCredits(
  * reach, and the narrow check looked right until Postgres disagreed.
  *
  * 23505 is unique_violation.
+ *
+ * Exported because T-229's unlock owns its own transaction — debit, ledger row
+ * and `CONTACT_SHARED` commit together (T-148 §4.4) — so the catch has to live
+ * at that boundary. It reuses this rather than writing a second check, because
+ * the second check is the narrow `P2002`-only one, and that is precisely the
+ * bug the proofs already caught here once.
  */
-function isUniqueViolation(error: unknown): boolean {
+export function isUniqueViolation(error: unknown): boolean {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     return error.code === "P2002";
   }
