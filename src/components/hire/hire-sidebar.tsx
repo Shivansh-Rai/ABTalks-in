@@ -11,7 +11,14 @@ import {
 } from "@/components/hire/subscription-gate";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 import { cn } from "@/lib/utils";
-import { ChartColumn, FolderKanban, FolderOpen, House, LifeBuoy } from "lucide-react";
+import {
+  ChartColumn,
+  FolderKanban,
+  FolderOpen,
+  House,
+  LifeBuoy,
+  MessageSquare,
+} from "lucide-react";
 
 /**
  * The nav card on the left of the Scout desk (Figma 1585:76).
@@ -23,8 +30,11 @@ import { ChartColumn, FolderKanban, FolderOpen, House, LifeBuoy } from "lucide-r
  */
 export function HireSidebar({
   account,
+  unreadMessages = 0,
 }: {
   account: RecruiterAccountSnapshot | null;
+  /** T-232: outreach threads where the candidate replied since this recruiter last looked. */
+  unreadMessages?: number;
 }) {
   const pathname = usePathname();
   const { openAuth } = useHireAuth();
@@ -73,6 +83,25 @@ export function HireSidebar({
           <FolderKanban className="hire-side__icon" aria-hidden="true" />
           Projects
         </Link>
+        {account && (
+          <Link
+            href="/hire/messages"
+            className={cn(
+              "hire-side__item",
+              pathname.startsWith("/hire/messages") && "is-current",
+            )}
+            aria-current={pathname.startsWith("/hire/messages") ? "page" : undefined}
+          >
+            <MessageSquare className="hire-side__icon" aria-hidden="true" />
+            Messages
+            {unreadMessages > 0 && (
+              <span className="ml-auto rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-primary-foreground">
+                {unreadMessages}
+                <span className="sr-only"> unread</span>
+              </span>
+            )}
+          </Link>
+        )}
         <span
           className="hire-side__item is-disabled"
           aria-disabled="true"

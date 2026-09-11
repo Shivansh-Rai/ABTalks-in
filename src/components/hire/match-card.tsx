@@ -8,6 +8,7 @@ import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
 import { buttonVariants } from "@/components/ui/button";
 import { RequestIntroButton } from "@/components/hire/request-intro-button";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
+import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import {
   SampleCardNotice,
   type SampleDemand,
@@ -463,8 +464,14 @@ function RealMatchCard({
         {/* Two different things, deliberately side by side. The intro request
             asks ABTalks to make an introduction; the unlock buys the contact
             details outright (T-229). Once contact is shared, only the intro
-            chip is worth showing — the unlock has nothing left to offer. */}
-        {match.engagementStatus === "CONTACT_SHARED" ? null : (
+            chip is worth showing — the unlock has nothing left to offer, and
+            its slot becomes "Email candidate" (T-232). */}
+        {match.engagementStatus === "CONTACT_SHARED" ? (
+          <OutreachComposeDialog
+            candidateRef={match.candidateRef}
+            candidateLabel={match.displayName ?? publicId}
+          />
+        ) : (
           <UnlockContactDialog
             candidateRef={match.candidateRef}
             publicId={publicId}

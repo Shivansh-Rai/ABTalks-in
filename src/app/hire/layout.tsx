@@ -6,6 +6,7 @@ import { getRecruiterAccountSnapshot } from "@/features/hire/recruiter-account";
 import { getWorkspaceCredits } from "@/features/hire/credits";
 import { existingEngagements } from "@/features/hire/contact-access";
 import { listProjectShortlist } from "@/features/hire/project-shortlist";
+import { countUnreadForRecruiter } from "@/features/hire/outreach";
 import { logger } from "@/lib/logger";
 import { getShortlist } from "@/features/talent-pool/pool";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
@@ -37,6 +38,10 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   // Resolved server-side because this layout already resolves the recruiter,
   // so the figure needs no client fetch and therefore no loading state.
   const credits = account ? await getWorkspaceCredits() : null;
+
+  // T-232: the desk has no notification bell, so an outreach reply shows here
+  // as a count on Messages. The recruiter is also emailed (outreach.reply_received).
+  const unreadMessages = userId && active ? await countUnreadForRecruiter(userId) : 0;
 
   // The header shortlist is the union of TWO stores, and it has to be, because
   // neither can name every candidate:
@@ -141,6 +146,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
             // disagree. `account.cartCount` counts the legacy table only.
             serverCartCount={podRows.length}
             podRows={podRows}
+            unreadMessages={unreadMessages}
           >
             {children}
           </HireChrome>

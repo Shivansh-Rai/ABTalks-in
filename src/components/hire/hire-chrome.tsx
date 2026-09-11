@@ -31,6 +31,7 @@ export function HireChrome({
   credits,
   serverCartCount,
   podRows,
+  unreadMessages,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
@@ -38,6 +39,8 @@ export function HireChrome({
   credits: { balanceMinor: number; currency: string } | null;
   serverCartCount: number;
   podRows: CartRow[];
+  /** T-232: unread outreach replies, resolved server-side in the layout. */
+  unreadMessages: number;
   children: React.ReactNode;
 }) {
   const { approved, openAuth } = useHireAuth();
@@ -84,6 +87,8 @@ export function HireChrome({
     (/^\/hire\/[^/]+$/.test(pathname ?? "") &&
       pathname !== "/hire/evidence" &&
       pathname !== "/hire/requests" &&
+      // T-232: a plain page, not a project desk (`/hire/[id]` shares its shape).
+      pathname !== "/hire/messages" &&
       pathname !== "/hire/matches" &&
       pathname !== "/hire/create-test" &&
       pathname !== "/hire/assessments");
@@ -254,7 +259,7 @@ export function HireChrome({
       {desk ? (
         <main className="hire-workspace">
           {isResults && (
-            <HireSidebar account={account} />
+            <HireSidebar account={account} unreadMessages={unreadMessages} />
           )}
           {/* On desktop the results screen hides this rail behind the nav card;
               phones keep its compact step strip. */}

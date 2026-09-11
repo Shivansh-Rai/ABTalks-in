@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { loadProtectedContacts } from "@/features/hire/contact-access";
 import { CheckoutFlash } from "@/components/hire/checkout-flash";
 import { EngagementThread } from "@/components/hire/engagement-thread";
+import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
+import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +50,7 @@ export default async function HireRequestsPage() {
       createdAt: true,
       request: { select: { id: true, title: true } },
       programMemberId: true,
+      source: true,
       messages: {
         orderBy: { createdAt: "asc" },
         take: 50,
@@ -189,14 +192,25 @@ export default async function HireRequestsPage() {
                 )}
 
                 {identity?.email && (
-                  <p className="rounded-lg bg-primary/5 px-3 py-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-3 rounded-lg bg-primary/5 px-3 py-2 text-sm">
                     <a
                       href={`mailto:${identity.email}`}
                       className="text-primary hover:underline"
                     >
                       {identity.email}
                     </a>
-                  </p>
+                    {/* T-232. PROGRAM refs name the cohort member; every other
+                        track names the user — the same encoding the pool uses. */}
+                    <OutreachComposeDialog
+                      candidateRef={encodeCandidateRef(
+                        e.source,
+                        e.source === "PROGRAM" && e.programMemberId
+                          ? e.programMemberId
+                          : e.candidateUserId,
+                      )}
+                      candidateLabel={identity.fullName ?? e.candidatePublicId}
+                    />
+                  </div>
                 )}
 
                 <EngagementThread
