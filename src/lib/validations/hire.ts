@@ -366,10 +366,32 @@ export const sendScoutMessageSchema = z.object({
    * the engine always parses `message`.
    */
   display: z.string().trim().min(1).max(200).optional(),
+  /**
+   * Plan 133. The search session this turn continues. Absent with a
+   * `requestId` means "start a new search in this project".
+   */
+  sessionId: z.string().cuid().optional(),
 });
 
 export const runMatchSchema = z.object({
   requestId: z.string().cuid(),
+  /** Plan 133. The search session to run; absent means a new session. */
+  sessionId: z.string().cuid().optional(),
+});
+
+/** Plan 133. A new, named project — created before any search. */
+export const createTalentProjectSchema = z.object({
+  name: z.string().trim().min(1, "Give the project a name.").max(80),
+});
+
+/** Plan 133. File (or unfile) one of the recruiter's assessments. */
+export const projectAssessmentLinkSchema = z.object({
+  requestId: z.string().cuid(),
+  assessmentId: z.string().cuid(),
+});
+
+export const projectAssessmentUnlinkSchema = z.object({
+  assessmentId: z.string().cuid(),
 });
 
 export const guestScoutHistorySchema = z.object({

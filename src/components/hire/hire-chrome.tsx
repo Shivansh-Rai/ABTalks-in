@@ -12,6 +12,7 @@ import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
 import { HireSidebar } from "@/components/hire/hire-sidebar";
 import { HireTalentPod } from "@/components/hire/hire-talent-pod";
+import { projectIdFromPath, scopePodRows } from "@/components/hire/shortlist-scope";
 import { HireSavedLater } from "@/components/hire/hire-saved-later";
 import type { CartRow } from "@/components/hire/shortlist-cart";
 import {
@@ -29,18 +30,20 @@ import { cn } from "@/lib/utils";
 export function HireChrome({
   account,
   credits,
-  serverCartCount,
   podRows,
   unreadMessages,
+  projects,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
   /** Null when this visitor has no recruiter workspace to have a balance in. */
   credits: { balanceMinor: number; currency: string } | null;
-  serverCartCount: number;
+  /** Every shortlist row the recruiter has, tagged with its project; scoped below. */
   podRows: CartRow[];
   /** T-232: unread outreach replies, resolved server-side in the layout. */
   unreadMessages: number;
+  /** Plan 133: the recruiter's projects, for switching in the nav card. */
+  projects: { id: string; label: string }[];
   children: React.ReactNode;
 }) {
   const { approved, openAuth } = useHireAuth();
@@ -80,8 +83,16 @@ export function HireChrome({
     return () => window.removeEventListener("resize", fit);
   }, []);
 
-  const cartCount = approved ? serverCartCount + overlayCount : guestCount;
   const pathname = usePathname();
+  // Plan 133: the header shortlist is the OPEN project's, never a union of
+  // projects. Off-project it is the legacy saved list, which belongs to none.
+  // The count is taken from the same scoped array the panel renders.
+  const openProjectId = projectIdFromPath(pathname);
+  const scopedRows = scopePodRows(podRows, openProjectId);
+  const openProjectLabel = openProjectId
+    ? (projects.find((p) => p.id === openProjectId)?.label ?? "This project")
+    : null;
+  const cartCount = approved ? scopedRows.length + overlayCount : guestCount;
   const desk =
     pathname === "/hire" ||
     (/^\/hire\/[^/]+$/.test(pathname ?? "") &&
@@ -259,7 +270,12 @@ export function HireChrome({
       {desk ? (
         <main className="hire-workspace">
           {isResults && (
-            <HireSidebar account={account} unreadMessages={unreadMessages} />
+            <HireSidebar
+              account={account}
+              unreadMessages={unreadMessages}
+              projects={projects}
+              openProjectId={openProjectId}
+            />
           )}
           {/* On desktop the results screen hides this rail behind the nav card;
               phones keep its compact step strip. */}
@@ -274,7 +290,16 @@ export function HireChrome({
           </div>
           {view === "pod" && (
             <div className="hire-pod-region">
-              <HireTalentPod serverRows={podRows} />
+              <HireTalentPod
+                serverRows={scopedRows}
+                scopeLabel={
+                  openProjectLabel
+                    ? `Project: ${openProjectLabel}`
+                    : approved
+                      ? "Saved candidates — not part of any project"
+                      : undefined
+                }
+              />
             </div>
           )}
           {view === "saved" && (

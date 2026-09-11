@@ -39,6 +39,22 @@ export type HireDeskState = {
    */
   newSearchNonce: number;
   newProjectNonce: number;
+  /**
+   * Plan 133. The open project's search sessions and assessments, published
+   * by ScoutChat for the nav card. The nav card only renders it while the URL
+   * is this project, so a stale value from a page left behind never shows.
+   */
+  project: DeskProject | null;
+};
+
+export type DeskSession = { id: string; ordinal: number; title: string };
+export type DeskAssessment = { id: string; title: string; status: string };
+export type DeskProject = {
+  id: string;
+  activeSessionId: string | null;
+  sessions: DeskSession[];
+  assessments: DeskAssessment[];
+  unassignedAssessments: DeskAssessment[];
 };
 
 type HireDeskValue = HireDeskState & {
@@ -65,6 +81,7 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
     projectName: null,
     newSearchNonce: 0,
     newProjectNonce: 0,
+    project: null,
   });
   const setDesk = useCallback((next: Partial<HireDeskState>) => {
     setState((s) => ({ ...s, ...next }));
@@ -154,6 +171,7 @@ export function useHireDesk(): HireDeskValue {
       projectName: null,
       newSearchNonce: 0,
       newProjectNonce: 0,
+      project: null,
       setDesk: () => {},
       openPod: () => {},
       closePod: () => {},

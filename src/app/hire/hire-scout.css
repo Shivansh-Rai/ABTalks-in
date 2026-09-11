@@ -6948,17 +6948,16 @@ html.dark .vc-card {
 }
 
 .hire-side__spacer--a {
-  height: 37px;
+  height: 16px;
 }
 
 .hire-side__spacer--b {
-  height: 43px;
+  height: 16px;
 }
 
 .hire-side__project {
   display: flex;
   flex-direction: column;
-  height: 65px;
   flex: none;
 }
 
