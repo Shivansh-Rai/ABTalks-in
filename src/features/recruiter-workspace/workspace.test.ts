@@ -8,13 +8,17 @@
  * The pure checks cover the slug, which is what actually separates two
  * recruiters at one company. The source assertions cover what a unit test
  * cannot see — that the workspace is resolved from the session rather than from
- * a caller-supplied id, that setup is ordered ahead of approval, and that the
- * old company-scoped slug has not survived anywhere.
+ * a caller-supplied id, and that the old company-scoped slug has not survived
+ * anywhere.
+ *
+ * Plan 127 removed the recruiter application process, so the suites that used
+ * to pin the ordering of setup and approval now pin their absence: there is no
+ * pending state, no setup wizard, and no approval gate to get past.
  *
  * Run: npm run test:recruiter-workspace
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join, posix, sep } from "node:path";
 import { recruiterWorkspaceSlug } from "@/features/hire/provision-recruiter";
 
 let passed = 0;
@@ -39,6 +43,37 @@ const NEWLINE = String.fromCharCode(10);
 
 function source(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
+}
+
+/**
+ * A file's code with its comments stripped.
+ *
+ * Every one of these removals left a comment behind saying what used to be
+ * there and why it went — which is the point of them. A grep for the old route
+ * has to read the code, not the history written above it.
+ */
+function code(rel: string): string {
+  return source(rel)
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split(NEWLINE)
+    .filter((l) => !l.trim().startsWith("//"))
+    .join(NEWLINE);
+}
+
+/** Every .ts/.tsx file under the given repo-relative roots, as posix paths. */
+function sourceFiles(roots: string[]): string[] {
+  const out: string[] = [];
+  const walk = (rel: string) => {
+    for (const entry of readdirSync(join(process.cwd(), rel), {
+      withFileTypes: true,
+    })) {
+      const child = `${rel}/${entry.name}`;
+      if (entry.isDirectory()) walk(child);
+      else if (/\.tsx?$/.test(entry.name)) out.push(child);
+    }
+  };
+  for (const root of roots) walk(root);
+  return out.map((p) => p.split(sep).join(posix.sep));
 }
 
 console.log("\nT-226 independent recruiter workspace\n");
@@ -106,45 +141,61 @@ suite("requireRecruiterWorkspace takes no id from the caller", () => {
   assert(src.includes("ok: false"), "returns the result envelope");
 });
 
-suite("an unfinished or unapproved recruiter gets no workspace", () => {
+suite("a registered recruiter always gets a workspace", () => {
   const src = source("src/features/recruiter-workspace/workspace.ts");
-  const setup = src.indexOf("setupCompletedAt");
-  const approved = src.indexOf("profile.approved");
-  const member = src.indexOf("organizationMember.findFirst");
-  assert(setup > 0 && approved > 0, "both gates present");
   assert(
-    setup < member && approved < member,
-    "both are checked before a workspace is handed out",
+    src.includes("ensureRecruiterWorkspace"),
+    "the workspace is resolved through the self-healing helper",
+  );
+  // Plan 127: approval and the setup wizard were the two gates between
+  // registering and working. Neither may come back as a refusal here.
+  assert(!src.includes("profile.approved"), "no approval gate");
+  assert(!src.includes("under review"), "no application-review refusal");
+  assert(
+    !src.includes("setupCompletedAt"),
+    "no wizard gate — provisioning is not something a recruiter has to finish",
   );
 });
 
-/* ─── setup is ordered ahead of approval, and resumable ──────────────────── */
+/* ─── there is nothing to wait for ───────────────────────────────────────── */
 
-suite("setup_incomplete is decided before pending", () => {
+suite("the recruiter state machine has no waiting states", () => {
   const src = source("src/features/talent-pool/recruiter-registration.ts");
-  const fn = src.slice(src.indexOf("export async function getRecruiterState"));
-  const incomplete = fn.indexOf('status: "setup_incomplete"');
-  const pending = fn.indexOf('status: "pending"');
-  assert(incomplete > 0 && pending > 0, "both states exist");
   assert(
-    incomplete < pending,
-    "an unfinished application must not be reported as under review",
+    !src.includes('"pending"') && !src.includes('"setup_incomplete"'),
+    "registering and being a recruiter are the same thing",
+  );
+  assert(
+    src.includes('status: "active"'),
+    "a profile resolves straight to active",
+  );
+  // getRecruiterState runs in the /hire and /talent layouts on every request.
+  const from = src.indexOf("export async function getRecruiterState");
+  const fn = src.slice(from, src.indexOf("export async function", from + 1));
+  assert(fn.length > 0, "getRecruiterState exists");
+  assert(
+    !fn.includes("$transaction") && !fn.includes(".update("),
+    "the layout read must not write",
   );
 });
 
-suite("every redirecting surface routes an unfinished setup", () => {
+suite("the application screens are gone, and nothing links to them", () => {
   for (const rel of [
-    "src/app/talent/login/page.tsx",
-    "src/app/talent/register/page.tsx",
     "src/app/talent/pending/page.tsx",
-    "src/app/page.tsx",
+    "src/app/talent/setup/page.tsx",
+    "src/components/talent/recruiter-setup-form.tsx",
+    "src/app/actions/recruiter-setup-actions.ts",
+    "src/app/actions/admin-recruiter-actions.ts",
   ]) {
-    const src = source(rel);
-    assert(
-      src.includes('"setup_incomplete"') && src.includes('"/talent/setup"'),
-      `${rel} must send an unfinished setup to /talent/setup`,
-    );
+    assert(!existsSync(join(process.cwd(), rel)), `${rel} must be deleted`);
   }
+  const offenders = sourceFiles(["src/app", "src/components", "src/features", "src/lib"])
+    .filter((rel) => !rel.endsWith(".test.ts"))
+    .filter((rel) => /["'`]\/talent\/(pending|setup)/.test(code(rel)));
+  assert(
+    offenders.length === 0,
+    `these still route to a removed screen: ${offenders.join(", ")}`,
+  );
 });
 
 suite("registration hands off to sign-in, not a terminal panel", () => {
@@ -190,107 +241,77 @@ suite("the login page seeds the email it was handed", () => {
   );
 });
 
-suite("recruiter sign-in lands on setup, not the Scout desk", () => {
+suite("recruiter sign-in lands on the desk", () => {
   const src = source("src/components/talent/recruiter-login-form.tsx");
   const fn = src.slice(src.indexOf("function submitCode()"));
   const stop = fn.indexOf("if (step === ");
   const body = stop > 0 ? fn.slice(0, stop) : fn;
 
-  // The bug this replaces: sign-in hard-navigated to `redirectTo`, which
-  // defaults to /hire. That skipped every recruiter-state guard, so a recruiter
-  // with setup still to finish landed on Scout as a guest and was asked to log
-  // in again — a loop with no way into the wizard.
+  // Sign-in used to route through /talent/setup because it could not know
+  // which of three recruiter states the account was in. Plan 127 left one
+  // state, so the destination is unconditional.
   assert(
-    body.includes('window.location.href = "/talent/setup"'),
-    "a successful sign-in navigates to the setup wizard",
+    body.includes('window.location.href = "/hire"'),
+    "a successful sign-in navigates to the Scout desk",
   );
+  // Still a full navigation, not an App Router transition: the session cookie
+  // has just been set and every guard downstream reads it server-side.
   assert(
-    !body.includes("window.location.href = redirectTo"),
-    "sign-in no longer jumps straight to the ?from= target",
-  );
-  assert(
-    !/window\.location\.href\s*=\s*["'`]\/hire/.test(src),
-    "/hire is not a post-login destination for the recruiter flow",
+    !body.includes("router.push(") && !body.includes("router.refresh("),
+    "no App Router transition across a fresh session cookie",
   );
 });
 
-suite("finishing setup does not bounce off its own guard", () => {
-  const src = source("src/components/talent/recruiter-setup-form.tsx");
-  const fn = src.slice(src.indexOf("function saveCompany()"));
-  // Comments out first: the fix explains itself by naming the call it removed,
-  // and a plain substring check would match the explanation instead of the code.
-  const body = fn
-    .slice(0, fn.indexOf("if (step ==="))
-    .split(NEWLINE)
-    .filter((l) => !l.trim().startsWith("//"))
-    .join(NEWLINE);
-
-  // The bug: setStep("COMPLETE") rendered "Workspace ready", then
-  // router.refresh() re-rendered /talent/setup, whose pending guard redirected
-  // to "Application received" a second later — a success message immediately
-  // contradicted.
+suite("the workspace is provisioned by registering, not by a wizard", () => {
+  const src = source("src/features/hire/provision-recruiter.ts");
+  const fn = src.slice(src.indexOf("export async function ensureRecruiterWorkspace"));
+  assert(fn.length > 0, "the helper exists");
   assert(
-    !body.includes("router.refresh("),
-    "no refresh — the page guard would redirect out of the success state",
+    /export async function ensureRecruiterWorkspace\(\s*userId: string,?\s*\)/.test(src),
+    "it takes only a user id resolved by its caller from the session",
   );
-  assert(
-    src.includes("Workspace ready"),
-    "the success state still exists",
-  );
-  // T-226's scope ends at a workspace, not at access. Say both.
-  assert(
-    src.includes("ABTalks confirms your company"),
-    "the panel says approval is still to come",
-  );
-  assert(
-    src.includes('href="/talent/pending"'),
-    "and offers the next step instead of jumping there",
-  );
-
-  // The refresh was only half of it. In the App Router a revalidate issued from
-  // a Server Action re-renders the route the caller is standing on, whichever
-  // path it names — so any revalidatePath in the setup actions puts the
-  // recruiter back through this page's pending guard.
-  const actions = source("src/app/actions/recruiter-setup-actions.ts")
-    .split(NEWLINE)
-    .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
-    .join(NEWLINE);
-  assert(
-    !actions.includes("revalidatePath("),
-    "setup actions revalidate nothing — it would redirect off the success panel",
-  );
-});
-
-suite("the setup page is reachable by an unapproved recruiter", () => {
-  const src = source("src/app/talent/setup/page.tsx");
-  // This page is reached BEFORE approval. Gating it on an admin or an approved
-  // role is the failure mode that has bitten public/pending surfaces before.
-  assert(!src.includes("requireAdmin"), "no admin gate");
-  assert(!src.includes("requireRole"), "no role gate");
-  assert(src.includes("await auth()"), "session required");
-  assert(
-    src.includes('redirect("/talent/register")'),
-    "a non-recruiter is sent to register",
-  );
-});
-
-suite("setup steps are saved server-side, one step at a time", () => {
-  const src = source("src/app/actions/recruiter-setup-actions.ts");
-  assert(src.includes('"use server"'), "server action");
-  assert(
-    src.includes("discriminatedUnion"),
-    "each step validates its own fields",
-  );
-  assert(
-    !/saveRecruiterSetupStepAction[\s\S]{0,400}userId:\s*(parsed|input)/.test(src),
-    "the recruiter is never taken from the payload",
-  );
-  const complete = src.slice(
-    src.indexOf("export async function completeRecruiterSetupAction"),
-  );
-  const tx = complete.indexOf("$transaction");
-  const provision = complete.indexOf("provisionRecruiterIdentity");
+  const tx = fn.indexOf("$transaction");
+  const provision = fn.indexOf("provisionRecruiterIdentity");
   assert(tx > 0 && provision > tx, "provisioning happens inside the transaction");
+  // Idempotence is what makes it safe to call on every gated request: an
+  // existing workspace short-circuits before the transaction is opened.
+  assert(
+    fn.indexOf("organizationMember.findFirst") < tx,
+    "an existing workspace is returned without writing",
+  );
+
+  // Registration provisions up front, so the healing path is a fallback for
+  // rows written under the old flow rather than the normal case.
+  for (const rel of [
+    "src/app/actions/recruiter-auth-actions.ts",
+    "src/features/talent-pool/recruiter-registration.ts",
+  ]) {
+    const reg = source(rel);
+    assert(
+      reg.includes("provisionRecruiterIdentity"),
+      `${rel} provisions the workspace as it creates the profile`,
+    );
+    assert(
+      !/approved:\s*(approved|Boolean\(seat\)|false)/.test(reg),
+      `${rel} must not create a profile that is waiting for anything`,
+    );
+  }
+});
+
+suite("nothing reads approval as a gate any more", () => {
+  // Server-side reads only. `approved` survives as a column that is always
+  // written true, and as a boolean prop on the hire auth context meaning
+  // "signed in and a recruiter" — neither is a gate. What must not come back
+  // is a refusal branch or a query that selects the unapproved.
+  const offenders = sourceFiles(["src/app", "src/components", "src/features", "src/lib"])
+    .filter((rel) => !rel.endsWith(".test.ts"))
+    .filter((rel) =>
+      /!profile\??\.approved|where:\s*\{\s*approved:\s*false/.test(code(rel)),
+    );
+  assert(
+    offenders.length === 0,
+    `approval is still gating: ${offenders.join(", ")}`,
+  );
 });
 
 /* ─── the migration must not disturb existing recruiters ─────────────────── */

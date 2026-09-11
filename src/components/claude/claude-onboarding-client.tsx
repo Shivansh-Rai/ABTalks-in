@@ -108,7 +108,7 @@ function CountdownDisplay() {
           </div>
           <span className="text-muted-foreground">:</span>
           <div className="flex flex-col items-center">
-            <span className="text-lg md:text-xl text-orange-500">
+            <span className="text-lg md:text-xl text-[#03535F]">
               {String(time.seconds).padStart(2, "0")}
             </span>
             <span className="text-[9px] font-normal tracking-wider text-muted-foreground">
@@ -204,12 +204,12 @@ export function ClaudeOnboardingClient() {
   const isLast = currentIndex === SLIDES.length - 1;
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-gradient-to-br from-background via-background to-orange-500/5">
+    <div className="relative min-h-svh overflow-hidden bg-gradient-to-br from-background via-background to-[#03535F]/5">
       <ClaudeBackgroundBlobs slideIndex={currentIndex} />
 
       <div className="relative z-10 flex min-h-svh flex-col">
-        <header className="relative z-20 shrink-0 px-6 py-4">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+        <header className="abt-header z-20 shrink-0">
+          <div className="abt-header-inner">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Link href="/" aria-label="ABTalks home" className="logo-link">
@@ -222,7 +222,7 @@ export function ClaudeOnboardingClient() {
                     className="logo-image"
                   />
                 </Link>
-                <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                <span className="rounded bg-[#03535F]/10 px-2 py-0.5 text-[10px] font-bold text-[#02434D] dark:text-[#076573]">
                   CLAUDE
                 </span>
               </div>
@@ -276,7 +276,7 @@ export function ClaudeOnboardingClient() {
                 href={LOGIN_HREF}
                 className={cn(
                   buttonVariants(),
-                  "w-full justify-center gap-2 bg-[#E05226] text-white hover:bg-[#C9411C]",
+                  "w-full justify-center gap-2 bg-[#03535F] text-white hover:bg-[#076573]",
                 )}
               >
                 <Rocket className="h-4 w-4" />
@@ -308,7 +308,7 @@ export function ClaudeOnboardingClient() {
               <Button
                 type="button"
                 onClick={next}
-                className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600"
+                className="gap-2 bg-gradient-to-r from-[#03535F] to-[#03535F] text-white hover:from-[#02434D] hover:to-[#02434D]"
               >
                 Continue
                 <ArrowRight className="h-4 w-4" />
@@ -327,17 +327,17 @@ function ClaudeBackgroundBlobs({ slideIndex }: { slideIndex: number }) {
       <motion.div
         animate={{ x: slideIndex * 20, y: -slideIndex * 10 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl"
+        className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-[#03535F]/20 blur-3xl"
       />
       <motion.div
         animate={{ x: -slideIndex * 30, y: slideIndex * 20 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute -right-32 top-60 h-80 w-80 rounded-full bg-pink-500/15 blur-3xl"
+        className="absolute -right-32 top-60 h-80 w-80 rounded-full bg-[#03535F]/15 blur-3xl"
       />
       <motion.div
         animate={{ x: slideIndex * 15, y: -slideIndex * 25 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-[#FFECE3] blur-3xl"
+        className="absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-[#E7F2F3] blur-3xl"
       />
     </div>
   );

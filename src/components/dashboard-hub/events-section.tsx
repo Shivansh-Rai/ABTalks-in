@@ -26,7 +26,7 @@ export function EventsSection() {
 
   return (
     <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-5">
-      <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-2">Events</h2>
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">Events</h2>
 
       {upcoming.length > 0 ? (
         <EventRail title="Upcoming events" events={upcoming} />
@@ -77,7 +77,7 @@ function EventCard({
   return (
     <article
       className={cn(
-        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 p-5 sm:w-[300px]",
+        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px]",
         HUB_CARD_HOVER_CLASS,
         past ? "bg-white" : "bg-white shadow-sm",
       )}
@@ -85,13 +85,13 @@ function EventCard({
       <h4 className="font-inter text-base font-bold leading-snug text-black">
         {event.title}
       </h4>
-      <p className="mt-2 text-xs text-[#555555]">
+      <p className="mt-2 text-xs text-[#4B4B4B]">
         {event.date} · {event.time}
       </p>
-      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-[#555555]">
+      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-[#4B4B4B]">
         {event.desc}
       </p>
-      <p className="mt-3 text-xs text-[#555555]">{event.location}</p>
+      <p className="mt-3 text-xs text-[#4B4B4B]">{event.location}</p>
       {past ? null : (
         <Link
           href={href}

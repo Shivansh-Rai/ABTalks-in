@@ -93,8 +93,8 @@ export function AppHeader({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/95 shadow-sm backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="abt-header z-50">
+      <div className="abt-header-inner">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
@@ -124,30 +124,20 @@ export function AppHeader({
           ) : null}
           <Link
             href="/jobs"
-            className={cn(
-              "focus-spark group hidden shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm font-medium transition-colors md:inline-flex",
-              jobsActive
-                ? "border-primary/30 bg-primary/10 text-primary"
-                : "border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/60 hover:text-foreground",
-            )}
+            aria-current={jobsActive ? "page" : undefined}
+            className="abt-header-nav-link hidden md:inline-flex"
           >
-            <Briefcase
-              className="size-3.5 transition-transform group-hover:scale-110"
-              aria-hidden
-            />
+            <Briefcase aria-hidden />
             Jobs
           </Link>
           {user.isAdmin ? (
-            <Link
-              href="/admin"
-              className="focus-spark hidden shrink-0 items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 md:inline-flex"
-            >
+            <Link href="/admin" className="abt-header-cta hidden md:inline-flex">
               Admin
             </Link>
           ) : null}
           {/* All breakpoints. On mobile this lands between the challenge
               switcher and the hamburger, which are the only other visible items. */}
-          <NotificationBellButton className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-card text-foreground transition-colors hover:border-[#E05226] hover:bg-[#E05226]/10 hover:text-[#E05226]" />
+          <NotificationBellButton className="abt-header-icon" />
           <div className="hidden md:block">
             <SynergyChip />
           </div>

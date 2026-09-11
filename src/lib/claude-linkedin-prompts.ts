@@ -170,7 +170,7 @@ This should also ask others to join and all the demographics should be accurate 
   45: `Create a premium LinkedIn milestone poster (portrait 4:5, 1080×1350) celebrating "45/60 Days Completed" of the ABTalks 60 Days Claude Challenge. This is an IMAGE EDITING task, not an image generation task. Use my uploaded photo exactly as provided. 
   Do NOT redraw, recreate, beautify, stylize, age, de-age, modify, or regenerate my face, hairstyle, skin tone, facial features, expression, clothing, pose, body proportions, or camera angle. 
   Preserve the original photograph pixel-for-pixel, only remove the background and seamlessly composite the original photo into the poster. Place the unmodified photo on the right with soft blue and purple brush-stroke blending and subtle cinematic rim lighting around the edges only. Use a dark navy-black cosmic background with faint stars, abstract tech textures, 
-  floating particles, and neon blue (#4EA8FF) and violet (#8B5CF6) glow. Top-left: ABTALKS in bold white brush typography, PRESENTS below, rounded badge reading "60 DAYS CLAUDE CHALLENGE". Center-left: huge brush-stroke "45", "DAYS", glowing violet pill "COMPLETED". Add a premium progress card showing "45/60", "75% Complete", and a circular progress ring. Add the headline "CONSISTENCY TODAY, EXPERTISE TOMORROW.", subtext "Halfway there. 
+  floating particles, and neon blue (#076573) and violet (#076573) glow. Top-left: ABTALKS in bold white brush typography, PRESENTS below, rounded badge reading "60 DAYS CLAUDE CHALLENGE". Center-left: huge brush-stroke "45", "DAYS", glowing violet pill "COMPLETED". Add a premium progress card showing "45/60", "75% Complete", and a circular progress ring. Add the headline "CONSISTENCY TODAY, EXPERTISE TOMORROW.", subtext "Halfway there. 
   The best projects are still ahead! 🚀", elegant quote card with "Small progress every day leads to big transformation.", section title "WHAT WE'RE BUILDING TOGETHER" with five premium icon cards: Real Projects, AI Mastery, Build in Public, Level Up, Amazing Community. Bottom glowing brush-stroke banner with trophy icon reading "45 DAYS OF FOCUS. A LIFETIME OF IMPACT." and subtitle "LET'S FINISH THESE 15 DAYS LIKE LEGENDS. 🔥". Add handwritten script in the top-right saying "Build. Reflect. Grow.". Use modern startup branding, Behance and Dribbble-quality composition, ultra-sharp typography, clean spacing, high contrast, 
   crisp readable text, premium graphic design, no watermark, no logo distortion, preserve the uploaded photograph exactly without changing the person's appearance.`,
 
@@ -184,7 +184,7 @@ Elite AI Professional • Graduation • Innovation • Growth • Community •
 
 Background
 
-Dark navy-black cosmic backdrop with subtle stars, neural-network patterns, holographic UI, floating particles, glassmorphism, and neon blue (#4EA8FF) & violet (#8B5CF6) lighting. Modern OpenAI / Linear / Apple-style aesthetic.
+Dark navy-black cosmic backdrop with subtle stars, neural-network patterns, holographic UI, floating particles, glassmorphism, and neon blue (#076573) & violet (#076573) lighting. Modern OpenAI / Linear / Apple-style aesthetic.
 
 Branding
 

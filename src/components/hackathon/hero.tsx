@@ -43,27 +43,27 @@ export async function Hero() {
           {/* Top cluster: title → subheading → date → countdown */}
           <div className="flex shrink-0 flex-col items-center pt-3 md:pt-0">
             <h1
-              className="w-full bg-gradient-to-r from-white from-[39%] to-[#A2A2A2] bg-clip-text text-center text-[clamp(1.95rem,4.6vw,4.32rem)] font-normal leading-[1.15] text-transparent"
-              style={{ fontFamily: "var(--font-hackathon-display), sans-serif" }}
+              className="w-full bg-gradient-to-r from-white from-[39%] to-[#A5A5A5] bg-clip-text text-center text-[clamp(1.95rem,4.6vw,4.32rem)] font-normal leading-[1.15] text-transparent"
+              style={{ fontFamily: "var(--font-outfit), sans-serif" }}
             >
               {HACKATHON.name}
             </h1>
 
             <p
               className="mt-3 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] leading-snug text-[#E9E9E9] md:mt-3 md:leading-8"
-              style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+              style={{ fontFamily: "var(--font-inter), sans-serif" }}
             >
-              <span className="font-bold text-[#7364E6]">48</span>
+              <span className="font-bold text-[#076573]">48</span>
               {" hours   ·  No boilerplate   ·  "}
-              <span className="font-bold text-[#6B78F0]">Just</span>
+              <span className="font-bold text-[#076573]">Just</span>
               {" you, your ideas, "}
-              <span className="font-bold text-[#6B78F0]">and</span>{" "}
-              <span className="font-bold text-[#3345EA]">AI</span>.
+              <span className="font-bold text-[#076573]">and</span>{" "}
+              <span className="font-bold text-[#03535F]">AI</span>.
             </p>
 
             <p
-              className="mt-6 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] font-bold leading-snug text-[#D6DAFB] md:mt-2 md:leading-8"
-              style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+              className="mt-6 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] font-bold leading-snug text-[#E7F2F3] md:mt-2 md:leading-8"
+              style={{ fontFamily: "var(--font-inter), sans-serif" }}
             >
               {HACKATHON.kickoffLabel}
             </p>
@@ -94,7 +94,7 @@ export async function Hero() {
               initialName={name}
             />
 
-            <p className="mt-2 w-full text-center text-[12px] leading-6 text-[#BCBCBC] sm:mt-3 sm:text-[15px] sm:leading-8">
+            <p className="mt-2 w-full text-center text-[12px] leading-6 text-[#D2D2D2] sm:mt-3 sm:text-[15px] sm:leading-8">
               {HACKATHON.registrationClosesLabel}
             </p>
           </div>

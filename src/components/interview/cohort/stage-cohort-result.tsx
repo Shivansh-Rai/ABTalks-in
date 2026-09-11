@@ -20,9 +20,9 @@ const TIER_LABEL: Record<EvidenceTier, string> = {
 
 const TIER_COLOR: Record<EvidenceTier, string> = {
   NONE: "text-foreground/40",
-  CLAIMED: "text-amber-600",
-  EXPLAINED: "text-blue-600",
-  DEMONSTRATED: "text-emerald-600",
+  CLAIMED: "text-[#AA821D]",
+  EXPLAINED: "text-[#02434D]",
+  DEMONSTRATED: "text-[#197E23]",
 };
 
 /**
@@ -232,7 +232,7 @@ export function StageCohortResult({
         <ul className="mt-4 space-y-3">
           {MOCK_STRENGTHS.map((s, i) => (
             <li key={i} className="flex gap-3 text-[15.5px] leading-7 text-foreground/78">
-              <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-emerald-500" />
+              <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-[#18D39B]" />
               <span>{s}</span>
             </li>
           ))}
@@ -245,7 +245,7 @@ export function StageCohortResult({
         <ul className="mt-4 space-y-3">
           {MOCK_IMPROVEMENTS.map((s, i) => (
             <li key={i} className="flex gap-3 text-[15.5px] leading-7 text-foreground/78">
-              <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-amber-500" />
+              <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-[#AA821D]" />
               <span>{s}</span>
             </li>
           ))}

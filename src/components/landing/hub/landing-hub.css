@@ -1,22 +1,22 @@
 /* Figma interview landing — page-scoped tokens (rounded marketing; not modernist lattice) */
 
 .landing-hub {
-  --hub-bg: #fbfbfd;
-  --hub-text: #111111;
-  --hub-muted: #555555;
-  --hub-accent: #7c5cff;
-  --hub-accent-700: #6b38d1;
-  --hub-lavender: #ebe3ff;
-  --hub-border: #e2e2e9;
-  --hub-soft: #f3f4f6;
+  --hub-bg: #FFFFFF;
+  --hub-text: #000000;
+  --hub-muted: #4B4B4B;
+  --hub-accent: #076573;
+  --hub-accent-700: #03535F;
+  --hub-lavender: #E7F2F3;
+  --hub-border: #E9E9E9;
+  --hub-soft: #F4F4F4;
   --hub-radius: 15px;
   --hub-radius-lg: 25px;
   --hub-radius-xl: 30px;
   --hub-shell: min(1680px, calc(100% - clamp(32px, 8vw, 240px)));
   --hub-font-sans: var(--font-hub-sans), system-ui, sans-serif;
-  --hub-font-serif: var(--font-hub-serif), Georgia, serif;
-  --hub-font-display: var(--font-hub-display), system-ui, sans-serif;
-  --hub-font-quote: var(--font-hub-quote), Georgia, serif;
+  --hub-font-heading: var(--font-outfit), Georgia, serif;
+  --hub-font-display: var(--font-outfit), system-ui, sans-serif;
+  --hub-font-quote: var(--font-outfit), Georgia, serif;
 
   background: var(--hub-bg);
   color: var(--hub-text);
@@ -133,17 +133,17 @@
     linear-gradient(
       135deg,
       rgba(255, 255, 255, 0.72) 0%,
-      rgba(235, 227, 255, 0.42) 42%,
-      rgba(220, 203, 255, 0.28) 72%,
-      rgba(189, 157, 255, 0.22) 100%
+      rgba(231, 242, 243, 0.42) 42%,
+      rgba(212, 235, 236, 0.28) 72%,
+      rgba(166, 210, 213, 0.22) 100%
     );
-  border: 1px solid rgba(224, 209, 255, 0.55);
+  border: 1px solid rgba(212, 235, 236, 0.55);
   backdrop-filter: blur(18px) saturate(1.45);
   -webkit-backdrop-filter: blur(18px) saturate(1.45);
   box-shadow:
-    0 8px 32px rgba(124, 92, 255, 0.1),
+    0 8px 32px rgba(7, 101, 115, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -1px 0 rgba(124, 92, 255, 0.08);
+    inset 0 -1px 0 rgba(7, 101, 115, 0.08);
 }
 
 .landing-hub .hub-nav-logo {
@@ -200,12 +200,12 @@
   padding: 0 28px;
   border-radius: 15px;
   background: var(--hub-accent);
-  border: 1px solid #b6a4ff;
+  border: 1px solid #A6D2D5;
   color: #fff;
   font-size: 18px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(124, 92, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(7, 101, 115, 0.25);
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -219,7 +219,7 @@
   height: 40px;
   padding: 0 14px;
   border-radius: 12px;
-  border: 1px solid rgba(224, 209, 255, 0.6);
+  border: 1px solid rgba(212, 235, 236, 0.6);
   background: rgba(255, 255, 255, 0.4);
   color: var(--hub-text);
   font-size: 14px;
@@ -241,7 +241,7 @@
   padding: 16px 20px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(224, 209, 255, 0.55);
+  border: 1px solid rgba(212, 235, 236, 0.55);
   backdrop-filter: blur(16px);
 }
 
@@ -284,7 +284,7 @@
 
 /* —— purple stats strip —— */
 .landing-hub .hub-stats {
-  background: linear-gradient(180deg, #7c5cff 0%, #6c51d8 100%);
+  background: linear-gradient(180deg, #076573 0%, #03535F 100%);
   color: #fff;
   padding: 48px 0;
   min-height: 196px;
@@ -320,12 +320,12 @@
 .landing-hub .hub-interview {
   position: relative;
   display: inline-block;
-  font-family: var(--hub-font-serif);
+  font-family: var(--hub-font-heading);
   font-style: italic;
   font-weight: 400;
   font-size: clamp(52px, 6.5vw, 96px);
   line-height: 1;
-  color: #888;
+  color: #8F8F8F;
   margin: 0;
 }
 
@@ -384,7 +384,7 @@
 
 /* —— blank media frame —— */
 .landing-hub .hub-blank-frame {
-  background: #d9d9d9;
+  background: #E0E0E0;
   border-radius: var(--hub-radius-lg);
   box-shadow: 2px 5px 4px rgba(0, 0, 0, 0.18);
   min-height: 280px;
@@ -392,7 +392,7 @@
 }
 
 .landing-hub .hub-how-frame {
-  background: #d9d9d9;
+  background: #E0E0E0;
 }
 
 .landing-hub .hub-how-frame-img {
@@ -410,7 +410,7 @@
   overflow: hidden;
   transform-origin: center center;
   will-change: transform;
-  background: #fdfdfd;
+  background: #FFFFFF;
   border: 1px solid var(--hub-border);
   border-radius: var(--hub-radius);
   box-shadow: 5px 4px 16px rgba(0, 0, 0, 0.18);
@@ -485,7 +485,7 @@
 
 /* —— FAQ —— */
 .landing-hub .hub-faq details {
-  border-bottom: 1px solid #d7d3d3;
+  border-bottom: 1px solid #D2D2D2;
   padding: 18px 0;
 }
 
@@ -533,8 +533,8 @@
   height: 48px;
   padding: 0 22px;
   border-radius: 8px;
-  border: 1px solid #0bc63a;
-  background: linear-gradient(180deg, #61e24a, #4eb53c);
+  border: 1px solid #27CA37;
+  background: linear-gradient(180deg, #27CA37, #27CA37);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
@@ -553,7 +553,7 @@
   position: relative;
   height: 453px;
   overflow: hidden;
-  background: linear-gradient(90deg, #7c5cff, #4a3799);
+  background: linear-gradient(90deg, #076573, #03535F);
   color: #fff;
   display: flex;
   align-items: center;
@@ -647,7 +647,7 @@
   font-family: var(--hub-font-quote);
   font-size: 140px;
   line-height: 0.7;
-  color: #111;
+  color: #000000;
   margin: -8px 0 0;
   pointer-events: none;
 }
@@ -656,7 +656,7 @@
   margin: 8px 0 0;
   font-size: 16px;
   line-height: 1.55;
-  color: #111;
+  color: #000000;
   flex: 1;
 }
 
@@ -676,7 +676,7 @@
   border-radius: 999px;
   border: 1px solid #d2d2d2;
   background: #fff;
-  color: #111;
+  color: #000000;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: background 0.15s ease, opacity 0.15s ease;
@@ -688,7 +688,7 @@
 }
 
 .landing-hub .hub-t-arrow:not(:disabled):hover {
-  background: #f6f4ff;
+  background: #EEF6F6;
 }
 
 @media (max-width: 960px) {

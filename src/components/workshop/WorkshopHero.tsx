@@ -472,7 +472,7 @@ export default function WorkshopHero({
                 key={p.label}
                 className="flex h-full min-h-10.5 w-full items-center gap-1.5 rounded-[9px] px-2.5 py-1.5 text-[12px] font-semibold leading-tight text-white"
                 style={{
-                  background: "linear-gradient(180deg, #e05226 0%, #c9411c 100%)",
+                  background: "linear-gradient(180deg, #03535F 0%, #076573 100%)",
                   boxShadow: "0 4px 7px rgba(var(--wk-ink-a),0.5)",
                 }}
               >
@@ -622,7 +622,7 @@ function ExactPill({
         paddingLeft: 9,
         paddingRight: 18,
         borderRadius: 9,
-        background: "linear-gradient(180deg, #e05226 0%, #c9411c 100%)",
+        background: "linear-gradient(180deg, #03535F 0%, #076573 100%)",
         boxShadow: "0 4px 7px rgba(var(--wk-ink-a),0.5)",
       }}
     >

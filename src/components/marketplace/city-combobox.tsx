@@ -126,10 +126,10 @@ export function CityCombobox({
         >
           <Autocomplete.Popup
             className={cn(
-              "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-[#1C283D] bg-[#0B1124] p-1 text-white shadow-md ring-1 ring-white/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+              "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-[#E0E0E0] bg-white p-1 text-black shadow-[0_12px_32px_rgba(0,0,0,0.1)] duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             )}
           >
-            <Autocomplete.Empty className="px-2 py-1.5 text-xs text-zinc-400">
+            <Autocomplete.Empty className="px-2 py-1.5 text-xs text-[#8F8F8F]">
               {value.trim()
                 ? "No match — you can still type your city."
                 : null}
@@ -139,14 +139,14 @@ export function CityCombobox({
                 <Autocomplete.Item
                   key={`${item.state}|${item.city}`}
                   value={item}
-                  className="relative flex w-full cursor-default items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-highlighted:bg-white/10"
+                  className="relative flex w-full cursor-default items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-highlighted:bg-[#EEF6F6] data-highlighted:text-[#03535F]"
                   onClick={() => onChange(item.city, item.state)}
                 >
                   <span>{item.city}</span>
                   {/* Only useful while searching all of India — with a state
                       chosen every row would repeat the same name. */}
                   {state ? null : (
-                    <span className="shrink-0 text-xs text-zinc-400">
+                    <span className="shrink-0 text-xs text-[#8F8F8F]">
                       {item.state}
                     </span>
                   )}

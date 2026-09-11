@@ -2,60 +2,72 @@
 
 import { z } from "zod";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import {
-  assertApplyAllowed,
   CLOSED_JOB_MESSAGE,
-} from "@/features/recruiter-jobs/service";
+  DUPLICATE_APPLICATION_MESSAGE,
+  applyToPublishedJob,
+  listMyApplications,
+} from "@/features/candidate-jobs/service";
+import { prismaApplicationStore } from "@/features/candidate-jobs/prisma-store";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+
+export { CLOSED_JOB_MESSAGE, DUPLICATE_APPLICATION_MESSAGE };
 
 const applySchema = z.object({
   jobId: z.string().min(1),
   note: z.string().max(1000).optional().default(""),
+  resumeUrl: z.string().url().max(2048).optional(),
+  coverLetter: z.string().max(5000).optional(),
 });
 
-export { CLOSED_JOB_MESSAGE };
+function deps() {
+  return {
+    jobs: prismaJobStore(),
+    applications: prismaApplicationStore(),
+  };
+}
 
-export async function applyToJobAction(input: { jobId: string; note?: string }) {
+export async function applyToJobAction(input: {
+  jobId: string;
+  note?: string;
+  resumeUrl?: string;
+  coverLetter?: string;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
-    return { ok: false as const, message: "Sign in to apply." };
+    return { ok: false as const, message: "Sign in to apply.", status: 401 };
   }
 
   const parsed = applySchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false as const, message: "Invalid input" };
+    return { ok: false as const, message: "Invalid input", status: 400 };
   }
 
-  const guard = await assertApplyAllowed(
-    { jobs: prismaJobStore() },
-    parsed.data.jobId,
+  const res = await applyToPublishedJob(
+    deps(),
+    { userId: session.user.id },
+    parsed.data,
   );
-  if (!guard.ok) {
-    return { ok: false as const, message: guard.message };
+
+  if (!res.ok) {
+    return {
+      ok: false as const,
+      message: res.message,
+      status: res.status ?? 400,
+    };
+  }
+  return { ok: true as const, applicationId: res.data.id, status: res.data.status };
+}
+
+export async function listMyApplicationsAction() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false as const, message: "Sign in to view your applications.", status: 401 };
   }
 
-  try {
-    await prisma.jobApplication.create({
-      data: {
-        jobId: parsed.data.jobId,
-        userId: session.user.id,
-        note: parsed.data.note.trim() || null,
-      },
-    });
-
-    return { ok: true as const };
-  } catch (e: unknown) {
-    const code =
-      typeof e === "object" && e !== null && "code" in e
-        ? String((e as { code: string }).code)
-        : "";
-    if (code === "P2002") {
-      return {
-        ok: false as const,
-        message: "You've already applied to this role.",
-      };
-    }
-    return { ok: false as const, message: "Application failed. Try again." };
+  const res = await listMyApplications(deps(), { userId: session.user.id });
+  if (!res.ok) {
+    return { ok: false as const, message: res.message, status: res.status ?? 400 };
   }
+  return { ok: true as const, applications: res.data };
 }

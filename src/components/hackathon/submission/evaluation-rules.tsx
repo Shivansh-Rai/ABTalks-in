@@ -2,28 +2,28 @@ import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 function Highlight({ children }: { children: ReactNode }) {
-  return <span className="font-semibold text-[#C4B5FD]">{children}</span>;
+  return <span className="font-semibold text-[#03535F]">{children}</span>;
 }
 
 function Accent({ children }: { children: ReactNode }) {
-  return <span className="text-[#A78BFA]">{children}</span>;
+  return <span className="text-[#03535F]">{children}</span>;
 }
 
 export function EvaluationRules() {
   return (
     <details
       open
-      className="group mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors open:border-[#7364E6]/40 open:bg-[#7364E6]/[0.06] sm:mt-10 sm:p-6"
+      className="group mt-8 rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-colors open:border-[#03535F]/30 open:bg-[#EEF6F6] sm:mt-10 sm:p-6"
     >
       <summary className="flex cursor-pointer list-none items-start gap-3 [&::-webkit-details-marker]:hidden">
-        <h2 className="min-w-0 flex-1 text-sm font-semibold uppercase tracking-[0.16em] text-[#A78BFA]">
+        <h2 className="min-w-0 flex-1 font-heading text-[13px] leading-[18px] font-semibold uppercase tracking-[0.16em] text-[#03535F]">
           Hackathon Rules and Evaluation Process
         </h2>
-        <ChevronDown className="ml-auto size-5 shrink-0 text-zinc-500 transition-transform group-open:rotate-180" />
+        <ChevronDown className="ml-auto size-5 shrink-0 text-[#787878] transition-transform group-open:rotate-180" />
       </summary>
 
       <div className="mt-5 space-y-8">
-        <p className="text-sm leading-relaxed text-zinc-300">
+        <p className="text-sm leading-relaxed text-[#353535]">
           To ensure a fair competition, every submission goes through a{" "}
           <Highlight>four-stage</Highlight> evaluation process. Automated
           verification is completed before judging so that judges only review
@@ -165,7 +165,7 @@ export function EvaluationRules() {
           </p>
         </Stage>
 
-        <p className="border-t border-white/10 pt-5 text-sm leading-relaxed text-zinc-400">
+        <p className="border-t border-[#E0E0E0] pt-5 text-sm leading-relaxed text-[#626262]">
           All verification and judging decisions made by the organizers are{" "}
           <Highlight>final</Highlight>.
         </p>
@@ -188,17 +188,17 @@ function Stage({
   return (
     <section className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#7364E6]/40 bg-[#7364E6]/15 font-mono text-sm font-bold text-[#C4B5FD]">
+        <div className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#03535F]/30 bg-[#E7F2F3] font-heading text-sm font-semibold text-[#03535F]">
           {number}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-white">
+          <h3 className="text-base font-semibold text-black">
             Stage {number}: {title}
           </h3>
-          <p className="mt-1 text-sm font-medium text-[#A78BFA]">{method}</p>
+          <p className="mt-1 text-sm font-medium text-[#03535F]">{method}</p>
         </div>
       </div>
-      <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
+      <div className="space-y-3 text-sm leading-relaxed text-[#353535]">
         {children}
       </div>
     </section>

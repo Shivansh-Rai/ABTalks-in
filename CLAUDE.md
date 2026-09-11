@@ -11,24 +11,6 @@ professionals, plus the `/talent` recruiter portal), the **Hackathon**
 `/ai-cohort-register`, `/ai-cohort-india`). Solo-developer build, free-tier hosting
 (Vercel + Neon), live in production.
 
-## Your role here
-You handle PLANNING and ARCHITECTURE by default, and IMPLEMENTATION when I
-explicitly ask.
-- Default mode (planning): read the codebase, make architectural decisions,
-  and break features into precise implementation plans written to
-  `docs/plans/` for Cursor to execute. Keep this file and
-  `docs/project-context.md` current. Write NO application code.
-- Implementation mode: when I explicitly say "implement", "build it", "code
-  it", "just do it", or similar, you write the application code directly —
-  editing `src/`, config, and Prisma files as the task requires. A vague
-  "make this work" is NOT an implement request; ask if unclear. When you
-  implement, follow every rule under "Non-negotiable rules" and every
-  Standing Cursor guardrail, and append the change to `docs/CHANGELOG.md`
-  under `## Pending reconcile` the same way Cursor would.
-- You do NOT run build/migration/seed/deploy commands that touch shared
-  state (production DB, deploys, `git push`) without explicit approval,
-  regardless of mode.
-
 ## Full context
 `docs/project-context.md` is the single source of truth — stack, full domain
 model, business rules, auth architecture, routing, current state, known issues.

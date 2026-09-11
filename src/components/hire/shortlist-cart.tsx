@@ -39,6 +39,14 @@ export type CartRow = {
    *  decided who appears in this cart. */
   openToWork?: boolean;
   compensationBand?: string | null;
+  /**
+   * Set ONLY on rows that came from a T-149 talent project. Their removal must
+   * flip `TalentRequestMatch.decision` back to UNDECIDED — the legacy
+   * RecruiterShortlistItem path cannot name them and answers "Member not
+   * found" for anything outside the one published cohort.
+   */
+  projectRequestId?: string | null;
+  candidateUserId?: string | null;
 };
 
 const STATUS_COPY: Record<string, string> = {
@@ -50,7 +58,7 @@ const STATUS_COPY: Record<string, string> = {
 
 export function ShortlistCart({ rows }: { rows: CartRow[] }) {
   const router = useRouter();
-  const { approved, pending: approvalPending, openAuth } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -78,10 +86,6 @@ export function ShortlistCart({ rows }: { rows: CartRow[] }) {
 
   function place() {
     if (!approved) {
-      if (approvalPending) {
-        toast.error("Your recruiter application is still being reviewed.");
-        return;
-      }
       savePendingCheckout({
         candidateRefs: [...selected],
         note: note.trim() || undefined,

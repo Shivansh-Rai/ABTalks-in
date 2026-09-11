@@ -236,14 +236,17 @@ suite(
   },
 );
 
-suite("the authenticated path refuses before the seat is consulted", () => {
+suite("the authenticated path refuses before anything is written", () => {
   const src = source("src/features/talent-pool/recruiter-registration.ts");
   const fn = src.slice(src.indexOf("export async function registerRecruiter"));
   const check = fn.indexOf("isPersonalEmailDomain");
-  const seat = fn.indexOf("verifiedRecruiterSeat");
+  const create = fn.indexOf("recruiterProfile.create");
   assert(check > 0, "the domain is checked");
-  assert(seat > 0, "the seat lookup is still there");
-  assert(check < seat, "a seat cannot pre-empt the domain rule");
+  assert(check < create, "it refuses before the profile is written");
+  // Plan 127: a VerifiedRecruiterSeat is a pre-verified company name, not an
+  // access grant. It must never be a way past the domain rule either.
+  const seat = fn.indexOf("verifiedRecruiterSeat");
+  assert(seat < 0 || check < seat, "a seat cannot pre-empt the domain rule");
 });
 
 /* ─── no exception mechanism ─────────────────────────────────────────────── */
@@ -261,17 +264,10 @@ suite("an admin cannot pre-verify a personal domain as a seat", () => {
   );
 });
 
-suite("an admin cannot approve a personal-domain application", () => {
-  const src = source("src/app/actions/admin-recruiter-actions.ts");
-  const fn = src.slice(
-    src.indexOf("export async function approveRecruiterAction"),
-    src.indexOf("export async function rejectRecruiterAction"),
-  );
-  const check = fn.indexOf("isPersonalEmailDomain");
-  const approve = fn.indexOf("recruiterProfile.update");
-  assert(check > 0, "approval checks the domain");
-  assert(check < approve, "it refuses before the profile is approved");
-});
+// Plan 127 deleted admin-recruiter-actions.ts along with the approval queue,
+// so "an admin cannot approve a personal-domain application" no longer has an
+// action to assert against. The two registration paths above are now the only
+// ways a RecruiterProfile is created, and both refuse first.
 
 suite("the rule has no configuration or environment escape hatch", () => {
   const src = source("src/lib/validations/work-email.ts");
@@ -281,7 +277,6 @@ suite("the rule has no configuration or environment escape hatch", () => {
     "src/app/actions/recruiter-auth-actions.ts",
     "src/features/talent-pool/recruiter-registration.ts",
     "src/app/actions/recruiter-seat-actions.ts",
-    "src/app/actions/admin-recruiter-actions.ts",
   ]) {
     const guarded = source(rel);
     assert(

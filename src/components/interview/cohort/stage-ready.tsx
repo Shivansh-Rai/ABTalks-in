@@ -55,7 +55,7 @@ export function StageReady({
             </div>
 
             <div className="flex-1 space-y-6 flex flex-col justify-center">
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex gap-3 text-amber-600">
+                <div className="bg-[#AA821D]/10 border border-[#AA821D]/30 rounded-xl p-4 flex gap-3 text-[#AA821D]">
                     <AlertCircle className="size-5 shrink-0 mt-0.5" />
                     <div>
                         <h4 className="font-bold text-sm">One Attempt Only</h4>
@@ -80,7 +80,7 @@ export function StageReady({
         </Button>
         <Button
           type="button"
-          className="bg-[#E05226] hover:bg-[#C9411C] text-white"
+          className="bg-[#03535F] hover:bg-[#076573] text-white"
           onClick={() => {
             // Future: requestFullscreen() here
             onBeginAction();

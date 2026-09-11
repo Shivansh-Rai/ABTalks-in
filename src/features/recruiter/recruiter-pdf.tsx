@@ -11,18 +11,18 @@ import type { RecruiterProfileView } from "@/features/recruiter/get-recruiter-pr
 import { FONT_BODY, FONT_HEADING } from "@/features/recruiter/pdf-fonts";
 
 // Plan-015 navy + gold palette (react-pdf StyleSheet — not Tailwind)
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#16293f";
-const GOLD = "#d99c2c";
-const GOLD_DARK = "#b9831f";
-const SIDEBAR_BG = "#f3f4f6";
-const SIDEBAR_BORDER = "#e5e7eb";
-const SYNERGY_BG = "#fbf6e9";
-const MUTED = "#6b7280";
-const SCORE_COMM = "#2f6fb0";
-const SCORE_PROG = "#e05226";
-const SCORE_BEHAV = "#1a9e8f";
-const PASSED_TEXT = "#8a6310";
+const NAVY = "#03535F";
+const NAVY_DARK = "#02434D";
+const GOLD = "#AA821D";
+const GOLD_DARK = "#AA821D";
+const SIDEBAR_BG = "#F4F4F4";
+const SIDEBAR_BORDER = "#E9E9E9";
+const SYNERGY_BG = "#FFEDB0";
+const MUTED = "#787878";
+const SCORE_COMM = "#03535F";
+const SCORE_PROG = "#03535F";
+const SCORE_BEHAV = "#03535F";
+const PASSED_TEXT = "#AA821D";
 
 const CAP_SUMMARY = 600;
 const CAP_FEEDBACK = 480;
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: FONT_BODY,
     fontSize: 9,
-    color: "#111827",
+    color: "#353535",
     paddingTop: 24,
     paddingBottom: 28,
     paddingHorizontal: 28,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 4,
-    backgroundColor: "#e8edf3",
+    backgroundColor: "#E7F2F3",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
     borderBottomWidth: 1,
-    borderBottomColor: "#d99c2c66",
+    borderBottomColor: "#AA821D66",
     paddingBottom: 2,
     marginBottom: 4,
     marginTop: 6,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
     borderBottomWidth: 1,
-    borderBottomColor: "#1e3a5f26",
+    borderBottomColor: "#03535F26",
     paddingBottom: 2,
     marginBottom: 4,
     marginTop: 4,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   scoreBarTrack: {
     height: 4,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#E9E9E9",
     borderRadius: 2,
     marginTop: 4,
     overflow: "hidden",
@@ -319,13 +319,13 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 2,
     borderWidth: 1,
-    borderColor: "#d99c2c80",
+    borderColor: "#AA821D80",
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb66",
+    borderBottomColor: "#E9E9E966",
     paddingBottom: 3,
     marginBottom: 3,
     gap: 4,

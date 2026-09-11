@@ -276,7 +276,7 @@ export default function EventsTimeline() {
                             border: "1px solid var(--wk-card-border)",
                           }}
                         >
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#AA821D]" />
                           Coming soon
                         </span>
                       )}

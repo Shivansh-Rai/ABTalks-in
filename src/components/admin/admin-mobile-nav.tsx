@@ -115,7 +115,7 @@ export function AdminMobileNav({ navItems }: AdminMobileNavProps) {
           />
           <div
             className={cn(
-              "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card p-4 shadow-xl transition-transform duration-200",
+              "fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r bg-card p-4 shadow-xl transition-transform duration-200",
               open ? "translate-x-0" : "-translate-x-full",
             )}
           >
@@ -139,14 +139,13 @@ export function AdminMobileNav({ navItems }: AdminMobileNavProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                      isActive
-                        ? "bg-[#E05226] text-primary-foreground shadow-[var(--shadow-card)]"
-                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                      "abt-nav-item gap-3 px-4",
+                      isActive ? "abt-nav-active" : "abt-nav-idle",
                     )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="size-5 shrink-0" aria-hidden />
                     {item.label}
                   </Link>
                 );

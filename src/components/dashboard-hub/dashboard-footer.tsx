@@ -109,24 +109,24 @@ const SOCIAL_LINKS = [
 
 export function DashboardFooter() {
   return (
-    <footer className={`mt-auto bg-[#FBF9F7] ${SIDEBAR_FOOTER_ROW_CLASS}`}>
+    <footer className={`mt-auto bg-[#F4F4F4] ${SIDEBAR_FOOTER_ROW_CLASS}`}>
       <div className="flex h-full items-center justify-between gap-4">
         <div className="min-w-0">
           <nav
-            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#555555]"
+            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#4B4B4B]"
             aria-label="Legal"
           >
             {LEGAL_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className="transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#e05226] hover:underline"
+                className="transition-colors duration-200 ease-[var(--ease-spark)] hover:text-[#03535F] hover:underline"
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <p className="mt-2 text-xs text-neutral-400">
+          <p className="mt-2 text-xs text-[#A5A5A5]">
             © {new Date().getFullYear()} ABTalksOnAI
           </p>
         </div>
@@ -138,7 +138,7 @@ export function DashboardFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="inline-flex size-8 items-center justify-center rounded-full text-[#555555] transition-[background-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:bg-[#e05226]/10 hover:text-[#e05226] motion-safe:hover:scale-110"
+              className="inline-flex size-8 items-center justify-center rounded-full text-[#4B4B4B] transition-[background-color,color,transform] duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F]/10 hover:text-[#03535F] motion-safe:hover:scale-110"
             >
               <Icon className="size-4" />
             </a>

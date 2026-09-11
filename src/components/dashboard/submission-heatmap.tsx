@@ -23,10 +23,10 @@ type Props = {
 };
 
 const STATUS_CLASS: Record<HeatmapCell["status"], string> = {
-  on_time: "bg-emerald-500",
-  late: "bg-emerald-500",
-  rejected: "bg-[#E05226]",
-  missed: "bg-red-500",
+  on_time: "bg-[#18D39B]",
+  late: "bg-[#18D39B]",
+  rejected: "bg-[#03535F]",
+  missed: "bg-[#D92D20]",
   future:
     "border border-dotted border-muted-foreground/40 bg-muted/20 dark:bg-muted/30",
 };
@@ -189,7 +189,7 @@ export function SubmissionHeatmap({
                   STATUS_CLASS[cell.status],
                   cell.status === "missed" &&
                     cell.isRelaxable &&
-                    "ring-2 ring-amber-400 ring-offset-1 ring-offset-background dark:ring-amber-500",
+                    "ring-2 ring-[#AA821D] ring-offset-1 ring-offset-background dark:ring-[#AA821D]",
                   clickable &&
                     "cursor-pointer transition-[box-shadow,transform] hover:z-10 hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isFuture && "cursor-not-allowed",
@@ -204,28 +204,28 @@ export function SubmissionHeatmap({
       <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <li className="flex items-center gap-2">
           <span
-            className="size-3.5 shrink-0 rounded-sm bg-emerald-500"
+            className="size-3.5 shrink-0 rounded-sm bg-[#18D39B]"
             aria-hidden
           />
           On time
         </li>
         <li className="flex items-center gap-2">
           <span
-            className="size-3.5 shrink-0 rounded-sm bg-[#E05226]"
+            className="size-3.5 shrink-0 rounded-sm bg-[#03535F]"
             aria-hidden
           />
           Rejected
         </li>
         <li className="flex items-center gap-2">
           <span
-            className="size-3.5 shrink-0 rounded-sm bg-red-500"
+            className="size-3.5 shrink-0 rounded-sm bg-[#D92D20]"
             aria-hidden
           />
           Missed
         </li>
         <li className="flex items-center gap-2">
           <span
-            className="size-3.5 shrink-0 rounded-sm bg-red-500 ring-2 ring-amber-400 ring-offset-1 ring-offset-background dark:ring-amber-500"
+            className="size-3.5 shrink-0 rounded-sm bg-[#D92D20] ring-2 ring-[#AA821D] ring-offset-1 ring-offset-background dark:ring-[#AA821D]"
             aria-hidden
           />
           Missed - catch up
@@ -265,7 +265,7 @@ export function SubmissionHeatmap({
 
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   {active.status === "missed" ? (
-                    <Badge variant="secondary" className="bg-red-100 text-red-900 dark:bg-red-950/50 dark:text-red-200">
+                    <Badge variant="secondary" className="bg-[#D92D201F] text-[#D92D20] dark:bg-[#D92D20]/50 dark:text-[#D92D2033]">
                       Missed
                     </Badge>
                   ) : (
@@ -273,8 +273,8 @@ export function SubmissionHeatmap({
                       variant="secondary"
                       className={
                         active.status === "on_time" || active.status === "late"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          : "bg-[#FFECE3] text-[#C9411C]"
+                          ? "bg-[#D6F7EC] text-[#197E23] dark:bg-[#197E23]/60 dark:text-[#197E23]"
+                          : "bg-[#E7F2F3] text-[#076573]"
                       }
                     >
                       {active.status === "on_time" || active.status === "late"
@@ -298,7 +298,7 @@ export function SubmissionHeatmap({
 
               <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-4">
                 {active.status === "missed" && active.isRelaxable ? (
-                  <p className="rounded-lg border border-amber-400/60 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+                  <p className="rounded-lg border border-[#AA821D]/60 bg-[#FFEDB0] p-3 text-sm text-[#AA821D] dark:bg-[#AA821D]/40 dark:text-[#FFEDB0]">
                     You&apos;re inside the 5-day catch-up window. Submit GitHub +
                     LinkedIn now to mark this day green and heal your streak.
                   </p>

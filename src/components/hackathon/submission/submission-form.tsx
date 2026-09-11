@@ -124,18 +124,18 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
     const savedBrief = initial?.problemId ? briefById.get(initial.problemId) ?? null : null;
 
     return (
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+      <section className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">Your submission</h2>
+          <h2 className="text-lg font-semibold text-black">Your submission</h2>
           {showIncompleteBadge ? (
-            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300">
+            <span className="rounded-full bg-[#FFEDB0] px-2 py-0.5 text-xs font-semibold text-[#AA821D]">
               Incomplete - add your live URL and AI-usage log before the deadline.
             </span>
           ) : null}
         </div>
 
         {initial === null ? (
-          <p className="mt-4 text-sm text-zinc-400">
+          <p className="mt-4 text-sm text-[#626262]">
             No submission was recorded for your team.
           </p>
         ) : (
@@ -155,11 +155,11 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
           </div>
         )}
 
-        <p className="mt-4 text-sm text-zinc-400">
+        <p className="mt-4 text-sm text-[#626262]">
           Submissions closed · {HACKATHON.deadlineLabel}
         </p>
         {initial !== null && mounted ? (
-          <p className="mt-2 text-xs text-zinc-500">
+          <p className="mt-2 text-xs text-[#787878]">
             Last saved {new Date(initial.updatedAtIso).toLocaleString()}
           </p>
         ) : null}
@@ -168,16 +168,16 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+    <section className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-semibold text-white">Submission</h2>
+        <h2 className="text-lg font-semibold text-black">Submission</h2>
         {showIncompleteBadge ? (
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300">
+          <span className="rounded-full bg-[#FFEDB0] px-2 py-0.5 text-xs font-semibold text-[#AA821D]">
             Incomplete - add your live URL and AI-usage log before the deadline.
           </span>
         ) : null}
       </div>
-      <p className="mt-2 text-sm text-zinc-400">
+      <p className="mt-2 text-sm text-[#626262]">
         Edit as often as you like until the deadline. Each save replaces the last one.
       </p>
 
@@ -194,8 +194,8 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
             className={cn(
               "rounded-xl border px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm",
               selectedId === brief.id
-                ? "border-[#7364E6] bg-[#7364E6]/20 text-white"
-                : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/25 hover:text-white",
+                ? "border-[#03535F] bg-[#E7F2F3] text-black"
+                : "border-[#E0E0E0] bg-white text-[#626262] hover:border-[#D2D2D2] hover:text-[#03535F]",
             )}
           >
             PROBLEM STATEMENT {brief.number}
@@ -204,14 +204,14 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
       </div>
 
       {selectedBrief ? (
-        <p className="mt-3 text-sm text-zinc-400">{selectedBrief.title}</p>
+        <p className="mt-3 text-sm text-[#626262]">{selectedBrief.title}</p>
       ) : null}
       {errors.problemId ? (
         <p className="mt-2 text-sm text-destructive">{errors.problemId}</p>
       ) : null}
 
       {movingBrief && initialBrief && selectedBrief ? (
-        <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+        <div className="mt-4 rounded-xl border border-[#AA821D]/30 bg-[#FFEDB0] px-3 py-2 text-sm text-[#AA821D]">
           Your saved entry is for <strong>{initialBrief.title}</strong>. Saving now moves it to{" "}
           <strong>{selectedBrief.title}</strong> you can submit only one problem statement.
         </div>
@@ -312,7 +312,7 @@ export function SubmissionForm({ briefs, initial, editable }: Props) {
       </div>
 
       {initial !== null && mounted ? (
-        <p className="mt-3 text-xs text-zinc-500">
+        <p className="mt-3 text-xs text-[#787878]">
           Last saved {new Date(initial.updatedAtIso).toLocaleString()}
         </p>
       ) : null}
@@ -350,7 +350,7 @@ function Field({
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
       />
-      <p className="text-sm text-zinc-500">{helper}</p>
+      <p className="text-sm text-[#787878]">{helper}</p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );
@@ -367,7 +367,7 @@ function StaticRow({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#787878]">
         {label}
       </p>
       {href ? (
@@ -375,12 +375,12 @@ function StaticRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="break-all text-sm text-[#C4B5FD] underline-offset-2 hover:underline"
+          className="break-all text-sm text-[#03535F] underline-offset-2 hover:underline"
         >
           {value}
         </a>
       ) : (
-        <p className="text-sm text-zinc-200">{value}</p>
+        <p className="text-sm text-[#353535]">{value}</p>
       )}
     </div>
   );

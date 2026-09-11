@@ -68,7 +68,7 @@ function renderAnswerWithInlineUrls(text: string) {
     parts.push(
       <code
         key={index}
-        className="rounded bg-[#FFECE3] px-1 py-0.5 font-mono text-xs text-[#C9411C]"
+        className="rounded bg-[#E7F2F3] px-1 py-0.5 font-mono text-xs text-[#076573]"
       >
         {match[0]}
       </code>,
@@ -91,17 +91,17 @@ export function ClaudeFaqBody() {
         <div
           key={faq.question}
           className={cn(
-            "overflow-hidden rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7]",
+            "overflow-hidden rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4]",
             openIndex === i && "bg-white",
           )}
         >
           <button
             type="button"
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
-            className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[#FFF5F0]"
+            className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[#EEF6F6]"
             aria-expanded={openIndex === i}
           >
-            <span className="flex-1 text-sm font-medium text-[#111111]">
+            <span className="flex-1 text-sm font-medium text-[#000000]">
               {faq.question}
             </span>
             <ChevronDown
@@ -119,14 +119,14 @@ export function ClaudeFaqBody() {
         </div>
       ))}
 
-      <div className="mt-4 rounded-[12px] border border-[#E0E0E0] bg-[#FBF9F7] p-4">
+      <div className="mt-4 rounded-[12px] border border-[#E0E0E0] bg-[#F4F4F4] p-4">
         <p className="text-xs text-[#8F8F8F]">
           Still have questions? Reach out via the{" "}
           <a
             href="https://chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#E05226] hover:underline"
+            className="text-[#03535F] hover:underline"
           >
             WhatsApp community
           </a>{" "}
@@ -135,7 +135,7 @@ export function ClaudeFaqBody() {
             href="https://www.youtube.com/@ABTalksonAI"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#E05226] hover:underline"
+            className="text-[#03535F] hover:underline"
           >
             ABTalks on AI YouTube channel
           </a>
@@ -151,7 +151,7 @@ export function ClaudeFAQ() {
   return (
     <section className="rounded-[12px] border border-[#E0E0E0] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="mb-6">
-        <h2 className="font-heading text-xl font-semibold text-[#111111]">
+        <h2 className="font-heading text-xl font-semibold text-[#000000]">
           Frequently Asked Questions
         </h2>
         <p className="mt-1 text-xs text-[#8F8F8F]">

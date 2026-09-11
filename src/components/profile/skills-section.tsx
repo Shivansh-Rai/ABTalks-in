@@ -10,6 +10,8 @@ import {
   PROFILE_QUICK_SKILLS,
   canonicalSkillName,
 } from "@/lib/skill-catalog";
+import { ANALYTICS_EVENTS, skillCountBucket } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { SkillCombobox, type SkillOption } from "./skill-combobox";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
@@ -62,7 +64,8 @@ export function SkillsSection({
   verified: VerifiedSkillView[];
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
-  const { save } = useSectionSave(saveSkillsAction, "Skills");
+  const { save } = useSectionSave(saveSkillsAction, "Skills", "skills");
+  const track = useTrack();
   const [rows, setRows] = useState<SkillRow[]>(initial);
   /* Derived, not mirrored: `initial` is the server's list, and a save calls
      router.refresh(), so the saved tick follows the database rather than a
@@ -170,10 +173,23 @@ export function SkillsSection({
       id={formId}
       onSubmit={async (e) => {
         e.preventDefault();
+        // Read against the ids the server already has, before the save moves
+        // that line. A save that only re-rated or removed skills added nothing.
+        const submittedIds = rows.map((r) => r.skillId);
+        const addedCount = submittedIds.filter(
+          (id) => !persistedIds.has(id),
+        ).length;
         const ok = await save({
           claims: rows.map((r) => ({ skillId: r.skillId })),
         });
-        if (ok) onSaved();
+        if (ok) {
+          if (addedCount > 0) {
+            track(ANALYTICS_EVENTS.siteSkillAdded, {
+              skill_count_bucket: skillCountBucket(submittedIds.length),
+            });
+          }
+          onSaved();
+        }
       }}
     >
       <PwRow cols={1}>

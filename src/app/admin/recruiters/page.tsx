@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
-import { listPendingRecruiterApplications } from "@/features/talent-pool/recruiter-registration";
+import { listRecruiters } from "@/features/talent-pool/recruiter-registration";
 import { AdminRecruitersPanel } from "@/components/talent/admin-recruiters-panel";
 import {
   RecruiterSeatsPanel,
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 export default async function AdminRecruitersPage() {
   await requireAdmin();
 
-  const [pending, seats] = await Promise.all([
-    listPendingRecruiterApplications(),
+  const [recruiters, seats] = await Promise.all([
+    listRecruiters(),
     prisma.verifiedRecruiterSeat.findMany({
       orderBy: [{ active: "desc" }, { verifiedAt: "desc" }],
       take: 500,
@@ -56,17 +56,18 @@ export default async function AdminRecruitersPage() {
           Recruiters
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review people who registered, or pre-verify a work email so they skip
-          the wait.
+          Everyone who has registered to hire, and the work emails we have
+          pre-verified. Registering opens a workspace immediately — there is no
+          approval step.
         </p>
       </div>
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-semibold">
-          Waiting for review
-          {pending.length > 0 ? ` (${pending.length})` : ""}
+          All recruiters
+          {recruiters.length > 0 ? ` (${recruiters.length})` : ""}
         </h2>
-        <AdminRecruitersPanel pending={pending} />
+        <AdminRecruitersPanel recruiters={recruiters} />
       </section>
 
       <section className="space-y-3">

@@ -29,7 +29,7 @@ export function RoadmapCard({
       )}
       style={{
         borderColor: `rgba(${phase.accentRgb}, 0.45)`,
-        backgroundColor: "rgba(8, 12, 28, 0.72)",
+        backgroundColor: "rgba(0, 0, 0, 0.72)",
         boxShadow: active
           ? `0 0 0 1px rgba(${phase.accentRgb}, 0.12), 0 4px 24px rgba(${phase.accentRgb}, 0.16), inset 0 1px 0 rgba(255,255,255,0.04)`
           : "0 4px 16px rgba(0,0,0,0.2)",
@@ -60,7 +60,7 @@ export function RoadmapCard({
               y: -4,
               boxShadow: `0 8px 40px rgba(${phase.accentRgb}, 0.28), inset 0 1px 0 rgba(255,255,255,0.06)`,
               borderColor: `rgba(${phase.accentRgb}, 0.55)`,
-              backgroundColor: "rgba(12, 16, 36, 0.88)",
+              backgroundColor: "rgba(0, 0, 0, 0.88)",
             }
       }
     >
@@ -110,7 +110,7 @@ export function RoadmapCard({
           <h3 className="mt-1 text-sm font-semibold text-white md:text-base">
             {phase.title}
           </h3>
-          <p className="truncate text-xs text-[#9CA3AF] md:text-[13px]">
+          <p className="truncate text-xs text-[#A5A5A5] md:text-[13px]">
             {phase.subtitle}
           </p>
         </div>

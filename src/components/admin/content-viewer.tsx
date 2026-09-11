@@ -211,7 +211,7 @@ export function ContentViewer({
                             key={opt}
                             className={cn(
                               "rounded px-2 py-1",
-                              isCorrect && "bg-emerald-100 font-medium text-emerald-800",
+                              isCorrect && "bg-[#D6F7EC] font-medium text-[#197E23]",
                             )}
                           >
                             {opt}. {value}

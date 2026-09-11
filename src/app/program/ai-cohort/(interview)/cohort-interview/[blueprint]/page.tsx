@@ -119,14 +119,14 @@ function Notice({
         {reportHref ? (
           <Link
             href={reportHref}
-            className="inline-flex h-11 items-center rounded-[12px] border border-[#E05226] bg-[#E05226] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#C9411C]"
+            className="inline-flex h-11 items-center rounded-[12px] border border-[#03535F] bg-[#03535F] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#076573]"
           >
             View interview report
           </Link>
         ) : null}
         <Link
           href={`${PROGRAM_AI_COHORT_BASE}/dashboard`}
-          className="text-[14px] text-[#4B4B4B] underline underline-offset-4 transition-colors hover:text-[#111111]"
+          className="text-[14px] text-[#4B4B4B] underline underline-offset-4 transition-colors hover:text-[#000000]"
         >
           Back to dashboard
         </Link>
@@ -134,7 +134,7 @@ function Notice({
           <form action={reattemptAction} className="inline-block ml-auto">
             <button
               type="submit"
-              className="inline-flex h-11 items-center rounded-[12px] border border-gray-300 bg-gray-100 px-5 text-[14px] font-semibold text-gray-800 transition-colors hover:bg-gray-200"
+              className="inline-flex h-11 items-center rounded-[12px] border border-[#D2D2D2] bg-[#E9E9E9] px-5 text-[14px] font-semibold text-[#353535] transition-colors hover:bg-[#E0E0E0]"
             >
               Reattempt (Demo)
             </button>

@@ -45,8 +45,8 @@ export default function SocialProof({ users }: { users?: RecentRegistrant[] }) {
         }}
       >
         <span
-          className="h-2 w-2 shrink-0 rounded-full bg-green-400"
-          style={{ boxShadow: "0 0 8px 1px rgba(74,222,128,0.7)", animation: "sp-pulse 2s infinite" }}
+          className="h-2 w-2 shrink-0 rounded-full bg-[#27CA37]"
+          style={{ boxShadow: "0 0 8px 1px rgba(39, 202, 55, 0.7)", animation: "sp-pulse 2s infinite" }}
         />
         <span
           className="text-[13px] leading-none transition-opacity duration-400"

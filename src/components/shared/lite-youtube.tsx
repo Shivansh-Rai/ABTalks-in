@@ -55,7 +55,7 @@ export function LiteYoutube({
             ) : (
               <span
                 aria-hidden="true"
-                className="absolute inset-0 bg-linear-to-br from-zinc-800 to-zinc-950"
+                className="absolute inset-0 bg-linear-to-br from-[#353535] to-[#000000]"
               />
             )}
             <span className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">

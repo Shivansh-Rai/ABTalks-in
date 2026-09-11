@@ -24,9 +24,9 @@ export const metadata: Metadata = {
 
 const STATUS_STYLE: Record<string, string> = {
   COMPLETED:
-    "border-[#1A7F37]/40 bg-[#1A7F37]/10 text-[#1A7F37]",
-  ABANDONED: "border-[#E0E0E0] bg-[#F5F5F5] text-[#8F8F8F]",
-  INVALID: "border-[#E0E0E0] bg-[#F5F5F5] text-[#8F8F8F]",
+    "border-[#197E23]/40 bg-[#197E23]/10 text-[#197E23]",
+  ABANDONED: "border-[#E0E0E0] bg-[#F4F4F4] text-[#8F8F8F]",
+  INVALID: "border-[#E0E0E0] bg-[#F4F4F4] text-[#8F8F8F]",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -46,14 +46,14 @@ export default async function MockInterviewHistoryPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 md:py-14">
       <Link
         href="/mock-interviews"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#111111]"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
       >
         <ArrowLeft className="size-3.5" strokeWidth={2} />
         All mock interviews
       </Link>
 
       <header className="mt-5">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-[#111111]">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[#000000]">
           Your practice history
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-[#4B4B4B]">
@@ -62,13 +62,13 @@ export default async function MockInterviewHistoryPage() {
       </header>
 
       {attempts.length === 0 ? (
-        <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#FFF5F0] p-6 text-center">
+        <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#EEF6F6] p-6 text-center">
           <p className="text-sm text-[#4B4B4B]">
             You haven&rsquo;t finished a mock interview yet.
           </p>
           <Link
             href="/mock-interviews"
-            className="mt-4 inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#C9411C]"
+            className="mt-4 inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
           >
             Choose an interview
           </Link>
@@ -78,11 +78,11 @@ export default async function MockInterviewHistoryPage() {
           {attempts.map((a) => (
             <li
               key={a.id}
-              className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 transition-colors hover:border-[#E05226]/40"
+              className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 transition-colors hover:border-[#03535F]/40"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-[15px] font-semibold text-[#111111]">
+                  <h2 className="text-[15px] font-semibold text-[#000000]">
                     {a.domainLabel}
                   </h2>
                   <p className="mt-1 text-[13px] text-[#8F8F8F]">
@@ -99,7 +99,7 @@ export default async function MockInterviewHistoryPage() {
 
                 <div className="flex items-center gap-3">
                   {a.status === "COMPLETED" && a.overallScore !== null ? (
-                    <span className="text-[15px] font-bold text-[#111111]">
+                    <span className="text-[15px] font-bold text-[#000000]">
                       {(a.overallScore / 10).toFixed(1)}
                       <span className="text-[13px] font-normal text-[#8F8F8F]">
                         /10
@@ -120,7 +120,7 @@ export default async function MockInterviewHistoryPage() {
                 {a.hasReport ? (
                   <Link
                     href={`/mock-interviews/${a.domainSlug}/attempt/${a.id}/report`}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[#E05226] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#C9411C]"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[#03535F] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#076573]"
                   >
                     <FileText className="size-3.5" strokeWidth={2} />
                     View report
@@ -132,7 +132,7 @@ export default async function MockInterviewHistoryPage() {
                 )}
                 <Link
                   href={`/mock-interviews/${a.domainSlug}`}
-                  className="text-[13px] text-[#4B4B4B] underline underline-offset-4 transition-colors hover:text-[#111111]"
+                  className="text-[13px] text-[#4B4B4B] underline underline-offset-4 transition-colors hover:text-[#000000]"
                 >
                   About this interview
                 </Link>

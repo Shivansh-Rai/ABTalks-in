@@ -132,15 +132,15 @@ const rowsFor = (lead: number, days: number) => Math.ceil((lead + days) / 7);
 /**
  * Event-bar fills, per track — a light REST state and a deep HOVER state.
  *
- * The tile used to sit at full-strength #E05226 all the time, which left the
+ * The tile used to sit at full-strength #03535F all the time, which left the
  * hover nowhere to go: an orange glow around an orange tile reads as nothing,
  * and the gradient already tops out, so brightness has no headroom either.
  * Resting light and darkening on hover gives the interaction the whole range
  * to move through, and the direction — light settles, dark responds — matches
  * the pressed-in feel of a button.
  *
- * Everything here is from the approved set: #E05226 / #C9411C / #A93617 and
- * the #FFECE3 / #FFF1E9 tints. No new hues.
+ * Everything here is from the approved set: #03535F / #076573 / #02434D and
+ * the #E7F2F3 / #EEF6F6 tints. No new hues.
  *
  * The hackathon keeps the palette's charcoal rather than an orange, so its
  * rest state is a neutral tint of the same idea.
@@ -164,43 +164,43 @@ type TrackFill = {
 
 const TRACK_FILL: Record<WorkshopEvent["track"], TrackFill> = {
   workshop: {
-    rest: ["#fff1e9", "#ffece3"],
-    hover: ["#e05226", "#c9411c"],
-    // #a93617 on #ffece3 measures 5.45:1 — passes AA for the 10px label.
-    restFg: "#a93617",
+    rest: ["#EEF6F6", "#E7F2F3"],
+    hover: ["#03535F", "#076573"],
+    // #02434D on #E7F2F3 measures 5.45:1 — passes AA for the 10px label.
+    restFg: "#02434D",
     hoverFg: "#ffffff",
-    restIcon: "#c9411c",
-    hoverIcon: "#c9411c",
+    restIcon: "#076573",
+    hoverIcon: "#076573",
     restPlate: "#ffffff",
     hoverPlate: "#ffffff",
   },
   challenge: {
-    rest: ["#fff1e9", "#ffece3"],
-    hover: ["rgba(224, 82, 38, 0.72)", "rgba(201, 65, 28, 0.72)"],
-    restFg: "#a93617",
-    hoverFg: "#111111",
-    restIcon: "#c9411c",
-    hoverIcon: "#c9411c",
+    rest: ["#EEF6F6", "#E7F2F3"],
+    hover: ["rgba(3, 83, 95, 0.72)", "rgba(7, 101, 115, 0.72)"],
+    restFg: "#02434D",
+    hoverFg: "#000000",
+    restIcon: "#076573",
+    hoverIcon: "#076573",
     restPlate: "#ffffff",
     hoverPlate: "#ffffff",
   },
   cohort: {
-    rest: ["#fff5f0", "#fff1e9"],
-    hover: ["rgba(224, 82, 38, 0.42)", "rgba(201, 65, 28, 0.42)"],
-    restFg: "#a93617",
-    hoverFg: "#111111",
-    restIcon: "#c9411c",
-    hoverIcon: "#c9411c",
+    rest: ["#EEF6F6", "#EEF6F6"],
+    hover: ["rgba(3, 83, 95, 0.42)", "rgba(7, 101, 115, 0.42)"],
+    restFg: "#02434D",
+    hoverFg: "#000000",
+    restIcon: "#076573",
+    hoverIcon: "#076573",
     restPlate: "#ffffff",
     hoverPlate: "#ffffff",
   },
   hackathon: {
-    rest: ["#f2f2f2", "#e6e6e6"],
-    hover: ["#4b4b4b", "#111111"],
-    restFg: "#111111",
+    rest: ["#F4F4F4", "#E9E9E9"],
+    hover: ["#4b4b4b", "#000000"],
+    restFg: "#000000",
     hoverFg: "#ffffff",
-    restIcon: "#111111",
-    hoverIcon: "#111111",
+    restIcon: "#000000",
+    hoverIcon: "#000000",
     restPlate: "#ffffff",
     hoverPlate: "#ffffff",
   },
@@ -507,9 +507,9 @@ export default function EventsCalendar() {
     <section
       ref={sectionRef}
       className="w-full px-4 pb-14 pt-10 lg:px-8 lg:pb-[63px] lg:pt-[50px] xl:px-10"
-      // --wk-bg, not --wk-bg-alt. The alt token is #fff1e9, the deepest peach
+      // --wk-bg, not --wk-bg-alt. The alt token is #EEF6F6, the deepest peach
       // in the ramp, and a whole section of it sat heavier than the calendar
-      // card it was meant to frame. --wk-bg (#fbf9f7) is the same warm
+      // card it was meant to frame. --wk-bg (#F4F4F4) is the same warm
       // neutral one step lighter — still a shade off the page wash behind it,
       // so the section still reads as its own surface.
       style={{ background: "var(--wk-bg)" }}

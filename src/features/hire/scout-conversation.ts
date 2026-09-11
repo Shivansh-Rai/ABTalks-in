@@ -23,7 +23,7 @@ import { readPoolExtra } from "@/features/hire/pool-brief";
 import { trackLabels } from "@/features/hire/track-registry";
 import { runScoutAgent } from "@/features/hire/scout-agent";
 import { readOfferedChips, suggestChips, type ScoutChip } from "@/features/hire/scout-chips";
-import { searchable, type ScoutToolDeps } from "@/features/hire/scout-tools";
+import { searchable, shouldAutoSearch, stampSearchFingerprint, type ScoutToolDeps } from "@/features/hire/scout-tools";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -344,7 +344,7 @@ function engineAction(spec: JobSpec, msg: string): ScoutTurn | null {
   const m = msg.trim();
 
   if (/^action:search$/i.test(m)) {
-    return turnFor(spec, "Searching the verified pool now.", {
+    return turnFor(stampSearchFingerprint(spec), "Searching the verified pool now.", {
       action: "search",
     });
   }
@@ -382,7 +382,10 @@ function engineAction(spec: JobSpec, msg: string): ScoutTurn | null {
     if (slot) {
       const parsed = jobSpecSchema.safeParse(mergeIntoSlot(spec, slot, m));
       const next = parsed.success ? parsed.data : spec;
-      return turnFor(next, isSlotFilled(next, slot) ? chipAck(slot, next) : "");
+      return afterChipMerge(
+        next,
+        isSlotFilled(next, slot) ? chipAck(slot, next) : "",
+      );
     }
   }
 
@@ -394,11 +397,37 @@ function engineAction(spec: JobSpec, msg: string): ScoutTurn | null {
     const parsed = jobSpecSchema.safeParse(mergeIntoSlot(spec, enumSlot, m));
     const next = parsed.success ? parsed.data : spec;
     if (isSlotFilled(next, enumSlot)) {
-      return turnFor(next, chipAck(enumSlot, next));
+      return afterChipMerge(next, chipAck(enumSlot, next));
+    }
+  }
+
+  // Free-text chip values that are stack suggestions ("Python, SQL").
+  if (suggestChips(spec, searchable(spec), readOfferedChips(spec)).some((c) => c.value === m)) {
+    const parsed = jobSpecSchema.safeParse(
+      mergeIntoSlot(spec, "mustHaveStack", m),
+    );
+    const next = parsed.success ? parsed.data : spec;
+    if (isSlotFilled(next, "mustHaveStack") || searchable(next)) {
+      return afterChipMerge(
+        next,
+        isSlotFilled(next, "mustHaveStack")
+          ? chipAck("mustHaveStack", next)
+          : "",
+      );
     }
   }
 
   return null;
+}
+
+/** After a chip updates the brief, search immediately when it became searchable. */
+function afterChipMerge(spec: JobSpec, text: string): ScoutTurn {
+  if (shouldAutoSearch(spec)) {
+    return turnFor(stampSearchFingerprint(spec), "Searching the verified pool now.", {
+      action: "search",
+    });
+  }
+  return turnFor(spec, text);
 }
 
 function enumChipSlot(raw: string): HireSlot | null {

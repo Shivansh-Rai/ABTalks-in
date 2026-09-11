@@ -31,7 +31,7 @@ function domainBadgeClass(domain: string | null): string {
   if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
   if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
   if (domain === "CLAUDE")
-    return "border-orange-500/40 bg-orange-50 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200";
+    return "border-[#03535F]/40 bg-[#EEF6F6] text-[#02434D] dark:bg-[#02434D]/40 dark:text-[#D4EBEC]";
   if (domain === "SE") return "border-domains-se/50 bg-domains-se-bg text-domains-se";
   return "border-border bg-muted text-muted-foreground";
 }
@@ -236,7 +236,7 @@ async function DrillDownView({
                     className={cn(
                       "border-0",
                       row.rewardGiven
-                        ? "bg-emerald-100 text-emerald-700"
+                        ? "bg-[#D6F7EC] text-[#197E23]"
                         : "bg-muted text-muted-foreground",
                     )}
                   >
@@ -292,7 +292,7 @@ async function DrillDownView({
                         className={cn(
                           "border-0",
                           row.rewardGiven
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-[#D6F7EC] text-[#197E23]"
                             : "bg-muted text-muted-foreground",
                         )}
                       >

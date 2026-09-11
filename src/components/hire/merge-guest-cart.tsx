@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   adoptGuestScoutSessionAction,
   recordSampleDemandAction,
 } from "@/app/actions/hire-actions";
-import { readGuestSession } from "@/components/hire/guest-session";
+import {
+  clearGuestSession,
+  readGuestSession,
+} from "@/components/hire/guest-session";
+import {
+  clearGuestMatches,
+  readGuestMatches,
+} from "@/components/hire/guest-matches-store";
 import { mergeGuestCartAction } from "@/app/actions/talent-actions";
 import { placeBulkEngagementRequestAction } from "@/app/actions/hire-request-actions";
 import {
@@ -38,6 +46,7 @@ import {
  * keep, silently, on the ordinary signup path.
  */
 export function MergeGuestCart() {
+  const router = useRouter();
   const running = useRef(false);
   const done = useRef(false);
 
@@ -89,19 +98,73 @@ export function MergeGuestCart() {
           }
         }
 
-        done.current = true;
-
         const guestBrief = readGuestSession();
         if (
           guestBrief &&
           guestBrief.messages.some((m) => m.role === "user")
         ) {
-          await adoptGuestScoutSessionAction({
+          // Identity only. The scores, tiers and ranking this browser is holding
+          // are the server's to decide again — it re-tests every ref against the
+          // same visibility and eligibility rules the search itself applies.
+          const candidateRefs = (readGuestMatches()?.matches ?? [])
+            .map((m) => m.candidateRef)
+            .filter(Boolean);
+
+          const adopted = await adoptGuestScoutSessionAction({
             spec: guestBrief.spec,
             summary: guestBrief.summary,
             searched: guestBrief.searched,
             messages: guestBrief.messages,
+            ...(candidateRefs.length > 0 ? { candidateRefs } : {}),
           });
+
+          if (!adopted.ok) {
+            // The recruiter who is still awaiting approval lands here, and this
+            // used to be silent: the result was discarded and the latch had
+            // already been set, so the search they had just run was dropped
+            // without a word and never retried.
+            //
+            // Nothing local is cleared, so the work is still here and the next
+            // visit adopts it. The message says "on this device" because that
+            // is the truth — approval usually arrives hours later, and if they
+            // come back on another machine this browser's copy is all there was.
+            toast.error(
+              `${adopted.message} Your search is kept on this device and will be saved to your account when access is approved.`,
+            );
+            return;
+          }
+
+          // Only now. Latching before the call meant a failure was never retried
+          // for the rest of the session.
+          done.current = true;
+
+          if (adopted.data.skipped > 0 && adopted.data.adopted > 0) {
+            toast.info(
+              `${adopted.data.adopted} of the ${adopted.data.adopted + adopted.data.skipped} candidates you saw are still available.`,
+            );
+          }
+
+          // Move to the saved copy, THEN forget the browser's.
+          //
+          // Order matters. `/hire/[requestId]` is server-rendered from the
+          // request and its matches, and ScoutChat skips guest hydration
+          // entirely when it has an `initialRequestId` — so the recruiter lands
+          // on the adopted work rather than on an empty desk.
+          //
+          // Clearing is what makes the count above mean anything. Leaving the
+          // guest copy in place would keep rendering all twenty candidates from
+          // localStorage while the account holds eighteen, so the recruiter
+          // would be told two were dropped and then shown twenty anyway, and
+          // would go on working against a copy nothing writes to.
+          //
+          // Only on success. A recruiter still awaiting approval returned above
+          // with everything untouched — that copy is the only one there is, and
+          // it is what the next visit adopts.
+          router.replace(`/hire/${adopted.data.requestId}`);
+          clearGuestSession();
+          clearGuestMatches();
+        } else {
+          done.current = true;
         }
 
         const pending = readPendingCheckout();
@@ -125,7 +188,9 @@ export function MergeGuestCart() {
         running.current = false;
       }
     })();
-  }, []);
+    // `router` is stable across renders; the empty array is what keeps this a
+    // once-per-mount effect, which the `running`/`done` refs above depend on.
+  }, [router]);
 
   return null;
 }

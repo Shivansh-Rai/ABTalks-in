@@ -74,7 +74,7 @@ export async function getOverviewStats() {
     registrationDates,
     liveSubmissionsRaw,
     recentAdminActionsRaw,
-    pendingRecruitersRaw,
+    recentRecruitersRaw,
   ] = await Promise.all([
     countRegisteredUsers(),
     prisma.submission.findMany({
@@ -128,9 +128,10 @@ export async function getOverviewStats() {
         },
       },
     }),
+    // Newest registrations, not a review queue: recruiter approval is gone,
+    // so "waiting" is not a state a profile can be in any more.
     prisma.recruiterProfile.findMany({
-      where: { approved: false },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       take: 5,
       select: {
         id: true,
@@ -198,7 +199,7 @@ export async function getOverviewStats() {
       createdAt: row.createdAt,
       createdAtRelative: formatDistanceToNow(row.createdAt, { addSuffix: true }),
     })),
-    pendingRecruiters: pendingRecruitersRaw.map((row) => ({
+    recentRecruiters: recentRecruitersRaw.map((row) => ({
       id: row.id,
       fullName: row.fullName,
       company: row.company,

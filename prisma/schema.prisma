@@ -359,6 +359,8 @@ model User {
   engagementMessages         TalentEngagementMessage[]
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
+  /// Plan 121 — recruiter-authored assessments (builder drafts).
+  assessmentsAuthored        RecruiterAssessment[]     @relation("RecruiterAssessmentsCreated")
 
   // credits (T-228) — the recruiter credit ledger. Restrict, like pointsLedger:
   // financial history outlives the convenience of deleting a row.
@@ -643,17 +645,30 @@ model Job {
   @@index([recruiterId, createdAt(sort: Desc)])
 }
 
-model JobApplication {
-  id        String   @id @default(cuid())
-  jobId     String
-  userId    String
-  note      String?
-  createdAt DateTime @default(now())
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+/// T-246 candidate application status. Default APPLIED; recruiter workflow
+/// for the remaining transitions ships in a later ticket.
+enum JobApplicationStatus {
+  APPLIED
+  REVIEWING
+  ACCEPTED
+  REJECTED
+}
 
-  @@unique([jobId, userId])
-  @@index([userId])
+model JobApplication {
+  id          String               @id @default(cuid())
+  jobId       String
+  userId      String // candidateId alias — one User.id per candidate
+  status      JobApplicationStatus @default(APPLIED)
+  resumeUrl   String?
+  coverLetter String?
+  note        String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  job         Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([jobId])
 }
 
@@ -1153,6 +1168,24 @@ model TalentRequest {
   /// Free-form extras Scout captured; never used for matching.
   extra                    Json?
   alertWhenAvailable       Boolean                   @default(false)
+  /// The recruiter's own label for this piece of work, e.g. "Senior Backend
+  /// Engineer - Delhi NCR". Distinct from `title`, which is the role being
+  /// hired for: two searches for the same role are otherwise indistinguishable
+  /// in a list. Nullable so existing rows need no invented value; the UI falls
+  /// back to `title` when it is null.
+  name                     String?
+  /// When this recruiter last opened the request.
+  ///
+  /// This is what `TalentRequestMatch.firstSeenAt` is compared against to draw
+  /// the "new since your last visit" badge - firstSeenAt alone has nothing to
+  /// measure from. A request has exactly one recruiter today
+  /// (`recruiterUserId`), so one column is enough; if organisation-wide
+  /// projects arrive this must become a per-(recruiter, request) row.
+  lastViewedAt             DateTime?
+  /// Filed away by the recruiter. Deliberately NOT a TalentRequestStatus value:
+  /// status says where the request is in its lifecycle, this says the recruiter
+  /// put it aside, and a timestamp also records when.
+  archivedAt               DateTime?
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   recruiter                User                      @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
@@ -1178,6 +1211,18 @@ model TalentRequestMessage {
   @@index([requestId, createdAt])
 }
 
+/// A recruiter's triage verdict on ONE match.
+///
+/// Deliberately narrow: three values, about a candidate's fit for this search.
+/// It is not the hiring pipeline - `PipelineStage` on TalentListItem owns that
+/// once a candidate is on a talent list. Keeping them apart is a decision
+/// pending sign-off; see docs/plans/113-A-schema-review-sohail.md, question 1.
+enum TalentMatchDecision {
+  UNDECIDED
+  SHORTLISTED
+  REJECTED
+}
+
 /// Scored candidate snapshot frozen at match time for auditability.
 ///
 /// Keyed on `candidateUserId`, because a candidate is a person and not a cohort
@@ -1200,10 +1245,25 @@ model TalentRequestMatch {
   gaps                String[]              @default([])
   availabilityUnknown Boolean               @default(true)
   source              TalentCandidateSource @default(PROGRAM)
+  /// The first time this candidate appeared on this request.
+  ///
+  /// `createdAt` cannot serve: the match run used to delete every row and
+  /// recreate it, so createdAt meant "last run". The run is an upsert now
+  /// (see runMatchAction) and this column is never written on update, which is
+  /// what makes "new since your last visit" answerable.
+  firstSeenAt         DateTime              @default(now())
+  /// When the recruiter first opened this candidate on this request. Null IS
+  /// the meaning "not yet viewed", so it is nullable with no default.
+  viewedAt            DateTime?
+  decision            TalentMatchDecision   @default(UNDECIDED)
   createdAt           DateTime              @default(now())
   request             TalentRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
   candidate           User                  @relation("CandidateMatches", fields: [candidateUserId], references: [id], onDelete: Cascade)
 
+  /// A candidate appears at most once per request. This is what the match run
+  /// upserts on, and it is the one part of this migration that can FAIL on
+  /// existing data - check for duplicate pairs before applying.
+  @@unique([requestId, candidateUserId])
   @@index([requestId, score(sort: Desc)])
   @@index([candidateUserId])
 }
@@ -2093,6 +2153,18 @@ enum AssessmentReportStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum RecruiterAssessmentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssessmentQuestionType {
+  MULTIPLE_CHOICE
+  PARAGRAPH
+  FILE_UPLOAD
 }
 
 enum RecommendationLevelV2 {
@@ -3117,12 +3189,13 @@ model Organization {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  members            OrganizationMember[]
-  talentLists        TalentList[]
-  notes              CandidateNote[]
-  experience         CandidateExperience[]
-  creditAccount      CreditAccount?
-  creditTransactions CreditTransaction[]
+  members              OrganizationMember[]
+  talentLists          TalentList[]
+  notes                CandidateNote[]
+  experience           CandidateExperience[]
+  recruiterAssessments RecruiterAssessment[]
+  creditAccount        CreditAccount?
+  creditTransactions   CreditTransaction[]
 
   // SQL: CREATE INDEX ... USING gin (name gin_trgm_ops);
   @@index([isVerified])
@@ -3147,6 +3220,83 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([userId, status])
   @@index([organizationId, role])
+}
+
+/// A recruiter-authored test. Owned by one workspace (T-226): reads and writes
+/// go through requireRecruiterWorkspace() and are scoped by organizationId.
+///
+/// Deliberately NOT built on Question/QuestionOption: those are reachable only
+/// through QuizActivityConfig -> Activity -> Module -> LearningProgram, which
+/// would mean inventing a learning program for every recruiter test.
+model RecruiterAssessment {
+  id              String                    @id @default(cuid())
+  organizationId  String
+  createdByUserId String
+  title           String
+  subheading      String?
+  instructions    String?
+  status          RecruiterAssessmentStatus @default(DRAFT)
+  /// Null = untimed. Whole minutes; the candidate screen renders the chip.
+  durationMinutes Int?
+  /// Percentage of auto-gradeable points needed to pass.
+  passMarkPercent Int                       @default(60)
+  /// Read-only provenance: which shortlisted candidates this was drafted for.
+  /// Public AB-#### refs, never user ids. Nothing reads this yet — the assign
+  /// ticket does. It is captured at draft time because the shortlist changes.
+  shortlistRefs   String[]                  @default([])
+  publishedAt     DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User                 @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  questions    AssessmentQuestion[]
+
+  @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
+  @@index([status])
+}
+
+model AssessmentQuestion {
+  id                   String                 @id @default(cuid())
+  assessmentId         String
+  position             Int
+  type                 AssessmentQuestionType
+  /// The question text the candidate reads.
+  title                String
+  helpText             String?
+  isRequired           Boolean                @default(true)
+  points               Int                    @default(1)
+  /// MULTIPLE_CHOICE only. False = radio group, true = checkbox group.
+  allowMultipleCorrect Boolean                @default(false)
+  /// PARAGRAPH only. Word cap enforced on the candidate screen.
+  maxWords             Int?
+  /// FILE_UPLOAD only. Where the recruiter expects the file to be uploaded.
+  /// ABTalks stores no files; the candidate answers with their own link.
+  uploadDestinationUrl String?
+  /// RESERVED for a later sections ticket. Never written in v1 — always null.
+  /// No relation and no FK on purpose: the AssessmentSection table does not
+  /// exist yet, and a dangling FK is worse than a documented placeholder.
+  sectionId            String?
+
+  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options    AssessmentQuestionOption[]
+
+  @@unique([assessmentId, position])
+  @@index([assessmentId, position])
+}
+
+model AssessmentQuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  position   Int
+  body       String
+  isCorrect  Boolean @default(false)
+
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, position])
+  @@index([questionId, isCorrect])
 }
 
 /// Runtime, admin-editable platform configuration (T-148 D-17, T-228).
@@ -3684,4 +3834,61 @@ enum VirtualCandidateRequestStatus {
   FULFILLED
   CANCELLED
   EXPIRED
+}
+
+// =============================================================================
+// T-259 — observability. One send attempt, one row.
+//
+// This is the database view of the "one incident, three views" rule: the same
+// `id` appears in the structured log line (`deliveryId`) and on the Sentry
+// event (tag `deliveryId`), and the row carries the `requestId` and
+// `sentryEventId` that lead to the other two.
+//
+// It deliberately stores NO contact detail. `recipientHash` is a SHA-256 of the
+// lowercased address, which is enough to answer "did this person's mail fail?"
+// (hash the address and look it up) without the table itself becoming a mailing
+// list — this row is read by admins and reachable from exports.
+// =============================================================================
+
+enum OutboundDeliveryChannel {
+  EMAIL
+}
+
+enum OutboundDeliveryStatus {
+  /// Provider not configured, or a seed/test address — nothing was attempted.
+  SKIPPED
+  SENT
+  FAILED
+}
+
+/// T-259 observability side-table for outbound mail. Distinct from
+/// T-248 `NotificationDelivery`, which tracks UserNotification channels.
+model OutboundDelivery {
+  id      String                   @id @default(cuid())
+  channel OutboundDeliveryChannel  @default(EMAIL)
+
+  /// What this send is, e.g. "recruiter.otp", "hire.alert", "contact.form".
+  /// Free text so a new caller needs no migration.
+  kind String
+
+  /// SHA-256 of the lowercased recipient address. Never the address.
+  recipientHash String
+
+  /// The domain entity this send belongs to, when there is one.
+  subjectType String?
+  subjectId   String?
+
+  status        OutboundDeliveryStatus
+  /// Output of safeErrorMessage() — already redacted.
+  failureReason String?
+
+  /// Correlation. Same values as the log line and the Sentry event.
+  requestId     String?
+  sentryEventId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([kind, createdAt(sort: Desc)])
+  @@index([recipientHash])
 }

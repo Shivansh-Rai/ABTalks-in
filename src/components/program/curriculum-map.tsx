@@ -21,9 +21,9 @@ const ALL_TYPES = Object.keys(MISSION_LABEL) as ProgramMissionType[];
 function StateIcon({ state }: { state: DayState }) {
   switch (state) {
     case "PASSED":
-      return <CheckCircle2 className="size-4 text-emerald-500" />;
+      return <CheckCircle2 className="size-4 text-[#197E23]" />;
     case "SKIPPED":
-      return <SkipForward className="size-4 text-amber-500" />;
+      return <SkipForward className="size-4 text-[#AA821D]" />;
     case "AVAILABLE":
       return <Circle className="size-4 animate-pulse text-primary" />;
     default:

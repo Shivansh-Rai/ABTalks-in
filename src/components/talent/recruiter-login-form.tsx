@@ -53,13 +53,11 @@ export function RecruiterLoginForm({ initialEmail = "" }: { initialEmail?: strin
       // A full navigation, not router.push: the session cookie has just been
       // set and every guard downstream reads it server-side.
       //
-      // Always /talent/setup, never `redirectTo` (T-226). Going straight to
-      // /hire skipped every recruiter-state guard, so a recruiter who still had
-      // setup to finish landed on the Scout desk as a guest and was asked to log
-      // in again. /talent/setup re-reads the state on the server and forwards an
-      // approved recruiter to /hire and a pending one to /talent/pending, so it
-      // is the correct destination for every case rather than only this one.
-      window.location.href = "/talent/setup";
+      // Straight to the desk. This used to route through /talent/setup because
+      // signing in could land on any of three recruiter states — setup
+      // unfinished, application pending, approved — and only the server knew
+      // which. There is one state now, so there is one destination.
+      window.location.href = "/hire";
     });
   }
 
@@ -124,7 +122,7 @@ export function RecruiterLoginForm({ initialEmail = "" }: { initialEmail?: strin
       </div>
 
       {devCode && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3 py-2 text-xs text-[#AA821D] dark:text-[#FFEDB0]">
           <strong className="font-semibold">Development only.</strong> No mail
           provider is configured, so the code is shown here instead of emailed:{" "}
           <span className="font-mono text-sm font-bold tracking-widest">

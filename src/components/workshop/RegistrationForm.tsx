@@ -9,7 +9,7 @@ import {
 } from "@/components/legal/legal-consent-fields";
 
 /** Palette oranges + the cream tints, so the burst stays in-system. */
-const CONFETTI_COLORS = ["#e05226", "#c9411c", "#a93617", "#ffece3", "#fff1e9", "#353535"];
+const CONFETTI_COLORS = ["#03535F", "#076573", "#02434D", "#E7F2F3", "#EEF6F6", "#353535"];
 
 function buildConfetti() {
   return Array.from({ length: 44 }, (_, i) => ({
@@ -227,8 +227,8 @@ export default function RegistrationForm({
           background: var(--wk-surface);
           box-shadow: 0 0 0 3px rgba(var(--wk-a1-rgb),0.18);
         }
-        .wk-input.err { border-color: rgba(248,113,113,0.6); }
-        .wk-input.err:focus { box-shadow: 0 0 0 3px rgba(248,113,113,0.14); }
+        .wk-input.err { border-color: rgba(217, 45, 32, 0.24); }
+        .wk-input.err:focus { box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.056); }
         .wk-select option { background: var(--wk-surface); color: var(--wk-text); }
 
         .register-btn {
@@ -471,8 +471,8 @@ export default function RegistrationForm({
           </div>
 
           {apiError && (
-            <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3.5">
-              <p className="text-center text-sm font-medium leading-relaxed text-red-300">
+            <div className="mt-5 rounded-xl border border-[#D92D20]/25 bg-[#D92D20]/10 p-3.5">
+              <p className="text-center text-sm font-medium leading-relaxed text-[#D92D2066]">
                 {apiError}
               </p>
             </div>
@@ -552,7 +552,7 @@ export default function RegistrationForm({
           <div
             className="animate-pop relative z-[102] w-full max-w-md overflow-hidden rounded-3xl p-8 text-center sm:p-10"
             style={{
-              background: "rgba(17,17,17,0.94)",
+              background: "rgba(0, 0, 0, 0.94)",
               border: "1px solid rgba(255,255,255,0.1)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
@@ -589,13 +589,13 @@ export default function RegistrationForm({
                     cx="26"
                     cy="26"
                     r="24"
-                    stroke="#e05226"
+                    stroke="#03535F"
                     strokeWidth="2.5"
                   />
                   <path
                     className="check-mark-path"
                     d="M15 27 L23 34 L38 18"
-                    stroke="#e05226"
+                    stroke="#03535F"
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -613,11 +613,11 @@ export default function RegistrationForm({
             <p className="mb-6 text-[12.5px] font-medium leading-relaxed text-white/40">
               We&apos;ve sent your webinar details to your email. (Please check your Spam or Promotions folders if you don&apos;t see it).
             </p>
-            <div className="inline-flex select-none items-center gap-2 rounded-xl border border-green-400/25 bg-green-400/10 px-4 py-2.5">
-              <span className="h-2 w-2 animate-ping rounded-full bg-green-400" />
-              <span className="text-xs font-semibold tracking-wide text-green-300">
+            <div className="inline-flex select-none items-center gap-2 rounded-xl border border-[#27CA37]/25 bg-[#27CA37]/10 px-4 py-2.5">
+              <span className="h-2 w-2 animate-ping rounded-full bg-[#27CA37]" />
+              <span className="text-xs font-semibold tracking-wide text-[#197E23]">
                 Redirecting to WhatsApp in{" "}
-                <strong className="text-sm font-bold text-green-200">{redirectCountdown}s</strong>...
+                <strong className="text-sm font-bold text-[#D6F7EC]">{redirectCountdown}s</strong>...
               </span>
             </div>
           </div>
@@ -646,7 +646,7 @@ function Field({ label, required, error, children }: FieldProps) {
       </label>
       {children}
       {error && (
-        <p className="mt-1.5 text-xs font-medium tracking-wide text-red-600">{error}</p>
+        <p className="mt-1.5 text-xs font-medium tracking-wide text-[#D92D20]">{error}</p>
       )}
     </div>
   );

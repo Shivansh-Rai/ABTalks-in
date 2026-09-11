@@ -29,6 +29,9 @@ export async function notifyDataRightsRequest(input: {
 
   try {
     await sendEmail({
+      kind: "legal.data_request",
+      subjectType: "dataRightsRequest",
+      subjectId: input.id,
       to: LEGAL_ENTITY.grievanceOfficer.email,
       subject: `[Data rights] ${label} request from ${input.email}`,
       text: [

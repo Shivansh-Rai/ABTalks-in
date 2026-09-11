@@ -345,9 +345,9 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
         the resume card a read-only shadow of the profile.
       */}
       {resume.addedToProfile.length > 0 ? (
-        <div className="flex gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+        <div className="flex gap-3 rounded-xl border border-[#27CA37]/25 bg-[#D6F7EC]/50 p-4">
           <Sparkles
-            className="mt-0.5 size-5 shrink-0 text-emerald-600"
+            className="mt-0.5 size-5 shrink-0 text-[#197E23]"
             aria-hidden
           />
           <div className="min-w-0 space-y-1">

@@ -11,16 +11,16 @@ export function Faq() {
   return (
     <section className="mx-auto w-full max-w-[1897px] px-8 py-16 sm:px-9 sm:pb-28 sm:pt-24">
       <h2
-        className="bg-gradient-to-r from-white from-[75%] to-[#A2A2A2] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
-        style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+        className="bg-gradient-to-r from-white from-[75%] to-[#A5A5A5] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
+        style={{ fontFamily: "var(--font-inter), sans-serif" }}
       >
         FAQ
       </h2>
-      <p className="mt-3 text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#BCBCBC]">
+      <p className="mt-3 text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#D2D2D2]">
         Common questions before you register.
       </p>
 
-      <ul className="mt-12 overflow-hidden rounded-[20px] border border-[#403880]">
+      <ul className="mt-12 overflow-hidden rounded-[20px] border border-[#03535F]">
         {HACKATHON.faq.map((item, index) => {
           const open = openIndex === index;
           return (
@@ -28,7 +28,7 @@ export function Faq() {
               key={item.q}
               className={cn(
                 index > 0 && "border-t border-[#4B4B4B]",
-                !open && "bg-[#030712]",
+                !open && "bg-[#000000]",
               )}
             >
               <button
@@ -36,7 +36,7 @@ export function Faq() {
                 className={cn(
                   "flex w-full items-start justify-between gap-4 px-5 py-4 text-left sm:px-10 sm:py-5",
                   open &&
-                    "bg-[linear-gradient(270deg,rgba(25,27,64,1)_0%,rgba(64,71,166,1)_100%)]",
+                    "bg-[linear-gradient(270deg,rgba(2, 67, 77, 1)_0%,rgba(3, 83, 95, 1)_100%)]",
                 )}
                 aria-expanded={open}
                 onClick={() => setOpenIndex(open ? null : index)}

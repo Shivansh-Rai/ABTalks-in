@@ -227,9 +227,9 @@ export function BridgeSection() {
                   x2="1"
                   y2="0"
                 >
-                  <stop offset="0%" stopColor="#8AA6C6" />
-                  <stop offset="50%" stopColor="#8480BD" />
-                  <stop offset="100%" stopColor="#E58256" />
+                  <stop offset="0%" stopColor="#076573" />
+                  <stop offset="50%" stopColor="#076573" />
+                  <stop offset="100%" stopColor="#076573" />
                 </linearGradient>
               </defs>
               {([1, 2, 3] as const).map((n) => (

@@ -23,13 +23,13 @@ export const metadata = {
 // do not change global tokens. Score-card accent colors use inline style via SCORE_COLORS.
 
 const SCORE_COLORS = {
-  communication: "#2f6fb0",
-  programming: "#e05226",
-  behavior: "#1a9e8f",
+  communication: "#03535F",
+  programming: "#03535F",
+  behavior: "#03535F",
 } as const;
 
 const PASSED_BADGE =
-  "border-[#d99c2c]/50 bg-[#fbf6e9] text-[#8a6310] print:bg-[#fbf6e9]";
+  "border-[#AA821D]/50 bg-[#FFEDB0] text-[#AA821D] print:bg-[#FFEDB0]";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -54,7 +54,7 @@ function recommendationLabel(level: RecommendationLevel): string {
 
 function SectionHeading({ title }: { title: string }) {
   return (
-    <h3 className="mb-3 border-b border-[#1e3a5f]/15 pb-1 font-display text-sm font-bold uppercase tracking-wide text-[#1e3a5f] print:mb-1.5">
+    <h3 className="mb-3 border-b border-[#03535F]/15 pb-1 font-display text-sm font-bold uppercase tracking-wide text-[#03535F] print:mb-1.5">
       {title}
     </h3>
   );
@@ -62,7 +62,7 @@ function SectionHeading({ title }: { title: string }) {
 
 function SidebarHeading({ title }: { title: string }) {
   return (
-    <h3 className="mb-3 border-b border-[#d99c2c]/40 pb-1 font-display text-xs font-bold uppercase tracking-[0.12em] text-[#b9831f] print:mb-1.5">
+    <h3 className="mb-3 border-b border-[#AA821D]/40 pb-1 font-display text-xs font-bold uppercase tracking-[0.12em] text-[#AA821D] print:mb-1.5">
       {title}
     </h3>
   );
@@ -215,7 +215,7 @@ export default async function RecruiterProfilePage({
   return (
     <div
       className={cn(
-        "report-light theme-abtalks-orange min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
+        "report-light theme-abtalks-brand min-h-svh bg-muted/30 text-foreground print:min-h-0 print:bg-white",
         "[print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
       )}
     >
@@ -225,20 +225,20 @@ export default async function RecruiterProfilePage({
 
       <div className="mx-auto my-6 max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-sm print:my-0 print:box-border print:w-full print:rounded-none print:border-0 print:shadow-none">
         {/* Brand bar */}
-        <div className="bg-[#16293f] px-6 py-2 text-right text-[11px] print:bg-[#16293f]">
-          <span className="font-display font-bold text-[#d99c2c]">AB TALKS</span>
+        <div className="bg-[#02434D] px-6 py-2 text-right text-[11px] print:bg-[#02434D]">
+          <span className="font-display font-bold text-[#AA821D]">AB TALKS</span>
           <span className="text-white/70"> | AI Conversations That Matter</span>
         </div>
 
         {/* ============ PAGE ONE — RESUME ============ */}
         <section>
           {/* Navy hero header */}
-          <header className="bg-[#1e3a5f] px-6 py-7 text-white print:bg-[#1e3a5f] print:py-4">
+          <header className="bg-[#03535F] px-6 py-7 text-white print:bg-[#03535F] print:py-4">
             <h1 className="font-display text-3xl font-bold text-white">
               {profile.fullName}
             </h1>
             {profile.targetRole ? (
-              <p className="mt-1 text-base font-semibold text-[#d99c2c]">
+              <p className="mt-1 text-base font-semibold text-[#AA821D]">
                 {profile.targetRole}
               </p>
             ) : null}
@@ -251,13 +251,13 @@ export default async function RecruiterProfilePage({
 
           {/* Light sidebar + white main */}
           <div className="grid grid-cols-1 md:grid-cols-[32%_1fr] print:grid-cols-[30%_minmax(0,1fr)]">
-            <aside className="min-w-0 space-y-6 border-r border-[#e5e7eb] bg-[#f3f4f6] px-5 py-6 print:space-y-3 print:bg-[#f3f4f6] print:py-4 print:text-[11px] print:leading-snug">
+            <aside className="min-w-0 space-y-6 border-r border-[#E9E9E9] bg-[#F4F4F4] px-5 py-6 print:space-y-3 print:bg-[#F4F4F4] print:py-4 print:text-[11px] print:leading-snug">
               <div className="aspect-square w-full max-w-[200px] break-inside-avoid print:max-w-[120px]">
                 <Avatar className="size-full rounded-lg">
                   {profile.image ? (
                     <AvatarImage src={profile.image} alt={profile.fullName} />
                   ) : null}
-                  <AvatarFallback className="rounded-lg bg-[#1e3a5f]/10 font-display text-3xl font-bold text-[#1e3a5f]">
+                  <AvatarFallback className="rounded-lg bg-[#03535F]/10 font-display text-3xl font-bold text-[#03535F]">
                     {initials(profile.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -269,7 +269,7 @@ export default async function RecruiterProfilePage({
                   <div className="space-y-3">
                     {profile.skillGroups.map((group) => (
                       <div key={group.category}>
-                        <p className="text-xs font-semibold text-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-[#03535F]">
                           {group.category}
                         </p>
                         {group.skills.length > 0 ? (
@@ -289,7 +289,7 @@ export default async function RecruiterProfilePage({
                   <div className="space-y-3">
                     {profile.education.map((row) => (
                       <div key={`${row.degree}-${row.institution}`}>
-                        <p className="text-xs font-semibold text-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-[#03535F]">
                           {row.degree}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -312,7 +312,7 @@ export default async function RecruiterProfilePage({
                   <div className="space-y-2">
                     {profile.certifications.map((cert) => (
                       <div key={`${cert.name}-${cert.issuer}`}>
-                        <p className="text-xs font-semibold text-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-[#03535F]">
                           {cert.name}
                         </p>
                         {[cert.issuer, cert.year].filter(Boolean).length > 0 ? (
@@ -375,15 +375,15 @@ export default async function RecruiterProfilePage({
                         className="break-inside-avoid"
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                          <p className="font-semibold text-[#1e3a5f]">
+                          <p className="font-semibold text-[#03535F]">
                             {exp.title}
                           </p>
                           {exp.period ? (
-                            <p className="text-xs text-[#b9831f]">{exp.period}</p>
+                            <p className="text-xs text-[#AA821D]">{exp.period}</p>
                           ) : null}
                         </div>
                         {(exp.company || exp.location) && (
-                          <p className="text-sm font-medium text-[#b9831f]">
+                          <p className="text-sm font-medium text-[#AA821D]">
                             {[exp.company, exp.location]
                               .filter(Boolean)
                               .join(" · ")}
@@ -408,11 +408,11 @@ export default async function RecruiterProfilePage({
                   <div className="space-y-3">
                     {profile.projects.map((project) => (
                       <div key={project.title} className="break-inside-avoid">
-                        <p className="font-semibold text-[#1e3a5f]">
+                        <p className="font-semibold text-[#03535F]">
                           {project.title}
                         </p>
                         {project.tech ? (
-                          <p className="mt-0.5 font-mono text-xs text-[#b9831f]">
+                          <p className="mt-0.5 font-mono text-xs text-[#AA821D]">
                             {project.tech}
                           </p>
                         ) : null}
@@ -433,9 +433,9 @@ export default async function RecruiterProfilePage({
         {/* ============ PAGE TWO+ — ASSESSMENT REPORT ============ */}
         {hasAssessmentContent ? (
           <section className="border-t print:break-before-page print:text-[11px] print:leading-snug print:[zoom:0.85]">
-            <div className="bg-[#1e3a5f] px-6 py-6 text-white print:bg-[#1e3a5f] print:py-3">
+            <div className="bg-[#03535F] px-6 py-6 text-white print:bg-[#03535F] print:py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
-                <span className="text-[#d99c2c]">AB TALKS</span>{" "}
+                <span className="text-[#AA821D]">AB TALKS</span>{" "}
                 <span className="text-white">CANDIDATE ASSESSMENT REPORT</span>
               </p>
               <h2 className="mt-2 font-display text-2xl font-bold">
@@ -449,15 +449,15 @@ export default async function RecruiterProfilePage({
             </div>
 
             {hasFullAssessmentScores && profile.assessmentComposite != null ? (
-              <div className="mx-6 mt-6 break-inside-avoid rounded-lg border-l-4 border-[#d99c2c] bg-[#fbf6e9] px-5 py-4 print:mt-4 print:bg-[#fbf6e9] print:py-2">
+              <div className="mx-6 mt-6 break-inside-avoid rounded-lg border-l-4 border-[#AA821D] bg-[#FFEDB0] px-5 py-4 print:mt-4 print:bg-[#FFEDB0] print:py-2">
                 <p className="text-sm">
-                  <span className="font-bold text-[#1e3a5f]">
+                  <span className="font-bold text-[#03535F]">
                     ABTalks Synergy Score:{" "}
                   </span>
-                  <span className="font-bold text-[#b9831f]">
+                  <span className="font-bold text-[#AA821D]">
                     {profile.assessmentComposite}
                   </span>
-                  <span className="font-bold text-[#1e3a5f]">
+                  <span className="font-bold text-[#03535F]">
                     {" "}
                     / {profile.assessmentMax} Points
                   </span>
@@ -580,7 +580,7 @@ export default async function RecruiterProfilePage({
                     <div className="hidden break-inside-avoid md:block print:block [&_[data-slot=table-container]]:print:overflow-visible">
                       <Table className="print:table-fixed">
                         <TableHeader>
-                          <TableRow className="bg-[#1e3a5f] hover:bg-[#1e3a5f] print:bg-[#1e3a5f]">
+                          <TableRow className="bg-[#03535F] hover:bg-[#03535F] print:bg-[#03535F]">
                             <TableHead className="text-white print:whitespace-normal print:break-words">
                               Challenge
                             </TableHead>
@@ -666,8 +666,8 @@ export default async function RecruiterProfilePage({
                 ) : null}
 
                 {rec ? (
-                  <section className="break-inside-avoid rounded-xl bg-[#1e3a5f] p-4 text-white print:bg-[#1e3a5f]">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#d99c2c]">
+                  <section className="break-inside-avoid rounded-xl bg-[#03535F] p-4 text-white print:bg-[#03535F]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#AA821D]">
                       ABTalks Recommendation
                     </p>
                     <p className="mt-1 font-display text-lg font-bold">{rec}</p>

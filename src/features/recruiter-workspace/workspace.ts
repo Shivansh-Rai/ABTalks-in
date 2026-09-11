@@ -1,7 +1,7 @@
 import "server-only";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
+import { ensureRecruiterWorkspace } from "@/features/hire/provision-recruiter";
 
 /**
  * The recruiter workspace boundary (T-226).
@@ -36,43 +36,22 @@ export async function requireRecruiterWorkspace(): Promise<WorkspaceResult> {
   const userId = session?.user?.id;
   if (!userId) return { ok: false, message: "Please sign in to continue." };
 
-  const profile = await prisma.recruiterProfile.findUnique({
-    where: { userId },
-    select: {
-      id: true,
-      company: true,
-      approved: true,
-      setupCompletedAt: true,
-    },
-  });
-  if (!profile) {
+  // Being a recruiter is the whole condition. There is no approval to wait for
+  // and no wizard to finish: `ensureRecruiterWorkspace` creates the workspace
+  // if registration has not already, and the membership row it resolves is
+  // slugged on this recruiter's own id, so it can only ever be their own.
+  const workspace = await ensureRecruiterWorkspace(userId);
+  if (!workspace) {
     return { ok: false, message: "This account is not a recruiter account." };
-  }
-  if (!profile.setupCompletedAt) {
-    return { ok: false, message: "Finish setting up your workspace first." };
-  }
-  if (!profile.approved) {
-    return { ok: false, message: "Your recruiter application is still under review." };
-  }
-
-  // The membership row is what names the workspace. It is written by
-  // provisionRecruiterIdentity at the end of setup, and its slug carries the
-  // recruiter's own id, so this can only ever resolve to their own.
-  const membership = await prisma.organizationMember.findFirst({
-    where: { userId, status: "ACTIVE" },
-    select: { organizationId: true },
-  });
-  if (!membership) {
-    return { ok: false, message: "Your workspace is not ready yet." };
   }
 
   return {
     ok: true,
     data: {
       userId,
-      recruiterProfileId: profile.id,
-      organizationId: membership.organizationId,
-      company: profile.company,
+      recruiterProfileId: workspace.recruiterProfileId,
+      organizationId: workspace.organizationId,
+      company: workspace.company,
     },
   };
 }

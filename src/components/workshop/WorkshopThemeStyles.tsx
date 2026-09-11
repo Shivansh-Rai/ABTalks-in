@@ -2,14 +2,14 @@
  * Brand tokens + colour utilities for the `/workshop` surfaces.
  *
  * Palette comes from `docs/design-system.md` — the orange/cream system
- * (#E05226 on #FBF9F7), which is also what the workshop poster uses. It
+ * (#03535F on #F4F4F4), which is also what the workshop poster uses. It
  * replaces the blue values the Figma file (Aw3uPilErVzYc8C6sNsrpd) carried;
  * that file's GEOMETRY is still the source of truth, only its colours were
  * swapped.
  *
  * Two rules from the spec that constrain everything here:
- *   - no additional shades of orange beyond #E05226 / #C9411C / #A93617 and
- *     the #FFECE3 / #FFF5F0 / #FFF1E9 tints, so gradients and capsule fills
+ *   - no additional shades of orange beyond #03535F / #076573 / #02434D and
+ *     the #E7F2F3 / #EEF6F6 / #EEF6F6 tints, so gradients and capsule fills
  *     are built from those plus neutrals;
  *   - only four font weights (400/500/600/700).
  *
@@ -27,113 +27,87 @@ export default function WorkshopThemeStyles() {
            400/500/600/700; the app-wide --font-hub-instrument-sans has only
            400/700, and a substituted 600 renders wide enough to reflow the
            community subhead. */
-        font-family: var(--font-workshop-sans), var(--font-hub-instrument-sans),
+        font-family: var(--font-inter), var(--font-inter),
           ui-sans-serif, system-ui, sans-serif;
 
         /* ---------- accents: same in both themes ---------- */
-        --wk-a1: #e05226;
+        --wk-a1: #03535F;
         --wk-a1-rgb: 224, 82, 38;
-        --wk-a1-hover: #c9411c;
-        --wk-a1-active: #a93617;
-        --wk-a1-light: #ffece3;
+        --wk-a1-hover: #076573;
+        --wk-a1-active: #02434D;
+        --wk-a1-light: #E7F2F3;
         --wk-a1-light-rgb: 255, 236, 227;
-        --wk-a1-deep: #c9411c;
-        --wk-a2: #e05226;
+        --wk-a1-deep: #076573;
+        --wk-a2: #03535F;
         --wk-a2-rgb: 224, 82, 38;
-        --wk-a3: #e05226;
-        --wk-a3-light: #ffece3;
-        --wk-a4: #fff1e9;
-        --wk-a5: #fff5f0;
-        --wk-ink: #111111;
+        --wk-a3: #03535F;
+        --wk-a3-light: #E7F2F3;
+        --wk-a4: #EEF6F6;
+        --wk-a5: #EEF6F6;
+        --wk-ink: #000000;
 
         /* Primary gradient — the two approved oranges, nothing in between. */
         --wk-grad: linear-gradient(180deg, var(--wk-a1) 0%, var(--wk-a1-hover) 100%);
         /* Page wash: cream falling to peach. Painted once on .wk-root so the
            sections can sit transparent over it and never band at their seams. */
-        --wk-page-grad: linear-gradient(180deg, #fbf9f7 0%, #fff5f0 45%, #fff1e9 100%);
+        --wk-page-grad: linear-gradient(180deg, #F4F4F4 0%, #EEF6F6 45%, #EEF6F6 100%);
 
         /* Hero card — dark in BOTH themes, as in the design. Charcoal rather
            than the old navy, to sit in the orange/cream system. */
-        --wk-navy: #111111;
+        --wk-navy: #000000;
         --wk-navy-chip: #353535;
-        --wk-navy-box: #262220;
+        --wk-navy-box: #353535;
         --wk-navy-box-border: #4b4b4b;
 
         /* Header and footer are charcoal bars in BOTH themes, bookending the
-           cream page against the hero card's own #111111. They need their own
+           cream page against the hero card's own #000000. They need their own
            text tokens because the page-level ones flip with the theme and
            would go dark-on-dark. */
-        --wk-bar-bg: #111111;
+        --wk-bar-bg: #000000;
         /* 0.64 is as sheer as this can go: against a pale cream page scrolling
            under, bar text still clears AA at 5.5:1, while 0.58 drops to 4.47
            and fails. */
-        --wk-bar-bg-blur: rgba(17, 17, 17, 0.64);
-        --wk-bar-border: #302a27;
-        --wk-bar-text: #faf7f5;
-        --wk-bar-muted: #b3aaa4;
+        --wk-bar-bg-blur: rgba(0, 0, 0, 0.64);
+        --wk-bar-border: #353535;
+        --wk-bar-text: #F4F4F4;
+        --wk-bar-muted: #A5A5A5;
 
         /* ---------- LIGHT (the spec's native mode) ---------- */
-        --wk-bg: #fbf9f7;
-        --wk-bg-alt: #fff1e9;
+        --wk-bg: #F4F4F4;
+        --wk-bg-alt: #EEF6F6;
         --wk-surface: #ffffff;
-        --wk-text: #111111;
+        --wk-text: #000000;
         --wk-text-dim: #353535;
         --wk-text-faint: #4b4b4b;
         --wk-card-bg: #ffffff;
         --wk-card-border: #e0e0e0;
         --wk-hairline: #e0e0e0;
-        --wk-chip: #ffece3;
+        --wk-chip: #E7F2F3;
         --wk-chip-strong: #e0e0e0;
-        --wk-header-bg: rgba(251, 249, 247, 0.86);
-        --wk-shadow: 0 4px 5px rgba(17, 17, 17, 0.14);
+        --wk-header-bg: rgba(244, 244, 244, 0.86);
+        --wk-shadow: 0 4px 5px rgba(0, 0, 0, 0.14);
         /* Primary-CTA drop shadow, tinted with the deep orange rather than
            black — a neutral shadow reads grey and cold against cream. Stored
            as the whole drop-shadow() shorthand because it is consumed by the
            filter property, not box-shadow. */
-        --wk-cta-shadow: drop-shadow(0 4px 2px rgba(169, 54, 23, 0.32));
+        --wk-cta-shadow: drop-shadow(0 4px 2px rgba(2, 67, 77, 0.32));
         /* Generic depth on warm surfaces. */
         --wk-ink-a: 17, 17, 17;
-        --wk-shadow-lg: 0 40px 90px -30px rgba(17, 17, 17, 0.28);
+        --wk-shadow-lg: 0 40px 90px -30px rgba(0, 0, 0, 0.28);
         --wk-grid-line: #e0e0e0;
-        --wk-cell-text: #111111;
+        --wk-cell-text: #000000;
         --wk-cell-muted: #8f8f8f;
         --wk-muted: #8f8f8f;
-        --wk-heading: #111111;
+        --wk-heading: #000000;
         --wk-placeholder: #8f8f8f;
-        --wk-scrim: rgba(17, 17, 17, 0.55);
-        --wk-inset-hi: rgba(17, 17, 17, 0.04);
+        --wk-scrim: rgba(0, 0, 0, 0.55);
+        --wk-inset-hi: rgba(0, 0, 0, 0.04);
 
         background: var(--wk-page-grad);
         background-attachment: fixed;
       }
 
-      .dark .wk-root {
-        --wk-page-grad: linear-gradient(180deg, #141110 0%, #1c1a19 55%, #241f1c 100%);
-        --wk-bg: #141110;
-        --wk-bg-alt: #241f1c;
-        --wk-surface: #1c1a19;
-        --wk-text: #faf7f5;
-        --wk-text-dim: #d6cfca;
-        --wk-text-faint: #b3aaa4;
-        --wk-card-bg: #1c1a19;
-        --wk-card-border: #3a3330;
-        --wk-hairline: #302a27;
-        --wk-chip: rgba(224, 82, 38, 0.16);
-        --wk-chip-strong: rgba(255, 255, 255, 0.12);
-        --wk-header-bg: rgba(20, 17, 16, 0.84);
-        --wk-cta-shadow: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.45));
-        --wk-ink-a: 0, 0, 0;
-        --wk-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
-        --wk-shadow-lg: 0 40px 100px -20px rgba(0, 0, 0, 0.85);
-        --wk-grid-line: #302a27;
-        --wk-cell-text: #faf7f5;
-        --wk-cell-muted: #8a807a;
-        --wk-muted: #b3aaa4;
-        --wk-heading: #faf7f5;
-        --wk-placeholder: #8a807a;
-        --wk-scrim: rgba(10, 8, 7, 0.78);
-        --wk-inset-hi: rgba(255, 255, 255, 0.06);
-      }
+      /* No dark variant: ABTalks UI Design System v2 is light-only. */
 
       /* ---------- colour utilities ----------
          Two-class specificity (0,2,0) so they win over a bare Tailwind
@@ -157,7 +131,7 @@ export default function WorkshopThemeStyles() {
       }
       .wk-root .wk-cta:hover {
         transform: translateY(-2px);
-        filter: drop-shadow(0 8px 10px rgba(169, 54, 23, 0.34));
+        filter: drop-shadow(0 8px 10px rgba(2, 67, 77, 0.34));
       }
       .wk-root .wk-cta:active { transform: translateY(0); }
       @media (prefers-reduced-motion: reduce) {
@@ -266,7 +240,7 @@ export default function WorkshopThemeStyles() {
 
       /* Calendar event tiles: light at rest, deep on hover.
 
-         The tile used to sit at full-strength #E05226 permanently, which left
+         The tile used to sit at full-strength #03535F permanently, which left
          the hover nowhere to go — an orange glow around an orange tile reads
          as nothing, and the gradient already tops out so brightness had no
          headroom either. Resting on a tint and darkening on hover gives the
@@ -334,7 +308,7 @@ export default function WorkshopThemeStyles() {
          because "live" is a claim about right now, and a static dot reads as
          a label rather than a state. */
       .wk-root .wk-live-dot {
-        background: #16a34a;
+        background: #197E23;
         animation: wk-live-pulse 1.8s ease-in-out infinite;
       }
       @keyframes wk-live-pulse {
