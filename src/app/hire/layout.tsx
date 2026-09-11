@@ -23,6 +23,20 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   const active = state.status === "active";
   const account = userId && active ? await getRecruiterAccountSnapshot(userId) : null;
 
+  // The header balance, shown only once the recruiter is approved.
+  //
+  // The $200 exists earlier than this — it is granted when setup completes,
+  // before an admin sees the application — but a balance is only worth showing
+  // to someone allowed to spend it, and `unlockContact` refuses an unapproved
+  // recruiter. Displaying credits beside a "Pending" badge would advertise
+  // spending power the product does not yet grant. So the backend holds it and
+  // the UI waits, which is why this goes through `getWorkspaceCredits` and its
+  // existing workspace boundary rather than a looser read.
+  //
+  // Resolved server-side because this layout already resolves the recruiter,
+  // so the figure needs no client fetch and therefore no loading state.
+  const credits = account ? await getWorkspaceCredits() : null;
+
   // The header shortlist is the union of TWO stores, and it has to be, because
   // neither can name every candidate:
   //
@@ -110,9 +124,19 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
       <HireDeskProvider>
         <HireChrome
           account={account}
+          credits={
+            credits?.ok
+              ? {
+                balanceMinor: credits.data.balanceMinor,
+                currency: credits.data.currency,
+              }
+              : null
+          }
+          serverCartCount={account?.cartCount ?? 0}
           // Same array the panel renders, so the badge and the list can never
           // disagree. `account.cartCount` counts the legacy table only.
           serverCartCount={podRows.length}
+          pendingName={pending && state.status === "pending" ? state.fullName : null}
           podRows={podRows}
         >
           {children}
