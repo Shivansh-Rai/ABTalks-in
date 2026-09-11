@@ -21,7 +21,6 @@ import {
   DESK_SHORTLIST_EVENT,
   readDeskShortlist,
 } from "@/components/hire/desk-shortlist";
-import { signOutAction } from "@/app/actions/auth-actions";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 import { hireZoomFor } from "@/components/hire/hire-zoom";
 import { cn } from "@/lib/utils";
@@ -29,13 +28,11 @@ import { cn } from "@/lib/utils";
 export function HireChrome({
   account,
   serverCartCount,
-  pendingName,
   podRows,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
   serverCartCount: number;
-  pendingName: string | null;
   podRows: CartRow[];
   children: React.ReactNode;
 }) {
@@ -232,17 +229,6 @@ export function HireChrome({
           )}
           {account ? (
             <RecruiterAccountMenu account={account} />
-          ) : pendingName ? (
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-lg px-2 py-1 text-left text-xs"
-                title="Application pending review"
-              >
-                <span className="block font-medium">{pendingName}</span>
-                <span className="text-muted-foreground">Pending · Sign out</span>
-              </button>
-            </form>
           ) : (
             <button
               type="button"
@@ -258,7 +244,7 @@ export function HireChrome({
       {desk ? (
         <main className="hire-workspace">
           {isResults && (
-            <HireSidebar account={account} pendingName={pendingName} />
+            <HireSidebar account={account} />
           )}
           {/* On desktop the results screen hides this rail behind the nav card;
               phones keep its compact step strip. */}

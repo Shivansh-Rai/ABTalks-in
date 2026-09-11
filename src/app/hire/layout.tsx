@@ -20,9 +20,8 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const state = userId ? await getRecruiterState(userId) : { status: "none" as const };
-  const approved = state.status === "approved";
-  const pending = state.status === "pending";
-  const account = userId && approved ? await getRecruiterAccountSnapshot(userId) : null;
+  const active = state.status === "active";
+  const account = userId && active ? await getRecruiterAccountSnapshot(userId) : null;
 
   // The header shortlist is the union of TWO stores, and it has to be, because
   // neither can name every candidate:
@@ -37,7 +36,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   // merged here ONCE and the count is derived from the same array, so the
   // header can never show a number the panel cannot list.
   let podRows: CartRow[] = [];
-  if (userId && approved) {
+  if (userId && active) {
     // NO try/catch around listProjectShortlist on purpose. If the project
     // shortlist query fails — a missing column, a migration that never reached
     // this environment — this surface must fail LOUDLY. A caught error here
@@ -117,7 +116,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         <HireDeskProvider>
           <HireChrome
             account={account}
-                      // Same array the panel renders, so the badge and the list can never
+            // Same array the panel renders, so the badge and the list can never
             // disagree. `account.cartCount` counts the legacy table only.
             serverCartCount={podRows.length}
             pendingName={pending && state.status === "pending" ? state.fullName : null}

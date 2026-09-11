@@ -33,9 +33,7 @@ export default async function RecruiterLoginPage({ searchParams }: Props) {
   const session = await auth();
   if (session?.user?.id) {
     const state = await getRecruiterState(session.user.id);
-    if (state.status === "approved") redirect(redirectTo);
-    if (state.status === "setup_incomplete") redirect("/talent/setup");
-    if (state.status === "pending") redirect("/talent/pending");
+    if (state.status === "active") redirect(redirectTo);
   }
 
   if (!isRecruiterAuthEnabled()) {

@@ -17,20 +17,18 @@ export default async function TalentLayout({
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const state = userId ? await getRecruiterState(userId) : { status: "none" as const };
-  const approved = state.status === "approved";
-  const pending = state.status === "pending";
-  const account = userId && approved ? await getRecruiterAccountSnapshot(userId) : null;
+  const active = state.status === "active";
+  const account = userId && active ? await getRecruiterAccountSnapshot(userId) : null;
 
   return (
     <HireAuthProvider
-      approved={approved}
+      approved={active}
       signedIn={Boolean(userId)}
-      pending={pending}
       authEnabled={isRecruiterAuthEnabled()}
     >
-      {/* Same reason as the /hire layout: a pending recruiter's ask has to be
-          recorded before the browser session that holds it goes away. */}
-      {(approved || pending) && <MergeGuestCart />}
+      {/* Same reason as the /hire layout: a guest's ask has to be recorded
+          before the browser session that holds it goes away. */}
+      {active && <MergeGuestCart />}
       <TalentShell account={account}>{children}</TalentShell>
     </HireAuthProvider>
   );

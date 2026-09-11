@@ -17,7 +17,7 @@ const NAV = [
   { href: "/talent/shortlist", label: "Cart" },
 ];
 
-const HIDE_NAV = ["/talent/login", "/talent/register", "/talent/pending"];
+const HIDE_NAV = ["/talent/login", "/talent/register"];
 
 export function TalentShell({
   children,
@@ -28,7 +28,7 @@ export function TalentShell({
 }) {
   const pathname = usePathname();
   const showNav = !HIDE_NAV.some((p) => pathname === p);
-  const { openAuth, signedIn, pending, authEnabled } = useHireAuth();
+  const { openAuth, signedIn, authEnabled } = useHireAuth();
 
   return (
     <div className="min-h-svh bg-background">
@@ -70,7 +70,7 @@ export function TalentShell({
               ) : signedIn ? (
                 <form action={signOutAction}>
                   <button type="submit" className="abt-header-nav-link">
-                    {pending ? "Pending · Sign out" : "Sign out"}
+                    Sign out
                   </button>
                 </form>
               ) : authEnabled ? (

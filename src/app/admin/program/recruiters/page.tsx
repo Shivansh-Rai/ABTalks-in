@@ -1,8 +1,8 @@
-import { listPendingRecruiterApplications } from "@/features/talent-pool/recruiter-registration";
+import { listRecruiters } from "@/features/talent-pool/recruiter-registration";
 import { AdminRecruitersPanel } from "@/components/talent/admin-recruiters-panel";
 
 export default async function AdminProgramRecruitersPage() {
-  const rows = await listPendingRecruiterApplications();
+  const recruiters = await listRecruiters();
 
   return (
     <div className="space-y-6">
@@ -11,11 +11,11 @@ export default async function AdminProgramRecruitersPage() {
           Recruiters
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Approve recruiters for post-publish talent pool access.
+          Everyone registered for post-publish talent pool access.
         </p>
       </header>
 
-      <AdminRecruitersPanel pending={rows} />
+      <AdminRecruitersPanel recruiters={recruiters} />
     </div>
   );
 }

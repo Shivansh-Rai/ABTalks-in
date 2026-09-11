@@ -38,7 +38,7 @@ export function RequestIntroButton({
   className,
 }: Props) {
   const router = useRouter();
-  const { approved, pending: approvalPending, openAuth } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [status, setStatus] = useState<string | null>(existingStatus ?? null);
@@ -64,10 +64,6 @@ export function RequestIntroButton({
 
   function submit() {
     if (!approved) {
-      if (approvalPending) {
-        toast.error("Your recruiter application is still being reviewed.");
-        return;
-      }
       savePendingCheckout({
         candidateRefs: [candidateRef],
         note: note.trim() || undefined,
@@ -99,10 +95,6 @@ export function RequestIntroButton({
         type="button"
         onClick={() => {
           if (!approved) {
-            if (approvalPending) {
-              toast.error("Your recruiter application is still being reviewed.");
-              return;
-            }
             savePendingCheckout({ candidateRefs: [candidateRef] });
             openAuth("checkout");
             return;

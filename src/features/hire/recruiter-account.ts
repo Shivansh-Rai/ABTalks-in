@@ -8,7 +8,7 @@ import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account
 export type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 
 /**
- * Header-menu payload for an approved recruiter.
+ * Header-menu payload for a registered recruiter.
  *
  * Candidate names are never included — the menu uses the same public AB-####
  * labels as the rest of the portal. Identity is released only on the requests
@@ -22,11 +22,10 @@ export async function getRecruiterAccountSnapshot(
     select: {
       fullName: true,
       company: true,
-      approved: true,
       user: { select: { email: true } },
     },
   });
-  if (!profile?.approved) return null;
+  if (!profile) return null;
 
   const [cartItems, cartCount, requestItems, requestCount] = await Promise.all([
     prisma.recruiterShortlistItem.findMany({

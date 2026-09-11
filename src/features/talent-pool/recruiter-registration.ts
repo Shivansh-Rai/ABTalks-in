@@ -1,5 +1,4 @@
 import "server-only";
-import type { RecruiterSetupStep } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
 import { studentProfile } from "@/repositories/legacy/student-profile";
@@ -8,39 +7,35 @@ import {
   isPersonalEmailDomain,
 } from "@/lib/validations/work-email";
 
+/**
+ * There are two states, and registering is what moves between them.
+ *
+ * There used to be four: a half-finished setup wizard, an application under
+ * review, and an approved account. Registering now provisions the workspace,
+ * so a `RecruiterProfile` and a working recruiter are the same thing.
+ */
 export type RecruiterState =
   | { status: "none" }
-  /**
-   * Registered, but the setup wizard was never finished. Ordered ahead of
-   * `pending` on purpose: an admin should be approving a completed application,
-   * not a half-filled one.
-   */
-  | {
-      status: "setup_incomplete";
-      step: RecruiterSetupStep;
-      fullName: string;
-      company: string;
-    }
-  | { status: "pending"; fullName: string; company: string }
-  | { status: "approved"; fullName: string; company: string };
+  | { status: "active"; fullName: string; company: string };
 
-export type PendingRecruiterApplication = {
+export type RecruiterDirectoryRow = {
   id: string;
   fullName: string;
   company: string;
   phone: string | null;
   createdAt: string;
   email: string;
-  /** Open introduction requests this applicant has already placed. */
-  pendingCandidateAsks: number;
+  /** Whether the 078 workspace rows exist for this recruiter yet. */
+  hasWorkspace: boolean;
+  /** Open introduction requests this recruiter has placed. */
+  openCandidateAsks: number;
 };
 
-export async function listPendingRecruiterApplications(): Promise<
-  PendingRecruiterApplication[]
-> {
-  const pending = await prisma.recruiterProfile.findMany({
-    where: { approved: false },
-    orderBy: { createdAt: "asc" },
+/** Everyone who has registered to hire, newest first. Read-only. */
+export async function listRecruiters(): Promise<RecruiterDirectoryRow[]> {
+  const rows = await prisma.recruiterProfile.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 500,
     select: {
       id: true,
       userId: true,
@@ -51,70 +46,55 @@ export async function listPendingRecruiterApplications(): Promise<
       user: { select: { email: true } },
     },
   });
+  if (rows.length === 0) return [];
 
-  // What they came for, shown next to the application itself.
-  //
-  // A recruiter who signs up because they want two specific candidates is a
-  // different decision from one who signed up to browse, and the team was
-  // seeing only the second kind. One grouped count rather than a query per row.
-  const asks =
-    pending.length === 0
-      ? []
-      : await prisma.talentEngagementRequest.groupBy({
-          by: ["recruiterUserId"],
-          where: {
-            recruiterUserId: { in: pending.map((p) => p.userId) },
-            status: { notIn: ["CLOSED", "DECLINED"] },
-          },
-          _count: { _all: true },
-        });
+  const userIds = rows.map((r) => r.userId);
+
+  // Two grouped queries rather than a query per row.
+  const [asks, memberships] = await Promise.all([
+    prisma.talentEngagementRequest.groupBy({
+      by: ["recruiterUserId"],
+      where: {
+        recruiterUserId: { in: userIds },
+        status: { notIn: ["CLOSED", "DECLINED"] },
+      },
+      _count: { _all: true },
+    }),
+    prisma.organizationMember.findMany({
+      where: { userId: { in: userIds }, status: "ACTIVE" },
+      select: { userId: true },
+    }),
+  ]);
   const asksByUser = new Map(
     asks.map((a) => [a.recruiterUserId, a._count._all]),
   );
+  const withWorkspace = new Set(memberships.map((m) => m.userId));
 
-  return pending.map((p) => ({
-    id: p.id,
-    fullName: p.fullName,
-    company: p.company,
-    phone: p.phone,
-    createdAt: p.createdAt.toISOString(),
-    email: p.user.email ?? "",
-    pendingCandidateAsks: asksByUser.get(p.userId) ?? 0,
+  return rows.map((r) => ({
+    id: r.id,
+    fullName: r.fullName,
+    company: r.company,
+    phone: r.phone,
+    createdAt: r.createdAt.toISOString(),
+    email: r.user.email ?? "",
+    hasWorkspace: withWorkspace.has(r.userId),
+    openCandidateAsks: asksByUser.get(r.userId) ?? 0,
   }));
 }
 
+/**
+ * Read-only on purpose: this runs in the /hire and /talent layouts on every
+ * request. Provisioning belongs in `requireRecruiter` /
+ * `requireRecruiterWorkspace`, which are gates rather than renders.
+ */
 export async function getRecruiterState(userId: string): Promise<RecruiterState> {
   const profile = await prisma.recruiterProfile.findUnique({
     where: { userId },
-    select: {
-      fullName: true,
-      company: true,
-      approved: true,
-      setupStep: true,
-      setupCompletedAt: true,
-    },
+    select: { fullName: true, company: true },
   });
   if (!profile) return { status: "none" };
-  // Setup before approval. A recruiter who stopped halfway is not waiting on
-  // ABTalks, they are waiting on themselves, and telling them "under review"
-  // would be a lie they cannot act on.
-  if (!profile.setupCompletedAt) {
-    return {
-      status: "setup_incomplete",
-      step: profile.setupStep,
-      fullName: profile.fullName,
-      company: profile.company,
-    };
-  }
-  if (!profile.approved) {
-    return {
-      status: "pending",
-      fullName: profile.fullName,
-      company: profile.company,
-    };
-  }
   return {
-    status: "approved",
+    status: "active",
     fullName: profile.fullName,
     company: profile.company,
   };
@@ -151,19 +131,9 @@ export async function registerRecruiter(
     return { ok: false, message: "This account cannot register as a recruiter." };
   }
   if (existing) {
-    return {
-      ok: false,
-      message: existing.approved
-        ? "You already have recruiter access."
-        : "Your recruiter application is already pending review.",
-    };
+    return { ok: false, message: "You already have recruiter access." };
   }
 
-  // Recruiter access is decided here, by a seat ABTalks verified out of band —
-  // never by anything the person signing up submits. This is what stops a
-  // candidate from filling in the form and becoming a recruiter: previously any
-  // account that posted this form was switched to role RECRUITER (unapproved,
-  // but a recruiter nonetheless).
   const email = user.email?.trim().toLowerCase();
 
   // The account signing in here may have arrived through Google, which will
@@ -174,6 +144,9 @@ export async function registerRecruiter(
     return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
   }
 
+  // A seat is no longer an access grant — registering is. It survives as a
+  // pre-verified company name, so a recruiter ABTalks already spoke to gets the
+  // name on file rather than whatever they typed into the form.
   const seat = email
     ? await prisma.verifiedRecruiterSeat.findFirst({
         where: { email, active: true, revokedAt: null },
@@ -181,25 +154,21 @@ export async function registerRecruiter(
       })
     : null;
 
-  if (!seat) {
-    return {
-      ok: false,
-      message:
-        "This email isn't on our verified recruiter list. Write to team@abtalks.in from your work address and we'll verify your company.",
-    };
-  }
-
-  const company = seat.company || input.company;
+  const company = seat?.company || input.company;
+  const now = new Date();
 
   await prisma.$transaction(async (tx) => {
     await tx.recruiterProfile.create({
       data: {
         userId,
         fullName: input.fullName,
-        // The verified company wins over whatever was typed in the form.
         company,
         phone: input.phone || null,
+        // Written, never read as a gate. See ensureRecruiterWorkspace.
         approved: true,
+        approvedAt: now,
+        setupStep: "COMPLETE",
+        setupCompletedAt: now,
       },
     });
     await tx.user.update({

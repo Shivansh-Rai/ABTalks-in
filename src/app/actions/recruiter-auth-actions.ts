@@ -126,10 +126,14 @@ export async function requestRecruiterOtpAction(
 /**
  * Complete registration once the emailed code proves the address.
  *
- * The profile is created unapproved: anyone can apply, and a human at ABTalks
- * checks they are really a recruiter before any candidate data is reachable.
- * The one exception is an email the team verified out of band — a live seat is
- * that decision, already made.
+ * The account is live the moment the code is verified: the profile is created,
+ * the workspace is provisioned and funded, and the recruiter signs in to
+ * /hire. There is no application to review. The profile used to be created
+ * unapproved unless the address matched a `VerifiedRecruiterSeat`, which parked
+ * everybody else on an "Application received" screen until an admin acted.
+ *
+ * The work-email rule is unaffected and still refuses a personal domain twice,
+ * before anything is written. A seat now only supplies the company name.
  */
 export async function registerRecruiterWithOtpAction(
   input: unknown,
@@ -180,8 +184,10 @@ export async function registerRecruiterWithOtpAction(
       return { ok: false, message: "This email is already registered." };
     }
 
+    // Company name only. A seat is no longer an access decision.
     const seat = await findLiveSeat(normalised);
-    const approved = Boolean(seat);
+    const resolvedCompany = seat?.company ?? company;
+    const now = new Date();
 
     const userId = await prisma.$transaction(async (tx) => {
       const id =
@@ -203,10 +209,13 @@ export async function registerRecruiterWithOtpAction(
         data: {
           userId: id,
           fullName,
-          company: seat?.company ?? company,
+          company: resolvedCompany,
           phone: phone || null,
-          approved,
-          approvedAt: approved ? new Date() : null,
+          // Written, never read as a gate. See ensureRecruiterWorkspace.
+          approved: true,
+          approvedAt: now,
+          setupStep: "COMPLETE",
+          setupCompletedAt: now,
         },
       });
 
@@ -214,16 +223,14 @@ export async function registerRecruiterWithOtpAction(
         await tx.user.update({ where: { id }, data: { role: "RECRUITER" } });
       }
 
-      // Only for a verified seat. An unapproved application gets its 078
-      // identity when an admin approves it — granting a role assignment to
-      // somebody still under review would put the new model ahead of the
-      // decision the legacy model has not made yet.
-      if (approved) {
-        await provisionRecruiterIdentity(tx, {
-          userId: id,
-          company: seat?.company ?? company,
-        });
-      }
+      // Always. The workspace — Organization, OrganizationMember, the
+      // RECRUITER role assignment and the starting credit grant — is what
+      // registering gets you, and it is created in the same commit as the
+      // profile so the two can never disagree.
+      await provisionRecruiterIdentity(tx, {
+        userId: id,
+        company: resolvedCompany,
+      });
       return id;
     });
 
@@ -246,7 +253,7 @@ export async function registerRecruiterWithOtpAction(
       });
     }
 
-    return { ok: true, data: { approved } };
+    return { ok: true, data: { approved: true } };
   } catch (error) {
     logger.error("[recruiter-auth] registerRecruiterWithOtpAction", {
       error: String(error),
