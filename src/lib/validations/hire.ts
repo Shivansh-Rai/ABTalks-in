@@ -372,6 +372,12 @@ export const runMatchSchema = z.object({
   requestId: z.string().cuid(),
 });
 
+/** Persist a filter-dialog spec onto a TalentRequest and re-run search (no agent). */
+export const applyHireFiltersSchema = z.object({
+  requestId: z.string().cuid(),
+  spec: jobSpecSchema,
+});
+
 export const guestScoutHistorySchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string().trim().min(1).max(2000),

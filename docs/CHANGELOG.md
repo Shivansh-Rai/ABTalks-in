@@ -46,6 +46,7 @@
 
 ## Pending reconcile
 - 2026-09-12 [convention] PRs auto-labeled from changed paths: `module:<id>` for every matching module and `primary:<id>` for the largest file share (tie-break: changed lines); map lives in scripts/pr-module-labels.mjs.
+- 2026-09-12 [convention] After `/hire` search, Scout chat is hidden; recruiters edit profile+ranker filters in a dialog and re-run search without an agent turn (plan 133).
 - 2026-09-12 [convention] Recruiter `/hire` type aligned to Design System v2: Outfit headings only (H1 64/70, H2 40/48, H3 24/30, H4 20/26), Inter UI (nav 14/20/400 uppercase, sidebar 14/20/500, input 16/24, button 16/20/600); dropped weights 300/450/800.
 - 2026-09-11 [rule] T-258 UNLOCK rate limit now wraps unlockContactAction (T-229 spend path); preview/reveal stay reads and do not consume the bucket.
 - 2026-09-11 [convention] Cursor rules split for chat use: always-apply ABTalks88 contract + Sohail ownership; forest-green UI is glob/agent; workbook moved to `.cursor/sources` because xlsx is not a Cursor rule.

@@ -13,6 +13,7 @@ import { Search, Sparkles } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { toast } from "sonner";
 import {
+  applyHireFiltersAction,
   runMatchAction,
   sendScoutMessageAction,
 } from "@/app/actions/hire-actions";
@@ -28,6 +29,10 @@ import {
 } from "@/app/actions/hire-guest-actions";
 import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
+import {
+  filterSummary,
+  HireFilterDialog,
+} from "@/components/hire/hire-filter-dialog";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
@@ -62,6 +67,7 @@ import {
   labelGuestSearch,
   readGuestMatchCollection,
   setActiveGuestSearch,
+  writeGuestMatchCollection,
   type GuestSearchTab,
 } from "@/components/hire/guest-matches-store";
 import {
@@ -334,6 +340,7 @@ export function ScoutChat({
   const [searchTabs, setSearchTabs] = useState<GuestSearchTab[]>([]);
   const [activeSearchId, setActiveSearchId] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMatch, setOpenMatch] = useState<MatchCardData | null>(null);
   /** Open the inspector and fire-and-forget a detail-view record (plan 120). */
   function openMatchPanel(match: MatchCardData) {
@@ -656,12 +663,17 @@ export function ScoutChat({
     const message = value.trim();
     if (!message || pending) return;
     if (message === "action:search") {
-      runSearch();
+      runSearch(undefined, searched);
       return;
     }
 
     const shown = label?.trim() || message;
-    setMessages((m) => [...m, { role: "user", content: shown }]);
+    // After a search the thread is gone: parse NL once, then re-run search
+    // without painting Scout bubbles.
+    const hideThread = searched;
+    if (!hideThread) {
+      setMessages((m) => [...m, { role: "user", content: shown }]);
+    }
     setText("");
     startTransition(async () => {
       if (persist) {
@@ -678,18 +690,21 @@ export function ScoutChat({
         setSpec(res.data.spec);
         setSummary(res.data.summary);
         setReadyToSearch(res.data.readyToSearch);
-        setMessages((m) => [
-          ...m,
-          {
-            role: "assistant",
-            content: res.data.assistantMessage,
-            options: res.data.options,
-          },
-        ]);
+        if (!hideThread) {
+          setMessages((m) => [
+            ...m,
+            {
+              role: "assistant",
+              content: res.data.assistantMessage,
+              options: res.data.options,
+            },
+          ]);
+        }
         // Search on this turn BEFORE navigating. replace() unmounts this
         // chat; if we kicked search off after it, the first brief never
         // wrote matches and the new page said "No matches yet".
-        if (res.data.action === "search") {
+        // On the results screen, a new query always re-runs search after parse.
+        if (res.data.action === "search" || hideThread) {
           const match = await runMatchAction({
             requestId: res.data.requestId,
           });
@@ -698,18 +713,20 @@ export function ScoutChat({
           } else {
             setSearched(true);
             setMatchCount(match.data.matchCount);
-            setMessages((m) => {
-              const next: Msg[] = [
-                ...m,
-                { role: "assistant", content: match.data.overallGap },
-              ];
-              setResultsPin(next.length - 1);
-              return next;
-            });
+            if (!hideThread) {
+              setMessages((m) => {
+                const next: Msg[] = [
+                  ...m,
+                  { role: "assistant", content: match.data.overallGap },
+                ];
+                setResultsPin(next.length - 1);
+                return next;
+              });
+            }
           }
         }
         if (!requestId) router.replace(`/hire/${res.data.requestId}`);
-        else if (res.data.action === "search") router.refresh();
+        else if (res.data.action === "search" || hideThread) router.refresh();
         return;
       }
 
@@ -729,32 +746,43 @@ export function ScoutChat({
       setSpec(res.data.spec);
       setSummary(res.data.summary);
       setReadyToSearch(res.data.readyToSearch);
-      setMessages((m) => {
-        const next: Msg[] = [
-          ...m,
-          {
-            role: "assistant",
-            content: res.data.assistantMessage,
-            options: res.data.options,
-          },
-        ];
+      if (hideThread) {
         writeGuestSession({
           spec: res.data.spec,
-          messages: next,
+          messages,
           summary: res.data.summary,
           readyToSearch: res.data.readyToSearch,
-          searched,
+          searched: true,
         });
-        return next;
-      });
+      } else {
+        setMessages((m) => {
+          const next: Msg[] = [
+            ...m,
+            {
+              role: "assistant",
+              content: res.data.assistantMessage,
+              options: res.data.options,
+            },
+          ];
+          writeGuestSession({
+            spec: res.data.spec,
+            messages: next,
+            summary: res.data.summary,
+            readyToSearch: res.data.readyToSearch,
+            searched,
+          });
+          return next;
+        });
+      }
       // Same rule as the signed-in path: the engine says when to search.
-      if (res.data.action === "search") {
-        runSearch(res.data.spec);
+      // After results, a new NL query always re-runs.
+      if (res.data.action === "search" || hideThread) {
+        runSearch(res.data.spec, hideThread);
       }
     });
   }
 
-  function runSearch(overrideSpec?: JobSpec) {
+  function runSearch(overrideSpec?: JobSpec, quiet = false) {
     if (persist && !requestId) {
       toast.error("Answer at least one question first.");
       return;
@@ -769,14 +797,16 @@ export function ScoutChat({
         }
         setSearched(true);
         setMatchCount(res.data.matchCount);
-        setMessages((m) => {
-          const next: Msg[] = [
-            ...m,
-            { role: "assistant", content: res.data.overallGap },
-          ];
-          setResultsPin(next.length - 1);
-          return next;
-        });
+        if (!quiet) {
+          setMessages((m) => {
+            const next: Msg[] = [
+              ...m,
+              { role: "assistant", content: res.data.overallGap },
+            ];
+            setResultsPin(next.length - 1);
+            return next;
+          });
+        }
         router.refresh();
         return;
       }
@@ -791,30 +821,120 @@ export function ScoutChat({
         ...m,
         shortlisted: cart.has(m.candidateRef),
       }));
-      const tab = appendGuestSearch({
+      const payload = {
         label: labelGuestSearch(active, cards.length),
         title: active.title?.trim() || "your requirement",
         overallGap: res.data.overallGap,
         matches: cards,
-      });
-      setSearchTabs(readGuestMatchCollection().tabs);
-      setActiveSearchId(tab.id);
+      };
+      if (quiet) {
+        const current = readGuestMatchCollection();
+        if (current.activeId && current.tabs.some((t) => t.id === current.activeId)) {
+          const tabs = current.tabs.map((t) =>
+            t.id === current.activeId ? { ...t, ...payload } : t,
+          );
+          writeGuestMatchCollection({ ...current, tabs });
+          setSearchTabs(tabs);
+        } else {
+          const tab = appendGuestSearch(payload);
+          setSearchTabs(readGuestMatchCollection().tabs);
+          setActiveSearchId(tab.id);
+        }
+      } else {
+        const tab = appendGuestSearch(payload);
+        setSearchTabs(readGuestMatchCollection().tabs);
+        setActiveSearchId(tab.id);
+      }
       setSearched(true);
       setMatchCount(cards.length);
-      setMessages((m) => {
-        const next: Msg[] = [
-          ...m,
-          { role: "assistant", content: res.data.overallGap },
-        ];
-        setResultsPin(next.length - 1);
+      if (!quiet) {
+        setMessages((m) => {
+          const next: Msg[] = [
+            ...m,
+            { role: "assistant", content: res.data.overallGap },
+          ];
+          setResultsPin(next.length - 1);
+          writeGuestSession({
+            spec: active,
+            messages: next,
+            summary,
+            readyToSearch: true,
+            searched: true,
+          });
+          return next;
+        });
+      } else {
         writeGuestSession({
           spec: active,
-          messages: next,
+          messages,
           summary,
           readyToSearch: true,
           searched: true,
         });
-        return next;
+      }
+    });
+  }
+
+  /** Persist the dialog spec and re-rank — never an agent turn. */
+  function applyFilters(next: JobSpec) {
+    setSpec(next);
+    setFiltersOpen(false);
+    if (persist && !requestId) {
+      toast.error("Answer at least one question first.");
+      return;
+    }
+    startTransition(async () => {
+      if (persist) {
+        const res = await applyHireFiltersAction({
+          requestId: requestId!,
+          spec: next,
+        });
+        if (!res.ok) {
+          toast.error(res.message);
+          return;
+        }
+        setSearched(true);
+        setMatchCount(res.data.matchCount);
+        router.refresh();
+        return;
+      }
+
+      const res = await runGuestMatchAction({ spec: next });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      const cart = new Set(readGuestCart().map((i) => i.candidateRef));
+      const cards = res.data.matches.map((m) => ({
+        ...m,
+        shortlisted: cart.has(m.candidateRef),
+      }));
+      const payload = {
+        label: labelGuestSearch(next, cards.length),
+        title: next.title?.trim() || "your requirement",
+        overallGap: res.data.overallGap,
+        matches: cards,
+      };
+      const current = readGuestMatchCollection();
+      if (current.activeId && current.tabs.some((t) => t.id === current.activeId)) {
+        const tabs = current.tabs.map((t) =>
+          t.id === current.activeId ? { ...t, ...payload } : t,
+        );
+        writeGuestMatchCollection({ ...current, tabs });
+        setSearchTabs(tabs);
+      } else {
+        const tab = appendGuestSearch(payload);
+        setSearchTabs(readGuestMatchCollection().tabs);
+        setActiveSearchId(tab.id);
+      }
+      setSearched(true);
+      setMatchCount(cards.length);
+      writeGuestSession({
+        spec: next,
+        messages,
+        summary,
+        readyToSearch: true,
+        searched: true,
       });
     });
   }
@@ -954,6 +1074,7 @@ export function ScoutChat({
     setActiveSearchId("");
     setText("");
     setDetailsOpen(false);
+    setFiltersOpen(false);
     setOpenMatch(null);
   }
 
@@ -1123,6 +1244,7 @@ export function ScoutChat({
   // Not gated on `initialRequestId` any more: "New search" inside a saved
   // project returns `/hire/[id]` to screen 1 without leaving the project.
   const hero = view === "scout" && !talked && !freshChat;
+  const filterBits = filterSummary(spec);
 
   // Record where everything sits while it is the hero, so the hand-off has
   // the "before" half of each move. Every hero render: typing reflows the
@@ -1227,9 +1349,12 @@ export function ScoutChat({
             <button
               type="button"
               className="scout-filters"
-              aria-expanded={detailsOpen}
-              aria-haspopup="menu"
-              onClick={() => setDetailsOpen((o) => !o)}
+              aria-expanded={searched ? filtersOpen : detailsOpen}
+              aria-haspopup={searched ? "dialog" : "menu"}
+              onClick={() => {
+                if (searched) setFiltersOpen(true);
+                else setDetailsOpen((o) => !o);
+              }}
             >
               <span className="scout-filters__icon" aria-hidden="true">
                 <img
@@ -1241,7 +1366,7 @@ export function ScoutChat({
               </span>
               Filters
             </button>
-            {detailsOpen && (
+            {!searched && detailsOpen && (
               <div className="hire-req__menu" role="menu">
                 <p className="hire-req__label">Requirement</p>
                 {persist && requestId && (
@@ -1343,6 +1468,120 @@ export function ScoutChat({
         </div>
 
         <div ref={scrollRef} className="chat-output" id="hire-results">
+          {searched ? (
+            <>
+              <div className="hire-filter-bar">
+                <p className="hire-filter-bar__title">Filters from this search</p>
+                <div className="hire-filter-bar__chips">
+                  {filterBits.chips.length === 0 ? (
+                    <span className="hire-filter-bar__empty">No filters set</span>
+                  ) : (
+                    filterBits.chips.map((c, i) => (
+                      <span key={`${c}-${i}`} className="hire-filter-chip">
+                        {c}
+                      </span>
+                    ))
+                  )}
+                  {filterBits.more > 0 && (
+                    <span className="hire-filter-chip hire-filter-chip--more">
+                      +{filterBits.more} more
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="hire-filter-bar__edit"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  Edit filters
+                </button>
+              </div>
+              <div className="scout-thread__results" aria-busy={pending}>
+                {!persist && searchTabs.length > 1 && (
+                  <div className="scout-tabs">
+                    <SearchTabs
+                      tabs={searchTabs}
+                      activeId={activeSearchId}
+                      onSelect={(id) => {
+                        setActiveSearchId(id);
+                        setActiveGuestSearch(id);
+                        const tab = searchTabs.find((t) => t.id === id);
+                        setMatchCount(tab?.matches.length ?? 0);
+                        setOpenMatch(null);
+                      }}
+                    />
+                  </div>
+                )}
+                {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
+                  <label className="hire-hide-rejected">
+                    <input
+                      type="checkbox"
+                      checked={hideRejected}
+                      onChange={(e) => setHideRejected(e.target.checked)}
+                    />
+                    Hide rejected
+                  </label>
+                )}
+                {deskGap && (
+                  <p className="scout-gap">{deskGap}</p>
+                )}
+                {pending && (
+                  <p className="hire-filter-bar__status">Updating results…</p>
+                )}
+                <MatchResults
+                  desk
+                  matches={visibleDeskMatches}
+                  samples={deskSamples}
+                  sampleDemand={{
+                    spec,
+                    requestId,
+                    alreadyRecorded: alertWhenAvailable,
+                  }}
+                  cartCount={
+                    persist ? resultsCartCount : readGuestCart().length
+                  }
+                  requestId={persist ? requestId : null}
+                  onOpen={openFromList}
+                  onDecision={(m, decision) => {
+                    const userId =
+                      m.candidateUserId ??
+                      triageByRef[m.candidateRef]?.candidateUserId;
+                    if (!persist || !requestId || !userId) return;
+                    setTriageByRef((prev) => ({
+                      ...prev,
+                      [m.candidateRef]: {
+                        candidateUserId: userId,
+                        viewedAt: prev[m.candidateRef]?.viewedAt ?? m.viewedAt ?? null,
+                        decision,
+                        isNew: false,
+                      },
+                    }));
+                    void setMatchDecisionAction({
+                      requestId,
+                      candidateUserId: userId,
+                      decision,
+                    }).then((res) => {
+                      if (!res.ok) toast.error(res.message);
+                    });
+                  }}
+                  selectedRef={openMatch?.candidateRef}
+                />
+                {persist && requestId && matchCount === 0 && (
+                  <div className="hire-gap">
+                    <GapReport
+                      requestId={requestId}
+                      overallGap={
+                        deskGap?.trim() ||
+                        "No verified matches in the published pool for this requirement yet. Your demand is saved."
+                      }
+                      alertWhenAvailable={alertWhenAvailable}
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
           {!talked && (
             <div className="scout-empty">
               <button
@@ -1425,92 +1664,6 @@ export function ScoutChat({
                       <span className="scout-mark">You</span>
                     )}
                   </div>
-                  {searched && resultsPin === i && (
-                    <div className="scout-thread__results">
-                      {!persist && searchTabs.length > 1 && (
-                        <div className="scout-tabs">
-                          <SearchTabs
-                            tabs={searchTabs}
-                            activeId={activeSearchId}
-                            onSelect={(id) => {
-                              setActiveSearchId(id);
-                              setActiveGuestSearch(id);
-                              const tab = searchTabs.find((t) => t.id === id);
-                              setMatchCount(tab?.matches.length ?? 0);
-                              setOpenMatch(null);
-                            }}
-                          />
-                        </div>
-                      )}
-                      {/* The "contact stays hidden until you place a request"
-                          line was removed: since T-229 contact is revealed by a
-                          paid unlock in the profile panel, so it described a
-                          flow that no longer exists. */}
-                      {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
-                        <label className="hire-hide-rejected">
-                          <input
-                            type="checkbox"
-                            checked={hideRejected}
-                            onChange={(e) => setHideRejected(e.target.checked)}
-                          />
-                          Hide rejected
-                        </label>
-                      )}
-                      {deskGap && (
-                        <p className="scout-gap">{deskGap}</p>
-                      )}
-                      <MatchResults
-                        desk
-                        matches={visibleDeskMatches}
-                        samples={deskSamples}
-                        sampleDemand={{
-                          spec,
-                          requestId,
-                          alreadyRecorded: alertWhenAvailable,
-                        }}
-                        cartCount={
-                          persist ? resultsCartCount : readGuestCart().length
-                        }
-                        requestId={persist ? requestId : null}
-                        onOpen={openFromList}
-                        onDecision={(m, decision) => {
-                          const userId =
-                            m.candidateUserId ??
-                            triageByRef[m.candidateRef]?.candidateUserId;
-                          if (!persist || !requestId || !userId) return;
-                          setTriageByRef((prev) => ({
-                            ...prev,
-                            [m.candidateRef]: {
-                              candidateUserId: userId,
-                              viewedAt: prev[m.candidateRef]?.viewedAt ?? m.viewedAt ?? null,
-                              decision,
-                              isNew: false,
-                            },
-                          }));
-                          void setMatchDecisionAction({
-                            requestId,
-                            candidateUserId: userId,
-                            decision,
-                          }).then((res) => {
-                            if (!res.ok) toast.error(res.message);
-                          });
-                        }}
-                        selectedRef={openMatch?.candidateRef}
-                      />
-                      {persist && requestId && matchCount === 0 && (
-                        <div className="hire-gap">
-                          <GapReport
-                            requestId={requestId}
-                            overallGap={
-                              deskGap?.trim() ||
-                              "No verified matches in the published pool for this requirement yet. Your demand is saved."
-                            }
-                            alertWhenAvailable={alertWhenAvailable}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
                   </Fragment>
                 );
               })}
@@ -1527,7 +1680,7 @@ export function ScoutChat({
                   the bar has already arrived. Card-shaped placeholders hold
                   the space the results will take, so they populate into it
                   rather than pushing the layout around. */}
-              {pending && !searched && (
+              {pending && (
                 <div className="hire-skeletons" aria-hidden="true">
                   {[0, 1, 2].map((i) => (
                     <div key={i} className="hire-skel">
@@ -1550,6 +1703,8 @@ export function ScoutChat({
               )}
               <div ref={bottomRef} className="scout-thread__end" aria-hidden="true" />
             </div>
+            </>
+          )}
         </div>
 
         {openMatch && (
@@ -1593,7 +1748,7 @@ export function ScoutChat({
           onSubmit={(e) => {
             e.preventDefault();
             if (text.trim()) send(text);
-            else runSearch();
+            else runSearch(undefined, searched);
           }}
         >
           <div className="scout-composer__row">
@@ -1611,7 +1766,7 @@ export function ScoutChat({
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     if (text.trim()) send(text);
-                    else runSearch();
+                    else runSearch(undefined, searched);
                   }
                 }}
                 placeholder="Type here...."
@@ -1629,7 +1784,18 @@ export function ScoutChat({
               </span>
               {pending ? "Searching" : "Search"}
             </button>
+            {searched && (
+              <button
+                type="button"
+                className="scout-reset"
+                disabled={pending || returning}
+                onClick={newProject}
+              >
+                Reset search
+              </button>
+            )}
           </div>
+          {!searched && (
           <div className="scout-criteria-slot is-open">
             <div className="scout-criteria-slot__clip">
               <ul
@@ -1654,6 +1820,7 @@ export function ScoutChat({
               </ul>
             </div>
           </div>
+          )}
         </form>
 
         <div className="scout-hero-slot scout-hero-slot--below">
@@ -1675,6 +1842,13 @@ export function ScoutChat({
           ) : null}
         </div>
       </div>
+      <HireFilterDialog
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        spec={spec}
+        pending={pending}
+        onApply={applyFilters}
+      />
     </section>
   );
 }
