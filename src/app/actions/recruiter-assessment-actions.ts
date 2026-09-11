@@ -8,16 +8,19 @@ import { logger } from "@/lib/logger";
 import {
   assessmentDraftSchema,
   assignAssessmentSchema,
+  createAndSendSchema,
   publishAssessmentSchema,
 } from "@/lib/validations/assessment";
 import {
   assignAssessment,
   candidateAssessmentHref,
   createAssessment,
+  createPublishAndAssign,
   deleteAssessment,
   publishAssessment,
   saveAssessmentDraft,
   type AssessmentNotifier,
+  type CreateAndSendResult,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
 
@@ -225,5 +228,64 @@ export async function assignRecruiterAssessmentAction(
       error: String(error),
     });
     return { ok: false, message: "Failed to assign assessment" };
+  }
+}
+
+/**
+ * Plan 130 — the builder's Create: save, publish and send to the picked
+ * Shortlisted candidates in one step, through the same notifier as assign.
+ * A failure before publishing returns the saved draft's id (when there is one)
+ * so the builder's next click updates it rather than creating a duplicate.
+ */
+export async function createAndSendRecruiterAssessmentAction(
+  input: unknown,
+): Promise<
+  ActionOk<CreateAndSendResult> | (ActionErr & { assessmentId?: string })
+> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = createAndSendSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid assessment",
+    };
+  }
+
+  try {
+    const result = await createPublishAndAssign(
+      prismaAssessmentStore(),
+      assessmentNotifier(),
+      scopeFrom(workspace.data),
+      parsed.data,
+    );
+    if (!result.ok) {
+      if (result.assessmentId) revalidatePath("/hire/assessments");
+      return {
+        ok: false,
+        message: result.message,
+        status: statusFor(result.code),
+        assessmentId: result.assessmentId ?? undefined,
+      };
+    }
+    if (result.data.notificationFailures > 0) {
+      logger.warn("[recruiter-assessment-actions] create notification failures", {
+        assessmentId: result.data.id,
+        notificationFailures: result.data.notificationFailures,
+      });
+    }
+    if (result.data.assignError) {
+      logger.warn("[recruiter-assessment-actions] create published but not assigned", {
+        assessmentId: result.data.id,
+      });
+    }
+    revalidateAssessment(result.data.id);
+    return { ok: true, data: result.data };
+  } catch (error) {
+    logger.error("[recruiter-assessment-actions] create", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to create assessment" };
   }
 }

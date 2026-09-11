@@ -3,8 +3,15 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { saveRecruiterAssessmentAction } from "@/app/actions/recruiter-assessment-actions";
-import { assessmentDraftSchema } from "@/lib/validations/assessment";
+import {
+  createAndSendRecruiterAssessmentAction,
+  saveRecruiterAssessmentAction,
+} from "@/app/actions/recruiter-assessment-actions";
+import {
+  MAX_ASSIGN_PER_CALL,
+  assessmentDraftSchema,
+  type AssessmentDraftInput,
+} from "@/lib/validations/assessment";
 import { CandidateAssessmentScreen } from "./candidate-assessment-screen";
 import { QuestionEditor } from "./question-editor";
 import type { AssessmentDraft, DraftQuestion } from "./assessment-types";
@@ -18,9 +25,10 @@ const NEW_MCQ = (): DraftQuestion => ({
   isRequired: true,
   points: 1,
   allowMultipleCorrect: false,
+  // Empty on purpose: the inputs show "Option 1" / "Option 2" as placeholders.
   options: [
-    { body: "Option 1", isCorrect: false },
-    { body: "Option 2", isCorrect: false },
+    { body: "", isCorrect: false },
+    { body: "", isCorrect: false },
   ],
 });
 
@@ -41,19 +49,19 @@ function stripKeys(questions: DraftQuestion[]) {
   });
 }
 
+/** A Shortlisted candidate the assessment can be sent to — refs only, no user id. */
+type SendableCandidate = { candidateRef: string; label: string; jobRole: string };
+
 type Props = {
-  shortlistCount: number;
-  shortlistRefs: string[];
+  /** The recruiter's live Shortlist (legacy + project halves, searchable only). */
+  candidates: SendableCandidate[];
   existingDraft: AssessmentDraft | null;
 };
 
-export function AssessmentBuilder({
-  shortlistCount,
-  shortlistRefs,
-  existingDraft,
-}: Props) {
+export function AssessmentBuilder({ candidates, existingDraft }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<"save" | "create" | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [assessmentId, setAssessmentId] = useState(
     existingDraft?.assessmentId,
@@ -79,6 +87,15 @@ export function AssessmentBuilder({
   );
   const [announce, setAnnounce] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [confirming, setConfirming] = useState(false);
+
+  // Provenance only (nothing reads it — plan 128 §2): the Shortlist this was
+  // built against.
+  const shortlistRefs = useMemo(
+    () => candidates.map((c) => c.candidateRef),
+    [candidates],
+  );
 
   const previewDraft: AssessmentDraft = useMemo(
     () => ({
@@ -104,6 +121,19 @@ export function AssessmentBuilder({
     ],
   );
 
+  // Only refs still on the Shortlist are ever sent.
+  const picked = candidates.filter((c) => selected.has(c.candidateRef));
+  const pickedCount = picked.length;
+  const allPicked = candidates.length > 0 && pickedCount === candidates.length;
+  const createBlockedReason =
+    candidates.length === 0
+      ? "Your Shortlist is empty — shortlist candidates on Hire to send this. You can still save a draft."
+      : pickedCount === 0
+        ? "Select at least one shortlisted candidate to send this to."
+        : pickedCount > MAX_ASSIGN_PER_CALL
+          ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
+          : null;
+
   function move(from: number, to: number) {
     setQuestions((q) => {
       if (to < 0 || to >= q.length) return q;
@@ -120,7 +150,17 @@ export function AssessmentBuilder({
     }
   }
 
-  function save() {
+  function toggle(ref: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(ref)) next.delete(ref);
+      else next.add(ref);
+      return next;
+    });
+  }
+
+  /** The same checks for Save draft and Create; highlights what fails. */
+  function validDraft(): AssessmentDraftInput | null {
     const payload = {
       ...previewDraft,
       assessmentId,
@@ -134,12 +174,32 @@ export function AssessmentBuilder({
         if (!errors[key]) errors[key] = issue.message;
       }
       setFieldErrors(errors);
-      toast.error(parsed.error.issues[0]?.message ?? "Fix the highlighted fields");
-      return;
+      // Options start empty now, so name the question an issue belongs to.
+      const first = parsed.error.issues[0];
+      const qIndex =
+        first?.path[0] === "questions" && typeof first.path[1] === "number"
+          ? first.path[1]
+          : null;
+      toast.error(
+        first
+          ? qIndex !== null
+            ? `Question ${qIndex + 1}: ${first.message}`
+            : first.message
+          : "Fix the highlighted fields",
+      );
+      return null;
     }
     setFieldErrors({});
+    return parsed.data;
+  }
+
+  function save() {
+    const draft = validDraft();
+    if (!draft) return;
+    setPendingAction("save");
     startTransition(async () => {
-      const res = await saveRecruiterAssessmentAction(parsed.data);
+      const res = await saveRecruiterAssessmentAction(draft);
+      setPendingAction(null);
       if (!res.ok) {
         toast.error(res.message);
         return;
@@ -150,6 +210,60 @@ export function AssessmentBuilder({
     });
   }
 
+  /** First click: check everything, then ask — Create notifies people. */
+  function askCreate() {
+    if (createBlockedReason) {
+      toast.error(createBlockedReason);
+      return;
+    }
+    if (!validDraft()) return;
+    setConfirming(true);
+  }
+
+  function create() {
+    const draft = validDraft();
+    if (!draft || createBlockedReason) {
+      setConfirming(false);
+      if (createBlockedReason) toast.error(createBlockedReason);
+      return;
+    }
+    const candidateRefs = picked.map((c) => c.candidateRef);
+    setPendingAction("create");
+    startTransition(async () => {
+      const res = await createAndSendRecruiterAssessmentAction({
+        draft,
+        candidateRefs,
+      });
+      setPendingAction(null);
+      if (!res.ok) {
+        // A draft saved before the failure keeps its id, so the next click
+        // updates it instead of creating a second one.
+        if (res.assessmentId) setAssessmentId(res.assessmentId);
+        setConfirming(false);
+        toast.error(res.message);
+        return;
+      }
+      const { id, assigned, alreadyAssigned, notificationFailures, assignError } =
+        res.data;
+      if (assignError) {
+        toast.warning(
+          `Published, but not sent yet: ${assignError} Assign candidates from this page.`,
+        );
+      } else {
+        const sent = assigned + alreadyAssigned;
+        toast.success(
+          `Published and sent to ${sent} candidate${sent === 1 ? "" : "s"}.`,
+        );
+        if (notificationFailures > 0) {
+          toast.warning(
+            `${notificationFailures} notification${notificationFailures === 1 ? "" : "s"} could not be sent. Assign again to retry — nobody is notified twice.`,
+          );
+        }
+      }
+      router.push(`/hire/assessments/${id}`);
+    });
+  }
+
   return (
     <div className="hire-assess">
       <div className="hire-assess__top">
@@ -157,10 +271,12 @@ export function AssessmentBuilder({
           <p className="hire-assess__kicker">Assessment builder</p>
           <h1>Create an assessment</h1>
           <p className="hire-assess__sub">
-            For {shortlistCount} shortlisted candidate
-            {shortlistCount === 1 ? "" : "s"}
+            For {candidates.length} shortlisted candidate
+            {candidates.length === 1 ? "" : "s"}
           </p>
         </div>
+        {/* Phones only: at ≥1100px both panes are always on screen, so the
+            toggle is hidden there (hire-scout.css). */}
         <div className="hire-assess__seg" role="tablist" aria-label="Edit or preview">
           <button
             type="button"
@@ -313,15 +429,113 @@ export function AssessmentBuilder({
             ) : null}
           </div>
 
+          <section className="hire-assess__send" aria-labelledby="assess-send-heading">
+            <div className="hire-assess__send-head">
+              <h2 id="assess-send-heading">Send to shortlisted candidates</h2>
+              {candidates.length > 0 && (
+                <button
+                  type="button"
+                  className="hire-assess-linkbtn"
+                  disabled={pending}
+                  onClick={() =>
+                    setSelected(allPicked ? new Set() : new Set(shortlistRefs))
+                  }
+                >
+                  {allPicked ? "Clear selection" : "Select all"}
+                </button>
+              )}
+            </div>
+            <p className="hire-assess-hint">
+              Create publishes this assessment and sends it to the candidates
+              you tick. Each one is notified and finds it on their Assessments
+              page.
+            </p>
+            {candidates.length === 0 ? (
+              <p className="hire-assess__send-empty">
+                Your Shortlist is empty. Shortlist candidates on Hire first — you
+                can still save this as a draft.
+              </p>
+            ) : (
+              <fieldset className="hire-assess-assign__fieldset" aria-busy={pending}>
+                <legend className="sr-only">Shortlisted candidates</legend>
+                <ul className="hire-assess-assign__list">
+                  {candidates.map((c) => (
+                    <li key={c.candidateRef}>
+                      <label className="hire-assess-assign__row">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(c.candidateRef)}
+                          disabled={pending}
+                          onChange={() => toggle(c.candidateRef)}
+                        />
+                        <span className="hire-assess-assign__who">
+                          <span>{c.label}</span>
+                          <span className="hire-assess-detail__role">{c.jobRole}</span>
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
+            )}
+          </section>
+
           <div className="hire-assess__save">
-            <button
-              type="button"
-              className="hire-assess__savebtn"
-              disabled={pending}
-              onClick={save}
-            >
-              {pending ? "Saving…" : "Save draft"}
-            </button>
+            {confirming ? (
+              <div
+                className="hire-assess-assign__confirm hire-assess__confirm"
+                role="group"
+                aria-label="Confirm create"
+              >
+                <p>
+                  Publish and send to {pickedCount} candidate
+                  {pickedCount === 1 ? "" : "s"}? Publishing locks the questions
+                  and the pass mark, and each candidate is notified.
+                </p>
+                <div className="hire-assess-assign__confirm-actions">
+                  <button
+                    type="button"
+                    className="hire-assess__savebtn hire-assess__savebtn--ghost"
+                    disabled={pending}
+                    onClick={() => setConfirming(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="hire-assess__savebtn"
+                    disabled={pending}
+                    onClick={create}
+                  >
+                    {pendingAction === "create" ? "Creating…" : "Create"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="hire-assess__savebtn hire-assess__savebtn--ghost"
+                  disabled={pending}
+                  onClick={save}
+                >
+                  {pendingAction === "save" ? "Saving…" : "Save draft"}
+                </button>
+                <button
+                  type="button"
+                  className="hire-assess__savebtn"
+                  disabled={pending || Boolean(createBlockedReason)}
+                  aria-describedby="assess-create-hint"
+                  onClick={askCreate}
+                >
+                  Create
+                </button>
+                <p id="assess-create-hint" className="hire-assess-hint hire-assess__save-hint">
+                  {createBlockedReason ??
+                    `Sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
