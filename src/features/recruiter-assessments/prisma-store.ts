@@ -81,20 +81,31 @@ function scopeWhere(scope: Scope) {
   };
 }
 
-function questionCreateData(assessmentId: string, q: ContentInput["questions"][number], position: number) {
+/**
+ * Build the nested-create payload for one question (without `assessmentId` — it
+ * is implied by nesting under the parent create/update). Nesting the whole tree
+ * into a single `create`/`update` avoids an interactive `$transaction`, which
+ * the Neon serverless driver cannot hold across many sequential statements.
+ */
+function questionCreateNested(
+  q: ContentInput["questions"][number],
+  position: number,
+) {
+  const base = {
+    position,
+    type: q.type,
+    title: q.title,
+    helpText: q.helpText ?? null,
+    isRequired: q.isRequired,
+    points: q.points,
+    sectionId: null,
+  };
   if (q.type === "MULTIPLE_CHOICE") {
     return {
-      assessmentId,
-      position,
-      type: q.type,
-      title: q.title,
-      helpText: q.helpText ?? null,
-      isRequired: q.isRequired,
-      points: q.points,
+      ...base,
       allowMultipleCorrect: q.allowMultipleCorrect,
       maxWords: null,
       uploadDestinationUrl: null,
-      sectionId: null,
       options: {
         create: q.options.map((o, j) => ({
           position: j,
@@ -106,92 +117,69 @@ function questionCreateData(assessmentId: string, q: ContentInput["questions"][n
   }
   if (q.type === "PARAGRAPH") {
     return {
-      assessmentId,
-      position,
-      type: q.type,
-      title: q.title,
-      helpText: q.helpText ?? null,
-      isRequired: q.isRequired,
-      points: q.points,
+      ...base,
       allowMultipleCorrect: false,
       maxWords: q.maxWords,
       uploadDestinationUrl: null,
-      sectionId: null,
-      options: { create: [] as { position: number; body: string; isCorrect: boolean }[] },
     };
   }
   return {
-    assessmentId,
-    position,
-    type: q.type,
-    title: q.title,
-    helpText: q.helpText ?? null,
-    isRequired: q.isRequired,
-    points: q.points,
+    ...base,
     allowMultipleCorrect: false,
     maxWords: null,
     uploadDestinationUrl: q.uploadDestinationUrl,
-    sectionId: null,
-    options: { create: [] as { position: number; body: string; isCorrect: boolean }[] },
   };
 }
 
 export function prismaAssessmentStore(): AssessmentStore {
   return {
     async create(scope, input) {
-      const row = await prisma.$transaction(async (tx) => {
-        const created = await tx.recruiterAssessment.create({
-          data: {
-            organizationId: scope.organizationId,
-            createdByUserId: scope.createdByUserId,
-            title: input.title,
-            subheading: input.subheading,
-            instructions: input.instructions,
-            status: "DRAFT",
-            durationMinutes: input.durationMinutes,
-            passMarkPercent: input.passMarkPercent,
-            shortlistRefs: input.shortlistRefs,
+      // Single nested create: assessment + questions + options in one atomic
+      // statement — no interactive transaction (Neon-safe).
+      const row = await prisma.recruiterAssessment.create({
+        data: {
+          organizationId: scope.organizationId,
+          createdByUserId: scope.createdByUserId,
+          title: input.title,
+          subheading: input.subheading,
+          instructions: input.instructions,
+          status: "DRAFT",
+          durationMinutes: input.durationMinutes,
+          passMarkPercent: input.passMarkPercent,
+          shortlistRefs: input.shortlistRefs,
+          questions: {
+            create: input.questions.map((q, i) => questionCreateNested(q, i)),
           },
-          select: { id: true },
-        });
-        for (const [i, q] of input.questions.entries()) {
-          await tx.assessmentQuestion.create({
-            data: questionCreateData(created.id, q, i),
-            select: { id: true },
-          });
-        }
-        return created;
+        },
+        select: { id: true },
       });
       return { id: row.id };
     },
 
     async replaceContent(assessmentId, scope, input) {
-      await prisma.$transaction(async (tx) => {
-        const owned = await tx.recruiterAssessment.findFirst({
-          where: { id: assessmentId, ...scopeWhere(scope) },
-          select: { id: true },
-        });
-        if (!owned) throw new Error("Assessment not found for replace");
+      // Ownership check (read), then a single atomic update that clears and
+      // recreates the question tree via nested writes — no interactive tx.
+      const owned = await prisma.recruiterAssessment.findFirst({
+        where: { id: assessmentId, ...scopeWhere(scope) },
+        select: { id: true },
+      });
+      if (!owned) throw new Error("Assessment not found for replace");
 
-        await tx.assessmentQuestion.deleteMany({ where: { assessmentId } });
-        for (const [i, q] of input.questions.entries()) {
-          await tx.assessmentQuestion.create({
-            data: questionCreateData(assessmentId, q, i),
-            select: { id: true },
-          });
-        }
-        await tx.recruiterAssessment.update({
-          where: { id: assessmentId },
-          data: {
-            title: input.title,
-            subheading: input.subheading,
-            instructions: input.instructions,
-            durationMinutes: input.durationMinutes,
-            passMarkPercent: input.passMarkPercent,
-            shortlistRefs: input.shortlistRefs,
+      await prisma.recruiterAssessment.update({
+        where: { id: assessmentId },
+        data: {
+          title: input.title,
+          subheading: input.subheading,
+          instructions: input.instructions,
+          durationMinutes: input.durationMinutes,
+          passMarkPercent: input.passMarkPercent,
+          shortlistRefs: input.shortlistRefs,
+          questions: {
+            deleteMany: {},
+            create: input.questions.map((q, i) => questionCreateNested(q, i)),
           },
-          select: { id: true },
-        });
+        },
+        select: { id: true },
       });
     },
 
