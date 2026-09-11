@@ -119,6 +119,7 @@
     "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
     "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
     "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",
+    "test:admin-project-inspect": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/admin/admin-project-inspect.test.ts",
     "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts",
     "test:credits": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/credits.test.ts",
     "test:unlock": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/unlock-contact.test.ts",
