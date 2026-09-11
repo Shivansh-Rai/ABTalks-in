@@ -51,6 +51,12 @@ export default async function AdminLayout({
       label: "Hire",
       icon: "jobs" as const,
     },
+    // Read-only inspection of any recruiter's talent project (T-278).
+    {
+      href: "/admin/hire/projects",
+      label: "Talent Projects",
+      icon: "talentProjects" as const,
+    },
     {
       href: "/admin/platform-admins",
       label: "Platform Admins",

@@ -16,6 +16,7 @@ import {
   Megaphone,
   Package,
   ShieldCheck,
+  FolderSearch,
   Presentation,
   UserPlus,
   Users,
@@ -40,6 +41,7 @@ type IconName =
   | "hackathon"
   | "workshop"
   | "recruiters"
+  | "talentProjects"
   | "platformAdmins";
 
 const iconMap = {
@@ -60,6 +62,7 @@ const iconMap = {
   hackathon: Code2,
   workshop: Presentation,
   recruiters: UserPlus,
+  talentProjects: FolderSearch,
   platformAdmins: ShieldCheck,
 } as const;
 
