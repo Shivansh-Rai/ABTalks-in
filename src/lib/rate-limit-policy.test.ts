@@ -1,0 +1,88 @@
+/**
+ * Pure rate-limit policy + required call-site scan.
+ *   npm run test:demo1-security
+ */
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import {
+  RATE_LIMIT_MAX,
+  RATE_LIMIT_WINDOW_MS,
+  REQUIRED_RATE_LIMIT_SITES,
+  isRateLimited,
+  rateLimitMessage,
+} from "@/lib/rate-limit-policy";
+
+let passed = 0;
+let failed = 0;
+
+function assert(cond: boolean | undefined, msg: string) {
+  if (!cond) throw new Error(msg);
+}
+
+function suite(name: string, fn: () => void) {
+  try {
+    fn();
+    passed++;
+    console.log(`  ✓ ${name}`);
+  } catch (e) {
+    failed++;
+    console.log(`  ✗ ${name}\n      ${(e as Error).message}`);
+  }
+}
+
+console.log("\nDemo 1 rate limits");
+
+suite("under the cap is allowed", () => {
+  const now = 1_000_000;
+  const hits = Array.from({ length: 5 }, (_, i) => now - i * 1000);
+  assert(!isRateLimited(hits, now, 10), "5 < 10 must pass");
+});
+
+suite("at the cap is refused", () => {
+  const now = 1_000_000;
+  const hits = Array.from({ length: 10 }, (_, i) => now - i * 1000);
+  assert(isRateLimited(hits, now, 10), "10 of 10 must refuse");
+});
+
+suite("hits outside the window do not count", () => {
+  const now = 1_000_000;
+  const hits = [now - RATE_LIMIT_WINDOW_MS - 1];
+  assert(!isRateLimited(hits, now, 1), "stale hits must drop");
+});
+
+suite("every bucket has a readable message and a max", () => {
+  for (const bucket of ["UNLOCK", "OUTREACH", "SEARCH", "EXPORT"] as const) {
+    assert(RATE_LIMIT_MAX[bucket] > 0, `${bucket} needs a max`);
+    assert(rateLimitMessage(bucket).length > 10, `${bucket} needs a message`);
+  }
+});
+
+suite("existing SEARCH and EXPORT call sites call assertRateLimit", () => {
+  for (const site of REQUIRED_RATE_LIMIT_SITES) {
+    for (const file of site.files) {
+      const abs = join(process.cwd(), file);
+      assert(existsSync(abs), `missing ${file}`);
+      const src = readFileSync(abs, "utf8");
+      assert(
+        src.includes("assertRateLimit"),
+        `${file} must call assertRateLimit for ${site.bucket}`,
+      );
+      assert(
+        src.includes(`bucket: "${site.bucket}"`),
+        `${file} must use bucket ${site.bucket}`,
+      );
+    }
+  }
+});
+
+suite("guest scout no longer uses an in-memory Map", () => {
+  const src = readFileSync(
+    join(process.cwd(), "src/app/actions/hire-guest-actions.ts"),
+    "utf8",
+  );
+  assert(!src.includes("new Map"), "guest limiter must not be an in-memory Map");
+  assert(src.includes("assertRateLimit"), "guest scout must use assertRateLimit");
+});
+
+console.log(`\n${passed} passed, ${failed} failed`);
+if (failed > 0) process.exit(1);

@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   registerRecruiterWithOtpAction,
   requestRecruiterOtpAction,
 } from "@/app/actions/recruiter-auth-actions";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { useTrack } from "@/lib/analytics/use-track";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +24,8 @@ import { cn } from "@/lib/utils";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm() {
-  const [step, setStep] = useState<"form" | "code" | "done">("form");
+  const track = useTrack();
+  const [step, setStep] = useState<"form" | "code">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +34,6 @@ export function RecruiterRegisterForm() {
   const [newsletterOptIn, setNewsletterOptIn] = useState(true);
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
-  const [approved, setApproved] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const canSubmitForm =
@@ -71,36 +73,19 @@ export function RecruiterRegisterForm() {
         setCode("");
         return;
       }
-      setApproved(res.data.approved);
-      setStep("done");
+      track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
+      // The account and its workspace are both written by now, but this action
+      // does NOT create a session — nothing is signed in. So the next step is
+      // signing in, and /talent/login goes on to /hire once the code is
+      // verified. Sending them straight to /hire would only bounce off the
+      // middleware's session guard.
+      //
+      // A full navigation rather than router.push: an App Router transition
+      // that lands on a server redirect leaves useTransition pending forever,
+      // which is exactly how this button ended up spinning after the write had
+      // already succeeded. The email rides along so they do not retype it.
+      window.location.href = `/talent/login?email=${encodeURIComponent(email)}`;
     });
-  }
-
-  if (step === "done") {
-    return (
-      <div className="space-y-3 rounded-xl border bg-card p-6 text-center">
-        <CheckCircle2
-          className="mx-auto size-8 text-primary"
-          aria-hidden="true"
-        />
-        <h3 className="font-display text-lg font-semibold">
-          {approved ? "You're all set" : "Thank you — we'll reach out soon"}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {approved
-            ? "Your company was already verified, so you can sign in straight away."
-            : "We've got your details. Someone from ABTalks will contact you to confirm, and you'll be able to sign in once that's done."}
-        </p>
-        {approved && (
-          <Link
-            href="/talent/login"
-            className={cn(buttonVariants({ size: "sm" }), "mt-1")}
-          >
-            Sign in
-          </Link>
-        )}
-      </div>
-    );
   }
 
   if (step === "code") {
@@ -116,7 +101,7 @@ export function RecruiterRegisterForm() {
         </div>
 
         {devCode && (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3 py-2 text-xs text-[#AA821D] dark:text-[#FFEDB0]">
             <strong className="font-semibold">Development only.</strong> No mail
             provider is configured, so the code is shown here instead of
             emailed:{" "}

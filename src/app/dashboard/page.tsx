@@ -12,6 +12,7 @@ import { EventsSection } from "@/components/dashboard-hub/events-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
 import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
+import { registrationRedirect } from "@/features/registration/registration-gate";
 import { buildHubSearchIndex } from "@/features/dashboard/hub-search-index";
 import { getHistory } from "@/features/interview/platform/service";
 import {
@@ -170,6 +171,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
+  // Signed in is not registered: OAuth creates the User row before any form is
+  // reached, and Google's callback lands here directly. Before the hub is even
+  // queried, a candidate with no StudentProfile goes and makes one.
+  const needsRegistration = await registrationRedirect(
+    session.user.id,
+    "/dashboard",
+  );
+  if (needsRegistration) redirect(needsRegistration);
+
   const params = await searchParams;
   const data = await getHubData(session.user.id);
   if (!data.hasUser) {
@@ -243,7 +253,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {notice ? (
         <section className="px-4 py-2 sm:px-6 lg:ml-4">
           <div
-            className={`rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm text-[#555555] ${HUB_CARD_HOVER_CLASS}`}
+            className={`rounded-2xl border border-[#E0E0E0] bg-white px-5 py-4 text-sm text-[#4B4B4B] ${HUB_CARD_HOVER_CLASS}`}
           >
             {notice}
           </div>

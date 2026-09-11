@@ -44,7 +44,7 @@ const ON_SCREEN_MARGIN = "0px 0px -20% 0px";
 
 /** Nodes 1:319-1:324. `x` is the number's left edge, `cx` the label's centre. */
 const STATS = [
-  { value: 11000, suffix: "+", label: "AI Learners", sub: "From 25+ Countries", x: 123, cx: 227 },
+  { value: 12000, suffix: "+", label: "AI Learners", sub: "From 25+ Countries", x: 123, cx: 227 },
   { value: 550, suffix: "+", label: "Institutions", sub: "Students enrolled", x: 453, cx: 519.5 },
   { value: 300, suffix: "+", label: "Organizations", sub: "Working professionals", x: 747, cx: 810.5 },
 ] as const;
@@ -235,7 +235,7 @@ export default function CommunityStats() {
               section, and what separates it from the section above. The SVG is
               2519×746 and sits 300px outside its 1919×146 box on every side:
               that overhang IS the blur, so it must not be squashed to the box.
-              Recoloured from the Figma blue to the palette's #E05226 and held
+              Recoloured from the Figma blue to the palette's #03535F and held
               at ~1/3 opacity — orange is far denser than the pale blue was, and
               at full strength it reads as a solid band rather than a wash.
 

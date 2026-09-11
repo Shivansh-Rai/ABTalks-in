@@ -1,0 +1,3 @@
+{"users":12806,"submissions":15645,"adminaction":281,"requests":3,"matches":40,"hackathon":8293,"enrollments":3188,"visibility":12804}
+{"tables":123,"indexes":400,"fkeys":148,"constraints":272,"extensions":2,"enums":68,"sequences":0}
+extensions: pg_trgm,plpgsql

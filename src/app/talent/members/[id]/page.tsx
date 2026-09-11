@@ -9,6 +9,7 @@ import { getTalentProfile } from "@/features/talent-pool/pool";
 import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import { MissionHeatmap } from "@/components/program/mission-heatmap";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
+import { TrackCandidateView } from "@/components/talent/track-candidate-view";
 import { ShortlistNoteForm } from "@/components/talent/shortlist-note-form";
 import { ScoreBreakdown } from "@/components/talent/score-breakdown";
 import { buttonVariants } from "@/components/ui/button";
@@ -39,6 +40,10 @@ export default async function TalentMemberPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
+      {/* Renders nothing; emits recruiter_candidate_viewed once the profile is
+          actually on screen. Only a string crosses the Server → Client
+          boundary. */}
+      <TrackCandidateView candidateRef={candidatePublicId(profile.memberId)} />
       <div className="flex items-center gap-3">
         <Link
           href="/talent/shortlist"

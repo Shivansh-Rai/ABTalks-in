@@ -13,12 +13,19 @@ export async function getTeamByCode(
   code: string,
 ): Promise<HackathonTeamLookup | null> {
   const team = await prisma.hackathonTeam.findUnique({
-    where: { teamCode: code.toUpperCase() },
+    where: {
+      eventId_teamCode: {
+        eventId: HACKATHON.eventId,
+        teamCode: code.toUpperCase(),
+      },
+    },
     select: {
       id: true,
       teamName: true,
       entryType: true,
-      _count: { select: { participants: true } },
+      _count: {
+        select: { participants: { where: { eventId: HACKATHON.eventId } } },
+      },
     },
   });
 
@@ -36,7 +43,10 @@ export async function getTeamByCode(
 
 export async function isTeamNameTaken(teamName: string): Promise<boolean> {
   const existing = await prisma.hackathonTeam.findFirst({
-    where: { teamName: { equals: teamName, mode: "insensitive" } },
+    where: {
+      eventId: HACKATHON.eventId,
+      teamName: { equals: teamName, mode: "insensitive" },
+    },
     select: { id: true },
   });
   return existing !== null;
@@ -46,7 +56,7 @@ export async function getTeamLeader(
   teamId: string,
 ): Promise<{ fullName: string; email: string } | null> {
   const leader = await prisma.hackathonParticipant.findFirst({
-    where: { teamId, isLeader: true },
+    where: { eventId: HACKATHON.eventId, teamId, isLeader: true },
     select: { fullName: true, email: true },
   });
   if (!leader) return null;

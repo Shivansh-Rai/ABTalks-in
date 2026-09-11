@@ -126,7 +126,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-06-01",
     time: "Day 1",
     tag: "Challenge",
-    accent: "#c9411c",
+    accent: "#076573",
     track: "challenge",
     Icon: Rocket,
     title: "60-Day Claude AI Challenge begins",
@@ -141,7 +141,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-07-15",
     time: "Cohort start",
     tag: "Cohort",
-    accent: "#c9411c",
+    accent: "#076573",
     track: "cohort",
     Icon: Users,
     title: "AI Cohort Program — Cohort begins",
@@ -157,7 +157,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-07-18",
     time: "4:00 PM IST",
     tag: "Live",
-    accent: "#e05226",
+    accent: "#03535F",
     track: "workshop",
     Icon: GraduationCap,
     title: "FREE AI Bootcamp Live Workshop",
@@ -176,7 +176,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-08-01",
     time: "6:00 PM IST",
     tag: "Design",
-    accent: "#a93617",
+    accent: "#02434D",
     track: "workshop",
     Icon: Palette,
     title: "Figma × Cursor - AI-Powered UI/UX Workshop",
@@ -198,7 +198,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-08-07",
     time: "Starts 8:00 PM IST",
     tag: "Hackathon",
-    accent: "#111111",
+    accent: "#000000",
     track: "hackathon",
     Icon: Trophy,
     title: "48-Hour AI Hackathon",
@@ -214,7 +214,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-08-21",
     time: "6:00 PM IST",
     tag: "Career",
-    accent: "#e05226",
+    accent: "#03535F",
     track: "workshop",
     Icon: BriefcaseBusiness,
     title: "Enhance LinkedIn & AI Mock Interview",
@@ -243,7 +243,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-09-05",
     time: "7:00 PM IST",
     tag: "Content",
-    accent: "#e05226",
+    accent: "#03535F",
     track: "workshop",
     Icon: Clapperboard,
     title: "AI Image & Video Generation",
@@ -278,14 +278,14 @@ export const EVENTS: WorkshopEvent[] = [
     // generator skips any Saturday already in EVENTS. No placeholder logic
     // changes, and every other Saturday keeps its TBA.
     //
-    // 6:00 PM, not the 7:00 PM the other three run at: that is the time the
-    // Sep 12 placeholder already carried, and it was kept rather than silently
-    // moved. Change it here if the session really is at 7.
+    // 7:00 PM, moved off the 6:00 PM the Sep 12 placeholder carried: the
+    // published poster and the Supabase `workshop_config` the hero reads both
+    // say 7:00 PM, and this file was the only place still saying 6.
     id: "workshop-2026-09-12",
     date: "2026-09-12",
-    time: "6:00 PM IST",
+    time: "7:00 PM IST",
     tag: "Build",
-    accent: "#e05226",
+    accent: "#03535F",
     track: "workshop",
     Icon: Code2,
     title: "Vibe Coding Mini Project",
@@ -298,13 +298,30 @@ export const EVENTS: WorkshopEvent[] = [
     // field anyway (see the note in UpcomingWorkshops).
     //
     // No `register` / `registrationOpen` either — see the note below.
+    posterSrc: "/workshop/posters/vibe_coding.jpeg",
+    topics: [
+      // The five the poster advertises, first and verbatim, then the build
+      // steps that fill out the hour. `TopicsSection` falls back to its own
+      // DEFAULT_TOPICS when this is absent, which is why the live page was
+      // showing the Sep 5 image/video list under a vibe-coding title.
+      "Build Your Mini Project",
+      "Vibe Coding Workflow",
+      "Ideas to Code with Claude",
+      "Live AI Development",
+      "Idea to Reality",
+      "Cursor, Antigravity & Claude",
+      "Prompting Your Way to Working Code",
+      "Debugging & Iterating with AI",
+      "From Prompt to Running App",
+      "Ship & Deploy Your Build",
+    ],
   },
   {
     id: "workshop-2026-09-19",
     date: "2026-09-19",
     time: "7:00 PM IST",
     tag: "Developer",
-    accent: "#c9411c",
+    accent: "#076573",
     track: "workshop",
     Icon: GitBranch,
     title: "GitHub Essentials: From Code to Collaboration",
@@ -320,7 +337,7 @@ export const EVENTS: WorkshopEvent[] = [
     date: "2026-09-26",
     time: "7:00 PM IST",
     tag: "Automation",
-    accent: "#a93617",
+    accent: "#02434D",
     track: "workshop",
     Icon: Workflow,
     title: "AI Workflows, Automation & Model Showdown",

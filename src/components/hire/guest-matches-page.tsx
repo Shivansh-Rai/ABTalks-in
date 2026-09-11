@@ -84,7 +84,7 @@ export function GuestMatchesPage() {
         </p>
       ) : (
         <>
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+          <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3.5 py-2.5 text-xs leading-relaxed text-[#AA821D] dark:text-[#FFEDB0]">
             <strong className="font-semibold">Privacy protected.</strong>{" "}
             Candidates are shown by reference ID. Names and contact details stay
             hidden until you place a request and our team confirms the

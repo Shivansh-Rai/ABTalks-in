@@ -2,17 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { switchHackathonAccountAction } from "@/app/actions/hackathon-auth-actions";
 import {
   lookupHackathonTeamAction,
   submitHackathonRegistrationAction,
 } from "@/app/actions/hackathon-actions";
 import { CollegeCombobox } from "@/components/shared/college-combobox";
 import { SuccessPanel } from "@/components/hackathon/success-panel";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -30,12 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import {
   LegalConsentFields,
   legalConsentAccepted,
+  DEFAULT_LEGAL_CONSENT,
   type LegalConsentValues,
 } from "@/components/legal/legal-consent-fields";
+import type { RegistrationPrefill } from "@/features/hackathon/registration-identity";
+import { requiredPhoneSchema } from "@/lib/validations/phone";
 import {
   hackathonRegistrationSchema,
   type HackathonRegistrationInput,
@@ -46,15 +45,22 @@ const GRADUATION_YEARS = [
   2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032,
 ] as const;
 
+const DEFAULT_GRADUATION_YEAR = 2026;
+
+/** No profile to read from — ask for everything the row needs. */
+const FALLBACK_PREFILL: RegistrationPrefill = {
+  college: "",
+  graduationYear: null,
+  needsPhone: true,
+};
+
 type EntryType = HackathonRegistrationInput["entryType"];
 
 type FormValues = {
   entryType: EntryType;
-  fullName: string;
-  email: string;
-  phone: string;
   college: string;
   graduationYear: number;
+  phone: string;
   teamName: string;
   teamCode: string;
   acceptLegal: boolean;
@@ -85,12 +91,26 @@ const ENTRY_OPTIONS: { value: EntryType; title: string; body: string }[] = [
   },
 ];
 
+function Spinner() {
+  return (
+    <svg
+      className="hk-reg__spinner"
+      viewBox="0 0 24 24"
+      aria-hidden
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="9" opacity=".3" />
+      <path d="M21 12a9 9 0 0 0-9-9" />
+    </svg>
+  );
+}
+
 export function RegistrationForm({
-  initialEmail,
-  initialName = "",
+  prefill = FALLBACK_PREFILL,
+  onSuccess,
 }: {
-  initialEmail: string;
-  initialName?: string;
+  prefill?: RegistrationPrefill;
+  onSuccess?: (data: SuccessState) => void;
 }) {
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -99,11 +119,9 @@ export function RegistrationForm({
   const [lookupPending, startLookup] = useTransition();
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
   const [lookupOk, setLookupOk] = useState(false);
-  const [lookupTeamName, setLookupTeamName] = useState<string | null>(null);
-  const [lookupSpots, setLookupSpots] = useState<number | null>(null);
-  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>({
-    acceptLegal: false, newsletterOptIn: true,
-  });
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>(
+    DEFAULT_LEGAL_CONSENT,
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(
@@ -111,59 +129,38 @@ export function RegistrationForm({
     ) as unknown as Resolver<FormValues>,
     defaultValues: {
       entryType: "SOLO",
-      fullName: initialName,
-      email: initialEmail,
+      college: prefill.college,
+      graduationYear: prefill.graduationYear ?? DEFAULT_GRADUATION_YEAR,
       phone: "",
-      college: "",
-      graduationYear: 2026,
       teamName: "",
       teamCode: "",
-      acceptLegal: false, newsletterOptIn: true,
+      acceptLegal: DEFAULT_LEGAL_CONSENT.acceptLegal,
+      newsletterOptIn: DEFAULT_LEGAL_CONSENT.newsletterOptIn,
     },
     mode: "onTouched",
   });
 
   const entryType = form.watch("entryType");
   const totalSteps = entryType === "SOLO" ? 2 : 3;
+  const consented = legalConsentAccepted(legalConsent);
 
   function buildPayload(values: FormValues): HackathonRegistrationInput {
-    const legal = {
+    const base = {
+      college: values.college,
+      graduationYear: values.graduationYear,
+      // Only carries a value when the profile had no number to reuse; the
+      // server prefers what is on the profile either way.
+      phone: prefill.needsPhone ? values.phone : "",
       acceptLegal: values.acceptLegal,
       newsletterOptIn: values.newsletterOptIn,
     };
-    if (values.entryType === "SOLO") {
-      return {
-        entryType: "SOLO",
-        fullName: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        college: values.college,
-        graduationYear: values.graduationYear,
-        ...legal,
-      };
-    }
     if (values.entryType === "TEAM_CREATE") {
-      return {
-        entryType: "TEAM_CREATE",
-        fullName: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        college: values.college,
-        graduationYear: values.graduationYear,
-        teamName: values.teamName,
-        ...legal,
-      };
+      return { ...base, entryType: "TEAM_CREATE", teamName: values.teamName };
     }
-    return {
-      entryType: "TEAM_JOIN",
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      college: values.college,
-      graduationYear: values.graduationYear,
-      teamCode: values.teamCode,
-      ...legal,
-    };
+    if (values.entryType === "TEAM_JOIN") {
+      return { ...base, entryType: "TEAM_JOIN", teamCode: values.teamCode };
+    }
+    return { ...base, entryType: "SOLO" };
   }
 
   async function goNext() {
@@ -175,16 +172,23 @@ export function RegistrationForm({
       return;
     }
     if (step === 2) {
-      const ok = await form.trigger([
-        "fullName",
-        "email",
-        "phone",
-        "college",
-        "graduationYear",
-      ]);
+      const ok = await form.trigger(["college", "graduationYear"]);
       if (!ok) return;
+      // The shared schema can only treat `phone` as an optional string — it has
+      // no way to know whether this account already has one — so the "actually
+      // required here" case is checked in the one place that knows.
+      if (prefill.needsPhone) {
+        const phone = requiredPhoneSchema.safeParse(form.getValues("phone"));
+        if (!phone.success) {
+          form.setError("phone", {
+            message:
+              phone.error.issues[0]?.message ?? "Enter a valid phone number",
+          });
+          return;
+        }
+      }
       if (entryType === "SOLO") {
-        if (!legalConsentAccepted(legalConsent)) {
+        if (!consented) {
           setSubmitError(
             "Please accept the Terms of Service and Privacy Policy.",
           );
@@ -204,8 +208,6 @@ export function RegistrationForm({
     form.setValue("teamCode", code, { shouldValidate: true });
     setLookupMessage(null);
     setLookupOk(false);
-    setLookupTeamName(null);
-    setLookupSpots(null);
 
     startLookup(async () => {
       const result = await lookupHackathonTeamAction(code);
@@ -215,20 +217,16 @@ export function RegistrationForm({
         return;
       }
       setLookupOk(true);
-      setLookupTeamName(result.data.teamName);
-      setLookupSpots(result.data.spotsLeft);
       setLookupMessage(
-        `Joining ${result.data.teamName ?? "team"}, ${result.data.spotsLeft} spot(s) left`,
+        `Joining ${result.data.teamName ?? "team"} — ${result.data.spotsLeft} spot(s) left.`,
       );
     });
   }
 
   function onSubmit(values: FormValues) {
     setSubmitError(null);
-    if (!legalConsentAccepted(legalConsent)) {
-      setSubmitError(
-        "Please accept the Terms of Service and Privacy Policy.",
-      );
+    if (!consented) {
+      setSubmitError("Please accept the Terms of Service and Privacy Policy.");
       return;
     }
     const payload = buildPayload(values);
@@ -240,11 +238,13 @@ export function RegistrationForm({
         toast.error(result.message);
         return;
       }
-      setSuccess({
+      const next: SuccessState = {
         entryType: result.data.entryType,
         teamCode: result.data.teamCode,
         teamName: result.data.teamName,
-      });
+      };
+      setSuccess(next);
+      onSuccess?.(next);
     });
   }
 
@@ -258,56 +258,40 @@ export function RegistrationForm({
     );
   }
 
+  const submitLabel = pending ? (
+    <>
+      <Spinner />
+      Registering…
+    </>
+  ) : (
+    "Register"
+  );
+
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6"
-      >
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="hk-reg">
+        <div className="hk-reg__meter">
+          <div className="hk-reg__meter-row">
             <span>
               Step {step} of {totalSteps}
             </span>
-            <span className="tabular-nums">
-              {Math.round((step / totalSteps) * 100)}%
-            </span>
+            <b>{Math.round((step / totalSteps) * 100)}%</b>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="hk-reg__track">
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className="hk-reg__fill"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
         </div>
-
-        <p className="text-sm text-muted-foreground">
-          Registering as <span className="font-medium text-foreground">{initialEmail}</span>
-          {" · "}
-          <button
-            type="button"
-            className="text-primary underline-offset-2 hover:underline"
-            onClick={() => {
-              if (form.formState.isDirty) {
-                const ok = window.confirm(
-                  "Switch account? You'll lose what you've entered here.",
-                );
-                if (!ok) return;
-              }
-              void switchHackathonAccountAction();
-            }}
-          >
-            Not you? Switch account
-          </button>
-        </p>
 
         {step === 1 ? (
           <FormField
             control={form.control}
             name="entryType"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-base font-semibold">
+              <FormItem>
+                <FormLabel className="hk-reg__legend">
                   How are you entering?
                 </FormLabel>
                 <FormControl>
@@ -323,36 +307,30 @@ export function RegistrationForm({
                       setLookupMessage(null);
                       if (step > 2 && next === "SOLO") setStep(2);
                     }}
-                    className="grid gap-3"
+                    className="hk-reg__choices"
                   >
                     {ENTRY_OPTIONS.map((opt) => (
-                      <Label
+                      <label
                         key={opt.value}
                         htmlFor={`entry-${opt.value}`}
-                        className="cursor-pointer"
+                        className={cn(
+                          "hk-reg__choice",
+                          field.value === opt.value && "is-selected",
+                        )}
                       >
-                        <div
-                          className={cn(
-                            "flex items-start gap-3 rounded-xl border border-border p-4 transition-colors",
-                            field.value === opt.value &&
-                              "border-primary bg-primary/5 ring-2 ring-primary/20",
-                          )}
-                        >
-                          <RadioGroupItem
-                            value={opt.value}
-                            id={`entry-${opt.value}`}
-                            className="mt-1"
-                          />
-                          <div className="min-w-0">
-                            <div className="font-display font-semibold text-foreground">
-                              {opt.title}
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {opt.body}
-                            </p>
-                          </div>
-                        </div>
-                      </Label>
+                        <RadioGroupItem
+                          value={opt.value}
+                          id={`entry-${opt.value}`}
+                        />
+                        <span className="min-w-0">
+                          <span className="hk-reg__choice-title block">
+                            {opt.title}
+                          </span>
+                          <span className="hk-reg__choice-body block">
+                            {opt.body}
+                          </span>
+                        </span>
+                      </label>
                     ))}
                   </RadioGroup>
                 </FormControl>
@@ -363,188 +341,178 @@ export function RegistrationForm({
         ) : null}
 
         {step === 2 ? (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full name</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      readOnly
-                      tabIndex={-1}
-                      className="bg-muted text-muted-foreground"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>WhatsApp number</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+91…"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="college"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>College</FormLabel>
-                  <FormControl>
-                    <CollegeCombobox
-                      value={field.value}
-                      onChange={(name) => field.onChange(name)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="graduationYear"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Graduation year</FormLabel>
-                  <Select
-                    value={String(field.value)}
-                    onValueChange={(v) => {
-                      if (v != null) field.onChange(Number(v));
-                    }}
-                  >
+          <div>
+            <p className="hk-reg__legend">Where do you study?</p>
+            <p className="hk-reg__hint">
+              {prefill.needsPhone
+                ? "We take your name and email from your account — this is all we're missing."
+                : "Your name, email and WhatsApp number come from your account, so this is all we need."}
+            </p>
+
+            <div className="hk-reg__fields mt-4">
+              <FormField
+                control={form.control}
+                name="college"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>College</FormLabel>
                     <FormControl>
-                      <SelectTrigger className="w-full min-w-0">
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
+                      <CollegeCombobox
+                        value={field.value}
+                        onChange={(name) => field.onChange(name)}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {GRADUATION_YEARS.map((y) => (
-                        <SelectItem key={y} value={String(y)}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="graduationYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Graduation year</FormLabel>
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(v) => {
+                        if (v != null) field.onChange(Number(v));
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full min-w-0">
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {GRADUATION_YEARS.map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* Asked only for accounts with no number on file — everyone who
+                  came through /register already has a verified one. */}
+              {prefill.needsPhone ? (
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>WhatsApp number</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          autoComplete="tel"
+                          placeholder="+91…"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
+            </div>
           </div>
         ) : null}
 
         {step === 3 && entryType === "TEAM_CREATE" ? (
-          <FormField
-            control={form.control}
-            name="teamName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Team name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <p className="text-sm text-muted-foreground">
-                  You&apos;ll get a 6-character code to share with your teammates.
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <p className="hk-reg__legend">Name your team</p>
+            <p className="hk-reg__hint">
+              You&apos;ll get a 6-character code to share with your teammates.
+            </p>
+            <div className="hk-reg__fields mt-4">
+              <FormField
+                control={form.control}
+                name="teamName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Team name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
         ) : null}
 
         {step === 3 && entryType === "TEAM_JOIN" ? (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="teamCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team code</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      maxLength={6}
-                      autoCapitalize="characters"
-                      className="font-mono tracking-widest uppercase"
-                      onChange={(e) => {
-                        field.onChange(e.target.value.toUpperCase());
-                        setLookupOk(false);
-                        setLookupMessage(null);
-                      }}
-                      onBlur={() => {
-                        field.onBlur();
-                        if (form.getValues("teamCode").trim().length === 6) {
-                          checkTeamCode();
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={checkTeamCode}
-              disabled={lookupPending}
-            >
-              {lookupPending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                  Checking…
-                </>
-              ) : (
-                "Check code"
-              )}
-            </Button>
-            {lookupMessage ? (
-              <p
-                className={cn(
-                  "text-sm",
-                  lookupOk ? "text-foreground" : "text-destructive",
+          <div>
+            <p className="hk-reg__legend">Enter your team code</p>
+            <p className="hk-reg__hint">
+              The 6-character code your team leader shared with you.
+            </p>
+            <div className="hk-reg__fields mt-4">
+              <FormField
+                control={form.control}
+                name="teamCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Team code</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        maxLength={6}
+                        autoCapitalize="characters"
+                        className="hk-reg__code-input"
+                        onChange={(e) => {
+                          field.onChange(e.target.value.toUpperCase());
+                          setLookupOk(false);
+                          setLookupMessage(null);
+                        }}
+                        onBlur={() => {
+                          field.onBlur();
+                          if (form.getValues("teamCode").trim().length === 6) {
+                            checkTeamCode();
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
+              <button
+                type="button"
+                className="ab-btn hk-btn--outline"
+                onClick={checkTeamCode}
+                disabled={lookupPending}
               >
-                {lookupOk && lookupTeamName != null && lookupSpots != null
-                  ? `Joining ${lookupTeamName}, ${lookupSpots} spot(s) left`
-                  : lookupMessage}
-              </p>
-            ) : null}
+                {lookupPending ? (
+                  <>
+                    <Spinner />
+                    Checking…
+                  </>
+                ) : (
+                  "Check code"
+                )}
+              </button>
+              {lookupMessage ? (
+                <p
+                  className={cn(
+                    "hk-reg__lookup",
+                    lookupOk ? "is-ok" : "is-bad",
+                  )}
+                >
+                  {lookupMessage}
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : null}
 
         {step === totalSteps ? (
           <LegalConsentFields
+            className="hk-reg__legal"
             values={legalConsent}
             onChange={(next) => {
               setLegalConsent(next);
@@ -555,16 +523,48 @@ export function RegistrationForm({
         ) : null}
 
         {submitError ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div className="hk-reg__error" role="alert">
             {submitError}
           </div>
         ) : null}
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-          {step > 1 ? (
-            <Button
+        <div className="hk-reg__actions">
+          {step === 2 && entryType === "SOLO" ? (
+            <button
               type="button"
-              variant="outline"
+              className="ab-btn ab-btn--primary"
+              onClick={goNext}
+              disabled={pending || !consented}
+            >
+              {submitLabel}
+            </button>
+          ) : step < totalSteps ? (
+            <button
+              type="button"
+              className="ab-btn ab-btn--primary"
+              onClick={goNext}
+              disabled={pending}
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="ab-btn ab-btn--primary"
+              disabled={
+                pending ||
+                !consented ||
+                (entryType === "TEAM_JOIN" && !lookupOk)
+              }
+            >
+              {submitLabel}
+            </button>
+          )}
+
+          {step > 1 ? (
+            <button
+              type="button"
+              className="ab-btn hk-btn--outline"
               onClick={() => {
                 setSubmitError(null);
                 setStep((s) => s - 1);
@@ -572,48 +572,9 @@ export function RegistrationForm({
               disabled={pending}
             >
               Back
-            </Button>
+            </button>
           ) : (
             <span />
-          )}
-
-          {step === 2 && entryType === "SOLO" ? (
-            <Button
-              type="button"
-              onClick={goNext}
-              disabled={pending || !legalConsentAccepted(legalConsent)}
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                  Registering…
-                </>
-              ) : (
-                "Register"
-              )}
-            </Button>
-          ) : step < totalSteps ? (
-            <Button type="button" onClick={goNext} disabled={pending}>
-              Continue
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              disabled={
-                pending ||
-                !legalConsentAccepted(legalConsent) ||
-                (entryType === "TEAM_JOIN" && !lookupOk)
-              }
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                  Registering…
-                </>
-              ) : (
-                "Register"
-              )}
-            </Button>
           )}
         </div>
       </form>

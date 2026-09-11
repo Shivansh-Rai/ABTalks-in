@@ -9,6 +9,7 @@ import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
+import { HireSidebar } from "@/components/hire/hire-sidebar";
 import { HireTalentPod } from "@/components/hire/hire-talent-pod";
 import { HireSavedLater } from "@/components/hire/hire-saved-later";
 import type { CartRow } from "@/components/hire/shortlist-cart";
@@ -20,25 +21,23 @@ import {
   DESK_SHORTLIST_EVENT,
   readDeskShortlist,
 } from "@/components/hire/desk-shortlist";
-import { signOutAction } from "@/app/actions/auth-actions";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
+import { hireZoomFor } from "@/components/hire/hire-zoom";
 import { cn } from "@/lib/utils";
 
 export function HireChrome({
   account,
   serverCartCount,
-  pendingName,
   podRows,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
   serverCartCount: number;
-  pendingName: string | null;
   podRows: CartRow[];
   children: React.ReactNode;
 }) {
-  const { approved, openAuth, authEnabled } = useHireAuth();
-  const { view, openPod, closePod, openSaved } = useHireDesk();
+  const { approved, openAuth } = useHireAuth();
+  const { view, landing, openPod, closePod, openSaved } = useHireDesk();
   const [guestCount, setGuestCount] = useState(0);
   const [overlayCount, setOverlayCount] = useState(0);
   const [starCount, setStarCount] = useState(0);
@@ -61,6 +60,19 @@ export function HireChrome({
     };
   }, []);
 
+  // Screen 2's scale (see hire-zoom.ts). The layout's inline script covers a
+  // full page load; this covers resizing and arriving by client navigation.
+  useEffect(() => {
+    const fit = () =>
+      document.documentElement.style.setProperty(
+        "--hire-zoom",
+        String(hireZoomFor(window.innerWidth)),
+      );
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+
   const cartCount = approved ? serverCartCount + overlayCount : guestCount;
   const pathname = usePathname();
   const desk =
@@ -68,7 +80,15 @@ export function HireChrome({
     (/^\/hire\/[^/]+$/.test(pathname ?? "") &&
       pathname !== "/hire/evidence" &&
       pathname !== "/hire/requests" &&
-      pathname !== "/hire/matches");
+      pathname !== "/hire/matches" &&
+      pathname !== "/hire/create-test" &&
+      pathname !== "/hire/assessments");
+  // Any desk route, not just `/hire`: "New search" inside a project returns
+  // `/hire/[id]` to screen 1 without leaving the project.
+  const isLanding = desk && landing && view === "scout";
+  // Everything on the desk after the landing is the results screen (Figma
+  // 1585:46): nav card left, results over the composer, profile panel right.
+  const isResults = desk && !isLanding;
 
   const [seenCartCount, setSeenCartCount] = useState(cartCount);
   if (cartCount !== seenCartCount) {
@@ -79,89 +99,156 @@ export function HireChrome({
   }
 
   return (
-    <div className={cn("hire-app", desk && "hire-app--desk")}>
+    <div
+      className={cn(
+        "hire-app",
+        desk && "hire-app--desk",
+        isLanding && "hire-app--landing",
+        isResults && "hire-app--results",
+      )}
+    >
+      {/* The green field is its OWN layer, not the landing's background, so
+          the two screens can cross-fade through it instead of the page
+          swapping colour in one frame. It is painted on both screens and
+          simply faded out on the results side. */}
+      {desk && (
+        <div className="hire-field" aria-hidden="true">
+          {/* Light-green blobs (moving) interleaved with the static dark
+              layers in the ORIGINAL gradient's paint order, so screen 1 is
+              exactly as bright as the design — just no longer still. */}
+          {(["a", "d", "b"] as const).map((g) => (
+            <span key={g} className={`hire-field__glow hire-field__glow--${g}`}>
+              <span className="hire-field__glow-y">
+                <span className="hire-field__glow-core" />
+              </span>
+            </span>
+          ))}
+          <span className="hire-field__shade hire-field__shade--low" />
+          <span className="hire-field__glow hire-field__glow--c">
+            <span className="hire-field__glow-y">
+              <span className="hire-field__glow-core" />
+            </span>
+          </span>
+          <span className="hire-field__shade hire-field__shade--high" />
+        </div>
+      )}
+
       <header className="hire-app__header">
         <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
           <span className="hire-app__logo">
-            <Image
-              src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
-              width={561}
-              height={168}
-              priority
-            />
+            {desk ? (
+              // Both wordmarks, stacked and crossfaded by the stage class:
+              // white on the green, the design's dark one on the light
+              // dashboard. Swapping the <Image> instead made the header
+              // change a whole frame ahead of the background.
+              <span className="hire-app__logo-swap">
+                <Image
+                  src="/hire/abtalks-wordmark.png"
+                  alt={isLanding ? "ABTalks" : ""}
+                  aria-hidden={!isLanding || undefined}
+                  width={342}
+                  height={67}
+                  priority
+                  className="hire-app__logo-img hire-app__logo-img--light"
+                />
+                <Image
+                  src="/hire/abtalks-wordmark-dark.png"
+                  alt={isLanding ? "" : "ABTalks"}
+                  aria-hidden={isLanding || undefined}
+                  width={346}
+                  height={81}
+                  priority
+                  className="hire-app__logo-img hire-app__logo-img--dark"
+                />
+              </span>
+            ) : (
+              <Image
+                src="/landing/abtalks-logo-mark.png"
+                alt="ABTalks"
+                width={561}
+                height={168}
+                priority
+              />
+            )}
           </span>
-          <span className="hire-app__badge">Hire</span>
+          {!isLanding && <span className="hire-app__badge">Hire</span>}
         </Link>
 
         <nav className="hire-app__nav">
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              starCount > 0 && "has-count",
-              view === "saved" && "is-current",
-            )}
-            aria-current={view === "saved" ? "page" : undefined}
-            title="Kept on this device — nothing is sent to our team from here"
-            onClick={() => (view === "saved" ? closePod() : openSaved())}
-          >
-            <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
-              <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
-            </span>
-            <span>Save for Later</span>
-            {starCount > 0 && (
-              <span className="hire-hbtn__count">{starCount}</span>
-            )}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              cartCount > 0 && "has-count",
-              view === "pod" && "is-current",
-            )}
-            aria-current={view === "pod" ? "page" : undefined}
-            onClick={() => (view === "pod" ? closePod() : openPod())}
-          >
-            <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
-              <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
-            </span>
-            <span>Shortlist</span>
-            {cartCount > 0 && (
-              <span className="hire-hbtn__count">{cartCount}</span>
-            )}
-          </button>
-          {account ? (
-            <RecruiterAccountMenu account={account} />
-          ) : pendingName ? (
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-lg px-2 py-1 text-left text-xs"
-                title="Application pending review"
-              >
-                <span className="block font-medium">{pendingName}</span>
-                <span className="text-muted-foreground">Pending · Sign out</span>
-              </button>
-            </form>
-          ) : authEnabled ? (
+          {!isLanding && (
             <>
               <button
                 type="button"
-                onClick={() => openAuth("nav")}
-                className="hire-signin"
+                className={cn(
+                  "hire-hbtn",
+                  starCount > 0 && "has-count",
+                  view === "saved" && "is-current",
+                )}
+                aria-current={view === "saved" ? "page" : undefined}
+                title="Kept on this device — nothing is sent to our team from here"
+                onClick={() => (view === "saved" ? closePod() : openSaved())}
               >
-                Sign in
+                <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
+                  <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
+                </span>
+                <span>Save for Later</span>
+                {starCount > 0 && (
+                  <span className="hire-hbtn__count">{starCount}</span>
+                )}
               </button>
+              <button
+                type="button"
+                className={cn(
+                  "hire-hbtn",
+                  cartCount > 0 && "has-count",
+                  view === "pod" && "is-current",
+                )}
+                aria-current={view === "pod" ? "page" : undefined}
+                onClick={() => (view === "pod" ? closePod() : openPod())}
+              >
+                <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
+                  <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
+                </span>
+                <span>Shortlist</span>
+                {cartCount > 0 && (
+                  <span className="hire-hbtn__count">{cartCount}</span>
+                )}
+              </button>
+              <Link
+                href="/hire/assessments"
+                className={cn(
+                  "hire-hbtn",
+                  "hire-hbtn--label",
+                  pathname === "/hire/assessments" && "is-current",
+                )}
+                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+              >
+                <span>Assessments</span>
+              </Link>
             </>
-          ) : null}
+          )}
+          {account ? (
+            <RecruiterAccountMenu account={account} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuth("nav")}
+              className="hire-signin"
+            >
+              Sign in
+            </button>
+          )}
         </nav>
       </header>
 
       {desk ? (
         <main className="hire-workspace">
-          <HireJourney />
+          {isResults && (
+            <HireSidebar account={account} />
+          )}
+          {/* On desktop the results screen hides this rail behind the nav card;
+              phones keep its compact step strip. */}
+          {!isLanding && <HireJourney />}
           <div
             className={cn(
               "hire-scout-region",
@@ -185,7 +272,7 @@ export function HireChrome({
         <div className="hire-plain">{children}</div>
       )}
 
-      {cartCount > 0 && !podDismissed && view === "scout" && (
+      {cartCount > 0 && !podDismissed && view === "scout" && !isLanding && (
         <div className="hire-podbar" role="status">
           <span className="hire-podbar__icon" aria-hidden="true">
             <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />

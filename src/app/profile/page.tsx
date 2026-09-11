@@ -9,8 +9,12 @@ import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { getProfileEvidence } from "@/features/profile/get-evidence";
 import { getResumeView } from "@/features/resume/service";
 import { computeCompleteness } from "@/features/profile/completeness";
+import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
+import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
+import { getProfilePerformance } from "@/features/profile/get-profile-performance";
+import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
-import { PROFILE_QUICK_SKILLS } from "@/lib/candidate-vocab";
+import { CANONICAL_SKILL_NAMES } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
@@ -20,7 +24,7 @@ import { EducationSection } from "@/components/profile/education-section";
 import { ProjectsSection } from "@/components/profile/projects-section";
 import { MockInterviewsSection } from "@/components/profile/mock-interviews-section";
 import { SkillsSection } from "@/components/profile/skills-section";
-import { CertificationsSection } from "@/components/profile/certifications-section";
+import { AccomplishmentsSection } from "@/components/profile/accomplishments-section";
 import { LinksSection } from "@/components/profile/links-section";
 import { ResumeSection } from "@/components/profile/resume-section";
 import { PreferencesSection } from "@/components/profile/preferences-section";
@@ -28,16 +32,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { PERSONA_LABELS } from "@/lib/candidate-vocab";
 import { isOtpVerificationRequired } from "@/lib/feature-flags";
 import { isAvatarStorageConfigured } from "@/features/profile/avatar-storage";
-
-/**
- * Placeholder figures — nothing measures these yet.
- *
- * Search appearances needs a write when a candidate is returned by a /hire
- * search; recruiter actions needs one when a recruiter opens or shortlists
- * them. Neither exists. When that tracking lands, replace this constant with
- * the real read and delete this comment — no other file needs to change.
- */
-const PROFILE_PERFORMANCE = { searchAppearances: 1, recruiterActions: 0 } as const;
 
 /**
  * Résumé parsing runs inline in a Server Action invoked from this route, and one
@@ -108,9 +102,12 @@ export default async function ProfilePage() {
     mockInterviewHistory,
     activeMockInterview,
     resume,
+    verifiedAccomplishments,
+    verifiedSkills,
+    performance,
   ] = await Promise.all([
     getProfileEvidence(userId),
-    getSkillsByNames(PROFILE_QUICK_SKILLS),
+    getSkillsByNames(CANONICAL_SKILL_NAMES),
     // The MockInterview tables exist on demo but the migration has not been
     // applied to production, so this query throws there until it is. The
     // profile must not 500 over it — it degrades to an empty list, which
@@ -139,6 +136,32 @@ export default async function ProfilePage() {
         message: e instanceof Error ? e.message : String(e),
       });
       return null;
+    }),
+    // Read-only derivation across Credential / Enrollment / ProgramEnrollment /
+    // HackathonParticipant. Never issues a certificate — unlike /achievements,
+    // opening the profile must not have write side effects. Degrades to an
+    // empty list on any environment where one of those tables is not migrated.
+    getVerifiedAccomplishments(userId).catch((e: unknown) => {
+      logger.warn("[profile] verified accomplishments unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return [];
+    }),
+    // Curriculum (ProgramSkill) × completion. Read-only and unstored, so a new
+    // cohort's skills reach everyone already past the bar with no backfill.
+    getVerifiedSkills(userId).catch((e: unknown) => {
+      logger.warn("[profile] verified skills unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return [];
+    }),
+    // Plan 120 — CandidateProfileEvent counts. Degrades to zeros until the
+    // migration is applied (or if the read fails for any other reason).
+    getProfilePerformance(userId).catch((e: unknown) => {
+      logger.warn("[profile] performance unavailable", {
+        message: e instanceof Error ? e.message : String(e),
+      });
+      return { searchAppearances: 0, recruiterActions: 0 };
     }),
   ]);
 
@@ -178,6 +201,7 @@ export default async function ProfilePage() {
             locationCity: s(detail.locationCity),
             locationRegion: s(detail.locationRegion),
             countryCode: s(detail.countryCode),
+            gender: detail.gender ?? "",
             primaryPersona: detail.primaryPersona ?? CandidatePersona.STUDENT,
           }}
         />
@@ -286,32 +310,46 @@ export default async function ProfilePage() {
             skillId: sk.skillId,
             name: sk.name,
             categoryName: sk.categoryName,
-            selfRated: sk.selfRated,
-            verified: sk.verified,
-            evidenceCount: sk.evidenceCount,
           }))}
+          verified={verifiedSkills}
         />
       ),
     },
     {
-      key: "certifications",
-      title: "Certifications",
-      description: "External certifications you hold.",
-      checklist: "certifications",
-      complete: sectionOf("certifications")?.complete ?? false,
+      key: "accomplishments",
+      title: "Accomplishments",
+      description:
+        "What you have earned here, the certifications you hold, and your awards.",
+      checklist: "accomplishments",
+      // Scoring still keys off "certifications" — completeness weights are a
+      // separate concern from what the tab is called.
+      complete:
+        (sectionOf("certifications")?.complete ?? false) ||
+        verifiedAccomplishments.length > 0,
       attention: false,
       savable: true,
       node: (
-        <CertificationsSection
-          initial={detail.certifications.map((c) => ({
-            name: c.name,
-            issuer: c.issuer,
-            issuedMonth: c.issuedMonth,
-            issuedYear: c.issuedYear,
-            expiresMonth: c.expiresMonth,
-            expiresYear: c.expiresYear,
-            credentialUrl: s(c.credentialUrl),
+        <AccomplishmentsSection
+          verified={verifiedAccomplishments.map((v) => ({
+            key: v.key,
+            title: v.title,
+            detail: v.detail,
+            outcomeLabel: v.outcomeLabel,
           }))}
+          initial={{
+            rows: detail.certifications.map((c) => ({
+              name: c.name,
+              issuer: c.issuer,
+              issuedMonth: c.issuedMonth,
+              issuedYear: c.issuedYear,
+              expiresMonth: c.expiresMonth,
+              expiresYear: c.expiresYear,
+              credentialUrl: s(c.credentialUrl),
+              // No expiry stored means the certificate does not expire.
+              noExpiry: c.expiresYear === null,
+            })),
+            awards: s(detail.awards),
+          }}
         />
       ),
     },
@@ -382,25 +420,42 @@ export default async function ProfilePage() {
   const firstIncomplete = steps.findIndex((step) => !step.complete);
   const initialIndex = firstIncomplete === -1 ? 0 : firstIncomplete;
 
+  // The report card links back into the wizard by index, so the mapping is
+  // derived from `steps` rather than restated — reordering a step here moves
+  // its Add / Edit button with it.
+  const stepIndexByKey = Object.fromEntries(
+    steps.map((step, i) => [step.key, i]),
+  );
+
+  const review = buildProfileReview({
+    detail,
+    personaLabel:
+      PERSONA_LABELS[detail.primaryPersona] ?? detail.primaryPersona,
+    score: completeness.score,
+    resume,
+    mockInterviewCount: mockInterviews.length,
+    verifiedAccomplishments,
+    verifiedSkills,
+    stepIndexByKey,
+  });
+
   return (
     <DashboardShell
       user={{ ...shellUser, name: detail.fullName || shellUser.name }}
       isAdmin={session.user.isAdmin ?? false}
       showSectionNav={false}
+      collapsible
+      contentClassName="min-h-0"
     >
       <ProfileWizard
         steps={steps}
         initialIndex={initialIndex}
         score={completeness.score}
         fullName={detail.fullName}
-        personaLabel={
-          PERSONA_LABELS[detail.primaryPersona] ?? detail.primaryPersona
-        }
         imageUrl={user.image ?? null}
-        updatedAtIso={detail.updatedAt.toISOString()}
-        performance={PROFILE_PERFORMANCE}
+        review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
-        openToWork={detail.preference?.openToWork ?? false}
+        performance={performance}
       />
     </DashboardShell>
   );

@@ -99,7 +99,7 @@ export function DaySubmitPanel({
   if (!canSubmit) {
     return (
       <section className="min-w-0 overflow-hidden rounded-[12px] border border-[#E0E0E0] bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)] md:p-5">
-        <h2 className="mb-4 font-heading text-base font-semibold text-[#111111] md:text-lg">
+        <h2 className="mb-4 font-heading text-base font-semibold text-[#000000] md:text-lg">
           {existingSubmission ? "Your submission" : "View only"}
         </h2>
         {existingSubmission &&
@@ -112,7 +112,7 @@ export function DaySubmitPanel({
                   href={existingSubmission.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex max-w-full items-start gap-1 text-[#E05226] underline-offset-4 hover:underline"
+                  className="flex max-w-full items-start gap-1 text-[#03535F] underline-offset-4 hover:underline"
                 >
                   <span className="min-w-0 flex-1 break-all">
                     {existingSubmission.githubUrl}
@@ -128,7 +128,7 @@ export function DaySubmitPanel({
                   href={existingSubmission.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex max-w-full items-start gap-1 text-[#E05226] underline-offset-4 hover:underline"
+                  className="flex max-w-full items-start gap-1 text-[#03535F] underline-offset-4 hover:underline"
                 >
                   <span className="min-w-0 flex-1 break-all">
                     {existingSubmission.linkedinUrl}
@@ -170,22 +170,22 @@ export function DaySubmitPanel({
       ) : null}
 
       <section className="rounded-[12px] border border-[#E0E0E0] bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)] md:p-5">
-        <h2 className="mb-4 font-heading text-base font-semibold text-[#111111] md:text-lg">
+        <h2 className="mb-4 font-heading text-base font-semibold text-[#000000] md:text-lg">
           Submit Day {dayNumber}
         </h2>
         <div className="space-y-5">
-          <div className="flex items-start gap-3 rounded-[12px] border border-[#E05226]/30 bg-[#FFECE3]/50 p-4">
+          <div className="flex items-start gap-3 rounded-[12px] border border-[#03535F]/30 bg-[#E7F2F3]/50 p-4">
             <input
               id="confirm-task"
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               disabled={submitting}
-              className="mt-0.5 size-4 shrink-0 rounded border border-[#E0E0E0] accent-[#E05226]"
+              className="mt-0.5 size-4 shrink-0 rounded border border-[#E0E0E0] accent-[#03535F]"
             />
             <label
               htmlFor="confirm-task"
-              className="text-sm font-medium leading-snug text-[#111111]"
+              className="text-sm font-medium leading-snug text-[#000000]"
             >
               I confirm I have completed today&apos;s task.
             </label>
@@ -198,7 +198,7 @@ export function DaySubmitPanel({
             <div className="space-y-2">
               <label
                 htmlFor="github-url"
-                className="text-sm font-medium text-[#111111]"
+                className="text-sm font-medium text-[#000000]"
               >
                 GitHub URL
               </label>
@@ -216,7 +216,7 @@ export function DaySubmitPanel({
             <div className="space-y-2">
               <label
                 htmlFor="linkedin-url"
-                className="text-sm font-medium text-[#111111]"
+                className="text-sm font-medium text-[#000000]"
               >
                 LinkedIn URL
               </label>

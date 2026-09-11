@@ -1,14 +1,23 @@
 import { z } from "zod";
-import { requiredPhoneSchema } from "@/lib/validations/phone";
 import { legalAcceptanceSchema } from "@/lib/validations/legal";
 
+/**
+ * What the register popup sends.
+ *
+ * Name, email and phone are deliberately absent: the server reads them from
+ * the session and the student profile (see `registration-identity.ts`), so the
+ * form only asks for what it does not already know. `phone` survives as an
+ * optional field for the rare account with no number on file — it is a plain
+ * (possibly empty) string rather than `.optional()` or `.default()` because
+ * either of those makes the schema's input and output types diverge, which
+ * breaks react-hook-form's resolver generics. The server applies
+ * `requiredPhoneSchema` to whatever it ends up with.
+ */
 export const participantSchema = z
   .object({
-    fullName: z.string().trim().min(2, "Name is required").max(120),
-    email: z.string().trim().toLowerCase().email("Enter a valid email"),
-    phone: requiredPhoneSchema,
     college: z.string().trim().min(2, "College is required").max(200),
     graduationYear: z.number().int().min(2024).max(2032),
+    phone: z.string().trim().max(24),
   })
   .merge(legalAcceptanceSchema);
 

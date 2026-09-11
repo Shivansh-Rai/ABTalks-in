@@ -29,7 +29,7 @@ export function TrackRow({ href, title, support, icon, badge }: Props) {
   } as const;
   const toneClasses = {
     success:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400",
+      "bg-[#D6F7EC] text-[#197E23] dark:bg-[#197E23]/50 dark:text-[#197E23]",
     neutral: "bg-muted text-muted-foreground",
   } as const;
   const Icon = iconMap[icon];

@@ -42,7 +42,12 @@ export async function saveHackathonSubmissionAction(
   }
 
   const participant = await prisma.hackathonParticipant.findUnique({
-    where: { userId: session.user.id },
+    where: {
+      eventId_userId: {
+        eventId: HACKATHON.eventId,
+        userId: session.user.id,
+      },
+    },
     select: { teamId: true },
   });
   if (!participant) {

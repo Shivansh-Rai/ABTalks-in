@@ -36,11 +36,11 @@ const DOMAIN_COLORS: Record<string, string> = {
   DS: "border-domains-ds/50 bg-domains-ds-bg text-domains-ds",
   AI: "border-domains-ai/50 bg-domains-ai-bg text-domains-ai",
   CLAUDE:
-    "border-[#E05226]/50 bg-[#FFECE3] text-[#C9411C]",
+    "border-[#03535F]/50 bg-[#E7F2F3] text-[#076573]",
 };
 
 const HACK_BADGE_COLOR =
-  "border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
+  "border-[#AA821D]/50 bg-[#FFEDB0] text-[#AA821D] dark:bg-[#AA821D]/40 dark:text-[#FFEDB0]";
 
 const BADGE_BASE =
   "inline-flex h-6 w-16 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-bold leading-none tracking-wide";
@@ -69,9 +69,7 @@ export function ChallengeSwitcher({
 
   function handleHackathon() {
     router.push(
-      isHackathonRegistered
-        ? "/hackathon/dashboard"
-        : "/hackathon/register?s=shr",
+      isHackathonRegistered ? "/hackathon/dashboard" : "/hackathon?s=shr",
     );
     router.refresh();
   }

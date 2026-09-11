@@ -53,8 +53,8 @@ export default function ChallengesPage() {
     <div className="relative min-h-svh overflow-hidden bg-background">
       <BackgroundBlobs />
 
-      <header className="relative z-20 border-b border-border/60 bg-background/75 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 md:px-8">
+      <header className="abt-header z-20">
+        <div className="abt-header-inner">
           <Link
             href="/"
             aria-label="Back to ABTalks home"
@@ -72,10 +72,7 @@ export default function ChallengesPage() {
               />
             </span>
           </Link>
-          <Link
-            href="/login"
-            className={buttonVariants({ variant: "ghost" })}
-          >
+          <Link href="/login" className="abt-header-cta">
             Sign in
           </Link>
         </div>
@@ -100,7 +97,7 @@ export default function ChallengesPage() {
               href="#choose-domain"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "h-12 rounded-xl bg-[#E05226] px-6 text-primary-foreground hover:bg-[#C9411C]",
+                "h-12 rounded-xl bg-[#03535F] px-6 text-primary-foreground hover:bg-[#076573]",
               )}
             >
               Start the challenge
@@ -205,9 +202,9 @@ export default function ChallengesPage() {
             carefully.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+            <div className="rounded-2xl border border-[#D92D20]/20 bg-[#D92D20]/5 p-5">
               <div className="flex items-start gap-3">
-                <ShieldX className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+                <ShieldX className="mt-0.5 h-5 w-5 shrink-0 text-[#D92D20]" />
                 <div>
                   <h3 className="font-display text-sm font-semibold text-foreground">
                     Foul Language or Harassment
@@ -221,9 +218,9 @@ export default function ChallengesPage() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <div className="rounded-2xl border border-[#AA821D]/20 bg-[#AA821D]/5 p-5">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#AA821D]" />
                 <div>
                   <h3 className="font-display text-sm font-semibold text-foreground">
                     Cheating or Platform Misuse
@@ -264,7 +261,7 @@ function BackgroundBlobs() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
       <div className="absolute -right-32 top-12 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
-      <div className="absolute -left-40 top-[46rem] h-96 w-96 rounded-full bg-[#FFECE3] blur-3xl" />
+      <div className="absolute -left-40 top-[46rem] h-96 w-96 rounded-full bg-[#E7F2F3] blur-3xl" />
     </div>
   );
 }

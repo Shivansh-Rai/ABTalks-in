@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+// T-259: the MSG91 widget puts the phone number into its error objects, so the
+// raw value must never be handed to console.error. `safeErrorMessage` is
+// dependency-free and browser-safe - it does not pull the server logger in.
+import { safeErrorMessage } from "@/lib/observability/redact";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { verifyOtpAction } from "@/app/actions/otp-actions";
@@ -257,7 +261,7 @@ export function PhoneVerifyField({
       setCooldown(RESEND_COOLDOWN_SECONDS);
       toast.success("OTP sent to your phone");
     } catch (e) {
-      console.error("[otp] sendOtp failed", e);
+      console.error("[otp] sendOtp failed", safeErrorMessage(e));
       toast.error("Could not send OTP. Please try again.");
     } finally {
       setSending(false);
@@ -283,7 +287,7 @@ export function PhoneVerifyField({
       setCooldown(RESEND_COOLDOWN_SECONDS);
       toast.success("OTP resent");
     } catch (e) {
-      console.error("[otp] retryOtp failed", e);
+      console.error("[otp] retryOtp failed", safeErrorMessage(e));
       toast.error("Could not resend OTP.");
     }
   }
@@ -326,7 +330,7 @@ export function PhoneVerifyField({
       toast.success("Phone number verified");
       onVerified?.(toE164(countryCode, phoneNumber));
     } catch (e) {
-      console.error("[otp] verifyOtp failed", e);
+      console.error("[otp] verifyOtp failed", safeErrorMessage(e));
       toast.error("Invalid code. Please try again.");
     } finally {
       setVerifying(false);
@@ -384,7 +388,7 @@ export function PhoneVerifyField({
       </div>
 
       {verificationRequired && isIndia && step === "verified" ? (
-        <p className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+        <p className="flex items-center gap-1.5 text-sm text-[#197E23] dark:text-[#197E23]">
           <CheckCircle2 className="size-4" aria-hidden />
           Phone number verified
         </p>

@@ -36,7 +36,12 @@ export async function removeHackathonTeamMemberAction(
   }
 
   const me = await prisma.hackathonParticipant.findUnique({
-    where: { userId: session.user.id },
+    where: {
+      eventId_userId: {
+        eventId: HACKATHON.eventId,
+        userId: session.user.id,
+      },
+    },
     select: {
       id: true,
       teamId: true,

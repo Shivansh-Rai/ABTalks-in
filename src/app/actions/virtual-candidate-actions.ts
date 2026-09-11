@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/admin-auth";
+import { requireRegisteredRecruiterAction } from "@/lib/recruiter-gate";
 import { isVirtualCandidatesEnabled } from "@/lib/feature-flags";
 import {
   cancelVirtualCandidateRequest,
@@ -24,35 +22,7 @@ import {
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
-/**
- * Registered is enough to ask us to source someone.
- *
- * Deliberately looser than the introductions gate. Asking for a candidate to be
- * found reveals nothing about anybody — there is nobody yet — so holding it
- * behind approval would only lose the demand signal from recruiters who signed
- * up precisely because their search came back empty.
- */
-async function requireRegisteredRecruiter(): Promise<
-  ActionResult<{ userId: string }>
-> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Sign in to request a candidate." };
-  }
-  try {
-    const profile = await prisma.recruiterProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { userId: true },
-    });
-    if (!profile) return { ok: false, message: "Register as a recruiter first." };
-    return { ok: true, data: { userId: session.user.id } };
-  } catch (error) {
-    logger.error("[hire] requireRegisteredRecruiter (virtual)", {
-      error: String(error),
-    });
-    return { ok: false, message: "Could not reach the server. Try again." };
-  }
-}
+const requireRegisteredRecruiter = requireRegisteredRecruiterAction;
 
 /**
  * "Request Candidate" on a virtual profile.

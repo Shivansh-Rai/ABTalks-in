@@ -32,13 +32,13 @@ function domainBadgeClass(domain: string): string {
   if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
   if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
   if (domain === "CLAUDE")
-    return "border-orange-500/40 bg-orange-50 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200";
+    return "border-[#03535F]/40 bg-[#EEF6F6] text-[#02434D] dark:bg-[#02434D]/40 dark:text-[#D4EBEC]";
   return "border-domains-se/50 bg-domains-se-bg text-domains-se";
 }
 
 function statusBadgeClass(status: string): string {
-  if (status === "ACTIVE") return "bg-emerald-100 text-emerald-700";
-  if (status === "COMPLETED") return "bg-[#FFECE3] text-[#C9411C]";
+  if (status === "ACTIVE") return "bg-[#D6F7EC] text-[#197E23]";
+  if (status === "COMPLETED") return "bg-[#E7F2F3] text-[#076573]";
   return "bg-muted text-muted-foreground";
 }
 

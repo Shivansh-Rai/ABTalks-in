@@ -144,6 +144,23 @@ export const TRACKS: readonly TrackDescriptor[] = [
     enabled: () => hireChallengePool().enabled,
   },
   {
+    slug: "PROFILE",
+    label: "Profile only",
+    // Recruiters do not ask for this track by name — it is what an unscoped
+    // search should already include. The aliases are for the rare explicit ask.
+    aliases: [/\bprofile[-\s]?only\b/i, /\bno cohort\b/i, /\bopen pool\b/i],
+    evidenceKinds: ["declared skills"],
+    // Profile-only candidates are not tied to a geography.
+    geo: null,
+    // No day scale exists here; a day floor would silently empty the result.
+    supportsEvidenceDays: false,
+    // Lowest priority: anyone with real ABTalks evidence should show as that
+    // track's card, not as a bare profile.
+    dedupePriority: 10,
+    // Not a learning-catalog track — membership is profile state, not a cohort.
+    cohortSlug: null,
+  },
+  {
     slug: "HACKATHON",
     label: "Hackathon",
     aliases: [/\bhackathons?\b/i, /\bhackathoners?\b/i, /\bvibe code\b/i],

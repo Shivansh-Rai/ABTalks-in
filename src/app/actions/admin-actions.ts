@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { Role, PointsSourceType } from "@prisma/client";
 import { z } from "zod";
 import { prisma, writeClient } from "@/lib/db";
-import { isAdminEmail, requireAdmin } from "@/lib/admin-auth";
+import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { computeStreakStats } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
@@ -16,6 +16,10 @@ import {
   dualWriteDeleteEnrollmentSubmissions,
   dualWriteDeleteSubmissionAttempt,
 } from "@/repositories/dual-write";
+import {
+  anonymizeUser,
+  AnonymizeUserError,
+} from "@/features/admin/anonymize-user";
 import {
   applyPointsChange,
   lockWalletBalance,
@@ -272,6 +276,67 @@ export async function removeFromChallengeAction(input: {
   }
 }
 
+const deleteUserAccountInput = z.object({
+  targetUserId: z.string().min(1),
+  confirm: z.literal("delete"),
+});
+
+export async function deleteUserAccountAction(input: {
+  targetUserId: string;
+  confirm: string;
+}) {
+  const admin = await requireAdmin();
+  const parsed = deleteUserAccountInput.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false as const,
+      message: 'Type "delete" to confirm account deletion',
+    };
+  }
+
+  const { targetUserId } = parsed.data;
+
+  if (targetUserId === admin.userId) {
+    return {
+      ok: false as const,
+      message: "You cannot delete your own account",
+    };
+  }
+
+  if (await hasPlatformAdmin(targetUserId)) {
+    return {
+      ok: false as const,
+      message: "Cannot delete a platform admin account",
+    };
+  }
+
+  try {
+    await writeClient().$transaction(
+      async (tx) => {
+        await anonymizeUser(tx, {
+          userId: targetUserId,
+          adminUserId: admin.userId,
+        });
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      },
+    );
+
+    revalidateAdminViews(targetUserId);
+    return { ok: true as const };
+  } catch (e) {
+    if (e instanceof AnonymizeUserError) {
+      return { ok: false as const, message: e.message };
+    }
+    return {
+      ok: false as const,
+      message: e instanceof Error ? e.message : "Failed to delete user account",
+    };
+  }
+}
+
 export async function rejectSubmissionAction(input: {
   submissionId: string;
   reason?: string;
@@ -429,15 +494,15 @@ export async function grantSynergyAction(input: {
           email: true,
           role: true,
           studentProfile: { select: { id: true } },
-          hackathonParticipant: { select: { id: true } },
+          hackathonParticipants: { take: 1, select: { id: true } },
         },
       });
-      const targetIsAdmin = await isAdminEmail(target?.email);
+      const targetIsAdmin = await hasPlatformAdmin(targetUserId);
       if (
         !target ||
         target.role !== Role.STUDENT ||
         targetIsAdmin ||
-        (!target.studentProfile && !target.hackathonParticipant)
+        (!target.studentProfile && target.hackathonParticipants.length === 0)
       ) {
         throw new Error("Registered student not found");
       }

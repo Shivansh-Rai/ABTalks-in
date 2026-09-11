@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, Send, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { placeBulkEngagementRequestAction } from "@/app/actions/hire-request-actions";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
+import { setMatchDecisionAction } from "@/app/actions/talent-project-actions";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
@@ -64,7 +66,7 @@ function isAsked(row: CartRow, requested: string[]): boolean {
 export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
-  const { approved, pending: approvalPending, openAuth } = useHireAuth();
+  const { approved, openAuth } = useHireAuth();
   const [extra, setExtra] = useState<CartRow[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -148,6 +150,31 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
       next.delete(row.candidateRef);
       return next;
     });
+    // A project row is removed through T-149 — SHORTLISTED -> UNDECIDED, keyed
+    // on requestId + candidateUserId. Routing it through the legacy action was
+    // the "Member not found" on removal: that action looks up a ProgramMember
+    // in the single published cohort, which cannot name most candidates, and
+    // for a non-program row `memberId` is null outright.
+    //
+    // The row is NOT deleted. The match keeps its firstSeenAt/viewedAt history
+    // and simply stops being shortlisted.
+    if (approved && row.projectRequestId && row.candidateUserId) {
+      startTransition(async () => {
+        const res = await setMatchDecisionAction({
+          requestId: row.projectRequestId!,
+          candidateUserId: row.candidateUserId!,
+          decision: "UNDECIDED",
+        });
+        if (!res.ok) {
+          toast.error(res.message);
+          return;
+        }
+        toast.success("Removed from Shortlist");
+        router.refresh();
+      });
+      return;
+    }
+
     if (approved && row.memberId) {
       startTransition(async () => {
         const res = await toggleShortlistAction({ memberId: row.memberId! });
@@ -176,10 +203,6 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
       return;
     }
     if (!approved) {
-      if (approvalPending) {
-        toast.error("Your recruiter application is still being reviewed.");
-        return;
-      }
       savePendingCheckout({
         candidateRefs: refs,
         note: note.trim() || undefined,
@@ -379,6 +402,23 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
             Place request for {selected.size} candidate
             {selected.size === 1 ? "" : "s"}
           </button>
+          <div className="hire-pod__assess-divider" aria-hidden="true" />
+          {rows.length === 0 ? (
+            <button
+              type="button"
+              disabled
+              className="hire-pod__assess is-disabled"
+              title="Add candidates to your Shortlist first"
+            >
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </button>
+          ) : (
+            <Link href="/hire/create-test" className="hire-pod__assess">
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </Link>
+          )}
         </aside>
       </div>
     </section>

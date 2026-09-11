@@ -66,7 +66,7 @@ function HubTestimonialCard({ name, org, photo, quote }: Testimonial) {
               margin: 0,
               fontSize: 16,
               fontWeight: 700,
-              color: "#111",
+              color: "#000000",
             }}
           >
             {name}
@@ -76,7 +76,7 @@ function HubTestimonialCard({ name, org, photo, quote }: Testimonial) {
               style={{
                 margin: "2px 0 0",
                 fontSize: 14,
-                color: "#666",
+                color: "#626262",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",

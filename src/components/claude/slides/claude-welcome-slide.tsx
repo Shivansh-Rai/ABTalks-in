@@ -15,9 +15,9 @@ export function ClaudeWelcomeSlide() {
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10"
+        className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#03535F]/10"
       >
-        <Sparkles className="h-8 w-8 text-orange-500" />
+        <Sparkles className="h-8 w-8 text-[#03535F]" />
       </motion.div>
 
       <motion.h1
@@ -28,7 +28,7 @@ export function ClaudeWelcomeSlide() {
       >
         Master Claude AI
         <br />
-        <span className="text-[#E05226]">
+        <span className="text-[#03535F]">
           in 60 Days
         </span>
       </motion.h1>

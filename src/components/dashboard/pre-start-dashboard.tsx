@@ -84,7 +84,7 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border bg-[#FFF5F0] p-6 text-center md:p-8"
+        className="rounded-2xl border bg-[#EEF6F6] p-6 text-center md:p-8"
       >
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
           <Rocket className="h-8 w-8 text-primary" />
@@ -179,10 +179,10 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="rounded-2xl border bg-emerald-500/5 p-6 text-center"
+        className="rounded-2xl border bg-[#18D39B]/5 p-6 text-center"
       >
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-          <MessageCircle className="h-6 w-6 text-emerald-500" />
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#18D39B]/10">
+          <MessageCircle className="h-6 w-6 text-[#197E23]" />
         </div>
         <h2 className="font-display text-lg font-semibold">
           Join the WhatsApp Community
@@ -196,7 +196,7 @@ export function PreStartDashboard({ enrollment, challenge }: Props) {
           rel="noopener noreferrer"
           className={cn(
             buttonVariants({ variant: "outline" }),
-            "mt-4 inline-flex border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400",
+            "mt-4 inline-flex border-[#18D39B]/30 text-[#197E23] hover:bg-[#18D39B]/10 dark:text-[#197E23]",
           )}
         >
           Join WhatsApp Group

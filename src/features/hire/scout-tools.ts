@@ -30,6 +30,7 @@ import {
   isMonthlyContext,
   parseMoney,
 } from "@/features/hire/spec-fields";
+import { requirementFingerprint } from "@/features/hire/requirement-fingerprint";
 import { describeTracks, trackLabels } from "@/features/hire/track-registry";
 
 /**
@@ -128,15 +129,60 @@ function result(
   return JSON.stringify(payload);
 }
 
-/** Is there enough here to run a search that means something? */
+/**
+ * Is there enough here to run a search that means something?
+ *
+ * Canonical Scout gate: a role, one or more skills, or an explicit track pool.
+ * Experience / location / salary alone never open the pool — that would dump
+ * the whole candidate set. Prefer this helper over ad-hoc checks.
+ */
 export function searchable(spec: JobSpec): boolean {
   const extra = readPoolExtra(spec);
   return (
-    extra.sources.length > 0 ||
-    extra.minEvidenceDays != null ||
     Boolean(spec.title?.trim()) ||
-    (spec.mustHaveStack?.length ?? 0) > 0
+    (spec.mustHaveStack?.length ?? 0) > 0 ||
+    extra.sources.length > 0
   );
+}
+
+/** Alias kept for call sites that read as a predicate name. */
+export const isSearchable = searchable;
+
+/**
+ * Stable signature for "the same effective search". Used to skip duplicate
+ * auto-searches when only casing / skill order / whitespace changed.
+ */
+export function searchFingerprint(spec: JobSpec): string {
+  const fp = requirementFingerprint(spec);
+  const extra = readPoolExtra(spec);
+  const sources = [...extra.sources].map((s) => s.toLowerCase()).sort();
+  return [
+    fp.key,
+    `sources:${sources.join("+") || "any"}`,
+    `days:${extra.minEvidenceDays ?? "any"}`,
+    `limit:${extra.resultLimit ?? "any"}`,
+  ].join("|");
+}
+
+export function shouldAutoSearch(
+  spec: JobSpec,
+  opts?: { force?: boolean },
+): boolean {
+  if (!searchable(spec)) return false;
+  if (opts?.force) return true;
+  const last = (spec.extra as { lastSearchFingerprint?: unknown } | null | undefined)
+    ?.lastSearchFingerprint;
+  return typeof last !== "string" || last !== searchFingerprint(spec);
+}
+
+export function stampSearchFingerprint(spec: JobSpec): JobSpec {
+  return {
+    ...spec,
+    extra: {
+      ...(spec.extra ?? {}),
+      lastSearchFingerprint: searchFingerprint(spec),
+    },
+  };
 }
 
 /**
@@ -151,7 +197,7 @@ export function searchable(spec: JobSpec): boolean {
  */
 function stillMissing(spec: JobSpec): string[] {
   if (searchable(spec)) return [];
-  return ["a track to search, or the role you are hiring for"];
+  return ["the role you are hiring for, or at least one must-have skill"];
 }
 
 /* ── update_brief ─────────────────────────────────────────────────────────── */
@@ -432,7 +478,7 @@ export function createScoutTools(
     {
       name: "update_brief",
       description:
-        "Record what the recruiter stated about the role — title, seniority, skills, budget, work mode, notice, experience. This is the common case: \"senior backend engineer, python and postgres, 25 LPA, remote\" is four stated facts, not a question. salaryText must be the recruiter's own words for the money and nothing else (\"20k\", \"25 LPA\", \"1.2 crore\") — never a figure you computed, and never a whole sentence. Pass only what they actually said; a value they did not state is omitted, not guessed. Anything returned under `rejected` was NOT applied — tell the recruiter, using the reason given, and never restate it as accepted.",
+        "Record what the recruiter stated about the role — title, seniority, skills, budget, work mode, employment type, notice, experience. Employment type is one of FULL_TIME, CONTRACT, INTERNSHIP, PART_TIME, FREELANCE (freelance / contractor gigs use FREELANCE). This is the common case: \"senior backend engineer, python and postgres, 25 LPA, remote\" is four stated facts, not a question. salaryText must be the recruiter's own words for the money and nothing else (\"20k\", \"25 LPA\", \"1.2 crore\") — never a figure you computed, and never a whole sentence. Pass only what they actually said; a value they did not state is omitted, not guessed. Anything returned under `rejected` was NOT applied — tell the recruiter, using the reason given, and never restate it as accepted.",
       schema: updateBriefArgsSchema,
     },
   );

@@ -80,7 +80,7 @@ export function DashboardShell({
   }, [mobileOpen, closeMobile]);
 
   return (
-    <div className="theme-abtalks-light theme-abtalks-orange flex min-h-svh bg-[#FBF9F7] font-content text-black">
+    <div className="theme-abtalks-light theme-abtalks-brand flex min-h-svh bg-[#F4F4F4] font-content text-black">
       <DashboardSidebar
         user={user}
         mobileOpen={mobileOpen}
@@ -99,24 +99,34 @@ export function DashboardShell({
         />
       ) : null}
 
-      <div className="flex min-h-svh min-w-0 flex-1 flex-col">
-        <DashboardHeader
-          isAdmin={isAdmin}
-          menuOpen={mobileOpen}
-          onMenuClick={() => setMobileOpen(true)}
-          showSectionNav={showSectionNav}
-          sectionNavItems={sectionNavItems}
-          searchItems={searchItems}
-        />
+      <div className="flex h-svh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {/* The footer lives INSIDE the scroller. Outside it, the column is
+            viewport-height and the footer sits below the fold forever — which
+            is why it read as pinned in place. `min-h-full` keeps it at the
+            bottom when a page is short, and lets it scroll into view when the
+            page is long. */}
         <div
           className={cn(
-            "flex-1 overflow-x-hidden scroll-smooth",
+            "abt-content-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
             contentClassName,
           )}
         >
-          {children}
+          {/* The header is sticky INSIDE the scroller so page content passes
+              beneath it and the frosted glass has something to blur — the
+              same treatment as the landing and workshop headers. */}
+          <DashboardHeader
+            isAdmin={isAdmin}
+            menuOpen={mobileOpen}
+            onMenuClick={() => setMobileOpen(true)}
+            showSectionNav={showSectionNav}
+            sectionNavItems={sectionNavItems}
+            searchItems={searchItems}
+          />
+          <div className="flex min-h-[calc(100%-55px)] flex-col">
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <DashboardFooter />
+          </div>
         </div>
-        <DashboardFooter />
       </div>
     </div>
   );

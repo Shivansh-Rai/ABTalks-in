@@ -16,6 +16,8 @@ import {
   createScoutToolContext,
   createScoutTools,
   searchable,
+  shouldAutoSearch,
+  stampSearchFingerprint,
   type ScoutToolDeps,
 } from "@/features/hire/scout-tools";
 import { runScoutGraph } from "@/features/hire/scout-graph";
@@ -107,7 +109,7 @@ function groqIsCooling(): boolean {
 
 function searchNow(spec: JobSpec): ScoutAgentResult {
   return {
-    spec,
+    spec: stampSearchFingerprint(spec),
     text: "Searching the verified pool now — the cards are on their way.",
     action: "search",
     degraded: false,
@@ -138,6 +140,11 @@ prime minister of india" is out of scope, not a request for Indian candidates.
 One message is often several things at once. Record everything they stated before
 you ask for anything missing; never end a turn having captured nothing.
 
+Search-first: once the brief has a role OR at least one skill (or a named track
+pool), call search_pool this turn. Do not interview for stack, seniority, or
+salary before the first search — those are optional refinements after results.
+Clarify only when you truly cannot search (no role, no skills, no track).
+
 Showing candidates is the product: a search puts anonymous cards on their screen.
 Asking for candidates is never something you refuse. Names, emails and phone
 numbers you simply do not have — cards carry a reference id and the team handles
@@ -167,8 +174,8 @@ export type ScoutAgentResult = {
  * Everything Scout can say without a model.
  *
  * Reached when Groq is unreachable, out of budget, over the hop limit, or out of
- * time. It deliberately never searches: firing a search on a guess is the exact
- * failure this rewrite exists to remove.
+ * time. When the latest valid brief is already searchable, the engine still
+ * searches — a timeout must not turn a usable brief into an intake questionnaire.
  */
 function fallbackText(spec: JobSpec, action?: "search" | "reset" | null): string {
   const extra = readPoolExtra(spec);
@@ -178,7 +185,7 @@ function fallbackText(spec: JobSpec, action?: "search" | "reset" | null): string
     return "Searching the verified pool now — the cards are on their way.";
   }
   if (searchable(spec)) {
-    return "I have enough to search on — tap Show me, or tell me anything else you want weighted.";
+    return "I have enough to search on — refining is optional from here.";
   }
   if (extra.sources.length === 0 && !spec.title?.trim()) {
     const tracks = describeTracks()
@@ -285,25 +292,42 @@ export async function runScoutAgent(args: {
   // Enum-shaped answers ("mid", "remote") land even if the hop 429s after this.
   seeded = applyObviousAnswers(seeded, msg);
 
-  // Do not spend a Groq hop to start a search the engine already knows to run.
-  // "now give me the list of candidate" was dying on 429 and never searching.
-  if (wantsToSeeCards(msg) && searchable(seeded)) {
-    return searchNow(seeded);
-  }
-
   // Asking about the 429 is not a hiring turn. Sending it to Groq 429s again.
+  // Checked before auto-search so a usable brief + "why at capacity" does not
+  // fire a duplicate search.
   if (/\b(capacity|rate limit|too many requests|atak)\b/i.test(msg)) {
     return {
       spec: seeded,
       text: searchable(seeded)
-        ? "That was Groq hitting its rate limit, not a problem with your brief. Tap Show me — everything you told me is saved."
+        ? "That was Groq hitting its rate limit, not a problem with your brief. Your brief is saved — refine if you want, or tap Search again."
         : "That was Groq hitting its rate limit. Give it half a minute and send the requirement again.",
       action: null,
       degraded: true,
     };
   }
 
+  // Search-first: once the UPDATED brief is searchable, run search without
+  // waiting for "show me" / "find candidates". Explicit see-cards still forces
+  // a re-run even when the fingerprint is unchanged. Questions go to the model
+  // (pool counts, etc.) instead of searching on a role keyword alone.
+  const forceSearch = wantsToSeeCards(msg);
+  const looksLikeQuestion =
+    msg.endsWith("?") ||
+    /^(how many|what|who|why|when|where|which)\b/i.test(msg);
+  if (
+    (!looksLikeQuestion || forceSearch) &&
+    shouldAutoSearch(seeded, { force: forceSearch })
+  ) {
+    return searchNow(seeded);
+  }
+
   if (groqIsCooling() || !process.env.GROQ_API_KEY) {
+    if (
+      (!looksLikeQuestion || forceSearch) &&
+      shouldAutoSearch(seeded, { force: forceSearch })
+    ) {
+      return { ...searchNow(seeded), degraded: true };
+    }
     const noted = briefDelta(args.priorSpec, seeded);
     return {
       spec: seeded,
@@ -354,15 +378,34 @@ export async function runScoutAgent(args: {
 
   // A tool may have already moved the brief before the loop failed. Keeping that
   // work is right: the recruiter said it, and it was validated when it landed.
+  // Search-first on timeout: if the latest valid brief is searchable, search it
+  // instead of asking the recruiter to repeat themselves.
   if (!run.ok) {
     if (run.reason === "rate_limit") markGroqCooling();
-    if (wantsToSeeCards(msg) && searchable(ctx.spec)) {
+    if (ctx.action === "reset") {
+      return {
+        spec: ctx.spec,
+        text: fallbackText(ctx.spec, "reset"),
+        action: "reset",
+        degraded: true,
+        offeredChips: ctx.offeredChips,
+      };
+    }
+    if (
+      searchable(ctx.spec) &&
+      (run.reason === "timeout" ||
+        forceSearch ||
+        ctx.action === "search" ||
+        shouldAutoSearch(ctx.spec))
+    ) {
       return { ...searchNow(ctx.spec), degraded: true };
     }
     const noted = briefDelta(args.priorSpec, ctx.spec);
     const retry =
       run.reason === "timeout"
-        ? "That took too long on my side — say it again and I'll pick it up."
+        ? searchable(ctx.spec)
+          ? "That took too long on my side — I still have your brief."
+          : "That took too long on my side — say it again and I'll pick it up."
         : run.reason === "rate_limit"
           ? "I'm at capacity for a moment — give it a few seconds and send that again. Nothing you've told me is lost."
           : run.reason === "auth"
@@ -376,13 +419,21 @@ export async function runScoutAgent(args: {
       text: noted.length
         ? `Noted: ${noted.join(" · ")}. ${retry}`
         : retry,
-      action: ctx.action,
+      action: null,
       degraded: true,
       offeredChips: ctx.offeredChips,
     };
   }
 
   if (!run.text) {
+    if (
+      ctx.action !== "reset" &&
+      shouldAutoSearch(ctx.spec, {
+        force: forceSearch || ctx.action === "search",
+      })
+    ) {
+      return { ...searchNow(ctx.spec), degraded: true };
+    }
     return {
       spec: ctx.spec,
       text: fallbackText(ctx.spec, ctx.action),
@@ -397,6 +448,14 @@ export async function runScoutAgent(args: {
       offending: ungroundedFigures(run.text, ctx.facts, msg, ctx.spec).join(","),
       text: run.text.slice(0, 300),
     });
+    if (
+      ctx.action !== "reset" &&
+      shouldAutoSearch(ctx.spec, {
+        force: forceSearch || ctx.action === "search",
+      })
+    ) {
+      return { ...searchNow(ctx.spec), degraded: true };
+    }
     return {
       spec: ctx.spec,
       text: fallbackText(ctx.spec, ctx.action),
@@ -406,25 +465,39 @@ export async function runScoutAgent(args: {
     };
   }
 
-  // ── The engine decides to search when the model forgot to. ────────────────
-  //
-  // "give me 5 students from the claude challenge" is a request for people, and
-  // a recruiter who asked plainly must not have to ask again because the model
-  // chose to keep interviewing them. Both keys are still required: the words
-  // have to read as a request, and the brief has to actually be searchable —
-  // which needs a track or a role the recruiter genuinely stated.
-  const action =
-    ctx.action ?? (wantsCandidates(msg) && searchable(ctx.spec) ? "search" : null);
+  // Engine decides search from the UPDATED brief. Explicit search verbs and the
+  // model's search_pool tool force a run; otherwise search whenever the brief
+  // became newly searchable (fingerprint changed).
+  if (ctx.action === "reset") {
+    return {
+      spec: ctx.spec,
+      text: delugSlugs(run.text).slice(0, 700),
+      action: "reset",
+      degraded: false,
+      offeredChips: ctx.offeredChips,
+    };
+  }
+
+  const willSearch = shouldAutoSearch(ctx.spec, {
+    force: forceSearch || wantsCandidates(msg) || ctx.action === "search",
+  });
+
+  if (willSearch) {
+    return {
+      ...searchNow(ctx.spec),
+      text:
+        ctx.action === "search"
+          ? delugSlugs(run.text).slice(0, 700)
+          : "Searching the verified pool now — the cards are on their way.",
+      degraded: false,
+      offeredChips: ctx.offeredChips,
+    };
+  }
 
   return {
     spec: ctx.spec,
-    // Slugs are stripped here rather than trusted to the prompt: the model has
-    // leaked them to a recruiter despite being told twice not to.
-    text:
-      action === "search" && ctx.action !== "search"
-        ? "Searching the verified pool now — the cards are on their way."
-        : delugSlugs(run.text).slice(0, 700),
-    action,
+    text: delugSlugs(run.text).slice(0, 700),
+    action: null,
     degraded: false,
     offeredChips: ctx.offeredChips,
   };

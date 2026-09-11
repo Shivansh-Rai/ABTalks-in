@@ -1,16 +1,12 @@
 import "server-only";
-import { BrevoClient } from "@getbrevo/brevo";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { sendEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
-const brevoApiKey = process.env.BREVO_API_KEY!;
-const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
-const fromName = process.env.FROM_NAME || "ABTalks";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
 const logoUrl = `${appUrl}/abtalks-logo.png`;
 
-const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
-
-const WHATSAPP_LINK =
-  "https://chat.whatsapp.com/FOfHNBfoNbw473EHo3FyOS?s=cl&p=a&ilr=1";
+const WHATSAPP_LINK = HACKATHON.whatsappLink;
 const SOCIALS = {
   linkedin: "https://www.linkedin.com/company/abtalks-on-ai",
   youtube: "https://youtube.com/@abtalksonai",
@@ -18,12 +14,12 @@ const SOCIALS = {
 };
 
 const C = {
-  text: "#1f2430",
-  muted: "#5b6472",
-  soft: "#8a93a2",
-  accent: "#6366f1",
-  border: "#e6e8ee",
-  panel: "#f5f3ff",
+  text: "#353535",
+  muted: "#626262",
+  soft: "#8F8F8F",
+  accent: "#076573",
+  border: "#E9E9E9",
+  panel: "#EEF6F6",
 };
 
 function eventDetailsBlock(): string {
@@ -48,12 +44,12 @@ function shell(bodyHtml: string): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#F4F4F4;font-family:Inter,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:40px 20px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(20,23,40,0.06);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(53, 53, 53, 0.06);">
         <tr>
-          <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px 32px;text-align:center;">
+          <td style="background:linear-gradient(135deg,#076573,#076573);padding:30px 32px;text-align:center;">
             <img src="${logoUrl}" alt="ABTalks" width="140" style="display:block;margin:0 auto;height:auto;max-width:140px;border:0;outline:none;text-decoration:none;" />
             <p style="color:rgba(255,255,255,0.92);font-size:13px;letter-spacing:0.5px;margin:10px 0 0;">48-Hour AI Hackathon</p>
           </td>
@@ -65,7 +61,7 @@ function shell(bodyHtml: string): string {
           </td>
         </tr>
         <tr>
-          <td style="background-color:#fafbfc;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
+          <td style="background-color:#FFFFFF;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
             <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${C.soft};">Follow ABTalks on AI</p>
             <p style="margin:0;font-size:13px;line-height:1.9;color:${C.muted};">
               LinkedIn: <a href="${SOCIALS.linkedin}" style="color:${C.accent};text-decoration:none;">${SOCIALS.linkedin}</a><br>
@@ -93,18 +89,63 @@ function whatsappLine(): string {
   return `Join our official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a>`;
 }
 
+/**
+ * Plain-text alternative. These messages used to go out as HTML only, which
+ * mailbox providers score as more spam-like — a plausible reason a registrant
+ * finds nothing in their inbox even when Brevo reports the send as accepted.
+ */
+function toPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&rsquo;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * All hackathon mail goes through the shared Brevo transport rather than a
+ * second client built here. That one logs a missing `BREVO_API_KEY`, skips
+ * seed addresses, sets a Reply-To and returns a result instead of throwing —
+ * so a send that does not happen says so in the logs, which is exactly what
+ * this path was missing when registrants reported no welcome email.
+ */
 async function send(
   toEmail: string,
-  toName: string,
+  /** Kept in the signature for call-site readability; not logged (T-259). */
+  _toName: string,
   subject: string,
   html: string,
 ): Promise<void> {
-  await brevoClient.transactionalEmails.sendTransacEmail({
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email: toEmail, name: toName }],
+  const result = await sendEmail({
+    to: toEmail,
     subject,
-    htmlContent: html,
+    html,
+    text: toPlainText(html),
+    kind: "hackathon.transactional",
   });
+  if (!result.ok) {
+    // The recipient address and name used to be in this line. `deliveryId` is
+    // what identifies the send now: it is on the OutboundDelivery row
+    // (which holds the address hash) and on the Sentry event.
+    logger.error(
+      {
+        event: "hackathon.email.not_delivered",
+        deliveryId: result.deliveryId,
+        skipped: result.skipped === true,
+        reason: result.reason,
+      },
+      "hackathon email not delivered",
+    );
+  }
 }
 
 // 1. Solo participant welcome
@@ -269,7 +310,7 @@ export async function sendMemberRemovedEmail(
     ${heading(`Hi ${name},`)}
     <p style="margin:0 0 12px;">You've been removed from <strong>${teamLabel}</strong> on the 48-Hour AI Hackathon roster.</p>
     <p style="margin:0 0 12px;">You can register again at any time — solo, as your own team, or by rejoining with a team code (including the same one if your leader invites you back).</p>
-    <p style="margin:0;"><a href="${appUrl}/hackathon/register" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
+    <p style="margin:0;"><a href="${appUrl}/hackathon" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
   await send(
     email,
     name,

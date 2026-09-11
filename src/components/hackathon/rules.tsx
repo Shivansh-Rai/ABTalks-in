@@ -11,12 +11,12 @@ export function Rules() {
   return (
     <section className="mx-auto w-full max-w-[1897px] px-8 py-16 sm:px-9 sm:py-24">
       <h2
-        className="bg-gradient-to-r from-white from-[75%] to-[#A2A2A2] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
-        style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+        className="bg-gradient-to-r from-white from-[75%] to-[#A5A5A5] bg-clip-text text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-tight text-transparent"
+        style={{ fontFamily: "var(--font-inter), sans-serif" }}
       >
         Rules
       </h2>
-      <p className="mt-3 max-w-3xl text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#BCBCBC]">
+      <p className="mt-3 max-w-3xl text-[clamp(1rem,2vw,1.25rem)] tracking-[0.02em] text-[#D2D2D2]">
         Eligibility, team size, and fair play.
       </p>
 

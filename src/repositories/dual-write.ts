@@ -1049,6 +1049,45 @@ export async function dualWriteCandidateIdentity(
 }
 
 /**
+ * The basic-info fields that live ONLY on `CandidateProfile`.
+ *
+ * `StudentProfile` has no column for a headline, a city, a region or a country,
+ * so unlike everything else in this file there is nothing to mirror and nothing
+ * to read back from legacy — which is also why `dualWriteCandidateIdentity`,
+ * whose whole job is copying the legacy row upward, cannot carry them.
+ *
+ * `updateMany` rather than `update`: the row is created by
+ * `dualWriteCandidateIdentity` immediately before this call, and if that
+ * savepoint rolled back there is no row to write to. Zero rows updated is the
+ * correct outcome then, not a throw.
+ *
+ * The same four fields are edited afterwards by `saveBasicInfo` in
+ * `repositories/candidate-detail.ts`. This is registration's one write of them.
+ */
+export async function dualWriteCandidateBasicInfo(
+  tx: Tx,
+  userId: string,
+  input: {
+    headline: string | null;
+    locationCity: string | null;
+    locationRegion: string | null;
+    countryCode: string | null;
+  },
+): Promise<void> {
+  await runDualWrite(tx, "candidateBasicInfo", async () => {
+    await tx.candidateProfile.updateMany({
+      where: { userId },
+      data: {
+        headline: input.headline,
+        locationCity: input.locationCity,
+        locationRegion: input.locationRegion,
+        countryCode: input.countryCode,
+      },
+    });
+  });
+}
+
+/**
  * Upsert Credential from a legacy Certificate already written in this
  * transaction. Public id is reused verbatim. Mapping matches Phase 2g.
  */

@@ -47,7 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // "we're reviewing you" page; every recruiter surface still checks
         // `approved` for itself.
         const existing = await prisma.user.findFirst({
-          where: { email },
+          where: { email, deletedAt: null },
           select: {
             id: true,
             email: true,
@@ -81,9 +81,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                 const user = await prisma.user.findUnique({
                   where: { email: String(credentials.email) },
+                  select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    role: true,
+                    password: true,
+                    deletedAt: true,
+                  },
                 });
 
-                if (!user || !user.password) return null;
+                if (!user || !user.password || user.deletedAt) return null;
                 if (user.password !== String(credentials.password)) return null;
 
                 return {
@@ -109,6 +117,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ]
       : []),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user }) {
+      if (!user?.id) return true;
+      const row = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { deletedAt: true },
+      });
+      if (row?.deletedAt) return false;
+      return true;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { isAdmin?: boolean }).isAdmin =
+          token.isAdmin as boolean;
+      }
+
+      const userId = token.id as string | undefined;
+      if (userId) {
+        const row = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { deletedAt: true },
+        });
+        if (row?.deletedAt) {
+          return { ...session, user: undefined as never };
+        }
+      }
+      return session;
+    },
+  },
   events: {
     /**
      * Fires exactly once, when the adapter first creates a User row — i.e. the

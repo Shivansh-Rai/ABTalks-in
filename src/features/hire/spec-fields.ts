@@ -333,6 +333,57 @@ export function applyObviousAnswers(spec: JobSpec, msg: string): JobSpec {
     if (/\bfull[\s-]?stack\b/i.test(text)) next.title = "Full-stack developer";
     else if (/\bfront[\s-]?end\b/i.test(text)) next.title = "Frontend engineer";
     else if (/\bback[\s-]?end\b/i.test(text)) next.title = "Backend engineer";
+    else if (/\bai\s*engineer\b/i.test(text)) next.title = "AI engineer";
+    else if (/\breact\s+(?:developer|engineer|dev)\b/i.test(text)) {
+      next.title = "React developer";
+    } else {
+      // Strip trailing constraints so "AI engineer with 2 years in Bengaluru"
+      // becomes a title, not a sentence stored as the role.
+      const roleSeed = text
+        .replace(/\bwith\b[\s\S]*$/i, "")
+        .replace(/\bin\b[\s\S]*$/i, "")
+        .replace(/\bfor\b[\s\S]*$/i, "")
+        .trim();
+      const role = asRoleTitle(roleSeed);
+      if (
+        role &&
+        /\b(engineer|developer|designer|manager|analyst|architect|dev)\b/i.test(
+          role,
+        )
+      ) {
+        next.title = role;
+      }
+    }
+  }
+
+  if (!next.locationCity) {
+    const loc =
+      /\b(?:in|only|from)\s+(bengaluru|bangalore|delhi(?:\s*ncr)?|mumbai|hyderabad|chennai|pune|kolkata|remote)\b/i.exec(
+        text,
+      ) ??
+      /^(bengaluru|bangalore|delhi(?:\s*ncr)?|mumbai|hyderabad|chennai|pune|kolkata|remote)\s*[.!,]*$/i.exec(
+        text,
+      );
+    if (loc?.[1]) {
+      const city = loc[1].toLowerCase();
+      next.locationCity =
+        city === "bangalore" || city === "bengaluru"
+          ? "Bengaluru"
+          : city === "remote"
+            ? "Remote"
+            : city.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  }
+
+  if (next.employmentType == null) {
+    const employment = firstHit(text, [
+      [/\bfull[\s-]?time\b/i, "FULL_TIME"],
+      [/\bpart[\s-]?time\b/i, "PART_TIME"],
+      [/\bintern(?:ship)?\b/i, "INTERNSHIP"],
+      [/\bcontract\b/i, "CONTRACT"],
+      [/\bfreelance\b/i, "FREELANCE"],
+    ] as const);
+    if (employment) next.employmentType = employment;
   }
 
   const statedStack = extractStatedStack(text);

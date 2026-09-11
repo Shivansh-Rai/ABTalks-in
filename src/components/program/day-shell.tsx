@@ -31,7 +31,7 @@ export function DayShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#FBF9F7] px-5 py-8 font-content text-[#111111] sm:px-8">
+    <div className="-mx-4 -my-6 min-h-[calc(100svh-4.25rem)] bg-[#F4F4F4] px-5 py-8 font-content text-[#000000] sm:px-8">
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(240px,352px)_1fr] lg:items-stretch">
         <div className="hidden lg:block">
           <DaySidebar

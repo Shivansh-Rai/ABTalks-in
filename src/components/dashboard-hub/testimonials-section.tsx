@@ -19,20 +19,20 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
   return (
     <figure
       className={cn(
-        "flex h-auto w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:w-[360px]",
+        "flex h-auto w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] bg-white p-6 shadow-sm sm:w-[360px]",
         HUB_CARD_HOVER_CLASS,
       )}
     >
       <span
-        className="font-heading text-4xl leading-none text-neutral-300"
+        className="font-heading text-4xl leading-none text-[#D2D2D2]"
         aria-hidden
       >
         &rdquo;
       </span>
-      <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#555555]">
+      <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#4B4B4B]">
         {quote}
       </blockquote>
-      <figcaption className="mt-5 flex items-center gap-3 border-t border-neutral-100 pt-4">
+      <figcaption className="mt-5 flex items-center gap-3 border-t border-[#E9E9E9] pt-4">
         {photo ? (
           <Image
             src={photo}
@@ -44,7 +44,7 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
           />
         ) : (
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 font-heading text-sm font-bold text-neutral-700"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E9E9E9] font-heading text-sm font-bold text-[#353535]"
             aria-hidden
           >
             {initials(name)}
@@ -55,7 +55,7 @@ function TestimonialCard({ name, org, photo, quote }: Testimonial) {
             {name}
           </p>
           {org ? (
-            <p className="truncate text-xs text-[#555555]">{org}</p>
+            <p className="truncate text-xs text-[#4B4B4B]">{org}</p>
           ) : null}
         </div>
       </figcaption>
@@ -67,7 +67,7 @@ export function TestimonialsSection() {
   return (
     <section id="testimonials" className="scroll-mt-20 py-8">
       <div className="px-4 sm:px-6 lg:ml-4">
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#e05226] lg:ml-4">
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-4">
           WHAT STUDENTS SAY
         </h2>
       </div>

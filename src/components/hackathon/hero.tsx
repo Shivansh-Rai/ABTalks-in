@@ -1,8 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { auth } from "@/auth";
 import { Countdown } from "@/components/hackathon/countdown";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { HACKATHON, isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
+import { HeroCta } from "@/components/hackathon/hero-cta";
 import { getMyRegistration } from "@/features/hackathon/get-my-registration";
 
 export async function Hero() {
@@ -12,6 +12,10 @@ export async function Hero() {
     const reg = await getMyRegistration(session.user.id);
     registered = reg !== null;
   }
+  const registrationOpen = isHackathonRegistrationOpen();
+  const email = session?.user?.email ?? null;
+  const name = session?.user?.name ?? "";
+  const isAuthed = Boolean(session?.user?.id);
 
   return (
     <section className="relative bg-black">
@@ -39,27 +43,27 @@ export async function Hero() {
           {/* Top cluster: title → subheading → date → countdown */}
           <div className="flex shrink-0 flex-col items-center pt-3 md:pt-0">
             <h1
-              className="w-full bg-gradient-to-r from-white from-[39%] to-[#A2A2A2] bg-clip-text text-center text-[clamp(1.95rem,4.6vw,4.32rem)] font-normal leading-[1.15] text-transparent"
-              style={{ fontFamily: "var(--font-hackathon-display), sans-serif" }}
+              className="w-full bg-gradient-to-r from-white from-[39%] to-[#A5A5A5] bg-clip-text text-center text-[clamp(1.95rem,4.6vw,4.32rem)] font-normal leading-[1.15] text-transparent"
+              style={{ fontFamily: "var(--font-outfit), sans-serif" }}
             >
               {HACKATHON.name}
             </h1>
 
             <p
               className="mt-3 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] leading-snug text-[#E9E9E9] md:mt-3 md:leading-8"
-              style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+              style={{ fontFamily: "var(--font-inter), sans-serif" }}
             >
-              <span className="font-bold text-[#7364E6]">48</span>
+              <span className="font-bold text-[#076573]">48</span>
               {" hours   ·  No boilerplate   ·  "}
-              <span className="font-bold text-[#6B78F0]">Just</span>
+              <span className="font-bold text-[#076573]">Just</span>
               {" you, your ideas, "}
-              <span className="font-bold text-[#6B78F0]">and</span>{" "}
-              <span className="font-bold text-[#3345EA]">AI</span>.
+              <span className="font-bold text-[#076573]">and</span>{" "}
+              <span className="font-bold text-[#03535F]">AI</span>.
             </p>
 
             <p
-              className="mt-6 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] font-bold leading-snug text-[#D6DAFB] md:mt-2 md:leading-8"
-              style={{ fontFamily: "var(--font-hackathon-mono), monospace" }}
+              className="mt-6 w-full text-center text-[clamp(0.8rem,1.8vw,1.25rem)] font-bold leading-snug text-[#E7F2F3] md:mt-2 md:leading-8"
+              style={{ fontFamily: "var(--font-inter), sans-serif" }}
             >
               {HACKATHON.kickoffLabel}
             </p>
@@ -82,39 +86,15 @@ export async function Hero() {
 
           {/* CTA — mobile near bottom of 80vh; desktop normal flow */}
           <div className="mt-6 flex w-full shrink-0 flex-col items-center pb-2 md:mt-6 md:pb-0">
-            <div className="flex w-full flex-row items-center justify-center gap-2 sm:gap-3 md:w-auto">
-              {registered ? (
-                <Link
-                  href="/hackathon/dashboard"
-                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
-                  }}
-                >
-                  Go to your dashboard →
-                </Link>
-              ) : (
-                <Link
-                  href="/hackathon/register"
-                  className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(115, 100, 230, 1) 0%, rgba(64, 56, 128, 1) 100%)",
-                  }}
-                >
-                  Register free →
-                </Link>
-              )}
-              <Link
-                href="#how-it-works"
-                className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-[#2C1BA9] bg-[#100A3D] px-2 text-center text-[11px] font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:flex-none sm:rounded-[10px] sm:px-6 sm:text-[16px]"
-              >
-                How it works
-              </Link>
-            </div>
+            <HeroCta
+              registered={registered}
+              registrationOpen={registrationOpen}
+              isAuthed={isAuthed}
+              initialEmail={email}
+              initialName={name}
+            />
 
-            <p className="mt-2 w-full text-center text-[12px] leading-6 text-[#BCBCBC] sm:mt-3 sm:text-[15px] sm:leading-8">
+            <p className="mt-2 w-full text-center text-[12px] leading-6 text-[#D2D2D2] sm:mt-3 sm:text-[15px] sm:leading-8">
               {HACKATHON.registrationClosesLabel}
             </p>
           </div>

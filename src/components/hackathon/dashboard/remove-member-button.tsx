@@ -39,7 +39,7 @@ export function RemoveMemberButton({
             variant="ghost"
             size="sm"
             aria-label={`Remove ${memberName}`}
-            className="text-zinc-400 hover:bg-white/10 hover:text-white"
+            className="text-[#626262] hover:bg-[#EEF6F6] hover:text-[#03535F]"
           >
             <UserMinus className="size-4" />
           </Button>

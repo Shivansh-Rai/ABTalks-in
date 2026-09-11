@@ -1,4 +1,5 @@
 import "server-only";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type TeamSubmission = {
@@ -12,8 +13,8 @@ export type TeamSubmission = {
 export async function getTeamSubmission(
   teamId: string,
 ): Promise<TeamSubmission | null> {
-  const row = await prisma.hackathonSubmission.findUnique({
-    where: { teamId },
+  const row = await prisma.hackathonSubmission.findFirst({
+    where: { teamId, team: { eventId: HACKATHON.eventId } },
     select: {
       problemId: true,
       repoUrl: true,

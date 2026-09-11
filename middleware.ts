@@ -26,6 +26,30 @@ function readConsentChoice(value: string | undefined): string | null {
     : null;
 }
 
+/**
+ * T-259 request correlation.
+ *
+ * Duplicated by hand from `src/lib/observability/request-id.ts` for the same
+ * reason the consent constants above are: middleware must not import from
+ * `@/lib/*`. Keep the header name and the pattern in sync with that file.
+ */
+const REQUEST_ID_HEADER = "x-request-id";
+const REQUEST_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
+/**
+ * The caller's id when it is well-formed, a fresh one otherwise.
+ *
+ * An inbound `x-request-id` is honoured so a trace started by a proxy or a
+ * client retry stays one trace — but only after the pattern check, because the
+ * value is echoed back in a response header and copied into Sentry tags, and
+ * neither should carry whatever a stranger felt like sending.
+ */
+function resolveRequestId(incoming: string | null): string {
+  return incoming && REQUEST_ID_RE.test(incoming)
+    ? incoming
+    : crypto.randomUUID();
+}
+
 const { auth } = NextAuth(authConfig);
 
 const protectedPaths = [
@@ -53,7 +77,6 @@ const protectedPaths = [
   "/program/powerbi",
   "/talent",
   "/hire",
-  "/hackathon/register",
   "/hackathon/dashboard",
   "/hackathon/submission",
 ];
@@ -103,7 +126,13 @@ function withTracking(
   alreadyAttributed: boolean,
   consent: string | null,
   hasAttributionCookies: boolean,
+  requestId: string,
 ) {
+  // Every response leaves through here, so this is the one place that has to
+  // set the correlation header — redirects included. It is not a cookie and
+  // carries nothing about the visitor, so it is outside the consent gate.
+  response.headers.set(REQUEST_ID_HEADER, requestId);
+
   // No decision yet: set nothing. The consent modal captures `?ref=` / `?s=`
   // from the URL and replays them through setCookieConsentAction on accept.
   if (consent === null) return response;
@@ -122,6 +151,7 @@ function withTracking(
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+  const requestId = resolveRequestId(req.headers.get(REQUEST_ID_HEADER));
   const isLoggedIn = !!req.auth;
   const ref = req.nextUrl.searchParams.get("ref");
   const src = req.nextUrl.searchParams.get("s");
@@ -175,6 +205,7 @@ export default auth((req) => {
       alreadyAttributed,
       consent,
       hasAttributionCookies,
+      requestId,
     );
   }
 
@@ -191,16 +222,23 @@ export default auth((req) => {
       alreadyAttributed,
       consent,
       hasAttributionCookies,
+      requestId,
     );
   }
 
+  // Forwarded so Server Components, Server Actions and route handlers can read
+  // the id back out of `headers()` — see `@/lib/observability/request-id`.
+  const forwarded = new Headers(req.headers);
+  forwarded.set(REQUEST_ID_HEADER, requestId);
+
   return withTracking(
-    NextResponse.next(),
+    NextResponse.next({ request: { headers: forwarded } }),
     ref,
     src,
     alreadyAttributed,
     consent,
     hasAttributionCookies,
+    requestId,
   );
 });
 

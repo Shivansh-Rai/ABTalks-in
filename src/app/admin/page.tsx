@@ -136,7 +136,7 @@ export default async function AdminHomePage() {
 
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Recruiter applications</CardTitle>
+            <CardTitle>Recent recruiters</CardTitle>
             <Link
               href="/admin/recruiters"
               className="text-xs text-primary hover:underline"
@@ -145,12 +145,12 @@ export default async function AdminHomePage() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {data.pendingRecruiters.length === 0 ? (
+            {data.recentRecruiters.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No recruiter applications waiting.
+                No recruiters yet.
               </p>
             ) : (
-              data.pendingRecruiters.map((row) => (
+              data.recentRecruiters.map((row) => (
                 <div
                   key={row.id}
                   className="flex items-center gap-3 rounded-lg border p-3 text-sm"
@@ -173,7 +173,7 @@ export default async function AdminHomePage() {
                     href="/admin/recruiters"
                     className={buttonVariants({ variant: "outline", size: "sm" })}
                   >
-                    Review
+                    View
                   </Link>
                 </div>
               ))

@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
-import { prisma } from "@/lib/db";
+import { ensureRecruiterWorkspace } from "@/features/hire/provision-recruiter";
 import {
   findActiveMembership,
   getCohortByJoinCode as getCohortByJoinCodeFromRepo,
@@ -67,19 +67,28 @@ export async function requireProgramMember() {
 }
 
 /**
- * Require an approved recruiter. DB-checked (approval flips aren't in the JWT).
- * Redirects to the pending page otherwise.
+ * Require a registered recruiter, and hand them a workspace.
+ *
+ * DB-checked rather than JWT-checked: the role in the token can be stale, and
+ * a `RecruiterProfile` is what actually makes someone a recruiter. There is no
+ * approval step — this used to redirect an unapproved account to
+ * /talent/pending, which is the "Application received" screen that has been
+ * removed. A signed-out visitor gets the recruiter door; a signed-in account
+ * with no recruiter profile gets the registration form.
  */
 export async function requireRecruiter() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/talent/pending");
+  if (!session?.user?.id) redirect("/talent/login");
 
-  const profile = await prisma.recruiterProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { id: true, approved: true, company: true, fullName: true },
-  });
+  const workspace = await ensureRecruiterWorkspace(session.user.id);
+  if (!workspace) redirect("/talent/register");
 
-  if (!profile || !profile.approved) redirect("/talent/pending");
-
-  return { profile, userId: session.user.id };
+  return {
+    profile: {
+      id: workspace.recruiterProfileId,
+      company: workspace.company,
+      fullName: workspace.fullName,
+    },
+    userId: session.user.id,
+  };
 }

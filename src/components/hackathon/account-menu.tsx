@@ -23,16 +23,16 @@ export function AccountMenu({ email }: { email: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         type="button"
-        className="inline-flex h-8 max-w-[200px] items-center gap-2 rounded-[8px] bg-[#403880] px-3 text-white transition-opacity hover:opacity-90 sm:h-[47px] sm:max-w-[280px] sm:rounded-[10px] sm:px-4"
+        className="inline-flex h-9 max-w-[200px] items-center gap-2 rounded-[10px] bg-[#03535F] px-3 text-white transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:bg-[#076573] hover:shadow-[0_4px_12px_rgba(3,83,95,0.26)] sm:max-w-[280px]"
         aria-label={`Signed in as ${email}`}
       >
         <span
-          className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-[11px] font-bold leading-none sm:size-8 sm:text-[14px]"
+          className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-semibold leading-none"
           aria-hidden
         >
           {initial}
         </span>
-        <span className="hidden min-w-0 truncate text-[11px] font-bold leading-none sm:inline sm:text-[14px]">
+        <span className="hidden min-w-0 truncate text-sm font-semibold leading-none sm:inline">
           {email}
         </span>
       </DropdownMenuTrigger>

@@ -16,9 +16,7 @@
  * so the protocol handler in `scout-conversation.ts` is unchanged.
  */
 import type { JobSpec } from "@/lib/validations/hire";
-import { isSlotFilled, type HireSlot } from "@/lib/validations/hire";
 import { isMonthlyContext } from "@/features/hire/spec-fields";
-import { readPoolExtra } from "@/features/hire/pool-brief";
 
 export type ScoutChip = { label: string; value: string };
 
@@ -120,15 +118,6 @@ function stackChips(spec: JobSpec): ScoutChip[] {
   ];
 }
 
-function seniorityChips(): ScoutChip[] {
-  return [
-    { label: "Intern", value: "INTERN" },
-    { label: "Junior (0-2 yrs)", value: "JUNIOR" },
-    { label: "Mid (2-5 yrs)", value: "MID" },
-    { label: "Senior (5+ yrs)", value: "SENIOR" },
-  ];
-}
-
 /**
  * Budget bands, in the units the role is actually paid in.
  *
@@ -151,13 +140,16 @@ export function salaryChips(spec: JobSpec): ScoutChip[] {
       ];
 }
 
-/** Chips for a brief that can already be searched. */
+/**
+ * Optional refinement after results — never a pre-search intake ladder.
+ * Search already ran (or can run); these only narrow the next pass.
+ */
 function readyChips(): ScoutChip[] {
   return [
-    { label: "Show me", value: "action:search" },
-    { label: "Change the stack", value: "edit:mustHaveStack" },
-    { label: "Change the budget", value: "edit:salary" },
-    { label: "Start a new search", value: "action:reset" },
+    { label: "Add skills", value: "edit:mustHaveStack" },
+    { label: "Set location", value: "edit:locationCity" },
+    { label: "Change experience", value: "edit:experience" },
+    { label: "Search again", value: "action:search" },
   ];
 }
 
@@ -206,31 +198,10 @@ export function suggestChips(
     return [...agentChips, ...stable.filter((c) => !seen.has(c.value))];
   }
 
-  // A searchable brief is not a finished brief. Jumping to "Change the stack"
-  // while Scout is still asking seniority is how the chips stop matching the
-  // question on screen. Keep the ladder; hang the stable exits off the end.
-  const wanted: HireSlot[] = ["mustHaveStack", "seniority", "salary"];
-  for (const slot of wanted) {
-    if (isSlotFilled(spec, slot)) continue;
-    const slotChips =
-      slot === "mustHaveStack"
-        ? stackChips(spec)
-        : slot === "seniority"
-          ? seniorityChips()
-          : salaryChips(spec);
-    if (!ready) return slotChips;
-    const seen = new Set(slotChips.map((c) => c.value));
-    return [
-      ...slotChips,
-      ...readyChips().filter((c) => !seen.has(c.value)),
-    ];
-  }
-
+  // Search-first: once the brief can search, only optional refine chips.
+  // Do not block first results on stack / seniority / salary.
   if (ready) return readyChips();
 
-  // Nothing obvious left to suggest, but a pool brief with no role can still be
-  // searched, so offer that rather than nothing.
-  const extra = readPoolExtra(spec);
-  if (extra.sources.length > 0) return readyChips();
-  return [];
+  // Not searchable yet — nudge toward a role or skills, nothing else.
+  return stackChips(spec);
 }

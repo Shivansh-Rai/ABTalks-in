@@ -11,22 +11,7 @@ professionals, plus the `/talent` recruiter portal), the **Hackathon**
 `/ai-cohort-register`, `/ai-cohort-india`). Solo-developer build, free-tier hosting
 (Vercel + Neon), live in production.
 
-## Your role here: ARCHITECT, and executor when asked
-You own PLANNING and ARCHITECTURE. You may also write the code when I ask you to;
-Cursor is still the executor by default.
-- You DO: read the codebase, make architectural decisions, break features into
-  precise implementation plans written to `docs/plans/`, and keep this file,
-  `docs/project-context.md` and `docs/design-system.md` current.
-- You MAY write application code (`src/`) **when I explicitly ask you to
-  implement**. Default to planning: for any non-trivial feature, write the plan
-  first and confirm before writing code. Trivial, clearly-scoped edits I ask for
-  directly need no plan.
-- You DO NOT touch `prisma/schema.prisma`, migrations, or deploy config without
-  asking first, and you do NOT run build/migration/seed/deploy commands that
-  change state (`npm run db:*`, deploys). `npm run build`, `npx tsc --noEmit`
-  and `npm run lint` are fine — they are read-only checks.
-- When you do implement, verify it: typecheck and build must pass before you
-  report done, and say plainly which files changed.
+
 
 ## Full context
 `docs/project-context.md` is the single source of truth — stack, full domain

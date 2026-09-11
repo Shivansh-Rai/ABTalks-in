@@ -13,6 +13,7 @@ import {
   loadRecruiterIdentities,
   searchableUserWhere,
 } from "@/repositories/talent";
+import { contactAccessFor } from "@/features/hire/contact-access";
 
 export type MissionPortfolioDay = {
   dayNumber: number;
@@ -107,12 +108,13 @@ export type ShortlistRow = {
 async function assertPoolAccess(recruiterUserId: string) {
   const profile = await prisma.recruiterProfile.findUnique({
     where: { userId: recruiterUserId },
-    select: { approved: true },
+    select: { id: true },
   });
-  // Same rule as the page and Server Action gates — see
-  // honoured the bypass, so /hire rendered but the pool still refused.
-  if (!profile?.approved) {
-    return { ok: false as const, message: "Recruiter access not approved." };
+  // Same rule as the page and Server Action gates: a RecruiterProfile is what
+  // makes someone a recruiter. This used to also require `approved`, which is
+  // how /hire could render while the pool underneath it still refused.
+  if (!profile) {
+    return { ok: false as const, message: "Register as a recruiter first." };
   }
 
   const cohort = await prisma.programCohort.findFirst({
@@ -544,19 +546,9 @@ export async function getShortlist(
     shown.map((i) => i.member.userId),
   );
 
-  const released = new Set(
-    (
-      await prisma.talentEngagementRequest.findMany({
-        where: {
-          recruiterUserId,
-          status: "CONTACT_SHARED",
-          programMemberId: { in: shown.map((i) => i.member.id) },
-        },
-        select: { programMemberId: true },
-      })
-    )
-      .map((r) => r.programMemberId)
-      .filter((id): id is string => id !== null),
+  const released = await contactAccessFor(
+    recruiterUserId,
+    shown.map((i) => i.member.userId),
   );
 
   return {
@@ -574,7 +566,7 @@ export async function getShortlist(
         displayName: name.trim() ? name.trim() : null,
         skills: idn?.skills.length ? idn.skills : i.member.skills,
         yearsExperience: idn?.yearsExperience ?? i.member.yearsExperience,
-        revealedName: released.has(i.member.id) ? name : null,
+        revealedName: released.has(i.member.userId) ? name : null,
         shortlistedAt: i.createdAt.toISOString(),
       };
     }),

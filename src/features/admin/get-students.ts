@@ -1,4 +1,5 @@
 import { Domain, EnrollmentStatus, Prisma } from "@prisma/client";
+import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 
 export type StudentTrack = "ALL" | "CHALLENGE" | "HACKATHON";
@@ -80,21 +81,25 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
           where: {
             ...(domainFilter ? { domain: domainFilter } : {}),
             ...(statusFilter ? { status: statusFilter } : {}),
-            ...(q
-              ? {
-                  user: {
+            user: {
+              deletedAt: null,
+              ...(q
+                ? {
                     OR: [
-                      { name: { contains: q, mode: "insensitive" } },
-                      { email: { contains: q, mode: "insensitive" } },
+                      { name: { contains: q, mode: "insensitive" as const } },
+                      { email: { contains: q, mode: "insensitive" as const } },
                       {
                         studentProfile: {
-                          fullName: { contains: q, mode: "insensitive" },
+                          fullName: {
+                            contains: q,
+                            mode: "insensitive" as const,
+                          },
                         },
                       },
                     ],
-                  },
-                }
-              : {}),
+                  }
+                : {}),
+            },
           },
           orderBy: challengeOrderBy,
           // Fetch enough to merge; final cap applied after merge+sort.
@@ -122,8 +127,11 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
       : Promise.resolve([]),
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
-          where: q
-            ? {
+          where: {
+            eventId: HACKATHON.eventId,
+            user: { deletedAt: null },
+            ...(q
+              ? {
                 OR: [
                   { fullName: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
@@ -137,7 +145,8 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
                   },
                 ],
               }
-            : undefined,
+              : {}),
+          },
           orderBy: { createdAt: "desc" },
           take: 100,
           select: {
@@ -260,7 +269,10 @@ export async function getStudentDomainCounts(
 
   const grouped = await prisma.enrollment.groupBy({
     by: ["domain"],
-    where: statusFilter ? { status: statusFilter } : undefined,
+    where: {
+      user: { deletedAt: null },
+      ...(statusFilter ? { status: statusFilter } : {}),
+    },
     _count: { _all: true },
   });
 
@@ -299,21 +311,22 @@ export async function getStudentTrackCounts(input?: {
   const challengeWhere: Prisma.EnrollmentWhereInput = {
     ...(domainFilter ? { domain: domainFilter } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(q
-      ? {
-          user: {
+    user: {
+      deletedAt: null,
+      ...(q
+        ? {
             OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
+              { name: { contains: q, mode: "insensitive" as const } },
+              { email: { contains: q, mode: "insensitive" as const } },
               {
                 studentProfile: {
-                  fullName: { contains: q, mode: "insensitive" },
+                  fullName: { contains: q, mode: "insensitive" as const },
                 },
               },
             ],
-          },
-        }
-      : {}),
+          }
+        : {}),
+    },
   };
 
   const hackathonAllowed =
@@ -323,8 +336,11 @@ export async function getStudentTrackCounts(input?: {
     prisma.enrollment.count({ where: challengeWhere }),
     hackathonAllowed
       ? prisma.hackathonParticipant.count({
-          where: q
-            ? {
+          where: {
+            eventId: HACKATHON.eventId,
+            user: { deletedAt: null },
+            ...(q
+              ? {
                 OR: [
                   { fullName: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
@@ -338,7 +354,8 @@ export async function getStudentTrackCounts(input?: {
                   },
                 ],
               }
-            : undefined,
+              : {}),
+          },
         })
       : Promise.resolve(0),
   ]);

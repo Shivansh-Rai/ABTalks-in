@@ -17,17 +17,28 @@ export default async function HirePage() {
   const recruiter = userId
     ? await getRecruiterState(userId)
     : { status: "none" as const };
-  const persist = recruiter.status === "approved";
+  const persist = recruiter.status === "active";
 
-  let recent: { id: string; title: string; status: string; updatedAt: Date }[] =
-    [];
+  let recent: {
+    id: string;
+    title: string;
+    name: string | null;
+    status: string;
+    updatedAt: Date;
+  }[] = [];
   if (userId) {
     try {
       recent = await prisma.talentRequest.findMany({
-        where: { recruiterUserId: userId },
+        where: { recruiterUserId: userId, archivedAt: null },
         orderBy: { updatedAt: "desc" },
         take: 8,
-        select: { id: true, title: true, status: true, updatedAt: true },
+        select: {
+          id: true,
+          title: true,
+          name: true,
+          status: true,
+          updatedAt: true,
+        },
       });
     } catch {
       recent = [];
@@ -45,7 +56,7 @@ export default async function HirePage() {
       initialSummary="Not started"
       recent={recent.map((r) => ({
         id: r.id,
-        title: r.title,
+        title: r.name ?? r.title,
         status: r.status,
         date: r.updatedAt.toISOString().slice(0, 10),
       }))}

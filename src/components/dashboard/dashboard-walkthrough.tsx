@@ -129,7 +129,7 @@ export function DashboardWalkthrough() {
 
   const panelStyle = (s: React.CSSProperties): React.CSSProperties => ({
     position: "fixed",
-    background: "rgba(3,6,15,0.68)",
+    background: "rgba(0, 0, 0, 0.68)",
     zIndex: 9998,
     pointerEvents: "auto",
     cursor: "default",
@@ -137,7 +137,7 @@ export function DashboardWalkthrough() {
     ...s,
   });
 
-  const CARD_BG = "rgba(20,25,40,0.78)";
+  const CARD_BG = "rgba(53, 53, 53, 0.78)";
   const CARD_BORDER = "rgba(255,255,255,0.12)";
   const GLASS = "blur(24px) saturate(160%)";
 
@@ -167,8 +167,8 @@ export function DashboardWalkthrough() {
           width: ringW,
           height: ringH,
           borderRadius: 14,
-          border: "1.5px solid rgba(20,184,166,0.7)",
-          boxShadow: "0 0 0 3px rgba(20,184,166,0.18), 0 0 24px 4px rgba(20,184,166,0.28)",
+          border: "1.5px solid rgba(3, 83, 95, 0.7)",
+          boxShadow: "0 0 0 3px rgba(3, 83, 95, 0.18), 0 0 24px 4px rgba(3, 83, 95, 0.28)",
           zIndex: 9999,
           pointerEvents: "none",
           transition: `top ${MOVE}, left ${MOVE}, width ${MOVE}, height ${MOVE}`,
@@ -234,7 +234,7 @@ export function DashboardWalkthrough() {
                   borderRadius: 100,
                   background:
                     i === step
-                      ? "linear-gradient(135deg, #E05226, #C9411C)"
+                      ? "linear-gradient(135deg, #03535F, #076573)"
                       : "rgba(255,255,255,0.16)",
                 }}
               />
@@ -244,14 +244,14 @@ export function DashboardWalkthrough() {
             <p style={{ fontSize: 18, fontWeight: 800, color: "#ffffff", margin: 0, letterSpacing: "-0.01em", lineHeight: 1.15 }}>
               {STEPS[step].title}
             </p>
-            <p style={{ fontSize: 12.5, color: "#98a2b3", margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 12.5, color: "#A5A5A5", margin: 0, lineHeight: 1.5 }}>
               {STEPS[step].body}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 3 }}>
             <button
               onClick={finish}
-              style={{ fontSize: 13, color: "#6b7688", background: "none", border: "none", cursor: "pointer", padding: "6px 4px", fontWeight: 500 }}
+              style={{ fontSize: 13, color: "#787878", background: "none", border: "none", cursor: "pointer", padding: "6px 4px", fontWeight: 500 }}
             >
               Skip
             </button>
@@ -261,13 +261,13 @@ export function DashboardWalkthrough() {
                 e.currentTarget.style.transform = "translateY(-1px)";
                 e.currentTarget.style.filter = "brightness(1.12)";
                 e.currentTarget.style.boxShadow =
-                  "0 6px 22px rgba(50,68,170,0.55), 0 0 26px 4px rgba(80,105,225,0.35), inset 0 1px 0 rgba(255,255,255,0.2)";
+                  "0 6px 22px rgba(3, 83, 95, 0.55), 0 0 26px 4px rgba(3, 83, 95, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.filter = "brightness(1)";
                 e.currentTarget.style.boxShadow =
-                  "0 4px 16px rgba(50,68,170,0.5), 0 0 20px 2px rgba(80,105,225,0.28), inset 0 1px 0 rgba(255,255,255,0.16)";
+                  "0 4px 16px rgba(3, 83, 95, 0.5), 0 0 20px 2px rgba(3, 83, 95, 0.28), inset 0 1px 0 rgba(255,255,255,0.16)";
               }}
               style={{
                 display: "inline-flex",
@@ -275,10 +275,10 @@ export function DashboardWalkthrough() {
                 gap: 6,
                 padding: "8px 22px",
                 borderRadius: 100,
-                border: "1px solid rgba(135,155,235,0.42)",
-                background: "linear-gradient(135deg, #E05226 0%, #C9411C 100%)",
-                boxShadow: "0 4px 16px rgba(50,68,170,0.5), 0 0 20px 2px rgba(80,105,225,0.28), inset 0 1px 0 rgba(255,255,255,0.16)",
-                color: "#f0f3ff",
+                border: "1px solid rgba(166, 210, 213, 0.42)",
+                background: "linear-gradient(135deg, #03535F 0%, #076573 100%)",
+                boxShadow: "0 4px 16px rgba(3, 83, 95, 0.5), 0 0 20px 2px rgba(3, 83, 95, 0.28), inset 0 1px 0 rgba(255,255,255,0.16)",
+                color: "#EEF6F6",
                 fontSize: 14,
                 fontWeight: 700,
                 cursor: "pointer",

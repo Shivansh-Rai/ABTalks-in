@@ -2,7 +2,10 @@
 
 import { z } from "zod";
 import { sendEmail } from "@/lib/email";
-import { logger } from "@/lib/logger";
+import { reqLogger } from "@/lib/logger";
+import { captureFailure } from "@/lib/observability/capture";
+import { logContact } from "@/lib/observability/domain-log";
+import { getRequestId } from "@/lib/observability/request-id";
 
 const contactSchema = z.object({
   name: z.string().min(2),
@@ -27,6 +30,18 @@ export async function submitContactMessage(
   }
 
   const { name, phone, email, message } = parsed.data;
+
+  // T-259: this action holds a name, a phone number and an email address. None
+  // of the four reach a log line - the message body is forwarded to the team by
+  // mail and nowhere else, and `sendEmail` logs only the recipient's hash.
+  const requestId = await getRequestId();
+  const log = reqLogger(requestId, { route: "action:submitContactMessage" });
+  logContact("contact.form", {
+    outcome: "attempt",
+    messageLength: message.length,
+    log,
+  });
+
   const subject = `Contact form: ${name}`;
   const text = `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\n\n${message}`;
   const html = `<p><strong>Name:</strong> ${escapeHtml(name)}</p>
@@ -40,20 +55,41 @@ export async function submitContactMessage(
       subject,
       html,
       text,
+      kind: "contact.form",
     });
     if (result.ok) {
+      logContact("contact.form", {
+        outcome: "success",
+        deliveryId: result.deliveryId,
+        log,
+      });
       return { ok: true, data: { sent: true } };
     }
     if (result.skipped) {
+      // Nothing was attempted (no provider configured). Already logged as
+      // `notification.skipped` against the same deliveryId.
       return { ok: true, data: { sent: true } };
     }
-    logger.error("submitContactMessage failed");
+    // `sendEmail` has already emitted `notification.failed` and captured the
+    // exception; this line is the action-level outcome, not a second report.
+    logContact("contact.form", {
+      outcome: "failed",
+      deliveryId: result.deliveryId,
+      reason: result.reason,
+      log,
+    });
     return {
       ok: false,
       message: "Could not send your message. Try again.",
     };
   } catch (error) {
-    logger.error("submitContactMessage threw", { error });
+    await captureFailure(error, {
+      event: "contact.form.failed",
+      message: "contact form threw",
+      log,
+      tags: { requestId, route: "action:submitContactMessage" },
+      extra: { area: "contact", op: "contact.form", outcome: "failed" },
+    });
     return {
       ok: false,
       message: "Could not send your message. Try again.",

@@ -23,7 +23,11 @@ export default async function MarketplacePage() {
     prisma.user.findUnique({
       where: { id: userId },
       select: {
-        hackathonParticipant: { select: { phone: true } },
+        hackathonParticipants: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { phone: true },
+        },
       },
     }),
   ]);
@@ -37,21 +41,19 @@ export default async function MarketplacePage() {
   };
 
   return (
-    <div className="dark flex min-h-full flex-1 flex-col bg-[#030712] text-white">
-      <div className="[&_header]:border-[#030712] [&_header]:bg-[#050C1D] [&_header]:shadow-none">
-        <AppHeader user={headerUser} />
-      </div>
+    <div className="flex min-h-full flex-1 flex-col bg-[#F4F4F4] text-black">
+      <AppHeader user={headerUser} />
       <MarketplaceHero />
       <main
         id="products"
-        className="mx-auto w-full max-w-[1897px] flex-1 scroll-mt-20 px-4 py-8 sm:px-[67px] sm:py-10"
+        className="mx-auto w-full max-w-[1897px] flex-1 scroll-mt-20 px-5 py-8 sm:px-10 sm:py-10"
       >
         <ProductGrid
           items={items}
           balance={balance}
           defaultPhone={
             candidate?.phone ??
-            contact?.hackathonParticipant?.phone ??
+            contact?.hackathonParticipants[0]?.phone ??
             ""
           }
           defaultName={candidate?.fullName?.trim() || session.user.name || ""}

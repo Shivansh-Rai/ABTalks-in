@@ -43,8 +43,9 @@ const PARTICIPANT_SELECT = {
 export async function ensureHackathonCertificate(
   userId: string,
 ): Promise<HackathonCertificateResult> {
-  const participant = await prisma.hackathonParticipant.findUnique({
+  const participant = await prisma.hackathonParticipant.findFirst({
     where: { userId },
+    orderBy: { createdAt: "desc" },
     select: PARTICIPANT_SELECT,
   });
 
@@ -160,8 +161,9 @@ export async function ensureHackathonAwardCertificate(input: {
     return { ok: false, message: "Recipient name is required" };
   }
 
-  const participant = await prisma.hackathonParticipant.findUnique({
+  const participant = await prisma.hackathonParticipant.findFirst({
     where: { userId },
+    orderBy: { createdAt: "desc" },
     select: PARTICIPANT_SELECT,
   });
 

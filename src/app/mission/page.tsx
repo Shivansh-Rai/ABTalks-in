@@ -61,7 +61,7 @@ export default async function MissionPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <article className="rounded-2xl border bg-card p-5 shadow-sm">
-              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-[#AA821D]/10 text-[#AA821D]">
                 <AlertTriangle className="size-5" aria-hidden />
               </div>
               <h3 className="font-display text-lg font-semibold">
@@ -74,7 +74,7 @@ export default async function MissionPage() {
               </p>
             </article>
             <article className="rounded-2xl border bg-card p-5 shadow-sm">
-              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-[#626262]/10 text-[#4B4B4B] dark:text-[#A5A5A5]">
                 <EyeOff className="size-5" aria-hidden />
               </div>
               <h3 className="font-display text-lg font-semibold">
@@ -151,7 +151,7 @@ export default async function MissionPage() {
 
         {/* What you're working toward */}
         <section
-          className="rounded-2xl bg-[#E05226] p-6 text-primary-foreground sm:p-8"
+          className="rounded-2xl bg-[#03535F] p-6 text-primary-foreground sm:p-8"
           aria-labelledby="mission-outcome-heading"
         >
           <div className="flex items-start gap-3">

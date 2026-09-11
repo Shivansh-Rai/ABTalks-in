@@ -14,9 +14,9 @@ import type { HireAuthReason } from "@/components/hire/hire-auth-types";
 export type { HireAuthReason };
 
 type HireAuthContextValue = {
+  /** Signed in AND a registered recruiter. There is no third state. */
   approved: boolean;
   signedIn: boolean;
-  pending: boolean;
   authEnabled: boolean;
   openAuth: (reason: HireAuthReason) => void;
 };
@@ -29,7 +29,6 @@ export function useHireAuth(): HireAuthContextValue {
     return {
       approved: false,
       signedIn: false,
-      pending: false,
       authEnabled: false,
       openAuth: () => {
         window.location.href = "/hire";
@@ -42,13 +41,11 @@ export function useHireAuth(): HireAuthContextValue {
 export function HireAuthProvider({
   approved,
   signedIn,
-  pending,
   authEnabled,
   children,
 }: {
   approved: boolean;
   signedIn: boolean;
-  pending: boolean;
   authEnabled: boolean;
   children: ReactNode;
 }) {
@@ -61,8 +58,8 @@ export function HireAuthProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ approved, signedIn, pending, authEnabled, openAuth }),
-    [approved, signedIn, pending, authEnabled, openAuth],
+    () => ({ approved, signedIn, authEnabled, openAuth }),
+    [approved, signedIn, authEnabled, openAuth],
   );
 
   return (

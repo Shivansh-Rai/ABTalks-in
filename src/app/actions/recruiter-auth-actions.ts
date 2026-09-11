@@ -20,6 +20,10 @@ import {
   registerRecruiterSchema,
   requestRecruiterOtpSchema,
 } from "@/lib/validations/recruiter-auth";
+import {
+  WORK_EMAIL_REQUIRED_MESSAGE,
+  isPersonalEmailDomain,
+} from "@/lib/validations/work-email";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -32,11 +36,19 @@ async function deliverCode(
   // The code leaves the server exactly one way: by email in production, or on
   // screen in development when there is no mail provider configured.
   if (otpDevFallbackEnabled()) {
-    logger.warn("[recruiter-auth] dev OTP", { email, code });
+    // The code is returned to the caller, which is how the dev flow surfaces
+    // it. It used to be logged next to the address as well - a one-time
+    // credential and a private email on one line, which T-259 forbids and
+    // which the return value already made redundant.
+    logger.warn(
+      { event: "recruiter.otp.dev_fallback" },
+      "OTP returned to the caller instead of emailed (dev fallback)",
+    );
     return { devCode: code };
   }
   await sendEmail({
     to: email,
+    kind: "recruiter.otp",
     subject: "Your ABTalks verification code",
     html: `<p>Your ABTalks code is:</p>
 <p style="font-size:28px;font-weight:700;letter-spacing:6px;">${code}</p>
@@ -68,6 +80,14 @@ export async function requestRecruiterOtpAction(
     };
   }
   const intent: OtpIntent = parsed.data.intent;
+
+  // Registering a personal mailbox is refused here rather than after the code
+  // is typed, so nobody spends a round trip on an address that can never become
+  // an account. Signing in is left alone: it needs an existing registration,
+  // and that registration already had to pass this rule.
+  if (intent === "register" && isPersonalEmailDomain(parsed.data.email)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
 
   try {
     void purgeExpiredOtps();
@@ -106,10 +126,14 @@ export async function requestRecruiterOtpAction(
 /**
  * Complete registration once the emailed code proves the address.
  *
- * The profile is created unapproved: anyone can apply, and a human at ABTalks
- * checks they are really a recruiter before any candidate data is reachable.
- * The one exception is an email the team verified out of band — a live seat is
- * that decision, already made.
+ * The account is live the moment the code is verified: the profile is created,
+ * the workspace is provisioned and funded, and the recruiter signs in to
+ * /hire. There is no application to review. The profile used to be created
+ * unapproved unless the address matched a `VerifiedRecruiterSeat`, which parked
+ * everybody else on an "Application received" screen until an admin acted.
+ *
+ * The work-email rule is unaffected and still refuses a personal domain twice,
+ * before anything is written. A seat now only supplies the company name.
  */
 export async function registerRecruiterWithOtpAction(
   input: unknown,
@@ -130,6 +154,13 @@ export async function registerRecruiterWithOtpAction(
   const { fullName, company, phone, email, code, newsletterOptIn } =
     parsed.data;
   const normalised = normaliseEmail(email);
+
+  // Checked again on the normalised address, at the boundary that actually
+  // creates the account. The schema above already refuses this, so reaching
+  // here means the schema was bypassed — which is exactly when it matters.
+  if (isPersonalEmailDomain(normalised)) {
+    return { ok: false, message: WORK_EMAIL_REQUIRED_MESSAGE };
+  }
 
   try {
     const verified = await verifyRecruiterOtp(normalised, code);
@@ -153,8 +184,10 @@ export async function registerRecruiterWithOtpAction(
       return { ok: false, message: "This email is already registered." };
     }
 
+    // Company name only. A seat is no longer an access decision.
     const seat = await findLiveSeat(normalised);
-    const approved = Boolean(seat);
+    const resolvedCompany = seat?.company ?? company;
+    const now = new Date();
 
     const userId = await prisma.$transaction(async (tx) => {
       const id =
@@ -176,10 +209,13 @@ export async function registerRecruiterWithOtpAction(
         data: {
           userId: id,
           fullName,
-          company: seat?.company ?? company,
+          company: resolvedCompany,
           phone: phone || null,
-          approved,
-          approvedAt: approved ? new Date() : null,
+          // Written, never read as a gate. See ensureRecruiterWorkspace.
+          approved: true,
+          approvedAt: now,
+          setupStep: "COMPLETE",
+          setupCompletedAt: now,
         },
       });
 
@@ -187,16 +223,14 @@ export async function registerRecruiterWithOtpAction(
         await tx.user.update({ where: { id }, data: { role: "RECRUITER" } });
       }
 
-      // Only for a verified seat. An unapproved application gets its 078
-      // identity when an admin approves it — granting a role assignment to
-      // somebody still under review would put the new model ahead of the
-      // decision the legacy model has not made yet.
-      if (approved) {
-        await provisionRecruiterIdentity(tx, {
-          userId: id,
-          company: seat?.company ?? company,
-        });
-      }
+      // Always. The workspace — Organization, OrganizationMember, the
+      // RECRUITER role assignment and the starting credit grant — is what
+      // registering gets you, and it is created in the same commit as the
+      // profile so the two can never disagree.
+      await provisionRecruiterIdentity(tx, {
+        userId: id,
+        company: resolvedCompany,
+      });
       return id;
     });
 
@@ -219,7 +253,7 @@ export async function registerRecruiterWithOtpAction(
       });
     }
 
-    return { ok: true, data: { approved } };
+    return { ok: true, data: { approved: true } };
   } catch (error) {
     logger.error("[recruiter-auth] registerRecruiterWithOtpAction", {
       error: String(error),

@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
  * verified this company" is different, because that is the one case where they
  * need to do something about it.
  */
-export function RecruiterLoginForm({ redirectTo }: { redirectTo: string }) {
+export function RecruiterLoginForm({ initialEmail = "" }: { initialEmail?: string }) {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "code">("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -52,7 +52,12 @@ export function RecruiterLoginForm({ redirectTo }: { redirectTo: string }) {
       }
       // A full navigation, not router.push: the session cookie has just been
       // set and every guard downstream reads it server-side.
-      window.location.href = redirectTo;
+      //
+      // Straight to the desk. This used to route through /talent/setup because
+      // signing in could land on any of three recruiter states — setup
+      // unfinished, application pending, approved — and only the server knew
+      // which. There is one state now, so there is one destination.
+      window.location.href = "/hire";
     });
   }
 
@@ -117,7 +122,7 @@ export function RecruiterLoginForm({ redirectTo }: { redirectTo: string }) {
       </div>
 
       {devCode && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <p className="rounded-lg border border-[#AA821D]/30 bg-[#AA821D]/10 px-3 py-2 text-xs text-[#AA821D] dark:text-[#FFEDB0]">
           <strong className="font-semibold">Development only.</strong> No mail
           provider is configured, so the code is shown here instead of emailed:{" "}
           <span className="font-mono text-sm font-bold tracking-widest">

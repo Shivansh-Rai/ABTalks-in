@@ -100,7 +100,7 @@ export function HackathonPromoModal() {
             className="relative w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/10 p-6"
             style={{
               background:
-                "radial-gradient(120% 90% at 50% -10%, #1a1430 0%, #0b0912 60%)",
+                "radial-gradient(120% 90% at 50% -10%, #353535 0%, #000000 60%)",
               boxShadow: "0 30px 80px -28px rgba(0,0,0,0.85)",
             }}
           >
@@ -110,7 +110,7 @@ export function HackathonPromoModal() {
               className="absolute inset-x-0 top-0 h-px"
               style={{
                 background:
-                  "linear-gradient(to right, transparent, rgba(139,92,246,0.8), rgba(99,102,241,0.8), transparent)",
+                  "linear-gradient(to right, transparent, rgba(7, 101, 115, 0.8), rgba(7, 101, 115, 0.8), transparent)",
               }}
             />
 
@@ -124,7 +124,7 @@ export function HackathonPromoModal() {
             </button>
 
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">
-              <Sparkles className="size-3 text-[#FFECE3]" aria-hidden />
+              <Sparkles className="size-3 text-[#E7F2F3]" aria-hidden />
               ViCODATHON
             </span>
 
@@ -132,7 +132,7 @@ export function HackathonPromoModal() {
               ABTalks{" "}
               <span
                 style={{
-                  background: "linear-gradient(120deg,#E05226,#C9411C)",
+                  background: "linear-gradient(120deg,#03535F,#076573)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -174,9 +174,9 @@ export function HackathonPromoModal() {
               onClick={() => setOpen(false)}
               className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-[14px] font-semibold text-white transition-[transform,filter] duration-200 hover:-translate-y-0.5 hover:brightness-110"
               style={{
-                background: "linear-gradient(135deg,#E05226 0%,#C9411C 100%)",
+                background: "linear-gradient(135deg,#03535F 0%,#076573 100%)",
                 boxShadow:
-                  "0 12px 28px -12px rgba(124,92,246,0.7), inset 0 1px 0 rgba(255,255,255,0.22)",
+                  "0 12px 28px -12px rgba(7, 101, 115, 0.7), inset 0 1px 0 rgba(255,255,255,0.22)",
               }}
             >
               Register Now

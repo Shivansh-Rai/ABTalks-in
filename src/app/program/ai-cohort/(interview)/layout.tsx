@@ -8,7 +8,7 @@ import { requireProgramMember } from "@/lib/program-auth";
  * are exits, not navigation. The background matches `(app)` exactly, so the
  * only difference the candidate sees is the missing chrome.
  *
- * This shell used to force `bg-[#040A12] text-white`, back when the interview
+ * This shell used to force `bg-[#000000] text-white`, back when the interview
  * had its own dark palette. It now follows the cream design system like the
  * rest of the site, and forcing a dark page here left a white report card
  * floating on a black screen.
@@ -28,7 +28,7 @@ export default async function ProgramInterviewLayout({
   await requireProgramMember();
 
   return (
-    <div className="min-h-svh bg-[#FBF9F7] font-content text-[#111111]">
+    <div className="min-h-svh bg-[#F4F4F4] font-content text-[#000000]">
       <main className="mx-auto w-full min-w-0 max-w-[1536px] px-4 py-6">
         {children}
       </main>

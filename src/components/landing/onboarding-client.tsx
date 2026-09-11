@@ -96,7 +96,7 @@ export function OnboardingClient() {
       <BackgroundBlobs slideIndex={currentIndex} />
 
       <div className="relative z-10 flex min-h-svh flex-col">
-        <header className="shrink-0 px-6 py-4">
+        <header className="abt-header shrink-0">
           <Link href="/" aria-label="ABTalks home" className="logo-link">
             <Image
               src="/abtalks-logo.png"
@@ -160,7 +160,7 @@ export function OnboardingClient() {
                 href="/login"
                 className={cn(
                   buttonVariants(),
-                  "gap-2 bg-[#E05226] text-primary-foreground hover:bg-[#C9411C]",
+                  "gap-2 bg-[#03535F] text-primary-foreground hover:bg-[#076573]",
                 )}
               >
                 <Rocket className="h-4 w-4" />
@@ -191,7 +191,7 @@ function BackgroundBlobs({ slideIndex }: { slideIndex: number }) {
           y: slideIndex * 20,
         }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute -right-32 top-60 h-80 w-80 rounded-full bg-[#FFECE3] blur-3xl"
+        className="absolute -right-32 top-60 h-80 w-80 rounded-full bg-[#E7F2F3] blur-3xl"
       />
       <motion.div
         animate={{
@@ -199,7 +199,7 @@ function BackgroundBlobs({ slideIndex }: { slideIndex: number }) {
           y: -slideIndex * 25,
         }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl"
+        className="absolute bottom-20 left-1/3 h-64 w-64 rounded-full bg-[#18D39B]/15 blur-3xl"
       />
     </div>
   );

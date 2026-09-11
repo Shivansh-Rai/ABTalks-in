@@ -30,10 +30,10 @@ export function ClaudeEnrollmentBanner({
 
   return (
     <>
-      <div className="border-b bg-[#FFF5F0]">
+      <div className="border-b bg-[#EEF6F6]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 md:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Sparkles className="h-4 w-4 shrink-0 text-orange-500" />
+            <Sparkles className="h-4 w-4 shrink-0 text-[#03535F]" />
             <p className="truncate text-sm font-medium">
               <span className="hidden sm:inline">
                 Master Claude AI in 60 Days:{" "}

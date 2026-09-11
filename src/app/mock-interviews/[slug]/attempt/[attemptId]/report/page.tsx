@@ -45,7 +45,7 @@ export default async function MockInterviewReportPage({
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 md:py-14">
       <Link
         href="/mock-interviews/history"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#111111]"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
       >
         <ArrowLeft className="size-3.5" strokeWidth={2} />
         Your practice history
@@ -53,20 +53,20 @@ export default async function MockInterviewReportPage({
 
       {!result.ok ? (
         <div className="mt-6">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[#111111]">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-[#000000]">
             Report unavailable
           </h1>
           <p className="mt-3 text-[15px] text-[#4B4B4B]">{result.message}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={`/mock-interviews/${slug}`}
-              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#C9411C]"
+              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
             >
               Take this interview
             </Link>
             <Link
               href="/mock-interviews"
-              className="inline-flex h-11 items-center rounded-[12px] border border-[#E0E0E0] px-5 text-sm text-[#4B4B4B] transition-colors hover:border-[#8F8F8F] hover:text-[#111111]"
+              className="inline-flex h-11 items-center rounded-[12px] border border-[#E0E0E0] px-5 text-sm text-[#4B4B4B] transition-colors hover:border-[#8F8F8F] hover:text-[#000000]"
             >
               All mock interviews
             </Link>
@@ -81,13 +81,13 @@ export default async function MockInterviewReportPage({
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href={`/mock-interviews/${result.data.domainSlug}`}
-              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#E05226] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#C9411C]"
+              className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
             >
               About this interview
             </Link>
             <Link
               href="/mock-interviews/history"
-              className="inline-flex h-11 items-center rounded-[12px] border border-[#E0E0E0] px-5 text-sm text-[#4B4B4B] transition-colors hover:border-[#8F8F8F] hover:text-[#111111]"
+              className="inline-flex h-11 items-center rounded-[12px] border border-[#E0E0E0] px-5 text-sm text-[#4B4B4B] transition-colors hover:border-[#8F8F8F] hover:text-[#000000]"
             >
               All attempts
             </Link>

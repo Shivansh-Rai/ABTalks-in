@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRecruiter } from "@/lib/program-auth";
 import { prisma } from "@/lib/db";
+import { loadProtectedContacts } from "@/features/hire/contact-access";
 import { CheckoutFlash } from "@/components/hire/checkout-flash";
 import { EngagementThread } from "@/components/hire/engagement-thread";
 import { buttonVariants } from "@/components/ui/button";
@@ -41,25 +42,12 @@ export default async function HireRequestsPage() {
     select: {
       id: true,
       candidatePublicId: true,
+      candidateUserId: true,
       status: true,
       note: true,
       createdAt: true,
       request: { select: { id: true, title: true } },
-      // Provenance only — used for the role label and the professional name.
       programMemberId: true,
-      // Identity is selected only to be shown when the status says it may be.
-      // The gate is `status === "CONTACT_SHARED"` below, not this select.
-      // Reading it from the User means a challenge or hackathon candidate is
-      // released the same way a cohort member is; before, only cohort members
-      // ever resolved to a name and everyone else stayed a reference id even
-      // after the introduction had been approved.
-      candidate: {
-        select: {
-          email: true,
-          name: true,
-          studentProfile: { select: { fullName: true, role: true } },
-        },
-      },
       messages: {
         orderBy: { createdAt: "asc" },
         take: 50,
@@ -67,6 +55,25 @@ export default async function HireRequestsPage() {
       },
     },
   });
+
+  const contacts = await loadProtectedContacts(
+    userId,
+    engagements
+      .map((e) => e.candidateUserId)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const unlockedUserIds = [...contacts.keys()];
+  const unlockedNames = new Map<string, string | null>();
+  if (unlockedUserIds.length > 0) {
+    const profiles = await prisma.candidateProfile.findMany({
+      where: { userId: { in: unlockedUserIds } },
+      select: { userId: true, fullName: true },
+    });
+    for (const p of profiles) {
+      unlockedNames.set(p.userId, p.fullName);
+    }
+  }
 
   const memberIds = [
     ...new Set(
@@ -79,7 +86,7 @@ export default async function HireRequestsPage() {
     (memberIds.length > 0
       ? await prisma.programMember.findMany({
           where: { id: { in: memberIds } },
-          select: { id: true, fullName: true, jobRole: true },
+          select: { id: true, jobRole: true },
         })
       : []
     ).map((m) => [m.id, m]),
@@ -136,22 +143,20 @@ export default async function HireRequestsPage() {
               label: e.status,
               hint: "",
             };
-            // Identity is released by the decision, never by this page. Anything
-            // other than CONTACT_SHARED renders the anonymous view.
             const member = e.programMemberId
               ? memberById.get(e.programMemberId)
               : undefined;
-            const identity =
-              e.status === "CONTACT_SHARED"
-                ? {
-                    fullName:
-                      member?.fullName ??
-                      e.candidate.studentProfile?.fullName ??
-                      e.candidate.name ??
-                      null,
-                    email: e.candidate.email,
-                  }
-                : null;
+            const contact = e.candidateUserId
+              ? contacts.get(e.candidateUserId)
+              : undefined;
+            const identity = contact
+              ? {
+                  fullName: e.candidateUserId
+                    ? (unlockedNames.get(e.candidateUserId) ?? null)
+                    : null,
+                  email: contact.email,
+                }
+              : null;
 
             return (
               <li key={e.id} className="space-y-3 rounded-xl border p-4">
@@ -161,20 +166,18 @@ export default async function HireRequestsPage() {
                       {identity?.fullName ?? e.candidatePublicId}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {member?.jobRole ??
-                        e.candidate.studentProfile?.role ??
-                        "Candidate"}
+                      {member?.jobRole ?? "Candidate"}
                       {e.request?.title ? ` · for ${e.request.title}` : ""}
                     </p>
                   </div>
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-1 text-xs font-medium",
-                      e.status === "CONTACT_SHARED"
+                      contact
                         ? "bg-primary/10 text-primary"
                         : e.status === "DECLINED"
                           ? "bg-muted text-muted-foreground"
-                          : "bg-amber-500/10 text-amber-900 dark:text-amber-100",
+                          : "bg-[#AA821D]/10 text-[#AA821D] dark:text-[#FFEDB0]",
                     )}
                   >
                     {copy.label}

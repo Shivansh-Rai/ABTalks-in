@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import "./profile-wizard.css";
+import type { ProfileReview } from "@/features/profile/build-review";
 import { ProfileCard } from "./profile-card";
-import { LeaveDialog } from "./leave-dialog";
+import { ProfileReviewCard } from "./profile-review";
+import { IdentityMedia } from "./identity-media";
 import { ProfileWizardProvider, PW_FORM_ID } from "./wizard-context";
 
 export type WizardChecklistKey =
@@ -13,7 +15,7 @@ export type WizardChecklistKey =
   | "projects"
   | "mock"
   | "skills"
-  | "certifications"
+  | "accomplishments"
   | "resume"
   | "links"
   | "preferences";
@@ -29,34 +31,41 @@ export type WizardStep = {
   node: ReactNode;
 };
 
+/** How long the sheet takes to slide out, per the transition in the CSS. */
+const SHEET_EXIT_MS = 260;
+
 export function ProfileWizard({
   steps,
   initialIndex,
   score,
   fullName,
-  personaLabel,
   imageUrl,
-  updatedAtIso,
-  performance,
+  review,
   avatarUploadEnabled,
-  openToWork,
+  performance,
 }: {
   steps: WizardStep[];
   initialIndex: number;
   score: number;
   fullName: string;
-  personaLabel: string;
   imageUrl: string | null;
-  updatedAtIso: string;
-  performance: { searchAppearances: number; recruiterActions: number };
+  review: ProfileReview;
   avatarUploadEnabled: boolean;
-  openToWork?: boolean;
+  performance: { searchAppearances: number; recruiterActions: number };
 }) {
   const [index, setIndex] = useState(initialIndex);
+  const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<number | null>(null);
-  const pendingRef = useRef<number | null>(null);
+  /** Where the leave dialog should go once it is answered. */
+  const [pendingTarget, setPendingTarget] = useState<number | "close" | null>(
+    null,
+  );
+  const pendingRef = useRef<number | "close" | null>(null);
+  const closeAfterSaveRef = useRef(false);
+  const exitTimer = useRef<number | undefined>(undefined);
+
   const loadedAt100 = score === 100;
   const [pillShow, setPillShow] = useState(loadedAt100);
   const [barFinished, setBarFinished] = useState(false);
@@ -68,12 +77,75 @@ export function ProfileWizard({
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const step = steps[index] ?? steps[0]!;
-  const last = index === steps.length - 1;
+
+  /* ---- open / close the slide-over ---------------------------------- */
+
+  const openSheet = useCallback((target: number) => {
+    window.clearTimeout(exitTimer.current);
+    setIndex(target);
+    setOpen(true);
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    setShown(false);
+    setDirty(false);
+    exitTimer.current = window.setTimeout(() => setOpen(false), SHEET_EXIT_MS);
+  }, []);
+
+  /** Dismissals that are not an explicit Cancel ask before dropping edits. */
+  const requestClose = useCallback(() => {
+    if (dirty) {
+      setPendingTarget("close");
+      return;
+    }
+    closeSheet();
+  }, [dirty, closeSheet]);
+
+  // Two frames: mount hidden, then add the class that runs the transform.
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  useEffect(() => () => window.clearTimeout(exitTimer.current), []);
+
+  // Marks the route for the scoped scrollbar-hiding rule in profile-wizard.css.
+  useEffect(() => {
+    document.body.classList.add("pw-profile-page");
+    return () => document.body.classList.remove("pw-profile-page");
+  }, []);
+
+  // Lock the page behind the sheet. Reserving the scrollbar's width keeps the
+  // workspace from jolting sideways as the sheet slides in.
+  useEffect(() => {
+    if (!open) return;
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    const previous = document.body.style.paddingRight;
+    document.body.classList.add("pw-sheet-open");
+    if (gap > 0) document.body.style.paddingRight = `${gap}px`;
+    return () => {
+      document.body.classList.remove("pw-sheet-open");
+      document.body.style.paddingRight = previous;
+    };
+  }, [open]);
 
   useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") requestClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, requestClose]);
+
+  useEffect(() => {
+    if (!open) return;
     pendingRef.current = null;
     headingRef.current?.focus();
-  }, [index]);
+  }, [open, index]);
+
+  /* ---- completion celebration --------------------------------------- */
 
   useEffect(() => {
     if (score !== 100 || prevScoreRef.current >= 100 || playedRef.current) {
@@ -107,25 +179,30 @@ export function ProfileWizard({
     };
   }, [score]);
 
-  function requestLeave(next: number) {
-    if (next === index) return;
-    if (!dirty) {
-      setIndex(next);
+  /* ---- navigation ---------------------------------------------------- */
+
+  /** A Quick Links tab, or an Add / Edit on the report card. */
+  function jump(next: number) {
+    if (next !== index && dirty && open) {
+      setPendingTarget(next);
       return;
     }
-    setPendingTarget(next);
+    openSheet(next);
   }
 
   function onSaved() {
     const target = pendingRef.current;
     pendingRef.current = null;
     setDirty(false);
-    if (target !== null) setIndex(target);
-    else if (!last) setIndex((i) => i + 1);
-  }
-
-  function advance() {
-    if (!last) setIndex((i) => Math.min(i + 1, steps.length - 1));
+    if (typeof target === "number") {
+      openSheet(target);
+      return;
+    }
+    if (target === "close" || closeAfterSaveRef.current) {
+      closeAfterSaveRef.current = false;
+      // Saving returns you to the report card, where the change is now visible.
+      closeSheet();
+    }
   }
 
   const progressClass = [
@@ -137,23 +214,31 @@ export function ProfileWizard({
     .join(" ");
 
   return (
-    <div className="pw-root">
+    <div className={`pw-root${open ? " pw-sheet-open" : ""}`}>
       <div className="pw-workspace">
         <ProfileCard
-          score={score}
-          fullName={fullName}
-          personaLabel={personaLabel}
-          imageUrl={imageUrl}
-          updatedAtIso={updatedAtIso}
           steps={steps}
           activeIndex={index}
-          celebrate={celebrate}
-          onJump={requestLeave}
+          onJump={jump}
           performance={performance}
-          avatarUploadEnabled={avatarUploadEnabled}
-          openToWork={openToWork}
         />
 
+        <ProfileReviewCard
+          review={review}
+          onOpen={jump}
+          media={
+            <IdentityMedia
+              score={score}
+              fullName={fullName}
+              imageUrl={imageUrl}
+              celebrate={celebrate}
+              avatarUploadEnabled={avatarUploadEnabled}
+            />
+          }
+        />
+      </div>
+
+      {open ? (
         <ProfileWizardProvider
           value={{
             formId: PW_FORM_ID,
@@ -163,9 +248,17 @@ export function ProfileWizard({
             setSaving,
           }}
         >
-          <section className="pw-form-card">
+          <button
+            type="button"
+            className={`pw-form-scrim${shown ? " pw-show" : ""}`}
+            aria-label="Close section"
+            onClick={requestClose}
+          />
+          <aside
+            className={`pw-form-sheet${shown ? " pw-show" : ""}`}
+            aria-label="Edit section"
+          >
             <div className="pw-section-header">
-              <div className="pw-section-track" aria-hidden />
               <div
                 ref={barRef}
                 className={progressClass}
@@ -178,18 +271,26 @@ export function ProfileWizard({
               />
               <div className="pw-section-header-content">
                 <h2 ref={headingRef} tabIndex={-1}>
-                  {index + 1}. {step.title}
+                  {step.title}
                 </h2>
                 <p>{step.description}</p>
               </div>
-              <div
-                className={`pw-complete-pill${pillShow ? " pw-show" : ""}`}
-              >
+              <div className={`pw-complete-pill${pillShow ? " pw-show" : ""}`}>
                 <svg viewBox="0 0 24 24" aria-hidden>
                   <path d="M5 13l4 4L19 7" />
                 </svg>{" "}
                 Profile Complete
               </div>
+              <button
+                type="button"
+                className="pw-form-close"
+                aria-label="Close"
+                onClick={requestClose}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden>
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
             </div>
 
             <div className="pw-section-body" data-section={step.key}>
@@ -197,59 +298,85 @@ export function ProfileWizard({
             </div>
 
             <div className="pw-form-actions">
+              {pendingTarget !== null ? (
+                <div className="pw-leave-pop" role="alertdialog" aria-live="polite">
+                  <p className="pw-leave-copy">
+                    You have unsaved changes in this section.
+                  </p>
+                  <div className="pw-leave-actions">
+                    <button
+                      type="button"
+                      className="pw-leave-btn"
+                      onClick={() => setPendingTarget(null)}
+                    >
+                      Keep editing
+                    </button>
+                    <button
+                      type="button"
+                      className="pw-leave-btn"
+                      onClick={() => {
+                        const target = pendingTarget;
+                        setDirty(false);
+                        setPendingTarget(null);
+                        if (typeof target === "number") openSheet(target);
+                        else if (target === "close") closeSheet();
+                      }}
+                    >
+                      Discard
+                    </button>
+                    <button
+                      type="button"
+                      className="pw-leave-btn pw-leave-primary"
+                      autoFocus
+                      onClick={() => {
+                        pendingRef.current = pendingTarget;
+                        closeAfterSaveRef.current = false;
+                        setPendingTarget(null);
+                        const form = document.getElementById(PW_FORM_ID);
+                        if (form instanceof HTMLFormElement) form.requestSubmit();
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <button
                 type="button"
                 className="pw-btn pw-btn-ghost"
-                disabled={index === 0}
-                onClick={() => requestLeave(index - 1)}
+                onClick={closeSheet}
               >
-                Previous
+                Cancel
               </button>
               {step.savable ? (
                 <button
                   type="submit"
                   form={PW_FORM_ID}
                   disabled={saving}
-                  className={`pw-btn pw-btn-primary${last ? " pw-save" : ""}`}
+                  className="pw-btn pw-btn-primary"
                   onClick={() => {
                     pendingRef.current = null;
+                    closeAfterSaveRef.current = true;
                   }}
                 >
-                  {saving ? "Saving…" : last ? "Save" : "Next"}
+                  {saving ? "Saving…" : "Save"}
                 </button>
               ) : (
+                /* Mock Interview and Résumé are earned, not typed — they
+                   persist their own changes, so there is nothing to submit. */
                 <button
                   type="button"
                   className="pw-btn pw-btn-primary"
-                  onClick={advance}
+                  onClick={closeSheet}
                 >
-                  Next
+                  Done
                 </button>
               )}
             </div>
-          </section>
+          </aside>
         </ProfileWizardProvider>
-      </div>
+      ) : null}
 
-      <LeaveDialog
-        open={pendingTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingTarget(null);
-        }}
-        onCancel={() => setPendingTarget(null)}
-        onDiscard={() => {
-          const target = pendingTarget;
-          setDirty(false);
-          setPendingTarget(null);
-          if (target !== null) setIndex(target);
-        }}
-        onSave={() => {
-          pendingRef.current = pendingTarget;
-          setPendingTarget(null);
-          const form = document.getElementById(PW_FORM_ID);
-          if (form instanceof HTMLFormElement) form.requestSubmit();
-        }}
-      />
     </div>
   );
 }

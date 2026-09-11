@@ -17,6 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
+import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
 import {
   removeFromChallengeAction,
   resetProgressAction,
@@ -220,6 +221,8 @@ export function StudentActionPanel({
           />
         </div>
       </ActionDialog>
+
+      <DeleteUserAccountDialog userId={studentId} userName={studentName} />
     </div>
   );
 }

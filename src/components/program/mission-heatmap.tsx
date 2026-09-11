@@ -12,10 +12,10 @@ type Props = {
 
 function cellClass(completed: boolean, variant: "dashboard" | "compact"): string {
   if (completed) {
-    return variant === "dashboard" ? "bg-[#6AE276]" : "bg-emerald-500";
+    return variant === "dashboard" ? "bg-[#27CA37]" : "bg-[#18D39B]";
   }
   return variant === "dashboard"
-    ? "bg-[#1a2333] border border-[#2a3548]"
+    ? "bg-[#353535] border border-[#03535F]"
     : "bg-muted";
 }
 
@@ -49,7 +49,7 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
         className={cn(
           "inline-flex items-center gap-2 text-xs",
           isDashboard
-            ? "rounded-[8px] border border-[#E05226] bg-[#111111] px-3 py-1.5 text-[#E9E9E9] transition-colors duration-300 ease-out hover:border-[#FFECE3]/70"
+            ? "rounded-[8px] border border-[#03535F] bg-[#000000] px-3 py-1.5 text-[#E9E9E9] transition-colors duration-300 ease-out hover:border-[#E7F2F3]/70"
             : "text-muted-foreground",
         )}
       >
@@ -57,14 +57,14 @@ export function MissionHeatmap({ cells, variant = "dashboard" }: Props) {
         <span
           className={cn(
             isDashboard ? "size-3.5 rounded-full sm:size-4" : "size-3 rounded-sm sm:size-3.5",
-            isDashboard ? "bg-[#1a2333] border border-[#2a3548]" : "bg-muted",
+            isDashboard ? "bg-[#353535] border border-[#03535F]" : "bg-muted",
           )}
         />
         <span>Complete</span>
         <span
           className={cn(
             isDashboard ? "size-3.5 rounded-full sm:size-4" : "size-3 rounded-sm sm:size-3.5",
-            isDashboard ? "bg-[#6AE276]" : "bg-emerald-500",
+            isDashboard ? "bg-[#27CA37]" : "bg-[#18D39B]",
           )}
         />
       </div>

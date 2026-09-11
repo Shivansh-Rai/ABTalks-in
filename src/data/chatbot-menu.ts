@@ -24,7 +24,7 @@ export const CHATBOT_CATEGORIES: ChatbotCategory[] = [
     id: "programs",
     number: 2,
     label: "Programs & Challenges",
-    seedQuestion: "What programs and challenges does ABTalks offer?",
+    seedQuestion: "What programs and challenges does ABTalks ovffer?",
   },
   {
     id: "hackathons",

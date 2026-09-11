@@ -47,8 +47,8 @@ export function WorkshopAnalyticsChart({ data }: { data: ChartDatum[] }) {
               }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="New" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="Returning" stackId="a" fill="#e05226" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="New" stackId="a" fill="#18D39B" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Returning" stackId="a" fill="#03535F" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

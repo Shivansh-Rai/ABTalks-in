@@ -408,7 +408,7 @@ export const COMMUNITY_PHOTOS = [
   },
 ] as const;
 
-export const QUOTE_TINTS = ["pink", "coral", "cream", "peach"] as const;
+export const QUOTE_TINTS = ["teal", "white", "mist", "mint"] as const;
 
 export const GLOBE_LATS = [
   { r: 0.1, h: 0.995 },

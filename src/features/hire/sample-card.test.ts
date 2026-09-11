@@ -204,34 +204,34 @@ suite("agent chips win when present", () => {
 });
 
 suite("fixed set is used when the agent offered nothing", () => {
-  const chips = suggestChips({ title: "backend engineer" }, false);
-  assert(chips.some((c) => /Python/.test(c.label)), "stack ladder");
+  const chips = suggestChips({}, false);
+  assert(chips.some((c) => /Python/.test(c.label)), "skill chips");
   assert(
     chips.some((c) => c.value === "skip:mustHaveStack"),
     "exit still there",
   );
 });
 
-suite("a ready brief keeps change-stack when the agent also offered chips", () => {
+suite("a ready brief keeps refine chips when the agent also offered chips", () => {
   const agent = [
     { label: "Missions", value: "missions" },
     { label: "Projects", value: "projects" },
   ];
   const chips = suggestChips(pythonSpec, true, agent);
   assert(chips.some((c) => c.value === "missions"), "agent chips");
-  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "change stack");
-  assert(chips.some((c) => c.value === "edit:salary"), "change budget");
+  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "add skills");
+  assert(!chips.some((c) => c.value === "edit:salary"), "no budget gate");
   assert(!chips.some((c) => c.value === "action:search"), "search stays a button");
 });
 
-suite("a ready brief still asking seniority does not jump to Change the stack", () => {
+suite("a ready brief offers refine chips, not seniority intake", () => {
   const chips = suggestChips(
     { title: "full stack developer", mustHaveStack: ["mern"] },
     true,
   );
-  assert(chips.some((c) => c.value === "MID"), "seniority chips");
-  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "change stack stays");
-  assert(chips.some((c) => c.value === "action:search"), "search still offered");
+  assert(chips.some((c) => c.value === "edit:mustHaveStack"), "add skills");
+  assert(chips.some((c) => c.value === "action:search"), "search again");
+  assert(!chips.some((c) => c.value === "MID"), "no seniority ladder");
 });
 
 suite("mid + remote is captured without the model", () => {

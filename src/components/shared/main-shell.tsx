@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isMarketplace =
-    pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   const isDashboardShellRoute =
@@ -20,26 +18,24 @@ export function MainShell({ children }: { children: React.ReactNode }) {
    */
   const isWorkshop =
     pathname === "/workshop" || pathname.startsWith("/workshop/");
-  const isLightOnlyRoute = !isMarketplace && !isHackathon;
-
-  useEffect(() => {
-    document.body.classList.toggle("marketplace-page", isMarketplace);
-    return () => document.body.classList.remove("marketplace-page");
-  }, [isMarketplace]);
+  const isHire = pathname === "/hire" || pathname.startsWith("/hire/");
 
   useEffect(() => {
     document.body.classList.toggle("landing-page", isLanding);
     return () => document.body.classList.remove("landing-page");
   }, [isLanding]);
 
+  // Design System v2 is light-only: every route, Marketplace and Hackathon
+  // included, renders on the one forest-green light theme.
   return (
     <main
       className={cn(
-        "flex-1",
-        isLightOnlyRoute && "theme-abtalks-light theme-abtalks-orange",
-        !isHackathon && !isDashboardShellRoute && !isWorkshop && "pb-16 md:pb-0",
-        isMarketplace && "bg-[#030712]",
-        isHackathon && "bg-black",
+        "theme-abtalks-light theme-abtalks-brand flex-1",
+        !isHackathon &&
+          !isDashboardShellRoute &&
+          !isWorkshop &&
+          !isHire &&
+          "pb-16 md:pb-0",
       )}
     >
       {children}
