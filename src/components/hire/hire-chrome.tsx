@@ -219,9 +219,11 @@ export function HireChrome({
                 className={cn(
                   "hire-hbtn",
                   "hire-hbtn--label",
-                  pathname === "/hire/assessments" && "is-current",
+                  pathname?.startsWith("/hire/assessments") === true && "is-current",
                 )}
-                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+                aria-current={
+                  pathname?.startsWith("/hire/assessments") === true ? "page" : undefined
+                }
               >
                 <span>Assessments</span>
               </Link>

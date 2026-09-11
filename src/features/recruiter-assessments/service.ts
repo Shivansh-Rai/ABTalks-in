@@ -4,7 +4,10 @@ import type {
   AssessmentDraftInput,
   AssessmentQuestionInput,
 } from "@/lib/validations/assessment";
-import { assessmentDraftSchema } from "@/lib/validations/assessment";
+import {
+  assessmentDraftSchema,
+  assignAssessmentSchema,
+} from "@/lib/validations/assessment";
 
 export type Scope = { organizationId: string; createdByUserId: string };
 
@@ -48,7 +51,8 @@ export type AssessmentRow = {
   questions: AssessmentQuestionRow[];
 };
 
-export type AssessmentListRow = {
+/** What `store.listOwned` returns — the list row before result counts. */
+export type AssessmentListStoreRow = {
   id: string;
   title: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
@@ -56,6 +60,72 @@ export type AssessmentListRow = {
   passMarkPercent: number;
   questionCount: number;
   updatedAt: Date;
+};
+
+export type AssignmentStatus = "ASSIGNED" | "STARTED" | "SUBMITTED";
+
+export type AssignableCandidate = {
+  candidateRef: string;
+  candidateUserId: string;
+  label: string;
+  jobRole: string;
+};
+
+export type AssignmentRow = {
+  id: string;
+  candidateUserId: string;
+  candidateRef: string;
+  label: string;
+  status: AssignmentStatus;
+  assignedAt: Date;
+  startedAt: Date | null;
+  submittedAt: Date | null;
+  scorePercent: number | null;
+  passed: boolean | null;
+};
+
+export type ResultCounts = { students: number; passed: number; failed: number };
+
+export type AssessmentListRow = AssessmentListStoreRow & {
+  /** Null for DRAFT — nothing can have been assigned yet. */
+  results: ResultCounts | null;
+};
+
+/** A Shortlisted candidate as the assign panel sees it — no user id. */
+export type MonitorCandidate = {
+  candidateRef: string;
+  label: string;
+  jobRole: string;
+  alreadyAssigned: boolean;
+};
+
+export type AssessmentMonitor = {
+  assessment: {
+    id: string;
+    title: string;
+    status: AssessmentRow["status"];
+    durationMinutes: number | null;
+    passMarkPercent: number;
+    questionCount: number;
+    publishedAt: Date | null;
+  };
+  summary: {
+    assigned: number;
+    started: number;
+    completed: number;
+    passed: number;
+    failed: number;
+  };
+  assignments: AssignmentRow[];
+  candidates: MonitorCandidate[];
+};
+
+export type AssessmentNotifier = {
+  assigned(input: {
+    recipientUserId: string;
+    assessmentId: string;
+    assignmentId: string;
+  }): Promise<{ ok: boolean; deduplicated: boolean }>;
 };
 
 export type ContentInput = {
@@ -78,9 +148,28 @@ export type AssessmentStore = {
     input: ContentInput,
   ): Promise<void>;
   findOwned(assessmentId: string, scope: Scope): Promise<AssessmentRow | null>;
-  listOwned(scope: Scope): Promise<AssessmentListRow[]>;
+  listOwned(scope: Scope): Promise<AssessmentListStoreRow[]>;
   delete(assessmentId: string, scope: Scope): Promise<boolean>;
+  /** DRAFT → PUBLISHED in one guarded write. False when nothing moved. */
+  publish(assessmentId: string, scope: Scope, at: Date): Promise<boolean>;
+  /** The recruiter's live Shortlist, both halves, searchable candidates only. */
+  listAssignableCandidates(recruiterUserId: string): Promise<AssignableCandidate[]>;
+  upsertAssignments(
+    assessmentId: string,
+    rows: { candidateUserId: string; candidateRef: string }[],
+  ): Promise<{ id: string; candidateUserId: string; created: boolean }[]>;
+  listAssignments(assessmentId: string, scope: Scope): Promise<AssignmentRow[]>;
+  countResults(
+    scope: Scope,
+    assessmentIds: string[],
+  ): Promise<Map<string, ResultCounts>>;
 };
+
+/** T-218 builds this route. Agreed here so notifications sent before it
+ *  lands point at the right place. */
+export function candidateAssessmentHref(assignmentId: string): string {
+  return `/assessments/${assignmentId}`;
+}
 
 type Result<T> =
   | { ok: true; data: T }
@@ -158,7 +247,20 @@ export async function listAssessments(
   store: AssessmentStore,
   scope: Scope,
 ): Promise<Result<AssessmentListRow[]>> {
-  return OK(await store.listOwned(scope));
+  const rows = await store.listOwned(scope);
+  const counts = await store.countResults(
+    scope,
+    rows.filter((r) => r.status !== "DRAFT").map((r) => r.id),
+  );
+  return OK(
+    rows.map((r) => ({
+      ...r,
+      results:
+        r.status === "DRAFT"
+          ? null
+          : (counts.get(r.id) ?? { students: 0, passed: 0, failed: 0 }),
+    })),
+  );
 }
 
 export async function getAssessment(
@@ -176,7 +278,168 @@ export async function deleteAssessment(
   scope: Scope,
   assessmentId: string,
 ): Promise<Result<{ id: string }>> {
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+  if (row.status !== "DRAFT") {
+    return CONFLICT(
+      "Published assessments can't be deleted — they hold candidates' results.",
+    );
+  }
   const removed = await store.delete(assessmentId, scope);
   if (!removed) return NOT_FOUND("Assessment not found");
   return OK({ id: assessmentId });
+}
+
+export async function publishAssessment(
+  store: AssessmentStore,
+  scope: Scope,
+  assessmentId: string,
+): Promise<Result<{ id: string; alreadyPublished: boolean }>> {
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+  if (row.status === "PUBLISHED") {
+    return OK({ id: row.id, alreadyPublished: true });
+  }
+  if (row.status === "ARCHIVED") {
+    return CONFLICT("This assessment is archived and can't be published.");
+  }
+  // The pass mark is a share of auto-gradeable points. With none, T-218 has
+  // nothing to score, so the assessment could never produce a result.
+  const gradeable = row.questions.some(
+    (q) => q.type === "MULTIPLE_CHOICE" && q.points > 0,
+  );
+  if (!gradeable) {
+    return INVALID(
+      "Add at least one multiple-choice question worth points — the pass mark is measured on those.",
+    );
+  }
+
+  const moved = await store.publish(assessmentId, scope, new Date());
+  if (!moved) {
+    // Lost a race with another tab or a double click: the DRAFT guard in the
+    // write's WHERE matched nothing. Whoever won published it once.
+    const again = await store.findOwned(assessmentId, scope);
+    if (again?.status === "PUBLISHED") {
+      return OK({ id: assessmentId, alreadyPublished: true });
+    }
+    return NOT_FOUND("Assessment not found");
+  }
+  return OK({ id: assessmentId, alreadyPublished: false });
+}
+
+export async function assignAssessment(
+  store: AssessmentStore,
+  notifier: AssessmentNotifier,
+  scope: Scope,
+  input: unknown,
+): Promise<
+  Result<{ assigned: number; alreadyAssigned: number; notificationFailures: number }>
+> {
+  const parsed = assignAssessmentSchema.safeParse(input);
+  if (!parsed.success) {
+    return INVALID(parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+  const { assessmentId } = parsed.data;
+
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+  if (row.status !== "PUBLISHED") {
+    return CONFLICT("Publish this assessment before assigning it.");
+  }
+
+  // Refs are names, not capabilities: every one is re-resolved against the
+  // recruiter's own live Shortlist, and the whole call is refused if any is
+  // missing so the result message is never half true.
+  const refs = [...new Set(parsed.data.candidateRefs)];
+  const pool = await store.listAssignableCandidates(scope.createdByUserId);
+  const byRef = new Map(pool.map((c) => [c.candidateRef, c]));
+
+  const targets: { candidateUserId: string; candidateRef: string }[] = [];
+  const seenUsers = new Set<string>();
+  for (const ref of refs) {
+    const candidate = byRef.get(ref);
+    if (!candidate) {
+      return INVALID(
+        "Some of these candidates are no longer on your Shortlist. Refresh and try again.",
+      );
+    }
+    if (seenUsers.has(candidate.candidateUserId)) continue;
+    seenUsers.add(candidate.candidateUserId);
+    targets.push({
+      candidateUserId: candidate.candidateUserId,
+      candidateRef: candidate.candidateRef,
+    });
+  }
+
+  const rows = await store.upsertAssignments(assessmentId, targets);
+
+  // Every row, new and existing, one at a time. The dispatch dedupe key is
+  // per candidate per assessment, so an existing row that was notified is a
+  // no-op and one whose first send failed gets its retry. Narrowing this to
+  // created rows would lose that retry.
+  let notificationFailures = 0;
+  for (const r of rows) {
+    try {
+      const res = await notifier.assigned({
+        recipientUserId: r.candidateUserId,
+        assessmentId,
+        assignmentId: r.id,
+      });
+      if (!res.ok) notificationFailures++;
+    } catch {
+      notificationFailures++;
+    }
+  }
+
+  const assigned = rows.filter((r) => r.created).length;
+  return OK({
+    assigned,
+    alreadyAssigned: rows.length - assigned,
+    notificationFailures,
+  });
+}
+
+export async function getAssessmentMonitor(
+  store: AssessmentStore,
+  scope: Scope,
+  assessmentId: string,
+): Promise<Result<AssessmentMonitor>> {
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+
+  const assignments = await store.listAssignments(assessmentId, scope);
+  const summary = {
+    assigned: assignments.length,
+    started: assignments.filter((a) => a.startedAt !== null).length,
+    completed: assignments.filter((a) => a.status === "SUBMITTED").length,
+    passed: assignments.filter((a) => a.passed === true).length,
+    failed: assignments.filter((a) => a.passed === false).length,
+  };
+
+  let candidates: MonitorCandidate[] = [];
+  if (row.status === "PUBLISHED") {
+    const pool = await store.listAssignableCandidates(scope.createdByUserId);
+    const assignedUserIds = new Set(assignments.map((a) => a.candidateUserId));
+    candidates = pool.map((c) => ({
+      candidateRef: c.candidateRef,
+      label: c.label,
+      jobRole: c.jobRole,
+      alreadyAssigned: assignedUserIds.has(c.candidateUserId),
+    }));
+  }
+
+  return OK({
+    assessment: {
+      id: row.id,
+      title: row.title,
+      status: row.status,
+      durationMinutes: row.durationMinutes,
+      passMarkPercent: row.passMarkPercent,
+      questionCount: row.questions.length,
+      publishedAt: row.publishedAt,
+    },
+    summary,
+    assignments,
+    candidates,
+  });
 }

@@ -110,10 +110,34 @@ suite("recruiter assessment actions go through the workspace gate", () => {
     src.includes("requireRecruiterWorkspace"),
     "assessment actions must call requireRecruiterWorkspace",
   );
+  // T-244: publish and assign are gated like save and delete.
+  assert(
+    src.includes("publishRecruiterAssessmentAction") &&
+      src.includes("assignRecruiterAssessmentAction"),
+    "publish and assign actions must exist",
+  );
+  const gateCalls = src.split("requireRecruiterWorkspace()").length - 1;
+  assert(
+    gateCalls >= 4,
+    `every assessment action must call requireRecruiterWorkspace() (found ${gateCalls}, need 4)`,
+  );
   assert(
     !/createdByUserId:\s*session\.user\.id/.test(src) &&
       !/organizationId:\s*session\.user\.id/.test(src),
     "must not use session.user.id as a scope value",
+  );
+});
+
+suite("assessment detail page 404s a foreign id", () => {
+  const src = read("src/app/hire/assessments/[assessmentId]/page.tsx");
+  assert(
+    src.includes("requireRecruiterWorkspace"),
+    "detail page must scope its read through requireRecruiterWorkspace",
+  );
+  assert(src.includes("notFound()"), "a foreign or unknown id must be notFound()");
+  assert(
+    !src.includes("searchParams"),
+    "detail page must not take candidate or scope data from the query string",
   );
 });
 

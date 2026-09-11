@@ -1,12 +1,20 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
+import { getShortlist } from "@/features/talent-pool/pool";
+import { listProjectShortlist } from "@/features/hire/project-shortlist";
+import { encodeCandidateRef, refPublicId } from "@/features/hire/candidate-ref";
+import { filterSearchableUserIds } from "@/repositories/talent";
+import { listUserDisplayNames } from "@/repositories/hire";
 import type {
-  AssessmentListRow,
+  AssessmentListStoreRow,
   AssessmentQuestionRow,
   AssessmentRow,
   AssessmentStore,
+  AssignableCandidate,
+  AssignmentRow,
   ContentInput,
+  ResultCounts,
   Scope,
 } from "./service";
 
@@ -199,7 +207,7 @@ export function prismaAssessmentStore(): AssessmentStore {
       };
     },
 
-    async listOwned(scope): Promise<AssessmentListRow[]> {
+    async listOwned(scope): Promise<AssessmentListStoreRow[]> {
       const rows = await prisma.recruiterAssessment.findMany({
         where: scopeWhere(scope),
         orderBy: { updatedAt: "desc" },
@@ -227,6 +235,147 @@ export function prismaAssessmentStore(): AssessmentStore {
         select: { id: true },
       });
       return true;
+    },
+
+    async publish(assessmentId, scope, at) {
+      // The DRAFT guard lives in the WHERE, not in a read before the write, so
+      // a double click or two tabs publish exactly once.
+      const res = await prisma.recruiterAssessment.updateMany({
+        where: { id: assessmentId, ...scopeWhere(scope), status: "DRAFT" },
+        data: { status: "PUBLISHED", publishedAt: at },
+      });
+      return res.count === 1;
+    },
+
+    async listAssignableCandidates(recruiterUserId): Promise<AssignableCandidate[]> {
+      // The same two stores and the same precedence as app/hire/layout.tsx
+      // (legacy first), so the panel lists who the Shortlist shows. Deduped on
+      // the person, because an assignment is unique per person.
+      const [legacy, project] = await Promise.all([
+        getShortlist(recruiterUserId),
+        listProjectShortlist(recruiterUserId),
+      ]);
+      const merged: {
+        candidateRef: string;
+        candidateUserId: string;
+        name: string | null;
+        jobRole: string;
+      }[] = [];
+      const seen = new Set<string>();
+      // No published cohort is not an error here — that half just adds nobody.
+      for (const r of legacy.ok ? legacy.data : []) {
+        if (seen.has(r.userId)) continue;
+        seen.add(r.userId);
+        merged.push({
+          candidateRef: encodeCandidateRef("PROGRAM", r.memberId),
+          candidateUserId: r.userId,
+          name: r.displayName,
+          jobRole: r.jobRole ?? "Candidate",
+        });
+      }
+      for (const r of project) {
+        if (seen.has(r.candidateUserId)) continue;
+        seen.add(r.candidateUserId);
+        merged.push({
+          candidateRef: r.candidateRef,
+          candidateUserId: r.candidateUserId,
+          name: r.displayName,
+          jobRole: r.jobRole,
+        });
+      }
+      // The project half is not filtered for searchability upstream; a
+      // candidate who has since hidden themselves must not be assignable.
+      const searchable = await filterSearchableUserIds(
+        merged.map((m) => m.candidateUserId),
+      );
+      return merged
+        .filter((m) => searchable.has(m.candidateUserId))
+        .map((m) => ({
+          candidateRef: m.candidateRef,
+          candidateUserId: m.candidateUserId,
+          label: m.name?.trim() || refPublicId(m.candidateRef),
+          jobRole: m.jobRole,
+        }));
+    },
+
+    async upsertAssignments(assessmentId, rows) {
+      if (rows.length === 0) return [];
+      return prisma.$transaction(async (tx) => {
+        const userIds = rows.map((r) => r.candidateUserId);
+        const before = await tx.recruiterAssessmentAssignment.findMany({
+          where: { assessmentId, candidateUserId: { in: userIds } },
+          select: { candidateUserId: true },
+        });
+        // skipDuplicates + the (assessmentId, candidateUserId) unique index is
+        // the duplicate guard. Two concurrent assigns may both report a row as
+        // created; the notification dedupe key still sends one.
+        await tx.recruiterAssessmentAssignment.createMany({
+          data: rows.map((r) => ({
+            assessmentId,
+            candidateUserId: r.candidateUserId,
+            candidateRef: r.candidateRef,
+          })),
+          skipDuplicates: true,
+        });
+        const after = await tx.recruiterAssessmentAssignment.findMany({
+          where: { assessmentId, candidateUserId: { in: userIds } },
+          select: { id: true, candidateUserId: true },
+        });
+        const existed = new Set(before.map((b) => b.candidateUserId));
+        return after.map((a) => ({
+          ...a,
+          created: !existed.has(a.candidateUserId),
+        }));
+      });
+    },
+
+    async listAssignments(assessmentId, scope): Promise<AssignmentRow[]> {
+      const rows = await prisma.recruiterAssessmentAssignment.findMany({
+        where: { assessmentId, assessment: scopeWhere(scope) },
+        orderBy: { assignedAt: "asc" },
+        select: {
+          id: true,
+          candidateUserId: true,
+          candidateRef: true,
+          status: true,
+          assignedAt: true,
+          startedAt: true,
+          submittedAt: true,
+          scorePercent: true,
+          passed: true,
+        },
+      });
+      // The same repository reader the desk uses. No contact field is read.
+      const names = await listUserDisplayNames(rows.map((r) => r.candidateUserId));
+      return rows.map((r) => ({
+        ...r,
+        label: names.get(r.candidateUserId) || refPublicId(r.candidateRef),
+      }));
+    },
+
+    async countResults(scope, assessmentIds) {
+      const out = new Map<string, ResultCounts>();
+      if (assessmentIds.length === 0) return out;
+      const groups = await prisma.recruiterAssessmentAssignment.groupBy({
+        by: ["assessmentId", "passed"],
+        where: {
+          assessmentId: { in: assessmentIds },
+          assessment: scopeWhere(scope),
+        },
+        _count: { _all: true },
+      });
+      for (const g of groups) {
+        const counts = out.get(g.assessmentId) ?? {
+          students: 0,
+          passed: 0,
+          failed: 0,
+        };
+        counts.students += g._count._all;
+        if (g.passed === true) counts.passed += g._count._all;
+        if (g.passed === false) counts.failed += g._count._all;
+        out.set(g.assessmentId, counts);
+      }
+      return out;
     },
   };
 }

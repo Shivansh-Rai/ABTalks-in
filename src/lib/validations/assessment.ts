@@ -82,3 +82,23 @@ export const assessmentDraftSchema = z
 
 export type AssessmentDraftInput = z.infer<typeof assessmentDraftSchema>;
 export type AssessmentQuestionInput = z.infer<typeof assessmentQuestionSchema>;
+
+/** One assign call notifies at most this many people (sequential sends). */
+export const MAX_ASSIGN_PER_CALL = 25;
+
+export const publishAssessmentSchema = z.object({
+  assessmentId: z.string().min(1),
+});
+
+export const assignAssessmentSchema = z.object({
+  assessmentId: z.string().min(1),
+  candidateRefs: z
+    .array(z.string().trim().min(3).max(200))
+    .min(1, "Pick at least one candidate")
+    .max(
+      MAX_ASSIGN_PER_CALL,
+      `Assign at most ${MAX_ASSIGN_PER_CALL} candidates at a time`,
+    ),
+});
+
+export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
