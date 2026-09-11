@@ -3284,6 +3284,8 @@ model AssessmentQuestion {
 
   assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   options    AssessmentQuestionOption[]
+  /// Plan 129 (T-218) — candidates' answers. Virtual; no column.
+  answers    AssessmentAnswer[]
 
   @@unique([assessmentId, position])
   @@index([assessmentId, position])
@@ -3342,10 +3344,43 @@ model RecruiterAssessmentAssignment {
 
   assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
   candidate  User                @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  /// Plan 129 (T-218) — the candidate's answers. Virtual; no column.
+  answers    AssessmentAnswer[]
 
   @@unique([assessmentId, candidateUserId])
   @@index([candidateUserId, assignedAt(sort: Desc)])
   @@index([assessmentId, status])
+}
+
+/// T-218: one candidate's answer to one question on one assignment.
+///
+/// Written only while the assignment is STARTED: every save first takes the
+/// assignment row lock with a guarded no-op update, so no answer can land after
+/// a submission. Frozen once the assignment is SUBMITTED.
+/// ABTalks stores no files — FILE_UPLOAD answers are a link the candidate pasted.
+///
+/// CASCADE on the assignment: answers go with the attempt they belong to.
+/// RESTRICT on the question: a PUBLISHED assessment's questions never change
+/// (saveAssessmentDraft is DRAFT-only and a DRAFT has no assignments), so this
+/// never blocks a real delete; it stops an answer silently losing its question.
+model AssessmentAnswer {
+  id                String   @id @default(cuid())
+  assignmentId      String
+  questionId        String
+  /// MULTIPLE_CHOICE only. AssessmentQuestionOption ids, stable once published.
+  selectedOptionIds String[] @default([])
+  /// PARAGRAPH only. Stored exactly as typed — never trimmed.
+  text              String?
+  /// FILE_UPLOAD only. An http(s) link. Null = cleared.
+  fileUrl           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  assignment RecruiterAssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion            @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, questionId])
+  @@index([questionId])
 }
 
 /// Runtime, admin-editable platform configuration (T-148 D-17, T-228).

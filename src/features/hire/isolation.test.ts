@@ -141,5 +141,27 @@ suite("assessment detail page 404s a foreign id", () => {
   );
 });
 
+// T-218 (plan 129): the candidate side of assessments.
+suite("candidate assessment page 404s a foreign assignment", () => {
+  const page = read("src/app/assessments/[assignmentId]/page.tsx");
+  assert(page.includes("auth()"), "the attempt page must resolve the session");
+  assert(page.includes("notFound()"), "a foreign or unknown assignment must be notFound()");
+  for (const word of ["searchParams", "isCorrect", "scorePercent"]) {
+    assert(!page.includes(word), `the attempt page must not contain ${word}`);
+  }
+  const list = read("src/app/assessments/page.tsx");
+  assert(list.includes("auth()"), "the list page must resolve the session");
+  assert(
+    !list.includes("scorePercent") && !/\bpassed\b/.test(list),
+    "the candidate list must not show a score (D-1)",
+  );
+});
+
+suite("middleware protects /assessments and stays edge-safe", () => {
+  const src = read("middleware.ts");
+  assert(src.includes('"/assessments"'), "/assessments must be in protectedPaths");
+  assert(!src.includes('from "@/lib'), "middleware must not import @/lib/*");
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
