@@ -103,23 +103,20 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
           dashboard can paint at full size. Static string, no user input. */}
       <script dangerouslySetInnerHTML={{ __html: HIRE_ZOOM_SCRIPT }} />
       <HireAuthProvider
-        approved={approved}
+        approved={active}
         signedIn={Boolean(userId)}
-        pending={pending}
         authEnabled={isRecruiterAuthEnabled()}
       >
-        {/* Also for a recruiter still awaiting approval: they registered
-            *because* they wanted specific candidates, and that ask lives in
-            sessionStorage until it is recorded. Approval arrives hours later in
-            another session, by which time it is gone. */}
-        {(approved || pending) && <MergeGuestCart />}
+        {/* A recruiter who registered *because* they wanted specific candidates
+            keeps that ask in sessionStorage until it is recorded, and the
+            session that recorded it may not be the one that placed it. */}
+        {active && <MergeGuestCart />}
         <HireDeskProvider>
           <HireChrome
             account={account}
             // Same array the panel renders, so the badge and the list can never
             // disagree. `account.cartCount` counts the legacy table only.
             serverCartCount={podRows.length}
-            pendingName={pending && state.status === "pending" ? state.fullName : null}
             podRows={podRows}
           >
             {children}
