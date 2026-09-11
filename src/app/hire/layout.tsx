@@ -13,6 +13,7 @@ import { HireDeskProvider } from "@/components/hire/hire-desk-context";
 import { HireChrome } from "@/components/hire/hire-chrome";
 import { MergeGuestCart } from "@/components/hire/merge-guest-cart";
 import type { CartRow } from "@/components/hire/shortlist-cart";
+import { HIRE_ZOOM_SCRIPT } from "@/components/hire/hire-zoom";
 import "./hire-scout.css";
 
 export default async function HireLayout({ children }: { children: ReactNode }) {
@@ -98,29 +99,34 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   }
 
   return (
-    <HireAuthProvider
-      approved={approved}
-      signedIn={Boolean(userId)}
-      pending={pending}
-      authEnabled={isRecruiterAuthEnabled()}
-    >
-      {/* Also for a recruiter still awaiting approval: they registered
-          *because* they wanted specific candidates, and that ask lives in
-          sessionStorage until it is recorded. Approval arrives hours later in
-          another session, by which time it is gone. */}
-      {(approved || pending) && <MergeGuestCart />}
-      <HireDeskProvider>
-        <HireChrome
-          account={account}
-                    // Same array the panel renders, so the badge and the list can never
-          // disagree. `account.cartCount` counts the legacy table only.
-          serverCartCount={podRows.length}
-          pendingName={pending && state.status === "pending" ? state.fullName : null}
-          podRows={podRows}
-        >
-          {children}
-        </HireChrome>
-      </HireDeskProvider>
-    </HireAuthProvider>
+    <>
+      {/* Screen 2's scale, set while the HTML is still parsing — before the
+          dashboard can paint at full size. Static string, no user input. */}
+      <script dangerouslySetInnerHTML={{ __html: HIRE_ZOOM_SCRIPT }} />
+      <HireAuthProvider
+        approved={approved}
+        signedIn={Boolean(userId)}
+        pending={pending}
+        authEnabled={isRecruiterAuthEnabled()}
+      >
+        {/* Also for a recruiter still awaiting approval: they registered
+            *because* they wanted specific candidates, and that ask lives in
+            sessionStorage until it is recorded. Approval arrives hours later in
+            another session, by which time it is gone. */}
+        {(approved || pending) && <MergeGuestCart />}
+        <HireDeskProvider>
+          <HireChrome
+            account={account}
+                      // Same array the panel renders, so the badge and the list can never
+            // disagree. `account.cartCount` counts the legacy table only.
+            serverCartCount={podRows.length}
+            pendingName={pending && state.status === "pending" ? state.fullName : null}
+            podRows={podRows}
+          >
+            {children}
+          </HireChrome>
+        </HireDeskProvider>
+      </HireAuthProvider>
+    </>
   );
 }

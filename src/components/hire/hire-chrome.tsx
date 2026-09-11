@@ -23,6 +23,7 @@ import {
 } from "@/components/hire/desk-shortlist";
 import { signOutAction } from "@/app/actions/auth-actions";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
+import { hireZoomFor } from "@/components/hire/hire-zoom";
 import { cn } from "@/lib/utils";
 
 export function HireChrome({
@@ -62,6 +63,19 @@ export function HireChrome({
     };
   }, []);
 
+  // Screen 2's scale (see hire-zoom.ts). The layout's inline script covers a
+  // full page load; this covers resizing and arriving by client navigation.
+  useEffect(() => {
+    const fit = () =>
+      document.documentElement.style.setProperty(
+        "--hire-zoom",
+        String(hireZoomFor(window.innerWidth)),
+      );
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+
   const cartCount = approved ? serverCartCount + overlayCount : guestCount;
   const pathname = usePathname();
   const desk =
@@ -72,7 +86,9 @@ export function HireChrome({
       pathname !== "/hire/matches" &&
       pathname !== "/hire/create-test" &&
       pathname !== "/hire/assessments");
-  const isLanding = pathname === "/hire" && landing && view === "scout";
+  // Any desk route, not just `/hire`: "New search" inside a project returns
+  // `/hire/[id]` to screen 1 without leaving the project.
+  const isLanding = desk && landing && view === "scout";
   // Everything on the desk after the landing is the results screen (Figma
   // 1585:46): nav card left, results over the composer, profile panel right.
   const isResults = desk && !isLanding;
@@ -94,28 +110,60 @@ export function HireChrome({
         isResults && "hire-app--results",
       )}
     >
+      {/* The green field is its OWN layer, not the landing's background, so
+          the two screens can cross-fade through it instead of the page
+          swapping colour in one frame. It is painted on both screens and
+          simply faded out on the results side. */}
+      {desk && (
+        <div className="hire-field" aria-hidden="true">
+          {/* Light-green blobs (moving) interleaved with the static dark
+              layers in the ORIGINAL gradient's paint order, so screen 1 is
+              exactly as bright as the design — just no longer still. */}
+          {(["a", "d", "b"] as const).map((g) => (
+            <span key={g} className={`hire-field__glow hire-field__glow--${g}`}>
+              <span className="hire-field__glow-y">
+                <span className="hire-field__glow-core" />
+              </span>
+            </span>
+          ))}
+          <span className="hire-field__shade hire-field__shade--low" />
+          <span className="hire-field__glow hire-field__glow--c">
+            <span className="hire-field__glow-y">
+              <span className="hire-field__glow-core" />
+            </span>
+          </span>
+          <span className="hire-field__shade hire-field__shade--high" />
+        </div>
+      )}
+
       <header className="hire-app__header">
         <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
           <span className="hire-app__logo">
-            {isResults ? (
-              // The results header is light, so it takes the design's dark
-              // wordmark; the landing's is white on forest green.
-              <Image
-                src="/hire/abtalks-wordmark-dark.png"
-                alt="ABTalks"
-                width={346}
-                height={81}
-                priority
-              />
-            ) : isLanding ? (
-              <Image
-                src="/hire/abtalks-wordmark.png"
-                alt="ABTalks"
-                width={342}
-                height={67}
-                priority
-                style={{ width: "auto", height: "100%" }}
-              />
+            {desk ? (
+              // Both wordmarks, stacked and crossfaded by the stage class:
+              // white on the green, the design's dark one on the light
+              // dashboard. Swapping the <Image> instead made the header
+              // change a whole frame ahead of the background.
+              <span className="hire-app__logo-swap">
+                <Image
+                  src="/hire/abtalks-wordmark.png"
+                  alt={isLanding ? "ABTalks" : ""}
+                  aria-hidden={!isLanding || undefined}
+                  width={342}
+                  height={67}
+                  priority
+                  className="hire-app__logo-img hire-app__logo-img--light"
+                />
+                <Image
+                  src="/hire/abtalks-wordmark-dark.png"
+                  alt={isLanding ? "" : "ABTalks"}
+                  aria-hidden={isLanding || undefined}
+                  width={346}
+                  height={81}
+                  priority
+                  className="hire-app__logo-img hire-app__logo-img--dark"
+                />
+              </span>
             ) : (
               <Image
                 src="/landing/abtalks-logo-mark.png"

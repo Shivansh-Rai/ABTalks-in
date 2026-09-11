@@ -29,8 +29,16 @@ export type HireDeskState = {
   landing: boolean;
   /** Name of the open talent project, shown in the nav card. Null off-project. */
   projectName: string | null;
-  /** Bumped by the nav card's "+ Create New Project"; ScoutChat resets on change. */
+  /**
+   * Two different resets, deliberately two counters.
+   *
+   * New search: another search inside the SAME project — ScoutChat clears the
+   * thread and returns to screen 1 but keeps the project. New project: a fresh
+   * workspace — nothing carried over. These used to be one counter behind the
+   * nav card's "+ Create New Project", whose reset was really a new project.
+   */
   newSearchNonce: number;
+  newProjectNonce: number;
 };
 
 type HireDeskValue = HireDeskState & {
@@ -41,6 +49,7 @@ type HireDeskValue = HireDeskState & {
   openInspect: (match: MatchCardData) => void;
   clearInspect: () => void;
   requestNewSearch: () => void;
+  requestNewProject: () => void;
 };
 
 const HireDeskContext = createContext<HireDeskValue | null>(null);
@@ -55,6 +64,7 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
     landing: true,
     projectName: null,
     newSearchNonce: 0,
+    newProjectNonce: 0,
   });
   const setDesk = useCallback((next: Partial<HireDeskState>) => {
     setState((s) => ({ ...s, ...next }));
@@ -94,6 +104,14 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
       newSearchNonce: s.newSearchNonce + 1,
     }));
   }, []);
+  const requestNewProject = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      view: "scout",
+      inspect: null,
+      newProjectNonce: s.newProjectNonce + 1,
+    }));
+  }, []);
   const value = useMemo(
     () => ({
       ...state,
@@ -104,6 +122,7 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
       openInspect,
       clearInspect,
       requestNewSearch,
+      requestNewProject,
     }),
     [
       state,
@@ -114,6 +133,7 @@ export function HireDeskProvider({ children }: { children: ReactNode }) {
       openInspect,
       clearInspect,
       requestNewSearch,
+      requestNewProject,
     ],
   );
   return (
@@ -133,6 +153,7 @@ export function useHireDesk(): HireDeskValue {
       landing: true,
       projectName: null,
       newSearchNonce: 0,
+      newProjectNonce: 0,
       setDesk: () => {},
       openPod: () => {},
       closePod: () => {},
@@ -140,6 +161,7 @@ export function useHireDesk(): HireDeskValue {
       openInspect: () => {},
       clearInspect: () => {},
       requestNewSearch: () => {},
+      requestNewProject: () => {},
     };
   }
   return ctx;
