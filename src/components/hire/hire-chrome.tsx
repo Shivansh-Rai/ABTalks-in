@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { Bookmark, ClipboardCheck, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
@@ -179,6 +179,11 @@ export function HireChrome({
         </Link>
 
         <nav className="hire-app__nav">
+          {/* Screen 1 carries the wordmark and Sign in only (Figma 1570:438):
+              the workspace's pills belong to the dashboard, and sat over the
+              green hero after the master merge dropped this guard. */}
+          {!isLanding && (
+          <>
           <button
             type="button"
             className={cn(
@@ -190,9 +195,7 @@ export function HireChrome({
             title="Kept on this device — nothing is sent to our team from here"
             onClick={() => (view === "saved" ? closePod() : openSaved())}
           >
-            <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
-              <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
-            </span>
+            <Bookmark className="hire-hbtn__svg" aria-hidden="true" />
             <span>Save for Later</span>
             {starCount > 0 && (
               <span className="hire-hbtn__count">{starCount}</span>
@@ -208,9 +211,7 @@ export function HireChrome({
             aria-current={view === "pod" ? "page" : undefined}
             onClick={() => (view === "pod" ? closePod() : openPod())}
           >
-            <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
-              <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
-            </span>
+            <UserCheck className="hire-hbtn__svg" aria-hidden="true" />
             <span>Shortlist</span>
             {cartCount > 0 && (
               <span className="hire-hbtn__count">{cartCount}</span>
@@ -231,8 +232,11 @@ export function HireChrome({
             )}
             aria-current={pathname === "/hire/assessments" ? "page" : undefined}
           >
+            <ClipboardCheck className="hire-hbtn__svg" aria-hidden="true" />
             <span>Assessments</span>
           </Link>
+          </>
+          )}
           {account ? (
             <RecruiterAccountMenu account={account} />
           ) : (

@@ -49,6 +49,8 @@ import {
   RecruiterSearchTitle,
 } from "@/components/hire/recruiter-search-landing";
 import {
+  HIRE_STAGE_MS,
+  ghostFadeOut,
   measureStage,
   playStageFlip,
   prefersReducedMotion,
@@ -1006,25 +1008,48 @@ export function ScoutChat({
   }
 
   /**
-   * New project — a fresh workspace, nothing carried over.
+   * New project — a fresh workspace, nothing carried over — and the Search
+   * transition played backwards, in one move rather than "fade, then move".
    *
-   * For a signed-in recruiter the project IS the TalentRequest, so leaving it
-   * means `/hire` with no id; the next message opens a new one. A guest has no
-   * server project, so the stored session and every search in it go.
+   * At the press, screen 2's pieces fade out pinned where they are (the
+   * mirror of screen 1's heading and suggestions on Search), while the reset
+   * sends the SAME bar back up to the centre, the surface morphs back to green
+   * and the heading and suggestions settle in behind it (`is-arriving`).
+   *
+   * For a signed-in recruiter the project IS the TalentRequest, so a new one
+   * means `/hire` with no id. The move plays here first, and the navigation
+   * lands once it has finished — onto the same screen 1 it just arrived at.
+   * A guest has no server project, so the stored session and every search in
+   * it go.
    */
   function newProject() {
-    if (requestId) {
-      router.push("/hire");
-      return;
+    if (returning) return;
+    if (!hero) {
+      ghostFadeOut(
+        [
+          ".scout__toolbar",
+          ".chat-output",
+          ".hire-detail",
+          ".hire-side",
+          ".hire-app__badge",
+          ".hire-app__nav > .hire-hbtn",
+        ],
+        LANDING_EXIT_MS,
+      );
     }
-    beginReturn(() => {
-      clearGuestSession();
-      clearGuestMatches();
-      setSearchTabs([]);
+    if (requestId) {
       clearSearch();
       setFreshChat(false);
-    });
+      window.setTimeout(() => router.push("/hire"), HIRE_STAGE_MS);
+      return;
+    }
+    clearGuestSession();
+    clearGuestMatches();
+    setSearchTabs([]);
+    clearSearch();
+    setFreshChat(false);
   }
+
 
 
   // "+ Create New Project" lives in the nav card, outside this component. It

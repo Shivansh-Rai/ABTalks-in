@@ -11,6 +11,7 @@ import {
 } from "@/components/hire/subscription-gate";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 import { cn } from "@/lib/utils";
+import { ChartColumn, FolderKanban, FolderOpen, House, LifeBuoy } from "lucide-react";
 
 /**
  * The nav card on the left of the Scout desk (Figma 1585:76).
@@ -59,7 +60,7 @@ export function HireSidebar({
           className={cn("hire-side__item", pathname === "/hire" && "is-current")}
           aria-current={pathname === "/hire" ? "page" : undefined}
         >
-          <span className="hire-side__icon" aria-hidden="true" />
+          <House className="hire-side__icon" aria-hidden="true" />
           Home
         </Link>
         <Link
@@ -69,7 +70,7 @@ export function HireSidebar({
             pathname === "/hire/requests" && "is-current",
           )}
         >
-          <span className="hire-side__icon" aria-hidden="true" />
+          <FolderKanban className="hire-side__icon" aria-hidden="true" />
           Projects
         </Link>
         <span
@@ -77,7 +78,7 @@ export function HireSidebar({
           aria-disabled="true"
           title="Coming soon"
         >
-          <span className="hire-side__icon" aria-hidden="true" />
+          <ChartColumn className="hire-side__icon" aria-hidden="true" />
           Analytics
         </span>
 
@@ -85,7 +86,7 @@ export function HireSidebar({
 
         <div className="hire-side__project">
           <span className="hire-side__item">
-            <span className="hire-side__icon" aria-hidden="true" />
+            <FolderOpen className="hire-side__icon" aria-hidden="true" />
             <span className="hire-side__label">
               {projectName || "Current Project"}
             </span>
@@ -102,7 +103,7 @@ export function HireSidebar({
         <span className="hire-side__spacer hire-side__spacer--b" aria-hidden="true" />
 
         <Link href="/contact" className="hire-side__item">
-          <span className="hire-side__icon" aria-hidden="true" />
+          <LifeBuoy className="hire-side__icon" aria-hidden="true" />
           Support
         </Link>
         <button

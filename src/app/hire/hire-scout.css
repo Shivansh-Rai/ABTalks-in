@@ -6540,11 +6540,11 @@ html.dark .vc-card {
   }
 
   .hire-app--results .hire-hbtn {
-    height: 32px;
-    padding: 0 16px;
+    height: 38px;
+    padding: 0 18px;
     border-color: #e4e4e7;
     background: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: #18181b;
   }
@@ -6649,9 +6649,14 @@ html.dark .vc-card {
 
 .hire-side__icon {
   flex: none;
-  width: 23px;
-  height: 23px;
-  background: #d9d9d9;
+  width: 21px;
+  height: 21px;
+  color: #4b4b4b;
+  stroke-width: 1.75;
+}
+
+.hire-side__item.is-current .hire-side__icon {
+  color: #03535f;
 }
 
 .hire-side__label {
@@ -7001,7 +7006,7 @@ button.hire-side__me {
 
 /* Result card (1646:209) */
 .hire-app .desk-card.desk-card--result {
-  padding: 24px 21px;
+  padding: 16px 18px;
   border: 0;
   border-radius: 15px;
   background: #ffffff;
@@ -7191,8 +7196,8 @@ button.hire-side__me {
 }
 
 .desk-card--result .desk-card__cta {
-  gap: 8px;
-  margin-top: 32px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .desk-card--rejected .desk-card__skills,
@@ -7206,13 +7211,13 @@ button.hire-side__me {
 }
 
 .hire-app .desk-card--result .desk-ghost {
-  height: 36px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   gap: 8px;
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #18181b;
 }
@@ -7222,13 +7227,13 @@ button.hire-side__me {
 }
 
 .hire-app .desk-card--result .desk-pod {
-  height: 36px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   gap: 8px;
   border: 1px solid #03535f;
   border-radius: 8px;
   background: #03535f;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   box-shadow: inset -2px -4px 4px rgba(0, 0, 0, 0.25);
@@ -7248,13 +7253,13 @@ button.hire-side__me {
 }
 
 .desk-card--result .desk-shortlist {
-  height: 36px;
-  padding: 0 20px;
+  height: 42px;
+  padding: 0 22px;
   gap: 8px;
   border: 1px solid #b1b1b3;
   border-radius: 8px;
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #18181b;
 }
@@ -8646,9 +8651,10 @@ button.hire-side__me {
   }
 }
 
+/* Mirrors the workspace's entrance on Search (720ms @ 380ms). */
 .scout--hero.is-arriving .rsearch__title,
 .scout--hero.is-arriving .rsearch__suggest {
-  animation: hire-results-in 680ms var(--ease) 720ms both;
+  animation: hire-results-in 720ms var(--ease) 380ms both;
 }
 
 /* New search: the empty chat settles in where the old thread faded out. */
@@ -8850,4 +8856,155 @@ button.hire-side__me {
   .rsearch__face.is-out {
     display: none;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Header button icons (SVG, lucide) — replaced the cropped JPG exports.
+   -------------------------------------------------------------------------- */
+.hire-hbtn__svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+/* --------------------------------------------------------------------------
+   Screen 2 keeps the profile panel's column even with no profile open.
+
+   The Figma dashboard (1585:46) leaves that space on the right; the cards
+   only ran full width because the column existed solely while `.is-open`.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1101px) {
+  .hire-app--results .scout__body {
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 484px);
+    column-gap: 15px;
+    /* No column transition here. The base rule animates the columns for the
+       panel opening, but this column is always present now — and on arrival
+       from screen 1 that transition started from ONE full-width column, so
+       the bar was measured (and stretched) to full width, then snapped back
+       to the card column when its move ended. */
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The search bar keeps ONE coordinate space on both screens.
+
+   Screen 2 is scaled with `zoom` (hire-zoom.ts) and screen 1 is not, so the
+   bar used to change zoom in the frame the stage flipped: whatever size it was
+   drawn at jumped, and nothing could animate across the jump. It now opts out
+   of screen 2's zoom and takes screen 2's sizes in real pixels (design value x
+   --hire-zoom) — identical on screen — so on Search the hero's larger field,
+   type and button TRANSITION down to the dashboard's while the bar stretches
+   (width + position in hire-stage-flip.ts), and back up on New project.
+   -------------------------------------------------------------------------- */
+.scout-composer {
+  transition:
+    background-color 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    box-shadow 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    padding 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+@media (min-width: 901px) {
+  .scout-composer__row,
+  .scout-field,
+  .scout-field textarea,
+  .scout-send,
+  .scout-send__icon,
+  .scout-criteria,
+  .scout-criterion {
+    transition-property:
+      width, height, min-height, padding, gap, margin, border-width,
+      border-radius, font-size, line-height;
+    transition-duration: 1200ms;
+    transition-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+
+  .hire-app--results .scout-composer {
+    zoom: calc(1 / var(--hire-zoom, 1));
+    padding: calc(20px * var(--hire-zoom, 1)) 0 0;
+  }
+
+  .hire-app--results .scout-composer__row {
+    gap: calc(16px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-field {
+    min-height: calc(53px * var(--hire-zoom, 1));
+    padding: calc(12px * var(--hire-zoom, 1)) calc(24px * var(--hire-zoom, 1));
+    border-width: calc(2px * var(--hire-zoom, 1));
+    border-radius: calc(15px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-field textarea {
+    min-height: calc(25px * var(--hire-zoom, 1));
+    font-size: calc(20px * var(--hire-zoom, 1));
+    line-height: calc(25px * var(--hire-zoom, 1));
+  }
+
+  /* Centred rather than left-padded (the frame's 25px inset): a centred label
+     does not slide sideways while the button resizes. */
+  .hire-app--results .scout-send {
+    justify-content: center;
+    gap: calc(8px * var(--hire-zoom, 1));
+    width: calc(166px * var(--hire-zoom, 1));
+    height: auto;
+    min-height: calc(53px * var(--hire-zoom, 1));
+    padding: 0;
+    border-radius: calc(15px * var(--hire-zoom, 1));
+    font-size: calc(20px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-send__icon {
+    width: calc(32px * var(--hire-zoom, 1));
+    height: calc(31px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-criteria {
+    gap: calc(4px * var(--hire-zoom, 1)) calc(16px * var(--hire-zoom, 1));
+    margin: calc(11px * var(--hire-zoom, 1)) 0 0;
+    padding: 0 0 0 calc(24px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-criterion {
+    gap: calc(4px * var(--hire-zoom, 1));
+    font-size: calc(14px * var(--hire-zoom, 1));
+    line-height: calc(17px * var(--hire-zoom, 1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout-composer,
+  .scout-composer__row,
+  .scout-field,
+  .scout-field textarea,
+  .scout-send,
+  .scout-send__icon,
+  .scout-criteria,
+  .scout-criterion {
+    transition: none;
+  }
+}
+
+/* Frozen copies of screen 2 fading out on New project (ghostFadeOut). They
+   carry the page's stage classes so they are styled exactly as the originals;
+   this stops those classes' entrance animations replaying on the copies, and
+   takes the layer out of the page's own box model. */
+.hire-app.hire-ghost {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: block;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+.hire-ghost *,
+.hire-ghost *::before,
+.hire-ghost *::after {
+  animation: none !important;
+  transition: none !important;
 }
