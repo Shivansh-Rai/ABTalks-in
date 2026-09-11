@@ -61,20 +61,37 @@ export function playStageFlip(
       : 1;
   const dx = (first.left - last.left) / zoom;
   const dy = (first.top - last.top) / zoom;
-  const scale = first.width / last.width;
+  const fromWidth = first.width / zoom;
+  const toWidth = last.width / zoom;
 
   // Sub-pixel drift is not a move; skip it so a resize cannot trigger a slide.
-  if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.01) {
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(fromWidth - toWidth) < 1) {
     return null;
   }
 
+  /**
+   * Position by transform, WIDTH by width — not a uniform scale.
+   *
+   * A scale shrank the bar's height and type along with its width, so on the
+   * way to screen 2 it visibly squashed and re-grew. The field is the same
+   * height on both screens now (see `.scout--hero` sizing), so the only thing
+   * that should change is how wide it is: it stretches. `maxWidth` rides along
+   * because the hero caps the card's width, which would otherwise clamp the
+   * return trip. Animating width relayouts the bar's own subtree for the
+   * length of the move — a few elements, not the page.
+   */
   return el.animate(
     [
       {
-        transform: `translate(${dx}px, ${dy}px) scale(${scale})`,
-        transformOrigin: "left top",
+        transform: `translate(${dx}px, ${dy}px)`,
+        width: `${fromWidth}px`,
+        maxWidth: `${Math.max(fromWidth, toWidth)}px`,
       },
-      { transform: "translate(0, 0) scale(1)", transformOrigin: "left top" },
+      {
+        transform: "translate(0, 0)",
+        width: `${toWidth}px`,
+        maxWidth: `${Math.max(fromWidth, toWidth)}px`,
+      },
     ],
     {
       duration,
@@ -92,4 +109,61 @@ export function playStageFlip(
       fill: "none",
     },
   );
+}
+
+/**
+ * Fade out, in place, parts of the page that are about to be unmounted.
+ *
+ * The screen 2 -> 1 move (New project) mirrors Search: there, screen 1's
+ * heading and suggestions stay pinned where they were and fade while the bar
+ * travels. Screen 2's pieces — cards, toolbar, nav card, header buttons — are
+ * torn down by the same state change that starts the move, so they are copied
+ * first: static clones in a layer that carries the page's CURRENT stage classes
+ * (so every stage-scoped rule, including screen 2's zoom, still styles them),
+ * positioned at the originals' rects and faded with `duration`, then removed.
+ * Call it BEFORE the state change.
+ */
+export function ghostFadeOut(selectors: string[], duration: number): void {
+  if (typeof document === "undefined" || prefersReducedMotion()) return;
+  const app = document.querySelector<HTMLElement>(".hire-app");
+  if (!app) return;
+
+  const zoom =
+    (app as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom || 1;
+  const layer = document.createElement("div");
+  layer.className = `${app.className} hire-ghost`;
+  layer.setAttribute("aria-hidden", "true");
+  layer.setAttribute("inert", "");
+
+  const scrolls: [HTMLElement, number][] = [];
+  for (const selector of selectors) {
+    document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.style.position = "absolute";
+      clone.style.margin = "0";
+      clone.style.top = `${r.top / zoom}px`;
+      clone.style.left = `${r.left / zoom}px`;
+      clone.style.width = `${r.width / zoom}px`;
+      clone.style.height = `${r.height / zoom}px`;
+      clone.style.boxSizing = "border-box";
+      layer.appendChild(clone);
+      if (el.scrollTop) scrolls.push([clone, el.scrollTop]);
+    });
+  }
+  if (!layer.childElementCount) return;
+
+  document.body.appendChild(layer);
+  // A clone starts scrolled to the top; put the thread back where it was.
+  for (const [clone, top] of scrolls) clone.scrollTop = top;
+
+  const fade = layer.animate([{ opacity: 1 }, { opacity: 0 }], {
+    duration,
+    // Ease-in: on its way out, exactly like screen 1's pieces on Search.
+    easing: "cubic-bezier(0.4, 0, 1, 1)",
+    fill: "forwards",
+  });
+  const done = () => layer.remove();
+  fade.finished.then(done, done);
 }
