@@ -27,7 +27,7 @@ export function HireSidebar({
 }) {
   const pathname = usePathname();
   const { openAuth } = useHireAuth();
-  const { projectName, requestNewSearch } = useHireDesk();
+  const { projectName, requestNewProject } = useHireDesk();
   const [gate, setGate] = useState<GateReason | null>(null);
 
   const name = account?.fullName ?? "Guest";
@@ -93,7 +93,7 @@ export function HireSidebar({
           <button
             type="button"
             className="hire-side__new"
-            onClick={requestNewSearch}
+            onClick={requestNewProject}
           >
             + Create New Project
           </button>
