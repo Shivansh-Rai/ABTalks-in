@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import {
   Prisma,
-  TalentMatchDecision,
   TalentMatchTier,
   TalentRequestStatus,
   type TalentEmploymentType,
@@ -38,6 +37,15 @@ import {
 import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
 import { toPublicMatch } from "@/features/hire/to-public-match";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
+import {
+  createSession,
+  ensureLegacySession,
+  getOwnedSession,
+  pruneUndecidedOutsideSessions,
+  recordSessionRun,
+  specFromJson,
+  specToJson,
+} from "@/features/hire/search-sessions";
 
 type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
@@ -133,6 +141,8 @@ export async function sendScoutMessageAction(
 ): Promise<
   ActionResult<{
     requestId: string;
+    /** Plan 133: the search session this turn was written to. */
+    sessionId: string;
     assistantMessage: string;
     options: { label: string; value: string }[];
     allowFreeText: boolean;
@@ -155,40 +165,40 @@ export async function sendScoutMessageAction(
     return { ok: false, message: "Invalid message." };
   }
 
-  const { message, display, requestId: existingId } = parsed.data;
+  const {
+    message,
+    display,
+    requestId: existingId,
+    sessionId: existingSessionId,
+  } = parsed.data;
   const userId = gate.data.userId;
 
   try {
     let requestId = existingId;
+    let sessionId: string;
+    // Plan 133: the brief and the history are the SESSION's, not the
+    // project's. A new search starts from nothing and cannot rewrite an
+    // earlier one.
     let priorSpec: JobSpec = {};
 
     if (requestId) {
       const existing = await prisma.talentRequest.findFirst({
         where: { id: requestId, recruiterUserId: userId },
-        select: {
-          id: true,
-          title: true,
-          seniority: true,
-          openings: true,
-          mustHaveStack: true,
-          niceToHaveStack: true,
-          evidencePriority: true,
-          salaryMin: true,
-          salaryMax: true,
-          salaryCurrency: true,
-          salaryPeriod: true,
-          workMode: true,
-          locationCity: true,
-          employmentType: true,
-          noticePeriodDays: true,
-          minExperience: true,
-          maxExperience: true,
-          requiresDegree: true,
-          extra: true,
-        },
+        select: { id: true },
       });
       if (!existing) return { ok: false, message: "Request not found." };
-      priorSpec = dbToSpec(existing);
+      // A project from before sessions: its history becomes Session 1 first,
+      // so a new session here never swallows it.
+      await ensureLegacySession(requestId);
+
+      if (existingSessionId) {
+        const session = await getOwnedSession(userId, requestId, existingSessionId);
+        if (!session) return { ok: false, message: "Search not found." };
+        sessionId = session.id;
+        priorSpec = specFromJson(session.spec);
+      } else {
+        sessionId = (await createSession({ requestId, title: display ?? message })).id;
+      }
     } else {
       const created = await prisma.talentRequest.create({
         data: {
@@ -200,10 +210,11 @@ export async function sendScoutMessageAction(
         select: { id: true },
       });
       requestId = created.id;
+      sessionId = (await createSession({ requestId, title: display ?? message })).id;
     }
 
     const historyRows = await prisma.talentRequestMessage.findMany({
-      where: { requestId },
+      where: { sessionId },
       orderBy: { createdAt: "asc" },
       select: { role: true, content: true },
       take: 40,
@@ -212,6 +223,7 @@ export async function sendScoutMessageAction(
     await prisma.talentRequestMessage.create({
       data: {
         requestId,
+        sessionId,
         role: "user",
         // What the recruiter saw on the chip, not the machine value behind it.
         // A bubble reading "30" under a button labelled "Within 30 days" is not
@@ -229,14 +241,24 @@ export async function sendScoutMessageAction(
       userMessage: message,
     });
 
+    // The session owns its brief. The project's columns mirror the latest one
+    // so the demand board, admin and hire alerts keep reading what they read.
     const dbFields = specToDb(turn.spec);
-    await prisma.talentRequest.update({
-      where: { id: requestId },
-      data: {
-        ...dbFields,
-        extra: dbFields.extra ?? Prisma.JsonNull,
-      },
-    });
+    await prisma.$transaction([
+      prisma.talentSearchSession.update({
+        where: { id: sessionId },
+        data: { spec: specToJson(turn.spec) },
+        select: { id: true },
+      }),
+      prisma.talentRequest.update({
+        where: { id: requestId },
+        data: {
+          ...dbFields,
+          extra: dbFields.extra ?? Prisma.JsonNull,
+        },
+        select: { id: true },
+      }),
+    ]);
 
     // What the recruiter sees live and what is replayed on reload must be the
     // same string. They were not: the stored copy prefixed the running summary,
@@ -252,6 +274,7 @@ export async function sendScoutMessageAction(
     await prisma.talentRequestMessage.create({
       data: {
         requestId,
+        sessionId,
         role: "assistant",
         content: assistantMessage,
         options: turn.options,
@@ -265,6 +288,7 @@ export async function sendScoutMessageAction(
       ok: true,
       data: {
         requestId,
+        sessionId,
         assistantMessage,
         options: turn.options,
         allowFreeText: turn.allowFreeText,
@@ -289,6 +313,8 @@ export async function runMatchAction(
 ): Promise<
   ActionResult<{
     requestId: string;
+    /** Plan 133: the session these results belong to. */
+    sessionId: string;
     matchCount: number;
     overallGap: string;
   }>
@@ -333,7 +359,25 @@ export async function runMatchAction(
     });
     if (!req) return { ok: false, message: "Request not found." };
 
-    const spec = dbToSpec(req);
+    // Plan 133: a run belongs to one session and searches THAT session's
+    // brief. No session id means a new search, which gets a new session.
+    await ensureLegacySession(req.id);
+    let sessionId: string;
+    let spec: JobSpec;
+    if (parsed.data.sessionId) {
+      const session = await getOwnedSession(
+        gate.data.userId,
+        req.id,
+        parsed.data.sessionId,
+      );
+      if (!session) return { ok: false, message: "Search not found." };
+      sessionId = session.id;
+      spec = specFromJson(session.spec);
+    } else {
+      spec = dbToSpec(req);
+      sessionId = (await createSession({ requestId: req.id, title: spec.title ?? null, spec })).id;
+    }
+
     const search = await searchCandidates(spec, { limit: 20 });
     if (!search.ok) return search;
 
@@ -412,25 +456,36 @@ export async function runMatchAction(
     // this stays on `prisma` exactly as before and needs no direct Neon
     // endpoint. (Review sheet question 5 asks whether writeClient() is wanted
     // here; keeping the current client means that answer changes nothing else.)
-    const keptCandidateIds = rows.map((row) => row.candidateUserId);
-    await prisma.$transaction([
-      prisma.talentRequestMatch.deleteMany({
-        where: {
-          requestId: req.id,
-          decision: TalentMatchDecision.UNDECIDED,
-          ...(keptCandidateIds.length > 0
-            ? { candidateUserId: { notIn: keptCandidateIds } }
-            : {}),
-        },
-      }),
-      ...rows.map(({ requestId, candidateUserId, ...scoring }) =>
+    //
+    // Plan 133: "dropped out of this run" is no longer enough to delete. An
+    // UNDECIDED row goes only when NO session of this project still shows
+    // it, or reopening an earlier search would find its results gone. This
+    // session's own list is written first, so the union below is current.
+    await prisma.$transaction(
+      rows.map(({ requestId, candidateUserId, ...scoring }) =>
         prisma.talentRequestMatch.upsert({
           where: { requestId_candidateUserId: { requestId, candidateUserId } },
           create: { requestId, candidateUserId, ...scoring },
           update: scoring,
         }),
       ),
-    ]);
+    );
+    await recordSessionRun({
+      sessionId,
+      rows: rows.map((row) => ({
+        candidateUserId: row.candidateUserId,
+        score: row.score,
+        tier: row.tier,
+        scoreBreakdown: row.scoreBreakdown,
+        evidence: row.evidence,
+        rationale: row.rationale,
+        gaps: row.gaps,
+        availabilityUnknown: row.availabilityUnknown,
+      })),
+      overallGap: explained.overallGap,
+      matchCount: explained.matches.length,
+    });
+    await pruneUndecidedOutsideSessions(req.id);
 
     // Always promote to ACTIVE so demand board sees the requirement
     const status =
@@ -446,6 +501,7 @@ export async function runMatchAction(
     await prisma.talentRequestMessage.create({
       data: {
         requestId: req.id,
+        sessionId,
         role: "assistant",
         content: explained.overallGap,
       },
@@ -458,6 +514,7 @@ export async function runMatchAction(
       ok: true,
       data: {
         requestId: req.id,
+        sessionId,
         matchCount: explained.matches.length,
         overallGap: explained.overallGap,
       },

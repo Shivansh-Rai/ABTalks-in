@@ -73,10 +73,17 @@ suite("UNDECIDED removal drops out of the navbar by construction", () => {
   );
 });
 
-suite("navbar count is derived from the rendered list", () => {
+// Plan 133 changed the next four rules on purpose: the header now shows the
+// OPEN project's shortlist (legacy rows only off-project), so it is no longer
+// one merged, cross-project list. The guarantees they protected still hold.
+const chrome = read("src/components/hire/hire-chrome.tsx");
+
+suite("navbar count is derived from the rendered (scoped) list", () => {
   assert(
-    /serverCartCount=\{podRows\.length\}/.test(layout),
-    "count must be podRows.length so the badge cannot disagree with the panel",
+    /const scopedRows = scopePodRows\(podRows, openProjectId\);/.test(chrome) &&
+      /scopedRows\.length \+ overlayCount/.test(chrome) &&
+      /serverRows=\{scopedRows\}/.test(chrome),
+    "count and panel must both come from the same scoped array",
   );
   assert(
     !/serverCartCount=\{account\?\.cartCount/.test(layout),
@@ -84,29 +91,29 @@ suite("navbar count is derived from the rendered list", () => {
   );
 });
 
-suite("navbar merges BOTH stores", () => {
+suite("navbar reads BOTH stores", () => {
   assert(
     /getShortlist\(userId\)/.test(layout) &&
-      /listProjectShortlist\(userId\)/.test(layout),
-    "layout must read the legacy list and the project list",
+      /listProjectShortlistByProject\(userId\)/.test(layout),
+    "layout must read the legacy list and the per-project list",
   );
 });
 
-suite("no duplicate candidate rows across the two stores", () => {
+suite("no duplicate candidate rows within one project", () => {
   assert(
-    /const seen = new Set\(podRows\.map\(\(r\) => r\.candidateRef\)\)/.test(layout),
-    "must dedupe on candidateRef",
+    /const key = `\$\{r\.requestId\}:\$\{r\.candidateRef\}`;/.test(layout),
+    "project rows must dedupe per project × candidate",
   );
   assert(
-    /if \(seen\.has\(r\.candidateRef\)\) continue;/.test(layout),
-    "must skip a project row already present from the legacy list",
+    /if \(seen\.has\(key\)\) continue;/.test(layout),
+    "a repeated project × candidate row must be skipped",
   );
 });
 
-suite("one row per candidate across multiple projects", () => {
+suite("one row per candidate for the assessment builder's reader", () => {
   assert(
-    /seen\.has\(r\.candidateUserId\)/.test(reader),
-    "the same candidate shortlisted in several projects must collapse to one row",
+    /return loadShortlist\(recruiterUserId, \(r\) => r\.candidateUserId\);/.test(reader),
+    "listProjectShortlist must still collapse a person to one row across projects",
   );
 });
 

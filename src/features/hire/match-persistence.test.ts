@@ -68,7 +68,19 @@ suite("the match run no longer recreates every row", () => {
 });
 
 suite("only UNDECIDED dropouts are deleted; decided rows survive", () => {
-  const deletes = actionCode.match(
+  // Plan 133 moved the cleanup into `pruneUndecidedOutsideSessions` (it now
+  // spares anything ANY search session still shows). Same three guarantees.
+  const sessionsCode = readFileSync(
+    join(process.cwd(), "src/features/hire/search-sessions.ts"),
+    "utf8",
+  )
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "");
+  assert(
+    actionCode.includes("await pruneUndecidedOutsideSessions(req.id)"),
+    "runMatchAction must still clean up after a run",
+  );
+  const deletes = sessionsCode.match(
     /talentRequestMatch\.deleteMany\(\{[\s\S]*?\}\)/,
   );
   if (!deletes) throw new Error("expected a deleteMany on TalentRequestMatch");

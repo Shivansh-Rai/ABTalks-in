@@ -30,7 +30,12 @@ import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
-import { useHireDesk } from "@/components/hire/hire-desk-context";
+import {
+  useHireDesk,
+  type DeskAssessment,
+  type DeskSession,
+} from "@/components/hire/hire-desk-context";
+import { NewProjectDialog } from "@/components/hire/new-project-dialog";
 import { readGuestCart } from "@/components/hire/guest-cart";
 import { buildSampleCards } from "@/features/hire/sample-card";
 import { hasSufficientRealMatches } from "@/features/hire/match-config";
@@ -106,7 +111,19 @@ type Props = {
   /** Server flag: fill an empty desk with blurred example profiles. */
   proPreview?: boolean;
   virtualCandidates?: boolean;
+  /** Plan 133: the search session on screen. Null = a new search not yet sent. */
+  initialSessionId?: string | null;
+  /** Plan 133: every search in this project, for the nav card. */
+  projectSessions?: DeskSession[];
+  /** Plan 133: this project's assessments, and the recruiter's unfiled ones. */
+  projectAssessments?: DeskAssessment[];
+  unassignedAssessments?: DeskAssessment[];
 };
+
+// Stable empties: a fresh `[]` default per render would re-fire the desk
+// effect that publishes these, which sets context, which re-renders — forever.
+const NO_SESSIONS: DeskSession[] = [];
+const NO_ASSESSMENTS: DeskAssessment[] = [];
 
 const OPENING: Msg = {
   role: "assistant",
@@ -314,9 +331,17 @@ export function ScoutChat({
   initialSearched = false,
   proPreview = false,
   virtualCandidates = false,
+  initialSessionId = null,
+  projectSessions = NO_SESSIONS,
+  projectAssessments = NO_ASSESSMENTS,
+  unassignedAssessments = NO_ASSESSMENTS,
 }: Props) {
   const router = useRouter();
   const [requestId, setRequestId] = useState<string | null>(initialRequestId);
+  // Plan 133: which search inside the project this chat is. Null until the
+  // first message of a new search, when the server creates the session.
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(
     initialMessages.length ? initialMessages : [OPENING],
   );
@@ -551,6 +576,30 @@ export function ScoutChat({
     });
   }, [persist, requestId, projectLabel, setDesk]);
 
+  // Plan 133: the nav card lists this project's searches and assessments.
+  useEffect(() => {
+    setDesk({
+      project:
+        persist && requestId
+          ? {
+              id: requestId,
+              activeSessionId: sessionId,
+              sessions: projectSessions,
+              assessments: projectAssessments,
+              unassignedAssessments,
+            }
+          : null,
+    });
+  }, [
+    persist,
+    requestId,
+    sessionId,
+    projectSessions,
+    projectAssessments,
+    unassignedAssessments,
+    setDesk,
+  ]);
+
   useEffect(() => {
     if (hydratedRef.current) return;
     if (persist && (initialMessages.length > 0 || initialRequestId)) return;
@@ -667,6 +716,9 @@ export function ScoutChat({
       if (persist) {
         const res = await sendScoutMessageAction({
           requestId: requestId ?? undefined,
+          // Absent on the first message of a new search: the server opens a
+          // new session in this project rather than continuing the last one.
+          sessionId: sessionId ?? undefined,
           message,
           display: shown === message ? undefined : shown,
         });
@@ -675,6 +727,8 @@ export function ScoutChat({
           return;
         }
         setRequestId(res.data.requestId);
+        setSessionId(res.data.sessionId);
+        const openedSession = res.data.sessionId !== sessionId;
         setSpec(res.data.spec);
         setSummary(res.data.summary);
         setReadyToSearch(res.data.readyToSearch);
@@ -692,6 +746,7 @@ export function ScoutChat({
         if (res.data.action === "search") {
           const match = await runMatchAction({
             requestId: res.data.requestId,
+            sessionId: res.data.sessionId,
           });
           if (!match.ok) {
             toast.error(match.message);
@@ -708,8 +763,11 @@ export function ScoutChat({
             });
           }
         }
-        if (!requestId) router.replace(`/hire/${res.data.requestId}`);
-        else if (res.data.action === "search") router.refresh();
+        // A new project or a new session gets its own URL, so reload and the
+        // nav card both land on this search. Same session: refresh in place.
+        if (!requestId || openedSession) {
+          router.replace(`/hire/${res.data.requestId}?session=${res.data.sessionId}`);
+        } else if (res.data.action === "search") router.refresh();
         return;
       }
 
@@ -762,9 +820,19 @@ export function ScoutChat({
     const active = overrideSpec ?? spec;
     startTransition(async () => {
       if (persist) {
-        const res = await runMatchAction({ requestId: requestId! });
+        const res = await runMatchAction({
+          requestId: requestId!,
+          sessionId: sessionId ?? undefined,
+        });
         if (!res.ok) {
           toast.error(res.message);
+          return;
+        }
+        // No session yet (a new search run straight from the button): the
+        // server opened one. Move to its URL so the nav card and reload agree.
+        if (res.data.sessionId !== sessionId) {
+          setSessionId(res.data.sessionId);
+          router.replace(`/hire/${requestId}?session=${res.data.sessionId}`);
           return;
         }
         setSearched(true);
@@ -988,6 +1056,13 @@ export function ScoutChat({
    * not rewritten — the next search continues it.)
    */
   function newSearch() {
+    // Plan 133: a NEW session in the SAME project. The previous session stays
+    // exactly as it is; the next message here opens session N+1. The URL says
+    // so without a navigation (which would remount mid-animation).
+    if (persist && requestId) {
+      setSessionId(null);
+      window.history.replaceState(null, "", `/hire/${requestId}?session=new`);
+    }
     beginReturn(() => {
       clearSearch();
       setFreshChat(true);
@@ -1024,6 +1099,13 @@ export function ScoutChat({
    */
   function newProject() {
     if (returning) return;
+    // Plan 133: a signed-in recruiter gets a REAL project — named, created now,
+    // then opened — instead of a cleared screen that became a project only
+    // once something was searched.
+    if (persist) {
+      setNewProjectOpen(true);
+      return;
+    }
     if (!hero) {
       ghostFadeOut(
         [
@@ -1201,6 +1283,9 @@ export function ScoutChat({
       )}
       aria-label="Scout assistant"
     >
+      {persist && (
+        <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} />
+      )}
       {/* One grid (see `.hire-app--results .scout__body`): Filters, the
           thread and the composer stack on the left, the profile panel takes
           the right column. "New search" moved to the nav card's

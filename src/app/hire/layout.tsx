@@ -5,7 +5,8 @@ import { getRecruiterState } from "@/features/talent-pool/recruiter-registration
 import { getRecruiterAccountSnapshot } from "@/features/hire/recruiter-account";
 import { getWorkspaceCredits } from "@/features/hire/credits";
 import { existingEngagements } from "@/features/hire/contact-access";
-import { listProjectShortlist } from "@/features/hire/project-shortlist";
+import { listProjectShortlistByProject } from "@/features/hire/project-shortlist";
+import { prisma } from "@/lib/db";
 import { countUnreadForRecruiter } from "@/features/hire/outreach";
 import { logger } from "@/lib/logger";
 import { getShortlist } from "@/features/talent-pool/pool";
@@ -43,6 +44,23 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   // as a count on Messages. The recruiter is also emailed (outreach.reply_received).
   const unreadMessages = userId && active ? await countUnreadForRecruiter(userId) : 0;
 
+  // Plan 133: the recruiter's projects, for switching between them in the nav
+  // card. Their own only; archived ones stay put away.
+  const projects =
+    userId && active
+      ? (
+          await prisma.talentRequest.findMany({
+            where: { recruiterUserId: userId, archivedAt: null },
+            orderBy: { updatedAt: "desc" },
+            take: 8,
+            select: { id: true, name: true, title: true },
+          })
+        ).map((p) => ({
+          id: p.id,
+          label: p.name?.trim() || p.title.trim() || "Untitled project",
+        }))
+      : [];
+
   // The header shortlist is the union of TWO stores, and it has to be, because
   // neither can name every candidate:
   //
@@ -53,8 +71,10 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   //
   // Reading only the first is why a candidate shortlisted inside a project was
   // written to the database correctly and then appeared nowhere. Both are
-  // merged here ONCE and the count is derived from the same array, so the
-  // header can never show a number the panel cannot list.
+  // loaded here ONCE; HireChrome then scopes them (plan 133) — the open
+  // project's rows inside a project, the legacy rows only off-project — and
+  // derives the count from that same scoped array, so the header can never
+  // show a number the panel cannot list.
   let podRows: CartRow[] = [];
   if (userId && active) {
     // NO try/catch around listProjectShortlist on purpose. If the project
@@ -62,9 +82,12 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
     // this environment — this surface must fail LOUDLY. A caught error here
     // renders a plausible header with a silently short shortlist, which is
     // exactly how a schema drift stayed hidden until it cost a day to find.
+    // Plan 133: one row per PROJECT × candidate. HireChrome shows only the
+    // open project's rows, and legacy rows only off-project — the two stores
+    // are never merged into one project's list.
     const [legacy, project] = await Promise.all([
       getShortlist(userId),
-      listProjectShortlist(userId),
+      listProjectShortlistByProject(userId),
     ]);
 
     const legacyRows = legacy.ok ? legacy.data : [];
@@ -88,13 +111,15 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
       engagementStatus: engagements.get(r.userId)?.status ?? null,
     }));
 
-    // Dedupe on candidateRef: a program member shortlisted BOTH the legacy way
-    // and inside a project is one person, not two rows. Legacy wins because it
-    // carries the note and the revealed name.
-    const seen = new Set(podRows.map((r) => r.candidateRef));
+    // Dedupe within ONE project: the same person shortlisted in Project A and
+    // Project B is a row in each. Legacy and project rows are never shown
+    // together (HireChrome scopes them), so they are not deduped against each
+    // other any more — doing so hid a project's row behind a legacy one.
+    const seen = new Set<string>();
     for (const r of project) {
-      if (seen.has(r.candidateRef)) continue;
-      seen.add(r.candidateRef);
+      const key = `${r.requestId}:${r.candidateRef}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       podRows.push({
         candidateRef: r.candidateRef,
         memberId: r.memberId,
@@ -142,11 +167,12 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
                 }
                 : null
             }
-            // Same array the panel renders, so the badge and the list can never
-            // disagree. `account.cartCount` counts the legacy table only.
-            serverCartCount={podRows.length}
+            // HireChrome scopes these to the open project and counts the scoped
+            // array, so the badge and the list can never disagree.
+            // `account.cartCount` counts the legacy table only.
             podRows={podRows}
             unreadMessages={unreadMessages}
+            projects={projects}
           >
             {children}
           </HireChrome>

@@ -4,17 +4,39 @@ import { prisma } from "@/lib/db";
 import { requireRecruiter } from "@/lib/program-auth";
 import { ScoutChat } from "@/components/hire/scout-chat";
 import { loadRequestMatches } from "@/features/hire/load-request-matches";
-import { jobSpecSchema, type JobSpec } from "@/lib/validations/hire";
+import {
+  ensureLegacySession,
+  getOwnedSession,
+  listProjectSessions,
+  listSessionMessages,
+  specFromJson,
+} from "@/features/hire/search-sessions";
+import {
+  listProjectAssessments,
+  listUnassignedAssessments,
+} from "@/features/hire/project-assessments";
+import type { JobSpec } from "@/lib/validations/hire";
 
-type Props = { params: Promise<{ requestId: string }> };
+type Props = {
+  params: Promise<{ requestId: string }>;
+  /** Plan 133: `?session=<id>` opens that search; `?session=new` a new one. */
+  searchParams: Promise<{ session?: string }>;
+};
 
 export const metadata: Metadata = {
   title: "Scout search | ABTalks Hire",
 };
 
-export default async function HireRequestPage({ params }: Props) {
+/**
+ * One project (plan 133). Its search sessions are listed in the nav card; this
+ * page shows ONE of them — the one in `?session=`, else the latest. A project
+ * with no search yet (just created) opens on an empty Scout, and its first
+ * search becomes Session 1.
+ */
+export default async function HireRequestPage({ params, searchParams }: Props) {
   const { userId } = await requireRecruiter();
   const { requestId } = await params;
+  const { session: sessionParam } = await searchParams;
 
   let request;
   try {
@@ -23,34 +45,9 @@ export default async function HireRequestPage({ params }: Props) {
       select: {
         id: true,
         title: true,
+        name: true,
         status: true,
         alertWhenAvailable: true,
-        seniority: true,
-        openings: true,
-        mustHaveStack: true,
-        niceToHaveStack: true,
-        evidencePriority: true,
-        salaryMin: true,
-        salaryMax: true,
-        salaryCurrency: true,
-        salaryPeriod: true,
-        workMode: true,
-        locationCity: true,
-        employmentType: true,
-        noticePeriodDays: true,
-        minExperience: true,
-        maxExperience: true,
-        requiresDegree: true,
-        extra: true,
-        messages: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            role: true,
-            content: true,
-            options: true,
-          },
-          take: 50,
-        },
       },
     });
   } catch {
@@ -59,43 +56,34 @@ export default async function HireRequestPage({ params }: Props) {
 
   if (!request) notFound();
 
-  // Prisma stores "" on a draft that has no role yet. jobSpecSchema treats
-  // title as optional, but rejects empty string (min 1). Same for currency.
-  const blank = (s: string | null | undefined) => {
-    const t = s?.trim();
-    return t ? t : undefined;
-  };
+  // A project from before sessions: its search becomes Session 1 here, before
+  // anything reads the list.
+  await ensureLegacySession(request.id);
+  const sessions = await listProjectSessions(userId, request.id);
 
-  const parsed = jobSpecSchema.safeParse({
-    title: blank(request.title),
-    seniority: request.seniority,
-    openings: request.openings,
-    mustHaveStack: request.mustHaveStack,
-    niceToHaveStack: request.niceToHaveStack,
-    evidencePriority: request.evidencePriority,
-    salaryMin: request.salaryMin,
-    salaryMax: request.salaryMax,
-    salaryCurrency: blank(request.salaryCurrency),
-    salaryPeriod: request.salaryPeriod === "MONTHLY" ? "MONTHLY" : "ANNUAL",
-    workMode: request.workMode,
-    locationCity: request.locationCity,
-    employmentType: request.employmentType,
-    noticePeriodDays: request.noticePeriodDays,
-    minExperience: request.minExperience,
-    maxExperience: request.maxExperience,
-    requiresDegree: request.requiresDegree,
-    extra:
-      request.extra && typeof request.extra === "object"
-        ? (request.extra as Record<string, unknown>)
-        : undefined,
-  });
-  const spec: JobSpec = parsed.success ? parsed.data : {};
+  const wanted =
+    sessionParam && sessionParam !== "new"
+      ? await getOwnedSession(userId, request.id, sessionParam)
+      : null;
+  // An unknown or foreign id falls back to the latest, never to an error page
+  // that confirms the id exists somewhere.
+  const selectedId =
+    sessionParam === "new" ? null : (wanted?.id ?? sessions[0]?.id ?? null);
+  const selected =
+    wanted ?? (selectedId ? await getOwnedSession(userId, request.id, selectedId) : null);
 
-  const matchData = await loadRequestMatches(requestId, userId);
+  const [messageRows, matchData, assessments, unassigned] = await Promise.all([
+    selected ? listSessionMessages(selected.id) : Promise.resolve([]),
+    loadRequestMatches(request.id, userId, { sessionId: selected?.id ?? null }),
+    listProjectAssessments(userId, request.id),
+    listUnassignedAssessments(userId),
+  ]);
+
+  const spec: JobSpec = selected ? specFromJson(selected.spec) : {};
   const matches = matchData?.matches ?? [];
-  const projectName = matchData?.name ?? request.title;
+  const projectName = request.name?.trim() || request.title;
 
-  const messages = request.messages.map((m) => ({
+  const messages = messageRows.map((m) => ({
     role: (m.role === "assistant" ? "assistant" : "user") as
       | "user"
       | "assistant",
@@ -105,26 +93,33 @@ export default async function HireRequestPage({ params }: Props) {
       : null,
   }));
 
-  const summary = [
-    request.title,
-    request.mustHaveStack.join(", "),
-    request.seniority,
-  ]
+  const summary = [spec.title, (spec.mustHaveStack ?? []).join(", "), spec.seniority]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <ScoutChat
+      // A different session is a different conversation: remount rather than
+      // let one session's local state leak into the next.
+      key={selected?.id ?? "new"}
       persist
       initialRequestId={request.id}
+      initialSessionId={selected?.id ?? null}
       initialMessages={messages}
       initialSpec={spec}
-      initialSummary={summary || request.title}
+      initialSummary={summary || selected?.title || projectName}
       projectName={projectName}
       results={matches}
       resultsCartCount={matchData?.cartCount ?? 0}
       alertWhenAvailable={request.alertWhenAvailable}
-      initialSearched={request.status !== "DRAFT" || matches.length > 0}
+      initialSearched={Boolean(selected?.lastRunAt) || matches.length > 0}
+      projectSessions={sessions.map((s) => ({
+        id: s.id,
+        ordinal: s.ordinal,
+        title: s.title,
+      }))}
+      projectAssessments={assessments}
+      unassignedAssessments={unassigned}
     />
   );
 }
