@@ -57,6 +57,12 @@ export async function sendEmail(opts: {
   html: string;
   text: string;
   attachments?: { filename: string; content: Buffer }[];
+  /**
+   * T-232: overrides the global Reply-To. Outreach mail must not point at the
+   * shared team inbox, so it passes a no-reply address and asks the candidate
+   * to reply on ABTalks. Every other caller is unchanged.
+   */
+  replyTo?: string;
   /** T-259: what this message is, e.g. "recruiter.otp". Defaults to "generic". */
   kind?: string;
   /** T-259: the domain entity it belongs to, when there is one. */
@@ -108,7 +114,7 @@ export async function sendEmail(opts: {
     const brevo = new BrevoClient({ apiKey });
     await brevo.transactionalEmails.sendTransacEmail({
       sender: { name: FROM_NAME, email: FROM_EMAIL },
-      replyTo: { email: REPLY_TO },
+      replyTo: { email: opts.replyTo ?? REPLY_TO },
       to: [{ email: opts.to }],
       subject: opts.subject,
       htmlContent: opts.html,

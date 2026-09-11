@@ -66,6 +66,17 @@ export const EVENT_TYPE_REGISTRY: Record<string, EventTypeConfig> = {
     emailExempt: false,
     defaultEmailEnabled: true,
   },
+  // T-232: in-app only. "low" is what makes dispatch() skip email — the
+  // outreach email itself is sent by the outreach feature, so a second one
+  // here would reach the candidate twice.
+  "outreach.message_received": {
+    key: "outreach.message_received",
+    label: "Message from a recruiter",
+    priority: "low",
+    suppressionExempt: true,
+    emailExempt: false,
+    defaultEmailEnabled: false,
+  },
   "auth.password_reset": {
     key: "auth.password_reset",
     label: "Password reset",

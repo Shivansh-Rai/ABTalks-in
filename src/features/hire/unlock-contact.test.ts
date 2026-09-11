@@ -277,9 +277,13 @@ suite("access is still derived from CONTACT_SHARED in one place", () => {
   const src = source("src/features/hire/contact-access.ts");
   const body = src.slice(src.indexOf("export async function hasContactAccess"));
   const fn = body.slice(0, body.indexOf("\n}") + 2).replace(/\s+/g, " ");
+  // The query, not the whole function: T-259 wrapped it in logging, which
+  // broke the old whole-text match without changing who gets access.
   assert(
-    fn.includes('status: "CONTACT_SHARED", }, select: { id: true }, }); return shared !== null;'),
-    "hasContactAccess must stay byte-identical (T-148 §6)",
+    fn.includes(
+      'prisma.talentEngagementRequest.findFirst({ where: { recruiterUserId, candidateUserId, status: "CONTACT_SHARED", }, select: { id: true }, });',
+    ),
+    "hasContactAccess must still derive access from CONTACT_SHARED alone (T-148 §6)",
   );
 });
 
