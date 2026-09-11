@@ -132,11 +132,9 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
               }
               : null
           }
-          serverCartCount={account?.cartCount ?? 0}
           // Same array the panel renders, so the badge and the list can never
           // disagree. `account.cartCount` counts the legacy table only.
           serverCartCount={podRows.length}
-          pendingName={pending && state.status === "pending" ? state.fullName : null}
           podRows={podRows}
         >
           {children}
