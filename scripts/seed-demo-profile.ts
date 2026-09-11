@@ -300,23 +300,11 @@ async function main() {
     },
   });
 
+  // Searchability only. Field exposure is RECRUITER_FIELD_POLICY, not per row.
   await prisma.candidateVisibility.upsert({
     where: { userId: user.id },
-    update: {
-      searchableByRecruiters: true,
-      showLinkedin: true,
-      showGithub: true,
-      showCurrentEmployer: true,
-      showResume: true,
-    },
-    create: {
-      userId: user.id,
-      searchableByRecruiters: true,
-      showLinkedin: true,
-      showGithub: true,
-      showCurrentEmployer: true,
-      showResume: true,
-    },
+    update: { searchableByRecruiters: true },
+    create: { userId: user.id, searchableByRecruiters: true },
   });
 
   // 10. CandidateSkills with Taxonomy

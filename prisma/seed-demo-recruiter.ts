@@ -146,16 +146,11 @@ async function main() {
 
   await prisma.candidateVisibility.upsert({
     where: { userId: candidateUser.id },
+    // Searchability only. Field exposure is RECRUITER_FIELD_POLICY, not per row.
     create: {
       userId: candidateUser.id,
       searchableByRecruiters: true,
       consentSource: "platform_default",
-      showResume: true,
-      showInterviewResults: true,
-      showAssessmentScores: true,
-      showLinkedin: true,
-      showGithub: true,
-      showCurrentEmployer: true,
     },
     update: {
       searchableByRecruiters: true,

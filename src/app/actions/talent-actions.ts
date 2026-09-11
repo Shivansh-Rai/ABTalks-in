@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
 import {
   registerRecruiter,
@@ -18,7 +17,6 @@ import {
   shortlistNoteSchema,
   shortlistToggleSchema,
 } from "@/lib/validations/talent";
-import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 
@@ -185,43 +183,7 @@ export async function mergeGuestCartAction(
   return { ok: true, data: { merged, mergedIds, failedIds } };
 }
 
-const recruiterVisibilitySchema = z.object({ enabled: z.boolean() });
-
-/**
- * Turn recruiter visibility on or off for the signed-in program member.
- *
- * Consent was write-once: it was captured on the application form
- * (features/program/entry.ts) and there was no second place to change it. A
- * member who skipped the checkbox — or ticked it and changed their mind — was
- * stuck with that answer for the whole cohort. Forty-one of forty-six members
- * of the live cohort are invisible to hiring because of a box they saw once,
- * including every one of the top performers.
- *
- * Off is still the default, nothing here pre-ticks anything, and turning it off
- * removes them from the next search — `memberEligibilityWhere` reads this
- * column on every query.
- */
-export async function setRecruiterVisibilityAction(
-  input: unknown,
-): Promise<ActionResult<{ enabled: boolean }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { ok: false, message: "Please sign in." };
-  }
-
-  const parsed = recruiterVisibilitySchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Invalid choice." };
-
-  const updated = await prisma.programMember.updateMany({
-    where: { userId: session.user.id },
-    data: {
-      recruiterVisibilityConsentAt: parsed.data.enabled ? new Date() : null,
-    },
-  });
-  if (updated.count === 0) {
-    return { ok: false, message: "No program membership found." };
-  }
-
-  revalidatePath(`${PROGRAM_AI_COHORT_BASE}/dashboard`);
-  return { ok: true, data: { enabled: parsed.data.enabled } };
-}
+// There is deliberately no recruiter-visibility action here (plan 133). Whether
+// a recruiter can find a candidate is decided by `searchableUserWhere` and what
+// they see by `RECRUITER_FIELD_POLICY`, both in `repositories/talent.ts`. Neither
+// is a candidate setting, so no candidate-callable action may write them.
