@@ -62,6 +62,8 @@ export function ProfileWizard({
   const [pendingTarget, setPendingTarget] = useState<number | "close" | null>(
     null,
   );
+  /** Bumped when a blocked Quick Links click should re-shake the leave pop. */
+  const [leaveShake, setLeaveShake] = useState(0);
   const pendingRef = useRef<number | "close" | null>(null);
   const closeAfterSaveRef = useRef(false);
   const exitTimer = useRef<number | undefined>(undefined);
@@ -185,6 +187,7 @@ export function ProfileWizard({
   function jump(next: number) {
     if (next !== index && dirty && open) {
       setPendingTarget(next);
+      setLeaveShake((n) => n + 1);
       return;
     }
     openSheet(next);
@@ -299,7 +302,12 @@ export function ProfileWizard({
 
             <div className="pw-form-actions">
               {pendingTarget !== null ? (
-                <div className="pw-leave-pop" role="alertdialog" aria-live="polite">
+                <div
+                  key={leaveShake}
+                  className={`pw-leave-pop${leaveShake > 0 ? " pw-leave-shake" : ""}`}
+                  role="alertdialog"
+                  aria-live="polite"
+                >
                   <p className="pw-leave-copy">
                     You have unsaved changes in this section.
                   </p>
@@ -307,7 +315,10 @@ export function ProfileWizard({
                     <button
                       type="button"
                       className="pw-leave-btn"
-                      onClick={() => setPendingTarget(null)}
+                      onClick={() => {
+                        setPendingTarget(null);
+                        setLeaveShake(0);
+                      }}
                     >
                       Keep editing
                     </button>
@@ -318,6 +329,7 @@ export function ProfileWizard({
                         const target = pendingTarget;
                         setDirty(false);
                         setPendingTarget(null);
+                        setLeaveShake(0);
                         if (typeof target === "number") openSheet(target);
                         else if (target === "close") closeSheet();
                       }}
@@ -332,6 +344,7 @@ export function ProfileWizard({
                         pendingRef.current = pendingTarget;
                         closeAfterSaveRef.current = false;
                         setPendingTarget(null);
+                        setLeaveShake(0);
                         const form = document.getElementById(PW_FORM_ID);
                         if (form instanceof HTMLFormElement) form.requestSubmit();
                       }}
