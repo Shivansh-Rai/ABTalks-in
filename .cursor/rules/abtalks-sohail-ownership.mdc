@@ -1,0 +1,229 @@
+---
+description: ABTalks module ownership, cross-module safety, and implementation rules for Sohail
+alwaysApply: true
+globs: "**/*"
+---
+
+# ABTalks — Cursor Ownership Rules (Sohail)
+
+This rule supplements the repository root `CLAUDE.md`.
+Always read and follow `CLAUDE.md` and `docs/project-context.md` for non-trivial work.
+Do not weaken any existing architectural, migration, auth, database, or safety rule from `CLAUDE.md`.
+
+The ABTalks codebase is shared by multiple developers using AI-assisted coding.
+Respect module ownership before making changes.
+
+## Current Developer
+
+Developer: **Sohail**
+
+## My Primary Ownership
+
+Sohail is the primary owner of:
+
+- Candidate search
+- Search ranking
+- Authentication architecture
+- Authorization
+- Recruiter isolation
+- Platform Admin
+- Security
+- Rate limiting
+- Audit
+- System configuration
+- Shared architecture
+- Infrastructure
+- Database conventions
+
+Sohail is also responsible for reviewing architecture-sensitive cross-module changes.
+
+## Other Module Owners
+
+### Shivansh
+- Candidate profile
+- Candidate skills
+- Education / experience / projects
+- Opportunity preferences
+- Candidate-side assessments
+- Evidence
+- Assessment Builder
+- Career guidance
+
+### Zainab
+- Recruiter registration
+- Recruiter profile
+- Company identity
+- Credits
+- Credit ledger
+- Contact unlock
+- Plans / limits
+- Outreach
+- Mock Interviews
+
+### Shashank
+- Talent projects
+- Search synonyms
+- Candidate review panel
+- Shortlist / reject
+- Hiring pipeline
+- Recruiter-side assessment builder
+- Recruiter analytics
+
+### Manuvrtti
+- Jobs
+- Applications
+- Job alerts
+- Notifications
+- Notification delivery
+- Analytics events
+- UTM tracking
+
+### Shallika
+- UI/UX
+- Design system
+- Information architecture
+- Product flows
+- Responsive behaviour
+- Visual QA
+
+## Ownership Means Accountability, Not Exclusivity
+
+A primary owner is accountable for the architecture, quality, maintenance, and important reviews of their module.
+Other developers may contribute to that module when required.
+
+When Sohail is contributing to another owner's module:
+
+1. Identify the primary owner.
+2. State why the contribution is required.
+3. Read the existing implementation before editing it.
+4. Keep changes limited to the assigned task.
+5. Do not perform unrelated refactoring.
+6. Do not redesign that module's architecture without explicit approval.
+7. Report every file changed.
+8. Significant changes should be reviewed by the primary owner before merge.
+9. Contribution does not transfer module ownership.
+
+## Mandatory Pre-Implementation Check
+
+Before modifying files for any non-trivial task, first output:
+
+TASK:
+
+MODULE:
+
+PRIMARY OWNER:
+
+MY ROLE: PRIMARY OWNER / CONTRIBUTOR
+
+FILES TO READ:
+
+FILES I PLAN TO MODIFY:
+
+WHY EACH FILE NEEDS TO CHANGE:
+
+CROSS-MODULE CHANGE: YES / NO
+
+DATABASE IMPACT: NONE / READ / WRITE / SCHEMA
+
+SECURITY OR AUTH IMPACT: YES / NO
+
+TEST PLAN:
+
+Do not begin unrelated refactoring while performing this check.
+
+## Cross-Module Rule
+
+If the task requires changing a module owned by another developer and that change has not already been explicitly approved in the user's request, STOP before editing that module.
+
+Output:
+
+CROSS-MODULE CHANGE REQUIRED
+
+Primary owner:
+
+Module:
+
+Files expected to change:
+
+Why the change is required:
+
+Proposed change:
+
+Alternative that avoids the cross-module change, if any:
+
+Approval/review required from:
+
+Do not make that cross-module edit until approval is given.
+
+If the user has explicitly assigned Sohail to help with or implement work in another owner's module, Sohail may act as a contributor without transferring ownership. Still follow that module's existing architecture and keep the change scoped.
+
+## Shared and Architecture-Sensitive Files
+
+Modify shared files only when genuinely necessary.
+
+Changes involving any of the following require architecture-level care and Sohail review:
+
+- authentication
+- authorization
+- recruiter isolation
+- shared architecture
+- database architecture or conventions
+- infrastructure
+- security
+- rate limiting
+- platform-wide configuration
+- cross-domain contracts
+
+Do not create shared abstractions merely to make one feature easier to implement.
+Prefer domain-local logic unless there is a real shared requirement.
+
+## Implementation Rules
+
+1. Work primarily inside the assigned module.
+2. Do not make unrelated changes.
+3. Do not refactor another developer's module merely because it looks cleaner.
+4. Never silently change existing behaviour.
+5. Preserve existing working functionality unless the task explicitly requires changing it.
+6. Follow all non-negotiable repository rules in `CLAUDE.md`.
+7. Respect the existing repository and migration boundaries.
+8. Use existing services/repositories/contracts before creating new abstractions.
+9. Do not bypass server-side authorization.
+10. Do not expose protected candidate/contact information through payloads and hide it only in the UI.
+11. Keep database writes safe and transactional where required.
+12. Retryable financial, notification, or sensitive writes must be idempotent where applicable.
+13. Run relevant tests after implementation.
+14. Run the appropriate typecheck/build/lint commands when the touched area requires them.
+15. Before reporting completion, verify that the intended files were actually changed and that the relevant checks pass.
+
+## End-of-Implementation Report
+
+At the end of implementation, output:
+
+WHAT CHANGED:
+
+FILES MODIFIED:
+
+PRIMARY MODULE:
+
+PRIMARY OWNER:
+
+CROSS-MODULE CHANGES:
+
+DATABASE CHANGES:
+
+SECURITY / AUTH IMPACT:
+
+TESTS RUN:
+
+TEST RESULTS:
+
+MANUAL TEST STEPS:
+
+KNOWN RISKS:
+
+FOLLOW-UP / OWNER REVIEW REQUIRED:
+
+## Important
+
+Do not claim a task is complete only because the code compiles.
+The requested user behaviour, persistence, authorization, and relevant regression paths must also be verified.
