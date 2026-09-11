@@ -1,6 +1,6 @@
 /**
  * Plan 121 recruiter assessment builder + plan 128 (T-244) publish / assign /
- * monitor + plan 130 builder "Create" acceptance tests.
+ * monitor + plan 131 builder "Create" acceptance tests.
  *   npm run test:recruiter-assessments
  */
 import { readFileSync } from "node:fs";
@@ -968,7 +968,7 @@ async function run() {
     },
   );
 
-  console.log("\nPlan 130 builder Create — save, publish and send in one step\n");
+  console.log("\nPlan 131 builder Create — save, publish and send in one step\n");
 
   /** A store with the fixture Shortlist loaded, and nothing else. */
   function storeWithPool() {

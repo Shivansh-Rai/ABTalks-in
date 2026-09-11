@@ -8,6 +8,7 @@ type Props = {
   question: DraftQuestion;
   index: number;
   total: number;
+  locked?: boolean;
   onChange: (next: DraftQuestion) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -20,6 +21,7 @@ export function QuestionEditor({
   question,
   index,
   total,
+  locked = false,
   onChange,
   onMoveUp,
   onMoveDown,
@@ -28,6 +30,7 @@ export function QuestionEditor({
   onAnnounce,
 }: Props) {
   function switchType(nextType: DraftQuestion["type"]) {
+    if (locked) return;
     if (nextType === question.type) return;
     const shared = {
       key: question.key,
@@ -65,6 +68,7 @@ export function QuestionEditor({
   }
 
   function setAllowMultiple(allow: boolean) {
+    if (locked) return;
     if (question.type !== "MULTIPLE_CHOICE") return;
     if (!allow) {
       const firstCorrect = question.options.findIndex((o) => o.isCorrect);
@@ -83,6 +87,7 @@ export function QuestionEditor({
   }
 
   function markCorrect(optionIndex: number, checked: boolean) {
+    if (locked) return;
     if (question.type !== "MULTIPLE_CHOICE") return;
     if (question.allowMultipleCorrect) {
       onChange({
@@ -106,14 +111,18 @@ export function QuestionEditor({
     <article
       id={`q-${question.key}`}
       tabIndex={-1}
-      className="hire-assess-q"
+      className={cn("hire-assess-q", locked && "hire-assess-q--locked")}
       aria-label={`Question ${index + 1}`}
     >
+      {locked ? (
+        <span className="hire-assess-q__badge">Provided by ABTalks</span>
+      ) : null}
       <div className="hire-assess-q__head">
         <label className="hire-assess-q__type">
           <span>Type</span>
           <select
             value={question.type}
+            disabled={locked}
             onChange={(e) =>
               switchType(e.target.value as DraftQuestion["type"])
             }
@@ -130,6 +139,7 @@ export function QuestionEditor({
             min={0}
             max={100}
             value={question.points}
+            disabled={locked}
             onChange={(e) =>
               onChange({
                 ...question,
@@ -142,6 +152,7 @@ export function QuestionEditor({
           <input
             type="checkbox"
             checked={question.isRequired}
+            disabled={locked}
             onChange={(e) =>
               onChange({ ...question, isRequired: e.target.checked })
             }
@@ -154,6 +165,7 @@ export function QuestionEditor({
         <span>Question</span>
         <textarea
           value={question.title}
+          readOnly={locked}
           onChange={(e) => onChange({ ...question, title: e.target.value })}
           rows={2}
           placeholder="Write the question the candidate will see"
@@ -165,6 +177,7 @@ export function QuestionEditor({
         <input
           type="text"
           value={question.helpText ?? ""}
+          readOnly={locked}
           onChange={(e) =>
             onChange({
               ...question,
@@ -183,6 +196,7 @@ export function QuestionEditor({
               <input
                 type="checkbox"
                 checked={question.allowMultipleCorrect}
+                disabled={locked}
                 onChange={(e) => setAllowMultiple(e.target.checked)}
               />
               <span>Multiple correct</span>
@@ -195,6 +209,7 @@ export function QuestionEditor({
                   <input
                     type="checkbox"
                     checked={opt.isCorrect}
+                    disabled={locked}
                     onChange={(e) => markCorrect(oi, e.target.checked)}
                     aria-label={`Mark option ${oi + 1} correct`}
                   />
@@ -203,6 +218,7 @@ export function QuestionEditor({
                     type="radio"
                     name={`correct-${question.key}`}
                     checked={opt.isCorrect}
+                    disabled={locked}
                     onChange={() => markCorrect(oi, true)}
                     aria-label={`Mark option ${oi + 1} correct`}
                   />
@@ -210,6 +226,7 @@ export function QuestionEditor({
                 <input
                   type="text"
                   value={opt.body}
+                  readOnly={locked}
                   onChange={(e) => {
                     const options = question.options.map((o, i) =>
                       i === oi ? { ...o, body: e.target.value } : o,
@@ -218,38 +235,40 @@ export function QuestionEditor({
                   }}
                   placeholder={`Option ${oi + 1}`}
                 />
-                <button
-                  type="button"
-                  className="hire-assess-linkbtn"
-                  disabled={question.options.length <= 2}
-                  onClick={() => {
-                    onChange({
-                      ...question,
-                      options: question.options.filter((_, i) => i !== oi),
-                    });
-                  }}
-                >
-                  Remove
-                </button>
+                {locked ? null : (
+                  <button
+                    type="button"
+                    className="hire-assess-linkbtn"
+                    disabled={question.options.length <= 2}
+                    onClick={() => {
+                      onChange({
+                        ...question,
+                        options: question.options.filter((_, i) => i !== oi),
+                      });
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            className="hire-assess-linkbtn"
-            disabled={question.options.length >= 12}
-            onClick={() =>
-              onChange({
-                ...question,
-                options: [
-                  ...question.options,
-                  { body: "", isCorrect: false },
-                ],
-              })
-            }
-          >
-            Add option
-          </button>
+          {locked ? null : (
+            <button
+              type="button"
+              className="hire-assess-linkbtn"
+              disabled={question.options.length >= 12}
+              onClick={() =>
+                onChange({
+                  ...question,
+                  // Empty on purpose: the input shows "Option N" as its placeholder.
+                  options: [...question.options, { body: "", isCorrect: false }],
+                })
+              }
+            >
+              Add option
+            </button>
+          )}
         </div>
       )}
 
@@ -261,6 +280,7 @@ export function QuestionEditor({
             min={10}
             max={1000}
             value={question.maxWords}
+            disabled={locked}
             onChange={(e) =>
               onChange({
                 ...question,
@@ -277,6 +297,7 @@ export function QuestionEditor({
           <input
             type="url"
             value={question.uploadDestinationUrl}
+            readOnly={locked}
             onChange={(e) =>
               onChange({
                 ...question,
@@ -312,9 +333,11 @@ export function QuestionEditor({
         >
           Move Down
         </button>
-        <button type="button" className="hire-assess-linkbtn" onClick={onDuplicate}>
-          Duplicate
-        </button>
+        {locked ? null : (
+          <button type="button" className="hire-assess-linkbtn" onClick={onDuplicate}>
+            Duplicate
+          </button>
+        )}
         <button
           type="button"
           className="hire-assess-linkbtn"

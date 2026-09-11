@@ -103,7 +103,7 @@ export const assignAssessmentSchema = z.object({
 
 export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
 
-/** Plan 130 — the builder's Create: save, publish and send in one step. */
+/** Plan 131 — the builder's Create: save, publish and send in one step. */
 export const createAndSendSchema = z.object({
   draft: assessmentDraftSchema,
   candidateRefs: assignAssessmentSchema.shape.candidateRefs,

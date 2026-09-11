@@ -23,6 +23,9 @@ import {
   type CreateAndSendResult,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
+import { buildContentFromPresets } from "@/features/recruiter-assessments/presets";
+import { getShortlist } from "@/features/talent-pool/pool";
+import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 
 type ActionOk<T = undefined> = T extends undefined
   ? { ok: true }
@@ -77,6 +80,51 @@ export async function saveRecruiterAssessmentAction(
       error: String(error),
     });
     return { ok: false, message: "Failed to save assessment" };
+  }
+}
+
+const presetsSchema = z.object({
+  presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
+});
+
+export async function createAssessmentFromPresetsAction(
+  input: unknown,
+): Promise<ActionOk<{ id: string }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = presetsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  const content = buildContentFromPresets(parsed.data.presetIds);
+  if (!content) return { ok: false, message: "Template not found", status: 404 };
+
+  try {
+    // Attach the recruiter's current shortlist, exactly as the builder does.
+    const list = await getShortlist(workspace.data.userId);
+    const shortlistRefs = list.ok
+      ? list.data.map((r) => encodeCandidateRef("PROGRAM", r.memberId))
+      : [];
+
+    const result = await createAssessment(
+      prismaAssessmentStore(),
+      scopeFrom(workspace.data),
+      { ...content, shortlistRefs },
+    );
+    if (!result.ok) return { ok: false, message: result.message };
+
+    revalidatePath("/hire/assessments");
+    return { ok: true, data: { id: result.data.id } };
+  } catch (error) {
+    logger.error("[recruiter-assessment-actions] createFromPresets", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to create assessment from templates" };
   }
 }
 
@@ -232,7 +280,7 @@ export async function assignRecruiterAssessmentAction(
 }
 
 /**
- * Plan 130 — the builder's Create: save, publish and send to the picked
+ * Plan 131 — the builder's Create: save, publish and send to the picked
  * Shortlisted candidates in one step, through the same notifier as assign.
  * A failure before publishing returns the saved draft's id (when there is one)
  * so the builder's next click updates it rather than creating a duplicate.

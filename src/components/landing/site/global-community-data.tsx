@@ -178,9 +178,9 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
   "in": (
     <>
       <rect width="24" height="16" fill="#fff"/>
-      <rect width="24" height="5.33" fill="#076573"/>
-      <rect y="10.67" width="24" height="5.33" fill="#197E23"/>
-      <circle cx="12" cy="8" r="2.1" fill="none" stroke="#03535F" strokeWidth=".9"/>
+      <rect width="24" height="5.33" fill="#FF9933"/>
+      <rect y="10.67" width="24" height="5.33" fill="#138808"/>
+      <circle cx="12" cy="8" r="2.1" fill="none" stroke="#000080" strokeWidth=".9"/>
     </>
   ),
   "us": (

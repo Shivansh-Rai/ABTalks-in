@@ -5276,7 +5276,7 @@ html.dark .vc-card {
   }
 
   /* Both panes are always on screen here, so Edit/Preview has nothing to
-     switch (plan 130). It stays below 1100px, where the panes do switch. */
+     switch (plan 131). It stays below 1100px, where the panes do switch. */
   .hire-assess__seg {
     display: none;
   }
@@ -5493,7 +5493,7 @@ html.dark .vc-card {
   cursor: not-allowed;
 }
 
-/* Plan 130 — the builder's send step and its two actions. */
+/* Plan 131 — the builder's send step and its two actions. */
 .hire-assess__savebtn--ghost {
   border: 1px solid var(--h-primary);
   background: #fff;
@@ -5628,6 +5628,170 @@ html.dark .vc-card {
 .hire-assess-list__footnote {
   margin: 12px 2px 0;
   font-size: 12px;
+  color: var(--h-gray-500, #78716c);
+}
+
+/* ── Assessment templates (presets) ─────────────────────────────── */
+.hire-assess-presets {
+  margin: 8px 0 28px;
+}
+
+.hire-assess-presets__head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.hire-assess-presets__head p {
+  margin: 4px 0 16px;
+  font-size: 13px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-presets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.hire-assess-preset-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  padding-right: 40px;
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 16px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hire-assess-preset-card:hover {
+  border-color: rgba(28, 25, 23, 0.2);
+}
+
+.hire-assess-preset-card.is-selected {
+  border-color: var(--h-primary);
+  box-shadow: inset 0 0 0 1px var(--h-primary);
+}
+
+.hire-assess-preset-card__check {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(28, 25, 23, 0.2);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+
+.hire-assess-preset-card.is-selected .hire-assess-preset-card__check {
+  background: var(--h-primary);
+  border-color: var(--h-primary);
+}
+
+.hire-assess-preset-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.hire-assess-preset-card__tagline {
+  margin: 0;
+  font-size: 13px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-preset-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hire-assess-preset-card__tags li {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f5f5f4;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--h-ink, #1c1917);
+}
+
+.hire-assess-preset-card__meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-presets__bar {
+  position: sticky;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(28, 25, 23, 0.08);
+}
+
+.hire-assess-presets__bar-count {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hire-assess-presets__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hire-assess__note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--h-gray-500, #78716c);
+}
+
+/* Locked (preset-provided) question in the builder. */
+.hire-assess-q--locked {
+  position: relative;
+  border-color: rgba(28, 25, 23, 0.14);
+  background: #fafaf9;
+}
+
+.hire-assess-q__badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f5f5f4;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--h-gray-500, #78716c);
 }
 

@@ -1,8 +1,13 @@
-# Plan 130 — Builder "Create": publish and send to Shortlisted candidates in one step
+# Plan 131 — Builder "Create": publish and send to Shortlisted candidates in one step
 
 **Tickets:** T-243 builder (plan 121) + T-244 publish/assign (plan 128), feeding T-218 (plan 129).
 **Owner:** Shivansh (assessment builder, recruiter-side and candidate-side assessments — `CLAUDE.md` ownership).
-**Status:** implemented on `ab-dev` (2026-09-11), uncommitted.
+**Status:** implemented on `ab-dev` (2026-09-11, commit `fb30179a`), merged with master's
+assessment presets (PR #298). Written as plan 130; renumbered to 131 at that merge because
+master's presets plan (`130-recruiter-assessment-presets.md`) took 130 first.
+Merged builder: `candidates` (this plan) + `presetLocked` (presets) props; `/hire/create-test`
+serves a blank builder, `?id=` (edit a draft) and `?presets=` (customize templates), all with
+the live Shortlist and the Create button.
 
 ## 1. Goal
 
