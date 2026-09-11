@@ -190,6 +190,30 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   border-color: var(--h-gray-200);
 }
 
+/* Credit balance (T-229).
+   Borrows .hire-hbtn's geometry so it lines up with the shortlist pills, but
+   is static: nothing to press, so no hover and no pointer. Temporary
+   placement pending T-202 — kept to one selector block for that reason. */
+.hire-credits {
+  gap: 6px;
+  cursor: default;
+  color: var(--h-gray-700);
+}
+
+.hire-credits:hover {
+  border-color: var(--h-border);
+}
+
+.hire-credits__label {
+  font-weight: 500;
+}
+
+.hire-credits__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--h-ink);
+}
+
 .hire-hbtn__icon {
   position: relative;
   flex: none;
@@ -2223,7 +2247,10 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
     min-width: 0;
   }
 
-  .hire-hbtn > span:not(.hire-hbtn__count):not(.hire-hbtn__icon) {
+  .hire-hbtn
+    > span:not(.hire-hbtn__count):not(.hire-hbtn__icon):not(
+      .hire-credits__value
+    ) {
     display: none;
   }
 
@@ -3271,6 +3298,270 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth {
   background: #000000;
   border-color: rgba(166, 210, 213, 0.28);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* Resume and Unlock contact sit on one row — two different locks, and a
+   recruiter has to be able to tell them apart. */
+.hire-detail__locks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* What the unlock bought. */
+.hire-detail__contact {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--h-border);
+  border-radius: 10px;
+  background: var(--h-peach-wash);
+  display: grid;
+  gap: 6px;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-detail__contact {
+  background: rgba(255, 176, 140, 0.08);
+}
+
+.hire-detail__contact > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.hire-detail__contact dt {
+  color: var(--h-gray-600);
+}
+
+.hire-detail__contact dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--h-ink);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.hire-detail__contact a {
+  color: var(--h-primary);
+}
+
+/* ── Contact unlock (T-229) ──────────────────────────────────────────────
+   Temporary presentation pending T-202. Reuses the auth dialog's token scope
+   and overlay; adds only what the three figures need. Kept in one block so it
+   can be replaced wholesale. */
+
+.hire-unlock-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--h-border);
+  border-radius: 100px;
+  background: var(--h-surface);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--h-ink);
+  transition: border-color 160ms var(--ease);
+}
+
+.hire-unlock-trigger:hover {
+  border-color: var(--h-gray-200);
+}
+
+[data-slot="dialog-overlay"]:has(+ .hire-unlock) {
+  background: rgba(24, 24, 27, 0.4);
+}
+
+html.dark:not(:has(.theme-abtalks-light))
+  [data-slot="dialog-overlay"]:has(+ .hire-unlock) {
+  background: rgba(9, 9, 11, 0.62);
+}
+
+.hire-app.hire-unlock {
+  --ring: 14 76% 51%;
+  min-height: 0;
+  height: auto;
+  width: calc(100% - 2rem);
+  padding: 22px 22px 20px;
+  background: var(--h-surface);
+  color: var(--h-ink);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-unlock {
+  background: #1c1614;
+  border-color: rgba(255, 176, 140, 0.28);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.hire-app.hire-unlock [data-slot="dialog-title"] {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--h-ink);
+}
+
+.hire-app.hire-unlock [data-slot="dialog-description"] {
+  font-size: 13px;
+  color: var(--h-gray-600);
+}
+
+.hire-unlock__figures {
+  margin: 16px 0 0;
+  border: 1px solid var(--h-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hire-unlock__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.hire-unlock__row + .hire-unlock__row {
+  border-top: 1px solid var(--h-border);
+}
+
+.hire-unlock__row dt {
+  color: var(--h-gray-600);
+}
+
+.hire-unlock__row dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--h-ink);
+}
+
+/* The figure the decision turns on. */
+.hire-unlock__row.is-strong {
+  background: var(--h-peach-wash);
+}
+
+.hire-unlock__row.is-strong dt {
+  color: var(--h-ink);
+  font-weight: 500;
+}
+
+.hire-unlock__row.is-strong dd {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-unlock__row.is-strong {
+  background: rgba(255, 176, 140, 0.08);
+}
+
+.hire-unlock__loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--h-gray-600);
+}
+
+.hire-unlock__notice {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--h-border);
+  border-radius: 10px;
+  background: var(--h-bubble);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--h-gray-700);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-unlock__notice {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hire-unlock__free {
+  margin: 16px 0 0;
+}
+
+.hire-unlock__freetag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--h-primary);
+}
+
+.hire-unlock__freenote {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--h-gray-600);
+}
+
+.hire-unlock__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.hire-unlock__cancel {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 100px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--h-gray-600);
+}
+
+.hire-unlock__cancel:hover:not(:disabled) {
+  color: var(--h-ink);
+}
+
+.hire-unlock__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 100px;
+  background: var(--h-primary);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  transition: background-color 160ms var(--ease);
+}
+
+.hire-unlock__confirm:hover:not(:disabled) {
+  background: var(--h-primary-hover);
+}
+
+.hire-unlock__confirm:disabled,
+.hire-unlock__cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .hire-unlock__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .hire-unlock__confirm,
+  .hire-unlock__cancel {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 .hire-auth__kicker {
@@ -6297,11 +6588,11 @@ html.dark .vc-card {
   }
 
   .hire-app--results .hire-hbtn {
-    height: 32px;
-    padding: 0 16px;
+    height: 38px;
+    padding: 0 18px;
     border-color: #e4e4e7;
     background: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: #18181b;
   }
@@ -6406,9 +6697,14 @@ html.dark .vc-card {
 
 .hire-side__icon {
   flex: none;
-  width: 23px;
-  height: 23px;
-  background: #d9d9d9;
+  width: 21px;
+  height: 21px;
+  color: #4b4b4b;
+  stroke-width: 1.75;
+}
+
+.hire-side__item.is-current .hire-side__icon {
+  color: #03535f;
 }
 
 .hire-side__label {
@@ -6758,7 +7054,7 @@ button.hire-side__me {
 
 /* Result card (1646:209) */
 .hire-app .desk-card.desk-card--result {
-  padding: 24px 21px;
+  padding: 16px 18px;
   border: 0;
   border-radius: 15px;
   background: #ffffff;
@@ -6948,8 +7244,8 @@ button.hire-side__me {
 }
 
 .desk-card--result .desk-card__cta {
-  gap: 8px;
-  margin-top: 32px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .desk-card--rejected .desk-card__skills,
@@ -6963,13 +7259,13 @@ button.hire-side__me {
 }
 
 .hire-app .desk-card--result .desk-ghost {
-  height: 36px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   gap: 8px;
   border: 1px solid #e4e4e7;
   border-radius: 8px;
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #18181b;
 }
@@ -6979,13 +7275,13 @@ button.hire-side__me {
 }
 
 .hire-app .desk-card--result .desk-pod {
-  height: 36px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   gap: 8px;
   border: 1px solid #03535f;
   border-radius: 8px;
   background: #03535f;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   box-shadow: inset -2px -4px 4px rgba(0, 0, 0, 0.25);
@@ -7005,13 +7301,13 @@ button.hire-side__me {
 }
 
 .desk-card--result .desk-shortlist {
-  height: 36px;
-  padding: 0 20px;
+  height: 42px;
+  padding: 0 22px;
   gap: 8px;
   border: 1px solid #b1b1b3;
   border-radius: 8px;
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #18181b;
 }
@@ -8403,9 +8699,10 @@ button.hire-side__me {
   }
 }
 
+/* Mirrors the workspace's entrance on Search (720ms @ 380ms). */
 .scout--hero.is-arriving .rsearch__title,
 .scout--hero.is-arriving .rsearch__suggest {
-  animation: hire-results-in 680ms var(--ease) 720ms both;
+  animation: hire-results-in 720ms var(--ease) 380ms both;
 }
 
 /* New search: the empty chat settles in where the old thread faded out. */
@@ -8607,4 +8904,155 @@ button.hire-side__me {
   .rsearch__face.is-out {
     display: none;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Header button icons (SVG, lucide) — replaced the cropped JPG exports.
+   -------------------------------------------------------------------------- */
+.hire-hbtn__svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+/* --------------------------------------------------------------------------
+   Screen 2 keeps the profile panel's column even with no profile open.
+
+   The Figma dashboard (1585:46) leaves that space on the right; the cards
+   only ran full width because the column existed solely while `.is-open`.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1101px) {
+  .hire-app--results .scout__body {
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 484px);
+    column-gap: 15px;
+    /* No column transition here. The base rule animates the columns for the
+       panel opening, but this column is always present now — and on arrival
+       from screen 1 that transition started from ONE full-width column, so
+       the bar was measured (and stretched) to full width, then snapped back
+       to the card column when its move ended. */
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The search bar keeps ONE coordinate space on both screens.
+
+   Screen 2 is scaled with `zoom` (hire-zoom.ts) and screen 1 is not, so the
+   bar used to change zoom in the frame the stage flipped: whatever size it was
+   drawn at jumped, and nothing could animate across the jump. It now opts out
+   of screen 2's zoom and takes screen 2's sizes in real pixels (design value x
+   --hire-zoom) — identical on screen — so on Search the hero's larger field,
+   type and button TRANSITION down to the dashboard's while the bar stretches
+   (width + position in hire-stage-flip.ts), and back up on New project.
+   -------------------------------------------------------------------------- */
+.scout-composer {
+  transition:
+    background-color 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    box-shadow 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    padding 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+@media (min-width: 901px) {
+  .scout-composer__row,
+  .scout-field,
+  .scout-field textarea,
+  .scout-send,
+  .scout-send__icon,
+  .scout-criteria,
+  .scout-criterion {
+    transition-property:
+      width, height, min-height, padding, gap, margin, border-width,
+      border-radius, font-size, line-height;
+    transition-duration: 1200ms;
+    transition-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+
+  .hire-app--results .scout-composer {
+    zoom: calc(1 / var(--hire-zoom, 1));
+    padding: calc(20px * var(--hire-zoom, 1)) 0 0;
+  }
+
+  .hire-app--results .scout-composer__row {
+    gap: calc(16px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-field {
+    min-height: calc(53px * var(--hire-zoom, 1));
+    padding: calc(12px * var(--hire-zoom, 1)) calc(24px * var(--hire-zoom, 1));
+    border-width: calc(2px * var(--hire-zoom, 1));
+    border-radius: calc(15px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-field textarea {
+    min-height: calc(25px * var(--hire-zoom, 1));
+    font-size: calc(20px * var(--hire-zoom, 1));
+    line-height: calc(25px * var(--hire-zoom, 1));
+  }
+
+  /* Centred rather than left-padded (the frame's 25px inset): a centred label
+     does not slide sideways while the button resizes. */
+  .hire-app--results .scout-send {
+    justify-content: center;
+    gap: calc(8px * var(--hire-zoom, 1));
+    width: calc(166px * var(--hire-zoom, 1));
+    height: auto;
+    min-height: calc(53px * var(--hire-zoom, 1));
+    padding: 0;
+    border-radius: calc(15px * var(--hire-zoom, 1));
+    font-size: calc(20px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-send__icon {
+    width: calc(32px * var(--hire-zoom, 1));
+    height: calc(31px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-criteria {
+    gap: calc(4px * var(--hire-zoom, 1)) calc(16px * var(--hire-zoom, 1));
+    margin: calc(11px * var(--hire-zoom, 1)) 0 0;
+    padding: 0 0 0 calc(24px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-criterion {
+    gap: calc(4px * var(--hire-zoom, 1));
+    font-size: calc(14px * var(--hire-zoom, 1));
+    line-height: calc(17px * var(--hire-zoom, 1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout-composer,
+  .scout-composer__row,
+  .scout-field,
+  .scout-field textarea,
+  .scout-send,
+  .scout-send__icon,
+  .scout-criteria,
+  .scout-criterion {
+    transition: none;
+  }
+}
+
+/* Frozen copies of screen 2 fading out on New project (ghostFadeOut). They
+   carry the page's stage classes so they are styled exactly as the originals;
+   this stops those classes' entrance animations replaying on the copies, and
+   takes the layer out of the page's own box model. */
+.hire-app.hire-ghost {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: block;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+.hire-ghost *,
+.hire-ghost *::before,
+.hire-ghost *::after {
+  animation: none !important;
+  transition: none !important;
 }
