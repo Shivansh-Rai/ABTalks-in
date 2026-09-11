@@ -5760,6 +5760,146 @@ html.dark .vc-card {
    Forest-green tokens. Lives only on `/hire` before the first query.
    ------------------------------------------------------------------ */
 
+/* The background — ONE surface that morphs, and on screen 1 moves.
+
+   Three layers, back to front, all inside `.hire-field`:
+     1. the base colour (on .hire-field itself)
+     2. the LIGHT-green blobs — separate elements (.hire-field__glow), because
+        they are the light the eye follows and they are what drifts
+     3. the deep-teal blobs (.hire-field__shade), static, over the light, so
+        the moving glow is seen through the gaps and under their edges —
+        which is also the paint order of the Figma export (1570:438), where
+        the mint ellipses sit beneath the dark ones.
+
+   Every colour is a registered custom property that transitions toward the
+   dashboard grey, so on Search the whole surface drains to grey at once
+   rather than a green page fading off a white one. Ellipses are the export's,
+   as viewport percentages, so the field covers any screen.
+
+   Behind everything (z-index -1 inside the isolated .hire-app), so on
+   screen 2, where nothing else is positioned, it is simply the page. */
+@property --hf-base { syntax: "<color>"; inherits: false; initial-value: #0c6f63; }
+@property --hf-mint { syntax: "<color>"; inherits: false; initial-value: #18d39b; }
+@property --hf-115 { syntax: "<color>"; inherits: false; initial-value: #115b5a; }
+@property --hf-0a4 { syntax: "<color>"; inherits: false; initial-value: #0a444c; }
+@property --hf-035 { syntax: "<color>"; inherits: false; initial-value: #03535f; }
+@property --hf-025 { syntax: "<color>"; inherits: false; initial-value: #02525d; }
+@property --hf-055 { syntax: "<color>"; inherits: false; initial-value: #055560; }
+@property --hf-053 { syntax: "<color>"; inherits: false; initial-value: #053d45; }
+@property --hf-287 { syntax: "<color>"; inherits: false; initial-value: #287b62; }
+
+.hire-app--desk {
+  isolation: isolate;
+}
+
+.hire-field {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--hf-base);
+  transition: --hf-base 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+/* The dark layers, split in two at the exact point the original gradient
+   stack had the lower-right mint blob (C): under C sit 287/053/055/025, over
+   it 035/0a4/the small mint/115. Same paint order as before, so the same
+   brightness — only now the light blobs between them can move. */
+.hire-field__shade {
+  position: absolute;
+  inset: 0;
+  transition:
+    --hf-mint 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-115 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-0a4 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-035 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-025 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-055 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-053 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    --hf-287 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+.hire-field__shade--low {
+  background:
+    radial-gradient(9.7% 19.7% at 89.1% 5.3%, var(--hf-025) 0%, transparent 100%),
+    radial-gradient(20.2% 48.8% at 13.2% 81.7%, var(--hf-025) 0%, transparent 100%),
+    radial-gradient(20.2% 48.8% at 66.1% 40.3%, var(--hf-055) 0%, transparent 100%),
+    radial-gradient(20.2% 48.8% at 26.6% 5.3%, var(--hf-053) 0%, transparent 100%),
+    radial-gradient(20.2% 48.8% at 95.4% 42.8%, var(--hf-287) 0%, transparent 100%);
+}
+
+.hire-field__shade--high {
+  background:
+    radial-gradient(14.5% 31.4% at 49.8% 13.1%, var(--hf-115) 0%, transparent 100%),
+    radial-gradient(8.3% 18.3% at 76.1% 96.9%, var(--hf-mint) 0%, transparent 100%),
+    radial-gradient(13.6% 32.2% at 57.1% 96.8%, var(--hf-0a4) 0%, transparent 100%),
+    radial-gradient(13.6% 32.2% at 94.4% 92.3%, var(--hf-035) 0%, transparent 100%);
+}
+
+/* Screen 2: every colour converges on the dashboard grey. The properties do
+   not inherit, so each layer that paints with them is set directly. */
+.hire-app--results .hire-field {
+  --hf-base: #f4f4f5;
+}
+
+.hire-app--results .hire-field__shade,
+.hire-app--results .hire-field__glow-core {
+  --hf-mint: #f4f4f5;
+  --hf-115: #f4f4f5;
+  --hf-0a4: #f4f4f5;
+  --hf-035: #f4f4f5;
+  --hf-025: #f4f4f5;
+  --hf-055: #f4f4f5;
+  --hf-053: #f4f4f5;
+  --hf-287: #f4f4f5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-field,
+  .hire-field__shade,
+  .hire-field__glow-core {
+    transition: none;
+  }
+}
+
+/* Results content arrives after the bar has landed. */
+/* The workspace forms while the bar is still travelling — but NOT the bar
+   itself, which is inside .scout__body: fading the whole body (as this used
+   to) hid the one element the transition is about. */
+.hire-app--results .scout__toolbar,
+.hire-app--results .chat-output {
+  animation: hire-results-in 720ms var(--ease) 380ms both;
+}
+
+/* Cards mount when the backend answers; they settle in rather than pop. */
+.hire-app--results .scout-thread__results {
+  animation: hire-results-in 560ms var(--ease) both;
+}
+
+@keyframes hire-results-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-field {
+    transition: none;
+  }
+
+  .hire-app--results .scout__toolbar,
+  .hire-app--results .chat-output,
+  .hire-app--results .scout-thread__results {
+    animation: none;
+  }
+}
+
 .hire-app--landing {
   --h-primary: #03535f;
   --h-primary-hover: #076573;
@@ -5769,17 +5909,28 @@ html.dark .vc-card {
   --h-border: rgba(255, 255, 255, 0.12);
   --color-primary: #03535f;
   --primary: 187 94% 19%;
-  background: #00181d;
+  /* The blob field, as a gradient stack.
+     This replaces `recruiter-search-blobs.svg`, which painted an opaque
+     backdrop that showed as a black strip under the card at desktop sizes and
+     hid two of the three suggestion lines. Same ellipses, in percentages, so
+     the field covers any viewport. Stops run back-to-front: the last
+     ellipse in the SVG is the first layer here. */
+  background: #f4f4f5;
   color: #ffffff;
   position: relative;
   overflow: auto;
 }
 
+/* Kept as an overlay hook, but NOT carrying the exported art any more.
+   `recruiter-search-blobs.svg` painted an opaque backdrop over the gradient
+   above — at desktop aspect ratios that was a black strip below the card, and
+   it also hid suggestion slots 1 and 2, whose type is near-black and only
+   reads against the green. The gradient reproduces the same ellipses and
+   covers every viewport. */
 .hire-app--landing::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("/hire/recruiter-search-blobs.svg") center / cover no-repeat;
   pointer-events: none;
   z-index: 0;
 }
@@ -5787,6 +5938,13 @@ html.dark .vc-card {
 .hire-app--landing > * {
   position: relative;
   z-index: 1;
+}
+
+/* ...except the field, which is a fixed backdrop. Same specificity as the rule
+   above, so it has to come after it. */
+.hire-app--landing > .hire-field {
+  position: fixed;
+  z-index: -1;
 }
 
 .hire-app--landing .hire-app__header {
@@ -5889,6 +6047,40 @@ html.dark .vc-card {
   width: 100%;
   padding: 48px 40px 64px;
   gap: 28px;
+}
+
+/* Screen 1 leaving. The heading and the suggestion stack go first (ease-in,
+   the curve for things on their way out) and the card holds its place, so the
+   bar the recruiter is watching is the one thing that does not move yet — it
+   moves next, on the FLIP. Duration matches LANDING_EXIT_MS in scout-chat. */
+.rsearch.is-leaving .rsearch__title,
+.rsearch.is-leaving .rsearch__suggest,
+.rsearch.is-leaving .rsearch__reply {
+  animation: rsearch-leave 520ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.rsearch.is-leaving .rsearch__filters {
+  animation: rsearch-leave 240ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes rsearch-leave {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsearch.is-leaving .rsearch__title,
+  .rsearch.is-leaving .rsearch__suggest,
+  .rsearch.is-leaving .rsearch__reply,
+  .rsearch.is-leaving .rsearch__filters {
+    animation: none;
+  }
 }
 
 .rsearch__title {
@@ -6007,9 +6199,10 @@ html.dark .vc-card {
 }
 
 .rsearch__submit:disabled {
-  background: #e0e0e0;
-  color: #8f8f8f;
+  background: #03535f;
+  color: rgba(255, 255, 255, 0.72);
   box-shadow: none;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -6020,7 +6213,7 @@ html.dark .vc-card {
 }
 
 .rsearch__submit:disabled .rsearch__submit-icon {
-  opacity: 0.45;
+  opacity: 0.72;
 }
 
 .rsearch__filters {
@@ -6050,6 +6243,66 @@ html.dark .vc-card {
   font-weight: 600;
 }
 
+/* Scout's question on the green screen, in the slot the suggestions occupy. */
+.rsearch__reply {
+  width: 100%;
+  max-width: 1040px;
+  padding: 0 12px;
+  animation: rsearch-suggest-in 260ms var(--ease) both;
+}
+
+.rsearch__reply-text {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.rsearch__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rsearch__chip {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    background 200ms var(--ease),
+    transform 200ms var(--ease);
+}
+
+.rsearch__chip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.rsearch__chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsearch__reply {
+    animation: none;
+  }
+
+  .rsearch__chip {
+    transition: none;
+  }
+}
+
 .rsearch__suggest {
   width: 100%;
   max-width: 1040px;
@@ -6061,7 +6314,7 @@ html.dark .vc-card {
   list-style: none;
 }
 
-.rsearch__suggest-slot button {
+.rsearch__suggest-slot .rsearch__face {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -6070,7 +6323,9 @@ html.dark .vc-card {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #0b464f;
+  /* White, like the heading. The design's dark teal (and black for the two
+     fading lines) all but disappeared against the green. */
+  color: #ffffff;
   font-family: var(--font-outfit), sans-serif;
   font-size: 28px;
   font-weight: 500;
@@ -6079,10 +6334,10 @@ html.dark .vc-card {
   cursor: pointer;
 }
 
-.rsearch__suggest-slot.is-1 button,
-.rsearch__suggest-slot.is-2 button {
+.rsearch__suggest-slot.is-1 .rsearch__face,
+.rsearch__suggest-slot.is-2 .rsearch__face {
   padding-left: 34px;
-  color: #000000;
+  color: #ffffff;
   font-weight: 400;
 }
 
@@ -6096,22 +6351,35 @@ html.dark .vc-card {
   filter: blur(3.5px);
 }
 
-.rsearch__suggest-slot.is-1 button {
+.rsearch__suggest-slot.is-1 .rsearch__face {
   font-size: 22px;
   min-height: 28px;
 }
 
-.rsearch__suggest-slot.is-2 button {
+.rsearch__suggest-slot.is-2 .rsearch__face {
   font-size: 20px;
   min-height: 25px;
 }
 
-.rsearch__suggest-arrow {
-  flex: none;
-  color: #0b464f;
+
+@keyframes rsearch-suggest-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.rsearch__suggest-slot button:focus-visible {
+
+.rsearch__suggest-arrow {
+  flex: none;
+  color: #ffffff;
+}
+
+.rsearch__suggest-slot .rsearch__face:focus-visible {
   outline: 2px solid #03535f;
   outline-offset: 4px;
   border-radius: 8px;
@@ -6125,10 +6393,6 @@ html.dark .vc-card {
 }
 
 @media (max-width: 900px) {
-  .hire-app--landing::before {
-    background-image: url("/hire/recruiter-search-mobile-bg.svg");
-  }
-
   .hire-app--landing .hire-app__header {
     height: 55px;
     padding: 0 20px;
@@ -7800,3 +8064,790 @@ button.hire-side__me {
   }
 }
 
+
+/* --------------------------------------------------------------------------
+   Landing sizing, desktop.
+
+   The rules above are the Figma frame's pixel values taken 1:1 — but that frame
+   is a 1956px-wide artboard. On a laptop viewport (1280–1440 CSS px, which is
+   what a 1080p screen at 125–150% Windows scaling gives you) every one of them
+   rendered ~1.5x too large, and the title wrapped to two lines. Each value here
+   is the frame value as a share of 1956px (e.g. 40px → 2.05vw), clamped so it
+   is never smaller than readable and never larger than the design. ≤900px keeps
+   its own fixed mobile sizes above.
+   -------------------------------------------------------------------------- */
+@media (min-width: 901px) {
+  .rsearch {
+    padding: clamp(24px, 2.45vw, 48px) clamp(24px, 2.05vw, 40px) clamp(32px, 3.27vw, 64px);
+    gap: clamp(16px, 1.43vw, 28px);
+  }
+
+  /* One line on desktop, as in the frame. `16ch` is the mobile two-line break. */
+  .rsearch__title {
+    max-width: none;
+    font-size: clamp(24px, 2.05vw, 40px);
+  }
+
+  .rsearch__card,
+  .rsearch__suggest,
+  .rsearch__reply {
+    max-width: clamp(600px, 53.2vw, 1040px);
+  }
+
+  .rsearch__card {
+    gap: clamp(10px, 0.82vw, 16px);
+    padding: clamp(18px, 1.64vw, 32px) clamp(20px, 1.84vw, 36px);
+  }
+
+  .rsearch__controls {
+    gap: clamp(12px, 1.23vw, 24px);
+    min-height: clamp(48px, 3.89vw, 76px);
+  }
+
+  .rsearch__input {
+    height: clamp(48px, 3.89vw, 76px);
+    padding: 0 clamp(14px, 1.23vw, 24px);
+    font-size: clamp(15px, 1.23vw, 24px);
+  }
+
+  .rsearch__submit {
+    width: clamp(128px, 11.1vw, 217px);
+    height: clamp(48px, 3.89vw, 76px);
+    gap: clamp(8px, 0.61vw, 12px);
+    font-size: clamp(15px, 1.23vw, 24px);
+  }
+
+  .rsearch__submit-icon {
+    width: clamp(16px, 1.23vw, 24px);
+    height: clamp(16px, 1.23vw, 24px);
+  }
+
+  .rsearch__filters {
+    gap: clamp(6px, 0.41vw, 8px) clamp(10px, 0.82vw, 16px);
+  }
+
+  .rsearch__filter {
+    font-size: clamp(12px, 1.02vw, 20px);
+  }
+
+  .rsearch__suggest-slot .rsearch__face {
+    min-height: clamp(28px, 2.25vw, 44px);
+    font-size: clamp(16px, 1.43vw, 28px);
+  }
+
+  .rsearch__suggest-slot.is-1 .rsearch__face,
+  .rsearch__suggest-slot.is-2 .rsearch__face {
+    padding-left: clamp(20px, 1.74vw, 34px);
+  }
+
+  .rsearch__suggest-slot.is-1 .rsearch__face {
+    min-height: clamp(20px, 1.43vw, 28px);
+    font-size: clamp(14px, 1.12vw, 22px);
+  }
+
+  .rsearch__suggest-slot.is-2 .rsearch__face {
+    min-height: clamp(18px, 1.28vw, 25px);
+    font-size: clamp(13px, 1.02vw, 20px);
+  }
+
+  .rsearch__reply-text {
+    font-size: clamp(16px, 1.23vw, 24px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Screen 1 as a STAGE of the desk, not a separate page.
+
+   The hero is `.scout.scout--hero`: the same section, body and composer as
+   screen 2, laid out as a centred column. The composer is styled here as the
+   Figma glass card; on screen 2 the rules scoped to .hire-app--results take
+   over and the FLIP carries it between the two. Values are the 1956px frame's
+   as viewport shares, clamped to never exceed the design.
+   -------------------------------------------------------------------------- */
+
+/* Empty on screen 2, so they must not become grid items there. */
+.scout-hero-slot {
+  display: contents;
+}
+
+.scout--hero {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.scout--hero .scout__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 1.43vw, 28px);
+  padding: clamp(24px, 2.45vw, 48px) clamp(24px, 2.05vw, 40px) clamp(32px, 3.27vw, 64px);
+  overflow: visible;
+}
+
+.scout--hero .scout__toolbar,
+.scout--hero .chat-output,
+.scout--hero .hire-detail {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .scout--hero .rsearch__title,
+  .rsearch__title.is-leaving {
+    max-width: none;
+    font-size: clamp(24px, 2.05vw, 40px);
+  }
+}
+
+/* The bar, as the glass card. */
+.scout--hero .scout-composer {
+  width: 100%;
+  max-width: clamp(600px, 53.2vw, 1040px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 0.82vw, 16px);
+  padding: clamp(18px, 1.64vw, 32px) clamp(20px, 1.84vw, 36px);
+  border-radius: 16px;
+  background: rgba(200, 235, 225, 0.2);
+  box-shadow: 0 10px 24px rgba(0, 25, 31, 0.3);
+}
+
+.scout--hero .scout-composer__row {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(12px, 1.23vw, 24px);
+}
+
+.scout--hero .scout-field {
+  flex: 1;
+  align-items: center;
+  min-height: clamp(48px, 3.89vw, 76px);
+  padding: 0 clamp(14px, 1.23vw, 24px);
+  border: 2px solid #03535f;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.scout--hero .scout-field:focus-within {
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.18);
+}
+
+.scout--hero .scout-field textarea {
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(15px, 1.23vw, 24px);
+  line-height: 1.25;
+  color: #353535;
+}
+
+.scout--hero .scout-field textarea::placeholder {
+  color: #787878;
+}
+
+.scout--hero .scout-send {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 0.61vw, 12px);
+  width: clamp(128px, 11.1vw, 217px);
+  height: auto;
+  min-height: clamp(48px, 3.89vw, 76px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: #03535f;
+  color: #ffffff;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(15px, 1.23vw, 24px);
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 4px 12px rgba(3, 83, 95, 0.16);
+}
+
+.scout--hero .scout-send:hover:not(:disabled) {
+  background: #076573;
+}
+
+.scout--hero .scout-send:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.scout--hero .scout-criteria {
+  flex-wrap: wrap;
+  gap: clamp(6px, 0.41vw, 8px) clamp(10px, 0.82vw, 16px);
+  margin: 0;
+  padding: 0 4px;
+  overflow: visible;
+}
+
+.scout--hero .scout-criterion {
+  color: #626262;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: clamp(12px, 1.02vw, 20px);
+}
+
+.scout--hero .scout-criterion.is-on {
+  color: #27ca37;
+  font-weight: 600;
+}
+
+/* Suggestions share the card's width so their left edge lines up with it. */
+.scout--hero .rsearch__suggest {
+  max-width: clamp(600px, 53.2vw, 1040px);
+}
+
+/* Mobile frame: the card stacks the field over a full-width Search. */
+@media (max-width: 900px) {
+  .scout--hero .scout-composer {
+    max-width: none;
+    padding: 16px;
+  }
+
+  .scout--hero .scout-composer__row {
+    flex-direction: column;
+  }
+
+  .scout--hero .scout-send {
+    width: 100%;
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .scout--hero .scout-field textarea {
+    font-size: 16px;
+  }
+
+  .scout--hero .scout-criterion {
+    font-size: 12px;
+  }
+}
+
+/* --- screen 1's own pieces leaving -----------------------------------------
+   Pinned where they were (inline position:fixed from ScoutChat) so they fade
+   in place while the workspace forms under them, instead of either vanishing
+   or shoving the new layout around. Ease-in: they are on their way out. */
+.rsearch__title.is-leaving,
+.rsearch__suggest.is-leaving {
+  animation: rsearch-leave 520ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsearch__title.is-leaving,
+  .rsearch__suggest.is-leaving {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* --- loading state on screen 2 ----------------------------------------------
+   The bar arrives before the backend does. Card-shaped placeholders hold the
+   space the results will take. */
+.hire-skeletons {
+  display: grid;
+  gap: 16px;
+}
+
+.hire-skel {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.hire-skel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hire-skel__avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 999px;
+}
+
+.hire-skel__lines {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+
+.hire-skel__line {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.hire-skel__line--name {
+  width: 28%;
+  height: 14px;
+}
+
+.hire-skel__line--meta {
+  width: 52%;
+}
+
+.hire-skel__chips {
+  display: flex;
+  gap: 8px;
+}
+
+.hire-skel__chip {
+  width: 64px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.hire-skel__summary {
+  height: 56px;
+  border-radius: 12px;
+}
+
+.hire-skel__avatar,
+.hire-skel__line,
+.hire-skel__chip,
+.hire-skel__summary {
+  background: linear-gradient(90deg, #eeeeef 0%, #f7f7f8 50%, #eeeeef 100%);
+  background-size: 200% 100%;
+  animation: hire-skel-shimmer 1.4s linear infinite;
+}
+
+@keyframes hire-skel-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-skel__avatar,
+  .hire-skel__line,
+  .hire-skel__chip,
+  .hire-skel__summary {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Screen 2 at design scale (see src/components/hire/hire-zoom.ts).
+
+   Laid out at the 1920px design width and scaled with `zoom`, so a 1280px
+   viewport shows the same dashboard a 1920px one does. Lengths declared on a
+   zoomed element are multiplied by its zoom, so the shell's viewport heights
+   are divided back out or the desk would stop two thirds of the way down.
+   -------------------------------------------------------------------------- */
+@media (min-width: 901px) {
+  .hire-app--results {
+    zoom: var(--hire-zoom, 1);
+    min-height: calc(100dvh / var(--hire-zoom, 1));
+  }
+
+  .hire-app--results.hire-app--desk {
+    height: calc(100dvh / var(--hire-zoom, 1));
+  }
+
+  /* The ≤1365px rule hides the nav card by VIEWPORT width, but under the zoom
+     the layout is never narrower than ~1453px — there is room for it. */
+  .hire-app--results .hire-side {
+    display: flex;
+  }
+
+  /* Screen 1's leaving pieces are pinned in viewport pixels measured on the
+     unzoomed hero. Cancel the dashboard's zoom on them so they stay exactly
+     where, and exactly the size, they were. */
+  .hire-app--results .rsearch__title.is-leaving,
+  .hire-app--results .rsearch__suggest.is-leaving {
+    zoom: calc(1 / var(--hire-zoom, 1));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Screen 1 ambient light — the light-green blobs roam and fade.
+
+   The four large mint ellipses of the field (the light the eye reads as "the
+   glow") are real elements, each sized and placed exactly as in the export so
+   the first frame IS the design, then wandering slowly from there. Each is
+   three nested layers — horizontal drift, vertical drift, a slight scale —
+   every one an eased back-and-forth at its own period. Separate axes at
+   unrelated periods trace a Lissajous path: no corners, no snap-back, and a
+   combined pattern that takes many minutes to come round again.
+
+   Transform only, one compositor layer each: nothing is repainted. Independent
+   of Search — it runs whenever screen 1 is idle — and paused on screen 2,
+   where the blobs have drained to grey anyway.
+   -------------------------------------------------------------------------- */
+.hire-field__glow,
+.hire-field__glow-y,
+.hire-field__glow-core {
+  display: block;
+  will-change: transform;
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); /* sine in-out */
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-play-state: paused;
+}
+
+.hire-field__glow {
+  position: absolute;
+  animation-name: hire-drift-x;
+  animation-duration: var(--gx-t);
+  /* Half a swing in: the first frame is the middle of the path, which is
+     exactly where the design put the blob. */
+  animation-delay: calc(var(--gx-t) / -2);
+}
+
+.hire-field__glow-y {
+  width: 100%;
+  height: 100%;
+  animation-name: hire-drift-y;
+  animation-duration: var(--gy-t);
+  animation-delay: calc(var(--gy-t) / -2);
+}
+
+.hire-field__glow-core {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(closest-side, var(--hf-mint) 0%, transparent 100%);
+  transition: --hf-mint 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+  /* Scale and a slow fade, each on its own clock: blobs gather and spread,
+     and brighten and dim, out of step with one another. */
+  animation-name: hire-breathe, hire-fade;
+  animation-duration: var(--gs-t), var(--gf-t);
+  animation-delay: var(--gs-d, 0s), var(--gf-d, 0s);
+}
+
+/* Geometry: the export's ellipse, box = 2 x radii, centred on its point.
+   Drift: how far it wanders (--gx / --gy) and how slowly (--g*-t). */
+.hire-field__glow--a {        /* 7.5% 23.8%, r 20.2% x 48.8% */
+  left: -12.7vw;
+  top: -25vh;
+  width: 40.4vw;
+  height: 97.6vh;
+  --gx: 30vw;  --gx-t: 17s;
+  --gy: 32vh;  --gy-t: 13.5s;
+  --gs-t: 11s;
+  --gf-t: 8.5s;
+}
+
+.hire-field__glow--b {        /* 39.8% 86.8%, r 28.2% x 40.3% */
+  left: 11.6vw;
+  top: 46.5vh;
+  width: 56.4vw;
+  height: 80.6vh;
+  --gx: -28vw; --gx-t: 19s;
+  --gy: -26vh; --gy-t: 15.5s;
+  --gs-t: 14s; --gs-d: -5.5s;
+  --gf-t: 10.5s; --gf-d: -4s;
+}
+
+.hire-field__glow--c {        /* 84.8% 81.4%, r 13.6% x 32.2% */
+  left: 71.2vw;
+  top: 49.2vh;
+  width: 27.2vw;
+  height: 64.4vh;
+  --gx: -34vw; --gx-t: 15.5s;
+  --gy: -30vh; --gy-t: 21s;
+  --gs-t: 12.5s; --gs-d: -8.5s;
+  --gf-t: 7s; --gf-d: -3s;
+}
+
+.hire-field__glow--d {        /* 35.4% 27.0%, r 13.1% x 28.8% */
+  left: 22.3vw;
+  top: -1.8vh;
+  width: 26.2vw;
+  height: 57.6vh;
+  --gx: 30vw;  --gx-t: 14s;
+  --gy: 34vh;  --gy-t: 18s;
+  --gs-t: 10.5s; --gs-d: -3.5s;
+  --gf-t: 9s; --gf-d: -6.5s;
+}
+
+.hire-app--landing .hire-field__glow,
+.hire-app--landing .hire-field__glow-y,
+.hire-app--landing .hire-field__glow-core {
+  animation-play-state: running;
+}
+
+@keyframes hire-drift-x {
+  from { transform: translate3d(calc(var(--gx) * -1), 0, 0); }
+  to { transform: translate3d(var(--gx), 0, 0); }
+}
+
+@keyframes hire-drift-y {
+  from { transform: translate3d(0, calc(var(--gy) * -1), 0); }
+  to { transform: translate3d(0, var(--gy), 0); }
+}
+
+/* Grows past its design size more than it shrinks below it, so the field
+   never ends up with less light than the design has. */
+@keyframes hire-breathe {
+  from { transform: scale(0.96); }
+  to { transform: scale(1.12); }
+}
+
+/* A shimmer, not a fade-out: the design's brightness is the floor, near
+   enough. Dipping to 20% (as this first did) visibly darkened the screen. */
+@keyframes hire-fade {
+  from { opacity: 0.8; }
+  to { opacity: 1; }
+}
+
+/* Reduced motion: the blobs simply stay where the design put them. */
+@media (prefers-reduced-motion: reduce) {
+  .hire-field__glow,
+  .hire-field__glow-y,
+  .hire-field__glow-core {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   New search / New project, beside Filters on screen 2.
+   -------------------------------------------------------------------------- */
+.scout__toolbar {
+  gap: 8px;
+}
+
+.scout-action {
+  padding: 0 14px;
+}
+
+.scout-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* --- screen 2 -> 1 ----------------------------------------------------------
+   Beat 1 (`is-returning`): the workspace leaves, ease-in. Beat 2 (after the
+   reset): the bar travels back up on the FLIP, the surface morphs back to
+   green, and screen 1's heading and suggestions come in behind it. */
+.scout.is-returning .scout__toolbar,
+.scout.is-returning .chat-output {
+  animation: hire-results-out 380ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes hire-results-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.scout--hero.is-arriving .rsearch__title,
+.scout--hero.is-arriving .rsearch__suggest {
+  animation: hire-results-in 680ms var(--ease) 720ms both;
+}
+
+/* New search: the empty chat settles in where the old thread faded out. */
+.scout.is-arriving:not(.scout--hero) .scout__toolbar,
+.scout.is-arriving:not(.scout--hero) .chat-output {
+  animation: hire-results-in 520ms var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout.is-returning .scout__toolbar,
+  .scout.is-returning .chat-output,
+  .scout--hero.is-arriving .rsearch__title,
+  .scout--hero.is-arriving .rsearch__suggest,
+  .scout.is-arriving:not(.scout--hero) .scout__toolbar,
+  .scout.is-arriving:not(.scout--hero) .chat-output {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The header changes WITH the surface, not ahead of it.
+
+   It used to swap in one frame when Search was pressed: the dashboard's dark
+   wordmark and nav buttons appeared over a background that was still green.
+   Now its glass fades on the same 1200ms curve as the field, both wordmarks
+   are stacked and crossfaded in place (they share a ~140x27 box), and the
+   buttons that only screen 2 has settle in as the surface turns light.
+   -------------------------------------------------------------------------- */
+.hire-app__header {
+  transition:
+    background-color 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    border-color 1200ms cubic-bezier(0.45, 0.05, 0.25, 1),
+    box-shadow 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+.hire-app__logo-swap {
+  display: grid;
+  height: 100%;
+  justify-items: start;
+  align-items: center;
+}
+
+.hire-app__logo-swap > img {
+  grid-area: 1 / 1;
+  transition: opacity 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+.hire-app--landing .hire-app__logo-img--dark,
+.hire-app--results .hire-app__logo-img--light {
+  opacity: 0;
+}
+
+.hire-app--landing .hire-app__logo-img--light,
+.hire-app--results .hire-app__logo-img--dark {
+  opacity: 1;
+}
+
+.hire-app--results .hire-app__badge,
+.hire-app--results .hire-app__nav > .hire-hbtn {
+  animation: hire-results-in 700ms var(--ease) 500ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-app__header,
+  .hire-app__logo-swap > img {
+    transition: none;
+  }
+
+  .hire-app--results .hire-app__badge,
+  .hire-app--results .hire-app__nav > .hire-hbtn {
+    animation: none;
+  }
+}
+
+/* The stacked wordmarks size to the logo box: a definite row, or `height:100%`
+   on the images has nothing to resolve against and they render at their
+   natural 67-81px. */
+.hire-app__logo-swap {
+  grid-template-rows: 100%;
+}
+
+/* Portrait screens. Every ellipse in the design is % of width x % of height,
+   which on a phone stretches each one into a tall streak — light and dark
+   alike. On the 1956x870 frame each is close to a circle whose radius is its
+   width-% of the long side (20.2% x 48.8% is 395 x 424px), so in portrait
+   they are drawn as exactly that: circles in vmax, on the same centres. */
+@media (orientation: portrait) {
+  .hire-field__glow--a {
+    width: 42vmax;
+    height: 42vmax;
+    left: calc(7.5vw - 21vmax);
+    top: calc(23.8vh - 21vmax);
+  }
+
+  .hire-field__glow--b {
+    width: 48vmax;
+    height: 48vmax;
+    left: calc(39.8vw - 24vmax);
+    top: calc(86.8vh - 24vmax);
+  }
+
+  .hire-field__glow--c {
+    width: 28vmax;
+    height: 28vmax;
+    left: calc(84.8vw - 14vmax);
+    top: calc(81.4vh - 14vmax);
+  }
+
+  .hire-field__glow--d {
+    width: 27vmax;
+    height: 27vmax;
+    left: calc(35.4vw - 13.5vmax);
+    top: calc(27vh - 13.5vmax);
+  }
+
+  .hire-field__shade--low {
+    background:
+      radial-gradient(9.7vmax 9.7vmax at 89.1% 5.3%, var(--hf-025) 0%, transparent 100%),
+      radial-gradient(20.2vmax 20.2vmax at 13.2% 81.7%, var(--hf-025) 0%, transparent 100%),
+      radial-gradient(20.2vmax 20.2vmax at 66.1% 40.3%, var(--hf-055) 0%, transparent 100%),
+      radial-gradient(20.2vmax 20.2vmax at 26.6% 5.3%, var(--hf-053) 0%, transparent 100%),
+      radial-gradient(20.2vmax 20.2vmax at 95.4% 42.8%, var(--hf-287) 0%, transparent 100%);
+  }
+
+  .hire-field__shade--high {
+    background:
+      radial-gradient(14.5vmax 14.5vmax at 49.8% 13.1%, var(--hf-115) 0%, transparent 100%),
+      radial-gradient(8.3vmax 8.3vmax at 76.1% 96.9%, var(--hf-mint) 0%, transparent 100%),
+      radial-gradient(13.6vmax 13.6vmax at 57.1% 96.8%, var(--hf-0a4) 0%, transparent 100%),
+      radial-gradient(13.6vmax 13.6vmax at 94.4% 92.3%, var(--hf-035) 0%, transparent 100%);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Suggestion stack turns like a row of cubes.
+
+   Every 5s (or a scroll notch) each line's current text rotates up and away
+   while the next rolls up from underneath — faces of a cube turning about a
+   horizontal axis half a line BEHIND the text (transform-origin z), which is
+   what makes it read as a solid turning rather than a card flipping on its
+   edge. Scrolling back turns it the other way. 700ms, the screen's standard
+   easing; transform only.
+   -------------------------------------------------------------------------- */
+.rsearch__cube {
+  position: relative;
+  display: block;
+  perspective: 900px;
+}
+
+.rsearch__face {
+  backface-visibility: hidden;
+  transform-origin: 50% 50% -0.6em;
+}
+
+.rsearch__face.is-out {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: rsearch-cube-out 700ms cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+
+.rsearch__face.is-in {
+  animation: rsearch-cube-in 700ms cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+
+.rsearch__face.is-out.is-back {
+  animation-name: rsearch-cube-out-back;
+}
+
+.rsearch__face.is-in.is-back {
+  animation-name: rsearch-cube-in-back;
+}
+
+@keyframes rsearch-cube-in {
+  from { transform: rotateX(-90deg); opacity: 0; }
+  to { transform: rotateX(0deg); opacity: 1; }
+}
+
+@keyframes rsearch-cube-out {
+  from { transform: rotateX(0deg); opacity: 1; }
+  to { transform: rotateX(90deg); opacity: 0; }
+}
+
+@keyframes rsearch-cube-in-back {
+  from { transform: rotateX(90deg); opacity: 0; }
+  to { transform: rotateX(0deg); opacity: 1; }
+}
+
+@keyframes rsearch-cube-out-back {
+  from { transform: rotateX(0deg); opacity: 1; }
+  to { transform: rotateX(-90deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsearch__face.is-in {
+    animation: none;
+  }
+
+  .rsearch__face.is-out {
+    display: none;
+  }
+}

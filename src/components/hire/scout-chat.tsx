@@ -44,7 +44,16 @@ import type {
   MatchTriage,
 } from "@/components/hire/match-card";
 import { SearchTabs } from "@/components/hire/search-tabs";
-import { RecruiterSearchLanding } from "@/components/hire/recruiter-search-landing";
+import {
+  RecruiterSearchSuggestions,
+  RecruiterSearchTitle,
+} from "@/components/hire/recruiter-search-landing";
+import {
+  measureStage,
+  playStageFlip,
+  prefersReducedMotion,
+  type StageRect,
+} from "@/components/hire/hire-stage-flip";
 import {
   appendGuestSearch,
   clearGuestMatches,
@@ -108,6 +117,13 @@ const OPENING: Msg = {
     { label: "Frontend engineer", value: "Frontend engineer" },
   ],
 };
+
+/** How long screen 1's heading and suggestions take to fade out, pinned in
+ *  place, while the workspace forms under them. Matches `rsearch-leave`. */
+const LANDING_EXIT_MS = 520;
+
+/** First beat of screen 2 -> 1. Matches `hire-results-out` in CSS. */
+const RETURN_EXIT_MS = 380;
 
 const SENIORITY_LABEL: Record<string, string> = {
   INTERN: "Intern",
@@ -328,7 +344,15 @@ export function ScoutChat({
       ? Math.max(0, (initialMessages.length || 1) - 1)
       : null,
   );
-  const { setDesk, view, inspect, clearInspect, newSearchNonce } = useHireDesk();
+  const {
+    setDesk,
+    view,
+    inspect,
+    clearInspect,
+    newSearchNonce,
+    newProjectNonce,
+    landing: deskLanding,
+  } = useHireDesk();
   const scrollRef = useRef<HTMLDivElement>(null);
   const visitStamped = useRef(false);
   const [projectLabel, setProjectLabel] = useState(
@@ -366,7 +390,56 @@ export function ScoutChat({
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
   }, [text]);
+
+  // ...and again whenever the field's WIDTH changes. Sizing only on `text`
+  // meant a measurement taken while the field was momentarily narrow (first
+  // layout, or mid stage-change) was kept for good: the empty placeholder
+  // wrapped into many lines, measured 132px, and the hero's single-line field
+  // rendered as a tall box. Height changes are ignored here, or the resize
+  // would feed itself.
+  useEffect(() => {
+    const el = promptRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let lastWidth = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth === lastWidth) return;
+      lastWidth = el.clientWidth;
+      el.style.height = "auto";
+      el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const reqMenuRef = useRef<HTMLDivElement>(null);
+  /**
+   * The search bar — ONE element on both screens. It is never unmounted
+   * between them; the stage change moves it and `playStageFlip` shows the
+   * move.
+   */
+  const composerRef = useRef<HTMLFormElement>(null);
+  /** Last hero geometry, recorded every hero render for the hand-off. */
+  const heroGeometry = useRef<{
+    bar: StageRect | null;
+    title: StageRect | null;
+    below: StageRect | null;
+  } | null>(null);
+  /** Screen 2's last bar position, for the move back to screen 1. */
+  const resultsBar = useRef<StageRect | null>(null);
+  /** First beat of the way back: the workspace fading before the reset. */
+  const [returning, setReturning] = useState(false);
+  /** Screen 1's pieces coming back in behind the returning bar. */
+  const [arriving, setArriving] = useState(false);
+  /**
+   * A fresh chat inside the project: screen 2 with an empty thread. Without
+   * it an empty thread means screen 1, and "New search" would have left the
+   * dashboard — which is New project's job, not New search's.
+   */
+  const [freshChat, setFreshChat] = useState(false);
+  /** Screen 1's own pieces, pinned where they were while they fade out. */
+  const [heroGhost, setHeroGhost] = useState<{
+    title: StageRect | null;
+    below: StageRect | null;
+  } | null>(null);
   const hydratedRef = useRef(false);
   const rows = specRows(spec);
   const activeSearch =
@@ -444,19 +517,29 @@ export function ScoutChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- plan 120: record on open
   }, [inspect, clearInspect]);
 
-  useEffect(() => {
+  // Layout effect, not effect: the chrome's class decides the whole page
+  // layout (grid, sidebar, header), and the bar's move is measured against it.
+  // As a plain effect the chrome switched one painted frame after this
+  // component did, so the bar was measured mid-switch and jumped.
+  useLayoutEffect(() => {
     if (view === "pod") return;
     setDesk({
       step: searched ? 2 : 1,
       matchCount,
       gap: deskGap,
+      // Must be exactly `showLanding` below. The chrome paints the green
+      // field and the white dashboard, so any disagreement leaves the landing
+      // sitting on the results header — which is what happened while this
+      // carried its own copy of the rule.
+      // Exactly `hero` below. It flips on the Search press, which is what
+      // starts the background morph and brings the workspace in — at the same
+      // moment the bar starts to travel, not after the backend answers.
       landing:
         view === "scout" &&
-        !initialRequestId &&
-        !searched &&
-        !messages.some((m) => m.role === "user"),
+        !freshChat &&
+        !(searched || messages.some((m) => m.role === "user")),
     });
-  }, [searched, matchCount, deskGap, setDesk, view, messages, initialRequestId]);
+  }, [searched, matchCount, deskGap, setDesk, view, messages, freshChat]);
 
   // The nav card names the open project; off-project it keeps its own
   // "Current Project" label.
@@ -857,37 +940,112 @@ export function ScoutChat({
     send(row.prompt);
   }
 
-  function resetDesk() {
-    if (requestId) {
-      router.push("/hire");
-      return;
-    }
-    clearGuestSession();
-    clearGuestMatches();
+  /** Everything a search put on screen, back to an empty brief. */
+  function clearSearch() {
     setMessages([OPENING]);
     setSpec({});
     setSummary("Not started");
     setReadyToSearch(false);
     setSearched(false);
     setMatchCount(null);
-    setSearchTabs([]);
+    setResultsPin(null);
     setActiveSearchId("");
     setText("");
     setDetailsOpen(false);
     setOpenMatch(null);
   }
 
+  /**
+   * Leaving the current search in two beats: the workspace's cards and
+   * toolbar fade first (`returning`), THEN the state resets. For New project
+   * that reset sends the bar back up and the surface back to green; for New
+   * search it just empties the thread in place. Without the first beat the
+   * cards vanished in one frame.
+   */
+  function beginReturn(reset: () => void) {
+    if (returning) return;
+    if (prefersReducedMotion() || hero) {
+      reset();
+      return;
+    }
+    setReturning(true);
+    window.setTimeout(() => {
+      reset();
+      setReturning(false);
+      promptRef.current?.focus();
+    }, RETURN_EXIT_MS);
+  }
+
+  /**
+   * New search — a new chat in the SAME project, like starting a new chat
+   * inside a Claude project. Stays on screen 2: the white dashboard, the nav
+   * card and the bar all stay where they are; only the thread clears (fading
+   * out, then the empty chat fading in) and the field takes focus. Nothing is
+   * created and `requestId` is kept. A guest's earlier searches stay in the
+   * tab history. (A saved project's conversation lives server-side and is
+   * not rewritten — the next search continues it.)
+   */
+  function newSearch() {
+    beginReturn(() => {
+      clearSearch();
+      setFreshChat(true);
+      setArriving(true);
+      window.setTimeout(() => setArriving(false), 600);
+      // A guest's session is what a reload restores from; left as it was it
+      // still said "searched" and a refresh brought back the closed results.
+      if (!persist) {
+        writeGuestSession({
+          spec: {},
+          messages: [OPENING],
+          summary: "Not started",
+          readyToSearch: false,
+          searched: false,
+        });
+      }
+    });
+  }
+
+  /**
+   * New project — a fresh workspace, nothing carried over.
+   *
+   * For a signed-in recruiter the project IS the TalentRequest, so leaving it
+   * means `/hire` with no id; the next message opens a new one. A guest has no
+   * server project, so the stored session and every search in it go.
+   */
+  function newProject() {
+    if (requestId) {
+      router.push("/hire");
+      return;
+    }
+    beginReturn(() => {
+      clearGuestSession();
+      clearGuestMatches();
+      setSearchTabs([]);
+      clearSearch();
+      setFreshChat(false);
+    });
+  }
+
+
   // "+ Create New Project" lives in the nav card, outside this component. It
   // bumps a counter in the desk context and the reset happens here, where the
   // conversation state is.
-  const seenNonce = useRef(newSearchNonce);
+  const seenSearchNonce = useRef(newSearchNonce);
   useEffect(() => {
-    if (newSearchNonce === seenNonce.current) return;
-    seenNonce.current = newSearchNonce;
-    resetDesk();
-    // resetDesk reads state at call time; the counter is the only trigger.
+    if (newSearchNonce === seenSearchNonce.current) return;
+    seenSearchNonce.current = newSearchNonce;
+    newSearch();
+    // The actions read state at call time; the counter is the only trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newSearchNonce]);
+
+  const seenProjectNonce = useRef(newProjectNonce);
+  useEffect(() => {
+    if (newProjectNonce === seenProjectNonce.current) return;
+    seenProjectNonce.current = newProjectNonce;
+    newProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newProjectNonce]);
 
   // The panel's arrows walk the same list the cards are drawn from.
   const panelList: (MatchCardData & Partial<MatchTriage>)[] =
@@ -926,32 +1084,120 @@ export function ScoutChat({
     (key) => criteria.find((c) => c.key === key)!,
   );
 
-  if (!talked && view === "scout" && !initialRequestId) {
-    return (
-      <RecruiterSearchLanding
-        value={text}
-        pending={pending}
-        spoken={{
-          location: spoken.location,
-          experience: spoken.experience,
-          role: spoken.role,
-          education: spoken.education,
-          skills: spoken.skills,
-        }}
-        onChange={setText}
-        onSubmit={(query) => send(query)}
-      />
-    );
-  }
+  /**
+   * Screen 1 until the recruiter presses Search — and not a frame longer.
+   *
+   * The press IS the transition. `send` pushes the recruiter's message
+   * synchronously, `talked` flips, and in that same commit the stage changes:
+   * the bar starts travelling, the green begins morphing into the dashboard's
+   * grey and the workspace comes in, all while the request is in flight. The
+   * dashboard then sits in a loading state (skeleton cards) until the backend
+   * answers; only the cards wait for the response. Nothing about the motion
+   * does.
+   */
+  // Not gated on `initialRequestId` any more: "New search" inside a saved
+  // project returns `/hire/[id]` to screen 1 without leaving the project.
+  const hero = view === "scout" && !talked && !freshChat;
+
+  // Record where everything sits while it is the hero, so the hand-off has
+  // the "before" half of each move. Every hero render: typing reflows the
+  // card (the criteria ticks, a wrapping line), and a stale rect would make
+  // the bar jump before it moves.
+  useLayoutEffect(() => {
+    if (!hero) {
+      resultsBar.current = measureStage(composerRef.current);
+      return;
+    }
+    const rect = (sel: string) =>
+      measureStage(document.querySelector<HTMLElement>(sel));
+    heroGeometry.current = {
+      bar: measureStage(composerRef.current),
+      title: rect(".scout-hero-slot .rsearch__title"),
+      below: rect(".scout-hero-slot--below .rsearch__suggest"),
+    };
+  });
+
+  // The hand-off itself. Layout effect so the bar's inverse transform is in
+  // place before the browser paints its new position.
+  // Keyed on the chrome's flag rather than `hero`: `hero` flips first, the
+  // chrome follows in a synchronous second commit, and only after that second
+  // commit is the bar sitting in its real screen-2 position to measure.
+  const wasHero = useRef(deskLanding);
+  useLayoutEffect(() => {
+    const was = wasHero.current;
+    wasHero.current = deskLanding;
+    if (was === deskLanding) return;
+
+    // Screen 2 -> 1 (New search / New project). The same bar travels back up
+    // while the surface morphs back to green; screen 1's pieces come in
+    // behind it (`arriving`).
+    if (deskLanding) {
+      const back = resultsBar.current;
+      resultsBar.current = null;
+      if (!back) return;
+      playStageFlip(composerRef.current, back);
+      if (prefersReducedMotion()) return;
+      setArriving(true);
+      const id = window.setTimeout(() => setArriving(false), 1500);
+      return () => window.clearTimeout(id);
+    }
+
+    const from = heroGeometry.current;
+    heroGeometry.current = null;
+    if (!from) return;
+    playStageFlip(composerRef.current, from.bar);
+    if (prefersReducedMotion()) return;
+    setHeroGhost({ title: from.title, below: from.below });
+    const id = window.setTimeout(() => setHeroGhost(null), LANDING_EXIT_MS);
+    return () => window.clearTimeout(id);
+  }, [deskLanding]);
+
+  /** Pin a leaving hero piece where it was, out of the workspace's flow. */
+  const pinned = (r: StageRect | null) =>
+    r
+      ? ({
+          position: "fixed",
+          top: r.top,
+          left: r.left,
+          width: r.width,
+          margin: 0,
+          zIndex: 5,
+          pointerEvents: "none",
+        } as const)
+      : undefined;
 
   return (
-    <section className="scout" aria-label="Scout assistant">
+    <section
+      className={cn(
+        "scout",
+        hero && "scout--hero",
+        returning && "is-returning",
+        arriving && "is-arriving",
+      )}
+      aria-label="Scout assistant"
+    >
       {/* One grid (see `.hire-app--results .scout__body`): Filters, the
           thread and the composer stack on the left, the profile panel takes
           the right column. "New search" moved to the nav card's
           "+ Create New Project"; the Requirement menu is behind Filters. */}
       <div className={cn("scout__body", openMatch && "is-open")}>
         <div className="scout__toolbar">
+          <button
+            type="button"
+            className="scout-filters scout-action"
+            onClick={newSearch}
+            disabled={returning}
+          >
+            New search
+          </button>
+          <button
+            type="button"
+            className="scout-filters scout-action"
+            onClick={newProject}
+            disabled={returning}
+          >
+            New project
+          </button>
           <div className="hire-req" ref={reqMenuRef}>
             <button
               type="button"
@@ -1254,6 +1500,31 @@ export function ScoutChat({
                   </p>
                 </div>
               )}
+              {/* The workspace is on screen before the backend has answered —
+                  the bar has already arrived. Card-shaped placeholders hold
+                  the space the results will take, so they populate into it
+                  rather than pushing the layout around. */}
+              {pending && !searched && (
+                <div className="hire-skeletons" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="hire-skel">
+                      <div className="hire-skel__head">
+                        <span className="hire-skel__avatar" />
+                        <span className="hire-skel__lines">
+                          <span className="hire-skel__line hire-skel__line--name" />
+                          <span className="hire-skel__line hire-skel__line--meta" />
+                        </span>
+                      </div>
+                      <div className="hire-skel__chips">
+                        {[0, 1, 2, 3, 4].map((c) => (
+                          <span key={c} className="hire-skel__chip" />
+                        ))}
+                      </div>
+                      <span className="hire-skel__summary" />
+                    </div>
+                  ))}
+                </div>
+              )}
               <div ref={bottomRef} className="scout-thread__end" aria-hidden="true" />
             </div>
         </div>
@@ -1282,7 +1553,19 @@ export function ScoutChat({
           />
         )}
 
+        {/* ONE slot either way, so the composer below keeps its position in
+            the tree across the stage change — that is what keeps it the same
+            DOM node, and what lets it travel instead of being re-created. */}
+        <div className="scout-hero-slot">
+          {hero ? (
+            <RecruiterSearchTitle />
+          ) : heroGhost?.title ? (
+            <RecruiterSearchTitle leaving frozen={pinned(heroGhost.title)} />
+          ) : null}
+        </div>
+
         <form
+          ref={composerRef}
           className="scout-composer"
           onSubmit={(e) => {
             e.preventDefault();
@@ -1349,6 +1632,25 @@ export function ScoutChat({
             </div>
           </div>
         </form>
+
+        <div className="scout-hero-slot scout-hero-slot--below">
+          {hero ? (
+            <RecruiterSearchSuggestions
+              pending={pending}
+              onPick={(query) => {
+                setText(query);
+                send(query);
+              }}
+            />
+          ) : heroGhost?.below ? (
+            <RecruiterSearchSuggestions
+              pending
+              onPick={() => {}}
+              leaving
+              frozen={pinned(heroGhost.below)}
+            />
+          ) : null}
+        </div>
       </div>
     </section>
   );

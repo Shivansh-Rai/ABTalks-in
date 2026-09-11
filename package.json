@@ -115,6 +115,7 @@
     "test:project-state": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/project-state.test.ts",
     "test:navbar-shortlist": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/navbar-shortlist.test.ts",
     "test:virtual": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/virtual-candidate.test.ts",
+    "test:notify": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notify.test.ts",
     "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
     "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
     "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",

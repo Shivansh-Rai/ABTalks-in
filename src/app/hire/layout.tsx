@@ -14,6 +14,7 @@ import { HireDeskProvider } from "@/components/hire/hire-desk-context";
 import { HireChrome } from "@/components/hire/hire-chrome";
 import { MergeGuestCart } from "@/components/hire/merge-guest-cart";
 import type { CartRow } from "@/components/hire/shortlist-cart";
+import { HIRE_ZOOM_SCRIPT } from "@/components/hire/hire-zoom";
 import "./hire-scout.css";
 
 export default async function HireLayout({ children }: { children: ReactNode }) {
@@ -112,34 +113,39 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
   }
 
   return (
-    <HireAuthProvider
-      approved={active}
-      signedIn={Boolean(userId)}
-      authEnabled={isRecruiterAuthEnabled()}
-    >
-      {/* A recruiter who registered *because* they wanted specific candidates
-          keeps that ask in sessionStorage until it is recorded, and the
-          session that recorded it may not be the one that placed it. */}
-      {active && <MergeGuestCart />}
-      <HireDeskProvider>
-        <HireChrome
-          account={account}
-          credits={
-            credits?.ok
-              ? {
-                balanceMinor: credits.data.balanceMinor,
-                currency: credits.data.currency,
-              }
-              : null
-          }
-          // Same array the panel renders, so the badge and the list can never
-          // disagree. `account.cartCount` counts the legacy table only.
-          serverCartCount={podRows.length}
-          podRows={podRows}
-        >
-          {children}
-        </HireChrome>
-      </HireDeskProvider>
-    </HireAuthProvider>
+    <>
+      {/* Screen 2's scale, set while the HTML is still parsing — before the
+          dashboard can paint at full size. Static string, no user input. */}
+      <script dangerouslySetInnerHTML={{ __html: HIRE_ZOOM_SCRIPT }} />
+      <HireAuthProvider
+        approved={active}
+        signedIn={Boolean(userId)}
+        authEnabled={isRecruiterAuthEnabled()}
+      >
+        {/* A recruiter who registered *because* they wanted specific candidates
+            keeps that ask in sessionStorage until it is recorded, and the
+            session that recorded it may not be the one that placed it. */}
+        {active && <MergeGuestCart />}
+        <HireDeskProvider>
+          <HireChrome
+            account={account}
+            credits={
+              credits?.ok
+                ? {
+                  balanceMinor: credits.data.balanceMinor,
+                  currency: credits.data.currency,
+                }
+                : null
+            }
+            // Same array the panel renders, so the badge and the list can never
+            // disagree. `account.cartCount` counts the legacy table only.
+            serverCartCount={podRows.length}
+            podRows={podRows}
+          >
+            {children}
+          </HireChrome>
+        </HireDeskProvider>
+      </HireAuthProvider>
+    </>
   );
 }
