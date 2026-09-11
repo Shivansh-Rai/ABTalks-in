@@ -11,6 +11,7 @@ import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   filterSearchableUserIds,
   loadRecruiterIdentities,
+  RECRUITER_FIELD_POLICY,
   searchableUserWhere,
 } from "@/repositories/talent";
 import { contactAccessFor } from "@/features/hire/contact-access";
@@ -341,8 +342,8 @@ export async function getTalentProfile(
       openToWork,
       fullName: useNew ? (idn?.fullName || member.fullName) : member.fullName,
       jobRole: useNew ? (idn?.role ?? member.jobRole) : member.jobRole,
-      company:
-        useNew && idn?.showCurrentEmployer === false ? null : member.company,
+      // Field exposure is the platform policy on both read paths (plan 133).
+      company: RECRUITER_FIELD_POLICY.currentEmployer ? member.company : null,
       yearsExperience: useNew
         ? (idn?.yearsExperience ?? member.yearsExperience)
         : member.yearsExperience,
@@ -381,7 +382,7 @@ export async function getTalentProfile(
       // edit: comm/tech/problem now come from the new competency fields, or from
       // the legacy row while it is still the only result a member has.
       interview:
-        useNew && !idn?.showInterviewResults
+        !RECRUITER_FIELD_POLICY.interviewResults
           ? null
           : interviewSignal
             ? {

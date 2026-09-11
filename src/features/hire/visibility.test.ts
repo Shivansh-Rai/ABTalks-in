@@ -16,11 +16,12 @@
  * the gate is the same bug, and this is what fails when someone writes it.
  */
 import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import {
+  RECRUITER_FIELD_POLICY,
   searchableUserWhere,
-  visibleProgramMemberWhere,
 } from "@/repositories/talent";
+import { applyProfileSchema } from "@/lib/validations/program";
 import { memberEligibilityWhere } from "@/features/hire/pool-policy";
 import { evaluateHardFilters } from "@/features/hire/score-candidate";
 import { findTrack } from "@/features/hire/track-registry";
@@ -115,15 +116,6 @@ suite("the seam adds the gate with AND, not a spreadable key", () => {
   assert(
     src.includes("AND: [where, { user: searchableUserWhere() }]"),
     "listProgramCandidates must AND the gate onto whatever the caller passes",
-  );
-});
-
-suite("the retiring /talent fragment is still distinct and still narrow", () => {
-  // Left in place only as a named leftover. If it ever grows a second
-  // responsibility, that is the drift this catches.
-  assert(
-    Object.keys(visibleProgramMemberWhere()).length === 1,
-    "visibleProgramMemberWhere must stay a single-key fragment",
   );
 });
 
@@ -495,6 +487,209 @@ suite("dossiers carry link booleans, never addresses", () => {
       assert(!code.includes(forbidden), `${f} must not read ${forbidden}`);
     }
   }
+});
+
+/* ─── Plan 133: no candidate-controlled visibility ───────────────────────── */
+
+const rel = (p: string) => relative(process.cwd(), p).replace(/\\/g, "/");
+
+/** Every non-test TS source the app, its seeds and its scripts can run. */
+function walkSources(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      // Historical migration SQL is never edited; node_modules is not ours.
+      if (entry.name === "node_modules" || entry.name === "migrations") continue;
+      walkSources(p, out);
+    } else if (/\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) {
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+const ALL_SOURCES = ["src", "scripts", "prisma"].flatMap((d) =>
+  walkSources(join(process.cwd(), d)),
+);
+
+suite("what a recruiter sees is one platform constant, equal to the old defaults", () => {
+  // The eight `show*` columns had no candidate writer, so every live row held
+  // these exact values. If this ever differs, the swap stopped being a no-op.
+  const expected: Record<string, boolean> = {
+    linkedin: true,
+    github: true,
+    resume: false,
+    interviewResults: false,
+    assessmentScores: false,
+    currentEmployer: true,
+  };
+  const policy = RECRUITER_FIELD_POLICY as Record<string, boolean>;
+  for (const [k, v] of Object.entries(expected)) {
+    assert(policy[k] === v, `RECRUITER_FIELD_POLICY.${k} must be ${v}`);
+  }
+  assert(
+    Object.keys(policy).length === Object.keys(expected).length,
+    "the policy must not grow fields without this test changing",
+  );
+  assert(Object.isFrozen(RECRUITER_FIELD_POLICY), "the policy is frozen at runtime");
+  assert(
+    !("email" in policy) && !("phone" in policy),
+    "email and phone are released only by contact-access, never by a field policy",
+  );
+});
+
+suite("no code reads or writes a per-candidate show* column", () => {
+  assert(
+    ALL_SOURCES.length > 300,
+    `expected to scan the whole codebase, saw ${ALL_SOURCES.length} files`,
+  );
+  const offenders = ALL_SOURCES.filter((p) =>
+    /\bshow(Email|Phone|Resume|Linkedin|Github|AssessmentScores|InterviewResults|CurrentEmployer)\b/.test(
+      stripComments(readFileSync(p, "utf8")),
+    ),
+  ).map(rel);
+  assert(
+    offenders.length === 0,
+    `per-candidate field visibility is back in: ${offenders.join(", ")}`,
+  );
+});
+
+suite("the search gate is the discovery gate and nothing a candidate sets", () => {
+  const talent = stripComments(repoSrc("talent.ts"));
+  const i = talent.indexOf("function buildUserGate");
+  assert(i !== -1, "buildUserGate exists");
+  const fn = talent.slice(i, talent.indexOf("function preferenceFilter"));
+  assert(
+    fn.includes("...searchableUserWhere()"),
+    "the search gate must reuse the one discovery gate, not restate it",
+  );
+  assert(
+    !/show[A-Z]|minAssessmentScore|assessmentReports/.test(fn),
+    "no field-visibility or hidden-score clause may reach the search gate",
+  );
+  assert(
+    !stripComments(repoSrc("types.ts")).includes("minAssessmentScore"),
+    "filtering on a score the platform hides would let a recruiter infer it",
+  );
+  assert(
+    !talent.includes("visibleProgramMemberWhere"),
+    "the legacy consent fragment is gone",
+  );
+});
+
+suite("only platform and admin code writes CandidateVisibility", () => {
+  // Seeds and one-off scripts are not candidate-callable; the app is what counts.
+  const writers = ALL_SOURCES.map(rel).filter(
+    (p) =>
+      p.startsWith("src/") &&
+      /candidateVisibility\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/.test(
+        stripComments(readFileSync(join(process.cwd(), p), "utf8")),
+      ),
+  );
+  const allowed = new Set([
+    "src/repositories/dual-write.ts",
+    "src/features/admin/anonymize-user.ts",
+  ]);
+  const unexpected = writers.filter((p) => !allowed.has(p));
+  assert(
+    unexpected.length === 0,
+    `CandidateVisibility is written outside platform/admin code: ${unexpected.join(", ")}`,
+  );
+  const actions = readdirSync(join(process.cwd(), "src/app/actions"))
+    .filter((f) => f.endsWith(".ts"))
+    .filter((f) =>
+      stripComments(
+        readFileSync(join(process.cwd(), "src/app/actions", f), "utf8"),
+      ).includes("recruiterVisibilityConsentAt"),
+    );
+  assert(
+    actions.length === 0,
+    `a server action writes the old consent column: ${actions.join(", ")}`,
+  );
+});
+
+suite("no candidate surface asks for or accepts a visibility choice", () => {
+  const read = (p: string) =>
+    stripComments(readFileSync(join(process.cwd(), p), "utf8"));
+  assert(
+    !read("src/components/program/apply-form.tsx").includes("recruiterVisibility"),
+    "the apply form has no recruiter opt-in",
+  );
+  assert(
+    !read("src/lib/validations/program.ts").includes("recruiterVisibilityConsent"),
+    "the apply schema has no recruiter-visibility field",
+  );
+  assert(
+    !read("src/features/program/entry.ts").includes("recruiterVisibilityConsentAt"),
+    "applying stamps no consent that was never asked for",
+  );
+  const talentActions = read("src/app/actions/talent-actions.ts");
+  assert(
+    !talentActions.includes("setRecruiterVisibilityAction") &&
+      !talentActions.includes("candidateVisibility"),
+    "no candidate-callable visibility action exists",
+  );
+
+  // A stale client still posting the old field is accepted, and the field is
+  // dropped before anything downstream can see it.
+  const parsed = applyProfileSchema.safeParse({
+    skills: ["React"],
+    linkedinUrl: "https://linkedin.com/in/someone",
+    githubUsername: "someone",
+    githubRepoUrl: "https://github.com/someone/ai-cohort",
+    hasLaptop8Gb: true,
+    recruiterVisibilityConsent: false,
+  });
+  assert(parsed.success, "an old client posting the removed field still applies");
+  assert(
+    parsed.success && !("recruiterVisibilityConsent" in parsed.data),
+    "the removed field is stripped, not passed through",
+  );
+});
+
+suite("moderation stays admin-only, server-side and durable", () => {
+  const anonymize = stripComments(
+    readFileSync(join(process.cwd(), "src/features/admin/anonymize-user.ts"), "utf8"),
+  );
+  assert(anonymize.includes("deletedAt: now"), "deletion stamps User.deletedAt");
+  assert(
+    anonymize.includes("searchableByRecruiters: false") &&
+      anonymize.includes("withdrawnAt: now"),
+    "deletion withdraws the candidate from discovery",
+  );
+  assert(anonymize.includes("adminAction.create"), "deletion is audited");
+
+  // `withdrawnAt` is the hard stop: neither dual-write helper may reopen it.
+  const dual = repoSrc("dual-write.ts");
+  assert(
+    dual.split("if (existing?.withdrawnAt) return;").length - 1 === 2,
+    "both dual-write visibility helpers must stop on withdrawnAt",
+  );
+
+  // The only way in is an admin action behind requireAdmin().
+  const callers = ALL_SOURCES.map(rel).filter(
+    (p) =>
+      p.startsWith("src/") &&
+      p !== "src/features/admin/anonymize-user.ts" &&
+      readFileSync(join(process.cwd(), p), "utf8").includes(
+        "@/features/admin/anonymize-user",
+      ),
+  );
+  assert(
+    callers.length === 1 && callers[0] === "src/app/actions/admin-actions.ts",
+    `anonymizeUser must be reachable only from admin actions, found: ${callers.join(", ")}`,
+  );
+  const admin = readFileSync(
+    join(process.cwd(), "src/app/actions/admin-actions.ts"),
+    "utf8",
+  );
+  const at = admin.indexOf("export async function deleteUserAccountAction");
+  assert(at !== -1, "the admin delete action exists");
+  const body = admin.slice(at, admin.indexOf("anonymizeUser(tx", at));
+  assert(
+    body.includes("await requireAdmin()"),
+    "the admin delete action must call requireAdmin() before anonymizing",
+  );
 });
 
 

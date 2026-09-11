@@ -251,7 +251,9 @@ const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, readonly string[]> = {
 {
   const EXCLUDED: { label: string; paths: string[] }[] = [
     {
-      label: "candidate visibility toggles",
+      // The candidate visibility toggles these files held were removed in plan
+      // 133; the files stay excluded so tracking is not added in their place.
+      label: "former candidate visibility surfaces",
       paths: [
         "src/app/actions/talent-actions.ts",
         "src/components/profile/evidence-section.tsx",

@@ -159,6 +159,14 @@ and the dead predicate fragment all go.
 **D5 — `minAssessmentScore` filter is removed.** No caller sets it, and filtering
 on a field the platform hides would let a recruiter infer that field.
 
+**D6 — The policy applies on both read paths (added during implementation).**
+The flag-off (`ENABLE_NEW_TALENT=false`) branches in `hire.ts` and `pool.ts`
+never read `show*`; they showed interview results, résumé presence and (via the
+legacy identity fallback) quiz averages unconditionally. Production runs with the
+flag ON, so this is invisible today — but a rollback would have silently widened
+what recruiters see. Both paths now read `RECRUITER_FIELD_POLICY`, so the rollout
+flag decides where data is read from, never what is shown.
+
 ## 5. Files to touch
 
 ### In my module (Candidate profile / Evidence) — no approval needed
@@ -202,13 +210,13 @@ client-side read it.
 
 ## 7. Steps (implementation order)
 
-1. **In-module, now:** `get-evidence.ts` → `evidence-section.tsx` → `page.tsx` copy → `profile.test.ts`. Typecheck, lint, tests.
-2. **On approval — UI + API first:** `apply-form.tsx`, `program.ts` schema, `entry.ts`, `talent-actions.ts`. (Zod strips unknown keys, so an old client still posting `recruiterVisibilityConsent` is harmless.)
-3. **On approval — platform policy:** add `RECRUITER_FIELD_POLICY` to `talent.ts`; switch `talent.ts`, `hire.ts`, `pool.ts`, `challenge-dossier.ts` to it; remove the gate clause, `minAssessmentScore`, `visibleProgramMemberWhere`.
-4. **On approval — stop writing:** `anonymize-user.ts`, seeds, rehearsal script.
-5. **Deploy steps 2–4.** The columns still exist; nothing reads or writes them.
-6. **Then apply the migration** dropping the eight columns (§8). Order matters: dropping first would break the running build.
-7. Tests + re-scan (§9).
+1. ✅ **In-module:** `get-evidence.ts` → `evidence-section.tsx` → `page.tsx` copy → `profile.test.ts`. Committed as `c5c8e6d1`.
+2. ✅ **UI + API:** `apply-form.tsx`, `program.ts` schema, `entry.ts`, `talent-actions.ts`. (Zod strips unknown keys, so an old client still posting `recruiterVisibilityConsent` is harmless — pinned by a test.)
+3. ✅ **Platform policy:** `RECRUITER_FIELD_POLICY` in `talent.ts`; `talent.ts`, `hire.ts`, `pool.ts`, `challenge-dossier.ts` switched to it (D6: both read paths); gate clause, `minAssessmentScore`, `visibleProgramMemberWhere` removed.
+4. ✅ **Stop writing:** `anonymize-user.ts`, both demo seeds, rehearsal script, `ARCHITECTURE.md`, analytics test label, `visibility.test.ts`.
+5. ⏳ **Deploy A = steps 2–4, with `schema.prisma` unchanged and NO migration file.** The columns still exist; nothing reads or writes them.
+6. ⏳ **Deploy B = the drop (§8), in a separate, later commit** — only after Deploy A is live in production. See §8 for why this cannot share a commit with Deploy A.
+7. ✅ Tests + re-scan (§9) — run for steps 1–4.
 
 ## 8. DB safety / migration strategy
 
@@ -228,6 +236,37 @@ client-side read it.
 - Commit checkpoint → Neon child branch snapshot → note hash →
   `npx prisma migrate deploy` on the branch → run the verification below →
   production **after** the code deploy.
+- **Why Deploy B must be a separate commit (found during implementation).**
+  `vercel.json` sets `buildCommand: npm run build:deploy`, and `build:deploy` is
+  `prisma migrate deploy && npm run build`. A drop migration committed together
+  with the code would therefore run *during the build*, while the previous
+  deployment — which still selects `show*` — is serving production. Every
+  recruiter query would fail from the moment the migration commits until the new
+  deployment is promoted, and indefinitely if that build then fails. So Deploy B
+  ships only after Deploy A is confirmed live.
+- **Deploy B contents (generated offline with `prisma migrate diff`; the
+  post-drop schema passes `prisma validate`):**
+  1. `prisma/schema.prisma` — delete these eight lines from `model
+     CandidateVisibility`: `showEmail`, `showPhone`, `showResume`,
+     `showLinkedin`, `showGithub`, `showAssessmentScores`,
+     `showInterviewResults`, `showCurrentEmployer`.
+  2. `prisma/migrations/<timestamp>_drop_candidate_visibility_show_fields/migration.sql`:
+
+     ```sql
+     -- Plan 133: per-candidate field visibility is replaced by the platform's
+     -- RECRUITER_FIELD_POLICY. No code reads or writes these columns
+     -- (enforced by test:visibility).
+     ALTER TABLE "CandidateVisibility" DROP COLUMN "showAssessmentScores",
+     DROP COLUMN "showCurrentEmployer",
+     DROP COLUMN "showEmail",
+     DROP COLUMN "showGithub",
+     DROP COLUMN "showInterviewResults",
+     DROP COLUMN "showLinkedin",
+     DROP COLUMN "showPhone",
+     DROP COLUMN "showResume";
+     ```
+  3. `npx prisma generate`, `npx tsc --noEmit`, `npm run test:visibility`.
+  Run the pre-drop count query above on a Neon child branch first.
 - No search index or cache to rebuild: search is live Prisma queries. The `/hire`
   pool snapshot cache (`pool-facts.ts`) holds no visibility flags.
 
@@ -270,6 +309,10 @@ Manual:
 | `identityFromLegacyProfile` currently shows assessment scores; unifying the policy hides the quiz average for challenge candidates **with no `CandidateProfile` row** | Accepted as a consistency fix; called out to Sohail |
 | The instrumentation test lists these two files as "candidate visibility toggles" | Both files still exist and stay un-instrumented, so the exclusion holds; the label goes stale (Manuvrtti). Note: the suite currently aborts earlier, on HEAD too, at `recruiterRegSubmitted` being emitted from two recruiter-onboarding files — unrelated to this plan (Zainab/Manuvrtti) |
 | Privacy/Terms copy still says opt-in | Pre-existing, deferred legal task (§522); not solved here |
+| Drop migration shipped with the code runs inside `build:deploy` before the new build is live | §8: Deploy B is a separate, later commit |
+| D6 changes the flag-off read path (interview results, résumé presence, legacy quiz average now hidden there too) | Production runs flag ON, where nothing changes; accepted so a rollback cannot widen exposure |
+| New program applicants get `consentSource = "platform_default"` instead of `"program_apply_migrated"` | Label only — nothing reads it; searchability is unchanged (`dual-write.ts` 116–125 creates/opens the row either way) |
+| `seed-demo-recruiter.ts` demo candidate no longer shows interview/scores/résumé presence | Intended: demo data follows the same policy as production |
 | Opening the ~12,800 legacy-closed users | **Deliberately not done** (D1) |
 
 ## 11. Guardrails for Cursor (DO NOT)
@@ -279,6 +322,7 @@ Manual:
 - **DO NOT** change `anonymizeUser`'s deletion semantics — only drop its `show*` writes.
 - **DO NOT** replace per-field visibility with another per-candidate setting; the policy is a constant.
 - **DO NOT** apply the migration before the code that stops reading the columns is live.
+- **DO NOT** commit the drop migration in the same commit/deploy as the code change — `build:deploy` runs `prisma migrate deploy` first (§8).
 - **DO NOT** drop `ProgramMember.recruiterVisibilityConsentAt` — legacy drops are frozen.
 - **DO NOT** expose email/phone anywhere other than `contact-access.ts`.
 
@@ -304,6 +348,28 @@ remains the durable, admin-only moderation stop.
 `show(Email|Phone|Resume|Linkedin|Github|AssessmentScores|InterviewResults|CurrentEmployer)`,
 `recruiterVisibility`, `setRecruiterVisibilityAction`,
 `visibleProgramMemberWhere`, `minAssessmentScore`, `discoverab`.
+
+**Result after steps 1–4 (2026-09-11):**
+
+- `show*` — only `prisma/schema.prisma` (removed in Deploy B) and historical
+  `migration.sql` files. Zero in `src/`, `scripts/`, seeds; pinned by
+  `test:visibility` ("no code reads or writes a per-candidate show* column").
+- `setRecruiterVisibilityAction`, `visibleProgramMemberWhere`,
+  `minAssessmentScore` — only as negative assertions in tests.
+- `recruiterVisibilityConsentAt` — legitimate, the column is kept (D4):
+  `dual-write.ts` reads it as the `consentedAt` audit timestamp for historical
+  members; one-off 078 scripts (`migrate-2b-visibility`, `migrate-078-shared`,
+  `compare-078-talent`, `repair-078-talent-preflip`, `rehearse-078-talent`) and
+  the `seed-hire-fixtures` seed. None is candidate-callable and none gates search.
+- `discoverab*` — platform copy only (landing slide, chatbot follow-up
+  question, code comments describing platform policy). No control.
+- **Follow-ups outside this plan (not candidate controls, but stale wording):**
+  `src/components/hire/availability-form.tsx` (unrendered component whose copy
+  mentions opting into recruiter visibility); `src/features/hire/explain-matches.ts`
+  and `src/features/hire/capabilities.ts` (recruiter-facing Scout text that says
+  members "opted into" / "haven't been asked for" recruiter visibility);
+  `ScoreableMember.hasVisibilityConsent` (always `true` in every loader — a
+  vestigial name, never candidate-derived).
 
 ## 14. Cross-module approvals required
 

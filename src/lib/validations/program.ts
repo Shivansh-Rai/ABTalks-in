@@ -30,8 +30,10 @@ export const applyProfileSchema = z
     hasLaptop8Gb: z.literal(true, {
       error: "Confirm you have a laptop with at least 8 GB RAM",
     }),
-    // Accepted if a stale client still posts it; ignored. Not a candidate preference.
-    recruiterVisibilityConsent: z.boolean().optional(),
+    // No recruiter-visibility field (plan 133): whether recruiters can find an
+    // applicant is platform policy, not something the form asks. A stale client
+    // that still posts `recruiterVisibilityConsent` is harmless — z.object
+    // strips unknown keys.
   })
   .refine(
     (data) => {
