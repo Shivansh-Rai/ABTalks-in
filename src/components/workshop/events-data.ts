@@ -278,12 +278,12 @@ export const EVENTS: WorkshopEvent[] = [
     // generator skips any Saturday already in EVENTS. No placeholder logic
     // changes, and every other Saturday keeps its TBA.
     //
-    // 6:00 PM, not the 7:00 PM the other three run at: that is the time the
-    // Sep 12 placeholder already carried, and it was kept rather than silently
-    // moved. Change it here if the session really is at 7.
+    // 7:00 PM, moved off the 6:00 PM the Sep 12 placeholder carried: the
+    // published poster and the Supabase `workshop_config` the hero reads both
+    // say 7:00 PM, and this file was the only place still saying 6.
     id: "workshop-2026-09-12",
     date: "2026-09-12",
-    time: "6:00 PM IST",
+    time: "7:00 PM IST",
     tag: "Build",
     accent: "#03535F",
     track: "workshop",
@@ -298,6 +298,23 @@ export const EVENTS: WorkshopEvent[] = [
     // field anyway (see the note in UpcomingWorkshops).
     //
     // No `register` / `registrationOpen` either — see the note below.
+    posterSrc: "/workshop/posters/vibe_coding.jpeg",
+    topics: [
+      // The five the poster advertises, first and verbatim, then the build
+      // steps that fill out the hour. `TopicsSection` falls back to its own
+      // DEFAULT_TOPICS when this is absent, which is why the live page was
+      // showing the Sep 5 image/video list under a vibe-coding title.
+      "Build Your Mini Project",
+      "Vibe Coding Workflow",
+      "Ideas to Code with Claude",
+      "Live AI Development",
+      "Idea to Reality",
+      "Cursor, Antigravity & Claude",
+      "Prompting Your Way to Working Code",
+      "Debugging & Iterating with AI",
+      "From Prompt to Running App",
+      "Ship & Deploy Your Build",
+    ],
   },
   {
     id: "workshop-2026-09-19",
