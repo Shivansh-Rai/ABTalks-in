@@ -43,10 +43,6 @@ import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
 import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
-import {
-  SubscriptionGate,
-  type GateReason,
-} from "@/components/hire/subscription-gate";
 
 function trackLongLabel(source?: CandidateSource): string | null {
   switch (source) {
@@ -105,8 +101,9 @@ type Role = { title: string; value: ReactNode; badge?: string; note?: string };
  * Experience timeline lists verified work on the track, Education is the
  * declared level, and the credentials card lists the connected platforms.
  * Contact is behind the paid unlock (T-229): "Reveal email" / "Reveal number"
- * open the unlock dialog, which states the cost before charging. The resume
- * stays behind the plan gate — a different lock.
+ * open the unlock dialog, which states the cost before charging. Resume uses
+ * the same credit unlock — billing is not enabled, so the plans dialog must
+ * not be the gate.
  */
 export function CandidateInspector({
   match,
@@ -170,7 +167,6 @@ export function CandidateInspector({
   );
   const status = decision ? DECISION_LABEL[decision] : null;
   const resumeHref = evidenceResumeHref(match.candidateRef);
-  const [gate, setGate] = useState<GateReason | null>(null);
   const [tab, setTab] = useState<TabId>("overview");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -407,18 +403,36 @@ export function CandidateInspector({
               jobRole={match.jobRole}
               match={match}
             />
-            {/* The resume is gated: this opens the plan dialog, not the file.
-                The evidence profile stays one click away behind "•••". */}
-            <button
-              type="button"
-              className="hire-profile__view"
-              aria-label="View resume"
-              title="Resume"
-              aria-haspopup="dialog"
-              onClick={() => setGate("resume")}
-            >
-              <Eye size={16} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" />
-            </button>
+            {contact ? (
+              <a
+                href={resumeHref}
+                className="hire-profile__view"
+                aria-label="View resume"
+                title="Resume"
+              >
+                <Eye size={16} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" />
+              </a>
+            ) : (
+              <UnlockContactDialog
+                candidateRef={match.candidateRef}
+                publicId={publicId}
+                className="hire-profile__view"
+                triggerAriaLabel="Unlock resume"
+                triggerTitle="Resume"
+                triggerLabel={
+                  <Eye
+                    size={16}
+                    strokeWidth={1}
+                    absoluteStrokeWidth
+                    aria-hidden="true"
+                  />
+                }
+                onUnlocked={() => {
+                  void loadContact();
+                  window.location.assign(resumeHref);
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -715,8 +729,6 @@ export function CandidateInspector({
           </p>
         </section>
       </div>
-
-      <SubscriptionGate reason={gate} onClose={() => setGate(null)} />
     </aside>
   );
 }

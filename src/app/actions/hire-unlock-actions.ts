@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/logger";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { unlockContactSchema } from "@/lib/validations/hire-unlock";
+import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import {
   previewUnlock,
   revealUnlockedContact,
@@ -54,6 +56,32 @@ export async function unlockContactAction(
       ok: false,
       reason: "CANDIDATE_UNAVAILABLE",
       message: "This candidate is no longer available.",
+      balanceMinor: 0,
+    };
+  }
+
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) {
+    return {
+      ok: false,
+      reason: "NOT_A_RECRUITER",
+      message: workspace.message,
+      balanceMinor: 0,
+    };
+  }
+
+  // T-258: the spend is the money path. Preview and reveal are reads and
+  // must not consume this bucket — opening twenty cost dialogs cannot
+  // lock a recruiter out of an unlock they can still afford.
+  const limited = await assertRateLimit({
+    bucket: "UNLOCK",
+    subjectId: workspace.data.userId,
+  });
+  if (!limited.ok) {
+    return {
+      ok: false,
+      reason: "UNAVAILABLE",
+      message: limited.message,
       balanceMinor: 0,
     };
   }
