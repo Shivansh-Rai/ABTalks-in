@@ -10,7 +10,13 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CandidatePersona, GradeType } from "@prisma/client";
+import {
+  CandidateGender,
+  CandidateLinkType,
+  CandidatePersona,
+  GradeType,
+  OpportunityType,
+} from "@prisma/client";
 import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
 import {
   pickPrimaryEducation,
@@ -618,6 +624,7 @@ function detailFixture(over: Partial<CandidateDetail> = {}): CandidateDetail {
     githubUsername: null,
     portfolioUrl: null,
     resumeUrl: null,
+    hasNoWorkExperience: false,
     referralCode: "ABC123",
     isReadyForInterview: false,
     updatedAt: new Date("2026-01-01T00:00:00Z"),
@@ -632,6 +639,24 @@ function detailFixture(over: Partial<CandidateDetail> = {}): CandidateDetail {
   };
 }
 
+function completeness(
+  over: Partial<CandidateDetail> = {},
+  extras: { hasResume?: boolean } = {},
+) {
+  return computeCompleteness(detailFixture(over), {
+    hasResume: extras.hasResume ?? false,
+  });
+}
+
+function sectionEarned(
+  result: ReturnType<typeof computeCompleteness>,
+  key: string,
+): number {
+  const s = result.sections.find((x) => x.key === key);
+  assert(s !== undefined, `missing section ${key}`);
+  return s!.weight * s!.fraction;
+}
+
 const skill = (id: string, claimed = true) => ({
   skillId: id,
   name: id,
@@ -644,195 +669,548 @@ const skill = (id: string, claimed = true) => ({
   lastEvidenceAt: null,
 });
 
-suite("completeness is deterministic and bounded", () => {
-  const blank = computeCompleteness(detailFixture({ fullName: "" }), {
-    hasAny: false,
-  });
-  assert(blank.score === 0, `blank profile scores 0, got ${blank.score}`);
+const completeExperience = (
+  over: Partial<CandidateDetail["experience"][number]> = {},
+): CandidateDetail["experience"][number] => ({
+  id: "x1",
+  companyName: "Acme",
+  title: "Intern",
+  employmentType: "Internship",
+  locationCity: "Pune",
+  startMonth: 6,
+  startYear: 2024,
+  endMonth: 8,
+  endYear: 2024,
+  isCurrent: false,
+  totalMonths: 3,
+  description: null,
+  ...over,
+});
 
-  const again = computeCompleteness(detailFixture({ fullName: "" }), {
-    hasAny: false,
-  });
+const completeEducation = (
+  over: Partial<CandidateDetail["education"][number]> = {},
+): CandidateDetail["education"][number] => ({
+  id: "e1",
+  institutionName: "IIT Bombay",
+  collegeId: null,
+  degree: "B.Tech",
+  fieldOfStudy: "CSE",
+  startMonth: 7,
+  startYear: 2022,
+  endMonth: 5,
+  graduationYear: 2026,
+  isCurrent: false,
+  gradeType: GradeType.CGPA_10,
+  grade: "8.6",
+  description: "Core CS",
+  ...over,
+});
+
+const completeProject = (
+  over: Partial<CandidateDetail["projects"][number]> = {},
+): CandidateDetail["projects"][number] => ({
+  id: "p1",
+  title: "ABTalks",
+  description: "A talent platform",
+  techStack: ["TypeScript"],
+  repoUrl: "https://github.com/abtalks/app",
+  liveUrl: "https://abtalks.in",
+  ...over,
+});
+
+const completeCert = (
+  over: Partial<CandidateDetail["certifications"][number]> = {},
+): CandidateDetail["certifications"][number] => ({
+  id: "c1",
+  name: "AWS CCP",
+  issuer: "Amazon",
+  issuedMonth: 1,
+  issuedYear: 2025,
+  expiresMonth: null,
+  expiresYear: null,
+  credentialUrl: "https://aws.amazon.com/cert",
+  ...over,
+});
+
+const emptyPref = {
+  openToWork: false,
+  preferredRoles: [] as string[],
+  preferredLocations: [] as string[],
+  opportunityTypes: [] as OpportunityType[],
+  remotePreference: null,
+  willingToRelocate: false,
+  noticePeriodDays: null,
+  availableFromMonth: null,
+  availableFromYear: null,
+};
+
+function fullProfile(
+  over: Partial<CandidateDetail> = {},
+): Partial<CandidateDetail> {
+  return {
+    fullName: "Test User",
+    phone: "+919876543210",
+    primaryPersona: CandidatePersona.STUDENT,
+    locationCity: "Pune",
+    locationRegion: "Maharashtra",
+    countryCode: "IN",
+    gender: CandidateGender.MALE,
+    headline: "CSE student",
+    summary: "I build things",
+    experience: [completeExperience({ description: "Shipped features" })],
+    education: [completeEducation()],
+    projects: [completeProject()],
+    skills: [skill("a"), skill("b"), skill("c")],
+    certifications: [completeCert()],
+    awards: "Dean list",
+    linkedinUrl: "https://linkedin.com/in/x",
+    githubUsername: "tester",
+    portfolioUrl: "https://tester.dev",
+    preference: {
+      ...emptyPref,
+      preferredRoles: ["Engineer"],
+      preferredLocations: ["Pune"],
+    },
+    ...over,
+  };
+}
+
+suite("completeness is deterministic and bounded", () => {
+  const blank = completeness({ fullName: "" });
+  assert(blank.score === 2, `empty name still has persona 2%, got ${blank.score}`);
+
+  const again = completeness({ fullName: "" });
   assert(again.score === blank.score, "same input, same score");
   assert(blank.sections.length === 9, "every section reported");
+  assert(blank.score <= 100, "never above 100");
 });
 
-suite("every field moves the number, not just whole sections", () => {
-  const nameOnly = computeCompleteness(detailFixture(), { hasAny: false });
-  // The fixture carries a full name and nothing else: partial credit, not zero
-  // and not a whole section's worth.
-  assert(nameOnly.score > 0, `a filled field scores something, got ${nameOnly.score}`);
-  assert(
-    nameOnly.score < 20,
-    `one field is not a whole section, got ${nameOnly.score}`,
-  );
+suite("every basic field has its own weight", () => {
+  const personaOnly = completeness({ fullName: "" });
+  assert(personaOnly.score === 2, `persona 2%, got ${personaOnly.score}`);
 
-  // Adding a second field in the same section must strictly increase the score.
-  const withHeadline = computeCompleteness(
-    detailFixture({ headline: "Final-year CSE student" }),
-    { hasAny: false },
-  );
-  assert(
-    withHeadline.score > nameOnly.score,
-    "a second field raises the score",
-  );
+  const nameAndPersona = completeness();
+  assert(nameAndPersona.score === 6, `name 4 + persona 2, got ${nameAndPersona.score}`);
 
-  // And a partially filled section is still reported incomplete.
+  const withHeadline = completeness({ headline: "Final-year CSE student" });
+  assert(withHeadline.score === 11, `+headline 5, got ${withHeadline.score}`);
+
+  const withAbout = completeness({
+    headline: "Final-year CSE student",
+    summary: "About me",
+  });
+  assert(withAbout.score === 14, `+about 3, got ${withAbout.score}`);
+
+  const withPhone = completeness({ phone: "+919876543210" });
+  assert(withPhone.score === 9, `+phone 3, got ${withPhone.score}`);
+
+  const badPhone = completeness({ phone: "   " });
+  assert(badPhone.score === 6, "whitespace phone does not count");
+  const invalidPhone = completeness({ phone: "abc" });
+  assert(invalidPhone.score === 6, "invalid phone does not count");
+
+  const withCity = completeness({ locationCity: "Pune" });
+  assert(withCity.score === 8, `+city 2, got ${withCity.score}`);
+  const withRegion = completeness({ locationRegion: "Maharashtra" });
+  assert(withRegion.score === 8, `+state 2, got ${withRegion.score}`);
+  const withCountry = completeness({ countryCode: "IN" });
+  assert(withCountry.score === 8, `+country 2, got ${withCountry.score}`);
+  const withGender = completeness({ gender: CandidateGender.FEMALE });
+  assert(withGender.score === 8, `+gender 2, got ${withGender.score}`);
+  const noGender = completeness({ gender: null });
+  assert(noGender.score === 6, "null gender does not count");
+
   const basic = withHeadline.sections.find((x) => x.key === "basic");
-  assert(basic !== undefined && !basic.complete, "partial section not complete");
+  assert(basic !== undefined && !basic.complete, "partial basic not complete");
   assert(
     basic !== undefined && basic.fraction > 0 && basic.fraction < 1,
-    "partial section reports a fraction",
+    "partial basic reports a fraction",
   );
 });
 
-suite("completeness reaches 100 without every optional section", () => {
-  // A student with no employment and no external certifications.
-  const student = computeCompleteness(
-    detailFixture({
-      headline: "Final-year CSE student",
-      locationCity: "Bangalore",
-      phoneVerified: true,
-      education: [{ id: "e1" } as never],
-      projects: [{ id: "p1" } as never],
-      skills: [skill("a"), skill("b"), skill("c")],
-      linkedinUrl: "https://linkedin.com/in/x",
-      preference: {
-        openToWork: false,
-        preferredRoles: ["Backend Engineer"],
-        preferredLocations: [],
-        opportunityTypes: [],
-        remotePreference: null,
-        willingToRelocate: false,
-        noticePeriodDays: null,
-        availableFromMonth: null,
-        availableFromYear: null,
-      },
-    }),
-    { hasAny: false },
-  );
-  assert(student.score === 100, `student path should hit 100, got ${student.score}`);
+suite("experience is gated on required fields of entry #1", () => {
+  const missingRole = completeness({
+    experience: [completeExperience({ title: "" })],
+  });
+  assert(sectionEarned(missingRole, "experience") === 0, "missing role gates to 0");
+
+  const missingType = completeness({
+    experience: [completeExperience({ employmentType: null })],
+  });
+  assert(sectionEarned(missingType, "experience") === 0, "missing type gates to 0");
+
+  const missingLocation = completeness({
+    experience: [completeExperience({ locationCity: "  " })],
+  });
   assert(
-    student.sections.find((x) => x.key === "experience")?.complete === false,
-    "experience still reported incomplete",
+    sectionEarned(missingLocation, "experience") === 0,
+    "whitespace location gates to 0",
+  );
+
+  const missingEnd = completeness({
+    experience: [completeExperience({ endYear: null, isCurrent: false })],
+  });
+  assert(sectionEarned(missingEnd, "experience") === 0, "missing end gates to 0");
+
+  const requiredOnly = completeness({
+    experience: [completeExperience()],
+  });
+  assert(
+    sectionEarned(requiredOnly, "experience") === 16,
+    `required experience is 16, got ${sectionEarned(requiredOnly, "experience")}`,
   );
   assert(
-    student.sections.find((x) => x.key === "certifications")?.complete === false,
-    "certifications still reported incomplete",
+    requiredOnly.sections.find((x) => x.key === "experience")?.complete === true,
+    "required-complete experience ticks even without description",
+  );
+
+  const withDesc = completeness({
+    experience: [completeExperience({ description: "Shipped features" })],
+  });
+  assert(sectionEarned(withDesc, "experience") === 20, "description adds 4");
+
+  const current = completeness({
+    experience: [
+      completeExperience({ isCurrent: true, endYear: null, endMonth: null }),
+    ],
+  });
+  assert(
+    sectionEarned(current, "experience") === 16,
+    "currently working satisfies the end date",
   );
 });
 
-suite("completeness treats preference engagement broadly", () => {
-  const withRoles = computeCompleteness(
-    detailFixture({
-      headline: "x",
-      locationCity: "y",
-      preference: {
-        openToWork: false,
-        preferredRoles: ["Engineer"],
-        preferredLocations: [],
-        opportunityTypes: [],
-        remotePreference: null,
-        willingToRelocate: false,
-        noticePeriodDays: null,
-        availableFromMonth: null,
-        availableFromYear: null,
-      },
-    }),
-    { hasAny: false },
+suite("additional experiences do not increase completion", () => {
+  const one = completeness({
+    experience: [completeExperience({ description: "One" })],
+  });
+  const two = completeness({
+    experience: [
+      completeExperience({ description: "One" }),
+      completeExperience({
+        id: "x2",
+        companyName: "Other",
+        title: "Lead",
+        description: "Richer second row",
+      }),
+    ],
+  });
+  assert(one.score === two.score, "second experience adds nothing");
+});
+
+suite("deleting experience #1 rescores the new first row", () => {
+  const afterDelete = completeness({
+    experience: [
+      completeExperience({
+        id: "x2",
+        companyName: "Other",
+        title: "",
+      }),
+    ],
+  });
+  assert(
+    sectionEarned(afterDelete, "experience") === 0,
+    "the former #2 is now gated as #1",
+  );
+});
+
+suite("education is gated on required fields of entry #1", () => {
+  const missingDegree = completeness({
+    education: [completeEducation({ degree: null })],
+  });
+  assert(sectionEarned(missingDegree, "education") === 0, "missing degree gates to 0");
+
+  const missingField = completeness({
+    education: [completeEducation({ fieldOfStudy: " " })],
+  });
+  assert(sectionEarned(missingField, "education") === 0, "missing field gates to 0");
+
+  const requiredOnly = completeness({
+    education: [
+      completeEducation({
+        gradeType: null,
+        grade: null,
+        description: null,
+      }),
+    ],
+  });
+  assert(
+    sectionEarned(requiredOnly, "education") === 13,
+    `required education is 13, got ${sectionEarned(requiredOnly, "education")}`,
   );
   assert(
-    withRoles.sections.find((x) => x.key === "preferences")?.complete === true,
-    "roles complete the section",
+    requiredOnly.sections.find((x) => x.key === "education")?.complete === true,
+    "optional score fields do not block the tick",
   );
 
-  const openOnly = computeCompleteness(
-    detailFixture({
-      headline: "x",
-      locationCity: "y",
-      preference: {
-        openToWork: true,
-        preferredRoles: [],
-        preferredLocations: [],
-        opportunityTypes: [],
-        remotePreference: null,
-        willingToRelocate: false,
-        noticePeriodDays: null,
-        availableFromMonth: null,
-        availableFromYear: null,
-      },
-    }),
-    { hasAny: false },
+  const full = completeness({ education: [completeEducation()] });
+  assert(sectionEarned(full, "education") === 15, "optionals bring education to 15");
+
+  const current = completeness({
+    education: [
+      completeEducation({
+        isCurrent: true,
+        graduationYear: null,
+        endMonth: null,
+        gradeType: null,
+        grade: null,
+        description: null,
+      }),
+    ],
+  });
+  assert(
+    sectionEarned(current, "education") === 13,
+    "currently studying satisfies the end date",
+  );
+
+  const extraIgnored = completeness({
+    education: [
+      completeEducation(),
+      completeEducation({ id: "e2", institutionName: "Other" }),
+    ],
+  });
+  assert(sectionEarned(extraIgnored, "education") === 15, "second education adds 0");
+});
+
+suite("projects award fields independently on entry #1 only", () => {
+  const empty = completeness();
+  assert(sectionEarned(empty, "projects") === 0, "no projects is 0");
+
+  const nameOnly = completeness({
+    projects: [
+      completeProject({
+        description: null,
+        techStack: [],
+        repoUrl: null,
+        liveUrl: null,
+      }),
+    ],
+  });
+  assert(sectionEarned(nameOnly, "projects") === 3, "name alone is 3");
+
+  const three = completeness({
+    projects: [
+      completeProject({ repoUrl: null, liveUrl: null }),
+    ],
+  });
+  assert(sectionEarned(three, "projects") === 10, "name+desc+stack is 10");
+
+  const emptyStack = completeness({
+    projects: [completeProject({ techStack: [], repoUrl: null, liveUrl: null })],
+  });
+  assert(
+    sectionEarned(emptyStack, "projects") === 7,
+    "empty tech stack does not count",
+  );
+
+  const one = completeness({ projects: [completeProject()] });
+  const two = completeness({
+    projects: [completeProject(), completeProject({ id: "p2", title: "Other" })],
+  });
+  assert(one.score === two.score, "second project adds nothing");
+});
+
+suite("skills use a 0 / 5 / 10 threshold", () => {
+  assert(sectionEarned(completeness(), "skills") === 0, "0 skills → 0");
+  assert(
+    sectionEarned(completeness({ skills: [skill("a")] }), "skills") === 5,
+    "1 skill → 5",
   );
   assert(
-    openOnly.sections.find((x) => x.key === "preferences")?.complete === true,
-    "openToWork alone completes the section after save",
+    sectionEarned(completeness({ skills: [skill("a"), skill("b")] }), "skills") === 5,
+    "2 skills → 5",
+  );
+  const three = completeness({ skills: [skill("a"), skill("b"), skill("c")] });
+  assert(sectionEarned(three, "skills") === 10, "3 skills → 10");
+  assert(three.sections.find((x) => x.key === "skills")?.complete === true, "3 ticks");
+
+  const many = completeness({
+    skills: Array.from({ length: 50 }, (_, i) => skill(`s${i}`)),
+  });
+  assert(sectionEarned(many, "skills") === 10, "50 skills still 10");
+
+  const withdrawn = completeness({
+    skills: [skill("a", false), skill("b", false), skill("c", false)],
+  });
+  assert(sectionEarned(withdrawn, "skills") === 0, "withdrawn claims do not count");
+  assert(
+    withdrawn.sections.find((x) => x.key === "skills")?.complete === false,
+    "withdrawn claims do not complete skills",
+  );
+});
+
+suite("accomplishments score the first cert and the awards field", () => {
+  const nameOnly = completeness({
+    certifications: [completeCert({ issuer: "", issuedYear: null, credentialUrl: null })],
+  });
+  assert(sectionEarned(nameOnly, "accomplishments") === 1, "cert name is 1");
+
+  const issuedNoExpiry = completeness({
+    certifications: [completeCert()],
+  });
+  assert(
+    sectionEarned(issuedNoExpiry, "accomplishments") === 4,
+    "issued without expires still counts the date bucket",
   );
 
-  const emptyPref = computeCompleteness(
-    detailFixture({
-      headline: "x",
-      locationCity: "y",
-      preference: {
-        openToWork: false,
-        preferredRoles: [],
-        preferredLocations: [],
-        opportunityTypes: [],
-        remotePreference: null,
-        willingToRelocate: false,
-        noticePeriodDays: null,
-        availableFromMonth: null,
-        availableFromYear: null,
+  const withAwards = completeness({
+    certifications: [completeCert()],
+    awards: "Hackathon winner",
+  });
+  assert(sectionEarned(withAwards, "accomplishments") === 5, "awards add 1");
+
+  const extraCert = completeness({
+    certifications: [
+      completeCert(),
+      completeCert({ id: "c2", name: "Other", issuer: "Other" }),
+    ],
+    awards: "Hackathon winner",
+  });
+  assert(
+    sectionEarned(extraCert, "accomplishments") === 5,
+    "second certification adds 0",
+  );
+
+  const awardsOnly = completeness({ awards: "Dean list" });
+  assert(sectionEarned(awardsOnly, "accomplishments") === 1, "awards alone is 1");
+  assert(
+    awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === false,
+    "awards without a cert do not tick the section",
+  );
+});
+
+suite("resume counts a link or a ready upload once", () => {
+  const urlOnly = completeness({ resumeUrl: "https://files.example/cv.pdf" });
+  assert(sectionEarned(urlOnly, "resume") === 0, "resumeUrl alone is not hasResume");
+
+  const ready = completeness({}, { hasResume: true });
+  assert(sectionEarned(ready, "resume") === 3, "hasResume awards 3");
+
+  const both = completeness(
+    { resumeUrl: "https://files.example/cv.pdf" },
+    { hasResume: true },
+  );
+  assert(sectionEarned(both, "resume") === 3, "url + ready is still 3");
+});
+
+suite("links count only the three first-class columns", () => {
+  const linkedin = completeness({ linkedinUrl: "https://linkedin.com/in/x" });
+  assert(sectionEarned(linkedin, "links") === 1.5, "linkedin 1.5");
+  const github = completeness({ githubUsername: "tester" });
+  assert(sectionEarned(github, "links") === 1.5, "github 1.5");
+  const portfolio = completeness({ portfolioUrl: "https://tester.dev" });
+  assert(sectionEarned(portfolio, "links") === 1, "portfolio 1");
+
+  const extra = completeness({
+    links: [
+      {
+        id: "l1",
+        type: CandidateLinkType.GITHUB,
+        label: "GitHub",
+        url: "https://github.com/other",
+        sortOrder: 0,
       },
+    ],
+  });
+  assert(sectionEarned(extra, "links") === 0, "extra links add 0");
+});
+
+suite("career preferences count only roles and locations", () => {
+  const roles = completeness({
+    preference: { ...emptyPref, preferredRoles: ["Engineer"] },
+  });
+  assert(sectionEarned(roles, "preferences") === 1.5, "roles 1.5");
+  assert(
+    roles.sections.find((x) => x.key === "preferences")?.complete === false,
+    "roles alone do not complete preferences",
+  );
+
+  const both = completeness({
+    preference: {
+      ...emptyPref,
+      preferredRoles: ["Engineer"],
+      preferredLocations: ["Pune"],
+    },
+  });
+  assert(sectionEarned(both, "preferences") === 3, "roles+locations 3");
+  assert(
+    both.sections.find((x) => x.key === "preferences")?.complete === true,
+    "both complete the section",
+  );
+
+  const nonCounting = completeness({
+    preference: {
+      ...emptyPref,
+      openToWork: true,
+      opportunityTypes: [OpportunityType.FULL_TIME],
+      remotePreference: "Remote",
+      willingToRelocate: true,
+      noticePeriodDays: 30,
+      availableFromMonth: 1,
+      availableFromYear: 2027,
+    },
+  });
+  assert(
+    sectionEarned(nonCounting, "preferences") === 0,
+    "openToWork / type / mode / notice / date add 0",
+  );
+});
+
+suite("fresher skip awards the full experience 20%", () => {
+  const skip = completeness({ hasNoWorkExperience: true });
+  assert(sectionEarned(skip, "experience") === 20, "empty rows + flag = 20");
+  assert(
+    skip.sections.find((x) => x.key === "experience")?.complete === true,
+    "fresher skip ticks experience",
+  );
+
+  const rowsWin = completeness({
+    hasNoWorkExperience: true,
+    experience: [completeExperience({ title: "" })],
+  });
+  assert(
+    sectionEarned(rowsWin, "experience") === 0,
+    "rows win over an inconsistent flag",
+  );
+
+  const emptyNoFlag = completeness({ hasNoWorkExperience: false });
+  assert(sectionEarned(emptyNoFlag, "experience") === 0, "no flag, no rows, 0");
+});
+
+suite("completeness reaches 100 along both honest paths", () => {
+  const withJob = completeness(fullProfile(), { hasResume: true });
+  assert(withJob.score === 100, `full experience path is 100, got ${withJob.score}`);
+  assert(withJob.score <= 100, "capped");
+
+  const fresher = completeness(
+    fullProfile({
+      hasNoWorkExperience: true,
+      experience: [],
     }),
-    { hasAny: false },
+    { hasResume: true },
+  );
+  assert(fresher.score === 100, `fresher path is 100, got ${fresher.score}`);
+
+  const noResume = completeness(fullProfile(), { hasResume: false });
+  assert(noResume.score === 97, `missing resume caps at 97, got ${noResume.score}`);
+
+  const noAccomplishment = completeness(
+    fullProfile({ certifications: [], awards: null }),
+    { hasResume: true },
   );
   assert(
-    emptyPref.sections.find((x) => x.key === "preferences")?.complete === false,
-    "empty defaults do not complete the section",
+    noAccomplishment.score === 95,
+    `missing accomplishments caps at 95, got ${noAccomplishment.score}`,
   );
+});
 
+suite("completeness does not take visibility or evidence inputs", () => {
   const src = code("src/features/profile/completeness.ts");
   assert(!src.includes("searchableByRecruiters"), "no visibility input");
   assert(!src.includes("CandidateVisibility"), "visibility is not imported");
-  assert(
-    src.includes("evidence: { hasAny: boolean }"),
-    "the only extra input is whether evidence exists",
-  );
-});
-
-suite("withdrawn skill claims do not count toward completeness", () => {
-  const withdrawn = computeCompleteness(
-    detailFixture({ skills: [skill("a", false), skill("b", false)] }),
-    { hasAny: false },
-  );
-  assert(
-    withdrawn.sections.find((x) => x.key === "skills")?.complete === false,
-    "withdrawn claims do not complete the section",
-  );
-
-  const one = computeCompleteness(
-    detailFixture({ skills: [skill("a")] }),
-    { hasAny: false },
-  );
-  assert(
-    one.sections.find((x) => x.key === "skills")?.complete === true,
-    "one claimed skill completes the section",
-  );
-});
-
-suite("evidence is reported but never scored", () => {
-  const without = computeCompleteness(detailFixture(), { hasAny: false });
-  const with_ = computeCompleteness(detailFixture(), { hasAny: true });
-  assert(without.score === with_.score, "evidence adds no points");
-  assert(
-    with_.sections.find((x) => x.key === "evidence")?.complete === true,
-    "still reported",
-  );
-  assert(
-    with_.sections.find((x) => x.key === "evidence")?.weight === 0,
-    "zero weight",
-  );
+  assert(!src.includes("isOtpVerificationRequired"), "OTP flag does not change the score");
+  assert(src.includes("hasResume: boolean"), "resume is the only extra input");
+  assert(!src.includes('"evidence"'), "evidence is not a scored section");
 });
 
 /* ─── Migration safety ───────────────────────────────────────────────────── */

@@ -176,7 +176,7 @@ export async function saveExperienceAction(
   raw: unknown,
 ): Promise<ActionResult> {
   return runSection(experienceSectionSchema, raw, "experience", (userId, value) =>
-    saveExperience(userId, value.rows),
+    saveExperience(userId, value.rows, value.hasNoWorkExperience),
   );
 }
 

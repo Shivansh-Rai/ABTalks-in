@@ -1,5 +1,11 @@
-import { isOtpVerificationRequired } from "@/lib/feature-flags";
-import type { CandidateDetail } from "@/repositories/candidate-detail";
+import { phoneSchema } from "@/lib/validations/phone";
+import type {
+  CandidateDetail,
+  CertificationView,
+  EducationView,
+  ExperienceView,
+  ProjectView,
+} from "@/repositories/candidate-detail";
 
 /**
  * Profile strength.
@@ -10,12 +16,11 @@ import type { CandidateDetail } from "@/repositories/candidate-detail";
  * anybody out of `/hire`. It exists to tell a candidate what is still worth
  * adding.
  *
- * Weights deliberately sum to 125, and the score is capped at 100. Nobody has
- * every kind of history: a first-year student has no employment, a working
- * professional may have no side projects, and most people hold no external
- * certifications. Over-weighting means a complete, honest profile reaches 100%
- * along more than one path, instead of nagging people for rows they cannot
- * truthfully fill.
+ * Weights sum to exactly 100, accumulated as tenths of a percent so 0.5 and
+ * 1.5 land without float drift. Experience and Education are gated: a
+ * started-but-incomplete first entry contributes 0. Additional rows never
+ * increase the score. A candidate with no employment history can still earn
+ * the Experience 20% by setting `hasNoWorkExperience`.
  */
 
 export type SectionKey =
@@ -24,18 +29,18 @@ export type SectionKey =
   | "education"
   | "projects"
   | "skills"
-  | "certifications"
+  | "accomplishments"
+  | "resume"
   | "links"
-  | "preferences"
-  | "evidence";
+  | "preferences";
 
 export type SectionStatus = {
   key: SectionKey;
   label: string;
   complete: boolean;
-  /** 0 for sections that are earned rather than filled in. */
+  /** Percent this section can contribute (0–25). */
   weight: number;
-  /** 0–1. How much of this section's own checklist is filled in. */
+  /** 0–1. How much of this section's own weight has been earned. */
   fraction: number;
   /** Shown when incomplete. Null when there is nothing to ask for. */
   hint: string | null;
@@ -47,189 +52,290 @@ export type ProfileCompleteness = {
   sections: SectionStatus[];
 };
 
-const WEIGHTS: Record<SectionKey, number> = {
-  basic: 20,
-  skills: 20,
-  education: 15,
-  experience: 15,
-  projects: 15,
-  links: 15,
-  preferences: 15,
-  certifications: 10,
-  // Earned from real activity, never self-filled — so it is reported but
-  // scoring it would punish candidates for having joined recently.
-  evidence: 0,
+/** Section maxima in tenths of a percent. Sum = 1000. */
+const WEIGHT_TENTHS: Record<SectionKey, number> = {
+  basic: 250,
+  experience: 200,
+  education: 150,
+  projects: 150,
+  skills: 100,
+  accomplishments: 50,
+  resume: 30,
+  links: 40,
+  preferences: 30,
 };
 
-const MIN_SKILLS = 1;
+type SectionScore = {
+  earnedTenths: number;
+  complete: boolean;
+  hint: string | null;
+};
 
-/**
- * Every field moves the number.
- *
- * Sections used to score all-or-nothing, so typing four of a section's five
- * fields earned exactly nothing and the bar sat still while real work went in.
- * Each section now reports a FRACTION of its own checklist and earns that
- * share of its weight. `complete` still means "all of it", so the tab ticks
- * and the hints behave as before.
- */
-function ratio(checks: readonly boolean[]): number {
-  if (checks.length === 0) return 0;
-  return checks.filter(Boolean).length / checks.length;
+function filled(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.some((item) => filled(item));
+  return true;
 }
 
-/** Repeatable sections: the first row is most of the value, a second adds depth. */
-function rowsRatio(count: number, idealRows = 2): number {
-  if (count <= 0) return 0;
-  return Math.min(1, count / idealRows);
+function validPhone(phone: string | null): boolean {
+  if (!filled(phone)) return false;
+  return phoneSchema.safeParse(phone).success;
+}
+
+function section(
+  key: SectionKey,
+  label: string,
+  scored: SectionScore,
+): SectionStatus {
+  const weightTenths = WEIGHT_TENTHS[key];
+  return {
+    key,
+    label,
+    complete: scored.complete,
+    weight: weightTenths / 10,
+    fraction: weightTenths === 0 ? 0 : scored.earnedTenths / weightTenths,
+    hint: scored.complete ? null : scored.hint,
+  };
+}
+
+function basicScore(detail: CandidateDetail): SectionScore {
+  const name = filled(detail.fullName);
+  const phone = validPhone(detail.phone);
+  // primaryPersona is non-null with a default; every registered profile has it.
+  const persona = filled(detail.primaryPersona);
+  const city = filled(detail.locationCity);
+  const region = filled(detail.locationRegion);
+  const country = filled(detail.countryCode);
+  const gender = detail.gender !== null;
+  const headline = filled(detail.headline);
+  const about = filled(detail.summary);
+
+  let earnedTenths = 0;
+  if (name) earnedTenths += 40;
+  if (phone) earnedTenths += 30;
+  if (persona) earnedTenths += 20;
+  if (city) earnedTenths += 20;
+  if (region) earnedTenths += 20;
+  if (country) earnedTenths += 20;
+  if (gender) earnedTenths += 20;
+  if (headline) earnedTenths += 50;
+  if (about) earnedTenths += 30;
+
+  const complete =
+    name && phone && persona && city && region && country && gender && headline && about;
+  return {
+    earnedTenths,
+    complete,
+    hint: "Add a headline, location, and contact details",
+  };
+}
+
+function experienceRequired(row: ExperienceView): boolean {
+  return (
+    filled(row.companyName) &&
+    filled(row.title) &&
+    filled(row.employmentType) &&
+    filled(row.locationCity) &&
+    row.startYear != null &&
+    (row.isCurrent || row.endYear != null)
+  );
+}
+
+function experienceScore(detail: CandidateDetail): SectionScore {
+  const rows = detail.experience;
+  if (detail.hasNoWorkExperience && rows.length === 0) {
+    return { earnedTenths: 200, complete: true, hint: null };
+  }
+  if (rows.length === 0) {
+    return {
+      earnedTenths: 0,
+      complete: false,
+      hint: "Add a role, internship, or freelance work — or mark that you have no work experience yet.",
+    };
+  }
+
+  const row = rows[0]!;
+  if (!experienceRequired(row)) {
+    return {
+      earnedTenths: 0,
+      complete: false,
+      hint: "Finish the required fields on your most recent role",
+    };
+  }
+
+  let earnedTenths = 160;
+  if (filled(row.description)) earnedTenths += 40;
+  return {
+    earnedTenths,
+    complete: true,
+    hint: earnedTenths < 200 ? "Add a description of the role" : null,
+  };
+}
+
+function educationRequired(row: EducationView): boolean {
+  return (
+    filled(row.institutionName) &&
+    filled(row.degree) &&
+    filled(row.fieldOfStudy) &&
+    row.startYear != null &&
+    (row.isCurrent || row.graduationYear != null)
+  );
+}
+
+function educationScore(rows: EducationView[]): SectionScore {
+  if (rows.length === 0) {
+    return {
+      earnedTenths: 0,
+      complete: false,
+      hint: "Add your college or school",
+    };
+  }
+
+  const row = rows[0]!;
+  if (!educationRequired(row)) {
+    return {
+      earnedTenths: 0,
+      complete: false,
+      hint: "Finish the required fields on your first education entry",
+    };
+  }
+
+  let earnedTenths = 130;
+  if (row.gradeType !== null) earnedTenths += 10;
+  if (filled(row.grade)) earnedTenths += 5;
+  if (filled(row.description)) earnedTenths += 5;
+  return {
+    earnedTenths,
+    complete: true,
+    hint: earnedTenths < 150 ? "Add your score and a short description" : null,
+  };
+}
+
+function projectScore(rows: ProjectView[]): SectionScore {
+  if (rows.length === 0) {
+    return {
+      earnedTenths: 0,
+      complete: false,
+      hint: "Add something you have built",
+    };
+  }
+
+  const row = rows[0]!;
+  let earnedTenths = 0;
+  if (filled(row.title)) earnedTenths += 30;
+  if (filled(row.description)) earnedTenths += 40;
+  if (filled(row.techStack)) earnedTenths += 30;
+  if (filled(row.repoUrl)) earnedTenths += 30;
+  if (filled(row.liveUrl)) earnedTenths += 20;
+
+  return {
+    earnedTenths,
+    complete: earnedTenths === 150,
+    hint: "Add a name, description, tech stack, and links",
+  };
+}
+
+function skillsScore(detail: CandidateDetail): SectionScore {
+  const claimed = detail.skills.filter((s) => s.claimedByCandidate);
+  const unique = new Set(claimed.map((s) => s.skillId)).size;
+  const earnedTenths = unique === 0 ? 0 : unique >= 3 ? 100 : 50;
+  return {
+    earnedTenths,
+    complete: unique >= 3,
+    hint: "Add at least three skills",
+  };
+}
+
+function accomplishmentsScore(
+  certs: CertificationView[],
+  awards: string | null,
+): SectionScore {
+  const cert = certs[0];
+  let earnedTenths = 0;
+  if (cert) {
+    if (filled(cert.name)) earnedTenths += 10;
+    if (filled(cert.issuer)) earnedTenths += 10;
+    if (cert.issuedYear != null) earnedTenths += 10;
+    if (filled(cert.credentialUrl)) earnedTenths += 10;
+  }
+  if (filled(awards)) earnedTenths += 10;
+
+  const certRequired =
+    cert != null &&
+    filled(cert.name) &&
+    filled(cert.issuer) &&
+    cert.issuedYear != null &&
+    filled(cert.credentialUrl);
+  return {
+    earnedTenths,
+    complete: certRequired,
+    hint: "Add a certification or an award you have received",
+  };
+}
+
+function resumeScore(hasResume: boolean): SectionScore {
+  return {
+    earnedTenths: hasResume ? 30 : 0,
+    complete: hasResume,
+    hint: "Upload a resume or add a resume link",
+  };
+}
+
+function linksScore(detail: CandidateDetail): SectionScore {
+  let earnedTenths = 0;
+  if (filled(detail.linkedinUrl)) earnedTenths += 15;
+  if (filled(detail.githubUsername)) earnedTenths += 15;
+  if (filled(detail.portfolioUrl)) earnedTenths += 10;
+  return {
+    earnedTenths,
+    complete: earnedTenths === 40,
+    hint: "Add LinkedIn, GitHub, and a portfolio",
+  };
+}
+
+function preferencesScore(detail: CandidateDetail): SectionScore {
+  const pref = detail.preference;
+  const roles = filled(pref?.preferredRoles);
+  const locations = filled(pref?.preferredLocations);
+  let earnedTenths = 0;
+  if (roles) earnedTenths += 15;
+  if (locations) earnedTenths += 15;
+  return {
+    earnedTenths,
+    complete: roles && locations,
+    hint: "Tell us the roles and locations you want",
+  };
 }
 
 export function computeCompleteness(
   detail: CandidateDetail,
-  evidence: { hasAny: boolean },
+  extras: { hasResume: boolean },
 ): ProfileCompleteness {
-  const pref = detail.preference;
-
-  const basicComplete =
-    detail.fullName.trim().length > 0 &&
-    (detail.headline?.trim() || detail.summary?.trim() ? true : false) &&
-    (detail.locationCity?.trim() ? true : false) &&
-    (!isOtpVerificationRequired() || detail.phoneVerified);
-
-  const claimedSkills = detail.skills.filter((s) => s.claimedByCandidate);
-
-  const linksComplete =
-    Boolean(detail.linkedinUrl) ||
-    Boolean(detail.githubUsername) ||
-    Boolean(detail.portfolioUrl) ||
-    detail.links.length > 0;
-
-  // Any saved engagement with the section counts. openToWork alone is enough
-  // once the candidate has opted in; roles/locations/types/mode/notice/dates
-  // also qualify. An empty save (all defaults) does not.
-  const preferencesComplete = Boolean(
-    pref &&
-      (pref.openToWork ||
-        pref.preferredRoles.length > 0 ||
-        pref.preferredLocations.length > 0 ||
-        pref.opportunityTypes.length > 0 ||
-        Boolean(pref.remotePreference) ||
-        pref.willingToRelocate ||
-        pref.noticePeriodDays !== null ||
-        pref.availableFromYear !== null),
-  );
-
-  // Per-field checklists. These are what the percentage is actually made of.
-  const basicChecks = [
-    detail.fullName.trim().length > 0,
-    Boolean(detail.headline?.trim()),
-    Boolean(detail.summary?.trim()),
-    Boolean(detail.locationCity?.trim()),
-    Boolean(detail.locationRegion?.trim()),
-    Boolean(detail.countryCode?.trim()),
-    detail.gender !== null,
-    !isOtpVerificationRequired() || detail.phoneVerified,
-  ];
-
-  const prefChecks = [
-    Boolean(pref?.openToWork),
-    (pref?.preferredRoles.length ?? 0) > 0,
-    (pref?.preferredLocations.length ?? 0) > 0,
-    (pref?.opportunityTypes.length ?? 0) > 0,
-    Boolean(pref?.remotePreference),
-    pref?.noticePeriodDays !== null && pref?.noticePeriodDays !== undefined,
-    pref?.availableFromYear !== null && pref?.availableFromYear !== undefined,
-  ];
-
-  const linkChecks = [
-    Boolean(detail.linkedinUrl),
-    Boolean(detail.githubUsername),
-    Boolean(detail.portfolioUrl),
-  ];
-
-  const sections: SectionStatus[] = [
+  const scored: { key: SectionKey; label: string; score: SectionScore }[] = [
+    { key: "basic", label: "Basic information", score: basicScore(detail) },
+    { key: "experience", label: "Experience", score: experienceScore(detail) },
+    { key: "education", label: "Education", score: educationScore(detail.education) },
+    { key: "projects", label: "Projects", score: projectScore(detail.projects) },
+    { key: "skills", label: "Skills", score: skillsScore(detail) },
     {
-      key: "basic",
-      label: "Basic information",
-      complete: basicComplete,
-      fraction: ratio(basicChecks),
-      weight: WEIGHTS.basic,
-      hint: !detail.phoneVerified && isOtpVerificationRequired()
-        ? "Verify your phone number"
-        : "Add a headline and your location",
+      key: "accomplishments",
+      label: "Accomplishments",
+      score: accomplishmentsScore(detail.certifications, detail.awards),
     },
-    {
-      key: "experience",
-      label: "Experience",
-      complete: detail.experience.length > 0,
-      fraction: rowsRatio(detail.experience.length),
-      weight: WEIGHTS.experience,
-      hint: "Add a role, internship, or freelance work",
-    },
-    {
-      key: "education",
-      label: "Education",
-      complete: detail.education.length > 0,
-      fraction: rowsRatio(detail.education.length, 1),
-      weight: WEIGHTS.education,
-      hint: "Add your college or school",
-    },
-    {
-      key: "projects",
-      label: "Projects",
-      complete: detail.projects.length > 0,
-      fraction: rowsRatio(detail.projects.length),
-      weight: WEIGHTS.projects,
-      hint: "Add something you have built",
-    },
-    {
-      key: "skills",
-      label: "Skills",
-      complete: claimedSkills.length >= MIN_SKILLS,
-      fraction: rowsRatio(claimedSkills.length, 5),
-      weight: WEIGHTS.skills,
-      hint: "Add at least one skill",
-    },
-    {
-      key: "certifications",
-      label: "Certifications",
-      complete: detail.certifications.length > 0,
-      fraction: rowsRatio(detail.certifications.length),
-      weight: WEIGHTS.certifications,
-      hint: "Add any external certifications you hold",
-    },
-    {
-      key: "links",
-      label: "Links",
-      complete: linksComplete,
-      fraction: ratio(linkChecks),
-      weight: WEIGHTS.links,
-      hint: "Add LinkedIn, GitHub, or a portfolio",
-    },
+    { key: "resume", label: "Resume", score: resumeScore(extras.hasResume) },
+    { key: "links", label: "Links", score: linksScore(detail) },
     {
       key: "preferences",
       label: "Career preferences",
-      complete: preferencesComplete,
-      fraction: ratio(prefChecks),
-      weight: WEIGHTS.preferences,
-      hint: "Tell us what you are looking for, or mark Open to work",
-    },
-    {
-      key: "evidence",
-      label: "Evidence & achievements",
-      complete: evidence.hasAny,
-      fraction: evidence.hasAny ? 1 : 0,
-      weight: WEIGHTS.evidence,
-      hint: null,
+      score: preferencesScore(detail),
     },
   ];
 
-  // Partial credit, so every saved field is visible in the number. A finished
-  // section still earns its whole weight, and the 125-point spread still caps
-  // at 100 so nobody is punished for having no employment history.
-  const earned = sections.reduce(
-    (sum, s) => sum + s.weight * (s.complete ? 1 : s.fraction),
-    0,
-  );
+  const earnedTenths = scored.reduce((sum, s) => sum + s.score.earnedTenths, 0);
 
-  return { score: Math.min(100, Math.round(earned)), sections };
+  return {
+    score: Math.min(100, Math.round(earnedTenths / 10)),
+    sections: scored.map((s) => section(s.key, s.label, s.score)),
+  };
 }

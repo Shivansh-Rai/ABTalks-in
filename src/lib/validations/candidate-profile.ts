@@ -223,12 +223,19 @@ const experienceRowSchema = z
     }
   });
 
-export const experienceSectionSchema = z.object({
-  rows: z
-    .array(experienceRowSchema)
-    .max(25, "You can add up to 25 roles")
-    .transform((rows) => rows.filter((r) => !isBlankRow(r))),
-});
+export const experienceSectionSchema = z
+  .object({
+    hasNoWorkExperience: z.coerce.boolean().default(false),
+    rows: z
+      .array(experienceRowSchema)
+      .max(25, "You can add up to 25 roles")
+      .transform((rows) => rows.filter((r) => !isBlankRow(r))),
+  })
+  .transform((value) =>
+    value.hasNoWorkExperience
+      ? { hasNoWorkExperience: true, rows: [] as typeof value.rows }
+      : { hasNoWorkExperience: false, rows: value.rows },
+  );
 
 export type ExperienceRowInput = z.infer<typeof experienceRowSchema>;
 

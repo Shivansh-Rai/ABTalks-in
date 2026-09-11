@@ -6,7 +6,6 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { getCandidateDetail } from "@/repositories/candidate-detail";
-import { getProfileEvidence } from "@/features/profile/get-evidence";
 import { getResumeView } from "@/features/resume/service";
 import { computeCompleteness } from "@/features/profile/completeness";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
@@ -97,7 +96,6 @@ export default async function ProfilePage() {
   }
 
   const [
-    evidence,
     catalogSkills,
     mockInterviewHistory,
     activeMockInterview,
@@ -106,7 +104,6 @@ export default async function ProfilePage() {
     verifiedSkills,
     performance,
   ] = await Promise.all([
-    getProfileEvidence(userId),
     getSkillsByNames(CANONICAL_SKILL_NAMES),
     // The MockInterview tables exist on demo but the migration has not been
     // applied to production, so this query throws there until it is. The
@@ -172,13 +169,14 @@ export default async function ProfilePage() {
     ? activeMockInterview.data
     : null;
 
-  const completeness = computeCompleteness(detail, { hasAny: evidence.hasAny });
+  const completeness = computeCompleteness(detail, {
+    hasResume: Boolean(detail.resumeUrl?.trim()) || resume?.status === "READY",
+  });
   const status = new Map(completeness.sections.map((x) => [x.key, x]));
   const sectionOf = (key: string) => status.get(key as never);
 
   const claimedSkills = detail.skills.filter((x) => x.claimedByCandidate);
   const mockComplete = mockInterviews.length > 0;
-  const resumeComplete = resume?.status === "READY";
 
   const steps: WizardStep[] = [
     {
@@ -217,6 +215,7 @@ export default async function ProfilePage() {
       savable: true,
       node: (
         <ExperienceSection
+          hasNoWorkExperience={detail.hasNoWorkExperience}
           initial={detail.experience.map((e) => ({
             companyName: e.companyName,
             title: e.title,
@@ -321,11 +320,7 @@ export default async function ProfilePage() {
       description:
         "What you have earned here, the certifications you hold, and your awards.",
       checklist: "accomplishments",
-      // Scoring still keys off "certifications" — completeness weights are a
-      // separate concern from what the tab is called.
-      complete:
-        (sectionOf("certifications")?.complete ?? false) ||
-        verifiedAccomplishments.length > 0,
+      complete: sectionOf("accomplishments")?.complete ?? false,
       attention: false,
       savable: true,
       node: (
@@ -359,8 +354,8 @@ export default async function ProfilePage() {
       description:
         "Upload your resume to see how strong it is and what to improve.",
       checklist: "resume",
-      complete: resumeComplete,
-      attention: !resumeComplete,
+      complete: sectionOf("resume")?.complete ?? false,
+      attention: !(sectionOf("resume")?.complete ?? false),
       savable: false,
       node: <ResumeSection resume={resume} />,
     },
