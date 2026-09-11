@@ -5483,172 +5483,6 @@ html.dark .vc-card {
   cursor: wait;
 }
 
-.hire-cand-assess__banner {
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #fff7ed;
-  color: #9a3412;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.hire-cand-assess__header h1 {
-  margin: 0 0 6px;
-  font-size: 1.4rem;
-  font-weight: 800;
-}
-
-.hire-cand-assess__header > p {
-  margin: 0 0 10px;
-  color: var(--h-gray-500, #78716c);
-}
-
-.hire-cand-assess__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 14px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.hire-cand-assess__chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--h-peach, #ffe8de);
-  color: var(--h-primary);
-  font-weight: 700;
-}
-
-.hire-cand-assess__instructions {
-  margin-bottom: 16px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f5f5f4;
-}
-
-.hire-cand-assess__instructions h2 {
-  margin: 0 0 6px;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.hire-cand-assess__instructions p {
-  margin: 0;
-  white-space: pre-wrap;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.hire-cand-assess__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.hire-cand-assess__item {
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
-}
-
-.hire-cand-assess__qhead {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.hire-cand-assess__num {
-  flex: 0 0 auto;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--h-primary);
-}
-
-.hire-cand-assess__title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.hire-cand-assess__help,
-.hire-cand-assess__points {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--h-gray-500, #78716c);
-}
-
-.hire-cand-assess__options {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hire-cand-assess__options label {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.hire-cand-assess__para textarea {
-  width: 100%;
-  min-height: 140px;
-  border: 1px solid rgba(28, 25, 23, 0.14);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  resize: vertical;
-}
-
-.hire-cand-assess__counter {
-  margin: 6px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--h-gray-500, #78716c);
-  text-align: right;
-}
-
-.hire-cand-assess__counter.is-over {
-  color: #b91c1c;
-}
-
-.hire-cand-assess__file {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.hire-cand-assess__upload-link {
-  color: var(--h-primary);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.hire-cand-assess__submit {
-  margin-top: 18px;
-  width: 100%;
-  height: 44px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--h-primary);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .hire-assess-list__head {
   display: flex;
   flex-wrap: wrap;
@@ -5753,6 +5587,220 @@ html.dark .vc-card {
     border: 0;
     padding: 4px 0;
     white-space: normal;
+  }
+}
+
+/* T-244 — assessment detail: publish, assign, monitor. Same palette and radii
+   as the hire-assess-* rules above; no new colour values. */
+.hire-assess-detail__back {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--h-gray-500, #78716c);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hire-assess-detail__back:hover {
+  color: var(--h-primary);
+}
+
+.hire-assess-detail__head {
+  margin-bottom: 18px;
+}
+
+.hire-assess-detail__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.hire-assess-detail__facts {
+  margin: 6px 0 0;
+  color: var(--h-gray-500, #78716c);
+  font-size: 14px;
+}
+
+.hire-assess-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.hire-assess-detail__stat {
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.hire-assess-detail__stat dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-detail__stat dd {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.hire-assess-detail__monitor {
+  margin-top: 22px;
+}
+
+.hire-assess-detail__monitor h2,
+.hire-assess-assign h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.hire-assess-detail__who {
+  display: block;
+  font-weight: 700;
+}
+
+.hire-assess-detail__role {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-assign {
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.hire-assess-assign__confirm {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff7ed;
+}
+
+.hire-assess-assign__confirm p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.hire-assess-assign__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hire-assess-assign__fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.hire-assess-assign__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-assign__list {
+  list-style: none;
+  margin: 10px 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hire-assess-assign__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 12px;
+  background: #fbf9f7;
+  cursor: pointer;
+}
+
+.hire-assess-assign__row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--h-primary);
+}
+
+.hire-assess-assign__row input:disabled {
+  cursor: not-allowed;
+}
+
+.hire-assess-assign__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hire-assess-assign__tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f5f5f4;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.hire-assess-assign__submit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .hire-assess-detail__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The list table above collapses to label-less blocks on phones. The monitor
+   has three date columns, which only read as a table, so it stays one and
+   scrolls inside .hire-assess-list__table-wrap instead. Same specificity as
+   the collapse rules, later in source, so these win. */
+@media (max-width: 720px) {
+  .hire-assess-detail__table {
+    display: table;
+    width: 100%;
+  }
+
+  .hire-assess-detail__table thead {
+    display: table-header-group;
+  }
+
+  .hire-assess-detail__table tbody {
+    display: table-row-group;
+  }
+
+  .hire-assess-detail__table tr {
+    display: table-row;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .hire-assess-detail__table td {
+    display: table-cell;
+    width: auto;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(28, 25, 23, 0.06);
+    white-space: nowrap;
   }
 }
 /* ------------------------------------------------------------------

@@ -82,3 +82,119 @@ export const assessmentDraftSchema = z
 
 export type AssessmentDraftInput = z.infer<typeof assessmentDraftSchema>;
 export type AssessmentQuestionInput = z.infer<typeof assessmentQuestionSchema>;
+
+/** One assign call notifies at most this many people (sequential sends). */
+export const MAX_ASSIGN_PER_CALL = 25;
+
+export const publishAssessmentSchema = z.object({
+  assessmentId: z.string().min(1),
+});
+
+export const assignAssessmentSchema = z.object({
+  assessmentId: z.string().min(1),
+  candidateRefs: z
+    .array(z.string().trim().min(3).max(200))
+    .min(1, "Pick at least one candidate")
+    .max(
+      MAX_ASSIGN_PER_CALL,
+      `Assign at most ${MAX_ASSIGN_PER_CALL} candidates at a time`,
+    ),
+});
+
+export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
+
+// ---------------------------------------------------------------------------
+// T-218 (plan 129) — candidate answers. Shared by the candidate screen and the
+// server so the two can never disagree about what counts as an answer.
+// ---------------------------------------------------------------------------
+
+/** Longest paragraph answer stored, in characters. The word cap is per question
+ *  and is enforced at submit, so nothing a candidate types is ever refused. */
+export const MAX_ANSWER_CHARS = 20_000;
+export const MAX_ANSWER_URL_CHARS = 2_000;
+
+/** One definition, so the screen's counter and the server's cap agree. */
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+/** http(s) only. Zod 4's .url() also accepts javascript: and data: URLs. */
+export function isHttpUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export const answerPayloadSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("choice"),
+      selectedOptionIds: z.array(z.string().min(1).max(64)).max(12),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("text"),
+      // NOT trimmed: the answer is restored exactly as it was typed.
+      text: z.string().max(MAX_ANSWER_CHARS),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("file"),
+      fileUrl: z.union([
+        z.literal(""),
+        z
+          .string()
+          .trim()
+          .max(MAX_ANSWER_URL_CHARS)
+          .refine(isHttpUrl, "Paste a full link starting with https://"),
+      ]),
+    })
+    .strict(),
+]);
+export type AnswerPayload = z.infer<typeof answerPayloadSchema>;
+
+export const attemptActionSchema = z.object({
+  assignmentId: z.string().min(1).max(64),
+});
+
+export const saveAnswerSchema = attemptActionSchema.extend({
+  questionId: z.string().min(1).max(64),
+  answer: answerPayloadSchema,
+});
+
+/** Whether an answer satisfies a required question. Shared by the screen's
+ *  "N required left" hint and the server's submit check. */
+export function isAnswerComplete(
+  type: "MULTIPLE_CHOICE" | "PARAGRAPH" | "FILE_UPLOAD",
+  answer: AnswerPayload | undefined,
+): boolean {
+  if (!answer) return false;
+  if (type === "MULTIPLE_CHOICE") {
+    return answer.kind === "choice" && answer.selectedOptionIds.length > 0;
+  }
+  if (type === "PARAGRAPH") {
+    return answer.kind === "text" && answer.text.trim().length > 0;
+  }
+  return answer.kind === "file" && isHttpUrl(answer.fileUrl);
+}
+
+/** The refusal copy for an incomplete submission. The server returns it and the
+ *  screen shows it before the click, in the same words. */
+export function incompleteMessage(
+  missingRequired: number,
+  overLimit: number,
+): string {
+  const q = `${missingRequired} required question${missingRequired === 1 ? "" : "s"}`;
+  const a = `${overLimit} answer${overLimit === 1 ? "" : "s"}`;
+  if (missingRequired > 0 && overLimit > 0) {
+    return `Answer the ${q} left and shorten ${a} over the word limit before submitting.`;
+  }
+  if (missingRequired > 0) return `Answer the ${q} left before submitting.`;
+  return `Shorten ${a} over the word limit before submitting.`;
+}

@@ -5,7 +5,8 @@ export type NavIconKey =
   | "briefcase"
   | "award"
   | "zap"
-  | "user";
+  | "user"
+  | "clipboard";
 
 export type NavItem = {
   label: string;
@@ -51,6 +52,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Workshops", href: "/workshop", icon: "presentation" },
   { label: "Marketplace", href: "/marketplace", icon: "store" },
   { label: "Jobs", href: "/jobs", icon: "briefcase" },
+  { label: "Assessments", href: "/assessments", icon: "clipboard" },
   { label: "Achievements", href: "/achievements", icon: "award" },
   { label: "Hackathon", href: "/hackathon", icon: "zap" },
   { label: "Profile", href: "/profile", icon: "user" },

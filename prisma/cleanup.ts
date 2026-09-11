@@ -79,6 +79,23 @@ async function cleanup() {
         `Deleted ${ledger.count} credit ledger rows and ${accounts.count} credit accounts.`,
       );
     }
+
+    // T-244: an assignment is ON DELETE RESTRICT to its assessment, so a
+    // recruiter whose published assessment has assignees cannot be deleted —
+    // their assessment cascades from the user and the assignments block it.
+    // Same reasoning as the ledger above: in a dev reset they go explicitly.
+    // Rows where the doomed user is the candidate would cascade anyway.
+    const assignments = await prisma.recruiterAssessmentAssignment.deleteMany({
+      where: {
+        OR: [
+          { candidateUserId: { in: doomedIds } },
+          { assessment: { createdByUserId: { in: doomedIds } } },
+        ],
+      },
+    });
+    if (assignments.count > 0) {
+      console.log(`Deleted ${assignments.count} assessment assignments.`);
+    }
   }
 
   const result = await prisma.user.deleteMany({ where: whereClause });
