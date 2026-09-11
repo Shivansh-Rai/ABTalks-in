@@ -1,7 +1,6 @@
 ---
 description: ABTalks module ownership, cross-module safety, and implementation rules for Sohail
 alwaysApply: true
-globs: "**/*"
 ---
 
 # ABTalks — Cursor Ownership Rules (Sohail)
@@ -9,6 +8,7 @@ globs: "**/*"
 This rule supplements the repository root `CLAUDE.md`.
 Always read and follow `CLAUDE.md` and `docs/project-context.md` for non-trivial work.
 Do not weaken any existing architectural, migration, auth, database, or safety rule from `CLAUDE.md`.
+If `CLAUDE.md` identifies the current developer as Shivansh, that is another developer's copy — this workspace is Sohail.
 
 The ABTalks codebase is shared by multiple developers using AI-assisted coding.
 Respect module ownership before making changes.

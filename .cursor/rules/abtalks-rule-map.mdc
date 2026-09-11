@@ -1,0 +1,26 @@
+---
+description: How ABTalks Cursor rules are layered in this workspace (Sohail)
+alwaysApply: true
+---
+
+# Cursor rule map
+
+This workspace is **Sohail**. Follow `CLAUDE.md` for architecture, auth split, Prisma 6, 078 repos, IST, and Neon. Ignore any `Developer: Shivansh` / "My Ownership" identity block in `CLAUDE.md`.
+
+## Always on (every chat)
+- `.cursorrules` — follow `docs/plans/` exactly; Neon child-branch before DB writes; CHANGELOG one-liners
+- `abtalks-sohail-ownership.mdc` — module owners, stop-on-cross-module, pre/post reports
+- `abtalks-september-contract.mdc` — ABTalks88 product decisions (override older wording)
+
+## Auto on UI files
+- `abtalks-design-system.mdc` — forest-green tokens. Replaces the deleted orange `abtalks-design-system.mdc`.
+
+## Pull in when relevant, or @-mention
+- `abtalks-sohail-tasks.mdc` — Sohail T-IDs for isolation, admin, audit, config
+- `figma-shallika-team.mdc` — Figma MCP team (Shallika only)
+- `.cursor/sources/ABTalks88-task-index.md` — every T-ID / owner / date (use this, not the xlsx)
+- `.cursor/sources/ABTalks_UI_Design_System_FINAL_Forest_Green.md` — full design spec
+
+## Not rules
+- `.cursor/sources/ABTalks88.xlsx` is the canonical workbook. Cursor cannot load xlsx as a rule or reliably @-read it.
+- `.cursor/debug-*.log` is leftover debug output. Do not treat it as product context.

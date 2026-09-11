@@ -1,0 +1,31 @@
+---
+description: Sohail's ABTalks88 tasks — isolation, authorization, rate limits, Platform Admin, audit, View As, config, release
+alwaysApply: false
+---
+
+# Sohail tasks (ABTalks88)
+
+Use when the user names a T-ID below, or when the work is isolation, admin, audit, or release. Full board: `.cursor/sources/ABTalks88-task-index.md`.
+
+Locked / executed (do not re-run): T-001, T-002, T-004, T-090, T-097.
+
+## Demo 1 wall 11 Sep
+- **T-283** Architecture guardrails (review/guidance, not implementation). Isolation, server-side authz, DB source of truth, idempotency.
+- **T-255** Recruiter-to-recruiter isolation. Server resolves the caller. A cannot open B's project/pipeline/credits/ledger/jobs/assessments/unlocks/outreach by id or URL. Tests: TC-R-003, TC-S-001. Depends on T-090, T-226.
+- **T-256** Server-side authorization sweep. Wrong persona calling a protected action is refused by the server. TC-S-003.
+- **T-257** Protected contact absent before unlock in every recruiter payload. Never filter in the client. TC-S-002. Depends on T-229, T-235.
+- **T-258** Rate-limit unlock, outreach, search, export server-side. TC-S-004. Depends on T-230.
+- **T-262** Database-backed Platform Admin role; grant/revoke with no deploy; non-admin refused by the **action**, not the layout. TC-A-001, TC-A-002. Design T-207.
+
+## Demo 2 / 3
+- **T-270** Immutable searchable audit (who, what, entity, before, after, reason, timestamp). TC-A-008. Demo 2 wall 14 Sep.
+- **T-269** Credit correction: mandatory reason, append-only ledger with before/after, audit, permission-gated. Never overwrite a balance. TC-A-007. Depends on T-266, T-270.
+- **T-272** Disable / restore / secure account. Disabled users refused at sign-in. Operator never sees or sets a password. TC-A-010.
+- **T-277** Runtime config without deploy: starting credits, unlock cost, free mock allowance, mock point cost. Audited. TC-A-012.
+- **T-271** View As: permission, persistent banner, audited entry/exit, dangerous actions refused, **never** authenticate as the target. TC-A-009.
+- **T-280** Operations guide: routine support from the console, no DB access.
+- **T-281** Three-persona integration on one environment.
+- **T-282** Seven pre-September journeys still work. TC-S-008.
+
+## Release calendar (Sohail is accountable)
+11 Sep Demo 1 code complete → 12 Sep Demo 1 verify → 14 Sep Demo 2 code complete → 15 Sep Demo 2 verify → 16 Sep all implementation complete → 17 UAT → 18 regression → 19 live verify + release.

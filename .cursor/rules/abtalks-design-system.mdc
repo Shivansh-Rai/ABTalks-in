@@ -1,16 +1,39 @@
 ---
-description: ABTalks UI design system for all new work (orange/cream, plan 071)
-alwaysApply: true
+description: Forest-green ABTalks UI tokens, clay buttons, 55px header, 250px sidebar. Apply when building or restyling UI.
+globs: "**/*.{tsx,css}"
+alwaysApply: false
 ---
 
-# ABTalks design system (orange / cream)
+# ABTalks UI — forest green
 
-Canonical spec: [`docs/design-system.md`](docs/design-system.md) (from plan 071).
+Full spec: `.cursor/sources/ABTalks_UI_Design_System_FINAL_Forest_Green.md`.
+This supersedes the deleted orange Cursor rule and `docs/design-system.md` (`#E05226`) for **new** UI.
+Do not restyle existing screens unless the user asks. Do not use orange as a brand/UI color.
 
-When building **new** UI:
+## Type
+Headings: Outfit 400/500/600/700. Body and UI: Inter 400/500/600/700.
+H1 64/70 desktop, 40/44 mobile. H2 40/48 → 32/36. Body 17/28 → 16/25. Buttons Inter 16/20/600.
+Header nav: Inter 14/20/400, uppercase, letter-spacing 0.08em, color `#353535`. Never bold nav labels.
 
-- Follow that spec (tokens, type scale, four weights, radius, spacing, components).
-- Primary accent is `#E05226`. Page ground is `#FBF9F7`. Do not introduce purple or indigo as brand.
-- Do **not** use or extend the modernist system (`src/components/landing/modernist/`, zero-radius, `#7C5CFF`) or pre-modernist landing-hub patterns as templates for new work.
-- Do **not** restyle existing screens unless the user explicitly asks.
-- Do not add a new font family without approval; use what is already loaded in `src/app/layout.tsx` / current Figma.
+## Color
+Primary `#03535F` · hover `#076573` · pressed `#02434D` · accent `#18D39B`
+Clay tab/surface `#D4EBEC` · inset `#A6D2D5` · tint `#E7F2F3` / `#EEF6F6`
+Success `#27CA37` / `#197E23` · neutrals `#FFFFFF` `#E9E9E9` `#D2D2D2` `#A5A5A5` `#8F8F8F` `#787878` `#626262` `#4B4B4B` `#353535` `#000000`
+Semantic-only: error `#D92D20`, warning `#FFEDB0` / `#AA821D`. Do not rely on color alone.
+
+## Layout
+Header 55px on every breakpoint, white frosted glass, 40px / 20px horizontal padding.
+Desktop sidebar 250px; tablet/mobile = drawer overlay. Do not shrink the header.
+Container 1280px max. Page padding 40 / 32 / 20. Grid 12 / 8 / 4. Gutter 24 / 24 / 16.
+Spacing tokens: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 120.
+
+## Clay buttons (same construction as Profile)
+Height 36 / 44 / 48. Radius 10 / 12 / 14. Hit area ≥ 44×44.
+`background: #03535F; box-shadow: inset 0 -3px 6px rgba(0,0,0,.22), inset 0 1px 1px rgba(255,255,255,.14), 0 4px 12px rgba(3,83,95,.16);`
+Hover `#076573`. Pressed `#02434D` with stronger inset. Focus 2px `#03535F` ring, 4px offset.
+No glossy gradients, neon glow, orange shadows, or a different clay recipe per screen.
+
+## Components
+Cards: 24px pad / 12px radius / 1px `#E0E0E0` / white. Inputs 48px, radius 8px.
+Required states: default, loading, empty, error, success, disabled, hover, active, focus, form validation.
+Use `buttonVariants` on `<Link>`; never `<Button asChild>`.
