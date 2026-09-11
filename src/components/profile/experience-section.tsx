@@ -33,7 +33,10 @@ export type ExperienceFormRow = {
   description: string;
 };
 
-type FormValues = { rows: ExperienceFormRow[] };
+type FormValues = {
+  hasNoWorkExperience: boolean;
+  rows: ExperienceFormRow[];
+};
 
 export const emptyExperienceRow: ExperienceFormRow = {
   companyName: "",
@@ -50,14 +53,17 @@ export const emptyExperienceRow: ExperienceFormRow = {
 
 export function ExperienceSection({
   initial,
+  hasNoWorkExperience: initialSkip,
 }: {
   initial: ExperienceFormRow[];
+  hasNoWorkExperience: boolean;
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveExperienceAction, "Experience", "experience");
   const { control, register, handleSubmit, watch, setValue, formState } =
     useForm<FormValues>({
       defaultValues: {
+        hasNoWorkExperience: initialSkip,
         rows: initial.length > 0 ? initial : [{ ...emptyExperienceRow }],
       },
     });
@@ -65,6 +71,8 @@ export function ExperienceSection({
     control,
     name: "rows",
   });
+
+  const skipExperience = watch("hasNoWorkExperience");
 
   useEffect(() => {
     setDirty(formState.isDirty);
@@ -85,8 +93,30 @@ export function ExperienceSection({
         if (await save(v)) onSaved();
       })}
     >
-      <div className="pw-entries">
-        {fields.map((field, index) => {
+      <PwRow cols={1}>
+        <Controller
+          control={control}
+          name="hasNoWorkExperience"
+          render={({ field: f }) => (
+            <PwCheckbox
+              id="exp-no-experience"
+              checked={f.value}
+              onChange={(checked) => {
+                f.onChange(checked);
+                if (checked) {
+                  replace([{ ...emptyExperienceRow }]);
+                }
+              }}
+            >
+              I don&apos;t have work experience yet
+            </PwCheckbox>
+          )}
+        />
+      </PwRow>
+      {skipExperience ? null : (
+        <>
+          <div className="pw-entries">
+            {fields.map((field, index) => {
           const isCurrent = watch(`rows.${index}.isCurrent`);
           const startYear = watch(`rows.${index}.startYear`);
           const employment = watch(`rows.${index}.employmentType`);
@@ -247,8 +277,10 @@ export function ExperienceSection({
             </PwEntryCard>
           );
         })}
-      </div>
-      <PwAddMore onClick={() => append({ ...emptyExperienceRow })} />
+          </div>
+          <PwAddMore onClick={() => append({ ...emptyExperienceRow })} />
+        </>
+      )}
     </form>
   );
 }

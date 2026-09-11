@@ -141,6 +141,11 @@ export type CandidateDetail = {
   githubUsername: string | null;
   portfolioUrl: string | null;
   resumeUrl: string | null;
+  /**
+   * Explicit fresher skip for profile completion. Ignored for scoring when
+   * any experience row exists — rows win.
+   */
+  hasNoWorkExperience: boolean;
   referralCode: string;
   isReadyForInterview: boolean;
   updatedAt: Date;
@@ -177,6 +182,7 @@ export async function getCandidateDetail(
       githubUsername: true,
       portfolioUrl: true,
       resumeUrl: true,
+      hasNoWorkExperience: true,
       referralCode: true,
       isReadyForInterview: true,
       updatedAt: true,
@@ -299,6 +305,7 @@ export async function getCandidateDetail(
     githubUsername: row.githubUsername,
     portfolioUrl: row.portfolioUrl,
     resumeUrl: row.resumeUrl,
+    hasNoWorkExperience: row.hasNoWorkExperience,
     referralCode: row.referralCode,
     isReadyForInterview: row.isReadyForInterview,
     updatedAt: row.updatedAt,
@@ -601,6 +608,7 @@ export type ExperienceWrite = {
 export async function saveExperience(
   userId: string,
   rows: readonly ExperienceWrite[],
+  hasNoWorkExperience = false,
 ): Promise<void> {
   const now = new Date();
   await runInTransaction(async (tx) => {
@@ -632,6 +640,14 @@ export async function saveExperience(
         })),
       });
     }
+    await tx.candidateProfile.update({
+      where: { userId },
+      data: {
+        // Rows win: a saved role clears the fresher skip.
+        hasNoWorkExperience: hasNoWorkExperience && dated.length === 0,
+      },
+      select: { userId: true },
+    });
     await mirrorExperienceToLegacy(tx, userId);
   });
 }

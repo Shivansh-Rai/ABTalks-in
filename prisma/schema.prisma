@@ -2275,6 +2275,9 @@ model CandidateProfile {
   githubUsername              String?
   portfolioUrl                String?
   resumeUrl                   String?
+  /// Explicit fresher skip for profile-completion scoring. False when any
+  /// experience row exists — rows win. Never backfilled; the candidate opts in.
+  hasNoWorkExperience         Boolean          @default(false)
   referralCode                String           @unique
   isReadyForInterview         Boolean          @default(false)
   isCampusAmbassadorCandidate Boolean          @default(false)
