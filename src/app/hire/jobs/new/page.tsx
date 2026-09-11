@@ -27,10 +27,10 @@ export default async function RecruiterNewJobPage() {
       >
         ← All jobs
       </Link>
-      <h1 className="font-display text-3xl font-bold tracking-tight">
+      <h1 className="font-heading text-[40px] leading-[48px] font-bold tracking-normal max-md:text-[32px] max-md:leading-[36px]">
         Write a job
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="mt-2 text-[17px] leading-7 text-muted-foreground max-md:text-base max-md:leading-[25px]">
         Posts as {workspace.data.company}. Saves as a draft — you publish it
         when you&apos;re ready.
       </p>

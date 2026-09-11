@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-12 [convention] Recruiter `/hire` type aligned to Design System v2: Outfit headings only (H1 64/70, H2 40/48, H3 24/30, H4 20/26), Inter UI (nav 14/20/400 uppercase, sidebar 14/20/500, input 16/24, button 16/20/600); dropped weights 300/450/800.
 - 2026-09-11 [rule] T-258 UNLOCK rate limit now wraps unlockContactAction (T-229 spend path); preview/reveal stay reads and do not consume the bucket.
 - 2026-09-11 [convention] Cursor rules split for chat use: always-apply ABTalks88 contract + Sohail ownership; forest-green UI is glob/agent; workbook moved to `.cursor/sources` because xlsx is not a Cursor rule.
 - 2026-09-11 [schema|rule] Profile completion is field-weighted to 100% (plan 132): gated Experience/Education on entry #1, skills 0/5/10, resume 3%, extra rows add 0; `CandidateProfile.hasNoWorkExperience` awards the Experience 20% for freshers (migration 20260911220000, additive, NOT applied). Completeness stays a UX number in `computeCompleteness` and gates nothing.

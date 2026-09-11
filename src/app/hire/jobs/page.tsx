@@ -39,8 +39,10 @@ export default async function RecruiterJobsPage() {
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Your jobs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-heading text-[40px] leading-[48px] font-bold tracking-normal max-md:text-[32px] max-md:leading-[36px]">
+            Your jobs
+          </h1>
+          <p className="mt-1 text-[17px] leading-7 text-muted-foreground max-md:text-base max-md:leading-[25px]">
             Draft roles stay private until you publish them. Close a role to
             stop accepting applications; reopen it any time.
           </p>
@@ -76,7 +78,7 @@ export default async function RecruiterJobsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="font-display text-lg font-semibold">
+                      <h2 className="font-heading text-[20px] leading-[26px] font-semibold">
                         {job.title}
                       </h2>
                       <Badge variant={statusVariant(job.status)}>

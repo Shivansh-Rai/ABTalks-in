@@ -747,7 +747,7 @@ function Row({
   return (
     <div className="hire-profile__row">
       <span className="hire-profile__label">
-        <Icon size={16} strokeWidth={1.25} absoluteStrokeWidth aria-hidden="true" />
+        <Icon size={20} strokeWidth={1.25} absoluteStrokeWidth aria-hidden="true" />
         {label}
       </span>
       <div className={cn("hire-profile__value", muted && "is-muted")}>
