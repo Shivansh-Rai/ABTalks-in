@@ -60,6 +60,12 @@ type Props = {
   publicId: string;
   className?: string;
   onUnlocked?: () => void;
+  /**
+   * Replaces the default "Unlock contact" pill with a plain text trigger — the
+   * inspector's "Reveal email" / "Reveal number" rows. When set, the trigger
+   * takes only `className`, not the pill styling or lock icon.
+   */
+  triggerLabel?: string;
 };
 
 type Preview = {
@@ -76,6 +82,7 @@ export function UnlockContactDialog({
   publicId,
   className,
   onUnlocked,
+  triggerLabel,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -138,14 +145,25 @@ export function UnlockContactDialog({
 
   return (
     <>
-      <button
-        type="button"
-        className={cn("hire-unlock-trigger", className)}
-        onClick={openDialog}
-      >
-        <Lock className="size-3.5" aria-hidden="true" />
-        Unlock contact
-      </button>
+      {triggerLabel ? (
+        <button
+          type="button"
+          className={className}
+          aria-haspopup="dialog"
+          onClick={openDialog}
+        >
+          {triggerLabel}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={cn("hire-unlock-trigger", className)}
+          onClick={openDialog}
+        >
+          <Lock className="size-3.5" aria-hidden="true" />
+          Unlock contact
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="hire-app hire-unlock sm:max-w-sm" showCloseButton>

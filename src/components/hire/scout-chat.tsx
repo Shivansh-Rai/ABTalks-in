@@ -1442,12 +1442,10 @@ export function ScoutChat({
                           />
                         </div>
                       )}
-                      {deskMatches.length > 0 && (
-                        <p className="scout-privacy">
-                          Contact stays hidden until you place a request and
-                          the candidate agrees.
-                        </p>
-                      )}
+                      {/* The "contact stays hidden until you place a request"
+                          line was removed: since T-229 contact is revealed by a
+                          paid unlock in the profile panel, so it described a
+                          flow that no longer exists. */}
                       {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
                         <label className="hire-hide-rejected">
                           <input

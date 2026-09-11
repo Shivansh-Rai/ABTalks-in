@@ -11,6 +11,7 @@ import {
   Gauge,
   Mail,
   Phone,
+  Send,
   Tag,
   X,
   type LucideIcon,
@@ -39,6 +40,7 @@ import type { MatchCardData, MatchDecision } from "@/components/hire/match-card"
 import { cn } from "@/lib/utils";
 import { MaskedName } from "@/components/hire/desk-match-card";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
+import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
 import {
@@ -102,7 +104,9 @@ type Role = { title: string; value: ReactNode; badge?: string; note?: string };
  * roles, schools. Each block is filled from what the pool does have: the
  * Experience timeline lists verified work on the track, Education is the
  * declared level, and the credentials card lists the connected platforms.
- * Contact stays behind the subscription gate, as it did before.
+ * Contact is behind the paid unlock (T-229): "Reveal email" / "Reveal number"
+ * open the unlock dialog, which states the cost before charging. The resume
+ * stays behind the plan gate — a different lock.
  */
 export function CandidateInspector({
   match,
@@ -170,9 +174,32 @@ export function CandidateInspector({
   const [tab, setTab] = useState<TabId>("overview");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [contact, setContact] = useState<RevealedContact | null>(null);
+
   useEffect(() => {
     rememberEvidence([match]);
   }, [match]);
+
+  // What this recruiter has already paid for. `revealContactAction` returns
+  // null unless a CONTACT_SHARED row exists, so it reveals nothing on its own.
+  // The `alive` flag stops a slow answer for the previous candidate landing on
+  // the one now open.
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const found = sample
+        ? null
+        : await revealContactAction({ candidateRef: match.candidateRef });
+      if (alive) setContact(found);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [match.candidateRef, sample]);
+
+  async function loadContact() {
+    setContact(await revealContactAction({ candidateRef: match.candidateRef }));
+  }
 
   function jump(id: TabId) {
     setTab(id);
@@ -439,27 +466,53 @@ export function CandidateInspector({
                 />
               </Row>
             </>
+          ) : contact ? (
+            // What the unlock bought, next to the control that bought it.
+            <>
+              <Row icon={Mail} label="Email" muted={!contact.email}>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </Row>
+              <Row icon={Phone} label="Phone" muted={!contact.phone}>
+                {contact.phone ? (
+                  <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </Row>
+              {/* T-232: message them from here, where the unlocked email is. */}
+              <Row icon={Send} label="Message">
+                <OutreachComposeDialog
+                  candidateRef={match.candidateRef}
+                  candidateLabel={match.displayName ?? publicId}
+                />
+              </Row>
+            </>
           ) : !sample ? (
+            // T-229: revealing contact is the paid unlock — the dialog shows the
+            // configured cost, the balance and what is left before anything is
+            // charged. It is not the plan gate; the plan is a different thing.
             <>
               <Row icon={Mail} label="Email">
-                <button
-                  type="button"
+                <UnlockContactDialog
+                  candidateRef={match.candidateRef}
+                  publicId={publicId}
+                  onUnlocked={loadContact}
+                  triggerLabel={"Reveal email  +"}
                   className="hire-profile__reveal"
-                  aria-haspopup="dialog"
-                  onClick={() => setGate("default")}
-                >
-                  {"Reveal email  +"}
-                </button>
+                />
               </Row>
               <Row icon={Phone} label="Phone">
-                <button
-                  type="button"
+                <UnlockContactDialog
+                  candidateRef={match.candidateRef}
+                  publicId={publicId}
+                  onUnlocked={loadContact}
+                  triggerLabel={"Reveal number  +"}
                   className="hire-profile__reveal"
-                  aria-haspopup="dialog"
-                  onClick={() => setGate("default")}
-                >
-                  {"Reveal number  +"}
-                </button>
+                />
               </Row>
             </>
           ) : null}

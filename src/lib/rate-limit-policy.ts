@@ -36,7 +36,7 @@ export const REQUIRED_RATE_LIMIT_SITES: {
   // Unlock / outreach are Zainab's Demo 1 actions. When those files exist
   // they must import assertRateLimit; the test only requires the helper.
   { bucket: "UNLOCK", files: [] },
-  { bucket: "OUTREACH", files: [] },
+  { bucket: "OUTREACH", files: ["src/app/actions/outreach-actions.ts"] },
 ];
 
 export function isRateLimited(

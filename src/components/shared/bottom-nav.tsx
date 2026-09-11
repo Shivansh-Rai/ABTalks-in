@@ -95,7 +95,7 @@ export function BottomNav() {
     // `hire` belongs here for the same reason `talent` does: the recruiter
     // portal is not the student app, and Home / Jobs / Rewards / Explore /
     // Profile are not its tabs. It was also covering the page on mobile.
-    /^\/(login|register|claude-signup|students|r|program|talent|hire|verify)(\/|$)/.test(
+    /^\/(login|register|claude-signup|students|r|program|talent|hire|recruiter-onboarding|verify)(\/|$)/.test(
       pathname,
     )
   ) {

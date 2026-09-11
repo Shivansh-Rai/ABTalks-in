@@ -12,7 +12,8 @@ export const NAV_LINKS = [
 
 export const GET_STARTED_ITEMS = [
   { href: "/register", label: "Candidates" },
-  { href: "/hire", label: "Recruiter" },
+  // Recruiters see the onboarding intro first; its Next/Skip lead on to /hire.
+  { href: "/recruiter-onboarding", label: "Recruiter" },
 ] as const;
 
 export const STATS = [

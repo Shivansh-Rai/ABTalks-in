@@ -357,6 +357,10 @@ model User {
   engagementsAsCandidate     TalentEngagementRequest[]       @relation("CandidateEngagements")
   candidateMatches           TalentRequestMatch[]            @relation("CandidateMatches")
   engagementMessages         TalentEngagementMessage[]
+  /// T-232 — recruiter ↔ candidate outreach (plan 130).
+  outreachThreadsAsRecruiter OutreachThread[]          @relation("OutreachThreadsAsRecruiter")
+  outreachThreadsAsCandidate OutreachThread[]          @relation("OutreachThreadsAsCandidate")
+  outreachMessagesAuthored   OutreachMessage[]         @relation("OutreachMessagesAuthored")
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
   /// Plan 121 — recruiter-authored assessments (builder drafts).
@@ -3201,6 +3205,7 @@ model Organization {
   recruiterAssessments RecruiterAssessment[]
   creditAccount        CreditAccount?
   creditTransactions   CreditTransaction[]
+  outreachThreads      OutreachThread[]
 
   // SQL: CREATE INDEX ... USING gin (name gin_trgm_ops);
   @@index([isVerified])
@@ -3744,6 +3749,78 @@ model TalentEngagementMessage {
   author     User?                   @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
 
   @@index([engagementId, createdAt])
+}
+
+/// T-232 (plan 130). Who wrote an outreach message.
+enum OutreachAuthor {
+  RECRUITER
+  CANDIDATE
+}
+
+/// T-232. What happened to the email copy of a RECRUITER message. CANDIDATE
+/// replies are NONE: the recruiter hears about them through dispatch(), which
+/// tracks its own email on NotificationDelivery.
+enum OutreachEmailStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+  NONE
+}
+
+/// One private conversation between ONE recruiter and ONE candidate.
+///
+/// Keyed on the recruiter *user*, not the organization: every recruiter works
+/// alone (demo contract §2) and contact access is per user, so two recruiters on
+/// one company domain never share a thread. Replies happen on ABTalks — there is
+/// no inbound email, and no shared inbox.
+model OutreachThread {
+  id                  String         @id @default(cuid())
+  recruiterUserId     String
+  organizationId      String
+  candidateUserId     String
+  /// The CONTACT_SHARED engagement that allowed the first message. Provenance for T-266/T-267.
+  engagementId        String?
+  subject             String
+  lastMessageAt       DateTime       @default(now())
+  lastMessageBy       OutreachAuthor
+  recruiterLastReadAt DateTime?
+  candidateLastReadAt DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  recruiter    User              @relation("OutreachThreadsAsRecruiter", fields: [recruiterUserId], references: [id], onDelete: Cascade)
+  /// Cascade: a candidate's self-deletion (T-217) takes their messages with it.
+  candidate    User              @relation("OutreachThreadsAsCandidate", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     OutreachMessage[]
+
+  @@unique([recruiterUserId, candidateUserId])
+  @@index([recruiterUserId, lastMessageAt(sort: Desc)])
+  @@index([candidateUserId, lastMessageAt(sort: Desc)])
+}
+
+model OutreachMessage {
+  id                 String              @id @default(cuid())
+  threadId           String
+  author             OutreachAuthor
+  authorUserId       String?
+  body               String
+  /// Client-generated per send. The unique index is the idempotency guarantee:
+  /// a retry or a double-click writes one message and sends one email.
+  clientRequestId    String
+  emailStatus        OutreachEmailStatus @default(NONE)
+  /// Recruiter-readable sentence. The technical, redacted reason is on the
+  /// OutboundDelivery row this points at (emailDeliveryId).
+  emailFailureReason String?
+  emailDeliveryId    String?
+  createdAt          DateTime            @default(now())
+
+  thread     OutreachThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorUser User?          @relation("OutreachMessagesAuthored", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@unique([threadId, clientRequestId])
+  @@index([threadId, createdAt])
 }
 
 /// Companies and seats ABTalks has verified out of band.
