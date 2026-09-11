@@ -4,7 +4,9 @@ import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import { listAssessments } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
+import { listAssessmentPresets } from "@/features/recruiter-assessments/presets";
 import { deleteRecruiterAssessmentAction } from "@/app/actions/recruiter-assessment-actions";
+import { AssessmentPresetPicker } from "@/components/hire/assessment/preset-picker";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +36,14 @@ export default async function HireAssessmentsPage() {
     createdByUserId: workspace.data.userId,
   });
   const rows = listed.ok ? listed.data : [];
+  const presetSummaries = listAssessmentPresets().map((p) => ({
+    id: p.id,
+    name: p.name,
+    tagline: p.tagline,
+    tags: p.tags,
+    questionCount: p.content.questions.length,
+    durationMinutes: p.content.durationMinutes,
+  }));
 
   return (
     <div className="hire-assess-list">
@@ -49,6 +59,8 @@ export default async function HireAssessmentsPage() {
           Create assessment
         </Link>
       </div>
+
+      <AssessmentPresetPicker presets={presetSummaries} />
 
       {rows.length === 0 ? (
         <div className="hire-assess-list__empty">
@@ -82,7 +94,7 @@ export default async function HireAssessmentsPage() {
                   <tr key={row.id}>
                     <td>
                       <Link
-                        href="/hire/create-test"
+                        href={`/hire/create-test?id=${row.id}`}
                         className="hire-assess-list__title"
                       >
                         {row.title}
@@ -112,7 +124,7 @@ export default async function HireAssessmentsPage() {
                     </td>
                     <td className="hire-assess-list__actions">
                       <Link
-                        href="/hire/create-test"
+                        href={`/hire/create-test?id=${row.id}`}
                         className="hire-assess-linkbtn"
                       >
                         Open builder

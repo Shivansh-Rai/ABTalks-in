@@ -26,17 +26,20 @@ const NEW_MCQ = (): DraftQuestion => ({
 
 function toDraftQuestions(
   existing: AssessmentDraft | null,
+  presetLocked: boolean,
 ): DraftQuestion[] {
   if (!existing?.questions?.length) return [NEW_MCQ()];
   return existing.questions.map((q) => ({
     ...q,
     key: crypto.randomUUID(),
+    ...(presetLocked ? { locked: true } : null),
   }));
 }
 
 function stripKeys(questions: DraftQuestion[]) {
-  return questions.map(({ key: _key, ...rest }) => {
+  return questions.map(({ key: _key, locked: _locked, ...rest }) => {
     void _key;
+    void _locked;
     return rest;
   });
 }
@@ -45,12 +48,14 @@ type Props = {
   shortlistCount: number;
   shortlistRefs: string[];
   existingDraft: AssessmentDraft | null;
+  presetLocked?: boolean;
 };
 
 export function AssessmentBuilder({
   shortlistCount,
   shortlistRefs,
   existingDraft,
+  presetLocked = false,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -75,7 +80,7 @@ export function AssessmentBuilder({
     existingDraft?.passMarkPercent ?? 60,
   );
   const [questions, setQuestions] = useState<DraftQuestion[]>(() =>
-    toDraftQuestions(existingDraft),
+    toDraftQuestions(existingDraft, presetLocked),
   );
   const [announce, setAnnounce] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -155,11 +160,23 @@ export function AssessmentBuilder({
       <div className="hire-assess__top">
         <div>
           <p className="hire-assess__kicker">Assessment builder</p>
-          <h1>Create an assessment</h1>
+          <h1>
+            {presetLocked
+              ? "Customize a template"
+              : assessmentId
+                ? "Edit assessment"
+                : "Create an assessment"}
+          </h1>
           <p className="hire-assess__sub">
             For {shortlistCount} shortlisted candidate
             {shortlistCount === 1 ? "" : "s"}
           </p>
+          {presetLocked ? (
+            <p className="hire-assess__note">
+              Template questions can’t be edited, but you can remove them or add
+              your own.
+            </p>
+          ) : null}
         </div>
         <div className="hire-assess__seg" role="tablist" aria-label="Edit or preview">
           <button
@@ -279,6 +296,7 @@ export function AssessmentBuilder({
               <QuestionEditor
                 key={q.key}
                 question={q}
+                locked={q.locked ?? false}
                 index={i}
                 total={questions.length}
                 onChange={(next) =>

@@ -125,6 +125,7 @@
     "test:notification-acceptance": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notification-acceptance.test.ts",
     "test:recruiter-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-jobs/recruiter-jobs.test.ts",
     "test:recruiter-assessments": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/recruiter-assessments.test.ts",
+    "test:assessment-presets": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/presets.test.ts",
     "test:candidate-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/candidate-jobs/candidate-jobs.test.ts",
     "test:observability": "npm run test:observability:redaction && npm run test:observability:contract && npm run test:observability:notification && npm run test:observability:request-id && npm run test:observability:paths && npm run test:observability:sentry && npm run test:observability:gating && npm run test:observability:scan"
   },
