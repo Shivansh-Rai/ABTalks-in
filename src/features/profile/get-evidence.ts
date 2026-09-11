@@ -16,8 +16,12 @@ import { prisma } from "@/lib/db";
  * not an encouraging guess.
  *
  * This is the candidate looking at their own profile, so it is unfiltered.
- * `CandidateVisibility` governs the recruiter surfaces and is reported back to
- * the candidate as information, never applied to hide their own data from them.
+ *
+ * Recruiter visibility is deliberately NOT read or returned here (plan 133).
+ * Whether and how a recruiter sees a candidate is decided by the platform —
+ * `searchableUserWhere` for eligibility and moderation, one field policy for
+ * what is shown — and none of it is a candidate setting, so there is nothing
+ * to report back to the candidate as though it were theirs to change.
  */
 
 export type SkillEvidenceItem = {
@@ -58,18 +62,12 @@ export type ProfileEvidence = {
   credentials: CredentialItem[];
   achievements: AchievementItem[];
   hasAny: boolean;
-  /** What recruiters are currently allowed to see. Display only — never applied here. */
-  recruiterVisibility: {
-    searchableByRecruiters: boolean;
-    showAssessmentScores: boolean;
-    showInterviewResults: boolean;
-  } | null;
 };
 
 export async function getProfileEvidence(
   userId: string,
 ): Promise<ProfileEvidence> {
-  const [skillRows, credentials, achievements, visibility] = await Promise.all([
+  const [skillRows, credentials, achievements] = await Promise.all([
     // Verification is `SkillEvidence` and nothing else. `selfRated` is not read
     // here — a candidate calling themselves an expert is not evidence.
     prisma.candidateSkill.findMany({
@@ -116,14 +114,6 @@ export async function getProfileEvidence(
         isPublic: true,
       },
     }),
-    prisma.candidateVisibility.findUnique({
-      where: { userId },
-      select: {
-        searchableByRecruiters: true,
-        showAssessmentScores: true,
-        showInterviewResults: true,
-      },
-    }),
   ]);
 
   const verifiedSkills: VerifiedSkillView[] = skillRows.map((row) => ({
@@ -148,6 +138,5 @@ export async function getProfileEvidence(
       verifiedSkills.length > 0 ||
       credentials.length > 0 ||
       achievements.length > 0,
-    recruiterVisibility: visibility,
   };
 }

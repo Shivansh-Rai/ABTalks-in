@@ -32,8 +32,7 @@ function formatDate(date: Date): string {
  * is no editing, and nothing is inferred to fill a gap.
  */
 export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
-  const { verifiedSkills, credentials, achievements, recruiterVisibility } =
-    evidence;
+  const { verifiedSkills, credentials, achievements } = evidence;
 
   if (!evidence.hasAny) {
     return (
@@ -155,20 +154,6 @@ export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
             ))}
           </ul>
         </section>
-      ) : null}
-
-      {recruiterVisibility ? (
-        <p className="border-t pt-4 text-xs text-muted-foreground">
-          {recruiterVisibility.searchableByRecruiters
-            ? "Recruiters can currently discover your profile."
-            : "Your profile is not currently discoverable by recruiters."}{" "}
-          Assessment scores are{" "}
-          {recruiterVisibility.showAssessmentScores ? "shown" : "hidden"} and
-          interview results are{" "}
-          {recruiterVisibility.showInterviewResults ? "shown" : "hidden"} on
-          recruiter surfaces. These settings are managed separately from this
-          page.
-        </p>
       ) : null}
     </div>
   );

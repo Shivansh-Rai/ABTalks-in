@@ -385,7 +385,7 @@ export default async function ProfilePage() {
     {
       key: "preferences",
       title: "Career Preferences",
-      description: "What you are looking for. Separate from recruiter visibility.",
+      description: "What you are looking for.",
       checklist: "preferences",
       complete: sectionOf("preferences")?.complete ?? false,
       attention: false,
