@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { getShortlist } from "@/features/talent-pool/pool";
-import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { buildContentFromPresets } from "@/features/recruiter-assessments/presets";
 import {
   getAssessment,
+  listSendableCandidates,
   type AssessmentRow,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
@@ -16,6 +15,9 @@ import type { AssessmentDraft } from "@/components/hire/assessment/assessment-ty
 export const metadata: Metadata = {
   title: "Create an assessment | ABTalks Hire",
 };
+// Create sends up to MAX_ASSIGN_PER_CALL notifications inline; the server
+// action runs under this page's function limit.
+export const maxDuration = 60;
 
 /**
  * Map a stored assessment into the builder's draft shape. Questions are mapped
@@ -74,10 +76,10 @@ export default async function CreateTestPage({
   searchParams: Promise<{ id?: string; preset?: string; presets?: string }>;
 }) {
   const { userId } = await requireRecruiter();
-  const list = await getShortlist(userId);
-  const refs = list.ok
-    ? list.data.map((r) => encodeCandidateRef("PROGRAM", r.memberId))
-    : [];
+  // The same live Shortlist the assign panel uses — legacy and project halves,
+  // searchable candidates only. Refs and labels only; no user id is sent down.
+  const candidates = await listSendableCandidates(prismaAssessmentStore(), userId);
+  const refs = candidates.map((c) => c.candidateRef);
 
   const { id, preset, presets } = await searchParams;
 
@@ -96,8 +98,7 @@ export default async function CreateTestPage({
       if (found.ok) {
         return (
           <AssessmentBuilder
-            shortlistCount={refs.length}
-            shortlistRefs={refs}
+            candidates={candidates}
             existingDraft={rowToDraft(found.data)}
             presetLocked={false}
           />
@@ -116,8 +117,7 @@ export default async function CreateTestPage({
 
   return (
     <AssessmentBuilder
-      shortlistCount={refs.length}
-      shortlistRefs={refs}
+      candidates={candidates}
       existingDraft={content ? { ...content, shortlistRefs: refs } : null}
       presetLocked={Boolean(content)}
     />

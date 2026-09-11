@@ -44,9 +44,10 @@ export function QuestionEditor({
         ...shared,
         type: "MULTIPLE_CHOICE",
         allowMultipleCorrect: false,
+        // Empty on purpose: the inputs show "Option N" as placeholders.
         options: [
-          { body: "Option 1", isCorrect: false },
-          { body: "Option 2", isCorrect: false },
+          { body: "", isCorrect: false },
+          { body: "", isCorrect: false },
         ],
       });
       return;
@@ -260,10 +261,8 @@ export function QuestionEditor({
               onClick={() =>
                 onChange({
                   ...question,
-                  options: [
-                    ...question.options,
-                    { body: `Option ${question.options.length + 1}`, isCorrect: false },
-                  ],
+                  // Empty on purpose: the input shows "Option N" as its placeholder.
+                  options: [...question.options, { body: "", isCorrect: false }],
                 })
               }
             >

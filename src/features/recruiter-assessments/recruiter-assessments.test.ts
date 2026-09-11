@@ -1,6 +1,6 @@
 /**
  * Plan 121 recruiter assessment builder + plan 128 (T-244) publish / assign /
- * monitor acceptance tests.
+ * monitor + plan 131 builder "Create" acceptance tests.
  *   npm run test:recruiter-assessments
  */
 import { readFileSync } from "node:fs";
@@ -8,6 +8,8 @@ import { join } from "node:path";
 import {
   assignAssessment,
   createAssessment,
+  createPublishAndAssign,
+  listSendableCandidates,
   saveAssessmentDraft,
   getAssessment,
   getAssessmentMonitor,
@@ -965,6 +967,177 @@ async function run() {
       assert(!store.includes("shortlistRefs"), "listAssignableCandidates must not read shortlistRefs");
     },
   );
+
+  console.log("\nPlan 131 builder Create — save, publish and send in one step\n");
+
+  /** A store with the fixture Shortlist loaded, and nothing else. */
+  function storeWithPool() {
+    const store = inMemoryStore();
+    store.pool.push(...POOL);
+    return store;
+  }
+
+  await suite("C1. Create sends a new assessment to the picked candidates", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: FIRST_THREE,
+    });
+    assert(res.ok, `create must succeed${res.ok ? "" : `: ${res.message}`}`);
+    if (!res.ok) return;
+    assert(store.rows.size === 1, "one assessment");
+    assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+    assert(res.data.assigned === 3 && res.data.alreadyAssigned === 0, "3 assigned");
+    assert(res.data.assignError === null, "no assign error");
+    assert(store.assignments.size === 3, "3 assignment rows");
+    assert(notifier.delivered.size === 3, "3 candidates notified once each");
+  });
+
+  await suite("C2. Create on an existing draft updates it — no duplicate", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const draft = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(draft.ok, "setup draft");
+    if (!draft.ok) return;
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: { ...validMcqDraft({ title: "Renamed screen" }), assessmentId: draft.data.id },
+      candidateRefs: [FIRST_THREE[0]],
+    });
+    assert(res.ok && res.data.id === draft.data.id, "same id");
+    assert(store.rows.size === 1, "still one assessment");
+    const row = store.rows.get(draft.data.id)!;
+    assert(row.title === "Renamed screen", "draft content saved");
+    assert(row.status === "PUBLISHED", "published");
+  });
+
+  await suite(
+    "C3. publish failure keeps the draft id, assigns nobody, and the retry reuses it",
+    async () => {
+      const store = storeWithPool();
+      const notifier = fakeNotifier();
+      const refused = await createPublishAndAssign(store, notifier, SCOPE_A, {
+        draft: paragraphOnlyDraft(),
+        candidateRefs: FIRST_THREE,
+      });
+      assert(!refused.ok && refused.code === "INVALID", "publish refused");
+      if (refused.ok) return;
+      assert(refused.assessmentId !== null, "the saved draft's id comes back");
+      const id = refused.assessmentId!;
+      assert(store.rows.get(id)?.status === "DRAFT", "still a draft");
+      assert(store.assignments.size === 0 && notifier.calls.length === 0, "nobody assigned or notified");
+
+      const retry = await createPublishAndAssign(store, notifier, SCOPE_A, {
+        draft: { ...validMcqDraft(), assessmentId: id },
+        candidateRefs: FIRST_THREE,
+      });
+      assert(retry.ok && retry.data.id === id, "retry updates the same draft");
+      assert(store.rows.size === 1, "no duplicate draft");
+    },
+  );
+
+  await suite(
+    "C4. an assign failure after publishing is reported, not hidden",
+    async () => {
+      const store = storeWithPool();
+      const notifier = fakeNotifier();
+      // The Shortlist changes between the pre-check and the assign.
+      const listPool = store.listAssignableCandidates;
+      let calls = 0;
+      store.listAssignableCandidates = async (id) => {
+        calls++;
+        const pool = await listPool(id);
+        return calls === 1 ? pool : pool.slice(1);
+      };
+      const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+        draft: validMcqDraft(),
+        candidateRefs: FIRST_THREE,
+      });
+      assert(res.ok, "the assessment is live");
+      if (!res.ok) return;
+      assert(res.data.assignError !== null, "assignError says it was not sent");
+      assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+      assert(store.assignments.size === 0 && notifier.calls.length === 0, "nobody assigned");
+    },
+  );
+
+  await suite("C5. another workspace's draft id → NOT_FOUND, nothing published", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const draftA = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(draftA.ok, "setup");
+    if (!draftA.ok) return;
+    const res = await createPublishAndAssign(store, notifier, SCOPE_B, {
+      draft: { ...validMcqDraft(), assessmentId: draftA.data.id },
+      candidateRefs: FIRST_THREE,
+    });
+    assert(!res.ok && res.code === "NOT_FOUND", "NOT_FOUND");
+    if (!res.ok) assert(res.assessmentId === null, "no id leaked back");
+    assert(store.rows.get(draftA.data.id)?.status === "DRAFT", "A's draft untouched");
+    assert(store.assignments.size === 0 && notifier.calls.length === 0, "nothing sent");
+  });
+
+  await suite("C6. zero or 26 candidates → INVALID, nothing saved", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const none = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: [],
+    });
+    const many = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: Array.from({ length: 26 }, (_, i) => `PROGRAM:bulk${i}`),
+    });
+    assert(!none.ok && none.code === "INVALID", "zero refused");
+    assert(!many.ok && many.code === "INVALID", "26 refused");
+    assert(store.rows.size === 0, "no draft saved");
+  });
+
+  await suite("C7. a candidate no longer on the Shortlist → INVALID, nothing saved", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: ["PROGRAM:m1", "PROGRAM:ghost"],
+    });
+    assert(!res.ok && res.code === "INVALID", "refused");
+    assert(store.rows.size === 0, "no draft saved, nothing published");
+    assert(notifier.calls.length === 0, "nobody notified");
+  });
+
+  await suite("C8. an already-published id cannot be re-created → CONFLICT", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const id = await publishedAssessment(store);
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: { ...validMcqDraft(), assessmentId: id },
+      candidateRefs: FIRST_THREE,
+    });
+    assert(!res.ok && res.code === "CONFLICT", "CONFLICT");
+    assert(store.assignments.size === 0, "nothing assigned");
+  });
+
+  await suite("C9. the builder's candidate list carries no user id", async () => {
+    const store = storeWithPool();
+    const list = await listSendableCandidates(store, SCOPE_A.createdByUserId);
+    assert(list.length === POOL.length, "the whole Shortlist");
+    assert(!JSON.stringify(list).includes("candidateUserId"), "no user id sent to the client");
+  });
+
+  await suite("C10. Create is gated and the builder page sends refs only", () => {
+    const actions = readSource("src/app/actions/recruiter-assessment-actions.ts");
+    // The last function in the file: its body runs to the end.
+    const start = actions.indexOf(
+      "export async function createAndSendRecruiterAssessmentAction(",
+    );
+    assert(start >= 0, "the Create action exists");
+    const body = actions.slice(start);
+    assert(body.includes("requireRecruiterWorkspace()"), "Create calls the workspace gate");
+    assert(body.includes("assessmentNotifier()"), "Create uses the existing notifier");
+    const page = readSource("src/app/hire/create-test/page.tsx");
+    assert(page.includes("listSendableCandidates"), "the page reads the live Shortlist");
+    assert(!page.includes("candidateUserId"), "no user id reaches the builder");
+  });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);
   process.exit(failed > 0 ? 1 : 0);

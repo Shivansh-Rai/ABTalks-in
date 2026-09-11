@@ -7,6 +7,7 @@ import type {
 import {
   assessmentDraftSchema,
   assignAssessmentSchema,
+  createAndSendSchema,
 } from "@/lib/validations/assessment";
 
 export type Scope = { organizationId: string; createdByUserId: string };
@@ -442,4 +443,130 @@ export async function getAssessmentMonitor(
     assignments,
     candidates,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Plan 131 — the builder's Create: save, publish and send in one step.
+// ---------------------------------------------------------------------------
+
+/** A Shortlisted candidate as the builder's send step sees it — no user id. */
+export type SendableCandidate = {
+  candidateRef: string;
+  label: string;
+  jobRole: string;
+};
+
+/** The recruiter's live Shortlist (both halves, searchable only), for the builder. */
+export async function listSendableCandidates(
+  store: AssessmentStore,
+  recruiterUserId: string,
+): Promise<SendableCandidate[]> {
+  const pool = await store.listAssignableCandidates(recruiterUserId);
+  return pool.map((c) => ({
+    candidateRef: c.candidateRef,
+    label: c.label,
+    jobRole: c.jobRole,
+  }));
+}
+
+export type CreateAndSendResult = {
+  id: string;
+  assigned: number;
+  alreadyAssigned: number;
+  notificationFailures: number;
+  /** Set when the assessment went live but assigning it failed. */
+  assignError: string | null;
+};
+
+type CreateAndSendOutcome =
+  | { ok: true; data: CreateAndSendResult }
+  | {
+      ok: false;
+      code: "NOT_FOUND" | "INVALID" | "CONFLICT";
+      message: string;
+      /** The saved draft, when one exists — the builder's retry updates it. */
+      assessmentId: string | null;
+    };
+
+/**
+ * Save the draft, publish it, and assign it to the Shortlisted candidates the
+ * recruiter ticked — each notified once through the existing notifier.
+ *
+ * Three steps that are each idempotent on their own, with no transaction
+ * across them, so every failure leaves a state the recruiter can finish from:
+ * - invalid input or a ref off the Shortlist → nothing is written at all;
+ * - save or publish fails → nothing is live; the draft's id comes back so the
+ *   next click updates it instead of creating a duplicate;
+ * - assign fails after publishing → the assessment is live with nobody on it;
+ *   `assignError` says so and the builder hands over to the detail page.
+ */
+export async function createPublishAndAssign(
+  store: AssessmentStore,
+  notifier: AssessmentNotifier,
+  scope: Scope,
+  input: unknown,
+): Promise<CreateAndSendOutcome> {
+  const parsed = createAndSendSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: parsed.error.issues[0]?.message ?? "Invalid assessment",
+      assessmentId: null,
+    };
+  }
+  const { draft } = parsed.data;
+  const refs = [...new Set(parsed.data.candidateRefs)];
+
+  // Checked before anything is saved: a stale pick must not leave a live
+  // assessment behind. assignAssessment re-checks (the Shortlist can change
+  // in between; that rare race lands in the assignError branch).
+  const pool = await store.listAssignableCandidates(scope.createdByUserId);
+  const onShortlist = new Set(pool.map((c) => c.candidateRef));
+  if (refs.some((ref) => !onShortlist.has(ref))) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message:
+        "Some of these candidates are no longer on your Shortlist. Refresh and try again.",
+      assessmentId: null,
+    };
+  }
+
+  const saved = draft.assessmentId
+    ? await saveAssessmentDraft(store, scope, draft)
+    : await createAssessment(store, scope, draft);
+  if (!saved.ok) {
+    return { ok: false, code: saved.code, message: saved.message, assessmentId: null };
+  }
+  const id = saved.data.id;
+
+  const published = await publishAssessment(store, scope, id);
+  if (!published.ok) {
+    return {
+      ok: false,
+      code: published.code,
+      message: published.message,
+      assessmentId: id,
+    };
+  }
+
+  const assigned = await assignAssessment(store, notifier, scope, {
+    assessmentId: id,
+    candidateRefs: refs,
+  });
+  if (!assigned.ok) {
+    return {
+      ok: true,
+      data: {
+        id,
+        assigned: 0,
+        alreadyAssigned: 0,
+        notificationFailures: 0,
+        assignError: assigned.message,
+      },
+    };
+  }
+
+  return { ok: true, data: { id, ...assigned.data, assignError: null } };
 }

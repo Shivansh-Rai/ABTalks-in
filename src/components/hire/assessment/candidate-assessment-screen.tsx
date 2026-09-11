@@ -108,7 +108,7 @@ export function CandidateAssessmentScreen({
     <div className="hire-cand-assess" data-stage={stage}>
       {stage === "preview" && (
         <p className="hire-cand-assess__banner" role="status">
-          Preview — this is exactly what the candidate sees. Answers are not
+          Preview of what the candidate will see. Answers are not
           saved.
         </p>
       )}

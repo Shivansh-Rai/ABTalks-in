@@ -5274,6 +5274,12 @@ html.dark .vc-card {
   .hire-assess__preview[data-active="false"] {
     display: block;
   }
+
+  /* Both panes are always on screen here, so Edit/Preview has nothing to
+     switch (plan 131). It stays below 1100px, where the panes do switch. */
+  .hire-assess__seg {
+    display: none;
+  }
 }
 
 @media (max-width: 1099px) {
@@ -5460,6 +5466,10 @@ html.dark .vc-card {
 
 .hire-assess__save {
   margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .hire-assess__savebtn {
@@ -5480,7 +5490,63 @@ html.dark .vc-card {
 
 .hire-assess__savebtn:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: not-allowed;
+}
+
+/* Plan 131 — the builder's send step and its two actions. */
+.hire-assess__savebtn--ghost {
+  border: 1px solid var(--h-primary);
+  background: #fff;
+  color: var(--h-primary);
+  box-shadow: none;
+}
+
+.hire-assess__save-hint {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+.hire-assess__confirm {
+  flex: 1 1 100%;
+}
+
+.hire-assess__send {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 14px;
+  background: #fbf9f7;
+}
+
+.hire-assess__send-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.hire-assess__send-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.hire-assess__send-empty {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess__send .hire-assess-assign__list {
+  max-height: 320px;
+  margin: 12px 0 0;
+  overflow-y: auto;
+}
+
+.hire-assess__send .hire-assess-assign__row {
+  background: #fff;
 }
 
 .hire-assess-list__head {
