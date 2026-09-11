@@ -18,6 +18,7 @@ import {
   House,
   LifeBuoy,
   MessageSquare,
+  Settings,
 } from "lucide-react";
 
 /**
@@ -100,6 +101,19 @@ export function HireSidebar({
                 <span className="sr-only"> unread</span>
               </span>
             )}
+          </Link>
+        )}
+        {account && (
+          <Link
+            href="/hire/settings"
+            className={cn(
+              "hire-side__item",
+              pathname.startsWith("/hire/settings") && "is-current",
+            )}
+            aria-current={pathname.startsWith("/hire/settings") ? "page" : undefined}
+          >
+            <Settings className="hire-side__icon" aria-hidden="true" />
+            Settings
           </Link>
         )}
         <span
