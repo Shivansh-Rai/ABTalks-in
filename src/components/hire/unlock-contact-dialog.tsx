@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -61,11 +61,13 @@ type Props = {
   className?: string;
   onUnlocked?: () => void;
   /**
-   * Replaces the default "Unlock contact" pill with a plain text trigger — the
-   * inspector's "Reveal email" / "Reveal number" rows. When set, the trigger
-   * takes only `className`, not the pill styling or lock icon.
+   * Replaces the default "Unlock contact" pill with a custom trigger — the
+   * inspector's "Reveal email" / "Reveal number" rows and the resume eye.
+   * When set, the trigger takes only `className`, not the pill styling.
    */
-  triggerLabel?: string;
+  triggerLabel?: ReactNode;
+  triggerAriaLabel?: string;
+  triggerTitle?: string;
 };
 
 type Preview = {
@@ -83,6 +85,8 @@ export function UnlockContactDialog({
   className,
   onUnlocked,
   triggerLabel,
+  triggerAriaLabel,
+  triggerTitle,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -150,6 +154,8 @@ export function UnlockContactDialog({
           type="button"
           className={className}
           aria-haspopup="dialog"
+          aria-label={triggerAriaLabel}
+          title={triggerTitle}
           onClick={openDialog}
         >
           {triggerLabel}

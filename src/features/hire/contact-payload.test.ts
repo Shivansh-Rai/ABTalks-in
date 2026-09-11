@@ -72,5 +72,42 @@ suite("pool released names use contactAccessFor on userId", () => {
   );
 });
 
+suite("inspector fetches contact only after unlock, never as a page prop", () => {
+  const src = stripComments(read("src/components/hire/candidate-inspector.tsx"));
+  assert(
+    src.includes("revealContactAction"),
+    "inspector must load contact through revealContactAction",
+  );
+  assert(
+    !/email\s*[:=]\s*match/.test(src) && !/match\.email/.test(src),
+    "inspector must not read email off the match card",
+  );
+});
+
+suite("unlock reveal selects email/phone only through loadProtectedContact", () => {
+  const src = read("src/features/hire/unlock-contact.ts");
+  assert(
+    src.includes("loadProtectedContact("),
+    "revealUnlockedContact must call loadProtectedContact",
+  );
+  const stripped = stripComments(src);
+  assert(
+    !stripped.includes("email: true") && !stripped.includes("phone: true"),
+    "unlock-contact.ts must not select email/phone itself",
+  );
+});
+
+suite("inspector resume uses credit unlock, not the billing placeholder", () => {
+  const src = read("src/components/hire/candidate-inspector.tsx");
+  assert(
+    !src.includes('setGate("resume")'),
+    "resume must not open SubscriptionGate — billing is not enabled",
+  );
+  assert(
+    src.includes("UnlockContactDialog"),
+    "locked resume must go through the $10 credit unlock",
+  );
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

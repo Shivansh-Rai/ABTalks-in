@@ -137,38 +137,53 @@ console.log("T-253 instrumentation structure: transport, emit sites, exclusions"
 
 // ── Every emit site, exactly once ────────────────────────────────────────────
 
-const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, string> = {
-  recruiterRegSubmitted: "src/components/talent/recruiter-register-form.tsx",
-  recruiterCandidateViewed: "src/components/talent/track-candidate-view.tsx",
-  recruiterContactUnlocked: "src/components/admin/engagement-decision.tsx",
-  siteProfileUpdated: "src/components/profile/use-section-save.ts",
-  siteSkillAdded: "src/components/profile/skills-section.tsx",
-  siteJobApplied: "src/components/jobs/apply-job-button.tsx",
-  siteTestCompleted: "src/app/quiz/[quizId]/quiz-form.tsx",
+// One event may have more than one canonical emit site when there is more
+// than one canonical entry point for the action it describes. Recruiter
+// registration is the current case: /talent/register (the legacy dedicated
+// page) and /recruiter-onboarding/signup (the onboarding flow) are both
+// live entry points that call the same server action. Any single user
+// completes one path or the other, so the event still fires once per
+// registration outcome — the "one action, one event" invariant holds even
+// though two files reference the constant.
+const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, readonly string[]> = {
+  recruiterRegSubmitted: [
+    "src/components/talent/recruiter-register-form.tsx",
+    "src/components/recruiter-onboarding/signup-screen.tsx",
+  ],
+  recruiterCandidateViewed: ["src/components/talent/track-candidate-view.tsx"],
+  recruiterContactUnlocked: ["src/components/admin/engagement-decision.tsx"],
+  siteProfileUpdated: ["src/components/profile/use-section-save.ts"],
+  siteSkillAdded: ["src/components/profile/skills-section.tsx"],
+  siteJobApplied: ["src/components/jobs/apply-job-button.tsx"],
+  siteTestCompleted: ["src/app/quiz/[quizId]/quiz-form.tsx"],
 };
 
 {
-  for (const [key, expectedPath] of Object.entries(EMIT_SITES)) {
+  for (const [key, expectedPaths] of Object.entries(EMIT_SITES)) {
     const marker = `ANALYTICS_EVENTS.${key}`;
     const users = APP.filter(
       (f) => f.path !== "src/lib/analytics/events.ts" && f.code.includes(marker),
     );
+    const foundPaths = users.map((f) => f.path).sort();
+    const expected = [...expectedPaths].sort();
     assert(
-      users.length === 1,
-      `${marker} should be emitted from exactly one file, found ${users.length}: ${users.map((f) => f.path).join(", ")}`,
+      users.length === expectedPaths.length,
+      `${marker} should be emitted from ${expectedPaths.length} file(s), found ${users.length}: ${foundPaths.join(", ")}`,
     );
     assert(
-      users[0].path === expectedPath,
-      `${marker} should be emitted from ${expectedPath}, found ${users[0].path}`,
+      foundPaths.join("|") === expected.join("|"),
+      `${marker} should be emitted from ${expected.join(", ")}, found ${foundPaths.join(", ")}`,
     );
     // Twice in one file is the other way to double-count a single action.
-    const occurrences = users[0].code.split(marker).length - 1;
-    assert(
-      occurrences === 1,
-      `${marker} appears ${occurrences} times in ${users[0].path} — one action must emit once`,
-    );
+    for (const user of users) {
+      const occurrences = user.code.split(marker).length - 1;
+      assert(
+        occurrences === 1,
+        `${marker} appears ${occurrences} times in ${user.path} — each emit site must reference it exactly once`,
+      );
+    }
   }
-  ok("emit sites: each of the 7 events is emitted from exactly one place, once");
+  ok("emit sites: every event's declared canonical path(s) each reference it exactly once");
 }
 
 {
@@ -218,7 +233,7 @@ const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, string> = {
 {
   // The one emit site that is not inside an `if (ok)` branch is the profile-view
   // beacon, which fires on render — so it carries its own once-guard instead.
-  const beacon = ALL.find((f) => f.path === EMIT_SITES.recruiterCandidateViewed);
+  const beacon = ALL.find((f) => f.path === EMIT_SITES.recruiterCandidateViewed[0]);
   assert(beacon !== undefined, "the candidate-view beacon is missing");
   assert(
     /useRef/.test(beacon!.text) && /emittedFor/.test(beacon!.text),
@@ -236,7 +251,9 @@ const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, string> = {
 {
   const EXCLUDED: { label: string; paths: string[] }[] = [
     {
-      label: "candidate visibility toggles",
+      // The candidate visibility toggles these files held were removed in plan
+      // 133; the files stay excluded so tracking is not added in their place.
+      label: "former candidate visibility surfaces",
       paths: [
         "src/app/actions/talent-actions.ts",
         "src/components/profile/evidence-section.tsx",

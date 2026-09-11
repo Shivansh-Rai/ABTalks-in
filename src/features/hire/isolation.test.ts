@@ -163,5 +163,87 @@ suite("middleware protects /assessments and stays edge-safe", () => {
   assert(!src.includes('from "@/lib'), "middleware must not import @/lib/*");
 });
 
+suite("talent project mutations scope rows to the caller", () => {
+  const src = read("src/app/actions/talent-project-actions.ts");
+  assert(
+    src.includes("recruiterUserId: gate.data.userId"),
+    "project writes must bind recruiterUserId from the session gate",
+  );
+  assert(
+    src.includes("request: { recruiterUserId: gate.data.userId }"),
+    "pipeline decisions must nest the request owner in the where",
+  );
+});
+
+suite("recruiter job actions resolve the caller from the workspace", () => {
+  const src = read("src/app/actions/recruiter-job-actions.ts");
+  const gateCalls = src.split("requireRecruiterWorkspace()").length - 1;
+  assert(
+    gateCalls >= 4,
+    `every job action must call requireRecruiterWorkspace() (found ${gateCalls}, need 4)`,
+  );
+  assert(
+    src.includes("getMyJobAction") && src.includes("listMyJobsAction"),
+    "workspace-scoped job reads must exist",
+  );
+  assert(
+    !/recruiterId:\s*input/.test(src) && !/recruiterId:\s*parsed/.test(src),
+    "the client must not supply the job owner id",
+  );
+});
+
+suite("credits and ledger take no organization id from the client", () => {
+  const src = read("src/features/hire/credits.ts");
+  assert(
+    src.includes("requireRecruiterWorkspace()"),
+    "credit reads must resolve the workspace from the session",
+  );
+  assert(
+    src.includes("getCreditBalance(workspace.data.organizationId)"),
+    "balance must use the session organization, not a payload id",
+  );
+  assert(
+    src.includes("listCreditTransactions(workspace.data.organizationId"),
+    "ledger must use the session organization, not a payload id",
+  );
+});
+
+suite("unlock spend is workspace-scoped and rate-limited", () => {
+  const action = read("src/app/actions/hire-unlock-actions.ts");
+  assert(
+    action.includes("requireRecruiterWorkspace()"),
+    "unlockContactAction must resolve the caller before spending",
+  );
+  assert(
+    action.includes('bucket: "UNLOCK"'),
+    "unlockContactAction must call assertRateLimit UNLOCK",
+  );
+  const feature = read("src/features/hire/unlock-contact.ts");
+  assert(
+    feature.includes("requireRecruiterWorkspace()"),
+    "the unlock feature must also resolve the workspace from the session",
+  );
+  assert(
+    feature.includes("loadProtectedContact"),
+    "reveal must go through loadProtectedContact",
+  );
+});
+
+suite("outreach threads are owned by the sending recruiter", () => {
+  const src = read("src/app/actions/outreach-actions.ts");
+  assert(
+    src.includes("requireRecruiterWorkspace()"),
+    "recruiter outreach must use the workspace gate",
+  );
+  assert(
+    src.includes("recruiterUserId: userId"),
+    "thread lookup must include recruiterUserId",
+  );
+  assert(
+    src.includes('bucket: "OUTREACH"'),
+    "outreach must be rate-limited",
+  );
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

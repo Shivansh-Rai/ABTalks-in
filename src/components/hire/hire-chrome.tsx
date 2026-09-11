@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Bookmark, ClipboardCheck, UserCheck, X } from "lucide-react";
+import { Bookmark, ClipboardCheck, FolderKanban, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
@@ -102,7 +102,8 @@ export function HireChrome({
       pathname !== "/hire/messages" &&
       pathname !== "/hire/matches" &&
       pathname !== "/hire/create-test" &&
-      pathname !== "/hire/assessments");
+      pathname !== "/hire/assessments" &&
+      pathname !== "/hire/settings");
   // Any desk route, not just `/hire`: "New search" inside a project returns
   // `/hire/[id]` to screen 1 without leaving the project.
   const isLanding = desk && landing && view === "scout";
@@ -254,7 +255,24 @@ export function HireChrome({
           </>
           )}
           {account ? (
-            <RecruiterAccountMenu account={account} />
+            <>
+              {isLanding && (
+                <Link
+                  href="/hire/requests"
+                  className={cn(
+                    "hire-hbtn",
+                    "hire-hbtn--label",
+                    "hire-hbtn--landing-projects",
+                    pathname === "/hire/requests" && "is-current",
+                  )}
+                  title="View your past search projects"
+                >
+                  <FolderKanban className="hire-hbtn__svg" aria-hidden="true" />
+                  <span>Projects</span>
+                </Link>
+              )}
+              <RecruiterAccountMenu account={account} />
+            </>
           ) : (
             <button
               type="button"

@@ -61,15 +61,16 @@ async function main() {
 
   await suite("emailDeliveryFrom maps all three sendEmail states", () => {
     assert(
-      emailDeliveryFrom({ ok: true }) === "delivered",
+      emailDeliveryFrom({ ok: true, deliveryId: "d1" }) === "delivered",
       "a sent email is 'delivered'",
     );
     assert(
-      emailDeliveryFrom({ ok: false, skipped: true }) === "skipped",
+      emailDeliveryFrom({ ok: false, skipped: true, deliveryId: "d2" }) ===
+        "skipped",
       "a deliberately skipped send is 'skipped', not 'failed'",
     );
     assert(
-      emailDeliveryFrom({ ok: false }) === "failed",
+      emailDeliveryFrom({ ok: false, deliveryId: "d3" }) === "failed",
       "a throwing send is 'failed'",
     );
   });

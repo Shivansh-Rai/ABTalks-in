@@ -604,6 +604,64 @@ suite("evidence is read from real rows only", () => {
   assert(!src.includes("selfRated"), "self-rating is never selected as evidence");
 });
 
+/* ─── Plan 133: no candidate-controlled visibility on profile surfaces ─── */
+
+suite("the candidate's evidence read carries no recruiter-visibility state", () => {
+  const src = code("src/features/profile/get-evidence.ts");
+  // Visibility is a platform decision, so it is not the candidate's data to be
+  // shown as though they could change it.
+  assert(!src.includes("candidateVisibility"), "does not read CandidateVisibility");
+  assert(!src.includes("recruiterVisibility"), "does not return recruiterVisibility");
+  assert(!src.includes("searchableByRecruiters"), "does not return discoverability");
+  assert(!/show[A-Z][a-zA-Z]+:/.test(src), "does not return a per-field show* flag");
+});
+
+suite("no profile surface renders discoverability or per-field visibility", () => {
+  for (const rel of [
+    "src/components/profile/evidence-section.tsx",
+    "src/app/profile/page.tsx",
+  ]) {
+    const src = code(rel);
+    assert(!src.includes("recruiterVisibility"), `${rel}: no visibility prop`);
+    assert(!/discoverab/i.test(src), `${rel}: no discoverability copy`);
+    assert(
+      !/recruiter visibility/i.test(src),
+      `${rel}: no "recruiter visibility" label`,
+    );
+    assert(
+      !/shown["']?\s*:\s*["']?hidden|\?\s*"shown"\s*:\s*"hidden"/.test(src),
+      `${rel}: no shown/hidden field toggle copy`,
+    );
+  }
+});
+
+suite("no profile write path touches recruiter visibility", () => {
+  for (const rel of [
+    "src/app/actions/candidate-profile-actions.ts",
+    "src/repositories/candidate-detail.ts",
+    "src/repositories/candidate.ts",
+    "src/lib/validations/candidate-profile.ts",
+  ]) {
+    const src = code(rel);
+    assert(
+      !/candidateVisibility\.(create|update|upsert|updateMany|delete)/.test(src),
+      `${rel} must not write CandidateVisibility`,
+    );
+    assert(
+      !src.includes("recruiterVisibilityConsentAt"),
+      `${rel} must not write the legacy consent column`,
+    );
+    for (const key of [
+      "searchableByRecruiters",
+      "isDiscoverable",
+      "fieldVisibility",
+      "visibleFields",
+    ]) {
+      assert(!src.includes(`${key}:`), `${rel} must not accept ${key}`);
+    }
+  }
+});
+
 /* ─── Completeness ───────────────────────────────────────────────────────── */
 
 function detailFixture(over: Partial<CandidateDetail> = {}): CandidateDetail {
