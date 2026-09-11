@@ -38,6 +38,9 @@ import {
 import type { MatchCardData, MatchDecision } from "@/components/hire/match-card";
 import { cn } from "@/lib/utils";
 import { MaskedName } from "@/components/hire/desk-match-card";
+import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
+import { revealContactAction } from "@/app/actions/hire-unlock-actions";
+import type { RevealedContact } from "@/features/hire/unlock-contact";
 import {
   SubscriptionGate,
   type GateReason,
@@ -232,30 +235,30 @@ export function CandidateInspector({
   const platforms: { title: string; sub: string; date: string }[] = sample
     ? []
     : [
-        ...(e.certificateIssued
-          ? [
-              {
-                title: "Track certificate",
-                sub: track ?? "ABTalks",
-                date: "Issued",
-              },
-            ]
-          : []),
-        {
-          title: "GitHub",
-          sub: e.githubConnected
-            ? typeof e.commitDayCount === "number"
-              ? `${e.commitDayCount} verified commit days`
-              : "Connected"
-            : "Not connected",
-          date: e.githubConnected ? "Verified" : "",
-        },
-        {
-          title: "LinkedIn",
-          sub: e.linkedinConnected ? "Connected" : "Not connected",
-          date: e.linkedinConnected ? "Verified" : "",
-        },
-      ];
+      ...(e.certificateIssued
+        ? [
+          {
+            title: "Track certificate",
+            sub: track ?? "ABTalks",
+            date: "Issued",
+          },
+        ]
+        : []),
+      {
+        title: "GitHub",
+        sub: e.githubConnected
+          ? typeof e.commitDayCount === "number"
+            ? `${e.commitDayCount} verified commit days`
+            : "Connected"
+          : "Not connected",
+        date: e.githubConnected ? "Verified" : "",
+      },
+      {
+        title: "LinkedIn",
+        sub: e.linkedinConnected ? "Connected" : "Not connected",
+        date: e.linkedinConnected ? "Verified" : "",
+      },
+    ];
 
   const experienceSummary = [
     years ? `${years} year${years === 1 ? "" : "s"} total` : null,

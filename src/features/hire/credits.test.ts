@@ -57,6 +57,10 @@ function source(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
 const CREDITS_REPO = "src/repositories/credits.ts";
 const CREDITS_FEATURE = "src/features/hire/credits.ts";
 const SETUP_ACTION = "src/app/actions/recruiter-setup-actions.ts";
@@ -540,12 +544,29 @@ suite("entitlements.ts still fails closed", () => {
   );
 });
 
-suite("no contact-unlock server action was added", () => {
-  const files = walk("src/app/actions");
-  const offenders = files.filter((f) =>
-    /unlockContact|UNLOCK_CONTACT/.test(readFileSync(f, "utf8")),
+suite("the unlock key has exactly one definition", () => {
+  // T-228 reserved this namespace and T-229 now uses it. What must stay true is
+  // that one function mints it: a hand-rolled `unlock:...` string somewhere
+  // else is a second key for the same movement, and two keys for one charge is
+  // how a double-charge gets in past a unique index.
+  const minters = walk("src")
+    .filter((f) => !f.endsWith(".test.ts"))
+    .filter((f) => /`unlock:\$\{/.test(readFileSync(f, "utf8")));
+  assert(
+    minters.length === 1 &&
+      minters[0].endsWith(join("repositories", "credits.ts")),
+    `the unlock key must be built in one place, found: ${minters.join(", ")}`,
   );
-  assert(offenders.length === 0, `T-229 code has leaked in: ${offenders.join(", ")}`);
+});
+
+suite("the credit layer stays generic — it knows nothing about unlocking", () => {
+  // Code only — the doc comment names TalentEngagementRequest precisely to
+  // explain why this file does not touch it.
+  const repo = stripComments(source(CREDITS_REPO));
+  assert(
+    !/hasContactAccess|talentEngagementRequest/i.test(repo),
+    "the ledger must not reach into contact access; the unlock composes them",
+  );
 });
 
 /* ─── helpers ────────────────────────────────────────────────────────────── */

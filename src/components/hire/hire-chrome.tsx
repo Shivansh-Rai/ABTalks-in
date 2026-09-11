@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
+import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
@@ -27,11 +28,14 @@ import { cn } from "@/lib/utils";
 
 export function HireChrome({
   account,
+  credits,
   serverCartCount,
   podRows,
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
+  /** Null when this visitor has no recruiter workspace to have a balance in. */
+  credits: { balanceMinor: number; currency: string } | null;
   serverCartCount: number;
   podRows: CartRow[];
   children: React.ReactNode;
@@ -175,58 +179,60 @@ export function HireChrome({
         </Link>
 
         <nav className="hire-app__nav">
-          {!isLanding && (
-            <>
-              <button
-                type="button"
-                className={cn(
-                  "hire-hbtn",
-                  starCount > 0 && "has-count",
-                  view === "saved" && "is-current",
-                )}
-                aria-current={view === "saved" ? "page" : undefined}
-                title="Kept on this device — nothing is sent to our team from here"
-                onClick={() => (view === "saved" ? closePod() : openSaved())}
-              >
-                <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
-                  <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
-                </span>
-                <span>Save for Later</span>
-                {starCount > 0 && (
-                  <span className="hire-hbtn__count">{starCount}</span>
-                )}
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "hire-hbtn",
-                  cartCount > 0 && "has-count",
-                  view === "pod" && "is-current",
-                )}
-                aria-current={view === "pod" ? "page" : undefined}
-                onClick={() => (view === "pod" ? closePod() : openPod())}
-              >
-                <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
-                  <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
-                </span>
-                <span>Shortlist</span>
-                {cartCount > 0 && (
-                  <span className="hire-hbtn__count">{cartCount}</span>
-                )}
-              </button>
-              <Link
-                href="/hire/assessments"
-                className={cn(
-                  "hire-hbtn",
-                  "hire-hbtn--label",
-                  pathname === "/hire/assessments" && "is-current",
-                )}
-                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
-              >
-                <span>Assessments</span>
-              </Link>
-            </>
-          )}
+          <button
+            type="button"
+            className={cn(
+              "hire-hbtn",
+              starCount > 0 && "has-count",
+              view === "saved" && "is-current",
+            )}
+            aria-current={view === "saved" ? "page" : undefined}
+            title="Kept on this device — nothing is sent to our team from here"
+            onClick={() => (view === "saved" ? closePod() : openSaved())}
+          >
+            <span className="hire-hbtn__icon hire-hbtn__icon--list" aria-hidden="true">
+              <img src="/hire/shortlist.jpg" alt="" width={14} height={18} />
+            </span>
+            <span>Save for Later</span>
+            {starCount > 0 && (
+              <span className="hire-hbtn__count">{starCount}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "hire-hbtn",
+              cartCount > 0 && "has-count",
+              view === "pod" && "is-current",
+            )}
+            aria-current={view === "pod" ? "page" : undefined}
+            onClick={() => (view === "pod" ? closePod() : openPod())}
+          >
+            <span className="hire-hbtn__icon hire-hbtn__icon--pod" aria-hidden="true">
+              <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
+            </span>
+            <span>Shortlist</span>
+            {cartCount > 0 && (
+              <span className="hire-hbtn__count">{cartCount}</span>
+            )}
+          </button>
+          {credits ? (
+            <CreditBalancePill
+              balanceMinor={credits.balanceMinor}
+              currency={credits.currency}
+            />
+          ) : null}
+          <Link
+            href="/hire/assessments"
+            className={cn(
+              "hire-hbtn",
+              "hire-hbtn--label",
+              pathname === "/hire/assessments" && "is-current",
+            )}
+            aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+          >
+            <span>Assessments</span>
+          </Link>
           {account ? (
             <RecruiterAccountMenu account={account} />
           ) : (
