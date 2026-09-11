@@ -99,7 +99,7 @@ function GetStartedCta({
 export function LandingNav({ user, showRecruiterCta = false }: Props) {
   const getStartedItems = showRecruiterCta
     ? GET_STARTED_ITEMS
-    : GET_STARTED_ITEMS.filter((item) => item.href !== "/hire");
+    : GET_STARTED_ITEMS.filter((item) => item.href !== "/recruiter-onboarding");
 
   const wrapRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
