@@ -19,6 +19,10 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const isWorkshop =
     pathname === "/workshop" || pathname.startsWith("/workshop/");
   const isHire = pathname === "/hire" || pathname.startsWith("/hire/");
+  // Fills exactly one viewport and must not scroll; BottomNav is hidden there too.
+  const isRecruiterOnboarding =
+    pathname === "/recruiter-onboarding" ||
+    pathname.startsWith("/recruiter-onboarding/");
 
   useEffect(() => {
     document.body.classList.toggle("landing-page", isLanding);
@@ -35,6 +39,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
           !isDashboardShellRoute &&
           !isWorkshop &&
           !isHire &&
+          !isRecruiterOnboarding &&
           "pb-16 md:pb-0",
       )}
     >
