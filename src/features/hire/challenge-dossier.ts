@@ -6,6 +6,7 @@ import {
   listQuizAggregates,
   listSubmissionActivity,
 } from "@/repositories/hire";
+import { RECRUITER_FIELD_POLICY } from "@/repositories/talent";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { computeCoverage, loadAvailabilityByUserId } from "@/features/hire/dossier";
 import {
@@ -314,7 +315,7 @@ export async function buildChallengeDossierSet(opts: {
         cohortProgress: derived({ day: elapsed, ofDays: CHALLENGE_TOTAL_DAYS }),
         certificateIssued: verified(e.certificate?.status === "ISSUED"),
         quizAverage: verified(
-          p.showAssessmentScores &&
+          RECRUITER_FIELD_POLICY.assessmentScores &&
             q &&
             q._count > 0 &&
             q._avg.score != null

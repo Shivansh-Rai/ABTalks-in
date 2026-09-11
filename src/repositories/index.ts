@@ -19,7 +19,6 @@ export {
   searchCandidates,
   searchableUserWhere,
   filterSearchableUserIds,
-  visibleProgramMemberWhere,
 } from "./talent";
 export {
   getBalance,

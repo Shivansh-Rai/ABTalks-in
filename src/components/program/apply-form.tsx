@@ -35,7 +35,6 @@ export function ApplyForm({
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [skillInput, setSkillInput] = useState("");
-  const [recruiterVisibility, setRecruiterVisibility] = useState(false);
 
   const form = useForm<ApplyFormInput, unknown, ApplyProfileInput>({
     resolver: zodResolver(applyProfileSchema),
@@ -44,7 +43,6 @@ export function ApplyForm({
       linkedinUrl: initialLinkedinUrl,
       githubUsername: "",
       githubRepoUrl: "",
-      recruiterVisibilityConsent: false,
     },
   });
 
@@ -93,11 +91,7 @@ export function ApplyForm({
   async function onSubmit(values: ApplyProfileInput) {
     setSubmitting(true);
     try {
-      const res = await applyToProgramAction({
-        ...values,
-        joinCode,
-        recruiterVisibilityConsent: recruiterVisibility,
-      });
+      const res = await applyToProgramAction({ ...values, joinCode });
       if (!res.ok) {
         toast.error(res.message);
         return;
@@ -203,24 +197,6 @@ export function ApplyForm({
         </label>
         <FieldError message={errors.hasLaptop8Gb?.message} />
       </div>
-
-      <label className="flex items-start gap-3 text-sm leading-snug">
-        <input
-          type="checkbox"
-          className="mt-0.5 size-4 shrink-0 rounded border"
-          checked={recruiterVisibility}
-          onChange={(e) => {
-            setRecruiterVisibility(e.target.checked);
-            setValue("recruiterVisibilityConsent", e.target.checked);
-          }}
-        />
-        <span>
-          I opt in to share my program profile with approved recruiters on the
-          ABTalks talent portal after results are published (email, LinkedIn,
-          resume, GitHub, scores, and interview summary — not my phone or full
-          interview transcript).
-        </span>
-      </label>
 
       <Button
         type="submit"

@@ -19,6 +19,7 @@ import {
   listQuizAggregates,
 } from "@/repositories/hire";
 import {
+  RECRUITER_FIELD_POLICY,
   searchCandidates as searchTalentRepo,
   searchableUserWhere,
 } from "@/repositories/talent";
@@ -111,8 +112,6 @@ async function main() {
         userId: true,
         searchableByRecruiters: true,
         withdrawnAt: true,
-        showInterviewResults: true,
-        showAssessmentScores: true,
       },
     }),
   ]);
@@ -350,13 +349,12 @@ async function main() {
       if (match.userId && withdrawnIds.has(match.userId)) {
         fail(`hire search included withdrawn ${match.userId}`);
       }
-      const vis = match.userId ? visByUser.get(match.userId) : undefined;
-      if (vis && vis.showInterviewResults !== true) {
+      if (!RECRUITER_FIELD_POLICY.interviewResults) {
         if (interviewHasDetail(match.dossier?.evidence.interview.value)) {
           fail(`interview leaked for ${match.userId}`);
         }
       }
-      if (vis && vis.showAssessmentScores !== true) {
+      if (!RECRUITER_FIELD_POLICY.assessmentScores) {
         const quiz = match.dossier?.evidence.quizAverage?.value;
         if (typeof quiz === "number") fail(`quiz leaked for ${match.userId}`);
       }
@@ -401,48 +399,29 @@ async function main() {
     }
   }
 
+  // Field exposure is one platform policy (plan 133), so there is no per-user
+  // flag to compare against — only the policy and what actually came back.
   const quizUsers = challengeRows.map((r) => r.userId);
   const quiz = await listQuizAggregates(quizUsers);
-  const quizByUser = new Map(quiz.map((q) => [q.userId, q]));
-  let quizHidden = 0;
-  let quizShown = 0;
-  for (const row of challengeRows) {
-    const vis = visByUser.get(row.userId);
-    const agg = quizByUser.get(row.userId);
-    if (vis?.showAssessmentScores !== true) {
-      quizHidden += 1;
-      if (
-        row.recruiterIdentity.showAssessmentScores &&
-        agg &&
-        agg._count > 0 &&
-        agg._avg.score != null
-      ) {
-        fail(`showAssessmentScores identity true while vis false ${row.userId}`);
-      }
-    } else {
-      quizShown += 1;
-    }
-  }
-  log("quiz_visibility", { hidden_flag: quizHidden, shown_flag: quizShown });
+  const withQuiz = quiz.filter((q) => q._count > 0 && q._avg.score != null);
+  log("quiz_visibility", {
+    policy: RECRUITER_FIELD_POLICY.assessmentScores ? "shown" : "hidden",
+    challenge_rows: challengeRows.length,
+    with_quiz_data: withQuiz.length,
+  });
 
-  let interviewHidden = 0;
-  let interviewShown = 0;
   let interviewLeaked = 0;
-  for (const row of programRows) {
-    const vis = visByUser.get(row.userId);
-    if (vis?.showInterviewResults !== true) {
-      interviewHidden += 1;
+  if (!RECRUITER_FIELD_POLICY.interviewResults) {
+    for (const row of programRows) {
       if (interviewHasDetail(row.interview)) {
         interviewLeaked += 1;
-        fail(`interview detail present without showInterviewResults ${row.userId}`);
+        fail(`interview detail present although the policy hides it ${row.userId}`);
       }
-    } else {
-      interviewShown += 1;
     }
   }
   log("interview_visibility", {
-    hidden_flag: interviewHidden,
-    shown_flag: interviewShown,
+    policy: RECRUITER_FIELD_POLICY.interviewResults ? "shown" : "hidden",
+    program_rows: programRows.length,
     leaked: interviewLeaked,
   });
 
