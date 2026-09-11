@@ -1200,6 +1200,9 @@ model TalentRequest {
   engagements              TalentEngagementRequest[]
   virtualCandidates        VirtualCandidate[]        @relation("VirtualCandidateOrigin")
   virtualCandidateRequests VirtualCandidateRequest[] @relation("VirtualCandidateRequestBrief")
+  /// Plan 133 — every search run inside this project, and the assessments filed under it.
+  sessions                 TalentSearchSession[]
+  assessmentLinks          TalentProjectAssessment[]
 
   @@index([recruiterUserId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
@@ -1212,9 +1215,68 @@ model TalentRequestMessage {
   content   String
   options   Json?
   createdAt DateTime      @default(now())
+  /// Plan 133. The search session this turn belongs to. Null only on rows
+  /// written before sessions existed, until `ensureLegacySession` files them
+  /// under Session 1.
+  sessionId String?
   request   TalentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  session   TalentSearchSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([requestId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+/// Plan 133. One search inside a project (TalentRequest): its own prompt,
+/// brief, chat and results. "New search" adds one; it never replaces another.
+///
+/// The shortlist is NOT here — decisions stay project-level on
+/// TalentRequestMatch, so a candidate shortlisted in session 1 is still
+/// shortlisted when session 2 shows them.
+model TalentSearchSession {
+  id                 String    @id @default(cuid())
+  requestId          String
+  /// 1, 2, 3… within the project. Unique, which is what makes creating one
+  /// (and materializing a legacy Session 1) safe under concurrency.
+  ordinal            Int
+  /// The recruiter's opening prompt for this search, trimmed.
+  title              String
+  /// This session's brief (JobSpec). The project's TalentRequest columns
+  /// mirror the latest session's brief for existing readers.
+  spec               Json?
+  /// Ordered candidates from this session's last run.
+  resultCandidateIds String[]  @default([])
+  /// Per-candidate scoring from this session's last run, so a later session
+  /// re-scoring the same person does not rewrite what this one showed.
+  resultSnapshot     Json?
+  overallGap         String?
+  matchCount         Int?
+  lastRunAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  request  TalentRequest          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  messages TalentRequestMessage[]
+
+  @@unique([requestId, ordinal])
+  @@index([requestId, createdAt(sort: Desc)])
+}
+
+/// Plan 133. Files a recruiter assessment under one project.
+///
+/// A separate table so the assessment system (T-243/T-244) is not modified:
+/// an assessment with no row here is "Unassigned", exactly as every
+/// assessment was before this existed. At most one project per assessment.
+model TalentProjectAssessment {
+  id             String   @id @default(cuid())
+  requestId      String
+  assessmentId   String   @unique
+  linkedByUserId String
+  createdAt      DateTime @default(now())
+
+  request    TalentRequest       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
 }
 
 /// A recruiter's triage verdict on ONE match.
@@ -3194,6 +3256,7 @@ model Organization {
   logoUrl    String?
   industry   String?
   sizeBucket String?
+  location   String?
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -3263,6 +3326,8 @@ model RecruiterAssessment {
   createdBy    User                            @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
   questions    AssessmentQuestion[]
   assignments  RecruiterAssessmentAssignment[]
+  /// Plan 133 back-relation only; owned by TalentProjectAssessment.
+  projectLink  TalentProjectAssessment?
 
   @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
   @@index([status])
