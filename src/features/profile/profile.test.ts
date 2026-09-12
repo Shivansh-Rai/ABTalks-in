@@ -25,6 +25,13 @@ import {
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
 import { computeCompleteness } from "@/features/profile/completeness";
+import {
+  CANONICAL_SKILLS,
+  CANONICAL_SKILL_NAMES,
+  SKILL_GROUPS,
+  canonicalSkillName,
+  searchCanonicalSkills,
+} from "@/lib/skill-catalog";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
 
 let passed = 0;
@@ -1648,6 +1655,243 @@ suite("dead profile components are gone", () => {
     }
     assert(!exists, rel + " should have been deleted");
   }
+});
+
+/* ─── Skill catalog (tech, research, engineering) ────────────────────────── */
+
+const squashSkill = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Names whose punctuation IS the name: C, C++ and C# all squash to "c". They
+ * are distinct skills, and the exact-key lookup keeps them apart — only the
+ * punctuation-insensitive fallback sees them as one, which is why "c" resolves
+ * to the language C and the other two are only ever reached by typing them.
+ */
+const SQUASH_COLLISIONS_ALLOWED = new Set(["c"]);
+
+suite("the catalog holds exactly one spelling per skill", () => {
+  const byName = new Map<string, string>();
+  for (const entry of CANONICAL_SKILLS) {
+    const key = squashSkill(entry.name);
+    const clash = byName.get(key);
+    assert(
+      !clash || SQUASH_COLLISIONS_ALLOWED.has(key),
+      `duplicate entry: ${entry.name} and ${clash}`,
+    );
+    if (!clash) byName.set(key, entry.name);
+  }
+  for (const name of ["C", "C++", "C#"]) {
+    assert(
+      canonicalSkillName(name) === name,
+      `${name} must survive folding as itself, got ${canonicalSkillName(name)}`,
+    );
+  }
+
+  // An alias that lands on another entry's name, or that two entries share,
+  // makes canonicalSkillName() depend on array order. That is how a catalog
+  // quietly starts folding "React" onto "React Native".
+  const byAlias = new Map<string, string>();
+  for (const entry of CANONICAL_SKILLS) {
+    for (const alias of entry.aliases ?? []) {
+      assert(alias === alias.toLowerCase(), `alias must be lower-case: ${alias}`);
+      assert(alias.trim() === alias, `alias must be trimmed: ${alias}`);
+      const key = squashSkill(alias);
+      const asName = byName.get(key);
+      assert(
+        !asName || asName === entry.name,
+        `alias "${alias}" on ${entry.name} collides with the skill ${asName}`,
+      );
+      const other = byAlias.get(key);
+      assert(
+        !other || other === entry.name,
+        `alias "${alias}" is claimed by both ${entry.name} and ${other}`,
+      );
+      byAlias.set(key, entry.name);
+    }
+  }
+  assert(byAlias.size > 200, `expected a broad alias table, got ${byAlias.size}`);
+});
+
+suite("every alias folds onto its canonical spelling", () => {
+  for (const entry of CANONICAL_SKILLS) {
+    assert(
+      canonicalSkillName(entry.name) === entry.name,
+      `${entry.name} must be its own canonical form`,
+    );
+    for (const alias of entry.aliases ?? []) {
+      const folded = canonicalSkillName(alias);
+      assert(
+        folded === entry.name,
+        `"${alias}" folded to "${folded}", expected ${entry.name}`,
+      );
+    }
+  }
+  // Spelling and spacing are handled by the squash pass, not by listing every
+  // permutation as an alias.
+  for (const [typed, expected] of [
+    ["tailwindcss", "Tailwind CSS"],
+    ["Tailwind css", "Tailwind CSS"],
+    ["TAILWINDCSS", "Tailwind CSS"],
+    ["node js", "Node.js"],
+    ["postgre sql", "PostgreSQL"],
+    ["scikit learn", "scikit-learn"],
+    ["k8s", "Kubernetes"],
+  ] as const) {
+    assert(
+      canonicalSkillName(typed) === expected,
+      `"${typed}" should fold to ${expected}, got ${canonicalSkillName(typed)}`,
+    );
+  }
+});
+
+suite("skill names are written the way their own docs write them", () => {
+  for (const name of [
+    "Tailwind CSS",
+    "Node.js",
+    "Next.js",
+    "TypeScript",
+    "JavaScript",
+    "PostgreSQL",
+    "MongoDB",
+    "GraphQL",
+    "scikit-learn",
+    "PyTorch",
+    "TensorFlow",
+    "MATLAB",
+    "AutoCAD",
+    "SolidWorks",
+    "LabVIEW",
+    "KiCad",
+    "STAAD.Pro",
+    "LaTeX",
+    "MySQL",
+  ]) {
+    assert(
+      CANONICAL_SKILL_NAMES.includes(name),
+      `${name} must be spelled exactly that way in the catalog`,
+    );
+  }
+  for (const entry of CANONICAL_SKILLS) {
+    assert(entry.name.trim() === entry.name, `${entry.name} has stray whitespace`);
+    assert(!entry.name.includes("  "), `${entry.name} has a double space`);
+  }
+});
+
+suite("the catalog covers tech, research and engineering", () => {
+  assert(
+    CANONICAL_SKILLS.length >= 300,
+    `expected a broad catalog, got ${CANONICAL_SKILLS.length}`,
+  );
+  const counts = new Map<string, number>();
+  for (const entry of CANONICAL_SKILLS) {
+    counts.set(entry.group, (counts.get(entry.group) ?? 0) + 1);
+  }
+  // Every declared group must actually carry skills — an empty group is a
+  // promise the picker cannot keep.
+  for (const group of SKILL_GROUPS) {
+    assert((counts.get(group) ?? 0) > 0, `group ${group} is empty`);
+  }
+  for (const group of [
+    "Research",
+    "Mechanical Engineering",
+    "Electrical Engineering",
+    "Civil Engineering",
+    "Chemical Engineering",
+    "Industrial Engineering",
+  ]) {
+    assert(
+      (counts.get(group) ?? 0) >= 10,
+      `${group} needs real depth, got ${counts.get(group) ?? 0}`,
+    );
+  }
+  for (const name of [
+    "Finite Element Analysis",
+    "Computational Fluid Dynamics",
+    "Research Methodology",
+    "Literature Review",
+    "PCB Design",
+    "Structural Analysis",
+    "Process Simulation",
+    "Six Sigma",
+  ]) {
+    assert(CANONICAL_SKILL_NAMES.includes(name), `${name} is missing`);
+  }
+});
+
+suite("search finds skills a substring match never would", () => {
+  const first = (q: string) => searchCanonicalSkills(q, 5)[0]?.name;
+  // Aliases carry the query to a name that shares nothing with it.
+  assert(first("k8s") === "Kubernetes", `k8s -> ${first("k8s")}`);
+  assert(first("dsa") === "Data Structures & Algorithms", `dsa -> ${first("dsa")}`);
+  assert(first("cfd") === "Computational Fluid Dynamics", `cfd -> ${first("cfd")}`);
+  assert(first("iot") === "Internet of Things", `iot -> ${first("iot")}`);
+
+  // An exact alias outranks a name that merely starts with the query.
+  assert(first("ml") === "Machine Learning", `ml -> ${first("ml")}`);
+  assert(first("fea") === "Finite Element Analysis", `fea -> ${first("fea")}`);
+  // An exact name still wins over everything.
+  assert(first("java") === "Java", `java -> ${first("java")}`);
+
+  // Misspacing and casing are not a dead end.
+  assert(first("tailwindcss") === "Tailwind CSS", `tailwindcss -> ${first("tailwindcss")}`);
+  assert(first("solid works") === "SolidWorks", `solid works -> ${first("solid works")}`);
+
+  // A field name browses that field.
+  const civil = searchCanonicalSkills("civil", 5);
+  assert(civil.length >= 3, "typing a discipline lists its skills");
+  assert(
+    civil.every((h) => h.group === "Civil Engineering"),
+    "and only that discipline",
+  );
+
+  // An empty query is a curated spread, never the whole catalog.
+  const idle = searchCanonicalSkills("", 40);
+  assert(idle.length > 0 && idle.length <= 40, `idle list is ${idle.length}`);
+  assert(
+    idle.length < CANONICAL_SKILLS.length,
+    "the idle list must not be the entire catalog",
+  );
+  assert(new Set(idle.map((h) => h.group)).size >= 6, "and it spans several areas");
+});
+
+suite("both skill pickers search the same catalog", () => {
+  const combobox = code("src/components/profile/skill-combobox.tsx");
+  assert(
+    combobox.includes("searchCanonicalSkills"),
+    "the Skills picker ranks with the catalog matcher",
+  );
+  assert(
+    !combobox.includes("s.name.toLowerCase().includes(q)"),
+    "and no longer falls back to a plain substring filter",
+  );
+
+  // The project Tech stack field is the pattern this was modelled on, so it
+  // gets the same alias search rather than a second, weaker one.
+  const projects = code("src/components/profile/projects-section.tsx");
+  assert(projects.includes("suggestions={CANONICAL_SKILL_NAMES}"), "same catalog");
+  assert(
+    projects.includes("searchSuggestions={searchCanonicalSkillNames}"),
+    "same alias-aware search",
+  );
+  assert(projects.includes("normalize={canonicalSkillName}"), "same folding");
+
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  assert(fields.includes("search?: (query: string)"), "PwSuggest accepts a matcher");
+});
+
+suite("the profile page does not resolve the whole catalog on load", () => {
+  const page = code("src/app/profile/page.tsx");
+  assert(
+    page.includes("getSkillsByNames(PROFILE_QUICK_SKILLS)"),
+    "only the quick adds are pre-resolved",
+  );
+  assert(
+    !page.includes("getSkillsByNames(CANONICAL_SKILL_NAMES)"),
+    "a few hundred name comparisons per page load is not a lookup",
+  );
+  // Everything else still reaches a Skill row on the way in.
+  const section = code("src/components/profile/skills-section.tsx");
+  assert(section.includes("resolveSkillAction"), "unresolved names resolve on add");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

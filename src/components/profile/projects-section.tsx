@@ -3,7 +3,11 @@
 import { useEffect } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { saveProjectsAction } from "@/app/actions/candidate-profile-actions";
-import { CANONICAL_SKILL_NAMES, canonicalSkillName } from "@/lib/skill-catalog";
+import {
+  CANONICAL_SKILL_NAMES,
+  canonicalSkillName,
+  searchCanonicalSkillNames,
+} from "@/lib/skill-catalog";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -115,6 +119,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                       values={f.value}
                       onChange={f.onChange}
                       suggestions={CANONICAL_SKILL_NAMES}
+                      searchSuggestions={searchCanonicalSkillNames}
                       normalize={canonicalSkillName}
                       placeholder="Start typing a technology"
                       helper="Descriptive only — this does not add to your skills."

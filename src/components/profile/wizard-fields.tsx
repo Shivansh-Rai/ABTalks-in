@@ -273,9 +273,16 @@ export const PwSuggest = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & {
     suggestions: readonly string[];
+    /**
+     * Ranks `suggestions` against what has been typed. Given one, it replaces
+     * the plain substring filter entirely — which is how the skill catalog
+     * gets to answer "k8s" with Kubernetes, a string that shares no substring
+     * with the query at all.
+     */
+    search?: (query: string) => readonly string[];
   }
 >(function PwSuggest(
-  { suggestions, className, onChange, onFocus, onBlur, onInput, ...props },
+  { suggestions, search, className, onChange, onFocus, onBlur, onInput, ...props },
   ref,
 ) {
   const [open, setOpen] = useState(false);
@@ -293,9 +300,14 @@ export const PwSuggest = forwardRef<
   }
 
   const q = text.trim().toLowerCase();
-  const filtered = suggestions
-    .filter((s) => (q ? s.toLowerCase().includes(q) : true))
-    .slice(0, 12);
+  const allowed = new Set(suggestions.map((s) => s.toLowerCase()));
+  const filtered = (
+    search
+      ? // The matcher ranks the whole catalog; `suggestions` still decides what
+        // is offerable, so an already-picked tag stays out of the list.
+        search(q).filter((s) => allowed.has(s.toLowerCase()))
+      : suggestions.filter((s) => (q ? s.toLowerCase().includes(q) : true))
+  ).slice(0, 12);
 
   function pick(value: string) {
     const el = inputRef.current;
@@ -704,6 +716,7 @@ export function PwTags({
   noAddButton,
   quickAdds,
   suggestions,
+  searchSuggestions,
   normalize,
   emptyText,
 }: {
@@ -716,6 +729,8 @@ export function PwTags({
   quickAdds?: readonly string[];
   /** Offered in a dropdown as you type. Free text is still accepted. */
   suggestions?: readonly string[];
+  /** Alias-aware ranking over `suggestions`. See PwSuggest. */
+  searchSuggestions?: (query: string) => readonly string[];
   /** Folds a typed value onto a canonical spelling before it is added. */
   normalize?: (raw: string) => string;
   emptyText?: string;
@@ -738,6 +753,7 @@ export function PwTags({
           <PwSuggest
             id={id}
             value={draft}
+            search={searchSuggestions}
             suggestions={suggestions.filter(
               (s) => !values.some((v) => v.toLowerCase() === s.toLowerCase()),
             )}
