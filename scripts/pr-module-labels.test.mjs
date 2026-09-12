@@ -2,12 +2,16 @@
  * PR module label matcher.
  *   node scripts/pr-module-labels.test.mjs
  */
+import { readFileSync } from "node:fs";
 import {
   classifyFiles,
   globToRegExp,
+  ISSUE_TEMPLATE_MODULE_IDS,
   matchModule,
   matchPattern,
+  MODULES,
   moduleLabel,
+  parseIssueModules,
   primaryLabel,
 } from "./pr-module-labels.mjs";
 
@@ -128,6 +132,47 @@ suite("file-count tie breaks on changed lines", () => {
 suite("label names use module: and primary: prefixes", () => {
   assert(moduleLabel("search") === "module:search", "module");
   assert(primaryLabel("search") === "primary:search", "primary");
+});
+
+suite("issue template checkboxes: first tick is primary", () => {
+  const parsed = parseIssueModules(`
+## Module
+- [x] \`credits\` — Credits
+- [ ] \`search\` — Search
+- [x] \`profile\` — Profile
+`);
+  assert(parsed.usedTemplate === true, "used template");
+  assert(parsed.modules.join(",") === "credits,profile", parsed.modules.join(","));
+  assert(parsed.primary === "credits", `primary was ${parsed.primary}`);
+});
+
+suite("issue template: recruiter-assessments is not parsed as assessments", () => {
+  const parsed = parseIssueModules("- [x] `recruiter-assessments` — builder");
+  assert(parsed.modules.join(",") === "recruiter-assessments", parsed.modules.join(","));
+  assert(parsed.primary === "recruiter-assessments", "primary");
+});
+
+suite("blank issue body is left alone", () => {
+  const parsed = parseIssueModules("Something broke in search today.");
+  assert(parsed.usedTemplate === false, "not a template");
+  assert(parsed.modules.length === 0, "no modules");
+  assert(parsed.primary === null, "no primary");
+});
+
+suite("unchecked-only template still counts as used (clears labels)", () => {
+  const parsed = parseIssueModules("- [ ] `search` — Candidate search");
+  assert(parsed.usedTemplate === true, "used template");
+  assert(parsed.modules.length === 0, "none ticked");
+  assert(parsed.primary === null, "no primary");
+});
+
+suite("issue template lists every module id except unmapped", () => {
+  const template = readFileSync(".github/ISSUE_TEMPLATE/module.md", "utf8");
+  for (const id of ISSUE_TEMPLATE_MODULE_IDS) {
+    assert(template.includes(`\`${id}\``), `template missing ${id}`);
+    assert(MODULES[id], `unknown module ${id}`);
+  }
+  assert(!template.includes("`unmapped`"), "unmapped should not be on the form");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -1,13 +1,19 @@
-name: PR module labels
+name: Module labels
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  issues:
+    types: [opened, edited]
   workflow_dispatch:
     inputs:
       pr_number:
         description: Pull request number to label
-        required: true
+        required: false
+        type: string
+      issue_number:
+        description: Issue number to label
+        required: false
         type: string
 
 permissions:
@@ -16,7 +22,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-module-labels-${{ github.event.pull_request.number || inputs.pr_number }}
+  group: module-labels-${{ github.event.pull_request.number || github.event.issue.number || github.event.inputs.pr_number || github.event.inputs.issue_number }}
   cancel-in-progress: true
 
 jobs:
@@ -27,9 +33,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Apply module labels from changed files
+      - name: Apply module labels
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          ISSUE_NUMBER: ${{ github.event_name == 'issues' && github.event.issue.number || github.event.inputs.issue_number }}
         run: node scripts/pr-module-labels.mjs

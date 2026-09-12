@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /**
- * PR module labels — map changed files to product modules.
+ * Module labels — PRs from changed files, issues from the module template checkboxes.
  *
  * Local:
  *   node scripts/pr-module-labels.mjs src/app/profile/page.tsx src/features/hire/credits.ts
  *   node scripts/pr-module-labels.test.mjs
  *
- * GitHub Action supplies GITHUB_TOKEN + GITHUB_REPOSITORY + PR_NUMBER and applies
- * `module:<id>` plus `primary:<id>` (most files; tie-break = additions+deletions).
+ * GitHub Action:
+ *   PR_NUMBER — `module:<id>` plus `primary:<id>` from the diff (most files; tie-break = lines).
+ *   ISSUE_NUMBER — same labels from ticked boxes in `.github/ISSUE_TEMPLATE/module.md`.
+ *   First ticked box is primary. Issues that were not opened from the template are left alone.
  *
  * First matching PATH_RULES entry wins. Put specific globs above directory catch-alls.
  * Authors may add/remove any non-managed label. `module:*` and `primary:*` are
- * re-synced from the diff on every push — fix a wrong tag here, not on the PR.
+ * re-synced from the diff (PRs) or checkboxes (issues) — fix a wrong tag here, not on the ticket.
  */
 import { appendFileSync } from "node:fs";
 import path from "node:path";
@@ -59,6 +61,11 @@ export const MODULES = {
 
 export const MODULE_LABEL_PREFIX = "module:";
 export const PRIMARY_LABEL_PREFIX = "primary:";
+
+/** Module ids offered on the issue template. `unmapped` is PR-only. */
+export const ISSUE_TEMPLATE_MODULE_IDS = /** @type {ModuleId[]} */ (
+  Object.keys(MODULES).filter((id) => id !== "unmapped")
+);
 
 /**
  * First match wins. More specific globs must appear before directory catch-alls.
@@ -590,6 +597,32 @@ export function primaryLabel(id) {
   return `${PRIMARY_LABEL_PREFIX}${id}`;
 }
 
+/**
+ * Read ticked module boxes from an issue body (GitHub markdown template).
+ * `usedTemplate` is true when the body has at least one known-module checkbox,
+ * checked or not — so blank issues are not retagged.
+ *
+ * @param {string | null | undefined} body
+ * @returns {{ usedTemplate: boolean, modules: ModuleId[], primary: ModuleId | null }}
+ */
+export function parseIssueModules(body) {
+  /** @type {ModuleId[]} */
+  const checked = [];
+  let usedTemplate = false;
+  for (const raw of String(body ?? "").split(/\r?\n/)) {
+    const line = raw.trim();
+    const box = line.match(/^- \[( |x|X)\]\s+`?([a-z0-9-]+)`?/i);
+    if (!box) continue;
+    const id = box[2];
+    if (!(id in MODULES) || id === "unmapped") continue;
+    usedTemplate = true;
+    if (box[1].toLowerCase() !== "x") continue;
+    const moduleId = /** @type {ModuleId} */ (id);
+    if (!checked.includes(moduleId)) checked.push(moduleId);
+  }
+  return { usedTemplate, modules: checked, primary: checked[0] ?? null };
+}
+
 function isManagedLabel(name) {
   return name.startsWith(MODULE_LABEL_PREFIX) || name.startsWith(PRIMARY_LABEL_PREFIX);
 }
@@ -791,13 +824,71 @@ async function applyFromGitHub() {
   await syncIssueLabels(owner, repo, prNumber, token, desired);
 }
 
+async function applyFromIssue() {
+  const token = process.env.GITHUB_TOKEN;
+  const repository = process.env.GITHUB_REPOSITORY;
+  const issueNumber = Number(process.env.ISSUE_NUMBER);
+  if (!token || !repository || !Number.isInteger(issueNumber) || issueNumber <= 0) {
+    throw new Error("GITHUB_TOKEN, GITHUB_REPOSITORY, and ISSUE_NUMBER are required");
+  }
+  const [owner, repo] = repository.split("/");
+  const issue = await gh(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,
+    token,
+  );
+  if (issue?.pull_request) {
+    console.log("Skipping pull request on the issues event");
+    return;
+  }
+  const parsed = parseIssueModules(issue?.body);
+  if (!parsed.usedTemplate) {
+    console.log("Issue body has no module template checkboxes; leaving labels unchanged");
+    return;
+  }
+  const payload = {
+    primary: parsed.primary,
+    modules: parsed.modules,
+  };
+  console.log(JSON.stringify(payload, null, 2));
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryPath) {
+    appendFileSync(
+      summaryPath,
+      [
+        "## Issue module labels",
+        "",
+        `Primary: ${parsed.primary ? `primary:${parsed.primary}` : "(none)"}`,
+        "",
+        parsed.modules.length > 0
+          ? parsed.modules.map((id) => `- \`module:${id}\``).join("\n")
+          : "_No boxes ticked — managed module labels removed._",
+        "",
+      ].join("\n"),
+    );
+  }
+  const desired = [
+    ...parsed.modules.map((id) => moduleLabel(id)),
+    ...(parsed.primary ? [primaryLabel(parsed.primary)] : []),
+  ];
+  await ensureLabels(owner, repo, token);
+  await syncIssueLabels(owner, repo, issueNumber, token, desired);
+}
+
 function isDirectRun() {
   const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
   return path.resolve(fileURLToPath(import.meta.url)) === invoked;
 }
 
 async function main() {
-  if (process.env.PR_NUMBER && process.env.GITHUB_TOKEN) {
+  const token = process.env.GITHUB_TOKEN;
+  const repository = process.env.GITHUB_REPOSITORY;
+  const issueNumber = Number(process.env.ISSUE_NUMBER);
+  const prNumber = Number(process.env.PR_NUMBER);
+  if (token && repository && Number.isInteger(issueNumber) && issueNumber > 0) {
+    await applyFromIssue();
+    return;
+  }
+  if (token && repository && Number.isInteger(prNumber) && prNumber > 0) {
     await applyFromGitHub();
     return;
   }
@@ -805,7 +896,8 @@ async function main() {
   if (files.length === 0) {
     console.error(
       "Usage: node scripts/pr-module-labels.mjs <file> [file...]\n" +
-        "   or: PR_NUMBER=123 GITHUB_TOKEN=… GITHUB_REPOSITORY=org/repo node scripts/pr-module-labels.mjs",
+        "   or: PR_NUMBER=123 GITHUB_TOKEN=… GITHUB_REPOSITORY=org/repo node scripts/pr-module-labels.mjs\n" +
+        "   or: ISSUE_NUMBER=45 GITHUB_TOKEN=… GITHUB_REPOSITORY=org/repo node scripts/pr-module-labels.mjs",
     );
     process.exit(1);
   }
