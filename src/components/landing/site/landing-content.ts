@@ -17,7 +17,7 @@ export const GET_STARTED_ITEMS = [
 ] as const;
 
 export const STATS = [
-  { count: 10, suffix: "k+", label: "People on the platform" },
+  { count: 13, suffix: "k+", label: "People on the platform" },
   { count: 100, suffix: "+", label: "Companies in the recruiter network" },
   { count: 15, suffix: "+", label: "Profiles shared with consent" },
 ] as const;

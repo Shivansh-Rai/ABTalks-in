@@ -1,17 +1,34 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { JobType, JobWorkMode } from "@prisma/client";
+import { JobStatus, JobType, JobWorkMode } from "@prisma/client";
+import {
+  Bold,
+  Briefcase,
+  Check,
+  Eye,
+  FileText,
+  Italic,
+  Lightbulb,
+  Link2,
+  List,
+  ListOrdered,
+  MapPin,
+  Monitor,
+  Save,
+  Send,
+  Tag,
+} from "lucide-react";
 import {
   createRecruiterJobAction,
+  publishRecruiterJobAction,
   updateRecruiterJobAction,
 } from "@/app/actions/recruiter-job-actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { JOB_TYPE_LABEL, WORK_MODE_LABEL } from "@/components/jobs/job-ui";
 
 type Initial = {
   jobId?: string;
@@ -34,13 +51,39 @@ const DEFAULT_INITIAL: Initial = {
   applyExternalUrl: "",
 };
 
+const DESCRIPTION_MAX = 5000;
+
+const TIPS = [
+  "Be clear and specific",
+  "Mention key technologies",
+  "Describe impact and growth",
+  "Keep it inclusive and open",
+] as const;
+
 type Props = {
   initial?: Partial<Initial>;
   jobId?: string;
+  company?: string;
+  variant?: "page" | "embedded";
+  status?: JobStatus;
 };
 
-export function JobFormClient({ initial, jobId }: Props) {
+function parseSkills(raw: string) {
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function JobFormClient({
+  initial,
+  jobId,
+  company,
+  variant = "page",
+  status,
+}: Props) {
   const router = useRouter();
+  const descRef = useRef<HTMLTextAreaElement>(null);
   const [values, setValues] = useState<Initial>({
     ...DEFAULT_INITIAL,
     ...initial,
@@ -48,140 +91,454 @@ export function JobFormClient({ initial, jobId }: Props) {
   const [skillsInput, setSkillsInput] = useState<string>(
     (initial?.skills ?? []).join(", "),
   );
+  const [preview, setPreview] = useState(false);
   const [pending, startTransition] = useTransition();
+  const isPage = variant === "page" && !jobId;
+  const canPublish = !jobId || status === "DRAFT";
+  const descMax = Math.max(DESCRIPTION_MAX, values.description.length);
 
   function set<K extends keyof Initial>(key: K, value: Initial[K]) {
     setValues((v) => ({ ...v, [key]: value }));
   }
 
-  function submit() {
-    const skills = skillsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+  function wrapSelection(prefix: string, suffix = prefix) {
+    const el = descRef.current;
+    if (!el) {
+      set("description", `${values.description}${prefix}text${suffix}`);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = values.description.slice(start, end) || "text";
+    const next =
+      values.description.slice(0, start) +
+      prefix +
+      selected +
+      suffix +
+      values.description.slice(end);
+    set("description", next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const from = start + prefix.length;
+      el.setSelectionRange(from, from + selected.length);
+    });
+  }
 
-    const payload = {
+  function prefixLine(prefix: string) {
+    const el = descRef.current;
+    if (!el) {
+      set("description", `${values.description}\n${prefix}`);
+      return;
+    }
+    const start = el.selectionStart;
+    const lineStart = values.description.lastIndexOf("\n", start - 1) + 1;
+    const next =
+      values.description.slice(0, lineStart) +
+      prefix +
+      values.description.slice(lineStart);
+    set("description", next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + prefix.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  function payload() {
+    return {
       title: values.title,
       description: values.description,
       location: values.location,
       workMode: values.workMode,
       opportunityType: values.type,
-      skills,
+      skills: parseSkills(skillsInput),
       applyExternalUrl: values.applyExternalUrl,
     };
+  }
+
+  function missingRequired() {
+    if (!values.title.trim()) return "Add a job title.";
+    if (!values.description.trim()) return "Add a job description.";
+    return null;
+  }
+
+  function submit(intent: "draft" | "publish" | "update") {
+    const missing = missingRequired();
+    if (missing) {
+      toast.error(missing);
+      return;
+    }
 
     startTransition(async () => {
       if (jobId) {
-        const res = await updateRecruiterJobAction({ ...payload, jobId });
-        if (res.ok) {
-          toast.success("Job updated");
+        const res = await updateRecruiterJobAction({ ...payload(), jobId });
+        if (!res.ok) {
+          toast.error(res.message);
+          return;
+        }
+        if (intent === "publish") {
+          const published = await publishRecruiterJobAction({ jobId });
+          if (!published.ok) {
+            toast.error(published.message);
+            router.refresh();
+            return;
+          }
+          toast.success("Job published");
           router.refresh();
           return;
         }
+        toast.success("Job updated");
+        router.refresh();
+        return;
+      }
+
+      const res = await createRecruiterJobAction(payload());
+      if (!res.ok) {
         toast.error(res.message);
         return;
       }
-      const res = await createRecruiterJobAction(payload);
-      if (res.ok) {
-        toast.success("Draft saved");
+      if (intent === "publish") {
+        const published = await publishRecruiterJobAction({
+          jobId: res.data.id,
+        });
+        if (!published.ok) {
+          toast.error(published.message);
+          router.push(`/hire/jobs/${res.data.id}`);
+          return;
+        }
+        toast.success("Job published");
         router.push(`/hire/jobs/${res.data.id}`);
         return;
       }
-      toast.error(res.message);
+      toast.success("Draft saved");
+      router.push(`/hire/jobs/${res.data.id}`);
     });
   }
 
-  return (
-    <div className="space-y-5">
-      <div className="grid gap-2">
-        <Label htmlFor="job-title">Title</Label>
-        <Input
-          id="job-title"
-          value={values.title}
-          onChange={(e) => set("title", e.target.value)}
-          placeholder="e.g. Full-Stack Engineer, remote India"
-          maxLength={200}
-        />
-      </div>
+  const fields = (
+    <>
+      <section className="hire-jobs-form__card">
+        <header className="hire-jobs-form__section-head">
+          <span className="hire-jobs-form__n" aria-hidden="true">
+            1
+          </span>
+          <div>
+            <h2>Basic information</h2>
+            <p>Start with the key details about the role.</p>
+          </div>
+        </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="job-location">Location</Label>
-          <Input
-            id="job-location"
-            value={values.location}
-            onChange={(e) => set("location", e.target.value)}
-            placeholder="City, country (optional)"
-            maxLength={200}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="job-workmode">Work mode</Label>
-          <select
-            id="job-workmode"
-            className="h-10 rounded-md border bg-background px-3 text-sm"
-            value={values.workMode}
-            onChange={(e) => set("workMode", e.target.value as JobWorkMode)}
-          >
-            <option value="REMOTE">Remote</option>
-            <option value="HYBRID">Hybrid</option>
-            <option value="ONSITE">On-site</option>
-          </select>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="job-type">Opportunity type</Label>
-          <select
-            id="job-type"
-            className="h-10 rounded-md border bg-background px-3 text-sm"
-            value={values.type}
-            onChange={(e) => set("type", e.target.value as JobType)}
-          >
-            <option value="FULL_TIME">Full-time</option>
-            <option value="PART_TIME">Part-time</option>
-            <option value="INTERNSHIP">Internship</option>
-            <option value="CONTRACT">Contract</option>
-          </select>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="job-apply-url">External apply URL (optional)</Label>
-          <Input
-            id="job-apply-url"
-            type="url"
-            value={values.applyExternalUrl}
-            onChange={(e) => set("applyExternalUrl", e.target.value)}
-            placeholder="https://…"
-            maxLength={2048}
-          />
-        </div>
-      </div>
+        <label className="hire-jobs-form__field">
+          <span>
+            Job title <abbr title="required">*</abbr>
+          </span>
+          <span className="hire-jobs-form__control">
+            <Briefcase aria-hidden="true" />
+            <input
+              id="job-title"
+              value={values.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="e.g. Full-Stack Engineer"
+              maxLength={200}
+              required
+            />
+          </span>
+        </label>
 
-      <div className="grid gap-2">
-        <Label htmlFor="job-skills">Skills (comma-separated)</Label>
-        <Input
-          id="job-skills"
-          value={skillsInput}
-          onChange={(e) => setSkillsInput(e.target.value)}
-          placeholder="react, node, aws"
-          maxLength={800}
-        />
-      </div>
+        <div className="hire-jobs-form__grid">
+          <label className="hire-jobs-form__field">
+            <span>Location</span>
+            <span className="hire-jobs-form__control">
+              <MapPin aria-hidden="true" />
+              <input
+                id="job-location"
+                value={values.location}
+                onChange={(e) => set("location", e.target.value)}
+                placeholder="e.g. Bengaluru, India"
+                maxLength={200}
+              />
+            </span>
+          </label>
+          <label className="hire-jobs-form__field">
+            <span>
+              Work mode <abbr title="required">*</abbr>
+            </span>
+            <span className="hire-jobs-form__control">
+              <Monitor aria-hidden="true" />
+              <select
+                id="job-workmode"
+                value={values.workMode}
+                onChange={(e) => set("workMode", e.target.value as JobWorkMode)}
+              >
+                {(Object.keys(WORK_MODE_LABEL) as JobWorkMode[]).map((mode) => (
+                  <option key={mode} value={mode}>
+                    {WORK_MODE_LABEL[mode]}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+          <label className="hire-jobs-form__field">
+            <span>
+              Opportunity type <abbr title="required">*</abbr>
+            </span>
+            <span className="hire-jobs-form__control">
+              <FileText aria-hidden="true" />
+              <select
+                id="job-type"
+                value={values.type}
+                onChange={(e) => set("type", e.target.value as JobType)}
+              >
+                {(Object.keys(JOB_TYPE_LABEL) as JobType[]).map((type) => (
+                  <option key={type} value={type}>
+                    {JOB_TYPE_LABEL[type]}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+          <label className="hire-jobs-form__field">
+            <span>External apply URL</span>
+            <span className="hire-jobs-form__control">
+              <Link2 aria-hidden="true" />
+              <input
+                id="job-apply-url"
+                type="url"
+                value={values.applyExternalUrl}
+                onChange={(e) => set("applyExternalUrl", e.target.value)}
+                placeholder="https://company.com/careers/…"
+                maxLength={2048}
+              />
+            </span>
+          </label>
+        </div>
+      </section>
 
-      <div className="grid gap-2">
-        <Label htmlFor="job-description">Description</Label>
-        <Textarea
-          id="job-description"
-          value={values.description}
-          onChange={(e) => set("description", e.target.value)}
-          placeholder="What the role is, who it's for, what they'll build."
-          className="min-h-[200px]"
-          maxLength={20000}
-        />
-      </div>
+      <section className="hire-jobs-form__card">
+        <header className="hire-jobs-form__section-head">
+          <span className="hire-jobs-form__n" aria-hidden="true">
+            2
+          </span>
+          <div>
+            <h2>Skills</h2>
+            <p>Add relevant skills to help candidates find this role.</p>
+          </div>
+        </header>
+        <label className="hire-jobs-form__field">
+          <span>Skills (comma-separated)</span>
+          <span className="hire-jobs-form__control">
+            <Tag aria-hidden="true" />
+            <input
+              id="job-skills"
+              value={skillsInput}
+              onChange={(e) => setSkillsInput(e.target.value)}
+              placeholder="e.g. react, node, aws"
+              maxLength={800}
+            />
+          </span>
+          <em>Add 3–10 key skills. Separate with commas.</em>
+        </label>
+      </section>
 
-      <div className="flex gap-3">
-        <Button type="button" onClick={submit} disabled={pending}>
+      <section className="hire-jobs-form__card">
+        <header className="hire-jobs-form__section-head">
+          <span className="hire-jobs-form__n" aria-hidden="true">
+            3
+          </span>
+          <div>
+            <h2>Description</h2>
+            <p>Give candidates a clear picture of the role.</p>
+          </div>
+        </header>
+        <div className="hire-jobs-form__field">
+          <span>
+            Job description <abbr title="required">*</abbr>
+          </span>
+          <div className="hire-jobs-form__editor">
+            <div className="hire-jobs-form__toolbar" role="toolbar" aria-label="Formatting">
+              <button
+                type="button"
+                onClick={() => wrapSelection("**")}
+                aria-label="Bold"
+              >
+                <Bold />
+              </button>
+              <button
+                type="button"
+                onClick={() => wrapSelection("_")}
+                aria-label="Italic"
+              >
+                <Italic />
+              </button>
+              <button
+                type="button"
+                onClick={() => prefixLine("- ")}
+                aria-label="Bullet list"
+              >
+                <List />
+              </button>
+              <button
+                type="button"
+                onClick={() => prefixLine("1. ")}
+                aria-label="Numbered list"
+              >
+                <ListOrdered />
+              </button>
+              <button
+                type="button"
+                onClick={() => wrapSelection("[", "](https://)")}
+                aria-label="Link"
+              >
+                <Link2 />
+              </button>
+              <button
+                type="button"
+                className={preview ? "is-active" : undefined}
+                aria-pressed={preview}
+                onClick={() => setPreview((v) => !v)}
+              >
+                <Eye />
+                Preview
+              </button>
+            </div>
+            {preview ? (
+              <div className="hire-jobs-form__preview">
+                {values.description.trim() ? (
+                  <ReactMarkdown>{values.description}</ReactMarkdown>
+                ) : (
+                  <p>Nothing to preview yet.</p>
+                )}
+              </div>
+            ) : (
+              <textarea
+                ref={descRef}
+                id="job-description"
+                value={values.description}
+                onChange={(e) => set("description", e.target.value)}
+                placeholder="What the role is, who it's for, what they'll build…"
+                maxLength={descMax}
+                required
+              />
+            )}
+            <p className="hire-jobs-form__count">
+              {values.description.length}/{descMax}
+            </p>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
+  const actions = (
+    <div className="hire-jobs-form__actions">
+      {isPage ? (
+        <Link href="/hire/jobs" className="hire-jobs__btn hire-jobs__btn--ghost">
+          Cancel
+        </Link>
+      ) : null}
+      <div className="hire-jobs-form__actions-end">
+        <button
+          type="button"
+          className="hire-jobs__btn hire-jobs__btn--secondary"
+          disabled={pending}
+          onClick={() => submit(jobId ? "update" : "draft")}
+        >
+          <Save aria-hidden="true" />
           {pending ? "Saving…" : jobId ? "Save changes" : "Save as draft"}
-        </Button>
+        </button>
+        {canPublish ? (
+          <button
+            type="button"
+            className="hire-jobs__btn"
+            disabled={pending}
+            onClick={() => submit("publish")}
+          >
+            <Send aria-hidden="true" />
+            {pending ? "Publishing…" : "Publish job"}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  if (!isPage) {
+    return (
+      <div className="hire-jobs-form hire-jobs-form--embedded">
+        {fields}
+        {actions}
+      </div>
+    );
+  }
+
+  return (
+    <div className="hire-jobs hire-jobs--compose">
+      <div className="hire-jobs-form__top">
+        <Link href="/hire/jobs" className="hire-jobs__back">
+          ← All jobs
+        </Link>
+        <button
+          type="button"
+          className="hire-jobs__btn hire-jobs__btn--secondary hire-jobs__btn--sm"
+          disabled={pending}
+          onClick={() => submit("draft")}
+        >
+          <Save aria-hidden="true" />
+          Save as draft
+        </button>
+      </div>
+
+      <div className="hire-jobs-form__title-row">
+        <div>
+          <h1>Write a job</h1>
+          <p>
+            Post on ABTalks. Save as a draft — you can publish it when
+            you&apos;re ready
+            {company ? ` as ${company}` : ""}.
+          </p>
+        </div>
+        <a className="hire-jobs__guidelines" href="#job-posting-tips">
+          Need help? View posting guidelines
+        </a>
+      </div>
+
+      <div className="hire-jobs-form__layout">
+        <form
+          className="hire-jobs-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit("draft");
+          }}
+        >
+          {fields}
+          {actions}
+        </form>
+
+        <aside className="hire-jobs-form__aside" id="job-posting-tips">
+          <section className="hire-jobs-form__tips">
+            <header>
+              <Lightbulb aria-hidden="true" />
+              <h2>Tips for a great job post</h2>
+            </header>
+            <ul>
+              {TIPS.map((tip) => (
+                <li key={tip}>
+                  <Check aria-hidden="true" />
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="hire-jobs-form__note">
+            <FileText aria-hidden="true" />
+            <div>
+              <h2>Title and description required</h2>
+              <p>
+                Save a draft any time. Add location and skills before you
+                publish so the right candidates can find the role.
+              </p>
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
   );
