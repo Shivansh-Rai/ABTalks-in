@@ -2,7 +2,7 @@
 
 import { Autocomplete } from "@base-ui/react/autocomplete";
 import { useEffect, useRef, useState } from "react";
-import { canonicalSkillName } from "@/lib/skill-catalog";
+import { canonicalSkillName, searchCanonicalSkills } from "@/lib/skill-catalog";
 
 export type SkillOption = {
   id: string;
@@ -81,35 +81,37 @@ export function SkillCombobox({
   const idSet = new Set(excludeIds.filter((x) => x.length > 0));
   const nameSet = new Set(excludeNames.map((n) => n.toLowerCase()));
 
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const listed: SkillOption[] = (() => {
-    if (q.length < 1) {
-      return catalog.filter((s) => !isExcluded(s, idSet, nameSet));
-    }
-    const fromCatalog = catalog.filter(
-      (s) =>
-        !isExcluded(s, idSet, nameSet) &&
-        s.name.toLowerCase().includes(q),
-    );
-    const fromApi = results
-      .filter((s) => !isExcluded(s, idSet, nameSet))
-      // The `Skill` table was seeded from free text, so it holds several
-      // spellings of one technology. Show the canonical one.
-      .map((s) => ({ ...s, name: canonicalSkillName(s.name) }))
-      .filter((s) => !isExcluded(s, idSet, nameSet));
+    const known = new Map(catalog.map((s) => [s.name.toLowerCase(), s] as const));
+    // The curated catalog answers first, ranked by the alias-aware matcher:
+    // that is what lets "k8s" find Kubernetes and "fea" find Finite Element
+    // Analysis, neither of which shares a substring with what was typed. An
+    // empty query gets the popular spread rather than four hundred rows.
+    const fromCatalog: SkillOption[] = searchCanonicalSkills(q, 20).map((hit) => {
+      const row = known.get(hit.name.toLowerCase());
+      return row
+        ? { ...row, categoryName: row.categoryName ?? hit.group }
+        : { id: "", name: hit.name, slug: "", categoryName: hit.group };
+    });
+    // Then whatever the `Skill` table knows that the catalog does not. Those
+    // rows were seeded from free text and hold several spellings of one
+    // technology, so they are folded onto the canonical name first.
+    const fromApi = q
+      ? results.map((s) => ({ ...s, name: canonicalSkillName(s.name) }))
+      : [];
+
     const out: SkillOption[] = [];
     const seenNames = new Set<string>();
+    // Rank order is the matcher's, so this must not re-sort.
     for (const s of [...fromCatalog, ...fromApi]) {
       const nameKey = s.name.toLowerCase();
       if (seenNames.has(nameKey)) continue;
+      if (isExcluded(s, idSet, nameSet)) continue;
       seenNames.add(nameKey);
       out.push(s);
     }
-    // Prefer rows that already have a catalog id when both shapes exist.
-    return out.sort((a, b) => {
-      if (Boolean(a.id) !== Boolean(b.id)) return a.id ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+    return out;
   })();
 
   const visible = [...listed, OTHER_ITEM];

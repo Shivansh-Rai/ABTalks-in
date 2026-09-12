@@ -5,6 +5,7 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { CandidateLinkType } from "@prisma/client";
 import { saveLinksAction } from "@/app/actions/candidate-profile-actions";
 import { EXTRA_LINK_TYPES, LINK_TYPE_LABELS } from "@/lib/candidate-vocab";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -60,8 +61,9 @@ function GlobeIcon() {
 export function LinksSection({ initial }: { initial: LinksFormValues }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveLinksAction, "Links", "links");
-  const { control, register, handleSubmit, watch, setValue, formState } =
-    useForm<LinksFormValues>({ defaultValues: initial });
+  const form = useForm<LinksFormValues>({ defaultValues: initial });
+  const { control, register, handleSubmit, watch, setValue, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove } = useFieldArray({
     control,
     name: "extra",
@@ -75,12 +77,13 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <PwRow cols={1}>
         <PwField
           label="LinkedIn"
+          required
           htmlFor="ln-linkedin"
           icon={<BriefcaseIcon />}
         >
@@ -97,6 +100,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="GitHub"
+          required
           htmlFor="ln-github"
           icon={<CodeIcon />}
           helper="Username or full profile URL — both are stored as your username."
@@ -112,6 +116,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="Portfolio"
+          required
           htmlFor="ln-portfolio"
           icon={<GlobeIcon />}
         >

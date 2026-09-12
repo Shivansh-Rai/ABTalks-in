@@ -12,6 +12,7 @@ import {
   INDIA_DIALING_CODE,
   isIndianPhone,
 } from "@/lib/validations/phone";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -84,18 +85,22 @@ export function BasicInfoSection({
     "Basic information",
     "basic",
   );
+  const form = useForm<FormValues>({
+    defaultValues: {
+      ...initial,
+      country: countryNameForCode(initial.countryCode),
+    },
+  });
   const {
     register,
     handleSubmit,
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({
-    defaultValues: {
-      ...initial,
-      country: countryNameForCode(initial.countryCode),
-    },
-  });
+  } = form;
+  // The form asks for a country NAME; the schema validates the stored CODE, so
+  // an issue about `countryCode` belongs under the Country input.
+  const placeIssues = useServerFieldErrors(form, { countryCode: "country" });
 
   const summary = watch("summary") ?? "";
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -120,7 +125,12 @@ export function BasicInfoSection({
           return;
         }
         const { country, ...rest } = v;
-        if (await save({ ...rest, countryCode: countryCodeForName(country) })) {
+        if (
+          await save(
+            { ...rest, countryCode: countryCodeForName(country) },
+            placeIssues,
+          )
+        ) {
           onSaved();
         }
       })}
@@ -145,7 +155,7 @@ export function BasicInfoSection({
           />
         </PwField>
         <PwField
-          label="Phone Number"
+          label="Phone number"
           required={otpRequired}
           htmlFor="bi-phone"
           verified={phoneVerified}
@@ -193,6 +203,7 @@ export function BasicInfoSection({
         </PwField>
         <PwField
           label="City"
+          required
           htmlFor="bi-city"
           error={errors.locationCity?.message}
         >
@@ -207,6 +218,7 @@ export function BasicInfoSection({
         </PwField>
         <PwField
           label="State / Region"
+          required
           htmlFor="bi-region"
           error={errors.locationRegion?.message}
         >
@@ -226,6 +238,7 @@ export function BasicInfoSection({
       <PwRow cols={3}>
         <PwField
           label="Country"
+          required
           htmlFor="bi-country"
           error={errors.country?.message}
         >
@@ -254,7 +267,7 @@ export function BasicInfoSection({
             ))}
           </PwSelect>
         </PwField>
-        <PwField label="Profile Headline" htmlFor="bi-headline">
+        <PwField label="Profile Headline" required htmlFor="bi-headline">
           <PwInput
             id="bi-headline"
             maxLength={160}
@@ -267,6 +280,7 @@ export function BasicInfoSection({
       <PwRow cols={1}>
         <PwField
           label="About"
+          required
           htmlFor="bi-summary"
           counter={`${summary.length}/2000`}
         >

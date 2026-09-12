@@ -13,7 +13,7 @@ import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { getProfilePerformance } from "@/features/profile/get-profile-performance";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
-import { CANONICAL_SKILL_NAMES } from "@/lib/skill-catalog";
+import { PROFILE_QUICK_SKILLS } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
@@ -104,7 +104,10 @@ export default async function ProfilePage() {
     verifiedSkills,
     performance,
   ] = await Promise.all([
-    getSkillsByNames(CANONICAL_SKILL_NAMES),
+    // Only the quick-add chips are pre-resolved. Matching the whole catalog
+    // meant a few hundred case-insensitive name comparisons on every profile
+    // load; everything else resolves on the click that adds it.
+    getSkillsByNames(PROFILE_QUICK_SKILLS),
     // The MockInterview tables exist on demo but the migration has not been
     // applied to production, so this query throws there until it is. The
     // profile must not 500 over it — it degrades to an empty list, which
@@ -285,6 +288,10 @@ export default async function ProfilePage() {
       checklist: "mock",
       complete: mockComplete,
       attention: !mockComplete && !activeAttempt,
+      // Outside `computeCompleteness` on purpose — an interview is earned, not
+      // filled in. Quick Links says so rather than showing it as unfinished
+      // work that cannot move Profile strength either way.
+      optional: true,
       savable: false,
       node: (
         <MockInterviewsSection

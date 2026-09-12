@@ -14,6 +14,7 @@ import {
   EDUCATION_MAX_SPAN_YEARS,
   EDUCATION_MIN_YEAR,
 } from "@/lib/validations/candidate-profile";
+import { endBeforeStart, useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -73,12 +74,25 @@ const GRADE_PLACEHOLDER: Record<string, string> = {
 export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveEducationAction, "Education", "education");
-  const { control, register, handleSubmit, watch, setValue, formState } =
-    useForm<FormValues>({
-      defaultValues: {
-        rows: initial.length > 0 ? initial : [{ ...emptyEducationRow }],
-      },
-    });
+  const form = useForm<FormValues>({
+    // Live: a wrong date pair says so while it is being picked, and stops
+    // saying so the moment it is fixed.
+    mode: "onChange",
+    defaultValues: {
+      rows: initial.length > 0 ? initial : [{ ...emptyEducationRow }],
+    },
+  });
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    trigger,
+    formState,
+  } = form;
+  const { errors } = formState;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "rows",
@@ -100,7 +114,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <div className="pw-entries">
@@ -116,7 +130,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               onRemove={() => removeOrClear(index)}
             >
               <PwRow cols={1}>
-                <PwField label="School / College">
+                <PwField label="School / College" required>
                   <Controller
                     control={control}
                     name={`rows.${index}.institutionName`}
@@ -136,7 +150,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Degree" htmlFor={`edu-degree-${index}`}>
+                <PwField label="Degree" required htmlFor={`edu-degree-${index}`}>
                   <PwSuggest
                     id={`edu-degree-${index}`}
                     placeholder="e.g. B.Tech"
@@ -146,6 +160,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                 </PwField>
                 <PwField
                   label="Department / field"
+                  required
                   htmlFor={`edu-field-${index}`}
                 >
                   <PwSuggest
@@ -180,7 +195,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Starting from">
+                <PwField label="Starting from" required>
                   <Controller
                     control={control}
                     name={`rows.${index}.startMonth`}
@@ -192,8 +207,16 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                           <PwMonthYear
                             month={month.value}
                             year={year.value}
-                            onMonthChange={month.onChange}
-                            onYearChange={year.onChange}
+                            // Moving the start can invalidate — or fix — the
+                            // end, so the rule that lives there is re-run.
+                            onMonthChange={(v) => {
+                              month.onChange(v);
+                              void trigger(`rows.${index}.graduationYear`);
+                            }}
+                            onYearChange={(v) => {
+                              year.onChange(v);
+                              void trigger(`rows.${index}.graduationYear`);
+                            }}
                             fromYear={EDUCATION_MIN_YEAR}
                             toYear={CURRENT_YEAR}
                           />
@@ -208,7 +231,11 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in">
+                  <PwField
+                    label="Ending in"
+                    required
+                    error={errors.rows?.[index]?.graduationYear?.message}
+                  >
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}
@@ -216,11 +243,37 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                         <Controller
                           control={control}
                           name={`rows.${index}.graduationYear`}
+                          // Same two rules the schema applies, run here so the
+                          // answer arrives without a round trip — and on the
+                          // same path, so a server issue lands here too.
+                          rules={{
+                            validate: (value, values) => {
+                              const row = values.rows[index];
+                              if (!row || row.isCurrent) return true;
+                              if (
+                                row.startYear !== null &&
+                                value !== null &&
+                                value > row.startYear + EDUCATION_MAX_SPAN_YEARS
+                              ) {
+                                return `End year cannot be more than ${EDUCATION_MAX_SPAN_YEARS} years after the start year`;
+                              }
+                              return (
+                                endBeforeStart(
+                                  { month: row.startMonth, year: row.startYear },
+                                  { month: row.endMonth, year: value },
+                                  "End date cannot be before the start date",
+                                ) ?? true
+                              );
+                            },
+                          }}
                           render={({ field: year }) => (
                             <PwMonthYear
                               month={month.value}
                               year={year.value}
-                              onMonthChange={month.onChange}
+                              onMonthChange={(v) => {
+                                month.onChange(v);
+                                void trigger(`rows.${index}.graduationYear`);
+                              }}
                               onYearChange={year.onChange}
                               disabled={isCurrent}
                               fromYear={startYear ?? EDUCATION_MIN_YEAR}
@@ -228,6 +281,9 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                                 (startYear ?? CURRENT_YEAR) +
                                 EDUCATION_MAX_SPAN_YEARS
                               }
+                              invalid={Boolean(
+                                errors.rows?.[index]?.graduationYear,
+                              )}
                             />
                           )}
                         />
