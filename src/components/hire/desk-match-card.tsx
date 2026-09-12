@@ -39,6 +39,43 @@ import {
 /** Skill chips on a result card before the rest collapse into "+N". */
 const CARD_SKILLS = 8;
 
+/** Roughly two lines on the card, before the sentence-boundary trim below. */
+const SUMMARY_PREVIEW_CHARS = 165;
+
+/**
+ * The card's share of the AI summary — a preview, not the rationale.
+ *
+ * The card exists to be scanned: a recruiter reads down a list deciding who to
+ * open, and a full paragraph per candidate turns eight cards into a page of
+ * prose and one candidate per screen. The whole rationale is two clicks away
+ * in the detail panel, and nothing is dropped from the data — this only
+ * changes what the card shows.
+ *
+ * Cuts on a sentence end where there is one in range, so the preview reads as
+ * a finished thought rather than a severed clause; falls back to a word
+ * boundary otherwise. The CSS line-clamp behind this is a second safety net
+ * for a single very long sentence, not the primary mechanism — clamping alone
+ * would still ship the whole string to the browser and still break mid-word.
+ */
+export function summaryPreview(text: string): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= SUMMARY_PREVIEW_CHARS) return flat;
+
+  const window = flat.slice(0, SUMMARY_PREVIEW_CHARS);
+  // A sentence end, but only if it lands in the back half — cutting at the
+  // first full stop of a long paragraph would throw away most of the preview.
+  const sentence = Math.max(
+    window.lastIndexOf(". "),
+    window.lastIndexOf("! "),
+    window.lastIndexOf("? "),
+  );
+  if (sentence > SUMMARY_PREVIEW_CHARS * 0.5) {
+    return flat.slice(0, sentence + 1);
+  }
+  const space = window.lastIndexOf(" ");
+  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}…`;
+}
+
 const WORK_MODE: Record<string, string> = {
   ONSITE: "Onsite",
   HYBRID: "Hybrid",
@@ -311,7 +348,7 @@ export function DeskMatchCard({
     { key: "education", Icon: GraduationCap, label: e.educationLevel },
   ].filter((m) => Boolean(m.label));
   const shownSkills = skills.slice(0, CARD_SKILLS);
-  const summary = match.rationale?.trim() || coverageLede(match);
+  const summary = summaryPreview(match.rationale?.trim() || coverageLede(match));
 
   return (
     <article

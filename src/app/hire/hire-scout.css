@@ -36,6 +36,8 @@
   --primary: 188 94% 19%;
   --color-primary: #03535F;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background: var(--h-page);
   color: var(--h-ink);
 }
@@ -87,6 +89,29 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
 
 .hire-app a {
   color: inherit;
+}
+
+/* …but not when the link has been given its own colour.
+
+   `.hire-app a` is specificity (0,1,1) and a Tailwind utility like
+   `text-primary-foreground` is (0,1,0), so the rule above silently beat every
+   link rendered as a button — `<Link className={buttonVariants(...)}>` came out
+   with a teal background and BLACK text, while the identical <button> was
+   white. That affected every such link across /hire: Messages' "Find
+   candidates", the empty states, the back-to-desk CTAs.
+
+   Matching on the utility rather than on the background means any link that
+   declares a foreground keeps it, whatever the variant. */
+.hire-app a[class*="text-primary-foreground"] {
+  color: hsl(var(--primary-foreground));
+}
+
+.hire-app a[class*="text-secondary-foreground"] {
+  color: hsl(var(--secondary-foreground));
+}
+
+.hire-app a[class*="text-destructive-foreground"] {
+  color: hsl(var(--destructive-foreground));
 }
 
 /* Header — the Design System v2 global header: 55px, white frosted glass. */
@@ -179,9 +204,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
   line-height: 20px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 500;
+  /* Sentence case. These are navigation labels, and small-caps-with-tracking
+     reads as a shouted category rather than a thing you click. The tracking
+     goes with it — it exists to open up uppercase letterforms. */
+  letter-spacing: 0;
+  text-transform: none;
   color: #353535;
   text-decoration: none;
   white-space: nowrap;
@@ -211,9 +239,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
 }
 
 .hire-credits__label {
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .hire-credits__value {
@@ -486,6 +514,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
 }
 
 @keyframes hire-node-pulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -496,6 +525,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
       inset 0 -3px 6px rgba(2, 67, 77, 0.45),
       inset 0 3px 6px rgba(255, 255, 255, 0.34);
   }
+
   50% {
     transform: scale(1.08);
     box-shadow:
@@ -512,10 +542,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
     transform: scale(0.72);
     opacity: 0.5;
   }
+
   60% {
     transform: scale(1.12);
     opacity: 1;
   }
+
   to {
     transform: none;
     opacity: 1;
@@ -527,6 +559,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
     opacity: 0.35;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -546,7 +579,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app__badge {
   flex-direction: column;
 }
 
-.hire-scout-region > * {
+.hire-scout-region>* {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -788,11 +821,13 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-idle {
+
   0%,
   100% {
     transform: scale(1);
     filter: drop-shadow(0 0 0 rgba(3, 83, 95, 0));
   }
+
   50% {
     transform: scale(1.045);
     filter: drop-shadow(0 0 6px rgba(3, 83, 95, 0.45));
@@ -934,42 +969,51 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-crack {
+
   0%,
   100% {
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
     filter: drop-shadow(0 0 0 transparent);
     opacity: 0.9;
   }
+
   18% {
     transform: translate(-50%, -50%) scale(1.22) rotate(-12deg);
     filter: drop-shadow(0 0 10px rgba(3, 83, 95, 0.95));
     opacity: 1;
   }
+
   36% {
     transform: translate(-50%, -50%) scale(0.86) rotate(8deg);
   }
+
   58% {
     transform: translate(-50%, -50%) scale(1.12) rotate(-6deg);
     filter: drop-shadow(0 0 8px rgba(3, 83, 95, 0.7));
   }
+
   78% {
     transform: translate(-50%, -50%) scale(0.96) rotate(3deg);
   }
 }
 
 @keyframes scout-shard-a {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(0deg) scale(0.3);
     opacity: 0;
   }
+
   16% {
     opacity: 1;
   }
+
   44% {
     transform: translate(13px, -15px) rotate(42deg) scale(1);
     opacity: 1;
   }
+
   78% {
     transform: translate(5px, -6px) rotate(-18deg) scale(0.55);
     opacity: 0.25;
@@ -977,18 +1021,22 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-shard-b {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(0deg) scale(0.3);
     opacity: 0;
   }
+
   14% {
     opacity: 1;
   }
+
   46% {
     transform: translate(-14px, -11px) rotate(-50deg) scale(1);
     opacity: 1;
   }
+
   80% {
     transform: translate(-6px, -4px) rotate(16deg) scale(0.5);
     opacity: 0.2;
@@ -996,18 +1044,22 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-shard-c {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(20deg) scale(0.25);
     opacity: 0;
   }
+
   18% {
     opacity: 1;
   }
+
   48% {
     transform: translate(9px, 14px) rotate(70deg) scale(1.1);
     opacity: 1;
   }
+
   82% {
     transform: translate(3px, 6px) rotate(-8deg) scale(0.45);
     opacity: 0.2;
@@ -1015,18 +1067,22 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-shard-d {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(-10deg) scale(0.25);
     opacity: 0;
   }
+
   12% {
     opacity: 1;
   }
+
   42% {
     transform: translate(-12px, 12px) rotate(-64deg) scale(1);
     opacity: 1;
   }
+
   76% {
     transform: translate(-4px, 5px) rotate(22deg) scale(0.5);
     opacity: 0.25;
@@ -1034,18 +1090,22 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-shard-e {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(0deg) scale(0.2);
     opacity: 0;
   }
+
   20% {
     opacity: 1;
   }
+
   50% {
     transform: translate(16px, 2px) rotate(28deg) scale(0.95);
     opacity: 0.9;
   }
+
   84% {
     transform: translate(7px, 1px) rotate(-20deg) scale(0.4);
     opacity: 0.15;
@@ -1053,18 +1113,22 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @keyframes scout-shard-f {
+
   0%,
   100% {
     transform: translate(0, 0) rotate(0deg) scale(0.2);
     opacity: 0;
   }
+
   15% {
     opacity: 1;
   }
+
   40% {
     transform: translate(-8px, -16px) rotate(-36deg) scale(1);
     opacity: 1;
   }
+
   74% {
     transform: translate(-3px, -7px) rotate(14deg) scale(0.45);
     opacity: 0.2;
@@ -1075,12 +1139,14 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   .scout-mark--id {
     animation: none;
   }
+
   .scout-loader__core,
   .scout-loader__burst i {
     animation: none;
     opacity: 1;
     transform: translate(-50%, -50%);
   }
+
   .scout-loader__burst i {
     transform: none;
     opacity: 0;
@@ -1288,7 +1354,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .desk-name__gate { transition: none; }
+  .desk-name__gate {
+    transition: none;
+  }
 }
 
 /* Candidate card */
@@ -1543,21 +1611,67 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 /* Skill chips take a stable tint from the skill's own name, so "React" is the
    same hue on every card and in the inspector. Six soft tints; the index comes
    from `skillTint()` in desk-match-card.tsx, never from the render order. */
-.desk-pill--c0 { background: #E7F2F3; color: #076573; }
-.desk-pill--c1 { background: #E7F2F3; color: #03535F; }
-.desk-pill--c2 { background: #D6F7EC; color: #03535F; }
-.desk-pill--c3 { background: #EEF6F6; color: #03535F; }
-.desk-pill--c4 { background: #FFEDB0; color: #AA821D; }
-.desk-pill--c5 { background: #D92D2014; color: #D92D20; }
+.desk-pill--c0 {
+  background: #E7F2F3;
+  color: #076573;
+}
+
+.desk-pill--c1 {
+  background: #E7F2F3;
+  color: #03535F;
+}
+
+.desk-pill--c2 {
+  background: #D6F7EC;
+  color: #03535F;
+}
+
+.desk-pill--c3 {
+  background: #EEF6F6;
+  color: #03535F;
+}
+
+.desk-pill--c4 {
+  background: #FFEDB0;
+  color: #AA821D;
+}
+
+.desk-pill--c5 {
+  background: #D92D2014;
+  color: #D92D20;
+}
 
 /* The tints are light-mode inks on light-mode grounds; on dark they would sit
    at roughly 2:1. Same hue family, inverted, so a skill keeps its identity. */
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c0 { background: #02434D; color: #D4EBEC; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c1 { background: #03535F; color: #D4EBEC; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c2 { background: #02434D; color: #D6F7EC; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c3 { background: #03535F; color: #E7F2F3; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c4 { background: #AA821D; color: #FFEDB0; }
-html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c5 { background: #D92D20; color: #D92D2014; }
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c0 {
+  background: #02434D;
+  color: #D4EBEC;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c1 {
+  background: #03535F;
+  color: #D4EBEC;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c2 {
+  background: #02434D;
+  color: #D6F7EC;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c3 {
+  background: #03535F;
+  color: #E7F2F3;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c4 {
+  background: #AA821D;
+  color: #FFEDB0;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-pill--c5 {
+  background: #D92D20;
+  color: #D92D2014;
+}
 
 html.dark:not(:has(.theme-abtalks-light)) .desk-pill--warn {
   background: #AA821D;
@@ -1617,7 +1731,7 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-card__partial {
   margin-top: 18px;
 }
 
-.desk-card__cta > * {
+.desk-card__cta>* {
   min-width: 0;
   flex: 0 1 auto;
 }
@@ -1784,6 +1898,7 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-shortlist.is-on {
     opacity: 0;
     transform: translateX(10px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -2227,7 +2342,7 @@ body:has(.hire-app--desk) {
   overflow: hidden;
 }
 
-body:has(.hire-app--desk) > footer {
+body:has(.hire-app--desk)>footer {
   display: none;
 }
 
@@ -2266,15 +2381,12 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
     min-width: 0;
   }
 
-  .hire-hbtn
-    > span:not(.hire-hbtn__count):not(.hire-hbtn__icon):not(
-      .hire-credits__value
-    ) {
+  .hire-hbtn>span:not(.hire-hbtn__count):not(.hire-hbtn__icon):not(.hire-credits__value) {
     display: none;
   }
 
   /* Assessments has no icon — keep its label so the control is not a blank chip. */
-  .hire-hbtn--label > span:not(.hire-hbtn__count):not(.hire-hbtn__icon) {
+  .hire-hbtn--label>span:not(.hire-hbtn__count):not(.hire-hbtn__icon) {
     display: inline;
   }
 
@@ -2743,71 +2855,90 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 .pe__paper--a {
   animation-name: pe-riffle-a;
 }
+
 .pe__paper--b {
   animation-name: pe-riffle-b;
   animation-delay: 260ms;
 }
+
 .pe__paper--c {
   animation-name: pe-riffle-c;
   animation-delay: 520ms;
 }
 
 @keyframes pe-riffle-a {
+
   0%,
   100% {
     transform: rotate(-13deg) translate(-6px, 2px);
   }
+
   22% {
     transform: rotate(-21deg) translate(-13px, -5px);
   }
+
   46% {
     transform: rotate(-10deg) translate(-3px, 3px);
   }
+
   70% {
     transform: rotate(-15deg) translate(-7px, 1px);
   }
 }
+
 @keyframes pe-riffle-b {
+
   0%,
   100% {
     transform: rotate(8deg) translate(4px, 0);
   }
+
   24% {
     transform: rotate(15deg) translate(11px, -6px);
   }
+
   50% {
     transform: rotate(5deg) translate(2px, 2px);
   }
+
   74% {
     transform: rotate(9deg) translate(5px, 0);
   }
 }
+
 @keyframes pe-riffle-c {
+
   0%,
   100% {
     transform: rotate(-3deg) translate(0, 0);
   }
+
   26% {
     transform: rotate(1deg) translate(2px, -7px);
   }
+
   52% {
     transform: rotate(-5deg) translate(-2px, 1px);
   }
+
   76% {
     transform: rotate(-3deg) translate(0, -1px);
   }
 }
 
 @keyframes pe-ground {
+
   0%,
   100% {
     transform: scaleX(1);
     opacity: 0.9;
   }
+
   30% {
     transform: scaleX(0.86);
     opacity: 0.65;
   }
+
   60% {
     transform: scaleX(1.04);
     opacity: 1;
@@ -2835,9 +2966,8 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 }
 
 .pe__glass {
-  offset-path: path(
-    "M 82,96 C 96,78 124,80 122,98 C 120,116 94,118 82,96 C 70,74 44,76 42,94 C 40,112 68,114 82,96"
-  );
+  offset-path: path("M 82,96 C 96,78 124,80 122,98 C 120,116 94,118 82,96 C 70,74 44,76 42,94 C 40,112 68,114 82,96"
+    );
   offset-rotate: 0deg;
   animation:
     pe-orbit 5200ms cubic-bezier(0.5, 0, 0.5, 1) infinite,
@@ -2850,22 +2980,27 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
   from {
     offset-distance: 0%;
   }
+
   to {
     offset-distance: 100%;
   }
 }
 
 @keyframes pe-hunt {
+
   0%,
   100% {
     transform: rotate(-6deg) scale(1);
   }
+
   25% {
     transform: rotate(7deg) scale(1.06);
   }
+
   50% {
     transform: rotate(-4deg) scale(0.97);
   }
+
   75% {
     transform: rotate(8deg) scale(1.05);
   }
@@ -2879,10 +3014,12 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .pe__paper,
   .pe__ground {
     animation: none;
   }
+
   .pe__glass {
     offset-distance: 38%;
     animation: none;
@@ -2912,7 +3049,7 @@ html.dark:not(:has(.theme-abtalks-light)) .pe__paper rect {
   content: none;
 }
 
-.hire-pod__request > * {
+.hire-pod__request>* {
   position: relative;
   z-index: 1;
 }
@@ -2925,11 +3062,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request {
 
 html.dark:not(:has(.theme-abtalks-light)) .hire-pod__request::before {
   background:
-    radial-gradient(
-      90% 70% at 100% -10%,
+    radial-gradient(90% 70% at 100% -10%,
       rgba(7, 101, 115, 0.28) 0%,
-      transparent 52%
-    ),
+      transparent 52%),
     linear-gradient(180deg, rgba(3, 83, 95, 0.12) 0%, transparent 40%);
 }
 
@@ -3051,9 +3186,11 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-pod__note {
     box-shadow: 0 0 0 0 rgba(3, 83, 95, 0.45);
     border-color: var(--h-primary);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(3, 83, 95, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(3, 83, 95, 0);
   }
@@ -3251,7 +3388,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app .hire-podbar button:not(.hir
   color: var(--h-gray-700);
 }
 
-.hire-sheet__li + .hire-sheet__li {
+.hire-sheet__li+.hire-sheet__li {
   margin-top: 8px;
 }
 
@@ -3289,6 +3426,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-sheet {
   .hire-sheet {
     padding: 24px 20px 32px;
   }
+
   .hire-sheet__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3348,7 +3486,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-detail__contact {
   background: rgba(255, 176, 140, 0.08);
 }
 
-.hire-detail__contact > div {
+.hire-detail__contact>div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -3401,8 +3539,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-detail__contact {
   background: rgba(24, 24, 27, 0.4);
 }
 
-html.dark:not(:has(.theme-abtalks-light))
-  [data-slot="dialog-overlay"]:has(+ .hire-unlock) {
+html.dark:not(:has(.theme-abtalks-light)) [data-slot="dialog-overlay"]:has(+ .hire-unlock) {
   background: rgba(9, 9, 11, 0.62);
 }
 
@@ -3450,7 +3587,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-unlock {
   font-size: 13px;
 }
 
-.hire-unlock__row + .hire-unlock__row {
+.hire-unlock__row+.hire-unlock__row {
   border-top: 1px solid var(--h-border);
 }
 
@@ -3759,8 +3896,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
 
 .hire-pie__wedge {
   filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.16))
-    drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.16)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.08));
 }
 
 .hire-pie__gloss {
@@ -3806,6 +3942,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
     opacity: 0;
     transform: scale(0.86);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -3827,9 +3964,11 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
     transform: translate(var(--tx), var(--ty));
     opacity: 0;
   }
+
   35% {
     opacity: 1;
   }
+
   100% {
     transform: translate(0, 0);
     opacity: 1;
@@ -3869,6 +4008,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-auth [data-slot="input"
     opacity: 0;
     transform: translateX(6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -4117,6 +4257,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .hire-pie__slice,
   .hire-pie__row,
   .hire-pie__hub,
@@ -4454,7 +4595,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
     gap: 8px;
   }
 
-  .scout__body.is-open .hire-detail__actions > * {
+  .scout__body.is-open .hire-detail__actions>* {
     flex: 1 1 100%;
     justify-content: center;
     min-height: 44px;
@@ -4478,7 +4619,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
     gap: 10px;
   }
 
-  .hire-podbar > span:not(.hire-podbar__icon) {
+  .hire-podbar>span:not(.hire-podbar__icon) {
     flex: 1 1 auto;
     min-width: 0;
     white-space: nowrap;
@@ -4567,9 +4708,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
     justify-content: stretch;
   }
 
-  .desk-card__cta > *,
-  .hire-app .desk-card__cta > *,
-  .hire-pod__actions > * {
+  .desk-card__cta>*,
+  .hire-app .desk-card__cta>*,
+  .hire-pod__actions>* {
     width: 100%;
     height: 38px;
     justify-content: center;
@@ -4582,7 +4723,7 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
     text-overflow: ellipsis;
   }
 
-  .hire-pod__actions > *:first-child {
+  .hire-pod__actions>*:first-child {
     grid-column: 1 / -1;
     justify-self: center;
     width: auto;
@@ -4608,13 +4749,11 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
   padding: 18px 20px;
   border: 1px dashed var(--h-border-strong);
   border-radius: 16px;
-  background: repeating-linear-gradient(
-    135deg,
-    var(--h-peach-wash),
-    var(--h-peach-wash) 10px,
-    transparent 10px,
-    transparent 20px
-  );
+  background: repeating-linear-gradient(135deg,
+      var(--h-peach-wash),
+      var(--h-peach-wash) 10px,
+      transparent 10px,
+      transparent 20px);
 }
 
 html.dark .vc-card {
@@ -4718,11 +4857,13 @@ html.dark .vc-card {
   .desk-card__cta {
     gap: 8px;
   }
+
   .desk-card__cta .desk-ghost,
   .desk-card__cta .desk-pod {
     padding-left: 10px;
     padding-right: 10px;
   }
+
   .desk-card__cta .desk-ghost {
     gap: 5px;
   }
@@ -4760,14 +4901,17 @@ html.dark .vc-card {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+
 .desk-badge--new {
   background: color-mix(in srgb, var(--h-primary) 16%, transparent);
   color: var(--h-primary);
 }
+
 .desk-badge--viewed {
   background: var(--h-card-line);
   color: var(--h-ink-soft, #626262);
 }
+
 .desk-card__triage {
   display: flex;
   flex-wrap: wrap;
@@ -4775,23 +4919,28 @@ html.dark .vc-card {
   gap: 8px;
   margin-top: 12px;
 }
+
 .desk-card__triage .desk-ghost.is-on {
   border-color: var(--h-primary);
   color: var(--h-primary);
   background: color-mix(in srgb, var(--h-primary) 10%, transparent);
 }
+
 .desk-card--rejected {
   opacity: 0.62;
 }
+
 .desk-card--rejected .desk-card__facts,
 .desk-card--rejected .desk-card__why {
   display: none;
 }
+
 .hire-req__name {
   display: grid;
   gap: 6px;
   padding: 8px 12px 4px;
 }
+
 .hire-req__name-input {
   width: 100%;
   height: 34px;
@@ -4802,6 +4951,7 @@ html.dark .vc-card {
   color: inherit;
   font-size: 13px;
 }
+
 .hire-hide-rejected {
   display: inline-flex;
   align-items: center;
@@ -4948,9 +5098,16 @@ html.dark .vc-card {
   cursor: pointer;
   transition: background-color 200ms var(--ease), color 200ms var(--ease);
 }
-.hire-gate__x:hover { background: var(--h-gray-100); color: var(--h-ink); }
 
-.hire-gate__head { text-align: center; }
+.hire-gate__x:hover {
+  background: var(--h-gray-100);
+  color: var(--h-ink);
+}
+
+.hire-gate__head {
+  text-align: center;
+}
+
 .hire-gate__title {
   margin: 0;
   font-size: 20px;
@@ -4958,6 +5115,7 @@ html.dark .vc-card {
   font-weight: 700;
   color: var(--h-ink);
 }
+
 .hire-gate__body {
   margin: 6px auto 0;
   font-size: 13px;
@@ -4975,6 +5133,7 @@ html.dark .vc-card {
   background: #F4F4F4;
   border-radius: 999px;
 }
+
 .hire-gate__seg {
   height: 38px;
   padding: 0 24px;
@@ -4990,13 +5149,18 @@ html.dark .vc-card {
   transition: background-color 200ms var(--ease), color 200ms var(--ease),
     box-shadow 200ms var(--ease);
 }
+
 .hire-gate__seg.is-active {
   background: #fff;
   color: var(--h-ink);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 /* Green, like the "billed annually" line it promises. */
-.hire-gate__save { color: #197E23; font-weight: 700; }
+.hire-gate__save {
+  color: #197E23;
+  font-weight: 700;
+}
 
 .hire-gate__grid {
   display: grid;
@@ -5050,6 +5214,7 @@ html.dark .vc-card {
   font-weight: 700;
   color: var(--h-ink);
 }
+
 .hire-plan__tagline {
   margin: 5px 0 0;
   font-size: 13px;
@@ -5063,6 +5228,7 @@ html.dark .vc-card {
   gap: 9px;
   margin: 18px 0 0;
 }
+
 .hire-plan__price b {
   font-family: var(--font-outfit), sans-serif;
   font-size: 40px;
@@ -5072,6 +5238,7 @@ html.dark .vc-card {
   color: var(--h-ink);
   font-variant-numeric: tabular-nums;
 }
+
 .hire-plan__price span {
   font-size: 17px;
   font-weight: 400;
@@ -5111,6 +5278,7 @@ html.dark .vc-card {
   flex-direction: column;
   gap: 7px;
 }
+
 .hire-plan__list li {
   font-size: 13px;
   line-height: 19px;
@@ -5135,9 +5303,18 @@ html.dark .vc-card {
   cursor: pointer;
   transition: background-color 200ms var(--ease);
 }
-.hire-plan__cta:hover { background: #000; }
-.hire-plan__cta--prime { background: var(--h-primary); }
-.hire-plan__cta--prime:hover { background: var(--h-primary-hover); }
+
+.hire-plan__cta:hover {
+  background: #000;
+}
+
+.hire-plan__cta--prime {
+  background: var(--h-primary);
+}
+
+.hire-plan__cta--prime:hover {
+  background: var(--h-primary-hover);
+}
 
 .hire-gate__note {
   margin: 18px 0 0;
@@ -5148,9 +5325,18 @@ html.dark .vc-card {
 }
 
 @media (max-width: 900px) {
-  .hire-gate__grid { grid-template-columns: minmax(0, 1fr); }
-  .hire-gate__card { padding: 24px 18px 22px; }
-  .hire-plan--prime { margin-block: 0; padding-block: 24px 22px; }
+  .hire-gate__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hire-gate__card {
+    padding: 24px 18px 22px;
+  }
+
+  .hire-plan--prime {
+    margin-block: 0;
+    padding-block: 24px 22px;
+  }
 }
 
 /* Scout header: one row, one height, everything centred on it. */
@@ -5161,12 +5347,14 @@ html.dark .vc-card {
   gap: 10px;
   min-width: 0;
 }
-.scout__tools > * {
+
+.scout__tools>* {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 34px;
 }
+
 .scout__meta {
   display: flex;
   flex-direction: column;
@@ -5181,7 +5369,10 @@ html.dark .vc-card {
     flex-wrap: wrap;
     justify-content: center;
   }
-  .hire-pie__legend { flex-basis: 100%; }
+
+  .hire-pie__legend {
+    flex-basis: 100%;
+  }
 }
 
 /* ── Plan 121: assessment builder / preview / list ───────────────────────── */
@@ -5258,6 +5449,7 @@ html.dark .vc-card {
 }
 
 @media (max-width: 900px) {
+
   .hire-assess__top h1,
   .hire-assess-list h1 {
     font-size: 32px;
@@ -5330,6 +5522,7 @@ html.dark .vc-card {
 }
 
 @media (max-width: 1099px) {
+
   .hire-assess__form[data-active="false"],
   .hire-assess__preview[data-active="false"] {
     display: none;
@@ -6080,6 +6273,7 @@ html.dark .vc-card {
     white-space: nowrap;
   }
 }
+
 /* ------------------------------------------------------------------
    Recruiter search landing (Figma 1570:437 desktop / 1594:98 mobile)
    Forest-green tokens. Lives only on `/hire` before the first query.
@@ -6103,21 +6297,77 @@ html.dark .vc-card {
 
    Behind everything (z-index -1 inside the isolated .hire-app), so on
    screen 2, where nothing else is positioned, it is simply the page. */
-@property --hf-base { syntax: "<color>"; inherits: false; initial-value: #0c6f63; }
-@property --hf-mint { syntax: "<color>"; inherits: false; initial-value: #18d39b; }
-@property --hf-115 { syntax: "<color>"; inherits: false; initial-value: #115b5a; }
-@property --hf-0a4 { syntax: "<color>"; inherits: false; initial-value: #0a444c; }
-@property --hf-035 { syntax: "<color>"; inherits: false; initial-value: #03535f; }
-@property --hf-025 { syntax: "<color>"; inherits: false; initial-value: #02525d; }
-@property --hf-055 { syntax: "<color>"; inherits: false; initial-value: #055560; }
-@property --hf-053 { syntax: "<color>"; inherits: false; initial-value: #053d45; }
-@property --hf-287 { syntax: "<color>"; inherits: false; initial-value: #287b62; }
+@property --hf-base {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #0c6f63;
+}
+
+@property --hf-mint {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #18d39b;
+}
+
+@property --hf-115 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #115b5a;
+}
+
+@property --hf-0a4 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #0a444c;
+}
+
+@property --hf-035 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #03535f;
+}
+
+@property --hf-025 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #02525d;
+}
+
+@property --hf-055 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #055560;
+}
+
+@property --hf-053 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #053d45;
+}
+
+@property --hf-287 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #287b62;
+}
 
 .hire-app--desk {
   isolation: isolate;
 }
 
 .hire-field {
+  /* Screen 1's palette, declared here as well as in the @property blocks above
+     so the hero still paints where `@property` is unsupported. Keep the two
+     lists equal — they were darkened out of step once and the hero went muddy. */
+  --hf-base: #0c6f63;
+  --hf-mint: #18d39b;
+  --hf-115: #115b5a;
+  --hf-0a4: #0a444c;
+  --hf-035: #03535f;
+  --hf-025: #02525d;
+  --hf-055: #055560;
+  --hf-053: #053d45;
+  --hf-287: #287b62;
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -6162,8 +6412,12 @@ html.dark .vc-card {
     radial-gradient(13.6% 32.2% at 94.4% 92.3%, var(--hf-035) 0%, transparent 100%);
 }
 
-/* Screen 2: every colour converges on the dashboard grey. The properties do
-   not inherit, so each layer that paints with them is set directly. */
+/* Screen 2: every colour converges on the dashboard surface. The properties do
+   not inherit, so each layer that paints with them is set directly.
+
+   The dashboard grey. White flattened the cards into the page; the grey gives
+   the white sidebar, cards and detail panel something to sit on — the same
+   relationship the student dashboard has. */
 .hire-app--results .hire-field {
   --hf-base: #f4f4f5;
 }
@@ -6181,6 +6435,7 @@ html.dark .vc-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .hire-field,
   .hire-field__shade,
   .hire-field__glow-core {
@@ -6207,6 +6462,7 @@ html.dark .vc-card {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -6240,7 +6496,7 @@ html.dark .vc-card {
      hid two of the three suggestion lines. Same ellipses, in percentages, so
      the field covers any viewport. Stops run back-to-front: the last
      ellipse in the SVG is the first layer here. */
-  background: #f4f4f5;
+  background: #00181d;
   color: #ffffff;
   position: relative;
   overflow: auto;
@@ -6260,14 +6516,14 @@ html.dark .vc-card {
   z-index: 0;
 }
 
-.hire-app--landing > * {
+.hire-app--landing>* {
   position: relative;
   z-index: 1;
 }
 
 /* ...except the field, which is a fixed backdrop. Same specificity as the rule
    above, so it has to come after it. */
-.hire-app--landing > .hire-field {
+.hire-app--landing>.hire-field {
   position: fixed;
   z-index: -1;
 }
@@ -6275,11 +6531,11 @@ html.dark .vc-card {
 .hire-app--landing .hire-app__header {
   height: 55px;
   padding: 0 40px;
-  background: rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(0, 24, 29, 0.38);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .hire-app--landing .hire-app__logo {
@@ -6417,6 +6673,7 @@ html.dark .vc-card {
     opacity: 1;
     transform: none;
   }
+
   to {
     opacity: 0;
     transform: translateY(-10px);
@@ -6424,6 +6681,7 @@ html.dark .vc-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .rsearch.is-leaving .rsearch__title,
   .rsearch.is-leaving .rsearch__suggest,
   .rsearch.is-leaving .rsearch__reply,
@@ -6720,6 +6978,7 @@ html.dark .vc-card {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -6739,6 +6998,7 @@ html.dark .vc-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .rsearch__suggest-slot.is-1,
   .rsearch__suggest-slot.is-2 {
     display: none;
@@ -6913,9 +7173,9 @@ html.dark .vc-card {
     background: #ffffff;
     font-size: 14px;
     line-height: 20px;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
     color: #353535;
   }
 
@@ -7258,16 +7518,16 @@ html.dark .vc-card {
   background: #f4f5f5;
 }
 
-.hire-side__projectli > .hire-side__row {
+.hire-side__projectli>.hire-side__row {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.hire-side__projectli > .hire-side__row:hover {
+.hire-side__projectli>.hire-side__row:hover {
   background: transparent;
 }
 
-.hire-side__projectli > .hire-side__more {
+.hire-side__projectli>.hire-side__more {
   margin-right: 4px;
 }
 
@@ -7550,15 +7810,15 @@ button.hire-side__me {
     "composer panel";
 }
 
-.scout__body > .chat-output {
+.scout__body>.chat-output {
   grid-area: chat;
 }
 
-.scout__body > .scout-composer {
+.scout__body>.scout-composer {
   grid-area: composer;
 }
 
-.scout__body > .hire-detail {
+.scout__body>.hire-detail {
   grid-area: panel;
 }
 
@@ -7569,18 +7829,21 @@ button.hire-side__me {
   padding: 0 18px 10px 0;
 }
 
+/* Secondary toolbar actions, not primary CTAs — but findable. One height
+   across all three so the row reads as a set. */
 .scout-filters {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 12px 0 9px;
-  border: 1px solid #d5dcde;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 7px;
+  height: 41px;
+  padding: 0 16px;
+  border: 1px solid #cfd8da;
+  border-radius: 10px;
   background: #f7f9f9;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
   color: #334145;
   cursor: pointer;
@@ -7625,7 +7888,7 @@ button.hire-side__me {
   }
 
   /* The panel tops out on the card line, below the Filters row. */
-  .hire-app--results .scout__body > .hire-detail {
+  .hire-app--results .scout__body>.hire-detail {
     margin-top: 36px;
   }
 }
@@ -7686,14 +7949,17 @@ button.hire-side__me {
   color: #787878;
 }
 
+/* Centred, like both breakpoint overrides below already were. This rule used
+   to say `flex-start` with a 25px left inset, which nothing above 900px ever
+   saw — the ≥901px block overrides both. One alignment, stated once. */
 .hire-app--results .scout-send {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 8px;
   width: 166px;
   height: 53px;
-  padding: 0 0 0 25px;
+  padding: 0;
   border-radius: 15px;
   background: #03535f;
   font-family: var(--font-inter), sans-serif;
@@ -7708,23 +7974,14 @@ button.hire-side__me {
   background: #076573;
 }
 
-/* The exported magnifier carries its own padding; this is the design's crop. */
+/* 20px is the size the old cropped PNG actually drew the glyph at, so the
+   button's proportions are unchanged — only the icon is now legible. */
 .scout-send__icon {
-  position: relative;
   flex: none;
-  width: 32px;
-  height: 31px;
-  overflow: hidden;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.25;
   pointer-events: none;
-}
-
-.scout-send__icon img {
-  position: absolute;
-  left: -53.85%;
-  top: -58.97%;
-  width: 215.38%;
-  height: 215.38%;
-  max-width: none;
 }
 
 .hire-app--results .scout-criteria {
@@ -7889,20 +8146,22 @@ button.hire-side__me {
 
 .desk-chip {
   display: inline-flex;
-  padding: 6px 10px;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 14px;
   border: 1px solid #e4e4e7;
   border-radius: 999px;
   background: #f4f4f5;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 19px;
   color: #18181b;
 }
 
 .desk-card__ai {
   position: relative;
-  margin-top: 46px;
+  margin-top: 38px;
 }
 
 .desk-card__ai-tab {
@@ -7933,17 +8192,28 @@ button.hire-side__me {
   margin-top: 1px;
 }
 
+/* A preview, not the rationale. `summaryPreview()` in desk-match-card.tsx
+   already trims the string on a sentence boundary; the clamp is the safety net
+   for one very long unbroken sentence. Together they take this block from
+   ~72px minimum and 28px lines to two 22px lines — roughly half the height,
+   which is the point: more candidates per screen. The full text is in the
+   detail panel behind "View More Details". */
 .desk-card__ai-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   margin: 0;
-  min-height: 72px;
-  padding: 12px 21px;
+  min-height: 0;
+  padding: 10px 18px;
   border-radius: 10px;
   background: #f7fcfd;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   font-family: var(--font-inter), sans-serif;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 28px;
+  line-height: 22px;
   color: #4b4b4b;
 }
 
@@ -8223,7 +8493,7 @@ button.hire-profile__in:focus-visible {
   color: #18181b;
 }
 
-.hire-profile__org > span:last-child {
+.hire-profile__org>span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -8497,7 +8767,7 @@ button.hire-profile__in:focus-visible {
   gap: 12px;
 }
 
-.hire-profile__org-block + .hire-profile__org-block {
+.hire-profile__org-block+.hire-profile__org-block {
   margin-top: 16px;
 }
 
@@ -8710,7 +8980,7 @@ button.hire-profile__in:focus-visible {
   padding: 8px 12px;
 }
 
-.hire-profile__cert + .hire-profile__cert {
+.hire-profile__cert+.hire-profile__cert {
   border-top: 1px solid #e4e4e7;
 }
 
@@ -8825,8 +9095,9 @@ button.hire-profile__in:focus-visible {
   }
 
   .desk-card__ai-text {
-    padding: 12px 14px;
-    font-size: 14px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    line-height: 21px;
   }
 
   .desk-card--result .desk-card__cta {
@@ -9023,10 +9294,13 @@ button.hire-profile__in:focus-visible {
 }
 
 @media (min-width: 901px) {
+
   .scout--hero .rsearch__title,
   .rsearch__title.is-leaving {
     max-width: none;
     font-size: clamp(24px, 2.05vw, 40px);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 
@@ -9040,7 +9314,10 @@ button.hire-profile__in:focus-visible {
   padding: clamp(18px, 1.64vw, 32px) clamp(20px, 1.84vw, 36px);
   border-radius: 16px;
   background: rgba(200, 235, 225, 0.2);
-  box-shadow: 0 10px 24px rgba(0, 25, 31, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 24px rgba(0, 25, 31, 0.25);
 }
 
 .scout--hero .scout-composer__row {
@@ -9054,9 +9331,10 @@ button.hire-profile__in:focus-visible {
   align-items: center;
   min-height: clamp(48px, 3.89vw, 76px);
   padding: 0 clamp(14px, 1.23vw, 24px);
-  border: 2px solid #03535f;
-  border-radius: 16px;
+  border: 0;
+  border-radius: 14px;
   background: #ffffff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .scout--hero .scout-field:focus-within {
@@ -9086,7 +9364,7 @@ button.hire-profile__in:focus-visible {
   min-height: clamp(48px, 3.89vw, 76px);
   padding: 0;
   border: 0;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #03535f;
   color: #ffffff;
   font-family: var(--font-inter), sans-serif;
@@ -9094,9 +9372,9 @@ button.hire-profile__in:focus-visible {
   line-height: 20px;
   font-weight: 600;
   box-shadow:
-    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
-    inset 0 1px 1px rgba(255, 255, 255, 0.14),
-    0 4px 12px rgba(3, 83, 95, 0.16);
+    inset 0 -2px 5px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15),
+    0 4px 12px rgba(0, 20, 24, 0.2);
 }
 
 .scout--hero .scout-send:hover:not(:disabled) {
@@ -9117,21 +9395,51 @@ button.hire-profile__in:focus-visible {
 }
 
 .scout--hero .scout-criterion {
-  color: #626262;
+  color: rgba(255, 255, 255, 0.7);
   font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   line-height: 21px;
   font-weight: 400;
 }
 
+.scout--hero .scout-criterion .scout-criterion__box {
+  color: #72debf;
+  margin-right: 4px;
+}
+
 .scout--hero .scout-criterion.is-on {
-  color: #27ca37;
+  color: #ffffff;
   font-weight: 600;
+}
+
+.scout--hero .scout-criterion.is-on .scout-criterion__box {
+  color: #18d39b;
 }
 
 /* Suggestions share the card's width so their left edge lines up with it. */
 .scout--hero .rsearch__suggest {
   max-width: clamp(600px, 53.2vw, 1040px);
+}
+
+.scout--hero .rsearch__suggest-slot .rsearch__face {
+  color: #0b464f;
+  font-weight: 600;
+}
+
+.scout--hero .rsearch__suggest-slot.is-1 .rsearch__face {
+  color: #0b464f;
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+.scout--hero .rsearch__suggest-slot.is-2 .rsearch__face {
+  color: #0b464f;
+  opacity: 0.35;
+  font-weight: 400;
+}
+
+.scout--hero .rsearch__suggest-arrow {
+  color: #0b464f;
 }
 
 /* Mobile frame: the card stacks the field over a full-width Search. */
@@ -9174,6 +9482,7 @@ button.hire-profile__in:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .rsearch__title.is-leaving,
   .rsearch__suggest.is-leaving {
     animation: none;
@@ -9260,12 +9569,14 @@ button.hire-profile__in:focus-visible {
   from {
     background-position: 100% 0;
   }
+
   to {
     background-position: -100% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .hire-skel__avatar,
   .hire-skel__line,
   .hire-skel__chip,
@@ -9337,7 +9648,8 @@ button.hire-profile__in:focus-visible {
 .hire-field__glow-core {
   display: block;
   will-change: transform;
-  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); /* sine in-out */
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  /* sine in-out */
   animation-iteration-count: infinite;
   animation-direction: alternate;
   animation-play-state: paused;
@@ -9374,48 +9686,66 @@ button.hire-profile__in:focus-visible {
 
 /* Geometry: the export's ellipse, box = 2 x radii, centred on its point.
    Drift: how far it wanders (--gx / --gy) and how slowly (--g*-t). */
-.hire-field__glow--a {        /* 7.5% 23.8%, r 20.2% x 48.8% */
+.hire-field__glow--a {
+  /* 7.5% 23.8%, r 20.2% x 48.8% */
   left: -12.7vw;
   top: -25vh;
   width: 40.4vw;
   height: 97.6vh;
-  --gx: 30vw;  --gx-t: 17s;
-  --gy: 32vh;  --gy-t: 13.5s;
+  --gx: 30vw;
+  --gx-t: 17s;
+  --gy: 32vh;
+  --gy-t: 13.5s;
   --gs-t: 11s;
   --gf-t: 8.5s;
 }
 
-.hire-field__glow--b {        /* 39.8% 86.8%, r 28.2% x 40.3% */
+.hire-field__glow--b {
+  /* 39.8% 86.8%, r 28.2% x 40.3% */
   left: 11.6vw;
   top: 46.5vh;
   width: 56.4vw;
   height: 80.6vh;
-  --gx: -28vw; --gx-t: 19s;
-  --gy: -26vh; --gy-t: 15.5s;
-  --gs-t: 14s; --gs-d: -5.5s;
-  --gf-t: 10.5s; --gf-d: -4s;
+  --gx: -28vw;
+  --gx-t: 19s;
+  --gy: -26vh;
+  --gy-t: 15.5s;
+  --gs-t: 14s;
+  --gs-d: -5.5s;
+  --gf-t: 10.5s;
+  --gf-d: -4s;
 }
 
-.hire-field__glow--c {        /* 84.8% 81.4%, r 13.6% x 32.2% */
+.hire-field__glow--c {
+  /* 84.8% 81.4%, r 13.6% x 32.2% */
   left: 71.2vw;
   top: 49.2vh;
   width: 27.2vw;
   height: 64.4vh;
-  --gx: -34vw; --gx-t: 15.5s;
-  --gy: -30vh; --gy-t: 21s;
-  --gs-t: 12.5s; --gs-d: -8.5s;
-  --gf-t: 7s; --gf-d: -3s;
+  --gx: -34vw;
+  --gx-t: 15.5s;
+  --gy: -30vh;
+  --gy-t: 21s;
+  --gs-t: 12.5s;
+  --gs-d: -8.5s;
+  --gf-t: 7s;
+  --gf-d: -3s;
 }
 
-.hire-field__glow--d {        /* 35.4% 27.0%, r 13.1% x 28.8% */
+.hire-field__glow--d {
+  /* 35.4% 27.0%, r 13.1% x 28.8% */
   left: 22.3vw;
   top: -1.8vh;
   width: 26.2vw;
   height: 57.6vh;
-  --gx: 30vw;  --gx-t: 14s;
-  --gy: 34vh;  --gy-t: 18s;
-  --gs-t: 10.5s; --gs-d: -3.5s;
-  --gf-t: 9s; --gf-d: -6.5s;
+  --gx: 30vw;
+  --gx-t: 14s;
+  --gy: 34vh;
+  --gy-t: 18s;
+  --gs-t: 10.5s;
+  --gs-d: -3.5s;
+  --gf-t: 9s;
+  --gf-d: -6.5s;
 }
 
 .hire-app--landing .hire-field__glow,
@@ -9425,31 +9755,52 @@ button.hire-profile__in:focus-visible {
 }
 
 @keyframes hire-drift-x {
-  from { transform: translate3d(calc(var(--gx) * -1), 0, 0); }
-  to { transform: translate3d(var(--gx), 0, 0); }
+  from {
+    transform: translate3d(calc(var(--gx) * -1), 0, 0);
+  }
+
+  to {
+    transform: translate3d(var(--gx), 0, 0);
+  }
 }
 
 @keyframes hire-drift-y {
-  from { transform: translate3d(0, calc(var(--gy) * -1), 0); }
-  to { transform: translate3d(0, var(--gy), 0); }
+  from {
+    transform: translate3d(0, calc(var(--gy) * -1), 0);
+  }
+
+  to {
+    transform: translate3d(0, var(--gy), 0);
+  }
 }
 
 /* Grows past its design size more than it shrinks below it, so the field
    never ends up with less light than the design has. */
 @keyframes hire-breathe {
-  from { transform: scale(0.96); }
-  to { transform: scale(1.12); }
+  from {
+    transform: scale(0.96);
+  }
+
+  to {
+    transform: scale(1.12);
+  }
 }
 
 /* A shimmer, not a fade-out: the design's brightness is the floor, near
    enough. Dipping to 20% (as this first did) visibly darkened the screen. */
 @keyframes hire-fade {
-  from { opacity: 0.8; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.8;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Reduced motion: the blobs simply stay where the design put them. */
 @media (prefers-reduced-motion: reduce) {
+
   .hire-field__glow,
   .hire-field__glow-y,
   .hire-field__glow-core {
@@ -9465,7 +9816,7 @@ button.hire-profile__in:focus-visible {
 }
 
 .scout-action {
-  padding: 0 13px;
+  padding: 0 18px;
 }
 
 .scout-action--search {
@@ -9500,6 +9851,7 @@ button.hire-profile__in:focus-visible {
     opacity: 1;
     transform: none;
   }
+
   to {
     opacity: 0;
     transform: translateY(8px);
@@ -9519,6 +9871,7 @@ button.hire-profile__in:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .scout.is-returning .scout__toolbar,
   .scout.is-returning .chat-output,
   .scout--hero.is-arriving .rsearch__title,
@@ -9552,7 +9905,7 @@ button.hire-profile__in:focus-visible {
   align-items: center;
 }
 
-.hire-app__logo-swap > img {
+.hire-app__logo-swap>img {
   grid-area: 1 / 1;
   transition: opacity 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
 }
@@ -9570,18 +9923,19 @@ button.hire-profile__in:focus-visible {
 }
 
 .hire-app--results .hire-app__badge,
-.hire-app--results .hire-app__nav > .hire-hbtn {
+.hire-app--results .hire-app__nav>.hire-hbtn {
   animation: hire-results-in 700ms var(--ease) 500ms both;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .hire-app__header,
-  .hire-app__logo-swap > img {
+  .hire-app__logo-swap>img {
     transition: none;
   }
 
   .hire-app--results .hire-app__badge,
-  .hire-app--results .hire-app__nav > .hire-hbtn {
+  .hire-app--results .hire-app__nav>.hire-hbtn {
     animation: none;
   }
 }
@@ -9686,23 +10040,51 @@ button.hire-profile__in:focus-visible {
 }
 
 @keyframes rsearch-cube-in {
-  from { transform: rotateX(-90deg); opacity: 0; }
-  to { transform: rotateX(0deg); opacity: 1; }
+  from {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes rsearch-cube-out {
-  from { transform: rotateX(0deg); opacity: 1; }
-  to { transform: rotateX(90deg); opacity: 0; }
+  from {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+
+  to {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
 }
 
 @keyframes rsearch-cube-in-back {
-  from { transform: rotateX(90deg); opacity: 0; }
-  to { transform: rotateX(0deg); opacity: 1; }
+  from {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes rsearch-cube-out-back {
-  from { transform: rotateX(0deg); opacity: 1; }
-  to { transform: rotateX(-90deg); opacity: 0; }
+  from {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+
+  to {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -9763,6 +10145,7 @@ button.hire-profile__in:focus-visible {
 }
 
 @media (min-width: 901px) {
+
   .scout-composer__row,
   .scout-field,
   .scout-field textarea,
@@ -9829,8 +10212,8 @@ button.hire-profile__in:focus-visible {
   }
 
   .hire-app--results .scout-send__icon {
-    width: calc(32px * var(--hire-zoom, 1));
-    height: calc(31px * var(--hire-zoom, 1));
+    width: calc(20px * var(--hire-zoom, 1));
+    height: calc(20px * var(--hire-zoom, 1));
   }
 
   .hire-app--results .scout-criteria {
@@ -9847,6 +10230,7 @@ button.hire-profile__in:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .scout-composer,
   .scout-composer__row,
   .scout-field,
@@ -10042,8 +10426,8 @@ button.hire-profile__in:focus-visible {
   min-width: 0;
 }
 
-.hire-filter-field > span,
-.hire-filter-field > legend {
+.hire-filter-field>span,
+.hire-filter-field>legend {
   font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   line-height: 20px;
@@ -10442,7 +10826,7 @@ button.hire-profile__in:focus-visible {
   font-weight: 600;
 }
 
-.hire-jobs__filters > div {
+.hire-jobs__filters>div {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -10482,7 +10866,7 @@ button.hire-profile__in:focus-visible {
   font-weight: 700;
 }
 
-.hire-jobs__empty > p {
+.hire-jobs__empty>p {
   margin: 8px 0 20px;
   max-width: 36ch;
   color: #787878;
@@ -10534,9 +10918,24 @@ button.hire-profile__in:focus-visible {
   clip-path: polygon(50% 0, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 39% 65%, 0 50%, 39% 35%);
 }
 
-.hire-jobs__spark--a { top: 16px; right: 36px; }
-.hire-jobs__spark--b { top: 48px; right: 18px; width: 6px; height: 6px; }
-.hire-jobs__spark--c { top: 22px; left: 40px; width: 5px; height: 5px; }
+.hire-jobs__spark--a {
+  top: 16px;
+  right: 36px;
+}
+
+.hire-jobs__spark--b {
+  top: 48px;
+  right: 18px;
+  width: 6px;
+  height: 6px;
+}
+
+.hire-jobs__spark--c {
+  top: 22px;
+  left: 40px;
+  width: 5px;
+  height: 5px;
+}
 
 .hire-jobs__or {
   display: flex;
@@ -10799,7 +11198,7 @@ button.hire-profile__in:focus-visible {
   gap: 8px;
 }
 
-.hire-jobs-form__field > span:first-child {
+.hire-jobs-form__field>span:first-child {
   color: #353535;
   font-size: 14px;
   font-weight: 600;
@@ -10984,7 +11383,7 @@ button.hire-profile__in:focus-visible {
 }
 
 .hire-jobs-form__tips header svg,
-.hire-jobs-form__note > svg {
+.hire-jobs-form__note>svg {
   width: 18px;
   height: 18px;
   flex: none;

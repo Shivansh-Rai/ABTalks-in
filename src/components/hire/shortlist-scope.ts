@@ -6,7 +6,14 @@ import type { CartRow } from "@/components/hire/shortlist-cart";
  * Pure, no React, so the isolation rule can be tested directly.
  */
 
-/** `/hire/<segment>` routes that are pages, not projects. */
+/**
+ * `/hire/<segment>` routes that are pages, not projects.
+ *
+ * This list decides more than the shortlist scope: `HireChrome` derives `desk`
+ * from `projectIdFromPath`, so a page missing here is rendered with the whole
+ * project-desk shell — sidebar, journey rail, results grid — around content
+ * that is not a project. Every new `/hire/<page>` route belongs here.
+ */
 const NOT_A_PROJECT = new Set([
   "evidence",
   "requests",
@@ -14,6 +21,8 @@ const NOT_A_PROJECT = new Set([
   "matches",
   "create-test",
   "assessments",
+  "projects",
+  "settings",
   "jobs",
 ]);
 
