@@ -318,6 +318,7 @@ export function ProfileWizard({
         <ProfileReviewCard
           review={review}
           onOpen={jump}
+          performance={performance}
           media={
             <IdentityMedia
               score={score}

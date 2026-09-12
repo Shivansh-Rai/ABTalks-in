@@ -602,6 +602,82 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   font-weight: 500;
 }
 
+/* ---- Complete your profile (mobile CTA; hidden on desktop) ---- */
+.pw-rv-complete-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pw-rv-complete-ico {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff8e6;
+  color: var(--pw-warning);
+}
+.pw-rv-complete-ico svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-rv-complete-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pw-rv-complete-title {
+  font-family: var(--pw-font-display);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  color: #000000;
+}
+.pw-rv-complete-sub {
+  font-size: 13px;
+  line-height: 18px;
+  color: #787878;
+  font-weight: 400;
+}
+.pw-rv-complete-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pw-rv-complete-chip {
+  appearance: none;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 14px;
+  min-height: 36px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: #353535;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.pw-rv-complete-chip:hover,
+.pw-rv-complete-chip:focus-visible {
+  background: #eef6f6;
+  border-color: #a6d2d5;
+  outline: none;
+}
+.pw-rv-complete-chip:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+
 /* ---- the rule between what is filled in and what is not ---- */
 .pw-rv-divider {
   display: flex;
@@ -644,6 +720,10 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   gap: 10px;
   margin-bottom: 12px;
 }
+.pw-rv-card-copy {
+  flex: 1;
+  min-width: 0;
+}
 .pw-rv-ico {
   flex: none;
   width: 28px;
@@ -668,8 +748,6 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   stroke-linejoin: round;
 }
 .pw-rv-card-head h3 {
-  flex: 1;
-  min-width: 0;
   margin: 0;
   font-family: var(--pw-font-display);
   font-size: 16px;
@@ -677,6 +755,54 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   font-weight: 600;
   color: #000000;
   letter-spacing: 0;
+}
+/* Mobile overview preview — hidden on desktop; shown ≤1024. */
+.pw-rv-preview {
+  display: none;
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  color: #787878;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-rv-chev {
+  display: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: #a5a5a5;
+}
+.pw-rv-chev svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Full-card tap target on mobile; inert on desktop. */
+.pw-rv-card-hit {
+  display: none;
+}
+.pw-rv-desktop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pw-rv-mobile-list {
+  display: none;
+}
+.pw-rv-complete {
+  display: none;
+}
+/* Mobile-only performance mount under the section list. */
+.pw-rv-performance {
+  display: none;
 }
 .pw-rv-count {
   flex: none;
@@ -2949,35 +3075,127 @@ body.pw-sheet-open .abt-content-scroll {
     min-height: 0;
     --pw-ws-pad-left: 32px;
     --pw-ws-pad-right: 32px;
+    overflow-x: hidden;
   }
   .pw-workspace {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
     padding-bottom: 40px;
+    min-width: 0;
   }
-  .pw-profile-card,
   .pw-form-card {
     width: 100%;
     height: auto;
     max-height: none;
     min-height: 0;
+    min-width: 0;
   }
-  /* Not sticky here, so it needs no inner scroll and no height cap. */
+  /* Quick Links + sidebar performance — gone on mobile. */
   .pw-profile-card {
-    position: static;
-    overflow: hidden;
+    display: none;
   }
   .pw-review-body {
     overflow: visible;
-  }
-  .pw-checklist {
-    overflow: visible;
+    min-width: 0;
   }
   .pw-row.pw-grow {
     flex: none;
   }
   .pw-field.pw-field-area textarea {
     min-height: 146px;
+  }
+
+  /* ---- compact hero ---- */
+  .pw-rv-hero {
+    padding: 18px;
+  }
+  .pw-rv-hero-top {
+    gap: 14px;
+  }
+  .pw-rv-hero .pw-ring-wrap,
+  .pw-rv-hero .pw-ring {
+    width: 72px;
+    height: 72px;
+  }
+  .pw-rv-hero .pw-avatar.pw-lg {
+    width: 50px;
+    height: 50px;
+    font-size: 16px;
+  }
+  .pw-rv-hero-copy h2 {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  .pw-rv-meta-secondary {
+    display: none;
+  }
+
+  /* Still missing → Complete your profile CTA */
+  .pw-rv-gaps {
+    display: none;
+  }
+  .pw-rv-complete {
+    display: block;
+    padding: 16px;
+    border-radius: 14px;
+    background: #fff6eb;
+    border: 1px solid #f0d9b8;
+  }
+
+  /* Desktop filled/empty split → single ordered list */
+  .pw-rv-desktop-list {
+    display: none;
+  }
+  .pw-rv-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pw-rv-card {
+    position: relative;
+    padding: 14px 16px;
+    min-height: 64px;
+  }
+  .pw-rv-card-head {
+    margin-bottom: 0;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .pw-rv-card .pw-rv-add,
+  .pw-rv-card .pw-rv-count,
+  .pw-rv-card-body {
+    display: none;
+  }
+  .pw-rv-preview {
+    display: block;
+  }
+  .pw-rv-chev {
+    display: grid;
+    place-items: center;
+  }
+  .pw-rv-card-hit {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: inherit;
+  }
+  .pw-rv-card-hit:focus-visible {
+    outline: 2px solid var(--pw-primary);
+    outline-offset: 2px;
+  }
+
+  /* Performance under the section list */
+  .pw-rv-performance {
+    display: block;
+    margin: 8px 0 0;
   }
 }
 
@@ -2999,6 +3217,9 @@ body.pw-sheet-open .abt-content-scroll {
   }
   .pw-profile-card {
     padding-bottom: 18px;
+  }
+  .pw-review-body {
+    padding: 16px;
   }
   .pw-row.pw-cols-3 {
     grid-template-columns: 1fr 1fr;
