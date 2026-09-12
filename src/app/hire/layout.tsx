@@ -53,11 +53,15 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
             where: { recruiterUserId: userId, archivedAt: null },
             orderBy: { updatedAt: "desc" },
             take: 8,
-            select: { id: true, name: true, title: true },
+            select: { id: true, name: true, title: true, updatedAt: true },
           })
         ).map((p) => ({
           id: p.id,
           label: p.name?.trim() || p.title.trim() || "Untitled project",
+          // The nav card's "Updated 2d ago". Already the orderBy of this query,
+          // so selecting it costs nothing. ISO because it crosses to a Client
+          // Component, and a Date instance does not survive that boundary.
+          updatedAt: p.updatedAt.toISOString(),
         }))
       : [];
 
