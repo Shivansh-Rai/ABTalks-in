@@ -10151,3 +10151,1000 @@ button.hire-profile__in:focus-visible {
     padding: 12px 14px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Recruiter jobs — list + compose (T-245 posting UI)
+   -------------------------------------------------------------------------- */
+
+.hire-plain:has(.hire-jobs) {
+  max-width: 1120px;
+  padding: 32px 24px 80px;
+}
+
+.hire-jobs {
+  color: #000000;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.hire-jobs h1,
+.hire-jobs h2 {
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.hire-jobs__error {
+  margin: 0;
+  color: #626262;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hire-jobs__crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #8f8f8f;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hire-jobs__crumb [aria-current="page"] {
+  color: #4b4b4b;
+}
+
+.hire-jobs__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 28px;
+}
+
+.hire-jobs__head h1,
+.hire-jobs--compose h1,
+.hire-jobs-detail__head h1 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 700;
+}
+
+.hire-jobs__head p,
+.hire-jobs-form__title-row p {
+  margin: 8px 0 0;
+  max-width: 52ch;
+  color: #787878;
+  font-size: 17px;
+  line-height: 28px;
+}
+
+.hire-jobs__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #03535f;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 4px 12px rgba(3, 83, 95, 0.16);
+}
+
+.hire-jobs__btn:hover:not(:disabled) {
+  background: #076573;
+}
+
+.hire-jobs__btn:active:not(:disabled) {
+  background: #02434d;
+  box-shadow:
+    inset 0 -1px 8px rgba(0, 0, 0, 0.32),
+    0 2px 6px rgba(3, 83, 95, 0.1);
+}
+
+.hire-jobs__btn:focus-visible {
+  outline: 2px solid #03535f;
+  outline-offset: 4px;
+}
+
+.hire-jobs__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hire-jobs__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hire-app a.hire-jobs__btn {
+  color: #ffffff;
+}
+
+.hire-app a.hire-jobs__btn--secondary {
+  color: #03535f;
+}
+
+.hire-app a.hire-jobs__btn--ghost {
+  color: #353535;
+}
+
+.hire-jobs__btn--secondary {
+  background: #ffffff;
+  color: #03535f;
+  border: 1px solid #d4ebec;
+  box-shadow: none;
+}
+
+.hire-jobs__btn--secondary:hover:not(:disabled) {
+  background: #eef6f6;
+}
+
+.hire-jobs__btn--secondary:active:not(:disabled) {
+  background: #e7f2f3;
+  box-shadow: none;
+}
+
+.hire-jobs__btn--ghost {
+  background: #ffffff;
+  color: #353535;
+  border: 1px solid #e9e9e9;
+  box-shadow: none;
+}
+
+.hire-jobs__btn--ghost:hover:not(:disabled) {
+  background: #f4f4f4;
+}
+
+.hire-jobs__btn--ghost:active:not(:disabled) {
+  background: #e9e9e9;
+  box-shadow: none;
+}
+
+.hire-jobs__btn--sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.hire-jobs__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e9e9e9;
+}
+
+.hire-jobs__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: -1px;
+}
+
+.hire-jobs__tabs button {
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #8f8f8f;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hire-jobs__tabs button.is-active {
+  background: #eef6f6;
+  color: #03535f;
+  border-bottom-color: #03535f;
+  font-weight: 600;
+}
+
+.hire-jobs__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.hire-jobs__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 240px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #e9e9e9;
+  border-radius: 100px;
+  background: #ffffff;
+  color: #8f8f8f;
+}
+
+.hire-jobs__search svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.hire-jobs__search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #000000;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.hire-jobs__iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #4b4b4b;
+  cursor: pointer;
+}
+
+.hire-jobs__iconbtn:hover,
+.hire-jobs__iconbtn[aria-expanded="true"] {
+  background: #eef6f6;
+  border-color: #d4ebec;
+  color: #03535f;
+}
+
+.hire-jobs__iconbtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hire-jobs__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 12px 0 8px;
+}
+
+.hire-jobs__filters p {
+  margin: 0;
+  color: #626262;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hire-jobs__filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hire-jobs__filters button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e9e9e9;
+  border-radius: 100px;
+  background: #ffffff;
+  color: #4b4b4b;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.hire-jobs__filters button.is-active {
+  background: #e7f2f3;
+  border-color: #a6d2d5;
+  color: #03535f;
+  font-weight: 600;
+}
+
+.hire-jobs__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 20px 48px;
+}
+
+.hire-jobs__empty h2 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+}
+
+.hire-jobs__empty > p {
+  margin: 8px 0 20px;
+  max-width: 36ch;
+  color: #787878;
+  font-size: 16px;
+  line-height: 25px;
+}
+
+.hire-jobs__empty-art {
+  position: relative;
+  width: 180px;
+  height: 140px;
+  margin-bottom: 12px;
+}
+
+.hire-jobs__empty-blob {
+  position: absolute;
+  inset: 18px 8px 8px;
+  border-radius: 50%;
+  background: #e7f2f3;
+}
+
+.hire-jobs__empty-card {
+  position: absolute;
+  left: 50%;
+  top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border: 1px solid #e9e9e9;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(3, 83, 95, 0.08);
+  color: #18d39b;
+  transform: translateX(-50%) rotate(-8deg);
+}
+
+.hire-jobs__empty-card svg {
+  width: 36px;
+  height: 36px;
+}
+
+.hire-jobs__spark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #18d39b;
+  clip-path: polygon(50% 0, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 39% 65%, 0 50%, 39% 35%);
+}
+
+.hire-jobs__spark--a { top: 16px; right: 36px; }
+.hire-jobs__spark--b { top: 48px; right: 18px; width: 6px; height: 6px; }
+.hire-jobs__spark--c { top: 22px; left: 40px; width: 5px; height: 5px; }
+
+.hire-jobs__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(280px, 100%);
+  margin: 20px 0 12px;
+  color: #a5a5a5;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.hire-jobs__or::before,
+.hire-jobs__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e9e9e9;
+}
+
+.hire-jobs__textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: #03535f;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hire-jobs__textlink:hover {
+  color: #076573;
+}
+
+.hire-jobs__guide {
+  margin: 16px 0 0;
+  padding: 16px 20px 16px 32px;
+  max-width: 420px;
+  border: 1px solid #d4ebec;
+  border-radius: 12px;
+  background: #eef6f6;
+  color: #4b4b4b;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.hire-jobs__guide strong {
+  color: #03535f;
+}
+
+.hire-jobs__list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hire-app a.hire-jobs__card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 20px 24px;
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.hire-app a.hire-jobs__card:hover {
+  border-color: #a6d2d5;
+  background: #f7fbfb;
+}
+
+.hire-jobs__card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.hire-jobs__card h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.hire-jobs__pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 100px;
+  background: #eef6f6;
+  color: #03535f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hire-jobs__pill--draft {
+  background: #e7f2f3;
+  color: #03535f;
+}
+
+.hire-jobs__pill--published {
+  background: #d6f7ec;
+  color: #197e23;
+}
+
+.hire-jobs__pill--closed {
+  background: #f4f4f4;
+  color: #4b4b4b;
+}
+
+.hire-jobs__meta {
+  margin: 8px 0 0;
+  color: #787878;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hire-jobs__apps {
+  margin: 10px 0 0;
+  color: #4b4b4b;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.hire-jobs__updated {
+  margin: 0;
+  color: #8f8f8f;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.hire-jobs__back {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 16px;
+  color: #626262;
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.hire-app a.hire-jobs__back:hover {
+  color: #03535f;
+}
+
+.hire-jobs-form__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hire-jobs-form__top .hire-jobs__back {
+  margin: 0;
+}
+
+.hire-jobs-form__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin: 12px 0 28px;
+}
+
+.hire-app a.hire-jobs__guidelines {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d4ebec;
+  border-radius: 10px;
+  background: #eef6f6;
+  color: #03535f;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hire-app a.hire-jobs__guidelines:hover {
+  background: #e7f2f3;
+}
+
+.hire-jobs-form__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: start;
+  gap: 24px;
+}
+
+.hire-jobs-form {
+  display: grid;
+  gap: 20px;
+}
+
+.hire-jobs-form__card {
+  padding: 24px;
+  border: 1px solid #e9e9e9;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.hire-jobs-form__section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hire-jobs-form__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: #d6f7ec;
+  color: #197e23;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hire-jobs-form__section-head h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.hire-jobs-form__section-head p {
+  margin: 4px 0 0;
+  color: #8f8f8f;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hire-jobs-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.hire-jobs-form__field {
+  display: grid;
+  gap: 8px;
+}
+
+.hire-jobs-form__field > span:first-child {
+  color: #353535;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hire-jobs-form__field abbr {
+  color: #d92d20;
+  text-decoration: none;
+}
+
+.hire-jobs-form__field em {
+  color: #8f8f8f;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 16px;
+}
+
+.hire-jobs-form__control {
+  position: relative;
+  display: block;
+}
+
+.hire-jobs-form__control svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  color: #8f8f8f;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.hire-jobs-form__control input,
+.hire-jobs-form__control select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px 0 40px;
+  border: 1px solid #e9e9e9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #000000;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  appearance: none;
+}
+
+.hire-jobs-form__control select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238f8f8f' stroke-width='2'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.hire-jobs-form__control input:focus,
+.hire-jobs-form__control select:focus,
+.hire-jobs-form__editor textarea:focus {
+  border-color: #03535f;
+  box-shadow: 0 0 0 3px rgba(3, 83, 95, 0.12);
+}
+
+.hire-jobs-form__editor {
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.hire-jobs-form__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e9e9e9;
+  background: #fafafa;
+}
+
+.hire-jobs-form__toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #4b4b4b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hire-jobs-form__toolbar button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hire-jobs-form__toolbar button:hover,
+.hire-jobs-form__toolbar button.is-active {
+  background: #eef6f6;
+  color: #03535f;
+}
+
+.hire-jobs-form__toolbar button:last-child {
+  margin-left: auto;
+}
+
+.hire-jobs-form__editor textarea,
+.hire-jobs-form__preview {
+  width: 100%;
+  min-height: 220px;
+  padding: 16px;
+  border: 0;
+  resize: vertical;
+  background: #ffffff;
+  color: #000000;
+  font: inherit;
+  font-size: 15px;
+  line-height: 24px;
+  outline: none;
+}
+
+.hire-jobs-form__preview {
+  color: #353535;
+}
+
+.hire-jobs-form__preview p {
+  margin: 0 0 12px;
+}
+
+.hire-jobs-form__count {
+  margin: 0;
+  padding: 8px 16px 12px;
+  color: #a5a5a5;
+  font-size: 12px;
+  text-align: right;
+}
+
+.hire-jobs-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.hire-jobs-form__actions-end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.hire-jobs-form__aside {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 901px) {
+  .hire-jobs-form__aside {
+    position: sticky;
+    top: 24px;
+  }
+}
+
+.hire-jobs-form__tips,
+.hire-jobs-form__note {
+  padding: 20px;
+  border-radius: 16px;
+  background: #eef6f6;
+}
+
+.hire-jobs-form__tips header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #03535f;
+}
+
+.hire-jobs-form__tips header svg,
+.hire-jobs-form__note > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #18d39b;
+}
+
+.hire-jobs-form__tips h2,
+.hire-jobs-form__note h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.hire-jobs-form__tips ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hire-jobs-form__tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  color: #4b4b4b;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hire-jobs-form__tips li svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 2px;
+  color: #27ca37;
+}
+
+.hire-jobs-form__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e9e9e9;
+}
+
+.hire-jobs-form__note p {
+  margin: 6px 0 0;
+  color: #787878;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.hire-jobs-detail__head {
+  margin-bottom: 20px;
+}
+
+.hire-jobs-detail__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hire-jobs-detail__lifecycle p,
+.hire-jobs-detail__edit summary {
+  margin: 12px 0 0;
+  color: #626262;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.hire-app .hire-jobs-detail__lifecycle a {
+  color: #03535f;
+  text-decoration: underline;
+}
+
+.hire-jobs-detail__lifecycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hire-jobs-detail__body {
+  margin: 24px 0;
+  color: #353535;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.hire-jobs-detail__body p {
+  margin: 0 0 12px;
+}
+
+.hire-jobs-detail__edit {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #e9e9e9;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.hire-jobs-detail__edit summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #000000;
+}
+
+.hire-jobs-detail__edit-body {
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .hire-plain:has(.hire-jobs) {
+    padding: 20px 16px 48px;
+  }
+
+  .hire-jobs__head h1,
+  .hire-jobs--compose h1,
+  .hire-jobs-detail__head h1 {
+    font-size: 32px;
+    line-height: 36px;
+  }
+
+  .hire-jobs__head p,
+  .hire-jobs-form__title-row p {
+    font-size: 16px;
+    line-height: 25px;
+  }
+
+  .hire-jobs-form__layout,
+  .hire-jobs-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hire-jobs__search {
+    width: 180px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hire-jobs__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hire-jobs__tools {
+    width: 100%;
+  }
+
+  .hire-jobs__search {
+    flex: 1;
+    width: auto;
+  }
+
+  .hire-jobs__tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .hire-jobs-form__actions,
+  .hire-jobs-form__actions-end {
+    width: 100%;
+  }
+
+  .hire-jobs-form__actions .hire-jobs__btn,
+  .hire-jobs-form__actions-end .hire-jobs__btn {
+    flex: 1;
+  }
+}
