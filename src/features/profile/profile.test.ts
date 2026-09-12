@@ -1420,6 +1420,38 @@ suite("the profile card cannot strand its own content on short screens", () => {
   assert(card.includes("overflow: hidden auto"), "and scrolls inside itself");
 });
 
+suite("an open sheet leaves Quick Links pinned where it was", () => {
+  // Comment-stripped: the rule is explained in prose that names the very
+  // property this asserts is absent.
+  const css = code("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-profile-card");
+  assert(at !== -1, "the sheet-open rule exists");
+  const rule = css.slice(at, css.indexOf("}", at));
+  // `position: relative` cancels sticky, which is what made the card drift
+  // away with the page and sometimes scroll out of sight altogether.
+  assert(
+    !rule.includes("position:"),
+    "the open sheet must not re-position the card, only raise it",
+  );
+  assert(rule.includes("z-index: 45"), "it is still raised above the scrim");
+  assert(
+    rule.includes("overflow: hidden"),
+    "and has no inner scroll of its own while pinned",
+  );
+  const card = css.slice(css.indexOf(".pw-profile-card {"), css.indexOf(".pw-quick-head {"));
+  assert(card.includes("position: sticky"), "the card is sticky to begin with");
+});
+
+suite("Profile performance steps aside while a section is open", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-performance-section");
+  assert(at !== -1, "performance is addressed for the open state");
+  assert(
+    css.slice(at, css.indexOf("}", at)).includes("display: none"),
+    "and is hidden while editing",
+  );
+});
+
 suite("the mobile layout keeps Quick Links under the scrim", () => {
   const css = source("src/components/profile/profile-wizard.css");
   const at = css.indexOf(".pw-root.pw-sheet-open .pw-profile-card");

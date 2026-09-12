@@ -104,6 +104,16 @@ the résumé rewrite only changes class names and markup. Menus portal to
 17. **Long names (20, 23)** — `overflow-wrap: anywhere` + `min-width: 0` on the
     hero copy; `.pw-rv-add` stays `flex: none`.
 18. **Dead file (22)** — delete `leave-dialog.tsx`.
+19. **Pinned Quick Links while a section is open (reported after the QA list)**
+    — the sheet-open rule set `position: relative`, which cancels `position:
+    sticky`: the card fell back into normal flow, drifted with the page and
+    could scroll out of sight. It now only raises `z-index`, so it stays
+    sticky and pinned. It also gets `overflow: hidden` while open, because
+    with the page locked behind the sheet the card was the only thing a wheel
+    could still move. Profile performance is hidden for the duration
+    (`.pw-root.pw-sheet-open .pw-performance-section { display: none }`),
+    which is both what was asked for and what keeps the pinned card short
+    enough never to need a scrollbar.
 
 ## 6. Guardrails (DO NOT)
 

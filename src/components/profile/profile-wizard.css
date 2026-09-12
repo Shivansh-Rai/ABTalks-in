@@ -1132,9 +1132,23 @@ body.pw-sheet-open .abt-content-scroll {
    the dimmed page. There it belongs under the scrim like everything else. */
 @media (min-width: 1025px) {
   .pw-root.pw-sheet-open .pw-profile-card {
-    position: relative;
+    /* Raised, but still STICKY. This used to say `position: relative`, which
+       cancels sticky outright — the card dropped back into normal flow, drifted
+       with the page and scrolled out of sight entirely. `z-index` works on a
+       sticky element, so raising it above the scrim costs nothing. */
     z-index: 45;
+    /* And no inner scroll of its own while it is pinned: with the page locked
+       behind the sheet, the card was the only thing left that a wheel could
+       move, so scrolling over it slid its contents about. */
+    overflow: hidden;
   }
+}
+
+/* Profile performance is something you read about a finished profile, not
+   while you are editing one. It goes away with the sheet open — which also
+   keeps the pinned card short enough to never need a scrollbar. */
+.pw-root.pw-sheet-open .pw-performance-section {
+  display: none;
 }
 
 .pw-form-close {
