@@ -110,6 +110,21 @@ function jobSpan(row: InspectorWorkHistory["rows"][number]): string {
 
 type TabId = (typeof TABS)[number]["id"];
 
+/**
+ * Whether this viewer asked the OS to reduce motion.
+ *
+ * Read at click time rather than during render: it is a live browser query, so
+ * calling it in the render body would be impure and would also miss the user
+ * changing the setting mid-session. Guarded for the server pass, where there
+ * is no `window` and the value is never needed.
+ */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
+  );
+}
+
 /** http(s) LinkedIn URLs only — unlocked contact is still untrusted input. */
 function safeLinkedinHref(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -315,47 +330,88 @@ export function CandidateInspector({
     setContact(await revealContactAction({ candidateRef: match.candidateRef }));
   }
 
+  // A click sets the tab AND suppresses the spy for the length of the smooth
+  // scroll. Without this the animation sweeps through every section between
+  // here and the target, and the spy would repaint the active tab two or three
+  // times on the way — the nav would flicker on its own click.
+  const jumpingRef = useRef(false);
+  const jumpTimerRef = useRef<number | undefined>(undefined);
+
   function jump(id: TabId) {
     setTab(id);
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    jumpingRef.current = true;
+    window.clearTimeout(jumpTimerRef.current);
+    jumpTimerRef.current = window.setTimeout(() => {
+      jumpingRef.current = false;
+    }, 700);
     scrollRef.current
       ?.querySelector<HTMLElement>(`[data-section="${id}"]`)
-      ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      ?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
   }
 
+  useEffect(() => () => window.clearTimeout(jumpTimerRef.current), []);
+
+  // Scroll-spy: the tabs follow the scroll, not just drive it.
+  //
+  // A scroll listener over `getBoundingClientRect`, NOT an IntersectionObserver.
+  // `.hire-app--results` carries `zoom: var(--hire-zoom)` to fit the design
+  // frame to the viewport, and inside a zoomed subtree Chromium's
+  // IntersectionObserver never fires for a non-viewport `root` — verified here:
+  // an observer rooted on this panel reported no entries at all, not even the
+  // initial callback. `getBoundingClientRect` is zoom-correct, so the spy reads
+  // positions directly.
+  //
+  // The active section is the LAST anchor whose top has passed the reading
+  // line a quarter of the way down the panel. That keeps the final section
+  // reachable: at the bottom of the scroll several anchors sit above the line
+  // at once, and taking the last of them is the one actually being read.
   useEffect(() => {
-    if (!scrollRef.current || typeof IntersectionObserver === "undefined") {
-      return;
-    }
-    const scroller: HTMLDivElement = scrollRef.current;
-    const sections = TABS.map((t) =>
-      scroller.querySelector<HTMLElement>(`[data-section="${t.id}"]`),
-    ).filter((el): el is HTMLElement => Boolean(el));
-    if (sections.length === 0) return;
+    const root = scrollRef.current;
+    if (!root) return;
 
-    function syncTab() {
-      const line = scroller.getBoundingClientRect().top + 52;
-      let current: TabId = "overview";
-      for (const t of TABS) {
-        const el = scroller.querySelector<HTMLElement>(
-          `[data-section="${t.id}"]`,
-        );
-        if (el && el.getBoundingClientRect().top <= line + 1) {
-          current = t.id;
-        }
+    let frame = 0;
+
+    const measure = () => {
+      frame = 0;
+      // A click's smooth scroll owns the tab until it settles.
+      if (jumpingRef.current) return;
+      const anchors = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-section]"),
+      );
+      if (anchors.length === 0) return;
+
+      // Both halves from the same rect. `clientHeight` reports unzoomed CSS
+      // pixels while `getBoundingClientRect()` reports painted ones, so mixing
+      // the two puts the reading line in the wrong place under the desk zoom.
+      const rootRect = root.getBoundingClientRect();
+      const line = rootRect.top + rootRect.height * 0.25;
+
+      let current = anchors[0]!.dataset.section;
+      for (const el of anchors) {
+        if (el.getBoundingClientRect().top <= line) current = el.dataset.section;
+        else break;
       }
-      setTab(current);
-    }
+      if (current) {
+        setTab((prev) => (prev === current ? prev : (current as TabId)));
+      }
+    };
 
-    const observer = new IntersectionObserver(syncTab, {
-      root: scroller,
-      rootMargin: "-52px 0px -40% 0px",
-      threshold: [0, 0.1, 0.25, 0.5, 1],
-    });
-    for (const el of sections) observer.observe(el);
-    return () => observer.disconnect();
+    const onScroll = () => {
+      // One measurement per frame, however fast the wheel spins.
+      if (frame === 0) frame = window.requestAnimationFrame(measure);
+    };
+
+    root.addEventListener("scroll", onScroll, { passive: true });
+    measure();
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
+    };
+    // Re-reads when the candidate changes: a different profile can render a
+    // different set of sections.
   }, [match.candidateRef]);
 
   const name = preview ? (

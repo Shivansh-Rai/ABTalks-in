@@ -58,10 +58,10 @@ export function ProjectAssessmentsList({
   }
 
   return (
-    <div className="space-y-1.5 px-3 text-xs">
-      <p className="font-semibold tracking-wide text-muted-foreground uppercase">
-        Assessments
-      </p>
+    /* No heading of its own: the sidebar renders this inside a section that
+       already carries the "Assessments" kicker, and two identical headings
+       stacked is what this looked like before. */
+    <div className="space-y-1.5 px-1 text-xs">
       {assessments.length === 0 ? (
         <p className="text-muted-foreground">None in this project yet.</p>
       ) : (

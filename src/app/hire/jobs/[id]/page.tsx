@@ -8,10 +8,8 @@ import {
   prismaApplicantStore,
   prismaJobStore,
 } from "@/features/recruiter-jobs/prisma-store";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { formatDateIST } from "@/lib/date-utils";
+import { JOB_TYPE_LABEL, WORK_MODE_LABEL } from "@/components/jobs/job-ui";
 import { JobLifecycleButtons } from "@/components/hire/jobs/job-lifecycle-buttons";
 import { JobFormClient } from "@/components/hire/jobs/job-form-client";
 import { JobApplicantsDesk } from "@/components/hire/jobs/job-applicants-desk";
@@ -31,9 +29,9 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
   const workspace = await requireRecruiterWorkspace();
   if (!workspace.ok) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-        <p className="text-sm text-muted-foreground">{workspace.message}</p>
-      </main>
+      <div className="hire-jobs">
+        <p className="hire-jobs__error">{workspace.message}</p>
+      </div>
     );
   }
 
@@ -62,39 +60,36 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
     : [];
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+    <div className="hire-jobs hire-jobs--detail">
       <JobApplicantsDesk jobId={job.id} applicants={applicants}>
-      <Link
-        href="/hire/jobs"
-        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "mb-4")}
-      >
+      <Link href="/hire/jobs" className="hire-jobs__back">
         ← All jobs
       </Link>
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{job.type}</Badge>
-          <Badge
-            variant={
-              job.status === "PUBLISHED"
-                ? "default"
-                : job.status === "CLOSED"
-                  ? "secondary"
-                  : "outline"
-            }
+      <div className="hire-jobs-detail__head">
+        <div className="hire-jobs-detail__pills">
+          <span className="hire-jobs__pill">{JOB_TYPE_LABEL[job.type]}</span>
+          <span
+            className={`hire-jobs__pill hire-jobs__pill--${job.status.toLowerCase()}`}
           >
-            {job.status}
-          </Badge>
-          {job.workMode ? <Badge variant="outline">{job.workMode}</Badge> : null}
+            {job.status === "DRAFT"
+              ? "Draft"
+              : job.status === "PUBLISHED"
+                ? "Published"
+                : "Closed"}
+          </span>
+          {job.workMode ? (
+            <span className="hire-jobs__pill">
+              {WORK_MODE_LABEL[job.workMode]}
+            </span>
+          ) : null}
         </div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          {job.title}
-        </h1>
-        <p className="text-muted-foreground">
+        <h1>{job.title}</h1>
+        <p className="hire-jobs__meta">
           {job.company}
           {job.location ? ` · ${job.location}` : null}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="hire-jobs__updated">
           {job.publishedAt
             ? `Published ${formatDateIST(job.publishedAt)}`
             : `Created ${formatDateIST(job.createdAt)}`}
@@ -102,43 +97,38 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
         </p>
       </div>
 
-      <div className="mt-6 rounded-xl border bg-card p-4">
+      <div className="hire-jobs-form__card hire-jobs-detail__lifecycle">
         <JobLifecycleButtons jobId={job.id} status={job.status} />
         {job.status === "PUBLISHED" ? (
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p>
             Candidates can see this job at{" "}
-            <Link href={`/jobs/${job.id}`} className="underline">
-              /jobs/{job.id}
-            </Link>
-            .
+            <Link href={`/jobs/${job.id}`}>/jobs/{job.id}</Link>.
           </p>
         ) : job.status === "DRAFT" ? (
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p>
             Draft — not visible to candidates. Direct URL access is refused
             server-side.
           </p>
         ) : (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Closed — no new applications accepted. Reopen any time.
-          </p>
+          <p>Closed — no new applications accepted. Reopen any time.</p>
         )}
       </div>
 
       <JobApplicantsList applicants={applicants} />
 
       {job.description ? (
-        <div className="prose prose-sm dark:prose-invert mt-8 max-w-none [&_p]:mb-3">
+        <div className="hire-jobs-detail__body">
           <ReactMarkdown>{job.description}</ReactMarkdown>
         </div>
       ) : null}
 
-      <details className="mt-10 rounded-xl border bg-card p-4">
-        <summary className="cursor-pointer text-sm font-medium">
-          Edit job details
-        </summary>
-        <div className="mt-4">
+      <details className="hire-jobs-detail__edit">
+        <summary>Edit job details</summary>
+        <div className="hire-jobs-detail__edit-body">
           <JobFormClient
+            variant="embedded"
             jobId={job.id}
+            status={job.status}
             initial={{
               title: job.title,
               description: job.description,
@@ -152,6 +142,6 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
         </div>
       </details>
       </JobApplicantsDesk>
-    </main>
+    </div>
   );
 }
