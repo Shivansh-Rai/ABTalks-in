@@ -371,6 +371,71 @@ export async function getCandidateDetail(
   };
 }
 
+/**
+ * Recruiter-safe work history for the Scout inspector.
+ *
+ * Deliberately not `getCandidateDetail`: that select carries phone, LinkedIn,
+ * GitHub and resume URL. This read returns only the skip flag and the job
+ * rows the candidate typed or resume-merge wrote. Callers must still prove
+ * the candidate is in the searchable pool before invoking it.
+ */
+export type PublicWorkHistory = {
+  hasNoWorkExperience: boolean;
+  rows: ExperienceView[];
+};
+
+export async function listPublicWorkHistory(
+  userId: string,
+): Promise<PublicWorkHistory> {
+  const row = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: {
+      hasNoWorkExperience: true,
+      experience: {
+        orderBy: [{ isCurrent: "desc" }, { startedOn: "desc" }],
+        select: {
+          id: true,
+          companyName: true,
+          title: true,
+          employmentType: true,
+          locationCity: true,
+          startedOn: true,
+          endedOn: true,
+          isCurrent: true,
+          totalMonths: true,
+          description: true,
+        },
+      },
+    },
+  });
+
+  if (!row) {
+    return { hasNoWorkExperience: false, rows: [] };
+  }
+
+  return {
+    hasNoWorkExperience: row.hasNoWorkExperience,
+    rows: row.experience.map((e) => {
+      const start = splitMonthDate(e.startedOn);
+      const end = splitMonthDate(e.endedOn);
+      return {
+        id: e.id,
+        companyName: e.companyName,
+        title: e.title,
+        employmentType: e.employmentType,
+        locationCity: e.locationCity,
+        startMonth: start.month ?? 1,
+        startYear: start.year ?? new Date().getUTCFullYear(),
+        endMonth: end.month,
+        endYear: end.year,
+        isCurrent: e.isCurrent,
+        totalMonths: e.totalMonths,
+        description: e.description,
+      };
+    }),
+  };
+}
+
 /* ─── Legacy compatibility mirrors ───────────────────────────────────────── */
 
 /**

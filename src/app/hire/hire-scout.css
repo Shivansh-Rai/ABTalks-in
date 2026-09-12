@@ -8338,12 +8338,14 @@ button.hire-profile__in:focus-visible {
   padding: 0 8px;
   border-bottom: 1px solid #e4e4e7;
   background: #ffffff;
+  overflow-x: auto;
 }
 
 .hire-profile__tab {
   position: relative;
   display: flex;
   align-items: center;
+  flex: none;
   padding: 0 10px;
   border: 0;
   background: none;
@@ -8352,6 +8354,7 @@ button.hire-profile__in:focus-visible {
   font-weight: 400;
   color: #a1a1aa;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .hire-profile__tab.is-active {
@@ -8492,6 +8495,10 @@ button.hire-profile__in:focus-visible {
 .hire-profile__org-block {
   display: flex;
   gap: 12px;
+}
+
+.hire-profile__org-block + .hire-profile__org-block {
+  margin-top: 16px;
 }
 
 .hire-profile__tile {
