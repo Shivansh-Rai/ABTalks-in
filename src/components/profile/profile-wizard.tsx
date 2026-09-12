@@ -28,11 +28,22 @@ export type WizardStep = {
   complete: boolean;
   attention: boolean;
   savable: boolean;
+  /**
+   * Earned, and outside Profile strength. Quick Links must not show it as an
+   * unfinished requirement when finishing it cannot move the score.
+   */
+  optional?: boolean;
   node: ReactNode;
 };
 
 /** How long the sheet takes to slide out, per the transition in the CSS. */
 const SHEET_EXIT_MS = 260;
+
+/** How long the scrollbar stays painted after the last scroll event. */
+const SCROLL_CUE_MS = 900;
+
+const FOCUSABLE =
+  'a[href],area[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),iframe,object,embed,[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
 
 export function ProfileWizard({
   steps,
@@ -67,6 +78,9 @@ export function ProfileWizard({
   const pendingRef = useRef<number | "close" | null>(null);
   const closeAfterSaveRef = useRef(false);
   const exitTimer = useRef<number | undefined>(undefined);
+  const sheetRef = useRef<HTMLElement>(null);
+  /** What had focus before the sheet opened, so closing can hand it back. */
+  const openerRef = useRef<HTMLElement | null>(null);
 
   const loadedAt100 = score === 100;
   const [pillShow, setPillShow] = useState(loadedAt100);
@@ -84,6 +98,16 @@ export function ProfileWizard({
 
   const openSheet = useCallback((target: number) => {
     window.clearTimeout(exitTimer.current);
+    // Remembered before the sheet takes focus; a second jump from inside the
+    // sheet must not overwrite the page control that started all this.
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      !sheetRef.current?.contains(active) &&
+      active !== document.body
+    ) {
+      openerRef.current = active;
+    }
     setIndex(target);
     setOpen(true);
   }, []);
@@ -91,10 +115,17 @@ export function ProfileWizard({
   const closeSheet = useCallback(() => {
     setShown(false);
     setDirty(false);
+    setPendingTarget(null);
+    setLeaveShake(0);
+    // Back to whatever opened the sheet, so the keyboard does not restart at
+    // the top of the document.
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener?.isConnected) opener.focus();
     exitTimer.current = window.setTimeout(() => setOpen(false), SHEET_EXIT_MS);
   }, []);
 
-  /** Dismissals that are not an explicit Cancel ask before dropping edits. */
+  /** Every dismissal asks before dropping edits — Cancel included. */
   const requestClose = useCallback(() => {
     if (dirty) {
       setPendingTarget("close");
@@ -132,14 +163,69 @@ export function ProfileWizard({
     };
   }, [open]);
 
+  // Escape closes; Tab cycles inside the sheet. Without the second half the
+  // keyboard walks straight out of the modal and into the dimmed page behind
+  // it, where every control is still operable but invisible.
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") requestClose();
+      if (event.key === "Escape") {
+        requestClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const stops = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+        (el) => el.offsetParent !== null || el === document.activeElement,
+      );
+      if (stops.length === 0) return;
+      const first = stops[0]!;
+      const last = stops[stops.length - 1]!;
+      const active = document.activeElement;
+      // Focus outside the sheet (the heading has already yielded it, or the
+      // page behind stole it) comes straight back to the edge it belongs on.
+      if (!(active instanceof HTMLElement) || !sheet.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, requestClose]);
+
+  /**
+   * The page scrollbar is hidden by product decision. Hiding it outright left
+   * no cue that the page scrolls at all, so the gutter is always reserved (no
+   * layout shift) and the thumb is painted only while the page is moving.
+   */
+  useEffect(() => {
+    const scroller = document.querySelector(".abt-content-scroll");
+    if (!scroller) return;
+    let idle: number | undefined;
+    function onScroll() {
+      document.body.classList.add("pw-scrolling");
+      window.clearTimeout(idle);
+      idle = window.setTimeout(
+        () => document.body.classList.remove("pw-scrolling"),
+        SCROLL_CUE_MS,
+      );
+    }
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      window.clearTimeout(idle);
+      document.body.classList.remove("pw-scrolling");
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -221,7 +307,10 @@ export function ProfileWizard({
       <div className="pw-workspace">
         <ProfileCard
           steps={steps}
-          activeIndex={index}
+          // Only a sheet that is actually open has a current step. Keeping the
+          // index here left one tab in its clay active state over a closed
+          // sheet, which reads as stuck.
+          activeIndex={open ? index : -1}
           onJump={jump}
           performance={performance}
         />
@@ -258,8 +347,11 @@ export function ProfileWizard({
             onClick={requestClose}
           />
           <aside
+            ref={sheetRef}
             className={`pw-form-sheet${shown ? " pw-show" : ""}`}
-            aria-label="Edit section"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pw-sheet-title"
           >
             <div className="pw-section-header">
               <div
@@ -273,7 +365,7 @@ export function ProfileWizard({
                 aria-label="Profile completion"
               />
               <div className="pw-section-header-content">
-                <h2 ref={headingRef} tabIndex={-1}>
+                <h2 id="pw-sheet-title" ref={headingRef} tabIndex={-1}>
                   {step.title}
                 </h2>
                 <p>{step.description}</p>
@@ -281,8 +373,10 @@ export function ProfileWizard({
               <div className={`pw-complete-pill${pillShow ? " pw-show" : ""}`}>
                 <svg viewBox="0 0 24 24" aria-hidden>
                   <path d="M5 13l4 4L19 7" />
-                </svg>{" "}
-                Profile Complete
+                </svg>
+                {/* Narrow widths keep the tick and clip the words (never
+                    `display: none`), so the pill still announces. */}
+                <span className="pw-complete-pill-label">Profile Complete</span>
               </div>
               <button
                 type="button"
@@ -298,6 +392,14 @@ export function ProfileWizard({
 
             <div className="pw-section-body" data-section={step.key}>
               {step.node}
+              {step.savable ? (
+                <p className="pw-required-legend">
+                  <span className="pw-req" aria-hidden>
+                    *
+                  </span>{" "}
+                  Needed to complete this section. Nothing here blocks saving.
+                </p>
+              ) : null}
             </div>
 
             <div className="pw-form-actions">
@@ -354,10 +456,13 @@ export function ProfileWizard({
                   </div>
                 </div>
               ) : null}
+              {/* Cancel is a dismissal like Escape and the scrim, not a
+                  discard: unsaved edits raise the same keep/discard/save pop
+                  rather than disappearing. */}
               <button
                 type="button"
                 className="pw-btn pw-btn-ghost"
-                onClick={closeSheet}
+                onClick={requestClose}
               >
                 Cancel
               </button>

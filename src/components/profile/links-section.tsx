@@ -81,6 +81,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="LinkedIn"
+          required
           htmlFor="ln-linkedin"
           icon={<BriefcaseIcon />}
         >
@@ -97,6 +98,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="GitHub"
+          required
           htmlFor="ln-github"
           icon={<CodeIcon />}
           helper="Username or full profile URL — both are stored as your username."
@@ -112,6 +114,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="Portfolio"
+          required
           htmlFor="ln-portfolio"
           icon={<GlobeIcon />}
         >

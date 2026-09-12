@@ -145,7 +145,7 @@ export function BasicInfoSection({
           />
         </PwField>
         <PwField
-          label="Phone Number"
+          label="Phone number"
           required={otpRequired}
           htmlFor="bi-phone"
           verified={phoneVerified}
@@ -193,6 +193,7 @@ export function BasicInfoSection({
         </PwField>
         <PwField
           label="City"
+          required
           htmlFor="bi-city"
           error={errors.locationCity?.message}
         >
@@ -207,6 +208,7 @@ export function BasicInfoSection({
         </PwField>
         <PwField
           label="State / Region"
+          required
           htmlFor="bi-region"
           error={errors.locationRegion?.message}
         >
@@ -226,6 +228,7 @@ export function BasicInfoSection({
       <PwRow cols={3}>
         <PwField
           label="Country"
+          required
           htmlFor="bi-country"
           error={errors.country?.message}
         >
@@ -254,7 +257,7 @@ export function BasicInfoSection({
             ))}
           </PwSelect>
         </PwField>
-        <PwField label="Profile Headline" htmlFor="bi-headline">
+        <PwField label="Profile Headline" required htmlFor="bi-headline">
           <PwInput
             id="bi-headline"
             maxLength={160}
@@ -267,6 +270,7 @@ export function BasicInfoSection({
       <PwRow cols={1}>
         <PwField
           label="About"
+          required
           htmlFor="bi-summary"
           counter={`${summary.length}/2000`}
         >

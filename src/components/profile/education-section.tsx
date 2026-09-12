@@ -116,7 +116,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               onRemove={() => removeOrClear(index)}
             >
               <PwRow cols={1}>
-                <PwField label="School / College">
+                <PwField label="School / College" required>
                   <Controller
                     control={control}
                     name={`rows.${index}.institutionName`}
@@ -136,7 +136,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Degree" htmlFor={`edu-degree-${index}`}>
+                <PwField label="Degree" required htmlFor={`edu-degree-${index}`}>
                   <PwSuggest
                     id={`edu-degree-${index}`}
                     placeholder="e.g. B.Tech"
@@ -146,6 +146,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                 </PwField>
                 <PwField
                   label="Department / field"
+                  required
                   htmlFor={`edu-field-${index}`}
                 >
                   <PwSuggest
@@ -180,7 +181,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Starting from">
+                <PwField label="Starting from" required>
                   <Controller
                     control={control}
                     name={`rows.${index}.startMonth`}
@@ -208,7 +209,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in">
+                  <PwField label="Ending in" required>
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}

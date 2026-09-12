@@ -285,6 +285,10 @@ export default async function ProfilePage() {
       checklist: "mock",
       complete: mockComplete,
       attention: !mockComplete && !activeAttempt,
+      // Outside `computeCompleteness` on purpose — an interview is earned, not
+      // filled in. Quick Links says so rather than showing it as unfinished
+      // work that cannot move Profile strength either way.
+      optional: true,
       savable: false,
       node: (
         <MockInterviewsSection

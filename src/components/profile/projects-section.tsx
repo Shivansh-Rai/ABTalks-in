@@ -77,6 +77,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             <PwRow cols={1}>
               <PwField
                 label="Project name"
+                required
                 htmlFor={`prj-title-${index}`}
               >
                 <PwInput
@@ -90,6 +91,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             <PwRow cols={1}>
               <PwField
                 label="Description"
+                required
                 htmlFor={`prj-desc-${index}`}
                 area
               >
@@ -103,7 +105,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             </PwRow>
 
             <PwRow cols={1}>
-              <PwField label="Tech stack">
+              <PwField label="Tech stack" required>
                 <Controller
                   control={control}
                   name={`rows.${index}.techStack`}
@@ -123,7 +125,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             </PwRow>
 
             <PwRow cols={2}>
-              <PwField label="GitHub" htmlFor={`prj-repo-${index}`}>
+              <PwField label="GitHub" required htmlFor={`prj-repo-${index}`}>
                 <PwInput
                   id={`prj-repo-${index}`}
                   type="url"
@@ -132,7 +134,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   {...register(`rows.${index}.repoUrl`)}
                 />
               </PwField>
-              <PwField label="Live URL" htmlFor={`prj-live-${index}`}>
+              <PwField label="Live URL" required htmlFor={`prj-live-${index}`}>
                 <PwInput
                   id={`prj-live-${index}`}
                   type="url"

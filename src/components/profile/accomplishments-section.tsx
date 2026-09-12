@@ -100,7 +100,7 @@ function CertificationDates({
   return (
     <>
       <PwRow cols={2}>
-        <PwField label="Issued">
+        <PwField label="Issued" required>
           <Controller
             control={control}
             name={`rows.${index}.issuedMonth`}
@@ -287,7 +287,7 @@ export function AccomplishmentsSection({
             onRemove={() => removeOrClear(index)}
           >
             <PwRow cols={2}>
-              <PwField label="Name" htmlFor={`crt-name-${index}`}>
+              <PwField label="Name" required htmlFor={`crt-name-${index}`}>
                 <PwSuggest
                   id={`crt-name-${index}`}
                   suggestions={KNOWN_COURSE_NAMES}
@@ -305,7 +305,7 @@ export function AccomplishmentsSection({
                   })}
                 />
               </PwField>
-              <PwField label="Issuer" htmlFor={`crt-issuer-${index}`}>
+              <PwField label="Issuer" required htmlFor={`crt-issuer-${index}`}>
                 <PwSuggest
                   id={`crt-issuer-${index}`}
                   suggestions={CERTIFICATE_PROVIDERS}
@@ -318,7 +318,7 @@ export function AccomplishmentsSection({
             <CertificationDates control={control} index={index} />
 
             <PwRow cols={1}>
-              <PwField label="Credential URL" htmlFor={`crt-url-${index}`}>
+              <PwField label="Credential URL" required htmlFor={`crt-url-${index}`}>
                 <PwInput
                   id={`crt-url-${index}`}
                   type="url"

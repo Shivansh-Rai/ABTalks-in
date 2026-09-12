@@ -135,6 +135,7 @@ export function ExperienceSection({
               <PwRow cols={2}>
                 <PwField
                   label="Company"
+                  required
                   htmlFor={`exp-company-${index}`}
                 >
                   <PwInput
@@ -145,7 +146,7 @@ export function ExperienceSection({
                     })}
                   />
                 </PwField>
-                <PwField label="Role" htmlFor={`exp-title-${index}`}>
+                <PwField label="Role" required htmlFor={`exp-title-${index}`}>
                   <PwSuggest
                     id={`exp-title-${index}`}
                     placeholder="Enter your role"
@@ -158,6 +159,7 @@ export function ExperienceSection({
               <PwRow cols={2}>
                 <PwField
                   label="Employment type"
+                  required
                   htmlFor={`exp-type-${index}`}
                 >
                   <PwSelect
@@ -175,7 +177,7 @@ export function ExperienceSection({
                     ))}
                   </PwSelect>
                 </PwField>
-                <PwField label="Location" htmlFor={`exp-loc-${index}`}>
+                <PwField label="Location" required htmlFor={`exp-loc-${index}`}>
                   <PwInput
                     id={`exp-loc-${index}`}
                     placeholder="Enter your city"
@@ -207,7 +209,7 @@ export function ExperienceSection({
               </PwRow>
 
               <PwRow cols={2}>
-                <PwField label="Starting from">
+                <PwField label="Starting from" required>
                   <Controller
                     control={control}
                     name={`rows.${index}.startMonth`}
@@ -234,7 +236,7 @@ export function ExperienceSection({
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in">
+                  <PwField label="Ending in" required>
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}

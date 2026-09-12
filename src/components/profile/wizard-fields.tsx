@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -9,9 +10,11 @@ import {
   type ChangeEvent,
   type InputHTMLAttributes,
   type ReactNode,
+  type RefObject,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import { createPortal } from "react-dom";
 
 const MONTHS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
@@ -81,6 +84,79 @@ function formatBytes(n: number): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
+/* ─── Anchored menus ──────────────────────────────────────────────────────
+   Month / year pickers and suggestion lists used to be absolutely positioned
+   inside `.pw-section-body`, which is the sheet's scroll container — so a menu
+   opened near the bottom of a long form was cut off by the container it lived
+   in. They are portalled to <body> and positioned against the trigger's
+   viewport rect instead, flipping above it when there is more room there.
+   ------------------------------------------------------------------------- */
+
+/** Gap between trigger and menu, viewport margin, and the tallest menu. */
+const MENU_GAP = 6;
+const MENU_EDGE = 12;
+const MENU_MAX_H = 260;
+/** Below this, flipping up beats scrolling a stub of a menu. */
+const MENU_MIN_H = 160;
+
+/**
+ * Positions a portalled menu against its trigger.
+ *
+ * Deliberately imperative: the measurement happens in the ref callback, which
+ * runs before paint, so the menu is never rendered at a stale position for a
+ * frame. Holding the rect in state would mean a render pass per scroll event
+ * for a value nothing else reads.
+ */
+function useAnchoredMenu<T extends HTMLElement>(
+  open: boolean,
+  anchorRef: RefObject<HTMLElement | null>,
+) {
+  const menuRef = useRef<T | null>(null);
+
+  const place = useCallback(() => {
+    const menu = menuRef.current;
+    const anchor = anchorRef.current;
+    if (!menu || !anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - MENU_GAP - MENU_EDGE;
+    const above = rect.top - MENU_GAP - MENU_EDGE;
+    const flipUp = below < Math.min(MENU_MAX_H, MENU_MIN_H) && above > below;
+    const room = Math.max(120, Math.min(MENU_MAX_H, flipUp ? above : below));
+    menu.style.left = `${rect.left}px`;
+    menu.style.width = `${rect.width}px`;
+    menu.style.maxHeight = `${room}px`;
+    if (flipUp) {
+      menu.style.top = "auto";
+      menu.style.bottom = `${window.innerHeight - rect.top + MENU_GAP}px`;
+    } else {
+      menu.style.bottom = "auto";
+      menu.style.top = `${rect.bottom + MENU_GAP}px`;
+    }
+  }, [anchorRef]);
+
+  const setMenu = useCallback(
+    (node: T | null) => {
+      menuRef.current = node;
+      if (node) place();
+    },
+    [place],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    // Capture: the sheet body scrolls, not the window, and a scroll there does
+    // not bubble.
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open, place]);
+
+  return { setMenu, menuRef };
+}
+
 function markFilled(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
   if ("value" in el && String(el.value).length > 0) el.classList.add("pw-filled");
   else el.classList.remove("pw-filled");
@@ -145,10 +221,16 @@ export function PwField({
         <div className="pw-field-top">
           <label htmlFor={htmlFor}>
             {label}
+            {/* The asterisk is decorative; the sr-only word beside it is what
+                actually tells a screen reader the field is needed. It marks
+                what completes the section — nothing here blocks a save. */}
             {required ? (
-              <span className="pw-req" aria-hidden>
-                *
-              </span>
+              <>
+                <span className="pw-req" aria-hidden>
+                  *
+                </span>
+                <span className="pw-sr-only"> (required)</span>
+              </>
             ) : null}
           </label>
           {verified ? <span className="pw-verified">Verified</span> : null}
@@ -202,6 +284,7 @@ export const PwSuggest = forwardRef<
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const blurTimer = useRef<number | null>(null);
+  const { setMenu } = useAnchoredMenu<HTMLUListElement>(open, inputRef);
 
   function setRefs(node: HTMLInputElement | null) {
     inputRef.current = node;
@@ -259,24 +342,29 @@ export const PwSuggest = forwardRef<
           onChange?.(e);
         }}
       />
-      {open && filtered.length > 0 ? (
-        <ul className="pw-suggest-list" role="listbox">
-          {filtered.map((s) => (
-            <li key={s} role="option">
-              <button
-                type="button"
-                className="pw-suggest-option"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  pick(s);
-                }}
-              >
-                {s}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {open && filtered.length > 0
+        ? createPortal(
+            <ul ref={setMenu} className="pw-suggest-list pw-anchored" role="listbox">
+              {filtered.map((s) => (
+                <li key={s} role="option" aria-selected={s === text}>
+                  <button
+                    type="button"
+                    className="pw-suggest-option"
+                    // preventDefault keeps focus on the input, so the blur
+                    // timer never closes the list out from under the click.
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pick(s);
+                    }}
+                  >
+                    {s}
+                  </button>
+                </li>
+              ))}
+            </ul>,
+            document.body,
+          )
+        : null}
     </div>
   );
 });
@@ -348,11 +436,22 @@ function PwMenuSelect({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const { setMenu, menuRef } = useAnchoredMenu<HTMLUListElement>(
+    open,
+    triggerRef,
+  );
 
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // The list is portalled to <body>, so it is no longer a descendant of
+      // the root — it has to be tested separately or every pick closes first.
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) {
+        return;
+      }
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -363,7 +462,7 @@ function PwMenuSelect({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, menuRef]);
 
   const label = value ? (labels?.[value] ?? value) : placeholder;
 
@@ -375,6 +474,7 @@ function PwMenuSelect({
       <button
         type="button"
         id={id}
+        ref={triggerRef}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -387,38 +487,45 @@ function PwMenuSelect({
         </span>
       </button>
       {name ? <input type="hidden" name={name} value={value} /> : null}
-      {open ? (
-        <ul className="pw-menu-select-list" role="listbox">
-          <li role="option" aria-selected={!value}>
-            <button
-              type="button"
-              className="pw-menu-select-option"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange("");
-                setOpen(false);
-              }}
+      {open
+        ? createPortal(
+            <ul
+              ref={setMenu}
+              className="pw-menu-select-list pw-anchored"
+              role="listbox"
             >
-              {placeholder}
-            </button>
-          </li>
-          {options.map((opt) => (
-            <li key={opt} role="option" aria-selected={opt === value}>
-              <button
-                type="button"
-                className={`pw-menu-select-option${opt === value ? " pw-selected" : ""}`}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onChange(opt);
-                  setOpen(false);
-                }}
-              >
-                {labels?.[opt] ?? opt}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+              <li role="option" aria-selected={!value}>
+                <button
+                  type="button"
+                  className="pw-menu-select-option"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange("");
+                    setOpen(false);
+                  }}
+                >
+                  {placeholder}
+                </button>
+              </li>
+              {options.map((opt) => (
+                <li key={opt} role="option" aria-selected={opt === value}>
+                  <button
+                    type="button"
+                    className={`pw-menu-select-option${opt === value ? " pw-selected" : ""}`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onChange(opt);
+                      setOpen(false);
+                    }}
+                  >
+                    {labels?.[opt] ?? opt}
+                  </button>
+                </li>
+              ))}
+            </ul>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

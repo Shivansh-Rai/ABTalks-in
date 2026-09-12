@@ -1131,9 +1131,23 @@ suite("accomplishments score the first cert and the awards field", () => {
 
   const awardsOnly = completeness({ awards: "Dean list" });
   assert(sectionEarned(awardsOnly, "accomplishments") === 1, "awards alone is 1");
+  // Plan 136: the hint offers a certification OR an award, so an award has to
+  // finish the section. It still earns only its own tenth of the weight.
   assert(
-    awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === false,
-    "awards without a cert do not tick the section",
+    awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === true,
+    "an award alone completes the section",
+  );
+
+  const halfCert = completeness({
+    certifications: [completeCert({ credentialUrl: null })],
+  });
+  const halfCertSection = halfCert.sections.find(
+    (x) => x.key === "accomplishments",
+  );
+  assert(halfCertSection?.complete === false, "an unfinished cert is not complete");
+  assert(
+    halfCertSection?.hint?.includes("Finish the certification") === true,
+    `a started cert says what is missing, got: ${halfCertSection?.hint}`,
   );
 });
 
@@ -1326,6 +1340,281 @@ suite("grade type covers the scales Indian institutions actually use", () => {
   const values = Object.values(GradeType);
   for (const v of ["PERCENTAGE", "CGPA_10", "GPA_4", "GRADE", "OTHER"]) {
     assert(values.includes(v as GradeType), `${v} present`);
+  }
+});
+
+/* ─── Plan 136: UI QA findings ───────────────────────────────────────────── */
+
+suite("every dismissal of the sheet asks before dropping edits", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  // Cancel used to call closeSheet() straight through, so it discarded edits
+  // that Escape and the scrim would have asked about.
+  const cancelAt = src.indexOf("pw-btn pw-btn-ghost");
+  assert(cancelAt !== -1, "the Cancel button exists");
+  const cancel = src.slice(cancelAt, src.indexOf("Cancel", cancelAt));
+  assert(cancel.includes("onClick={requestClose}"), "Cancel routes through requestClose");
+  assert(!cancel.includes("onClick={closeSheet}"), "Cancel is not a silent discard");
+  assert(src.includes('if (event.key === "Escape")'), "Escape still closes the sheet");
+});
+
+suite("the open sheet is a modal, and the keyboard stays inside it", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  assert(src.includes('role="dialog"'), "the sheet is a dialog");
+  assert(src.includes('aria-modal="true"'), "and a modal one");
+  assert(src.includes("aria-labelledby"), "named by its own heading");
+  assert(src.includes('event.key !== "Tab"'), "Tab is handled");
+  assert(src.includes("FOCUSABLE"), "focusable stops are collected for the cycle");
+  assert(src.includes("openerRef"), "focus returns to whatever opened the sheet");
+});
+
+suite("no Quick Link stays selected once the sheet is closed", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  assert(
+    src.includes("activeIndex={open ? index : -1}"),
+    "the active step is scoped to an open sheet",
+  );
+});
+
+suite("Quick Links can render every state it sets a class for", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const card = code("src/components/profile/profile-card.tsx");
+  if (card.includes("pw-attention")) {
+    assert(css.includes(".pw-check-item.pw-attention"), "pw-attention is styled");
+  }
+  assert(css.includes(".pw-check-optional"), "the optional chip is styled");
+  // The chevron implied a control that never existed.
+  assert(!card.includes("pw-chev"), "no dead chevron in the performance panel");
+  assert(!css.includes(".pw-col-value .pw-chev"), "and no orphaned rule for it");
+});
+
+suite("Mock Interview is marked optional rather than unfinished", () => {
+  const page = code("src/app/profile/page.tsx");
+  const mock = page.slice(page.indexOf('key: "mock"'), page.indexOf('key: "skills"'));
+  assert(mock.includes("optional: true"), "the mock step is optional");
+  const scoring = code("src/features/profile/completeness.ts");
+  assert(!scoring.includes('"mock"'), "and it is still outside the score");
+  const card = code("src/components/profile/profile-card.tsx");
+  assert(
+    card.includes("!step.optional"),
+    "an optional step never shows the attention state",
+  );
+});
+
+suite("menus escape the scrolling sheet instead of clipping inside it", () => {
+  const src = code("src/components/profile/wizard-fields.tsx");
+  assert(src.includes("createPortal"), "menus are portalled");
+  assert(src.includes("useAnchoredMenu"), "and positioned against their trigger");
+  assert(src.includes("getBoundingClientRect"), "measured from the viewport");
+  assert(src.includes('"scroll", place, true'), "repositioned on any scroll");
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(css.includes(".pw-anchored"), "the portalled menu carries its own tokens");
+});
+
+suite("the profile card cannot strand its own content on short screens", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const card = css.slice(
+    css.indexOf(".pw-profile-card {"),
+    css.indexOf(".pw-quick-head {"),
+  );
+  assert(card.includes("max-height"), "a sticky card is capped to the viewport");
+  assert(card.includes("overflow: hidden auto"), "and scrolls inside itself");
+});
+
+suite("the mobile layout keeps Quick Links under the scrim", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-profile-card");
+  assert(at !== -1, "the raised-card rule exists");
+  const before = css.slice(0, at);
+  const guard = before.lastIndexOf("@media (min-width: 1025px)");
+  assert(
+    guard !== -1 && before.indexOf("}", guard) === -1,
+    "raising the card above the scrim is desktop-only",
+  );
+});
+
+suite("the completion pill survives narrow widths", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const narrow = css.slice(css.indexOf("@media (max-width: 820px)"));
+  const pill = narrow.slice(
+    narrow.indexOf(".pw-complete-pill {"),
+    narrow.indexOf(".pw-section-header-content"),
+  );
+  assert(pill.length > 0, "the pill is still addressed at 820px");
+  assert(!pill.includes("display: none"), "it is compacted, not removed");
+});
+
+suite("required fields are marked, announced, and explained", () => {
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  const req = fields.slice(fields.indexOf('className="pw-req"'));
+  assert(req.includes("(required)"), "screen readers hear the word");
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-required-legend"), "the sheet explains the asterisk");
+
+  // What completeness requires must be what the forms mark.
+  const marked: [string, string[]][] = [
+    [
+      "src/components/profile/basic-info-section.tsx",
+      ["City", "State / Region", "Country", "Profile Headline", "About"],
+    ],
+    [
+      "src/components/profile/experience-section.tsx",
+      ["Company", "Employment type", "Location"],
+    ],
+    [
+      "src/components/profile/education-section.tsx",
+      ["School / College", "Degree", "Department / field"],
+    ],
+    [
+      "src/components/profile/projects-section.tsx",
+      ["Project name", "Tech stack", "GitHub"],
+    ],
+    [
+      "src/components/profile/links-section.tsx",
+      ["LinkedIn", "GitHub", "Portfolio"],
+    ],
+    [
+      "src/components/profile/preferences-section.tsx",
+      ["Preferred roles", "Preferred locations"],
+    ],
+  ];
+  for (const [rel, labels] of marked) {
+    const src = code(rel);
+    for (const label of labels) {
+      const at = src.indexOf('label="' + label + '"');
+      assert(at !== -1, rel + ": " + label + " exists");
+      const field = src.slice(at, src.indexOf(">", at));
+      assert(field.includes("required"), rel + ": " + label + " is marked required");
+    }
+  }
+});
+
+suite("nothing on the profile blocks a save", () => {
+  // The asterisk means "needed to complete this section". Making any of these
+  // a hard form requirement would break the standing rule that only /register
+  // has mandatory fields.
+  for (const rel of [
+    "src/components/profile/basic-info-section.tsx",
+    "src/components/profile/experience-section.tsx",
+    "src/components/profile/education-section.tsx",
+    "src/components/profile/projects-section.tsx",
+    "src/components/profile/links-section.tsx",
+    "src/components/profile/preferences-section.tsx",
+  ]) {
+    const src = code(rel);
+    assert(
+      !/<PwInput[^>]*\srequired[\s/>]/.test(src),
+      rel + ": no input enforces required",
+    );
+  }
+});
+
+suite("the resume section is built from the wizard's own styling", () => {
+  const src = source("src/components/profile/resume-section.tsx");
+  const strength = source("src/components/profile/resume-strength.tsx");
+  const pair: [string, string][] = [
+    ["resume-section.tsx", src],
+    ["resume-strength.tsx", strength],
+  ];
+  for (const [rel, text] of pair) {
+    assert(!text.includes("@/components/ui/"), rel + ": no shadcn primitives");
+    assert(!text.includes("lucide-react"), rel + ": icons match the wizard");
+    assert(!text.includes("text-muted-foreground"), rel + ": no Tailwind tokens");
+    assert(text.includes("pw-"), rel + ": uses pw-* classes");
+  }
+  // The behaviour it wraps is unchanged.
+  for (const action of [
+    "uploadResumeAction",
+    "saveResumeLinkAction",
+    "removeResumeAction",
+  ]) {
+    assert(src.includes(action), action + " still wired");
+  }
+});
+
+suite("the photo control is never silently absent", () => {
+  const media = code("src/components/profile/identity-media.tsx");
+  assert(
+    !media.includes("avatarUploadEnabled ? <AvatarEditor"),
+    "the pencil is not conditionally dropped",
+  );
+  assert(media.includes("unavailable={!avatarUploadEnabled}"), "it explains itself");
+  const editor = code("src/components/profile/avatar-editor.tsx");
+  assert(editor.includes("unavailable"), "the editor understands the state");
+  assert(editor.includes("disabled={pending || unavailable}"), "and disables itself");
+});
+
+suite("one name per section, wizard and report card alike", () => {
+  const page = source("src/app/profile/page.tsx");
+  const review = source("src/features/profile/build-review.ts");
+  for (const title of ["Skills", "Career Preferences", "Accomplishments", "Resume"]) {
+    assert(page.includes('"' + title + '"'), "the wizard step is " + title);
+    assert(review.includes('"' + title + '"'), "the report card agrees on " + title);
+  }
+  assert(!review.includes('"Key skills"'), "no second name for Skills");
+  assert(
+    !review.includes('"Your career preferences"'),
+    "no second name for Career Preferences",
+  );
+});
+
+suite("sentence case in the places QA caught title case", () => {
+  assert(
+    source("src/components/profile/profile-review.tsx").includes("Open to work"),
+    "the hero badge is sentence case",
+  );
+  assert(
+    source("src/components/profile/basic-info-section.tsx").includes(
+      'label="Phone number"',
+    ),
+    "so is the phone label",
+  );
+});
+
+suite("the page keeps a scroll cue without showing a scrollbar at rest", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(
+    css.includes("body.pw-profile-page.pw-scrolling .abt-content-scroll"),
+    "the thumb is painted while scrolling",
+  );
+  assert(
+    css.includes("scrollbar-color: transparent transparent"),
+    "and invisible at rest",
+  );
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-scrolling"), "the wizard drives the class");
+  assert(wizard.includes("SCROLL_CUE_MS"), "and lets it lapse when scrolling stops");
+});
+
+suite("the section heading shows the focus it takes", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(
+    css.includes(".pw-section-header h2:focus-visible"),
+    "the focused heading has a ring",
+  );
+});
+
+suite("a long display name cannot crowd the Edit control", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const hero = css.slice(
+    css.indexOf(".pw-rv-hero-copy h2 {"),
+    css.indexOf(".pw-rv-headline {"),
+  );
+  assert(hero.includes("overflow-wrap"), "long names wrap");
+  assert(hero.includes("min-width: 0"), "and the column can shrink");
+});
+
+suite("dead profile components are gone", () => {
+  for (const rel of [
+    "src/components/profile/leave-dialog.tsx",
+    "src/components/profile/fields.tsx",
+  ]) {
+    let exists = true;
+    try {
+      source(rel);
+    } catch {
+      exists = false;
+    }
+    assert(!exists, rel + " should have been deleted");
   }
 });
 
