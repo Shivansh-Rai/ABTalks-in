@@ -655,6 +655,14 @@ async function gh(url, token, init = {}) {
 }
 
 /**
+ * @param {unknown} error
+ */
+export function isLabelWritePermissionError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes(" 403:") && message.includes("Resource not accessible by integration");
+}
+
+/**
  * @param {string} owner
  * @param {string} repo
  * @param {number} number
@@ -820,8 +828,16 @@ async function applyFromGitHub() {
     ...result.modules.map((row) => moduleLabel(row.id)),
     primaryLabel(result.primary),
   ];
-  await ensureLabels(owner, repo, token);
-  await syncIssueLabels(owner, repo, prNumber, token, desired);
+  try {
+    await ensureLabels(owner, repo, token);
+    await syncIssueLabels(owner, repo, prNumber, token, desired);
+  } catch (error) {
+    if (isLabelWritePermissionError(error)) {
+      console.log("Skipping label writes: token does not have permission in this context");
+      return;
+    }
+    throw error;
+  }
 }
 
 async function applyFromIssue() {
@@ -870,8 +886,16 @@ async function applyFromIssue() {
     ...parsed.modules.map((id) => moduleLabel(id)),
     ...(parsed.primary ? [primaryLabel(parsed.primary)] : []),
   ];
-  await ensureLabels(owner, repo, token);
-  await syncIssueLabels(owner, repo, issueNumber, token, desired);
+  try {
+    await ensureLabels(owner, repo, token);
+    await syncIssueLabels(owner, repo, issueNumber, token, desired);
+  } catch (error) {
+    if (isLabelWritePermissionError(error)) {
+      console.log("Skipping label writes: token does not have permission in this context");
+      return;
+    }
+    throw error;
+  }
 }
 
 function isDirectRun() {

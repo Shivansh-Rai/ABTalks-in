@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import {
   classifyFiles,
   globToRegExp,
+  isLabelWritePermissionError,
   ISSUE_TEMPLATE_MODULE_IDS,
   matchModule,
   matchPattern,
@@ -132,6 +133,22 @@ suite("file-count tie breaks on changed lines", () => {
 suite("label names use module: and primary: prefixes", () => {
   assert(moduleLabel("search") === "module:search", "module");
   assert(primaryLabel("search") === "primary:search", "primary");
+});
+
+suite("permission-denied label writes are recognized", () => {
+  assert(
+    isLabelWritePermissionError(
+      new Error(
+        'POST https://api.github.com/repos/o/r/issues/1/labels → 403: {"message":"Resource not accessible by integration"}',
+      ),
+    ) === true,
+    "403 integration message should be recognized",
+  );
+  assert(
+    isLabelWritePermissionError(new Error("GET https://api.github.com/repos/o/r/issues/1 → 404: {}")) ===
+      false,
+    "non-403 should not be recognized",
+  );
 });
 
 suite("issue template checkboxes: first tick is primary", () => {
