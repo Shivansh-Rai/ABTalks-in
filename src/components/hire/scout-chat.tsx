@@ -29,7 +29,10 @@ import {
 } from "@/app/actions/hire-guest-actions";
 import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
-import { HireFilterDialog } from "@/components/hire/hire-filter-dialog";
+import {
+  HireFilterDialog,
+  filterSummary,
+} from "@/components/hire/hire-filter-dialog";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
 import {
@@ -1243,7 +1246,6 @@ export function ScoutChat({
           ".chat-output",
           ".hire-detail",
           ".hire-side",
-          ".hire-app__badge",
           ".hire-app__nav > .hire-hbtn",
         ],
         LANDING_EXIT_MS,
@@ -1335,6 +1337,7 @@ export function ScoutChat({
   // Not gated on `initialRequestId` any more: "New search" inside a saved
   // project returns `/hire/[id]` to screen 1 without leaving the project.
   const hero = view === "scout" && !talked && !freshChat;
+  const filterBits = filterSummary(spec);
 
   // Record where everything sits while it is the hero, so the hand-off has
   // the "before" half of each move. Every hero render: typing reflows the
@@ -1563,6 +1566,36 @@ export function ScoutChat({
         <div ref={scrollRef} className="chat-output" id="hire-results">
           {searched ? (
             <>
+              {/* One coherent bar: what this search filtered on, and the way to
+                  change it. "Edit filters" belongs here beside the criteria it
+                  edits — as a loose button by the composer it read as an
+                  unrelated floating link. */}
+              <div className="hire-filter-bar">
+                <p className="hire-filter-bar__title">Filters from this search</p>
+                <div className="hire-filter-bar__chips">
+                  {filterBits.chips.length === 0 ? (
+                    <span className="hire-filter-bar__empty">No filters set</span>
+                  ) : (
+                    filterBits.chips.map((c, i) => (
+                      <span key={`${c}-${i}`} className="hire-filter-chip">
+                        {c}
+                      </span>
+                    ))
+                  )}
+                  {filterBits.more > 0 && (
+                    <span className="hire-filter-chip hire-filter-chip--more">
+                      +{filterBits.more} more
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="hire-filter-bar__edit"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  Edit filters
+                </button>
+              </div>
               <div className="scout-thread__results" aria-busy={pending}>
                 {!persist && searchTabs.length > 1 && (
                   <div className="scout-tabs">
@@ -1846,21 +1879,16 @@ export function ScoutChat({
               disabled={pending || (persist && !requestId && !text.trim())}
               className="scout-send"
             >
-              <span className="scout-send__icon" aria-hidden="true">
-                <img src="/hire/search-glass.png" alt="" width={500} height={500} />
-              </span>
+              {/* An inline SVG, not the 500×500 search-glass.png this used to
+                  crop down. That PNG is a hairline outline, and squeezing it
+                  into a ~20px box anti-aliased the stroke away to nothing — the
+                  icon still took its place in the flex row, so the label sat
+                  right of the button's centre with no visible icon to explain
+                  why. A stroked SVG keeps its weight at any size and inherits
+                  the button's white `currentColor`. */}
+              <Search className="scout-send__icon" aria-hidden="true" />
               {pending ? "Searching" : "Search"}
             </button>
-            {!hero && (
-              <button
-                type="button"
-                className="scout-reset"
-                disabled={returning}
-                onClick={() => setFiltersOpen(true)}
-              >
-                Edit filters
-              </button>
-            )}
           </div>
           {hero && (
           <div className="scout-criteria-slot is-open">

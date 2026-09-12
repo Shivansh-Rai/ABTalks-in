@@ -6,10 +6,6 @@ import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
-import {
-  SubscriptionGate,
-  type GateReason,
-} from "@/components/hire/subscription-gate";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
 import { NewProjectDialog } from "@/components/hire/new-project-dialog";
 import { RenameProjectDialog } from "@/components/hire/rename-project-dialog";
@@ -23,12 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  ArrowRight,
-  Briefcase,
   ChartColumn,
   ChevronDown,
   Clock,
-  Crown,
   Folder,
   FolderKanban,
   FolderOpen,
@@ -80,7 +73,7 @@ function initials(name: string): string {
  * The nav card on the left of the Scout desk.
  *
  * Six bands, top to bottom: navigation, the current project, that project's
- * recent searches, every project, the upgrade card, and the recruiter. The
+ * recent searches, every project, and the recruiter. The
  * order is deliberate — it narrows from "the whole product" to "this project"
  * to "this account", so the thing a recruiter is looking at is always nearer
  * the top than the thing they might switch to.
@@ -109,7 +102,6 @@ export function HireSidebar({
   const { openAuth } = useHireAuth();
   const { projectName, requestNewProject, requestNewSearch, project } =
     useHireDesk();
-  const [gate, setGate] = useState<GateReason | null>(null);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
     null,
@@ -168,27 +160,20 @@ export function HireSidebar({
           <House className="hire-side__icon" aria-hidden="true" />
           Home
         </Link>
+        {/* The Projects/History page, not the contact-request tracker — the
+            label and the destination now describe the same thing. */}
         <Link
-          href="/hire/requests"
+          href="/hire/projects"
           className={cn(
             "hire-side__item",
-            pathname === "/hire/requests" && "is-current",
+            pathname.startsWith("/hire/projects") && "is-current",
           )}
-          aria-current={pathname === "/hire/requests" ? "page" : undefined}
+          aria-current={
+            pathname.startsWith("/hire/projects") ? "page" : undefined
+          }
         >
           <FolderKanban className="hire-side__icon" aria-hidden="true" />
-          Projects
-        </Link>
-        <Link
-          href="/hire/jobs"
-          className={cn(
-            "hire-side__item",
-            pathname.startsWith("/hire/jobs") && "is-current",
-          )}
-          aria-current={pathname.startsWith("/hire/jobs") ? "page" : undefined}
-        >
-          <Briefcase className="hire-side__icon" aria-hidden="true" />
-          Jobs
+          Search history
         </Link>
         {account && (
           <Link
@@ -360,6 +345,15 @@ export function HireSidebar({
             New search
           </button>
 
+        </section>
+      )}
+
+      {/* Assessments ------------------------------------------------------ */}
+      {liveProject && (
+        <section className="hire-side__section" aria-label="Assessments">
+          <div className="hire-side__head">
+            <h2 className="hire-side__kicker">Assessments</h2>
+          </div>
           <ProjectAssessmentsList
             projectId={liveProject.id}
             assessments={liveProject.assessments}
@@ -482,25 +476,6 @@ export function HireSidebar({
           Support
         </Link>
 
-        {/* Upgrade -------------------------------------------------------- */}
-        <button
-          type="button"
-          className="hire-side__upgrade"
-          aria-haspopup="dialog"
-          onClick={() => setGate("default")}
-        >
-          <Crown className="hire-side__upicon" aria-hidden="true" />
-          <span className="hire-side__uptext">
-            <span className="hire-side__uptitle">Upgrade to Pro</span>
-            <span className="hire-side__upsub">
-              Get unlimited projects, advanced analytics and more.
-            </span>
-          </span>
-          <span className="hire-side__uparrow" aria-hidden="true">
-            <ArrowRight className="hire-side__uparrowicon" />
-          </span>
-        </button>
-
         {/* Recruiter ------------------------------------------------------ */}
         {account ? (
           <div className="hire-side__me">
@@ -549,7 +524,6 @@ export function HireSidebar({
         )}
       </div>
 
-      <SubscriptionGate reason={gate} onClose={() => setGate(null)} />
     </aside>
   );
 }

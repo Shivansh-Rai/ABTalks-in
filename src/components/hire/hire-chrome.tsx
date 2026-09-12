@@ -93,18 +93,15 @@ export function HireChrome({
     ? (projects.find((p) => p.id === openProjectId)?.label ?? "This project")
     : null;
   const cartCount = approved ? scopedRows.length + overlayCount : guestCount;
-  const desk =
-    pathname === "/hire" ||
-    (/^\/hire\/[^/]+$/.test(pathname ?? "") &&
-      pathname !== "/hire/evidence" &&
-      pathname !== "/hire/requests" &&
-      // T-232: a plain page, not a project desk (`/hire/[id]` shares its shape).
-      pathname !== "/hire/messages" &&
-      pathname !== "/hire/matches" &&
-      pathname !== "/hire/create-test" &&
-      pathname !== "/hire/assessments" &&
-      pathname !== "/hire/jobs" &&
-      pathname !== "/hire/settings");
+  // The desk is `/hire` itself and a project at `/hire/<id>`. Every other
+  // `/hire/<page>` is a plain page and must NOT get the project-desk shell.
+  //
+  // Derived from `projectIdFromPath` rather than a second hardcoded list of
+  // exclusions kept in this file: the two lists drifted, which is how
+  // `/hire/jobs` ended up rendering inside the desk while `/hire/jobs/new`
+  // did not. `shortlist-scope.ts` owns that list now — one place to add a
+  // route, and it is already unit-tested.
+  const desk = pathname === "/hire" || Boolean(openProjectId);
   // Any desk route, not just `/hire`: "New search" inside a project returns
   // `/hire/[id]` to screen 1 without leaving the project.
   const isLanding = desk && landing && view === "scout";
@@ -187,97 +184,110 @@ export function HireChrome({
               />
             </span>
           </span>
-          {!isLanding && <span className="hire-app__badge">Hire</span>}
         </Link>
 
         <nav className="hire-app__nav">
           {/* Screen 1 carries the wordmark and Sign in only (Figma 1570:438):
               the workspace's pills belong to the dashboard, and sat over the
-              green hero after the master merge dropped this guard. */}
+              green hero after the master merge dropped this guard.
+
+              `isResults`, not `!isLanding`: Save for later and Shortlist are
+              toggles for the desk's side panels, and those panels only exist
+              inside the desk. On Search history, Messages or Settings the
+              panel has nowhere to render, so the buttons did nothing — and
+              worse, the click still set `view` on the shared desk context, so
+              the desk opened parked the next time you went back to it. */}
+          {isResults && (
+            <>
+              <button
+                type="button"
+                className={cn(
+                  "hire-hbtn",
+                  starCount > 0 && "has-count",
+                  view === "saved" && "is-current",
+                )}
+                aria-current={view === "saved" ? "page" : undefined}
+                title="Kept on this device — nothing is sent to our team from here"
+                onClick={() => (view === "saved" ? closePod() : openSaved())}
+              >
+                <Bookmark className="hire-hbtn__svg" aria-hidden="true" />
+                <span>Save for later</span>
+                {starCount > 0 && (
+                  <span className="hire-hbtn__count">{starCount}</span>
+                )}
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "hire-hbtn",
+                  cartCount > 0 && "has-count",
+                  view === "pod" && "is-current",
+                )}
+                aria-current={view === "pod" ? "page" : undefined}
+                onClick={() => (view === "pod" ? closePod() : openPod())}
+              >
+                <UserCheck className="hire-hbtn__svg" aria-hidden="true" />
+                <span>Shortlist</span>
+                {cartCount > 0 && (
+                  <span className="hire-hbtn__count">{cartCount}</span>
+                )}
+              </button>
+            </>
+          )}
+          {/* Credits and Assessments are plain navigation/information and are
+              correct on every page except the hero, so they keep the wider
+              guard. */}
           {!isLanding && (
-          <>
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              starCount > 0 && "has-count",
-              view === "saved" && "is-current",
-            )}
-            aria-current={view === "saved" ? "page" : undefined}
-            title="Kept on this device — nothing is sent to our team from here"
-            onClick={() => (view === "saved" ? closePod() : openSaved())}
-          >
-            <Bookmark className="hire-hbtn__svg" aria-hidden="true" />
-            <span>Save for Later</span>
-            {starCount > 0 && (
-              <span className="hire-hbtn__count">{starCount}</span>
-            )}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "hire-hbtn",
-              cartCount > 0 && "has-count",
-              view === "pod" && "is-current",
-            )}
-            aria-current={view === "pod" ? "page" : undefined}
-            onClick={() => (view === "pod" ? closePod() : openPod())}
-          >
-            <UserCheck className="hire-hbtn__svg" aria-hidden="true" />
-            <span>Shortlist</span>
-            {cartCount > 0 && (
-              <span className="hire-hbtn__count">{cartCount}</span>
-            )}
-          </button>
-          {credits ? (
-            <CreditBalancePill
-              balanceMinor={credits.balanceMinor}
-              currency={credits.currency}
-            />
-          ) : null}
-          <Link
-            href="/hire/jobs"
-            className={cn(
-              "hire-hbtn",
-              "hire-hbtn--label",
-              pathname.startsWith("/hire/jobs") && "is-current",
-            )}
-            aria-current={
-              pathname.startsWith("/hire/jobs") ? "page" : undefined
-            }
-          >
-            <Briefcase className="hire-hbtn__svg" aria-hidden="true" />
-            <span>Jobs</span>
-          </Link>
-          <Link
-            href="/hire/assessments"
-            className={cn(
-              "hire-hbtn",
-              "hire-hbtn--label",
-              pathname === "/hire/assessments" && "is-current",
-            )}
-            aria-current={pathname === "/hire/assessments" ? "page" : undefined}
-          >
-            <ClipboardCheck className="hire-hbtn__svg" aria-hidden="true" />
-            <span>Assessments</span>
-          </Link>
-          </>
+            <>
+              {credits ? (
+                <CreditBalancePill
+                  balanceMinor={credits.balanceMinor}
+                  currency={credits.currency}
+                />
+              ) : null}
+              <Link
+                href="/hire/jobs"
+                className={cn(
+                  "hire-hbtn",
+                  "hire-hbtn--label",
+                  pathname.startsWith("/hire/jobs") && "is-current",
+                )}
+                aria-current={
+                  pathname.startsWith("/hire/jobs") ? "page" : undefined
+                }
+              >
+                <Briefcase className="hire-hbtn__svg" aria-hidden="true" />
+                <span>Jobs</span>
+              </Link>
+              <Link
+                href="/hire/assessments"
+                className={cn(
+                  "hire-hbtn",
+                  "hire-hbtn--label",
+                  pathname === "/hire/assessments" && "is-current",
+                )}
+                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
+              >
+                <ClipboardCheck className="hire-hbtn__svg" aria-hidden="true" />
+                <span>Assessments</span>
+              </Link>
+            </>
           )}
           {account ? (
             <>
               {isLanding && (
                 <Link
-                  href="/hire/requests"
+                  href="/hire/projects"
                   className={cn(
                     "hire-hbtn",
                     "hire-hbtn--label",
                     "hire-hbtn--landing-projects",
-                    pathname === "/hire/requests" && "is-current",
+                    pathname.startsWith("/hire/projects") && "is-current",
                   )}
-                  title="View your past search projects"
+                  title="Your past searches, grouped by project"
                 >
                   <FolderKanban className="hire-hbtn__svg" aria-hidden="true" />
-                  <span>Projects</span>
+                  <span>Search history</span>
                 </Link>
               )}
               <RecruiterAccountMenu account={account} />
@@ -336,10 +346,38 @@ export function HireChrome({
           )}
         </main>
       ) : (
-        <div className="hire-plain">{children}</div>
+        /* Every non-desk /hire page — Projects, Messages, Settings, Assessments,
+           Evidence — renders inside the SAME shell as the desk: one header
+           above, one sidebar beside. Before this they were bare centred
+           containers, so moving between /hire and /hire/messages felt like
+           moving between two products.
+
+           The candidate detail rail is deliberately NOT here: it belongs to
+           the results grid and has nothing to show on a Settings page. */
+        <main className="hire-shell">
+          {account && (
+            /* The rail holds the nav card at its designed 281px. The desk
+               cancels its own shell zoom to match this (see hire-scout.css),
+               so the sidebar is one size everywhere rather than 211px on the
+               results screen and 281px here. */
+            <div className="hire-shell__rail">
+              <HireSidebar
+                account={account}
+                unreadMessages={unreadMessages}
+                projects={projects}
+                // No project is "open" on a plain page, so the sidebar lists
+                // projects without pretending one of them is current.
+                openProjectId={null}
+              />
+            </div>
+          )}
+          <div className="hire-shell__content">{children}</div>
+        </main>
       )}
 
-      {cartCount > 0 && !podDismissed && view === "scout" && !isLanding && (
+      {/* Same reasoning as the header pills: this bar's "View Shortlist"
+          opens the desk panel, so off the desk it led nowhere. */}
+      {cartCount > 0 && !podDismissed && view === "scout" && isResults && (
         <div className="hire-podbar" role="status">
           <span className="hire-podbar__icon" aria-hidden="true">
             <img src="/hire/talentpod.jpg" alt="" width={18} height={20} />
