@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
+  Briefcase,
   ChartColumn,
   ChevronDown,
   Clock,
@@ -177,6 +178,17 @@ export function HireSidebar({
         >
           <FolderKanban className="hire-side__icon" aria-hidden="true" />
           Projects
+        </Link>
+        <Link
+          href="/hire/jobs"
+          className={cn(
+            "hire-side__item",
+            pathname.startsWith("/hire/jobs") && "is-current",
+          )}
+          aria-current={pathname.startsWith("/hire/jobs") ? "page" : undefined}
+        >
+          <Briefcase className="hire-side__icon" aria-hidden="true" />
+          Jobs
         </Link>
         {account && (
           <Link

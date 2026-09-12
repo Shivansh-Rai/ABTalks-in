@@ -45,6 +45,9 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-12 [rule] Recruiter can open the Scout inspector on owned-job applicants (PROFILE ref); unlock/message reuse T-229/T-232 with owned-application as a second addressability check — email/phone stay off the list and card payload.
+- 2026-09-12 [rule] Recruiter can list applicants for owned jobs only (T-226 NOT_FOUND on a foreign id); payload is display name + note + status + applied date — email/phone stay off the select.
+- 2026-09-12 [schema] T-245/T-246 Job lifecycle columns (status, workMode, skills, recruiterId, publishedAt, closedAt) and JobApplication.status/resumeUrl/coverLetter/updatedAt now have migration 20260912140000 — they were in schema.prisma without a migration, which crashed /jobs with P2022.
 - 2026-09-12 [rule] Hire inspector LinkedIn URL is released only after CONTACT_SHARED, through loadProtectedContact (same gate as email/phone); the search/match payload still carries linkedinConnected only.
 - 2026-09-12 [convention] PRs must fill `.github/PULL_REQUEST_TEMPLATE.md`: domain, owner, cross-module, shared/platform files, Sohail review, test evidence, and the ten-question self-audit.
 - 2026-09-12 [convention] Issues opened from `.github/ISSUE_TEMPLATE/module.md` get `module:*` / `primary:*` from ticked checkboxes (first tick is primary); issues without those boxes are left unlabeled.

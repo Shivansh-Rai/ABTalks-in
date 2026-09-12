@@ -183,12 +183,44 @@ suite("recruiter job actions resolve the caller from the workspace", () => {
     `every job action must call requireRecruiterWorkspace() (found ${gateCalls}, need 4)`,
   );
   assert(
-    src.includes("getMyJobAction") && src.includes("listMyJobsAction"),
-    "workspace-scoped job reads must exist",
+    src.includes("getMyJobAction") &&
+      src.includes("listMyJobsAction") &&
+      src.includes("listMyJobApplicantsAction") &&
+      src.includes("getMyJobApplicantCardAction"),
+    "workspace-scoped job reads (including applicants and inspector cards) must exist",
   );
   assert(
     !/recruiterId:\s*input/.test(src) && !/recruiterId:\s*parsed/.test(src),
     "the client must not supply the job owner id",
+  );
+});
+
+suite("recruiter job applicant reads never select protected contact", () => {
+  const store = read("src/features/recruiter-jobs/prisma-store.ts");
+  const action = read("src/app/actions/recruiter-job-actions.ts");
+  const listFn = store.slice(store.indexOf("async listByJob"));
+  assert(
+    listFn.includes("fullName: true") &&
+      !listFn.includes("email") &&
+      !listFn.includes("phone") &&
+      !listFn.includes("linkedinUrl") &&
+      !listFn.includes("resumeUrl"),
+    "listByJob select must be fullName only",
+  );
+  assert(
+    action.includes("listMyJobApplicantsAction") &&
+      action.includes("listApplicantsForOwnedJob") &&
+      action.includes("getMyJobApplicantCardAction") &&
+      action.includes("loadApplicantMatchForOwnedJob"),
+    "the applicants action must go through the owned-job service",
+  );
+  const card = read("src/features/recruiter-jobs/service.ts");
+  const mapper = card.slice(card.indexOf("function toApplicantMatchCard"));
+  assert(
+    !mapper.includes("email") &&
+      !mapper.includes("phone") &&
+      !mapper.includes("linkedinUrl"),
+    "the inspector card mapper must not assign contact fields",
   );
 });
 

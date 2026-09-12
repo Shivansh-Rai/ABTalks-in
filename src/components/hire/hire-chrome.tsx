@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Bookmark, ClipboardCheck, FolderKanban, UserCheck, X } from "lucide-react";
+import { Bookmark, Briefcase, ClipboardCheck, FolderKanban, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
@@ -103,6 +103,7 @@ export function HireChrome({
       pathname !== "/hire/matches" &&
       pathname !== "/hire/create-test" &&
       pathname !== "/hire/assessments" &&
+      pathname !== "/hire/jobs" &&
       pathname !== "/hire/settings");
   // Any desk route, not just `/hire`: "New search" inside a project returns
   // `/hire/[id]` to screen 1 without leaving the project.
@@ -240,6 +241,20 @@ export function HireChrome({
               currency={credits.currency}
             />
           ) : null}
+          <Link
+            href="/hire/jobs"
+            className={cn(
+              "hire-hbtn",
+              "hire-hbtn--label",
+              pathname.startsWith("/hire/jobs") && "is-current",
+            )}
+            aria-current={
+              pathname.startsWith("/hire/jobs") ? "page" : undefined
+            }
+          >
+            <Briefcase className="hire-hbtn__svg" aria-hidden="true" />
+            <span>Jobs</span>
+          </Link>
           <Link
             href="/hire/assessments"
             className={cn(

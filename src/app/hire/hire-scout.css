@@ -8041,11 +8041,32 @@ button.hire-side__me {
 }
 
 /* Candidate profile panel (1585:189) */
-.hire-app--results .hire-detail.hire-profile {
+.hire-app--results .hire-detail.hire-profile,
+.hire-jobs-inspect .hire-detail.hire-profile {
   position: relative;
   border-left: 0;
   border-radius: 15px;
   background: #ffffff;
+}
+
+.hire-jobs-inspect.is-open {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.hire-jobs-inspect__panel {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  height: calc(100dvh - 2rem);
+  min-height: 0;
+}
+
+.hire-jobs-inspect .hire-detail.hire-profile {
+  height: 100%;
+  min-height: 0;
 }
 
 .hire-profile::after {

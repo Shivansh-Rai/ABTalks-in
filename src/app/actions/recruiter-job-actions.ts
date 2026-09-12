@@ -8,14 +8,22 @@ import { logger } from "@/lib/logger";
 import {
   createRecruiterJob,
   getRecruiterJob,
+  listApplicantsForOwnedJob,
   listRecruiterJobs,
+  loadApplicantMatchForOwnedJob,
   transitionJob,
   updateRecruiterJob,
   type CreateJobInput,
   type JobRow,
+  type OwnedApplicantRow,
   type UpdateJobInput,
 } from "@/features/recruiter-jobs/service";
-import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+import {
+  prismaApplicantStore,
+  prismaJobStore,
+  prismaLoadPublicIdentity,
+} from "@/features/recruiter-jobs/prisma-store";
+import type { MatchCardData } from "@/components/hire/match-card";
 import type { LifecycleAction } from "@/features/recruiter-jobs/lifecycle";
 
 type ActionOk<T = undefined> = T extends undefined
@@ -28,7 +36,6 @@ const opportunityTypeSchema = z.nativeEnum(JobType);
 
 const createSchema = z.object({
   title: z.string().min(1).max(200),
-  company: z.string().min(1).max(200),
   description: z.string().min(1).max(20000),
   location: z.string().max(200).optional().default(""),
   workMode: workModeSchema,
@@ -50,10 +57,10 @@ const transitionSchema = z.object({
 
 function revalidateJobViews(jobId?: string) {
   revalidatePath("/jobs");
-  revalidatePath("/recruiter/jobs");
+  revalidatePath("/hire/jobs");
   if (jobId) {
     revalidatePath(`/jobs/${jobId}`);
-    revalidatePath(`/recruiter/jobs/${jobId}`);
+    revalidatePath(`/hire/jobs/${jobId}`);
   }
 }
 
@@ -109,10 +116,7 @@ export async function updateRecruiterJobAction(
   const { jobId, ...rest } = parsed.data;
 
   try {
-    // Company on the update payload is ignored — the workspace owns it.
-    const { company: _ignoreCompany, ...safeRest } = rest;
-    void _ignoreCompany;
-    const payload: UpdateJobInput = safeRest;
+    const payload: UpdateJobInput = rest;
     const result = await updateRecruiterJob(
       { jobs: prismaJobStore() },
       { userId: workspace.data.userId },
@@ -230,5 +234,67 @@ export async function getMyJobAction(
   } catch (error) {
     logger.error("[recruiter-job-actions] get", { error: String(error) });
     return { ok: false, message: "Failed to load job" };
+  }
+}
+
+/** Workspace-scoped applicants for an owned job — foreign id is NOT_FOUND. */
+export async function listMyJobApplicantsAction(
+  input: unknown,
+): Promise<ActionOk<{ applicants: OwnedApplicantRow[] }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+  const parsed = transitionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+  try {
+    const result = await listApplicantsForOwnedJob(
+      { jobs: prismaJobStore(), applications: prismaApplicantStore() },
+      { userId: workspace.data.userId },
+      parsed.data.jobId,
+    );
+    if (!result.ok) {
+      const status = result.code === "NOT_FOUND" ? 404 : undefined;
+      return { ok: false, message: result.message, status };
+    }
+    return { ok: true, data: { applicants: result.data } };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] applicants", { error: String(error) });
+    return { ok: false, message: "Failed to load applicants" };
+  }
+}
+
+const applicantCardSchema = z.object({
+  jobId: z.string().min(1),
+  candidateRef: z.string().min(1),
+});
+
+/** Public inspector card for one applicant on an owned job. */
+export async function getMyJobApplicantCardAction(
+  input: unknown,
+): Promise<ActionOk<{ match: MatchCardData }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+  const parsed = applicantCardSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+  try {
+    const result = await loadApplicantMatchForOwnedJob(
+      {
+        jobs: prismaJobStore(),
+        applications: prismaApplicantStore(),
+        loadPublicIdentity: prismaLoadPublicIdentity,
+      },
+      { userId: workspace.data.userId },
+      parsed.data.jobId,
+      parsed.data.candidateRef,
+    );
+    if (!result.ok) {
+      const status = result.code === "NOT_FOUND" ? 404 : undefined;
+      return { ok: false, message: result.message, status };
+    }
+    return { ok: true, data: { match: result.data } };
+  } catch (error) {
+    logger.error("[recruiter-job-actions] applicant-card", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to load applicant" };
   }
 }

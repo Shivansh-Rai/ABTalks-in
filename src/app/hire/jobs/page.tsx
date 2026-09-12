@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import { JobStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { listRecruiterJobs } from "@/features/recruiter-jobs/service";
-import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+import { countApplicantsByJobIds, listRecruiterJobs } from "@/features/recruiter-jobs/service";
+import {
+  prismaApplicantStore,
+  prismaJobStore,
+} from "@/features/recruiter-jobs/prisma-store";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -29,11 +32,16 @@ export default async function RecruiterJobsPage() {
     );
   }
 
-  const result = await listRecruiterJobs(
-    { jobs: prismaJobStore() },
-    { userId: workspace.data.userId },
-  );
+  const deps = {
+    jobs: prismaJobStore(),
+    applications: prismaApplicantStore(),
+  };
+  const result = await listRecruiterJobs(deps, { userId: workspace.data.userId });
   const jobs = result.ok ? result.data : [];
+  const applicantCounts = await countApplicantsByJobIds(
+    deps,
+    jobs.map((job) => job.id),
+  );
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
@@ -89,6 +97,12 @@ export default async function RecruiterJobsPage() {
                       {job.company}
                       {job.location ? ` · ${job.location}` : null}
                       {job.workMode ? ` · ${job.workMode}` : null}
+                    </p>
+                    <p className="mt-2 text-xs text-[#4B4B4B]">
+                      {applicantCounts[job.id] ?? 0}{" "}
+                      {(applicantCounts[job.id] ?? 0) === 1
+                        ? "applicant"
+                        : "applicants"}
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">

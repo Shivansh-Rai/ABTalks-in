@@ -3,14 +3,19 @@ import { notFound, redirect } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { auth } from "@/auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { getRecruiterJob } from "@/features/recruiter-jobs/service";
-import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+import { getRecruiterJob, listApplicantsForOwnedJob } from "@/features/recruiter-jobs/service";
+import {
+  prismaApplicantStore,
+  prismaJobStore,
+} from "@/features/recruiter-jobs/prisma-store";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDateIST } from "@/lib/date-utils";
 import { JobLifecycleButtons } from "@/components/hire/jobs/job-lifecycle-buttons";
 import { JobFormClient } from "@/components/hire/jobs/job-form-client";
+import { JobApplicantsDesk } from "@/components/hire/jobs/job-applicants-desk";
+import { JobApplicantsList } from "@/components/hire/jobs/job-applicants-list";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -32,16 +37,33 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
     );
   }
 
-  const result = await getRecruiterJob(
-    { jobs: prismaJobStore() },
-    { userId: workspace.data.userId },
-    id,
-  );
+  const deps = {
+    jobs: prismaJobStore(),
+    applications: prismaApplicantStore(),
+  };
+  const result = await getRecruiterJob(deps, { userId: workspace.data.userId }, id);
   if (!result.ok) notFound();
   const job = result.data;
 
+  const applicantsRes = await listApplicantsForOwnedJob(
+    deps,
+    { userId: workspace.data.userId },
+    id,
+  );
+  const applicants = applicantsRes.ok
+    ? applicantsRes.data.map((row) => ({
+        id: row.id,
+        candidateRef: row.candidateRef,
+        displayName: row.displayName,
+        note: row.note,
+        status: row.status,
+        appliedLabel: formatDateIST(row.appliedAt),
+      }))
+    : [];
+
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+      <JobApplicantsDesk jobId={job.id} applicants={applicants}>
       <Link
         href="/hire/jobs"
         className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "mb-4")}
@@ -102,6 +124,8 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
         )}
       </div>
 
+      <JobApplicantsList applicants={applicants} />
+
       {job.description ? (
         <div className="prose prose-sm dark:prose-invert mt-8 max-w-none [&_p]:mb-3">
           <ReactMarkdown>{job.description}</ReactMarkdown>
@@ -127,6 +151,7 @@ export default async function RecruiterJobDetailPage({ params }: PageProps) {
           />
         </div>
       </details>
+      </JobApplicantsDesk>
     </main>
   );
 }
