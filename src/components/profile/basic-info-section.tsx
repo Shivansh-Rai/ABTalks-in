@@ -244,9 +244,9 @@ export function BasicInfoSection({
             })}
           />
         </PwField>
-        <PwField label="Gender" htmlFor="bi-gender">
+        <PwField label="Gender" htmlFor="bi-gender" required>
           <PwSelect id="bi-gender" {...register("gender")}>
-            <option value="">Prefer not to say</option>
+            <option value="">Select</option>
             {Object.values(CandidateGender).map((g) => (
               <option key={g} value={g}>
                 {GENDER_LABELS[g] ?? g}
