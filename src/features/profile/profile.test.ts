@@ -1489,6 +1489,50 @@ suite("the mobile layout keeps Quick Links under the scrim", () => {
   );
 });
 
+suite("mobile profile overview hides Quick Links and uses preview cards", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const mobile = css.slice(css.indexOf("@media (max-width: 1024px)"));
+  const mobileCard = mobile.slice(
+    mobile.indexOf(".pw-profile-card {"),
+    mobile.indexOf("}", mobile.indexOf(".pw-profile-card {")) + 1,
+  );
+  assert(
+    mobileCard.includes("display: none"),
+    "Quick Links is hidden at the mobile breakpoint",
+  );
+  assert(css.includes(".pw-rv-complete"), "Complete your profile CTA is styled");
+  assert(css.includes(".pw-rv-performance"), "review-bottom performance is styled");
+  assert(css.includes(".pw-rv-preview"), "section previews are styled");
+  assert(css.includes(".pw-rv-card-hit"), "whole-card tap target exists");
+  assert(
+    mobile.includes(".pw-rv-desktop-list") && mobile.includes("display: none"),
+    "desktop filled/empty list is suppressed on mobile",
+  );
+  assert(
+    mobile.includes(".pw-rv-mobile-list") && mobile.includes("display: flex"),
+    "wizard-ordered mobile list is shown",
+  );
+
+  const review = code("src/components/profile/profile-review.tsx");
+  assert(review.includes("pw-rv-complete"), "the CTA is rendered");
+  assert(review.includes("pw-rv-mobile-list"), "the ordered list is rendered");
+  assert(review.includes("performance"), "performance is passed into the review");
+  assert(review.includes("pw-rv-meta-secondary"), "secondary meta can be hidden");
+  assert(review.includes("card.preview"), "cards expose a one-line preview");
+
+  const builder = code("src/features/profile/build-review.ts");
+  assert(builder.includes("preview:"), "ReviewCard carries preview");
+  assert(builder.includes("location:"), "hero meta is structured");
+  assert(builder.includes("updatedLabel:"), "updated label is a dedicated field");
+  assert(!builder.includes("meta: [place"), "flat meta array is gone");
+
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(
+    wizard.includes("performance={performance}"),
+    "the wizard forwards performance to the review card",
+  );
+});
+
 suite("the completion pill survives narrow widths", () => {
   const css = source("src/components/profile/profile-wizard.css");
   const narrow = css.slice(css.indexOf("@media (max-width: 820px)"));

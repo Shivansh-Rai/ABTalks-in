@@ -63,6 +63,11 @@ export type ReviewCard = {
   title: string;
   icon: ReviewIconKey;
   emptyHint: string;
+  /**
+   * One-line summary for the mobile overview row. Empty cards reuse
+   * `emptyHint`. Desktop keeps rendering full `blocks`.
+   */
+  preview: string;
   /** Rendered as a pill when greater than 1. */
   count: number;
   filled: boolean;
@@ -74,8 +79,14 @@ export type ReviewCard = {
 export type ProfileReview = {
   name: string;
   headline: string | null;
-  /** Location, phone, persona, last-updated — rendered as pills. */
-  meta: string[];
+  /** City / region — secondary on mobile. */
+  location: string | null;
+  /** Phone — secondary on mobile. */
+  phone: string | null;
+  /** Persona badge (always shown with Open to work). */
+  persona: string;
+  /** "Updated …" — secondary on mobile. */
+  updatedLabel: string | null;
   openToWork: boolean;
   score: number;
   cards: ReviewCard[];
@@ -141,21 +152,88 @@ function lastUpdated(updatedAt: Date): string {
   return `Updated ${rtf.format(Math.round(diffMs / (86_400_000 * 365)), "year")}`;
 }
 
+const PREVIEW_MAX = 100;
+
+function truncatePreview(text: string, max = PREVIEW_MAX): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1).trimEnd()}…`;
+}
+
+function previewFromItem(item: ReviewItem): string {
+  return truncatePreview(join([item.title, item.sub, item.meta], ", "));
+}
+
+function previewFromBlocks(
+  emptyHint: string,
+  blocks: ReviewBlock[],
+  options: {
+    skillNames?: string[];
+    verifiedSkillCount?: number;
+  } = {},
+): string {
+  if (blocks.length === 0) return emptyHint;
+
+  if (options.skillNames && options.skillNames.length > 0) {
+    const listed = options.skillNames.slice(0, 3).join(" · ");
+    const more =
+      options.skillNames.length > 3
+        ? ` +${options.skillNames.length - 3}`
+        : "";
+    const verified =
+      options.verifiedSkillCount && options.verifiedSkillCount > 0
+        ? ` · ${options.verifiedSkillCount} skills verified`
+        : "";
+    return truncatePreview(`${listed}${more}${verified}`);
+  }
+
+  for (const block of blocks) {
+    if (block.kind === "items" && block.items[0]) {
+      return previewFromItem(block.items[0]);
+    }
+    if (block.kind === "file") {
+      return truncatePreview(join([block.name, block.meta], " · "));
+    }
+    if (block.kind === "text") {
+      return truncatePreview(block.text);
+    }
+    if (block.kind === "pairs" && block.pairs.length > 0) {
+      return truncatePreview(
+        block.pairs
+          .slice(0, 3)
+          .map((p) => p.label)
+          .join(" · "),
+      );
+    }
+    if (block.kind === "chips" && block.items.length > 0) {
+      return truncatePreview(block.items.slice(0, 3).join(" · "));
+    }
+  }
+
+  return emptyHint;
+}
+
 function card(
   stepIndex: number,
   title: string,
   icon: ReviewIconKey,
   emptyHint: string,
   blocks: ReviewBlock[],
-  options: { count?: number; noGap?: boolean } = {},
+  options: {
+    count?: number;
+    noGap?: boolean;
+    preview?: string;
+  } = {},
 ): ReviewCard {
+  const filled = blocks.length > 0;
   return {
     stepIndex,
     title,
     icon,
     emptyHint,
+    preview: options.preview ?? previewFromBlocks(emptyHint, blocks),
     count: options.count ?? 0,
-    filled: blocks.length > 0,
+    filled,
     noGap: options.noGap ?? false,
     blocks,
   };
@@ -462,7 +540,17 @@ export function buildProfileReview({
       "skills",
       "Add the skills you want to be found for.",
       skillBlocks,
-      { count: claimed.length + verifiedSkills.length },
+      {
+        count: claimed.length + verifiedSkills.length,
+        preview: previewFromBlocks(
+          "Add the skills you want to be found for.",
+          skillBlocks,
+          {
+            skillNames: claimed.map((s) => s.name),
+            verifiedSkillCount: verifiedSkills.length,
+          },
+        ),
+      },
     ),
     card(
       at("accomplishments"),
@@ -500,8 +588,10 @@ export function buildProfileReview({
   return {
     name: detail.fullName || "Your name",
     headline: nonEmpty(detail.headline),
-    meta: [place, nonEmpty(detail.phone) ?? "", personaLabel, lastUpdated(detail.updatedAt)]
-      .filter((m) => m.trim().length > 0),
+    location: place || null,
+    phone: nonEmpty(detail.phone),
+    persona: personaLabel,
+    updatedLabel: lastUpdated(detail.updatedAt),
     openToWork: detail.preference?.openToWork ?? false,
     score,
     cards,
