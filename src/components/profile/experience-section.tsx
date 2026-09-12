@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { saveExperienceAction } from "@/app/actions/candidate-profile-actions";
 import { COMMON_ROLES, EMPLOYMENT_TYPES } from "@/lib/candidate-vocab";
+import { CITY_NAMES, searchCities } from "@/lib/city-catalog";
 import { endBeforeStart, useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
@@ -192,9 +193,14 @@ export function ExperienceSection({
                   </PwSelect>
                 </PwField>
                 <PwField label="Location" required htmlFor={`exp-loc-${index}`}>
-                  <PwInput
+                  {/* The same city vocabulary the profile's own location uses,
+                      so a role in Bengaluru and a candidate in Bengaluru are
+                      spelled the same way. */}
+                  <PwSuggest
                     id={`exp-loc-${index}`}
-                    placeholder="Enter your city"
+                    placeholder="Start typing a city"
+                    suggestions={CITY_NAMES}
+                    search={searchCities}
                     {...register(`rows.${index}.locationCity`)}
                   />
                 </PwField>

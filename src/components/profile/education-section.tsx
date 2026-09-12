@@ -7,8 +7,9 @@ import { CollegeCombobox } from "@/components/shared/college-combobox";
 import { saveEducationAction } from "@/app/actions/candidate-profile-actions";
 import {
   DEGREES,
-  FIELDS_OF_STUDY,
   GRADE_TYPE_LABELS,
+  departmentsForDegree,
+  searchDegrees,
 } from "@/lib/candidate-vocab";
 import {
   EDUCATION_MAX_SPAN_YEARS,
@@ -122,6 +123,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
           const isCurrent = watch(`rows.${index}.isCurrent`);
           const startYear = watch(`rows.${index}.startYear`);
           const gradeType = watch(`rows.${index}.gradeType`);
+          const degree = watch(`rows.${index}.degree`);
           return (
             <PwEntryCard
               key={field.id}
@@ -153,8 +155,9 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                 <PwField label="Degree" required htmlFor={`edu-degree-${index}`}>
                   <PwSuggest
                     id={`edu-degree-${index}`}
-                    placeholder="e.g. B.Tech"
+                    placeholder="e.g. B.E / B.Tech"
                     suggestions={DEGREES}
+                    search={searchDegrees}
                     {...register(`rows.${index}.degree`)}
                   />
                 </PwField>
@@ -163,10 +166,13 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                   required
                   htmlFor={`edu-field-${index}`}
                 >
+                  {/* Offers the branches that belong to the degree beside it —
+                      engineering for a B.Tech, commerce for a B.Com — and every
+                      branch when the degree is blank or unrecognised. */}
                   <PwSuggest
                     id={`edu-field-${index}`}
                     placeholder="Enter your field of study"
-                    suggestions={FIELDS_OF_STUDY}
+                    suggestions={departmentsForDegree(degree ?? "")}
                     {...register(`rows.${index}.fieldOfStudy`)}
                   />
                 </PwField>

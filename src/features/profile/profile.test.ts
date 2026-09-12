@@ -26,6 +26,20 @@ import {
 } from "@/repositories/candidate-primary";
 import { computeCompleteness } from "@/features/profile/completeness";
 import {
+  CITY_NAMES,
+  STATE_NAMES,
+  canonicalCityName,
+  searchCities,
+  searchStates,
+  stateForCity,
+} from "@/lib/city-catalog";
+import {
+  DEGREES,
+  FIELDS_OF_STUDY,
+  canonicalDegree,
+  departmentsForDegree,
+} from "@/lib/candidate-vocab";
+import {
   endBeforeStart,
   isFuture,
 } from "@/components/profile/field-issues";
@@ -2050,6 +2064,179 @@ suite("the date rule itself", () => {
   assert(isFuture(12, now.getFullYear() + 1), "next year is the future");
   assert(!isFuture(1, now.getFullYear() - 1), "last year is not");
   assert(!isFuture(null, null), "an empty date is not the future");
+});
+
+/* ─── Plan 137: catalogs and form fixes ──────────────────────────────────── */
+
+suite("the skills picker offers the catalog and nothing else", () => {
+  const src = code("src/components/profile/skill-combobox.tsx");
+  // The Skill table was seeded from free text, so it holds "Tailwinf CSS" and
+  // whole pasted stacks. Those were being listed beside real skills.
+  assert(!src.includes("/api/skills/search"), "no query against the seeded table");
+  assert(!src.includes("fetch("), "no network call at all");
+  assert(!src.includes("setResults"), "and no results state left behind");
+  assert(src.includes("searchCanonicalSkills"), "the catalog is the source");
+  // Free text still has a way in.
+  assert(src.includes("onEnterFreeText"), "typing something new still works");
+  assert(src.includes("OTHER_ITEM"), "and Other is still offered");
+});
+
+suite("the city catalog is derived from data already in the repo", () => {
+  const script = code("prisma/scripts/build-city-catalog.ts");
+  assert(
+    script.includes("prisma") && script.includes("colleges.json"),
+    "built from the college dataset",
+  );
+  const generated = source("src/lib/city-catalog.generated.ts");
+  assert(generated.includes("GENERATED"), "the output says so");
+  assert(CITY_NAMES.length > 500, `expected real coverage, got ${CITY_NAMES.length}`);
+  assert(STATE_NAMES.length >= 28, `expected the states, got ${STATE_NAMES.length}`);
+
+  // The 6 MB source must never be read at request time.
+  for (const rel of [
+    "src/lib/city-catalog.ts",
+    "src/components/profile/basic-info-section.tsx",
+  ]) {
+    assert(!code(rel).includes("colleges.json"), `${rel} does not read the dataset`);
+  }
+
+  // One entry per place: the dataset holds both Bangalore and Bengaluru.
+  const lower = CITY_NAMES.map((c) => c.toLowerCase());
+  assert(new Set(lower).size === lower.length, "no duplicate city entries");
+  assert(!CITY_NAMES.includes("Bangalore"), "old spellings are folded away");
+  assert(CITY_NAMES.includes("Bengaluru"), "and the current one is kept");
+});
+
+suite("a city knows its state, and a state never guesses a city", () => {
+  assert(stateForCity("Pune") === "Maharashtra", "Pune is in Maharashtra");
+  assert(stateForCity("Noida") === "Uttar Pradesh", "Noida is in UP");
+  // Old spellings and nicknames resolve to the same place.
+  assert(stateForCity("Bangalore") === "Karnataka", "Bangalore still resolves");
+  assert(stateForCity("vizag") === "Andhra Pradesh", "so do nicknames");
+  assert(canonicalCityName("gurgaon") === "Gurugram", "renames fold");
+  assert(stateForCity("Nowhereville") === null, "an unknown place says so");
+  assert(canonicalCityName("Nowhereville") === "Nowhereville", "and is kept as typed");
+
+  // The catalog exposes no way to go the other way.
+  const src = code("src/lib/city-catalog.ts");
+  assert(!/citiesForState|citiesInState/.test(src), "no state → city lookup exists");
+  const basic = code("src/components/profile/basic-info-section.tsx");
+  assert(basic.includes("stateForCity"), "the city field fills the state");
+  assert(
+    !basic.includes("setValue(\"locationCity\""),
+    "and nothing ever writes the city for the candidate",
+  );
+  assert(
+    basic.includes("onlyIfEmpty"),
+    "a state the candidate typed is never overwritten",
+  );
+});
+
+suite("city search reaches the big cities first", () => {
+  assert(searchCities("pun", 3)[0] === "Pune", "pun -> Pune");
+  assert(searchCities("mum", 3)[0] === "Mumbai", "mum -> Mumbai");
+  // "ban" no longer appears in "Bengaluru" at all — the old spelling carries it.
+  assert(searchCities("ban", 3)[0] === "Bengaluru", "ban -> Bengaluru");
+  assert(searchCities("trichy", 2)[0] === "Tiruchirappalli", "old name finds new");
+  assert(searchCities("", 5).length === 5, "an empty query still suggests");
+  assert(searchStates("mah", 3)[0] === "Maharashtra", "states search too");
+});
+
+suite("every place field draws on the same city catalog", () => {
+  for (const [rel, note] of [
+    ["src/components/profile/basic-info-section.tsx", "profile city"],
+    ["src/components/profile/experience-section.tsx", "experience location"],
+    ["src/components/profile/preferences-section.tsx", "preferred locations"],
+  ] as const) {
+    const src = code(rel);
+    assert(src.includes("city-catalog"), `${note} uses the catalog`);
+    assert(src.includes("searchCities"), `${note} searches it`);
+  }
+});
+
+suite("B.E and B.Tech are one degree, and departments follow the degree", () => {
+  // Widened: the list is `as const`, so the old spellings are not even
+  // assignable to its element type — which is half the point.
+  const degrees: readonly string[] = DEGREES;
+  assert(degrees.includes("B.E / B.Tech"), "the merged entry exists");
+  assert(!degrees.includes("B.E"), "and the two halves are gone");
+  assert(!degrees.includes("B.Tech"), "both of them");
+  assert(degrees.includes("M.E / M.Tech"), "the same is done for M.E / M.Tech");
+  // Rows saved before the merge still resolve.
+  for (const typed of ["B.E", "b.tech", "btech", "BE"]) {
+    assert(
+      canonicalDegree(typed) === "B.E / B.Tech",
+      `${typed} folds onto the merged degree, got ${canonicalDegree(typed)}`,
+    );
+  }
+  assert(degrees.length >= 35, `the list grew, got ${degrees.length}`);
+
+  // A degree offers its own branches, not everyone else's.
+  const btech = departmentsForDegree("B.Tech");
+  assert(btech.includes("Computer Science and Engineering"), "engineering for B.Tech");
+  assert(!btech.includes("Marketing"), "and not management");
+  const bcom = departmentsForDegree("B.Com");
+  assert(bcom.includes("Accounting and Finance"), "commerce for B.Com");
+  assert(!bcom.includes("Mechanical Engineering"), "and not engineering");
+  assert(
+    departmentsForDegree("MBBS").includes("General Medicine"),
+    "medicine for MBBS",
+  );
+  assert(
+    departmentsForDegree("Higher Secondary (12th)").includes("Science (PCM)"),
+    "school streams for school",
+  );
+  // Anything unrecognised must not narrow the list.
+  assert(
+    departmentsForDegree("Ph.D").length === FIELDS_OF_STUDY.length,
+    "a Ph.D can be in anything",
+  );
+  assert(
+    departmentsForDegree("Something Invented").length === FIELDS_OF_STUDY.length,
+    "an unknown degree offers everything",
+  );
+
+  const section = code("src/components/profile/education-section.tsx");
+  assert(
+    section.includes("departmentsForDegree(degree"),
+    "the Department field reads the degree beside it",
+  );
+});
+
+suite("the unsaved-changes warning sits above the buttons and is hard to miss", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const rule = css.slice(
+    css.indexOf(".pw-leave-pop {"),
+    css.indexOf("}", css.indexOf(".pw-leave-pop {")),
+  );
+  // It used to overlap the actions row by 8px and be white on white.
+  assert(rule.includes("bottom: calc(100% + 8px)"), "fully above the buttons");
+  assert(!rule.includes("bottom: calc(100% - 8px)"), "not overlapping them");
+  assert(rule.includes("var(--pw-warning-soft)"), "carries the warning colour");
+  assert(rule.includes("var(--pw-warning)"), "including its border");
+  assert(rule.includes("left: 20px") && rule.includes("right: 20px"), "spans the bar");
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-leave-head"), "and leads with an icon");
+});
+
+suite("basic info gives the headline its own row", () => {
+  const src = code("src/components/profile/basic-info-section.tsx");
+  const headlineAt = src.indexOf('label="Profile Headline"');
+  assert(headlineAt !== -1, "the headline field exists");
+  // The row it opens must be the single-column one, not the row holding
+  // Country and Gender.
+  const rowStart = src.lastIndexOf("<PwRow", headlineAt);
+  assert(
+    src.slice(rowStart, headlineAt).includes("cols={1}"),
+    "the headline has a row to itself",
+  );
+  const genderAt = src.indexOf('label="Gender"');
+  const genderRow = src.lastIndexOf("<PwRow", genderAt);
+  assert(
+    src.slice(genderRow, genderAt).includes("cols={2}"),
+    "and the row above it holds Country and Gender",
+  );
+  assert(genderRow < rowStart, "with the headline below it");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -280,9 +280,25 @@ export const PwSuggest = forwardRef<
      * with the query at all.
      */
     search?: (query: string) => readonly string[];
+    /**
+     * Fired only when a suggestion is actually chosen, never on typing — so a
+     * caller can fill in a companion field (city → state) without doing it on
+     * every keystroke of a half-typed word.
+     */
+    onPick?: (value: string) => void;
   }
 >(function PwSuggest(
-  { suggestions, search, className, onChange, onFocus, onBlur, onInput, ...props },
+  {
+    suggestions,
+    search,
+    onPick,
+    className,
+    onChange,
+    onFocus,
+    onBlur,
+    onInput,
+    ...props
+  },
   ref,
 ) {
   const [open, setOpen] = useState(false);
@@ -322,6 +338,7 @@ export const PwSuggest = forwardRef<
     setText(value);
     markFilled(el);
     setOpen(false);
+    onPick?.(value);
   }
 
   return (
