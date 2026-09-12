@@ -10,7 +10,7 @@ import {
   threadReplySchema,
 } from "@/lib/validations/hire-outreach";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
+import { resolveAddressableCandidate } from "@/features/hire/unlock-contact";
 import {
   sendCandidateReply,
   sendRecruiterMessage,
@@ -48,9 +48,12 @@ export async function sendOutreachAction(
   if (!limited.ok) return limited;
 
   try {
-    // A ref is a name, not a capability: re-checked against the pool, which
-    // also refuses the fabricated SAMPLE: preview cards.
-    const [candidate] = await resolveEligibleCandidates([parsed.data.candidateRef]);
+    // A ref is a name, not a capability: re-checked against the pool, or
+    // against an application on a job this recruiter owns (applicant inspector).
+    const candidate = await resolveAddressableCandidate(
+      userId,
+      parsed.data.candidateRef,
+    );
     if (!candidate) {
       return { ok: false, message: "This candidate is no longer available." };
     }

@@ -10,7 +10,7 @@
  * exercised by the app itself; every rule enforced here is enforced there
  * because both go through the same service functions.
  */
-import type { JobStatus, JobType, JobWorkMode } from "@prisma/client";
+import type { JobApplicationStatus, JobStatus, JobType, JobWorkMode } from "@prisma/client";
 import {
   createRecruiterJob,
   transitionJob,
@@ -18,12 +18,19 @@ import {
   getJobForCandidate,
   getRecruiterJob,
   listRecruiterJobs,
+  listApplicantsForOwnedJob,
+  countApplicantsByJobIds,
+  loadApplicantMatchForOwnedJob,
   assertApplyAllowed,
   CLOSED_JOB_MESSAGE,
+  type ApplicantStoreRow,
+  type ApplicationStore,
   type JobRow,
   type JobStore,
 } from "./service";
 import { lifecyclePatch, nextStatus, normalizeSkills } from "./lifecycle";
+import { candidatePublicId } from "@/features/hire/public-id";
+import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 
 let passed = 0;
 let failed = 0;
@@ -82,6 +89,48 @@ function inMemoryStore(): JobStore & { rows: Map<string, JobRow> } {
       return owned.sort(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
       );
+    },
+  };
+}
+
+function inMemoryApplicantStore(): ApplicationStore & {
+  add: (
+    jobId: string,
+    patch: Partial<ApplicantStoreRow> & { userId: string },
+  ) => ApplicantStoreRow;
+} {
+  type MemRow = ApplicantStoreRow & { jobId: string };
+  const rows: MemRow[] = [];
+  let seq = 0;
+  return {
+    async listByJob(jobId) {
+      return rows
+        .filter((r) => r.jobId === jobId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    },
+    async countByJobIds(jobIds) {
+      const counts: Record<string, number> = {};
+      for (const id of jobIds) counts[id] = 0;
+      for (const row of rows) {
+        if (row.jobId in counts) counts[row.jobId] += 1;
+      }
+      return counts;
+    },
+    async existsOnJob(jobId, userId) {
+      return rows.some((r) => r.jobId === jobId && r.userId === userId);
+    },
+    add(jobId, patch) {
+      const row: MemRow = {
+        id: `app_${++seq}`,
+        userId: patch.userId,
+        note: patch.note ?? null,
+        status: patch.status ?? "APPLIED",
+        createdAt: patch.createdAt ?? new Date(),
+        fullName: patch.fullName ?? null,
+        jobId,
+      };
+      rows.push(row);
+      return row;
     },
   };
 }
@@ -479,6 +528,204 @@ async function run() {
       // Candidates DO see it — that is the point of publishing.
       const asCandidate = await getJobForCandidate({ jobs: store }, create.data.id);
       assert(asCandidate.ok, "candidate view shows published job");
+    },
+  );
+
+  await suite(
+    "owned job returns that job's applicants newest-first, without email or phone",
+    async () => {
+      const jobs = inMemoryStore();
+      const applications = inMemoryApplicantStore();
+      const create = await createRecruiterJob({ jobs }, RECRUITER_A, draftInput());
+      if (!create.ok) throw new Error("setup");
+      const jobId = create.data.id;
+      const older = new Date("2026-09-01T00:00:00Z");
+      const newer = new Date("2026-09-10T00:00:00Z");
+      applications.add(jobId, {
+        userId: "cand_old",
+        fullName: "Old Applicant",
+        note: "first",
+        createdAt: older,
+      });
+      applications.add(jobId, {
+        userId: "cand_new",
+        fullName: "  New Applicant  ",
+        note: "second",
+        createdAt: newer,
+      });
+      applications.add("other_job", {
+        userId: "cand_other",
+        fullName: "Should not appear",
+      });
+
+      const listed = await listApplicantsForOwnedJob(
+        { jobs, applications },
+        RECRUITER_A,
+        jobId,
+      );
+      assert(listed.ok, "owner must see applicants");
+      if (!listed.ok) return;
+      assert(listed.data.length === 2, `expected 2, got ${listed.data.length}`);
+      assert(listed.data[0]?.displayName === "New Applicant", "newest first, trimmed");
+      assert(listed.data[1]?.displayName === "Old Applicant", "older second");
+      assert(
+        listed.data[0]?.candidateRef === encodeCandidateRef("PROFILE", "cand_new"),
+        "list carries a PROFILE ref, not contact",
+      );
+      const payload = JSON.stringify(listed.data);
+      assert(!/"email"/.test(payload), "payload must not include email");
+      assert(!/"phone"/.test(payload), "payload must not include phone");
+
+      const counts = await countApplicantsByJobIds({ jobs, applications }, [
+        jobId,
+        "other_job",
+      ]);
+      assert(counts[jobId] === 2, "owned job count");
+      assert(counts.other_job === 1, "countByJobIds is a store read of given ids");
+    },
+  );
+
+  await suite(
+    "listApplicantsForOwnedJob returns NOT_FOUND for a foreign job, identical to unknown id",
+    async () => {
+      const jobs = inMemoryStore();
+      const applications = inMemoryApplicantStore();
+      const create = await createRecruiterJob({ jobs }, RECRUITER_A, draftInput());
+      if (!create.ok) throw new Error("setup");
+      applications.add(create.data.id, {
+        userId: "cand_a",
+        fullName: "Secret Applicant",
+      });
+
+      const asForeign = await listApplicantsForOwnedJob(
+        { jobs, applications },
+        RECRUITER_B,
+        create.data.id,
+      );
+      assert(!asForeign.ok, "foreign recruiter must not see applicants");
+      if (asForeign.ok) return;
+      assert(asForeign.code === "NOT_FOUND", `expected NOT_FOUND, got ${asForeign.code}`);
+
+      const asMissing = await listApplicantsForOwnedJob(
+        { jobs, applications },
+        RECRUITER_B,
+        "no_such_id",
+      );
+      assert(!asMissing.ok && asMissing.code === "NOT_FOUND", "unknown id also 404");
+      assert(
+        !asMissing.ok && asMissing.message === asForeign.message,
+        "foreign id and unknown id give identical response",
+      );
+    },
+  );
+
+  await suite(
+    "applicant without a profile name falls back to the public AB- label",
+    async () => {
+      const jobs = inMemoryStore();
+      const applications = inMemoryApplicantStore();
+      const create = await createRecruiterJob({ jobs }, RECRUITER_A, draftInput());
+      if (!create.ok) throw new Error("setup");
+      applications.add(create.data.id, { userId: "cand_anon", fullName: null });
+
+      const listed = await listApplicantsForOwnedJob(
+        { jobs, applications },
+        RECRUITER_A,
+        create.data.id,
+      );
+      assert(listed.ok, "owner still sees the row");
+      if (!listed.ok) return;
+      assert(
+        listed.data[0]?.displayName === candidatePublicId("cand_anon"),
+        "fallback is the public id, not an email",
+      );
+    },
+  );
+
+  await suite(
+    "owned job applicant card is a public MatchCardData without email or phone",
+    async () => {
+      const jobs = inMemoryStore();
+      const applications = inMemoryApplicantStore();
+      const create = await createRecruiterJob({ jobs }, RECRUITER_A, draftInput());
+      if (!create.ok) throw new Error("setup");
+      const jobId = create.data.id;
+      applications.add(jobId, { userId: "cand_new", fullName: "New Applicant" });
+      const ref = encodeCandidateRef("PROFILE", "cand_new");
+
+      const card = await loadApplicantMatchForOwnedJob(
+        {
+          jobs,
+          applications,
+          loadPublicIdentity: async (userId) =>
+            userId === "cand_new"
+              ? {
+                  fullName: "New Applicant",
+                  role: "AI Engineer",
+                  yearsExperience: 3,
+                  education: "B.Tech",
+                  skills: ["Python"],
+                  hasLinkedin: true,
+                  hasGithub: false,
+                  hasResume: true,
+                }
+              : null,
+        },
+        RECRUITER_A,
+        jobId,
+        ref,
+      );
+      assert(card.ok, "owner must get a card");
+      if (!card.ok) return;
+      assert(card.data.candidateRef === ref, "card keeps the PROFILE ref");
+      assert(card.data.displayName === "New Applicant", "name from identity");
+      assert(card.data.jobRole === "AI Engineer", "role from identity");
+      assert(card.data.evidence.linkedinConnected === true, "linkedin is a boolean");
+      const payload = JSON.stringify(card.data);
+      assert(!/"email"/.test(payload), "card must not include email");
+      assert(!/"phone"/.test(payload), "card must not include phone");
+      assert(!/"linkedinUrl"/.test(payload), "card must not include linkedinUrl");
+    },
+  );
+
+  await suite(
+    "loadApplicantMatchForOwnedJob returns NOT_FOUND for a foreign job, identical to unknown id",
+    async () => {
+      const jobs = inMemoryStore();
+      const applications = inMemoryApplicantStore();
+      const create = await createRecruiterJob({ jobs }, RECRUITER_A, draftInput());
+      if (!create.ok) throw new Error("setup");
+      applications.add(create.data.id, { userId: "cand_a", fullName: "Secret" });
+      const ref = encodeCandidateRef("PROFILE", "cand_a");
+
+      const asForeign = await loadApplicantMatchForOwnedJob(
+        { jobs, applications },
+        RECRUITER_B,
+        create.data.id,
+        ref,
+      );
+      const asMissing = await loadApplicantMatchForOwnedJob(
+        { jobs, applications },
+        RECRUITER_B,
+        "no_such_id",
+        ref,
+      );
+      const asOtherApplicant = await loadApplicantMatchForOwnedJob(
+        { jobs, applications },
+        RECRUITER_A,
+        create.data.id,
+        encodeCandidateRef("PROFILE", "not_an_applicant"),
+      );
+      assert(!asForeign.ok && asForeign.code === "NOT_FOUND", "foreign job 404");
+      assert(!asMissing.ok && asMissing.code === "NOT_FOUND", "unknown job 404");
+      assert(
+        !asMissing.ok && !asForeign.ok && asMissing.message === asForeign.message,
+        "foreign id and unknown id give identical response",
+      );
+      assert(
+        !asOtherApplicant.ok && asOtherApplicant.code === "NOT_FOUND",
+        "a ref that did not apply is also 404",
+      );
     },
   );
 

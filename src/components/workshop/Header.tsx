@@ -13,8 +13,18 @@ import { NotificationBellButton } from "@/components/shared/notification-bell-bu
 export default function WorkshopHeader({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <header className="abt-header z-50">
-      <div className="abt-header-inner">
-        <WorkshopLogo />
+      {/* `md:justify-end` because `.abt-header-inner` is `space-between`: with
+          the logo hidden below it would otherwise leave the actions stranded
+          against the left edge. */}
+      <div className="abt-header-inner md:justify-end">
+        {/* The sidebar carries the ABTalks mark from `md` up — that is exactly
+            where it becomes visible — so showing this one too put two logos on
+            one screen. Below `md` there is no sidebar at all, which is why this
+            is hidden rather than deleted: it is the page's only branding there,
+            and /workshop is a public marketing page. */}
+        <div className="md:hidden">
+          <WorkshopLogo />
+        </div>
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           {/* Jumps to the calendar on this page — this header only renders on

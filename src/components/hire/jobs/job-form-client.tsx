@@ -62,7 +62,6 @@ export function JobFormClient({ initial, jobId }: Props) {
 
     const payload = {
       title: values.title,
-      company: "",
       description: values.description,
       location: values.location,
       workMode: values.workMode,

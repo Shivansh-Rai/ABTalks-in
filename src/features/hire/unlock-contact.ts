@@ -1,12 +1,19 @@
 import "server-only";
 
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
+import {
+  resolveEligibleCandidates,
+  type EligibleCandidate,
+} from "@/features/hire/pool-policy";
+import { decodeCandidateRef } from "@/features/hire/candidate-ref";
+import { candidatePublicId } from "@/features/hire/public-id";
 import {
   hasContactAccess,
   loadProtectedContact,
 } from "@/features/hire/contact-access";
 import { getCreditBalance } from "@/repositories/credits";
+import { searchableUserWhere } from "@/repositories/talent";
+import { prisma } from "@/lib/db";
 import {
   REFUSAL_MESSAGE,
   unlockResolvedContact,
@@ -102,8 +109,14 @@ async function resolve(
   }
 
   // A ref is a name, not a capability. Re-checked against the pool every time,
-  // which is also what refuses the fabricated `SAMPLE:` preview cards.
-  const [candidate] = await resolveEligibleCandidates([candidateRef]);
+  // which is also what refuses the fabricated `SAMPLE:` preview cards. An
+  // applicant on a job this recruiter owns is a second legitimate address —
+  // they applied, so unlock/message must not fail just because search would
+  // not have shown them.
+  const candidate = await resolveAddressableCandidate(
+    workspace.data.userId,
+    candidateRef,
+  );
   if (!candidate) return { ok: false, reason: "CANDIDATE_UNAVAILABLE" };
 
   return {
@@ -227,4 +240,48 @@ export async function revealUnlockedContact(
     resolved.data.recruiterUserId,
     resolved.data.candidateUserId,
   );
+}
+
+/**
+ * Who this recruiter may unlock or message.
+ *
+ * The search pool is still the first door (`resolveEligibleCandidates`). A
+ * PROFILE applicant on a job this recruiter owns is the second — they applied,
+ * so Scout search emptiness must not block T-229/T-232. SAMPLE: and other
+ * tracks are not admitted through this door. Deleted or withdrawn users are
+ * still refused via `searchableUserWhere`.
+ */
+export async function resolveAddressableCandidate(
+  recruiterUserId: string,
+  candidateRef: string,
+): Promise<EligibleCandidate | null> {
+  const [fromPool] = await resolveEligibleCandidates([candidateRef]);
+  if (fromPool) return fromPool;
+  return resolveViaOwnedApplication(recruiterUserId, candidateRef);
+}
+
+async function resolveViaOwnedApplication(
+  recruiterUserId: string,
+  candidateRef: string,
+): Promise<EligibleCandidate | null> {
+  const parsed = decodeCandidateRef(candidateRef);
+  if (!parsed || parsed.source !== "PROFILE") return null;
+  const userId = parsed.id;
+  const alive = await prisma.user.findFirst({
+    where: { id: userId, ...searchableUserWhere() },
+    select: { id: true },
+  });
+  if (!alive) return null;
+  const applied = await prisma.jobApplication.findFirst({
+    where: { userId, job: { recruiterId: recruiterUserId } },
+    select: { id: true },
+  });
+  if (!applied) return null;
+  return {
+    candidateRef,
+    source: "PROFILE",
+    userId,
+    programMemberId: null,
+    publicId: candidatePublicId(userId),
+  };
 }
