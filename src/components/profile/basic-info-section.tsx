@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { CandidateGender, CandidatePersona } from "@prisma/client";
@@ -8,6 +8,13 @@ import { saveBasicInfoAction } from "@/app/actions/candidate-profile-actions";
 import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { PERSONA_LABELS, GENDER_LABELS } from "@/lib/candidate-vocab";
 import { COUNTRY_NAMES, countryCodeForName, countryNameForCode } from "@/lib/country-catalog";
+import {
+  CITY_NAMES,
+  STATE_NAMES,
+  searchCities,
+  searchStates,
+  stateForCity,
+} from "@/lib/city-catalog";
 import {
   INDIA_DIALING_CODE,
   isIndianPhone,
@@ -96,6 +103,7 @@ export function BasicInfoSection({
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors, isDirty },
   } = form;
   // The form asks for a country NAME; the schema validates the stored CODE, so
@@ -104,6 +112,20 @@ export function BasicInfoSection({
 
   const summary = watch("summary") ?? "";
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  /** City → state. Never the other way round. */
+  const fillStateFrom = useCallback(
+    (city: string, opts?: { onlyIfEmpty: boolean }) => {
+      const state = stateForCity(city);
+      if (!state) return;
+      if (opts?.onlyIfEmpty && (getValues("locationRegion") ?? "").trim()) return;
+      setValue("locationRegion", state, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [getValues, setValue],
+  );
 
   const defaults = splitPhone(initial.phone);
 
@@ -207,13 +229,25 @@ export function BasicInfoSection({
           htmlFor="bi-city"
           error={errors.locationCity?.message}
         >
-          <PwInput
+          <PwSuggest
             id="bi-city"
-            placeholder="Enter your city"
+            placeholder="Start typing your city"
             autoComplete="address-level2"
+            suggestions={CITY_NAMES}
+            search={searchCities}
+            // A city knows its state, so choosing one fills the next field in.
+            // The reverse is never done: a state names dozens of cities and
+            // picking one for the candidate would be a guess.
+            onPick={fillStateFrom}
             aria-invalid={Boolean(errors.locationCity)}
             className={errors.locationCity ? "pw-invalid" : undefined}
-            {...register("locationCity", { validate: lettersOnly("City") })}
+            {...register("locationCity", {
+              validate: lettersOnly("City"),
+              // Typed in full and tabbed past, rather than picked: fill the
+              // state only when it is still empty, so a deliberate answer is
+              // never overwritten.
+              onBlur: (e) => fillStateFrom(e.target.value, { onlyIfEmpty: true }),
+            })}
           />
         </PwField>
         <PwField
@@ -222,10 +256,12 @@ export function BasicInfoSection({
           htmlFor="bi-region"
           error={errors.locationRegion?.message}
         >
-          <PwInput
+          <PwSuggest
             id="bi-region"
-            placeholder="Enter your state"
+            placeholder="Start typing your state"
             autoComplete="address-level1"
+            suggestions={STATE_NAMES}
+            search={searchStates}
             aria-invalid={Boolean(errors.locationRegion)}
             className={errors.locationRegion ? "pw-invalid" : undefined}
             {...register("locationRegion", {
@@ -235,7 +271,7 @@ export function BasicInfoSection({
         </PwField>
       </PwRow>
 
-      <PwRow cols={3}>
+      <PwRow cols={2}>
         <PwField
           label="Country"
           required
@@ -267,6 +303,11 @@ export function BasicInfoSection({
             ))}
           </PwSelect>
         </PwField>
+      </PwRow>
+
+      {/* A headline is a sentence, so it gets the width of one rather than a
+          third of a row shared with two dropdowns. */}
+      <PwRow cols={1}>
         <PwField label="Profile Headline" required htmlFor="bi-headline">
           <PwInput
             id="bi-headline"

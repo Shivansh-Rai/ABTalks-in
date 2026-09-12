@@ -2642,28 +2642,51 @@ body.pw-sheet-open .abt-content-scroll {
 /* ---------- "Save your changes?" — anchored to the buttons it is about ----------
    A centred modal for a question about the Save button two inches away read as
    a page-level interruption, and it had to out-stack the sheet to be seen. */
+/* Sits fully above the Cancel / Save row — it used to overlap it by 8px — and
+   spans the whole width instead of hiding in a 320px corner. White on a white
+   bar was the real problem: the one thing standing between a candidate and lost
+   work read as a tooltip. Semantic warning, an icon, and a border that carries
+   the colour through. */
 .pw-leave-pop {
   position: absolute;
-  right: 30px;
-  bottom: calc(100% - 8px);
+  left: 20px;
+  right: 20px;
+  bottom: calc(100% + 8px);
   z-index: 3;
-  width: min(320px, calc(100% - 60px));
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: var(--pw-shadow-float);
+  background: var(--pw-warning-soft);
+  border: 1.5px solid var(--pw-warning);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 28px rgba(170, 130, 29, 0.26);
   animation: pw-pickOpen 0.16s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.pw-leave-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pw-leave-head svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--pw-warning);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .pw-leave-pop.pw-leave-shake {
   animation: pw-fieldJitter 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 .pw-leave-copy {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 14.5px;
   line-height: 21px;
-  color: var(--pw-text-secondary);
-  font-weight: 500;
+  color: #6b5510;
+  font-weight: 600;
+}
+.pw-leave-actions {
+  margin-top: 12px;
 }
 .pw-leave-actions {
   display: flex;
