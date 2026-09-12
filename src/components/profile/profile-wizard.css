@@ -1291,7 +1291,7 @@ body.pw-sheet-open .abt-content-scroll {
 .pw-section-body {
   flex: 1;
   min-height: 0;
-  padding: 24px 30px 0;
+  padding: 24px 30px 24px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -1300,8 +1300,10 @@ body.pw-sheet-open .abt-content-scroll {
 .pw-section-body > form {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex: none;
+}
+.pw-section-body > form > .pw-row:last-child {
+  margin-bottom: 0;
 }
 
 .pw-row {
@@ -3073,10 +3075,11 @@ body.pw-sheet-open .abt-content-scroll {
    section", not "the form will refuse you". Nothing on the profile blocks a
    save. */
 .pw-required-legend {
-  margin: 22px 0 0;
+  margin: 20px 0 0;
   font-size: 12.5px;
   line-height: 18px;
   color: #787878;
+  flex: none;
 }
 .pw-required-legend .pw-req {
   color: var(--pw-error);
