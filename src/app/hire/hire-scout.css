@@ -1264,10 +1264,10 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
    over text that already carries nothing, rather than a blur laid over a real
    value that the page source would give up.
 
-   Blur strength is the same reading as the reference: light enough that the
-   word shape still says "a surname is here", heavy enough that no letter can be
-   picked out. Inline-block with baseline alignment so the blur, which bleeds
-   past the glyphs, cannot nudge the line box. */
+  Blur strength is the same reading as the reference: light enough that the
+  word shape still says "a surname is here", heavy enough that no letter can be
+  picked out. Inline-block with baseline alignment so the blur, which bleeds
+  past the glyphs, cannot nudge the line box. */
 .desk-name {
   display: inline-flex;
   align-items: baseline;
@@ -1279,12 +1279,12 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   display: inline-block;
   vertical-align: baseline;
   color: var(--h-gray-600);
-  filter: blur(2.9px);
-  opacity: 0.72;
+  filter: blur(8px);
+  opacity: 0.55;
   user-select: none;
   /* The blur spreads roughly its own radius; the padding keeps it off the
      neighbouring text instead of letting it smear into the Top match chip. */
-  padding: 0 3px;
+  padding: 0 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1774,7 +1774,7 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-shortlist.is-on {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .hire-detail__scroll {
+  .hire-detail {
     animation: hire-detail-in 280ms cubic-bezier(0.33, 0.9, 0.35, 1) both;
   }
 }
@@ -8147,12 +8147,28 @@ button.hire-side__me {
   justify-content: center;
   width: 18px;
   height: 18px;
+  padding: 0;
+  border: 0;
   border-radius: 4px;
   background: #0a66c2;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
   color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.hire-profile__in:hover,
+button.hire-profile__in:hover {
+  background: #004182;
+}
+
+a.hire-profile__in:focus-visible,
+button.hire-profile__in:focus-visible {
+  outline: 2px solid #03535f;
+  outline-offset: 4px;
 }
 
 .hire-profile__loc {
@@ -9709,10 +9725,19 @@ button.hire-side__me {
   .scout-criteria,
   .scout-criterion {
     transition-property:
-      width, height, min-height, padding, gap, margin, border-width,
+      width, padding, gap, margin, border-width,
       border-radius, font-size, line-height;
     transition-duration: 1200ms;
     transition-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+
+  .scout--hero .scout-field {
+    min-height: calc(53px * var(--hire-zoom, 1));
+  }
+
+  .scout--hero .scout-send {
+    height: auto;
+    min-height: calc(53px * var(--hire-zoom, 1));
   }
 
   .hire-app--results .scout-composer {
@@ -9746,6 +9771,13 @@ button.hire-side__me {
     height: auto;
     min-height: calc(53px * var(--hire-zoom, 1));
     padding: 0;
+    border-radius: calc(15px * var(--hire-zoom, 1));
+    font-size: calc(20px * var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout-reset {
+    height: calc(53px * var(--hire-zoom, 1));
+    padding: 0 calc(18px * var(--hire-zoom, 1));
     border-radius: calc(15px * var(--hire-zoom, 1));
     font-size: calc(20px * var(--hire-zoom, 1));
   }

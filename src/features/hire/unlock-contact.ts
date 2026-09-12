@@ -200,7 +200,11 @@ async function safeBalance(candidateRef: string): Promise<number> {
   }
 }
 
-export type RevealedContact = { email: string | null; phone: string | null };
+export type RevealedContact = {
+  email: string | null;
+  phone: string | null;
+  linkedinUrl: string | null;
+};
 
 /**
  * What the recruiter bought, for the surface they bought it on.

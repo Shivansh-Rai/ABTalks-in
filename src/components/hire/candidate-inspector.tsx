@@ -77,6 +77,66 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+/** http(s) LinkedIn URLs only — unlocked contact is still untrusted input. */
+function safeLinkedinHref(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    const host = parsed.hostname.toLowerCase();
+    if (host !== "linkedin.com" && !host.endsWith(".linkedin.com")) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function LinkedInMark({
+  href,
+  locked,
+  candidateRef,
+  publicId,
+  onUnlocked,
+}: {
+  href: string | null;
+  locked: boolean;
+  candidateRef: string;
+  publicId: string;
+  onUnlocked: () => void;
+}) {
+  if (href) {
+    return (
+      <a
+        className="hire-profile__in"
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open LinkedIn profile"
+      >
+        in
+      </a>
+    );
+  }
+  if (locked) {
+    return (
+      <UnlockContactDialog
+        candidateRef={candidateRef}
+        publicId={publicId}
+        onUnlocked={onUnlocked}
+        className="hire-profile__in"
+        triggerLabel="in"
+        triggerAriaLabel="Unlock contact to open LinkedIn"
+        triggerTitle="LinkedIn connected"
+      />
+    );
+  }
+  return (
+    <span className="hire-profile__in" title="LinkedIn connected">
+      in
+    </span>
+  );
+}
+
 const DECISION_LABEL: Record<MatchDecision, string | null> = {
   SHORTLISTED: "Shortlisted",
   REJECTED: "Rejected",
@@ -199,10 +259,46 @@ export function CandidateInspector({
 
   function jump(id: TabId) {
     setTab(id);
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     scrollRef.current
       ?.querySelector<HTMLElement>(`[data-section="${id}"]`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
   }
+
+  useEffect(() => {
+    if (!scrollRef.current || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+    const scroller: HTMLDivElement = scrollRef.current;
+    const sections = TABS.map((t) =>
+      scroller.querySelector<HTMLElement>(`[data-section="${t.id}"]`),
+    ).filter((el): el is HTMLElement => Boolean(el));
+    if (sections.length === 0) return;
+
+    function syncTab() {
+      const line = scroller.getBoundingClientRect().top + 52;
+      let current: TabId = "overview";
+      for (const t of TABS) {
+        const el = scroller.querySelector<HTMLElement>(
+          `[data-section="${t.id}"]`,
+        );
+        if (el && el.getBoundingClientRect().top <= line + 1) {
+          current = t.id;
+        }
+      }
+      setTab(current);
+    }
+
+    const observer = new IntersectionObserver(syncTab, {
+      root: scroller,
+      rootMargin: "-52px 0px -40% 0px",
+      threshold: [0, 0.1, 0.25, 0.5, 1],
+    });
+    for (const el of sections) observer.observe(el);
+    return () => observer.disconnect();
+  }, [match.candidateRef]);
 
   const name = preview ? (
     <LockedField
@@ -351,9 +447,15 @@ export function CandidateInspector({
               <OpenToWorkBadge openToWork={match.openToWork} />
             </h3>
             {e.linkedinConnected && (
-              <span className="hire-profile__in" title="LinkedIn connected">
-                in
-              </span>
+              <LinkedInMark
+                href={safeLinkedinHref(contact?.linkedinUrl)}
+                locked={!sample && !preview && !contact}
+                candidateRef={match.candidateRef}
+                publicId={publicId}
+                onUnlocked={() => {
+                  void loadContact();
+                }}
+              />
             )}
           </div>
           <p className="hire-profile__loc">

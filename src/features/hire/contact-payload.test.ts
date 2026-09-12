@@ -82,6 +82,37 @@ suite("inspector fetches contact only after unlock, never as a page prop", () =>
     !/email\s*[:=]\s*match/.test(src) && !/match\.email/.test(src),
     "inspector must not read email off the match card",
   );
+  assert(
+    !/match\.linkedinUrl/.test(src),
+    "inspector must not read linkedinUrl off the match card",
+  );
+});
+
+suite("linkedinUrl is released only through loadProtectedContact after CONTACT_SHARED", () => {
+  const access = read("src/features/hire/contact-access.ts");
+  const refuse = access.indexOf("if (!allowed) return null");
+  const select = access.indexOf("linkedinUrl: true");
+  assert(refuse >= 0, "loadProtectedContact must refuse before selecting");
+  assert(
+    select > refuse,
+    "linkedinUrl is selected only after hasContactAccess grants",
+  );
+  const match = stripComments(read("src/features/hire/to-public-match.ts"));
+  assert(
+    !match.includes("linkedinUrl"),
+    "toPublicMatch must never carry linkedinUrl",
+  );
+  const inspector = stripComments(
+    read("src/components/hire/candidate-inspector.tsx"),
+  );
+  assert(
+    inspector.includes("Unlock contact to open LinkedIn"),
+    "locked LinkedIn badge must open the unlock dialog",
+  );
+  assert(
+    inspector.includes("Open LinkedIn profile"),
+    "unlocked LinkedIn badge must be an accessible link",
+  );
 });
 
 suite("unlock reveal selects email/phone only through loadProtectedContact", () => {

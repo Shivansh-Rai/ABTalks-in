@@ -29,10 +29,7 @@ import {
 } from "@/app/actions/hire-guest-actions";
 import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
-import {
-  filterSummary,
-  HireFilterDialog,
-} from "@/components/hire/hire-filter-dialog";
+import { HireFilterDialog } from "@/components/hire/hire-filter-dialog";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
 import {
@@ -421,6 +418,13 @@ export function ScoutChat({
   useLayoutEffect(() => {
     const el = promptRef.current;
     if (!el) return;
+    // Empty field: drop the inline height so CSS min-height owns the box.
+    // Measuring scrollHeight on a blank placeholder after the stage flip
+    // wrapped the placeholder and grew the bar.
+    if (!el.value) {
+      el.style.height = "";
+      return;
+    }
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
   }, [text]);
@@ -430,7 +434,7 @@ export function ScoutChat({
   // layout, or mid stage-change) was kept for good: the empty placeholder
   // wrapped into many lines, measured 132px, and the hero's single-line field
   // rendered as a tall box. Height changes are ignored here, or the resize
-  // would feed itself.
+  // would feed itself. An empty field still skips the measurement.
   useEffect(() => {
     const el = promptRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -438,6 +442,10 @@ export function ScoutChat({
     const ro = new ResizeObserver(() => {
       if (el.clientWidth === lastWidth) return;
       lastWidth = el.clientWidth;
+      if (!el.value) {
+        el.style.height = "";
+        return;
+      }
       el.style.height = "auto";
       el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
     });
@@ -1327,7 +1335,6 @@ export function ScoutChat({
   // Not gated on `initialRequestId` any more: "New search" inside a saved
   // project returns `/hire/[id]` to screen 1 without leaving the project.
   const hero = view === "scout" && !talked && !freshChat;
-  const filterBits = filterSummary(spec);
 
   // Record where everything sits while it is the hero, so the hand-off has
   // the "before" half of each move. Every hero render: typing reflows the
@@ -1556,32 +1563,6 @@ export function ScoutChat({
         <div ref={scrollRef} className="chat-output" id="hire-results">
           {searched ? (
             <>
-              <div className="hire-filter-bar">
-                <p className="hire-filter-bar__title">Filters from this search</p>
-                <div className="hire-filter-bar__chips">
-                  {filterBits.chips.length === 0 ? (
-                    <span className="hire-filter-bar__empty">No filters set</span>
-                  ) : (
-                    filterBits.chips.map((c, i) => (
-                      <span key={`${c}-${i}`} className="hire-filter-chip">
-                        {c}
-                      </span>
-                    ))
-                  )}
-                  {filterBits.more > 0 && (
-                    <span className="hire-filter-chip hire-filter-chip--more">
-                      +{filterBits.more} more
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="hire-filter-bar__edit"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  Edit filters
-                </button>
-              </div>
               <div className="scout-thread__results" aria-busy={pending}>
                 {!persist && searchTabs.length > 1 && (
                   <div className="scout-tabs">
@@ -1870,8 +1851,18 @@ export function ScoutChat({
               </span>
               {pending ? "Searching" : "Search"}
             </button>
+            {!hero && (
+              <button
+                type="button"
+                className="scout-reset"
+                disabled={returning}
+                onClick={() => setFiltersOpen(true)}
+              >
+                Edit filters
+              </button>
+            )}
           </div>
-          {!searched && (
+          {hero && (
           <div className="scout-criteria-slot is-open">
             <div className="scout-criteria-slot__clip">
               <ul

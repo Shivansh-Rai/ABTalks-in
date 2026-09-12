@@ -142,11 +142,12 @@ export async function contactAccessFor(
 export type ProtectedContact = {
   email: string | null;
   phone: string | null;
+  linkedinUrl: string | null;
 };
 
 /**
- * Email and phone for one pair, or null if this recruiter has not unlocked
- * them. Callers must not select those columns themselves.
+ * Email, phone and LinkedIn URL for one pair, or null if this recruiter has
+ * not unlocked them. Callers must not select those columns themselves.
  */
 export async function loadProtectedContact(
   recruiterUserId: string,
@@ -159,13 +160,14 @@ export async function loadProtectedContact(
     where: { id: candidateUserId },
     select: {
       email: true,
-      candidateProfile: { select: { phone: true } },
+      candidateProfile: { select: { phone: true, linkedinUrl: true } },
     },
   });
   if (!user) return null;
   return {
     email: user.email,
     phone: user.candidateProfile?.phone ?? null,
+    linkedinUrl: user.candidateProfile?.linkedinUrl ?? null,
   };
 }
 
@@ -184,13 +186,14 @@ export async function loadProtectedContacts(
     select: {
       id: true,
       email: true,
-      candidateProfile: { select: { phone: true } },
+      candidateProfile: { select: { phone: true, linkedinUrl: true } },
     },
   });
   for (const u of users) {
     out.set(u.id, {
       email: u.email,
       phone: u.candidateProfile?.phone ?? null,
+      linkedinUrl: u.candidateProfile?.linkedinUrl ?? null,
     });
   }
   return out;
