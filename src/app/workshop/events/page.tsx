@@ -3,6 +3,9 @@ import Link from "next/link";
 import EventsTimeline from "@/components/workshop/EventsTimeline";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 import WorkshopThemeStyles from "@/components/workshop/WorkshopThemeStyles";
+import { WorkshopShell } from "@/components/workshop/WorkshopShell";
+import { DashboardFooter } from "@/components/dashboard-hub/dashboard-footer";
+import { auth } from "@/auth";
 
 export const metadata: Metadata = {
   title: "Upcoming Events | ABTalks Workshop",
@@ -10,22 +13,33 @@ export const metadata: Metadata = {
     "All upcoming ABTalks live workshops and events — UI/UX design, AI tools, agents, content, SaaS, data and careers.",
 };
 
-export default function WorkshopEventsPage() {
-  return (
-    <div
-      className="wk-root relative min-h-screen"
-      style={{
-        color: "var(--wk-text)",
-        overflowX: "clip",
-      }}
-    >
-      <WorkshopThemeStyles />
+export default async function WorkshopEventsPage() {
+  // Public route, same as /workshop — the session is read only to decide
+  // whether the sidebar shows a user tile or a Log in link.
+  const session = await auth();
+  const shellUser = {
+    name: session?.user?.name ?? "",
+    email: session?.user?.email ?? "",
+    image: session?.user?.image ?? null,
+  };
 
-      <div className="relative z-10">
-        {/* top bar */}
-        <header className="abt-header z-50">
-          <div className="abt-header-inner">
-            {/*
+  return (
+    <WorkshopShell user={shellUser} isAuthed={Boolean(session?.user?.id)}>
+      <div
+        className="wk-root relative min-h-screen"
+        style={{
+          color: "var(--wk-text)",
+          overflowX: "clip",
+        }}
+      >
+        <WorkshopThemeStyles />
+
+        <div className="relative z-10">
+          {/* top bar */}
+          <header className="abt-header z-50">
+            {/* See components/workshop/Header.tsx — same reasoning. */}
+            <div className="abt-header-inner md:justify-end">
+              {/*
               The "Workshop" chip that used to sit here (logo | divider | pill)
               is gone on THIS route only. It labelled the section you were
               already in, next to a link that says "Back to Workshop" — the
@@ -39,60 +53,35 @@ export default function WorkshopEventsPage() {
               shared `components/workshop/Header`, which never had this chip,
               so nothing else in the app changes.
             */}
-            <div className="flex items-center gap-3">
-              <WorkshopLogo />
+              {/* Hidden from `md` up, where the sidebar shows the mark. */}
+              <div className="flex items-center gap-3 md:hidden">
+                <WorkshopLogo />
+              </div>
+              <Link href="/workshop" className="abt-header-nav-link">
+                ← Back to Workshop
+              </Link>
             </div>
-            <Link href="/workshop" className="abt-header-nav-link">
-              ← Back to Workshop
+          </header>
+
+          <EventsTimeline />
+
+          {/* bottom CTA */}
+          <div className="mx-auto max-w-3xl px-4 pb-16 text-center">
+            <p className="text-sm" style={{ color: "var(--wk-muted)" }}>
+              Don&apos;t miss the next one.
+            </p>
+            <Link
+              href="/workshop#register"
+              className="wk-cta mt-4 inline-flex items-center gap-2 rounded-[12px] px-7 py-3.5 text-[15px] font-bold text-white"
+            >
+              Reserve Your Free Seat →
             </Link>
           </div>
-        </header>
 
-        <EventsTimeline />
-
-        {/* bottom CTA */}
-        <div className="mx-auto max-w-3xl px-4 pb-16 text-center">
-          <p className="text-sm" style={{ color: "var(--wk-muted)" }}>
-            Don&apos;t miss the next one.
-          </p>
-          <Link
-            href="/workshop#register"
-            className="wk-cta mt-4 inline-flex items-center gap-2 rounded-[12px] px-7 py-3.5 text-[15px] font-bold text-white"
-          >
-            Reserve Your Free Seat →
-          </Link>
+          {/* Matches /workshop and /marketplace — see the note there. */}
+          <DashboardFooter />
         </div>
-
-        <footer
-          className="px-4 py-10 text-center"
-          style={{
-            background: "var(--wk-bar-bg)",
-            borderTop: "1px solid var(--wk-bar-border)",
-          }}
-        >
-          <nav
-            className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px]"
-            aria-label="Legal"
-            style={{ color: "var(--wk-bar-text)" }}
-          >
-            <Link href="/terms" className="hover:underline">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:underline">
-              Privacy
-            </Link>
-            <Link href="/cookies" className="hover:underline">
-              Cookies
-            </Link>
-            <Link href="/contact" className="hover:underline">
-              Contact
-            </Link>
-          </nav>
-          <p className="text-[13px]" style={{ color: "var(--wk-bar-muted)" }}>
-            © {new Date().getFullYear()} ABTalksOnAI · Workshop
-          </p>
-        </footer>
       </div>
-    </div>
+    </WorkshopShell>
   );
 }
