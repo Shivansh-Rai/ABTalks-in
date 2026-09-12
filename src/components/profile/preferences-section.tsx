@@ -5,6 +5,8 @@ import { Controller, useForm } from "react-hook-form";
 import { OpportunityType } from "@prisma/client";
 import { savePreferencesAction } from "@/app/actions/candidate-profile-actions";
 import { OPPORTUNITY_TYPE_LABELS, WORK_MODES } from "@/lib/candidate-vocab";
+import { CITY_NAMES, canonicalCityName, searchCities } from "@/lib/city-catalog";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -47,8 +49,9 @@ export function PreferencesSection({
     "Career preferences",
     "preferences",
   );
-  const { control, register, handleSubmit, formState } =
-    useForm<PreferencesFormValues>({ defaultValues: initial });
+  const form = useForm<PreferencesFormValues>({ defaultValues: initial });
+  const { control, register, handleSubmit, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
 
   useEffect(() => {
     setDirty(formState.isDirty);
@@ -58,7 +61,7 @@ export function PreferencesSection({
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <PwRow cols={1}>
@@ -77,7 +80,7 @@ export function PreferencesSection({
       </PwRow>
 
       <PwRow cols={1}>
-        <PwField label="Preferred roles">
+        <PwField label="Preferred roles" required>
           <Controller
             control={control}
             name="preferredRoles"
@@ -93,7 +96,7 @@ export function PreferencesSection({
       </PwRow>
 
       <PwRow cols={1}>
-        <PwField label="Preferred locations">
+        <PwField label="Preferred locations" required>
           <Controller
             control={control}
             name="preferredLocations"
@@ -101,7 +104,13 @@ export function PreferencesSection({
               <PwTags
                 values={field.value}
                 onChange={field.onChange}
-                placeholder="ex: Bangalore"
+                // Same city catalog as the profile and experience locations:
+                // a recruiter filtering on Bengaluru should reach candidates
+                // who typed Bangalore.
+                suggestions={CITY_NAMES}
+                searchSuggestions={searchCities}
+                normalize={canonicalCityName}
+                placeholder="Start typing a city"
               />
             )}
           />

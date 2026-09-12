@@ -267,10 +267,20 @@ function accomplishmentsScore(
     filled(cert.issuer) &&
     cert.issuedYear != null &&
     filled(cert.credentialUrl);
+  const awarded = filled(awards);
+
+  // Either one finishes the section, which is what the hint has always
+  // promised. It used to require a certification, so a candidate who wrote up
+  // their awards watched the step stay grey with nothing telling them why.
+  // A started-but-unfinished certification is called out on its own, because
+  // that is a gap the candidate can see and did not intend.
   return {
     earnedTenths,
-    complete: certRequired,
-    hint: "Add a certification or an award you have received",
+    complete: certRequired || awarded,
+    hint:
+      cert != null && !certRequired
+        ? "Finish the certification — it needs a name, issuer, issue year, and credential link"
+        : "Add a certification or an award you have received",
   };
 }
 

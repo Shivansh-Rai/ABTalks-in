@@ -4,16 +4,6 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  AlertTriangle,
-  Download,
-  ExternalLink,
-  FileText,
-  Link2,
-  Loader2,
-  Sparkles,
-  Upload,
-} from "lucide-react";
-import {
   removeResumeAction,
   saveResumeLinkAction,
   uploadResumeAction,
@@ -23,10 +13,8 @@ import {
   MAX_RESUME_BYTES,
   type ResumeView,
 } from "@/features/resume/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field } from "./fields";
 import { ResumeStrength } from "./resume-strength";
+import { PwField, PwInput, PwRow } from "./wizard-fields";
 
 /**
  * The Resume section of the profile.
@@ -35,6 +23,10 @@ import { ResumeStrength } from "./resume-strength";
  * path; the link is kept because it was there first and people already have one
  * saved, and saving a link still writes the same `resumeUrl` every existing
  * reader uses.
+ *
+ * Styling is the wizard's own `pw-*` clay language, not shadcn — this renders
+ * inside the same sheet as every other section, and it used to be the one panel
+ * that looked like a different product.
  *
  * Nothing internal is rendered here — no raw JSON, no parser or model names, no
  * status codes. The only text a candidate ever sees on a failure is the message
@@ -52,11 +44,68 @@ function formatList(items: string[]): string {
   return `${lower.slice(0, -1).join(", ")} and ${lower[lower.length - 1]}`;
 }
 
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m17 8-5-5-5 5" />
+      <path d="M12 3v12" />
+    </svg>
+  );
+}
+
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M12 15V3" />
+    </svg>
+  );
+}
+
+function ExternalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </svg>
+  );
+}
+
+function SparkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  );
+}
+
 export function ResumeSection({ resume }: { resume: ResumeView | null }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [linkDraft, setLinkDraft] = useState(resume?.sourceUrl ?? "");
+  const [dragging, setDragging] = useState(false);
   const [removing, startRemoving] = useTransition();
 
   const busy = phase !== "idle" || removing;
@@ -130,14 +179,14 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
 
   if (phase !== "idle") {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed px-4 py-10 text-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-        <p className="text-sm font-medium" aria-live="polite">
+      <div className="pw-resume-busy">
+        <span className="pw-resume-spin" aria-hidden />
+        <p className="pw-resume-busy-title" aria-live="polite">
           {phase === "uploading"
             ? "Uploading your resume…"
             : "Analysing your resume…"}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="pw-resume-busy-copy">
           This usually takes a few seconds. Please keep this page open.
         </p>
       </div>
@@ -147,30 +196,59 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
   /* ── Source controls: always available, so a resume can be replaced ────── */
 
   const controls = (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={busy}
-        >
-          <Upload className="size-4" aria-hidden />
-          {resume ? "Replace resume" : "Upload resume"}
-        </Button>
+    <div className="pw-resume-controls">
+      <div
+        className={`pw-file-drop${dragging ? " pw-dragging" : ""}`}
+        onClick={() => {
+          if (!busy) fileRef.current?.click();
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file && !busy) void onFileChosen(file);
+        }}
+      >
         <input
           ref={fileRef}
           type="file"
+          className="pw-file-input"
           accept={ACCEPTED_MIME_TYPES.join(",")}
-          className="sr-only"
+          disabled={busy}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) void onFileChosen(file);
           }}
         />
-        <p className="text-xs text-muted-foreground">
-          PDF only, up to {MAX_MB} MB. Your file stays private — only you and
-          ABTalks admins can open it.
-        </p>
+        <div className="pw-file-body">
+          <span className="pw-file-icon">
+            <UploadIcon />
+          </span>
+          <span className="pw-file-copy">
+            <span className="pw-file-title">
+              {resume ? "Replace your resume" : "Upload your resume"}
+            </span>
+            <span className="pw-file-hint">
+              PDF only, up to {MAX_MB} MB. Your file stays private — only you and
+              ABTalks admins can open it.
+            </span>
+          </span>
+          <button type="button" className="pw-file-browse" disabled={busy}>
+            Browse
+          </button>
+        </div>
       </div>
 
       {/*
@@ -179,21 +257,19 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
         shared with anyone who has the link, and most people's are restricted.
         Presenting the two as peers sends candidates down the path that fails.
       */}
-      <div className="border-t pt-4">
-        <p className="text-xs text-muted-foreground">
+      <div className="pw-resume-divider">
+        <p className="pw-resume-hint">
           Already have your resume online? You can point us at it instead.
         </p>
       </div>
 
-      <div className="flex items-start gap-3">
-        <Link2 className="mt-8 size-5 shrink-0 text-muted-foreground" aria-hidden />
-        <Field
+      <PwRow cols={1}>
+        <PwField
           label="Resume link"
           htmlFor="resume-link"
-          className="flex-1"
-          hint="Must be publicly viewable — in Google Drive, set sharing to “Anyone with the link”. If we cannot open it, upload the PDF instead."
+          helper="Must be publicly viewable — in Google Drive, set sharing to “Anyone with the link”. If we cannot open it, upload the PDF instead."
         >
-          <Input
+          <PwInput
             id="resume-link"
             type="url"
             inputMode="url"
@@ -202,26 +278,27 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
             onChange={(e) => setLinkDraft(e.target.value)}
             disabled={busy}
           />
-        </Field>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button
+        </PwField>
+      </PwRow>
+
+      <div className="pw-resume-actions">
+        <button
           type="button"
-          variant="outline"
+          className="pw-btn-action pw-btn-quiet"
           onClick={() => void onSaveLink()}
           disabled={busy || linkDraft.trim().length === 0}
         >
           Save &amp; analyse link
-        </Button>
+        </button>
         {resume ? (
-          <Button
+          <button
             type="button"
-            variant="ghost"
+            className="pw-btn-action pw-btn-quiet"
             onClick={onRemove}
             disabled={busy}
           >
             {removing ? "Removing…" : "Remove resume"}
-          </Button>
+          </button>
         ) : null}
       </div>
     </div>
@@ -231,17 +308,10 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
 
   if (!resume) {
     return (
-      <div className="space-y-5">
-        <div className="rounded-xl border border-dashed px-4 py-6 text-center">
-          <FileText
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm font-medium">No resume yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload your resume to see how strong it is and what to improve.
-          </p>
-        </div>
+      <div className="pw-resume">
+        <p className="pw-note">
+          No resume yet. Upload one to see how strong it is and what to improve.
+        </p>
         {controls}
       </div>
     );
@@ -251,15 +321,14 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
 
   if (resume.status === "FAILED") {
     return (
-      <div className="space-y-5">
-        <div className="flex gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-          <AlertTriangle
-            className="mt-0.5 size-5 shrink-0 text-destructive"
-            aria-hidden
-          />
-          <div className="min-w-0 space-y-1">
-            <p className="text-sm font-medium">We could not analyse that resume</p>
-            <p className="text-sm text-muted-foreground">
+      <div className="pw-resume">
+        <div className="pw-resume-notice pw-is-error">
+          <AlertIcon />
+          <div>
+            <p className="pw-resume-notice-title">
+              We could not analyse that resume
+            </p>
+            <p className="pw-resume-notice-copy">
               {resume.failureReason ??
                 "Something went wrong. Please try again or upload the PDF directly."}
             </p>
@@ -274,16 +343,17 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
 
   if (resume.status === "PROCESSING") {
     return (
-      <div className="space-y-5">
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed px-4 py-10 text-center">
-          <Loader2
-            className="size-6 animate-spin text-muted-foreground"
-            aria-hidden
-          />
-          <p className="text-sm font-medium">Analysing your resume…</p>
-          <Button type="button" variant="ghost" onClick={() => router.refresh()}>
+      <div className="pw-resume">
+        <div className="pw-resume-busy">
+          <span className="pw-resume-spin" aria-hidden />
+          <p className="pw-resume-busy-title">Analysing your resume…</p>
+          <button
+            type="button"
+            className="pw-btn-action pw-btn-quiet"
+            onClick={() => router.refresh()}
+          >
             Refresh
-          </Button>
+          </button>
         </div>
         {controls}
       </div>
@@ -293,34 +363,34 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
   /* ── READY ────────────────────────────────────────────────────────────── */
 
   return (
-    <div className="space-y-6">
+    <div className="pw-resume">
       {/* What is attached */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {resume.fileName ?? resume.sourceUrl ?? "Your resume"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Added{" "}
-              {new Date(resume.updatedAtIso).toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3">
+      <div className="pw-resume-file">
+        <span className="pw-file-icon pw-file-icon-doc">
+          <FileIcon />
+        </span>
+        <span className="pw-file-copy">
+          <span className="pw-file-title">
+            {resume.fileName ?? resume.sourceUrl ?? "Your resume"}
+          </span>
+          <span className="pw-file-hint">
+            Added{" "}
+            {new Date(resume.updatedAtIso).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
+        </span>
+        <span className="pw-resume-file-links">
           {resume.downloadPath ? (
             <a
               href={resume.downloadPath}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              className="pw-resume-link"
             >
-              <Download className="size-4" aria-hidden />
+              <DownloadIcon />
               View file
             </a>
           ) : null}
@@ -329,13 +399,13 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
               href={resume.sourceUrl}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              className="pw-resume-link"
             >
-              <ExternalLink className="size-4" aria-hidden />
+              <ExternalIcon />
               Open link
             </a>
           ) : null}
-        </div>
+        </span>
       </div>
 
       {/*
@@ -345,16 +415,13 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
         the resume card a read-only shadow of the profile.
       */}
       {resume.addedToProfile.length > 0 ? (
-        <div className="flex gap-3 rounded-xl border border-[#27CA37]/25 bg-[#D6F7EC]/50 p-4">
-          <Sparkles
-            className="mt-0.5 size-5 shrink-0 text-[#197E23]"
-            aria-hidden
-          />
-          <div className="min-w-0 space-y-1">
-            <p className="text-sm font-medium">
+        <div className="pw-resume-notice">
+          <SparkIcon />
+          <div>
+            <p className="pw-resume-notice-title">
               Your {formatList(resume.addedToProfile)} got more complete
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="pw-resume-notice-copy">
               Scroll up to review and edit any of it. Nothing you had already
               written was changed or removed.
             </p>
@@ -364,7 +431,7 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
 
       {resume.strength ? <ResumeStrength strength={resume.strength} /> : null}
 
-      <div className="border-t pt-5">{controls}</div>
+      <div className="pw-resume-divider">{controls}</div>
     </div>
   );
 }

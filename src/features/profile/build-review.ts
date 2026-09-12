@@ -458,7 +458,7 @@ export function buildProfileReview({
     ),
     card(
       at("skills"),
-      "Key skills",
+      "Skills",
       "skills",
       "Add the skills you want to be found for.",
       skillBlocks,
@@ -488,7 +488,7 @@ export function buildProfileReview({
     ),
     card(
       at("preferences"),
-      "Your career preferences",
+      "Career Preferences",
       "career",
       "Tell recruiters what you are looking for — roles, locations and availability.",
       prefBlocks,

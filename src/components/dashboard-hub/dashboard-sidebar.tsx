@@ -103,12 +103,26 @@ export function DashboardSidebar({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "abt-nav-item",
-                compact ? "justify-center px-2" : "gap-3 px-4",
+                // px-3/gap-2.5 rather than px-4/gap-3: the 250px column leaves
+                // 154px for the label at px-4, and "Events And Workshops" needs
+                // ~144px at 14px — close enough that it wrapped to a second
+                // line and made that row taller than the rest. This buys 10px.
+                compact ? "justify-center px-2" : "gap-2.5 px-3",
                 active ? HUB_NAV_ACTIVE_CLASS : HUB_NAV_IDLE_CLASS,
               )}
             >
               <Icon className="size-5 shrink-0" aria-hidden />
-              <span className={cn(compact && "sr-only")}>{label}</span>
+              {/* `whitespace-nowrap` so a long label can never wrap this row to
+                  two lines; `truncate` keeps the failure mode contained to an
+                  ellipsis inside the column rather than text spilling out. */}
+              <span
+                className={cn(
+                  "min-w-0 truncate whitespace-nowrap",
+                  compact && "sr-only",
+                )}
+              >
+                {label}
+              </span>
             </Link>
           );
         })}

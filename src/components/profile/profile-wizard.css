@@ -101,15 +101,38 @@
 /* "Hide the scrollwheel on the profile page." The scroller is the shell's
    content pane, shared with every other route, so this is scoped to a body
    class ProfileWizard sets while it is mounted rather than hiding scrollbars
-   app-wide. */
+   app-wide.
+
+   The bar itself stays invisible at rest, but the gutter is always reserved
+   and the thumb is painted while the page is actually moving (ProfileWizard
+   adds `pw-scrolling` on scroll and drops it when scrolling stops). That keeps
+   the "no scrollwheel" look without leaving the page with no cue at all, and
+   because the gutter never changes width, nothing shifts sideways. */
 body.pw-profile-page .abt-content-scroll {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
   -ms-overflow-style: none;
+  /* Holds the gutter open even while the sheet sets `overflow: hidden` below,
+     so opening the sheet does not nudge the page sideways. */
+  scrollbar-gutter: stable;
 }
 body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+body.pw-profile-page .abt-content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+body.pw-profile-page .abt-content-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background-color 0.25s ease;
+}
+body.pw-profile-page.pw-scrolling .abt-content-scroll {
+  scrollbar-color: rgba(3, 83, 95, 0.32) transparent;
+}
+body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(3, 83, 95, 0.32);
 }
 
 .pw-root *,
@@ -174,7 +197,15 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
   padding: 0 0 16px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Sticky and taller than the viewport meant the bottom of the card — Profile
+     performance — could never be scrolled to, because the page scrolls past a
+     pinned element rather than through it. Cap it at the free height and let
+     the card scroll inside itself. `hidden auto` keeps the rounded corners
+     clipping horizontally, as `overflow: hidden` did. */
+  max-height: calc(100vh - 55px - var(--pw-ws-pad-top) * 2);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .pw-quick-head {
@@ -248,6 +279,44 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
 .pw-check-item.pw-completed {
   color: #000000;
   font-weight: 500;
+}
+
+/* ---- needs attention ----
+   A step the platform is waiting on (no résumé yet). Semantic warning, never
+   error: nothing is wrong, something is simply missing. */
+.pw-check-item.pw-attention {
+  color: var(--pw-warning);
+}
+.pw-check-item.pw-attention .pw-check-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pw-warning);
+  box-shadow: 0 0 0 3px var(--pw-warning-soft);
+}
+.pw-check-item.pw-current.pw-attention {
+  color: var(--pw-primary);
+}
+
+/* ---- optional step ----
+   Mock Interview is earned and outside Profile strength, so it carries a
+   label instead of an unfinished state. */
+.pw-check-optional {
+  flex: none;
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #787878;
+  background: #f4f4f4;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+.pw-check-item.pw-current .pw-check-optional {
+  color: var(--pw-primary);
+  background: #ffffff;
 }
 
 /* inactive hover — a very faint pale shift, nothing more */
@@ -338,35 +407,8 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
   white-space: nowrap;
   letter-spacing: -0.01em;
 }
-.pw-col-value .pw-dot,
-.pw-col-value .pw-chev {
-  flex: none;
-}
-.pw-col-value .pw-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #4b4b4b;
-  margin-left: 7px;
-}
-.pw-col-value .pw-chev {
-  width: 11px;
-  height: 11px;
-  margin-left: 6px;
-  display: grid;
-  place-items: center;
-  color: var(--pw-primary);
-}
-.pw-col-value .pw-chev svg {
-  width: 11px;
-  height: 11px;
-  display: block;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
+/* The dot + chevron that used to trail the number are gone: the chevron read
+   as a control, and nothing opens. See profile-card.tsx. */
 
 /* ============================================================
    REPORT CARD — the profile as a recruiter sees it
@@ -454,6 +496,10 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
   font-weight: 600;
   color: #000000;
   letter-spacing: 0;
+  /* A long display name used to push into the Edit control beside it. It wraps
+     — and, if a single token is longer than the column, breaks — instead. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .pw-rv-headline {
   margin: 4px 0 0;
@@ -953,6 +999,19 @@ body.pw-profile-page .abt-content-scroll::-webkit-scrollbar {
 .pw-avatar-edit:active {
   transform: translateY(-50%) scale(0.96);
 }
+/* Photo storage not configured for this environment: the control stays put and
+   explains itself on hover instead of vanishing. */
+.pw-avatar-edit.pw-is-unavailable {
+  color: #a5a5a5;
+  background: #f4f4f4;
+  cursor: not-allowed;
+}
+.pw-avatar-edit.pw-is-unavailable:hover {
+  background: #f4f4f4;
+  border-color: #e0e0e0;
+  color: #a5a5a5;
+  transform: translateY(-50%);
+}
 .pw-avatar-edit:disabled {
   opacity: 0.65;
   cursor: wait;
@@ -1066,10 +1125,30 @@ body.pw-sheet-open .abt-content-scroll {
   overflow: hidden;
 }
 /* Quick Links stays live while the form is open — it is how you switch
-   sections — so the profile card sits above the scrim, below the sheet */
-.pw-root.pw-sheet-open .pw-profile-card {
-  position: relative;
-  z-index: 45;
+   sections — so the profile card sits above the scrim, below the sheet.
+
+   Desktop only. Under 1024px the sheet is full width and the card is in normal
+   flow above the report card, so raising it just floats a fully lit card over
+   the dimmed page. There it belongs under the scrim like everything else. */
+@media (min-width: 1025px) {
+  .pw-root.pw-sheet-open .pw-profile-card {
+    /* Raised, but still STICKY. This used to say `position: relative`, which
+       cancels sticky outright — the card dropped back into normal flow, drifted
+       with the page and scrolled out of sight entirely. `z-index` works on a
+       sticky element, so raising it above the scrim costs nothing. */
+    z-index: 45;
+    /* And no inner scroll of its own while it is pinned: with the page locked
+       behind the sheet, the card was the only thing left that a wheel could
+       move, so scrolling over it slid its contents about. */
+    overflow: hidden;
+  }
+}
+
+/* Profile performance is something you read about a finished profile, not
+   while you are editing one. It goes away with the sheet open — which also
+   keeps the pinned card short enough to never need a scrollbar. */
+.pw-root.pw-sheet-open .pw-performance-section {
+  display: none;
 }
 
 .pw-form-close {
@@ -1130,8 +1209,11 @@ body.pw-sheet-open .abt-content-scroll {
   color: #000000;
   outline: none;
 }
-.pw-section-header-content h2:focus,
-.pw-section-header-content h2:focus-visible {
+/* The heading is focused programmatically each time the sheet opens, so plain
+   :focus must stay silent — but a keyboard user landing on it has to see where
+   they are, which is what :focus-visible is for. It is styled in the QA-pass
+   block at the end of this file. */
+.pw-section-header-content h2:focus {
   outline: none;
   box-shadow: none;
 }
@@ -1209,7 +1291,7 @@ body.pw-sheet-open .abt-content-scroll {
 .pw-section-body {
   flex: 1;
   min-height: 0;
-  padding: 24px 30px 0;
+  padding: 24px 30px 24px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -1218,8 +1300,10 @@ body.pw-sheet-open .abt-content-scroll {
 .pw-section-body > form {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex: none;
+}
+.pw-section-body > form > .pw-row:last-child {
+  margin-bottom: 0;
 }
 
 .pw-row {
@@ -2558,28 +2642,51 @@ body.pw-sheet-open .abt-content-scroll {
 /* ---------- "Save your changes?" — anchored to the buttons it is about ----------
    A centred modal for a question about the Save button two inches away read as
    a page-level interruption, and it had to out-stack the sheet to be seen. */
+/* Sits fully above the Cancel / Save row — it used to overlap it by 8px — and
+   spans the whole width instead of hiding in a 320px corner. White on a white
+   bar was the real problem: the one thing standing between a candidate and lost
+   work read as a tooltip. Semantic warning, an icon, and a border that carries
+   the colour through. */
 .pw-leave-pop {
   position: absolute;
-  right: 30px;
-  bottom: calc(100% - 8px);
+  left: 20px;
+  right: 20px;
+  bottom: calc(100% + 8px);
   z-index: 3;
-  width: min(320px, calc(100% - 60px));
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: var(--pw-shadow-float);
+  background: var(--pw-warning-soft);
+  border: 1.5px solid var(--pw-warning);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 28px rgba(170, 130, 29, 0.26);
   animation: pw-pickOpen 0.16s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.pw-leave-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pw-leave-head svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--pw-warning);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .pw-leave-pop.pw-leave-shake {
   animation: pw-fieldJitter 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 .pw-leave-copy {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 14.5px;
   line-height: 21px;
-  color: var(--pw-text-secondary);
-  font-weight: 500;
+  color: #6b5510;
+  font-weight: 600;
+}
+.pw-leave-actions {
+  margin-top: 12px;
 }
 .pw-leave-actions {
   display: flex;
@@ -2855,8 +2962,10 @@ body.pw-sheet-open .abt-content-scroll {
     max-height: none;
     min-height: 0;
   }
+  /* Not sticky here, so it needs no inner scroll and no height cap. */
   .pw-profile-card {
     position: static;
+    overflow: hidden;
   }
   .pw-review-body {
     overflow: visible;
@@ -2894,8 +3003,26 @@ body.pw-sheet-open .abt-content-scroll {
   .pw-row.pw-cols-3 {
     grid-template-columns: 1fr 1fr;
   }
+  /* The header has no room for the words at this width, so the pill keeps the
+     tick and clips its label — the confirmation still lands, and screen
+     readers still read it. */
   .pw-complete-pill {
-    display: none;
+    right: 60px;
+    padding: 6px;
+    gap: 0;
+  }
+  .pw-complete-pill .pw-complete-pill-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .pw-section-header-content {
+    padding-right: 44px;
   }
 }
 
@@ -2941,4 +3068,310 @@ body.pw-sheet-open .abt-content-scroll {
 .pw-quick-chip:focus-visible {
   outline: 2px solid var(--pw-primary);
   outline-offset: 4px;
+}
+
+/* ============================================================
+   QA PASS (plan 136)
+   ============================================================ */
+
+/* ---- portalled menus ----
+   Month / year and suggestion lists render into <body>, outside .pw-root, so
+   the palette tokens they use are not inherited. They are restated here (and
+   only here) so a portalled menu looks identical to an inline one. */
+.pw-anchored {
+  --pw-primary: #03535f;
+  --pw-primary-tint: #eef6f6;
+  --pw-navy: #000000;
+  --pw-shadow-float: 0 12px 32px rgba(0, 0, 0, 0.1);
+  /* left / top / bottom / width / max-height are written by useAnchoredMenu
+     against the trigger rect. `right: auto` stops the base rule's `right: 0`
+     from fighting the measured width. */
+  position: fixed;
+  right: auto;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ---- required-field legend ----
+   One line per section, because the asterisk means "needed to finish this
+   section", not "the form will refuse you". Nothing on the profile blocks a
+   save. */
+.pw-required-legend {
+  margin: 20px 0 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: #787878;
+  flex: none;
+}
+.pw-required-legend .pw-req {
+  color: var(--pw-error);
+  font-weight: 700;
+}
+
+/* ---- section heading focus ----
+   The heading takes focus when the sheet opens, so it has to show it. */
+.pw-section-header h2:focus-visible,
+.pw-section-header-content h2:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 4px;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* ============================================================
+   RESUME — same clay language as the rest of the sheet
+   ============================================================ */
+.pw-resume {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pw-resume-busy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1.5px dashed #d2d2d2;
+  border-radius: 14px;
+  background: #f4f4f4;
+  padding: 38px 18px;
+  text-align: center;
+}
+.pw-resume-spin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid #d4ebec;
+  border-top-color: var(--pw-primary);
+  animation: pw-resume-spin 0.8s linear infinite;
+}
+@keyframes pw-resume-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.pw-resume-busy-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-navy);
+}
+.pw-resume-busy-copy {
+  margin: 0;
+  font-size: 12.5px;
+  color: #787878;
+}
+
+/* attached file, analysis notice, failure notice */
+.pw-resume-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.pw-resume-file-links {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+}
+.pw-resume-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-primary);
+  text-decoration: none;
+}
+.pw-resume-link:hover {
+  text-decoration: underline;
+}
+.pw-resume-link svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-resume-notice {
+  display: flex;
+  gap: 12px;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid #d6f7ec;
+  background: rgba(214, 247, 236, 0.5);
+}
+.pw-resume-notice.pw-is-error {
+  border-color: rgba(217, 45, 32, 0.28);
+  background: rgba(217, 45, 32, 0.05);
+}
+.pw-resume-notice svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  fill: none;
+  stroke: var(--pw-green);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-resume-notice.pw-is-error svg {
+  stroke: var(--pw-error);
+}
+.pw-resume-notice-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-navy);
+}
+.pw-resume-notice-copy {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  line-height: 20px;
+  color: #4b4b4b;
+}
+
+/* strength */
+.pw-resume-strength {
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  background: #f9f9f9;
+  padding: 18px;
+}
+.pw-resume-strength-k {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #787878;
+}
+.pw-resume-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+.pw-resume-score b {
+  font-family: var(--pw-font-display);
+  font-size: 34px;
+  line-height: 38px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pw-resume-score span {
+  font-size: 16px;
+  color: #787878;
+}
+.pw-resume-band {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-text-secondary);
+}
+.pw-resume-bar {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e9e9e9;
+  overflow: hidden;
+}
+.pw-resume-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+.pw-resume-caption {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: #787878;
+}
+.pw-tone-good {
+  color: var(--pw-green);
+}
+.pw-tone-good-bg {
+  background: var(--pw-success);
+}
+.pw-tone-warn {
+  color: var(--pw-warning);
+}
+.pw-tone-warn-bg {
+  background: var(--pw-warning);
+}
+.pw-tone-bad {
+  color: var(--pw-error);
+}
+.pw-tone-bad-bg {
+  background: var(--pw-error);
+}
+.pw-resume-tips {
+  margin-top: 16px;
+  border: 1px solid rgba(170, 130, 29, 0.25);
+  background: rgba(255, 237, 176, 0.4);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.pw-resume-tips h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-navy);
+}
+.pw-resume-tips h4 svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--pw-warning);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-resume-tips ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: disc;
+}
+.pw-resume-tips li {
+  font-size: 13.5px;
+  line-height: 21px;
+  color: #4b4b4b;
+}
+.pw-resume-tips li + li {
+  margin-top: 4px;
+}
+
+/* source controls */
+.pw-resume-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pw-resume-divider {
+  border-top: 1px solid var(--pw-border-soft);
+  padding-top: 14px;
+}
+.pw-resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pw-resume-hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: #787878;
 }

@@ -158,40 +158,34 @@ export function HireChrome({
       <header className="hire-app__header">
         <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
           <span className="hire-app__logo">
-            {desk ? (
-              // Both wordmarks, stacked and crossfaded by the stage class:
-              // white on the green, the design's dark one on the light
-              // dashboard. Swapping the <Image> instead made the header
-              // change a whole frame ahead of the background.
-              <span className="hire-app__logo-swap">
-                <Image
-                  src="/hire/abtalks-wordmark.png"
-                  alt={isLanding ? "ABTalks" : ""}
-                  aria-hidden={!isLanding || undefined}
-                  width={342}
-                  height={67}
-                  priority
-                  className="hire-app__logo-img hire-app__logo-img--light"
-                />
-                <Image
-                  src="/hire/abtalks-wordmark-dark.png"
-                  alt={isLanding ? "" : "ABTalks"}
-                  aria-hidden={isLanding || undefined}
-                  width={346}
-                  height={81}
-                  priority
-                  className="hire-app__logo-img hire-app__logo-img--dark"
-                />
-              </span>
-            ) : (
+            {/* The same stacked-wordmark swap runs on the desk AND on plain
+                /hire/* pages (requests, jobs, messages, settings, …) so the
+                header brand reads identically once the user is inside Hire.
+                The dark wordmark shows on every non-landing page; the light
+                one is only revealed while `.hire-app--landing` is on (screen
+                1's green field). Swapping the <Image> at the JS boundary
+                instead of crossfading here made the header change a frame
+                ahead of the background. */}
+            <span className="hire-app__logo-swap">
               <Image
-                src="/landing/abtalks-logo-mark.png"
-                alt="ABTalks"
-                width={561}
-                height={168}
+                src="/hire/abtalks-wordmark.png"
+                alt={isLanding ? "ABTalks" : ""}
+                aria-hidden={!isLanding || undefined}
+                width={342}
+                height={67}
                 priority
+                className="hire-app__logo-img hire-app__logo-img--light"
               />
-            )}
+              <Image
+                src="/hire/abtalks-wordmark-dark.png"
+                alt={isLanding ? "" : "ABTalks"}
+                aria-hidden={isLanding || undefined}
+                width={346}
+                height={81}
+                priority
+                className="hire-app__logo-img hire-app__logo-img--dark"
+              />
+            </span>
           </span>
           {!isLanding && <span className="hire-app__badge">Hire</span>}
         </Link>

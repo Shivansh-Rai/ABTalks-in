@@ -8,22 +8,15 @@ const PERFORMANCE_TOOLTIP =
 /**
  * One half of the Profile performance panel.
  *
- * Order matches the design: value, then the charcoal dot, then the orange
- * chevron. The dot is a separator, not a status light.
+ * The number is the whole content. It carried a chevron in the design, which
+ * read as "opens a breakdown" — there is nothing to open, so it is gone rather
+ * than left as a promise the panel cannot keep.
  */
 function PerfColumn({ label, value }: { label: string; value: number }) {
   return (
     <div className="pw-perf-column">
       <div className="pw-col-label">{label}</div>
-      <div className="pw-col-value">
-        {value}
-        <span className="pw-dot" aria-hidden />
-        <span className="pw-chev" aria-hidden>
-          <svg viewBox="0 0 24 24">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </span>
-      </div>
+      <div className="pw-col-value">{value}</div>
     </div>
   );
 }
@@ -40,7 +33,8 @@ export function ProfileCard({
   onJump,
   performance,
 }: {
-  steps: Pick<WizardStep, "title" | "complete" | "attention">[];
+  steps: Pick<WizardStep, "title" | "complete" | "attention" | "optional">[];
+  /** -1 when no sheet is open, so no tab is left looking selected. */
   activeIndex: number;
   onJump: (index: number) => void;
   performance: { searchAppearances: number; recruiterActions: number };
@@ -54,10 +48,15 @@ export function ProfileCard({
       <ul className="pw-checklist">
         {steps.map((step, i) => {
           const current = i === activeIndex;
+          // An optional step is never "unfinished": finishing it cannot move
+          // Profile strength, so flagging it for attention would be a nag for
+          // something the score ignores.
+          const needsAttention =
+            !step.complete && step.attention && !step.optional;
           const classes = [
             "pw-check-item",
             step.complete ? "pw-completed" : "",
-            !step.complete && step.attention ? "pw-attention" : "",
+            needsAttention ? "pw-attention" : "",
             current ? "pw-current" : "",
           ]
             .filter(Boolean)
@@ -71,9 +70,17 @@ export function ProfileCard({
                 aria-current={current ? "step" : undefined}
               >
                 <span>{step.title}</span>
+                {step.optional && !step.complete ? (
+                  <span className="pw-check-optional">Optional</span>
+                ) : null}
+                {needsAttention ? <span className="pw-check-dot" aria-hidden /> : null}
                 <span className="pw-sr-only">
                   Step {i + 1} of {steps.length}
                   {step.complete ? ", complete" : ""}
+                  {step.optional
+                    ? ", optional — it does not count towards profile strength"
+                    : ""}
+                  {needsAttention ? ", needs attention" : ""}
                 </span>
               </button>
             </li>

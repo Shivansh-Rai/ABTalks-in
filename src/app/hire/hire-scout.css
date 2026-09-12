@@ -6847,7 +6847,13 @@ html.dark .vc-card {
    Recruiter search results (Figma 1585:46)
    The desk once the landing hands over: #F4F4F5 ground, the nav card on
    the left, results over the composer in the middle, the candidate
-   profile on the right. Scoped to `.hire-app--results` (hire-chrome).
+   profile on the right.
+
+   Header + nav rules (brand, logo, badge, header bar, .hire-hbtn pill
+   styling, .hire-signin) apply to EVERY /hire/* page except the landing
+   — Screen 1 owns its dark-on-green look and keeps it via its own
+   scoped overrides. Desk-only rules below (workspace, journey, scout
+   region, pod region) stay scoped to `.hire-app--results`.
    ------------------------------------------------------------------ */
 
 .hire-app--results {
@@ -6855,22 +6861,22 @@ html.dark .vc-card {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-.hire-app--results .hire-app__brand {
+.hire-app:not(.hire-app--landing) .hire-app__brand {
   gap: 12px;
 }
 
-.hire-app--results .hire-app__logo {
+.hire-app:not(.hire-app--landing) .hire-app__logo {
   width: auto;
 }
 
 /* The design crops the 346x81 export into a 140x27 box (object-fit: cover). */
-.hire-app--results .hire-app__logo img {
+.hire-app:not(.hire-app--landing) .hire-app__logo img {
   width: 140px;
   height: 27px;
   object-fit: cover;
 }
 
-.hire-app--results .hire-app__badge {
+.hire-app:not(.hire-app--landing) .hire-app__badge {
   height: auto;
   padding: 4px 8px;
   border: 1px solid #626262;
@@ -6884,7 +6890,7 @@ html.dark .vc-card {
 }
 
 @media (min-width: 901px) {
-  .hire-app--results .hire-app__header {
+  .hire-app:not(.hire-app--landing) .hire-app__header {
     height: 64px;
     padding: 0 80px 0 90px;
     background: rgba(255, 255, 255, 0.1);
@@ -6892,15 +6898,15 @@ html.dark .vc-card {
     box-shadow: none;
   }
 
-  .hire-app--results .hire-app__logo {
+  .hire-app:not(.hire-app--landing) .hire-app__logo {
     height: 27px;
   }
 
-  .hire-app--results .hire-app__nav {
+  .hire-app:not(.hire-app--landing) .hire-app__nav {
     gap: 7px;
   }
 
-  .hire-app--results .hire-hbtn {
+  .hire-app:not(.hire-app--landing) .hire-hbtn {
     height: 38px;
     padding: 0 18px;
     border-color: #e4e4e7;
@@ -6913,15 +6919,15 @@ html.dark .vc-card {
     color: #353535;
   }
 
-  .hire-app--results .hire-hbtn.has-count {
+  .hire-app:not(.hire-app--landing) .hire-hbtn.has-count {
     padding-right: 30px;
   }
 
-  .hire-app--results .hire-hbtn:hover {
+  .hire-app:not(.hire-app--landing) .hire-hbtn:hover {
     border-color: #d2d2d2;
   }
 
-  .hire-app--results .hire-signin {
+  .hire-app:not(.hire-app--landing) .hire-signin {
     height: 36px;
     padding: 0 20px;
     border: 2px solid #03535f;
@@ -6935,7 +6941,7 @@ html.dark .vc-card {
     text-transform: none;
   }
 
-  .hire-app--results .hire-signin:hover {
+  .hire-app:not(.hire-app--landing) .hire-signin:hover {
     background: #03535f;
   }
 
@@ -8766,11 +8772,11 @@ button.hire-profile__in:focus-visible {
     display: none;
   }
 
-  .hire-app--results .hire-app__logo {
+  .hire-app:not(.hire-app--landing) .hire-app__logo {
     height: 22px;
   }
 
-  .hire-app--results .hire-app__logo img {
+  .hire-app:not(.hire-app--landing) .hire-app__logo img {
     width: 114px;
     height: 22px;
   }
@@ -8869,11 +8875,11 @@ button.hire-profile__in:focus-visible {
 /* Phones: the wordmark takes the 88px the old mark had, so the header's
    icon buttons do not ride over it. */
 @media (max-width: 640px) {
-  .hire-app--results .hire-app__logo {
+  .hire-app:not(.hire-app--landing) .hire-app__logo {
     height: 17px;
   }
 
-  .hire-app--results .hire-app__logo img {
+  .hire-app:not(.hire-app--landing) .hire-app__logo img {
     width: 88px;
     height: 17px;
   }
@@ -9292,6 +9298,16 @@ button.hire-profile__in:focus-visible {
   .hire-app--results .rsearch__suggest.is-leaving {
     zoom: calc(1 / var(--hire-zoom, 1));
   }
+
+  /* Header consistency: the desk shell above is zoomed, which shrinks its
+     header on narrower viewports. Plain /hire/* pages (requests, jobs,
+     messages, settings, evidence, matches, create-test, assessments) do NOT
+     zoom their whole shell — that would scale their page content too — so
+     apply the same zoom to just the header. The result: the header reads at
+     the same visual size on every non-landing /hire/* page. */
+  .hire-app:not(.hire-app--desk) .hire-app__header {
+    zoom: var(--hire-zoom, 1);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -9534,13 +9550,15 @@ button.hire-profile__in:focus-visible {
   transition: opacity 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 
+/* Landing shows the light wordmark on the green field; every non-landing
+   /hire/* page (results desk AND the plain pages) shows the dark one. */
 .hire-app--landing .hire-app__logo-img--dark,
-.hire-app--results .hire-app__logo-img--light {
+.hire-app:not(.hire-app--landing) .hire-app__logo-img--light {
   opacity: 0;
 }
 
 .hire-app--landing .hire-app__logo-img--light,
-.hire-app--results .hire-app__logo-img--dark {
+.hire-app:not(.hire-app--landing) .hire-app__logo-img--dark {
   opacity: 1;
 }
 

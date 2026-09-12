@@ -226,7 +226,7 @@ export function ProfileReviewCard({
               <div className="pw-rv-meta">
                 {review.openToWork ? (
                   <span className="pw-rv-meta-i pw-open-to-work">
-                    Open To Work
+                    Open to work
                   </span>
                 ) : null}
                 {review.meta.map((m) => (

@@ -25,6 +25,31 @@ import {
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
 import { computeCompleteness } from "@/features/profile/completeness";
+import {
+  CITY_NAMES,
+  STATE_NAMES,
+  canonicalCityName,
+  searchCities,
+  searchStates,
+  stateForCity,
+} from "@/lib/city-catalog";
+import {
+  DEGREES,
+  FIELDS_OF_STUDY,
+  canonicalDegree,
+  departmentsForDegree,
+} from "@/lib/candidate-vocab";
+import {
+  endBeforeStart,
+  isFuture,
+} from "@/components/profile/field-issues";
+import {
+  CANONICAL_SKILLS,
+  CANONICAL_SKILL_NAMES,
+  SKILL_GROUPS,
+  canonicalSkillName,
+  searchCanonicalSkills,
+} from "@/lib/skill-catalog";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
 
 let passed = 0;
@@ -1131,9 +1156,23 @@ suite("accomplishments score the first cert and the awards field", () => {
 
   const awardsOnly = completeness({ awards: "Dean list" });
   assert(sectionEarned(awardsOnly, "accomplishments") === 1, "awards alone is 1");
+  // Plan 136: the hint offers a certification OR an award, so an award has to
+  // finish the section. It still earns only its own tenth of the weight.
   assert(
-    awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === false,
-    "awards without a cert do not tick the section",
+    awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === true,
+    "an award alone completes the section",
+  );
+
+  const halfCert = completeness({
+    certifications: [completeCert({ credentialUrl: null })],
+  });
+  const halfCertSection = halfCert.sections.find(
+    (x) => x.key === "accomplishments",
+  );
+  assert(halfCertSection?.complete === false, "an unfinished cert is not complete");
+  assert(
+    halfCertSection?.hint?.includes("Finish the certification") === true,
+    `a started cert says what is missing, got: ${halfCertSection?.hint}`,
   );
 });
 
@@ -1327,6 +1366,877 @@ suite("grade type covers the scales Indian institutions actually use", () => {
   for (const v of ["PERCENTAGE", "CGPA_10", "GPA_4", "GRADE", "OTHER"]) {
     assert(values.includes(v as GradeType), `${v} present`);
   }
+});
+
+/* ─── Plan 136: UI QA findings ───────────────────────────────────────────── */
+
+suite("every dismissal of the sheet asks before dropping edits", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  // Cancel used to call closeSheet() straight through, so it discarded edits
+  // that Escape and the scrim would have asked about.
+  const cancelAt = src.indexOf("pw-btn pw-btn-ghost");
+  assert(cancelAt !== -1, "the Cancel button exists");
+  const cancel = src.slice(cancelAt, src.indexOf("Cancel", cancelAt));
+  assert(cancel.includes("onClick={requestClose}"), "Cancel routes through requestClose");
+  assert(!cancel.includes("onClick={closeSheet}"), "Cancel is not a silent discard");
+  assert(src.includes('if (event.key === "Escape")'), "Escape still closes the sheet");
+});
+
+suite("the open sheet is a modal, and the keyboard stays inside it", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  assert(src.includes('role="dialog"'), "the sheet is a dialog");
+  assert(src.includes('aria-modal="true"'), "and a modal one");
+  assert(src.includes("aria-labelledby"), "named by its own heading");
+  assert(src.includes('event.key !== "Tab"'), "Tab is handled");
+  assert(src.includes("FOCUSABLE"), "focusable stops are collected for the cycle");
+  assert(src.includes("openerRef"), "focus returns to whatever opened the sheet");
+});
+
+suite("no Quick Link stays selected once the sheet is closed", () => {
+  const src = code("src/components/profile/profile-wizard.tsx");
+  assert(
+    src.includes("activeIndex={open ? index : -1}"),
+    "the active step is scoped to an open sheet",
+  );
+});
+
+suite("Quick Links can render every state it sets a class for", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const card = code("src/components/profile/profile-card.tsx");
+  if (card.includes("pw-attention")) {
+    assert(css.includes(".pw-check-item.pw-attention"), "pw-attention is styled");
+  }
+  assert(css.includes(".pw-check-optional"), "the optional chip is styled");
+  // The chevron implied a control that never existed.
+  assert(!card.includes("pw-chev"), "no dead chevron in the performance panel");
+  assert(!css.includes(".pw-col-value .pw-chev"), "and no orphaned rule for it");
+});
+
+suite("Mock Interview is marked optional rather than unfinished", () => {
+  const page = code("src/app/profile/page.tsx");
+  const mock = page.slice(page.indexOf('key: "mock"'), page.indexOf('key: "skills"'));
+  assert(mock.includes("optional: true"), "the mock step is optional");
+  const scoring = code("src/features/profile/completeness.ts");
+  assert(!scoring.includes('"mock"'), "and it is still outside the score");
+  const card = code("src/components/profile/profile-card.tsx");
+  assert(
+    card.includes("!step.optional"),
+    "an optional step never shows the attention state",
+  );
+});
+
+suite("menus escape the scrolling sheet instead of clipping inside it", () => {
+  const src = code("src/components/profile/wizard-fields.tsx");
+  assert(src.includes("createPortal"), "menus are portalled");
+  assert(src.includes("useAnchoredMenu"), "and positioned against their trigger");
+  assert(src.includes("getBoundingClientRect"), "measured from the viewport");
+  assert(src.includes('"scroll", place, true'), "repositioned on any scroll");
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(css.includes(".pw-anchored"), "the portalled menu carries its own tokens");
+});
+
+suite("the profile card cannot strand its own content on short screens", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const card = css.slice(
+    css.indexOf(".pw-profile-card {"),
+    css.indexOf(".pw-quick-head {"),
+  );
+  assert(card.includes("max-height"), "a sticky card is capped to the viewport");
+  assert(card.includes("overflow: hidden auto"), "and scrolls inside itself");
+});
+
+suite("an open sheet leaves Quick Links pinned where it was", () => {
+  // Comment-stripped: the rule is explained in prose that names the very
+  // property this asserts is absent.
+  const css = code("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-profile-card");
+  assert(at !== -1, "the sheet-open rule exists");
+  const rule = css.slice(at, css.indexOf("}", at));
+  // `position: relative` cancels sticky, which is what made the card drift
+  // away with the page and sometimes scroll out of sight altogether.
+  assert(
+    !rule.includes("position:"),
+    "the open sheet must not re-position the card, only raise it",
+  );
+  assert(rule.includes("z-index: 45"), "it is still raised above the scrim");
+  assert(
+    rule.includes("overflow: hidden"),
+    "and has no inner scroll of its own while pinned",
+  );
+  const card = css.slice(css.indexOf(".pw-profile-card {"), css.indexOf(".pw-quick-head {"));
+  assert(card.includes("position: sticky"), "the card is sticky to begin with");
+});
+
+suite("Profile performance steps aside while a section is open", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-performance-section");
+  assert(at !== -1, "performance is addressed for the open state");
+  assert(
+    css.slice(at, css.indexOf("}", at)).includes("display: none"),
+    "and is hidden while editing",
+  );
+});
+
+suite("the mobile layout keeps Quick Links under the scrim", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const at = css.indexOf(".pw-root.pw-sheet-open .pw-profile-card");
+  assert(at !== -1, "the raised-card rule exists");
+  const before = css.slice(0, at);
+  const guard = before.lastIndexOf("@media (min-width: 1025px)");
+  assert(
+    guard !== -1 && before.indexOf("}", guard) === -1,
+    "raising the card above the scrim is desktop-only",
+  );
+});
+
+suite("the completion pill survives narrow widths", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const narrow = css.slice(css.indexOf("@media (max-width: 820px)"));
+  const pill = narrow.slice(
+    narrow.indexOf(".pw-complete-pill {"),
+    narrow.indexOf(".pw-section-header-content"),
+  );
+  assert(pill.length > 0, "the pill is still addressed at 820px");
+  assert(!pill.includes("display: none"), "it is compacted, not removed");
+});
+
+suite("required fields are marked, announced, and explained", () => {
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  const req = fields.slice(fields.indexOf('className="pw-req"'));
+  assert(req.includes("(required)"), "screen readers hear the word");
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-required-legend"), "the sheet explains the asterisk");
+
+  // What completeness requires must be what the forms mark.
+  const marked: [string, string[]][] = [
+    [
+      "src/components/profile/basic-info-section.tsx",
+      ["City", "State / Region", "Country", "Profile Headline", "About"],
+    ],
+    [
+      "src/components/profile/experience-section.tsx",
+      ["Company", "Employment type", "Location"],
+    ],
+    [
+      "src/components/profile/education-section.tsx",
+      ["School / College", "Degree", "Department / field"],
+    ],
+    [
+      "src/components/profile/projects-section.tsx",
+      ["Project name", "Tech stack", "GitHub"],
+    ],
+    [
+      "src/components/profile/links-section.tsx",
+      ["LinkedIn", "GitHub", "Portfolio"],
+    ],
+    [
+      "src/components/profile/preferences-section.tsx",
+      ["Preferred roles", "Preferred locations"],
+    ],
+  ];
+  for (const [rel, labels] of marked) {
+    const src = code(rel);
+    for (const label of labels) {
+      const at = src.indexOf('label="' + label + '"');
+      assert(at !== -1, rel + ": " + label + " exists");
+      const field = src.slice(at, src.indexOf(">", at));
+      assert(field.includes("required"), rel + ": " + label + " is marked required");
+    }
+  }
+});
+
+suite("nothing on the profile blocks a save", () => {
+  // The asterisk means "needed to complete this section". Making any of these
+  // a hard form requirement would break the standing rule that only /register
+  // has mandatory fields.
+  for (const rel of [
+    "src/components/profile/basic-info-section.tsx",
+    "src/components/profile/experience-section.tsx",
+    "src/components/profile/education-section.tsx",
+    "src/components/profile/projects-section.tsx",
+    "src/components/profile/links-section.tsx",
+    "src/components/profile/preferences-section.tsx",
+  ]) {
+    const src = code(rel);
+    assert(
+      !/<PwInput[^>]*\srequired[\s/>]/.test(src),
+      rel + ": no input enforces required",
+    );
+  }
+});
+
+suite("the resume section is built from the wizard's own styling", () => {
+  const src = source("src/components/profile/resume-section.tsx");
+  const strength = source("src/components/profile/resume-strength.tsx");
+  const pair: [string, string][] = [
+    ["resume-section.tsx", src],
+    ["resume-strength.tsx", strength],
+  ];
+  for (const [rel, text] of pair) {
+    assert(!text.includes("@/components/ui/"), rel + ": no shadcn primitives");
+    assert(!text.includes("lucide-react"), rel + ": icons match the wizard");
+    assert(!text.includes("text-muted-foreground"), rel + ": no Tailwind tokens");
+    assert(text.includes("pw-"), rel + ": uses pw-* classes");
+  }
+  // The behaviour it wraps is unchanged.
+  for (const action of [
+    "uploadResumeAction",
+    "saveResumeLinkAction",
+    "removeResumeAction",
+  ]) {
+    assert(src.includes(action), action + " still wired");
+  }
+});
+
+suite("the photo control is never silently absent", () => {
+  const media = code("src/components/profile/identity-media.tsx");
+  assert(
+    !media.includes("avatarUploadEnabled ? <AvatarEditor"),
+    "the pencil is not conditionally dropped",
+  );
+  assert(media.includes("unavailable={!avatarUploadEnabled}"), "it explains itself");
+  const editor = code("src/components/profile/avatar-editor.tsx");
+  assert(editor.includes("unavailable"), "the editor understands the state");
+  assert(editor.includes("disabled={pending || unavailable}"), "and disables itself");
+});
+
+suite("one name per section, wizard and report card alike", () => {
+  const page = source("src/app/profile/page.tsx");
+  const review = source("src/features/profile/build-review.ts");
+  for (const title of ["Skills", "Career Preferences", "Accomplishments", "Resume"]) {
+    assert(page.includes('"' + title + '"'), "the wizard step is " + title);
+    assert(review.includes('"' + title + '"'), "the report card agrees on " + title);
+  }
+  assert(!review.includes('"Key skills"'), "no second name for Skills");
+  assert(
+    !review.includes('"Your career preferences"'),
+    "no second name for Career Preferences",
+  );
+});
+
+suite("sentence case in the places QA caught title case", () => {
+  assert(
+    source("src/components/profile/profile-review.tsx").includes("Open to work"),
+    "the hero badge is sentence case",
+  );
+  assert(
+    source("src/components/profile/basic-info-section.tsx").includes(
+      'label="Phone number"',
+    ),
+    "so is the phone label",
+  );
+});
+
+suite("the page keeps a scroll cue without showing a scrollbar at rest", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(
+    css.includes("body.pw-profile-page.pw-scrolling .abt-content-scroll"),
+    "the thumb is painted while scrolling",
+  );
+  assert(
+    css.includes("scrollbar-color: transparent transparent"),
+    "and invisible at rest",
+  );
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-scrolling"), "the wizard drives the class");
+  assert(wizard.includes("SCROLL_CUE_MS"), "and lets it lapse when scrolling stops");
+});
+
+suite("the section heading shows the focus it takes", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(
+    css.includes(".pw-section-header h2:focus-visible"),
+    "the focused heading has a ring",
+  );
+});
+
+suite("a long display name cannot crowd the Edit control", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const hero = css.slice(
+    css.indexOf(".pw-rv-hero-copy h2 {"),
+    css.indexOf(".pw-rv-headline {"),
+  );
+  assert(hero.includes("overflow-wrap"), "long names wrap");
+  assert(hero.includes("min-width: 0"), "and the column can shrink");
+});
+
+suite("dead profile components are gone", () => {
+  for (const rel of [
+    "src/components/profile/leave-dialog.tsx",
+    "src/components/profile/fields.tsx",
+  ]) {
+    let exists = true;
+    try {
+      source(rel);
+    } catch {
+      exists = false;
+    }
+    assert(!exists, rel + " should have been deleted");
+  }
+});
+
+/* ─── Skill catalog (tech, research, engineering) ────────────────────────── */
+
+const squashSkill = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Names whose punctuation IS the name: C, C++ and C# all squash to "c". They
+ * are distinct skills, and the exact-key lookup keeps them apart — only the
+ * punctuation-insensitive fallback sees them as one, which is why "c" resolves
+ * to the language C and the other two are only ever reached by typing them.
+ */
+const SQUASH_COLLISIONS_ALLOWED = new Set(["c"]);
+
+suite("the catalog holds exactly one spelling per skill", () => {
+  const byName = new Map<string, string>();
+  for (const entry of CANONICAL_SKILLS) {
+    const key = squashSkill(entry.name);
+    const clash = byName.get(key);
+    assert(
+      !clash || SQUASH_COLLISIONS_ALLOWED.has(key),
+      `duplicate entry: ${entry.name} and ${clash}`,
+    );
+    if (!clash) byName.set(key, entry.name);
+  }
+  for (const name of ["C", "C++", "C#"]) {
+    assert(
+      canonicalSkillName(name) === name,
+      `${name} must survive folding as itself, got ${canonicalSkillName(name)}`,
+    );
+  }
+
+  // An alias that lands on another entry's name, or that two entries share,
+  // makes canonicalSkillName() depend on array order. That is how a catalog
+  // quietly starts folding "React" onto "React Native".
+  const byAlias = new Map<string, string>();
+  for (const entry of CANONICAL_SKILLS) {
+    for (const alias of entry.aliases ?? []) {
+      assert(alias === alias.toLowerCase(), `alias must be lower-case: ${alias}`);
+      assert(alias.trim() === alias, `alias must be trimmed: ${alias}`);
+      const key = squashSkill(alias);
+      const asName = byName.get(key);
+      assert(
+        !asName || asName === entry.name,
+        `alias "${alias}" on ${entry.name} collides with the skill ${asName}`,
+      );
+      const other = byAlias.get(key);
+      assert(
+        !other || other === entry.name,
+        `alias "${alias}" is claimed by both ${entry.name} and ${other}`,
+      );
+      byAlias.set(key, entry.name);
+    }
+  }
+  assert(byAlias.size > 200, `expected a broad alias table, got ${byAlias.size}`);
+});
+
+suite("every alias folds onto its canonical spelling", () => {
+  for (const entry of CANONICAL_SKILLS) {
+    assert(
+      canonicalSkillName(entry.name) === entry.name,
+      `${entry.name} must be its own canonical form`,
+    );
+    for (const alias of entry.aliases ?? []) {
+      const folded = canonicalSkillName(alias);
+      assert(
+        folded === entry.name,
+        `"${alias}" folded to "${folded}", expected ${entry.name}`,
+      );
+    }
+  }
+  // Spelling and spacing are handled by the squash pass, not by listing every
+  // permutation as an alias.
+  for (const [typed, expected] of [
+    ["tailwindcss", "Tailwind CSS"],
+    ["Tailwind css", "Tailwind CSS"],
+    ["TAILWINDCSS", "Tailwind CSS"],
+    ["node js", "Node.js"],
+    ["postgre sql", "PostgreSQL"],
+    ["scikit learn", "scikit-learn"],
+    ["k8s", "Kubernetes"],
+  ] as const) {
+    assert(
+      canonicalSkillName(typed) === expected,
+      `"${typed}" should fold to ${expected}, got ${canonicalSkillName(typed)}`,
+    );
+  }
+});
+
+suite("skill names are written the way their own docs write them", () => {
+  for (const name of [
+    "Tailwind CSS",
+    "Node.js",
+    "Next.js",
+    "TypeScript",
+    "JavaScript",
+    "PostgreSQL",
+    "MongoDB",
+    "GraphQL",
+    "scikit-learn",
+    "PyTorch",
+    "TensorFlow",
+    "MATLAB",
+    "AutoCAD",
+    "SolidWorks",
+    "LabVIEW",
+    "KiCad",
+    "STAAD.Pro",
+    "LaTeX",
+    "MySQL",
+  ]) {
+    assert(
+      CANONICAL_SKILL_NAMES.includes(name),
+      `${name} must be spelled exactly that way in the catalog`,
+    );
+  }
+  for (const entry of CANONICAL_SKILLS) {
+    assert(entry.name.trim() === entry.name, `${entry.name} has stray whitespace`);
+    assert(!entry.name.includes("  "), `${entry.name} has a double space`);
+  }
+});
+
+suite("the catalog covers tech, research and engineering", () => {
+  assert(
+    CANONICAL_SKILLS.length >= 300,
+    `expected a broad catalog, got ${CANONICAL_SKILLS.length}`,
+  );
+  const counts = new Map<string, number>();
+  for (const entry of CANONICAL_SKILLS) {
+    counts.set(entry.group, (counts.get(entry.group) ?? 0) + 1);
+  }
+  // Every declared group must actually carry skills — an empty group is a
+  // promise the picker cannot keep.
+  for (const group of SKILL_GROUPS) {
+    assert((counts.get(group) ?? 0) > 0, `group ${group} is empty`);
+  }
+  for (const group of [
+    "Research",
+    "Mechanical Engineering",
+    "Electrical Engineering",
+    "Civil Engineering",
+    "Chemical Engineering",
+    "Industrial Engineering",
+  ]) {
+    assert(
+      (counts.get(group) ?? 0) >= 10,
+      `${group} needs real depth, got ${counts.get(group) ?? 0}`,
+    );
+  }
+  for (const name of [
+    "Finite Element Analysis",
+    "Computational Fluid Dynamics",
+    "Research Methodology",
+    "Literature Review",
+    "PCB Design",
+    "Structural Analysis",
+    "Process Simulation",
+    "Six Sigma",
+  ]) {
+    assert(CANONICAL_SKILL_NAMES.includes(name), `${name} is missing`);
+  }
+});
+
+suite("search finds skills a substring match never would", () => {
+  const first = (q: string) => searchCanonicalSkills(q, 5)[0]?.name;
+  // Aliases carry the query to a name that shares nothing with it.
+  assert(first("k8s") === "Kubernetes", `k8s -> ${first("k8s")}`);
+  assert(first("dsa") === "Data Structures & Algorithms", `dsa -> ${first("dsa")}`);
+  assert(first("cfd") === "Computational Fluid Dynamics", `cfd -> ${first("cfd")}`);
+  assert(first("iot") === "Internet of Things", `iot -> ${first("iot")}`);
+
+  // An exact alias outranks a name that merely starts with the query.
+  assert(first("ml") === "Machine Learning", `ml -> ${first("ml")}`);
+  assert(first("fea") === "Finite Element Analysis", `fea -> ${first("fea")}`);
+  // An exact name still wins over everything.
+  assert(first("java") === "Java", `java -> ${first("java")}`);
+
+  // Misspacing and casing are not a dead end.
+  assert(first("tailwindcss") === "Tailwind CSS", `tailwindcss -> ${first("tailwindcss")}`);
+  assert(first("solid works") === "SolidWorks", `solid works -> ${first("solid works")}`);
+
+  // A field name browses that field.
+  const civil = searchCanonicalSkills("civil", 5);
+  assert(civil.length >= 3, "typing a discipline lists its skills");
+  assert(
+    civil.every((h) => h.group === "Civil Engineering"),
+    "and only that discipline",
+  );
+
+  // An empty query is a curated spread, never the whole catalog.
+  const idle = searchCanonicalSkills("", 40);
+  assert(idle.length > 0 && idle.length <= 40, `idle list is ${idle.length}`);
+  assert(
+    idle.length < CANONICAL_SKILLS.length,
+    "the idle list must not be the entire catalog",
+  );
+  assert(new Set(idle.map((h) => h.group)).size >= 6, "and it spans several areas");
+});
+
+suite("both skill pickers search the same catalog", () => {
+  const combobox = code("src/components/profile/skill-combobox.tsx");
+  assert(
+    combobox.includes("searchCanonicalSkills"),
+    "the Skills picker ranks with the catalog matcher",
+  );
+  assert(
+    !combobox.includes("s.name.toLowerCase().includes(q)"),
+    "and no longer falls back to a plain substring filter",
+  );
+
+  // The project Tech stack field is the pattern this was modelled on, so it
+  // gets the same alias search rather than a second, weaker one.
+  const projects = code("src/components/profile/projects-section.tsx");
+  assert(projects.includes("suggestions={CANONICAL_SKILL_NAMES}"), "same catalog");
+  assert(
+    projects.includes("searchSuggestions={searchCanonicalSkillNames}"),
+    "same alias-aware search",
+  );
+  assert(projects.includes("normalize={canonicalSkillName}"), "same folding");
+
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  assert(fields.includes("search?: (query: string)"), "PwSuggest accepts a matcher");
+});
+
+suite("the profile page does not resolve the whole catalog on load", () => {
+  const page = code("src/app/profile/page.tsx");
+  assert(
+    page.includes("getSkillsByNames(PROFILE_QUICK_SKILLS)"),
+    "only the quick adds are pre-resolved",
+  );
+  assert(
+    !page.includes("getSkillsByNames(CANONICAL_SKILL_NAMES)"),
+    "a few hundred name comparisons per page load is not a lookup",
+  );
+  // Everything else still reaches a Skill row on the way in.
+  const section = code("src/components/profile/skills-section.tsx");
+  assert(section.includes("resolveSkillAction"), "unresolved names resolve on add");
+});
+
+/* ─── Validation errors belong under their field ─────────────────────────── */
+
+suite("a rejected save says which field it is about", () => {
+  const actions = code("src/app/actions/candidate-profile-actions.ts");
+  assert(actions.includes("export type FieldIssue"), "issues are a typed shape");
+  assert(
+    actions.includes("issues?: FieldIssue[]"),
+    "the failure envelope can carry them",
+  );
+  assert(actions.includes("function fieldIssues"), "zod paths are collected");
+  assert(
+    actions.includes('issue.path.join(".")'),
+    "as dotted paths the form can address",
+  );
+  // Every section boundary returns them, not just the first one written.
+  const returns = actions.split("issues: fieldIssues(parsed.error)").length - 1;
+  assert(returns >= 2, `expected the section boundaries to carry issues, got ${returns}`);
+});
+
+suite("the toast is the fallback, not the default", () => {
+  const hook = code("src/components/profile/use-section-save.ts");
+  assert(
+    hook.includes("const placed = placeIssues?.(result.issues ?? []) ?? 0"),
+    "the form gets first refusal on every failure",
+  );
+  assert(
+    hook.includes("if (placed === 0) toast.error(result.message)"),
+    "and a toast only fires when nothing could be placed",
+  );
+});
+
+suite("server errors clear the moment the field changes", () => {
+  const src = code("src/components/profile/field-issues.ts");
+  assert(src.includes("setError"), "issues become field errors");
+  assert(src.includes("shouldFocus: true"), "the first one pulls the view to it");
+  assert(
+    src.includes("owned.current.delete(name)") && src.includes("clearErrors"),
+    "and are dropped as soon as that field is edited",
+  );
+  // A path the form does not have must not count as placed, or the failure
+  // would be swallowed: no toast, no inline message, nothing.
+  assert(src.includes("function pathExists"), "unknown paths are detected");
+  assert(src.includes("if (!pathExists(values, path)) continue"), "and skipped");
+});
+
+suite("every section form routes its errors to its own fields", () => {
+  for (const rel of [
+    "src/components/profile/basic-info-section.tsx",
+    "src/components/profile/experience-section.tsx",
+    "src/components/profile/education-section.tsx",
+    "src/components/profile/projects-section.tsx",
+    "src/components/profile/links-section.tsx",
+    "src/components/profile/preferences-section.tsx",
+    "src/components/profile/accomplishments-section.tsx",
+  ]) {
+    const src = code(rel);
+    assert(src.includes("useServerFieldErrors"), `${rel}: has a sink`);
+    assert(src.includes("placeIssues"), `${rel}: passes it to save()`);
+    // Whitespace-free, because these calls wrap differently per section.
+    const flat = src.replace(/\s+/g, "");
+    assert(
+      flat.includes("placeIssues)") || flat.includes("placeIssues,)"),
+      `${rel}: the sink actually reaches save()`,
+    );
+  }
+  // The country input is named for what it shows, not for what is stored.
+  const basic = code("src/components/profile/basic-info-section.tsx");
+  assert(
+    basic.includes('{ countryCode: "country" }'),
+    "a schema field with a different form name is aliased",
+  );
+});
+
+suite("date pairs are judged as they are picked", () => {
+  const cases: [string, string, string][] = [
+    ["src/components/profile/experience-section.tsx", "endYear", "cannot end before it started"],
+    ["src/components/profile/education-section.tsx", "graduationYear", "cannot be before the start date"],
+    ["src/components/profile/accomplishments-section.tsx", "expiresYear", "cannot expire before it was issued"],
+  ];
+  for (const [rel, field, message] of cases) {
+    const src = code(rel);
+    assert(src.includes('mode: "onChange"'), `${rel}: validates while editing`);
+    assert(src.includes("endBeforeStart"), `${rel}: uses the shared rule`);
+    assert(src.includes(message), `${rel}: says what is wrong in words`);
+    // The rule lives on the path the schema names, so a live failure and a
+    // server one cannot land in two different places.
+    assert(
+      src.includes(`.${field}\`}`) || src.includes(`${field}?.message`),
+      `${rel}: the error surfaces on ${field}`,
+    );
+    assert(
+      src.includes(`errors.rows?.[index]?.${field}?.message`),
+      `${rel}: and is rendered by that field`,
+    );
+    // Editing any half of either date re-runs it, so a fix registers whichever
+    // input the candidate corrects.
+    assert(src.includes("void trigger("), `${rel}: siblings re-run the rule`);
+  }
+});
+
+suite("an invalid date pair looks invalid", () => {
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  // It used to go red only while empty, so a filled-but-wrong pair stayed
+  // looking correct while the message sat somewhere else entirely.
+  assert(
+    fields.includes('className={`pw-menu-select-trigger${invalid ? " pw-invalid" : ""}`}'),
+    "a set-but-wrong value still shows as invalid",
+  );
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(css.includes(".pw-menu-select-trigger.pw-invalid"), "and is styled");
+  // The message renders inside the field, so it displaces content instead of
+  // floating over another section.
+  assert(css.includes(".pw-field.pw-has-error .pw-error-msg"), "inline, in flow");
+  const errorRule = css.slice(
+    css.indexOf(".pw-error-msg {"),
+    css.indexOf("}", css.indexOf(".pw-error-msg {")),
+  );
+  assert(!errorRule.includes("position: absolute"), "never positioned over anything");
+  assert(!errorRule.includes("position: fixed"), "and never pinned to the viewport");
+});
+
+suite("the date rule itself", () => {
+  const msg = "nope";
+  const feb2026 = { month: 2, year: 2026 };
+  const jan2026 = { month: 1, year: 2026 };
+  assert(endBeforeStart(feb2026, jan2026, msg) === msg, "Feb 2026 → Jan 2026 fails");
+  assert(endBeforeStart(jan2026, feb2026, msg) === null, "Jan 2026 → Feb 2026 passes");
+  assert(endBeforeStart(feb2026, feb2026, msg) === null, "the same month passes");
+  // An unfinished date is not a wrong one.
+  assert(
+    endBeforeStart(feb2026, { month: null, year: null }, msg) === null,
+    "no end year yet is not an error",
+  );
+  assert(
+    endBeforeStart({ month: null, year: null }, jan2026, msg) === null,
+    "no start year yet is not an error either",
+  );
+  // A missing month must not invent a failure: a start defaults to the first
+  // month of its year and an end to the last.
+  assert(
+    endBeforeStart({ month: null, year: 2026 }, { month: null, year: 2026 }, msg) === null,
+    "same year, months unpicked, passes",
+  );
+  assert(
+    endBeforeStart({ month: 6, year: 2026 }, { month: null, year: 2025 }, msg) === msg,
+    "an earlier end year still fails",
+  );
+
+  const now = new Date();
+  assert(isFuture(12, now.getFullYear() + 1), "next year is the future");
+  assert(!isFuture(1, now.getFullYear() - 1), "last year is not");
+  assert(!isFuture(null, null), "an empty date is not the future");
+});
+
+/* ─── Plan 137: catalogs and form fixes ──────────────────────────────────── */
+
+suite("the skills picker offers the catalog and nothing else", () => {
+  const src = code("src/components/profile/skill-combobox.tsx");
+  // The Skill table was seeded from free text, so it holds "Tailwinf CSS" and
+  // whole pasted stacks. Those were being listed beside real skills.
+  assert(!src.includes("/api/skills/search"), "no query against the seeded table");
+  assert(!src.includes("fetch("), "no network call at all");
+  assert(!src.includes("setResults"), "and no results state left behind");
+  assert(src.includes("searchCanonicalSkills"), "the catalog is the source");
+  // Free text still has a way in.
+  assert(src.includes("onEnterFreeText"), "typing something new still works");
+  assert(src.includes("OTHER_ITEM"), "and Other is still offered");
+});
+
+suite("the city catalog is derived from data already in the repo", () => {
+  const script = code("prisma/scripts/build-city-catalog.ts");
+  assert(
+    script.includes("prisma") && script.includes("colleges.json"),
+    "built from the college dataset",
+  );
+  const generated = source("src/lib/city-catalog.generated.ts");
+  assert(generated.includes("GENERATED"), "the output says so");
+  assert(CITY_NAMES.length > 500, `expected real coverage, got ${CITY_NAMES.length}`);
+  assert(STATE_NAMES.length >= 28, `expected the states, got ${STATE_NAMES.length}`);
+
+  // The 6 MB source must never be read at request time.
+  for (const rel of [
+    "src/lib/city-catalog.ts",
+    "src/components/profile/basic-info-section.tsx",
+  ]) {
+    assert(!code(rel).includes("colleges.json"), `${rel} does not read the dataset`);
+  }
+
+  // One entry per place: the dataset holds both Bangalore and Bengaluru.
+  const lower = CITY_NAMES.map((c) => c.toLowerCase());
+  assert(new Set(lower).size === lower.length, "no duplicate city entries");
+  assert(!CITY_NAMES.includes("Bangalore"), "old spellings are folded away");
+  assert(CITY_NAMES.includes("Bengaluru"), "and the current one is kept");
+});
+
+suite("a city knows its state, and a state never guesses a city", () => {
+  assert(stateForCity("Pune") === "Maharashtra", "Pune is in Maharashtra");
+  assert(stateForCity("Noida") === "Uttar Pradesh", "Noida is in UP");
+  // Old spellings and nicknames resolve to the same place.
+  assert(stateForCity("Bangalore") === "Karnataka", "Bangalore still resolves");
+  assert(stateForCity("vizag") === "Andhra Pradesh", "so do nicknames");
+  assert(canonicalCityName("gurgaon") === "Gurugram", "renames fold");
+  assert(stateForCity("Nowhereville") === null, "an unknown place says so");
+  assert(canonicalCityName("Nowhereville") === "Nowhereville", "and is kept as typed");
+
+  // The catalog exposes no way to go the other way.
+  const src = code("src/lib/city-catalog.ts");
+  assert(!/citiesForState|citiesInState/.test(src), "no state → city lookup exists");
+  const basic = code("src/components/profile/basic-info-section.tsx");
+  assert(basic.includes("stateForCity"), "the city field fills the state");
+  assert(
+    !basic.includes("setValue(\"locationCity\""),
+    "and nothing ever writes the city for the candidate",
+  );
+  assert(
+    basic.includes("onlyIfEmpty"),
+    "a state the candidate typed is never overwritten",
+  );
+});
+
+suite("city search reaches the big cities first", () => {
+  assert(searchCities("pun", 3)[0] === "Pune", "pun -> Pune");
+  assert(searchCities("mum", 3)[0] === "Mumbai", "mum -> Mumbai");
+  // "ban" no longer appears in "Bengaluru" at all — the old spelling carries it.
+  assert(searchCities("ban", 3)[0] === "Bengaluru", "ban -> Bengaluru");
+  assert(searchCities("trichy", 2)[0] === "Tiruchirappalli", "old name finds new");
+  assert(searchCities("", 5).length === 5, "an empty query still suggests");
+  assert(searchStates("mah", 3)[0] === "Maharashtra", "states search too");
+});
+
+suite("every place field draws on the same city catalog", () => {
+  for (const [rel, note] of [
+    ["src/components/profile/basic-info-section.tsx", "profile city"],
+    ["src/components/profile/experience-section.tsx", "experience location"],
+    ["src/components/profile/preferences-section.tsx", "preferred locations"],
+  ] as const) {
+    const src = code(rel);
+    assert(src.includes("city-catalog"), `${note} uses the catalog`);
+    assert(src.includes("searchCities"), `${note} searches it`);
+  }
+});
+
+suite("B.E and B.Tech are one degree, and departments follow the degree", () => {
+  // Widened: the list is `as const`, so the old spellings are not even
+  // assignable to its element type — which is half the point.
+  const degrees: readonly string[] = DEGREES;
+  assert(degrees.includes("B.E / B.Tech"), "the merged entry exists");
+  assert(!degrees.includes("B.E"), "and the two halves are gone");
+  assert(!degrees.includes("B.Tech"), "both of them");
+  assert(degrees.includes("M.E / M.Tech"), "the same is done for M.E / M.Tech");
+  // Rows saved before the merge still resolve.
+  for (const typed of ["B.E", "b.tech", "btech", "BE"]) {
+    assert(
+      canonicalDegree(typed) === "B.E / B.Tech",
+      `${typed} folds onto the merged degree, got ${canonicalDegree(typed)}`,
+    );
+  }
+  assert(degrees.length >= 35, `the list grew, got ${degrees.length}`);
+
+  // A degree offers its own branches, not everyone else's.
+  const btech = departmentsForDegree("B.Tech");
+  assert(btech.includes("Computer Science and Engineering"), "engineering for B.Tech");
+  assert(!btech.includes("Marketing"), "and not management");
+  const bcom = departmentsForDegree("B.Com");
+  assert(bcom.includes("Accounting and Finance"), "commerce for B.Com");
+  assert(!bcom.includes("Mechanical Engineering"), "and not engineering");
+  assert(
+    departmentsForDegree("MBBS").includes("General Medicine"),
+    "medicine for MBBS",
+  );
+  assert(
+    departmentsForDegree("Higher Secondary (12th)").includes("Science (PCM)"),
+    "school streams for school",
+  );
+  // Anything unrecognised must not narrow the list.
+  assert(
+    departmentsForDegree("Ph.D").length === FIELDS_OF_STUDY.length,
+    "a Ph.D can be in anything",
+  );
+  assert(
+    departmentsForDegree("Something Invented").length === FIELDS_OF_STUDY.length,
+    "an unknown degree offers everything",
+  );
+
+  const section = code("src/components/profile/education-section.tsx");
+  assert(
+    section.includes("departmentsForDegree(degree"),
+    "the Department field reads the degree beside it",
+  );
+});
+
+suite("the unsaved-changes warning sits above the buttons and is hard to miss", () => {
+  const css = source("src/components/profile/profile-wizard.css");
+  const rule = css.slice(
+    css.indexOf(".pw-leave-pop {"),
+    css.indexOf("}", css.indexOf(".pw-leave-pop {")),
+  );
+  // It used to overlap the actions row by 8px and be white on white.
+  assert(rule.includes("bottom: calc(100% + 8px)"), "fully above the buttons");
+  assert(!rule.includes("bottom: calc(100% - 8px)"), "not overlapping them");
+  assert(rule.includes("var(--pw-warning-soft)"), "carries the warning colour");
+  assert(rule.includes("var(--pw-warning)"), "including its border");
+  assert(rule.includes("left: 20px") && rule.includes("right: 20px"), "spans the bar");
+  const wizard = code("src/components/profile/profile-wizard.tsx");
+  assert(wizard.includes("pw-leave-head"), "and leads with an icon");
+});
+
+suite("basic info gives the headline its own row", () => {
+  const src = code("src/components/profile/basic-info-section.tsx");
+  const headlineAt = src.indexOf('label="Profile Headline"');
+  assert(headlineAt !== -1, "the headline field exists");
+  // The row it opens must be the single-column one, not the row holding
+  // Country and Gender.
+  const rowStart = src.lastIndexOf("<PwRow", headlineAt);
+  assert(
+    src.slice(rowStart, headlineAt).includes("cols={1}"),
+    "the headline has a row to itself",
+  );
+  const genderAt = src.indexOf('label="Gender"');
+  const genderRow = src.lastIndexOf("<PwRow", genderAt);
+  assert(
+    src.slice(genderRow, genderAt).includes("cols={2}"),
+    "and the row above it holds Country and Gender",
+  );
+  assert(genderRow < rowStart, "with the headline below it");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
