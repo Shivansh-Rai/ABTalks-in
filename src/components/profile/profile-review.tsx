@@ -7,13 +7,15 @@ import type {
   ReviewCard,
   ReviewIconKey,
 } from "@/features/profile/build-review";
+import { ProfilePerformance } from "./profile-performance";
 
 /**
  * The report card — the profile as a recruiter sees it.
  *
  * Everything it renders arrives as plain data from `buildProfileReview` on the
- * server. Anything filled in stacks at the top; the rest waits below its own
- * rule, and each card's Add / Edit opens the wizard step that owns it.
+ * server. Desktop stacks filled cards above empty ones; mobile shows a compact
+ * overview (preview rows + Complete CTA). Each card's Add / Edit / row open
+ * the wizard step that owns it.
  */
 
 const RV_ICON: Record<ReviewIconKey, ReactNode> = {
@@ -158,6 +160,44 @@ function Block({ block }: { block: ReviewBlock }) {
   }
 }
 
+function CardHead({
+  card,
+  onOpen,
+}: {
+  card: ReviewCard;
+  onOpen: (stepIndex: number) => void;
+}) {
+  return (
+    <div className="pw-rv-card-head">
+      <span className="pw-rv-ico" aria-hidden>
+        <svg viewBox="0 0 24 24">{RV_ICON[card.icon]}</svg>
+      </span>
+      <div className="pw-rv-card-copy">
+        <h3>{card.title}</h3>
+        <p className="pw-rv-preview">{card.preview}</p>
+      </div>
+      {card.count > 1 ? <span className="pw-rv-count">{card.count}</span> : null}
+      <button
+        type="button"
+        className="pw-rv-add"
+        onClick={() => onOpen(card.stepIndex)}
+      >
+        {card.filled ? "Edit" : "Add"}
+        <span className="pw-sr-only"> {card.title}</span>
+      </button>
+      <span className="pw-rv-chev" aria-hidden>
+        <svg viewBox="0 0 24 24">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Desktop card: head with Add/Edit + full body.
+ * Mobile CSS turns this into a compact tappable row (preview + chevron).
+ */
 function Card({
   card,
   onOpen,
@@ -167,21 +207,7 @@ function Card({
 }) {
   return (
     <section className={`pw-rv-card${card.filled ? "" : " pw-is-empty"}`}>
-      <div className="pw-rv-card-head">
-        <span className="pw-rv-ico" aria-hidden>
-          <svg viewBox="0 0 24 24">{RV_ICON[card.icon]}</svg>
-        </span>
-        <h3>{card.title}</h3>
-        {card.count > 1 ? <span className="pw-rv-count">{card.count}</span> : null}
-        <button
-          type="button"
-          className="pw-rv-add"
-          onClick={() => onOpen(card.stepIndex)}
-        >
-          {card.filled ? "Edit" : "Add"}
-          <span className="pw-sr-only"> {card.title}</span>
-        </button>
-      </div>
+      <CardHead card={card} onOpen={onOpen} />
       <div className="pw-rv-card-body">
         {card.filled ? (
           card.blocks.map((block, i) => <Block block={block} key={i} />)
@@ -189,6 +215,13 @@ function Card({
           <p className="pw-rv-empty">{card.emptyHint}</p>
         )}
       </div>
+      {/* Mobile: whole-card hit target without nesting the desktop Add button. */}
+      <button
+        type="button"
+        className="pw-rv-card-hit"
+        onClick={() => onOpen(card.stepIndex)}
+        aria-label={`${card.filled ? "Edit" : "Add"} ${card.title}`}
+      />
     </section>
   );
 }
@@ -197,15 +230,18 @@ export function ProfileReviewCard({
   review,
   media,
   onOpen,
+  performance,
 }: {
   review: ProfileReview;
   /** The ring / avatar / photo editor, rendered into the hero. */
   media: ReactNode;
   onOpen: (stepIndex: number) => void;
+  performance: { searchAppearances: number; recruiterActions: number };
 }) {
   const filled = review.cards.filter((c) => c.filled);
   const empty = review.cards.filter((c) => !c.filled);
-  const gaps = empty.filter((c) => !c.noGap).map((c) => c.title);
+  const gapCards = empty.filter((c) => !c.noGap);
+  const gaps = gapCards.map((c) => c.title);
   const basicStep = review.cards[0]?.stepIndex ?? 0;
 
   return (
@@ -229,11 +265,24 @@ export function ProfileReviewCard({
                     Open to work
                   </span>
                 ) : null}
-                {review.meta.map((m) => (
-                  <span className="pw-rv-meta-i" key={m}>
-                    {m}
+                {review.persona ? (
+                  <span className="pw-rv-meta-i">{review.persona}</span>
+                ) : null}
+                {review.location ? (
+                  <span className="pw-rv-meta-i pw-rv-meta-secondary">
+                    {review.location}
                   </span>
-                ))}
+                ) : null}
+                {review.phone ? (
+                  <span className="pw-rv-meta-i pw-rv-meta-secondary">
+                    {review.phone}
+                  </span>
+                ) : null}
+                {review.updatedLabel ? (
+                  <span className="pw-rv-meta-i pw-rv-meta-secondary">
+                    {review.updatedLabel}
+                  </span>
+                ) : null}
               </div>
             </div>
             <button
@@ -271,20 +320,70 @@ export function ProfileReviewCard({
           </div>
         ) : null}
 
-        {filled.map((card) => (
-          <Card card={card} key={card.title} onOpen={onOpen} />
-        ))}
-
-        {empty.length > 0 ? (
-          <>
-            <div className="pw-rv-divider">
-              <span>{filled.length > 0 ? "Not added yet" : "Start anywhere"}</span>
+        {gapCards.length > 0 ? (
+          <div className="pw-rv-complete">
+            <div className="pw-rv-complete-head">
+              <span className="pw-rv-complete-ico" aria-hidden>
+                <svg viewBox="0 0 24 24">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                  <path d="M12 9v4" />
+                  <path d="M12 17h.01" />
+                </svg>
+              </span>
+              <div className="pw-rv-complete-copy">
+                <span className="pw-rv-complete-title">Complete your profile</span>
+                <span className="pw-rv-complete-sub">
+                  {gapCards.length} section
+                  {gapCards.length === 1 ? "" : "s"} remaining
+                </span>
+              </div>
             </div>
-            {empty.map((card) => (
-              <Card card={card} key={card.title} onOpen={onOpen} />
-            ))}
-          </>
+            <div className="pw-rv-complete-chips">
+              {gapCards.map((card) => (
+                <button
+                  key={card.title}
+                  type="button"
+                  className="pw-rv-complete-chip"
+                  onClick={() => onOpen(card.stepIndex)}
+                >
+                  {card.title}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : null}
+
+        {/* Desktop: filled then empty. Mobile CSS shows the ordered list below. */}
+        <div className="pw-rv-desktop-list">
+          {filled.map((card) => (
+            <Card card={card} key={card.title} onOpen={onOpen} />
+          ))}
+
+          {empty.length > 0 ? (
+            <>
+              <div className="pw-rv-divider">
+                <span>
+                  {filled.length > 0 ? "Not added yet" : "Start anywhere"}
+                </span>
+              </div>
+              {empty.map((card) => (
+                <Card card={card} key={card.title} onOpen={onOpen} />
+              ))}
+            </>
+          ) : null}
+        </div>
+
+        <div className="pw-rv-mobile-list">
+          {review.cards.map((card) => (
+            <Card card={card} key={`m-${card.title}`} onOpen={onOpen} />
+          ))}
+        </div>
+
+        <ProfilePerformance
+          className="pw-performance-section pw-rv-performance"
+          searchAppearances={performance.searchAppearances}
+          recruiterActions={performance.recruiterActions}
+        />
       </div>
     </section>
   );
