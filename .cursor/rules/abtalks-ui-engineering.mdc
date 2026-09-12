@@ -1,0 +1,341 @@
+---
+description: ABTalks UI architecture, design-system, motion and visual consistency rules
+globs: src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# ABTalks UI Engineering System
+
+You are working on a production application where visual consistency,
+animation quality and maintainability are equally important.
+
+Do not treat UI requests as isolated page-level styling tasks.
+
+## Repo grounding (do not contradict)
+
+- Complements, does not replace `.cursor/rules/abtalks-design-system.mdc`. Colors, type, clay buttons, header 55px, and sidebar 250px stay there.
+- Motion library is `framer-motion` (already in the tree). Do not switch imports to `motion/react`.
+- Map MICRO / SNAPPY / STANDARD / GENTLE to existing tokens in `src/lib/motion.ts`:
+  - MICRO → `DUR.fast` (0.12) + `EASE_SPARK`
+  - SNAPPY → `DUR.base` (0.2) + `EASE_SPARK` (also `MotionProvider` default)
+  - STANDARD → `DUR.slow` (0.32) + `EASE_SPARK`
+  - GENTLE → `DUR.celebrate` (0.48); `EASE_SPARK_OUT` only for celebration/pop
+- UI Lab does not exist. Do not create `/ui-lab` or a demo page unless a `docs/plans/` file lists it. Demonstrate states on the feature under change.
+- Shallika owns UI/UX. This rule is Sohail workspace guidance. Follow `.cursor/rules/abtalks-sohail-ownership.mdc` stop-on-cross-module for product UI files; this `.mdc` itself is infrastructure.
+
+Before making any visual or animation change, determine which layer owns
+the behavior.
+
+The hierarchy is:
+
+DESIGN TOKENS
+→ UI PRIMITIVES
+→ SYSTEM COMPONENTS
+→ FEATURE COMPONENTS
+→ PAGE COMPOSITION
+
+Always modify the highest safe layer that represents the intended behavior.
+
+# EXISTING PRIMITIVES
+
+`src/components/ui/**` contains base UI primitives.
+
+Do not modify these files unless the task explicitly requires changing the
+base design system.
+
+Prefer wrapping or composing primitives inside system or feature components.
+
+# BEFORE MODIFYING UI
+
+Before writing code report:
+
+UI REQUEST:
+
+CURRENT COMPONENT:
+
+OWNING LAYER:
+TOKEN / PRIMITIVE / SYSTEM / FEATURE / PAGE
+
+FILES TO READ:
+
+FILES TO MODIFY:
+
+OTHER CONSUMERS OF THESE COMPONENTS:
+
+VISUAL REGRESSION RISK:
+
+RESPONSIVE IMPACT:
+
+ANIMATION IMPACT:
+
+If you cannot identify the ownership layer, investigate before editing.
+
+# LAYOUT RULES
+
+Do not fix layout problems using arbitrary local offsets without first
+checking the parent layout.
+
+Avoid one-off values such as:
+
+ml-[7px]
+mt-[3px]
+w-[943px]
+left-[11px]
+
+unless the value represents a genuinely unique design requirement.
+
+Prefer:
+
+design tokens
+semantic spacing
+flex
+grid
+gap
+container constraints
+layout primitives
+
+Do not use negative margins to hide structural layout problems.
+
+Do not compensate for incorrect parent spacing inside children.
+
+Spacing must follow the project's established spacing system.
+
+If multiple screens have the same problem, fix the shared component or
+token rather than editing every screen.
+
+# DESIGN TOKENS
+
+Colors, spacing, radius, shadows, typography, control heights and layout
+dimensions must come from existing design tokens whenever available.
+
+Before introducing a new visual value:
+
+1. search for an existing token
+2. search for the same pattern elsewhere
+3. reuse an existing semantic value where possible
+
+Do not introduce a new design token for a single insignificant use.
+
+Do not hard-code the same design value repeatedly.
+
+# RESPONSIVE DESIGN
+
+Every significant UI change must be considered at:
+
+375px mobile
+tablet
+desktop
+
+Do not fix desktop by breaking mobile.
+
+Do not fix mobile with duplicated mobile-only markup unless necessary.
+
+Prefer responsive layout behavior from the shared component.
+
+# MOTION SYSTEM
+
+Animation behavior must be consistent across the application.
+
+Use the shared motion tokens and variants in `src/lib/motion.ts`.
+
+Do not invent random spring physics inside feature components.
+
+Do not invent random durations or easing curves when an existing motion
+token represents the interaction.
+
+Preferred transition categories (mapped in Repo grounding above):
+
+MICRO
+For buttons, icons, small state changes.
+
+SNAPPY
+For dropdowns, search controls and interactive panels.
+
+STANDARD
+For normal interface layout changes.
+
+GENTLE
+For large surfaces and significant transitions.
+
+# MOTION IMPLEMENTATION
+
+For React interface state transitions prefer framer-motion.
+
+For geometry/layout changes prefer:
+
+layout
+layoutId
+LayoutGroup
+
+For mounting/unmounting prefer:
+
+AnimatePresence
+
+For coordinated states prefer:
+
+variants
+
+For interaction prefer:
+
+whileHover
+whileTap
+whileFocus
+
+Do not create raw CSS keyframes for interactive React layout transitions
+when framer-motion can express the state safely.
+
+CSS keyframes are acceptable for simple autonomous effects such as:
+
+spinners
+indeterminate progress
+decorative looping effects
+
+They must not duplicate an existing Motion abstraction.
+
+# PERFORMANCE
+
+Prefer animating:
+
+transform
+opacity
+
+Avoid repeatedly animating expensive layout properties where a layout
+animation or transform can achieve the same result.
+
+Do not introduce continuous JavaScript animation loops for ordinary UI
+transitions.
+
+Avoid unnecessary client components.
+
+Keep Motion client boundaries as small as practical.
+
+# ACCESSIBILITY
+
+Respect reduced-motion preferences.
+
+Large transform, parallax and spatial animations must have a reduced-motion
+equivalent.
+
+Do not make essential information depend on animation.
+
+Interactive states must remain keyboard accessible.
+
+# SHARED LAYOUT
+
+Pages must not independently recreate:
+
+dashboard shells
+page widths
+header offsets
+sidebar offsets
+page padding
+section spacing
+global search animation
+navigation behavior
+
+These behaviors belong to shared layout/system components.
+
+If multiple dashboards require the same interaction, create or extend a
+shared system component rather than copy-pasting the implementation.
+
+# MORPHING COMPONENTS
+
+Complex components such as headers should be state-driven.
+
+Example states:
+
+default
+compact
+search
+detail
+
+Do not create separate copies of the component for each state unless the
+DOM structures are fundamentally different.
+
+Prefer state + variants + layout animation.
+
+# UI LAB
+
+There is no UI Lab page in this repo. Do not create one unless a `docs/plans/`
+file lists it.
+
+For new reusable visual components or substantial animation changes,
+demonstrate important states on the feature under change:
+
+default
+hover
+focus
+active
+loading
+disabled
+error
+empty
+mobile
+
+# CHANGE SCOPE
+
+Do not make unrelated visual cleanup while completing a specific task.
+
+Do not redesign surrounding components merely because you noticed another
+problem.
+
+Do not modify more files than necessary.
+
+If a UI change unexpectedly requires broad changes, stop and report why.
+
+# NO WHACK-A-MOLE FIXES
+
+Before changing a shared component:
+
+1. find its consumers
+2. understand why the current issue occurs
+3. determine whether the issue is local or systemic
+4. verify affected states after modification
+
+Never solve a shared problem by adding exceptions to several consumers.
+
+# VISUAL VERIFICATION
+
+After implementation verify:
+
+desktop
+tablet if relevant
+375px mobile
+
+Also verify relevant states:
+
+default
+hover
+focus
+loading
+empty
+error
+disabled
+
+Run existing visual or Playwright tests where available.
+
+# COMPLETION REPORT
+
+At the end provide:
+
+UI CHANGE:
+
+ROOT CAUSE:
+
+LAYER MODIFIED:
+
+FILES MODIFIED:
+
+TOKENS ADDED/CHANGED:
+
+SHARED COMPONENTS CHANGED:
+
+ANIMATIONS CHANGED:
+
+RESPONSIVE STATES VERIFIED:
+
+SCREENS POTENTIALLY AFFECTED:
+
+VISUAL TESTS RUN:
+
+KNOWN RISKS:

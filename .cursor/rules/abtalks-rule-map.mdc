@@ -14,6 +14,7 @@ This workspace is **Sohail**. Follow `CLAUDE.md` for architecture, auth split, P
 
 ## Auto on UI files
 - `abtalks-design-system.mdc` — forest-green tokens. Replaces the deleted orange `abtalks-design-system.mdc`.
+- `abtalks-ui-engineering.mdc` — layer ownership, layout/motion discipline, verification report. Complements `abtalks-design-system.mdc` (tokens stay there).
 
 ## Pull in when relevant, or @-mention
 - `abtalks-sohail-tasks.mdc` — Sohail T-IDs for isolation, admin, audit, config
