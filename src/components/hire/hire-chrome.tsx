@@ -43,7 +43,7 @@ export function HireChrome({
   /** T-232: unread outreach replies, resolved server-side in the layout. */
   unreadMessages: number;
   /** Plan 133: the recruiter's projects, for switching in the nav card. */
-  projects: { id: string; label: string }[];
+  projects: { id: string; label: string; updatedAt: string }[];
   children: React.ReactNode;
 }) {
   const { approved, openAuth } = useHireAuth();

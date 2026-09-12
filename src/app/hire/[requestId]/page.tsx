@@ -117,6 +117,8 @@ export default async function HireRequestPage({ params, searchParams }: Props) {
         id: s.id,
         ordinal: s.ordinal,
         title: s.title,
+        matchCount: s.matchCount,
+        createdAt: s.createdAt,
       }))}
       projectAssessments={assessments}
       unassignedAssessments={unassigned}

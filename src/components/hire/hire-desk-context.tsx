@@ -47,7 +47,22 @@ export type HireDeskState = {
   project: DeskProject | null;
 };
 
-export type DeskSession = { id: string; ordinal: number; title: string };
+/**
+ * One search inside the open project.
+ *
+ * `matchCount` and `createdAt` are what the nav card's search rows read to say
+ * "24 results · 2d ago". Both already come back from `listProjectSessions` —
+ * they used to be dropped on the way here, which is why the rows had nothing
+ * to show but a title. `matchCount` is null until the search has actually run.
+ */
+export type DeskSession = {
+  id: string;
+  ordinal: number;
+  title: string;
+  matchCount: number | null;
+  /** ISO 8601. A string, not a Date, because it crosses a Server→Client prop. */
+  createdAt: string;
+};
 export type DeskAssessment = { id: string; title: string; status: string };
 export type DeskProject = {
   id: string;

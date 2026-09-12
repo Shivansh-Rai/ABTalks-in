@@ -1870,16 +1870,6 @@ export function ScoutChat({
               </span>
               {pending ? "Searching" : "Search"}
             </button>
-            {searched && (
-              <button
-                type="button"
-                className="scout-reset"
-                disabled={pending || returning}
-                onClick={newProject}
-              >
-                Reset search
-              </button>
-            )}
           </div>
           {!searched && (
           <div className="scout-criteria-slot is-open">
