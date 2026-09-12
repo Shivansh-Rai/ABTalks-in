@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { saveExperienceAction } from "@/app/actions/candidate-profile-actions";
 import { COMMON_ROLES, EMPLOYMENT_TYPES } from "@/lib/candidate-vocab";
+import { endBeforeStart, useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -60,13 +61,26 @@ export function ExperienceSection({
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveExperienceAction, "Experience", "experience");
-  const { control, register, handleSubmit, watch, setValue, formState } =
-    useForm<FormValues>({
-      defaultValues: {
-        hasNoWorkExperience: initialSkip,
-        rows: initial.length > 0 ? initial : [{ ...emptyExperienceRow }],
-      },
-    });
+  const form = useForm<FormValues>({
+    // Live: a wrong date pair says so while it is being picked, and stops
+    // saying so the moment it is fixed.
+    mode: "onChange",
+    defaultValues: {
+      hasNoWorkExperience: initialSkip,
+      rows: initial.length > 0 ? initial : [{ ...emptyExperienceRow }],
+    },
+  });
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    trigger,
+    formState,
+  } = form;
+  const { errors } = formState;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "rows",
@@ -90,7 +104,7 @@ export function ExperienceSection({
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <PwRow cols={1}>
@@ -221,8 +235,16 @@ export function ExperienceSection({
                           <PwMonthYear
                             month={month.value}
                             year={year.value}
-                            onMonthChange={month.onChange}
-                            onYearChange={year.onChange}
+                            // Moving the start can invalidate — or fix — the
+                            // end, so the rule that lives there is re-run.
+                            onMonthChange={(v) => {
+                              month.onChange(v);
+                              void trigger(`rows.${index}.endYear`);
+                            }}
+                            onYearChange={(v) => {
+                              year.onChange(v);
+                              void trigger(`rows.${index}.endYear`);
+                            }}
                             toYear={CURRENT_YEAR}
                           />
                         )}
@@ -236,7 +258,11 @@ export function ExperienceSection({
                     pointerEvents: isCurrent ? "none" : undefined,
                   }}
                 >
-                  <PwField label="Ending in" required>
+                  <PwField
+                    label="Ending in"
+                    required
+                    error={errors.rows?.[index]?.endYear?.message}
+                  >
                     <Controller
                       control={control}
                       name={`rows.${index}.endMonth`}
@@ -244,15 +270,35 @@ export function ExperienceSection({
                         <Controller
                           control={control}
                           name={`rows.${index}.endYear`}
+                          // The rule sits on `endYear` because that is the path
+                          // the schema names, so a live failure and a server
+                          // one land under the same field.
+                          rules={{
+                            validate: (value, values) => {
+                              const row = values.rows[index];
+                              if (!row || row.isCurrent) return true;
+                              return (
+                                endBeforeStart(
+                                  { month: row.startMonth, year: row.startYear },
+                                  { month: row.endMonth, year: value },
+                                  "This role cannot end before it started",
+                                ) ?? true
+                              );
+                            },
+                          }}
                           render={({ field: year }) => (
                             <PwMonthYear
                               month={month.value}
                               year={year.value}
-                              onMonthChange={month.onChange}
+                              onMonthChange={(v) => {
+                                month.onChange(v);
+                                void trigger(`rows.${index}.endYear`);
+                              }}
                               onYearChange={year.onChange}
                               disabled={isCurrent}
                               fromYear={startYear ?? 1975}
                               toYear={CURRENT_YEAR}
+                              invalid={Boolean(errors.rows?.[index]?.endYear)}
                             />
                           )}
                         />

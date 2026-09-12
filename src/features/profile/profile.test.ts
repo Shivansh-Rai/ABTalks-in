@@ -26,6 +26,10 @@ import {
 } from "@/repositories/candidate-primary";
 import { computeCompleteness } from "@/features/profile/completeness";
 import {
+  endBeforeStart,
+  isFuture,
+} from "@/components/profile/field-issues";
+import {
   CANONICAL_SKILLS,
   CANONICAL_SKILL_NAMES,
   SKILL_GROUPS,
@@ -1892,6 +1896,160 @@ suite("the profile page does not resolve the whole catalog on load", () => {
   // Everything else still reaches a Skill row on the way in.
   const section = code("src/components/profile/skills-section.tsx");
   assert(section.includes("resolveSkillAction"), "unresolved names resolve on add");
+});
+
+/* ─── Validation errors belong under their field ─────────────────────────── */
+
+suite("a rejected save says which field it is about", () => {
+  const actions = code("src/app/actions/candidate-profile-actions.ts");
+  assert(actions.includes("export type FieldIssue"), "issues are a typed shape");
+  assert(
+    actions.includes("issues?: FieldIssue[]"),
+    "the failure envelope can carry them",
+  );
+  assert(actions.includes("function fieldIssues"), "zod paths are collected");
+  assert(
+    actions.includes('issue.path.join(".")'),
+    "as dotted paths the form can address",
+  );
+  // Every section boundary returns them, not just the first one written.
+  const returns = actions.split("issues: fieldIssues(parsed.error)").length - 1;
+  assert(returns >= 2, `expected the section boundaries to carry issues, got ${returns}`);
+});
+
+suite("the toast is the fallback, not the default", () => {
+  const hook = code("src/components/profile/use-section-save.ts");
+  assert(
+    hook.includes("const placed = placeIssues?.(result.issues ?? []) ?? 0"),
+    "the form gets first refusal on every failure",
+  );
+  assert(
+    hook.includes("if (placed === 0) toast.error(result.message)"),
+    "and a toast only fires when nothing could be placed",
+  );
+});
+
+suite("server errors clear the moment the field changes", () => {
+  const src = code("src/components/profile/field-issues.ts");
+  assert(src.includes("setError"), "issues become field errors");
+  assert(src.includes("shouldFocus: true"), "the first one pulls the view to it");
+  assert(
+    src.includes("owned.current.delete(name)") && src.includes("clearErrors"),
+    "and are dropped as soon as that field is edited",
+  );
+  // A path the form does not have must not count as placed, or the failure
+  // would be swallowed: no toast, no inline message, nothing.
+  assert(src.includes("function pathExists"), "unknown paths are detected");
+  assert(src.includes("if (!pathExists(values, path)) continue"), "and skipped");
+});
+
+suite("every section form routes its errors to its own fields", () => {
+  for (const rel of [
+    "src/components/profile/basic-info-section.tsx",
+    "src/components/profile/experience-section.tsx",
+    "src/components/profile/education-section.tsx",
+    "src/components/profile/projects-section.tsx",
+    "src/components/profile/links-section.tsx",
+    "src/components/profile/preferences-section.tsx",
+    "src/components/profile/accomplishments-section.tsx",
+  ]) {
+    const src = code(rel);
+    assert(src.includes("useServerFieldErrors"), `${rel}: has a sink`);
+    assert(src.includes("placeIssues"), `${rel}: passes it to save()`);
+    // Whitespace-free, because these calls wrap differently per section.
+    const flat = src.replace(/\s+/g, "");
+    assert(
+      flat.includes("placeIssues)") || flat.includes("placeIssues,)"),
+      `${rel}: the sink actually reaches save()`,
+    );
+  }
+  // The country input is named for what it shows, not for what is stored.
+  const basic = code("src/components/profile/basic-info-section.tsx");
+  assert(
+    basic.includes('{ countryCode: "country" }'),
+    "a schema field with a different form name is aliased",
+  );
+});
+
+suite("date pairs are judged as they are picked", () => {
+  const cases: [string, string, string][] = [
+    ["src/components/profile/experience-section.tsx", "endYear", "cannot end before it started"],
+    ["src/components/profile/education-section.tsx", "graduationYear", "cannot be before the start date"],
+    ["src/components/profile/accomplishments-section.tsx", "expiresYear", "cannot expire before it was issued"],
+  ];
+  for (const [rel, field, message] of cases) {
+    const src = code(rel);
+    assert(src.includes('mode: "onChange"'), `${rel}: validates while editing`);
+    assert(src.includes("endBeforeStart"), `${rel}: uses the shared rule`);
+    assert(src.includes(message), `${rel}: says what is wrong in words`);
+    // The rule lives on the path the schema names, so a live failure and a
+    // server one cannot land in two different places.
+    assert(
+      src.includes(`.${field}\`}`) || src.includes(`${field}?.message`),
+      `${rel}: the error surfaces on ${field}`,
+    );
+    assert(
+      src.includes(`errors.rows?.[index]?.${field}?.message`),
+      `${rel}: and is rendered by that field`,
+    );
+    // Editing any half of either date re-runs it, so a fix registers whichever
+    // input the candidate corrects.
+    assert(src.includes("void trigger("), `${rel}: siblings re-run the rule`);
+  }
+});
+
+suite("an invalid date pair looks invalid", () => {
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  // It used to go red only while empty, so a filled-but-wrong pair stayed
+  // looking correct while the message sat somewhere else entirely.
+  assert(
+    fields.includes('className={`pw-menu-select-trigger${invalid ? " pw-invalid" : ""}`}'),
+    "a set-but-wrong value still shows as invalid",
+  );
+  const css = source("src/components/profile/profile-wizard.css");
+  assert(css.includes(".pw-menu-select-trigger.pw-invalid"), "and is styled");
+  // The message renders inside the field, so it displaces content instead of
+  // floating over another section.
+  assert(css.includes(".pw-field.pw-has-error .pw-error-msg"), "inline, in flow");
+  const errorRule = css.slice(
+    css.indexOf(".pw-error-msg {"),
+    css.indexOf("}", css.indexOf(".pw-error-msg {")),
+  );
+  assert(!errorRule.includes("position: absolute"), "never positioned over anything");
+  assert(!errorRule.includes("position: fixed"), "and never pinned to the viewport");
+});
+
+suite("the date rule itself", () => {
+  const msg = "nope";
+  const feb2026 = { month: 2, year: 2026 };
+  const jan2026 = { month: 1, year: 2026 };
+  assert(endBeforeStart(feb2026, jan2026, msg) === msg, "Feb 2026 → Jan 2026 fails");
+  assert(endBeforeStart(jan2026, feb2026, msg) === null, "Jan 2026 → Feb 2026 passes");
+  assert(endBeforeStart(feb2026, feb2026, msg) === null, "the same month passes");
+  // An unfinished date is not a wrong one.
+  assert(
+    endBeforeStart(feb2026, { month: null, year: null }, msg) === null,
+    "no end year yet is not an error",
+  );
+  assert(
+    endBeforeStart({ month: null, year: null }, jan2026, msg) === null,
+    "no start year yet is not an error either",
+  );
+  // A missing month must not invent a failure: a start defaults to the first
+  // month of its year and an end to the last.
+  assert(
+    endBeforeStart({ month: null, year: 2026 }, { month: null, year: 2026 }, msg) === null,
+    "same year, months unpicked, passes",
+  );
+  assert(
+    endBeforeStart({ month: 6, year: 2026 }, { month: null, year: 2025 }, msg) === msg,
+    "an earlier end year still fails",
+  );
+
+  const now = new Date();
+  assert(isFuture(12, now.getFullYear() + 1), "next year is the future");
+  assert(!isFuture(1, now.getFullYear() - 1), "last year is not");
+  assert(!isFuture(null, null), "an empty date is not the future");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -12,6 +12,7 @@ import {
   INDIA_DIALING_CODE,
   isIndianPhone,
 } from "@/lib/validations/phone";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -84,18 +85,22 @@ export function BasicInfoSection({
     "Basic information",
     "basic",
   );
+  const form = useForm<FormValues>({
+    defaultValues: {
+      ...initial,
+      country: countryNameForCode(initial.countryCode),
+    },
+  });
   const {
     register,
     handleSubmit,
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({
-    defaultValues: {
-      ...initial,
-      country: countryNameForCode(initial.countryCode),
-    },
-  });
+  } = form;
+  // The form asks for a country NAME; the schema validates the stored CODE, so
+  // an issue about `countryCode` belongs under the Country input.
+  const placeIssues = useServerFieldErrors(form, { countryCode: "country" });
 
   const summary = watch("summary") ?? "";
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -120,7 +125,12 @@ export function BasicInfoSection({
           return;
         }
         const { country, ...rest } = v;
-        if (await save({ ...rest, countryCode: countryCodeForName(country) })) {
+        if (
+          await save(
+            { ...rest, countryCode: countryCodeForName(country) },
+            placeIssues,
+          )
+        ) {
           onSaved();
         }
       })}

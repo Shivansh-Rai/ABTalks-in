@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { OpportunityType } from "@prisma/client";
 import { savePreferencesAction } from "@/app/actions/candidate-profile-actions";
 import { OPPORTUNITY_TYPE_LABELS, WORK_MODES } from "@/lib/candidate-vocab";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -47,8 +48,9 @@ export function PreferencesSection({
     "Career preferences",
     "preferences",
   );
-  const { control, register, handleSubmit, formState } =
-    useForm<PreferencesFormValues>({ defaultValues: initial });
+  const form = useForm<PreferencesFormValues>({ defaultValues: initial });
+  const { control, register, handleSubmit, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
 
   useEffect(() => {
     setDirty(formState.isDirty);
@@ -58,7 +60,7 @@ export function PreferencesSection({
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <PwRow cols={1}>

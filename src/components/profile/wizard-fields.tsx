@@ -491,7 +491,7 @@ function PwMenuSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         disabled={disabled}
-        className={`pw-menu-select-trigger${invalid && !value ? " pw-invalid" : ""}`}
+        className={`pw-menu-select-trigger${invalid ? " pw-invalid" : ""}`}
         onClick={() => setOpen((v) => !v)}
       >
         <span className={value ? undefined : "pw-menu-select-placeholder"}>

@@ -8,6 +8,7 @@ import {
   canonicalSkillName,
   searchCanonicalSkillNames,
 } from "@/lib/skill-catalog";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -41,11 +42,13 @@ export const emptyProjectRow: ProjectFormRow = {
 export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveProjectsAction, "Projects", "projects");
-  const { control, register, handleSubmit, formState } = useForm<FormValues>({
+  const form = useForm<FormValues>({
     defaultValues: {
       rows: initial.length > 0 ? initial : [{ ...emptyProjectRow }],
     },
   });
+  const { control, register, handleSubmit, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "rows",
@@ -67,7 +70,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <div className="pw-entries">
