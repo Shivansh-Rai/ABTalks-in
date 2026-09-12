@@ -42,6 +42,10 @@ import { MaskedName } from "@/components/hire/desk-match-card";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
 import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
+import {
+  loadInspectorWorkHistoryAction,
+  type InspectorWorkHistory,
+} from "@/app/actions/hire-view-actions";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
 
 function trackLongLabel(source?: CandidateSource): string | null {
@@ -70,10 +74,39 @@ const WORK_MODE: Record<string, string> = {
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "experience", label: "Experience" },
+  { id: "evidence", label: "ABTalks Evidence" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "more", label: "More" },
 ] as const;
+
+const MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+function monthYear(month: number | null, year: number | null): string {
+  if (!year) return "";
+  const name = month && month >= 1 && month <= 12 ? MONTH_SHORT[month - 1] : "";
+  return name ? `${name} ${year}` : String(year);
+}
+
+function jobSpan(row: InspectorWorkHistory["rows"][number]): string {
+  const from = monthYear(row.startMonth, row.startYear);
+  const to = row.isCurrent ? "Present" : monthYear(row.endMonth, row.endYear);
+  if (!from && !to) return "";
+  return from && to ? `${from} – ${to}` : from || to;
+}
 
 type TabId = (typeof TABS)[number]["id"];
 
@@ -156,14 +189,13 @@ type Role = { title: string; value: ReactNode; badge?: string; note?: string };
 /**
  * The candidate profile panel (Figma 1585:189).
  *
- * The design is laid out for a work history ABTalks does not hold — employers,
- * roles, schools. Each block is filled from what the pool does have: the
- * Experience timeline lists verified work on the track, Education is the
- * declared level, and the credentials card lists the connected platforms.
- * Contact is behind the paid unlock (T-229): "Reveal email" / "Reveal number"
- * open the unlock dialog, which states the cost before charging. Resume uses
- * the same credit unlock — billing is not enabled, so the plans dialog must
- * not be the gate.
+ * Experience is the candidate's own jobs (`CandidateExperience`, typed or
+ * resume-merged), loaded on open. ABTalks Evidence is verified track proof
+ * already on the match card (days shipped, missions, commits). Education is
+ * the declared level. Contact is behind the paid unlock (T-229): "Reveal
+ * email" / "Reveal number" open the unlock dialog, which states the cost
+ * before charging. Resume uses the same credit unlock — billing is not
+ * enabled, so the plans dialog must not be the gate.
  */
 export function CandidateInspector({
   match,
@@ -231,6 +263,9 @@ export function CandidateInspector({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [contact, setContact] = useState<RevealedContact | null>(null);
+  const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
+    null,
+  );
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -247,6 +282,29 @@ export function CandidateInspector({
         ? null
         : await revealContactAction({ candidateRef: match.candidateRef });
       if (alive) setContact(found);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [match.candidateRef, sample]);
+
+  useEffect(() => {
+    let alive = true;
+    if (sample) {
+      setWorkHistory({ hasNoWorkExperience: false, rows: [] });
+      return () => {
+        alive = false;
+      };
+    }
+    setWorkHistory(null);
+    void (async () => {
+      const result = await loadInspectorWorkHistoryAction({
+        candidateRef: match.candidateRef,
+      });
+      if (!alive) return;
+      setWorkHistory(
+        result.ok ? result.data : { hasNoWorkExperience: false, rows: [] },
+      );
     })();
     return () => {
       alive = false;
@@ -381,8 +439,11 @@ export function CandidateInspector({
 
   const experienceSummary = [
     years ? `${years} year${years === 1 ? "" : "s"} total` : null,
-    track,
   ].filter(Boolean);
+
+  const evidenceSummary = [track].filter(Boolean);
+
+  const jobs = workHistory?.rows ?? [];
 
   return (
     <aside className="hire-detail hire-profile" aria-label="Candidate details">
@@ -666,6 +727,66 @@ export function CandidateInspector({
               <small>· {experienceSummary.join(" · ")}</small>
             )}
           </h4>
+          {sample ? (
+            <p className="hire-profile__meta">
+              Figures are taken from your requirement, not from a candidate.
+            </p>
+          ) : workHistory === null ? (
+            <p className="hire-profile__meta">Loading experience…</p>
+          ) : jobs.length > 0 ? (
+            jobs.map((job) => (
+              <div key={job.id} className="hire-profile__org-block">
+                <span className="hire-profile__tile" aria-hidden="true">
+                  {monogram(job.companyName || job.title)}
+                </span>
+                <div className="hire-profile__org-main">
+                  <div>
+                    <p className="hire-profile__org-name">{job.companyName}</p>
+                    <p className="hire-profile__org-sub">
+                      {[job.title, job.employmentType, job.locationCity]
+                        .map((part) => part?.trim())
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <ul className="hire-profile__roles">
+                    <li className="hire-profile__role">
+                      <span
+                        className="hire-profile__timeline"
+                        aria-hidden="true"
+                      />
+                      <div className="hire-profile__role-body">
+                        <div className="hire-profile__role-head">
+                          <p className="hire-profile__role-title">{job.title}</p>
+                        </div>
+                        <p className="hire-profile__meta">{jobSpan(job)}</p>
+                        {job.description?.trim() ? (
+                          <p className="hire-profile__text">
+                            {job.description.trim()}
+                          </p>
+                        ) : null}
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="hire-profile__meta">No work experience recorded</p>
+          )}
+        </section>
+
+        <section
+          data-section="evidence"
+          className="hire-profile__section hire-profile__section--ruled"
+          aria-label="ABTalks Evidence"
+        >
+          <h4 className="hire-profile__h">
+            ABTalks Evidence
+            {evidenceSummary.length > 0 && (
+              <small>· {evidenceSummary.join(" · ")}</small>
+            )}
+          </h4>
           <div className="hire-profile__org-block">
             <span className="hire-profile__tile" aria-hidden="true">
               {monogram(track ?? match.jobRole)}
@@ -681,7 +802,10 @@ export function CandidateInspector({
                 <ul className="hire-profile__roles">
                   {roles.map((r) => (
                     <li key={r.title} className="hire-profile__role">
-                      <span className="hire-profile__timeline" aria-hidden="true" />
+                      <span
+                        className="hire-profile__timeline"
+                        aria-hidden="true"
+                      />
                       <div className="hire-profile__role-body">
                         <div className="hire-profile__role-head">
                           <p className="hire-profile__role-title">{r.title}</p>

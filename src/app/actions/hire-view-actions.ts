@@ -4,12 +4,17 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { decodeCandidateRef } from "@/features/hire/candidate-ref";
+import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
 import {
   hireViewSalt,
   istDayKey,
   recordDetailView,
   viewerKeyFor,
 } from "@/features/profile/profile-events";
+import {
+  listPublicWorkHistory,
+  type PublicWorkHistory,
+} from "@/repositories/candidate-detail";
 import { resolveProgramRefs } from "@/repositories/hire";
 import { logger } from "@/lib/logger";
 
@@ -78,4 +83,57 @@ export async function recordCandidateViewAction(
     logger.error("[hire] recordCandidateViewAction", { error: String(error) });
   }
   return { ok: true };
+}
+
+const workHistoryInputSchema = z.object({
+  candidateRef: candidateRefSchema,
+});
+
+export type InspectorWorkHistory = PublicWorkHistory;
+
+const EMPTY_WORK_HISTORY: InspectorWorkHistory = {
+  hasNoWorkExperience: false,
+  rows: [],
+};
+
+/**
+ * Jobs the candidate typed or resume-merge wrote, for the Scout inspector.
+ *
+ * Work history is not protected contact, so this does not wait on an unlock.
+ * It still re-tests the handle against the searchable pool — a guessed ref
+ * for someone who withdrew must not return their employers. Sample and
+ * ineligible refs resolve to empty rather than an error, so the UI cannot
+ * tell those cases apart.
+ */
+export async function loadInspectorWorkHistoryAction(
+  input: unknown,
+): Promise<
+  { ok: true; data: InspectorWorkHistory } | { ok: false; message: string }
+> {
+  const parsed = workHistoryInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid candidate." };
+  }
+
+  const raw = parsed.data.candidateRef;
+  if (raw.startsWith("SAMPLE:")) {
+    return { ok: true, data: EMPTY_WORK_HISTORY };
+  }
+  if (!decodeCandidateRef(raw)) {
+    return { ok: true, data: EMPTY_WORK_HISTORY };
+  }
+
+  try {
+    const [eligible] = await resolveEligibleCandidates([raw]);
+    if (!eligible) {
+      return { ok: true, data: EMPTY_WORK_HISTORY };
+    }
+    const data = await listPublicWorkHistory(eligible.userId);
+    return { ok: true, data };
+  } catch (error) {
+    logger.error("[hire] loadInspectorWorkHistoryAction", {
+      error: String(error),
+    });
+    return { ok: false, message: "Could not load experience." };
+  }
 }
