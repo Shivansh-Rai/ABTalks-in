@@ -7566,22 +7566,25 @@ button.hire-side__me {
 .scout-filters {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 26px;
-  padding: 0 20px 0 10px;
-  border: 1px solid #e9e9e9;
-  border-radius: 5px;
-  background: #ffffff;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px 0 9px;
+  border: 1px solid #d5dcde;
+  border-radius: 8px;
+  background: #f7f9f9;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 500;
-  color: #4b4b4b;
+  color: #334145;
   cursor: pointer;
+  transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
 }
 
-.scout-filters:hover {
-  border-color: #d2d2d2;
+.scout-filters:hover:not(:disabled) {
+  border-color: #9cc2c7;
+  background: #edf5f5;
+  color: #03535f;
 }
 
 .scout-filters__icon {
@@ -9402,7 +9405,20 @@ button.hire-side__me {
 }
 
 .scout-action {
-  padding: 0 14px;
+  padding: 0 13px;
+}
+
+.scout-action--search {
+  background: #edf5f5;
+  border-color: #b9d3d7;
+  color: #03535f;
+  font-weight: 600;
+}
+
+.scout-action--search:hover:not(:disabled) {
+  background: #e1efef;
+  border-color: #03535f;
+  color: #023d46;
 }
 
 .scout-action:disabled {

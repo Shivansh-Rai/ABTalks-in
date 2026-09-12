@@ -1417,7 +1417,7 @@ export function ScoutChat({
         <div className="scout__toolbar">
           <button
             type="button"
-            className="scout-filters scout-action"
+            className="scout-filters scout-action scout-action--search"
             onClick={newSearch}
             disabled={returning}
           >
