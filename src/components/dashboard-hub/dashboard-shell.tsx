@@ -38,14 +38,19 @@ export function DashboardShell({
   contentClassName,
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // Default to collapsed. Overridden after mount by whatever the user last
+  // chose (if anything) — an explicit "0" keeps them expanded, absence keeps
+  // the collapsed default.
+  const [collapsed, setCollapsed] = useState(true);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   useEffect(() => {
     if (!collapsible) return;
     try {
-      setCollapsed(window.localStorage.getItem(CLAUDE_SIDEBAR_COLLAPSED_KEY) === "1");
+      const stored = window.localStorage.getItem(CLAUDE_SIDEBAR_COLLAPSED_KEY);
+      if (stored === "0") setCollapsed(false);
+      else setCollapsed(true);
     } catch {
       // ignore
     }

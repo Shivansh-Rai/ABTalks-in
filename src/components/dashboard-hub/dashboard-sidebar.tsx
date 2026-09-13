@@ -1,17 +1,18 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Award,
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   Grid3X3,
   LogIn,
   LogOut,
+  Menu,
+  MoreVertical,
   Presentation,
   Store,
   User,
@@ -80,6 +81,91 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const displayName = user.name.trim() || user.email || "User";
   const isCollapsed = collapsible && collapsed;
+
+  // Hover-to-expand + hover-away-to-collapse, gated by a manual-mode latch.
+  //
+  //   - collapsed rail hovered for 700ms → auto-expand (marks expandedViaHover)
+  //   - mouse leaves an auto-expanded rail → auto-collapse ~200ms later
+  //   - ANY button click (expand or collapse) trips manualModeRef; while it's
+  //     on, no hover handler does anything. Manual mode stays on until the
+  //     next button click, so a click-driven state persists until the user
+  //     clicks again — no accidental re-open on hover, no auto-collapse on
+  //     mouse-move.
+  //
+  // Timers are always cleared on the opposite event, on manual toggle, on
+  // collapsed-state changes, and on unmount.
+  const expandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expandedViaHoverRef = useRef(false);
+  // Session-scoped only — never persisted, so a page refresh always resets
+  // the sidebar back into hover-driven mode regardless of the last click.
+  const manualModeRef = useRef(false);
+
+  function clearExpandTimer() {
+    if (expandTimerRef.current !== null) {
+      clearTimeout(expandTimerRef.current);
+      expandTimerRef.current = null;
+    }
+  }
+  function clearCollapseTimer() {
+    if (collapseTimerRef.current !== null) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearExpandTimer();
+      clearCollapseTimer();
+    };
+  }, []);
+
+  function handleRailEnter() {
+    clearCollapseTimer();
+    if (manualModeRef.current) return;
+    if (!collapsible || !onToggleCollapse || !isCollapsed) return;
+    clearExpandTimer();
+    expandTimerRef.current = setTimeout(() => {
+      expandTimerRef.current = null;
+      expandedViaHoverRef.current = true;
+      onToggleCollapse();
+    }, 700);
+  }
+  function handleRailLeave() {
+    clearExpandTimer();
+    // Any full exit clears the manual-mode latch, so the very next re-entry
+    // is treated as a fresh session — hover can auto-expand again without
+    // requiring a page refresh. The refresh reset still holds separately.
+    const wasManual = manualModeRef.current;
+    manualModeRef.current = false;
+    if (wasManual) return;
+    if (
+      !collapsible ||
+      !onToggleCollapse ||
+      isCollapsed ||
+      !expandedViaHoverRef.current
+    )
+      return;
+    clearCollapseTimer();
+    collapseTimerRef.current = setTimeout(() => {
+      collapseTimerRef.current = null;
+      expandedViaHoverRef.current = false;
+      onToggleCollapse();
+    }, 200);
+  }
+
+  // Button-driven toggle. Trips the manual-mode latch so hover handlers stop
+  // firing until the next button click, and clears any pending hover timers.
+  const handleManualToggle = onToggleCollapse
+    ? () => {
+        clearExpandTimer();
+        clearCollapseTimer();
+        expandedViaHoverRef.current = false;
+        manualModeRef.current = true;
+        onToggleCollapse();
+      }
+    : undefined;
 
   function renderNav(compact: boolean) {
     return (
@@ -219,7 +305,7 @@ export function DashboardSidebar({
 
   const expandedContent = (
     <>
-      <div className={SIDEBAR_BRAND_ROW_CLASS}>
+      <div className={cn(SIDEBAR_BRAND_ROW_CLASS, "justify-between gap-2")}>
         <Link href="/dashboard" onClick={onNavigate}>
           <Image
             src="/abtalks-logo.png"
@@ -229,22 +315,20 @@ export function DashboardSidebar({
             className="h-8 w-auto brightness-0"
           />
         </Link>
-      </div>
-      {renderNav(false)}
-      {collapsible && onToggleCollapse ? (
-        <div className="hidden border-t border-[#E0E0E0] px-3 py-2 md:block">
+        {collapsible && handleManualToggle ? (
           <button
             type="button"
-            onClick={onToggleCollapse}
+            onClick={handleManualToggle}
             aria-expanded={!isCollapsed}
             aria-label="Collapse sidebar"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E0E0E0] px-3 py-2 text-sm font-medium text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:text-[#03535F]"
+            title="Collapse sidebar"
+            className="hidden size-8 items-center justify-center rounded-md text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F]/10 hover:text-[#03535F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] md:inline-flex"
           >
-            <ChevronLeft className="size-4" aria-hidden />
-            <span>Collapse</span>
+            <MoreVertical className="size-4" aria-hidden />
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
+      {renderNav(false)}
       {renderFooter(false)}
     </>
   );
@@ -252,34 +336,50 @@ export function DashboardSidebar({
   const collapsedContent = (
     <>
       <div className="flex h-[55px] shrink-0 items-center justify-center border-b border-[#E9E9E9]">
-        <Link
-          href="/dashboard"
-          onClick={onNavigate}
-          aria-label="ABTalks dashboard"
-        >
-          <Image
-            src="/abtalks-logo.png"
-            alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 object-contain brightness-0"
-          />
-        </Link>
-      </div>
-      {renderNav(true)}
-      {onToggleCollapse ? (
-        <div className="border-t border-[#E0E0E0] p-2">
+        {handleManualToggle ? (
           <button
             type="button"
-            onClick={onToggleCollapse}
+            onClick={handleManualToggle}
             aria-expanded={false}
             aria-label="Expand sidebar"
-            className="flex w-full items-center justify-center rounded-lg border border-[#E0E0E0] py-2 text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:border-[#03535F] hover:text-[#03535F]"
+            title="Expand sidebar"
+            className="group relative flex size-9 items-center justify-center rounded-md text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F]"
           >
-            <ChevronRight className="size-4" aria-hidden />
+            <span
+              aria-hidden
+              className="relative block h-6 w-[28px] overflow-hidden transition-opacity duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-0 group-focus-visible:opacity-0"
+            >
+              <Image
+                src="/abtalks-logo.png"
+                alt=""
+                width={120}
+                height={32}
+                className="absolute left-0 top-1/2 h-6 w-auto max-w-none -translate-y-1/2 brightness-0"
+              />
+            </span>
+            <Menu
+              aria-hidden
+              className="absolute size-4 text-[#03535F] opacity-0 transition-opacity duration-200 ease-[var(--ease-spark)] group-hover:opacity-100 group-focus-visible:opacity-100"
+            />
           </button>
-        </div>
-      ) : null}
+        ) : (
+          <Link
+            href="/dashboard"
+            onClick={onNavigate}
+            aria-label="ABTalks dashboard"
+            className="relative block h-6 w-[28px] overflow-hidden"
+          >
+            <Image
+              src="/abtalks-logo.png"
+              alt=""
+              width={120}
+              height={32}
+              className="absolute left-0 top-1/2 h-6 w-auto max-w-none -translate-y-1/2 brightness-0"
+            />
+          </Link>
+        )}
+      </div>
+      {renderNav(true)}
       {renderFooter(true)}
     </>
   );
@@ -291,12 +391,38 @@ export function DashboardSidebar({
   return (
     <>
       <aside
+        onMouseEnter={handleRailEnter}
+        onMouseLeave={handleRailLeave}
         className={cn(
-          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-y-auto border-r border-[#E9E9E9] bg-white transition-[width] duration-200 ease-[var(--ease-spark)] md:flex",
+          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-[#E9E9E9] bg-white md:flex",
+          "transition-[width] duration-[420ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width]",
           desktopWidth,
         )}
       >
-        {isCollapsed ? collapsedContent : expandedContent}
+        <div className="relative h-full w-full">
+          <div
+            aria-hidden={isCollapsed}
+            className={cn(
+              "absolute inset-0 flex flex-col overflow-y-auto transition-[opacity] duration-[260ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+              isCollapsed
+                ? "pointer-events-none opacity-0"
+                : "opacity-100 delay-[140ms]",
+            )}
+          >
+            {expandedContent}
+          </div>
+          <div
+            aria-hidden={!isCollapsed}
+            className={cn(
+              "absolute inset-0 flex flex-col overflow-y-auto transition-[opacity] duration-[260ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+              isCollapsed
+                ? "opacity-100 delay-[140ms]"
+                : "pointer-events-none opacity-0",
+            )}
+          >
+            {collapsedContent}
+          </div>
+        </div>
       </aside>
 
       <aside
