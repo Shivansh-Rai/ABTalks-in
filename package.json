@@ -82,6 +82,7 @@
     "test:078-progress": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/progress.test.ts",
     "test:synergy-cap": "NODE_OPTIONS=--conditions=react-server tsx src/features/synergy/synergy-cap.test.ts",
     "test:profile": "NODE_OPTIONS=--conditions=react-server tsx src/features/profile/profile.test.ts",
+    "test:career-guidance": "tsx src/features/career-guidance/career-guidance.test.ts",
     "build:resume-fixture": "tsx scripts/build-resume-fixture.ts",
     "build:resume-fixture:record": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/capture-resume-fixture.ts",
     "test:resume": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/resume/resume.test.ts",

@@ -175,4 +175,14 @@ export function istDateRangeToUtc(
   return { startUtc, endExclusiveUtc };
 }
 
+/** Current IST calendar day `yyyy-MM-dd`. */
+export function getIstDateKey(now: Date = new Date()): string {
+  return formatInTimeZone(now, IST, "yyyy-MM-dd");
+}
+
+/** Current IST ISO week `RRRR-Www` (week-numbering year + week). */
+export function getIstWeekKey(now: Date = new Date()): string {
+  return formatInTimeZone(now, IST, "RRRR-'W'II");
+}
+
 export { IST };

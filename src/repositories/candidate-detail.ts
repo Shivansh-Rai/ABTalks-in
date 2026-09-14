@@ -377,6 +377,63 @@ export async function getCandidateDetail(
 }
 
 /**
+ * Narrow profile facts for T-224 career guidance. Skills, preferences, and
+ * resumeUrl only — not the full CandidateDetail select.
+ */
+export type CareerGuidanceProfileFacts = {
+  skills: { name: string; categoryName: string | null }[];
+  preferredRoles: string[];
+  opportunityTypes: OpportunityType[];
+  resumeUrl: string | null;
+};
+
+export async function getCareerGuidanceFacts(
+  userId: string,
+): Promise<CareerGuidanceProfileFacts> {
+  const row = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: {
+      resumeUrl: true,
+      skills: {
+        select: {
+          skill: {
+            select: {
+              name: true,
+              category: { select: { name: true } },
+            },
+          },
+        },
+      },
+      preference: {
+        select: {
+          preferredRoles: true,
+          opportunityTypes: true,
+        },
+      },
+    },
+  });
+
+  if (!row) {
+    return {
+      skills: [],
+      preferredRoles: [],
+      opportunityTypes: [],
+      resumeUrl: null,
+    };
+  }
+
+  return {
+    resumeUrl: row.resumeUrl,
+    skills: row.skills.map((s) => ({
+      name: s.skill.name,
+      categoryName: s.skill.category?.name ?? null,
+    })),
+    preferredRoles: row.preference?.preferredRoles ?? [],
+    opportunityTypes: row.preference?.opportunityTypes ?? [],
+  };
+}
+
+/**
  * Recruiter-safe work history for the Scout inspector.
  *
  * Deliberately not `getCandidateDetail`: that select carries phone, LinkedIn,
