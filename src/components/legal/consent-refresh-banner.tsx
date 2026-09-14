@@ -29,7 +29,7 @@ export function ConsentRefreshBanner({
       const result = await acceptCurrentLegalVersionsAction();
       if (result.ok) {
         setAccepted(true);
-        toast.success("Thanks — your acceptance has been recorded.");
+        toast.success("Thanks - your acceptance has been recorded.");
       } else {
         toast.error(result.message ?? "Could not record your acceptance");
       }
