@@ -694,8 +694,8 @@
 .abtalks-landing .slab--top {
   top: 30px;
   --lp-tint-top:    linear-gradient(155deg, #E7F2F3, #A6D2D5);
-  --lp-tint-side-a: linear-gradient(180deg, #076573, #03535F);
-  --lp-tint-side-b: linear-gradient(180deg, #03535F, #076573);
+  --lp-tint-side-a: linear-gradient(180deg, #A6D2D5, #8DB3B5);
+  --lp-tint-side-b: linear-gradient(180deg, #8DB3B5, #749395);
 }
 .abtalks-landing .slab--middle {
   top: 130px;
@@ -1053,6 +1053,10 @@
 
 /* ---------- 13. TESTIMONIALS (unchanged) ---------- */
 .abtalks-landing .testimonials { background: var(--lp-color-background); overflow: hidden; }
+/* The cohort cards sat 128px clear of this heading (54px off .section.open
+   plus 74px here). Trimmed to the top of this section only, so every other
+   section keeps the shared --lp-section-gap rhythm. */
+.abtalks-landing .section.testimonials { padding-block-start: 36px; }
 .abtalks-landing .testimonials__head { text-align: center; margin-bottom: var(--lp-space-40); }
 .abtalks-landing .testimonials__head .h2 { text-transform: uppercase; letter-spacing: .01em; }
 .abtalks-landing .testimonials__head .p { margin-inline: auto; font-size: 14px; line-height: 21px; }
