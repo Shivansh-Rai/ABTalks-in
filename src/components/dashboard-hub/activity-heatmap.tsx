@@ -214,11 +214,10 @@ export function ActivityHeatmap({
   }, [weekCount]);
 
   const Wrapper = embedded ? "div" : "section";
-  // The grid is trimmed inside its own column — ~10% at lg/xl, ~15% at 2xl, so
-  // the squares stay compact instead of stretching. The dashboard grid columns
-  // are untouched, so the streak card never moves.
+  // lg/xl (laptop) trims the grid ~10% inside its own column — the dashboard
+  // grid columns are untouched, so the streak card never moves. 2xl opts out.
   const wrapperClass = embedded
-    ? "w-full min-w-0 flex flex-col max-lg:-mx-4 max-lg:w-[calc(100%+2rem)] lg:min-h-[315px] lg:max-w-[90%] 2xl:max-w-[85%]"
+    ? "w-full min-w-0 flex flex-col max-lg:-mx-4 max-lg:w-[calc(100%+2rem)] lg:min-h-[315px] lg:max-w-[90%] 2xl:max-w-none"
     : "scroll-mt-20 px-4 py-8 sm:px-6";
 
   const gridSharedProps = {
@@ -259,9 +258,9 @@ export function ActivityHeatmap({
         {...gridSharedProps}
         variant="desktop"
         gridCols={desktopGridCols}
-        cellClassName="aspect-square w-[82%] min-w-0 justify-self-center"
+        cellClassName="aspect-square w-[72%] min-w-0 justify-self-center 2xl:w-[89%]"
         className={cn(
-          "mt-3 hidden w-full min-w-0 lg:grid",
+          "mt-3 hidden w-full min-w-0 lg:grid 2xl:mx-auto 2xl:max-w-[820px]",
           embedded && "flex-1 lg:min-h-0",
         )}
       />
