@@ -1,38 +1,58 @@
 "use client";
 
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { motion, stagger, useAnimate } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { dsButtonVariants } from "@/components/design/ds-button";
 import { cn } from "@/lib/utils";
+import { useOnboardingStory } from "./onboarding-story";
 
 /*
  * Shared frame for the recruiter onboarding screens (01 Define, 02 Discover,
- * 03 Connect). Each screen supplies only its diagram; the frame owns the
- * header, copy column and CTAs so every screen stays identical.
+ * 03 Connect, 04 Assess). Each screen supplies only its diagram; the frame
+ * owns the header, copy column and CTAs so every screen stays identical. The
+ * background photo lives one level up, in the story layout, so it persists
+ * across screens (see onboarding-story.tsx).
  *
- * Every animation runs once on mount and then holds. Each screen is its own
- * route, so Next mounts a fresh timeline rather than replaying one.
+ * Entrance — every animation runs once on mount and then holds:
  *
  *   0.0s–3.1s  the screen's diagram (see the helpers below)
  *   3.2s  label · 3.4s heading types out at 40ms/char · 3.6s copy
  *   3.75s steps · 3.9s Next · 4.05s Skip
+ *
+ * Exit — Next rewinds the screen before navigating, so the story flows on:
+ *
+ *   0.0s   copy lifts away, blurring, 60ms apart · connectors fade
+ *   0.05s  satellite cards gather back into the focal card, shrinking (0.9s)
+ *   0.3s   the background starts morphing to the next photo (2.6s sweep)
+ *   0.5s   the focal card shrinks back to 85% and fades (0.8s)
+ *   1.3s   navigate — the next screen's entrance plays as the light sweeps on
+ *
+ * Screens mark their focal card with `data-focal`; everything else directly
+ * inside the diagram is a satellite (cards) or the connector svg.
  */
 
 export const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE_IN = [0.7, 0, 0.84, 0] as const;
 export const DURATION = 0.8;
 export const LINE_STROKE = "#5C5C5C";
 const TYPE_START = 3.4;
 const TYPE_STEP = 0.04;
-const STEPS = ["Define", "Discover", "Connect"] as const;
+const STEPS = ["Define", "Discover", "Connect", "Assess"] as const;
+/** How far satellites travel toward the focal card's centre as they gather. */
+const GATHER = 0.6;
+const MORPH_DELAY_MS = 300;
 
 /**
  * DS v2 §9A clay depth, layered on `dsButtonVariants` — shared by every
@@ -181,7 +201,7 @@ function placeInScene(
 }
 
 type Props = {
-  step: 0 | 1 | 2;
+  step: 0 | 1 | 2 | 3;
   /** One array per visual line; parts carry their own spacing. */
   heading: HeadingPart[][];
   description: string;
@@ -189,14 +209,9 @@ type Props = {
   /** The final screen closes the flow with its own label. */
   nextLabel?: string;
   /**
-   * Public path to the full-bleed photo under the header. The Figma frames
-   * author it at exactly that area (1920×845).
-   */
-  background?: string;
-  /**
-   * Where the diagram sits in `background` and what it must not cover. On
-   * desktop the diagram is placed against the photo so cards never overlap
-   * its objects; without it, the diagram simply fits its column.
+   * Where the diagram sits in the story's background photo and what it must
+   * not cover. On desktop the diagram is placed against the photo so cards
+   * never overlap its objects; without it, the diagram simply fits its column.
    */
   scene?: OnboardingScene;
   /** The diagram's authored size — it is scaled as one unit to fit. */
@@ -210,11 +225,14 @@ export function OnboardingShell({
   description,
   nextHref,
   nextLabel = "Next",
-  background,
   scene,
   canvas,
   children,
 }: Props) {
+  const router = useRouter();
+  const story = useOnboardingStory();
+  const [scope, animateScope] = useAnimate<HTMLDivElement>();
+  const leaving = useRef(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -270,13 +288,86 @@ export function OnboardingShell({
     };
   }, [canvas, scene]);
 
+  // The exit only navigates once it has played, so have the route ready.
+  useEffect(() => {
+    router.prefetch(nextHref);
+  }, [router, nextHref]);
+
+  function playExit() {
+    const runs = [
+      animateScope(
+        "[data-story='copy']",
+        { opacity: 0, y: -14, filter: "blur(4px)" },
+        { duration: 0.6, delay: stagger(0.06), ease: EASE_IN },
+      ),
+    ];
+
+    const diagram = scope.current.querySelector<HTMLElement>("[data-story='diagram']");
+    if (diagram) {
+      const focal = diagram.querySelector<HTMLElement>(":scope > [data-focal]");
+      // Offsets are the diagram's own unscaled pixels, the space the cards
+      // are transformed in, so the gather lines up at any fit scale.
+      const fx = focal ? focal.offsetLeft + focal.offsetWidth / 2 : diagram.offsetWidth / 2;
+      const fy = focal ? focal.offsetTop + focal.offsetHeight / 2 : diagram.offsetHeight / 2;
+
+      diagram.querySelectorAll<SVGSVGElement>(":scope > svg").forEach((lines) => {
+        runs.push(animateScope(lines, { opacity: 0 }, { duration: 0.5, ease: EASE_IN }));
+      });
+      diagram
+        .querySelectorAll<HTMLElement>(":scope > div:not([data-focal])")
+        .forEach((card, i) => {
+          const cx = card.offsetLeft + card.offsetWidth / 2;
+          const cy = card.offsetTop + card.offsetHeight / 2;
+          runs.push(
+            animateScope(
+              card,
+              { x: (fx - cx) * GATHER, y: (fy - cy) * GATHER, scale: 0.6, opacity: 0 },
+              { duration: 0.9, delay: 0.05 + i * 0.06, ease: EASE_IN },
+            ),
+          );
+        });
+      if (focal) {
+        runs.push(
+          animateScope(
+            focal,
+            { scale: 0.85, opacity: 0 },
+            { duration: 0.8, delay: 0.5, ease: EASE_IN },
+          ),
+        );
+      }
+    }
+    return Promise.all(runs);
+  }
+
+  async function handleNext(event: MouseEvent<HTMLAnchorElement>) {
+    // Modified clicks (new tab…), reduced motion and screens rendered outside
+    // the story layout keep plain link behaviour.
+    if (
+      !story ||
+      story.reducedMotion ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    if (leaving.current) return;
+    leaving.current = true;
+    window.setTimeout(() => story.morphTo(nextHref), MORPH_DELAY_MS);
+    await playExit();
+    router.push(nextHref);
+  }
+
   const headingText = heading
     .map((line) => line.map((part) => part.text).join(""))
     .join(" ");
   let charIndex = 0;
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden bg-[linear-gradient(90deg,#F1F1F1_0%,#F5F5F5_55%,#FAFAFA_100%)] text-[#161616]">
+    <div ref={scope} className="flex h-svh flex-col overflow-hidden text-[#161616]">
       <header className="flex h-[55px] shrink-0 items-center bg-white px-5 lg:px-[54px]">
         <Link href="/" aria-label="ABTalks home">
           <Image
@@ -294,36 +385,19 @@ export function OnboardingShell({
       <div
         ref={stageRef}
         className="relative isolate flex min-h-0 flex-1 flex-col gap-4 px-5 pb-[76px] pt-6 lg:grid lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-0 lg:p-0">
-        {background && (
-          // Behind everything in this area (isolate + -z-10); the gradient
-          // shows through until it loads. Desktop: fills the area, anchored
-          // bottom-right so the desk stays in view. Below lg a portrait
-          // screen would crop the wide photo down to a close-up behind the
-          // copy, so it becomes a full-width strip at its natural 1920×845
-          // ratio along the bottom, its top edge faded into the ground.
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 aspect-[1920/845] [mask-image:linear-gradient(to_bottom,transparent,black_45%)] lg:top-0 lg:aspect-auto lg:[mask-image:none]"
-          >
-            <Image
-              src={background}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-bottom-right"
-            />
-          </div>
-        )}
         <section className="shrink-0 lg:col-start-1 lg:row-start-1 lg:pl-[72px] lg:pt-[clamp(32px,11vh,100px)]">
           <motion.p
             {...fadeUp(3.2)}
+            data-story="copy"
             className="text-[12.5px] font-bold uppercase tracking-[0.02em] text-[#03535F]"
           >
             0{step + 1} / {STEPS[step]}
           </motion.p>
 
-          <h1 className="mt-4 font-heading text-[38px] font-semibold leading-[0.98] tracking-[-0.02em] sm:text-[52px] lg:mt-6 lg:text-[60px] xl:text-[72px] [@media(max-height:720px)]:lg:text-[52px]">
+          <h1
+            data-story="copy"
+            className="mt-4 font-heading text-[38px] font-semibold leading-[0.98] tracking-[-0.02em] sm:text-[52px] lg:mt-6 lg:text-[60px] xl:text-[72px] [@media(max-height:720px)]:lg:text-[52px]"
+          >
             <span className="sr-only">{headingText}</span>
             <span aria-hidden>
               {heading.map((line, li) => (
@@ -358,6 +432,7 @@ export function OnboardingShell({
 
           <motion.p
             {...fadeUp(3.6)}
+            data-story="copy"
             className="mt-5 max-w-[510px] text-[15px] leading-[1.6] text-[#5A5A5A] lg:mt-10 lg:text-[17px] lg:leading-[1.65]"
           >
             {description}
@@ -365,11 +440,12 @@ export function OnboardingShell({
 
           <motion.ol
             {...fadeUp(3.75)}
+            data-story="copy"
             aria-label="Onboarding steps"
-            className="mt-5 flex items-center gap-[26px] text-[12.5px] font-semibold uppercase tracking-[0.03em] lg:mt-7"
+            className="mt-5 flex items-center gap-3 text-[12.5px] font-semibold uppercase tracking-[0.03em] sm:gap-6.5 lg:mt-7"
           >
             {STEPS.map((label, i) => (
-              <li key={label} className="flex items-center gap-[26px]">
+              <li key={label} className="flex items-center gap-3 sm:gap-6.5">
                 {i > 0 && (
                   <span aria-hidden className="text-[#9A9A9A]">
                     ·
@@ -395,6 +471,7 @@ export function OnboardingShell({
               the photo) overrides the classes. Otherwise: centred on phones,
               pinned right of the copy column a little above centre on desktop. */}
           <div
+            data-story="diagram"
             className="absolute left-1/2 top-1/2 origin-center transform-[translate(-50%,-50%)_scale(var(--fit))] lg:left-5 lg:top-[calc(50%-40px)] lg:origin-left lg:transform-[translate(0,-50%)_scale(var(--fit))]"
             style={
               placement
@@ -414,7 +491,7 @@ export function OnboardingShell({
         </div>
 
         <div className="flex shrink-0 items-center justify-between lg:col-start-1 lg:row-start-2 lg:flex-col lg:items-start lg:justify-between lg:pb-12 lg:pl-[72px] lg:pt-6">
-          <motion.div {...fadeUp(4.05, 15)} className="lg:order-2">
+          <motion.div {...fadeUp(4.05, 15)} data-story="copy" className="lg:order-2">
             <Link
               href="/hire"
               className="text-[15px] text-[#5E5E5E] transition-colors hover:text-[#03535F]"
@@ -422,9 +499,10 @@ export function OnboardingShell({
               Skip
             </Link>
           </motion.div>
-          <motion.div {...fadeUp(3.9)} className="lg:order-1">
+          <motion.div {...fadeUp(3.9)} data-story="copy" className="lg:order-1">
             <Link
               href={nextHref}
+              onClick={handleNext}
               className={cn(
                 // DS v2 Large CTA (48 / 24 / 14) + the shared clay depth.
                 dsButtonVariants({ size: "lg" }),
