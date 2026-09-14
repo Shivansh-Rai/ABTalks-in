@@ -39,6 +39,14 @@ export type VerifiedAccomplishment = {
   occurredAt: Date | null;
 };
 
+/**
+ * `"profile"` is `/profile` Accomplishments: Claude is certificate-gated,
+ * hackathon participation still lists. `"wins-only"` is the recruiter inspector:
+ * 50+ days on every challenge domain including Claude, finished cohorts, and
+ * hackathon placements only.
+ */
+export type VerifiedAccomplishmentMode = "profile" | "wins-only";
+
 /** Claude's certificate is the gate; the other tracks gate on days completed. */
 const CHALLENGE_ELIGIBLE_DAYS = 50;
 
@@ -87,14 +95,20 @@ function metaRecord(metadata: unknown): Record<string, unknown> {
 
 export async function getVerifiedAccomplishments(
   userId: string,
+  mode: VerifiedAccomplishmentMode = "profile",
 ): Promise<VerifiedAccomplishment[]> {
+  const winsOnly = mode === "wins-only";
+  const challengeDomains: Domain[] = winsOnly
+    ? [Domain.SE, Domain.DS, Domain.AI, Domain.CLAUDE]
+    : [Domain.SE, Domain.DS, Domain.AI];
+
   const [credentials, enrollments, programEnrollments, participant] =
     await Promise.all([
       // Repository boundary: this is flag-aware (Credential vs legacy
       // Certificate). Never read either table directly from here.
       listForUser(userId),
       prisma.enrollment.findMany({
-        where: { userId, domain: { in: [Domain.SE, Domain.DS, Domain.AI] } },
+        where: { userId, domain: { in: challengeDomains } },
         select: {
           id: true,
           domain: true,
@@ -141,12 +155,13 @@ export async function getVerifiedAccomplishments(
   const out: VerifiedAccomplishment[] = [];
 
   /* ── Claude Challenge: gated on the certificate existing, nothing else ── */
+  // Recruiter wins-only uses the 50-day enrollment loop for Claude instead.
   const claude = live.find(
     (row) =>
       certificateTypeFromCredentialTitle(row.title) ===
       CertificateType.CLAUDE_CHALLENGE,
   );
-  if (claude) {
+  if (!winsOnly && claude) {
     const meta = metaRecord(claude.metadata);
     const days =
       typeof meta.daysCompleted === "number" ? meta.daysCompleted : null;
@@ -162,7 +177,7 @@ export async function getVerifiedAccomplishments(
     });
   }
 
-  /* ── SE / AI / DS: gated on 50+ days, certificate or not ── */
+  /* ── Challenges: gated on 50+ days. Profile excludes Claude here. ── */
   const challengeStats = await Promise.all(
     enrollments.map(async (e) => ({
       enrollment: e,
@@ -204,7 +219,10 @@ export async function getVerifiedAccomplishments(
   const best = HACKATHON_PLACEMENT_RANK.find((v) => variants.includes(v)) ?? null;
 
   const hasSubmission = Boolean(participant?.team.submission);
-  if (hackathonRows.length > 0 || hasSubmission) {
+  const showHackathon = winsOnly
+    ? best !== null
+    : hackathonRows.length > 0 || hasSubmission;
+  if (showHackathon) {
     const anchor = hackathonRows[0];
     const teamName = participant?.team.teamName ?? null;
     out.push({

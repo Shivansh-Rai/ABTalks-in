@@ -164,8 +164,18 @@ suite("inspector Experience is fetched jobs, not the track", () => {
   );
   const ev = src.slice(evStart);
   assert(
-    ev.includes('track ?? "Verified work on ABTalks"'),
-    "track proof sits in ABTalks Evidence",
+    ev.includes("loadInspectorTrackEvidenceAction") ||
+      src.includes("loadInspectorTrackEvidenceAction"),
+    "inspector loads completions on open",
+  );
+  assert(
+    ev.includes("No completed tracks or placements recorded."),
+    "empty Evidence copy",
+  );
+  assert(!ev.includes("Days shipped"), "Evidence is not live days shipped");
+  assert(
+    ev.includes("Verified work on ABTalks"),
+    "completions sit in ABTalks Evidence",
   );
 });
 
@@ -187,6 +197,27 @@ suite("work-history action gates on the pool and never selects contact", () => {
   assert(
     !stripped.includes("getCandidateDetail"),
     "must not call the full profile read",
+  );
+});
+
+suite("track-evidence action gates on the pool and uses wins-only accomplishments", () => {
+  const src = read("src/app/actions/hire-view-actions.ts");
+  const start = src.indexOf("export async function loadInspectorTrackEvidenceAction");
+  assert(start >= 0, "loadInspectorTrackEvidenceAction must exist");
+  const fn = src.slice(start);
+  assert(
+    fn.includes("resolveEligibleCandidates"),
+    "re-tests the ref against the searchable pool",
+  );
+  assert(
+    fn.includes('getVerifiedAccomplishments(eligible.userId, "wins-only")'),
+    "reads wins-only accomplishments",
+  );
+  assert(!fn.includes("getCandidateDetail"), "must not call the full profile read");
+  const stripped = stripComments(fn);
+  assert(
+    !stripped.includes("email: true") && !stripped.includes("phone: true"),
+    "action must not select email/phone",
   );
 });
 
