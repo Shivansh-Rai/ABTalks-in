@@ -176,7 +176,6 @@ export function DiscoverScreen() {
       heading={HEADING}
       description="Explore relevant candidates, understand their strengths and build your shortlist without the endless scrolling."
       nextHref="/recruiter-onboarding/connect"
-      background="/recruiter-onboarding/desk-discover.png"
       scene={SCENE}
       canvas={CANVAS}
     >
@@ -273,6 +272,7 @@ export function DiscoverScreen() {
         className="absolute rounded-[12px] border border-[#E6E6E6] bg-white p-[23px] shadow-[0_12px_32px_-16px_rgba(0,0,0,0.22)]"
         style={{ left: PROFILE.x, top: PROFILE.y, width: PROFILE.w, height: PROFILE.h }}
         {...focalEntrance}
+        data-focal
       >
         <div
           className={`flex h-[190px] items-center justify-center rounded-md text-[56px] ${PORTRAIT_FILL}`}

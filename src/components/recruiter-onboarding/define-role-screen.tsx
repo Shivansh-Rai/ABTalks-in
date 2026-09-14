@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import {
-  Award,
+  BadgeCheck,
   Briefcase,
   FileCode,
   GraduationCap,
@@ -115,16 +115,16 @@ const CRITERIA: Criterion[] = [
     lineDelay: 1.4,
   },
   {
-    key: "experience-right",
-    label: "Experience",
-    lines: ["3–5 Years"],
-    Icon: Award,
+    key: "verified-skills",
+    label: "ABTalks Verified Skills",
+    lines: ["Python, SQL and more"],
+    Icon: BadgeCheck,
     side: "right",
-    x: 664,
+    x: 650,
     y: 394,
-    w: 171,
+    w: 262,
     cardDelay: 2.3,
-    path: "M558 417L672 434",
+    path: "M558 417L658 434",
     lineDelay: 1.4,
   },
 ];
@@ -145,7 +145,7 @@ const SCENE: OnboardingScene = {
     { x: 16, y: 256, w: 188, h: 78 }, // location
     { x: 680, y: 190, w: 227, h: 117 }, // requirements
     { x: 56, y: 491, w: 172, h: 78 }, // experience (left)
-    { x: 664, y: 394, w: 171, h: 78 }, // experience (right)
+    { x: 650, y: 394, w: 262, h: 78 }, // ABTalks verified skills
     { x: 339, y: 211, w: 218, h: 248 }, // role brief
   ],
   obstacles: [
@@ -163,7 +163,6 @@ export function DefineRoleScreen() {
       heading={HEADING}
       description="Set the role, skills and requirements that matter. ABTalks turns your brief into a focused hiring journey."
       nextHref="/recruiter-onboarding/discover"
-      background="/recruiter-onboarding/desk-define.png"
       scene={SCENE}
       canvas={CANVAS}
     >
@@ -218,6 +217,7 @@ export function DefineRoleScreen() {
         className="absolute rounded-[10px] border border-[#E6E6E6] bg-white p-[22px] shadow-[0_12px_32px_-16px_rgba(0,0,0,0.22)]"
         style={{ left: 339, top: 211, width: 218, height: 248 }}
         {...focalEntrance}
+        data-focal
       >
         <span className="flex size-[50px] items-center justify-center rounded-lg bg-[#03535F] text-white">
           <UserCog className="size-6" strokeWidth={1.6} />
