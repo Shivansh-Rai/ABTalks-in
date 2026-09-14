@@ -1,0 +1,977 @@
+[
+  {
+    "dayNumber": 1,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What are the three layers of Snowflake's architecture?",
+        "options": [
+          "Ingestion, transformation and serving",
+          "Database storage, query processing (compute) and cloud services",
+          "Bronze, silver and gold",
+          "Driver, executor and metastore"
+        ],
+        "correctIndex": 1,
+        "explanation": "Snowflake separates storage, virtual-warehouse compute and the cloud services layer that handles auth, metadata and optimization."
+      },
+      {
+        "order": 2,
+        "question": "What happens when a warehouse created with AUTO_SUSPEND=60 sits idle for a minute?",
+        "options": [
+          "It is dropped",
+          "It scales down to the smallest size",
+          "It suspends and stops consuming credits",
+          "It keeps running at half the credit rate"
+        ],
+        "correctIndex": 2,
+        "explanation": "AUTO_SUSPEND is measured in seconds. A suspended warehouse uses no credits, and AUTO_RESUME restarts it on the next query."
+      },
+      {
+        "order": 3,
+        "question": "Why can two users query the same table from two differently sized warehouses without contention?",
+        "options": [
+          "Compute is separate from storage, so each warehouse reads the same data independently",
+          "Snowflake copies the table into each warehouse",
+          "Queries are queued and run one at a time",
+          "The larger warehouse locks the table first"
+        ],
+        "correctIndex": 0,
+        "explanation": "Warehouses are independent compute clusters over shared storage, so workloads don't compete for the same resources."
+      },
+      {
+        "order": 4,
+        "question": "Which object sits directly inside a database in Snowflake's object hierarchy?",
+        "options": [
+          "Warehouse",
+          "Account",
+          "Organization",
+          "Schema"
+        ],
+        "correctIndex": 3,
+        "explanation": "Organization \u2192 account \u2192 database \u2192 schema \u2192 tables, views and other objects. Warehouses are account-level compute, not database objects."
+      },
+      {
+        "order": 5,
+        "question": "What is SNOWFLAKE_SAMPLE_DATA?",
+        "options": [
+          "A copy of your production data for testing",
+          "A read-only shared database with TPC-H and TPC-DS sample schemas",
+          "A paid Marketplace listing",
+          "A schema created automatically by COPY INTO"
+        ],
+        "correctIndex": 1,
+        "explanation": "It's a share from Snowflake with benchmark sample data, so every account can practice without loading anything."
+      }
+    ]
+  },
+  {
+    "dayNumber": 2,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Which is the top-level system-defined role in an account?",
+        "options": [
+          "SYSADMIN",
+          "SECURITYADMIN",
+          "ACCOUNTADMIN",
+          "PUBLIC"
+        ],
+        "correctIndex": 2,
+        "explanation": "ACCOUNTADMIN encapsulates SYSADMIN and SECURITYADMIN, so it should be granted to very few users and used sparingly."
+      },
+      {
+        "order": 2,
+        "question": "Why grant a custom role like data_engineer to SYSADMIN?",
+        "options": [
+          "So SYSADMIN inherits its privileges and can manage the objects it creates",
+          "Because custom roles can't be granted to users",
+          "To give data_engineer ACCOUNTADMIN rights",
+          "It is required before any table can be created"
+        ],
+        "correctIndex": 0,
+        "explanation": "Rolling custom roles up into SYSADMIN keeps the hierarchy intact, so administrators can manage every object those roles own."
+      },
+      {
+        "order": 3,
+        "question": "What does GRANT SELECT ON FUTURE TABLES IN SCHEMA ... do?",
+        "options": [
+          "Grants SELECT only on tables that exist today",
+          "Schedules the grant for a future date",
+          "Revokes access after 30 days",
+          "Automatically grants SELECT on tables created in that schema later"
+        ],
+        "correctIndex": 3,
+        "explanation": "Future grants apply to objects created after the grant, so new tables are readable without another GRANT."
+      },
+      {
+        "order": 4,
+        "question": "A masking policy returns '***MASKED***' unless CURRENT_ROLE() is DATA_ENGINEER. What does data_analyst see when querying the column?",
+        "options": [
+          "The raw value",
+          "The masked value",
+          "An error",
+          "No rows at all"
+        ],
+        "correctIndex": 1,
+        "explanation": "Masking policies are evaluated at query time for the querying role. The stored data itself never changes."
+      },
+      {
+        "order": 5,
+        "question": "Why does tag-based masking scale better than attaching masking policies table by table?",
+        "options": [
+          "A policy attached to a tag protects every column carrying that tag, across tables",
+          "Tags make queries run faster",
+          "Tags encrypt the data at rest",
+          "Tags remove the need for roles"
+        ],
+        "correctIndex": 0,
+        "explanation": "Tag a column as PII once and the tag's masking policy follows it, instead of maintaining policies on every table."
+      }
+    ]
+  },
+  {
+    "dayNumber": 3,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Which query reads a table as it was 60 seconds ago?",
+        "options": [
+          "SELECT * FROM t BEFORE(OFFSET => 60)",
+          "SELECT * FROM t HISTORY 60",
+          "SELECT * FROM t AT(OFFSET => -60)",
+          "SELECT * FROM t UNDROP(-60)"
+        ],
+        "correctIndex": 2,
+        "explanation": "AT(OFFSET => -60) uses Time Travel to read the table state 60 seconds in the past."
+      },
+      {
+        "order": 2,
+        "question": "What is true of a zero-copy clone right after it is created?",
+        "options": [
+          "It shares micro-partitions with the source and only stores data that changes later",
+          "It duplicates all of the source's storage immediately",
+          "It is a live view that mirrors every later source change",
+          "It can only clone single tables"
+        ],
+        "correctIndex": 0,
+        "explanation": "Clones are copy-on-write: they start as metadata pointing at the same micro-partitions and diverge only as either side changes."
+      },
+      {
+        "order": 3,
+        "question": "Who can recover data that has moved into Fail-safe?",
+        "options": [
+          "Any user with the UNDROP privilege",
+          "The table owner with AT queries",
+          "Nobody, because Fail-safe is metadata only",
+          "Snowflake Support, as a last resort"
+        ],
+        "correctIndex": 3,
+        "explanation": "Fail-safe is a non-configurable 7-day period after Time Travel for permanent tables, and recovery goes through Snowflake Support."
+      },
+      {
+        "order": 4,
+        "question": "What does LATERAL FLATTEN(input => raw:line_items) return?",
+        "options": [
+          "The JSON as a single string",
+          "One row per element of the line_items array",
+          "Only the first line item",
+          "A count of the line items"
+        ],
+        "correctIndex": 1,
+        "explanation": "FLATTEN explodes an array or object into rows, exposing each element through the VALUE column."
+      },
+      {
+        "order": 5,
+        "question": "When is adding a manual clustering key a bad idea?",
+        "options": [
+          "When the table has a VARIANT column",
+          "When Time Travel is enabled",
+          "When the table is small, because reclustering costs credits without improving pruning",
+          "Never, because it always helps"
+        ],
+        "correctIndex": 2,
+        "explanation": "Clustering keys pay off on very large tables with selective filters. On small tables, automatic clustering maintenance just spends credits."
+      }
+    ]
+  },
+  {
+    "dayNumber": 4,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does the PUT command do?",
+        "options": [
+          "Uploads local files to an internal stage",
+          "Loads staged files into a table",
+          "Creates an external stage",
+          "Unloads a table into files"
+        ],
+        "correctIndex": 0,
+        "explanation": "PUT runs from a client such as the Snowflake CLI and uploads files to an internal stage. COPY INTO then loads them."
+      },
+      {
+        "order": 2,
+        "question": "Why does running the same COPY INTO twice load zero rows the second time?",
+        "options": [
+          "COPY INTO deletes the files after loading them",
+          "The table is locked after the first load",
+          "The file format rejects duplicate rows",
+          "Load metadata records which files were already loaded"
+        ],
+        "correctIndex": 3,
+        "explanation": "Table load metadata is kept for 64 days, so COPY INTO skips files it already loaded unless you set FORCE=TRUE."
+      },
+      {
+        "order": 3,
+        "question": "Which option best fits an application emitting individual events continuously with low latency?",
+        "options": [
+          "A nightly COPY INTO",
+          "An external table",
+          "Snowpipe Streaming",
+          "A zero-copy clone"
+        ],
+        "correctIndex": 2,
+        "explanation": "Snowpipe Streaming writes rows through an API without staging files, which suits continuous event producers."
+      },
+      {
+        "order": 4,
+        "question": "What triggers an auto-ingest Snowpipe on an external stage?",
+        "options": [
+          "A cron schedule",
+          "Cloud storage event notifications when new files land",
+          "A manual COPY INTO",
+          "A stream on the target table"
+        ],
+        "correctIndex": 1,
+        "explanation": "With AUTO_INGEST=TRUE, cloud event notifications (such as S3 events) tell Snowpipe that new files have arrived."
+      },
+      {
+        "order": 5,
+        "question": "What is the main trade-off of an external table?",
+        "options": [
+          "The data stays in cloud storage, so queries are typically slower than on loaded tables",
+          "It stores the data twice",
+          "It can't be queried with SQL",
+          "It requires a Snowpipe"
+        ],
+        "correctIndex": 0,
+        "explanation": "External tables avoid loading, but reading files in place usually can't match the performance of native micro-partitioned tables."
+      }
+    ]
+  },
+  {
+    "dayNumber": 5,
+    "questions": [
+      {
+        "order": 1,
+        "question": "How does a standard stream represent an UPDATE to a row?",
+        "options": [
+          "As a single UPDATE action",
+          "As two INSERT rows",
+          "As a DELETE and an INSERT, both with METADATA$ISUPDATE = TRUE",
+          "It doesn't track updates"
+        ],
+        "correctIndex": 2,
+        "explanation": "Streams record updates as a DELETE of the old values plus an INSERT of the new ones, flagged with METADATA$ISUPDATE."
+      },
+      {
+        "order": 2,
+        "question": "What does WHEN SYSTEM$STREAM_HAS_DATA('products_stream') add to a task?",
+        "options": [
+          "It creates the stream if it's missing",
+          "It skips the scheduled run when the stream has no new changes",
+          "It makes the task serverless",
+          "It runs the task whenever the stream is queried"
+        ],
+        "correctIndex": 1,
+        "explanation": "The WHEN condition is checked before the run, so the task skips runs with nothing to process."
+      },
+      {
+        "order": 3,
+        "question": "In a task graph, what does AFTER do?",
+        "options": [
+          "Delays the task by a set amount of time",
+          "Runs the task after the warehouse suspends",
+          "Schedules the task after midnight",
+          "Makes the task run once its predecessor finishes"
+        ],
+        "correctIndex": 3,
+        "explanation": "AFTER declares a predecessor, turning standalone tasks into a DAG with a single root."
+      },
+      {
+        "order": 4,
+        "question": "What does TARGET_LAG = '5 minutes' mean for a dynamic table?",
+        "options": [
+          "Its content should be no more than about 5 minutes behind its sources",
+          "It refreshes exactly every 5 minutes",
+          "Queries against it take 5 minutes",
+          "It keeps 5 minutes of Time Travel"
+        ],
+        "correctIndex": 0,
+        "explanation": "Target lag is a freshness goal. Snowflake schedules refreshes to keep the table within that lag of its sources."
+      },
+      {
+        "order": 5,
+        "question": "Why might a team choose Dynamic Tables over Streams and Tasks?",
+        "options": [
+          "They support arbitrary procedural logic and external calls",
+          "They are always cheaper",
+          "They let you declare the result while Snowflake manages refreshes and dependency order",
+          "They never need a warehouse"
+        ],
+        "correctIndex": 2,
+        "explanation": "Dynamic Tables are declarative: you write the SELECT and set a lag, and Snowflake handles incremental refresh and ordering."
+      }
+    ]
+  },
+  {
+    "dayNumber": 6,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Where does a Snowpark DataFrame transformation execute?",
+        "options": [
+          "Inside Snowflake's engine, pushed down as SQL",
+          "On your laptop",
+          "In a separate Spark cluster",
+          "In the browser"
+        ],
+        "correctIndex": 0,
+        "explanation": "Snowpark builds a query plan lazily and executes it in Snowflake when an action such as collect() or save_as_table() runs."
+      },
+      {
+        "order": 2,
+        "question": "What does QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) = 1 keep?",
+        "options": [
+          "All duplicate rows",
+          "The latest row for each order_id",
+          "The whole table sorted by date",
+          "Only orders placed today"
+        ],
+        "correctIndex": 1,
+        "explanation": "QUALIFY filters on the window function result, keeping the top-ranked row in each partition."
+      },
+      {
+        "order": 3,
+        "question": "Which layer holds business-level aggregates such as revenue by category?",
+        "options": [
+          "Bronze",
+          "Silver",
+          "Stage",
+          "Gold"
+        ],
+        "correctIndex": 3,
+        "explanation": "Bronze holds raw data, Silver cleaned and conformed data, and Gold business-ready aggregates."
+      },
+      {
+        "order": 4,
+        "question": "When is a Python UDF a better choice than plain SQL?",
+        "options": [
+          "For simple GROUP BY aggregates",
+          "For loading files from a stage",
+          "For logic SQL can't express easily, such as custom text cleaning",
+          "For granting privileges"
+        ],
+        "correctIndex": 2,
+        "explanation": "UDFs extend SQL with Python logic while still running inside Snowflake."
+      },
+      {
+        "order": 5,
+        "question": "What does APPROX_COUNT_DISTINCT trade for speed?",
+        "options": [
+          "Exactness, because it returns an estimate",
+          "Security",
+          "Time Travel retention",
+          "Nothing, because it's exact"
+        ],
+        "correctIndex": 0,
+        "explanation": "It uses HyperLogLog to estimate distinct counts with a small error, much faster than COUNT(DISTINCT ...) on large data."
+      }
+    ]
+  },
+  {
+    "dayNumber": 7,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What is a serverless task?",
+        "options": [
+          "A task without a schedule",
+          "A task whose compute Snowflake manages, created without a WAREHOUSE",
+          "A task that runs outside Snowflake",
+          "A task that can't be monitored"
+        ],
+        "correctIndex": 1,
+        "explanation": "Serverless tasks use Snowflake-managed compute that is sized automatically from recent runs."
+      },
+      {
+        "order": 2,
+        "question": "Which query shows recent task runs and their errors?",
+        "options": [
+          "SHOW WAREHOUSES",
+          "LIST @my_stage",
+          "SYSTEM$CLUSTERING_INFORMATION",
+          "SELECT * FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY())"
+        ],
+        "correctIndex": 3,
+        "explanation": "TASK_HISTORY returns task runs with their state, scheduled time and error details."
+      },
+      {
+        "order": 3,
+        "question": "What do dbt Projects on Snowflake remove the need for?",
+        "options": [
+          "An external orchestrator or separate dbt runtime",
+          "SQL models",
+          "Git",
+          "Warehouses"
+        ],
+        "correctIndex": 0,
+        "explanation": "dbt Core runs natively inside Snowflake, developed in Workspaces and deployed as a Snowflake object."
+      },
+      {
+        "order": 4,
+        "question": "What is a Snowsight Workspace used for in this program?",
+        "options": [
+          "Billing management",
+          "Creating users and roles",
+          "Git-backed editing and running of the dbt project inside Snowsight",
+          "Storing raw files"
+        ],
+        "correctIndex": 2,
+        "explanation": "Workspaces connect to a Git repository so you can edit, run and deploy the dbt project without leaving Snowsight."
+      },
+      {
+        "order": 5,
+        "question": "Why deploy the dbt project as a Snowflake object instead of only running it interactively?",
+        "options": [
+          "It makes models run faster",
+          "So it can run on a schedule or from the Snowflake CLI",
+          "It removes the need for a warehouse",
+          "Interactive runs can't create tables"
+        ],
+        "correctIndex": 1,
+        "explanation": "A deployed project is a governed object that tasks or the CLI can execute repeatedly."
+      }
+    ]
+  },
+  {
+    "dayNumber": 8,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does a Git repository object in Snowflake let you do?",
+        "options": [
+          "Replace GitHub as your remote",
+          "Push commits from SQL worksheets only",
+          "Fetch and read a remote repo's files from SQL, such as LIST @my_repo/branches/main",
+          "Replace GitHub Actions"
+        ],
+        "correctIndex": 2,
+        "explanation": "It keeps a synced clone of the remote so Snowflake can list and execute files from specific branches."
+      },
+      {
+        "order": 2,
+        "question": "What makes a migration script idempotent?",
+        "options": [
+          "It can only ever run once",
+          "Running it again leaves the same end state, for example with CREATE ... IF NOT EXISTS",
+          "It deletes everything before running",
+          "It has a version number in its name"
+        ],
+        "correctIndex": 1,
+        "explanation": "Idempotent DDL can be re-run safely, which matters when pipelines retry or replay scripts."
+      },
+      {
+        "order": 3,
+        "question": "Where should Snowflake credentials for a GitHub Actions workflow live?",
+        "options": [
+          "In GitHub Actions secrets",
+          "In the workflow YAML file",
+          "In the README",
+          "In a committed .env file"
+        ],
+        "correctIndex": 0,
+        "explanation": "Secrets are encrypted and injected at runtime, and never belong in the repository itself."
+      },
+      {
+        "order": 4,
+        "question": "In the workflow you built, when does the prod deploy run?",
+        "options": [
+          "On every push to any branch",
+          "Only when triggered manually",
+          "Nightly on a schedule",
+          "On merge to main"
+        ],
+        "correctIndex": 3,
+        "explanation": "Feature branches deploy to dev, and only reviewed changes merged to main promote to prod."
+      },
+      {
+        "order": 5,
+        "question": "Why run the same versioned scripts against dev and prod?",
+        "options": [
+          "Because prod can't run SQL directly",
+          "So both environments end up with identical objects from source control",
+          "To use more credits",
+          "So dev can be deleted afterwards"
+        ],
+        "correctIndex": 1,
+        "explanation": "Deploying the same source-controlled scripts everywhere prevents environments from drifting apart."
+      }
+    ]
+  },
+  {
+    "dayNumber": 9,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Which Query Profile signal suggests a warehouse is too small for a large sort?",
+        "options": [
+          "A result cache hit",
+          "Many partitions pruned",
+          "Low bytes scanned",
+          "Bytes spilled to local or remote storage"
+        ],
+        "correctIndex": 3,
+        "explanation": "Spilling means intermediate results didn't fit in memory, so the query overflowed to disk, which slows it down."
+      },
+      {
+        "order": 2,
+        "question": "When is the result cache reused?",
+        "options": [
+          "For identical query text when the underlying data hasn't changed",
+          "For any query on the same table",
+          "Only on larger warehouses",
+          "Only for SELECT * queries"
+        ],
+        "correctIndex": 0,
+        "explanation": "Persisted results are reused for the same query text as long as the data hasn't changed and the query is deterministic."
+      },
+      {
+        "order": 3,
+        "question": "What does resizing a warehouse from XSMALL to SMALL require?",
+        "options": [
+          "Downtime and restarting all queries",
+          "A support ticket",
+          "Just an ALTER WAREHOUSE statement, with no downtime",
+          "Dropping and recreating the warehouse"
+        ],
+        "correctIndex": 2,
+        "explanation": "Resizing takes effect for new queries without downtime. Queries already running finish on the old size."
+      },
+      {
+        "order": 4,
+        "question": "Which scaling policy favors keeping running clusters fully loaded to save credits?",
+        "options": [
+          "Standard",
+          "Economy",
+          "Maximized",
+          "Burst"
+        ],
+        "correctIndex": 1,
+        "explanation": "Economy starts extra clusters only when there's enough sustained load, while Standard prioritizes low queuing."
+      },
+      {
+        "order": 5,
+        "question": "What can a Resource Monitor do when usage reaches 100% of its credit quota?",
+        "options": [
+          "Suspend the warehouses assigned to it",
+          "Delete the warehouse",
+          "Upgrade the account edition",
+          "Refund the credits"
+        ],
+        "correctIndex": 0,
+        "explanation": "Triggers can NOTIFY, SUSPEND (after running queries finish) or SUSPEND_IMMEDIATE (cancelling running queries)."
+      }
+    ]
+  },
+  {
+    "dayNumber": 10,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What backs a Snowsight dashboard tile?",
+        "options": [
+          "A Streamlit script",
+          "A stage",
+          "A worksheet query",
+          "A task"
+        ],
+        "correctIndex": 2,
+        "explanation": "Each tile is created from a saved worksheet query and its chart settings."
+      },
+      {
+        "order": 2,
+        "question": "Where does a Streamlit in Snowflake app run?",
+        "options": [
+          "Inside Snowflake, with no external hosting",
+          "On a separate server you deploy",
+          "Only on your laptop",
+          "On GitHub Pages"
+        ],
+        "correctIndex": 0,
+        "explanation": "Streamlit in Snowflake hosts the app natively, using Snowflake compute and governance."
+      },
+      {
+        "order": 3,
+        "question": "What does a Cortex Analyst semantic model describe?",
+        "options": [
+          "Warehouse sizes",
+          "User passwords",
+          "Stream offsets",
+          "Tables, columns, synonyms and verified queries so an LLM can write accurate SQL"
+        ],
+        "correctIndex": 3,
+        "explanation": "The semantic model maps business vocabulary to your physical tables so generated SQL targets the right objects."
+      },
+      {
+        "order": 4,
+        "question": "Why add verified queries to a semantic model?",
+        "options": [
+          "They speed up warehouses",
+          "They give Cortex Analyst known-correct SQL for common questions, improving accuracy",
+          "Dashboards require them",
+          "They disable RBAC checks"
+        ],
+        "correctIndex": 1,
+        "explanation": "Verified queries act as trusted examples that ground the SQL generated for similar questions."
+      },
+      {
+        "order": 5,
+        "question": "Why are Cortex Analyst answers governed?",
+        "options": [
+          "It only reads public data",
+          "It copies data out of Snowflake first",
+          "The generated SQL runs under the user's role, so RBAC and masking policies still apply",
+          "It bypasses policies for speed"
+        ],
+        "correctIndex": 2,
+        "explanation": "Cortex Analyst generates SQL, but that SQL executes with the caller's privileges like any other query."
+      }
+    ]
+  },
+  {
+    "dayNumber": 11,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What do Snowpark ML Modeling estimators share with scikit-learn?",
+        "options": [
+          "They only run on your laptop",
+          "The same fit and predict interface",
+          "They require pandas input",
+          "They can't be evaluated"
+        ],
+        "correctIndex": 1,
+        "explanation": "Snowpark ML wraps familiar scikit-learn-style APIs while executing the work on Snowflake compute."
+      },
+      {
+        "order": 2,
+        "question": "What do built-in ML Functions like FORECAST let you do?",
+        "options": [
+          "Get forecasts or anomaly flags from SQL without building a model yourself",
+          "Train deep neural networks by hand",
+          "Load files into stages",
+          "Create roles"
+        ],
+        "correctIndex": 0,
+        "explanation": "ML Functions package common ML tasks behind SQL, so analysts can use them without writing model code."
+      },
+      {
+        "order": 3,
+        "question": "Why preprocess with Snowpark ML transformers instead of to_pandas()?",
+        "options": [
+          "pandas can't scale numeric columns",
+          "It avoids needing a warehouse",
+          "It encrypts the features",
+          "The work runs on Snowflake compute and scales without pulling data locally"
+        ],
+        "correctIndex": 3,
+        "explanation": "to_pandas() moves all the data into client memory, while Snowpark ML transformers push the work down."
+      },
+      {
+        "order": 4,
+        "question": "What compute can a Snowflake Notebook run on?",
+        "options": [
+          "Only your laptop",
+          "Only serverless tasks",
+          "A virtual warehouse or Container Runtime",
+          "Only GPUs"
+        ],
+        "correctIndex": 2,
+        "explanation": "Notebooks run on a warehouse, or on Container Runtime for workloads that need packages or GPUs."
+      },
+      {
+        "order": 5,
+        "question": "Which is a governance benefit of training models inside Snowflake?",
+        "options": [
+          "Data never leaves the platform, so existing access controls still apply",
+          "It removes the need for roles",
+          "It makes all data public",
+          "It disables Time Travel"
+        ],
+        "correctIndex": 0,
+        "explanation": "Keeping training in-platform avoids uncontrolled data copies and keeps RBAC and masking in force."
+      }
+    ]
+  },
+  {
+    "dayNumber": 12,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does a Feature Store Entity define?",
+        "options": [
+          "A warehouse size",
+          "The join key or keys features are looked up by, such as customer_id",
+          "A model version",
+          "A stage location"
+        ],
+        "correctIndex": 1,
+        "explanation": "Entities describe the keys that connect feature views to training data and inference requests."
+      },
+      {
+        "order": 2,
+        "question": "What does point-in-time correctness prevent?",
+        "options": [
+          "Warehouse spilling",
+          "Duplicate files in a stage",
+          "Label leakage from feature values recorded after each label's timestamp",
+          "Slow dashboards"
+        ],
+        "correctIndex": 2,
+        "explanation": "Joining features as of the label time stops the model from learning information it wouldn't have had at prediction time."
+      },
+      {
+        "order": 3,
+        "question": "Why log-scale a skewed revenue column?",
+        "options": [
+          "To encrypt it",
+          "To turn it into a categorical feature",
+          "To remove null values",
+          "To reduce the influence of extreme values"
+        ],
+        "correctIndex": 3,
+        "explanation": "A log transform compresses long tails so a few very large values don't dominate the model."
+      },
+      {
+        "order": 4,
+        "question": "What does refresh_freq='1 day' on a FeatureView do?",
+        "options": [
+          "Keeps the feature data refreshed daily",
+          "Deletes the view after a day",
+          "Retrains the model daily",
+          "Limits queries to once a day"
+        ],
+        "correctIndex": 0,
+        "explanation": "Managed feature views are refreshed on their schedule so features stay current."
+      },
+      {
+        "order": 5,
+        "question": "Which of these is a time-based feature?",
+        "options": [
+          "Customer email",
+          "Days since a customer's first order",
+          "Product category",
+          "Warehouse size"
+        ],
+        "correctIndex": 1,
+        "explanation": "Recency and tenure features capture how behavior changes over time."
+      }
+    ]
+  },
+  {
+    "dayNumber": 13,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does GridSearchCV do?",
+        "options": [
+          "Samples a few random hyperparameter combinations",
+          "Deploys the model",
+          "Tries every combination of the listed hyperparameters and keeps the best",
+          "Registers the model"
+        ],
+        "correctIndex": 2,
+        "explanation": "GridSearchCV is exhaustive. RandomizedSearchCV samples combinations instead, which is cheaper for large grids."
+      },
+      {
+        "order": 2,
+        "question": "Which metric fits an imbalanced churn classifier better than accuracy?",
+        "options": [
+          "RMSE",
+          "F1 or AUC",
+          "MAE",
+          "Row count"
+        ],
+        "correctIndex": 1,
+        "explanation": "With few positive cases, accuracy can look high while missing churners. F1 and AUC reflect performance on the minority class."
+      },
+      {
+        "order": 3,
+        "question": "Why set a default version or alias in the Model Registry?",
+        "options": [
+          "It deletes old versions",
+          "It speeds up training",
+          "It is required before logging a model",
+          "Consumers call the current champion without hard-coding a version"
+        ],
+        "correctIndex": 3,
+        "explanation": "Promoting a new version becomes a registry change instead of a code change in every consumer."
+      },
+      {
+        "order": 4,
+        "question": "What is batch inference?",
+        "options": [
+          "Scoring a whole table of rows at once",
+          "Scoring one request in real time",
+          "Retraining the model every night",
+          "Registering a model"
+        ],
+        "correctIndex": 0,
+        "explanation": "Batch inference scores many rows in one job, typically writing the predictions to a table."
+      },
+      {
+        "order": 5,
+        "question": "Which signal suggests model drift?",
+        "options": [
+          "A warehouse resize",
+          "Live prediction distributions moving away from training-time distributions",
+          "A new Git commit",
+          "A dashboard refresh"
+        ],
+        "correctIndex": 1,
+        "explanation": "When the data or predictions shift away from what the model was trained on, its accuracy usually degrades."
+      }
+    ]
+  },
+  {
+    "dayNumber": 14,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does Cortex Search provide?",
+        "options": [
+          "Managed hybrid vector and keyword retrieval over a table",
+          "A warehouse result cache",
+          "Model training",
+          "File uploads to a stage"
+        ],
+        "correctIndex": 0,
+        "explanation": "Cortex Search indexes text from a table and serves low-latency hybrid search for RAG applications."
+      },
+      {
+        "order": 2,
+        "question": "What is the correct order of a RAG chain?",
+        "options": [
+          "Generate, then retrieve, then augment",
+          "Augment, then generate, then retrieve",
+          "Retrieve relevant chunks, augment the prompt, then generate",
+          "Generate only"
+        ],
+        "correctIndex": 2,
+        "explanation": "Retrieval supplies grounded context, the prompt is augmented with it, and the LLM generates the answer."
+      },
+      {
+        "order": 3,
+        "question": "What does AI_CLASSIFY do?",
+        "options": [
+          "Creates a role",
+          "Compresses a table",
+          "Translates SQL into Python",
+          "Sorts text or images into categories you provide"
+        ],
+        "correctIndex": 3,
+        "explanation": "AI_CLASSIFY assigns inputs to one or more labels you supply, directly from SQL."
+      },
+      {
+        "order": 4,
+        "question": "Why check retrieved chunks before building generation on top of them?",
+        "options": [
+          "If retrieval is off, answers will be wrong or hallucinated no matter the prompt",
+          "Retrieved chunks expire quickly",
+          "It makes COMPLETE free",
+          "RBAC requires it"
+        ],
+        "correctIndex": 0,
+        "explanation": "Generation quality is capped by retrieval quality, so evaluate retrieval first."
+      },
+      {
+        "order": 5,
+        "question": "How is a Cortex Search Service governed?",
+        "options": [
+          "Anyone with its URL can query it",
+          "It is a Snowflake object controlled by the same RBAC as tables",
+          "It has no access controls",
+          "Only Snowflake Support can query it"
+        ],
+        "correctIndex": 1,
+        "explanation": "Access to Cortex objects is granted to roles like any other Snowflake object."
+      }
+    ]
+  },
+  {
+    "dayNumber": 15,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does a Cortex Agent do with its tools?",
+        "options": [
+          "Runs every tool for every question",
+          "Replaces the warehouse",
+          "Plans the request and picks the right tool or tools, such as Analyst, Search or a custom tool",
+          "Only answers from documents"
+        ],
+        "correctIndex": 2,
+        "explanation": "Agents orchestrate multi-step work, routing structured questions to Cortex Analyst and document questions to Cortex Search."
+      },
+      {
+        "order": 2,
+        "question": "What is Snowflake Intelligence / CoWork for?",
+        "options": [
+          "A governed, no-code chat experience for business users on top of agents",
+          "Warehouse billing",
+          "Loading files",
+          "Git integration"
+        ],
+        "correctIndex": 0,
+        "explanation": "It puts agents in front of business users without them writing SQL, under the same governance."
+      },
+      {
+        "order": 3,
+        "question": "Which is a concrete cost-saving move for production?",
+        "options": [
+          "Doubling every warehouse size",
+          "Disabling Resource Monitors",
+          "Running every task each minute",
+          "More aggressive auto-suspend on warehouses"
+        ],
+        "correctIndex": 3,
+        "explanation": "Shorter auto-suspend, smaller default warehouses, serverless tasks and tight Resource Monitors all cut idle spend."
+      },
+      {
+        "order": 4,
+        "question": "What does the Trust Center help you do?",
+        "options": [
+          "Design dashboards",
+          "Review account security posture, such as users without MFA",
+          "Train models",
+          "Write dbt models"
+        ],
+        "correctIndex": 1,
+        "explanation": "Trust Center scans the account against security recommendations and surfaces findings to fix."
+      },
+      {
+        "order": 5,
+        "question": "Before registering for a SnowPro exam, what should you always check?",
+        "options": [
+          "The current official exam guide on snowflake.com",
+          "An old blog post",
+          "Only your trial credit balance",
+          "Your Git history"
+        ],
+        "correctIndex": 0,
+        "explanation": "Exam guides and product names change, so the official guide is the source of truth."
+      }
+    ]
+  }
+]

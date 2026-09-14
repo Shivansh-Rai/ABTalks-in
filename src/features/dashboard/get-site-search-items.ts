@@ -8,6 +8,7 @@ import {
   isDsArchitectEnabled,
   isPowerBiEnabled,
   isProgramEnabled,
+  isSnowflakeEnabled,
 } from "@/lib/feature-flags";
 import { loadAvailableInterviews } from "@/features/dashboard/load-available-interviews";
 import {
@@ -25,6 +26,7 @@ function guestCatalog(): HubSearchItem[] {
     hasDatabricksAccess: isDatabricksEnabled(),
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
+    hasSnowflakeAccess: isSnowflakeEnabled(),
     isAdmin: false,
     claudeEnabled: isClaudeEnabled(),
     programEnabled: isProgramEnabled(),
@@ -80,6 +82,7 @@ export const getSiteSearchItems = cache(async (): Promise<HubSearchItem[]> => {
     hasDatabricksAccess: isDatabricksEnabled(),
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
+    hasSnowflakeAccess: isSnowflakeEnabled(),
     isAdmin: session.user.isAdmin ?? false,
     claudeEnabled: isClaudeEnabled(),
     programEnabled,

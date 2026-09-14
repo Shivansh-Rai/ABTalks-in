@@ -1,0 +1,50 @@
+[
+  {
+    "number": 1,
+    "title": "Platform Foundations & Governance",
+    "subtitle": "Architecture \u00b7 Warehouses \u00b7 RBAC \u00b7 Horizon \u00b7 Time Travel \u00b7 Cloning \u00b7 VARIANT",
+    "color": "#0ea5e9",
+    "startDay": 1,
+    "endDay": 3
+  },
+  {
+    "number": 2,
+    "title": "Data Engineering: Ingestion to Modeling",
+    "subtitle": "Stages \u00b7 COPY INTO \u00b7 Snowpipe \u00b7 Streams & Tasks \u00b7 Dynamic Tables \u00b7 Snowpark",
+    "color": "#6366f1",
+    "startDay": 4,
+    "endDay": 6
+  },
+  {
+    "number": 3,
+    "title": "Orchestration, CI/CD & Production Ops",
+    "subtitle": "Task DAGs \u00b7 dbt Projects \u00b7 Git \u00b7 Snowflake CLI \u00b7 Query Profile \u00b7 Resource Monitors",
+    "color": "#14b8a6",
+    "startDay": 7,
+    "endDay": 9
+  },
+  {
+    "number": 4,
+    "title": "Analytics & BI",
+    "subtitle": "Snowsight Dashboards \u00b7 Streamlit in Snowflake \u00b7 Cortex Analyst",
+    "color": "#f59e0b",
+    "startDay": 10,
+    "endDay": 10
+  },
+  {
+    "number": 5,
+    "title": "Machine Learning Engineering",
+    "subtitle": "Notebooks \u00b7 Snowpark ML \u00b7 Feature Store \u00b7 Model Registry",
+    "color": "#ec4899",
+    "startDay": 11,
+    "endDay": 13
+  },
+  {
+    "number": 6,
+    "title": "Generative AI Engineering & Capstone",
+    "subtitle": "Cortex AISQL \u00b7 Cortex Search \u00b7 Document AI \u00b7 Cortex Agents",
+    "color": "#22c55e",
+    "startDay": 14,
+    "endDay": 15
+  }
+]

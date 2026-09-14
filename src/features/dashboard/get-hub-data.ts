@@ -4,6 +4,7 @@ import {
   isDsArchitectEnabled,
   isPowerBiEnabled,
   isProgramEnabled,
+  isSnowflakeEnabled,
 } from "@/lib/feature-flags";
 import { prisma } from "@/lib/db";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
@@ -40,6 +41,7 @@ export type HubData = {
   hasDatabricksAccess: boolean;
   hasDsArchitectAccess: boolean;
   hasPowerBiAccess: boolean;
+  hasSnowflakeAccess: boolean;
   isHackathonRegistered: boolean;
   heatmap: ActivityHeatmap;
   streak: ActivityStreak;
@@ -107,6 +109,7 @@ export async function getHubData(
     hasDatabricksAccess: isDatabricksEnabled(),
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
+    hasSnowflakeAccess: isSnowflakeEnabled(),
     isHackathonRegistered,
     heatmap,
     streak: heatmap.streak,

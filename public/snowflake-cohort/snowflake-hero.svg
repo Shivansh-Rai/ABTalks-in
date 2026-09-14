@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="670" height="502" viewBox="0 0 670 502" role="img" aria-labelledby="title">
+  <title id="title">Snowflake Data &amp; AI Engineering Cohort</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E7F2F3"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#03535F" fill-opacity="0.08"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#03535F"/>
+    </marker>
+    <g id="arm">
+      <line x1="485" y1="165" x2="485" y2="79" stroke="#29B5E8" stroke-width="6" stroke-linecap="round"/>
+      <line x1="485" y1="115" x2="468" y2="98" stroke="#29B5E8" stroke-width="5" stroke-linecap="round"/>
+      <line x1="485" y1="115" x2="502" y2="98" stroke="#29B5E8" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="485" cy="79" r="8" fill="#FFFFFF" stroke="#03535F" stroke-width="4"/>
+    </g>
+  </defs>
+
+  <rect width="670" height="502" rx="24" fill="url(#bg)"/>
+  <rect width="670" height="502" rx="24" fill="url(#dots)"/>
+
+  <text x="58" y="112" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="700" letter-spacing="2" fill="#03535F">RETAIL LAKEHOUSE</text>
+
+  <!-- Gold -->
+  <rect x="56" y="140" width="240" height="62" rx="14" fill="#F6EBC8" stroke="#C9A227" stroke-width="2"/>
+  <text x="78" y="178" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="17" fill="#2B2B2B"><tspan font-weight="700">GOLD</tspan><tspan dx="8" font-size="13" fill="#6B5A1E">business-ready</tspan></text>
+  <rect x="244" y="160" width="40" height="6" rx="3" fill="#C9A227" fill-opacity="0.55"/>
+  <rect x="244" y="170" width="30" height="6" rx="3" fill="#C9A227" fill-opacity="0.55"/>
+  <rect x="244" y="180" width="36" height="6" rx="3" fill="#C9A227" fill-opacity="0.55"/>
+
+  <!-- Silver -->
+  <rect x="56" y="236" width="240" height="62" rx="14" fill="#EBEFF3" stroke="#9AA5B1" stroke-width="2"/>
+  <text x="78" y="274" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="17" fill="#2B2B2B"><tspan font-weight="700">SILVER</tspan><tspan dx="8" font-size="13" fill="#56606B">cleaned</tspan></text>
+  <rect x="244" y="256" width="40" height="6" rx="3" fill="#9AA5B1" fill-opacity="0.6"/>
+  <rect x="244" y="266" width="30" height="6" rx="3" fill="#9AA5B1" fill-opacity="0.6"/>
+  <rect x="244" y="276" width="36" height="6" rx="3" fill="#9AA5B1" fill-opacity="0.6"/>
+
+  <!-- Bronze -->
+  <rect x="56" y="332" width="240" height="62" rx="14" fill="#F4E2D2" stroke="#B07A4F" stroke-width="2"/>
+  <text x="78" y="370" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="17" fill="#2B2B2B"><tspan font-weight="700">BRONZE</tspan><tspan dx="8" font-size="13" fill="#7A5236">raw</tspan></text>
+  <rect x="244" y="352" width="40" height="6" rx="3" fill="#B07A4F" fill-opacity="0.55"/>
+  <rect x="244" y="362" width="30" height="6" rx="3" fill="#B07A4F" fill-opacity="0.55"/>
+  <rect x="244" y="372" width="36" height="6" rx="3" fill="#B07A4F" fill-opacity="0.55"/>
+
+  <!-- Flow between layers -->
+  <line x1="176" y1="328" x2="176" y2="306" stroke="#03535F" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+  <line x1="176" y1="232" x2="176" y2="210" stroke="#03535F" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+
+  <!-- Pipeline chips -->
+  <g font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="600" fill="#03535F">
+    <rect x="56" y="418" width="84" height="28" rx="14" fill="#E7F2F3" stroke="#03535F" stroke-opacity="0.35"/>
+    <text x="98" y="436" text-anchor="middle">Snowpipe</text>
+    <rect x="148" y="418" width="126" height="28" rx="14" fill="#E7F2F3" stroke="#03535F" stroke-opacity="0.35"/>
+    <text x="211" y="436" text-anchor="middle">Streams &amp; Tasks</text>
+    <rect x="282" y="418" width="52" height="28" rx="14" fill="#E7F2F3" stroke="#03535F" stroke-opacity="0.35"/>
+    <text x="308" y="436" text-anchor="middle">dbt</text>
+  </g>
+
+  <!-- Data crystal -->
+  <polygon points="485,55 580.3,110 580.3,220 485,275 389.7,220 389.7,110" fill="#FFFFFF" fill-opacity="0.7" stroke="#29B5E8" stroke-opacity="0.35" stroke-width="2"/>
+  <use href="#arm"/>
+  <use href="#arm" transform="rotate(60 485 165)"/>
+  <use href="#arm" transform="rotate(120 485 165)"/>
+  <use href="#arm" transform="rotate(180 485 165)"/>
+  <use href="#arm" transform="rotate(240 485 165)"/>
+  <use href="#arm" transform="rotate(300 485 165)"/>
+  <circle cx="485" cy="165" r="14" fill="#03535F"/>
+  <circle cx="485" cy="165" r="5" fill="#FFFFFF"/>
+
+  <!-- Connectors -->
+  <path d="M296 171 C 334 171, 352 150, 386 142" fill="none" stroke="#03535F" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="485" y1="275" x2="485" y2="318" stroke="#03535F" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Analytics card -->
+  <rect x="372" y="318" width="210" height="126" rx="14" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="2"/>
+  <text x="390" y="344" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="600" fill="#4B4B4B">Revenue by category</text>
+  <rect x="390" y="392" width="18" height="36" rx="4" fill="#03535F" fill-opacity="0.45"/>
+  <rect x="416" y="376" width="18" height="52" rx="4" fill="#03535F" fill-opacity="0.65"/>
+  <rect x="442" y="384" width="18" height="44" rx="4" fill="#03535F" fill-opacity="0.55"/>
+  <rect x="468" y="358" width="18" height="70" rx="4" fill="#03535F"/>
+  <polyline points="505,410 525,392 545,398 565,370" fill="none" stroke="#29B5E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="505" cy="410" r="3.5" fill="#FFFFFF" stroke="#29B5E8" stroke-width="2"/>
+  <circle cx="525" cy="392" r="3.5" fill="#FFFFFF" stroke="#29B5E8" stroke-width="2"/>
+  <circle cx="545" cy="398" r="3.5" fill="#FFFFFF" stroke="#29B5E8" stroke-width="2"/>
+  <circle cx="565" cy="370" r="3.5" fill="#FFFFFF" stroke="#29B5E8" stroke-width="2"/>
+
+  <!-- AI agent bubble -->
+  <rect x="520" y="420" width="136" height="50" rx="16" fill="#03535F"/>
+  <path d="M536 468 L552 468 L534 484 Z" fill="#03535F"/>
+  <path d="M544 434 L547 442 L555 445 L547 448 L544 456 L541 448 L533 445 L541 442 Z" fill="#FFFFFF"/>
+  <text x="564" y="450" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Cortex AI</text>
+</svg>

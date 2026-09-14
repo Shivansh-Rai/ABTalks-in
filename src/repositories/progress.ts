@@ -248,21 +248,34 @@ async function listPowerBiAttemptTimes(userId: string): Promise<Date[]> {
   return rows.map((r) => r.submittedAt ?? r.createdAt);
 }
 
+/** Snowflake mission runs — every verification run, pass or fail. */
+async function listSnowflakeAttemptTimes(userId: string): Promise<Date[]> {
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      enrollment: { userId },
+      activityId: { startsWith: "act_snf_day_" },
+    },
+    select: { submittedAt: true, createdAt: true },
+  });
+  return rows.map((r) => r.submittedAt ?? r.createdAt);
+}
+
 /**
  * Every submission the hub heatmap and streak card count, across all tracks
  * the user can be in: 60-Day Challenge, AI Cohort, Databricks, DS Architect,
- * Power BI.
+ * Power BI, Snowflake.
  */
 export async function listHubSubmissionTimes(
   userId: string,
 ): Promise<Date[]> {
-  const [challenge, program, databricks, dsArchitect, powerBi] =
+  const [challenge, program, databricks, dsArchitect, powerBi, snowflake] =
     await Promise.all([
       listChallengeSubmissionTimes(userId),
       listProgramMissionTimes(userId),
       listDatabricksAttemptTimes(userId),
       listDsArchitectAttemptTimes(userId),
       listPowerBiAttemptTimes(userId),
+      listSnowflakeAttemptTimes(userId),
     ]);
   return [
     ...challenge,
@@ -270,6 +283,7 @@ export async function listHubSubmissionTimes(
     ...databricks,
     ...dsArchitect,
     ...powerBi,
+    ...snowflake,
   ];
 }
 

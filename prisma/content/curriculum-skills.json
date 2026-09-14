@@ -122,6 +122,25 @@
         { "name": "Solution Architecture", "category": "professional" },
         { "name": "Data Modeling", "category": "data" }
       ]
+    },
+    {
+      "program": "snowflake",
+      "label": "Snowflake Data & AI Engineering Cohort",
+      "source": "prisma/content/snowflake-cohort/{modules,days}.json",
+      "skills": [
+        { "name": "Snowflake", "category": "data" },
+        { "name": "SQL", "category": "data" },
+        { "name": "Data Engineering", "category": "data" },
+        { "name": "Data Warehousing", "category": "data" },
+        { "name": "Snowpark", "category": "data" },
+        { "name": "dbt", "category": "data" },
+        { "name": "Data Governance", "category": "data" },
+        { "name": "CI/CD", "category": "tools" },
+        { "name": "Machine Learning", "category": "ai-ml" },
+        { "name": "MLOps", "category": "ai-ml" },
+        { "name": "Retrieval-Augmented Generation (RAG)", "category": "ai-ml" },
+        { "name": "AI Agents", "category": "ai-ml" }
+      ]
     }
   ]
 }

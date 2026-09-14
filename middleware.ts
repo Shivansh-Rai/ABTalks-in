@@ -76,6 +76,7 @@ const protectedPaths = [
   "/program/databricks",
   "/program/ds-architect",
   "/program/powerbi",
+  "/program/snowflake",
   "/talent",
   "/hire",
   "/hackathon/dashboard",
