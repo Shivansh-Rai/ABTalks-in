@@ -256,6 +256,100 @@ export function prismaAttemptStore(): AttemptStore {
       }
     },
 
+    async submitForced(assignmentId, candidateUserId, at, finish) {
+      const existing = await prisma.recruiterAssessmentAssignment.findFirst({
+        where: { id: assignmentId, candidateUserId },
+        select: { status: true },
+      });
+      if (!existing) return { outcome: "NOT_OPEN" as const };
+      if (existing.status === "SUBMITTED") return { outcome: "ALREADY" as const };
+
+      // STARTED only — ASSIGNED is refused by the service before this runs.
+      try {
+        return await writeClient().$transaction(async (tx) => {
+          const flipped = await tx.recruiterAssessmentAssignment.updateMany({
+            where: {
+              id: assignmentId,
+              candidateUserId,
+              status: "STARTED",
+            },
+            data: { status: "SUBMITTED", submittedAt: at },
+          });
+          if (flipped.count !== 1) return { outcome: "NOT_OPEN" as const };
+
+          const a = await tx.recruiterAssessmentAssignment.findUniqueOrThrow({
+            where: { id: assignmentId },
+            select: {
+              assessment: {
+                select: {
+                  passMarkPercent: true,
+                  questions: {
+                    select: {
+                      id: true,
+                      type: true,
+                      points: true,
+                      isRequired: true,
+                      maxWords: true,
+                      options: {
+                        where: { isCorrect: true },
+                        select: { id: true },
+                      },
+                    },
+                  },
+                },
+              },
+              answers: { select: ANSWER_SELECT },
+            },
+          });
+
+          const result = finish({
+            passMarkPercent: a.assessment.passMarkPercent,
+            answers: a.answers,
+            questions: a.assessment.questions.map((q) => ({
+              id: q.id,
+              type: q.type,
+              points: q.points,
+              isRequired: q.isRequired,
+              maxWords: q.maxWords,
+              correctOptionIds: q.options.map((o) => o.id),
+            })),
+          });
+          if (!result.ok) {
+            throw new IncompleteSubmission(result.missingRequired, result.overLimit);
+          }
+
+          await tx.recruiterAssessmentAssignment.update({
+            where: { id: assignmentId },
+            data: { scorePercent: result.scorePercent, passed: result.passed },
+            select: { id: true },
+          });
+          return { outcome: "SUBMITTED" as const };
+        });
+      } catch (error) {
+        if (error instanceof IncompleteSubmission) {
+          return {
+            outcome: "INCOMPLETE" as const,
+            missingRequired: error.missingRequired,
+            overLimit: error.overLimit,
+          };
+        }
+        throw error;
+      }
+    },
+
+    async hasPageLeftEvent(assignmentId, candidateUserId) {
+      const owned = await prisma.recruiterAssessmentAssignment.findFirst({
+        where: { id: assignmentId, candidateUserId },
+        select: { id: true },
+      });
+      if (!owned) return false;
+      const row = await prisma.assessmentAttemptEvent.findFirst({
+        where: { assignmentId, type: "PAGE_LEFT" },
+        select: { id: true },
+      });
+      return row !== null;
+    },
+
     async findEventContext(assignmentId, candidateUserId, clientSessionId): Promise<EventContext | null> {
       const a = await prisma.recruiterAssessmentAssignment.findFirst({
         where: { id: assignmentId, candidateUserId },

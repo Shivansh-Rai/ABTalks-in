@@ -175,6 +175,18 @@ export type AttemptStore = {
     at: Date,
     finish: (input: FinishInput) => FinishResult,
   ): Promise<SubmitOutcome>;
+  /**
+   * Plan 141 leave-finalize: same guarded flip as submit, but finish must always
+   * succeed (use finishAttemptForced). Already SUBMITTED → ALREADY.
+   */
+  submitForced(
+    assignmentId: string,
+    candidateUserId: string,
+    at: Date,
+    finish: (input: FinishInput) => FinishResult,
+  ): Promise<SubmitOutcome | { outcome: "ALREADY" }>;
+  /** True when any PAGE_LEFT event exists for this assignment (leave safety net). */
+  hasPageLeftEvent(assignmentId: string, candidateUserId: string): Promise<boolean>;
   findEventContext(
     assignmentId: string,
     candidateUserId: string,
@@ -280,6 +292,34 @@ export function finishAttempt(input: FinishInput): FinishResult {
   return { ok: true, scorePercent, passed: scorePercent >= input.passMarkPercent };
 }
 
+/**
+ * Plan 141 — leave-finalize always commits.
+ * Unanswered required questions score as empty (MCQ → 0). Over-limit paragraph
+ * text is ignored for scoring (paragraphs are not auto-scored). Intentional
+ * Submit still uses finishAttempt and refuses incomplete / over-limit.
+ */
+export function finishAttemptForced(input: FinishInput): FinishResult {
+  const byQuestion = new Map(input.answers.map((a) => [a.questionId, a]));
+
+  let total = 0;
+  let earned = 0;
+  for (const q of input.questions) {
+    if (q.type !== "MULTIPLE_CHOICE" || q.points <= 0) continue;
+    total += q.points;
+    const row = byQuestion.get(q.id);
+    // Over-limit only applies to paragraphs; MCQ path is unchanged.
+    const picked = new Set(row?.selectedOptionIds ?? []);
+    const correct = new Set(q.correctOptionIds);
+    const exact =
+      correct.size > 0 &&
+      picked.size === correct.size &&
+      [...correct].every((id) => picked.has(id));
+    if (exact) earned += q.points;
+  }
+  const scorePercent = total === 0 ? 0 : Math.round((100 * earned) / total);
+  return { ok: true, scorePercent, passed: scorePercent >= input.passMarkPercent };
+}
+
 /** Field by field on purpose: spreading a row is how an answer key leaks. */
 function toCandidateQuestion(q: AttemptQuestionRow): CandidateQuestion {
   const base = {
@@ -327,9 +367,21 @@ export async function loadAttempt(
   store: AttemptStore,
   candidateUserId: string,
   assignmentId: string,
+  device: DeviceHint = { mobile: false },
 ): Promise<Result<LoadedAttempt>> {
-  const row = await store.findAttempt(assignmentId, candidateUserId);
+  let row = await store.findAttempt(assignmentId, candidateUserId);
   if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+
+  // Plan 141 safety net: if a strict attempt was left (PAGE_LEFT recorded) but
+  // keepalive finalize did not land, close it on the next open — no resume.
+  if (row.assessment.strictMode && row.status === "STARTED") {
+    const left = await store.hasPageLeftEvent(assignmentId, candidateUserId);
+    if (left) {
+      await finalizeStrictAttemptOnLeave(store, candidateUserId, assignmentId, device);
+      row = await store.findAttempt(assignmentId, candidateUserId);
+      if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+    }
+  }
 
   const byQuestion = new Map(row.answers.map((a) => [a.questionId, a]));
   const answers: Record<string, CandidateAnswer> = {};
@@ -349,6 +401,54 @@ export async function loadAttempt(
       cameraRequired: row.assessment.cameraRequired,
     },
   });
+}
+
+/**
+ * Plan 141 — page leave / keepalive: force-submit a strict STARTED attempt.
+ * Incomplete answers are allowed. Already SUBMITTED is OK (idempotent).
+ */
+export async function finalizeStrictAttemptOnLeave(
+  store: AttemptStore,
+  candidateUserId: string,
+  assignmentId: string,
+  device: DeviceHint = { mobile: false },
+): Promise<Result<{ submittedAt: Date | null; alreadySubmitted: boolean }>> {
+  const row = await store.findAttempt(assignmentId, candidateUserId);
+  if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  if (!row.assessment.strictMode) {
+    return CONFLICT("Activity leave-close is only for strict assessments.");
+  }
+  if (row.assessment.strictMode && device.mobile) {
+    return CONFLICT("This assessment can only be taken on a laptop or desktop computer.");
+  }
+  if (row.status === "SUBMITTED") {
+    return OK({ submittedAt: row.submittedAt, alreadySubmitted: true });
+  }
+  if (row.status === "ASSIGNED") {
+    return CONFLICT("This assessment has not been started.");
+  }
+
+  const at = new Date();
+  const out = await store.submitForced(assignmentId, candidateUserId, at, finishAttemptForced);
+  if (out.outcome === "ALREADY") {
+    const again = await store.findAttempt(assignmentId, candidateUserId);
+    return OK({
+      submittedAt: again?.submittedAt ?? row.submittedAt,
+      alreadySubmitted: true,
+    });
+  }
+  if (out.outcome === "NOT_OPEN") {
+    const again = await store.findAttempt(assignmentId, candidateUserId);
+    if (again?.status === "SUBMITTED") {
+      return OK({ submittedAt: again.submittedAt, alreadySubmitted: true });
+    }
+    return NOT_FOUND(NOT_FOUND_MSG);
+  }
+  if (out.outcome === "INCOMPLETE") {
+    // finishAttemptForced must never return incomplete; treat as server error path.
+    return CONFLICT("Couldn't close this assessment.");
+  }
+  return OK({ submittedAt: at, alreadySubmitted: false });
 }
 
 export async function startAttempt(

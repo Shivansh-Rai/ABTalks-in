@@ -106,6 +106,7 @@ export function AssessmentAttempt({
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const [confirming, setConfirming] = useState(false);
+  const [leaveNavBlocked, setLeaveNavBlocked] = useState(false);
   const [busy, startTransition] = useTransition();
   const [support, setSupport] = useState<StrictSupport | null>(null);
   const [camera, setCamera] = useState<MediaStream | null>(null);
@@ -277,20 +278,76 @@ export function AssessmentAttempt({
     return () => clearTimeout(timer);
   }, [retryNonce, flush]);
 
-  // Closing the tab with a save still pending asks first.
+  // Closing the tab: always warn while a strict attempt is in progress; also
+  // warn when non-strict saves are still pending.
   useEffect(() => {
     function onBeforeUnload(e: BeforeUnloadEvent) {
-      if (
+      const pending =
         pendingRef.current.size > 0 ||
         debouncedRef.current.size > 0 ||
-        inFlightRef.current
-      ) {
+        inFlightRef.current;
+      if (rules.strictMode && stage === "taking") {
         e.preventDefault();
+        return;
       }
+      if (pending) e.preventDefault();
     }
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  }, [rules.strictMode, stage]);
+
+  // Plan 141 — block in-app leave while a strict attempt is in progress. The
+  // candidate must Submit (complete answers). Hard leave force-finalizes via
+  // the integrity guard's leave beacon.
+  useEffect(() => {
+    if (!rules.strictMode || stage !== "taking") return;
+
+    const marker = { assessmentLeaveGuard: true as const };
+    window.history.pushState(marker, "", window.location.href);
+
+    const onPopState = () => {
+      window.history.pushState(marker, "", window.location.href);
+      setLeaveNavBlocked(true);
+    };
+
+    const onClickCapture = (e: MouseEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const el =
+        e.target instanceof Element
+          ? e.target
+          : e.target instanceof Node
+            ? e.target.parentElement
+            : null;
+      const anchor = el?.closest("a[href]");
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+      let url: URL;
+      try {
+        url = new URL(anchor.href, window.location.href);
+      } catch {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      const stay =
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search;
+      if (stay) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setLeaveNavBlocked(true);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    document.addEventListener("click", onClickCapture, true);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      document.removeEventListener("click", onClickCapture, true);
+    };
+  }, [rules.strictMode, stage]);
 
   // Leaving by an in-app link mid-typing: send what is still queued rather
   // than drop the last few words. The Maps are created once, so these are the
@@ -543,11 +600,44 @@ export function AssessmentAttempt({
       }
       resumeHint={
         rules.strictMode
-          ? "Your answers save automatically as you go. You can close this page and continue later on a laptop or desktop."
+          ? "Your answers save automatically while you stay on this page. Leaving or closing the tab ends the assessment — you cannot continue later."
           : undefined
       }
     />
   );
+
+  const leaveBlockModal =
+    leaveNavBlocked && stage === "taking" ? (
+      <div className="hire-cand-assess-block" role="dialog" aria-modal="true">
+        <div className="hire-cand-assess-block__card">
+          <h2>Submit to leave</h2>
+          <p>
+            This assessment ends when you leave. Submit your answers to finish, or stay and keep
+            working.
+          </p>
+          <div className="hire-cand-assess-leave-actions">
+            <button
+              type="button"
+              className="hire-cand-assess__secondary"
+              onClick={() => setLeaveNavBlocked(false)}
+            >
+              Stay
+            </button>
+            <button
+              type="button"
+              className="hire-cand-assess__primary"
+              disabled={busy}
+              onClick={() => {
+                setLeaveNavBlocked(false);
+                setConfirming(true);
+              }}
+            >
+              Submit assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null;
 
   if (!rules.strictMode) return screen;
 
@@ -568,13 +658,23 @@ export function AssessmentAttempt({
         onRequestCamera={requestCamera}
         endingRef={endingRef}
         onStopped={(status) => {
-          if (status === 409) router.refresh();
+          if (status === 409) {
+            endingRef.current = "submitted";
+            setStage("submitted");
+            router.refresh();
+          }
         }}
       >
         {screen}
+        {leaveBlockModal}
       </StrictModeGuard>
     );
   }
 
-  return screen;
+  return (
+    <>
+      {screen}
+      {leaveBlockModal}
+    </>
+  );
 }

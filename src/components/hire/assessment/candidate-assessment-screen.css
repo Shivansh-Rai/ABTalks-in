@@ -656,6 +656,13 @@ html:not(:-webkit-full-screen) .hire-cand-assess-guard .hire-cand-assess-guard__
   color: #fff;
 }
 
+.hire-cand-assess-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .hire-cand-assess-selfview {
   position: fixed;
   right: 16px;

@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
 import { createIntegrityRecorder, type IntegrityRecorder } from "./integrity-recorder";
 import "@/components/hire/assessment/candidate-assessment-screen.css";
 
@@ -207,7 +206,10 @@ export function StrictModeChecklist({
             The assessment page being hidden or shown again, and the browser window losing or
             regaining focus
           </li>
-          <li>Leaving and reopening the assessment page</li>
+          <li>
+            Leaving the assessment page ends it — you cannot continue later. Closing the tab or
+            navigating away submits what you have answered so far
+          </li>
           <li>
             Copy, cut and paste attempts — these are blocked, except pasting a link into a
             file-link field
@@ -306,18 +308,34 @@ export function StrictModeGuard({
   children,
 }: GuardProps) {
   const recorderRef = useRef<IntegrityRecorder | null>(null);
+  const leaveBeaconedRef = useRef(false);
   const [outsideFullscreen, setOutsideFullscreen] = useState(() => !isPageFullscreen());
   const [exitedThisSession, setExitedThisSession] = useState(false);
   const [deadCameraId, setDeadCameraId] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const lastToastAt = useRef(0);
   const cameraLive =
     isCameraLive(camera) && (camera === null || camera.id !== deadCameraId);
   const blocked = outsideFullscreen || (cameraRequired && !cameraLive);
 
   useEffect(() => {
     const url = `/api/assessments/${assignmentId}/events`;
+    const leaveUrl = `/api/assessments/${assignmentId}/leave`;
+    const beaconLeaveClose = () => {
+      if (leaveBeaconedRef.current) return;
+      if (endingRef.current === "submitted") return;
+      leaveBeaconedRef.current = true;
+      const body = JSON.stringify({ reason: "leave" });
+      const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
+      if (!navigator.sendBeacon(leaveUrl, blob)) {
+        void fetch(leaveUrl, {
+          method: "POST",
+          body,
+          keepalive: true,
+          headers: { "content-type": "text/plain;charset=UTF-8" },
+        });
+      }
+    };
     const recorder = createIntegrityRecorder({
       assignmentId,
       send: (body) =>
@@ -342,13 +360,6 @@ export function StrictModeGuard({
     if (!document.hasFocus()) recorder.record("WINDOW_BLURRED");
     if (cameraRequired && isCameraLive(camera)) recorder.record("CAMERA_ON");
 
-    const toastBlocked = () => {
-      const now = Date.now();
-      if (now - lastToastAt.current < 3000) return;
-      lastToastAt.current = now;
-      toast("Copy, cut and paste are turned off during this assessment.");
-    };
-
     const onFullscreen = () => {
       const on = isPageFullscreen();
       setOutsideFullscreen(!on);
@@ -368,9 +379,14 @@ export function StrictModeGuard({
     };
     const onBlur = () => recorder.record("WINDOW_BLURRED");
     const onFocus = () => recorder.record("WINDOW_FOCUSED");
-    const onPageHide = () => recorder.leave();
+    const onPageHide = () => {
+      recorder.leave();
+      beaconLeaveClose();
+    };
     const onPageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
+      // bfcache restore after leave-close: do not reopen a closed attempt's session.
+      leaveBeaconedRef.current = false;
       setExitedThisSession(false);
       recorder.startSession();
       if (isPageFullscreen()) recorder.record("FULLSCREEN_ENTERED");
@@ -383,12 +399,10 @@ export function StrictModeGuard({
     const onCopy = (e: ClipboardEvent) => {
       e.preventDefault();
       recorder.record("COPY_BLOCKED", closestAttr(e.target, "[data-question-id]", "data-question-id"));
-      toastBlocked();
     };
     const onCut = (e: ClipboardEvent) => {
       e.preventDefault();
       recorder.record("CUT_BLOCKED", closestAttr(e.target, "[data-question-id]", "data-question-id"));
-      toastBlocked();
     };
     const onPaste = (e: ClipboardEvent) => {
       const linkQ = closestAttr(e.target, "[data-link-input-question]", "data-link-input-question");
@@ -398,12 +412,10 @@ export function StrictModeGuard({
       }
       e.preventDefault();
       recorder.record("PASTE_BLOCKED", closestAttr(e.target, "[data-question-id]", "data-question-id"));
-      toastBlocked();
     };
     const onDrop = (e: DragEvent) => {
       e.preventDefault();
       recorder.record("DROP_BLOCKED", closestAttr(e.target, "[data-question-id]", "data-question-id"));
-      toastBlocked();
     };
     const onBeforeInput = (e: InputEvent) => {
       if (
@@ -456,7 +468,10 @@ export function StrictModeGuard({
       // Read at unmount: submitted vs leave. Intentionally not captured at mount.
       // eslint-disable-next-line react-hooks/exhaustive-deps -- endingRef is a mutable flag
       if (endingRef.current === "submitted") recorder.finish();
-      else recorder.leave();
+      else {
+        recorder.leave();
+        beaconLeaveClose();
+      }
     };
     // Mount-only: listeners capture the stream via the camera argument at start;
     // later camera changes are handled in the track effect.

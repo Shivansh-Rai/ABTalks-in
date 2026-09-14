@@ -10,6 +10,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   finishAttempt,
+  finishAttemptForced,
+  finalizeStrictAttemptOnLeave,
   listCandidateAttempts,
   loadAttempt,
   recordAttemptEvents,
@@ -233,6 +235,46 @@ function inMemoryStore() {
       a.passed = result.passed;
       return { outcome: "SUBMITTED" };
     },
+    async submitForced(assignmentId, candidateUserId, at, finish) {
+      const a = owned(assignmentId, candidateUserId);
+      if (!a) return { outcome: "NOT_OPEN" };
+      if (a.status === "SUBMITTED") return { outcome: "ALREADY" };
+      if (a.status !== "STARTED") return { outcome: "NOT_OPEN" };
+      const before = { status: a.status, submittedAt: a.submittedAt };
+      a.status = "SUBMITTED";
+      a.submittedAt = at;
+      const s = assessments.get(a.assessmentId)!;
+      const result = finish({
+        passMarkPercent: s.passMarkPercent,
+        answers: answersFor(a.id),
+        questions: s.questions.map((q) => ({
+          id: q.id,
+          type: q.type,
+          points: q.points,
+          isRequired: q.isRequired,
+          maxWords: q.maxWords,
+          correctOptionIds: s.correct.get(q.id) ?? [],
+        })),
+      });
+      if (!result.ok) {
+        a.status = before.status;
+        a.submittedAt = before.submittedAt;
+        return {
+          outcome: "INCOMPLETE",
+          missingRequired: result.missingRequired,
+          overLimit: result.overLimit,
+        };
+      }
+      a.scorePercent = result.scorePercent;
+      a.passed = result.passed;
+      return { outcome: "SUBMITTED" };
+    },
+    async hasPageLeftEvent(assignmentId, candidateUserId) {
+      if (!owned(assignmentId, candidateUserId)) return false;
+      return [...events.values()].some(
+        (e) => e.assignmentId === assignmentId && e.type === "PAGE_LEFT",
+      );
+    },
     async findEventContext(assignmentId, candidateUserId, clientSessionId) {
       const a = owned(assignmentId, candidateUserId);
       if (!a) return null;
@@ -417,6 +459,9 @@ async function strictFixture(cameraRequired = false): Promise<Fixture> {
   f.assessments.get(f.s.id)!.cameraRequired = cameraRequired;
   const res = await startAttempt(f.store, C, { assignmentId: f.aC });
   if (!res.ok) throw new Error("strict start failed");
+  // Pin start before the I-suite's fixed receivedAt timestamps so wall-clock
+  // time of day cannot drop events as "before start".
+  f.assignments.get(f.aC)!.startedAt = new Date("2026-09-14T09:00:00Z");
   return f;
 }
 
@@ -835,13 +880,16 @@ async function run() {
   await suite("28. guarded writes use plan 128 §10's guards and no relation filter", () => {
     const src = read("src/features/assessment-attempts/prisma-store.ts");
     const wheres = [...src.matchAll(/updateMany\(\{([\s\S]*?)data:/g)].map((m) => m[1] ?? "");
-    assert(wheres.length === 3, `expected 3 guarded updateMany, found ${wheres.length}`);
+    assert(wheres.length === 4, `expected 4 guarded updateMany, found ${wheres.length}`);
     assert(
       wheres.every((w) => w.includes("candidateUserId") && !w.includes("assessment:")),
       "every guard scopes by candidate and carries no relation filter",
     );
     assert(wheres.some((w) => w.includes('status: "ASSIGNED"')), "start guards on ASSIGNED");
-    assert(wheres.some((w) => w.includes('status: "STARTED"')), "save guards on STARTED");
+    assert(
+      wheres.filter((w) => w.includes('status: "STARTED"')).length >= 2,
+      "save and leave-finalize guard on STARTED",
+    );
     assert(
       wheres.some((w) => /status:\s*\{\s*in:\s*\["ASSIGNED",\s*"STARTED"\]\s*\}/.test(w)),
       "submit guards on ASSIGNED | STARTED",
@@ -1655,6 +1703,97 @@ async function run() {
     g.rec.record("COPY_BLOCKED");
     await g.advance(5_000);
     assert(g.sends.length === 0, "finish records nothing more");
+  });
+
+  // ---- Plan 141 leave-close -------------------------------------------------
+
+  await suite("L1. finishAttemptForced scores incomplete; never refuses missing required", () => {
+    const requiredBlank = gradeInput({
+      questions: [
+        {
+          id: "m1",
+          type: "MULTIPLE_CHOICE",
+          points: 2,
+          isRequired: true,
+          maxWords: null,
+          correctOptionIds: ["a"],
+        },
+      ],
+      answers: [],
+    });
+    const forced = finishAttemptForced(requiredBlank);
+    assert(forced.ok, "forced ok");
+    if (forced.ok) {
+      assert(forced.scorePercent === 0, "unanswered MCQ = 0");
+    }
+    const refused = finishAttempt(requiredBlank);
+    assert(!refused.ok, "normal finish still refuses");
+  });
+
+  await suite("L2. leave-finalize incomplete strict STARTED → SUBMITTED", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const left = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(left.ok && !left.data.alreadySubmitted, "closed");
+    assert(f.assignments.get(f.aC)!.status === "SUBMITTED", "submitted");
+    assert(f.assignments.get(f.aC)!.scorePercent === 0, "scored");
+  });
+
+  await suite("L3. second leave is idempotent ALREADY", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    const again = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(again.ok && again.data.alreadySubmitted, "already");
+  });
+
+  await suite("L4. non-strict leave → CONFLICT; ASSIGNED leave → CONFLICT", async () => {
+    const f = fixture();
+    const non = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(!non.ok && non.code === "CONFLICT", "non-strict");
+    f.assessments.get(f.s.id)!.strictMode = true;
+    const assigned = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(!assigned.ok && assigned.code === "CONFLICT", "assigned");
+  });
+
+  await suite("L5. leave on mobile strict → CONFLICT", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const left = await finalizeStrictAttemptOnLeave(f.store, C, f.aC, { mobile: true });
+    assert(!left.ok && left.code === "CONFLICT", "mobile refused");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("L6. loadAttempt with PAGE_LEFT force-closes strict STARTED", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const t = new Date();
+    await f.store.writeEventBatch(f.aC, "11111111-1111-4111-8111-111111111111", t, [
+      {
+        seq: 0,
+        type: "PAGE_LEFT",
+        occurredAt: t,
+        clientOccurredAt: t,
+        receivedAt: t,
+        questionId: null,
+        count: 1,
+      },
+    ]);
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "SUBMITTED", "closed on load");
+  });
+
+  await suite("L7. integrity UI has no clipboard toast string", () => {
+    const src = read("src/components/assessments/assessment-integrity.tsx");
+    assert(
+      !src.includes("Copy, cut and paste are turned off"),
+      "toast copy removed",
+    );
+    assert(!src.includes('from "sonner"'), "no sonner toast in integrity");
   });
 
   // ---- T-219 copy guard -----------------------------------------------------
