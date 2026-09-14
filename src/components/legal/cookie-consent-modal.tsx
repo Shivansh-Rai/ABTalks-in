@@ -18,22 +18,23 @@ import {
  * cookies until a choice is made (middleware gates on consent).
  */
 export function CookieConsentModal() {
-  const { isOpen, choice, decide, close } = useCookieConsent();
+  const { isOpen, choice, decide, close, isPreferencesOpen, openPreferences } =
+    useCookieConsent();
   const [pending, setPending] = useState<CookieChoice | null>(null);
 
   // Only closable once a choice exists — i.e. when reopened from /cookies.
   const dismissible = choice !== null;
 
   useEffect(() => {
-    if (!isOpen || !dismissible) return;
+    if (!isOpen || !dismissible || isPreferencesOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, dismissible, close]);
+  }, [isOpen, dismissible, isPreferencesOpen, close]);
 
-  if (!isOpen) return null;
+  if (!isOpen || isPreferencesOpen) return null;
 
   async function onChoose(next: CookieChoice) {
     setPending(next);
@@ -51,8 +52,8 @@ export function CookieConsentModal() {
       role="region"
       aria-label="Cookie choices"
       className={cn(
-        // Mobile: ~18rem (slightly roomier than 16.5); desktop: up to 21rem.
-        "fixed z-100 w-[min(calc(100%-1.5rem),18rem)] sm:w-[min(calc(100%-2rem),21rem)]",
+        // Mobile: ~19rem; desktop: up to 23rem.
+        "fixed z-100 w-[min(calc(100%-1.5rem),19rem)] sm:w-[min(calc(100%-2rem),23rem)]",
         "left-3 right-auto sm:left-4",
         // Clear mobile bottom nav without floating too high.
         "bottom-[4.5rem] sm:bottom-5 md:bottom-6",
@@ -64,44 +65,50 @@ export function CookieConsentModal() {
 
       <div className="p-3.5 sm:p-4">
         <div className="flex items-start gap-2">
-          {/* Short line on mobile; slightly fuller on sm+ */}
-          <p className="flex-1 text-xs leading-snug text-muted-foreground sm:text-[13px] sm:leading-relaxed">
-            <span className="sm:hidden">
-              We use cookies for sign-in and optional attribution.{" "}
-              <Link
-                href="/cookies"
-                className="font-medium text-primary underline-offset-2 hover:underline"
-              >
-                Details
-              </Link>
-              .
-            </span>
-            <span className="hidden sm:inline">
-              This site uses cookies for essential sign-in, and optional ones for
-              referrals and share attribution.{" "}
-              <Link
-                href="/terms"
-                className="font-medium text-primary underline-offset-2 hover:underline"
-              >
-                Terms
-              </Link>
-              {" · "}
-              <Link
-                href="/privacy"
-                className="font-medium text-primary underline-offset-2 hover:underline"
-              >
-                Privacy
-              </Link>
-              {" · "}
-              <Link
-                href="/cookies"
-                className="font-medium text-primary underline-offset-2 hover:underline"
-              >
-                Cookie details
-              </Link>
-              .
-            </span>
-          </p>
+          <div className="flex-1 space-y-1">
+            <p className="text-xs font-semibold text-foreground sm:text-sm">
+              Cookie &amp; Privacy Choices
+            </p>
+            <p className="text-xs leading-snug text-muted-foreground sm:text-[13px] sm:leading-relaxed">
+              <span className="sm:hidden">
+                We use essential cookies for sign-in and security, plus optional
+                analytics to improve ABTalks.{" "}
+                <Link
+                  href="/cookies"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Details
+                </Link>
+                .
+              </span>
+              <span className="hidden sm:inline">
+                We use cookies to make ABTalks work. Essential cookies are required
+                for sign-in, security, and keeping your session active. We also use
+                optional analytics cookies to understand product usage and improve the platform.{" "}
+                <Link
+                  href="/terms"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Terms
+                </Link>
+                {" · "}
+                <Link
+                  href="/privacy"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Privacy
+                </Link>
+                {" · "}
+                <Link
+                  href="/cookies"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Cookie Policy
+                </Link>
+                .
+              </span>
+            </p>
+          </div>
           {dismissible && (
             <button
               type="button"
@@ -114,55 +121,57 @@ export function CookieConsentModal() {
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2">
+        <div className="mt-3 flex flex-col gap-2">
           <button
             type="button"
             disabled={busy}
-            onClick={() => onChoose("limited")}
+            onClick={() => onChoose("all")}
             className={cn(
-              "inline-flex h-9 items-center justify-center rounded-md border border-border sm:h-9",
-              "bg-background px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
-              "text-foreground transition-colors hover:bg-muted",
+              "flex h-9 w-full items-center justify-center rounded-md sm:h-9",
+              "bg-primary px-3 text-xs font-semibold tracking-wide sm:text-xs",
+              "text-primary-foreground transition-colors hover:bg-primary/90",
               "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
               "disabled:cursor-not-allowed disabled:opacity-60",
-              choice === "limited" && "ring-1 ring-primary/50",
+              choice === "all" &&
+                "ring-2 ring-primary/40 ring-offset-2 ring-offset-background",
             )}
           >
-            {pending === "limited" ? "…" : "Limited"}
+            {pending === "all" ? "…" : "Accept all"}
           </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onChoose("essential")}
-            className={cn(
-              "inline-flex h-9 items-center justify-center rounded-md border border-border sm:h-9",
-              "bg-background px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
-              "text-foreground transition-colors hover:bg-muted",
-              "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
-              "disabled:cursor-not-allowed disabled:opacity-60",
-              choice === "essential" && "ring-1 ring-primary/50",
-            )}
-          >
-            {pending === "essential" ? "…" : "Reject all"}
-          </button>
-        </div>
 
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => onChoose("all")}
-          className={cn(
-            "mt-1.5 flex h-9 w-full items-center justify-center rounded-md sm:mt-2 sm:h-10",
-            "bg-primary px-2.5 text-[11px] font-semibold tracking-wide uppercase sm:px-3 sm:text-xs",
-            "text-primary-foreground transition-colors hover:bg-primary/90",
-            "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
-            "disabled:cursor-not-allowed disabled:opacity-60",
-            choice === "all" &&
-              "ring-2 ring-primary/40 ring-offset-2 ring-offset-background",
-          )}
-        >
-          {pending === "all" ? "…" : "Accept all"}
-        </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onChoose("essential")}
+              className={cn(
+                "inline-flex h-8.5 items-center justify-center rounded-md border border-border sm:h-9",
+                "bg-background px-2 text-[11px] font-semibold tracking-wide sm:px-3 sm:text-xs",
+                "text-foreground transition-colors hover:bg-muted",
+                "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+                choice === "essential" && "ring-1 ring-primary/50",
+              )}
+            >
+              {pending === "essential" ? "…" : "Necessary only"}
+            </button>
+
+            <button
+              type="button"
+              disabled={busy}
+              onClick={openPreferences}
+              className={cn(
+                "inline-flex h-8.5 items-center justify-center rounded-md border border-border sm:h-9",
+                "bg-muted/50 px-2 text-[11px] font-semibold tracking-wide sm:px-3 sm:text-xs",
+                "text-foreground transition-colors hover:bg-muted",
+                "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              Preferences
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
