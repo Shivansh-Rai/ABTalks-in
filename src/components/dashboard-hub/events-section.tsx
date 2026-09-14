@@ -5,8 +5,10 @@ import { formatInTimeZone } from "date-fns-tz";
 import { IST } from "@/lib/date-utils";
 import { EVENTS } from "@/components/workshop/events-data";
 import {
-  HUB_BUTTON_CLASS,
+  HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
+  HUB_CONTAINER_CLASS,
+  HUB_SECTION_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -25,16 +27,22 @@ export function EventsSection() {
   );
 
   return (
-    <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-5">
-      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">Events</h2>
+    <section id="events" className={HUB_SECTION_CLASS}>
+      <div className={HUB_CONTAINER_CLASS}>
+        {/* "Events", "Upcoming events" and the cards all start on the container's
+            left edge — the heading used to carry an extra `lg:ml-2` of its own. */}
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
+          Events
+        </h2>
 
-      {upcoming.length > 0 ? (
-        <EventRail title="Upcoming events" events={upcoming} />
-      ) : null}
+        {upcoming.length > 0 ? (
+          <EventRail title="Upcoming events" events={upcoming} />
+        ) : null}
 
-      {past.length > 0 ? (
-        <EventRail title="Past events" events={past} past />
-      ) : null}
+        {past.length > 0 ? (
+          <EventRail title="Past events" events={past} past />
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -53,7 +61,7 @@ function EventRail({
       <h3 className="text-sm font-semibold tracking-wide text-black uppercase">
         {title}
       </h3>
-      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
+      <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
         {events.map((event) => (
           <EventCard key={event.id} event={event} past={past} />
         ))}
@@ -98,7 +106,7 @@ function EventCard({
           {...(event.href
             ? { target: "_blank", rel: "noopener noreferrer" }
             : {})}
-          className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+          className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
         >
           {ctaLabel}
         </Link>
