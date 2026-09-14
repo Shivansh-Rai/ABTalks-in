@@ -1,0 +1,10 @@
+Hi {{recipientName}},
+
+{{title}}
+
+{{body}}
+
+Open your profile: {{baseUrl}}{{href}}
+
+---
+Change or turn off profile-view emails: {{baseUrl}}/settings/notifications

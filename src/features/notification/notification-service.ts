@@ -13,6 +13,15 @@ type DispatchEvent = {
   body?: string;
   href?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * T-251: optional per-send dedupe key. When set, the DB unique-index
+   * on `UserNotification.dedupeKey` de-duplicates against this exact value
+   * instead of the default `{eventType}:{recipientUserId}:{primaryEntityId}`.
+   * Used by rolling-window events (e.g. profile.viewed) that want a 24-hour
+   * bucket to rotate the key. Backwards compatible — omitted callers get
+   * the original behavior.
+   */
+  dedupeKey?: string;
 };
 
 type DispatchResult =
@@ -51,11 +60,13 @@ export async function dispatch(event: DispatchEvent): Promise<DispatchResult> {
     return { ok: false, message: "Unknown event type" };
   }
 
-  const dedupeKey = buildDedupeKey(
-    event.eventType,
-    event.recipientUserId,
-    event.primaryEntityId,
-  );
+  const dedupeKey =
+    event.dedupeKey ??
+    buildDedupeKey(
+      event.eventType,
+      event.recipientUserId,
+      event.primaryEntityId,
+    );
 
   let notificationId: string;
   let emailDeliveryId: string | null = null;
