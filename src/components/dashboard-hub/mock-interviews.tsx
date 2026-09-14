@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileText, History, Mic } from "lucide-react";
 import {
-  HUB_BUTTON_CLASS,
+  HUB_HEADER_ACTION_CLASS,
   HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
 } from "@/components/dashboard-hub/nav-items";
@@ -85,11 +85,11 @@ export function MockInterviews({ mock, cohort }: Props) {
           AI agent interviews
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/mock-interviews" className={HUB_BUTTON_CLASS}>
+          <Link href="/mock-interviews" className={HUB_HEADER_ACTION_CLASS}>
             <Mic className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
             All mock interviews
           </Link>
-          <Link href="/mock-interviews/history" className={HUB_BUTTON_CLASS}>
+          <Link href="/mock-interviews/history" className={HUB_HEADER_ACTION_CLASS}>
             <History className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
             Practice history
           </Link>

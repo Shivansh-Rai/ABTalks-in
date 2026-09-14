@@ -3,7 +3,7 @@ import type { Domain } from "@prisma/client";
 import type { HubEnrollment } from "@/features/dashboard/get-hub-data";
 import {
   HUB_BUTTON_CLASS,
-  HUB_CARD_CTA_CLASS,
+  HUB_CARD_CTA_SOLID_CLASS,
   HUB_CARD_HOVER_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
@@ -96,7 +96,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                 </div>
                 <Link
                   href={TRACK_PATH[e.domain]}
-                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+                  className={cn(HUB_CARD_CTA_SOLID_CLASS, "mt-2 self-end")}
                 >
                   {isCompleted ? "View" : "Continue"}
                 </Link>
