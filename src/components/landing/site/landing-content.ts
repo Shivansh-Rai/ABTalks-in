@@ -1,3 +1,4 @@
+import { DATABRICKS_BASE } from "@/features/databricks/constants";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 
 export const WHATSAPP_INVITE =
@@ -312,7 +313,7 @@ export const COHORT_DEFAULTS: readonly Omit<
   {
     key: "hackathon",
     title: "Databricks Cohort",
-    href: "/t",
+    href: DATABRICKS_BASE,
     order: 2,
     bullets: [
       "Spark, lakehouse, and production pipelines",

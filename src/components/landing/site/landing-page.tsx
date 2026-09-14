@@ -43,9 +43,11 @@ function resolveCard(
 
 export function LandingPage({
   claudeEnabled,
+  databricksEnabled,
   state,
 }: {
   claudeEnabled: boolean;
+  databricksEnabled: boolean;
   state: LandingState;
 }) {
   const overrides: Record<CohortKey, TrackCta> = {
@@ -57,9 +59,14 @@ export function LandingPage({
 
   const showRecruiterCta = isRecruiterAuthEnabled();
 
-  const cards: CohortCard[] = COHORT_DEFAULTS.filter(
-    (card) => card.key !== "claude" || claudeEnabled,
-  ).map((card) => {
+  // A cohort whose route is flag-gated must not be advertised while the flag
+  // is off: its layout calls notFound(), so the card would be a dead link.
+  // The Databricks cohort occupies the legacy "hackathon" slot.
+  const cards: CohortCard[] = COHORT_DEFAULTS.filter((card) => {
+    if (card.key === "claude") return claudeEnabled;
+    if (card.key === "hackathon") return databricksEnabled;
+    return true;
+  }).map((card) => {
     const resolved = resolveCard(card.key, overrides[card.key]);
     return {
       key: card.key,

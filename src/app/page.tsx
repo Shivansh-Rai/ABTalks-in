@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getLandingState } from "@/features/landing/get-landing-state";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
-import { isClaudeEnabled } from "@/lib/feature-flags";
+import { isClaudeEnabled, isDatabricksEnabled } from "@/lib/feature-flags";
 import { LandingPage } from "@/components/landing/site/landing-page";
 
 export default async function HomePage() {
@@ -16,5 +16,11 @@ export default async function HomePage() {
   }
 
   const state = await getLandingState();
-  return <LandingPage claudeEnabled={isClaudeEnabled()} state={state} />;
+  return (
+    <LandingPage
+      claudeEnabled={isClaudeEnabled()}
+      databricksEnabled={isDatabricksEnabled()}
+      state={state}
+    />
+  );
 }
