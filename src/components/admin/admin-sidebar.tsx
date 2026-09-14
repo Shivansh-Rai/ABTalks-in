@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   FolderSearch,
   Presentation,
+  Send,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 type IconName =
   | "overview"
   | "notifications"
+  | "deliveries"
   | "students"
   | "submissions"
   | "jobs"
@@ -47,6 +49,7 @@ type IconName =
 const iconMap = {
   overview: LayoutDashboard,
   notifications: Bell,
+  deliveries: Send,
   students: Users,
   submissions: FileText,
   jobs: Briefcase,
