@@ -515,6 +515,21 @@ suite("T-216 inspector external links are the only declared-URL surface", () => 
       !inspector.includes('date: e.linkedinConnected ? "Verified"'),
     "Credentials must not stamp GitHub/LinkedIn connected as Verified",
   );
+  // External profiles must sit in Overview so View Detail shows them without
+  // opening More (plan fix_links_visibility).
+  const overviewIdx = inspector.indexOf('data-section="overview"');
+  const moreIdx = inspector.indexOf('data-section="more"');
+  const extIdx = inspector.indexOf("External profiles");
+  assert(overviewIdx > 0 && moreIdx > overviewIdx && extIdx > 0);
+  assert(
+    extIdx > overviewIdx && extIdx < moreIdx,
+    "External profiles must render inside Overview, before More",
+  );
+  assert(
+    inspector.includes("No external profiles declared") &&
+      inspector.includes("Loading profiles…"),
+    "Overview shows loading and empty states for external profiles",
+  );
 });
 
 /* ─── Plan 133: no candidate-controlled visibility ───────────────────────── */

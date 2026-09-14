@@ -868,6 +868,55 @@ export function CandidateInspector({
               behind the blur are generated, not a candidate.
             </p>
           )}
+
+          {!sample && externalLinks === null ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                Loading profiles…
+              </p>
+            </div>
+          ) : declaredLinks.length > 0 ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">
+                External profiles <small>· {declaredLinks.length}</small>
+              </p>
+              {declaredLinks.map((link) => (
+                <div
+                  key={`${link.provider}:${link.href}`}
+                  className="hire-profile__cert"
+                >
+                  <Award
+                    size={14}
+                    strokeWidth={1.2}
+                    absoluteStrokeWidth
+                    color="#03535F"
+                    aria-hidden="true"
+                  />
+                  <span className="hire-profile__cert-body">
+                    <span className="hire-profile__cert-title">{link.label}</span>
+                    <a
+                      className="hire-profile__cert-sub hire-profile__ext-link"
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.href}
+                    </a>
+                  </span>
+                  <span className="hire-profile__self-reported">SELF-REPORTED</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                No external profiles declared
+              </p>
+            </div>
+          )}
+
           <div className="hire-profile__rule" />
         </section>
 
@@ -1076,37 +1125,6 @@ export function CandidateInspector({
                 Scores are derived from the evidence on record — indicative, not
                 a validated psychometric measure.
               </p>
-            </div>
-          )}
-
-          {declaredLinks.length > 0 && (
-            <div className="hire-profile__card">
-              <p className="hire-profile__card-head">
-                External profiles <small>· {declaredLinks.length}</small>
-              </p>
-              {declaredLinks.map((link) => (
-                <div key={`${link.provider}:${link.href}`} className="hire-profile__cert">
-                  <Award
-                    size={14}
-                    strokeWidth={1.2}
-                    absoluteStrokeWidth
-                    color="#03535F"
-                    aria-hidden="true"
-                  />
-                  <span className="hire-profile__cert-body">
-                    <span className="hire-profile__cert-title">{link.label}</span>
-                    <a
-                      className="hire-profile__cert-sub hire-profile__ext-link"
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {link.href}
-                    </a>
-                  </span>
-                  <span className="hire-profile__self-reported">SELF-REPORTED</span>
-                </div>
-              ))}
             </div>
           )}
 

@@ -8846,6 +8846,15 @@ a.hire-profile__ext-link:focus-visible {
   outline-offset: 2px;
 }
 
+.hire-profile__overview .hire-profile__card--ext {
+  margin-top: 8px;
+}
+
+.hire-profile__ext-empty {
+  margin: 0;
+  padding: 8px 16px 12px;
+}
+
 .hire-profile__note {
   margin: 0;
   font-size: 16px;
