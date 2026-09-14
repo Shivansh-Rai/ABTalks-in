@@ -22,7 +22,6 @@ export type CandidateSearchFilters = {
   graduationYearTo?: number;
   minExperienceMonths?: number;
   completedProgramIds?: string[];
-  minAssessmentScore?: { dimension: string; score: number };
   availableBefore?: Date;
   locationCity?: string;
   countryCode?: string;

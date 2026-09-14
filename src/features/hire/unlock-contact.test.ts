@@ -199,6 +199,40 @@ suite("workspace and candidate are resolved server-side, never from the client",
   );
 });
 
+suite("owned-application fallback is a second door, not a pool widening", () => {
+  const unlock = source(UNLOCK);
+  assert(
+    unlock.includes("resolveAddressableCandidate"),
+    "unlock resolve must go through the shared addressability helper",
+  );
+  assert(
+    unlock.includes("resolveViaOwnedApplication"),
+    "an applicant on an owned job must be addressable when the pool misses",
+  );
+  assert(
+    unlock.includes('parsed.source !== "PROFILE"'),
+    "the fallback admits PROFILE refs only",
+  );
+  assert(
+    unlock.includes("searchableUserWhere()"),
+    "deleted or withdrawn users stay refused",
+  );
+  assert(
+    unlock.includes("recruiterId: recruiterUserId"),
+    "the fallback must bind the job to the session recruiter",
+  );
+  const outreach = source("src/app/actions/outreach-actions.ts");
+  assert(
+    outreach.includes("resolveAddressableCandidate"),
+    "outreach send must use the same helper as unlock",
+  );
+  const pool = source("src/features/hire/pool-policy.ts");
+  assert(
+    !/jobApplication/i.test(pool),
+    "the search pool must not grow a job-application path",
+  );
+});
+
 /* ─── safety: T-230 ──────────────────────────────────────────────────────── */
 
 console.log("\nUnlock safety");

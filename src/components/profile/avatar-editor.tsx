@@ -43,7 +43,13 @@ function squareJpeg(file: File): Promise<Blob> {
   });
 }
 
-export function AvatarEditor() {
+/**
+ * `unavailable` is set when photo storage has no token configured for this
+ * environment. The control still renders, disabled and explained: a missing
+ * env var should look like a temporary gap, not like a profile that never had
+ * a photo option.
+ */
+export function AvatarEditor({ unavailable }: { unavailable?: boolean } = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -86,13 +92,22 @@ export function AvatarEditor() {
     }
   }
 
+  const title = unavailable
+    ? "Photo upload is unavailable right now. Please try again later."
+    : undefined;
+
   return (
     <>
       <button
         type="button"
-        className="pw-avatar-edit"
-        aria-label="Change profile photo"
-        disabled={pending}
+        className={`pw-avatar-edit${unavailable ? " pw-is-unavailable" : ""}`}
+        aria-label={
+          unavailable
+            ? "Change profile photo — unavailable right now"
+            : "Change profile photo"
+        }
+        title={title}
+        disabled={pending || unavailable}
         onClick={() => inputRef.current?.click()}
       >
         {pending ? (

@@ -9,6 +9,7 @@ import { filterSearchableUserIds } from "@/repositories/talent";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { existingEngagements } from "@/features/hire/contact-access";
 import { loadAvailabilityByUserId } from "@/features/hire/dossier";
+import { getOwnedSession, snapshotFromJson } from "@/features/hire/search-sessions";
 import { estimateCompensation, formatBandLpa } from "@/features/hire/compensation";
 import { roleFamilyFor, tidyRoleLabel } from "@/features/hire/role-family";
 import type { MatchTier } from "@/features/hire/types";
@@ -35,6 +36,14 @@ export type MatchState = MatchTriage;
 export async function loadRequestMatches(
   requestId: string,
   recruiterUserId: string,
+  /**
+   * Plan 133. Present → only that search session's results, in its order and
+   * with its scoring; `null` → a project with no session selected (none).
+   * Absent → every match in the project, as before (the full candidate list).
+   * Decisions always come from the project row, so the shortlist is shared by
+   * every session of this project and by no other project.
+   */
+  opts?: { sessionId: string | null },
 ): Promise<{
   title: string;
   // The recruiter's own label for the request; null on every row created
@@ -86,8 +95,12 @@ export async function loadRequestMatches(
   });
   if (!request) return null;
 
+  const projectMatches = opts
+    ? await scopeToSession(request.matches, requestId, recruiterUserId, opts.sessionId)
+    : request.matches;
+
   // Every match is keyed on a person, so this needs no per-source branching.
-  const storedUserIds = request.matches.map((m) => m.candidateUserId);
+  const storedUserIds = projectMatches.map((m) => m.candidateUserId);
 
   // A saved match list is a discovery surface, not an archive. `TalentRequestMatch`
   // is a snapshot frozen at match time, so a candidate who has since been made
@@ -96,7 +109,7 @@ export async function loadRequestMatches(
   // deliberately not filtered — those are the record of an introduction that has
   // already happened.
   const stillSearchable = await filterSearchableUserIds(storedUserIds);
-  const visibleMatches = request.matches.filter((m) =>
+  const visibleMatches = projectMatches.filter((m) =>
     stillSearchable.has(m.candidateUserId),
   );
   const candidateUserIds = visibleMatches.map((m) => m.candidateUserId);
@@ -234,4 +247,61 @@ export async function loadRequestMatches(
       };
     }),
   };
+}
+
+type StoredMatch = {
+  candidateUserId: string;
+  programMemberId: string | null;
+  source: string;
+  score: number;
+  tier: string;
+  scoreBreakdown: unknown;
+  rationale: string | null;
+  gaps: string[];
+  availabilityUnknown: boolean;
+  evidence: unknown;
+  firstSeenAt: Date;
+  viewedAt: Date | null;
+  decision: string;
+};
+
+/**
+ * Plan 133. One session's view of the project's matches: only the candidates
+ * that session returned, in its order, with the scoring it computed. Identity
+ * and the recruiter's decision stay the project row's. A session id that is
+ * not in this recruiter's project returns nothing.
+ */
+async function scopeToSession<M extends StoredMatch>(
+  matches: M[],
+  requestId: string,
+  recruiterUserId: string,
+  sessionId: string | null,
+): Promise<M[]> {
+  if (!sessionId) return [];
+  const session = await getOwnedSession(recruiterUserId, requestId, sessionId);
+  if (!session) return [];
+
+  const byUser = new Map(matches.map((m) => [m.candidateUserId, m]));
+  const snapshot = snapshotFromJson(session.resultSnapshot);
+  const out: M[] = [];
+  for (const candidateUserId of session.resultCandidateIds) {
+    const row = byUser.get(candidateUserId);
+    if (!row) continue;
+    const seen = snapshot.get(candidateUserId);
+    out.push(
+      seen
+        ? {
+            ...row,
+            score: seen.score,
+            tier: seen.tier,
+            scoreBreakdown: seen.scoreBreakdown,
+            evidence: seen.evidence,
+            rationale: seen.rationale,
+            gaps: seen.gaps,
+            availabilityUnknown: seen.availabilityUnknown,
+          } as M
+        : row,
+    );
+  }
+  return out;
 }

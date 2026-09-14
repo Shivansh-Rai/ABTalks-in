@@ -6,7 +6,7 @@ import {
   saveSkillsAction,
 } from "@/app/actions/candidate-profile-actions";
 import {
-  CANONICAL_SKILL_NAMES,
+  CANONICAL_SKILLS,
   PROFILE_QUICK_SKILLS,
   canonicalSkillName,
 } from "@/lib/skill-catalog";
@@ -30,27 +30,24 @@ export type VerifiedSkillView = {
   sources: string[];
 };
 
+/**
+ * The offerable list: every catalog entry, carrying a `Skill` row id where the
+ * database already has one.
+ *
+ * Entries without an id are not a problem — `addOrResolve` sends the name to
+ * `resolveSkillAction`, which folds it onto the canonical row or creates it.
+ * That is why the page only pre-resolves the quick-add handful rather than
+ * every name in a four-hundred-entry catalog.
+ */
 function mergeCatalog(resolved: readonly SkillOption[]): SkillOption[] {
   const byName = new Map(
     resolved.map((s) => [s.name.toLowerCase(), s] as const),
   );
-  const bySlug = new Map(resolved.map((s) => [s.slug, s] as const));
-  return CANONICAL_SKILL_NAMES.map((name) => {
-    const slug = name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80);
-    return (
-      byName.get(name.toLowerCase()) ??
-      bySlug.get(slug) ?? {
-        id: "",
-        name,
-        slug: "",
-        categoryName: null,
-      }
-    );
+  return CANONICAL_SKILLS.map((entry) => {
+    const known = byName.get(entry.name.toLowerCase());
+    return known
+      ? { ...known, categoryName: known.categoryName ?? entry.group }
+      : { id: "", name: entry.name, slug: "", categoryName: entry.group };
   });
 }
 

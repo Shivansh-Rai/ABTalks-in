@@ -33,6 +33,43 @@ export function searchableUserWhere(): Prisma.UserWhereInput {
   };
 }
 
+export type RecruiterFieldPolicy = Readonly<{
+  /** Whether a LinkedIn profile exists — never the URL. */
+  linkedin: boolean;
+  /** Whether a GitHub account exists — never the username. */
+  github: boolean;
+  /** Whether a résumé exists — never the file. */
+  resume: boolean;
+  /** AI interview scores and summary. */
+  interviewResults: boolean;
+  /** Quiz and assessment averages. */
+  assessmentScores: boolean;
+  /** Current employer name. */
+  currentEmployer: boolean;
+}>;
+
+/**
+ * What a recruiter sees about a candidate. Decided by the platform, the same
+ * for every candidate (plan 133).
+ *
+ * This replaces eight per-candidate `CandidateVisibility.show*` columns. No
+ * candidate path ever wrote them, so every live row held the schema defaults —
+ * and these values ARE those defaults, which makes the swap a no-op on every
+ * recruiter surface. It is a constant on purpose: which fields are shown is not
+ * a candidate setting and must not become one again.
+ *
+ * Email and phone are not here. They are released only at CONTACT_SHARED
+ * through `features/hire/contact-access.ts`, never by a field policy.
+ */
+export const RECRUITER_FIELD_POLICY: RecruiterFieldPolicy = Object.freeze({
+  linkedin: true,
+  github: true,
+  resume: false,
+  interviewResults: false,
+  assessmentScores: false,
+  currentEmployer: true,
+});
+
 /** Recruiter-safe identity. No email, phone, or resume URL. */
 export type RecruiterPublicIdentity = {
   fullName: string;
@@ -45,9 +82,6 @@ export type RecruiterPublicIdentity = {
   hasLinkedin: boolean;
   hasGithub: boolean;
   hasResume: boolean;
-  showInterviewResults: boolean;
-  showAssessmentScores: boolean;
-  showCurrentEmployer: boolean;
 };
 
 /**
@@ -86,20 +120,6 @@ export async function loadRecruiterIdentities(
         experience: {
           select: { totalMonths: true },
         },
-        user: {
-          select: {
-            visibility: {
-              select: {
-                showLinkedin: true,
-                showGithub: true,
-                showResume: true,
-                showInterviewResults: true,
-                showAssessmentScores: true,
-                showCurrentEmployer: true,
-              },
-            },
-          },
-        },
       },
     }),
     prisma.candidateProfile.findMany({
@@ -110,7 +130,6 @@ export async function loadRecruiterIdentities(
   const resumeSet = new Set(withResume.map((r) => r.userId));
 
   for (const p of profiles) {
-    const vis = p.user.visibility;
     const months = p.experience.reduce((sum, e) => sum + (e.totalMonths ?? 0), 0);
     const edu = p.education[0];
     out.set(p.userId, {
@@ -121,12 +140,9 @@ export async function loadRecruiterIdentities(
       education: edu?.degree ?? null,
       university: edu?.institutionName ?? null,
       skills: p.skills.map((s) => s.skill.name).filter(Boolean),
-      hasLinkedin: Boolean((vis?.showLinkedin ?? true) && p.linkedinUrl),
-      hasGithub: Boolean((vis?.showGithub ?? true) && p.githubUsername),
-      hasResume: Boolean(vis?.showResume === true && resumeSet.has(p.userId)),
-      showInterviewResults: vis?.showInterviewResults === true,
-      showAssessmentScores: vis?.showAssessmentScores === true,
-      showCurrentEmployer: vis?.showCurrentEmployer ?? true,
+      hasLinkedin: RECRUITER_FIELD_POLICY.linkedin && Boolean(p.linkedinUrl),
+      hasGithub: RECRUITER_FIELD_POLICY.github && Boolean(p.githubUsername),
+      hasResume: RECRUITER_FIELD_POLICY.resume && resumeSet.has(p.userId),
     });
   }
   return out;
@@ -149,42 +165,19 @@ export async function filterSearchableUserIds(
 }
 
 /**
- * Legacy `/talent` fragment. The live gate is {@link searchableUserWhere}.
- * Kept as a single-key fragment so tests can catch it growing a second job.
+ * The discovery gate plus the recruiter's own filters. The gate is spread in
+ * from {@link searchableUserWhere} rather than restated, so there is exactly one
+ * definition of who may be shown. Nothing a candidate sets reaches this clause.
  */
-export function visibleProgramMemberWhere(): Prisma.ProgramMemberWhereInput {
-  return { recruiterVisibilityConsentAt: { not: null } };
-}
-
 function buildUserGate(f: CandidateSearchFilters): Prisma.UserWhereInput {
   return {
-    deletedAt: null,
-    visibility: {
-      is: {
-        searchableByRecruiters: true,
-        withdrawnAt: null,
-        ...(f.minAssessmentScore && { showAssessmentScores: true }),
-      },
-    },
+    ...searchableUserWhere(),
     ...(f.completedProgramIds?.length && {
       programEnrollments: {
         some: {
           status: "COMPLETED",
           cohort: {
             programVersion: { programId: { in: f.completedProgramIds } },
-          },
-        },
-      },
-    }),
-    ...(f.minAssessmentScore && {
-      assessmentReports: {
-        some: {
-          status: "PUBLISHED",
-          scores: {
-            some: {
-              dimension: f.minAssessmentScore.dimension,
-              score: { gte: f.minAssessmentScore.score },
-            },
           },
         },
       },
@@ -287,20 +280,6 @@ export async function searchCandidates(
           headline: true,
           locationCity: true,
           countryCode: true,
-          user: {
-            select: {
-              visibility: {
-                select: {
-                  showResume: true,
-                  showLinkedin: true,
-                  showGithub: true,
-                  showAssessmentScores: true,
-                  showInterviewResults: true,
-                  showCurrentEmployer: true,
-                },
-              },
-            },
-          },
           skills: {
             orderBy: { evidenceScore: "desc" },
             take: 8,
@@ -331,27 +310,25 @@ export async function searchCandidates(
       total,
       page: f.page ?? 1,
       pageSize,
-      rows: rows.map((row) => {
-        const vis = row.user.visibility;
-        const showEmployer = vis?.showCurrentEmployer ?? true;
-        return {
-          userId: row.userId,
-          fullName: row.fullName,
-          headline: row.headline,
-          locationCity: row.locationCity,
-          countryCode: row.countryCode,
-          hasLinkedin: vis?.showLinkedin ?? true,
-          hasGithub: vis?.showGithub ?? true,
-          hasResume: vis?.showResume === true,
-          skills: row.skills,
-          education: row.education,
-          experience: row.experience.map((e) => ({
-            title: e.title,
-            companyName: showEmployer ? e.companyName : null,
-            totalMonths: e.totalMonths,
-          })),
-        };
-      }),
+      rows: rows.map((row) => ({
+        userId: row.userId,
+        fullName: row.fullName,
+        headline: row.headline,
+        locationCity: row.locationCity,
+        countryCode: row.countryCode,
+        hasLinkedin: RECRUITER_FIELD_POLICY.linkedin,
+        hasGithub: RECRUITER_FIELD_POLICY.github,
+        hasResume: RECRUITER_FIELD_POLICY.resume,
+        skills: row.skills,
+        education: row.education,
+        experience: row.experience.map((e) => ({
+          title: e.title,
+          companyName: RECRUITER_FIELD_POLICY.currentEmployer
+            ? e.companyName
+            : null,
+          totalMonths: e.totalMonths,
+        })),
+      })),
     };
   }
 

@@ -120,11 +120,16 @@
     "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
     "test:work-email": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-auth/work-email.test.ts",
     "db:audit:personal-domain-recruiters": "tsx prisma/scripts/audit-personal-domain-recruiters.ts",
+    "test:admin-project-inspect": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/admin/admin-project-inspect.test.ts",
     "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts",
+    "test:recruiter-profile": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/recruiter-profile.test.ts",
     "test:credits": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/credits.test.ts",
     "test:unlock": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/unlock-contact.test.ts",
     "test:outreach": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/outreach.test.ts",
     "db:check:outreach": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/check-outreach.ts",
+    "db:check:project-sessions": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/check-project-sessions.ts",
+    "db:backfill:search-sessions": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/backfill-search-sessions.ts",
+    "test:project-sessions": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/project-sessions.test.ts",
     "db:seed:platform-config": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-platform-config.ts",
     "db:seed:demo-recruiter": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-demo-recruiter.ts",
     "db:check:credit-ledger": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/check-credit-ledger.ts",
@@ -137,7 +142,8 @@
     "test:assessment-presets": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/presets.test.ts",
     "test:assessment-attempts": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/assessment-attempts/assessment-attempts.test.ts",
     "test:candidate-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/candidate-jobs/candidate-jobs.test.ts",
-    "test:observability": "npm run test:observability:redaction && npm run test:observability:contract && npm run test:observability:notification && npm run test:observability:request-id && npm run test:observability:paths && npm run test:observability:sentry && npm run test:observability:gating && npm run test:observability:scan"
+    "test:observability": "npm run test:observability:redaction && npm run test:observability:contract && npm run test:observability:notification && npm run test:observability:request-id && npm run test:observability:paths && npm run test:observability:sentry && npm run test:observability:gating && npm run test:observability:scan",
+    "test:pr-module-labels": "node scripts/pr-module-labels.test.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

@@ -55,6 +55,9 @@ type Props = {
   submitBlockedReason?: string | null;
   busy?: boolean;
   submittedAtLabel?: string | null;
+  startPanel?: ReactNode;
+  startBlockedReason?: string | null;
+  resumeHint?: string;
 };
 
 function plural(n: number, word: string): string {
@@ -85,6 +88,9 @@ export function CandidateAssessmentScreen({
   submitBlockedReason = null,
   busy = false,
   submittedAtLabel = null,
+  startPanel,
+  startBlockedReason = null,
+  resumeHint = "Your answers save automatically as you go. You can close this page and come back on any device.",
 }: Props) {
   const [localAnswers, setLocalAnswers] = useState<
     Record<string, CandidateAnswer>
@@ -151,17 +157,15 @@ export function CandidateAssessmentScreen({
       {stage === "instructions" ? (
         // Questions stay unseen until the candidate starts.
         <section className="hire-cand-assess__start" aria-label="Before you start">
+          {startPanel}
           <p className="hire-cand-assess__start-summary">
             {plural(questionCount, "question")} · {requiredCount} required
           </p>
-          <p>
-            Your answers save automatically as you go. You can close this page
-            and come back on any device.
-          </p>
+          <p>{resumeHint}</p>
           <button
             type="button"
             className="hire-cand-assess__primary"
-            disabled={busy}
+            disabled={busy || Boolean(startBlockedReason)}
             onClick={onStart}
           >
             {busy ? (
@@ -170,6 +174,9 @@ export function CandidateAssessmentScreen({
             Start assessment
             {!busy ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
           </button>
+          {startBlockedReason ? (
+            <p className="hire-cand-assess__hint">{startBlockedReason}</p>
+          ) : null}
         </section>
       ) : (
         <>
@@ -182,7 +189,7 @@ export function CandidateAssessmentScreen({
               const error = questionErrors?.[key];
               const errorId = error ? `cand-q${qi}-error` : undefined;
               return (
-                <li key={key} className="hire-cand-assess__item">
+                <li key={key} className="hire-cand-assess__item" data-question-id={key}>
                   <div className="hire-cand-assess__qhead">
                     <span className="hire-cand-assess__num">Q{qi + 1}</span>
                     <div className="hire-cand-assess__qtext">
@@ -401,6 +408,7 @@ function QuestionInput({
           target="_blank"
           rel="noopener noreferrer"
           className="hire-cand-assess__upload-link"
+          data-upload-link-question={question.id ?? String(index)}
         >
           Open upload destination
           <ExternalLink aria-hidden="true" />
@@ -421,6 +429,7 @@ function QuestionInput({
           aria-describedby={describedBy}
           onChange={(e) => onChange({ kind: "file", fileUrl: e.target.value })}
           placeholder="https://"
+          data-link-input-question={question.id ?? String(index)}
         />
       </label>
       {linkNeedsFix ? (

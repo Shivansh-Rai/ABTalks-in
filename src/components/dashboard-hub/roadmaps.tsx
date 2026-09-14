@@ -3,7 +3,7 @@ import type { Domain } from "@prisma/client";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import {
-  HUB_BUTTON_CLASS,
+  HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
@@ -39,12 +39,12 @@ export function Roadmaps({
     <>
       <section
         id="domains"
-        className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4 2xl:mx-auto 2xl:max-w-[1600px]"
+        className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
       >
         <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">
           CHALLENGE TRACKS
         </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-3 2xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:max-w-[1240px]">
           {ROADMAPS.map(({ domain, label, path }) => {
             const isJoined = joined.has(domain);
             const isAbandoned = abandoned.has(domain);
@@ -62,15 +62,20 @@ export function Roadmaps({
               <li
                 key={domain}
                 className={cn(
-                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5",
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <p className="font-inter font-bold text-black">{label}</p>
-                <p className="mt-1 flex-1 text-sm text-[#4B4B4B]">
-                  60-day challenge track
-                </p>
-                <Link href={href} className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}>
+                <div>
+                  <p className="font-inter font-bold text-black">{label}</p>
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                    60-day challenge track
+                  </p>
+                </div>
+                <Link
+                  href={href}
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+                >
                   {ctaLabel}
                 </Link>
               </li>
@@ -92,15 +97,15 @@ export function Roadmaps({
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <div
               className={cn(
-                "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                 HUB_CARD_HOVER_CLASS,
               )}
             >
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0">
                 <p className="font-inter text-lg font-bold text-black">
                   31 Days AI Cohort
                 </p>
-                <p className="mt-1 text-sm text-[#4B4B4B]">
+                <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
                 Build and deploy a production-grade enterprise AI chatbot in 31 days.
                 </p>
               </div>
@@ -110,7 +115,7 @@ export function Roadmaps({
                     ? `${PROGRAM_AI_COHORT_BASE}/dashboard`
                     : `${PROGRAM_AI_COHORT_BASE}/apply`
                 }
-                className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+                className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
               >
                 {hasProgramMembership ? "Continue" : "Start Challenge"}
               </Link>
@@ -118,22 +123,22 @@ export function Roadmaps({
             {showDatabricks ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                   <p className="font-inter text-lg font-bold text-black">
                     31 Days Databricks
                   </p>
-                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                  <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
                     Build a healthcare-claims Lakehouse on Databricks
                     in 31 days.
                   </p>
                 </div>
                 <Link
                   href="/program/databricks"
-                  className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
                 >
                   Open
                 </Link>
@@ -142,21 +147,21 @@ export function Roadmaps({
             {showDsArchitect ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                   <p className="font-inter text-lg font-bold text-black">
                     10 Days Data Solutions Architect
                   </p>
-                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                  <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
                     Design AWS-first data and AI platforms in 10 days.
                   </p>
                 </div>
                 <Link
                   href="/program/ds-architect"
-                  className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
                 >
                   Open
                 </Link>
@@ -165,21 +170,21 @@ export function Roadmaps({
             {showPowerBi ? (
               <div
                 className={cn(
-                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                   <p className="font-inter text-lg font-bold text-black">
                     7 Days Power BI &amp; Analytics
                   </p>
-                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                  <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
                     Ship recruiter-grade Power BI dashboards in 7 days.
                   </p>
                 </div>
                 <Link
                   href="/program/powerbi"
-                  className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
                 >
                   Open
                 </Link>

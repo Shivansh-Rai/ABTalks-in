@@ -25,6 +25,10 @@ type ConsentContextValue = {
   open: () => void;
   /** Closes a chooser reopened from /cookies. No-op while undecided. */
   close: () => void;
+  /** True when the category-level preferences dialog is open. */
+  isPreferencesOpen: boolean;
+  openPreferences: () => void;
+  closePreferences: () => void;
   decide: (choice: CookieChoice) => Promise<void>;
 };
 
@@ -57,16 +61,20 @@ export function CookieConsentProvider({
   const [choice, setChoice] = useState<CookieChoice | null>(null);
   const [ready, setReady] = useState(false);
   const [manuallyOpened, setManuallyOpened] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   // Read on mount rather than via cookies() in the root layout — that would
   // opt the entire app into dynamic rendering and deopt every static page.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChoice(readStoredChoice());
     setReady(true);
   }, []);
 
   const open = useCallback(() => setManuallyOpened(true), []);
   const close = useCallback(() => setManuallyOpened(false), []);
+  const openPreferences = useCallback(() => setIsPreferencesOpen(true), []);
+  const closePreferences = useCallback(() => setIsPreferencesOpen(false), []);
 
   const decide = useCallback(async (next: CookieChoice) => {
     // Attribution params are only on the URL at first landing; middleware no
@@ -81,6 +89,7 @@ export function CookieConsentProvider({
 
     setChoice(next);
     setManuallyOpened(false);
+    setIsPreferencesOpen(false);
   }, []);
 
   const value = useMemo<ConsentContextValue>(
@@ -90,9 +99,12 @@ export function CookieConsentProvider({
       isOpen: ready && (manuallyOpened || choice === null),
       open,
       close,
+      isPreferencesOpen,
+      openPreferences,
+      closePreferences,
       decide,
     }),
-    [choice, ready, manuallyOpened, open, close, decide],
+    [choice, ready, manuallyOpened, isPreferencesOpen, open, close, openPreferences, closePreferences, decide],
   );
 
   return (

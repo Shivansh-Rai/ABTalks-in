@@ -21,11 +21,13 @@ export default async function HireMessagesPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <p className="text-xs font-medium tracking-wide text-primary uppercase">
+        <p className="font-heading text-[13px] leading-[18px] font-semibold text-primary">
           Outreach
         </p>
-        <h2 className="font-display text-2xl font-bold tracking-tight">Messages</h2>
-        <p className="max-w-xl text-sm text-muted-foreground">
+        <h1 className="font-heading text-[40px] leading-[48px] font-bold tracking-normal max-md:text-[32px] max-md:leading-[36px]">
+          Messages
+        </h1>
+        <p className="max-w-xl text-[17px] leading-7 text-muted-foreground max-md:text-base max-md:leading-[25px]">
           Candidates you email from ABTalks reply here. Replies reach you alone,
           and you&apos;re notified by email when one arrives.
         </p>

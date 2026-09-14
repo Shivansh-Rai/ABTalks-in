@@ -6,6 +6,7 @@ import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
 import {
   loadRecruiterIdentities,
+  RECRUITER_FIELD_POLICY,
   searchableUserWhere,
   type RecruiterPublicIdentity,
 } from "@/repositories/talent";
@@ -34,6 +35,12 @@ function newModelActive(): boolean {
   return isNewTalentRepoEnabled();
 }
 
+/**
+ * Identity for a candidate with no `CandidateProfile` row, or on the legacy
+ * read path. Field exposure follows the same {@link RECRUITER_FIELD_POLICY} as
+ * every other path (plan 133) — this fallback used to hard-code assessment
+ * scores as shown, so the same person was treated differently by row source.
+ */
 function identityFromLegacyProfile(p: {
   fullName?: string | null;
   role?: string | null;
@@ -53,12 +60,9 @@ function identityFromLegacyProfile(p: {
     education: null,
     university: p?.college ?? null,
     skills: p?.skills ?? [],
-    hasLinkedin: Boolean(p?.linkedinUrl),
-    hasGithub: Boolean(p?.githubUsername),
-    hasResume: Boolean(p?.resumeUrl),
-    showInterviewResults: false,
-    showAssessmentScores: true,
-    showCurrentEmployer: true,
+    hasLinkedin: RECRUITER_FIELD_POLICY.linkedin && Boolean(p?.linkedinUrl),
+    hasGithub: RECRUITER_FIELD_POLICY.github && Boolean(p?.githubUsername),
+    hasResume: RECRUITER_FIELD_POLICY.resume && Boolean(p?.resumeUrl),
   };
 }
 
@@ -131,15 +135,18 @@ export type ProgramCandidateRow = Prisma.ProgramMemberGetPayload<{
   hasResume: boolean;
 };
 
+/** Legacy read path. Same {@link RECRUITER_FIELD_POLICY} as the new path. */
 function withLegacyLinkFlags(
   row: Prisma.ProgramMemberGetPayload<{ select: typeof PROGRAM_CANDIDATE_SELECT }>,
   extras?: { linkedinUrl?: string | null; githubUsername?: string | null; resumeUrl?: string | null },
 ): ProgramCandidateRow {
   return {
     ...row,
-    hasLinkedin: Boolean(extras?.linkedinUrl),
-    hasGithub: Boolean(extras?.githubUsername),
-    hasResume: Boolean(extras?.resumeUrl),
+    company: RECRUITER_FIELD_POLICY.currentEmployer ? row.company : null,
+    interview: RECRUITER_FIELD_POLICY.interviewResults ? row.interview : null,
+    hasLinkedin: RECRUITER_FIELD_POLICY.linkedin && Boolean(extras?.linkedinUrl),
+    hasGithub: RECRUITER_FIELD_POLICY.github && Boolean(extras?.githubUsername),
+    hasResume: RECRUITER_FIELD_POLICY.resume && Boolean(extras?.resumeUrl),
   };
 }
 
@@ -165,7 +172,9 @@ export async function listProgramCandidates(
     const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
     return rows.map((r) => {
       const idn = identities.get(r.userId);
-      const interview = idn?.showInterviewResults ? r.interview : null;
+      const interview = RECRUITER_FIELD_POLICY.interviewResults
+        ? r.interview
+        : null;
       return {
         id: r.id,
         userId: r.userId,
@@ -173,7 +182,7 @@ export async function listProgramCandidates(
         status: r.status,
         fullName: idn?.fullName || "",
         jobRole: idn?.role ?? r.jobRole,
-        company: idn?.showCurrentEmployer === false ? null : r.company,
+        company: RECRUITER_FIELD_POLICY.currentEmployer ? r.company : null,
         missionPoints: r.missionPoints,
         totalScore: r.totalScore,
         yearsExperience: idn?.yearsExperience ?? r.yearsExperience,

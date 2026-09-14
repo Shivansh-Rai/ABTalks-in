@@ -13,6 +13,7 @@ import {
   saveAssessmentDraft,
   getAssessment,
   getAssessmentMonitor,
+  getAttemptActivity,
   deleteAssessment,
   listAssessments,
   publishAssessment,
@@ -26,6 +27,7 @@ import {
   type ResultCounts,
   type Scope,
 } from "./service";
+import { buildContentFromPresets } from "./presets";
 
 let passed = 0;
 let failed = 0;
@@ -89,11 +91,13 @@ function inMemoryStore(): AssessmentStore & {
   /** Which recruiter ids the service asked for a Shortlist. */
   poolCalls: string[];
   assignments: Map<string, StoredAssignment>;
+  activity: Map<string, number>;
 } {
   const rows = new Map<string, AssessmentRow>();
   const pool: AssignableCandidate[] = [];
   const poolCalls: string[] = [];
   const assignments = new Map<string, StoredAssignment>();
+  const activity = new Map<string, number>();
   let seq = 0;
   let qSeq = 0;
   let oSeq = 0;
@@ -162,6 +166,7 @@ function inMemoryStore(): AssessmentStore & {
     pool,
     poolCalls,
     assignments,
+    activity,
     async create(scope, input) {
       const id = `ra_${++seq}`;
       const now = new Date();
@@ -175,6 +180,8 @@ function inMemoryStore(): AssessmentStore & {
         status: "DRAFT",
         durationMinutes: input.durationMinutes,
         passMarkPercent: input.passMarkPercent,
+        strictMode: false,
+        cameraRequired: input.cameraRequired,
         shortlistRefs: input.shortlistRefs,
         publishedAt: null,
         archivedAt: null,
@@ -201,6 +208,7 @@ function inMemoryStore(): AssessmentStore & {
         durationMinutes: input.durationMinutes,
         passMarkPercent: input.passMarkPercent,
         shortlistRefs: input.shortlistRefs,
+        cameraRequired: input.cameraRequired,
         updatedAt: new Date(),
         questions: buildQuestions(assessmentId, input.questions),
       });
@@ -251,6 +259,7 @@ function inMemoryStore(): AssessmentStore & {
       if (!row || !owns(row, scope) || row.status !== "DRAFT") return false;
       row.status = "PUBLISHED";
       row.publishedAt = at;
+      row.strictMode = true;
       return true;
     },
     async listAssignableCandidates(recruiterUserId) {
@@ -319,6 +328,38 @@ function inMemoryStore(): AssessmentStore & {
         out.set(a.assessmentId, c);
       }
       return out;
+    },
+    async countActivityEvents(assessmentId, scope) {
+      const row = rows.get(assessmentId);
+      if (!row || !owns(row, scope)) return {};
+      const out: Record<string, number> = {};
+      for (const [id, n] of activity) {
+        const a = assignments.get(id);
+        if (a?.assessmentId === assessmentId) out[id] = n;
+      }
+      return out;
+    },
+    async findAttemptActivity(assessmentId, assignmentId, scope) {
+      const row = rows.get(assessmentId);
+      if (!row || !owns(row, scope)) return null;
+      const a = assignments.get(assignmentId);
+      if (!a || a.assessmentId !== assessmentId) return null;
+      return {
+        assignmentId: a.id,
+        label: a.label,
+        status: a.status,
+        assignedAt: a.assignedAt,
+        startedAt: a.startedAt,
+        submittedAt: a.submittedAt,
+        assessment: {
+          title: row.title,
+          strictMode: row.strictMode,
+          cameraRequired: row.cameraRequired,
+        },
+        questionNumbers: Object.fromEntries(row.questions.map((q) => [q.id, q.position + 1])),
+        sessions: [],
+        events: [],
+      };
     },
   };
 }
@@ -1137,6 +1178,82 @@ async function run() {
     const page = readSource("src/app/hire/create-test/page.tsx");
     assert(page.includes("listSendableCandidates"), "the page reads the live Shortlist");
     assert(!page.includes("candidateUserId"), "no user id reaches the builder");
+  });
+
+  await suite("P1. publish sets strictMode; publishing twice keeps it; save after publish is CONFLICT", async () => {
+    const store = inMemoryStore();
+    const created = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(created.ok, "created");
+    if (!created.ok) return;
+    assert(store.rows.get(created.data.id)!.strictMode === false, "draft not strict");
+    const pub = await publishAssessment(store, SCOPE_A, created.data.id);
+    assert(pub.ok, "published");
+    assert(store.rows.get(created.data.id)!.strictMode === true, "strict after publish");
+    const again = await publishAssessment(store, SCOPE_A, created.data.id);
+    assert(again.ok && again.data.alreadyPublished, "second publish");
+    assert(store.rows.get(created.data.id)!.strictMode === true, "still strict");
+    const save = await saveAssessmentDraft(store, SCOPE_A, {
+      ...validMcqDraft(),
+      assessmentId: created.data.id,
+    });
+    assert(!save.ok && save.code === "CONFLICT", "save after publish");
+  });
+
+  await suite("P2. cameraRequired round-trips while DRAFT; defaults false; presets false", async () => {
+    const store = inMemoryStore();
+    const created = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(created.ok, "created");
+    if (!created.ok) return;
+    assert(store.rows.get(created.data.id)!.cameraRequired === false, "default");
+    const saved = await saveAssessmentDraft(store, SCOPE_A, {
+      ...validMcqDraft(),
+      assessmentId: created.data.id,
+      cameraRequired: true,
+    });
+    assert(saved.ok, "saved");
+    assert(store.rows.get(created.data.id)!.cameraRequired === true, "round-trip");
+    const presets = buildContentFromPresets(["frontend-fundamentals"]);
+    assert(presets?.cameraRequired === false, "preset false");
+  });
+
+  await suite("P3. getAssessmentMonitor activityCounts only when strict", async () => {
+    const store = inMemoryStore();
+    const created = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(created.ok, "created");
+    if (!created.ok) return;
+    store.activity.set("nope", 4);
+    const draftMon = await getAssessmentMonitor(store, SCOPE_A, created.data.id);
+    assert(draftMon.ok && Object.keys(draftMon.data.activityCounts).length === 0, "draft empty");
+    await publishAssessment(store, SCOPE_A, created.data.id);
+    const pubMon = await getAssessmentMonitor(store, SCOPE_A, created.data.id);
+    assert(pubMon.ok && pubMon.data.assessment.strictMode, "strict");
+    await store.upsertAssignments(created.data.id, [
+      { candidateUserId: "u1", candidateRef: "PROGRAM:m1" },
+    ]);
+    const assigned = [...store.assignments.values()].find((a) => a.assessmentId === created.data.id)!;
+    store.activity.set(assigned.id, 7);
+    const withCounts = await getAssessmentMonitor(store, SCOPE_A, created.data.id);
+    assert(withCounts.ok && withCounts.data.activityCounts[assigned.id] === 7, "counts");
+  });
+
+  await suite("P4. getAttemptActivity scopes and returns summary null when not strict", async () => {
+    const store = inMemoryStore();
+    const created = await createAssessment(store, SCOPE_A, validMcqDraft());
+    assert(created.ok, "created");
+    if (!created.ok) return;
+    await store.upsertAssignments(created.data.id, [
+      { candidateUserId: "u1", candidateRef: "PROGRAM:m1" },
+    ]);
+    const asg = [...store.assignments.values()].find((a) => a.assessmentId === created.data.id)!;
+    const foreign = await getAttemptActivity(store, SCOPE_B, created.data.id, asg.id, new Date());
+    assert(!foreign.ok && foreign.code === "NOT_FOUND", "other workspace");
+    const other = await createAssessment(store, SCOPE_A, validMcqDraft({ title: "Other" }));
+    assert(other.ok, "other");
+    if (!other.ok) return;
+    const mismatch = await getAttemptActivity(store, SCOPE_A, other.data.id, asg.id, new Date());
+    assert(!mismatch.ok && mismatch.code === "NOT_FOUND", "wrong assessmentId");
+    const nonStrict = await getAttemptActivity(store, SCOPE_A, created.data.id, asg.id, new Date());
+    assert(nonStrict.ok && nonStrict.data.summary === null, "non-strict summary null");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

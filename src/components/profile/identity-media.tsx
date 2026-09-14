@@ -109,7 +109,9 @@ export function IdentityMedia({
             <span aria-hidden>{initials(fullName)}</span>
           )}
         </div>
-        {avatarUploadEnabled ? <AvatarEditor /> : null}
+        {/* Always rendered. When storage is unconfigured the pencil is
+            disabled and says so, rather than silently disappearing. */}
+        <AvatarEditor unavailable={!avatarUploadEnabled} />
 
         <div
           className={`pw-ring-check${complete ? " pw-show" : ""}`}

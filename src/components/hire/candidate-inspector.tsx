@@ -44,11 +44,11 @@ import { MaskedName } from "@/components/hire/desk-match-card";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
 import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
-import type { RevealedContact } from "@/features/hire/unlock-contact";
 import {
-  SubscriptionGate,
-  type GateReason,
-} from "@/components/hire/subscription-gate";
+  loadInspectorWorkHistoryAction,
+  type InspectorWorkHistory,
+} from "@/app/actions/hire-view-actions";
+import type { RevealedContact } from "@/features/hire/unlock-contact";
 
 function trackLongLabel(source?: CandidateSource): string | null {
   switch (source) {
@@ -76,13 +76,117 @@ const WORK_MODE: Record<string, string> = {
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "experience", label: "Experience" },
+  { id: "evidence", label: "ABTalks Evidence" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "resume", label: "Resume" },
   { id: "more", label: "More" },
 ] as const;
 
+const MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+function monthYear(month: number | null, year: number | null): string {
+  if (!year) return "";
+  const name = month && month >= 1 && month <= 12 ? MONTH_SHORT[month - 1] : "";
+  return name ? `${name} ${year}` : String(year);
+}
+
+function jobSpan(row: InspectorWorkHistory["rows"][number]): string {
+  const from = monthYear(row.startMonth, row.startYear);
+  const to = row.isCurrent ? "Present" : monthYear(row.endMonth, row.endYear);
+  if (!from && !to) return "";
+  return from && to ? `${from} – ${to}` : from || to;
+}
+
 type TabId = (typeof TABS)[number]["id"];
+
+/**
+ * Whether this viewer asked the OS to reduce motion.
+ *
+ * Read at click time rather than during render: it is a live browser query, so
+ * calling it in the render body would be impure and would also miss the user
+ * changing the setting mid-session. Guarded for the server pass, where there
+ * is no `window` and the value is never needed.
+ */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
+  );
+}
+
+/** http(s) LinkedIn URLs only — unlocked contact is still untrusted input. */
+function safeLinkedinHref(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    const host = parsed.hostname.toLowerCase();
+    if (host !== "linkedin.com" && !host.endsWith(".linkedin.com")) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function LinkedInMark({
+  href,
+  locked,
+  candidateRef,
+  publicId,
+  onUnlocked,
+}: {
+  href: string | null;
+  locked: boolean;
+  candidateRef: string;
+  publicId: string;
+  onUnlocked: () => void;
+}) {
+  if (href) {
+    return (
+      <a
+        className="hire-profile__in"
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open LinkedIn profile"
+      >
+        in
+      </a>
+    );
+  }
+  if (locked) {
+    return (
+      <UnlockContactDialog
+        candidateRef={candidateRef}
+        publicId={publicId}
+        onUnlocked={onUnlocked}
+        className="hire-profile__in"
+        triggerLabel="in"
+        triggerAriaLabel="Unlock contact to open LinkedIn"
+        triggerTitle="LinkedIn connected"
+      />
+    );
+  }
+  return (
+    <span className="hire-profile__in" title="LinkedIn connected">
+      in
+    </span>
+  );
+}
 
 const DECISION_LABEL: Record<MatchDecision, string | null> = {
   SHORTLISTED: "Shortlisted",
@@ -103,13 +207,13 @@ type Role = { title: string; value: ReactNode; badge?: string; note?: string };
 /**
  * The candidate profile panel (Figma 1585:189).
  *
- * The design is laid out for a work history ABTalks does not hold — employers,
- * roles, schools. Each block is filled from what the pool does have: the
- * Experience timeline lists verified work on the track, Education is the
- * declared level, and the credentials card lists the connected platforms.
- * Contact is behind the paid unlock (T-229): "Reveal email" / "Reveal number"
- * open the unlock dialog, which states the cost before charging. The resume
- * stays behind the plan gate — a different lock.
+ * Experience is the candidate's own jobs (`CandidateExperience`, typed or
+ * resume-merged), loaded on open. ABTalks Evidence is verified track proof
+ * already on the match card (days shipped, missions, commits). Education is
+ * the declared level. Contact is behind the paid unlock (T-229): "Reveal
+ * email" / "Reveal number" open the unlock dialog, which states the cost
+ * before charging. Resume uses the same credit unlock — billing is not
+ * enabled, so the plans dialog must not be the gate.
  */
 export function CandidateInspector({
   match,
@@ -173,11 +277,13 @@ export function CandidateInspector({
   );
   const status = decision ? DECISION_LABEL[decision] : null;
   const resumeHref = evidenceResumeHref(match.candidateRef);
-  const [gate, setGate] = useState<GateReason | null>(null);
   const [tab, setTab] = useState<TabId>("overview");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [contact, setContact] = useState<RevealedContact | null>(null);
+  const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
+    null,
+  );
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -200,16 +306,151 @@ export function CandidateInspector({
     };
   }, [match.candidateRef, sample]);
 
+  useEffect(() => {
+    let alive = true;
+    if (sample) {
+      setWorkHistory({ hasNoWorkExperience: false, rows: [] });
+      return () => {
+        alive = false;
+      };
+    }
+    setWorkHistory(null);
+    void (async () => {
+      const result = await loadInspectorWorkHistoryAction({
+        candidateRef: match.candidateRef,
+      });
+      if (!alive) return;
+      setWorkHistory(
+        result.ok ? result.data : { hasNoWorkExperience: false, rows: [] },
+      );
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [match.candidateRef, sample]);
+
   async function loadContact() {
     setContact(await revealContactAction({ candidateRef: match.candidateRef }));
   }
 
+  // A click sets the tab AND suppresses the spy for the length of the smooth
+  // scroll. Without this the animation sweeps through every section between
+  // here and the target, and the spy would repaint the active tab two or three
+  // times on the way — the nav would flicker on its own click.
+  const jumpingRef = useRef(false);
+  const jumpTimerRef = useRef<number | undefined>(undefined);
+
   function jump(id: TabId) {
     setTab(id);
+    jumpingRef.current = true;
+    window.clearTimeout(jumpTimerRef.current);
+    jumpTimerRef.current = window.setTimeout(() => {
+      jumpingRef.current = false;
+    }, 700);
     scrollRef.current
       ?.querySelector<HTMLElement>(`[data-section="${id}"]`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      ?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
   }
+
+  useEffect(() => () => window.clearTimeout(jumpTimerRef.current), []);
+
+  // On a narrow panel the tab strip scrolls sideways, so the active tab (set by
+  // a click or by the scroll-spy below) is brought to the middle of the strip.
+  // `scrollTo` on the strip itself: `scrollIntoView` would also move the
+  // panel's vertical scroll and fight the spy.
+  const tabsRef = useRef<HTMLElement>(null);
+
+  // Phones: once the name has scrolled out of the panel, a compact copy rides
+  // above the tabs so the recruiter always knows whose profile they are in.
+  const nameRef = useRef<HTMLHeadingElement>(null);
+  const [nameStuck, setNameStuck] = useState(false);
+  useEffect(() => {
+    const root = scrollRef.current;
+    const heading = nameRef.current;
+    if (!root || !heading) return;
+    const check = () => {
+      setNameStuck(
+        heading.getBoundingClientRect().bottom <
+          root.getBoundingClientRect().top + 4,
+      );
+    };
+    root.addEventListener("scroll", check, { passive: true });
+    check();
+    return () => root.removeEventListener("scroll", check);
+  }, []);
+  useEffect(() => {
+    const strip = tabsRef.current;
+    if (!strip || strip.scrollWidth <= strip.clientWidth) return;
+    const active = strip.querySelector<HTMLElement>(".hire-profile__tab.is-active");
+    if (!active) return;
+    strip.scrollTo({
+      left: active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [tab]);
+
+  // Scroll-spy: the tabs follow the scroll, not just drive it.
+  //
+  // A scroll listener over `getBoundingClientRect`, NOT an IntersectionObserver.
+  // `.hire-app--results` carries `zoom: var(--hire-zoom)` to fit the design
+  // frame to the viewport, and inside a zoomed subtree Chromium's
+  // IntersectionObserver never fires for a non-viewport `root` — verified here:
+  // an observer rooted on this panel reported no entries at all, not even the
+  // initial callback. `getBoundingClientRect` is zoom-correct, so the spy reads
+  // positions directly.
+  //
+  // The active section is the LAST anchor whose top has passed the reading
+  // line a quarter of the way down the panel. That keeps the final section
+  // reachable: at the bottom of the scroll several anchors sit above the line
+  // at once, and taking the last of them is the one actually being read.
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+
+    let frame = 0;
+
+    const measure = () => {
+      frame = 0;
+      // A click's smooth scroll owns the tab until it settles.
+      if (jumpingRef.current) return;
+      const anchors = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-section]"),
+      );
+      if (anchors.length === 0) return;
+
+      // Both halves from the same rect. `clientHeight` reports unzoomed CSS
+      // pixels while `getBoundingClientRect()` reports painted ones, so mixing
+      // the two puts the reading line in the wrong place under the desk zoom.
+      const rootRect = root.getBoundingClientRect();
+      const line = rootRect.top + rootRect.height * 0.25;
+
+      let current = anchors[0]!.dataset.section;
+      for (const el of anchors) {
+        if (el.getBoundingClientRect().top <= line) current = el.dataset.section;
+        else break;
+      }
+      if (current) {
+        setTab((prev) => (prev === current ? prev : (current as TabId)));
+      }
+    };
+
+    const onScroll = () => {
+      // One measurement per frame, however fast the wheel spins.
+      if (frame === 0) frame = window.requestAnimationFrame(measure);
+    };
+
+    root.addEventListener("scroll", onScroll, { passive: true });
+    measure();
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
+    };
+    // Re-reads when the candidate changes: a different profile can render a
+    // different set of sections.
+  }, [match.candidateRef]);
 
   const name = preview ? (
     <LockedField
@@ -292,8 +533,11 @@ export function CandidateInspector({
 
   const experienceSummary = [
     years ? `${years} year${years === 1 ? "" : "s"} total` : null,
-    track,
   ].filter(Boolean);
+
+  const evidenceSummary = [track].filter(Boolean);
+
+  const jobs = workHistory?.rows ?? [];
 
   return (
     <aside className="hire-detail hire-profile" aria-label="Candidate details">
@@ -356,14 +600,20 @@ export function CandidateInspector({
 
         <div className="hire-profile__identity">
           <div className="hire-profile__namerow">
-            <h3 className="hire-profile__name">
+            <h3 ref={nameRef} className="hire-profile__name">
               {name}
               <OpenToWorkBadge openToWork={match.openToWork} />
             </h3>
             {e.linkedinConnected && (
-              <span className="hire-profile__in" title="LinkedIn connected">
-                in
-              </span>
+              <LinkedInMark
+                href={safeLinkedinHref(contact?.linkedinUrl)}
+                locked={!sample && !preview && !contact}
+                candidateRef={match.candidateRef}
+                publicId={publicId}
+                onUnlocked={() => {
+                  void loadContact();
+                }}
+              />
             )}
           </div>
           <p className="hire-profile__loc">
@@ -430,7 +680,21 @@ export function CandidateInspector({
           </div>
         )}
 
-        <nav className="hire-profile__tabs" aria-label="Profile sections">
+        <div className={cn("hire-profile__stick", nameStuck && "is-stuck")}>
+        {/* A visual repeat of the heading above, so hidden from assistive tech;
+            a locked preview shows the role rather than a second locked field. */}
+        <div className="hire-profile__stickname" aria-hidden="true">
+          <span className="hire-profile__stickname-inner">
+            <span className="hire-profile__stickname-text">
+              {preview ? match.jobRole : name}
+            </span>
+          </span>
+        </div>
+        <nav
+          ref={tabsRef}
+          className="hire-profile__tabs"
+          aria-label="Profile sections"
+        >
           {/* A sample card has no evidence record, so it has no resume section
               to jump to — drop the tab rather than leave it inert. */}
           {TABS.filter((t) => t.id !== "resume" || !sample).map((t) => (
@@ -445,6 +709,7 @@ export function CandidateInspector({
             </button>
           ))}
         </nav>
+        </div>
 
         <section
           data-section="overview"
@@ -560,6 +825,66 @@ export function CandidateInspector({
               <small>· {experienceSummary.join(" · ")}</small>
             )}
           </h4>
+          {sample ? (
+            <p className="hire-profile__meta">
+              Figures are taken from your requirement, not from a candidate.
+            </p>
+          ) : workHistory === null ? (
+            <p className="hire-profile__meta">Loading experience…</p>
+          ) : jobs.length > 0 ? (
+            jobs.map((job) => (
+              <div key={job.id} className="hire-profile__org-block">
+                <span className="hire-profile__tile" aria-hidden="true">
+                  {monogram(job.companyName || job.title)}
+                </span>
+                <div className="hire-profile__org-main">
+                  <div>
+                    <p className="hire-profile__org-name">{job.companyName}</p>
+                    <p className="hire-profile__org-sub">
+                      {[job.title, job.employmentType, job.locationCity]
+                        .map((part) => part?.trim())
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <ul className="hire-profile__roles">
+                    <li className="hire-profile__role">
+                      <span
+                        className="hire-profile__timeline"
+                        aria-hidden="true"
+                      />
+                      <div className="hire-profile__role-body">
+                        <div className="hire-profile__role-head">
+                          <p className="hire-profile__role-title">{job.title}</p>
+                        </div>
+                        <p className="hire-profile__meta">{jobSpan(job)}</p>
+                        {job.description?.trim() ? (
+                          <p className="hire-profile__text">
+                            {job.description.trim()}
+                          </p>
+                        ) : null}
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="hire-profile__meta">No work experience recorded</p>
+          )}
+        </section>
+
+        <section
+          data-section="evidence"
+          className="hire-profile__section hire-profile__section--ruled"
+          aria-label="ABTalks Evidence"
+        >
+          <h4 className="hire-profile__h">
+            ABTalks Evidence
+            {evidenceSummary.length > 0 && (
+              <small>· {evidenceSummary.join(" · ")}</small>
+            )}
+          </h4>
           <div className="hire-profile__org-block">
             <span className="hire-profile__tile" aria-hidden="true">
               {monogram(track ?? match.jobRole)}
@@ -575,7 +900,10 @@ export function CandidateInspector({
                 <ul className="hire-profile__roles">
                   {roles.map((r) => (
                     <li key={r.title} className="hire-profile__role">
-                      <span className="hire-profile__timeline" aria-hidden="true" />
+                      <span
+                        className="hire-profile__timeline"
+                        aria-hidden="true"
+                      />
                       <div className="hire-profile__role-body">
                         <div className="hire-profile__role-head">
                           <p className="hire-profile__role-title">{r.title}</p>
@@ -742,8 +1070,6 @@ export function CandidateInspector({
           </p>
         </section>
       </div>
-
-      <SubscriptionGate reason={gate} onClose={() => setGate(null)} />
     </aside>
   );
 }
@@ -762,7 +1088,7 @@ function Row({
   return (
     <div className="hire-profile__row">
       <span className="hire-profile__label">
-        <Icon size={16} strokeWidth={1.25} absoluteStrokeWidth aria-hidden="true" />
+        <Icon size={20} strokeWidth={1.25} absoluteStrokeWidth aria-hidden="true" />
         {label}
       </span>
       <div className={cn("hire-profile__value", muted && "is-muted")}>

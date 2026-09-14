@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import {
   Prisma,
-  TalentMatchDecision,
   TalentMatchTier,
   TalentRequestStatus,
   type TalentEmploymentType,
@@ -23,6 +22,7 @@ import {
   candidateAvailabilitySchema,
   jobSpecSchema,
   adoptGuestScoutSessionSchema,
+  applyHireFiltersSchema,
   recordSampleDemandSchema,
   runMatchSchema,
   sendScoutMessageSchema,
@@ -38,6 +38,15 @@ import {
 import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
 import { toPublicMatch } from "@/features/hire/to-public-match";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
+import {
+  createSession,
+  ensureLegacySession,
+  getOwnedSession,
+  pruneUndecidedOutsideSessions,
+  recordSessionRun,
+  specFromJson,
+  specToJson,
+} from "@/features/hire/search-sessions";
 
 type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
@@ -133,6 +142,8 @@ export async function sendScoutMessageAction(
 ): Promise<
   ActionResult<{
     requestId: string;
+    /** Plan 133: the search session this turn was written to. */
+    sessionId: string;
     assistantMessage: string;
     options: { label: string; value: string }[];
     allowFreeText: boolean;
@@ -155,40 +166,40 @@ export async function sendScoutMessageAction(
     return { ok: false, message: "Invalid message." };
   }
 
-  const { message, display, requestId: existingId } = parsed.data;
+  const {
+    message,
+    display,
+    requestId: existingId,
+    sessionId: existingSessionId,
+  } = parsed.data;
   const userId = gate.data.userId;
 
   try {
     let requestId = existingId;
+    let sessionId: string;
+    // Plan 133: the brief and the history are the SESSION's, not the
+    // project's. A new search starts from nothing and cannot rewrite an
+    // earlier one.
     let priorSpec: JobSpec = {};
 
     if (requestId) {
       const existing = await prisma.talentRequest.findFirst({
         where: { id: requestId, recruiterUserId: userId },
-        select: {
-          id: true,
-          title: true,
-          seniority: true,
-          openings: true,
-          mustHaveStack: true,
-          niceToHaveStack: true,
-          evidencePriority: true,
-          salaryMin: true,
-          salaryMax: true,
-          salaryCurrency: true,
-          salaryPeriod: true,
-          workMode: true,
-          locationCity: true,
-          employmentType: true,
-          noticePeriodDays: true,
-          minExperience: true,
-          maxExperience: true,
-          requiresDegree: true,
-          extra: true,
-        },
+        select: { id: true },
       });
       if (!existing) return { ok: false, message: "Request not found." };
-      priorSpec = dbToSpec(existing);
+      // A project from before sessions: its history becomes Session 1 first,
+      // so a new session here never swallows it.
+      await ensureLegacySession(requestId);
+
+      if (existingSessionId) {
+        const session = await getOwnedSession(userId, requestId, existingSessionId);
+        if (!session) return { ok: false, message: "Search not found." };
+        sessionId = session.id;
+        priorSpec = specFromJson(session.spec);
+      } else {
+        sessionId = (await createSession({ requestId, title: display ?? message })).id;
+      }
     } else {
       const created = await prisma.talentRequest.create({
         data: {
@@ -200,10 +211,11 @@ export async function sendScoutMessageAction(
         select: { id: true },
       });
       requestId = created.id;
+      sessionId = (await createSession({ requestId, title: display ?? message })).id;
     }
 
     const historyRows = await prisma.talentRequestMessage.findMany({
-      where: { requestId },
+      where: { sessionId },
       orderBy: { createdAt: "asc" },
       select: { role: true, content: true },
       take: 40,
@@ -212,6 +224,7 @@ export async function sendScoutMessageAction(
     await prisma.talentRequestMessage.create({
       data: {
         requestId,
+        sessionId,
         role: "user",
         // What the recruiter saw on the chip, not the machine value behind it.
         // A bubble reading "30" under a button labelled "Within 30 days" is not
@@ -229,14 +242,24 @@ export async function sendScoutMessageAction(
       userMessage: message,
     });
 
+    // The session owns its brief. The project's columns mirror the latest one
+    // so the demand board, admin and hire alerts keep reading what they read.
     const dbFields = specToDb(turn.spec);
-    await prisma.talentRequest.update({
-      where: { id: requestId },
-      data: {
-        ...dbFields,
-        extra: dbFields.extra ?? Prisma.JsonNull,
-      },
-    });
+    await prisma.$transaction([
+      prisma.talentSearchSession.update({
+        where: { id: sessionId },
+        data: { spec: specToJson(turn.spec) },
+        select: { id: true },
+      }),
+      prisma.talentRequest.update({
+        where: { id: requestId },
+        data: {
+          ...dbFields,
+          extra: dbFields.extra ?? Prisma.JsonNull,
+        },
+        select: { id: true },
+      }),
+    ]);
 
     // What the recruiter sees live and what is replayed on reload must be the
     // same string. They were not: the stored copy prefixed the running summary,
@@ -252,6 +275,7 @@ export async function sendScoutMessageAction(
     await prisma.talentRequestMessage.create({
       data: {
         requestId,
+        sessionId,
         role: "assistant",
         content: assistantMessage,
         options: turn.options,
@@ -265,6 +289,7 @@ export async function sendScoutMessageAction(
       ok: true,
       data: {
         requestId,
+        sessionId,
         assistantMessage,
         options: turn.options,
         allowFreeText: turn.allowFreeText,
@@ -284,11 +309,220 @@ export async function sendScoutMessageAction(
   }
 }
 
+const MATCH_REQUEST_SELECT = {
+  id: true,
+  title: true,
+  seniority: true,
+  openings: true,
+  mustHaveStack: true,
+  niceToHaveStack: true,
+  evidencePriority: true,
+  salaryMin: true,
+  salaryMax: true,
+  salaryCurrency: true,
+  salaryPeriod: true,
+  workMode: true,
+  locationCity: true,
+  employmentType: true,
+  noticePeriodDays: true,
+  minExperience: true,
+  maxExperience: true,
+  requiresDegree: true,
+  extra: true,
+} as const;
+
+/**
+ * Rank + persist matches for a TalentRequest the caller already owns.
+ * Plan 133: a run belongs to one session and searches THAT session's brief.
+ * No session id means a new search, which gets a new session.
+ */
+async function executeMatchForOwnedRequest(
+  requestId: string,
+  recruiterUserId: string,
+  options: { persistGapMessage?: boolean; sessionId?: string } = {},
+): Promise<
+  ActionResult<{
+    requestId: string;
+    sessionId: string;
+    matchCount: number;
+    overallGap: string;
+  }>
+> {
+  const req = await prisma.talentRequest.findFirst({
+    where: { id: requestId, recruiterUserId },
+    select: MATCH_REQUEST_SELECT,
+  });
+  if (!req) return { ok: false, message: "Request not found." };
+
+  await ensureLegacySession(req.id);
+  let sessionId: string;
+  let spec: JobSpec;
+  if (options.sessionId) {
+    const session = await getOwnedSession(
+      recruiterUserId,
+      req.id,
+      options.sessionId,
+    );
+    if (!session) return { ok: false, message: "Search not found." };
+    sessionId = session.id;
+    spec = specFromJson(session.spec);
+  } else {
+    spec = dbToSpec(req);
+    sessionId = (await createSession({ requestId: req.id, title: spec.title ?? null, spec })).id;
+  }
+
+  const search = await searchCandidates(spec, { limit: 20 });
+  if (!search.ok) return search;
+
+  const explained = await explainMatches(
+    search.data.matches,
+    search.data.nearMisses,
+    spec,
+    {
+      totalEligible: search.data.totalEligible,
+      belowEvidenceFloor: search.data.belowEvidenceFloor,
+      coverageNote: search.data.coverage.note,
+      stage: search.data.stage,
+    },
+  );
+
+  // A track the DB enum does not know yet cannot be stored. It is still shown
+  // and still ranked — only the persisted copy is skipped — and it is logged,
+  // because the fix is a one-line enum migration and silence would hide it.
+  const persistable = explained.matches.filter((m) =>
+    Boolean(persistableSource(m.source)),
+  );
+  const unstorable = explained.matches.length - persistable.length;
+  if (unstorable > 0) {
+    logger.error("[hire] matches not persisted: source missing from enum", {
+      count: unstorable,
+      sources: [
+        ...new Set(
+          explained.matches
+            .filter((m) => !persistableSource(m.source))
+            .map((m) => m.source),
+        ),
+      ].join(","),
+    });
+  }
+
+  const rows = persistable.map((m) => {
+    const card = toPublicMatch(m, {
+      coverageNote: search.data.coverage.note,
+      highlightSkills: spec.mustHaveStack,
+    });
+    return {
+      requestId: req.id,
+      source: persistableSource(m.source)!,
+      // The candidate is the person. Every track has one of these.
+      candidateUserId: m.userId,
+      // Provenance: which cohort row the evidence came from, where there
+      // was one. Not a key, not a foreign key, never looked up by.
+      programMemberId: m.programMemberId,
+      score: m.score,
+      tier: m.tier as TalentMatchTier,
+      scoreBreakdown: m.scoreBreakdown as unknown as Prisma.InputJsonValue,
+      // Public evidence only — CandidateEvidence still carries company.
+      evidence: {
+        ...card.evidence,
+        locationLabel: card.locationLabel ?? null,
+        compensationBand: card.compensationBand ?? null,
+        compensationDeclared: card.compensationDeclared ?? false,
+      } as unknown as Prisma.InputJsonValue,
+      rationale: m.rationale,
+      gaps: m.gaps,
+      availabilityUnknown: m.availabilityUnknown,
+    };
+  });
+
+  // T-044 / T-149: a match run must not forget what the recruiter already did.
+  //
+  // This used to delete every row for the request and recreate it, which made
+  // firstSeenAt / viewedAt / decision impossible to keep. Now only UNDECIDED
+  // rows that dropped out of this run are deleted. SHORTLISTED and REJECTED
+  // stay even when the candidate is outside the latest top set. Survivors
+  // (and returning decided rows) are upserted with an `update` branch that
+  // touches ONLY the scoring fields. The three state columns are absent
+  // from `update` on purpose — that omission is the whole feature.
+  //
+  // One $transaction([...]) batch rather than an interactive callback, so
+  // this stays on `prisma` exactly as before and needs no direct Neon
+  // endpoint. (Review sheet question 5 asks whether writeClient() is wanted
+  // here; keeping the current client means that answer changes nothing else.)
+  //
+  // Plan 133: "dropped out of this run" is no longer enough to delete. An
+  // UNDECIDED row goes only when NO session of this project still shows
+  // it, or reopening an earlier search would find its results gone. This
+  // session's own list is written first, so the union below is current.
+  await prisma.$transaction(
+    rows.map(({ requestId: rowRequestId, candidateUserId, ...scoring }) =>
+      prisma.talentRequestMatch.upsert({
+        where: { requestId_candidateUserId: { requestId: rowRequestId, candidateUserId } },
+        create: { requestId: rowRequestId, candidateUserId, ...scoring },
+        update: scoring,
+      }),
+    ),
+  );
+  await recordSessionRun({
+    sessionId,
+    rows: rows.map((row) => ({
+      candidateUserId: row.candidateUserId,
+      score: row.score,
+      tier: row.tier,
+      scoreBreakdown: row.scoreBreakdown,
+      evidence: row.evidence,
+      rationale: row.rationale,
+      gaps: row.gaps,
+      availabilityUnknown: row.availabilityUnknown,
+    })),
+    overallGap: explained.overallGap,
+    matchCount: explained.matches.length,
+  });
+  await pruneUndecidedOutsideSessions(req.id);
+
+  // Always promote to ACTIVE so demand board sees the requirement
+  const status =
+    explained.matches.length > 0
+      ? TalentRequestStatus.MATCHED
+      : TalentRequestStatus.ACTIVE;
+
+  await prisma.talentRequest.update({
+    where: { id: req.id },
+    data: { status },
+  });
+
+  if (options.persistGapMessage !== false) {
+    await prisma.talentRequestMessage.create({
+      data: {
+        requestId: req.id,
+        sessionId,
+        role: "assistant",
+        content: explained.overallGap,
+      },
+    });
+  }
+
+  revalidatePath(`/hire/${req.id}`);
+  revalidatePath("/admin/hire");
+
+  return {
+    ok: true,
+    data: {
+      requestId: req.id,
+      sessionId,
+      matchCount: explained.matches.length,
+      overallGap: explained.overallGap,
+    },
+  };
+}
+
 export async function runMatchAction(
   input: unknown,
 ): Promise<
   ActionResult<{
     requestId: string;
+    /** Plan 133: the session these results belong to. */
+    sessionId: string;
     matchCount: number;
     overallGap: string;
   }>
@@ -304,169 +538,83 @@ export async function runMatchAction(
   if (!parsed.success) return { ok: false, message: "Invalid request." };
 
   try {
-    const req = await prisma.talentRequest.findFirst({
-      where: {
-        id: parsed.data.requestId,
-        recruiterUserId: gate.data.userId,
-      },
-      select: {
-        id: true,
-        title: true,
-        seniority: true,
-        openings: true,
-        mustHaveStack: true,
-        niceToHaveStack: true,
-        evidencePriority: true,
-        salaryMin: true,
-        salaryMax: true,
-        salaryCurrency: true,
-        salaryPeriod: true,
-        workMode: true,
-        locationCity: true,
-        employmentType: true,
-        noticePeriodDays: true,
-        minExperience: true,
-        maxExperience: true,
-        requiresDegree: true,
-        extra: true,
-      },
-    });
-    if (!req) return { ok: false, message: "Request not found." };
-
-    const spec = dbToSpec(req);
-    const search = await searchCandidates(spec, { limit: 20 });
-    if (!search.ok) return search;
-
-    const explained = await explainMatches(
-      search.data.matches,
-      search.data.nearMisses,
-      spec,
-      {
-        totalEligible: search.data.totalEligible,
-        belowEvidenceFloor: search.data.belowEvidenceFloor,
-        coverageNote: search.data.coverage.note,
-        stage: search.data.stage,
-      },
+    return await executeMatchForOwnedRequest(
+      parsed.data.requestId,
+      gate.data.userId,
+      { sessionId: parsed.data.sessionId },
     );
-
-    // A track the DB enum does not know yet cannot be stored. It is still shown
-    // and still ranked — only the persisted copy is skipped — and it is logged,
-    // because the fix is a one-line enum migration and silence would hide it.
-    const persistable = explained.matches.filter((m) =>
-      Boolean(persistableSource(m.source)),
-    );
-    const unstorable = explained.matches.length - persistable.length;
-    if (unstorable > 0) {
-      logger.error("[hire] matches not persisted: source missing from enum", {
-        count: unstorable,
-        sources: [
-          ...new Set(
-            explained.matches
-              .filter((m) => !persistableSource(m.source))
-              .map((m) => m.source),
-          ),
-        ].join(","),
-      });
-    }
-
-    const rows = persistable.map((m) => {
-      const card = toPublicMatch(m, {
-        coverageNote: search.data.coverage.note,
-        highlightSkills: spec.mustHaveStack,
-      });
-      return {
-        requestId: req.id,
-        source: persistableSource(m.source)!,
-        // The candidate is the person. Every track has one of these.
-        candidateUserId: m.userId,
-        // Provenance: which cohort row the evidence came from, where there
-        // was one. Not a key, not a foreign key, never looked up by.
-        programMemberId: m.programMemberId,
-        score: m.score,
-        tier: m.tier as TalentMatchTier,
-        scoreBreakdown: m.scoreBreakdown as unknown as Prisma.InputJsonValue,
-        // Public evidence only — CandidateEvidence still carries company.
-        evidence: {
-          ...card.evidence,
-          locationLabel: card.locationLabel ?? null,
-          compensationBand: card.compensationBand ?? null,
-          compensationDeclared: card.compensationDeclared ?? false,
-        } as unknown as Prisma.InputJsonValue,
-        rationale: m.rationale,
-        gaps: m.gaps,
-        availabilityUnknown: m.availabilityUnknown,
-      };
-    });
-
-    // T-044 / T-149: a match run must not forget what the recruiter already did.
-    //
-    // This used to delete every row for the request and recreate it, which made
-    // firstSeenAt / viewedAt / decision impossible to keep. Now only UNDECIDED
-    // rows that dropped out of this run are deleted. SHORTLISTED and REJECTED
-    // stay even when the candidate is outside the latest top set. Survivors
-    // (and returning decided rows) are upserted with an `update` branch that
-    // touches ONLY the scoring fields. The three state columns are absent
-    // from `update` on purpose — that omission is the whole feature.
-    //
-    // One $transaction([...]) batch rather than an interactive callback, so
-    // this stays on `prisma` exactly as before and needs no direct Neon
-    // endpoint. (Review sheet question 5 asks whether writeClient() is wanted
-    // here; keeping the current client means that answer changes nothing else.)
-    const keptCandidateIds = rows.map((row) => row.candidateUserId);
-    await prisma.$transaction([
-      prisma.talentRequestMatch.deleteMany({
-        where: {
-          requestId: req.id,
-          decision: TalentMatchDecision.UNDECIDED,
-          ...(keptCandidateIds.length > 0
-            ? { candidateUserId: { notIn: keptCandidateIds } }
-            : {}),
-        },
-      }),
-      ...rows.map(({ requestId, candidateUserId, ...scoring }) =>
-        prisma.talentRequestMatch.upsert({
-          where: { requestId_candidateUserId: { requestId, candidateUserId } },
-          create: { requestId, candidateUserId, ...scoring },
-          update: scoring,
-        }),
-      ),
-    ]);
-
-    // Always promote to ACTIVE so demand board sees the requirement
-    const status =
-      explained.matches.length > 0
-        ? TalentRequestStatus.MATCHED
-        : TalentRequestStatus.ACTIVE;
-
-    await prisma.talentRequest.update({
-      where: { id: req.id },
-      data: { status },
-    });
-
-    await prisma.talentRequestMessage.create({
-      data: {
-        requestId: req.id,
-        role: "assistant",
-        content: explained.overallGap,
-      },
-    });
-
-    revalidatePath(`/hire/${req.id}`);
-    revalidatePath("/admin/hire");
-
-    return {
-      ok: true,
-      data: {
-        requestId: req.id,
-        matchCount: explained.matches.length,
-        overallGap: explained.overallGap,
-      },
-    };
   } catch (error) {
     logger.error("[hire] runMatchAction", { error: String(error) });
     return {
       ok: false,
       message: "Match failed. Check migration and try again.",
+    };
+  }
+}
+
+/**
+ * Write a filter-dialog spec onto the recruiter's own TalentRequest and
+ * re-run search. No Scout turn — the brief is already structured.
+ */
+export async function applyHireFiltersAction(
+  input: unknown,
+): Promise<
+  ActionResult<{
+    requestId: string;
+    sessionId: string;
+    matchCount: number;
+    overallGap: string;
+  }>
+> {
+  const gate = await requireApprovedRecruiter();
+  if (!gate.ok) return gate;
+  const limited = await assertRateLimit({
+    bucket: "SEARCH",
+    subjectId: gate.data.userId,
+  });
+  if (!limited.ok) return limited;
+  const parsed = applyHireFiltersSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid filters." };
+
+  try {
+    const owned = await prisma.talentRequest.findFirst({
+      where: {
+        id: parsed.data.requestId,
+        recruiterUserId: gate.data.userId,
+      },
+      select: { id: true },
+    });
+    if (!owned) return { ok: false, message: "Request not found." };
+
+    await prisma.talentRequest.update({
+      where: { id: owned.id },
+      data: specToDb(parsed.data.spec),
+    });
+
+    let sessionId = parsed.data.sessionId;
+    if (sessionId) {
+      const session = await getOwnedSession(
+        gate.data.userId,
+        owned.id,
+        sessionId,
+      );
+      if (!session) return { ok: false, message: "Search not found." };
+      await prisma.talentSearchSession.update({
+        where: { id: session.id },
+        data: { spec: specToJson(parsed.data.spec) },
+        select: { id: true },
+      });
+    }
+
+    return await executeMatchForOwnedRequest(owned.id, gate.data.userId, {
+      persistGapMessage: false,
+      sessionId,
+    });
+  } catch (error) {
+    logger.error("[hire] applyHireFiltersAction", { error: String(error) });
+    return {
+      ok: false,
+      message: "Could not apply filters. Try again.",
     };
   }
 }

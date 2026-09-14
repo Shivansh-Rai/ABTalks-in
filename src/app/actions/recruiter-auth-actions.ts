@@ -232,7 +232,12 @@ export async function registerRecruiterWithOtpAction(
         company: resolvedCompany,
       });
       return id;
-    });
+      // The same window ensureRecruiterWorkspace and the credit grant use.
+      // Prisma's 5s default is not enough for this many sequential writes over
+      // Neon: it timed out at ~5.3s, rolled everything back, and — because the
+      // code had already been consumed — the retry told the recruiter a correct
+      // code "isn't right".
+    }, { maxWait: 20_000, timeout: 20_000 });
 
     // Credentials sign-ins bypass the adapter, so no createUser event fires —
     // consent is recorded here or it is not recorded at all.
@@ -258,9 +263,11 @@ export async function registerRecruiterWithOtpAction(
     logger.error("[recruiter-auth] registerRecruiterWithOtpAction", {
       error: String(error),
     });
+    // The code was consumed before this failed, so it cannot be reused. Say
+    // so — otherwise the retry reports a correct code as wrong.
     return {
       ok: false,
-      message: `Could not complete registration. Write to ${SUPPORT_EMAIL} if this keeps happening.`,
+      message: `Could not complete registration. Request a new code and try again, or write to ${SUPPORT_EMAIL} if this keeps happening.`,
     };
   }
 }

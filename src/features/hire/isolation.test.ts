@@ -163,5 +163,154 @@ suite("middleware protects /assessments and stays edge-safe", () => {
   assert(!src.includes('from "@/lib'), "middleware must not import @/lib/*");
 });
 
+suite("talent project mutations scope rows to the caller", () => {
+  const src = read("src/app/actions/talent-project-actions.ts");
+  assert(
+    src.includes("recruiterUserId: gate.data.userId"),
+    "project writes must bind recruiterUserId from the session gate",
+  );
+  assert(
+    src.includes("request: { recruiterUserId: gate.data.userId }"),
+    "pipeline decisions must nest the request owner in the where",
+  );
+});
+
+suite("recruiter job actions resolve the caller from the workspace", () => {
+  const src = read("src/app/actions/recruiter-job-actions.ts");
+  const gateCalls = src.split("requireRecruiterWorkspace()").length - 1;
+  assert(
+    gateCalls >= 4,
+    `every job action must call requireRecruiterWorkspace() (found ${gateCalls}, need 4)`,
+  );
+  assert(
+    src.includes("getMyJobAction") &&
+      src.includes("listMyJobsAction") &&
+      src.includes("listMyJobApplicantsAction") &&
+      src.includes("getMyJobApplicantCardAction"),
+    "workspace-scoped job reads (including applicants and inspector cards) must exist",
+  );
+  assert(
+    !/recruiterId:\s*input/.test(src) && !/recruiterId:\s*parsed/.test(src),
+    "the client must not supply the job owner id",
+  );
+});
+
+suite("recruiter job applicant reads never select protected contact", () => {
+  const store = read("src/features/recruiter-jobs/prisma-store.ts");
+  const action = read("src/app/actions/recruiter-job-actions.ts");
+  const listFn = store.slice(store.indexOf("async listByJob"));
+  assert(
+    listFn.includes("fullName: true") &&
+      !listFn.includes("email") &&
+      !listFn.includes("phone") &&
+      !listFn.includes("linkedinUrl") &&
+      !listFn.includes("resumeUrl"),
+    "listByJob select must be fullName only",
+  );
+  assert(
+    action.includes("listMyJobApplicantsAction") &&
+      action.includes("listApplicantsForOwnedJob") &&
+      action.includes("getMyJobApplicantCardAction") &&
+      action.includes("loadApplicantMatchForOwnedJob"),
+    "the applicants action must go through the owned-job service",
+  );
+  const card = read("src/features/recruiter-jobs/service.ts");
+  const mapper = card.slice(card.indexOf("function toApplicantMatchCard"));
+  assert(
+    !mapper.includes("email") &&
+      !mapper.includes("phone") &&
+      !mapper.includes("linkedinUrl"),
+    "the inspector card mapper must not assign contact fields",
+  );
+});
+
+suite("credits and ledger take no organization id from the client", () => {
+  const src = read("src/features/hire/credits.ts");
+  assert(
+    src.includes("requireRecruiterWorkspace()"),
+    "credit reads must resolve the workspace from the session",
+  );
+  assert(
+    src.includes("getCreditBalance(workspace.data.organizationId)"),
+    "balance must use the session organization, not a payload id",
+  );
+  assert(
+    src.includes("listCreditTransactions(workspace.data.organizationId"),
+    "ledger must use the session organization, not a payload id",
+  );
+});
+
+suite("unlock spend is workspace-scoped and rate-limited", () => {
+  const action = read("src/app/actions/hire-unlock-actions.ts");
+  assert(
+    action.includes("requireRecruiterWorkspace()"),
+    "unlockContactAction must resolve the caller before spending",
+  );
+  assert(
+    action.includes('bucket: "UNLOCK"'),
+    "unlockContactAction must call assertRateLimit UNLOCK",
+  );
+  const feature = read("src/features/hire/unlock-contact.ts");
+  assert(
+    feature.includes("requireRecruiterWorkspace()"),
+    "the unlock feature must also resolve the workspace from the session",
+  );
+  assert(
+    feature.includes("loadProtectedContact"),
+    "reveal must go through loadProtectedContact",
+  );
+});
+
+suite("outreach threads are owned by the sending recruiter", () => {
+  const src = read("src/app/actions/outreach-actions.ts");
+  assert(
+    src.includes("requireRecruiterWorkspace()"),
+    "recruiter outreach must use the workspace gate",
+  );
+  assert(
+    src.includes("recruiterUserId: userId"),
+    "thread lookup must include recruiterUserId",
+  );
+  assert(
+    src.includes('bucket: "OUTREACH"'),
+    "outreach must be rate-limited",
+  );
+});
+
+suite("assessment events route is session-scoped and same-origin", () => {
+  const src = read("src/app/api/assessments/[assignmentId]/events/route.ts");
+  assert(src.includes("auth()"), "must resolve the session");
+  assert(src.includes('headers.get("origin")'), "must check Origin");
+  assert(src.includes("recordAttemptEvents"), "must go through the session-scoped service");
+  assert(!src.includes("searchParams"), "must not read searchParams");
+  assert(!src.includes("console."), "must not log with console");
+  assert(!src.includes("export async function GET"), "must not expose GET");
+});
+
+suite("assessment leave route is session-scoped and same-origin", () => {
+  const src = read("src/app/api/assessments/[assignmentId]/leave/route.ts");
+  assert(src.includes("auth()"), "must resolve the session");
+  assert(src.includes('headers.get("origin")'), "must check Origin");
+  assert(
+    src.includes("finalizeStrictAttemptOnLeave"),
+    "must go through the session-scoped leave finalize",
+  );
+  assert(!src.includes("searchParams"), "must not read searchParams");
+  assert(!src.includes("console."), "must not log with console");
+  assert(!src.includes("export async function GET"), "must not expose GET");
+});
+
+suite("attempt activity page 404s a foreign attempt", () => {
+  const src = read(
+    "src/app/hire/assessments/[assessmentId]/attempts/[assignmentId]/page.tsx",
+  );
+  assert(
+    src.includes("requireRecruiterWorkspace"),
+    "activity page must scope through requireRecruiterWorkspace",
+  );
+  assert(src.includes("notFound()"), "a foreign attempt must be notFound()");
+  assert(!src.includes("searchParams"), "must not take scope from the query string");
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

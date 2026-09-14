@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { DashboardHeader, type HeaderSectionNavItem } from "./dashboard-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { DashboardFooter } from "./dashboard-footer";
-import type { HubSearchItem } from "@/features/dashboard/hub-search-index";
 import { cn } from "@/lib/utils";
 
 const CLAUDE_SIDEBAR_COLLAPSED_KEY = "abtalks.claudeSidebarCollapsed";
@@ -25,8 +24,6 @@ type DashboardShellProps = {
   showSectionNav?: boolean;
   /** Custom header section links (Claude Days / FAQs / …). */
   sectionNavItems?: HeaderSectionNavItem[];
-  /** Hub-only search catalog. Omit on other DashboardShell routes. */
-  searchItems?: HubSearchItem[];
   /** Extra classes on the header/footer content pane. */
   contentClassName?: string;
 };
@@ -38,18 +35,22 @@ export function DashboardShell({
   collapsible = false,
   showSectionNav = true,
   sectionNavItems,
-  searchItems,
   contentClassName,
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // Default to collapsed. Overridden after mount by whatever the user last
+  // chose (if anything) — an explicit "0" keeps them expanded, absence keeps
+  // the collapsed default.
+  const [collapsed, setCollapsed] = useState(true);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   useEffect(() => {
     if (!collapsible) return;
     try {
-      setCollapsed(window.localStorage.getItem(CLAUDE_SIDEBAR_COLLAPSED_KEY) === "1");
+      const stored = window.localStorage.getItem(CLAUDE_SIDEBAR_COLLAPSED_KEY);
+      if (stored === "0") setCollapsed(false);
+      else setCollapsed(true);
     } catch {
       // ignore
     }
@@ -120,7 +121,6 @@ export function DashboardShell({
             onMenuClick={() => setMobileOpen(true)}
             showSectionNav={showSectionNav}
             sectionNavItems={sectionNavItems}
-            searchItems={searchItems}
           />
           <div className="flex min-h-[calc(100%-55px)] flex-col">
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>

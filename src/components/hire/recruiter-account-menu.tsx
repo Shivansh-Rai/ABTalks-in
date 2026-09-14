@@ -68,6 +68,12 @@ export function RecruiterAccountMenu({
 
         <DropdownMenuGroup>
           <DropdownMenuItem
+            render={<Link href="/hire/settings" />}
+            className="cursor-pointer hire-menu__link"
+          >
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem
             render={<Link href="/hire/requests" />}
             className="cursor-pointer hire-menu__link"
           >

@@ -101,6 +101,12 @@ export default async function AssessmentsPage() {
                       {row.title}
                     </h2>
                     <p className="text-sm text-muted-foreground">{facts.join(" · ")}</p>
+                    {row.strictMode ? (
+                      <p className="text-sm text-muted-foreground">
+                        Laptop or desktop · Fullscreen
+                        {row.cameraRequired ? " · Camera" : ""}
+                      </p>
+                    ) : null}
                   </div>
                   <Link
                     href={`/assessments/${row.assignmentId}`}

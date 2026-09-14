@@ -1,8 +1,8 @@
 "use client";
 
 import { Autocomplete } from "@base-ui/react/autocomplete";
-import { useEffect, useRef, useState } from "react";
-import { canonicalSkillName } from "@/lib/skill-catalog";
+import { useState } from "react";
+import { canonicalSkillName, searchCanonicalSkills } from "@/lib/skill-catalog";
 
 export type SkillOption = {
   id: string;
@@ -24,21 +24,6 @@ function isOther(item: SkillOption): boolean {
   return item.id === OTHER_ID;
 }
 
-type SearchEnvelope =
-  | { ok: true; data: SkillOption[] }
-  | { ok: false; message: string };
-
-function isSearchEnvelope(value: unknown): value is SearchEnvelope {
-  if (typeof value !== "object" || value === null || !("ok" in value)) {
-    return false;
-  }
-  const envelope = value as { ok: unknown };
-  if (envelope.ok === true && "data" in envelope) {
-    return Array.isArray((envelope as { data: unknown }).data);
-  }
-  return envelope.ok === false;
-}
-
 function isExcluded(
   skill: SkillOption,
   excludeIds: ReadonlySet<string>,
@@ -51,7 +36,13 @@ function isExcluded(
 /**
  * Typeahead over the canonical skill catalog, plus a curated empty-query list.
  *
- * Selection of catalog rows only — "Other" is a UI switch, not a skill.
+ * **The catalog is the only source.** This used to merge results from
+ * `/api/skills/search`, which reads the `Skill` table — and that table was
+ * seeded from free-text `StudentProfile.skills`, so it holds typos ("Tailwinf
+ * CSS") and whole pasted stacks ("Html CSS tailwind css javascript next js
+ * mongodb"). Those appeared beside real skills and were indistinguishable from
+ * them. Anything genuinely missing still goes in through "Other", which is a UI
+ * switch rather than a skill.
  */
 export function SkillCombobox({
   id,
@@ -74,91 +65,46 @@ export function SkillCombobox({
   placeholder?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SkillOption[]>([]);
-  const abortRef = useRef<AbortController | null>(null);
-  const queryRef = useRef("");
 
   const idSet = new Set(excludeIds.filter((x) => x.length > 0));
   const nameSet = new Set(excludeNames.map((n) => n.toLowerCase()));
 
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   const listed: SkillOption[] = (() => {
-    if (q.length < 1) {
-      return catalog.filter((s) => !isExcluded(s, idSet, nameSet));
-    }
-    const fromCatalog = catalog.filter(
-      (s) =>
-        !isExcluded(s, idSet, nameSet) &&
-        s.name.toLowerCase().includes(q),
-    );
-    const fromApi = results
-      .filter((s) => !isExcluded(s, idSet, nameSet))
-      // The `Skill` table was seeded from free text, so it holds several
-      // spellings of one technology. Show the canonical one.
-      .map((s) => ({ ...s, name: canonicalSkillName(s.name) }))
-      .filter((s) => !isExcluded(s, idSet, nameSet));
+    const known = new Map(catalog.map((s) => [s.name.toLowerCase(), s] as const));
+    // The curated catalog answers first, ranked by the alias-aware matcher:
+    // that is what lets "k8s" find Kubernetes and "fea" find Finite Element
+    // Analysis, neither of which shares a substring with what was typed. An
+    // empty query gets the popular spread rather than four hundred rows.
+    const fromCatalog: SkillOption[] = searchCanonicalSkills(q, 20).map((hit) => {
+      const row = known.get(hit.name.toLowerCase());
+      return row
+        ? { ...row, categoryName: row.categoryName ?? hit.group }
+        : { id: "", name: hit.name, slug: "", categoryName: hit.group };
+    });
     const out: SkillOption[] = [];
     const seenNames = new Set<string>();
-    for (const s of [...fromCatalog, ...fromApi]) {
+    // Rank order is the matcher's, so this must not re-sort.
+    for (const s of fromCatalog) {
       const nameKey = s.name.toLowerCase();
       if (seenNames.has(nameKey)) continue;
+      if (isExcluded(s, idSet, nameSet)) continue;
       seenNames.add(nameKey);
       out.push(s);
     }
-    // Prefer rows that already have a catalog id when both shapes exist.
-    return out.sort((a, b) => {
-      if (Boolean(a.id) !== Boolean(b.id)) return a.id ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+    return out;
   })();
 
   const visible = [...listed, OTHER_ITEM];
-
-  useEffect(() => {
-    queryRef.current = query;
-    const q = query.trim();
-    if (q.length < 1) {
-      abortRef.current?.abort();
-      return;
-    }
-
-    const handle = window.setTimeout(() => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const requested = query;
-
-      fetch(`/api/skills/search?q=${encodeURIComponent(q)}`, {
-        signal: controller.signal,
-        cache: "no-store",
-      })
-        .then(async (res) => {
-          const json: unknown = await res.json();
-          if (!isSearchEnvelope(json) || json.ok !== true) return;
-          if (queryRef.current !== requested) return;
-          setResults(json.data);
-        })
-        .catch((err: unknown) => {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-          if (err instanceof Error && err.name === "AbortError") return;
-        });
-    }, 200);
-
-    return () => {
-      window.clearTimeout(handle);
-    };
-  }, [query]);
 
   function choose(skill: SkillOption) {
     if (isOther(skill)) {
       onOther();
       setQuery("");
-      setResults([]);
       return;
     }
     onSelect(skill);
     setQuery("");
-    setResults([]);
   }
 
   return (
@@ -194,7 +140,6 @@ export function SkillCombobox({
           if (typed) {
             onEnterFreeText?.(canonicalSkillName(typed));
             setQuery("");
-            setResults([]);
           }
         }}
       />

@@ -38,7 +38,22 @@ import { isIndianPhone } from "@/lib/validations/phone";
 import { resolveOrCreateSkill } from "@/features/skill/resolve-skill";
 import type { SkillOption } from "@/features/skill/search-skills";
 
-export type ActionResult = { ok: true } | { ok: false; message: string };
+/**
+ * One failed field, addressed the way the form addresses it: a dotted path such
+ * as `rows.1.expiresYear`.
+ *
+ * The schemas already know exactly which field each rule is about — every
+ * `addIssue` here carries a `path`. That knowledge used to be flattened into a
+ * single sentence for a toast ("Entry 2: This certificate cannot expire before
+ * it was issued"), which landed in a corner of the screen, far from the field
+ * it described and on top of whatever was underneath. Returning the path lets
+ * the form put the sentence under the input it belongs to.
+ */
+export type FieldIssue = { path: string; message: string };
+
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; message: string; issues?: FieldIssue[] };
 
 /** "expiresYear" → "Expires year", so an error never shows a code name. */
 function humanField(field: string): string {
@@ -59,6 +74,21 @@ function humanField(field: string): string {
  * only added when the message is a bare Zod default that would otherwise say
  * nothing about what to fix.
  */
+/** Every issue, as form field paths. Array indices keep their position. */
+function fieldIssues(error: z.ZodError): FieldIssue[] {
+  const out: FieldIssue[] = [];
+  const seen = new Set<string>();
+  for (const issue of error.issues) {
+    if (issue.path.length === 0) continue;
+    const path = issue.path.join(".");
+    // One message per field: the first rule to fire is the one to fix.
+    if (seen.has(path)) continue;
+    seen.add(path);
+    out.push({ path, message: issue.message });
+  }
+  return out;
+}
+
 function firstIssue(error: z.ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "Something in this section is not valid.";
@@ -92,7 +122,11 @@ async function runSection<S extends z.ZodType>(
 
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
-    return { ok: false, message: firstIssue(parsed.error) };
+    return {
+      ok: false,
+      message: firstIssue(parsed.error),
+      issues: fieldIssues(parsed.error),
+    };
   }
 
   try {
@@ -117,7 +151,11 @@ export async function saveBasicInfoAction(raw: unknown): Promise<ActionResult> {
 
   const parsed = basicInfoSchema.safeParse(raw);
   if (!parsed.success) {
-    return { ok: false, message: firstIssue(parsed.error) };
+    return {
+      ok: false,
+      message: firstIssue(parsed.error),
+      issues: fieldIssues(parsed.error),
+    };
   }
 
   const value = parsed.data;
@@ -212,6 +250,8 @@ export async function resolveSkillAction(
 
   const parsed = resolveSkillSchema.safeParse(raw);
   if (!parsed.success) {
+    // Not a form field — this is one typed skill name, so the message is all
+    // there is to say and the combobox shows it inline itself.
     return { ok: false, message: firstIssue(parsed.error) };
   }
 

@@ -30,16 +30,30 @@ export default function WorkshopThemeStyles() {
         font-family: var(--font-inter), var(--font-inter),
           ui-sans-serif, system-ui, sans-serif;
 
-        /* ---------- accents: same in both themes ---------- */
+        /* ---------- accents: same in both themes ----------
+
+           NOTE: no backticks in this block. The whole stylesheet is a JS
+           template literal, so one would end it mid-comment.
+
+           The -rgb triplets MUST stay in step with the hex token above each of
+           them. They are the same colour in a form rgba() can take an alpha
+           on, and nothing else — they are not a second accent.
+
+           They were missed when this palette moved from orange to teal: the
+           hex tokens became #03535F / #E7F2F3 while the triplets kept the old
+           224, 82, 38 (#E05226) and 255, 236, 227 (#FFECE3). Every
+           rgba(var(--wk-a1-rgb), N) therefore kept painting orange — the
+           calendar's "today" cell, the registration form's focus rings and
+           button glow, and the coming-soon card's wash. */
         --wk-a1: #03535F;
-        --wk-a1-rgb: 224, 82, 38;
+        --wk-a1-rgb: 3, 83, 95;
         --wk-a1-hover: #076573;
         --wk-a1-active: #02434D;
         --wk-a1-light: #E7F2F3;
-        --wk-a1-light-rgb: 255, 236, 227;
+        --wk-a1-light-rgb: 231, 242, 243;
         --wk-a1-deep: #076573;
         --wk-a2: #03535F;
-        --wk-a2-rgb: 224, 82, 38;
+        --wk-a2-rgb: 3, 83, 95;
         --wk-a3: #03535F;
         --wk-a3-light: #E7F2F3;
         --wk-a4: #EEF6F6;

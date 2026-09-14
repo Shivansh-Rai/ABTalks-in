@@ -1,4 +1,15 @@
-import type { JobStatus, JobType, JobWorkMode } from "@prisma/client";
+import type {
+  JobApplicationStatus,
+  JobStatus,
+  JobType,
+  JobWorkMode,
+} from "@prisma/client";
+import type { MatchCardData } from "@/components/hire/match-card";
+import {
+  decodeCandidateRef,
+  encodeCandidateRef,
+} from "@/features/hire/candidate-ref";
+import { candidatePublicId } from "@/features/hire/public-id";
 import {
   lifecyclePatch,
   normalizeSkills,
@@ -48,14 +59,63 @@ export type JobStore = {
   listByRecruiter(recruiterId: string): Promise<JobRow[]>;
 };
 
+/**
+ * Narrow application row the recruiter path is allowed to load. Contact
+ * fields (email, phone, LinkedIn) are deliberately absent — T-257.
+ */
+export type ApplicantStoreRow = {
+  id: string;
+  userId: string;
+  note: string | null;
+  status: JobApplicationStatus;
+  createdAt: Date;
+  fullName: string | null;
+};
+
 export type ApplicationStore = {
-  countForJob(jobId: string): Promise<number>;
+  listByJob(jobId: string): Promise<ApplicantStoreRow[]>;
+  countByJobIds(jobIds: string[]): Promise<Record<string, number>>;
+  existsOnJob(jobId: string, userId: string): Promise<boolean>;
+};
+
+/** Recruiter-safe identity for the inspector card. Booleans only for links. */
+export type ApplicantPublicIdentity = {
+  fullName: string;
+  role: string | null;
+  yearsExperience: number | null;
+  education: string | null;
+  skills: string[];
+  hasLinkedin: boolean;
+  hasGithub: boolean;
+  hasResume: boolean;
 };
 
 export type ServiceDeps = {
   jobs: JobStore;
   applications?: ApplicationStore;
+  loadPublicIdentity?: (
+    userId: string,
+  ) => Promise<ApplicantPublicIdentity | null>;
   now?: () => Date;
+  /**
+   * T-250 fanout hook. Called AFTER a successful transition write, and only
+   * when the transition was a first-time DRAFT→PUBLISHED (i.e. the row had
+   * no `publishedAt` before the write). A thrown error is swallowed by the
+   * caller so the publish response is not held hostage by an alerts
+   * failure — dispatch is idempotent, so a retry stays safe.
+   */
+  onFirstPublish?: (job: JobRow) => Promise<void>;
+};
+
+/** Serializable applicant row for the recruiter's own job view. */
+export type OwnedApplicantRow = {
+  id: string;
+  userId: string;
+  candidateRef: string;
+  displayName: string;
+  note: string | null;
+  status: JobApplicationStatus;
+  appliedAt: Date;
 };
 
 const OK = <T>(data: T): Result<T> => ({ ok: true, data });
@@ -134,14 +194,30 @@ export async function transitionJob(
   actor: { userId: string; isAdmin?: boolean },
   jobId: string,
   action: LifecycleAction,
-): Promise<Result<{ id: string; status: JobStatus }>> {
+): Promise<Result<{ id: string; status: JobStatus; firstPublish: boolean }>> {
   const loaded = await loadOwned(deps, jobId, actor);
   if (!loaded.ok) return loaded;
   const now = (deps.now ?? (() => new Date()))();
   const patch = lifecyclePatch(loaded.data, action, now);
   if (!patch.ok) return patch;
+  // First publish = the transition just stamped publishedAt for the first
+  // time. Derive from the pre-image + the patch so this stays a single
+  // invariant with lifecyclePatch — edit/close/reopen physically cannot
+  // set firstPublish.
+  const firstPublish =
+    action === "publish" &&
+    !loaded.data.publishedAt &&
+    patch.data.publishedAt != null;
   const updated = await deps.jobs.update(jobId, patch.data);
-  return OK({ id: updated.id, status: updated.status });
+  if (firstPublish && deps.onFirstPublish) {
+    try {
+      await deps.onFirstPublish(updated);
+    } catch {
+      // Swallowed on purpose: the row is written, dispatch is idempotent,
+      // the action layer logs. See ServiceDeps.onFirstPublish doc.
+    }
+  }
+  return OK({ id: updated.id, status: updated.status, firstPublish });
 }
 
 export type UpdateJobInput = Partial<Omit<CreateJobInput, "opportunityType">> & {
@@ -209,6 +285,98 @@ export async function getRecruiterJob(
     return NOT_FOUND("Job not found");
   }
   return OK(row);
+}
+
+/**
+ * Applicants on a job the caller owns. Foreign / unknown ids return the same
+ * NOT_FOUND as `getRecruiterJob` so this read cannot enumerate another
+ * recruiter's applications. Display name is CandidateProfile.fullName or the
+ * public AB- label — never email.
+ */
+export async function listApplicantsForOwnedJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  jobId: string,
+): Promise<Result<OwnedApplicantRow[]>> {
+  const owned = await getRecruiterJob(deps, actor, jobId);
+  if (!owned.ok) return owned;
+  if (!deps.applications) return OK([]);
+  const rows = await deps.applications.listByJob(jobId);
+  return OK(
+    rows.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      candidateRef: encodeCandidateRef("PROFILE", row.userId),
+      displayName: row.fullName?.trim() || candidatePublicId(row.userId),
+      note: row.note,
+      status: row.status,
+      appliedAt: row.createdAt,
+    })),
+  );
+}
+
+/**
+ * Public inspector card for one applicant on a job the caller owns. Foreign
+ * job, unknown id, or a ref that is not an applicant on this job are the same
+ * NOT_FOUND — this read cannot probe another recruiter's applications or mint
+ * a card from a fabricated handle. Contact URLs stay off the card.
+ */
+export async function loadApplicantMatchForOwnedJob(
+  deps: ServiceDeps,
+  actor: { userId: string; isAdmin?: boolean },
+  jobId: string,
+  candidateRef: string,
+): Promise<Result<MatchCardData>> {
+  const owned = await getRecruiterJob(deps, actor, jobId);
+  if (!owned.ok) return owned;
+  const parsed = decodeCandidateRef(candidateRef);
+  if (!parsed || parsed.source !== "PROFILE") {
+    return NOT_FOUND("Job not found");
+  }
+  if (!deps.applications) return NOT_FOUND("Job not found");
+  const applied = await deps.applications.existsOnJob(jobId, parsed.id);
+  if (!applied) return NOT_FOUND("Job not found");
+  const identity = deps.loadPublicIdentity
+    ? await deps.loadPublicIdentity(parsed.id)
+    : null;
+  return OK(toApplicantMatchCard(candidateRef, parsed.id, identity));
+}
+
+function toApplicantMatchCard(
+  candidateRef: string,
+  userId: string,
+  identity: ApplicantPublicIdentity | null,
+): MatchCardData {
+  const name = identity?.fullName.trim() || candidatePublicId(userId);
+  return {
+    candidateRef,
+    source: "PROFILE",
+    programMemberId: null,
+    displayName: name,
+    jobRole: identity?.role?.trim() || "Candidate",
+    score: 0,
+    tier: "NONE",
+    rationale: null,
+    gaps: [],
+    availabilityUnknown: true,
+    openToWork: false,
+    evidence: {
+      skills: identity?.skills.length ? identity.skills : undefined,
+      yearsExperience: identity?.yearsExperience ?? undefined,
+      educationLevel: identity?.education?.trim() || null,
+      githubConnected: identity?.hasGithub ?? false,
+      linkedinConnected: identity?.hasLinkedin ?? false,
+    },
+  };
+}
+
+/** Counts for job ids the caller already listed as their own — one grouped query. */
+export async function countApplicantsByJobIds(
+  deps: ServiceDeps,
+  jobIds: string[],
+): Promise<Record<string, number>> {
+  if (!deps.applications || jobIds.length === 0) return {};
+  return deps.applications.countByJobIds(jobIds);
 }
 
 /**

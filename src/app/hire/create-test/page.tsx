@@ -32,6 +32,7 @@ function rowToDraft(row: AssessmentRow): AssessmentDraft {
     instructions: row.instructions,
     durationMinutes: row.durationMinutes,
     passMarkPercent: row.passMarkPercent,
+    cameraRequired: row.cameraRequired,
     shortlistRefs: row.shortlistRefs,
     questions: row.questions.map((q) => {
       if (q.type === "MULTIPLE_CHOICE") {

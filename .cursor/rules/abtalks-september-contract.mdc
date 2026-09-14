@@ -1,0 +1,32 @@
+---
+description: ABTalks88 September product contract — personas, isolation, money, discovery, release calendar
+alwaysApply: true
+---
+
+# ABTalks88 product contract
+
+Canonical workbook: `.cursor/sources/ABTalks88.xlsx`. Decisions D-01–D-20 are final and override locked-history wording.
+
+Today is in the Demo 1 window: **11 Sep DEMO 1 CODE COMPLETE BY EOD**. 12 Sep is demo/verify only (no planned new features). Sundays 13 and 20 Sep are holidays.
+
+## Personas (D-01)
+Candidate, Recruiter, ABTalks Platform Admin. No fourth persona. No Company Admin / Owner / team hiring in September (D-07, Phase 2).
+
+## Hard product rules
+- **D-02 / D-03** Discovery is automatic. No candidate visibility switch, opt-in, opt-out, or field hide/show. The platform decides which fields a recruiter sees.
+- **D-04 / D-15** Being searchable never exposes email/phone/protected contact. Evidence never gates search.
+- **D-06** Every recruiter is one independent user. Recruiter A cannot reach recruiter B's data. Two recruiters on one email domain stay independent.
+- **D-08** Recruiter auth is work email only. Refuse gmail.com, yahoo.com, hotmail.com, outlook.com. No exception path, no social recruiter sign-in. Do not touch candidate auth.
+- **D-09** Notifications: in-app + selective email. No WhatsApp, no SMS.
+- **D-10** Credits: start $200, unlock $10, repeat unlock of the same candidate by the same recruiter is free. Configurable without deploy. Individual balance, not pooled.
+- **D-11** Mock interviews: first three free (remaining count visible); fourth+ costs configured Synergy Points; failed technical attempt consumes nothing.
+- **D-13** Candidate self-delete is immediate. No admin approval queue.
+- **D-17** Modular monolith: Next.js + Prisma + Postgres. No Elasticsearch, Kafka, microservices, or K8s for this work.
+- **D-18** Authorization, isolation, limits, duplicates, and contact access are decided on the **server**. Hiding a button is not protection. Never filter protected contact in the client.
+
+## How we work
+Done means: works end to end, state in the database, server-side auth, tests pass, walked in a browser, regression guard checked, design matched.
+Do not defer committed work, flag-off a feature to pass a demo, or fake demo data.
+A committed capability unverified by 19 Sep is a release blocker.
+
+When implementing a T-ID, @-mention `.cursor/sources/ABTalks88-task-index.md` or `abtalks-sohail-tasks.mdc`. Stay in the owner's module unless the user explicitly assigns the cross-module work.

@@ -43,7 +43,7 @@ function GetStartedCta({
   onNavigate,
 }: GetStartedCtaProps) {
   const btnClass =
-    size === "nav" ? "btn btn--ghost btn--nav" : "btn btn--ghost btn--sm";
+    size === "nav" ? "btn btn--clay btn--nav" : "btn btn--clay btn--sm";
 
   if (items.length === 1) {
     return (

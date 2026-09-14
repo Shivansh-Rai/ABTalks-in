@@ -1,6 +1,6 @@
 ---
-description: Figma MCP must use Shallika's team only for this project
-alwaysApply: true
+description: Figma MCP must use Shallika's team only. Apply when using Figma, creating designs, or calling user-figma / Framelink tools.
+alwaysApply: false
 ---
 
 # Figma MCP — Shallika's team only

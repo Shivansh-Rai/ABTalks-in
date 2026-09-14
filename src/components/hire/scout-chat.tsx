@@ -13,6 +13,7 @@ import { Search, Sparkles } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { toast } from "sonner";
 import {
+  applyHireFiltersAction,
   runMatchAction,
   sendScoutMessageAction,
 } from "@/app/actions/hire-actions";
@@ -28,9 +29,18 @@ import {
 } from "@/app/actions/hire-guest-actions";
 import { recordCandidateViewAction } from "@/app/actions/hire-view-actions";
 import { MatchResults } from "@/components/hire/match-results";
+import {
+  HireFilterDialog,
+  filterSummary,
+} from "@/components/hire/hire-filter-dialog";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
-import { useHireDesk } from "@/components/hire/hire-desk-context";
+import {
+  useHireDesk,
+  type DeskAssessment,
+  type DeskSession,
+} from "@/components/hire/hire-desk-context";
+import { NewProjectDialog } from "@/components/hire/new-project-dialog";
 import { readGuestCart } from "@/components/hire/guest-cart";
 import { buildSampleCards } from "@/features/hire/sample-card";
 import { hasSufficientRealMatches } from "@/features/hire/match-config";
@@ -62,6 +72,7 @@ import {
   labelGuestSearch,
   readGuestMatchCollection,
   setActiveGuestSearch,
+  writeGuestMatchCollection,
   type GuestSearchTab,
 } from "@/components/hire/guest-matches-store";
 import {
@@ -106,7 +117,19 @@ type Props = {
   /** Server flag: fill an empty desk with blurred example profiles. */
   proPreview?: boolean;
   virtualCandidates?: boolean;
+  /** Plan 133: the search session on screen. Null = a new search not yet sent. */
+  initialSessionId?: string | null;
+  /** Plan 133: every search in this project, for the nav card. */
+  projectSessions?: DeskSession[];
+  /** Plan 133: this project's assessments, and the recruiter's unfiled ones. */
+  projectAssessments?: DeskAssessment[];
+  unassignedAssessments?: DeskAssessment[];
 };
+
+// Stable empties: a fresh `[]` default per render would re-fire the desk
+// effect that publishes these, which sets context, which re-renders — forever.
+const NO_SESSIONS: DeskSession[] = [];
+const NO_ASSESSMENTS: DeskAssessment[] = [];
 
 const OPENING: Msg = {
   role: "assistant",
@@ -314,9 +337,17 @@ export function ScoutChat({
   initialSearched = false,
   proPreview = false,
   virtualCandidates = false,
+  initialSessionId = null,
+  projectSessions = NO_SESSIONS,
+  projectAssessments = NO_ASSESSMENTS,
+  unassignedAssessments = NO_ASSESSMENTS,
 }: Props) {
   const router = useRouter();
   const [requestId, setRequestId] = useState<string | null>(initialRequestId);
+  // Plan 133: which search inside the project this chat is. Null until the
+  // first message of a new search, when the server creates the session.
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(
     initialMessages.length ? initialMessages : [OPENING],
   );
@@ -334,6 +365,7 @@ export function ScoutChat({
   const [searchTabs, setSearchTabs] = useState<GuestSearchTab[]>([]);
   const [activeSearchId, setActiveSearchId] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMatch, setOpenMatch] = useState<MatchCardData | null>(null);
   /**
    * Where the results were scrolled to before the panel opened.
@@ -436,6 +468,13 @@ export function ScoutChat({
   useLayoutEffect(() => {
     const el = promptRef.current;
     if (!el) return;
+    // Empty field: drop the inline height so CSS min-height owns the box.
+    // Measuring scrollHeight on a blank placeholder after the stage flip
+    // wrapped the placeholder and grew the bar.
+    if (!el.value) {
+      el.style.height = "";
+      return;
+    }
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
   }, [text]);
@@ -445,7 +484,7 @@ export function ScoutChat({
   // layout, or mid stage-change) was kept for good: the empty placeholder
   // wrapped into many lines, measured 132px, and the hero's single-line field
   // rendered as a tall box. Height changes are ignored here, or the resize
-  // would feed itself.
+  // would feed itself. An empty field still skips the measurement.
   useEffect(() => {
     const el = promptRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -453,6 +492,10 @@ export function ScoutChat({
     const ro = new ResizeObserver(() => {
       if (el.clientWidth === lastWidth) return;
       lastWidth = el.clientWidth;
+      if (!el.value) {
+        el.style.height = "";
+        return;
+      }
       el.style.height = "auto";
       el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
     });
@@ -598,6 +641,30 @@ export function ScoutChat({
     });
   }, [persist, requestId, projectLabel, setDesk]);
 
+  // Plan 133: the nav card lists this project's searches and assessments.
+  useEffect(() => {
+    setDesk({
+      project:
+        persist && requestId
+          ? {
+              id: requestId,
+              activeSessionId: sessionId,
+              sessions: projectSessions,
+              assessments: projectAssessments,
+              unassignedAssessments,
+            }
+          : null,
+    });
+  }, [
+    persist,
+    requestId,
+    sessionId,
+    projectSessions,
+    projectAssessments,
+    unassignedAssessments,
+    setDesk,
+  ]);
+
   useEffect(() => {
     if (hydratedRef.current) return;
     if (persist && (initialMessages.length > 0 || initialRequestId)) return;
@@ -703,17 +770,25 @@ export function ScoutChat({
     const message = value.trim();
     if (!message || pending) return;
     if (message === "action:search") {
-      runSearch();
+      runSearch(undefined, searched);
       return;
     }
 
     const shown = label?.trim() || message;
-    setMessages((m) => [...m, { role: "user", content: shown }]);
+    // After a search the thread is gone: parse NL once, then re-run search
+    // without painting Scout bubbles.
+    const hideThread = searched;
+    if (!hideThread) {
+      setMessages((m) => [...m, { role: "user", content: shown }]);
+    }
     setText("");
     startTransition(async () => {
       if (persist) {
         const res = await sendScoutMessageAction({
           requestId: requestId ?? undefined,
+          // Absent on the first message of a new search: the server opens a
+          // new session in this project rather than continuing the last one.
+          sessionId: sessionId ?? undefined,
           message,
           display: shown === message ? undefined : shown,
         });
@@ -722,41 +797,52 @@ export function ScoutChat({
           return;
         }
         setRequestId(res.data.requestId);
+        setSessionId(res.data.sessionId);
+        const openedSession = res.data.sessionId !== sessionId;
         setSpec(res.data.spec);
         setSummary(res.data.summary);
         setReadyToSearch(res.data.readyToSearch);
-        setMessages((m) => [
-          ...m,
-          {
-            role: "assistant",
-            content: res.data.assistantMessage,
-            options: res.data.options,
-          },
-        ]);
+        if (!hideThread) {
+          setMessages((m) => [
+            ...m,
+            {
+              role: "assistant",
+              content: res.data.assistantMessage,
+              options: res.data.options,
+            },
+          ]);
+        }
         // Search on this turn BEFORE navigating. replace() unmounts this
         // chat; if we kicked search off after it, the first brief never
         // wrote matches and the new page said "No matches yet".
-        if (res.data.action === "search") {
+        // On the results screen, a new query always re-runs search after parse.
+        if (res.data.action === "search" || hideThread) {
           const match = await runMatchAction({
             requestId: res.data.requestId,
+            sessionId: res.data.sessionId,
           });
           if (!match.ok) {
             toast.error(match.message);
           } else {
             setSearched(true);
             setMatchCount(match.data.matchCount);
-            setMessages((m) => {
-              const next: Msg[] = [
-                ...m,
-                { role: "assistant", content: match.data.overallGap },
-              ];
-              setResultsPin(next.length - 1);
-              return next;
-            });
+            if (!hideThread) {
+              setMessages((m) => {
+                const next: Msg[] = [
+                  ...m,
+                  { role: "assistant", content: match.data.overallGap },
+                ];
+                setResultsPin(next.length - 1);
+                return next;
+              });
+            }
           }
         }
-        if (!requestId) router.replace(`/hire/${res.data.requestId}`);
-        else if (res.data.action === "search") router.refresh();
+        // A new project or a new session gets its own URL, so reload and the
+        // nav card both land on this search. Same session: refresh in place.
+        if (!requestId || openedSession) {
+          router.replace(`/hire/${res.data.requestId}?session=${res.data.sessionId}`);
+        } else if (res.data.action === "search" || hideThread) router.refresh();
         return;
       }
 
@@ -776,32 +862,43 @@ export function ScoutChat({
       setSpec(res.data.spec);
       setSummary(res.data.summary);
       setReadyToSearch(res.data.readyToSearch);
-      setMessages((m) => {
-        const next: Msg[] = [
-          ...m,
-          {
-            role: "assistant",
-            content: res.data.assistantMessage,
-            options: res.data.options,
-          },
-        ];
+      if (hideThread) {
         writeGuestSession({
           spec: res.data.spec,
-          messages: next,
+          messages,
           summary: res.data.summary,
           readyToSearch: res.data.readyToSearch,
-          searched,
+          searched: true,
         });
-        return next;
-      });
+      } else {
+        setMessages((m) => {
+          const next: Msg[] = [
+            ...m,
+            {
+              role: "assistant",
+              content: res.data.assistantMessage,
+              options: res.data.options,
+            },
+          ];
+          writeGuestSession({
+            spec: res.data.spec,
+            messages: next,
+            summary: res.data.summary,
+            readyToSearch: res.data.readyToSearch,
+            searched,
+          });
+          return next;
+        });
+      }
       // Same rule as the signed-in path: the engine says when to search.
-      if (res.data.action === "search") {
-        runSearch(res.data.spec);
+      // After results, a new NL query always re-runs.
+      if (res.data.action === "search" || hideThread) {
+        runSearch(res.data.spec, hideThread);
       }
     });
   }
 
-  function runSearch(overrideSpec?: JobSpec) {
+  function runSearch(overrideSpec?: JobSpec, quiet = false) {
     if (persist && !requestId) {
       toast.error("Answer at least one question first.");
       return;
@@ -809,21 +906,33 @@ export function ScoutChat({
     const active = overrideSpec ?? spec;
     startTransition(async () => {
       if (persist) {
-        const res = await runMatchAction({ requestId: requestId! });
+        const res = await runMatchAction({
+          requestId: requestId!,
+          sessionId: sessionId ?? undefined,
+        });
         if (!res.ok) {
           toast.error(res.message);
           return;
         }
+        // No session yet (a new search run straight from the button): the
+        // server opened one. Move to its URL so the nav card and reload agree.
+        if (res.data.sessionId !== sessionId) {
+          setSessionId(res.data.sessionId);
+          router.replace(`/hire/${requestId}?session=${res.data.sessionId}`);
+          return;
+        }
         setSearched(true);
         setMatchCount(res.data.matchCount);
-        setMessages((m) => {
-          const next: Msg[] = [
-            ...m,
-            { role: "assistant", content: res.data.overallGap },
-          ];
-          setResultsPin(next.length - 1);
-          return next;
-        });
+        if (!quiet) {
+          setMessages((m) => {
+            const next: Msg[] = [
+              ...m,
+              { role: "assistant", content: res.data.overallGap },
+            ];
+            setResultsPin(next.length - 1);
+            return next;
+          });
+        }
         router.refresh();
         return;
       }
@@ -838,30 +947,121 @@ export function ScoutChat({
         ...m,
         shortlisted: cart.has(m.candidateRef),
       }));
-      const tab = appendGuestSearch({
+      const payload = {
         label: labelGuestSearch(active, cards.length),
         title: active.title?.trim() || "your requirement",
         overallGap: res.data.overallGap,
         matches: cards,
-      });
-      setSearchTabs(readGuestMatchCollection().tabs);
-      setActiveSearchId(tab.id);
+      };
+      if (quiet) {
+        const current = readGuestMatchCollection();
+        if (current.activeId && current.tabs.some((t) => t.id === current.activeId)) {
+          const tabs = current.tabs.map((t) =>
+            t.id === current.activeId ? { ...t, ...payload } : t,
+          );
+          writeGuestMatchCollection({ ...current, tabs });
+          setSearchTabs(tabs);
+        } else {
+          const tab = appendGuestSearch(payload);
+          setSearchTabs(readGuestMatchCollection().tabs);
+          setActiveSearchId(tab.id);
+        }
+      } else {
+        const tab = appendGuestSearch(payload);
+        setSearchTabs(readGuestMatchCollection().tabs);
+        setActiveSearchId(tab.id);
+      }
       setSearched(true);
       setMatchCount(cards.length);
-      setMessages((m) => {
-        const next: Msg[] = [
-          ...m,
-          { role: "assistant", content: res.data.overallGap },
-        ];
-        setResultsPin(next.length - 1);
+      if (!quiet) {
+        setMessages((m) => {
+          const next: Msg[] = [
+            ...m,
+            { role: "assistant", content: res.data.overallGap },
+          ];
+          setResultsPin(next.length - 1);
+          writeGuestSession({
+            spec: active,
+            messages: next,
+            summary,
+            readyToSearch: true,
+            searched: true,
+          });
+          return next;
+        });
+      } else {
         writeGuestSession({
           spec: active,
-          messages: next,
+          messages,
           summary,
           readyToSearch: true,
           searched: true,
         });
-        return next;
+      }
+    });
+  }
+
+  /** Persist the dialog spec and re-rank — never an agent turn. */
+  function applyFilters(next: JobSpec) {
+    setSpec(next);
+    setFiltersOpen(false);
+    if (persist && !requestId) {
+      toast.error("Answer at least one question first.");
+      return;
+    }
+    startTransition(async () => {
+      if (persist) {
+        const res = await applyHireFiltersAction({
+          requestId: requestId!,
+          sessionId: sessionId ?? undefined,
+          spec: next,
+        });
+        if (!res.ok) {
+          toast.error(res.message);
+          return;
+        }
+        setSearched(true);
+        setMatchCount(res.data.matchCount);
+        router.refresh();
+        return;
+      }
+
+      const res = await runGuestMatchAction({ spec: next });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      const cart = new Set(readGuestCart().map((i) => i.candidateRef));
+      const cards = res.data.matches.map((m) => ({
+        ...m,
+        shortlisted: cart.has(m.candidateRef),
+      }));
+      const payload = {
+        label: labelGuestSearch(next, cards.length),
+        title: next.title?.trim() || "your requirement",
+        overallGap: res.data.overallGap,
+        matches: cards,
+      };
+      const current = readGuestMatchCollection();
+      if (current.activeId && current.tabs.some((t) => t.id === current.activeId)) {
+        const tabs = current.tabs.map((t) =>
+          t.id === current.activeId ? { ...t, ...payload } : t,
+        );
+        writeGuestMatchCollection({ ...current, tabs });
+        setSearchTabs(tabs);
+      } else {
+        const tab = appendGuestSearch(payload);
+        setSearchTabs(readGuestMatchCollection().tabs);
+        setActiveSearchId(tab.id);
+      }
+      setSearched(true);
+      setMatchCount(cards.length);
+      writeGuestSession({
+        spec: next,
+        messages,
+        summary,
+        readyToSearch: true,
+        searched: true,
       });
     });
   }
@@ -1001,6 +1201,7 @@ export function ScoutChat({
     setActiveSearchId("");
     setText("");
     setDetailsOpen(false);
+    setFiltersOpen(false);
     setOpenMatch(null);
     savedScroll.current = null;
   }
@@ -1036,6 +1237,13 @@ export function ScoutChat({
    * not rewritten — the next search continues it.)
    */
   function newSearch() {
+    // Plan 133: a NEW session in the SAME project. The previous session stays
+    // exactly as it is; the next message here opens session N+1. The URL says
+    // so without a navigation (which would remount mid-animation).
+    if (persist && requestId) {
+      setSessionId(null);
+      window.history.replaceState(null, "", `/hire/${requestId}?session=new`);
+    }
     beginReturn(() => {
       clearSearch();
       setFreshChat(true);
@@ -1072,6 +1280,13 @@ export function ScoutChat({
    */
   function newProject() {
     if (returning) return;
+    // Plan 133: a signed-in recruiter gets a REAL project — named, created now,
+    // then opened — instead of a cleared screen that became a project only
+    // once something was searched.
+    if (persist) {
+      setNewProjectOpen(true);
+      return;
+    }
     if (!hero) {
       ghostFadeOut(
         [
@@ -1079,7 +1294,6 @@ export function ScoutChat({
           ".chat-output",
           ".hire-detail",
           ".hire-side",
-          ".hire-app__badge",
           ".hire-app__nav > .hire-hbtn",
         ],
         LANDING_EXIT_MS,
@@ -1171,6 +1385,7 @@ export function ScoutChat({
   // Not gated on `initialRequestId` any more: "New search" inside a saved
   // project returns `/hire/[id]` to screen 1 without leaving the project.
   const hero = view === "scout" && !talked && !freshChat;
+  const filterBits = filterSummary(spec);
 
   // Record where everything sits while it is the hero, so the hand-off has
   // the "before" half of each move. Every hero render: typing reflows the
@@ -1249,6 +1464,9 @@ export function ScoutChat({
       )}
       aria-label="Scout assistant"
     >
+      {persist && (
+        <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} />
+      )}
       {/* One grid (see `.hire-app--results .scout__body`): Filters, the
           thread and the composer stack on the left, the profile panel takes
           the right column. "New search" moved to the nav card's
@@ -1257,7 +1475,7 @@ export function ScoutChat({
         <div className="scout__toolbar">
           <button
             type="button"
-            className="scout-filters scout-action"
+            className="scout-filters scout-action scout-action--search"
             onClick={newSearch}
             disabled={returning}
           >
@@ -1275,9 +1493,12 @@ export function ScoutChat({
             <button
               type="button"
               className="scout-filters"
-              aria-expanded={detailsOpen}
-              aria-haspopup="menu"
-              onClick={() => setDetailsOpen((o) => !o)}
+              aria-expanded={searched ? filtersOpen : detailsOpen}
+              aria-haspopup={searched ? "dialog" : "menu"}
+              onClick={() => {
+                if (searched) setFiltersOpen(true);
+                else setDetailsOpen((o) => !o);
+              }}
             >
               <span className="scout-filters__icon" aria-hidden="true">
                 <img
@@ -1289,7 +1510,7 @@ export function ScoutChat({
               </span>
               Filters
             </button>
-            {detailsOpen && (
+            {!searched && detailsOpen && (
               <div className="hire-req__menu" role="menu">
                 <p className="hire-req__label">Requirement</p>
                 {persist && requestId && (
@@ -1391,6 +1612,125 @@ export function ScoutChat({
         </div>
 
         <div ref={scrollRef} className="chat-output" id="hire-results">
+          {searched ? (
+            <>
+              {/* One coherent bar: what this search filtered on, and the way to
+                  change it. "Edit filters" belongs here beside the criteria it
+                  edits — as a loose button by the composer it read as an
+                  unrelated floating link. */}
+              <div className="hire-filter-bar">
+                <p className="hire-filter-bar__title">Filters from this search</p>
+                <div className="hire-filter-bar__chips">
+                  {filterBits.chips.length === 0 ? (
+                    <span className="hire-filter-bar__empty">No filters set</span>
+                  ) : (
+                    filterBits.chips.map((c, i) => (
+                      <span key={`${c}-${i}`} className="hire-filter-chip">
+                        {c}
+                      </span>
+                    ))
+                  )}
+                  {filterBits.more > 0 && (
+                    <span className="hire-filter-chip hire-filter-chip--more">
+                      +{filterBits.more} more
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="hire-filter-bar__edit"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  Edit filters
+                </button>
+              </div>
+              <div className="scout-thread__results" aria-busy={pending}>
+                {!persist && searchTabs.length > 1 && (
+                  <div className="scout-tabs">
+                    <SearchTabs
+                      tabs={searchTabs}
+                      activeId={activeSearchId}
+                      onSelect={(id) => {
+                        setActiveSearchId(id);
+                        setActiveGuestSearch(id);
+                        const tab = searchTabs.find((t) => t.id === id);
+                        setMatchCount(tab?.matches.length ?? 0);
+                        setOpenMatch(null);
+                        savedScroll.current = null;
+                      }}
+                    />
+                  </div>
+                )}
+                {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
+                  <label className="hire-hide-rejected">
+                    <input
+                      type="checkbox"
+                      checked={hideRejected}
+                      onChange={(e) => setHideRejected(e.target.checked)}
+                    />
+                    Hide rejected
+                  </label>
+                )}
+                {deskGap && (
+                  <p className="scout-gap">{deskGap}</p>
+                )}
+                {pending && (
+                  <p className="hire-filter-bar__status">Updating results…</p>
+                )}
+                <MatchResults
+                  desk
+                  matches={visibleDeskMatches}
+                  samples={deskSamples}
+                  sampleDemand={{
+                    spec,
+                    requestId,
+                    alreadyRecorded: alertWhenAvailable,
+                  }}
+                  cartCount={
+                    persist ? resultsCartCount : readGuestCart().length
+                  }
+                  requestId={persist ? requestId : null}
+                  onOpen={openFromList}
+                  onDecision={(m, decision) => {
+                    const userId =
+                      m.candidateUserId ??
+                      triageByRef[m.candidateRef]?.candidateUserId;
+                    if (!persist || !requestId || !userId) return;
+                    setTriageByRef((prev) => ({
+                      ...prev,
+                      [m.candidateRef]: {
+                        candidateUserId: userId,
+                        viewedAt: prev[m.candidateRef]?.viewedAt ?? m.viewedAt ?? null,
+                        decision,
+                        isNew: false,
+                      },
+                    }));
+                    void setMatchDecisionAction({
+                      requestId,
+                      candidateUserId: userId,
+                      decision,
+                    }).then((res) => {
+                      if (!res.ok) toast.error(res.message);
+                    });
+                  }}
+                  selectedRef={openMatch?.candidateRef}
+                />
+                {persist && requestId && matchCount === 0 && (
+                  <div className="hire-gap">
+                    <GapReport
+                      requestId={requestId}
+                      overallGap={
+                        deskGap?.trim() ||
+                        "No verified matches in the published pool for this requirement yet. Your demand is saved."
+                      }
+                      alertWhenAvailable={alertWhenAvailable}
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
           {!talked && (
             <div className="scout-empty">
               <button
@@ -1473,93 +1813,6 @@ export function ScoutChat({
                       <span className="scout-mark">You</span>
                     )}
                   </div>
-                  {searched && resultsPin === i && (
-                    <div className="scout-thread__results">
-                      {!persist && searchTabs.length > 1 && (
-                        <div className="scout-tabs">
-                          <SearchTabs
-                            tabs={searchTabs}
-                            activeId={activeSearchId}
-                            onSelect={(id) => {
-                              setActiveSearchId(id);
-                              setActiveGuestSearch(id);
-                              const tab = searchTabs.find((t) => t.id === id);
-                              setMatchCount(tab?.matches.length ?? 0);
-                              setOpenMatch(null);
-                              savedScroll.current = null;
-                            }}
-                          />
-                        </div>
-                      )}
-                      {/* The "contact stays hidden until you place a request"
-                          line was removed: since T-229 contact is revealed by a
-                          paid unlock in the profile panel, so it described a
-                          flow that no longer exists. */}
-                      {persist && requestId && deskMatches.some((m) => m.decision === "REJECTED") && (
-                        <label className="hire-hide-rejected">
-                          <input
-                            type="checkbox"
-                            checked={hideRejected}
-                            onChange={(e) => setHideRejected(e.target.checked)}
-                          />
-                          Hide rejected
-                        </label>
-                      )}
-                      {deskGap && (
-                        <p className="scout-gap">{deskGap}</p>
-                      )}
-                      <MatchResults
-                        desk
-                        matches={visibleDeskMatches}
-                        samples={deskSamples}
-                        sampleDemand={{
-                          spec,
-                          requestId,
-                          alreadyRecorded: alertWhenAvailable,
-                        }}
-                        cartCount={
-                          persist ? resultsCartCount : readGuestCart().length
-                        }
-                        requestId={persist ? requestId : null}
-                        onOpen={openFromList}
-                        onDecision={(m, decision) => {
-                          const userId =
-                            m.candidateUserId ??
-                            triageByRef[m.candidateRef]?.candidateUserId;
-                          if (!persist || !requestId || !userId) return;
-                          setTriageByRef((prev) => ({
-                            ...prev,
-                            [m.candidateRef]: {
-                              candidateUserId: userId,
-                              viewedAt: prev[m.candidateRef]?.viewedAt ?? m.viewedAt ?? null,
-                              decision,
-                              isNew: false,
-                            },
-                          }));
-                          void setMatchDecisionAction({
-                            requestId,
-                            candidateUserId: userId,
-                            decision,
-                          }).then((res) => {
-                            if (!res.ok) toast.error(res.message);
-                          });
-                        }}
-                        selectedRef={openMatch?.candidateRef}
-                      />
-                      {persist && requestId && matchCount === 0 && (
-                        <div className="hire-gap">
-                          <GapReport
-                            requestId={requestId}
-                            overallGap={
-                              deskGap?.trim() ||
-                              "No verified matches in the published pool for this requirement yet. Your demand is saved."
-                            }
-                            alertWhenAvailable={alertWhenAvailable}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
                   </Fragment>
                 );
               })}
@@ -1576,7 +1829,7 @@ export function ScoutChat({
                   the bar has already arrived. Card-shaped placeholders hold
                   the space the results will take, so they populate into it
                   rather than pushing the layout around. */}
-              {pending && !searched && (
+              {pending && (
                 <div className="hire-skeletons" aria-hidden="true">
                   {[0, 1, 2].map((i) => (
                     <div key={i} className="hire-skel">
@@ -1599,6 +1852,8 @@ export function ScoutChat({
               )}
               <div ref={bottomRef} className="scout-thread__end" aria-hidden="true" />
             </div>
+            </>
+          )}
         </div>
 
         {openMatch && (
@@ -1642,7 +1897,7 @@ export function ScoutChat({
           onSubmit={(e) => {
             e.preventDefault();
             if (text.trim()) send(text);
-            else runSearch();
+            else runSearch(undefined, searched);
           }}
         >
           <div className="scout-composer__row">
@@ -1660,7 +1915,7 @@ export function ScoutChat({
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     if (text.trim()) send(text);
-                    else runSearch();
+                    else runSearch(undefined, searched);
                   }
                 }}
                 placeholder="Type here...."
@@ -1673,12 +1928,18 @@ export function ScoutChat({
               disabled={pending || (persist && !requestId && !text.trim())}
               className="scout-send"
             >
-              <span className="scout-send__icon" aria-hidden="true">
-                <img src="/hire/search-glass.png" alt="" width={500} height={500} />
-              </span>
+              {/* An inline SVG, not the 500×500 search-glass.png this used to
+                  crop down. That PNG is a hairline outline, and squeezing it
+                  into a ~20px box anti-aliased the stroke away to nothing — the
+                  icon still took its place in the flex row, so the label sat
+                  right of the button's centre with no visible icon to explain
+                  why. A stroked SVG keeps its weight at any size and inherits
+                  the button's white `currentColor`. */}
+              <Search className="scout-send__icon" aria-hidden="true" />
               {pending ? "Searching" : "Search"}
             </button>
           </div>
+          {hero && (
           <div className="scout-criteria-slot is-open">
             <div className="scout-criteria-slot__clip">
               <ul
@@ -1703,6 +1964,7 @@ export function ScoutChat({
               </ul>
             </div>
           </div>
+          )}
         </form>
 
         <div className="scout-hero-slot scout-hero-slot--below">
@@ -1724,6 +1986,13 @@ export function ScoutChat({
           ) : null}
         </div>
       </div>
+      <HireFilterDialog
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        spec={spec}
+        pending={pending}
+        onApply={applyFilters}
+      />
     </section>
   );
 }

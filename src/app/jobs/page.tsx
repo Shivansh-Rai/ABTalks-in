@@ -1,67 +1,76 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { JobType, JobWorkMode } from "@prisma/client";
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { formatDateIST } from "@/lib/date-utils";
-import { browsePublishedJobs } from "@/features/candidate-jobs/service";
+import { JobsBrowser } from "@/components/jobs/jobs-browser";
+import {
+  formatPostedLabel,
+  type ApplicationCardRow,
+  type JobCardRow,
+} from "@/components/jobs/job-ui";
 import { prismaApplicationStore } from "@/features/candidate-jobs/prisma-store";
+import {
+  browsePublishedJobs,
+  listMyApplications,
+} from "@/features/candidate-jobs/service";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
-import { JobFilters } from "@/components/jobs/job-filters";
+import { formatDateIST } from "@/lib/date-utils";
 
-function jobTypeLabel(type: JobType): string {
-  switch (type) {
-    case "FULL_TIME":
-      return "Full-time";
-    case "INTERNSHIP":
-      return "Internship";
-    case "CONTRACT":
-      return "Contract";
-    case "PART_TIME":
-      return "Part-time";
-    default:
-      return type;
-  }
-}
+export const metadata: Metadata = { title: "Jobs | ABTalks" };
 
-const WORK_MODES = new Set<string>(Object.values(JobWorkMode));
-const JOB_TYPES = new Set<string>(Object.values(JobType));
-
-type Props = {
-  searchParams: Promise<{
-    location?: string;
-    workMode?: string;
-    type?: string;
-    skills?: string;
-  }>;
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>;
 };
 
-export default async function JobsPage({ searchParams }: Props) {
+export default async function JobsPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  const sp = await searchParams;
-  const workMode =
-    sp.workMode && WORK_MODES.has(sp.workMode)
-      ? (sp.workMode as JobWorkMode)
-      : undefined;
-  const opportunityType =
-    sp.type && JOB_TYPES.has(sp.type) ? (sp.type as JobType) : undefined;
-  const skills = sp.skills
-    ? sp.skills.split(",").map((s) => s.trim()).filter(Boolean)
-    : undefined;
-  const location = sp.location?.trim() || undefined;
+  const { tab } = await searchParams;
 
-  const result = await browsePublishedJobs(
-    { jobs: prismaJobStore(), applications: prismaApplicationStore() },
-    { location, workMode, opportunityType, skills },
-  );
-  const jobs = result.ok ? result.data : [];
+  // `browsePublishedJobs` is the candidate read boundary — DRAFT and CLOSED
+  // rows never leave it, so the browser below only ever receives live roles.
+  const deps = {
+    jobs: prismaJobStore(),
+    applications: prismaApplicationStore(),
+  };
+  const [browsed, mine] = await Promise.all([
+    browsePublishedJobs(deps),
+    listMyApplications(deps, { userId: session.user.id }),
+  ]);
+
+  const applications = mine.ok ? mine.data : [];
+  const appliedJobIds = new Set(applications.map((a) => a.jobId));
+  const now = new Date();
+
+  // Server → Client: plain serializable rows only, with dates already rendered
+  // to strings so the card copy is identical on both sides of the boundary.
+  const jobs: JobCardRow[] = (browsed.ok ? browsed.data : []).map((job) => ({
+    id: job.id,
+    title: job.title,
+    company: job.company,
+    location: job.location,
+    workMode: job.workMode,
+    type: job.type,
+    skills: job.skills,
+    postedLabel: formatPostedLabel(job.publishedAt ?? job.createdAt, now),
+    applied: appliedJobIds.has(job.id),
+  }));
+
+  const applicationRows: ApplicationCardRow[] = applications.map((row) => ({
+    id: row.id,
+    jobId: row.jobId,
+    title: row.job.title,
+    company: row.job.company,
+    location: row.job.location,
+    workMode: row.job.workMode,
+    type: row.job.type,
+    status: row.status,
+    appliedLabel: formatDateIST(row.createdAt),
+    isOpen: row.job.isOpen,
+  }));
 
   const shellUser = {
     name: session.user.name ?? session.user.email ?? "",
@@ -75,67 +84,13 @@ export default async function JobsPage({ searchParams }: Props) {
       isAdmin={session.user.isAdmin ?? false}
       showSectionNav={false}
     >
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight">
-              Jobs
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Open roles from the ABTalks community and partners.
-            </p>
-          </div>
-          <Link
-            href="/jobs/my"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            My applications
-          </Link>
-        </div>
-
-        <JobFilters />
-
-        {jobs.length === 0 ? (
-          <p className="mt-10 text-center text-muted-foreground">
-            No open roles match those filters. Try clearing them.
-          </p>
-        ) : (
-          <ul className="mt-8 grid gap-4">
-            {jobs.map((job) => (
-              <li key={job.id}>
-                <Link
-                  href={`/jobs/${job.id}`}
-                  className={cn(
-                    "block rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-primary/30 hover:bg-card/80",
-                  )}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="font-display text-lg font-semibold">
-                        {job.title}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {job.company}
-                        {job.location ? ` · ${job.location}` : null}
-                        {job.workMode ? ` · ${job.workMode}` : null}
-                      </p>
-                      {job.skills && job.skills.length > 0 ? (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {job.skills.slice(0, 6).join(" · ")}
-                        </p>
-                      ) : null}
-                    </div>
-                    <Badge variant="outline">{jobTypeLabel(job.type)}</Badge>
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Posted {formatDateIST(job.createdAt)}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+      <JobsBrowser
+        jobs={jobs}
+        applications={applicationRows}
+        initialTab={
+          tab === "applications" || tab === "saved" ? tab : "jobs"
+        }
+      />
     </DashboardShell>
   );
 }

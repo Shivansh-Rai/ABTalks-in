@@ -113,18 +113,18 @@ const POP_EASE = [0.45, 1.45, 0.8, 1] as const;
  * position falls out of the stack rather than out of an offset that had to be
  * kept in step with everything above it.
  */
-const CTA_W = 216;
-const CTA_H = 48;
+const CTA_W = 281;
+const CTA_H = 62;
 
 const ctaStyle: React.CSSProperties = {
   width: CTA_W,
   height: CTA_H,
   flexShrink: 0,
-  borderRadius: 12,
+  borderRadius: 14,
   display: "flex",
   alignItems: "center",
-  paddingLeft: 24,
-  fontSize: 16,
+  paddingLeft: 30,
+  fontSize: 20,
   fontWeight: 700,
   color: "#ffffff",
   textDecoration: "none",
@@ -311,7 +311,7 @@ export default function WorkshopHero({
                   text: measured, "September 05, 2026" needed 114px against 104px
                   of room and spilled 10px past the background, while the time
                   pill left 28px of empty pill trailing its text. */}
-              <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <Chip text={webinarDate} Icon={CalendarDays} />
                 <Chip text={webinarTime} Icon={Clock} />
               </div>
@@ -319,12 +319,26 @@ export default function WorkshopHero({
               <h1
                 style={{
                   marginTop: GAP_CHIPS_TITLE,
-                  width: 639,
+                  // 639 in the design, widened to hold the title on ONE line.
+                  // The column starts at x 86 and the poster at 1098, so 1012
+                  // is all there is; 960 takes it and leaves a 52px gutter
+                  // before the poster. Everything between 639 and here was dead
+                  // card — the same emptiness that got the subtitle widened
+                  // from 509 to 620.
+                  //
+                  // NOT `whiteSpace: nowrap`. The title is event data, and a
+                  // long one set on a forced single line would run under the
+                  // poster and be clipped by the card. Wrapping stays as the
+                  // fallback: today's title fits this box on one line, and a
+                  // longer one breaks rather than overflows.
+                  width: 960,
                   marginBottom: 0,
-                  // 64 in the design. Trimmed one step: the 639px box still
-                  // breaks it at the same word, so the wrap stays intentional
-                  // and the title stays the largest thing on the page.
-                  fontSize: 56,
+                  // Back to the design's own 64, from the 56 it had been
+                  // trimmed to. The canvas is scaled down ~13% further than it
+                  // used to be now that /workshop carries a 250px sidebar, so
+                  // this restores the title's apparent size rather than
+                  // enlarging it past what the design asked for.
+                  fontSize: 64,
                   fontWeight: 700,
                   lineHeight: 1.2,
                   letterSpacing: "-0.01em",
@@ -366,7 +380,7 @@ export default function WorkshopHero({
                   marginTop: GAP_COUNT_CTA,
                   display: "flex",
                   alignItems: "center",
-                  gap: 26,
+                  gap: 30,
                 }}
               >
                 <a href="#register" className="wk-cta" style={ctaStyle}>
@@ -375,7 +389,7 @@ export default function WorkshopHero({
                 <a
                   href="#curriculum"
                   style={{
-                    fontSize: 15,
+                    fontSize: 19,
                     fontWeight: 700,
                     color: "#ffffff",
                     textDecoration: "none",
@@ -513,11 +527,11 @@ function Chip({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 7,
-        height: 30,
-        paddingLeft: 9,
-        paddingRight: 12,
-        borderRadius: 8,
+        gap: 9,
+        height: 39,
+        paddingLeft: 12,
+        paddingRight: 15,
+        borderRadius: 10,
         background: "var(--wk-navy-chip)",
         whiteSpace: "nowrap",
       }}
@@ -526,20 +540,20 @@ function Chip({
         aria-hidden
         style={{
           flexShrink: 0,
-          width: 23,
-          height: 22,
-          borderRadius: 10,
+          width: 30,
+          height: 29,
+          borderRadius: 12,
           background: "#ffffff",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Icon size={14} strokeWidth={2.25} color="var(--wk-a1)" />
+        <Icon size={18} strokeWidth={2.25} color="var(--wk-a1)" />
       </span>
       <span
         style={{
-          fontSize: 12,
+          fontSize: 15,
           lineHeight: 1.1,
           fontWeight: 500,
           color: "#ffffff",

@@ -62,6 +62,26 @@ function roleFromEvidence(evidence: unknown): string | null {
 export async function listProjectShortlist(
   recruiterUserId: string,
 ): Promise<ProjectShortlistRow[]> {
+  return loadShortlist(recruiterUserId, (r) => r.candidateUserId);
+}
+
+/**
+ * Plan 133. The same rows, one per PROJECT × candidate instead of one per
+ * person, so the header can show each project's own shortlist. A person
+ * shortlisted in Project A and Project B appears once in each and is never
+ * attributed to only one of them. `listProjectShortlist` above is unchanged —
+ * the assessment builder reads it and wants one row per person.
+ */
+export async function listProjectShortlistByProject(
+  recruiterUserId: string,
+): Promise<ProjectShortlistRow[]> {
+  return loadShortlist(recruiterUserId, (r) => `${r.requestId}:${r.candidateUserId}`);
+}
+
+async function loadShortlist(
+  recruiterUserId: string,
+  dedupeKey: (r: { requestId: string; candidateUserId: string }) => string,
+): Promise<ProjectShortlistRow[]> {
   const rows = await prisma.talentRequestMatch.findMany({
     where: {
       decision: "SHORTLISTED",
@@ -99,8 +119,9 @@ export async function listProjectShortlist(
   const seen = new Set<string>();
   const out: ProjectShortlistRow[] = [];
   for (const r of rows) {
-    if (seen.has(r.candidateUserId)) continue;
-    seen.add(r.candidateUserId);
+    const key = dedupeKey(r);
+    if (seen.has(key)) continue;
+    seen.add(key);
 
     const source = refSource(r.source);
     const isProgram = source === "PROGRAM";

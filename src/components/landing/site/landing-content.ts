@@ -5,7 +5,6 @@ export const WHATSAPP_INVITE =
 
 export const NAV_LINKS = [
   { href: "#bridge", id: "bridge", label: "Platform" },
-  { href: "#how", id: "how", label: "How it works" },
   { href: "#cohorts", id: "cohorts", label: "Cohorts" },
   { href: "#faq", id: "faq", label: "FAQ" },
 ] as const;
@@ -17,7 +16,7 @@ export const GET_STARTED_ITEMS = [
 ] as const;
 
 export const STATS = [
-  { count: 10, suffix: "k+", label: "People on the platform" },
+  { count: 13, suffix: "k+", label: "People on the platform" },
   { count: 100, suffix: "+", label: "Companies in the recruiter network" },
   { count: 15, suffix: "+", label: "Profiles shared with consent" },
 ] as const;
@@ -25,7 +24,7 @@ export const STATS = [
 export const BRIDGE_SLABS = [
   { key: "top", slab: 3, label: "100+ companies" },
   { key: "middle", slab: 2, label: "ABTalks" },
-  { key: "bottom", slab: 1, label: "12k+ users" },
+  { key: "bottom", slab: 1, label: "13k+ users" },
 ] as const;
 
 export const BRIDGE_PANELS = [

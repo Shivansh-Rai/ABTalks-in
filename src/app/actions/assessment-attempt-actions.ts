@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { logger } from "@/lib/logger";
@@ -11,6 +12,7 @@ import {
   saveAnswer,
   startAttempt,
   submitAttempt,
+  type DeviceHint,
 } from "@/features/assessment-attempts/service";
 import { prismaAttemptStore } from "@/features/assessment-attempts/prisma-store";
 
@@ -48,6 +50,10 @@ function revalidateAttempt(assignmentId: string) {
   revalidatePath(`/assessments/${assignmentId}`);
 }
 
+async function deviceHint(): Promise<DeviceHint> {
+  return { mobile: (await headers()).get("sec-ch-ua-mobile") === "?1" };
+}
+
 export async function startAssessmentAttemptAction(
   input: unknown,
 ): Promise<ActionOk<{ alreadyStarted: boolean }> | ActionErr> {
@@ -58,7 +64,7 @@ export async function startAssessmentAttemptAction(
   if (!parsed.success) return { ok: false, message: "Invalid input" };
 
   try {
-    const result = await startAttempt(prismaAttemptStore(), userId, parsed.data);
+    const result = await startAttempt(prismaAttemptStore(), userId, parsed.data, await deviceHint());
     if (!result.ok) {
       return { ok: false, message: result.message, status: statusFor(result.code) };
     }
@@ -88,7 +94,7 @@ export async function saveAssessmentAnswerAction(
   }
 
   try {
-    const result = await saveAnswer(prismaAttemptStore(), userId, parsed.data);
+    const result = await saveAnswer(prismaAttemptStore(), userId, parsed.data, await deviceHint());
     if (!result.ok) {
       return { ok: false, message: result.message, status: statusFor(result.code) };
     }
@@ -114,7 +120,7 @@ export async function submitAssessmentAttemptAction(
   if (!parsed.success) return { ok: false, message: "Invalid input" };
 
   try {
-    const result = await submitAttempt(prismaAttemptStore(), userId, parsed.data);
+    const result = await submitAttempt(prismaAttemptStore(), userId, parsed.data, await deviceHint());
     if (!result.ok) {
       return { ok: false, message: result.message, status: statusFor(result.code) };
     }

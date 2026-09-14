@@ -3,7 +3,12 @@
 import { useEffect } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { saveProjectsAction } from "@/app/actions/candidate-profile-actions";
-import { CANONICAL_SKILL_NAMES, canonicalSkillName } from "@/lib/skill-catalog";
+import {
+  CANONICAL_SKILL_NAMES,
+  canonicalSkillName,
+  searchCanonicalSkillNames,
+} from "@/lib/skill-catalog";
+import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -37,11 +42,13 @@ export const emptyProjectRow: ProjectFormRow = {
 export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(saveProjectsAction, "Projects", "projects");
-  const { control, register, handleSubmit, formState } = useForm<FormValues>({
+  const form = useForm<FormValues>({
     defaultValues: {
       rows: initial.length > 0 ? initial : [{ ...emptyProjectRow }],
     },
   });
+  const { control, register, handleSubmit, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "rows",
@@ -63,7 +70,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v)) onSaved();
+        if (await save(v, placeIssues)) onSaved();
       })}
     >
       <div className="pw-entries">
@@ -77,6 +84,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             <PwRow cols={1}>
               <PwField
                 label="Project name"
+                required
                 htmlFor={`prj-title-${index}`}
               >
                 <PwInput
@@ -90,6 +98,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             <PwRow cols={1}>
               <PwField
                 label="Description"
+                required
                 htmlFor={`prj-desc-${index}`}
                 area
               >
@@ -103,7 +112,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             </PwRow>
 
             <PwRow cols={1}>
-              <PwField label="Tech stack">
+              <PwField label="Tech stack" required>
                 <Controller
                   control={control}
                   name={`rows.${index}.techStack`}
@@ -113,6 +122,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                       values={f.value}
                       onChange={f.onChange}
                       suggestions={CANONICAL_SKILL_NAMES}
+                      searchSuggestions={searchCanonicalSkillNames}
                       normalize={canonicalSkillName}
                       placeholder="Start typing a technology"
                       helper="Descriptive only — this does not add to your skills."
@@ -123,7 +133,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             </PwRow>
 
             <PwRow cols={2}>
-              <PwField label="GitHub" htmlFor={`prj-repo-${index}`}>
+              <PwField label="GitHub" required htmlFor={`prj-repo-${index}`}>
                 <PwInput
                   id={`prj-repo-${index}`}
                   type="url"
@@ -132,7 +142,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   {...register(`rows.${index}.repoUrl`)}
                 />
               </PwField>
-              <PwField label="Live URL" htmlFor={`prj-live-${index}`}>
+              <PwField label="Live URL" required htmlFor={`prj-live-${index}`}>
                 <PwInput
                   id={`prj-live-${index}`}
                   type="url"

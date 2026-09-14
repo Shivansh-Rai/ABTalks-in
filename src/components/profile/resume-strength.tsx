@@ -1,6 +1,4 @@
-import { Lightbulb, Minus } from "lucide-react";
 import type { ResumeView } from "@/features/resume/types";
-import { cn } from "@/lib/utils";
 
 /**
  * Resume Strength, as the candidate sees it.
@@ -16,14 +14,15 @@ import { cn } from "@/lib/utils";
  * were all removed for that reason; they are still computed, still persisted in
  * `CandidateResume.analysis`, and still available to whatever needs them.
  *
- * A Server Component: it renders plain data and has no interactivity.
+ * A Server Component: it renders plain data and has no interactivity. Styled
+ * with the wizard's `pw-*` classes so it matches the sheet it renders inside.
  */
 
 // Design System v2: success / semantic-warning / semantic-error — never orange.
 function tone(score: number) {
-  if (score >= 75) return { text: "text-[#197E23]", bar: "bg-[#27CA37]" };
-  if (score >= 50) return { text: "text-[#AA821D]", bar: "bg-[#AA821D]" };
-  return { text: "text-[#D92D20]", bar: "bg-[#D92D20]" };
+  if (score >= 75) return { text: "pw-tone-good", bar: "pw-tone-good-bg" };
+  if (score >= 50) return { text: "pw-tone-warn", bar: "pw-tone-warn-bg" };
+  return { text: "pw-tone-bad", bar: "pw-tone-bad-bg" };
 }
 
 export function ResumeStrength({
@@ -34,59 +33,49 @@ export function ResumeStrength({
   const t = tone(strength.overallScore);
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border bg-muted/20 p-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Resume strength
-        </p>
+    <div>
+      <div className="pw-resume-strength">
+        <p className="pw-resume-strength-k">Resume strength</p>
 
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <p className="flex items-baseline gap-1">
-            <span
-              className={cn(
-                "font-[family-name:var(--font-outfit)] text-4xl font-bold tabular-nums",
-                t.text,
-              )}
-            >
-              {strength.overallScore}
-            </span>
-            <span className="text-lg text-muted-foreground">/ 100</span>
-          </p>
-          <p className="text-sm font-medium">{strength.band}</p>
+        <div className="pw-resume-score">
+          <b className={t.text}>{strength.overallScore}</b>
+          <span>/ 100</span>
+          <span className="pw-resume-band">{strength.band}</span>
         </div>
 
         <div
-          className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          className="pw-resume-bar"
           role="progressbar"
           aria-valuenow={strength.overallScore}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label="Resume strength"
         >
-          <div
-            className={cn("h-full rounded-full transition-all duration-500", t.bar)}
+          <i
+            className={t.bar}
             style={{ width: `${strength.overallScore}%` }}
           />
         </div>
 
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="pw-resume-caption">
           How complete and well written your resume is on its own — not measured
           against any particular job.
         </p>
       </div>
 
       {strength.tips.length > 0 ? (
-        <div className="space-y-2 rounded-xl border border-[#AA821D]/25 bg-[#FFEDB0]/40 p-4">
-          <h4 className="flex items-center gap-2 text-sm font-semibold">
-            <Lightbulb className="size-4 text-[#AA821D]" aria-hidden />
+        <div className="pw-resume-tips">
+          <h4>
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z" />
+            </svg>
             Areas to improve
           </h4>
-          <ul className="space-y-1.5">
+          <ul>
             {strength.tips.map((tip) => (
-              <li key={tip} className="flex gap-2 text-sm text-muted-foreground">
-                <Minus className="mt-1 size-3 shrink-0" aria-hidden />
-                <span>{tip}</span>
-              </li>
+              <li key={tip}>{tip}</li>
             ))}
           </ul>
         </div>

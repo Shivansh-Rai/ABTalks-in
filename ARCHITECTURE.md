@@ -5,7 +5,7 @@
 ABTalks is an enterprise talent and education platform connecting candidates (graduates, challenge participants, cohort students) with recruiters and partner organisations.
 
 The platform architecture is built around three foundational pillars:
-1. **Privacy-First Data Architecture (078 & DPDP Compliance):** Candidate data visibility is strictly opt-in and server-enforced. Recruiter access is gated by explicit status decisions, never ambient flags.
+1. **Privacy-First Data Architecture (078 & DPDP Compliance):** What recruiters can find and see is decided by the platform and enforced on the server — candidates have no discoverability or per-field visibility switches (plan 133). Discovery goes through one gate (`searchableUserWhere`), field exposure through one policy (`RECRUITER_FIELD_POLICY`), and contact release through explicit status decisions, never ambient flags.
 2. **Immutable Financial-Grade Ledgers:** All balances (student Synergy Points, recruiter Credits) are backed by append-only transaction ledgers. Stored balances are cached projections governed by optimistic locking, never authoritative counters.
 3. **Multi-Tenant Isolation:** Recruiters belong to an `Organization`. All limits, unlocks, credits, and shortlists are scoped to the organisation, preventing cross-company leakage.
 
@@ -229,11 +229,8 @@ From `features/hire/locked-preview.ts`:
 
 1. **`hasContactAccess()` is the sole reader:**
    Located in `src/features/hire/contact-access.ts`, derived solely from `TalentEngagementRequest.status === "CONTACT_SHARED"`. It is **unchanged** by this plan.
-2. **Candidate Privacy Switches:**
-   Candidate contact revelation respects `showEmail`, `showPhone`, and `showResume`:
-   - `email`: Revealed on unlock.
-   - `phone`: Revealed only if candidate's `showPhone` switch is TRUE.
-   - `resume`: Revealed via private blob stream only if candidate's `showResume` switch is TRUE.
+2. **No Candidate Privacy Switches (plan 133):**
+   No per-candidate flag takes part in contact release. `loadProtectedContact` returns email and phone only after `hasContactAccess` passes. Non-contact field exposure (LinkedIn/GitHub/résumé presence, interview results, assessment scores, current employer) is the platform's `RECRUITER_FIELD_POLICY` in `src/repositories/talent.ts` — the same for every candidate. The former `CandidateVisibility.show*` columns had no candidate writer and are being removed.
 3. **No Leakage in Refusal:**
    If credits are insufficient or access is denied, server responses contain **zero** contact fragments (no partial email, no masked phone).
 

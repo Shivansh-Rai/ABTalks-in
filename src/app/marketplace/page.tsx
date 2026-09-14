@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { AppHeader } from "@/components/shared/app-header";
+import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
 import { ProductGrid } from "@/components/marketplace/product-grid";
 import { getCatalog } from "@/features/marketplace/get-catalog";
@@ -32,17 +32,18 @@ export default async function MarketplacePage() {
     }),
   ]);
 
-  const headerUser = {
-    name: session.user.name ?? null,
+  const shellUser = {
+    name: candidate?.fullName?.trim() || session.user.name || "",
     email: session.user.email ?? "",
     image: session.user.image ?? null,
-    role: session.user.role ?? "STUDENT",
-    isAdmin: session.user.isAdmin ?? false,
   };
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-[#F4F4F4] text-black">
-      <AppHeader user={headerUser} />
+    <DashboardShell
+      user={shellUser}
+      isAdmin={session.user.isAdmin ?? false}
+      showSectionNav={false}
+    >
       <MarketplaceHero />
       <main
         id="products"
@@ -59,6 +60,6 @@ export default async function MarketplacePage() {
           defaultName={candidate?.fullName?.trim() || session.user.name || ""}
         />
       </main>
-    </div>
+    </DashboardShell>
   );
 }

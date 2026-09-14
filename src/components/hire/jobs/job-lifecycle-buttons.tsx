@@ -9,7 +9,6 @@ import {
   closeRecruiterJobAction,
   reopenRecruiterJobAction,
 } from "@/app/actions/recruiter-job-actions";
-import { Button } from "@/components/ui/button";
 
 type Props = {
   jobId: string;
@@ -39,34 +38,36 @@ export function JobLifecycleButtons({ jobId, status }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="hire-jobs-detail__lifecycle-actions">
       {status === "DRAFT" ? (
-        <Button
+        <button
           type="button"
+          className="hire-jobs__btn"
           disabled={pending}
           onClick={() => run(publishRecruiterJobAction, "Published")}
         >
           Publish
-        </Button>
+        </button>
       ) : null}
       {status === "PUBLISHED" ? (
-        <Button
+        <button
           type="button"
-          variant="outline"
+          className="hire-jobs__btn hire-jobs__btn--secondary"
           disabled={pending}
           onClick={() => run(closeRecruiterJobAction, "Closed")}
         >
           Close
-        </Button>
+        </button>
       ) : null}
       {status === "CLOSED" ? (
-        <Button
+        <button
           type="button"
+          className="hire-jobs__btn"
           disabled={pending}
           onClick={() => run(reopenRecruiterJobAction, "Reopened")}
         >
           Reopen
-        </Button>
+        </button>
       ) : null}
     </div>
   );

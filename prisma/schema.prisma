@@ -319,6 +319,7 @@ model User {
   notificationReads       NotificationRead[]
   userNotifications       UserNotification[]       @relation("UserNotifications")
   notificationPreferences NotificationPreference[] @relation("NotificationPreferences")
+  jobAlerts               JobAlert[]               @relation("CandidateJobAlerts")
   /// Interview platform attempts (plan 103). Direct User relation: a mock
   /// interview needs registration only, never cohort enrollment.
   mockInterviews          MockInterview[]
@@ -358,9 +359,9 @@ model User {
   candidateMatches           TalentRequestMatch[]            @relation("CandidateMatches")
   engagementMessages         TalentEngagementMessage[]
   /// T-232 — recruiter ↔ candidate outreach (plan 130).
-  outreachThreadsAsRecruiter OutreachThread[]          @relation("OutreachThreadsAsRecruiter")
-  outreachThreadsAsCandidate OutreachThread[]          @relation("OutreachThreadsAsCandidate")
-  outreachMessagesAuthored   OutreachMessage[]         @relation("OutreachMessagesAuthored")
+  outreachThreadsAsRecruiter OutreachThread[]                @relation("OutreachThreadsAsRecruiter")
+  outreachThreadsAsCandidate OutreachThread[]                @relation("OutreachThreadsAsCandidate")
+  outreachMessagesAuthored   OutreachMessage[]               @relation("OutreachMessagesAuthored")
   /// Plan 120 — recruiter detail views / resume unlocks on this candidate.
   profileEvents              CandidateProfileEvent[]
   /// Plan 121 — recruiter-authored assessments (builder drafts).
@@ -1200,21 +1201,83 @@ model TalentRequest {
   engagements              TalentEngagementRequest[]
   virtualCandidates        VirtualCandidate[]        @relation("VirtualCandidateOrigin")
   virtualCandidateRequests VirtualCandidateRequest[] @relation("VirtualCandidateRequestBrief")
+  /// Plan 133 — every search run inside this project, and the assessments filed under it.
+  sessions                 TalentSearchSession[]
+  assessmentLinks          TalentProjectAssessment[]
 
   @@index([recruiterUserId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
 }
 
 model TalentRequestMessage {
-  id        String        @id @default(cuid())
+  id        String               @id @default(cuid())
   requestId String
   role      String // "user" | "assistant"
   content   String
   options   Json?
-  createdAt DateTime      @default(now())
-  request   TalentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdAt DateTime             @default(now())
+  /// Plan 133. The search session this turn belongs to. Null only on rows
+  /// written before sessions existed, until `ensureLegacySession` files them
+  /// under Session 1.
+  sessionId String?
+  request   TalentRequest        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  session   TalentSearchSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([requestId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+/// Plan 133. One search inside a project (TalentRequest): its own prompt,
+/// brief, chat and results. "New search" adds one; it never replaces another.
+///
+/// The shortlist is NOT here — decisions stay project-level on
+/// TalentRequestMatch, so a candidate shortlisted in session 1 is still
+/// shortlisted when session 2 shows them.
+model TalentSearchSession {
+  id                 String    @id @default(cuid())
+  requestId          String
+  /// 1, 2, 3… within the project. Unique, which is what makes creating one
+  /// (and materializing a legacy Session 1) safe under concurrency.
+  ordinal            Int
+  /// The recruiter's opening prompt for this search, trimmed.
+  title              String
+  /// This session's brief (JobSpec). The project's TalentRequest columns
+  /// mirror the latest session's brief for existing readers.
+  spec               Json?
+  /// Ordered candidates from this session's last run.
+  resultCandidateIds String[]  @default([])
+  /// Per-candidate scoring from this session's last run, so a later session
+  /// re-scoring the same person does not rewrite what this one showed.
+  resultSnapshot     Json?
+  overallGap         String?
+  matchCount         Int?
+  lastRunAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  request  TalentRequest          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  messages TalentRequestMessage[]
+
+  @@unique([requestId, ordinal])
+  @@index([requestId, createdAt(sort: Desc)])
+}
+
+/// Plan 133. Files a recruiter assessment under one project.
+///
+/// A separate table so the assessment system (T-243/T-244) is not modified:
+/// an assessment with no row here is "Unassigned", exactly as every
+/// assessment was before this existed. At most one project per assessment.
+model TalentProjectAssessment {
+  id             String   @id @default(cuid())
+  requestId      String
+  assessmentId   String   @unique
+  linkedByUserId String
+  createdAt      DateTime @default(now())
+
+  request    TalentRequest       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
 }
 
 /// A recruiter's triage verdict on ONE match.
@@ -1887,6 +1950,32 @@ model NotificationPreference {
   user User @relation("NotificationPreferences", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventType, channel])
+}
+
+/// T-250 candidate job alert. Rule-based, not a recommendation engine.
+/// Many rows per candidate — each with its own name and criteria. Cap is
+/// enforced in the service (not the schema) so it can be raised without a
+/// migration. Fanout runs on the FIRST DRAFT→PUBLISHED transition of a Job
+/// and dedups per (candidate, job) via UserNotification.dedupeKey — even if
+/// several of a candidate's alerts match the same job, they still receive
+/// exactly one notification.
+model JobAlert {
+  id              String       @id @default(cuid())
+  candidateUserId String
+  name            String       @default("My job alert")
+  enabled         Boolean      @default(true)
+  skills          String[]     @default([])
+  role            String?
+  location        String?
+  workMode        JobWorkMode?
+  opportunityType JobType?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  candidate User @relation("CandidateJobAlerts", fields: [candidateUserId], references: [id], onDelete: Cascade)
+
+  @@index([candidateUserId, createdAt(sort: Desc)])
+  @@index([enabled])
 }
 
 // =============================================================================
@@ -3194,6 +3283,7 @@ model Organization {
   logoUrl    String?
   industry   String?
   sizeBucket String?
+  location   String?
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -3250,6 +3340,15 @@ model RecruiterAssessment {
   durationMinutes Int?
   /// Percentage of auto-gradeable points needed to pass.
   passMarkPercent Int                       @default(60)
+  /// T-219: fixed at publish. Every assessment published after T-219 ships is
+  /// strict: laptop/desktop only, fullscreen required, copy/cut/paste blocked,
+  /// page activity recorded. Rows published before stay false and keep the
+  /// T-218 behaviour. Only store.publish ever writes true.
+  strictMode      Boolean                   @default(false)
+  /// T-219: recruiter's builder setting — editable while DRAFT, fixed at
+  /// publish. The candidate's camera must be on to see the questions. Only
+  /// on/off is recorded; no image or video ever leaves the candidate's device.
+  cameraRequired  Boolean                   @default(false)
   /// Read-only provenance: which shortlisted candidates this was drafted for.
   /// Public AB-#### refs, never user ids. Nothing reads this yet — the assign
   /// ticket does. It is captured at draft time because the shortlist changes.
@@ -3263,6 +3362,8 @@ model RecruiterAssessment {
   createdBy    User                            @relation("RecruiterAssessmentsCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
   questions    AssessmentQuestion[]
   assignments  RecruiterAssessmentAssignment[]
+  /// Plan 133 back-relation only; owned by TalentProjectAssessment.
+  projectLink  TalentProjectAssessment?
 
   @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
   @@index([status])
@@ -3290,10 +3391,11 @@ model AssessmentQuestion {
   /// exist yet, and a dangling FK is worse than a documented placeholder.
   sectionId            String?
 
-  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  options    AssessmentQuestionOption[]
+  assessment    RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options       AssessmentQuestionOption[]
   /// Plan 129 (T-218) — candidates' answers. Virtual; no column.
-  answers    AssessmentAnswer[]
+  answers       AssessmentAnswer[]
+  attemptEvents AssessmentAttemptEvent[]
 
   @@unique([assessmentId, position])
   @@index([assessmentId, position])
@@ -3350,10 +3452,11 @@ model RecruiterAssessmentAssignment {
   passed          Boolean?
   updatedAt       DateTime                   @updatedAt
 
-  assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
-  candidate  User                @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  candidate  User                       @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
   /// Plan 129 (T-218) — the candidate's answers. Virtual; no column.
   answers    AssessmentAnswer[]
+  sessions   AssessmentAttemptSession[]
 
   @@unique([assessmentId, candidateUserId])
   @@index([candidateUserId, assignedAt(sort: Desc)])
@@ -3388,6 +3491,80 @@ model AssessmentAnswer {
   question   AssessmentQuestion            @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@unique([assignmentId, questionId])
+  @@index([questionId])
+}
+
+/// T-219: what the candidate's page reported. Facts about the page, never
+/// conclusions about the candidate — see src/features/assessment-attempts/activity.ts.
+enum AssessmentAttemptEventType {
+  SESSION_STARTED
+  PAGE_LEFT
+  FULLSCREEN_ENTERED
+  FULLSCREEN_EXITED
+  VISIBILITY_HIDDEN
+  VISIBILITY_VISIBLE
+  WINDOW_BLURRED
+  WINDOW_FOCUSED
+  COPY_BLOCKED
+  CUT_BLOCKED
+  PASTE_BLOCKED
+  DROP_BLOCKED
+  LINK_PASTED
+  UPLOAD_LINK_OPENED
+  CAMERA_ON
+  CAMERA_OFF
+}
+
+/// T-219: one page lifetime of a strict attempt — a page load, or a restore
+/// from the back/forward cache. clientSessionId is crypto.randomUUID() minted
+/// by that page. firstSeenAt/lastSeenAt are SERVER receipt times, so how long a
+/// page kept reporting is known without trusting the device clock.
+///
+/// CASCADE on the assignment: activity goes with the attempt it describes.
+model AssessmentAttemptSession {
+  id              String   @id @default(cuid())
+  assignmentId    String
+  clientSessionId String
+  firstSeenAt     DateTime @default(now())
+  /// Receipt time of the latest batch (events or heartbeat) from this page.
+  lastSeenAt      DateTime @default(now())
+
+  assignment RecruiterAssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  events     AssessmentAttemptEvent[]
+
+  @@unique([assignmentId, clientSessionId])
+  @@index([assignmentId, firstSeenAt])
+}
+
+/// T-219: one reported change on a strict attempt's page.
+///
+/// (assignmentId, sessionId, seq) is unique, so a batch resent after a network
+/// failure, or sent by both fetch and sendBeacon, is stored once.
+/// occurredAt = device time corrected to server time (see recordAttemptEvents);
+/// clientOccurredAt keeps the raw device value for audit.
+///
+/// CASCADE through the session (and so the assignment). RESTRICT on the question,
+/// matching AssessmentAnswer: a published assessment's questions never change.
+model AssessmentAttemptEvent {
+  id               String                     @id @default(cuid())
+  assignmentId     String
+  /// = AssessmentAttemptSession.clientSessionId
+  sessionId        String
+  seq              Int
+  type             AssessmentAttemptEventType
+  occurredAt       DateTime
+  clientOccurredAt DateTime
+  receivedAt       DateTime                   @default(now())
+  /// The question an event happened in or about. Never any content.
+  questionId       String?
+  /// Repeats of the same blocked clipboard action within 1s, coalesced. 1 otherwise.
+  count            Int                        @default(1)
+
+  session  AssessmentAttemptSession @relation(fields: [assignmentId, sessionId], references: [assignmentId, clientSessionId], onDelete: Cascade)
+  question AssessmentQuestion?      @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, sessionId, seq])
+  @@index([assignmentId, occurredAt])
   @@index([questionId])
 }
 
@@ -4028,8 +4205,8 @@ enum OutboundDeliveryStatus {
 /// T-259 observability side-table for outbound mail. Distinct from
 /// T-248 `NotificationDelivery`, which tracks UserNotification channels.
 model OutboundDelivery {
-  id      String                   @id @default(cuid())
-  channel OutboundDeliveryChannel  @default(EMAIL)
+  id      String                  @id @default(cuid())
+  channel OutboundDeliveryChannel @default(EMAIL)
 
   /// What this send is, e.g. "recruiter.otp", "hire.alert", "contact.form".
   /// Free text so a new caller needs no migration.

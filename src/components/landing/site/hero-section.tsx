@@ -207,7 +207,7 @@ export function HeroSection({
           </p>
 
           <div className="hero__actions">
-            <Link href={getStartedHref} className="btn btn--primary btn--lg">
+            <Link href={getStartedHref} className="btn btn--clay btn--lg">
               {isSignedIn ? "Open Dashboard" : "Get Started"}
             </Link>
             {showRecruiterCta ? (

@@ -3,15 +3,11 @@
 import { z } from "zod";
 import { auth } from "@/auth";
 import {
-  CLOSED_JOB_MESSAGE,
-  DUPLICATE_APPLICATION_MESSAGE,
   applyToPublishedJob,
   listMyApplications,
 } from "@/features/candidate-jobs/service";
 import { prismaApplicationStore } from "@/features/candidate-jobs/prisma-store";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
-
-export { CLOSED_JOB_MESSAGE, DUPLICATE_APPLICATION_MESSAGE };
 
 const applySchema = z.object({
   jobId: z.string().min(1),

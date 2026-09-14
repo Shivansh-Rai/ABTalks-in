@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Shortlist the right people, reach out with confidence and start hiring.",
 };
 
-// Public, step 3 (final) of the pre-signup recruiter onboarding (see ../page.tsx).
+// Public, step 3 of the pre-signup recruiter onboarding (see ../page.tsx).
 export default function RecruiterOnboardingConnectPage() {
   return <ConnectScreen />;
 }

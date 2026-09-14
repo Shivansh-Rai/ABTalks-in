@@ -302,7 +302,10 @@ export async function createApplication(
           cohortId: cohort.id,
           status: "APPLIED",
           ...data,
-          recruiterVisibilityConsentAt: new Date(),
+          // No `recruiterVisibilityConsentAt` (plan 133). Nobody is asked, so
+          // stamping a consent time would record a consent that never happened.
+          // Discoverability comes from `CandidateVisibility` via dual-write,
+          // which treats a null here as the platform default.
         },
         update: { status: "APPLIED", ...data },
         select: { id: true },

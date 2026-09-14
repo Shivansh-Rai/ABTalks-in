@@ -8,9 +8,11 @@ import { NotificationProvider } from "@/components/shared/notification-provider"
 import { RouteThemeToaster } from "@/components/shared/route-theme-toaster";
 import { AppFooter } from "@/components/shared/app-footer";
 import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
+import { SiteSearchGate } from "@/components/dashboard-hub/site-search-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
 import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
+import { CookiePreferencesModal } from "@/components/legal/cookie-preferences-modal";
 import { GA4Loader } from "@/components/analytics/ga4-loader";
 import { ChatWidget } from "@/components/chatbot/ChatWidget";
 import { isChatbotEnabled } from "@/lib/feature-flags";
@@ -81,13 +83,16 @@ export default function RootLayout({
             <NotificationProvider>
               <SynergyProvider>
                 <MotionProvider>
-                  <MainShell>{children}</MainShell>
+                  <SiteSearchGate>
+                    <MainShell>{children}</MainShell>
+                  </SiteSearchGate>
                 </MotionProvider>
               </SynergyProvider>
               <AppFooter />
               <BottomNavGate />
               <RouteThemeToaster />
               <CookieConsentModal />
+              <CookiePreferencesModal />
               {isChatbotEnabled() && <ChatWidget />}
             </NotificationProvider>
           </CookieConsentProvider>

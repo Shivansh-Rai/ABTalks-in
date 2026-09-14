@@ -8,6 +8,7 @@ import {
   useForm,
   useWatch,
   type Control,
+  type UseFormTrigger,
 } from "react-hook-form";
 import {
   CERTIFICATE_PROVIDERS,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/certification-catalog";
 import { MAX_CERTIFICATIONS } from "@/lib/validations/candidate-profile";
 import { saveAccomplishmentsAction } from "@/app/actions/candidate-profile-actions";
+import { endBeforeStart, useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
 import {
@@ -87,9 +89,14 @@ const AWARDS_PLACEHOLDER =
 function CertificationDates({
   control,
   index,
+  trigger,
+  error,
 }: {
   control: Control<FormValues>;
   index: number;
+  /** Re-runs the expiry rule when any of the four dates moves. */
+  trigger: UseFormTrigger<FormValues>;
+  error?: string;
 }) {
   const issuedYear = useWatch({
     control,
@@ -97,10 +104,15 @@ function CertificationDates({
   });
   const noExpiry = useWatch({ control, name: `rows.${index}.noExpiry` });
 
+  // The rule lives on `expiresYear` because that is the path the schema names,
+  // so a server issue and a live one land in the same place. Any of the four
+  // inputs can invalidate or fix it, so each of them re-runs it.
+  const recheck = () => void trigger(`rows.${index}.expiresYear`);
+
   return (
     <>
       <PwRow cols={2}>
-        <PwField label="Issued">
+        <PwField label="Issued" required>
           <Controller
             control={control}
             name={`rows.${index}.issuedMonth`}
@@ -112,8 +124,14 @@ function CertificationDates({
                   <PwMonthYear
                     month={month.value}
                     year={year.value}
-                    onMonthChange={month.onChange}
-                    onYearChange={year.onChange}
+                    onMonthChange={(v) => {
+                      month.onChange(v);
+                      recheck();
+                    }}
+                    onYearChange={(v) => {
+                      year.onChange(v);
+                      recheck();
+                    }}
                     fromYear={1975}
                     toYear={CURRENT_YEAR}
                     maxMonth={
@@ -130,7 +148,7 @@ function CertificationDates({
             <p className="pw-note-muted">This certificate does not expire.</p>
           </PwField>
         ) : (
-          <PwField label="Expires">
+          <PwField label="Expires" error={error}>
             <Controller
               control={control}
               name={`rows.${index}.expiresMonth`}
@@ -138,13 +156,30 @@ function CertificationDates({
                 <Controller
                   control={control}
                   name={`rows.${index}.expiresYear`}
+                  rules={{
+                    validate: (value, values) => {
+                      const row = values.rows[index];
+                      if (!row || row.noExpiry) return true;
+                      return (
+                        endBeforeStart(
+                          { month: row.issuedMonth, year: row.issuedYear },
+                          { month: row.expiresMonth, year: value },
+                          "This certificate cannot expire before it was issued",
+                        ) ?? true
+                      );
+                    },
+                  }}
                   render={({ field: year }) => (
                     <PwMonthYear
                       month={month.value}
                       year={year.value}
-                      onMonthChange={month.onChange}
+                      onMonthChange={(v) => {
+                        month.onChange(v);
+                        recheck();
+                      }}
                       onYearChange={year.onChange}
                       fromYear={issuedYear ?? 1975}
+                      invalid={Boolean(error)}
                     />
                   )}
                 />
@@ -163,7 +198,10 @@ function CertificationDates({
               <PwCheckbox
                 id={`crt-noexpiry-${index}`}
                 checked={Boolean(field.value)}
-                onChange={field.onChange}
+                onChange={(checked) => {
+                  field.onChange(checked);
+                  recheck();
+                }}
               >
                 This certificate does not expire
               </PwCheckbox>
@@ -188,14 +226,18 @@ export function AccomplishmentsSection({
     "Accomplishments",
     "certifications",
   );
-  const { control, register, handleSubmit, setValue, formState } =
-    useForm<FormValues>({
+  const form = useForm<FormValues>({
+    // Live: a wrong date pair says so while it is being picked, and stops
+    // saying so the moment it is fixed.
+    mode: "onChange",
     defaultValues: {
       rows:
         initial.rows.length > 0 ? initial.rows : [{ ...emptyCertificationRow }],
       awards: initial.awards,
     },
   });
+  const { control, register, handleSubmit, setValue, trigger, formState } = form;
+  const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "rows",
@@ -225,7 +267,7 @@ export function AccomplishmentsSection({
             expiresYear: noExpiry ? null : row.expiresYear,
           })),
         };
-        if (await save(payload)) onSaved();
+        if (await save(payload, placeIssues)) onSaved();
       })}
     >
       {/* ---- A. Verified — platform records, not editable ---- */}
@@ -287,7 +329,7 @@ export function AccomplishmentsSection({
             onRemove={() => removeOrClear(index)}
           >
             <PwRow cols={2}>
-              <PwField label="Name" htmlFor={`crt-name-${index}`}>
+              <PwField label="Name" required htmlFor={`crt-name-${index}`}>
                 <PwSuggest
                   id={`crt-name-${index}`}
                   suggestions={KNOWN_COURSE_NAMES}
@@ -305,7 +347,7 @@ export function AccomplishmentsSection({
                   })}
                 />
               </PwField>
-              <PwField label="Issuer" htmlFor={`crt-issuer-${index}`}>
+              <PwField label="Issuer" required htmlFor={`crt-issuer-${index}`}>
                 <PwSuggest
                   id={`crt-issuer-${index}`}
                   suggestions={CERTIFICATE_PROVIDERS}
@@ -315,10 +357,15 @@ export function AccomplishmentsSection({
               </PwField>
             </PwRow>
 
-            <CertificationDates control={control} index={index} />
+            <CertificationDates
+              control={control}
+              index={index}
+              trigger={trigger}
+              error={formState.errors.rows?.[index]?.expiresYear?.message}
+            />
 
             <PwRow cols={1}>
-              <PwField label="Credential URL" htmlFor={`crt-url-${index}`}>
+              <PwField label="Credential URL" required htmlFor={`crt-url-${index}`}>
                 <PwInput
                   id={`crt-url-${index}`}
                   type="url"

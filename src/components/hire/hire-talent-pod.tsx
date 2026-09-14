@@ -63,7 +63,13 @@ function isAsked(row: CartRow, requested: string[]): boolean {
   return Boolean(row.engagementStatus) || requested.includes(row.candidateRef);
 }
 
-export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
+export function HireTalentPod({
+  serverRows,
+  scopeLabel,
+}: {
+  serverRows: CartRow[];
+  scopeLabel?: string;
+}) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
   const { approved, openAuth } = useHireAuth();
@@ -244,6 +250,9 @@ export function HireTalentPod({ serverRows }: { serverRows: CartRow[] }) {
           Back to Scout
         </button>
         <h1 className="hire-pod__title">Your Shortlist</h1>
+        {/* Plan 133: whose list this is — one project's, or the legacy
+            saved list that belongs to no project. */}
+        {scopeLabel && <p className="text-sm text-muted-foreground">{scopeLabel}</p>}
       </header>
 
       <div className="hire-pod__main">

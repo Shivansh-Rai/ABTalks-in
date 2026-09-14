@@ -1,10 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 import { EarningPills } from "@/components/marketplace/earning-pills";
-import { dsButtonVariants } from "@/components/design/ds-button";
-import { cn } from "@/lib/utils";
 
 export function MarketplaceHero() {
   return (
@@ -19,15 +16,26 @@ export function MarketplaceHero() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] max-w-[820px] lg:block"
+        className="pointer-events-none absolute inset-y-0 right-0 hidden xl:block"
+        style={{
+          // The merch occupies the right 55.6% of the artwork, so the fade must
+          // finish before 44.4%. Because the wrapper is sized by the image
+          // itself (below), these percentages track the artwork rather than the
+          // viewport — the product can never be caught by the fade at any width.
+          maskImage:
+            "linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.5) 14%, #000 30%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.5) 14%, #000 30%)",
+        }}
       >
         <Image
           src="/marketplace/hero-merch.png"
           alt=""
-          fill
+          width={1836}
+          height={857}
           priority
-          sizes="46vw"
-          className="object-contain object-right"
+          sizes="70vw"
+          className="h-full w-auto max-w-none"
         />
       </div>
 
@@ -44,10 +52,6 @@ export function MarketplaceHero() {
             Turn the points you earn from daily tasks, referrals, and proof of
             work into exclusive ABTalks merchandise.
           </p>
-          <Link href="#products" className={cn(dsButtonVariants(), "w-fit gap-2")}>
-            Browse Rewards
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
         </div>
         <EarningPills />
       </div>
