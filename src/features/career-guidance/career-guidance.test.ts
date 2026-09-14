@@ -431,7 +431,7 @@ suite("exhausted mock attempts skip the mock card", () => {
   assert(!items.some((i) => i.kind === "mock"), "exhausted mock leaked");
 });
 
-suite("hrefs are unique and the list caps at 6", () => {
+suite("hrefs are unique and the list caps at 4", () => {
   const jobs = Array.from({ length: 8 }, (_, i) => ({
     id: `job-${i}`,
     title: "Data Scientist",

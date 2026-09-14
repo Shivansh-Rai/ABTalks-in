@@ -6,7 +6,6 @@ import { X } from "lucide-react";
 import {
   HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
-  HUB_HEADER_ACTION_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { GUIDANCE_CATALOG } from "@/features/career-guidance/catalog";
 import type { GuidanceTargeting } from "@/features/career-guidance/catalog";
@@ -153,18 +152,10 @@ export function CareerGuidanceDeck({
       id="career-guidance"
       className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-          Career Guidance
-        </h2>
-        <Link
-          href="/dashboard/career-guidance"
-          className={HUB_HEADER_ACTION_CLASS}
-        >
-          View all guidance
-        </Link>
-      </div>
-      <ul className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory 2xl:grid 2xl:grid-cols-3 2xl:overflow-visible 2xl:pb-0 2xl:snap-none">
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
+        Career Guidance
+      </h2>
+      <ul className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory">
         {visible.map((card) => (
           <DailyCardView key={card.id} card={card} onDismiss={dismiss} />
         ))}
@@ -183,7 +174,7 @@ function DailyCardView({
   return (
     <li
       className={cn(
-        "relative flex w-[min(100%,320px)] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink",
+        "relative flex w-[min(100%,320px)] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px]",
         HUB_CARD_HOVER_CLASS,
       )}
     >

@@ -79,7 +79,7 @@ export type CandidateFacts = {
   appliedJobIds: string[];
 };
 
-export const GUIDANCE_CAP = 6;
+export const GUIDANCE_CAP = 4;
 export const DAILY_CAP = 4;
 export const MAX_JOB_CARDS = 2;
 
