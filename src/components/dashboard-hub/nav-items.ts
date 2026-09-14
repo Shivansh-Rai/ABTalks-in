@@ -48,11 +48,13 @@ export const HUB_CARD_CTA_CLASS =
   "inline-flex h-10 items-center justify-center rounded-xl bg-[#D4EBEC] px-4 text-sm font-bold text-[#03535F] shadow-[inset_0_-4px_15px_0_#A6D2D5] transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#C8E5E7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
 
 /**
- * Brand-filled card CTA. Continue your journey keeps this treatment; every
- * other card CTA moved to the clay one above.
+ * Continue your journey's CTA — the sidebar's active nav tile, lifted from
+ * .abt-nav-active in globals.css: #03535F behind white at weight 600, 12px
+ * radius, and the inset bottom shadow that gives it the clay edge. Only this
+ * one section wears it; every other card CTA uses HUB_CARD_CTA_CLASS above.
  */
 export const HUB_CARD_CTA_SOLID_CLASS =
-  "inline-flex h-10 items-center justify-center rounded-lg border border-[#03535F] bg-[#03535F] px-4 text-sm font-semibold text-white shadow-none transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#02424C] hover:border-[#02424C] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
+  "inline-flex h-10 items-center justify-center rounded-xl bg-[#03535F] px-4 text-sm font-semibold text-white shadow-[inset_0_-5px_14px_rgba(0,0,0,0.34)] transition-[background-color,box-shadow,transform] duration-200 ease-[var(--ease-spark)] hover:bg-[#076573] hover:shadow-[inset_0_-5px_14px_rgba(0,0,0,0.3)] active:translate-y-px active:shadow-[inset_0_-3px_10px_rgba(0,0,0,0.42)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
 
 /**
  * Section-header action (All mock interviews / Practice history) — the tint
