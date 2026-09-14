@@ -115,7 +115,7 @@ export function MockInterviews({ mock, cohort }: Props) {
               candidate who is eligible for one should not have to scroll. */}
           {cohort.map((c) => (
             <li key={c.key} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0">
                 <span className="inline-flex rounded-[4px] border border-[#03535F]/40 bg-[#EEF6F6] px-2 py-0.5 text-[11px] font-semibold text-[#03535F]">
                   AI Cohort
                 </span>
@@ -133,7 +133,7 @@ export function MockInterviews({ mock, cohort }: Props) {
 
           {mock.map((m) => (
             <li key={m.slug} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0">
                 <p className="font-inter font-bold text-black">{m.label}</p>
                 <p className="mt-1 text-sm text-[#4B4B4B]">{m.blurb}</p>
                 <p className="mt-2 text-[13px] text-[#8F8F8F]">

@@ -38,12 +38,13 @@ export const HUB_BUTTON_CLASS =
   "inline-flex h-10 items-center justify-center rounded-lg border border-[#03535F] bg-transparent px-4 text-sm font-semibold text-black shadow-none transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-transparent hover:text-[#03535F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
 
 /**
- * Card CTA — the same outline geometry as HUB_BUTTON_CLASS, filled with the
- * brand colour on hover. Kept separate because HUB_BUTTON_CLASS is also worn
- * by /login and /register. Alignment is applied at the call site.
+ * Card CTA — the same geometry as HUB_BUTTON_CLASS, filled with the brand
+ * colour by default and darkening on hover. Kept separate because
+ * HUB_BUTTON_CLASS is also worn by /login and /register. Alignment is applied
+ * at the call site.
  */
 export const HUB_CARD_CTA_CLASS =
-  "inline-flex h-10 items-center justify-center rounded-lg border border-[#03535F] bg-transparent px-4 text-sm font-semibold text-black shadow-none transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
+  "inline-flex h-10 items-center justify-center rounded-lg border border-[#03535F] bg-[#03535F] px-4 text-sm font-semibold text-white shadow-none transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#02424C] hover:border-[#02424C] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] disabled:opacity-60";
 
 export const HUB_ARROW_HOVER_CLASS =
   "size-4 transition-transform duration-200 ease-[var(--ease-spark)] motion-safe:group-hover:translate-x-0.5";
