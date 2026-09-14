@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "checkin-dsa-se",
+      "kind": "checkin",
+      "cadence": "daily",
+      "title": "Did you solve a DSA question today?",
+      "body": "A short problem is enough. This is a reminder, not a log on your profile.",
+      "ctaLabel": "I did",
+      "when": { "challengeDomains": ["SE"] }
+    },
+    {
+      "id": "checkin-dsa-role",
+      "kind": "checkin",
+      "cadence": "daily",
+      "title": "Did you solve a DSA question today?",
+      "body": "A short problem is enough. This is a reminder, not a log on your profile.",
+      "ctaLabel": "I did",
+      "when": { "roleIncludes": ["software", "backend", "frontend", "sde"] }
+    },
+    {
+      "id": "checkin-cohort-today",
+      "kind": "checkin",
+      "cadence": "daily",
+      "title": "Did you open today's AI Cohort lesson?",
+      "body": "You are enrolled in the 31-day AI Cohort. This reminder is not recorded as evidence.",
+      "ctaLabel": "Open dashboard",
+      "href": "/program/ai-cohort/dashboard",
+      "when": { "aiCohortActive": true }
+    },
+    {
+      "id": "checkin-add-skill",
+      "kind": "checkin",
+      "cadence": "daily",
+      "title": "Add a skill on your profile",
+      "body": "Your profile has no skills listed yet. Recruiters match on the names you add.",
+      "ctaLabel": "Add skills",
+      "href": "/profile",
+      "when": { "skillsEmpty": true }
+    },
+    {
+      "id": "checkin-practise",
+      "kind": "checkin",
+      "cadence": "daily",
+      "title": "Did you practise for 30 minutes today?",
+      "body": "A small session counts. Tapping I did only clears this reminder for today.",
+      "ctaLabel": "I did",
+      "when": { "always": true }
+    },
+    {
+      "id": "quote-seneca-luck",
+      "kind": "quote",
+      "cadence": "weekly",
+      "title": "Luck is what happens when preparation meets opportunity.",
+      "body": "Seneca",
+      "when": { "always": true }
+    },
+    {
+      "id": "quote-confucius-slowly",
+      "kind": "quote",
+      "cadence": "weekly",
+      "title": "It does not matter how slowly you go as long as you do not stop.",
+      "body": "Confucius",
+      "when": { "always": true }
+    },
+    {
+      "id": "quote-plato-beginning",
+      "kind": "quote",
+      "cadence": "weekly",
+      "title": "The beginning is the most important part of the work.",
+      "body": "Plato",
+      "when": { "always": true }
+    },
+    {
+      "id": "quote-curie-progress",
+      "kind": "quote",
+      "cadence": "once",
+      "title": "I was taught that the way of progress was neither swift nor easy.",
+      "body": "Marie Curie",
+      "when": { "always": true }
+    },
+    {
+      "id": "quote-mandela-education",
+      "kind": "quote",
+      "cadence": "once",
+      "title": "Education is the most powerful weapon which you can use to change the world.",
+      "body": "Nelson Mandela",
+      "when": { "always": true }
+    }
+  ]
+}

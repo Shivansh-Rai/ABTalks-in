@@ -5,7 +5,9 @@ import { HeroGreeting } from "@/components/dashboard-hub/hero-greeting";
 import { StreakCard } from "@/components/dashboard-hub/streak-card";
 import { ActivityHeatmap } from "@/components/dashboard-hub/activity-heatmap";
 import { ContinueJourney } from "@/components/dashboard-hub/continue-journey";
+import { CareerGuidance } from "@/components/dashboard-hub/career-guidance";
 import { MockInterviews } from "@/components/dashboard-hub/mock-interviews";
+import { getCareerGuidance } from "@/features/career-guidance/get-career-guidance";
 import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
@@ -55,6 +57,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   const availableInterviews = await loadAvailableInterviews(session.user.id);
+  const guidance = await getCareerGuidance(
+    session.user.id,
+    availableInterviews.mock.map((m) => ({
+      slug: m.slug,
+      label: m.label,
+      attemptsLeft: m.attemptsLeft,
+    })),
+  );
 
   const firstName =
     data.profile?.fullName.split(/\s+/)[0] ??
@@ -116,6 +126,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       />
 
       <ContinueJourney enrollments={data.enrollments} />
+      <CareerGuidance
+        userId={session.user.id}
+        istDay={guidance.istDay}
+        istWeek={guidance.istWeek}
+        items={guidance.items}
+        targeting={guidance.targeting}
+      />
       <OtherChallenges
         joinedDomains={data.joinedDomains}
         abandonedDomains={data.abandonedDomains}
