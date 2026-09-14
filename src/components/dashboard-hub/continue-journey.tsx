@@ -1,7 +1,11 @@
 import Link from "next/link";
 import type { Domain } from "@prisma/client";
 import type { HubEnrollment } from "@/features/dashboard/get-hub-data";
-import { HUB_BUTTON_CLASS, HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
+import {
+  HUB_BUTTON_CLASS,
+  HUB_CARD_CTA_SOLID_CLASS,
+  HUB_CARD_HOVER_CLASS,
+} from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
 const TRACK_PATH: Record<Domain, string> = {
@@ -63,11 +67,11 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
               <li
                 key={e.id}
                 className={cn(
-                  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink",
+                  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink",
                   HUB_CARD_HOVER_CLASS,
                 )}
               >
-                <div className="flex min-h-0 flex-1 flex-col gap-4">
+                <div className="flex min-h-0 flex-col gap-2">
                   <div className="min-w-0">
                     <p className="font-inter font-bold text-black">
                       {DOMAIN_LABEL[e.domain]}
@@ -92,7 +96,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                 </div>
                 <Link
                   href={TRACK_PATH[e.domain]}
-                  className={cn(HUB_BUTTON_CLASS, "mt-4 w-full")}
+                  className={cn(HUB_CARD_CTA_SOLID_CLASS, "mt-2 self-end")}
                 >
                   {isCompleted ? "View" : "Continue"}
                 </Link>

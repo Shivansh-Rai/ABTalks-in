@@ -46,7 +46,11 @@ export function OtherChallenges({
             <p className="mt-1 text-sm text-[#4B4B4B]">
               Build with Claude · 60 days
             </p>
-            <JoinClaudeButton />
+            {/* Wrapper, not a change to the card: the CTA is right-aligned
+                without the card itself becoming a flex column. */}
+            <div className="mt-2 flex justify-end">
+              <JoinClaudeButton />
+            </div>
           </li>
         ) : null}
       </ul>

@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { enrollInClaudeChallenge } from "@/app/actions/enrollment-actions";
-import { HUB_BUTTON_CLASS } from "@/components/dashboard-hub/nav-items";
-import { cn } from "@/lib/utils";
+import { HUB_CARD_CTA_CLASS } from "@/components/dashboard-hub/nav-items";
 
 export function JoinClaudeButton() {
   const router = useRouter();
@@ -32,7 +31,7 @@ export function JoinClaudeButton() {
       type="button"
       onClick={handleJoin}
       disabled={pending}
-      className={cn(HUB_BUTTON_CLASS, "mt-4 w-full disabled:opacity-60")}
+      className={HUB_CARD_CTA_CLASS}
     >
       {pending ? "Joining…" : "Join"}
     </button>
