@@ -380,11 +380,19 @@ export default async function ProfilePage() {
             linkedinUrl: s(detail.linkedinUrl),
             githubUsername: s(detail.githubUsername),
             portfolioUrl: s(detail.portfolioUrl),
-            extra: detail.links.map((l) => ({
-              type: l.type,
-              label: s(l.label),
-              url: l.url,
-            })),
+            leetcodeUrl: s(
+              detail.links.find((l) => l.type === "LEETCODE")?.url ?? null,
+            ),
+            codechefUrl: s(
+              detail.links.find((l) => l.type === "CODECHEF")?.url ?? null,
+            ),
+            extra: detail.links
+              .filter((l) => l.type !== "LEETCODE" && l.type !== "CODECHEF")
+              .map((l) => ({
+                type: l.type,
+                label: s(l.label),
+                url: l.url,
+              })),
           }}
         />
       ),

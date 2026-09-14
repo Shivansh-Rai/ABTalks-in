@@ -434,6 +434,36 @@ export type AccomplishmentsInput = z.infer<typeof accomplishmentsSchema>;
 
 /* ─── Links ──────────────────────────────────────────────────────────────── */
 
+/**
+ * LeetCode / CodeChef must be real profile hosts — declared links only, no sync.
+ * Returns null when the URL is not a valid http(s) URL for that type.
+ */
+export function assertCodingProfileHost(
+  type: "LEETCODE" | "CODECHEF",
+  url: string,
+): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url.trim());
+  } catch {
+    return type === "LEETCODE"
+      ? "Enter a LeetCode profile URL (leetcode.com/…)"
+      : "Enter a CodeChef profile URL (codechef.com/users/…)";
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return type === "LEETCODE"
+      ? "Enter a LeetCode profile URL (leetcode.com/…)"
+      : "Enter a CodeChef profile URL (codechef.com/users/…)";
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (type === "LEETCODE") {
+    if (host === "leetcode.com" || host === "www.leetcode.com") return null;
+    return "Enter a LeetCode profile URL (leetcode.com/…)";
+  }
+  if (host === "codechef.com" || host === "www.codechef.com") return null;
+  return "Enter a CodeChef profile URL (codechef.com/users/…)";
+}
+
 const extraLinkSchema = z
   .object({
     type: z.enum(CandidateLinkType),
@@ -448,12 +478,44 @@ const extraLinkSchema = z
         message: "Add a label for this link",
       });
     }
+    if (
+      row.type === CandidateLinkType.LEETCODE ||
+      row.type === CandidateLinkType.CODECHEF
+    ) {
+      const hostError = assertCodingProfileHost(row.type, row.url);
+      if (hostError) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["url"],
+          message: hostError,
+        });
+      }
+    }
   });
 
 export const linksSectionSchema = z.object({
   linkedinUrl: nullableUrl,
   githubUsername: githubField,
   portfolioUrl: nullableUrl,
+  /**
+   * First-class declared coding profiles (T-216). Stored as CandidateLink rows,
+   * not CandidateProfile columns. Optional — they do not affect profile
+   * completeness %.
+   */
+  leetcodeUrl: nullableUrl.superRefine((value, ctx) => {
+    if (value === null) return;
+    const hostError = assertCodingProfileHost("LEETCODE", value);
+    if (hostError) {
+      ctx.addIssue({ code: "custom", message: hostError });
+    }
+  }),
+  codechefUrl: nullableUrl.superRefine((value, ctx) => {
+    if (value === null) return;
+    const hostError = assertCodingProfileHost("CODECHEF", value);
+    if (hostError) {
+      ctx.addIssue({ code: "custom", message: hostError });
+    }
+  }),
   /**
    * Optional, and absent from the Links form since plan 106 moved the resume
    * into its own profile section. It stays in the schema so any older client
@@ -466,6 +528,41 @@ export const linksSectionSchema = z.object({
 
 export type ExtraLinkInput = z.infer<typeof extraLinkSchema>;
 export type LinksInput = z.infer<typeof linksSectionSchema>;
+
+/**
+ * Fold first-class LeetCode / CodeChef URLs into the CandidateLink list used by
+ * `saveLinks`. Drops any duplicate LEETCODE/CODECHEF rows from `extra` so the
+ * fixed fields win.
+ */
+export function mergeCodingProfileLinks(input: LinksInput): LinksWriteExtra[] {
+  const rest = input.extra.filter(
+    (row) =>
+      row.type !== CandidateLinkType.LEETCODE &&
+      row.type !== CandidateLinkType.CODECHEF,
+  );
+  const coding: LinksWriteExtra[] = [];
+  if (input.leetcodeUrl) {
+    coding.push({
+      type: CandidateLinkType.LEETCODE,
+      label: null,
+      url: input.leetcodeUrl,
+    });
+  }
+  if (input.codechefUrl) {
+    coding.push({
+      type: CandidateLinkType.CODECHEF,
+      label: null,
+      url: input.codechefUrl,
+    });
+  }
+  return [...coding, ...rest];
+}
+
+type LinksWriteExtra = {
+  type: CandidateLinkType;
+  label: string | null;
+  url: string;
+};
 
 /* ─── Career preferences ─────────────────────────────────────────────────── */
 

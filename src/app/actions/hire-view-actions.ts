@@ -13,7 +13,9 @@ import {
 } from "@/features/profile/profile-events";
 import {
   listPublicWorkHistory,
+  listSelfReportedExternalLinks,
   type PublicWorkHistory,
+  type SelfReportedExternalLink,
 } from "@/repositories/candidate-detail";
 import { resolveProgramRefs } from "@/repositories/hire";
 import { logger } from "@/lib/logger";
@@ -135,5 +137,52 @@ export async function loadInspectorWorkHistoryAction(
       error: String(error),
     });
     return { ok: false, message: "Could not load experience." };
+  }
+}
+
+const externalLinksInputSchema = z.object({
+  candidateRef: candidateRefSchema,
+});
+
+export type InspectorExternalLinks = {
+  links: SelfReportedExternalLink[];
+};
+
+/**
+ * Declared GitHub / LeetCode / CodeChef profile URLs for View Detail (T-216).
+ *
+ * Same pool gate as work history. Protected contact stays off this payload.
+ * UI must label every link SELF-REPORTED — these are not verified.
+ */
+export async function loadInspectorExternalLinksAction(
+  input: unknown,
+): Promise<
+  { ok: true; data: InspectorExternalLinks } | { ok: false; message: string }
+> {
+  const parsed = externalLinksInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid candidate." };
+  }
+
+  const raw = parsed.data.candidateRef;
+  if (raw.startsWith("SAMPLE:")) {
+    return { ok: true, data: { links: [] } };
+  }
+  if (!decodeCandidateRef(raw)) {
+    return { ok: true, data: { links: [] } };
+  }
+
+  try {
+    const [eligible] = await resolveEligibleCandidates([raw]);
+    if (!eligible) {
+      return { ok: true, data: { links: [] } };
+    }
+    const links = await listSelfReportedExternalLinks(eligible.userId);
+    return { ok: true, data: { links } };
+  } catch (error) {
+    logger.error("[hire] loadInspectorExternalLinksAction", {
+      error: String(error),
+    });
+    return { ok: false, message: "Could not load profile links." };
   }
 }

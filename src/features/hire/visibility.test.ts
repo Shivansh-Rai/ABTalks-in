@@ -464,7 +464,9 @@ suite("no contact field can reach the browser payload", () => {
   ]) {
     assert(!code.includes(forbidden), `toPublicMatch must never carry ${forbidden}`);
   }
-  // Links are booleans, and that is the whole contract.
+  // Search cards keep link presence as booleans. Declared profile URLs for
+  // GitHub / LeetCode / CodeChef load only via loadInspectorExternalLinksAction
+  // on View Detail (T-216) — never on the match card.
   assert(
     code.includes("githubConnected") && code.includes("linkedinConnected"),
     "links stay booleans on the card",
@@ -487,6 +489,47 @@ suite("dossiers carry link booleans, never addresses", () => {
       assert(!code.includes(forbidden), `${f} must not read ${forbidden}`);
     }
   }
+});
+
+suite("T-216 inspector external links are the only declared-URL surface", () => {
+  const actions = readFileSync(
+    join(process.cwd(), "src/app/actions/hire-view-actions.ts"),
+    "utf8",
+  );
+  assert(
+    actions.includes("loadInspectorExternalLinksAction") &&
+      actions.includes("listSelfReportedExternalLinks"),
+    "View Detail loads declared links through the inspector action",
+  );
+  const inspector = readFileSync(
+    join(process.cwd(), "src/components/hire/candidate-inspector.tsx"),
+    "utf8",
+  );
+  assert(
+    inspector.includes("SELF-REPORTED") &&
+      inspector.includes("loadInspectorExternalLinksAction"),
+    "inspector labels declared links SELF-REPORTED",
+  );
+  assert(
+    !inspector.includes('date: e.githubConnected ? "Verified"') &&
+      !inspector.includes('date: e.linkedinConnected ? "Verified"'),
+    "Credentials must not stamp GitHub/LinkedIn connected as Verified",
+  );
+  // External profiles must sit in Overview so View Detail shows them without
+  // opening More (plan fix_links_visibility).
+  const overviewIdx = inspector.indexOf('data-section="overview"');
+  const moreIdx = inspector.indexOf('data-section="more"');
+  const extIdx = inspector.indexOf("External profiles");
+  assert(overviewIdx > 0 && moreIdx > overviewIdx && extIdx > 0);
+  assert(
+    extIdx > overviewIdx && extIdx < moreIdx,
+    "External profiles must render inside Overview, before More",
+  );
+  assert(
+    inspector.includes("No external profiles declared") &&
+      inspector.includes("Loading profiles…"),
+    "Overview shows loading and empty states for external profiles",
+  );
 });
 
 /* ─── Plan 133: no candidate-controlled visibility ───────────────────────── */

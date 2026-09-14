@@ -12,6 +12,7 @@ import {
   educationSectionSchema,
   experienceSectionSchema,
   linksSectionSchema,
+  mergeCodingProfileLinks,
   preferencesSchema,
   projectSectionSchema,
   resolveSkillSchema,
@@ -296,7 +297,7 @@ export async function saveLinksAction(raw: unknown): Promise<ActionResult> {
       githubUsername: value.githubUsername,
       portfolioUrl: value.portfolioUrl,
       resumeUrl: value.resumeUrl,
-      extra: value.extra,
+      extra: mergeCodingProfileLinks(value),
     }),
   );
 }

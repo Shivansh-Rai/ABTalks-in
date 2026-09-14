@@ -8365,6 +8365,30 @@ button.hire-profile__in:focus-visible {
   outline-offset: 4px;
 }
 
+.hire-profile__in-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.hire-profile__self-reported {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #eef6f6;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: #03535f;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .hire-profile__loc {
   margin: 0;
   font-size: 16px;
@@ -8913,6 +8937,35 @@ button.hire-profile__in:focus-visible {
   width: 70px;
   line-height: 1.25;
   text-align: right;
+}
+
+.hire-profile__cert .hire-profile__self-reported {
+  align-self: center;
+}
+
+a.hire-profile__ext-link {
+  color: #03535f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+a.hire-profile__ext-link:hover {
+  color: #076573;
+}
+
+a.hire-profile__ext-link:focus-visible {
+  outline: 2px solid #03535f;
+  outline-offset: 2px;
+}
+
+.hire-profile__overview .hire-profile__card--ext {
+  margin-top: 8px;
+}
+
+.hire-profile__ext-empty {
+  margin: 0;
+  padding: 8px 16px 12px;
 }
 
 .hire-profile__note {

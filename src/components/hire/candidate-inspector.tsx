@@ -45,9 +45,11 @@ import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
 import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog";
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
 import {
+  loadInspectorExternalLinksAction,
   loadInspectorWorkHistoryAction,
   type InspectorWorkHistory,
 } from "@/app/actions/hire-view-actions";
+import type { SelfReportedExternalLink } from "@/features/hire/self-reported-links";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
 
 function trackLongLabel(source?: CandidateSource): string | null {
@@ -142,6 +144,30 @@ function safeLinkedinHref(url: string | null | undefined): string | null {
   }
 }
 
+/** Declared coding-profile URLs from the server — still untrusted for href. */
+function safeExternalProfileHref(
+  provider: SelfReportedExternalLink["provider"],
+  url: string,
+): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    const host = parsed.hostname.toLowerCase();
+    if (provider === "GITHUB") {
+      if (host !== "github.com" && host !== "www.github.com") return null;
+    } else if (provider === "LEETCODE") {
+      if (host !== "leetcode.com" && host !== "www.leetcode.com") return null;
+    } else if (provider === "CODECHEF") {
+      if (host !== "codechef.com" && host !== "www.codechef.com") return null;
+    } else {
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function LinkedInMark({
   href,
   locked,
@@ -157,15 +183,18 @@ function LinkedInMark({
 }) {
   if (href) {
     return (
-      <a
-        className="hire-profile__in"
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Open LinkedIn profile"
-      >
-        in
-      </a>
+      <span className="hire-profile__in-wrap">
+        <a
+          className="hire-profile__in"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open LinkedIn profile (self-reported)"
+        >
+          in
+        </a>
+        <span className="hire-profile__self-reported">SELF-REPORTED</span>
+      </span>
     );
   }
   if (locked) {
@@ -284,6 +313,9 @@ export function CandidateInspector({
   const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
     null,
   );
+  const [externalLinks, setExternalLinks] = useState<
+    SelfReportedExternalLink[] | null
+  >(null);
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -310,19 +342,29 @@ export function CandidateInspector({
     let alive = true;
     if (sample) {
       setWorkHistory({ hasNoWorkExperience: false, rows: [] });
+      setExternalLinks([]);
       return () => {
         alive = false;
       };
     }
     setWorkHistory(null);
+    setExternalLinks(null);
     void (async () => {
-      const result = await loadInspectorWorkHistoryAction({
-        candidateRef: match.candidateRef,
-      });
+      const [historyResult, linksResult] = await Promise.all([
+        loadInspectorWorkHistoryAction({
+          candidateRef: match.candidateRef,
+        }),
+        loadInspectorExternalLinksAction({
+          candidateRef: match.candidateRef,
+        }),
+      ]);
       if (!alive) return;
       setWorkHistory(
-        result.ok ? result.data : { hasNoWorkExperience: false, rows: [] },
+        historyResult.ok
+          ? historyResult.data
+          : { hasNoWorkExperience: false, rows: [] },
       );
+      setExternalLinks(linksResult.ok ? linksResult.data.links : []);
     })();
     return () => {
       alive = false;
@@ -522,12 +564,14 @@ export function CandidateInspector({
             ? `${e.commitDayCount} verified commit days`
             : "Connected"
           : "Not connected",
-        date: e.githubConnected ? "Verified" : "",
+        // Declared profile links are never "Verified" — commit days above are
+        // ABTalks evidence wording only. The profile URL is SELF-REPORTED.
+        date: "",
       },
       {
         title: "LinkedIn",
         sub: e.linkedinConnected ? "Connected" : "Not connected",
-        date: e.linkedinConnected ? "Verified" : "",
+        date: "",
       },
     ];
 
@@ -538,6 +582,11 @@ export function CandidateInspector({
   const evidenceSummary = [track].filter(Boolean);
 
   const jobs = workHistory?.rows ?? [];
+  const declaredLinks = (externalLinks ?? []).flatMap((link) => {
+    const href = safeExternalProfileHref(link.provider, link.url);
+    if (!href) return [];
+    return [{ ...link, href }];
+  });
 
   return (
     <aside className="hire-detail hire-profile" aria-label="Candidate details">
@@ -811,6 +860,55 @@ export function CandidateInspector({
               behind the blur are generated, not a candidate.
             </p>
           )}
+
+          {!sample && externalLinks === null ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                Loading profiles…
+              </p>
+            </div>
+          ) : declaredLinks.length > 0 ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">
+                External profiles <small>· {declaredLinks.length}</small>
+              </p>
+              {declaredLinks.map((link) => (
+                <div
+                  key={`${link.provider}:${link.href}`}
+                  className="hire-profile__cert"
+                >
+                  <Award
+                    size={14}
+                    strokeWidth={1.2}
+                    absoluteStrokeWidth
+                    color="#03535F"
+                    aria-hidden="true"
+                  />
+                  <span className="hire-profile__cert-body">
+                    <span className="hire-profile__cert-title">{link.label}</span>
+                    <a
+                      className="hire-profile__cert-sub hire-profile__ext-link"
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.href}
+                    </a>
+                  </span>
+                  <span className="hire-profile__self-reported">SELF-REPORTED</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                No external profiles declared
+              </p>
+            </div>
+          )}
+
           <div className="hire-profile__rule" />
         </section>
 
@@ -1057,7 +1155,9 @@ export function CandidateInspector({
                     <span className="hire-profile__cert-title">{p.title}</span>
                     <span className="hire-profile__cert-sub">{p.sub}</span>
                   </span>
-                  <span className="hire-profile__cert-date">{p.date}</span>
+                  {p.date ? (
+                    <span className="hire-profile__cert-date">{p.date}</span>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -1065,8 +1165,9 @@ export function CandidateInspector({
 
           <p className="hire-profile__note">
             Mission, first-attempt, commit and project figures are verified by
-            ABTalks. Experience, skills and role are self-declared. Compensation
-            and availability are shown only when the candidate shared them.
+            ABTalks. Experience, skills, role and external profile links are
+            self-declared. Compensation and availability are shown only when the
+            candidate shared them.
           </p>
         </section>
       </div>

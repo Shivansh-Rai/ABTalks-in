@@ -27,6 +27,8 @@ export type LinksFormValues = {
   linkedinUrl: string;
   githubUsername: string;
   portfolioUrl: string;
+  leetcodeUrl: string;
+  codechefUrl: string;
   extra: ExtraLinkFormRow[];
 };
 
@@ -91,7 +93,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
             id="ln-linkedin"
             type="url"
             inputMode="url"
-            placeholder="https://www.linkedin.com/in/username/"
+            placeholder="Enter your LinkedIn URL"
             {...register("linkedinUrl")}
           />
         </PwField>
@@ -103,7 +105,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
           required
           htmlFor="ln-github"
           icon={<CodeIcon />}
-          helper="Username or full profile URL — both are stored as your username."
+          helper="Username or full profile URL"
         >
           <PwInput
             id="ln-github"
@@ -124,8 +126,42 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
             id="ln-portfolio"
             type="url"
             inputMode="url"
-            placeholder="https://yoursite.com"
+            placeholder="Enter your Portfolio URL"
             {...register("portfolioUrl")}
+          />
+        </PwField>
+      </PwRow>
+
+      <PwRow cols={1}>
+        <PwField
+          label="LeetCode"
+          htmlFor="ln-leetcode"
+          icon={<CodeIcon />}
+          
+        >
+          <PwInput
+            id="ln-leetcode"
+            type="url"
+            inputMode="url"
+            placeholder="Enter your LeetCode URL"
+            {...register("leetcodeUrl")}
+          />
+        </PwField>
+      </PwRow>
+
+      <PwRow cols={1}>
+        <PwField
+          label="CodeChef"
+          htmlFor="ln-codechef"
+          icon={<CodeIcon />}
+          
+        >
+          <PwInput
+            id="ln-codechef"
+            type="url"
+            inputMode="url"
+            placeholder="Enter your CodeChef URL"
+            {...register("codechefUrl")}
           />
         </PwField>
       </PwRow>
@@ -198,7 +234,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
 
       <PwAddMore
         onClick={() =>
-          append({ type: CandidateLinkType.LEETCODE, label: "", url: "" })
+          append({ type: CandidateLinkType.CODEFORCES, label: "", url: "" })
         }
       />
     </form>

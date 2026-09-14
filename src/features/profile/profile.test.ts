@@ -1210,6 +1210,29 @@ suite("links count only the three first-class columns", () => {
     ],
   });
   assert(sectionEarned(extra, "links") === 0, "extra links add 0");
+
+  const coding = completeness({
+    links: [
+      {
+        id: "l2",
+        type: CandidateLinkType.LEETCODE,
+        label: null,
+        url: "https://leetcode.com/u/alice",
+        sortOrder: 0,
+      },
+      {
+        id: "l3",
+        type: CandidateLinkType.CODECHEF,
+        label: null,
+        url: "https://codechef.com/users/alice",
+        sortOrder: 1,
+      },
+    ],
+  });
+  assert(
+    sectionEarned(coding, "links") === 0,
+    "LeetCode/CodeChef do not change profile completion %",
+  );
 });
 
 suite("career preferences count only roles and locations", () => {
