@@ -21,6 +21,7 @@ type RoadmapsProps = {
   showDatabricks?: boolean;
   showDsArchitect?: boolean;
   showPowerBi?: boolean;
+  showSnowflake?: boolean;
 };
 
 export function Roadmaps({
@@ -30,6 +31,7 @@ export function Roadmaps({
   showDatabricks = false,
   showDsArchitect = false,
   showPowerBi = false,
+  showSnowflake = false,
 }: RoadmapsProps) {
   const joined = new Set(joinedDomains);
   const abandoned = new Set(abandonedDomains);
@@ -93,7 +95,7 @@ export function Roadmaps({
             Prep Kit
           </h2>
           {/* Wraps by breakpoint — never a horizontal scroller. 1 col on
-              mobile, 2 at sm, 3 at lg, all 4 inline at xl. */}
+              mobile, 2 at sm, 3 at lg, 4 per row at xl; further cards wrap. */}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <div
               className={cn(
@@ -184,6 +186,29 @@ export function Roadmaps({
                 </div>
                 <Link
                   href="/program/powerbi"
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+                >
+                  Open
+                </Link>
+              </div>
+            ) : null}
+            {showSnowflake ? (
+              <div
+                className={cn(
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  HUB_CARD_HOVER_CLASS,
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="font-inter text-lg font-bold text-black">
+                    15 Days Snowflake Data &amp; AI
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
+                    Build a governed Data + AI lakehouse on Snowflake in 15 days.
+                  </p>
+                </div>
+                <Link
+                  href="/program/snowflake"
                   className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
                 >
                   Open

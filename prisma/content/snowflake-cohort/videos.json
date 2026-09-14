@@ -1,0 +1,251 @@
+[
+  {
+    "dayNumber": 1,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake Snowsight Introduction (Data Meaning)",
+        "youtubeId": "diXTQ8Sndt8",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Getting Started: Introduction To Snowflake Virtual Warehouses (Snowflake Developers)",
+        "youtubeId": "TeD5zshkdjY",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 2,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Getting Started with Snowflake: Roles And RBAC (Snowflake Developers)",
+        "youtubeId": "W_a88Qea9lU",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Horizon Catalog: Governing Data For Trusted AI (Snowflake Developers)",
+        "youtubeId": "42GWL5x3Xpg",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 3,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake Zero Copy Cloning and Time Travel (Praveen Kumar Bommisetty)",
+        "youtubeId": "d7x-vRtoRLY",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 4,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake Data Loading Explained \u2014 COPY INTO vs Snowpipe vs Streaming (learn by doing it)",
+        "youtubeId": "gvKG3Yc7Jmk",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "How to Use Snowpipe Streaming \u2014 Snowpipe Streaming for Beginners (The Data and AI Guy)",
+        "youtubeId": "zM1ew5UdAEM",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 5,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake Streams and Tasks Tutorial \u2014 Data Ingestion & CDC (KnowHow Academy)",
+        "youtubeId": "zYihLKWJLt0",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Snowflake Dynamic Tables \u2014 Automate your Data Transformations (DataMuscle)",
+        "youtubeId": "PpCIpM5xAGg",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 6,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Learn About Snowpark For Python In 2 Minutes (Snowflake Inc.)",
+        "youtubeId": "iCu3VsvsH4g",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Snowpark 101: Using Snowpark For Python For Data Science With Tasty Bytes (Snowflake Developers)",
+        "youtubeId": "KDZpjQZDRyQ",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 7,
+    "videos": [
+      {
+        "order": 1,
+        "title": "dbt Projects on Snowflake \u2014 End-to-End Tutorial (Cloudlearningyard)",
+        "youtubeId": "eiHwCA_mrVQ",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Snowflake Tasks \u2014 Types and Examples (SleekData)",
+        "youtubeId": "3ylKXNTg0Sk",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 8,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake \u2014 Git Integration (Daniel Wilczak)",
+        "youtubeId": "WEklZ63mMr4",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "CI/CD with SnowCLI and GitHub Actions \u2014 Part 01: Introduction & Setup (beems technologies)",
+        "youtubeId": "TfE22MByhrc",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 9,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Monitor Snowflake Query History, Execution Plan and Query Profile (Kahan Data Solutions)",
+        "youtubeId": "9InDeI1XpjM",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Cost Optimization Best Practices: Resource Monitors and Other Cost Controls (Snowflake Developers)",
+        "youtubeId": "cwDDUbNBpXE",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 10,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Tutorial for Streamlit in Snowflake: Build Apps Inside Snowflake (Cloudlearningyard)",
+        "youtubeId": "CSII2klzZcQ",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Snowflake Cortex Analyst Tutorial \u2014 The Semantic Model File (Ani Bj\u00f6rkstr\u00f6m)",
+        "youtubeId": "bZQqCzcVHac",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 11,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Train & Explain: Using the Snowpark ML Python Library (phData)",
+        "youtubeId": "eO6vGyb-8_0",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Demo: Machine Learning with Snowflake (Snowflake Developers)",
+        "youtubeId": "zvy5NMQwhAc",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 12,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Building Feature Stores on Snowflake \u2014 apply() Meetup (Tecton)",
+        "youtubeId": "uSbS754XTeA",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Assembling the Beginnings of a Feature Store with Snowflake & dbt Labs (dbt Labs)",
+        "youtubeId": "tKao-7lOkeY",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 13,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Snowflake E2E ML with Notebooks, Feature Store, Snowpark ML and Model Registry (Tarun Jaitly)",
+        "youtubeId": "c_kNUmkR7cM",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Build, Deploy, And Observe A Model In Snowflake ML (Snowflake Developers)",
+        "youtubeId": "JDMEUrwpYlE",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 14,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Build a RAG AI Assistant in Snowflake Cortex + Streamlit \u2014 Cortex Search Tutorial (Shashank)",
+        "youtubeId": "8w--K59mIBc",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Using Cortex AI to Get Insights from Unstructured Data on Snowflake: Deep Dive (Allison Godfrey)",
+        "youtubeId": "a6SZyzzJd8U",
+        "durationMin": null
+      }
+    ]
+  },
+  {
+    "dayNumber": 15,
+    "videos": [
+      {
+        "order": 1,
+        "title": "Getting Started With Cortex Agents (Snowflake Developers)",
+        "youtubeId": "SDqyB-yWaAE",
+        "durationMin": null
+      },
+      {
+        "order": 2,
+        "title": "Build Your First AI Agent in Minutes \u2014 Snowflake Intelligence (Mastering Snowflake)",
+        "youtubeId": "-OS2RTchbzU",
+        "durationMin": null
+      }
+    ]
+  }
+]

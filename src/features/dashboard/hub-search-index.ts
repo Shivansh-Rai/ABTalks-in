@@ -67,6 +67,7 @@ export type HubSearchIndexInput = {
   hasDatabricksAccess: boolean;
   hasDsArchitectAccess: boolean;
   hasPowerBiAccess: boolean;
+  hasSnowflakeAccess: boolean;
   isAdmin: boolean;
   claudeEnabled: boolean;
   programEnabled: boolean;
@@ -298,6 +299,18 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
       subtitle: "Ship recruiter-grade Power BI dashboards in 7 days.",
       href: "/program/powerbi",
       keywords: "prep kit power bi powerbi analytics dax dashboard 7 days",
+    });
+  }
+
+  if (input.hasSnowflakeAccess) {
+    items.push({
+      id: "prep:snowflake",
+      group: "Prep Kit",
+      title: "15 Days Snowflake Data & AI",
+      subtitle: "Build a governed Data + AI lakehouse on Snowflake in 15 days.",
+      href: "/program/snowflake",
+      keywords:
+        "prep kit snowflake data engineering snowpark dbt cortex ai snowpro 15 days",
     });
   }
 

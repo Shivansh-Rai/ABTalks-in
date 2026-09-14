@@ -600,6 +600,7 @@ suite("curriculum skills are data, not a hardcoded frontend list", () => {
     "databricks",
     "powerbi",
     "ds-architect",
+    "snowflake",
   ]) {
     assert(slugs.includes(slug), `${slug} has curriculum skills`);
   }

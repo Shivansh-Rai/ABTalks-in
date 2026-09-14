@@ -42,6 +42,15 @@ export function isPowerBiEnabled(): boolean {
 }
 
 /**
+ * Snowflake Data & AI Engineering cohort at /program/snowflake.
+ * Unset/false 404s the route and hides the Prep Kit card.
+ * Set to true in Vercel to launch.
+ */
+export function isSnowflakeEnabled(): boolean {
+  return process.env.ENABLE_SNOWFLAKE === "true";
+}
+
+/**
  * Entry assessment quiz is removed from the program cohort product surface.
  * Apply enrolls/waitlists directly. Kept as a always-on flag for call sites.
  */

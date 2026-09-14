@@ -1,0 +1,1019 @@
+[
+  {
+    "dayNumber": 1,
+    "moduleNumber": 1,
+    "title": "Snowflake Architecture & Free Trial Setup",
+    "missionType": "DATA_ROOM",
+    "briefMd": "## Mission: Snowflake Architecture & Free Trial Setup\n\n**Sign up for a Snowflake free trial, tour Snowsight, and understand the multi-cluster shared data architecture before touching any data**\n\nOver the next 15 days you grow one running project \u2014 a retail/e-commerce lakehouse \u2014 from raw files into governed Bronze/Silver/Gold tables, orchestrated pipelines, dashboards, a registered ML model and a governed Cortex AI agent. Everything runs on a Snowflake free trial (30 days or $400 in credits, no credit card) using the built-in `SNOWFLAKE_SAMPLE_DATA` share and small synthetic files you create yourself \u2014 never real customer or production data. Today you set up the account and learn how the platform is put together.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Architecture and Features (31%)\n\n**Concepts to learn**\n\n- **Multi-cluster shared data architecture** \u2014 separate storage, compute and cloud services layers\n- **Virtual warehouses** \u2014 sizing (XS\u20136XL), multi-cluster warehouses, auto-suspend and auto-resume\n- **Snowsight** \u2014 Worksheets, Databases, Data Products, Monitoring and Admin\n- **Object hierarchy** \u2014 organization \u2192 account \u2192 database \u2192 schema \u2192 objects\n- **Editions** \u2014 Standard, Enterprise, Business Critical, and what the free trial gives you\n- **SNOWFLAKE_SAMPLE_DATA** \u2014 the shared TPC-H and TPC-DS schemas available in every account\n\n**Deliverable:** a working Snowflake free trial account, a virtual warehouse with sensible auto-suspend settings, and a first query against the built-in TPC-H sample data.\n\n### Your repo layout (set this up today)\n\n```text\n<your program repo>/\n\u251c\u2500\u2500 README.md\n\u251c\u2500\u2500 sql/              one worksheet export per day (dayNN_*.sql)\n\u251c\u2500\u2500 python/           Snowpark scripts, UDFs, the RAG chain\n\u251c\u2500\u2500 notebooks/        Snowflake Notebook exports (.ipynb)\n\u251c\u2500\u2500 streamlit/        Streamlit in Snowflake app (Day 10)\n\u251c\u2500\u2500 semantic_models/  Cortex Analyst YAML (Day 10)\n\u251c\u2500\u2500 dbt/              dbt project (Day 7)\n\u251c\u2500\u2500 migrations/       versioned SQL scripts (Day 8)\n\u251c\u2500\u2500 .github/workflows GitHub Actions (Day 8)\n\u251c\u2500\u2500 screenshots/      PNG evidence\n\u2514\u2500\u2500 docs/             notes, decision tables, reviews\n```\n\nFolders appear as you commit files into them. Every path the verifier checks is relative to the repo root on your default branch.\n\n### Build steps\n\n1. **Start your free trial:** Sign up at `snowflake.com/en/snowflake-trial` with no credit card. Pick any cloud provider and region (AWS is a safe default, and it can't be changed later) and Enterprise Edition, then confirm you land in Snowsight.\n2. **Tour Snowsight:** Click once into each area of the sidebar: Worksheets, Databases, Data Products (Marketplace), Monitoring (Query History, Warehouses) and Admin (Users & Roles, Cost Management).\n3. **Confirm your session:** Open a new SQL worksheet, run `SELECT CURRENT_ACCOUNT(), CURRENT_REGION(), CURRENT_VERSION();` and note your account identifier.\n4. **Create your warehouse:** Run `CREATE WAREHOUSE learn_wh WITH WAREHOUSE_SIZE='XSMALL' AUTO_SUSPEND=60 AUTO_RESUME=TRUE;` and add a comment explaining why auto-suspend matters for a $400 trial credit budget.\n5. **Explore the sample data:** Run `SHOW DATABASES;` and find `SNOWFLAKE_SAMPLE_DATA`, then run `SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS LIMIT 10;` and the same query on `CUSTOMER`. Finish with `SELECT COUNT(*) FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS;`. If the database is missing, an ACCOUNTADMIN can add it with `CREATE DATABASE SNOWFLAKE_SAMPLE_DATA FROM SHARE SFC_SAMPLES.SAMPLE_DATA;`.\n6. **Create the project database:** Run `CREATE DATABASE retail_lakehouse;` and then `CREATE SCHEMA retail_lakehouse.bronze;` (the silver and gold schemas arrive on Day 3).\n7. **Read a Query Profile:** Open Monitoring \u2192 Query History, pick one of today's queries and open its Query Profile. Note the operator graph even though it's trivial for a LIMIT 10 query, because you read a real one on Day 9.\n8. **Write your note-to-self:** Write one paragraph in your own words on why Snowflake separates storage from compute, and why that lets two people query the same table from two differently sized warehouses at the same time without contention.\n9. **Ship to your repo:** Save today's worksheet as `sql/day01_setup.sql`, add your note to `README.md` under an About this repo heading, commit and push. Then answer below.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What does `SELECT COUNT(*) FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS;` return? (number, no commas)\n2. How many layers make up Snowflake's architecture? (number)\n3. Which warehouse parameter stops a warehouse from spending credits while it sits idle? (parameter name)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "TPC-H SF1 ORDERS row count",
+          "value": "1500000",
+          "caseInsensitive": true
+        },
+        {
+          "check": "architecture layer count",
+          "value": "3",
+          "caseInsensitive": true
+        },
+        {
+          "check": "idle warehouse parameter",
+          "value": "AUTO_SUSPEND",
+          "caseInsensitive": true
+        }
+      ]
+    },
+    "objectives": [
+      "Explain Snowflake's three-layer architecture and why storage is separate from compute",
+      "Create a right-sized virtual warehouse with auto-suspend and auto-resume",
+      "Navigate Snowsight and read a query in Query History and Query Profile",
+      "Query the built-in TPC-H sample data and create the retail_lakehouse database"
+    ],
+    "tools": [
+      "Snowsight",
+      "SQL",
+      "GitHub"
+    ],
+    "estimatedMin": 120,
+    "missionPoints": 10,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 2,
+    "moduleNumber": 1,
+    "title": "Role-Based Access Control & Horizon Governance",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Role-Based Access Control & Horizon Governance\n\n**Build a governed role hierarchy and learn the access-control and governance primitives that underpin everything else in this program**\n\nEvery object you create from here on \u2014 tables, pipelines, models, search services, agents \u2014 is governed by the roles and policies you set up today. You build a least-privilege role hierarchy, mask a sensitive column, restrict rows by region, and find all of it in Horizon Catalog.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Governance (20%)\n\n**Concepts to learn**\n\n- **Role-based access control (RBAC)** \u2014 system-defined roles (ACCOUNTADMIN, SYSADMIN, SECURITYADMIN, PUBLIC) vs custom roles\n- **Role hierarchies** \u2014 role inheritance and the principle of least privilege\n- **GRANT and REVOKE** \u2014 on databases, schemas and warehouses, plus future grants\n- **Horizon Catalog** \u2014 Snowflake's built-in governance layer: tag-based classification, lineage and access history\n- **Row access and masking policies** \u2014 row-level filtering and column-level dynamic data masking\n- **Object tagging** \u2014 tag-based masking that propagates one policy to every tagged column\n\n**Deliverable:** a custom role hierarchy with least-privilege grants and a future grant, plus a governed table with a working masking policy and row access policy, verified under two different roles.\n\n### Build steps\n\n1. **Create the role hierarchy:** As ACCOUNTADMIN run `CREATE ROLE data_engineer;`, `CREATE ROLE data_analyst;` and `GRANT ROLE data_engineer TO ROLE SYSADMIN;`. Add a comment explaining why you inherit into SYSADMIN rather than granting directly to your user.\n2. **Grant least privilege:** Run `GRANT USAGE ON DATABASE retail_lakehouse TO ROLE data_engineer;` and `GRANT USAGE ON WAREHOUSE learn_wh TO ROLE data_engineer;`, then `GRANT ROLE data_engineer TO USER <your_user>;` and switch with `USE ROLE data_engineer;`. Give data_analyst the same USAGE grants and grant it to your user too, so you can switch between the two roles.\n3. **Add a future grant:** Run `GRANT SELECT ON FUTURE TABLES IN SCHEMA retail_lakehouse.bronze TO ROLE data_analyst;` so every new bronze table is readable by analysts automatically.\n4. **Mask a sensitive column:** Load a small synthetic customer table with an email column, then run `CREATE MASKING POLICY mask_email AS (val STRING) RETURNS STRING -> CASE WHEN CURRENT_ROLE() IN ('DATA_ENGINEER') THEN val ELSE '***MASKED***' END;` and apply it with `ALTER TABLE ... MODIFY COLUMN email SET MASKING POLICY mask_email;`. Query the table as data_engineer, then as data_analyst, and confirm the difference.\n5. **Restrict rows by region:** Create a row access policy such as `CREATE ROW ACCESS POLICY region_policy AS (region STRING) RETURNS BOOLEAN -> CURRENT_ROLE() = 'DATA_ENGINEER' OR region = 'EAST';`, apply it with `ALTER TABLE ... ADD ROW ACCESS POLICY region_policy ON (region);`, and confirm the two roles see different row counts from the same `SELECT *`.\n6. **Find it in Horizon:** Open the table's governance view in Snowsight (or the ACCOUNT_USAGE views) and find your masking policy and row access policy listed against the table, along with its basic lineage.\n7. **Write the governance note:** In `docs/day02_governance_note.md`, explain what a Snowflake tag is, how tag-based masking propagates a policy to every column tagged (for example) PII across an account, and why that scales better than applying masking policies table by table.\n8. **Ship to your repo:** Save the worksheets as `sql/day02_rbac.sql` and `sql/day02_policies.sql`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which system-defined role sits at the top of an account's role hierarchy? (one word)\n2. Which role is automatically granted to every user and every role? (one word)\n3. Complete the grant: `GRANT SELECT ON ___ TABLES IN SCHEMA retail_lakehouse.bronze TO ROLE data_analyst;` (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "top-level system role",
+          "value": "ACCOUNTADMIN",
+          "caseInsensitive": true
+        },
+        {
+          "check": "role granted to everyone",
+          "value": "PUBLIC",
+          "caseInsensitive": true
+        },
+        {
+          "check": "grant keyword for tables created later",
+          "value": "FUTURE",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day02_rbac.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day02_rbac.sql"
+        },
+        {
+          "check": "RBAC worksheet creates the custom roles",
+          "kind": "contentMatches",
+          "path": "sql/day02_rbac.sql",
+          "regex": "CREATE ROLE|create role"
+        },
+        {
+          "check": "sql/day02_policies.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day02_policies.sql"
+        },
+        {
+          "check": "policies worksheet defines a masking policy",
+          "kind": "contentMatches",
+          "path": "sql/day02_policies.sql",
+          "regex": "MASKING POLICY|masking policy"
+        },
+        {
+          "check": "docs/day02_governance_note.md exists",
+          "kind": "fileExists",
+          "path": "docs/day02_governance_note.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Design a least-privilege custom role hierarchy that inherits into SYSADMIN",
+      "Use GRANT, REVOKE and future grants on databases, schemas and warehouses",
+      "Protect data with a masking policy and a row access policy verified under two roles",
+      "Explain how tag-based masking in Horizon Catalog scales governance across an account"
+    ],
+    "tools": [
+      "Snowsight",
+      "SQL",
+      "Horizon Catalog",
+      "GitHub"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 3,
+    "moduleNumber": 1,
+    "title": "Time Travel, Cloning & Semi-Structured Data",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Time Travel, Cloning & Semi-Structured Data\n\n**Master Snowflake's storage layer: instant zero-copy clones, Time Travel for recovery, and native semi-structured data handling**\n\nYour lakehouse gets its Silver and Gold schemas today. You break things on purpose \u2014 change rows, drop a table \u2014 and recover them, clone a whole schema without copying storage, and query nested JSON without flattening it first.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Architecture and Features (31%); SnowPro Advanced: Data Engineer \u2014 Storage and Data Protection\n\n**Concepts to learn**\n\n- **Micro-partitions** \u2014 how Snowflake stores data under the hood, and automatic clustering\n- **Time Travel and Fail-safe** \u2014 `UNDROP`, `AT` and `BEFORE` queries, and how retention periods differ by edition\n- **Zero-copy cloning** \u2014 instant, storage-free copies of databases, schemas and tables\n- **VARIANT** \u2014 native semi-structured data support for JSON, Avro and Parquet\n- **Querying nested data** \u2014 dot notation and `FLATTEN`\n- **Clustering keys** \u2014 when manual clustering helps and when it only burns credits\n\n**Deliverable:** a recovered (UNDROP'd) table, an independent zero-copy clone of a schema, and a VARIANT table with nested JSON queried via both dot notation and FLATTEN.\n\n### Build steps\n\n1. **Add the medallion schemas:** Run `CREATE SCHEMA retail_lakehouse.silver;` and `CREATE SCHEMA retail_lakehouse.gold;`.\n2. **Travel back in time:** Change a row in your Day 2 bronze table, then run `SELECT * FROM <your_table> AT(OFFSET => -60);` to see the data as it was 60 seconds ago. Then try `BEFORE(STATEMENT => '<query_id>')` with the query ID of your change.\n3. **Drop and recover:** Drop a table on purpose with `DROP TABLE retail_lakehouse.bronze.<some_table>;`, recover it with `UNDROP TABLE retail_lakehouse.bronze.<some_table>;`, and confirm the data is back.\n4. **Clone a schema:** Run `CREATE SCHEMA retail_lakehouse.bronze_clone CLONE retail_lakehouse.bronze;`, modify a row in the clone, and confirm the original bronze schema is untouched. The clone is independent copy-on-write storage, not a live view.\n5. **Load nested JSON:** Stage a small JSON file with nested structure (for example a customer with an address and a list of line items) using the Snowsight upload UI or a stage, load it into a table with a single VARIANT column named raw using `COPY INTO` with `FILE_FORMAT=(TYPE=JSON)`, then query nested fields with `SELECT raw:customer.id, raw:customer.address.city FROM <your_table>;`.\n6. **Explode an array:** Run `SELECT value:item_id, value:qty FROM <your_table>, LATERAL FLATTEN(input => raw:line_items);` to get one row per line item.\n7. **Check clustering:** Create a larger working table with `CREATE TABLE retail_lakehouse.bronze.orders AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS;`, then run `SELECT SYSTEM$CLUSTERING_INFORMATION('retail_lakehouse.bronze.orders', '(o_orderdate)');` and read the clustering depth. Note why a manual clustering key is premature at this volume and would cost credits without benefit.\n8. **Write the comparison:** In `docs/day03_data_protection.md`, compare Time Travel, Fail-safe and zero-copy cloning, and say when you'd reach for each.\n9. **Ship to your repo:** Save the worksheets as `sql/day03_time_travel_clone.sql` and `sql/day03_semi_structured.sql`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which command brings back a dropped table? (one word)\n2. Which data type stores a whole JSON document in a single column? (one word)\n3. How many days of Fail-safe does a permanent table get after its Time Travel period ends? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "dropped table recovery command",
+          "value": "UNDROP",
+          "caseInsensitive": true
+        },
+        {
+          "check": "semi-structured data type",
+          "value": "VARIANT",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Fail-safe days for permanent tables",
+          "value": "7",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day03_time_travel_clone.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day03_time_travel_clone.sql"
+        },
+        {
+          "check": "worksheet recovers a table with UNDROP",
+          "kind": "contentMatches",
+          "path": "sql/day03_time_travel_clone.sql",
+          "regex": "UNDROP|undrop"
+        },
+        {
+          "check": "sql/day03_semi_structured.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day03_semi_structured.sql"
+        },
+        {
+          "check": "worksheet explodes an array with FLATTEN",
+          "kind": "contentMatches",
+          "path": "sql/day03_semi_structured.sql",
+          "regex": "FLATTEN|flatten"
+        },
+        {
+          "check": "docs/day03_data_protection.md exists",
+          "kind": "fileExists",
+          "path": "docs/day03_data_protection.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Recover data with Time Travel AT and BEFORE queries and UNDROP",
+      "Create independent zero-copy clones and explain copy-on-write storage",
+      "Load and query nested JSON with VARIANT, dot notation and FLATTEN",
+      "Read clustering depth and judge when a clustering key is premature"
+    ],
+    "tools": [
+      "Snowsight",
+      "SQL",
+      "JSON",
+      "GitHub"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 4,
+    "moduleNumber": 2,
+    "title": "Data Loading & Connectivity",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Data Loading & Connectivity\n\n**Load data into Bronze using every major Snowflake ingestion pattern \u2014 batch, continuous and streaming**\n\nA real lakehouse is fed by several sources at once: nightly partner files, event streams, one-off backfills. Today you load Bronze with `COPY INTO`, wire up a Snowpipe, query data in place, and write down which ingestion tool fits which job.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Data Loading and Connectivity (18%); SnowPro Advanced: Data Engineer \u2014 Data Ingestion and Preparation (17%)\n\n**Concepts to learn**\n\n- **Stages** \u2014 internal vs external stages, file formats and the `PUT` command\n- **Batch loading with COPY INTO** \u2014 idempotent, incremental loads tracked through load history\n- **Snowpipe** \u2014 event-driven, serverless continuous ingestion from cloud storage\n- **Snowpipe Streaming** \u2014 low-latency row-level ingestion through an API, with no stage required\n- **Openflow** \u2014 Snowflake's managed, extensible data integration service for SaaS, database and streaming sources\n- **External tables** \u2014 reading data in place in cloud storage without loading it\n\n**Deliverable:** Bronze tables loaded via COPY INTO and a configured Snowpipe, one external table queried in place (or its exact definition documented), and a written ingestion-method decision table.\n\n### Build steps\n\n1. **Create an internal stage:** Run `CREATE STAGE bronze_stage;`, then `PUT` a small synthetic products CSV to it from the Snowflake CLI (or upload it in Snowsight) and confirm it appears with `LIST @bronze_stage;`.\n2. **Load with COPY INTO:** Create `retail_lakehouse.bronze.products` to match your CSV, define a file format with `CREATE FILE FORMAT csv_ff TYPE=CSV SKIP_HEADER=1;`, and load it with `COPY INTO retail_lakehouse.bronze.products FROM @bronze_stage FILE_FORMAT=(FORMAT_NAME=csv_ff);`. Run the load twice and confirm the second run loads zero new rows, because load history makes COPY INTO idempotent.\n3. **Set up a Snowpipe:** Create a pipe that reads its own folder of the stage: `CREATE PIPE bronze_pipe AS COPY INTO retail_lakehouse.bronze.products FROM @bronze_stage/pipe/ FILE_FORMAT=(FORMAT_NAME=csv_ff);`. Stage one more CSV under `@bronze_stage/pipe/`, trigger the pipe with `ALTER PIPE bronze_pipe REFRESH;`, and check `SELECT SYSTEM$PIPE_STATUS('bronze_pipe');` until the rows land. On an external cloud stage with event notifications you would add `AUTO_INGEST=TRUE` so it loads automatically. Keep bulk loads and Snowpipe on separate files, because they keep separate load history and could load the same file twice.\n4. **Compare with Snowpipe Streaming:** Read how Snowpipe Streaming ingests individual rows through an API with no file staging step, and add a comment explaining when you'd choose it over Snowpipe, for example a service emitting individual events vs files landing periodically.\n5. **Explore Openflow:** Open the Openflow (or Add Data) section in Snowsight and browse the connector catalog of SaaS apps, databases and Kafka or Kinesis sources. Note when a managed Openflow connector beats writing COPY INTO or Snowpipe yourself.\n6. **Query data in place:** External tables need an external stage, a cloud storage location you own or a public bucket. Create one with `CREATE EXTERNAL TABLE ... LOCATION=@<external_stage> FILE_FORMAT=(...);`, query it without loading, and compare its latency with your loaded products table. If you have no bucket, write the exact statement you would run and explain what would change.\n7. **Write the decision table:** In `docs/day04_ingestion_decisions.md`, name the best-fit ingestion tool and why for three scenarios: a partner drops CSVs into cloud storage nightly, an application emits individual events continuously, and a one-time historical backfill from files already in cloud storage.\n8. **Ship to your repo:** Save the worksheets as `sql/day04_copy_into.sql` and `sql/day04_snowpipe.sql`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which command uploads a local file to an internal stage? (one word)\n2. For how many days does a table's load metadata remember which files `COPY INTO` already loaded? (number)\n3. Complete the statement: `CREATE ___ bronze_pipe AS COPY INTO ...` (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "upload command",
+          "value": "PUT",
+          "caseInsensitive": true
+        },
+        {
+          "check": "load metadata retention days",
+          "value": "64",
+          "caseInsensitive": true
+        },
+        {
+          "check": "continuous ingestion object",
+          "value": "PIPE",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day04_copy_into.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day04_copy_into.sql"
+        },
+        {
+          "check": "worksheet loads with COPY INTO",
+          "kind": "contentMatches",
+          "path": "sql/day04_copy_into.sql",
+          "regex": "COPY INTO|copy into"
+        },
+        {
+          "check": "sql/day04_snowpipe.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day04_snowpipe.sql"
+        },
+        {
+          "check": "worksheet creates a pipe",
+          "kind": "contentMatches",
+          "path": "sql/day04_snowpipe.sql",
+          "regex": "PIPE|pipe"
+        },
+        {
+          "check": "docs/day04_ingestion_decisions.md exists",
+          "kind": "fileExists",
+          "path": "docs/day04_ingestion_decisions.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Load Bronze idempotently with stages, file formats and COPY INTO",
+      "Configure a Snowpipe and explain event-driven continuous ingestion",
+      "Choose between COPY INTO, Snowpipe, Snowpipe Streaming, Openflow and external tables",
+      "Query data in place with an external table and compare it with loaded data"
+    ],
+    "tools": [
+      "Snowsight",
+      "Snowflake CLI",
+      "SQL",
+      "GitHub"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 5,
+    "moduleNumber": 2,
+    "title": "Streams, Tasks & Dynamic Tables",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Streams, Tasks & Dynamic Tables\n\n**Track changes with Streams, schedule work with Tasks, and build declarative incremental pipelines with Dynamic Tables**\n\nBronze receives data; today it starts flowing to Silver and Gold on its own. You build the same pipeline twice \u2014 hand-wired with a Stream and Tasks, then declaratively with Dynamic Tables \u2014 so you can defend either choice on a real team.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Data Transformation and Modeling (23%); Automation\n\n**Concepts to learn**\n\n- **Streams** \u2014 change data capture on a table, with INSERT, UPDATE and DELETE tracked through metadata columns\n- **Tasks** \u2014 scheduled or triggered SQL and procedural execution, standalone or chained\n- **Task graphs (DAGs)** \u2014 predecessor and successor tasks, and conditional execution with `WHEN`\n- **Dynamic Tables** \u2014 declarative, incrementally refreshed tables defined by a target lag instead of a schedule\n- **Choosing an approach** \u2014 hand-built Streams and Tasks vs declarative Dynamic Tables\n\n**Deliverable:** a working Stream + Task CDC pipeline with a two-task DAG, and a separate declarative two-layer Dynamic Table pipeline over the same data, both verified end to end.\n\n### Build steps\n\n1. **Create a stream:** Run `CREATE STREAM products_stream ON TABLE retail_lakehouse.bronze.products;`. Insert and update a few rows in the source table, then run `SELECT * FROM products_stream;` and find the `METADATA$ACTION` and `METADATA$ISUPDATE` columns showing what changed.\n2. **Merge changes with a task:** Create `retail_lakehouse.silver.products`, then a task that consumes the stream: `CREATE TASK sync_products_task WAREHOUSE=learn_wh SCHEDULE='5 MINUTE' WHEN SYSTEM$STREAM_HAS_DATA('products_stream') AS MERGE INTO retail_lakehouse.silver.products AS tgt USING (SELECT * FROM products_stream WHERE NOT (METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE)) AS src ON tgt.product_id = src.product_id WHEN MATCHED AND src.METADATA$ACTION = 'DELETE' THEN DELETE WHEN MATCHED THEN UPDATE SET ... WHEN NOT MATCHED THEN INSERT ...;`. An update shows up in a stream as a DELETE plus an INSERT, so the filter keeps each product from matching twice. Resume it with `ALTER TASK sync_products_task RESUME;` (your role needs the EXECUTE TASK privilege) and confirm it runs on schedule.\n3. **Chain a second task:** Suspend the root with `ALTER TASK sync_products_task SUSPEND;`, create `CREATE TASK gold_refresh_task WAREHOUSE=learn_wh AFTER sync_products_task AS ...;`, resume the child and then the root, and check the graph in Snowsight's task graph view or with `SHOW TASKS;`.\n4. **Rebuild it declaratively:** Run `CREATE DYNAMIC TABLE retail_lakehouse.silver.products_dt TARGET_LAG='5 minutes' WAREHOUSE=learn_wh AS SELECT ... FROM retail_lakehouse.bronze.products;`. Change a row in bronze.products and watch the dynamic table refresh automatically within its target lag.\n5. **Stack a Gold dynamic table:** Build a Gold aggregate dynamic table on top of `products_dt` with the same TARGET_LAG pattern, and confirm Snowflake works out the refresh order across the two dynamic tables without an explicit DAG.\n6. **Compare the two pipelines:** In `docs/day05_pipeline_comparison.md`, write three differences between the Stream + Task pipeline and the Dynamic Table pipeline, and when you'd choose each on a real team.\n7. **Save your credits:** Suspend both tasks with `ALTER TASK ... SUSPEND;` and the dynamic tables with `ALTER DYNAMIC TABLE ... SUSPEND;` when you're done, so they stop spending trial credits.\n8. **Ship to your repo:** Save the worksheets as `sql/day05_streams_tasks.sql` and `sql/day05_dynamic_tables.sql`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which stream metadata column tells you whether a change is an INSERT or a DELETE? (column name)\n2. Which function in a task's `WHEN` clause skips the run when the stream has no new changes? (function name, no brackets)\n3. Which dynamic table parameter sets how far behind its sources the table may fall? (parameter name)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "stream action column",
+          "value": "METADATA$ACTION",
+          "caseInsensitive": true
+        },
+        {
+          "check": "stream has data function",
+          "value": "SYSTEM$STREAM_HAS_DATA",
+          "caseInsensitive": true
+        },
+        {
+          "check": "dynamic table freshness parameter",
+          "value": "TARGET_LAG",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day05_streams_tasks.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day05_streams_tasks.sql"
+        },
+        {
+          "check": "worksheet creates a stream",
+          "kind": "contentMatches",
+          "path": "sql/day05_streams_tasks.sql",
+          "regex": "STREAM|stream"
+        },
+        {
+          "check": "sql/day05_dynamic_tables.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day05_dynamic_tables.sql"
+        },
+        {
+          "check": "worksheet sets a target lag",
+          "kind": "contentMatches",
+          "path": "sql/day05_dynamic_tables.sql",
+          "regex": "TARGET_LAG|target_lag"
+        },
+        {
+          "check": "docs/day05_pipeline_comparison.md exists",
+          "kind": "fileExists",
+          "path": "docs/day05_pipeline_comparison.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Capture change data with Streams and read their metadata columns",
+      "Schedule a stream-driven MERGE with a Task and chain tasks into a DAG",
+      "Build a two-layer declarative pipeline with Dynamic Tables and a target lag",
+      "Defend when to use Streams and Tasks vs Dynamic Tables"
+    ],
+    "tools": [
+      "Snowsight",
+      "SQL",
+      "Streams & Tasks",
+      "Dynamic Tables"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 6,
+    "moduleNumber": 2,
+    "title": "Data Modeling & Snowpark Python Transformations",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Data Modeling & Snowpark Python Transformations\n\n**Build Silver and Gold layers with both Snowflake SQL and Snowpark's Python DataFrame API**\n\nYour orders get cleaned, deduplicated and aggregated into the Gold tables every later day depends on. You write the transformation twice \u2014 in SQL and in Snowpark Python \u2014 then package logic as a Python UDF and a stored procedure.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Data Transformation and Modeling (23%); Advanced Development (Snowpark)\n\n**Concepts to learn**\n\n- **Snowpark** \u2014 a DataFrame API for Python, Java and Scala that pushes execution down to Snowflake's engine, so no data leaves the warehouse\n- **Snowpark DataFrames vs Snowflake SQL** \u2014 when to reach for each\n- **UDFs, UDTFs and stored procedures** \u2014 extending Snowflake with Python\n- **Silver and Gold layers** \u2014 cleaned, conformed data vs business-level aggregates\n- **Joins, window functions and deduplication** \u2014 the same patterns in Snowflake SQL and Snowpark\n\n**Deliverable:** Silver and Gold tables built two ways \u2014 Snowflake SQL and the Snowpark Python DataFrame API \u2014 plus a working Python UDF and a stored procedure encapsulating your transformation.\n\n### Build steps\n\n1. **Start a Snowpark session:** Install the library locally with `pip install snowflake-snowpark-python` (or use a Snowflake Notebook in Snowsight) and create a session with `Session.builder.configs(connection_params).create()` after `from snowflake.snowpark import Session`.\n2. **Build Silver in SQL:** Read from bronze, clean nulls, deduplicate with `QUALIFY ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...) = 1`, cast types correctly, and write the result to `silver.orders` as a managed table.\n3. **Rebuild it in Snowpark:** Recreate the same transformation with the DataFrame API, for example `session.table('bronze.orders').drop_duplicates('order_id').filter(...)` saved with `.write.mode('overwrite').save_as_table('silver.orders_snowpark')`. Compare `df.explain()` with the plan of your SQL version. Adapt column names to your table.\n4. **Practice joins and windows:** Join orders to products (inner and left) and compute a running total or rank with `ROW_NUMBER`, `RANK` or `SUM(...) OVER (PARTITION BY ... ORDER BY ...)`, in both SQL and Snowpark.\n5. **Build a Gold aggregate:** Group by category to compute total revenue, order count and `APPROX_COUNT_DISTINCT(customer_id)` per category, and write it as `gold.category_summary`.\n6. **Register a Python UDF:** Write a function SQL can't easily express, such as a custom text-cleaning function, register it with `@udf(name='clean_text', ...)`, and use it in a `SELECT`.\n7. **Wrap it in a stored procedure:** Package your bronze-to-silver transformation as a callable unit with `CREATE PROCEDURE ... LANGUAGE PYTHON ...` and run it with `CALL <your_procedure>();`.\n8. **Ship to your repo:** Save `sql/day06_silver_gold.sql`, `python/day06_snowpark_transform.py` and `python/day06_udf_procedure.py` (copy notebook cells into the .py files if you worked in a notebook), commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which clause filters on a window function without a subquery, as in `___ ROW_NUMBER() OVER (...) = 1`? (one word)\n2. Which pip package installs the Snowpark Python library? (package name)\n3. Which SQL command runs a stored procedure? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "window filter clause",
+          "value": "QUALIFY",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Snowpark pip package",
+          "value": "snowflake-snowpark-python",
+          "caseInsensitive": true
+        },
+        {
+          "check": "stored procedure command",
+          "value": "CALL",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day06_silver_gold.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day06_silver_gold.sql"
+        },
+        {
+          "check": "SQL deduplicates with QUALIFY",
+          "kind": "contentMatches",
+          "path": "sql/day06_silver_gold.sql",
+          "regex": "QUALIFY|qualify"
+        },
+        {
+          "check": "python/day06_snowpark_transform.py exists",
+          "kind": "fileExists",
+          "path": "python/day06_snowpark_transform.py"
+        },
+        {
+          "check": "Snowpark script saves a table",
+          "kind": "contentMatches",
+          "path": "python/day06_snowpark_transform.py",
+          "regex": "save_as_table|saveAsTable"
+        },
+        {
+          "check": "python/day06_udf_procedure.py exists",
+          "kind": "fileExists",
+          "path": "python/day06_udf_procedure.py"
+        }
+      ]
+    },
+    "objectives": [
+      "Build Silver and Gold layers in Snowflake SQL with deduplication and window functions",
+      "Rebuild the same transformation with the Snowpark Python DataFrame API",
+      "Register a Python UDF and a Python stored procedure",
+      "Decide when Snowpark beats plain SQL and when it doesn't"
+    ],
+    "tools": [
+      "Snowpark Python",
+      "Snowflake Notebooks",
+      "SQL",
+      "GitHub"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 7,
+    "moduleNumber": 3,
+    "title": "Orchestration \u2014 Task DAGs & dbt Projects on Snowflake",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Orchestration \u2014 Task DAGs & dbt Projects on Snowflake\n\n**Move from a couple of hand-wired tasks to a properly orchestrated, monitored pipeline \u2014 including running dbt natively inside Snowflake**\n\nYour Day 5 pipeline grows into a three-step DAG with serverless compute, and your models move into a Git-backed dbt project that Snowflake runs for you \u2014 no external orchestrator required.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Automation (Tasks, Snowflake Scripting)\n\n**Concepts to learn**\n\n- **Task graphs at scale** \u2014 multiple predecessors, error handling and task history\n- **Serverless vs warehouse-based tasks** \u2014 who manages the compute and how each is billed\n- **dbt Projects on Snowflake** \u2014 dbt Core running natively inside Snowflake via Workspaces, with no external orchestrator\n- **Workspaces** \u2014 Git-backed development and editing of dbt projects directly in Snowsight\n- **Monitoring** \u2014 task and dbt run history for failures and duration trends\n\n**Deliverable:** a three-step Task DAG with both warehouse-based and serverless tasks, plus a Git-backed dbt project running natively inside Snowflake via Workspaces, including one deliberately diagnosed failure.\n\n### Build steps\n\n1. **Extend the DAG to three steps:** Build a bronze ingestion task, a silver merge task that runs AFTER it, and a gold refresh task that runs AFTER the silver task. Confirm the full chain runs with `SELECT * FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY()) ORDER BY SCHEDULED_TIME DESC;`.\n2. **Go serverless:** Recreate the bronze ingestion task without the WAREHOUSE clause so Snowflake manages the compute (your role needs the EXECUTE MANAGED TASK privilege), and compare its behavior and cost model with your warehouse-based tasks.\n3. **Create a Workspace:** In Snowsight open Projects \u2192 Workspaces \u2192 Create from Git repository and link your program repo. Initialize a minimal dbt project inside a `dbt/` folder, not the repo root: `dbt/dbt_project.yml`, `dbt/profiles.yml` (no passwords), one staging model `dbt/models/staging/stg_orders.sql` and one mart model `dbt/models/marts/category_revenue.sql`, targeting retail_lakehouse.\n4. **Run dbt inside Snowflake:** Run `dbt run` from the Workspace editor and confirm the resulting tables appear under your target schema.\n5. **Deploy the project:** Deploy the dbt project as a Snowflake object with the Workspace deploy action (or `CREATE DBT PROJECT ... FROM ...;`) so it can run on a schedule or from the Snowflake CLI, not just interactively.\n6. **Break it on purpose:** Typo a column reference in one model, run it, and find the failure in the dbt project's run history in Snowsight. This is the same monitoring muscle you'll use for every production pipeline. Then fix the model.\n7. **Compare the approaches:** In `docs/day07_dag_vs_dbt.md`, write three differences between the hand-built Task DAG and dbt Projects on Snowflake, and when you'd reach for each.\n8. **Ship to your repo:** Save `sql/day07_task_dag.sql`, make sure the fixed `dbt/` project is committed, and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which keyword makes a task run once another task finishes, as in `CREATE TASK gold_refresh_task ... ___ silver_merge_task`? (one word)\n2. Which clause do you leave out of `CREATE TASK` to make the task serverless? (one word)\n3. What is the file name of a dbt project's main configuration file? (file name with extension)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "task dependency keyword",
+          "value": "AFTER",
+          "caseInsensitive": true
+        },
+        {
+          "check": "clause removed for serverless tasks",
+          "value": "WAREHOUSE",
+          "caseInsensitive": true
+        },
+        {
+          "check": "dbt project config file",
+          "value": "dbt_project.yml",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day07_task_dag.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day07_task_dag.sql"
+        },
+        {
+          "check": "DAG worksheet chains tasks with AFTER",
+          "kind": "contentMatches",
+          "path": "sql/day07_task_dag.sql",
+          "regex": "AFTER|after"
+        },
+        {
+          "check": "dbt/dbt_project.yml exists",
+          "kind": "fileExists",
+          "path": "dbt/dbt_project.yml"
+        },
+        {
+          "check": "dbt/models/staging/stg_orders.sql exists",
+          "kind": "fileExists",
+          "path": "dbt/models/staging/stg_orders.sql"
+        },
+        {
+          "check": "dbt/models/marts/category_revenue.sql exists",
+          "kind": "fileExists",
+          "path": "dbt/models/marts/category_revenue.sql"
+        },
+        {
+          "check": "docs/day07_dag_vs_dbt.md exists",
+          "kind": "fileExists",
+          "path": "docs/day07_dag_vs_dbt.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Orchestrate a three-step Task DAG and read its task history",
+      "Compare serverless and warehouse-based tasks on behavior and cost",
+      "Run and deploy a Git-backed dbt project natively in Snowflake Workspaces",
+      "Diagnose a failed run from the run history"
+    ],
+    "tools": [
+      "Snowflake Tasks",
+      "dbt Projects on Snowflake",
+      "Workspaces",
+      "GitHub"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 8,
+    "moduleNumber": 3,
+    "title": "CI/CD \u2014 Git Integration, Snowflake CLI & Schema Change Management",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: CI/CD \u2014 Git Integration, Snowflake CLI & Schema Change Management\n\n**Move from clicking around Snowsight to deploying database objects as versioned code across dev and prod**\n\nToday your lakehouse becomes code. Versioned migration scripts live in your repo, the Snowflake CLI applies them to dev and prod, and a GitHub Actions workflow does it automatically on every push and merge.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Collaboration (10%); SnowPro Advanced: Data Engineer \u2014 DevOps and CI/CD practices\n\n**Concepts to learn**\n\n- **Git integration** \u2014 a Git repository object in Snowflake connected directly to a GitHub or GitLab repo\n- **The Snowflake CLI (snow)** \u2014 authentication, connections, and running SQL or deploying objects from the command line\n- **Schema change management** \u2014 versioned SQL migration scripts and idempotent DDL\n- **CI/CD with GitHub Actions** \u2014 validating and deploying Snowflake changes automatically on merge\n- **Environment promotion** \u2014 moving changes from a dev database or schema to prod\n\n**Deliverable:** a Git repository integration in Snowflake, versioned SQL migration scripts deployed to both a dev and a prod schema via the Snowflake CLI, and a working GitHub Actions CI/CD workflow.\n\n### Build steps\n\n1. **Install the Snowflake CLI:** Install it with `pip install snowflake-cli` (or the platform installer) and configure a named connection with `snow connection add`.\n2. **Connect your repo to Snowflake:** Create an API integration for GitHub, then `CREATE GIT REPOSITORY my_repo API_INTEGRATION=... ORIGIN='https://github.com/<you>/<repo>.git';` and list its contents from SQL with `LIST @my_repo/branches/main;`.\n3. **Write versioned migrations:** Add `migrations/001_create_bronze_tables.sql` and `migrations/002_add_masking_policy.sql` with idempotent DDL (`CREATE ... IF NOT EXISTS` or `CREATE OR REPLACE`), and run them against a dev schema with `snow sql -f migrations/001_create_bronze_tables.sql -c dev_connection`.\n4. **Promote to prod:** Create a separate prod schema (or database), re-run the same scripts through a second connection, and confirm both environments end up with identical objects from the same source-controlled scripts.\n5. **Automate with GitHub Actions:** Write `.github/workflows/deploy.yml` that installs the Snowflake CLI and runs your migrations against dev on every push to a feature branch, and against prod on merge to main. Store credentials in GitHub Actions secrets, using key-pair authentication or a programmatic access token rather than a password, and never commit them.\n6. **Ship a change through the pipeline:** Make a change on a branch, push it and watch the Action run against dev, then open a pull request, merge it, and confirm the prod deploy step ran after the merge.\n7. **Write the hardening note:** In `docs/day08_cicd_notes.md`, list what you'd add before trusting this pipeline with a real team, such as required review approvals before merge, a rollback-script convention, or dbt Projects on Snowflake deploy hooks instead of raw SQL scripts.\n8. **Ship to your repo:** Make sure the migrations, workflow and note are on your default branch (merging your pull request puts them there). Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What command name do you type to run the Snowflake CLI? (one word)\n2. Complete the path of your workflow file: `.github/___/deploy.yml` (one word)\n3. Which `snow` subcommand runs a SQL file, as in `snow ___ -f migrations/001_create_bronze_tables.sql`? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "Snowflake CLI command",
+          "value": "snow",
+          "caseInsensitive": true
+        },
+        {
+          "check": "GitHub Actions workflow folder",
+          "value": "workflows",
+          "caseInsensitive": true
+        },
+        {
+          "check": "CLI subcommand for SQL files",
+          "value": "sql",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "migrations/001_create_bronze_tables.sql exists",
+          "kind": "fileExists",
+          "path": "migrations/001_create_bronze_tables.sql"
+        },
+        {
+          "check": "migrations/002_add_masking_policy.sql exists",
+          "kind": "fileExists",
+          "path": "migrations/002_add_masking_policy.sql"
+        },
+        {
+          "check": ".github/workflows/deploy.yml exists",
+          "kind": "fileExists",
+          "path": ".github/workflows/deploy.yml"
+        },
+        {
+          "check": "workflow runs the Snowflake CLI",
+          "kind": "contentMatches",
+          "path": ".github/workflows/deploy.yml",
+          "regex": "snowflake-cli|snow sql"
+        },
+        {
+          "check": "docs/day08_cicd_notes.md exists",
+          "kind": "fileExists",
+          "path": "docs/day08_cicd_notes.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Connect a GitHub repo to Snowflake with a Git repository object",
+      "Deploy versioned, idempotent migrations to dev and prod with the Snowflake CLI",
+      "Automate Snowflake deployments with a GitHub Actions workflow",
+      "Name the guardrails a team needs before trusting the pipeline"
+    ],
+    "tools": [
+      "Snowflake CLI",
+      "Git",
+      "GitHub Actions",
+      "SQL"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 9,
+    "moduleNumber": 3,
+    "title": "Performance Optimization, Query Profiling & Cost Monitoring",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Performance Optimization, Query Profiling & Cost Monitoring\n\n**Learn to read the Query Profile like a mechanic reads a dashboard, and keep your trial credits \u2014 and a future production bill \u2014 under control**\n\nEvery pipeline you've built so far spends credits. Today you make queries slow on purpose, diagnose them from the Query Profile, fix them, and put a Resource Monitor between your warehouse and your $400 trial budget.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Performance (21%); SnowPro Advanced: Data Engineer \u2014 Performance Optimization and Monitoring\n\n**Concepts to learn**\n\n- **Reading the Query Profile** \u2014 the operator graph, most expensive nodes, and bytes scanned vs bytes spilled\n- **Caching** \u2014 result cache, metadata cache and warehouse (local disk) cache, and what each does and doesn't help\n- **Diagnosing slow queries** \u2014 spilling to local or remote storage, exploding joins and full table scans\n- **Warehouse sizing and scaling** \u2014 multi-cluster scaling policies (Standard vs Economy)\n- **Query Acceleration and Search Optimization** \u2014 what each service is for and when it helps\n- **Resource Monitors** \u2014 credit quotas with notify, suspend and suspend-immediate actions\n\n**Deliverable:** a documented before/after performance fix using the Query Profile (spill or cache behavior), a configured Resource Monitor protecting your trial credits, and a written diagnosis of your slowest pipeline run.\n\n### Build steps\n\n1. **Profile a slow query:** Run a deliberately inefficient query, such as a join missing a filter or a `SELECT *` with an ORDER BY over a large TPC-H table, then open its Query Profile, find the most expensive operator node and read its statistics panel.\n2. **Hit the result cache:** Run the exact same query twice in a row and compare execution times. Identify the result cache hit on the second run, and explain in a comment why the cache only applies to identical SQL text over unchanged underlying data.\n3. **Make a query spill:** Run `ALTER SESSION SET USE_CACHED_RESULT = FALSE;`, then a large sort or aggregation on the XSMALL warehouse (for example over `SNOWFLAKE_SAMPLE_DATA.TPCH_SF10.LINEITEM`), and look for bytes spilled to local storage in the profile. Re-run the identical query on a larger warehouse and compare.\n4. **Resize on the fly:** Run `ALTER WAREHOUSE learn_wh SET WAREHOUSE_SIZE='SMALL';`, re-run a heavier query, then set it back to XSMALL. Resizing is an any-time, no-downtime change in Snowflake.\n5. **Protect your credits:** Create a monitor with `CREATE RESOURCE MONITOR trial_budget WITH CREDIT_QUOTA=50 TRIGGERS ON 75 PERCENT DO NOTIFY ON 100 PERCENT DO SUSPEND;` and assign it with `ALTER WAREHOUSE learn_wh SET RESOURCE_MONITOR=trial_budget;`.\n6. **Review your spend:** Open Admin \u2192 Cost Management, review credit consumption by warehouse for the program so far, and note which day's exercises cost the most and why.\n7. **Diagnose your pipeline:** In `docs/day09_performance_diagnosis.md`, pick the slowest run of your Day 5 or Day 7 pipeline, open its profile, and write three bullets: what was slow, why, and what you'd change (warehouse size, clustering, a query rewrite or Query Acceleration Service).\n8. **Ship to your repo:** Save `sql/day09_performance.sql` and `sql/day09_resource_monitor.sql`, add a screenshot of the slow query's profile as `screenshots/day09_query_profile.png`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. For how many hours is a query result kept in the result cache after it was last used? (number)\n2. Which multi-cluster scaling policy saves credits by keeping running clusters fully loaded before starting new ones? (one word)\n3. In `trial_budget`, which action runs at 100 percent of the credit quota? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "result cache retention hours",
+          "value": "24",
+          "caseInsensitive": true
+        },
+        {
+          "check": "credit-saving scaling policy",
+          "value": "Economy",
+          "caseInsensitive": true
+        },
+        {
+          "check": "action at 100 percent",
+          "value": "SUSPEND",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day09_performance.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day09_performance.sql"
+        },
+        {
+          "check": "sql/day09_resource_monitor.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day09_resource_monitor.sql"
+        },
+        {
+          "check": "worksheet creates a resource monitor",
+          "kind": "contentMatches",
+          "path": "sql/day09_resource_monitor.sql",
+          "regex": "RESOURCE MONITOR|resource monitor"
+        },
+        {
+          "check": "screenshots/day09_query_profile.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day09_query_profile.png"
+        },
+        {
+          "check": "docs/day09_performance_diagnosis.md exists",
+          "kind": "fileExists",
+          "path": "docs/day09_performance_diagnosis.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Find the most expensive operator and spilling in a Query Profile",
+      "Explain result, metadata and warehouse caching",
+      "Resize warehouses and choose a multi-cluster scaling policy",
+      "Cap spend with a Resource Monitor and review costs in Cost Management"
+    ],
+    "tools": [
+      "Query Profile",
+      "Resource Monitors",
+      "Cost Management",
+      "SQL"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 10,
+    "moduleNumber": 4,
+    "title": "Snowsight Dashboards, Streamlit in Snowflake & Cortex Analyst",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Snowsight Dashboards, Streamlit in Snowflake & Cortex Analyst\n\n**Turn your Gold tables into dashboards, a native interactive app, and a natural-language Q&A experience business users can self-serve from**\n\nGold data only matters when people use it. Today your lakehouse gets three front doors: a Snowsight dashboard, a Streamlit app hosted inside Snowflake, and Cortex Analyst answering questions in plain English \u2014 all under the same governance.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Collaboration (10%)\n\n**Concepts to learn**\n\n- **Snowsight Dashboards** \u2014 tiles backed by worksheet queries, filters and refresh schedules\n- **Streamlit in Snowflake** \u2014 building and hosting interactive Python data apps natively, with no separate deployment\n- **Cortex Analyst** \u2014 a YAML semantic model that lets an LLM translate natural-language questions into governed SQL\n- **Verified queries** \u2014 curating the semantic model so Cortex Analyst's SQL stays accurate\n\n**Deliverable:** a Snowsight Dashboard with at least 3 tiles, an interactive Streamlit in Snowflake app, and a working Cortex Analyst semantic model answering natural-language questions correctly against your Gold tables.\n\n### Build steps\n\n1. **Build a dashboard:** Write and save a query against `gold.category_summary`, then build a Snowsight Dashboard with at least 3 tiles sourced from your Gold tables: a bar chart of revenue by category, a line chart of orders over time and a KPI number tile.\n2. **Create a Streamlit app:** Open Projects \u2192 Streamlit \u2192 + Streamlit App and write a small Python app that queries a Gold table with `session.table(...).to_pandas()` and renders a chart and a filter widget. It runs directly inside Snowsight with no external hosting.\n3. **Make it interactive:** Add an `st.selectbox` that lets the user filter by category, re-querying Snowflake live as the selection changes.\n4. **Define a semantic model:** Write a YAML file describing your Gold tables, their columns and synonyms, plus 2\u20133 verified example questions with their correct SQL, and register it as a semantic model in Snowsight.\n5. **Ask Cortex Analyst:** Open the Cortex Analyst chat, point it at your semantic model, and ask 3 natural-language questions you didn't pre-write as verified queries. For each one, check the generated SQL queried the right tables and didn't hallucinate a column.\n6. **Share safely:** Share your dashboard with a read-only role (or note how you would), and explain in one sentence why Cortex Analyst's answers are governed by the same RBAC and masking policies as any other query in Snowflake.\n7. **Ship to your repo:** Commit the app as `streamlit/day10_app.py`, the semantic model as `semantic_models/retail_semantic_model.yaml`, the tile queries as `sql/day10_dashboard.sql` and a dashboard screenshot as `screenshots/day10_dashboard.png`, then push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which file format is a Cortex Analyst semantic model written in? (one word)\n2. Which Streamlit widget gives the user a dropdown to pick one category (`st.___`)? (one word)\n3. Which Snowpark method turns query results into a pandas DataFrame in your app? (method name, no brackets)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "semantic model file format",
+          "value": "YAML",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Streamlit dropdown widget",
+          "value": "selectbox",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Snowpark to pandas method",
+          "value": "to_pandas",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "streamlit/day10_app.py exists",
+          "kind": "fileExists",
+          "path": "streamlit/day10_app.py"
+        },
+        {
+          "check": "app filters with a selectbox",
+          "kind": "contentMatches",
+          "path": "streamlit/day10_app.py",
+          "regex": "selectbox"
+        },
+        {
+          "check": "semantic_models/retail_semantic_model.yaml exists",
+          "kind": "fileExists",
+          "path": "semantic_models/retail_semantic_model.yaml"
+        },
+        {
+          "check": "semantic model parses as YAML",
+          "kind": "parsesAs",
+          "path": "semantic_models/retail_semantic_model.yaml",
+          "format": "yaml"
+        },
+        {
+          "check": "sql/day10_dashboard.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day10_dashboard.sql"
+        },
+        {
+          "check": "screenshots/day10_dashboard.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day10_dashboard.png"
+        }
+      ]
+    },
+    "objectives": [
+      "Build a Snowsight dashboard from Gold-table queries",
+      "Ship an interactive Streamlit in Snowflake app with a live filter",
+      "Write a Cortex Analyst semantic model with verified queries",
+      "Check LLM-generated SQL for accuracy and governance"
+    ],
+    "tools": [
+      "Snowsight Dashboards",
+      "Streamlit in Snowflake",
+      "Cortex Analyst",
+      "YAML"
+    ],
+    "estimatedMin": 165,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 11,
+    "moduleNumber": 5,
+    "title": "Snowpark ML Fundamentals \u2014 Notebooks, ML Functions & Model Development",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Snowpark ML Fundamentals \u2014 Notebooks, ML Functions & Model Development\n\n**Train your first models on Snowflake, without ever moving data out of the platform**\n\nYour Gold tables become training data. You forecast with a built-in ML function in plain SQL, then preprocess features and train a model with Snowpark ML \u2014 every step executes on Snowflake compute, right next to the data.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Advanced Development (Snowpark); supports Snowflake ML skills\n\n**Concepts to learn**\n\n- **Snowflake Notebooks** \u2014 an in-platform notebook with Python, SQL and Markdown cells backed by warehouse or Container Runtime compute\n- **Snowpark ML Modeling API** \u2014 scikit-learn-compatible estimators that push training down to Snowflake compute\n- **Built-in ML Functions** \u2014 forecasting, anomaly detection and classification callable from SQL with no model building\n- **Preprocessing at scale** \u2014 Snowpark ML's distributed encoders, scalers and imputers\n\n**Deliverable:** a Snowflake Notebook running a built-in ML Function, a Snowpark ML preprocessing pipeline, and a trained baseline model evaluated with a Snowpark ML metric \u2014 all executed inside Snowflake compute.\n\n### Build steps\n\n1. **Create a notebook:** Open Projects \u2192 Notebooks in Snowsight, create a Snowflake Notebook attached to learn_wh, and run a cell confirming your session can read retail_lakehouse.\n2. **Forecast with zero model building:** Build a daily-revenue view from your Gold orders, create a forecast model on it with `CREATE SNOWFLAKE.ML.FORECAST ...`, and call it with `CALL <model>!FORECAST(FORECASTING_PERIODS => 14);` (or try ANOMALY_DETECTION). Inspect the forecasted or flagged output.\n3. **Preprocess with Snowpark ML:** Load a feature set from your Gold tables into a Snowpark DataFrame and fit and transform it with `StandardScaler` and `OneHotEncoder` from `snowflake.ml.modeling.preprocessing`, without pulling the data into a local pandas DataFrame.\n4. **Train a baseline model:** Train `snowflake.ml.modeling.ensemble.RandomForestClassifier` using the same `.fit()` and `.predict()` interface as scikit-learn, executing inside Snowflake's compute.\n5. **Evaluate it:** Score the model with a Snowpark ML metric such as `accuracy_score` or `mean_squared_error` from `snowflake.ml.modeling.metrics` and print the result.\n6. **Explain the trade-off:** In `docs/day11_training_notes.md`, compare training the same model with Snowpark ML against a plain scikit-learn plus `to_pandas()` approach, in 2\u20133 sentences on why keeping training inside Snowflake matters for large datasets and for governance.\n7. **Ship to your repo:** Export the notebook as `notebooks/day11_snowpark_ml.ipynb`, save the ML Function SQL as `sql/day11_ml_functions.sql`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Complete the import: `from snowflake.___.modeling.preprocessing import StandardScaler` (one word)\n2. Which built-in ML function class forecasts a time series (`SNOWFLAKE.ML.___`)? (one word)\n3. Which method trains a Snowpark ML estimator, just like in scikit-learn? (method name, no brackets)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "Snowpark ML package segment",
+          "value": "ml",
+          "caseInsensitive": true
+        },
+        {
+          "check": "forecast ML function",
+          "value": "FORECAST",
+          "caseInsensitive": true
+        },
+        {
+          "check": "training method",
+          "value": "fit",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day11_snowpark_ml.ipynb exists",
+          "kind": "fileExists",
+          "path": "notebooks/day11_snowpark_ml.ipynb"
+        },
+        {
+          "check": "notebook is valid .ipynb",
+          "kind": "notebookParses",
+          "path": "notebooks/day11_snowpark_ml.ipynb"
+        },
+        {
+          "check": "sql/day11_ml_functions.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day11_ml_functions.sql"
+        },
+        {
+          "check": "worksheet calls an ML function",
+          "kind": "contentMatches",
+          "path": "sql/day11_ml_functions.sql",
+          "regex": "FORECAST|ANOMALY_DETECTION|forecast|anomaly_detection"
+        },
+        {
+          "check": "docs/day11_training_notes.md exists",
+          "kind": "fileExists",
+          "path": "docs/day11_training_notes.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Run a built-in ML Function from SQL with no model building",
+      "Preprocess features at scale with Snowpark ML transformers",
+      "Train and evaluate a baseline model on Snowflake compute",
+      "Explain why in-platform training matters for scale and governance"
+    ],
+    "tools": [
+      "Snowflake Notebooks",
+      "Snowpark ML",
+      "ML Functions",
+      "Python"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 12,
+    "moduleNumber": 5,
+    "title": "Feature Engineering & Snowflake Feature Store",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Feature Engineering & Snowflake Feature Store\n\n**Do proper exploratory data analysis, engineer features, and register them in a governed Feature Store with point-in-time correctness**\n\nYesterday's model trained on ad-hoc columns. Today you explore the data properly, engineer real features, and register them so every future model trains on the same governed, leakage-free definitions.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Data Transformation and Modeling (23%); Advanced Development (Snowpark)\n\n**Concepts to learn**\n\n- **Exploratory data analysis on Snowpark DataFrames** \u2014 `describe()`, approximate percentiles and null counts\n- **Feature engineering** \u2014 encoding categoricals, scaling and time-based features\n- **Snowflake Feature Store** \u2014 FeatureView objects backed by governed tables, with entity keys and refresh schedules\n- **Point-in-time correctness** \u2014 generating training sets that prevent label leakage\n\n**Deliverable:** a registered Entity and FeatureView in the Snowflake Feature Store with 2\u20133 engineered features, a point-in-time training set generated from it, and a re-trained model using those features.\n\n### Build steps\n\n1. **Explore the data:** Run `df.describe()` on your training dataset and count nulls per column, for example `df.select([count(when(col(c).is_null(), 1)).alias(c) for c in df.columns])` or an equivalent SQL query, and flag any columns with unexpected nulls or outliers.\n2. **Engineer features:** Build 2\u20133 new features: one categorical encoding (Snowpark ML's OneHotEncoder or OrdinalEncoder), one numeric transform (such as log-scaling a skewed revenue column) and one time-based feature (such as days since first order).\n3. **Register an entity:** Set up the client with `from snowflake.ml.feature_store import FeatureStore, Entity, FeatureView` and register a customer Entity with a customer_id join key.\n4. **Create a FeatureView:** Create `FeatureView(name='customer_features', entities=[customer_entity], feature_df=your_df, timestamp_col=..., refresh_freq='1 day')` and register it with `fs.register_feature_view(fv, version='1')`.\n5. **Generate a point-in-time training set:** Use `fs.generate_training_set()` (or `generate_dataset()`) to join your labels to the feature view as of each label's timestamp, and explain in a comment why this prevents label leakage compared with a plain join.\n6. **Retrain the model:** Retrain your Day 11 baseline on the Feature Store training set instead of ad-hoc columns, and compare its metric with yesterday's baseline.\n7. **Ship to your repo:** Export the notebook as `notebooks/day12_feature_store.ipynb`, write your EDA findings, feature list and before/after metric in `docs/day12_features.md`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Feature Store object defines the join key, such as `customer_id`? (one word)\n2. Which Feature Store class registers engineered features with a refresh frequency? (class name)\n3. Which DataFrame method returns count, mean, stddev, min and max for each column? (method name, no brackets)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "join key object",
+          "value": "Entity",
+          "caseInsensitive": true
+        },
+        {
+          "check": "feature registration class",
+          "value": "FeatureView",
+          "caseInsensitive": true
+        },
+        {
+          "check": "summary statistics method",
+          "value": "describe",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day12_feature_store.ipynb exists",
+          "kind": "fileExists",
+          "path": "notebooks/day12_feature_store.ipynb"
+        },
+        {
+          "check": "notebook is valid .ipynb",
+          "kind": "notebookParses",
+          "path": "notebooks/day12_feature_store.ipynb"
+        },
+        {
+          "check": "docs/day12_features.md exists",
+          "kind": "fileExists",
+          "path": "docs/day12_features.md"
+        },
+        {
+          "check": "notes explain leakage or point-in-time correctness",
+          "kind": "contentMatches",
+          "path": "docs/day12_features.md",
+          "regex": "leakage|point-in-time|point in time|Leakage|Point-in-time"
+        }
+      ]
+    },
+    "objectives": [
+      "Profile a dataset with Snowpark EDA before modeling",
+      "Engineer categorical, numeric and time-based features",
+      "Register an Entity and a versioned FeatureView in the Feature Store",
+      "Generate point-in-time correct training data and retrain the model"
+    ],
+    "tools": [
+      "Snowflake Feature Store",
+      "Snowpark ML",
+      "Snowflake Notebooks",
+      "Python"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 13,
+    "moduleNumber": 5,
+    "title": "Model Training, Registry & Deployment",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Model Training, Registry & Deployment\n\n**Tune a model properly, register it in the governed Snowflake Model Registry, and deploy it for batch and real-time inference**\n\nA notebook model isn't a product. Today it gets tuned, versioned, given a champion alias, and put to work scoring a whole table \u2014 plus a plan for catching drift before it hurts the business.\n\n**Exam alignment:** SnowPro Advanced: Data Engineer \u2014 Advanced Development (Snowpark); supports Snowflake ML deployment skills\n\n**Concepts to learn**\n\n- **Hyperparameter tuning** \u2014 Snowpark ML's GridSearchCV and RandomizedSearchCV, distributed inside Snowflake\n- **Evaluation metrics** \u2014 classification and regression metrics, and when to use each\n- **Snowflake Model Registry** \u2014 registering, versioning and tagging models, such as a default or production alias\n- **Deployment strategies** \u2014 batch inference through SQL or Snowpark, and real-time inference through a Registry-served function\n\n**Deliverable:** a model tuned with GridSearchCV, registered in the Snowflake Model Registry with a versioned default alias, and used for batch inference against a full table \u2014 plus notes on real-time deployment and drift monitoring.\n\n### Build steps\n\n1. **Tune it:** Wrap your Day 12 model in `GridSearchCV` from `snowflake.ml.modeling.model_selection`, sweep 2\u20133 hyperparameters, fit it, and inspect `best_params_` and `best_score_` (call `.to_sklearn()` on the fitted search to reach the scikit-learn attributes).\n2. **Pick the right metric:** Evaluate your best model with the metric that fits the problem type (F1 or AUC for classification, RMSE or MAE for regression) and write one sentence justifying why that metric fits the business problem.\n3. **Register the model:** Log it with `Registry(session=session).log_model(model, model_name='churn_model', version_name='v1', metrics={...})` after `from snowflake.ml.registry import Registry`.\n4. **Set the champion:** Set a default version or alias on the registered model so downstream consumers always call the current champion without hard-coding a version string.\n5. **Score in batch:** Score a whole table at once with `reg.get_model('churn_model').default.run(your_dataframe, function_name='predict')` and write the predictions to a new Gold table.\n6. **Explore real-time inference:** Read how a registered model is exposed as a callable function for row-by-row scoring, such as `churn_model!PREDICT(...)` in SQL, and run one test prediction that way if your trial allows it. If not, document the exact steps.\n7. **Plan for drift:** In `docs/day13_deployment_note.md`, describe the monitoring you'd add in production to detect model drift, such as comparing live prediction distributions with training-time distributions, before it becomes a business problem.\n8. **Ship to your repo:** Export the notebook as `notebooks/day13_registry.ipynb`, save the batch-scoring code as `python/day13_batch_inference.py`, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Snowpark ML class tries every combination in a hyperparameter grid? (class name)\n2. Which Registry method stores a trained model, as in `reg.___(model, model_name='churn_model', ...)`? (method name)\n3. What `version_name` do you give the first registered version of churn_model? (exact value)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "exhaustive search class",
+          "value": "GridSearchCV",
+          "caseInsensitive": true
+        },
+        {
+          "check": "registry logging method",
+          "value": "log_model",
+          "caseInsensitive": true
+        },
+        {
+          "check": "first version name",
+          "value": "v1",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day13_registry.ipynb exists",
+          "kind": "fileExists",
+          "path": "notebooks/day13_registry.ipynb"
+        },
+        {
+          "check": "notebook is valid .ipynb",
+          "kind": "notebookParses",
+          "path": "notebooks/day13_registry.ipynb"
+        },
+        {
+          "check": "python/day13_batch_inference.py exists",
+          "kind": "fileExists",
+          "path": "python/day13_batch_inference.py"
+        },
+        {
+          "check": "docs/day13_deployment_note.md exists",
+          "kind": "fileExists",
+          "path": "docs/day13_deployment_note.md"
+        },
+        {
+          "check": "deployment note covers drift",
+          "kind": "contentMatches",
+          "path": "docs/day13_deployment_note.md",
+          "regex": "drift|Drift"
+        }
+      ]
+    },
+    "objectives": [
+      "Tune hyperparameters with distributed GridSearchCV",
+      "Choose and justify an evaluation metric for the business problem",
+      "Register, version and alias a model in the Snowflake Model Registry",
+      "Run batch inference and plan real-time serving and drift monitoring"
+    ],
+    "tools": [
+      "Snowpark ML",
+      "Model Registry",
+      "Snowflake Notebooks",
+      "Python"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 14,
+    "moduleNumber": 6,
+    "title": "Cortex AISQL, Cortex Search & Document AI",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Cortex AISQL, Cortex Search & Document AI\n\n**Build a governed retrieval-augmented generation pipeline entirely in SQL and Python**\n\nYour lakehouse learns to read. Cortex functions generate and classify text, Cortex Search retrieves the right chunks, and Document AI turns documents into rows \u2014 and because every Cortex object is a Snowflake object, the RBAC you built on Day 2 governs all of it.\n\n**Exam alignment:** SnowPro Core (COF-C03) \u2014 Architecture and Features (31%, Cortex AI); foundational for Snowflake's Gen AI specialty coverage\n\n**Concepts to learn**\n\n- **Cortex AISQL** \u2014 SQL-callable LLM functions such as `AI_COMPLETE` (formerly `SNOWFLAKE.CORTEX.COMPLETE`), `AI_CLASSIFY`, `AI_FILTER`, `AI_AGG`, `AI_SUMMARIZE_AGG` and `AI_EXTRACT`\n- **Cortex Search** \u2014 a managed hybrid (vector + keyword) retrieval service for RAG, indexed directly off a table\n- **Document AI** \u2014 extracting structured fields from forms, PDFs and images with a trained or pre-built extraction model\n- **The RAG chain** \u2014 retrieve via Cortex Search \u2192 augment the prompt \u2192 generate via COMPLETE\n- **Governance** \u2014 every Cortex object is a Snowflake object governed by the same RBAC as your tables\n\n**Deliverable:** working Cortex AISQL functions on a real column, a Cortex Search Service over your document corpus, a minimal RAG chain combining retrieval and COMPLETE-based generation, and a Document AI extraction example.\n\n### Build steps\n\n1. **Call an LLM from SQL:** Create a small synthetic reviews table, then run `SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-8b', 'Summarize this in one sentence: ' || review_text) FROM <your_reviews_table> LIMIT 5;` and try AI_CLASSIFY and a summarize function on the same column. If a model isn't available in your region, an ACCOUNTADMIN can enable cross-region inference with `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';`.\n2. **Prepare a document corpus:** Load 5\u201310 short text documents (product FAQs or policy snippets, synthetic or public, never real customer data) into a table with columns id, text and source.\n3. **Create a search service:** Run `CREATE CORTEX SEARCH SERVICE product_search ON text ATTRIBUTES source WAREHOUSE=learn_wh TARGET_LAG='1 hour' AS SELECT id, text, source FROM <your_docs_table>;`.\n4. **Check retrieval first:** Query the service with a test question through SQL (`SNOWFLAKE.CORTEX.SEARCH_PREVIEW`) or the Python client, inspect the top-k retrieved chunks, and confirm they're actually relevant before building anything on top.\n5. **Build the RAG chain:** In `python/day14_rag_chain.py`, retrieve the top-k chunks for a user question from Cortex Search, assemble a prompt from system instructions, the retrieved context and the question, and call `SNOWFLAKE.CORTEX.COMPLETE()` to generate the answer.\n6. **Extract from documents:** Upload a synthetic form or invoice-style document, extract 2\u20133 structured fields with a pre-built or trained Document AI model (or `AI_EXTRACT` on the staged file), and load the results into a table.\n7. **Test for grounding:** Ask your RAG chain 3 test questions and check each answer is grounded in a retrieved chunk rather than hallucinated. Record the results, and what you'd change when an answer wasn't grounded, in `docs/day14_rag_eval.md`.\n8. **Ship to your repo:** Save the AISQL, search service and extraction statements as `sql/day14_cortex.sql` alongside the RAG script and eval notes, commit and push. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Cortex function generates text from a prompt (`SNOWFLAKE.CORTEX.___`)? (one word)\n2. Complete the DDL: `CREATE CORTEX ___ SERVICE product_search ...` (one word)\n3. What does the R in RAG stand for? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "Cortex generation function",
+          "value": "COMPLETE",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Cortex retrieval service",
+          "value": "SEARCH",
+          "caseInsensitive": true
+        },
+        {
+          "check": "RAG first word",
+          "value": "Retrieval",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day14_cortex.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day14_cortex.sql"
+        },
+        {
+          "check": "worksheet creates a Cortex Search Service",
+          "kind": "contentMatches",
+          "path": "sql/day14_cortex.sql",
+          "regex": "CORTEX SEARCH SERVICE|cortex search service"
+        },
+        {
+          "check": "python/day14_rag_chain.py exists",
+          "kind": "fileExists",
+          "path": "python/day14_rag_chain.py"
+        },
+        {
+          "check": "RAG chain generates with COMPLETE",
+          "kind": "contentMatches",
+          "path": "python/day14_rag_chain.py",
+          "regex": "COMPLETE|complete"
+        },
+        {
+          "check": "docs/day14_rag_eval.md exists",
+          "kind": "fileExists",
+          "path": "docs/day14_rag_eval.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Call Cortex AISQL functions on a real column",
+      "Stand up and test a Cortex Search Service over a document corpus",
+      "Build a minimal RAG chain with retrieval and COMPLETE-based generation",
+      "Extract structured fields from documents and check answers for grounding"
+    ],
+    "tools": [
+      "Cortex AISQL",
+      "Cortex Search",
+      "Document AI",
+      "Python"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 25,
+    "isProjectDay": true
+  },
+  {
+    "dayNumber": 15,
+    "moduleNumber": 6,
+    "title": "Capstone \u2014 Cortex Agents, Snowflake Intelligence & Certification Prep",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Capstone \u2014 Cortex Agents, Snowflake Intelligence & Certification Prep\n\n**Turn your RAG pipeline into a tool-using agent, explore Snowflake's agentic layer, review cost and governance, and leave with a study plan for your next certification**\n\nEverything you built comes together. Your agent chooses between Cortex Analyst for structured questions, Cortex Search for documents and a custom tool of your own \u2014 then you audit what the program cost, review your account's security posture, and tell the end-to-end story as your portfolio narrative.\n\n**Exam alignment:** Capstone \u2014 wraps up SnowPro Core (COF-C03) and SnowPro Advanced: Data Engineer (DEA-C02) coverage from Days 1\u201314; foundational for Snowflake's Gen AI specialty track\n\n**Concepts to learn**\n\n- **Cortex Agents** \u2014 orchestrated multi-step agentic workflows combining Cortex Analyst (structured data), Cortex Search (unstructured data) and custom tools\n- **Snowflake Intelligence / CoWork** \u2014 a governed, no-code agent experience for business users built on the same Cortex primitives\n- **Cost visibility** \u2014 credit consumption by warehouse and service, and the Resource Monitor guardrails you set on Day 9\n- **Trust Center** \u2014 account-level security posture review\n- **Certification prep** \u2014 exam-day logistics and a study plan for whichever certification you're sitting next\n\n**Deliverable:** a working multi-tool Cortex Agent tested against 5 mixed questions, a written cost review with 3 concrete savings, a Trust Center security review, and a personal certification study plan.\n\n### Build steps\n\n1. **Configure the agent:** Create a Cortex Agent that combines your Day 10 Cortex Analyst semantic model (structured Gold-table Q&A) with your Day 14 Cortex Search service (document retrieval) as two tools it can choose between.\n2. **Add a custom tool:** Give the agent a third tool, a SQL function or stored procedure it can call directly (for example, look up total revenue for a category), so it chooses between semantic SQL generation, document retrieval and your custom tool depending on the question.\n3. **Test tool choice:** Ask the agent 5 mixed questions (some needing structured data, some needing documents, one needing both), confirm it picks the right tool or tools each time, and log every question, tool choice and verdict in `docs/day15_agent_tests.md`.\n4. **Hand it to business users:** Register the agent in Snowflake Intelligence / CoWork so a business user could ask it questions from a chat interface without writing SQL. If your trial tier doesn't allow it, read the setup docs and document the exact steps.\n5. **Review the cost:** Open Admin \u2192 Cost Management, review total credit consumption across the program by warehouse and by day, and write 3 concrete cost-saving moves for a real production deployment in `docs/day15_cost_review.md`, such as a smaller default warehouse, more aggressive auto-suspend, serverless tasks or a tighter Resource Monitor.\n6. **Review security:** Open the Trust Center (if your edition has it), review its security findings for your account, and note what it flags, such as unused roles or users without MFA, and what you'd fix first in `docs/day15_security_review.md`.\n7. **Tell the story:** Write the full architecture walkthrough in `docs/architecture.md` (link a recording if you make one): bronze \u2192 silver \u2192 gold \u2192 Streams/Tasks and Dynamic Tables \u2192 dbt Projects and CI/CD \u2192 dashboards and Cortex Analyst \u2192 Feature Store \u2192 registered model \u2192 Cortex Search and RAG \u2192 Cortex Agent. This is your portfolio narrative.\n8. **Plan your certification:** Pick your next target (SnowPro Core and/or SnowPro Advanced: Data Engineer), map today's capstone components back to the exam domains, and write a 1-week study plan for the gaps in `docs/day15_study_plan.md`. Always cross-check the current official exam guide on snowflake.com before registering.\n9. **Ship to your repo:** Commit and push everything. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many tools does your Cortex Agent have by the end of today? (number)\n2. How many mixed questions do you test the agent with? (number)\n3. What is the SnowPro Advanced: Data Engineer exam code this program maps to? (exact code, like ABC-X00)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "agent tool count",
+          "value": "3",
+          "caseInsensitive": true
+        },
+        {
+          "check": "agent test question count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Data Engineer exam code",
+          "value": "DEA-C02",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "docs/day15_agent_tests.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_agent_tests.md"
+        },
+        {
+          "check": "docs/day15_cost_review.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_cost_review.md"
+        },
+        {
+          "check": "docs/day15_security_review.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_security_review.md"
+        },
+        {
+          "check": "docs/architecture.md exists",
+          "kind": "fileExists",
+          "path": "docs/architecture.md"
+        },
+        {
+          "check": "docs/day15_study_plan.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_study_plan.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Build a Cortex Agent that routes between Cortex Analyst, Cortex Search and a custom tool",
+      "Expose the agent to business users through Snowflake Intelligence / CoWork",
+      "Review program cost and account security posture with concrete fixes",
+      "Present the end-to-end architecture and plan the next certification"
+    ],
+    "tools": [
+      "Cortex Agents",
+      "Snowflake Intelligence",
+      "Trust Center",
+      "Cost Management"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 30,
+    "isProjectDay": true
+  }
+]

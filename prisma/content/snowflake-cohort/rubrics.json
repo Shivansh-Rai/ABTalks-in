@@ -1,0 +1,116 @@
+[
+  {
+    "moduleNumber": 1,
+    "title": "Milestone 1 \u2014 Governed Platform Foundations",
+    "criteria": [
+      {
+        "name": "Account & warehouse setup",
+        "weight": 20,
+        "description": "Right-sized warehouse with auto-suspend and auto-resume; clean database and schema hierarchy for the running project; credit-aware choices explained."
+      },
+      {
+        "name": "RBAC & least privilege",
+        "weight": 30,
+        "description": "Custom roles inherit into SYSADMIN; grants are least-privilege, including a future grant; no work is done as ACCOUNTADMIN once roles exist."
+      },
+      {
+        "name": "Policies & governance",
+        "weight": 30,
+        "description": "Masking and row access policies verified under two roles; policies and lineage located in Horizon; tag-based masking explained, not just named."
+      },
+      {
+        "name": "Data protection & semi-structured data",
+        "weight": 20,
+        "description": "Time Travel and UNDROP recovery demonstrated; clone independence proven; nested JSON queried with dot notation and FLATTEN."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 3,
+    "title": "Milestone 2 \u2014 Data Engineering Pipelines",
+    "criteria": [
+      {
+        "name": "Ingestion design",
+        "weight": 20,
+        "description": "Idempotent COPY INTO, a working Snowpipe kept separate from bulk loads, and a decision table that picks one tool per scenario with a reason."
+      },
+      {
+        "name": "Incremental pipelines",
+        "weight": 25,
+        "description": "Stream + Task MERGE handles inserts, updates and deletes correctly; Dynamic Table pipeline refreshes within its lag; trade-offs defended."
+      },
+      {
+        "name": "Transformation & modeling",
+        "weight": 20,
+        "description": "Silver and Gold built in SQL and Snowpark with deduplication and window functions; a UDF and stored procedure that actually get used."
+      },
+      {
+        "name": "Orchestration & CI/CD",
+        "weight": 20,
+        "description": "Three-step DAG with a serverless task, a deployed dbt project with a diagnosed failure, and migrations promoted to dev and prod through GitHub Actions."
+      },
+      {
+        "name": "Performance & cost",
+        "weight": 15,
+        "description": "Query Profile diagnosis grounded in real statistics (spill, cache, pruning); Resource Monitor in place; concrete fixes proposed."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 5,
+    "title": "Milestone 3 \u2014 Analytics & ML Engineering",
+    "criteria": [
+      {
+        "name": "Self-service analytics",
+        "weight": 25,
+        "description": "Dashboard, Streamlit app and Cortex Analyst all read governed Gold tables; generated SQL was checked for accuracy."
+      },
+      {
+        "name": "Features & Feature Store",
+        "weight": 25,
+        "description": "EDA drives feature choices; entity and FeatureView registered with a timestamp; training set is point-in-time correct."
+      },
+      {
+        "name": "Model quality & evaluation",
+        "weight": 25,
+        "description": "Tuned with GridSearchCV; the metric matches the business problem and is justified; improvement over the baseline is measured, not assumed."
+      },
+      {
+        "name": "Registry & deployment",
+        "weight": 25,
+        "description": "Versioned model with a default alias, batch predictions written to Gold, real-time path documented, and a concrete drift-monitoring plan."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 6,
+    "title": "Milestone 4 \u2014 Generative AI Capstone",
+    "criteria": [
+      {
+        "name": "Retrieval & grounding",
+        "weight": 25,
+        "description": "Cortex Search returns relevant chunks; RAG answers are checked for grounding and failures are explained."
+      },
+      {
+        "name": "Agent design & tool routing",
+        "weight": 30,
+        "description": "The agent picks correctly between Cortex Analyst, Cortex Search and the custom tool across all 5 test questions, with the evidence logged."
+      },
+      {
+        "name": "Governance, cost & security",
+        "weight": 20,
+        "description": "Cost review names 3 concrete savings; Trust Center findings are prioritized; RBAC covers every Cortex object."
+      },
+      {
+        "name": "Architecture narrative",
+        "weight": 15,
+        "description": "The bronze-to-agent walkthrough is coherent, accurate and portfolio-ready."
+      },
+      {
+        "name": "Certification plan",
+        "weight": 10,
+        "description": "Capstone components are mapped to exam domains, with a realistic 1-week plan for the gaps."
+      }
+    ]
+  }
+]
