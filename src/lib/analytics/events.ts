@@ -30,6 +30,20 @@ export const ANALYTICS_EVENTS = {
   siteJobApplied: "site_job_applied",
   /** A candidate submitted an assessment and the server returned a score. */
   siteTestCompleted: "site_test_completed",
+  /**
+   * T-253: a `job.alert.match` notification was accepted by the dispatcher
+   * (not deduplicated). Fires from the candidate's client on first sight of
+   * a new alert notification in the bell feed — server dispatch stays off
+   * the wire per plan 114 §12.
+   */
+  siteJobAlertSent: "site_job_alert_sent",
+  /**
+   * T-253: a `profile.viewed` notification was accepted by the dispatcher.
+   * Fires from the candidate's client on first sight of a new profile-view
+   * notification. Server dispatch stays off the wire (same reason as
+   * job_alert_sent).
+   */
+  siteProfileViewNotified: "site_profile_view_notified",
 } as const;
 
 export type AnalyticsEventName =
@@ -81,6 +95,8 @@ const EVENT_PARAMS = {
   site_skill_added: { skill_count_bucket: SKILL_COUNT_BUCKETS },
   site_job_applied: {},
   site_test_completed: { score_bucket: SCORE_BUCKETS },
+  site_job_alert_sent: {},
+  site_profile_view_notified: {},
 } as const satisfies Record<
   AnalyticsEventName,
   Readonly<Record<string, readonly string[]>>
@@ -100,6 +116,8 @@ export type AnalyticsEventParams = {
   site_skill_added: { skill_count_bucket: SkillCountBucket };
   site_job_applied: undefined;
   site_test_completed: { score_bucket: ScoreBucket };
+  site_job_alert_sent: undefined;
+  site_profile_view_notified: undefined;
 };
 
 /** Introspection for the tests and for anyone auditing what a name may carry. */

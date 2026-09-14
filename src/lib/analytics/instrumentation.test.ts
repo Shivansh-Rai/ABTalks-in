@@ -156,6 +156,14 @@ const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, readonly string[]> = {
   siteSkillAdded: ["src/components/profile/skills-section.tsx"],
   siteJobApplied: ["src/components/jobs/apply-job-button.tsx"],
   siteTestCompleted: ["src/app/quiz/[quizId]/quiz-form.tsx"],
+  // T-253: notification-driven analytics. Both events fire from the same
+  // browser-side tracker that reads the candidate's notification feed.
+  siteJobAlertSent: [
+    "src/components/shared/notification-analytics-tracker.tsx",
+  ],
+  siteProfileViewNotified: [
+    "src/components/shared/notification-analytics-tracker.tsx",
+  ],
 };
 
 {

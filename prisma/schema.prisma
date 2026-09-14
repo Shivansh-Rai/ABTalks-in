@@ -286,6 +286,17 @@ model User {
   /// Soft delete. Set instead of DELETE; PII is scrubbed by the anonymizer.
   deletedAt               DateTime?
   anonymizedAt            DateTime?
+  /// T-254 first-touch UTM attribution. Captured on the landing page from
+  /// URL query, persisted to a cookie, then written here on signup finalise.
+  /// First touch wins — later visits do not overwrite. Bounded free strings
+  /// with a 200-char max at the write boundary (validations/utm.ts). Never
+  /// sent to analytics as raw values; only campaign-level aggregates count.
+  utmSource               String?
+  utmMedium               String?
+  utmCampaign             String?
+  utmTerm                 String?
+  utmContent              String?
+  utmCapturedAt           DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   accounts                Account[]

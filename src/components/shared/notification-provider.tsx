@@ -29,6 +29,7 @@ import type {
   NotificationFeed,
 } from "@/features/notification/types";
 import { cn } from "@/lib/utils";
+import { NotificationAnalyticsTracker } from "@/components/shared/notification-analytics-tracker";
 
 type Ctx = {
   feed: NotificationFeed | null;
@@ -173,6 +174,9 @@ export function NotificationProvider({
       value={{ feed, open, ensureLoaded, setAnchor, openPanel, closePanel }}
     >
       {children}
+      {feed?.signedIn ? (
+        <NotificationAnalyticsTracker items={feed.items} />
+      ) : null}
       {open && feed?.signedIn ? (
         <NotificationPanel
           items={feed.items}

@@ -39,15 +39,13 @@ console.log("T-253 analytics events: vocabulary, PII filter, buckets, consent");
 // ── The nine T-253 behaviours ────────────────────────────────────────────────
 
 {
-  // Seven of the nine requested behaviours reach GA4. The other two have no
-  // emit site that could honestly fire:
-  //   - "job alert sent" runs in a Vercel cron with no browser and no consent
-  //     signal (see features/hire/run-hire-alerts.ts),
-  //   - "profile-view notification sent" has no underlying feature — nothing in
-  //     the schema records a profile view and nothing notifies a candidate.
-  assert(NAMES.length === 7, `expected 7 event names, got ${NAMES.length}`);
-  assert(new Set(NAMES).size === 7, "event names must be unique");
-  ok("vocabulary: 7 unique names (2 of the 9 behaviours have no emit site)");
+  // All nine T-253 behaviours now have an emit site:
+  //   - job alert sent: T-250 shipped, candidate client fires on first sight
+  //     of a new `job.alert.match` notification in the bell feed.
+  //   - profile-view notification sent: T-251 shipped, same pattern.
+  assert(NAMES.length === 9, `expected 9 event names, got ${NAMES.length}`);
+  assert(new Set(NAMES).size === 9, "event names must be unique");
+  ok("vocabulary: 9 unique names (every T-253 behaviour has an emit site)");
 }
 
 {
@@ -59,6 +57,8 @@ console.log("T-253 analytics events: vocabulary, PII filter, buckets, consent");
     "site_skill_added", // candidate skill added
     "site_job_applied", // job application created
     "site_test_completed", // assessment submitted
+    "site_job_alert_sent", // job alert sent (T-250)
+    "site_profile_view_notified", // profile-view notification sent (T-251)
   ];
   for (const name of expected) {
     assert(
