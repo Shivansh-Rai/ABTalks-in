@@ -485,10 +485,8 @@ export const LINK_TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-/** Additional-link types only — the three first-class links have their own fields. */
+/** Additional-link types only — LinkedIn/GitHub/Portfolio/LeetCode/CodeChef have fixed fields. */
 export const EXTRA_LINK_TYPES = [
-  "LEETCODE",
-  "CODECHEF",
   "CODEFORCES",
   "KAGGLE",
   "BEHANCE",

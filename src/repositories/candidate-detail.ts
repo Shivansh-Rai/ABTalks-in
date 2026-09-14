@@ -18,6 +18,11 @@ import {
   toMonthDate,
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
+import { RECRUITER_FIELD_POLICY } from "@/repositories/talent";
+import {
+  shapeSelfReportedExternalLinks,
+  type SelfReportedExternalLink,
+} from "@/features/hire/self-reported-links";
 
 /**
  * The detailed candidate profile: reads and writes for the sections that only
@@ -434,6 +439,48 @@ export async function listPublicWorkHistory(
       };
     }),
   };
+}
+
+/**
+ * Declared GitHub / LeetCode / CodeChef links for the Scout inspector (T-216).
+ *
+ * Recruiter-safe: selects only githubUsername and coding-profile CandidateLink
+ * rows. Protected contact fields stay off this select. URLs are declared by the
+ * candidate — callers must label them SELF-REPORTED and must never treat them
+ * as verified. Pool eligibility is the caller's job.
+ */
+export type { SelfReportedExternalLink };
+
+export async function listSelfReportedExternalLinks(
+  userId: string,
+): Promise<SelfReportedExternalLink[]> {
+  const row = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: {
+      githubUsername: true,
+      links: {
+        where: {
+          type: {
+            in: [CandidateLinkType.LEETCODE, CandidateLinkType.CODECHEF],
+          },
+        },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          type: true,
+          url: true,
+          label: true,
+        },
+      },
+    },
+  });
+
+  if (!row) return [];
+
+  return shapeSelfReportedExternalLinks({
+    githubUsername: row.githubUsername,
+    githubAllowedByPolicy: RECRUITER_FIELD_POLICY.github,
+    links: row.links,
+  });
 }
 
 /* ─── Legacy compatibility mirrors ───────────────────────────────────────── */
