@@ -27,6 +27,13 @@ export type AppNotification = {
    * (docs/plans/114-unified-notify-helper.md).
    */
   isPersonal?: boolean;
+  /**
+   * T-253: the underlying event type when this row is a personal
+   * `user:` item, e.g. `job.alert.match` or `profile.viewed`. Used by
+   * the client analytics tracker to fire the right GA4 event. Never
+   * carries PII — it is a fixed enum from `EVENT_TYPE_REGISTRY`.
+   */
+  eventType?: string;
 };
 
 export type NotificationFeed = {

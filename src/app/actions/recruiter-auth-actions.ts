@@ -7,6 +7,7 @@ import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter"
 import { sendEmail } from "@/lib/email";
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
+import { attributeUtmToUser } from "@/features/utm/attribute";
 import {
   findLiveSeat,
   issueRecruiterOtp,
@@ -257,6 +258,11 @@ export async function registerRecruiterWithOtpAction(
         error: String(error),
       });
     }
+
+    // T-254: first-touch UTM attribution. Best-effort — failure never blocks
+    // the recruiter's signup, and the write itself is a no-op if the row
+    // already has any UTM value.
+    void attributeUtmToUser(userId);
 
     return { ok: true, data: { approved: true } };
   } catch (error) {

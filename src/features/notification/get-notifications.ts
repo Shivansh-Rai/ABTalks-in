@@ -145,6 +145,7 @@ export async function getNotificationsForUser(
       href: row.href,
       category: "GENERAL" as NotificationCategoryKey,
       publishedAt: row.createdAt.toISOString(),
+      eventType: row.eventType,
     }),
   );
 

@@ -46,13 +46,18 @@ export function useTrack() {
       if (typeof gtag !== "function") return;
 
       const safe = sanitizeParams(name, params);
+      // T-254 DebugView: when NEXT_PUBLIC_GA_DEBUG is on, every emit carries
+      // debug_mode: true so it appears in GA4's DebugView reports. This is
+      // the only side-channel added to events — no PII, no tracking id.
+      const debug = process.env.NEXT_PUBLIC_GA_DEBUG === "1";
       // An event with nothing to say sends nothing rather than an empty object,
       // which GA4 would otherwise record as a parameter-less payload anyway.
       if (Object.keys(safe).length === 0) {
-        gtag("event", name);
+        if (debug) gtag("event", name, { debug_mode: true });
+        else gtag("event", name);
         return;
       }
-      gtag("event", name, safe);
+      gtag("event", name, debug ? { ...safe, debug_mode: true } : safe);
     },
     [choice, ready],
   );
