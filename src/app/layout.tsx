@@ -12,6 +12,7 @@ import { SiteSearchGate } from "@/components/dashboard-hub/site-search-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
 import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
+import { CookiePreferencesModal } from "@/components/legal/cookie-preferences-modal";
 import { GA4Loader } from "@/components/analytics/ga4-loader";
 import { ChatWidget } from "@/components/chatbot/ChatWidget";
 import { isChatbotEnabled } from "@/lib/feature-flags";
@@ -91,6 +92,7 @@ export default function RootLayout({
               <BottomNavGate />
               <RouteThemeToaster />
               <CookieConsentModal />
+              <CookiePreferencesModal />
               {isChatbotEnabled() && <ChatWidget />}
             </NotificationProvider>
           </CookieConsentProvider>

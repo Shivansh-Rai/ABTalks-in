@@ -5,19 +5,19 @@ import { cn } from "@/lib/utils";
 import { useCookieConsent } from "@/components/legal/cookie-consent-provider";
 
 const LABELS: Record<string, string> = {
-  all: "Allow all",
-  limited: "Limited",
-  essential: "Deny",
+  all: "Accept all (Analytics & Attribution)",
+  limited: "Limited (Analytics only)",
+  essential: "Necessary only",
 };
 
 export function ManageCookiesButton() {
-  const { open, choice, ready } = useCookieConsent();
+  const { openPreferences, choice, ready } = useCookieConsent();
 
   return (
     <div className="mt-8 flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-4 py-4">
       <button
         type="button"
-        onClick={open}
+        onClick={openPreferences}
         className={cn(buttonVariants({ size: "sm" }))}
       >
         Manage cookie preferences
