@@ -258,9 +258,9 @@ export function ActivityHeatmap({
         {...gridSharedProps}
         variant="desktop"
         gridCols={desktopGridCols}
-        cellClassName="aspect-square w-[72%] min-w-0 justify-self-center 2xl:w-[89%]"
+        cellClassName="aspect-square w-[72%] min-w-0 justify-self-center"
         className={cn(
-          "mt-3 hidden w-full min-w-0 lg:grid 2xl:mx-auto 2xl:max-w-[820px]",
+          "mt-3 hidden w-full min-w-0 lg:grid",
           embedded && "flex-1 lg:min-h-0",
         )}
       />

@@ -48,7 +48,7 @@ export function OtherChallenges({
             </p>
             {/* Wrapper, not a change to the card: the CTA is right-aligned
                 without the card itself becoming a flex column. */}
-            <div className="mt-4 flex justify-end">
+            <div className="mt-2 flex justify-end">
               <JoinClaudeButton />
             </div>
           </li>

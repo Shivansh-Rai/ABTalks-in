@@ -79,28 +79,30 @@ function EventCard({
   return (
     <article
       className={cn(
-        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px] 2xl:min-w-[300px] 2xl:max-w-[420px] 2xl:shrink 2xl:grow 2xl:basis-0",
+        "flex w-[280px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px] 2xl:min-w-[300px] 2xl:max-w-[420px] 2xl:shrink 2xl:grow 2xl:basis-0",
         HUB_CARD_HOVER_CLASS,
         past ? "bg-white" : "bg-white shadow-sm",
       )}
     >
-      <h4 className="font-inter text-base font-bold leading-snug text-black">
-        {event.title}
-      </h4>
-      <p className="mt-2 text-xs text-[#4B4B4B]">
-        {event.date} · {event.time}
-      </p>
-      <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-[#4B4B4B]">
-        {event.desc}
-      </p>
-      <p className="mt-3 text-xs text-[#4B4B4B]">{event.location}</p>
+      <div className="min-w-0">
+        <h4 className="font-inter text-base font-bold leading-snug text-black">
+          {event.title}
+        </h4>
+        <p className="mt-2 text-xs text-[#4B4B4B]">
+          {event.date} · {event.time}
+        </p>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-[#4B4B4B]">
+          {event.desc}
+        </p>
+        <p className="mt-3 text-xs text-[#4B4B4B]">{event.location}</p>
+      </div>
       {past ? null : (
         <Link
           href={href}
           {...(event.href
             ? { target: "_blank", rel: "noopener noreferrer" }
             : {})}
-          className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
+          className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
         >
           {ctaLabel}
         </Link>

@@ -55,7 +55,7 @@ function minutes(sec: number): string {
 }
 
 const CARD_CLASS =
-  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink";
+  "flex w-[min(100%,320px)] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:w-[300px] 2xl:w-full 2xl:max-w-none 2xl:shrink";
 
 /**
  * Interviews the candidate can take, on the hub, directly under the heatmap.
@@ -120,11 +120,13 @@ export function MockInterviews({ mock, cohort }: Props) {
                   AI Cohort
                 </span>
                 <p className="mt-2 font-inter font-bold text-black">{c.label}</p>
-                <p className="mt-1 text-sm text-[#4B4B4B]">{c.blurb}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
+                  {c.blurb}
+                </p>
               </div>
               <Link
                 href={c.href}
-                className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
+                className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
               >
                 {c.inProgress ? "Resume interview" : "Start interview"}
               </Link>
@@ -135,7 +137,9 @@ export function MockInterviews({ mock, cohort }: Props) {
             <li key={m.slug} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
               <div className="min-h-0">
                 <p className="font-inter font-bold text-black">{m.label}</p>
-                <p className="mt-1 text-sm text-[#4B4B4B]">{m.blurb}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
+                  {m.blurb}
+                </p>
                 <p className="mt-2 text-[13px] text-[#8F8F8F]">
                   {minutes(m.durationSec)} · {m.questionCount} questions
                   {m.completedAttempts > 0
@@ -146,7 +150,7 @@ export function MockInterviews({ mock, cohort }: Props) {
                     : ""}
                 </p>
               </div>
-              <div className="mt-4 flex flex-col gap-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {m.latestReportAttemptId ? (
                   <Link
                     href={`/mock-interviews/${m.slug}/attempt/${m.latestReportAttemptId}/report`}
