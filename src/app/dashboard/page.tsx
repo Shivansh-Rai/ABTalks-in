@@ -81,7 +81,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const isAdmin = session.user.isAdmin ?? false;
 
   return (
-    <DashboardShell user={shellUser} isAdmin={isAdmin}>
+    <DashboardShell user={shellUser} isAdmin={isAdmin} collapsible>
       <section className="px-4 py-8 sm:px-6">
         <div className="w-full max-w-[1020px] lg:ml-5 2xl:mx-auto 2xl:max-w-[1600px]">
           <HeroGreeting firstName={firstName} />
