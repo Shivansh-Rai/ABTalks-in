@@ -5,7 +5,6 @@ export const WHATSAPP_INVITE =
 
 export const NAV_LINKS = [
   { href: "#bridge", id: "bridge", label: "Platform" },
-  { href: "#how", id: "how", label: "How it works" },
   { href: "#cohorts", id: "cohorts", label: "Cohorts" },
   { href: "#faq", id: "faq", label: "FAQ" },
 ] as const;
