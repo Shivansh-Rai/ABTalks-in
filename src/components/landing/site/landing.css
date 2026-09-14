@@ -665,6 +665,11 @@
   pointer-events: none;
 }
 
+/* Only the bottom platform's tint lands dark enough to flip the label. At its
+   mid-tone (#055C69) white scores 7.6:1 against black's 2.8:1. Middle and top
+   keep black: at their mid-tones black still wins (6.6:1 vs white's 3.2:1). */
+.abtalks-landing .slab--bottom .slab__label { color: #FFFFFF; }
+
 /* Side walls — each hinges up from the edge it sits on, filling the gap
    between the ground plane and the raised top face. Only the two walls the
    isometric camera can actually see are drawn; the far two would sit behind
