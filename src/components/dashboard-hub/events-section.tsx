@@ -7,8 +7,6 @@ import { EVENTS } from "@/components/workshop/events-data";
 import {
   HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
-  HUB_CONTAINER_CLASS,
-  HUB_SECTION_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -27,22 +25,18 @@ export function EventsSection() {
   );
 
   return (
-    <section id="events" className={HUB_SECTION_CLASS}>
-      <div className={HUB_CONTAINER_CLASS}>
-        {/* "Events", "Upcoming events" and the cards all start on the container's
-            left edge — the heading used to carry an extra `lg:ml-2` of its own. */}
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-          Events
-        </h2>
+    <section id="events" className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-5">
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
+        Events
+      </h2>
 
-        {upcoming.length > 0 ? (
-          <EventRail title="Upcoming events" events={upcoming} />
-        ) : null}
+      {upcoming.length > 0 ? (
+        <EventRail title="Upcoming events" events={upcoming} />
+      ) : null}
 
-        {past.length > 0 ? (
-          <EventRail title="Past events" events={past} past />
-        ) : null}
-      </div>
+      {past.length > 0 ? (
+        <EventRail title="Past events" events={past} past />
+      ) : null}
     </section>
   );
 }
@@ -61,7 +55,7 @@ function EventRail({
       <h3 className="text-sm font-semibold tracking-wide text-black uppercase">
         {title}
       </h3>
-      <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
+      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory 2xl:flex-wrap 2xl:overflow-visible">
         {events.map((event) => (
           <EventCard key={event.id} event={event} past={past} />
         ))}
@@ -85,7 +79,7 @@ function EventCard({
   return (
     <article
       className={cn(
-        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px]",
+        "flex w-[280px] shrink-0 snap-start flex-col rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px] 2xl:min-w-[300px] 2xl:max-w-[420px] 2xl:shrink 2xl:grow 2xl:basis-0",
         HUB_CARD_HOVER_CLASS,
         past ? "bg-white" : "bg-white shadow-sm",
       )}
@@ -106,7 +100,7 @@ function EventCard({
           {...(event.href
             ? { target: "_blank", rel: "noopener noreferrer" }
             : {})}
-          className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
+          className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
         >
           {ctaLabel}
         </Link>

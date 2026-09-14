@@ -10,11 +10,7 @@ import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
 import { EventsSection } from "@/components/dashboard-hub/events-section";
 import { FaqSection } from "@/components/dashboard-hub/faq-section";
-import {
-  HUB_CARD_HOVER_CLASS,
-  HUB_CONTAINER_CLASS,
-  HUB_SECTION_CLASS,
-} from "@/components/dashboard-hub/nav-items";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
 import { registrationRedirect } from "@/features/registration/registration-gate";
 import { loadAvailableInterviews } from "@/features/dashboard/load-available-interviews";
@@ -74,7 +70,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     blockedDomain && ["AI", "DS", "SE", "CLAUDE"].includes(blockedDomain)
       ? `You were removed from the ${blockedDomain} track and can't re-join it.`
       : joinError
-        ? (JOIN_ERROR_MESSAGE[joinError] ?? null)
+        ? JOIN_ERROR_MESSAGE[joinError] ?? null
         : null;
 
   const shellUser = {
@@ -86,8 +82,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <DashboardShell user={shellUser} isAdmin={isAdmin} collapsible>
-      <section className={HUB_SECTION_CLASS}>
-        <div className={HUB_CONTAINER_CLASS}>
+      <section className="px-4 py-8 sm:px-6">
+        <div className="w-full max-w-[1020px] lg:ml-5 2xl:mx-auto 2xl:max-w-[1600px]">
           <HeroGreeting firstName={firstName} />
           <div className="mt-4 grid min-w-0 gap-6 lg:grid-cols-[1fr_320px] lg:items-center lg:gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
             <div className="min-w-0 lg:pr-6">
@@ -105,13 +101,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </section>
 
       {notice ? (
-        <section className={`${HUB_SECTION_CLASS} py-2`}>
-          <div className={HUB_CONTAINER_CLASS}>
-            <div
-              className={`rounded-2xl border border-[#E0E0E0] bg-white px-5 py-4 text-sm text-[#4B4B4B] ${HUB_CARD_HOVER_CLASS}`}
-            >
-              {notice}
-            </div>
+        <section className="px-4 py-2 sm:px-6 lg:ml-4">
+          <div
+            className={`rounded-2xl border border-[#E0E0E0] bg-white px-5 py-4 text-sm text-[#4B4B4B] ${HUB_CARD_HOVER_CLASS}`}
+          >
+            {notice}
           </div>
         </section>
       ) : null}
@@ -135,6 +129,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         showPowerBi={data.hasPowerBiAccess}
       />
       <EventsSection />
+      
       <FaqSection />
     </DashboardShell>
   );

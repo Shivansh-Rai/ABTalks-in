@@ -1,11 +1,6 @@
 import type { Domain } from "@prisma/client";
 import { isClaudeEnabled } from "@/lib/feature-flags";
-import {
-  HUB_CARD_GRID_CLASS,
-  HUB_CARD_HOVER_CLASS,
-  HUB_CONTAINER_CLASS,
-  HUB_SECTION_CLASS,
-} from "@/components/dashboard-hub/nav-items";
+import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { JoinClaudeButton } from "@/components/dashboard-hub/join-claude-button";
 import { cn } from "@/lib/utils";
 
@@ -30,30 +25,35 @@ export function OtherChallenges({
   }
 
   return (
-    <section id="other-challenges" className={HUB_SECTION_CLASS}>
-      <div className={HUB_CONTAINER_CLASS}>
-        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-          Other challenges
-        </h2>
-        <ul className={cn("mt-4", HUB_CARD_GRID_CLASS)}>
-          {showClaude ? (
-            <li
-              className={cn(
-                "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5",
-                HUB_CARD_HOVER_CLASS,
-              )}
-            >
-              <p className="font-inter font-bold text-black">
-                Claude Challenge
-              </p>
-              <p className="mt-1 text-sm text-[#4B4B4B]">
-                Build with Claude · 60 days
-              </p>
+    <section
+      id="other-challenges"
+      className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
+    >
+      <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
+        Other challenges
+      </h2>
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:ml-4">
+        {showClaude ? (
+          <li
+            className={cn(
+              "rounded-2xl border border-[#E0E0E0] bg-white p-5",
+              HUB_CARD_HOVER_CLASS,
+            )}
+          >
+            <p className="font-inter font-bold text-black">
+              Claude Challenge
+            </p>
+            <p className="mt-1 text-sm text-[#4B4B4B]">
+              Build with Claude · 60 days
+            </p>
+            {/* Wrapper, not a change to the card: the CTA is right-aligned
+                without the card itself becoming a flex column. */}
+            <div className="mt-4 flex justify-end">
               <JoinClaudeButton />
-            </li>
-          ) : null}
-        </ul>
-      </div>
+            </div>
+          </li>
+        ) : null}
+      </ul>
     </section>
   );
 }

@@ -4,8 +4,6 @@ import {
   HUB_BUTTON_CLASS,
   HUB_CARD_CTA_CLASS,
   HUB_CARD_HOVER_CLASS,
-  HUB_CONTAINER_CLASS,
-  HUB_SECTION_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -78,109 +76,109 @@ export function MockInterviews({ mock, cohort }: Props) {
   const hasAny = mock.length > 0 || cohort.length > 0;
 
   return (
-    <section id="mock-interviews" className={HUB_SECTION_CLASS}>
-      <div className={HUB_CONTAINER_CLASS}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-            AI agent interviews
-          </h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href="/mock-interviews" className={HUB_BUTTON_CLASS}>
-              <Mic className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
-              All mock interviews
-            </Link>
-            <Link href="/mock-interviews/history" className={HUB_BUTTON_CLASS}>
-              <History className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
-              Practice history
-            </Link>
-          </div>
+    <section
+      id="mock-interviews"
+      className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
+          AI agent interviews
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/mock-interviews" className={HUB_BUTTON_CLASS}>
+            <Mic className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
+            All mock interviews
+          </Link>
+          <Link href="/mock-interviews/history" className={HUB_BUTTON_CLASS}>
+            <History className="mr-1.5 size-4" strokeWidth={2} aria-hidden />
+            Practice history
+          </Link>
         </div>
-
-        {!hasAny ? (
-          <div
-            className={cn(
-              "mt-4 rounded-2xl border border-[#E0E0E0] bg-white p-6",
-              HUB_CARD_HOVER_CLASS,
-            )}
-          >
-            <p className="text-[#4B4B4B]">
-              Practise a live voice interview with an AI interviewer, then read
-              a scored report on how it went. Open to every ABTalks member — no
-              cohort enrolment needed.
-            </p>
-          </div>
-        ) : (
-          <ul className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory 2xl:grid 2xl:grid-cols-4 2xl:overflow-visible 2xl:pb-0 2xl:snap-none">
-            {/* Cohort milestones first: they are time-bound and one-shot, so a
-              candidate who is eligible for one should not have to scroll. */}
-            {cohort.map((c) => (
-              <li key={c.key} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
-                <div className="min-h-0 flex-1">
-                  <span className="inline-flex rounded-[4px] border border-[#03535F]/40 bg-[#EEF6F6] px-2 py-0.5 text-[11px] font-semibold text-[#03535F]">
-                    AI Cohort
-                  </span>
-                  <p className="mt-2 font-inter font-bold text-black">
-                    {c.label}
-                  </p>
-                  <p className="mt-1 text-sm text-[#4B4B4B]">{c.blurb}</p>
-                </div>
-                <Link href={c.href} className={cn(HUB_CARD_CTA_CLASS, "mt-4")}>
-                  {c.inProgress ? "Resume interview" : "Start interview"}
-                </Link>
-              </li>
-            ))}
-
-            {mock.map((m) => (
-              <li key={m.slug} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
-                <div className="min-h-0 flex-1">
-                  <p className="font-inter font-bold text-black">{m.label}</p>
-                  <p className="mt-1 text-sm text-[#4B4B4B]">{m.blurb}</p>
-                  <p className="mt-2 text-[13px] text-[#8F8F8F]">
-                    {minutes(m.durationSec)} · {m.questionCount} questions
-                    {m.completedAttempts > 0
-                      ? ` · ${m.completedAttempts} taken`
-                      : ""}
-                    {m.attemptsLeft !== null && m.attemptsLeft > 0
-                      ? ` · ${m.attemptsLeft} left`
-                      : ""}
-                  </p>
-                </div>
-                <div className="mt-4 flex flex-col gap-2">
-                  {m.latestReportAttemptId ? (
-                    <Link
-                      href={`/mock-interviews/${m.slug}/attempt/${m.latestReportAttemptId}/report`}
-                      className={HUB_CARD_CTA_CLASS}
-                    >
-                      <FileText
-                        className="mr-1.5 size-4"
-                        strokeWidth={2}
-                        aria-hidden
-                      />
-                      View last report
-                    </Link>
-                  ) : null}
-
-                  {m.attemptsLeft === null || m.attemptsLeft > 0 ? (
-                    <Link
-                      href={`/mock-interviews/${m.slug}`}
-                      className={HUB_CARD_CTA_CLASS}
-                    >
-                      {m.completedAttempts > 0
-                        ? "Take again"
-                        : "Start interview"}
-                    </Link>
-                  ) : (
-                    <p className="text-[13px] text-[#8F8F8F]">
-                      You have used all {m.completedAttempts} attempts. Your
-                      reports stay available.
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
+
+      {!hasAny ? (
+        <div
+          className={cn(
+            "mt-4 rounded-2xl border border-[#E0E0E0] bg-white p-6",
+            HUB_CARD_HOVER_CLASS,
+          )}
+        >
+          <p className="text-[#4B4B4B]">
+            Practise a live voice interview with an AI interviewer, then read a
+            scored report on how it went. Open to every ABTalks member — no
+            cohort enrolment needed.
+          </p>
+        </div>
+      ) : (
+        <ul className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory 2xl:grid 2xl:grid-cols-3 2xl:overflow-visible 2xl:pb-0 2xl:snap-none">
+          {/* Cohort milestones first: they are time-bound and one-shot, so a
+              candidate who is eligible for one should not have to scroll. */}
+          {cohort.map((c) => (
+            <li key={c.key} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
+              <div className="min-h-0 flex-1">
+                <span className="inline-flex rounded-[4px] border border-[#03535F]/40 bg-[#EEF6F6] px-2 py-0.5 text-[11px] font-semibold text-[#03535F]">
+                  AI Cohort
+                </span>
+                <p className="mt-2 font-inter font-bold text-black">{c.label}</p>
+                <p className="mt-1 text-sm text-[#4B4B4B]">{c.blurb}</p>
+              </div>
+              <Link
+                href={c.href}
+                className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
+              >
+                {c.inProgress ? "Resume interview" : "Start interview"}
+              </Link>
+            </li>
+          ))}
+
+          {mock.map((m) => (
+            <li key={m.slug} className={cn(CARD_CLASS, HUB_CARD_HOVER_CLASS)}>
+              <div className="min-h-0 flex-1">
+                <p className="font-inter font-bold text-black">{m.label}</p>
+                <p className="mt-1 text-sm text-[#4B4B4B]">{m.blurb}</p>
+                <p className="mt-2 text-[13px] text-[#8F8F8F]">
+                  {minutes(m.durationSec)} · {m.questionCount} questions
+                  {m.completedAttempts > 0
+                    ? ` · ${m.completedAttempts} taken`
+                    : ""}
+                  {m.attemptsLeft !== null && m.attemptsLeft > 0
+                    ? ` · ${m.attemptsLeft} left`
+                    : ""}
+                </p>
+              </div>
+              <div className="mt-4 flex flex-col gap-2">
+                {m.latestReportAttemptId ? (
+                  <Link
+                    href={`/mock-interviews/${m.slug}/attempt/${m.latestReportAttemptId}/report`}
+                    className={cn(HUB_CARD_CTA_CLASS, "self-end")}
+                  >
+                    <FileText
+                      className="mr-1.5 size-4"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                    View last report
+                  </Link>
+                ) : null}
+
+                {m.attemptsLeft === null || m.attemptsLeft > 0 ? (
+                  <Link
+                    href={`/mock-interviews/${m.slug}`}
+                    className={cn(HUB_CARD_CTA_CLASS, "self-end")}
+                  >
+                    {m.completedAttempts > 0 ? "Take again" : "Start interview"}
+                  </Link>
+                ) : (
+                  <p className="text-[13px] text-[#8F8F8F]">
+                    You have used all {m.completedAttempts} attempts. Your
+                    reports stay available.
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

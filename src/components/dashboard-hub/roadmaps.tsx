@@ -4,10 +4,7 @@ import { isProgramEnabled } from "@/lib/feature-flags";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import {
   HUB_CARD_CTA_CLASS,
-  HUB_CARD_GRID_CLASS,
   HUB_CARD_HOVER_CLASS,
-  HUB_CONTAINER_CLASS,
-  HUB_SECTION_CLASS,
 } from "@/components/dashboard-hub/nav-items";
 import { cn } from "@/lib/utils";
 
@@ -40,59 +37,88 @@ export function Roadmaps({
 
   return (
     <>
-      <section id="domains" className={HUB_SECTION_CLASS}>
-        <div className={HUB_CONTAINER_CLASS}>
-          <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-            CHALLENGE TRACKS
-          </h2>
-          <ul className={cn("mt-4", HUB_CARD_GRID_CLASS)}>
-            {ROADMAPS.map(({ domain, label, path }) => {
-              const isJoined = joined.has(domain);
-              const isAbandoned = abandoned.has(domain);
-              const href = isJoined
+      <section
+        id="domains"
+        className="scroll-mt-20 px-4 py-8 sm:px-6 lg:ml-4"
+      >
+        <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">
+          CHALLENGE TRACKS
+        </h2>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:max-w-[1240px]">
+          {ROADMAPS.map(({ domain, label, path }) => {
+            const isJoined = joined.has(domain);
+            const isAbandoned = abandoned.has(domain);
+            const href = isJoined
+              ? path
+              : isAbandoned
                 ? path
-                : isAbandoned
-                  ? path
-                  : `/register?domain=${domain}`;
-              const ctaLabel = isJoined
-                ? "Continue"
-                : isAbandoned
-                  ? "View status"
-                  : "Join";
-              return (
-                <li
-                  key={domain}
-                  className={cn(
-                    "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5",
-                    HUB_CARD_HOVER_CLASS,
-                  )}
+                : `/register?domain=${domain}`;
+            const ctaLabel = isJoined
+              ? "Continue"
+              : isAbandoned
+                ? "View status"
+                : "Join";
+            return (
+              <li
+                key={domain}
+                className={cn(
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5",
+                  HUB_CARD_HOVER_CLASS,
+                )}
+              >
+                <p className="font-inter font-bold text-black">{label}</p>
+                <p className="mt-1 flex-1 text-sm text-[#4B4B4B]">
+                  60-day challenge track
+                </p>
+                <Link
+                  href={href}
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
                 >
-                  <p className="font-inter font-bold text-black">{label}</p>
-                  <p className="mt-1 flex-1 text-sm text-[#4B4B4B]">
-                    60-day challenge track
-                  </p>
-                  <Link href={href} className={cn(HUB_CARD_CTA_CLASS, "mt-4")}>
-                    {ctaLabel}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                  {ctaLabel}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {showProgramPrepKit ? (
         <section
           id="prep-kit"
-          className={cn(HUB_SECTION_CLASS, "py-2 sm:py-4")}
+          className="scroll-mt-20 px-4 py-2 sm:px-6 sm:py-4 lg:ml-4"
         >
-          <div className={HUB_CONTAINER_CLASS}>
-            <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F]">
-              Prep Kit
-            </h2>
-            {/* Wraps by breakpoint — never a horizontal scroller. 1 col on
+          <h2 className="font-heading text-xl font-semibold uppercase text-[#03535F] lg:ml-2">
+            Prep Kit
+          </h2>
+          {/* Wraps by breakpoint — never a horizontal scroller. 1 col on
               mobile, 2 at sm, 3 at lg, all 4 inline at xl. */}
-            <div className={cn("mt-4", HUB_CARD_GRID_CLASS)}>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={cn(
+                "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                HUB_CARD_HOVER_CLASS,
+              )}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-inter text-lg font-bold text-black">
+                  31 Days AI Cohort
+                </p>
+                <p className="mt-1 text-sm text-[#4B4B4B]">
+                Build and deploy a production-grade enterprise AI chatbot in 31 days.
+                </p>
+              </div>
+              <Link
+                href={
+                  hasProgramMembership
+                    ? `${PROGRAM_AI_COHORT_BASE}/dashboard`
+                    : `${PROGRAM_AI_COHORT_BASE}/apply`
+                }
+                className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
+              >
+                {hasProgramMembership ? "Continue" : "Start Challenge"}
+              </Link>
+            </div>
+            {showDatabricks ? (
               <div
                 className={cn(
                   "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
@@ -101,95 +127,67 @@ export function Roadmaps({
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-inter text-lg font-bold text-black">
-                    31 Days AI Cohort
+                    31 Days Databricks
                   </p>
                   <p className="mt-1 text-sm text-[#4B4B4B]">
-                    Build and deploy a production-grade enterprise AI chatbot in
-                    31 days.
+                    Build a healthcare-claims Lakehouse on Databricks
+                    in 31 days.
                   </p>
                 </div>
                 <Link
-                  href={
-                    hasProgramMembership
-                      ? `${PROGRAM_AI_COHORT_BASE}/dashboard`
-                      : `${PROGRAM_AI_COHORT_BASE}/apply`
-                  }
-                  className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
+                  href="/program/databricks"
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
                 >
-                  {hasProgramMembership ? "Continue" : "Start Challenge"}
+                  Open
                 </Link>
               </div>
-              {showDatabricks ? (
-                <div
-                  className={cn(
-                    "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
-                    HUB_CARD_HOVER_CLASS,
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-inter text-lg font-bold text-black">
-                      31 Days Databricks
-                    </p>
-                    <p className="mt-1 text-sm text-[#4B4B4B]">
-                      Build a healthcare-claims Lakehouse on Databricks in 31
-                      days.
-                    </p>
-                  </div>
-                  <Link
-                    href="/program/databricks"
-                    className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
-                  >
-                    Open
-                  </Link>
+            ) : null}
+            {showDsArchitect ? (
+              <div
+                className={cn(
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  HUB_CARD_HOVER_CLASS,
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-inter text-lg font-bold text-black">
+                    10 Days Data Solutions Architect
+                  </p>
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                    Design AWS-first data and AI platforms in 10 days.
+                  </p>
                 </div>
-              ) : null}
-              {showDsArchitect ? (
-                <div
-                  className={cn(
-                    "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
-                    HUB_CARD_HOVER_CLASS,
-                  )}
+                <Link
+                  href="/program/ds-architect"
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-inter text-lg font-bold text-black">
-                      10 Days Data Solutions Architect
-                    </p>
-                    <p className="mt-1 text-sm text-[#4B4B4B]">
-                      Design AWS-first data and AI platforms in 10 days.
-                    </p>
-                  </div>
-                  <Link
-                    href="/program/ds-architect"
-                    className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
-                  >
-                    Open
-                  </Link>
+                  Open
+                </Link>
+              </div>
+            ) : null}
+            {showPowerBi ? (
+              <div
+                className={cn(
+                  "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  HUB_CARD_HOVER_CLASS,
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-inter text-lg font-bold text-black">
+                    7 Days Power BI &amp; Analytics
+                  </p>
+                  <p className="mt-1 text-sm text-[#4B4B4B]">
+                    Ship recruiter-grade Power BI dashboards in 7 days.
+                  </p>
                 </div>
-              ) : null}
-              {showPowerBi ? (
-                <div
-                  className={cn(
-                    "flex flex-col rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
-                    HUB_CARD_HOVER_CLASS,
-                  )}
+                <Link
+                  href="/program/powerbi"
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-4 self-end")}
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-inter text-lg font-bold text-black">
-                      7 Days Power BI &amp; Analytics
-                    </p>
-                    <p className="mt-1 text-sm text-[#4B4B4B]">
-                      Ship recruiter-grade Power BI dashboards in 7 days.
-                    </p>
-                  </div>
-                  <Link
-                    href="/program/powerbi"
-                    className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
-                  >
-                    Open
-                  </Link>
-                </div>
-              ) : null}
-            </div>
+                  Open
+                </Link>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}

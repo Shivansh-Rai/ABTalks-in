@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { enrollInClaudeChallenge } from "@/app/actions/enrollment-actions";
 import { HUB_CARD_CTA_CLASS } from "@/components/dashboard-hub/nav-items";
-import { cn } from "@/lib/utils";
 
 export function JoinClaudeButton() {
   const router = useRouter();
@@ -32,7 +31,7 @@ export function JoinClaudeButton() {
       type="button"
       onClick={handleJoin}
       disabled={pending}
-      className={cn(HUB_CARD_CTA_CLASS, "mt-4")}
+      className={HUB_CARD_CTA_CLASS}
     >
       {pending ? "Joining…" : "Join"}
     </button>
