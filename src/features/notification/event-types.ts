@@ -42,10 +42,14 @@ export const EVENT_TYPE_REGISTRY: Record<string, EventTypeConfig> = {
     emailExempt: false,
     defaultEmailEnabled: false,
   },
+  // T-251: profile.viewed is now the "a real recruiter opened your profile"
+  // signal. priority: "important" opens the email path; defaultEmailEnabled
+  // stays false so email is opt-in — the "selectively by email" from the
+  // T-251 spec. In-app is always delivered (T-248 rule).
   "profile.viewed": {
     key: "profile.viewed",
     label: "Profile viewed by a recruiter",
-    priority: "low",
+    priority: "important",
     suppressionExempt: false,
     emailExempt: false,
     defaultEmailEnabled: false,

@@ -11,6 +11,9 @@ import {
   renameTalentProjectSchema,
   setMatchDecisionSchema,
 } from "@/lib/validations/hire";
+import { dispatch as dispatchNotification } from "@/features/notification/notification-service";
+import { prismaProfileViewStore } from "@/features/profile-view-notification/store";
+import { notifyProfileViewed } from "@/features/profile-view-notification/service";
 
 type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
@@ -133,11 +136,30 @@ export async function markMatchViewedAction(
       data: { viewedAt },
     });
     revalidateHire(parsed.data.requestId);
-    return { ok: true, data: { viewedAt: viewedAt.toISOString() } };
   } catch (error) {
     logger.error("[hire] markMatchViewedAction", { error: String(error) });
     return { ok: false, message: "Could not record that this candidate was viewed." };
   }
+
+  // T-251: notify the candidate that a real recruiter viewed them. Wrapped
+  // in its own try so a notification failure never fails the recruiter's
+  // view action — the DB update above is already committed.
+  try {
+    await notifyProfileViewed(
+      { store: prismaProfileViewStore(), dispatch: dispatchNotification },
+      {
+        candidateUserId: parsed.data.candidateUserId,
+        recruiterUserId: gate.data.userId,
+      },
+    );
+  } catch (error) {
+    logger.error("[hire] profile-view notify failed", {
+      error: String(error),
+      candidateUserId: parsed.data.candidateUserId,
+    });
+  }
+
+  return { ok: true, data: { viewedAt: viewedAt.toISOString() } };
 }
 
 export async function setMatchDecisionAction(

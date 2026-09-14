@@ -28,6 +28,9 @@ import type { LifecycleAction } from "@/features/recruiter-jobs/lifecycle";
 import { prismaJobAlertStore } from "@/features/job-alerts/prisma-store";
 import { fanoutOnJobPublished } from "@/features/job-alerts/service";
 import { dispatch as dispatchNotification } from "@/features/notification/notification-service";
+import { decodeCandidateRef } from "@/features/hire/candidate-ref";
+import { notifyProfileViewed } from "@/features/profile-view-notification/service";
+import { prismaProfileViewStore } from "@/features/profile-view-notification/store";
 
 type ActionOk<T = undefined> = T extends undefined
   ? { ok: true }
@@ -312,6 +315,32 @@ export async function getMyJobApplicantCardAction(
       const status = result.code === "NOT_FOUND" ? 404 : undefined;
       return { ok: false, message: result.message, status };
     }
+
+    // T-251: notify the candidate that a real recruiter opened their
+    // profile from the jobs applicant panel. Best-effort — the decoded
+    // ref might come from a legacy prefix in edge cases, in which case
+    // we simply skip the notification. Failure never surfaces to the
+    // recruiter.
+    const decoded = decodeCandidateRef(parsed.data.candidateRef);
+    if (decoded?.source === "PROFILE" && decoded.id) {
+      try {
+        await notifyProfileViewed(
+          {
+            store: prismaProfileViewStore(),
+            dispatch: dispatchNotification,
+          },
+          {
+            candidateUserId: decoded.id,
+            recruiterUserId: workspace.data.userId,
+          },
+        );
+      } catch (error) {
+        logger.error("[recruiter-job-actions] profile-view notify failed", {
+          error: String(error),
+        });
+      }
+    }
+
     return { ok: true, data: { match: result.data } };
   } catch (error) {
     logger.error("[recruiter-job-actions] applicant-card", {
