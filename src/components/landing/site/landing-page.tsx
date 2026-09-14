@@ -4,7 +4,6 @@ import { LandingNav } from "./landing-nav";
 import { HeroSection } from "./hero-section";
 import { StatsStrip } from "./stats-strip";
 import { BridgeSection } from "./bridge-section";
-import { HowItWorksSection } from "./how-it-works-section";
 import { KeepThreeSection } from "./keep-three-section";
 import { CohortsSection } from "./cohorts-section";
 import { TestimonialsSection } from "./testimonials-section";
@@ -91,7 +90,6 @@ export function LandingPage({
         />
         <StatsStrip />
         <BridgeSection />
-        <HowItWorksSection />
         <KeepThreeSection getStartedHref={state.getStartedHref} />
         <CohortsSection cards={cards} />
         <TestimonialsSection />

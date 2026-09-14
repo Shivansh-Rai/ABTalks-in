@@ -5,12 +5,20 @@ import { useSafeReducedMotion } from "@/lib/motion";
 import { Reveal } from "./motion/reveal";
 import { QUOTE_TINTS } from "./landing-content";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0]![0] + parts[1]![0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase() || "?";
+/**
+ * The placeholder WhatsApp shows when an account has no photo: a plain person
+ * glyph on a grey disc. Decorative — the name it belongs to is read out of the
+ * <strong> beside it.
+ */
+function AvatarGlyph() {
+  return (
+    <span className="avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <circle cx="12" cy="8.2" r="3.9" />
+        <path d="M12 13.7c-4.2 0-7.6 2.6-7.6 5.8V21h15.2v-1.5c0-3.2-3.4-5.8-7.6-5.8Z" />
+      </svg>
+    </span>
+  );
 }
 
 function QuoteCard({
@@ -30,7 +38,7 @@ function QuoteCard({
     <article className={`quote quote--${tint}`} aria-hidden={hidden || undefined}>
       <p>“{quote}”</p>
       <footer>
-        <span className="avatar">{initials(name)}</span>
+        <AvatarGlyph />
         <span>
           <strong>{name}</strong>
           {org ? <small>{org}</small> : null}

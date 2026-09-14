@@ -154,6 +154,15 @@
 .abtalks-landing .btn--ghost { background: transparent; color: var(--lp-color-text-primary); border-color: var(--lp-color-border); }
 .abtalks-landing .btn--ghost:hover { border-color: var(--lp-color-text-primary); }
 
+/* Clay chip CTA — same treatment as .pw-check-item.pw-current in
+   profile-wizard.css, so the nav CTA matches the rest of the product. */
+.abtalks-landing .btn--clay {
+  background: #D4EBEC; color: #03535F;
+  border-color: transparent; border-radius: 12px; font-weight: 700;
+  box-shadow: inset 0 -4px 15px 0 #A6D2D5;
+}
+.abtalks-landing .btn--clay:hover { background: #C8E5E7; }
+
 .abtalks-landing .btn--ghost-light { background: rgba(255,255,255,.10); color: #fff; border-color: rgba(255,255,255,.55); backdrop-filter: blur(4px); }
 .abtalks-landing .btn--ghost-light:hover { background: rgba(255,255,255,.20); }
 
@@ -214,9 +223,15 @@
 }
 .abtalks-landing .nav__logo img {
   height: 32px; width: auto; object-fit: contain;
+  /* The mark is solid black. Over the hero the nav pill is only 42% white on
+     a dark photo, so black-on-dark barely reads; invert lifts it to a light
+     grey. Once stuck the pill sits over light content and black is correct. */
+  filter: invert(88%);
+  transition: filter var(--lp-dur) var(--lp-ease), height var(--lp-dur) var(--lp-ease);
 }
 .abtalks-landing .nav-wrap.is-stuck .nav__logo img {
   height: 28px;
+  filter: none;
 }
 .abtalks-landing .nav__links {
   display: flex; align-items: center; gap: var(--lp-space-24);
@@ -266,12 +281,10 @@
   transform: rotate(45deg) translateY(-1px);
   transition: transform var(--lp-dur-fast) var(--lp-ease);
 }
-.abtalks-landing .nav__cta-menu .btn--ghost,
-.abtalks-landing .nav__cta-menu .btn--ghost:hover,
-.abtalks-landing .nav__cta-menu:hover .btn--ghost,
-.abtalks-landing .nav__cta-menu:focus-within .btn--ghost,
-.abtalks-landing .nav__cta-menu.is-open .btn--ghost {
-  border-color: var(--lp-color-primary);
+.abtalks-landing .nav__cta-menu:hover .btn--clay,
+.abtalks-landing .nav__cta-menu:focus-within .btn--clay,
+.abtalks-landing .nav__cta-menu.is-open .btn--clay {
+  background: #C8E5E7;
 }
 .abtalks-landing .nav__cta-menu:hover .nav__cta-caret,
 .abtalks-landing .nav__cta-menu:focus-within .nav__cta-caret,
@@ -379,7 +392,7 @@
   font-family: var(--lp-font-display);
   font-style: italic;
   font-weight: 500;
-  font-size: 44px; line-height: 52px;
+  font-size: 48px; line-height: 56px;
   color: rgba(255,255,255,.92);
 }
 .abtalks-landing .strike__word {
@@ -652,6 +665,11 @@
   pointer-events: none;
 }
 
+/* Only the bottom platform's tint lands dark enough to flip the label. At its
+   mid-tone (#055C69) white scores 7.6:1 against black's 2.8:1. Middle and top
+   keep black: at their mid-tones black still wins (6.6:1 vs white's 3.2:1). */
+.abtalks-landing .slab--bottom .slab__label { color: #FFFFFF; }
+
 /* Side walls — each hinges up from the edge it sits on, filling the gap
    between the ground plane and the raised top face. Only the two walls the
    isometric camera can actually see are drawn; the far two would sit behind
@@ -675,9 +693,9 @@
 /* Same three layer colours as before, now split into top / side tones */
 .abtalks-landing .slab--top {
   top: 30px;
-  --lp-tint-top:    linear-gradient(155deg, #A6D2D5, #076573);
-  --lp-tint-side-a: linear-gradient(180deg, #076573, #03535F);
-  --lp-tint-side-b: linear-gradient(180deg, #03535F, #076573);
+  --lp-tint-top:    linear-gradient(155deg, #E7F2F3, #A6D2D5);
+  --lp-tint-side-a: linear-gradient(180deg, #A6D2D5, #8DB3B5);
+  --lp-tint-side-b: linear-gradient(180deg, #8DB3B5, #749395);
 }
 .abtalks-landing .slab--middle {
   top: 130px;
@@ -687,7 +705,7 @@
 }
 .abtalks-landing .slab--bottom {
   top: 230px;
-  --lp-tint-top:    linear-gradient(155deg, #A6D2D5, #076573);
+  --lp-tint-top:    linear-gradient(155deg, #076573, #03535F);
   --lp-tint-side-a: linear-gradient(180deg, #A6D2D5, #076573);
   --lp-tint-side-b: linear-gradient(180deg, #076573, #03535F);
 }
@@ -1035,6 +1053,10 @@
 
 /* ---------- 13. TESTIMONIALS (unchanged) ---------- */
 .abtalks-landing .testimonials { background: var(--lp-color-background); overflow: hidden; }
+/* The cohort cards sat 128px clear of this heading (54px off .section.open
+   plus 74px here). Trimmed to the top of this section only, so every other
+   section keeps the shared --lp-section-gap rhythm. */
+.abtalks-landing .section.testimonials { padding-block-start: 36px; }
 .abtalks-landing .testimonials__head { text-align: center; margin-bottom: var(--lp-space-40); }
 .abtalks-landing .testimonials__head .h2 { text-transform: uppercase; letter-spacing: .01em; }
 .abtalks-landing .testimonials__head .p { margin-inline: auto; font-size: 14px; line-height: 21px; }
@@ -1051,17 +1073,18 @@
   border: 1px solid var(--lp-color-border);
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--lp-space-24);
 }
-.abtalks-landing .quote p { margin: 0; font-size: 16px; line-height: 25px; color: var(--lp-color-dark-gray); }
+.abtalks-landing .quote p { margin: 0; font-size: 14px; line-height: 21px; color: var(--lp-color-dark-gray); }
 .abtalks-landing .quote footer { display: flex; align-items: center; gap: var(--lp-space-12); }
 .abtalks-landing .quote footer > span:last-child { display: grid; }
 .abtalks-landing .quote strong { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--lp-color-text-primary); }
 .abtalks-landing .quote small { font-size: 13px; line-height: 18px; color: var(--lp-color-text-muted); }
 .abtalks-landing .avatar {
   width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
-  background: var(--lp-color-primary); color: #fff;
+  background: #DFE5E7; color: #FFFFFF;
   display: grid; place-items: center;
-  font-size: 13px; font-weight: 600; letter-spacing: .02em;
+  overflow: hidden;
 }
+.abtalks-landing .avatar svg { width: 30px; height: 30px; display: block; fill: currentColor; }
 /* Design System v2 — cool palette tints only (no warning yellow / red washes). */
 .abtalks-landing .quote--teal  { background: #E7F2F3; border-color: #D4EBEC; }
 .abtalks-landing .quote--white { background: #FFFFFF; border-color: #E0E0E0; }
