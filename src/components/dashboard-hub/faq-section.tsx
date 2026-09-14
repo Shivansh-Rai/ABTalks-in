@@ -8,10 +8,10 @@ export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="scroll-mt-20 px-4 py-12 sm:px-6">
-      <div className="grid gap-8 lg:grid-cols-[2fr_3fr] lg:gap-12">
+    <section id="faq" className="scroll-mt-20 px-4 py-12 sm:px-6 lg:ml-5">
+      <div className="grid gap-8 lg:grid-cols-[2fr_3fr] lg:items-center lg:gap-12">
         {/* Left column: heading + subtitle */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div>
           <h2 className="text-3xl font-fredoka font-bold leading-tight tracking-tight text-black sm:text-4xl">
             Frequently asked
             <br />

@@ -120,9 +120,7 @@ export function ConnectScreen() {
       step={2}
       heading={HEADING}
       description="Shortlist the right people, reach out with confidence and start hiring."
-      nextHref="/recruiter-onboarding/signup"
-      nextLabel="Let’s Go"
-      background="/recruiter-onboarding/desk-connect.png"
+      nextHref="/recruiter-onboarding/assess"
       scene={SCENE}
       canvas={CANVAS}
     >
@@ -156,6 +154,7 @@ export function ConnectScreen() {
           height: SHORTLIST_CARD.h,
         }}
         {...focalEntrance}
+        data-focal
       >
         <div className="flex items-center justify-between">
           <p className="font-heading text-[22px] font-semibold text-[#03535F]">

@@ -1,7 +1,7 @@
 # Terms of Service
 
-**Version:** 2026-08-10  
-**Effective date:** 2026-08-10
+**Version:** 2026-09-14  
+**Effective date:** 2026-09-14
 
 These Terms of Service (“Terms”) govern your access to and use of ABTalks websites, apps, and related services (the “Service”), operated under the trading name **ABTalks** (“ABTalks”, “we”, “us”).
 
@@ -11,7 +11,7 @@ These Terms of Service (“Terms”) govern your access to and use of ABTalks we
 | **Entity type** | Sole Proprietorship (Proprietary) |
 | **Enterprise scale** | Micro (Udyam) |
 | **Major activity** | Services |
-| **Industry (NIC)** | 62099 — Other information technology and computer service activities n.e.c. |
+| **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
 | **Trading name** | ABTalks |
 | **Unit name** | ABTalksOnAI |
@@ -38,11 +38,11 @@ You must be at least **18 years old** and able to form a binding contract. The S
 
 The Service may include (availability varies by feature flags and cohort):
 
-1. **60-Day Challenge** — daily tasks, submissions, quizzes, streaks, certificates  
-2. **Workshops / webinars** — event registration and related emails  
-3. **Hackathon** — team or solo registration and project submission  
-4. **AI Cohort Program** — missions, projects, AI-assisted feedback, exit interview  
-5. **Talent portal** — recruiter access to opted-in program member profiles  
+1. **60-Day Challenge** - daily tasks, submissions, quizzes, streaks, certificates  
+2. **Workshops / webinars** - event registration and related emails  
+3. **Hackathon** - team or solo registration and project submission  
+4. **AI Cohort Program** - missions, projects, AI-assisted feedback, exit interview  
+5. **Talent portal** - recruiter discovery of eligible active candidate profiles, and paid unlock of protected contact details  
 6. **Jobs board, marketplace, referrals, and related community features**
 
 We may change, pause, or discontinue features. Challenge or program completion does **not** guarantee employment, interviews, or admission to any cohort.
@@ -60,7 +60,7 @@ Community conduct rules shown in onboarding apply in addition to these Terms.
 
 ## 5. Your content
 
-You retain ownership of content you submit (profile data, GitHub/LinkedIn URLs, code, writeups, hackathon repos, interview responses). You grant ABTalks a worldwide, non-exclusive license to host, process, display, and share that content as needed to operate the Service (including admin review, certificates, leaderboards, and—where you opt in—recruiter visibility), and as described in the Privacy Policy.
+You retain ownership of content you submit (profile data, GitHub/LinkedIn URLs, code, writeups, hackathon repos, interview responses). You grant ABTalks a worldwide, non-exclusive license to host, process, display, and share that content as needed to operate the Service (including admin review, certificates, leaderboards, and recruiter discoverability for eligible active candidate profiles), and as described in the Privacy Policy.
 
 Public URLs you submit (e.g. GitHub, LinkedIn) may be visible to admins and, where applicable, other participants or recruiters.
 
@@ -72,11 +72,13 @@ Certificates issued by ABTalks are certificates of **participation and completio
 
 ## 7. Recruiters and talent
 
-If you opt in to recruiter visibility (program track), approved recruiters may view profile and performance information described in the Privacy Policy. ABTalks is not a party to any employment relationship and makes no hiring guarantees.
+Active candidates with eligible, usable profiles are discoverable by authorized recruiters on the Service automatically. There is no candidate visibility toggle, opt-in/opt-out switch, or individual field hide/show setting. The platform determines which profile and assessment fields are visible to recruiters in general searches.
 
-Inclusion in the talent pool, publication of a shared assessment report at `/r/[token]`, and listings on the jobs board are **introductions only**. ABTalks does not screen, vet, endorse, or vouch for any employer, recruiter, or listing, and is not responsible for their conduct, hiring processes, or the accuracy of anything they publish. We do not warrant that you will receive any interview, offer, internship, or employment outcome, and we make no representation about salary, role, or timeline. Any engagement you enter into with an employer is solely between you and them.
+Candidate protected contact details (specifically personal email address, phone number, and LinkedIn profile URL) remain shielded and are never visible in general recruiter searches. Authorized recruiters access protected contact details through the platform's paid contact unlock mechanism. Unlocking a candidate who has already been unlocked by your organization does not consume credits again (repeat unlocks are free).
 
-Recruiters must use the talent portal only for legitimate recruiting, keep access confidential, and not resell candidate data.
+ABTalks is not an employment agency or employer, is not a party to any employment relationship, and makes no hiring guarantees. Inclusion in the talent pool, publication of a shared assessment report at `/r/[token]`, and listings on the jobs board are **introductions only**. ABTalks does not screen, vet, endorse, or vouch for any employer, recruiter, or listing, and is not responsible for their conduct, hiring processes, or the accuracy of anything they publish. We do not warrant that you will receive any interview, offer, internship, or employment outcome, and we make no representation about salary, role, or timeline. Any engagement you enter into with an employer is solely between you and them.
+
+Recruiters must use the talent portal only for legitimate recruiting, keep candidate information strictly confidential, and not resell or re-distribute candidate data.
 
 ## 8. Marketplace and Synergy Points
 
@@ -88,9 +90,11 @@ Fulfillment of physical rewards is **discretionary and currently limited to addr
 
 ## 9. Fees
 
-The Service is currently provided **free of charge**. We do not collect fees and do not process payment cards or other payment instruments. Synergy Points (§8) are not a payment mechanism.
+For candidates and learners, the Service is provided **free of charge**. We do not collect fees from candidates and do not process consumer payment cards or other payment instruments. Synergy Points (§8) are not a payment mechanism.
 
-If we introduce paid offerings in future, the applicable prices, billing terms, cancellation rights, and refund policy will be presented to you at the point of purchase and will govern that purchase in addition to these Terms.
+Recruiter workspaces operate on a platform credit ledger balance. Recruiter organizations receive a starting credit balance upon onboarding. Contact unlocks are billed against the organization's credit balance at the current platform rate specified in the recruiter workspace. Repeat unlocks of the same candidate are free.
+
+If we introduce additional paid offerings in future, the applicable prices, billing terms, cancellation rights, and refund policy will be presented at the point of purchase and will govern that purchase in addition to these Terms.
 
 ## 9A. Communications
 
@@ -116,15 +120,21 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, ABTALKS AND ITS OPERATORS WILL NOT BE LI
 
 You agree to indemnify, defend, and hold harmless ABTalks, its operators, employees, and contractors from and against any claim, demand, loss, liability, or expense (including reasonable legal fees) arising out of or relating to: (a) content you submit to the Service; (b) your breach of these Terms or the Community Rules; (c) your infringement of any third party's intellectual property or other rights; or (d) your unlawful or fraudulent use of the Service. This does not limit any rights you have that cannot be waived under applicable law.
 
-## 15. Termination
+## 15. Termination, account deletion, and data rights
 
-You may stop using the Service at any time. You may request account deletion via the Privacy Policy rights process. We may remove you from a challenge, program, or hackathon for inactivity, cheating, or Terms violations.
+You may stop using the Service at any time. 
+
+- **Self-service account deletion**: You can delete your account yourself immediately at any time without requiring admin approval. Upon deletion, your personal account details are erased or anonymized from active systems, subject only to minimal records retained for fraud prevention, legal compliance, or public certificate verification as detailed in our [Privacy Policy](/privacy).
+- **Data export**: You may request and download a copy of your personal data held by the platform.
+- **In-product and contact channels**: You can initiate data rights and deletion directly in your account settings or submit a request via [/privacy/requests](/privacy/requests).
+
+We may suspend, terminate, or remove you from a challenge, program, or hackathon for inactivity, fraud, cheating, or Terms violations.
 
 ## 16. Governing law and dispute resolution
 
 These Terms are governed by the laws of **India**, without regard to conflict-of-law rules. Courts in India shall have exclusive jurisdiction, subject to mandatory consumer protections that cannot be waived.
 
-**Notice before proceedings.** Before commencing any legal proceeding, the party raising the dispute will give the other **30 days' prior written notice** describing the dispute and the relief sought, and both parties will attempt in good faith to resolve it during that period. Notice to us goes to our Grievance Officer at [team@abtalks.in](mailto:team@abtalks.in) — see [/contact](/contact). Nothing in this clause prevents either party from seeking urgent interim relief, or a consumer from approaching a consumer forum.
+**Notice before proceedings.** Before commencing any legal proceeding, the party raising the dispute will give the other **30 days' prior written notice** describing the dispute and the relief sought, and both parties will attempt in good faith to resolve it during that period. Notice to us goes to our Grievance Officer at [team@abtalks.in](mailto:team@abtalks.in) - see [/contact](/contact). Nothing in this clause prevents either party from seeking urgent interim relief, or a consumer from approaching a consumer forum.
 
 ## 17. Changes
 
