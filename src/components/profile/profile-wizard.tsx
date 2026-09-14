@@ -398,7 +398,7 @@ export function ProfileWizard({
                   <span className="pw-req" aria-hidden>
                     *
                   </span>{" "}
-                  Needed to complete this section.
+                  Mandatory section
                 </p>
               ) : null}
             </div>
