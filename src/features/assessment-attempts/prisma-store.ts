@@ -1,10 +1,13 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import type {
   AttemptListRow,
   AttemptRow,
   AttemptStore,
+  EventContext,
+  EventWrite,
   SubmitOutcome,
 } from "./service";
 
@@ -57,6 +60,8 @@ export function prismaAttemptStore(): AttemptStore {
               instructions: true,
               durationMinutes: true,
               passMarkPercent: true,
+              strictMode: true,
+              cameraRequired: true,
               questions: {
                 orderBy: { position: "asc" },
                 select: {
@@ -94,6 +99,8 @@ export function prismaAttemptStore(): AttemptStore {
           instructions: a.assessment.instructions,
           durationMinutes: a.assessment.durationMinutes,
           passMarkPercent: a.assessment.passMarkPercent,
+          strictMode: a.assessment.strictMode,
+          cameraRequired: a.assessment.cameraRequired,
         },
         questions: a.assessment.questions,
         answers: a.answers,
@@ -113,6 +120,8 @@ export function prismaAttemptStore(): AttemptStore {
             select: {
               title: true,
               durationMinutes: true,
+              strictMode: true,
+              cameraRequired: true,
               _count: { select: { questions: true } },
             },
           },
@@ -126,6 +135,8 @@ export function prismaAttemptStore(): AttemptStore {
         submittedAt: r.submittedAt,
         durationMinutes: r.assessment.durationMinutes,
         questionCount: r.assessment._count.questions,
+        strictMode: r.assessment.strictMode,
+        cameraRequired: r.assessment.cameraRequired,
       }));
     },
 
@@ -240,6 +251,81 @@ export function prismaAttemptStore(): AttemptStore {
             missingRequired: error.missingRequired,
             overLimit: error.overLimit,
           };
+        }
+        throw error;
+      }
+    },
+
+    async findEventContext(assignmentId, candidateUserId, clientSessionId): Promise<EventContext | null> {
+      const a = await prisma.recruiterAssessmentAssignment.findFirst({
+        where: { id: assignmentId, candidateUserId },
+        select: {
+          status: true,
+          startedAt: true,
+          submittedAt: true,
+          assessment: {
+            select: {
+              status: true,
+              strictMode: true,
+              cameraRequired: true,
+              questions: { select: { id: true, type: true } },
+            },
+          },
+        },
+      });
+      if (!a) return null;
+      const [eventCount, session, sessionCount] = await Promise.all([
+        prisma.assessmentAttemptEvent.count({ where: { assignmentId } }),
+        prisma.assessmentAttemptSession.findUnique({
+          where: {
+            assignmentId_clientSessionId: { assignmentId, clientSessionId },
+          },
+          select: { id: true },
+        }),
+        prisma.assessmentAttemptSession.count({ where: { assignmentId } }),
+      ]);
+      return {
+        status: a.status,
+        startedAt: a.startedAt,
+        submittedAt: a.submittedAt,
+        assessment: a.assessment,
+        eventCount,
+        sessionExists: session !== null,
+        sessionCount,
+      };
+    },
+
+    async writeEventBatch(assignmentId, clientSessionId, receivedAt, events: EventWrite[]) {
+      const data = events.map((e) => ({
+        seq: e.seq,
+        type: e.type,
+        occurredAt: e.occurredAt,
+        clientOccurredAt: e.clientOccurredAt,
+        receivedAt: e.receivedAt,
+        questionId: e.questionId,
+        count: e.count,
+      }));
+      const nested = data.length > 0 ? { createMany: { data, skipDuplicates: true } } : undefined;
+      const write = () =>
+        writeClient().assessmentAttemptSession.upsert({
+          where: { assignmentId_clientSessionId: { assignmentId, clientSessionId } },
+          create: {
+            assignmentId,
+            clientSessionId,
+            firstSeenAt: receivedAt,
+            lastSeenAt: receivedAt,
+            events: nested,
+          },
+          update: { lastSeenAt: receivedAt, events: nested },
+          select: { id: true },
+        });
+      try {
+        await write();
+      } catch (error) {
+        // Two first batches from one page raced to create the session: the loser retries as an update.
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          await write();
+          return;
         }
         throw error;
       }

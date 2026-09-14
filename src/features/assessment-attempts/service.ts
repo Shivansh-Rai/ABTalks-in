@@ -1,12 +1,19 @@
 import "server-only";
 
 import {
+  CAMERA_EVENT_TYPES,
+  CLIPBOARD_EVENT_TYPES,
+  FILE_LINK_EVENT_TYPES,
+  MAX_EVENTS_PER_ATTEMPT,
   MAX_PARAGRAPH_WORDS,
+  MAX_SESSIONS_PER_ATTEMPT,
   attemptActionSchema,
+  attemptEventBatchSchema,
   countWords,
   incompleteMessage,
   isAnswerComplete,
   saveAnswerSchema,
+  type AttemptEventType,
 } from "@/lib/validations/assessment";
 import type {
   CandidateAnswer,
@@ -68,6 +75,8 @@ export type AttemptRow = {
     instructions: string | null;
     durationMinutes: number | null;
     passMarkPercent: number;
+    strictMode: boolean;
+    cameraRequired: boolean;
   };
   questions: AttemptQuestionRow[];
   answers: AnswerRow[];
@@ -81,6 +90,8 @@ export type AttemptListRow = {
   submittedAt: Date | null;
   durationMinutes: number | null;
   questionCount: number;
+  strictMode: boolean;
+  cameraRequired: boolean;
 };
 
 /** What is written for one answer — exactly one of the three is meaningful. */
@@ -115,6 +126,33 @@ export type SubmitOutcome =
   | { outcome: "NOT_OPEN" }
   | { outcome: "INCOMPLETE"; missingRequired: number; overLimit: number };
 
+export type DeviceHint = { mobile: boolean };
+
+export type EventContext = {
+  status: AttemptStatus;
+  startedAt: Date | null;
+  submittedAt: Date | null;
+  assessment: {
+    status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+    strictMode: boolean;
+    cameraRequired: boolean;
+    questions: { id: string; type: QuestionType }[];
+  };
+  eventCount: number;
+  sessionExists: boolean;
+  sessionCount: number;
+};
+
+export type EventWrite = {
+  seq: number;
+  type: AttemptEventType;
+  occurredAt: Date;
+  clientOccurredAt: Date;
+  receivedAt: Date;
+  questionId: string | null;
+  count: number;
+};
+
 export type AttemptStore = {
   /** Only when candidateUserId owns it. Never selects isCorrect/scorePercent/passed. */
   findAttempt(assignmentId: string, candidateUserId: string): Promise<AttemptRow | null>;
@@ -137,6 +175,18 @@ export type AttemptStore = {
     at: Date,
     finish: (input: FinishInput) => FinishResult,
   ): Promise<SubmitOutcome>;
+  findEventContext(
+    assignmentId: string,
+    candidateUserId: string,
+    clientSessionId: string,
+  ): Promise<EventContext | null>;
+  /** Creates the session if new, sets lastSeenAt = receivedAt, inserts events skipping duplicates — one operation. */
+  writeEventBatch(
+    assignmentId: string,
+    clientSessionId: string,
+    receivedAt: Date,
+    events: EventWrite[],
+  ): Promise<void>;
 };
 
 type Result<T> =
@@ -270,6 +320,7 @@ export type LoadedAttempt = {
   submittedAt: Date | null;
   view: CandidateAssessmentView;
   answers: Record<string, CandidateAnswer>;
+  rules: { strictMode: boolean; cameraRequired: boolean };
 };
 
 export async function loadAttempt(
@@ -293,6 +344,10 @@ export async function loadAttempt(
     submittedAt: row.submittedAt,
     view: toView(row),
     answers,
+    rules: {
+      strictMode: row.assessment.strictMode,
+      cameraRequired: row.assessment.cameraRequired,
+    },
   });
 }
 
@@ -300,6 +355,7 @@ export async function startAttempt(
   store: AttemptStore,
   candidateUserId: string,
   input: unknown,
+  device: DeviceHint = { mobile: false },
 ): Promise<Result<{ alreadyStarted: boolean }>> {
   const parsed = attemptActionSchema.safeParse(input);
   if (!parsed.success) return INVALID("Invalid input");
@@ -307,6 +363,9 @@ export async function startAttempt(
 
   const row = await store.findAttempt(assignmentId, candidateUserId);
   if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  if (row.assessment.strictMode && device.mobile) {
+    return CONFLICT("This assessment can only be taken on a laptop or desktop computer.");
+  }
   if (row.status === "SUBMITTED") {
     return CONFLICT("You've already submitted this assessment.");
   }
@@ -329,6 +388,7 @@ export async function saveAnswer(
   store: AttemptStore,
   candidateUserId: string,
   input: unknown,
+  device: DeviceHint = { mobile: false },
 ): Promise<Result<{ savedAt: Date }>> {
   const parsed = saveAnswerSchema.safeParse(input);
   if (!parsed.success) {
@@ -338,6 +398,9 @@ export async function saveAnswer(
 
   const row = await store.findAttempt(assignmentId, candidateUserId);
   if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  if (row.assessment.strictMode && device.mobile) {
+    return CONFLICT("This assessment can only be taken on a laptop or desktop computer.");
+  }
   if (row.status === "SUBMITTED") return CONFLICT(LOCKED_MSG);
   if (row.status === "ASSIGNED") {
     return CONFLICT("Start the assessment before answering.");
@@ -385,6 +448,7 @@ export async function submitAttempt(
   store: AttemptStore,
   candidateUserId: string,
   input: unknown,
+  device: DeviceHint = { mobile: false },
 ): Promise<Result<{ submittedAt: Date }>> {
   const parsed = attemptActionSchema.safeParse(input);
   if (!parsed.success) return INVALID("Invalid input");
@@ -392,6 +456,9 @@ export async function submitAttempt(
 
   const row = await store.findAttempt(assignmentId, candidateUserId);
   if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  if (row.assessment.strictMode && device.mobile) {
+    return CONFLICT("This assessment can only be taken on a laptop or desktop computer.");
+  }
   // TC-C-013: the duplicate refusal, as a message rather than an error.
   if (row.status === "SUBMITTED") return CONFLICT(ALREADY_SUBMITTED_MSG);
 
@@ -416,3 +483,111 @@ export async function listCandidateAttempts(
 ): Promise<Result<AttemptListRow[]>> {
   return OK(await store.listAttempts(candidateUserId));
 }
+
+const SUBMIT_GRACE_MS = 60_000;
+const AFTER_SUBMIT_TOLERANCE_MS = 5_000;
+const BEFORE_START_TOLERANCE_MS = 300_000;
+const MAX_CLIENT_LAG_MS = 86_400_000;
+const SENT_BEFORE_TOLERANCE_MS = 1_000;
+
+const FILE_LINK = new Set<string>(FILE_LINK_EVENT_TYPES);
+const CLIPBOARD = new Set<string>(CLIPBOARD_EVENT_TYPES);
+const CAMERA = new Set<string>(CAMERA_EVENT_TYPES);
+
+export async function recordAttemptEvents(
+  store: AttemptStore,
+  candidateUserId: string,
+  assignmentId: string,
+  body: unknown,
+  receivedAt: Date,
+): Promise<Result<{ accepted: number; dropped: number; limitReached: boolean }>> {
+  const parsed = attemptEventBatchSchema.safeParse(body);
+  if (!parsed.success) return INVALID("Invalid activity batch");
+
+  const { sessionId, sentAt, events } = parsed.data;
+  const ctx = await store.findEventContext(assignmentId, candidateUserId, sessionId);
+  if (!ctx || ctx.assessment.status !== "PUBLISHED") {
+    return NOT_FOUND(NOT_FOUND_MSG);
+  }
+  if (!ctx.assessment.strictMode) {
+    return CONFLICT("Activity isn't recorded for this assessment.");
+  }
+  if (ctx.status === "ASSIGNED" || !ctx.startedAt) {
+    return CONFLICT("The assessment hasn't started.");
+  }
+  if (
+    ctx.status === "SUBMITTED" &&
+    ctx.submittedAt &&
+    receivedAt.getTime() > ctx.submittedAt.getTime() + SUBMIT_GRACE_MS
+  ) {
+    return CONFLICT("This assessment has been submitted.");
+  }
+  if (!ctx.sessionExists && ctx.sessionCount >= MAX_SESSIONS_PER_ATTEMPT) {
+    return CONFLICT("Too many page sessions for this attempt.");
+  }
+
+  const offsetMs = receivedAt.getTime() - sentAt;
+  const questionById = new Map(ctx.assessment.questions.map((q) => [q.id, q]));
+  const ordered = [...events].sort((a, b) => a.seq - b.seq);
+  const kept: EventWrite[] = [];
+
+  for (const event of ordered) {
+    if (
+      event.occurredAt > sentAt + SENT_BEFORE_TOLERANCE_MS ||
+      sentAt - event.occurredAt > MAX_CLIENT_LAG_MS
+    ) {
+      continue;
+    }
+    const corrected = new Date(
+      Math.min(event.occurredAt + offsetMs, receivedAt.getTime()),
+    );
+    if (corrected.getTime() < ctx.startedAt.getTime() - BEFORE_START_TOLERANCE_MS) {
+      continue;
+    }
+    if (
+      ctx.submittedAt &&
+      corrected.getTime() > ctx.submittedAt.getTime() + AFTER_SUBMIT_TOLERANCE_MS
+    ) {
+      continue;
+    }
+    if (CAMERA.has(event.type) && !ctx.assessment.cameraRequired) {
+      continue;
+    }
+
+    let questionId: string | null = null;
+    if (FILE_LINK.has(event.type)) {
+      if (!event.questionId) continue;
+      const q = questionById.get(event.questionId);
+      if (!q || q.type !== "FILE_UPLOAD") continue;
+      questionId = event.questionId;
+    } else if (CLIPBOARD.has(event.type)) {
+      questionId =
+        event.questionId && questionById.has(event.questionId)
+          ? event.questionId
+          : null;
+    }
+
+    kept.push({
+      seq: event.seq,
+      type: event.type,
+      occurredAt: corrected,
+      clientOccurredAt: new Date(event.occurredAt),
+      receivedAt,
+      questionId,
+      count: CLIPBOARD.has(event.type) ? (event.count ?? 1) : 1,
+    });
+  }
+
+  const capacity = Math.max(0, MAX_EVENTS_PER_ATTEMPT - ctx.eventCount);
+  const accepted = kept.slice(0, capacity);
+  const limitReached = ctx.eventCount + kept.length > MAX_EVENTS_PER_ATTEMPT;
+
+  await store.writeEventBatch(assignmentId, sessionId, receivedAt, accepted);
+
+  return OK({
+    accepted: accepted.length,
+    dropped: parsed.data.events.length - kept.length,
+    limitReached,
+  });
+}
+

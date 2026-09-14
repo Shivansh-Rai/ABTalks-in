@@ -90,6 +90,9 @@ export function AssessmentBuilder({
   const [passMarkPercent, setPassMarkPercent] = useState(
     existingDraft?.passMarkPercent ?? 60,
   );
+  const [cameraRequired, setCameraRequired] = useState(
+    existingDraft?.cameraRequired ?? false,
+  );
   const [questions, setQuestions] = useState<DraftQuestion[]>(() =>
     toDraftQuestions(existingDraft, presetLocked),
   );
@@ -113,6 +116,7 @@ export function AssessmentBuilder({
       instructions: instructions.trim() ? instructions : null,
       durationMinutes: untimed ? null : durationMinutes,
       passMarkPercent,
+      cameraRequired,
       shortlistRefs,
       questions: stripKeys(questions) as AssessmentDraft["questions"],
     }),
@@ -124,6 +128,7 @@ export function AssessmentBuilder({
       untimed,
       durationMinutes,
       passMarkPercent,
+      cameraRequired,
       shortlistRefs,
       questions,
     ],
@@ -294,6 +299,11 @@ export function AssessmentBuilder({
               your own.
             </p>
           ) : null}
+          <p className="hire-assess__note">
+            Published assessments run in strict mode: laptop or desktop only,
+            fullscreen required, copy and paste blocked, and page activity
+            recorded for you to review.
+          </p>
         </div>
         {/* Phones only: at ≥1100px both panes are always on screen, so the
             toggle is hidden there (hire-scout.css). */}
@@ -398,7 +408,19 @@ export function AssessmentBuilder({
                 }
               />
             </label>
+            <label className="hire-assess-q__required">
+              <input
+                type="checkbox"
+                checked={cameraRequired}
+                onChange={(e) => setCameraRequired(e.target.checked)}
+              />
+              <span>Require camera</span>
+            </label>
           </div>
+          <p className="hire-assess-hint">
+            Candidates must keep their camera on to see the questions. ABTalks
+            never records or sees the video — only when the camera is on or off.
+          </p>
 
           <div className="hire-assess__questions">
             <div className="hire-assess__questions-head">

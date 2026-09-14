@@ -21,6 +21,18 @@ import type {
   CandidateAssessmentView,
 } from "@/components/hire/assessment/assessment-types";
 import {
+  acquireCamera,
+  detectStrictSupport,
+  exitPageFullscreen,
+  requestPageFullscreen,
+  startBlockedReasonFor,
+  StrictModeChecklist,
+  StrictModeGuard,
+  StrictModeUnavailable,
+  type CameraError,
+  type StrictSupport,
+} from "@/components/assessments/assessment-integrity";
+import {
   MAX_PARAGRAPH_WORDS,
   countWords,
   incompleteMessage,
@@ -47,6 +59,7 @@ type AssessmentAttemptProps = {
   submittedAtLabel: string | null;
   view: CandidateAssessmentView;
   initialAnswers: Record<string, CandidateAnswer>;
+  rules: { strictMode: boolean; cameraRequired: boolean };
 };
 
 /** Typing pause before a paragraph or link is sent. Choices go immediately. */
@@ -78,6 +91,7 @@ export function AssessmentAttempt({
   submittedAtLabel,
   view,
   initialAnswers,
+  rules,
 }: AssessmentAttemptProps) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>(() => stageFor(status));
@@ -93,6 +107,11 @@ export function AssessmentAttempt({
   const [retryNonce, setRetryNonce] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [busy, startTransition] = useTransition();
+  const [support, setSupport] = useState<StrictSupport | null>(null);
+  const [camera, setCamera] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<CameraError | null>(null);
+  const endingRef = useRef<"submitted" | null>(null);
+  const cameraRef = useRef<MediaStream | null>(null);
 
   // A refresh that finds the attempt moved on (started, or submitted here or on
   // another device) moves the screen with it. On SUBMITTED it also shows the
@@ -102,6 +121,59 @@ export function AssessmentAttempt({
     setStage(stageFor(status));
     if (status === "SUBMITTED") setAnswers(initialAnswers);
   }
+
+  const stopCameraTracks = useCallback((stream: MediaStream | null) => {
+    if (!stream) return;
+    for (const t of stream.getTracks()) t.stop();
+  }, []);
+
+  const applyCamera = useCallback(
+    (stream: MediaStream | null) => {
+      setCamera((prev) => {
+        if (prev && prev !== stream) stopCameraTracks(prev);
+        return stream;
+      });
+    },
+    [stopCameraTracks],
+  );
+
+  const requestCamera = useCallback(async (): Promise<boolean> => {
+    const res = await acquireCamera();
+    if (!res.ok) {
+      setCameraError(res.reason);
+      return false;
+    }
+    setCameraError(null);
+    applyCamera(res.stream);
+    return true;
+  }, [applyCamera]);
+
+  useEffect(() => {
+    if (!rules.strictMode) return;
+    // Window/UA aren't available during SSR; the plan requires a mount detect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- detectStrictSupport needs window
+    setSupport(detectStrictSupport());
+  }, [rules.strictMode]);
+
+  useEffect(() => {
+    if (status === "SUBMITTED") endingRef.current = "submitted";
+  }, [status]);
+
+  useEffect(() => {
+    if (stage !== "submitted") return;
+    void exitPageFullscreen();
+    stopCameraTracks(cameraRef.current);
+  }, [stage, stopCameraTracks]);
+
+  useEffect(() => {
+    cameraRef.current = camera;
+  }, [camera]);
+
+  useEffect(() => {
+    return () => {
+      stopCameraTracks(cameraRef.current);
+    };
+  }, [stopCameraTracks]);
 
   // The autosave queue. Refs: they change without re-rendering, and one save
   // in flight per tab keeps this tab's writes in the order they were made.
@@ -168,6 +240,7 @@ export function AssessmentAttempt({
         if (res.status === 409) {
           // Submitted from another tab or device.
           stopAutosave();
+          endingRef.current = "submitted";
           setStage("submitted");
           toast("This assessment was already submitted.");
           router.refresh();
@@ -341,6 +414,25 @@ export function AssessmentAttempt({
   }, [answers, questionErrors, view.questions]);
 
   function start() {
+    if (rules.strictMode) {
+      const entering = requestPageFullscreen(); // synchronous call inside the click handler
+      startTransition(async () => {
+        if (!(await entering)) {
+          toast.error("Fullscreen couldn't be opened. Try again.");
+          return;
+        }
+        const res = await startAssessmentAttemptAction({ assignmentId });
+        if (!res.ok) {
+          await exitPageFullscreen();
+          toast.error(res.message);
+          if (res.status === 409 || res.status === 404) router.refresh();
+          return;
+        }
+        setStage("taking");
+        router.refresh();
+      });
+      return;
+    }
     startTransition(async () => {
       const res = await startAssessmentAttemptAction({ assignmentId });
       if (!res.ok) {
@@ -375,6 +467,7 @@ export function AssessmentAttempt({
       if (!res.ok) {
         if (res.status === 409) {
           stopAutosave();
+          endingRef.current = "submitted";
           setStage("submitted");
           toast("This assessment was already submitted.");
           router.refresh();
@@ -384,6 +477,7 @@ export function AssessmentAttempt({
         return;
       }
       stopAutosave();
+      endingRef.current = "submitted";
       setStage("submitted");
       toast.success("Assessment submitted.");
       router.refresh();
@@ -411,7 +505,7 @@ export function AssessmentAttempt({
     </p>
   );
 
-  return (
+  const screen = (
     <CandidateAssessmentScreen
       draft={view}
       readOnly={stage !== "taking" || busy}
@@ -428,6 +522,59 @@ export function AssessmentAttempt({
       submitBlockedReason={blockedReason}
       busy={busy}
       submittedAtLabel={submittedAtLabel}
+      startPanel={
+        rules.strictMode ? (
+          <StrictModeChecklist
+            support={support}
+            cameraRequired={rules.cameraRequired}
+            camera={camera}
+            cameraError={cameraError}
+            onAllowCamera={() => {
+              void requestCamera();
+            }}
+            busy={busy}
+          />
+        ) : undefined
+      }
+      startBlockedReason={
+        rules.strictMode
+          ? startBlockedReasonFor(support, rules.cameraRequired, camera)
+          : null
+      }
+      resumeHint={
+        rules.strictMode
+          ? "Your answers save automatically as you go. You can close this page and continue later on a laptop or desktop."
+          : undefined
+      }
     />
   );
+
+  if (!rules.strictMode) return screen;
+
+  if (stage === "taking") {
+    if (
+      support &&
+      (support.phone ||
+        !support.fullscreenSupported ||
+        (rules.cameraRequired && !support.cameraSupported))
+    ) {
+      return <StrictModeUnavailable />;
+    }
+    return (
+      <StrictModeGuard
+        assignmentId={assignmentId}
+        cameraRequired={rules.cameraRequired}
+        camera={camera}
+        onRequestCamera={requestCamera}
+        endingRef={endingRef}
+        onStopped={(status) => {
+          if (status === 409) router.refresh();
+        }}
+      >
+        {screen}
+      </StrictModeGuard>
+    );
+  }
+
+  return screen;
 }

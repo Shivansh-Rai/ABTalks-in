@@ -51,6 +51,7 @@ export default async function AssessmentAttemptPage({ params }: Props) {
           }
           view={loaded.data.view}
           initialAnswers={loaded.data.answers}
+          rules={loaded.data.rules}
         />
       </main>
     </DashboardShell>

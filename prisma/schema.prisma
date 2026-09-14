@@ -3313,6 +3313,15 @@ model RecruiterAssessment {
   durationMinutes Int?
   /// Percentage of auto-gradeable points needed to pass.
   passMarkPercent Int                       @default(60)
+  /// T-219: fixed at publish. Every assessment published after T-219 ships is
+  /// strict: laptop/desktop only, fullscreen required, copy/cut/paste blocked,
+  /// page activity recorded. Rows published before stay false and keep the
+  /// T-218 behaviour. Only store.publish ever writes true.
+  strictMode      Boolean                   @default(false)
+  /// T-219: recruiter's builder setting — editable while DRAFT, fixed at
+  /// publish. The candidate's camera must be on to see the questions. Only
+  /// on/off is recorded; no image or video ever leaves the candidate's device.
+  cameraRequired  Boolean                   @default(false)
   /// Read-only provenance: which shortlisted candidates this was drafted for.
   /// Public AB-#### refs, never user ids. Nothing reads this yet — the assign
   /// ticket does. It is captured at draft time because the shortlist changes.
@@ -3355,10 +3364,11 @@ model AssessmentQuestion {
   /// exist yet, and a dangling FK is worse than a documented placeholder.
   sectionId            String?
 
-  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  options    AssessmentQuestionOption[]
+  assessment    RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options       AssessmentQuestionOption[]
   /// Plan 129 (T-218) — candidates' answers. Virtual; no column.
-  answers    AssessmentAnswer[]
+  answers       AssessmentAnswer[]
+  attemptEvents AssessmentAttemptEvent[]
 
   @@unique([assessmentId, position])
   @@index([assessmentId, position])
@@ -3415,10 +3425,11 @@ model RecruiterAssessmentAssignment {
   passed          Boolean?
   updatedAt       DateTime                   @updatedAt
 
-  assessment RecruiterAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
-  candidate  User                @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  candidate  User                       @relation("AssessmentAssignee", fields: [candidateUserId], references: [id], onDelete: Cascade)
   /// Plan 129 (T-218) — the candidate's answers. Virtual; no column.
   answers    AssessmentAnswer[]
+  sessions   AssessmentAttemptSession[]
 
   @@unique([assessmentId, candidateUserId])
   @@index([candidateUserId, assignedAt(sort: Desc)])
@@ -3453,6 +3464,80 @@ model AssessmentAnswer {
   question   AssessmentQuestion            @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@unique([assignmentId, questionId])
+  @@index([questionId])
+}
+
+/// T-219: what the candidate's page reported. Facts about the page, never
+/// conclusions about the candidate — see src/features/assessment-attempts/activity.ts.
+enum AssessmentAttemptEventType {
+  SESSION_STARTED
+  PAGE_LEFT
+  FULLSCREEN_ENTERED
+  FULLSCREEN_EXITED
+  VISIBILITY_HIDDEN
+  VISIBILITY_VISIBLE
+  WINDOW_BLURRED
+  WINDOW_FOCUSED
+  COPY_BLOCKED
+  CUT_BLOCKED
+  PASTE_BLOCKED
+  DROP_BLOCKED
+  LINK_PASTED
+  UPLOAD_LINK_OPENED
+  CAMERA_ON
+  CAMERA_OFF
+}
+
+/// T-219: one page lifetime of a strict attempt — a page load, or a restore
+/// from the back/forward cache. clientSessionId is crypto.randomUUID() minted
+/// by that page. firstSeenAt/lastSeenAt are SERVER receipt times, so how long a
+/// page kept reporting is known without trusting the device clock.
+///
+/// CASCADE on the assignment: activity goes with the attempt it describes.
+model AssessmentAttemptSession {
+  id              String   @id @default(cuid())
+  assignmentId    String
+  clientSessionId String
+  firstSeenAt     DateTime @default(now())
+  /// Receipt time of the latest batch (events or heartbeat) from this page.
+  lastSeenAt      DateTime @default(now())
+
+  assignment RecruiterAssessmentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  events     AssessmentAttemptEvent[]
+
+  @@unique([assignmentId, clientSessionId])
+  @@index([assignmentId, firstSeenAt])
+}
+
+/// T-219: one reported change on a strict attempt's page.
+///
+/// (assignmentId, sessionId, seq) is unique, so a batch resent after a network
+/// failure, or sent by both fetch and sendBeacon, is stored once.
+/// occurredAt = device time corrected to server time (see recordAttemptEvents);
+/// clientOccurredAt keeps the raw device value for audit.
+///
+/// CASCADE through the session (and so the assignment). RESTRICT on the question,
+/// matching AssessmentAnswer: a published assessment's questions never change.
+model AssessmentAttemptEvent {
+  id               String                     @id @default(cuid())
+  assignmentId     String
+  /// = AssessmentAttemptSession.clientSessionId
+  sessionId        String
+  seq              Int
+  type             AssessmentAttemptEventType
+  occurredAt       DateTime
+  clientOccurredAt DateTime
+  receivedAt       DateTime                   @default(now())
+  /// The question an event happened in or about. Never any content.
+  questionId       String?
+  /// Repeats of the same blocked clipboard action within 1s, coalesced. 1 otherwise.
+  count            Int                        @default(1)
+
+  session  AssessmentAttemptSession @relation(fields: [assignmentId, sessionId], references: [assignmentId, clientSessionId], onDelete: Cascade)
+  question AssessmentQuestion?      @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([assignmentId, sessionId, seq])
+  @@index([assignmentId, occurredAt])
   @@index([questionId])
 }
 

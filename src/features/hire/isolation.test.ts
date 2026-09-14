@@ -277,5 +277,27 @@ suite("outreach threads are owned by the sending recruiter", () => {
   );
 });
 
+suite("assessment events route is session-scoped and same-origin", () => {
+  const src = read("src/app/api/assessments/[assignmentId]/events/route.ts");
+  assert(src.includes("auth()"), "must resolve the session");
+  assert(src.includes('headers.get("origin")'), "must check Origin");
+  assert(src.includes("recordAttemptEvents"), "must go through the session-scoped service");
+  assert(!src.includes("searchParams"), "must not read searchParams");
+  assert(!src.includes("console."), "must not log with console");
+  assert(!src.includes("export async function GET"), "must not expose GET");
+});
+
+suite("attempt activity page 404s a foreign attempt", () => {
+  const src = read(
+    "src/app/hire/assessments/[assessmentId]/attempts/[assignmentId]/page.tsx",
+  );
+  assert(
+    src.includes("requireRecruiterWorkspace"),
+    "activity page must scope through requireRecruiterWorkspace",
+  );
+  assert(src.includes("notFound()"), "a foreign attempt must be notFound()");
+  assert(!src.includes("searchParams"), "must not take scope from the query string");
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
