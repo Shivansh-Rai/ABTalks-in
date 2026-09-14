@@ -223,9 +223,15 @@
 }
 .abtalks-landing .nav__logo img {
   height: 32px; width: auto; object-fit: contain;
+  /* The mark is solid black. Over the hero the nav pill is only 42% white on
+     a dark photo, so black-on-dark barely reads; invert lifts it to a light
+     grey. Once stuck the pill sits over light content and black is correct. */
+  filter: invert(88%);
+  transition: filter var(--lp-dur) var(--lp-ease), height var(--lp-dur) var(--lp-ease);
 }
 .abtalks-landing .nav-wrap.is-stuck .nav__logo img {
   height: 28px;
+  filter: none;
 }
 .abtalks-landing .nav__links {
   display: flex; align-items: center; gap: var(--lp-space-24);
@@ -386,7 +392,7 @@
   font-family: var(--lp-font-display);
   font-style: italic;
   font-weight: 500;
-  font-size: 44px; line-height: 52px;
+  font-size: 48px; line-height: 56px;
   color: rgba(255,255,255,.92);
 }
 .abtalks-landing .strike__word {
@@ -682,7 +688,7 @@
 /* Same three layer colours as before, now split into top / side tones */
 .abtalks-landing .slab--top {
   top: 30px;
-  --lp-tint-top:    linear-gradient(155deg, #A6D2D5, #076573);
+  --lp-tint-top:    linear-gradient(155deg, #E7F2F3, #A6D2D5);
   --lp-tint-side-a: linear-gradient(180deg, #076573, #03535F);
   --lp-tint-side-b: linear-gradient(180deg, #03535F, #076573);
 }
@@ -694,7 +700,7 @@
 }
 .abtalks-landing .slab--bottom {
   top: 230px;
-  --lp-tint-top:    linear-gradient(155deg, #A6D2D5, #076573);
+  --lp-tint-top:    linear-gradient(155deg, #076573, #03535F);
   --lp-tint-side-a: linear-gradient(180deg, #A6D2D5, #076573);
   --lp-tint-side-b: linear-gradient(180deg, #076573, #03535F);
 }
