@@ -12,12 +12,14 @@ import type { ContentInput } from "./service";
  * `content` omits `assessmentId` (always a fresh create) and `shortlistRefs`
  * (attached from the recruiter's current shortlist at use time).
  */
+export type PresetContent = Omit<ContentInput, "cameraRequired">;
+
 export type AssessmentPreset = {
   id: string;
   name: string;
   tagline: string;
   tags: string[];
-  content: ContentInput;
+  content: PresetContent;
 };
 
 /** MCQ option helper — keeps preset authoring terse and correct. */
@@ -474,5 +476,6 @@ export function buildContentFromPresets(ids: string[]): ContentInput | null {
     passMarkPercent: 60,
     shortlistRefs: [],
     questions,
+    cameraRequired: false,
   };
 }

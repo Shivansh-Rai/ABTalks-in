@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { AssessmentAttemptEventType } from "@prisma/client"; // type-only: erased from the client bundle
 
 export const MAX_PARAGRAPH_WORDS = 250;
 
@@ -53,6 +54,7 @@ export const assessmentDraftSchema = z
     instructions: z.string().trim().max(5000).optional().nullable(),
     durationMinutes: z.number().int().min(1).max(480).nullable().default(null),
     passMarkPercent: z.number().int().min(0).max(100).default(60),
+    cameraRequired: z.boolean().default(false),
     shortlistRefs: z.array(z.string().max(64)).max(500).default([]),
     questions: z
       .array(assessmentQuestionSchema)
@@ -206,3 +208,68 @@ export function incompleteMessage(
   if (missingRequired > 0) return `Answer the ${q} left before submitting.`;
   return `Shorten ${a} over the word limit before submitting.`;
 }
+
+/** T-219 — everything a strict attempt's page may report. Mirrors the Prisma
+ *  enum; assessment-attempts.test.ts asserts the two lists are equal. */
+export const ATTEMPT_EVENT_TYPES = [
+  "SESSION_STARTED",
+  "PAGE_LEFT",
+  "FULLSCREEN_ENTERED",
+  "FULLSCREEN_EXITED",
+  "VISIBILITY_HIDDEN",
+  "VISIBILITY_VISIBLE",
+  "WINDOW_BLURRED",
+  "WINDOW_FOCUSED",
+  "COPY_BLOCKED",
+  "CUT_BLOCKED",
+  "PASTE_BLOCKED",
+  "DROP_BLOCKED",
+  "LINK_PASTED",
+  "UPLOAD_LINK_OPENED",
+  "CAMERA_ON",
+  "CAMERA_OFF",
+] as const satisfies readonly AssessmentAttemptEventType[];
+export type AttemptEventType = (typeof ATTEMPT_EVENT_TYPES)[number];
+
+export const CLIPBOARD_EVENT_TYPES = [
+  "COPY_BLOCKED",
+  "CUT_BLOCKED",
+  "PASTE_BLOCKED",
+  "DROP_BLOCKED",
+] as const satisfies readonly AttemptEventType[];
+/** Require a FILE_UPLOAD questionId of the same assessment. */
+export const FILE_LINK_EVENT_TYPES = [
+  "LINK_PASTED",
+  "UPLOAD_LINK_OPENED",
+] as const satisfies readonly AttemptEventType[];
+export const CAMERA_EVENT_TYPES = [
+  "CAMERA_ON",
+  "CAMERA_OFF",
+] as const satisfies readonly AttemptEventType[];
+
+export const MAX_EVENTS_PER_BATCH = 50;
+export const MAX_EVENTS_PER_ATTEMPT = 1_000;
+export const MAX_SESSIONS_PER_ATTEMPT = 50;
+export const MAX_EVENT_BODY_BYTES = 64_000;
+
+export const attemptEventSchema = z
+  .object({
+    seq: z.number().int().min(0).max(1_000_000),
+    type: z.enum(ATTEMPT_EVENT_TYPES),
+    /** Epoch ms, the device clock at the moment it happened. */
+    occurredAt: z.number().int().positive(),
+    questionId: z.string().min(1).max(64).optional(),
+    count: z.number().int().min(1).max(1_000).optional(),
+  })
+  .strict();
+
+export const attemptEventBatchSchema = z
+  .object({
+    sessionId: z.string().uuid(),
+    /** Epoch ms, the device clock when THIS transmission was made (re-stamped on retry). */
+    sentAt: z.number().int().positive(),
+    events: z.array(attemptEventSchema).max(MAX_EVENTS_PER_BATCH),
+  })
+  .strict();
+export type AttemptEventBatch = z.infer<typeof attemptEventBatchSchema>;
+

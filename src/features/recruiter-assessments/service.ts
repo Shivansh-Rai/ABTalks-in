@@ -9,6 +9,11 @@ import {
   assignAssessmentSchema,
   createAndSendSchema,
 } from "@/lib/validations/assessment";
+import {
+  summarizeAttemptActivity,
+  type ActivityEvent,
+  type ActivitySummary,
+} from "@/features/assessment-attempts/activity";
 
 export type Scope = { organizationId: string; createdByUserId: string };
 
@@ -44,6 +49,8 @@ export type AssessmentRow = {
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   durationMinutes: number | null;
   passMarkPercent: number;
+  strictMode: boolean;
+  cameraRequired: boolean;
   shortlistRefs: string[];
   publishedAt: Date | null;
   archivedAt: Date | null;
@@ -109,6 +116,8 @@ export type AssessmentMonitor = {
     passMarkPercent: number;
     questionCount: number;
     publishedAt: Date | null;
+    strictMode: boolean;
+    cameraRequired: boolean;
   };
   summary: {
     assigned: number;
@@ -119,6 +128,7 @@ export type AssessmentMonitor = {
   };
   assignments: AssignmentRow[];
   candidates: MonitorCandidate[];
+  activityCounts: Record<string, number>;
 };
 
 export type AssessmentNotifier = {
@@ -135,11 +145,25 @@ export type ContentInput = {
   instructions: string | null;
   durationMinutes: number | null;
   passMarkPercent: number;
+  cameraRequired: boolean;
   shortlistRefs: string[];
   questions: AssessmentQuestionInput[];
 };
 
 export type CreateInput = ContentInput;
+
+export type AttemptActivityRow = {
+  assignmentId: string;
+  label: string; // listUserDisplayNames || refPublicId — same as the monitor
+  status: AssignmentStatus;
+  assignedAt: Date;
+  startedAt: Date | null;
+  submittedAt: Date | null;
+  assessment: { title: string; strictMode: boolean; cameraRequired: boolean };
+  questionNumbers: Record<string, number>; // question id → 1-based position
+  sessions: { clientSessionId: string; firstSeenAt: Date; lastSeenAt: Date }[];
+  events: ActivityEvent[]; // from activity.ts
+};
 
 export type AssessmentStore = {
   create(scope: Scope, input: CreateInput): Promise<{ id: string }>;
@@ -164,6 +188,12 @@ export type AssessmentStore = {
     scope: Scope,
     assessmentIds: string[],
   ): Promise<Map<string, ResultCounts>>;
+  countActivityEvents(assessmentId: string, scope: Scope): Promise<Record<string, number>>;
+  findAttemptActivity(
+    assessmentId: string,
+    assignmentId: string,
+    scope: Scope,
+  ): Promise<AttemptActivityRow | null>;
 };
 
 /** T-218 builds this route. Agreed here so notifications sent before it
@@ -200,6 +230,7 @@ function toContent(input: AssessmentDraftInput): ContentInput {
     instructions: input.instructions ?? null,
     durationMinutes: input.durationMinutes,
     passMarkPercent: input.passMarkPercent,
+    cameraRequired: input.cameraRequired,
     shortlistRefs: input.shortlistRefs,
     questions: input.questions,
   };
@@ -291,6 +322,9 @@ export async function deleteAssessment(
   return OK({ id: assessmentId });
 }
 
+/**
+ * DRAFT → PUBLISHED. The store sets strictMode (T-219) in the same guarded write.
+ */
 export async function publishAssessment(
   store: AssessmentStore,
   scope: Scope,
@@ -438,11 +472,40 @@ export async function getAssessmentMonitor(
       passMarkPercent: row.passMarkPercent,
       questionCount: row.questions.length,
       publishedAt: row.publishedAt,
+      strictMode: row.strictMode,
+      cameraRequired: row.cameraRequired,
     },
     summary,
     assignments,
     candidates,
+    activityCounts: row.strictMode
+      ? await store.countActivityEvents(assessmentId, scope)
+      : {},
   });
+}
+
+export async function getAttemptActivity(
+  store: AssessmentStore,
+  scope: Scope,
+  assessmentId: string,
+  assignmentId: string,
+  now: Date,
+): Promise<Result<{ row: AttemptActivityRow; summary: ActivitySummary | null }>> {
+  const row = await store.findAttemptActivity(assessmentId, assignmentId, scope);
+  if (!row) return NOT_FOUND("Attempt not found");
+  const summary = row.assessment.strictMode
+    ? summarizeAttemptActivity({
+        startedAt: row.startedAt ?? row.assignedAt,
+        submittedAt: row.submittedAt,
+        now,
+        cameraRequired: row.assessment.cameraRequired,
+        sessions: row.sessions,
+        events: row.events,
+        questionNumbers: row.questionNumbers,
+        eventCount: row.events.length,
+      })
+    : null;
+  return OK({ row, summary });
 }
 
 // ---------------------------------------------------------------------------

@@ -6,6 +6,10 @@ import { listProjectShortlist } from "@/features/hire/project-shortlist";
 import { encodeCandidateRef, refPublicId } from "@/features/hire/candidate-ref";
 import { filterSearchableUserIds } from "@/repositories/talent";
 import { listUserDisplayNames } from "@/repositories/hire";
+import {
+  MAX_EVENTS_PER_ATTEMPT,
+  MAX_EVENTS_PER_BATCH,
+} from "@/lib/validations/assessment";
 import type {
   AssessmentListStoreRow,
   AssessmentQuestionRow,
@@ -13,6 +17,7 @@ import type {
   AssessmentStore,
   AssignableCandidate,
   AssignmentRow,
+  AttemptActivityRow,
   ContentInput,
   ResultCounts,
   Scope,
@@ -53,6 +58,8 @@ const ASSESSMENT_SELECT = {
   status: true,
   durationMinutes: true,
   passMarkPercent: true,
+  strictMode: true,
+  cameraRequired: true,
   shortlistRefs: true,
   publishedAt: true,
   archivedAt: true,
@@ -146,6 +153,7 @@ export function prismaAssessmentStore(): AssessmentStore {
           status: "DRAFT",
           durationMinutes: input.durationMinutes,
           passMarkPercent: input.passMarkPercent,
+          cameraRequired: input.cameraRequired,
           shortlistRefs: input.shortlistRefs,
           questions: {
             create: input.questions.map((q, i) => questionCreateNested(q, i)),
@@ -174,6 +182,7 @@ export function prismaAssessmentStore(): AssessmentStore {
           durationMinutes: input.durationMinutes,
           passMarkPercent: input.passMarkPercent,
           shortlistRefs: input.shortlistRefs,
+          cameraRequired: input.cameraRequired,
           questions: {
             deleteMany: {},
             create: input.questions.map((q, i) => questionCreateNested(q, i)),
@@ -230,7 +239,7 @@ export function prismaAssessmentStore(): AssessmentStore {
       // a double click or two tabs publish exactly once.
       const res = await prisma.recruiterAssessment.updateMany({
         where: { id: assessmentId, ...scopeWhere(scope), status: "DRAFT" },
-        data: { status: "PUBLISHED", publishedAt: at },
+        data: { status: "PUBLISHED", publishedAt: at, strictMode: true },
       });
       return res.count === 1;
     },
@@ -364,6 +373,83 @@ export function prismaAssessmentStore(): AssessmentStore {
         out.set(g.assessmentId, counts);
       }
       return out;
+    },
+
+    async countActivityEvents(assessmentId, scope) {
+      const groups = await prisma.assessmentAttemptEvent.groupBy({
+        by: ["assignmentId"],
+        where: { session: { assignment: { assessmentId, assessment: scopeWhere(scope) } } },
+        _count: { _all: true },
+      });
+      return Object.fromEntries(groups.map((g) => [g.assignmentId, g._count._all]));
+    },
+
+    async findAttemptActivity(assessmentId, assignmentId, scope): Promise<AttemptActivityRow | null> {
+      const assignment = await prisma.recruiterAssessmentAssignment.findFirst({
+        where: { id: assignmentId, assessmentId, assessment: scopeWhere(scope) },
+        select: {
+          id: true,
+          candidateUserId: true,
+          candidateRef: true,
+          status: true,
+          assignedAt: true,
+          startedAt: true,
+          submittedAt: true,
+          assessment: {
+            select: {
+              title: true,
+              strictMode: true,
+              cameraRequired: true,
+              questions: { select: { id: true, position: true } },
+            },
+          },
+          sessions: {
+            orderBy: { firstSeenAt: "asc" },
+            select: { clientSessionId: true, firstSeenAt: true, lastSeenAt: true },
+          },
+        },
+      });
+      if (!assignment) return null;
+
+      const events = await prisma.assessmentAttemptEvent.findMany({
+        where: {
+          assignmentId,
+          session: { assignment: { assessmentId, assessment: scopeWhere(scope) } },
+        },
+        orderBy: [{ occurredAt: "asc" }, { seq: "asc" }],
+        take: MAX_EVENTS_PER_ATTEMPT + MAX_EVENTS_PER_BATCH,
+        select: {
+          sessionId: true,
+          seq: true,
+          type: true,
+          occurredAt: true,
+          questionId: true,
+          count: true,
+        },
+      });
+
+      const names = await listUserDisplayNames([assignment.candidateUserId]);
+      const questionNumbers: Record<string, number> = {};
+      for (const q of assignment.assessment.questions) {
+        questionNumbers[q.id] = q.position + 1;
+      }
+
+      return {
+        assignmentId: assignment.id,
+        label: names.get(assignment.candidateUserId) || refPublicId(assignment.candidateRef),
+        status: assignment.status,
+        assignedAt: assignment.assignedAt,
+        startedAt: assignment.startedAt,
+        submittedAt: assignment.submittedAt,
+        assessment: {
+          title: assignment.assessment.title,
+          strictMode: assignment.assessment.strictMode,
+          cameraRequired: assignment.assessment.cameraRequired,
+        },
+        questionNumbers,
+        sessions: assignment.sessions,
+        events,
+      };
     },
   };
 }

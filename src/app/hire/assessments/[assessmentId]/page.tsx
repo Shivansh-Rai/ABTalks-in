@@ -55,7 +55,7 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
   // A foreign or unknown id is a 404, never a 403 — ids are not enumerable.
   if (!monitor.ok) notFound();
 
-  const { assessment, summary, assignments, candidates } = monitor.data;
+  const { assessment, summary, assignments, candidates, activityCounts } = monitor.data;
   const isDraft = assessment.status === "DRAFT";
   // Job role is a Shortlist fact, so it shows for anyone still shortlisted.
   const roleByRef = new Map(candidates.map((c) => [c.candidateRef, c.jobRole]));
@@ -70,6 +70,8 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
   if (assessment.publishedAt) {
     facts.push(`Published ${formatWhen(assessment.publishedAt)}`);
   }
+  if (assessment.strictMode) facts.push("Strict mode");
+  if (assessment.cameraRequired) facts.push("Camera required");
 
   const stats = [
     { label: "Assigned", value: summary.assigned },
@@ -135,6 +137,7 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
                     <th>Completed</th>
                     <th>Score</th>
                     <th>Result</th>
+                    {assessment.strictMode ? <th>Activity</th> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -154,6 +157,25 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
                         <td>{formatWhen(a.submittedAt)}</td>
                         <td>{a.scorePercent == null ? "—" : `${a.scorePercent}%`}</td>
                         <td>{resultCopy(a)}</td>
+                        {assessment.strictMode ? (
+                          <td>
+                            {a.status === "ASSIGNED" ? (
+                              "—"
+                            ) : (
+                              <>
+                                {activityCounts[a.id]
+                                  ? `${activityCounts[a.id]} events`
+                                  : "None recorded"}{" "}
+                                <Link
+                                  href={`/hire/assessments/${assessment.id}/attempts/${a.id}`}
+                                  className="hire-assess-linkbtn"
+                                >
+                                  View
+                                </Link>
+                              </>
+                            )}
+                          </td>
+                        ) : null}
                       </tr>
                     );
                   })}

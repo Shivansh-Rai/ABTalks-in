@@ -10,8 +10,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   finishAttempt,
+  finishAttemptForced,
+  finalizeStrictAttemptOnLeave,
   listCandidateAttempts,
   loadAttempt,
+  recordAttemptEvents,
   saveAnswer,
   startAttempt,
   submitAttempt,
@@ -21,10 +24,28 @@ import {
   type AttemptRow,
   type AttemptStatus,
   type AttemptStore,
+  type EventWrite,
   type FinishInput,
   type GradeQuestion,
   type SubmitOutcome,
 } from "./service";
+import {
+  ACTIVITY_DISCLAIMER,
+  BANNED_CLAIM_PATTERN,
+  CAMERA_DISCLAIMER,
+  SESSION_GRACE_MS,
+  SUMMARY_COPY,
+  describeEvent,
+  summarizeAttemptActivity,
+  type ActivityEvent,
+  type ActivitySession,
+} from "./activity";
+import { createIntegrityRecorder } from "@/components/assessments/integrity-recorder";
+import {
+  ATTEMPT_EVENT_TYPES,
+  type AttemptEventType,
+} from "@/lib/validations/assessment";
+import { $Enums } from "@prisma/client";
 
 let passed = 0;
 let failed = 0;
@@ -70,7 +91,18 @@ type StoredAssessment = {
   questions: AttemptQuestionRow[];
   /** The answer key, kept apart — findAttempt never reads it. */
   correct: Map<string, string[]>;
+  strictMode: boolean;
+  cameraRequired: boolean;
 };
+
+type StoredSession = {
+  assignmentId: string;
+  clientSessionId: string;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+};
+
+type StoredEvent = EventWrite & { assignmentId: string; sessionId: string };
 
 type StoredAssignment = {
   id: string;
@@ -88,7 +120,14 @@ function inMemoryStore() {
   const assessments = new Map<string, StoredAssessment>();
   const assignments = new Map<string, StoredAssignment>();
   const answers = new Map<string, AnswerRow>();
+  const sessions = new Map<string, StoredSession>();
+  const events = new Map<string, StoredEvent>();
   let seq = 0;
+
+  const sessionKey = (assignmentId: string, clientSessionId: string) =>
+    `${assignmentId}:${clientSessionId}`;
+  const eventKey = (assignmentId: string, sessionId: string, n: number) =>
+    `${assignmentId}:${sessionId}:${n}`;
 
   const key = (assignmentId: string, questionId: string) =>
     `${assignmentId}:${questionId}`;
@@ -118,6 +157,8 @@ function inMemoryStore() {
           instructions: "Read carefully.",
           durationMinutes: s.durationMinutes,
           passMarkPercent: s.passMarkPercent,
+          strictMode: s.strictMode,
+          cameraRequired: s.cameraRequired,
         },
         questions: s.questions,
         answers: answersFor(a.id),
@@ -141,6 +182,8 @@ function inMemoryStore() {
             submittedAt: a.submittedAt,
             durationMinutes: s.durationMinutes,
             questionCount: s.questions.length,
+            strictMode: s.strictMode,
+            cameraRequired: s.cameraRequired,
           };
         });
     },
@@ -192,6 +235,86 @@ function inMemoryStore() {
       a.passed = result.passed;
       return { outcome: "SUBMITTED" };
     },
+    async submitForced(assignmentId, candidateUserId, at, finish) {
+      const a = owned(assignmentId, candidateUserId);
+      if (!a) return { outcome: "NOT_OPEN" };
+      if (a.status === "SUBMITTED") return { outcome: "ALREADY" };
+      if (a.status !== "STARTED") return { outcome: "NOT_OPEN" };
+      const before = { status: a.status, submittedAt: a.submittedAt };
+      a.status = "SUBMITTED";
+      a.submittedAt = at;
+      const s = assessments.get(a.assessmentId)!;
+      const result = finish({
+        passMarkPercent: s.passMarkPercent,
+        answers: answersFor(a.id),
+        questions: s.questions.map((q) => ({
+          id: q.id,
+          type: q.type,
+          points: q.points,
+          isRequired: q.isRequired,
+          maxWords: q.maxWords,
+          correctOptionIds: s.correct.get(q.id) ?? [],
+        })),
+      });
+      if (!result.ok) {
+        a.status = before.status;
+        a.submittedAt = before.submittedAt;
+        return {
+          outcome: "INCOMPLETE",
+          missingRequired: result.missingRequired,
+          overLimit: result.overLimit,
+        };
+      }
+      a.scorePercent = result.scorePercent;
+      a.passed = result.passed;
+      return { outcome: "SUBMITTED" };
+    },
+    async hasPageLeftEvent(assignmentId, candidateUserId) {
+      if (!owned(assignmentId, candidateUserId)) return false;
+      return [...events.values()].some(
+        (e) => e.assignmentId === assignmentId && e.type === "PAGE_LEFT",
+      );
+    },
+    async findEventContext(assignmentId, candidateUserId, clientSessionId) {
+      const a = owned(assignmentId, candidateUserId);
+      if (!a) return null;
+      const s = assessments.get(a.assessmentId)!;
+      const eventCount = [...events.values()].filter((e) => e.assignmentId === assignmentId).length;
+      const sessionCount = [...sessions.values()].filter((x) => x.assignmentId === assignmentId).length;
+      return {
+        status: a.status,
+        startedAt: a.startedAt,
+        submittedAt: a.submittedAt,
+        assessment: {
+          status: s.status,
+          strictMode: s.strictMode,
+          cameraRequired: s.cameraRequired,
+          questions: s.questions.map((q) => ({ id: q.id, type: q.type })),
+        },
+        eventCount,
+        sessionExists: sessions.has(sessionKey(assignmentId, clientSessionId)),
+        sessionCount,
+      };
+    },
+    async writeEventBatch(assignmentId, clientSessionId, receivedAt, batch) {
+      const sk = sessionKey(assignmentId, clientSessionId);
+      const existing = sessions.get(sk);
+      if (existing) {
+        existing.lastSeenAt = receivedAt;
+      } else {
+        sessions.set(sk, {
+          assignmentId,
+          clientSessionId,
+          firstSeenAt: receivedAt,
+          lastSeenAt: receivedAt,
+        });
+      }
+      for (const e of batch) {
+        const ek = eventKey(assignmentId, clientSessionId, e.seq);
+        if (events.has(ek)) continue;
+        events.set(ek, { ...e, assignmentId, sessionId: clientSessionId });
+      }
+    },
   };
 
   function addAssessment(
@@ -205,6 +328,8 @@ function inMemoryStore() {
       title,
       passMarkPercent: 60,
       durationMinutes: 30,
+      strictMode: false,
+      cameraRequired: false,
       correct: new Map([
         [`${id}_q1`, [`${id}_o1a`]],
         [`${id}_q2`, [`${id}_o2a`, `${id}_o2b`]],
@@ -291,7 +416,7 @@ function inMemoryStore() {
     return id;
   }
 
-  return { store, assessments, assignments, answers, addAssessment, addAssignment, key };
+  return { store, assessments, assignments, answers, sessions, events, addAssessment, addAssignment, key };
 }
 
 const C = "cand_c";
@@ -326,6 +451,40 @@ async function started(): Promise<Fixture> {
   const res = await startAttempt(f.store, C, { assignmentId: f.aC });
   if (!res.ok) throw new Error("setup start failed");
   return f;
+}
+
+async function strictFixture(cameraRequired = false): Promise<Fixture> {
+  const f = fixture();
+  f.assessments.get(f.s.id)!.strictMode = true;
+  f.assessments.get(f.s.id)!.cameraRequired = cameraRequired;
+  const res = await startAttempt(f.store, C, { assignmentId: f.aC });
+  if (!res.ok) throw new Error("strict start failed");
+  // Pin start before the I-suite's fixed receivedAt timestamps so wall-clock
+  // time of day cannot drop events as "before start".
+  f.assignments.get(f.aC)!.startedAt = new Date("2026-09-14T09:00:00Z");
+  return f;
+}
+
+const SID = "11111111-1111-4111-8111-111111111111";
+const SID2 = "22222222-2222-4222-8222-222222222222";
+
+function ev(
+  seq: number,
+  type: AttemptEventType,
+  occurredAt: number,
+  extra: { questionId?: string; count?: number } = {},
+) {
+  return { seq, type, occurredAt, ...extra };
+}
+
+async function ingest(
+  f: Fixture,
+  body: unknown,
+  receivedAt: Date,
+  assignmentId = f.aC,
+  user = C,
+) {
+  return recordAttemptEvents(f.store, user, assignmentId, body, receivedAt);
 }
 
 function gradeInput(overrides: Partial<FinishInput> = {}): FinishInput {
@@ -721,13 +880,16 @@ async function run() {
   await suite("28. guarded writes use plan 128 §10's guards and no relation filter", () => {
     const src = read("src/features/assessment-attempts/prisma-store.ts");
     const wheres = [...src.matchAll(/updateMany\(\{([\s\S]*?)data:/g)].map((m) => m[1] ?? "");
-    assert(wheres.length === 3, `expected 3 guarded updateMany, found ${wheres.length}`);
+    assert(wheres.length === 4, `expected 4 guarded updateMany, found ${wheres.length}`);
     assert(
       wheres.every((w) => w.includes("candidateUserId") && !w.includes("assessment:")),
       "every guard scopes by candidate and carries no relation filter",
     );
     assert(wheres.some((w) => w.includes('status: "ASSIGNED"')), "start guards on ASSIGNED");
-    assert(wheres.some((w) => w.includes('status: "STARTED"')), "save guards on STARTED");
+    assert(
+      wheres.filter((w) => w.includes('status: "STARTED"')).length >= 2,
+      "save and leave-finalize guard on STARTED",
+    );
     assert(
       wheres.some((w) => /status:\s*\{\s*in:\s*\["ASSIGNED",\s*"STARTED"\]\s*\}/.test(w)),
       "submit guards on ASSIGNED | STARTED",
@@ -742,6 +904,964 @@ async function run() {
     assert(!src.includes("candidateUserId"), "no user id is read from input");
     assert(!src.includes("console."), "no console");
     assert(!src.includes("scorePercent") && !/\bpassed\b/.test(src), "no score in responses");
+  });
+
+  // ---- T-219 device refusal -------------------------------------------------
+
+  await suite("G1. strict + mobile → CONFLICT on start, save and submit; nothing written", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    const phone = { mobile: true };
+    const start = await startAttempt(f.store, C, { assignmentId: f.aC }, phone);
+    assert(!start.ok && start.code === "CONFLICT", "start CONFLICT");
+    assert(f.assignments.get(f.aC)!.status === "ASSIGNED", "not started");
+    f.assignments.get(f.aC)!.status = "STARTED";
+    f.assignments.get(f.aC)!.startedAt = new Date();
+    const put = await saveAnswer(
+      f.store,
+      C,
+      { assignmentId: f.aC, questionId: f.q(1), answer: { kind: "choice", selectedOptionIds: [f.o("1a")] } },
+      phone,
+    );
+    assert(!put.ok && put.code === "CONFLICT", "save CONFLICT");
+    assert(f.answers.size === 0, "nothing written");
+    const sub = await submitAttempt(f.store, C, { assignmentId: f.aC }, phone);
+    assert(!sub.ok && sub.code === "CONFLICT", "submit CONFLICT");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "not submitted");
+  });
+
+  await suite("G2. non-strict + mobile → start/save/submit behave as today", async () => {
+    const f = fixture();
+    const phone = { mobile: true };
+    const start = await startAttempt(f.store, C, { assignmentId: f.aC }, phone);
+    assert(start.ok, "start ok");
+    const put = await saveAnswer(
+      f.store,
+      C,
+      { assignmentId: f.aC, questionId: f.q(1), answer: { kind: "choice", selectedOptionIds: [f.o("1a")] } },
+      phone,
+    );
+    assert(put.ok, "save ok");
+    await answerAll(f);
+    const sub = await submitAttempt(f.store, C, { assignmentId: f.aC }, phone);
+    assert(sub.ok, "submit ok");
+  });
+
+  await suite("G3. loadAttempt returns rules matching the assessment", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    f.assessments.get(f.s.id)!.cameraRequired = true;
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.rules.strictMode && loaded.data.rules.cameraRequired, "rules");
+    const plain = fixture();
+    const loaded2 = await loadAttempt(plain.store, C, plain.aC);
+    assert(
+      loaded2.ok && !loaded2.data.rules.strictMode && !loaded2.data.rules.cameraRequired,
+      "defaults false",
+    );
+  });
+
+  // ---- T-219 ingestion ------------------------------------------------------
+
+  await suite("I1. a batch for a started strict attempt is stored", async () => {
+    const f = await strictFixture();
+    const receivedAt = new Date("2026-09-14T10:00:00Z");
+    const res = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: receivedAt.getTime(),
+        events: [ev(0, "SESSION_STARTED", receivedAt.getTime() - 10)],
+      },
+      receivedAt,
+    );
+    assert(res.ok && res.data.accepted === 1 && res.data.dropped === 0, "accepted 1");
+    const sess = f.sessions.get(`${f.aC}:${SID}`)!;
+    assert(sess.firstSeenAt.getTime() === receivedAt.getTime(), "firstSeenAt");
+    assert(sess.lastSeenAt.getTime() === receivedAt.getTime(), "lastSeenAt");
+    assert(f.events.size === 1, "one event");
+  });
+
+  await suite("I2. device clock 2h behind is corrected; clientOccurredAt keeps raw", async () => {
+    const f = await strictFixture();
+    const receivedAt = new Date("2026-09-14T12:00:00Z");
+    const sentAt = receivedAt.getTime() - 2 * 3600_000;
+    const occurredAt = sentAt - 5_000;
+    const res = await ingest(
+      f,
+      { sessionId: SID, sentAt, events: [ev(0, "SESSION_STARTED", occurredAt)] },
+      receivedAt,
+    );
+    assert(res.ok && res.data.accepted === 1, "accepted");
+    const stored = [...f.events.values()][0];
+    const expected = occurredAt + (receivedAt.getTime() - sentAt);
+    assert(Math.abs(stored.occurredAt.getTime() - expected) < 50, "corrected");
+    assert(stored.clientOccurredAt.getTime() === occurredAt, "raw kept");
+  });
+
+  await suite("I3. the same batch twice: no new events, lastSeenAt advances", async () => {
+    const f = await strictFixture();
+    const t1 = new Date("2026-09-14T10:00:00Z");
+    const body = {
+      sessionId: SID,
+      sentAt: t1.getTime(),
+      events: [ev(0, "SESSION_STARTED", t1.getTime() - 10)],
+    };
+    await ingest(f, body, t1);
+    const t2 = new Date("2026-09-14T10:00:05Z");
+    const again = await ingest(f, { ...body, sentAt: t2.getTime() }, t2);
+    assert(again.ok && again.data.accepted === 1, "accepted again (idempotent write)");
+    assert(f.events.size === 1, "one event");
+    assert(f.sessions.get(`${f.aC}:${SID}`)!.lastSeenAt.getTime() === t2.getTime(), "lastSeenAt");
+  });
+
+  await suite("I4. another candidate's assignment → NOT_FOUND, nothing written", async () => {
+    const f = await strictFixture();
+    const t = new Date();
+    const res = await ingest(
+      f,
+      { sessionId: SID, sentAt: t.getTime(), events: [ev(0, "SESSION_STARTED", t.getTime())] },
+      t,
+      f.aC,
+      D,
+    );
+    assert(!res.ok && res.code === "NOT_FOUND", "NOT_FOUND");
+    assert(f.sessions.size === 0 && f.events.size === 0, "nothing written");
+  });
+
+  await suite("I5. non-strict → CONFLICT; ASSIGNED → CONFLICT", async () => {
+    const f = await started();
+    const t = new Date();
+    const nonStrict = await ingest(
+      f,
+      { sessionId: SID, sentAt: t.getTime(), events: [ev(0, "SESSION_STARTED", t.getTime())] },
+      t,
+    );
+    assert(!nonStrict.ok && nonStrict.code === "CONFLICT", "non-strict");
+    const assigned = fixture();
+    assigned.assessments.get(assigned.s.id)!.strictMode = true;
+    const before = await ingest(
+      assigned,
+      { sessionId: SID, sentAt: t.getTime(), events: [ev(0, "SESSION_STARTED", t.getTime())] },
+      t,
+      assigned.aC,
+    );
+    assert(!before.ok && before.code === "CONFLICT", "ASSIGNED");
+  });
+
+  await suite("I6. SUBMITTED grace: within 60s stored; late occurredAt dropped; after 60s CONFLICT", async () => {
+    const f = await strictFixture();
+    await answerAll(f);
+    const submittedAt = new Date("2026-09-14T10:00:00Z");
+    f.assignments.get(f.aC)!.status = "SUBMITTED";
+    f.assignments.get(f.aC)!.submittedAt = submittedAt;
+    const okAt = new Date(submittedAt.getTime() + 10_000);
+    const ok = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: okAt.getTime(),
+        events: [ev(0, "PAGE_LEFT", submittedAt.getTime() - 1)],
+      },
+      okAt,
+    );
+    assert(ok.ok && ok.data.accepted === 1, "within grace stored");
+    const droppedAt = new Date(submittedAt.getTime() + 20_000);
+    const drop = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: droppedAt.getTime(),
+        events: [ev(1, "PAGE_LEFT", submittedAt.getTime() + 6_000)],
+      },
+      droppedAt,
+    );
+    assert(drop.ok && drop.data.accepted === 0 && drop.data.dropped === 1, "late occurredAt dropped");
+    const late = new Date(submittedAt.getTime() + 61_000);
+    const conflict = await ingest(
+      f,
+      { sessionId: SID, sentAt: late.getTime(), events: [] },
+      late,
+    );
+    assert(!conflict.ok && conflict.code === "CONFLICT", "after 60s");
+  });
+
+  await suite("I7. camera events on a non-camera assessment → dropped", async () => {
+    const f = await strictFixture(false);
+    const t = new Date();
+    const res = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: t.getTime(),
+        events: [ev(0, "CAMERA_ON", t.getTime() - 5), ev(1, "CAMERA_OFF", t.getTime() - 1)],
+      },
+      t,
+    );
+    assert(res.ok && res.data.accepted === 0 && res.data.dropped === 2, "dropped");
+  });
+
+  await suite("I8. file-link events need a FILE_UPLOAD question; foreign clipboard id nulled", async () => {
+    const f = await strictFixture();
+    const t = new Date();
+    const other = f.addAssessment();
+    const res = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: t.getTime(),
+        events: [
+          ev(0, "LINK_PASTED", t.getTime() - 4, { questionId: f.q(3) }),
+          ev(1, "UPLOAD_LINK_OPENED", t.getTime() - 3, { questionId: `${other.id}_q4` }),
+          ev(2, "PASTE_BLOCKED", t.getTime() - 2, { questionId: `${other.id}_q1` }),
+          ev(3, "LINK_PASTED", t.getTime() - 1, { questionId: f.q(4) }),
+        ],
+      },
+      t,
+    );
+    assert(res.ok && res.data.accepted === 2 && res.data.dropped === 2, "2 kept 2 dropped");
+    const paste = [...f.events.values()].find((e) => e.type === "PASTE_BLOCKED")!;
+    assert(paste.questionId === null, "foreign clipboard nulled");
+    const link = [...f.events.values()].find((e) => e.type === "LINK_PASTED")!;
+    assert(link.questionId === f.q(4), "file-link kept");
+  });
+
+  await suite("I9. event after sentAt + 1s, or older than 24h → dropped", async () => {
+    const f = await strictFixture();
+    const t = new Date("2026-09-14T12:00:00Z");
+    const res = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: t.getTime(),
+        events: [
+          ev(0, "SESSION_STARTED", t.getTime() + 2_000),
+          ev(1, "PAGE_LEFT", t.getTime() - 86_400_001),
+        ],
+      },
+      t,
+    );
+    assert(res.ok && res.data.accepted === 0 && res.data.dropped === 2, "both dropped");
+  });
+
+  await suite("I10. 51 events or a non-UUID sessionId → INVALID, nothing written", async () => {
+    const f = await strictFixture();
+    const t = new Date();
+    const tooMany = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: t.getTime(),
+        events: Array.from({ length: 51 }, (_, i) => ev(i, "COPY_BLOCKED", t.getTime() - i)),
+      },
+      t,
+    );
+    assert(!tooMany.ok && tooMany.code === "INVALID", "51 INVALID");
+    const badId = await ingest(
+      f,
+      { sessionId: "not-a-uuid", sentAt: t.getTime(), events: [] },
+      t,
+    );
+    assert(!badId.ok && badId.code === "INVALID", "uuid INVALID");
+    assert(f.sessions.size === 0 && f.events.size === 0, "nothing written");
+  });
+
+  await suite("I11. 990 stored + 20 sent → 10 accepted, limitReached; next batch 0 but lastSeenAt", async () => {
+    const f = await strictFixture();
+    const t0 = new Date("2026-09-14T10:00:00Z");
+    await ingest(f, { sessionId: SID, sentAt: t0.getTime(), events: [] }, t0);
+    for (let i = 0; i < 990; i++) {
+      f.events.set(`${f.aC}:${SID}:${i}`, {
+        assignmentId: f.aC,
+        sessionId: SID,
+        seq: i,
+        type: "COPY_BLOCKED",
+        occurredAt: t0,
+        clientOccurredAt: t0,
+        receivedAt: t0,
+        questionId: null,
+        count: 1,
+      });
+    }
+    const t1 = new Date("2026-09-14T10:01:00Z");
+    const res = await ingest(
+      f,
+      {
+        sessionId: SID,
+        sentAt: t1.getTime(),
+        events: Array.from({ length: 20 }, (_, i) => ev(1000 + i, "COPY_BLOCKED", t1.getTime() - i)),
+      },
+      t1,
+    );
+    assert(res.ok && res.data.accepted === 10 && res.data.limitReached, "10 accepted");
+    const t2 = new Date("2026-09-14T10:01:05Z");
+    const next = await ingest(f, { sessionId: SID, sentAt: t2.getTime(), events: [ev(2000, "COPY_BLOCKED", t2.getTime())] }, t2);
+    assert(next.ok && next.data.accepted === 0 && next.data.limitReached, "0 accepted");
+    assert(f.sessions.get(`${f.aC}:${SID}`)!.lastSeenAt.getTime() === t2.getTime(), "lastSeenAt");
+  });
+
+  await suite("I12. 50 sessions → 51st CONFLICT; existing session still accepted", async () => {
+    const f = await strictFixture();
+    const t = new Date();
+    for (let i = 0; i < 50; i++) {
+      const id = `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`;
+      f.sessions.set(`${f.aC}:${id}`, {
+        assignmentId: f.aC,
+        clientSessionId: id,
+        firstSeenAt: t,
+        lastSeenAt: t,
+      });
+    }
+    const neu = await ingest(f, { sessionId: SID, sentAt: t.getTime(), events: [] }, t);
+    assert(!neu.ok && neu.code === "CONFLICT", "51st CONFLICT");
+    const existingId = [...f.sessions.values()][0].clientSessionId;
+    const existing = await ingest(f, { sessionId: existingId, sentAt: t.getTime(), events: [] }, t);
+    assert(existing.ok, "existing accepted");
+  });
+
+  await suite("I13. empty batch creates or updates the session and stores no events", async () => {
+    const f = await strictFixture();
+    const t = new Date();
+    const res = await ingest(f, { sessionId: SID, sentAt: t.getTime(), events: [] }, t);
+    assert(res.ok && res.data.accepted === 0, "accepted 0");
+    assert(f.sessions.has(`${f.aC}:${SID}`) && f.events.size === 0, "session only");
+  });
+
+  await suite("I14. ATTEMPT_EVENT_TYPES equals the Prisma enum", () => {
+    const prismaSet = new Set(Object.values($Enums.AssessmentAttemptEventType));
+    const ours = new Set(ATTEMPT_EVENT_TYPES);
+    assert(prismaSet.size === ours.size, "same size");
+    for (const t of ours) assert(prismaSet.has(t), t);
+  });
+
+  // ---- T-219 summary --------------------------------------------------------
+
+  function act(
+    sessionId: string,
+    seq: number,
+    type: AttemptEventType,
+    at: Date,
+    extra: Partial<ActivityEvent> = {},
+  ): ActivityEvent {
+    return { sessionId, seq, type, occurredAt: at, questionId: extra.questionId ?? null, count: extra.count ?? 1 };
+  }
+
+  const t0 = new Date("2026-09-14T10:00:00Z");
+  const ms = (n: number) => new Date(t0.getTime() + n);
+
+  await suite("S1. exit → return: FULLSCREEN times 1 and Returned to fullscreen after 2m 14s", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(10 * 60_000),
+      now: ms(10 * 60_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(10 * 60_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", ms(1_000)),
+        act(SID, 2, "FULLSCREEN_EXITED", ms(60_000)),
+        act(SID, 3, "FULLSCREEN_ENTERED", ms(60_000 + 134_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 4,
+    });
+    assert(summary.totals.FULLSCREEN.times === 1, "times");
+    assert(summary.totals.FULLSCREEN.ms === 134_000, `ms ${summary.totals.FULLSCREEN.ms}`);
+    const line = summary.timeline.flatMap((e) => e.lines).find((l) => l.startsWith("Returned"));
+    assert(line === "Returned to fullscreen after 2m 14s", `line: ${line}`);
+  });
+
+  await suite("S2. tab switch counts once in awayMs and once in each per-kind total", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(60_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+        act(SID, 2, "FULLSCREEN_EXITED", ms(10_000)),
+        act(SID, 3, "VISIBILITY_HIDDEN", ms(10_000)),
+        act(SID, 4, "WINDOW_BLURRED", ms(10_000)),
+        act(SID, 5, "VISIBILITY_VISIBLE", ms(20_000)),
+        act(SID, 6, "WINDOW_FOCUSED", ms(20_000)),
+        act(SID, 7, "FULLSCREEN_ENTERED", ms(20_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 8,
+    });
+    assert(summary.totals.FULLSCREEN.times === 1, "fullscreen");
+    assert(summary.totals.HIDDEN.times === 1, "hidden");
+    assert(summary.totals.UNFOCUSED.times === 1, "unfocused");
+    assert(summary.awayMs === 10_000, `away ${summary.awayMs}`);
+  });
+
+  await suite("S3. two concurrent sessions: A hidden while B in view → not away", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: false,
+      sessions: [
+        { clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(60_000) },
+        { clientSessionId: SID2, firstSeenAt: t0, lastSeenAt: ms(60_000) },
+      ],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+        act(SID, 2, "VISIBILITY_HIDDEN", ms(10_000)),
+        act(SID2, 0, "SESSION_STARTED", t0),
+        act(SID2, 1, "FULLSCREEN_ENTERED", t0),
+      ],
+      questionNumbers: {},
+      eventCount: 5,
+    });
+    assert(summary.awayMs === 0, `away ${summary.awayMs}`);
+  });
+
+  await suite("S4. leave → next session: PAGE_CLOSED interval; awayMs includes it", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: false,
+      sessions: [
+        { clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(10_000) },
+        { clientSessionId: SID2, firstSeenAt: ms(40_000), lastSeenAt: ms(60_000) },
+      ],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+        act(SID, 2, "PAGE_LEFT", ms(10_000)),
+        act(SID2, 0, "SESSION_STARTED", ms(40_000)),
+        act(SID2, 1, "FULLSCREEN_ENTERED", ms(40_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 5,
+    });
+    assert(summary.totals.PAGE_CLOSED.times === 1, "closed once");
+    assert(summary.totals.PAGE_CLOSED.ms === 30_000, `closed ms ${summary.totals.PAGE_CLOSED.ms}`);
+    assert(summary.awayMs === 30_000, `away ${summary.awayMs}`);
+    assert(
+      summary.timeline.flatMap((e) => e.lines).includes("Left the assessment page"),
+      "left line",
+    );
+  });
+
+  await suite("S5. crashed session: in view until lastSeenAt + 45s, away after", () => {
+    const lastSeen = ms(10_000);
+    const submittedAt = ms(10_000 + SESSION_GRACE_MS + 20_000);
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt,
+      now: submittedAt,
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: lastSeen }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+      ],
+      questionNumbers: {},
+      eventCount: 2,
+    });
+    assert(summary.awayMs === 20_000, `away ${summary.awayMs}`);
+  });
+
+  await suite("S6. away starting ≤5s after upload link is attributed; >5s is not", () => {
+    const attributed = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(60_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+        act(SID, 2, "UPLOAD_LINK_OPENED", ms(10_000), { questionId: "q4" }),
+        act(SID, 3, "FULLSCREEN_EXITED", ms(12_000)),
+        act(SID, 4, "FULLSCREEN_ENTERED", ms(22_000)),
+      ],
+      questionNumbers: { q4: 4 },
+      eventCount: 5,
+    });
+    assert(attributed.awayAfterUploadLinkMs === 10_000, `attr ${attributed.awayAfterUploadLinkMs}`);
+    const not = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(60_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", t0),
+        act(SID, 2, "UPLOAD_LINK_OPENED", ms(10_000), { questionId: "q4" }),
+        act(SID, 3, "FULLSCREEN_EXITED", ms(16_000)),
+        act(SID, 4, "FULLSCREEN_ENTERED", ms(26_000)),
+      ],
+      questionNumbers: { q4: 4 },
+      eventCount: 5,
+    });
+    assert(not.awayAfterUploadLinkMs === 0, `not ${not.awayAfterUploadLinkMs}`);
+  });
+
+  await suite("S7. camera off → on duration; reopen before first CAMERA_ON is not Camera off", () => {
+    const withOff = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: true,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(60_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "CAMERA_ON", t0),
+        act(SID, 2, "CAMERA_OFF", ms(10_000)),
+        act(SID, 3, "CAMERA_ON", ms(25_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 4,
+    });
+    assert(withOff.totals.CAMERA_OFF.times === 1 && withOff.totals.CAMERA_OFF.ms === 15_000, "duration");
+    const reopen = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(60_000),
+      now: ms(60_000),
+      cameraRequired: true,
+      sessions: [{ clientSessionId: SID2, firstSeenAt: t0, lastSeenAt: ms(60_000) }],
+      events: [
+        act(SID2, 0, "SESSION_STARTED", t0),
+        act(SID2, 1, "CAMERA_ON", ms(8_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 2,
+    });
+    assert(reopen.totals.CAMERA_OFF.times === 0, "not counted before first on");
+  });
+
+  await suite("S8. in progress uses now; submitted uses submittedAt", () => {
+    const events = [
+      act(SID, 0, "SESSION_STARTED", t0),
+      act(SID, 1, "FULLSCREEN_ENTERED", t0),
+    ];
+    const sessions: ActivitySession[] = [
+      { clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(30_000) },
+    ];
+    const inProg = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: null,
+      now: ms(20_000),
+      cameraRequired: false,
+      sessions,
+      events,
+      questionNumbers: {},
+      eventCount: 2,
+    });
+    assert(inProg.window.inProgress && inProg.window.end.getTime() === ms(20_000).getTime(), "now");
+    const done = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(15_000),
+      now: ms(40_000),
+      cameraRequired: false,
+      sessions,
+      events: [...events, act(SID, 2, "FULLSCREEN_EXITED", ms(40_000))],
+      questionNumbers: {},
+      eventCount: 3,
+    });
+    assert(!done.window.inProgress && done.window.end.getTime() === ms(15_000).getTime(), "submittedAt");
+  });
+
+  await suite("S9. clipboard counts sum count; Paste blocked in Q3 (3 attempts)", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(10_000),
+      now: ms(10_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(10_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "PASTE_BLOCKED", ms(1_000), { questionId: "q3", count: 3 }),
+        act(SID, 2, "COPY_BLOCKED", ms(2_000), { count: 2 }),
+      ],
+      questionNumbers: { q3: 3 },
+      eventCount: 3,
+    });
+    assert(summary.clipboardBlocked === 5, `sum ${summary.clipboardBlocked}`);
+    const line = describeEvent(act(SID, 1, "PASTE_BLOCKED", ms(1_000), { questionId: "q3", count: 3 }), {
+      questionNumber: 3,
+      sessionNumber: 1,
+      multipleSessions: false,
+    });
+    assert(line === "Paste blocked in Q3 (3 attempts)", line);
+  });
+
+  await suite("S10. events within 1s form one timeline entry; Started and Submitted present", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(10_000),
+      now: ms(10_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(10_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_EXITED", ms(5_000)),
+        act(SID, 2, "VISIBILITY_HIDDEN", ms(5_400)),
+        act(SID, 3, "WINDOW_BLURRED", ms(5_800)),
+      ],
+      questionNumbers: {},
+      eventCount: 4,
+    });
+    const grouped = summary.timeline.find((e) => e.lines.includes("Fullscreen exited"));
+    assert(grouped && grouped.lines.length === 3, `grouped ${grouped?.lines.length}`);
+    assert(summary.timeline[0].lines[0] === "Started the assessment", "started");
+    assert(
+      summary.timeline[summary.timeline.length - 1].lines[0] === "Submitted the assessment",
+      "submitted",
+    );
+  });
+
+  await suite("S11. Entered fullscreen (no prior exit) creates no FULLSCREEN interval", () => {
+    const summary = summarizeAttemptActivity({
+      startedAt: t0,
+      submittedAt: ms(10_000),
+      now: ms(10_000),
+      cameraRequired: false,
+      sessions: [{ clientSessionId: SID, firstSeenAt: t0, lastSeenAt: ms(10_000) }],
+      events: [
+        act(SID, 0, "SESSION_STARTED", t0),
+        act(SID, 1, "FULLSCREEN_ENTERED", ms(1_000)),
+      ],
+      questionNumbers: {},
+      eventCount: 2,
+    });
+    assert(summary.totals.FULLSCREEN.times === 0 && summary.totals.FULLSCREEN.ms === 0, "no interval");
+    assert(
+      summary.timeline.flatMap((e) => e.lines).includes("Entered fullscreen"),
+      "entered line",
+    );
+  });
+
+  // ---- T-219 recorder -------------------------------------------------------
+
+  function fakeRecorder() {
+    let now = 1_000_000;
+    const timers = new Map<number, { fn: () => void; at: number }>();
+    let tid = 0;
+    const sends: string[] = [];
+    const beacons: string[] = [];
+    let sendImpl: (body: string) => Promise<{ status: number }> = async (body) => {
+      sends.push(body);
+      return { status: 200 };
+    };
+    let stoppedStatus: number | null = null;
+    const rec = createIntegrityRecorder({
+      assignmentId: "a1",
+      send: (body) => sendImpl(body),
+      beacon: (body) => {
+        beacons.push(body);
+        return true;
+      },
+      now: () => now,
+      uuid: () => SID,
+      setTimer: (fn, ms) => {
+        const id = ++tid;
+        timers.set(id, { fn, at: now + ms });
+        return id;
+      },
+      clearTimer: (id) => {
+        timers.delete(id);
+      },
+      onStopped: (status) => {
+        stoppedStatus = status;
+      },
+    });
+    async function advance(ms: number) {
+      const target = now + ms;
+      now = target;
+      let guard = 0;
+      while (guard++ < 50) {
+        const due = [...timers.entries()].filter(([, t]) => t.at <= now);
+        if (due.length === 0) break;
+        for (const [id, t] of due) {
+          timers.delete(id);
+          t.fn();
+        }
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+    }
+    return { rec, sends, beacons, advance, setSend: (fn: typeof sendImpl) => { sendImpl = fn; }, get stoppedStatus() { return stoppedStatus; }, get now() { return now; } };
+  }
+
+  await suite("R1. startSession → seq 0 is SESSION_STARTED; seq increments", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    await f.advance(5_000);
+    const body = JSON.parse(f.sends[0] ?? "{}") as { events: { seq: number; type: string }[] };
+    assert(body.events[0]?.seq === 0 && body.events[0]?.type === "SESSION_STARTED", "seq 0");
+    f.rec.record("FULLSCREEN_ENTERED");
+    await f.advance(5_000);
+    const body2 = JSON.parse(f.sends[1] ?? "{}") as { events: { seq: number; type: string }[] };
+    assert(body2.events[0]?.seq === 1, `seq ${body2.events[0]?.seq}`);
+  });
+
+  await suite("R2. repeated PASTE_BLOCKED within 1s coalesce; after 1s a new seq", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    f.rec.record("PASTE_BLOCKED", "q1");
+    f.rec.record("PASTE_BLOCKED", "q1");
+    await f.advance(5_000);
+    const body = JSON.parse(f.sends[0] ?? "{}") as { events: { type: string; count?: number; seq: number }[] };
+    const paste = body.events.find((e) => e.type === "PASTE_BLOCKED");
+    assert(paste?.count === 2, `count ${paste?.count}`);
+    await f.advance(1);
+    // new event after >1s from first paste — the coalesced one was sent, so a new seq
+    f.rec.record("PASTE_BLOCKED", "q1");
+    await f.advance(5_000);
+    const body2 = JSON.parse(f.sends[1] ?? "{}") as { events: { seq: number }[] };
+    assert(body2.events[0]?.seq === 2, `new seq ${body2.events[0]?.seq}`);
+  });
+
+  await suite("R3. flush sends ≤50 events, sentAt = send time; retry re-stamps sentAt", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    for (let i = 0; i < 55; i++) f.rec.record("COPY_BLOCKED", `q${i}`);
+    await f.advance(5_000);
+    const first = JSON.parse(f.sends[0] ?? "{}") as { sentAt: number; events: unknown[] };
+    assert(first.events.length === 50, `len ${first.events.length}`);
+    assert(first.sentAt === f.now, "sentAt now");
+
+    const g = fakeRecorder();
+    let attempts = 0;
+    const sentAts: number[] = [];
+    g.setSend(async (body) => {
+      attempts += 1;
+      sentAts.push(JSON.parse(body).sentAt as number);
+      g.sends.push(body);
+      if (attempts === 1) throw new Error("net");
+      return { status: 200 };
+    });
+    g.rec.startSession();
+    await g.advance(5_000);
+    await g.advance(2_000);
+    assert(attempts === 2 && sentAts[1] > sentAts[0], "re-stamped");
+  });
+
+  await suite("R4. network error retried; 200 removes; 409 stops later record", async () => {
+    const f = fakeRecorder();
+    let n = 0;
+    f.setSend(async (body) => {
+      n += 1;
+      f.sends.push(body);
+      if (n === 1) throw new Error("offline");
+      if (n === 2) return { status: 200 };
+      return { status: 409 };
+    });
+    f.rec.startSession();
+    await f.advance(5_000);
+    await f.advance(2_000);
+    assert(n >= 2, "retried then 200");
+    f.rec.record("WINDOW_BLURRED");
+    await f.advance(5_000);
+    assert(f.stoppedStatus === 409 && f.rec.isStopped(), "stopped");
+    const before = f.sends.length;
+    f.rec.record("WINDOW_FOCUSED");
+    await f.advance(5_000);
+    assert(f.sends.length === before, "later record ignored");
+  });
+
+  await suite("R5. beaconed events stay queued and go out on the next fetch flush", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    f.rec.record("PAGE_LEFT");
+    f.rec.flushWithBeacon();
+    assert(f.beacons.length === 1, "beaconed");
+    await f.advance(5_000);
+    const body = JSON.parse(f.sends[0] ?? "{}") as { events: { type: string }[] };
+    assert(body.events.some((e) => e.type === "PAGE_LEFT"), "resent on fetch");
+  });
+
+  await suite("R6. 20s with nothing sent → empty heartbeat batch", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    await f.advance(5_000);
+    assert(f.sends.length === 1, "session start flushed");
+    await f.advance(20_000);
+    const last = JSON.parse(f.sends[f.sends.length - 1] ?? "{}") as { events: unknown[] };
+    assert(last.events.length === 0, "heartbeat empty");
+  });
+
+  await suite("R7. leave() records PAGE_LEFT once and beacons; finish() records nothing", async () => {
+    const f = fakeRecorder();
+    f.rec.startSession();
+    f.rec.leave();
+    f.rec.leave();
+    const beacon = JSON.parse(f.beacons[0] ?? "{}") as { events: { type: string }[] };
+    assert(beacon.events.filter((e) => e.type === "PAGE_LEFT").length === 1, "once");
+    const g = fakeRecorder();
+    g.rec.startSession();
+    g.rec.finish();
+    g.rec.record("COPY_BLOCKED");
+    await g.advance(5_000);
+    assert(g.sends.length === 0, "finish records nothing more");
+  });
+
+  // ---- Plan 141 leave-close -------------------------------------------------
+
+  await suite("L1. finishAttemptForced scores incomplete; never refuses missing required", () => {
+    const requiredBlank = gradeInput({
+      questions: [
+        {
+          id: "m1",
+          type: "MULTIPLE_CHOICE",
+          points: 2,
+          isRequired: true,
+          maxWords: null,
+          correctOptionIds: ["a"],
+        },
+      ],
+      answers: [],
+    });
+    const forced = finishAttemptForced(requiredBlank);
+    assert(forced.ok, "forced ok");
+    if (forced.ok) {
+      assert(forced.scorePercent === 0, "unanswered MCQ = 0");
+    }
+    const refused = finishAttempt(requiredBlank);
+    assert(!refused.ok, "normal finish still refuses");
+  });
+
+  await suite("L2. leave-finalize incomplete strict STARTED → SUBMITTED", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const left = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(left.ok && !left.data.alreadySubmitted, "closed");
+    assert(f.assignments.get(f.aC)!.status === "SUBMITTED", "submitted");
+    assert(f.assignments.get(f.aC)!.scorePercent === 0, "scored");
+  });
+
+  await suite("L3. second leave is idempotent ALREADY", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    const again = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(again.ok && again.data.alreadySubmitted, "already");
+  });
+
+  await suite("L4. non-strict leave → CONFLICT; ASSIGNED leave → CONFLICT", async () => {
+    const f = fixture();
+    const non = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(!non.ok && non.code === "CONFLICT", "non-strict");
+    f.assessments.get(f.s.id)!.strictMode = true;
+    const assigned = await finalizeStrictAttemptOnLeave(f.store, C, f.aC);
+    assert(!assigned.ok && assigned.code === "CONFLICT", "assigned");
+  });
+
+  await suite("L5. leave on mobile strict → CONFLICT", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const left = await finalizeStrictAttemptOnLeave(f.store, C, f.aC, { mobile: true });
+    assert(!left.ok && left.code === "CONFLICT", "mobile refused");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("L6. loadAttempt with PAGE_LEFT force-closes strict STARTED", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.strictMode = true;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const t = new Date();
+    await f.store.writeEventBatch(f.aC, "11111111-1111-4111-8111-111111111111", t, [
+      {
+        seq: 0,
+        type: "PAGE_LEFT",
+        occurredAt: t,
+        clientOccurredAt: t,
+        receivedAt: t,
+        questionId: null,
+        count: 1,
+      },
+    ]);
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "SUBMITTED", "closed on load");
+  });
+
+  await suite("L7. integrity UI has no clipboard toast string", () => {
+    const src = read("src/components/assessments/assessment-integrity.tsx");
+    assert(
+      !src.includes("Copy, cut and paste are turned off"),
+      "toast copy removed",
+    );
+    assert(!src.includes('from "sonner"'), "no sonner toast in integrity");
+  });
+
+  // ---- T-219 copy guard -----------------------------------------------------
+
+  await suite("C1. describeEvent and SUMMARY_COPY never match BANNED_CLAIM_PATTERN", () => {
+    const types = [...ATTEMPT_EVENT_TYPES];
+    for (const type of types) {
+      const e: ActivityEvent = {
+        sessionId: SID,
+        seq: 0,
+        type,
+        occurredAt: t0,
+        questionId: "q1",
+        count: 3,
+      };
+      for (const paired of [undefined, 2000]) {
+        const line = describeEvent(e, {
+          returnAfterMs: paired,
+          questionNumber: 3,
+          sessionNumber: 2,
+          multipleSessions: true,
+        });
+        assert(!BANNED_CLAIM_PATTERN.test(line), `describe ${type}: ${line}`);
+      }
+    }
+    const strings: string[] = [
+      SUMMARY_COPY.away.label,
+      SUMMARY_COPY.away.help,
+      SUMMARY_COPY.awayAfterUploadLink.help("2s"),
+      SUMMARY_COPY.FULLSCREEN.label,
+      SUMMARY_COPY.FULLSCREEN.help(1, "2s"),
+      SUMMARY_COPY.HIDDEN.label,
+      SUMMARY_COPY.HIDDEN.help,
+      SUMMARY_COPY.UNFOCUSED.label,
+      SUMMARY_COPY.UNFOCUSED.help,
+      SUMMARY_COPY.PAGE_CLOSED.label,
+      SUMMARY_COPY.PAGE_CLOSED.help,
+      SUMMARY_COPY.CAMERA_OFF.label,
+      SUMMARY_COPY.CAMERA_OFF.help,
+      SUMMARY_COPY.clipboard.label,
+      SUMMARY_COPY.clipboard.help,
+      SUMMARY_COPY.links.label,
+      SUMMARY_COPY.links.help,
+      SUMMARY_COPY.sessions.label,
+      SUMMARY_COPY.sessions.help,
+      SUMMARY_COPY.withoutReturn.help(1),
+      SUMMARY_COPY.limit.help,
+    ];
+    for (const s of strings) {
+      assert(!BANNED_CLAIM_PATTERN.test(s), `summary: ${s}`);
+    }
+  });
+
+  await suite("C2. activity page, integrity UI and builder note do not match BANNED_CLAIM_PATTERN", () => {
+    for (const rel of [
+      "src/app/hire/assessments/[assessmentId]/attempts/[assignmentId]/page.tsx",
+      "src/components/assessments/assessment-integrity.tsx",
+      "src/components/hire/assessment/assessment-builder.tsx",
+    ]) {
+      const src = read(rel);
+      assert(!BANNED_CLAIM_PATTERN.test(src), rel);
+    }
+  });
+
+  await suite("C3. disclaimers contain the required phrases", () => {
+    assert(ACTIVITY_DISCLAIMER.includes("does not detect"), "does not detect");
+    assert(ACTIVITY_DISCLAIMER.includes("not proof"), "not proof");
+    assert(CAMERA_DISCLAIMER.includes("doesn't record or see the video"), "camera");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);
