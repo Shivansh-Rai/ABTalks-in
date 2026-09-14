@@ -46,7 +46,9 @@ import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
 import {
   loadInspectorExternalLinksAction,
+  loadInspectorTrackEvidenceAction,
   loadInspectorWorkHistoryAction,
+  type InspectorTrackEvidence,
   type InspectorWorkHistory,
 } from "@/app/actions/hire-view-actions";
 import type { SelfReportedExternalLink } from "@/features/hire/self-reported-links";
@@ -111,6 +113,12 @@ function jobSpan(row: InspectorWorkHistory["rows"][number]): string {
   const to = row.isCurrent ? "Present" : monthYear(row.endMonth, row.endYear);
   if (!from && !to) return "";
   return from && to ? `${from} – ${to}` : from || to;
+}
+
+function monthYearFromIso(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return monthYear(d.getUTCMonth() + 1, d.getUTCFullYear());
 }
 
 type TabId = (typeof TABS)[number]["id"];
@@ -231,14 +239,14 @@ function monogram(label: string): string {
   return letters.toUpperCase();
 }
 
-type Role = { title: string; value: ReactNode; badge?: string; note?: string };
+type Role = { key?: string; title: string; value: ReactNode; badge?: string; note?: string };
 
 /**
  * The candidate profile panel (Figma 1585:189).
  *
  * Experience is the candidate's own jobs (`CandidateExperience`, typed or
- * resume-merged), loaded on open. ABTalks Evidence is verified track proof
- * already on the match card (days shipped, missions, commits). Education is
+ * resume-merged), loaded on open. ABTalks Evidence is completed tracks and
+ * hackathon placements, also loaded on open. Education is
  * the declared level. Contact is behind the paid unlock (T-229): "Reveal
  * email" / "Reveal number" open the unlock dialog, which states the cost
  * before charging. Resume uses the same credit unlock — billing is not
@@ -267,29 +275,8 @@ export function CandidateInspector({
   const preview = isLockedPreview(match) ? match.preview : null;
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const track = trackLongLabel(match.source);
-  const isChallenge = match.source === "CLAUDE" || match.source === "CHALLENGE_60";
-  const totalDays = e.totalTrackDays;
   const skills = e.skills ?? [];
   const languages = e.workingLanguages ?? [];
-  const missions =
-    typeof e.missionsPassed === "number"
-      ? totalDays
-        ? `${e.missionsPassed} of ${totalDays}`
-        : String(e.missionsPassed)
-      : match.source === "HACKATHON"
-        ? "Shipped project"
-        : null;
-  const firstAttempt =
-    typeof e.cleanPassCount === "number"
-      ? e.cleanPassCount > 0
-        ? String(e.cleanPassCount)
-        : "None recorded"
-      : null;
-  const commits =
-    typeof e.commitDayCount === "number" ? String(e.commitDayCount) : null;
-  const projects = e.projectScores?.length
-    ? e.projectScores.join(" / ")
-    : null;
   const years =
     typeof e.yearsExperience === "number" && e.yearsExperience > 0
       ? e.yearsExperience
@@ -316,6 +303,8 @@ export function CandidateInspector({
   const [externalLinks, setExternalLinks] = useState<
     SelfReportedExternalLink[] | null
   >(null);
+  const [trackEvidence, setTrackEvidence] =
+    useState<InspectorTrackEvidence | null>(null);
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -343,18 +332,23 @@ export function CandidateInspector({
     if (sample) {
       setWorkHistory({ hasNoWorkExperience: false, rows: [] });
       setExternalLinks([]);
+      setTrackEvidence({ items: [] });
       return () => {
         alive = false;
       };
     }
     setWorkHistory(null);
     setExternalLinks(null);
+    setTrackEvidence(null);
     void (async () => {
-      const [historyResult, linksResult] = await Promise.all([
+      const [historyResult, linksResult, evidenceResult] = await Promise.all([
         loadInspectorWorkHistoryAction({
           candidateRef: match.candidateRef,
         }),
         loadInspectorExternalLinksAction({
+          candidateRef: match.candidateRef,
+        }),
+        loadInspectorTrackEvidenceAction({
           candidateRef: match.candidateRef,
         }),
       ]);
@@ -365,6 +359,9 @@ export function CandidateInspector({
           : { hasNoWorkExperience: false, rows: [] },
       );
       setExternalLinks(linksResult.ok ? linksResult.data.links : []);
+      setTrackEvidence(
+        evidenceResult.ok ? evidenceResult.data : { items: [] },
+      );
     })();
     return () => {
       alive = false;
@@ -509,25 +506,16 @@ export function CandidateInspector({
 
   const orgs = [match.jobRole, track].filter((v): v is string => Boolean(v));
 
-  const roles: Role[] = [];
-  if (missions) {
-    roles.push({
-      title: isChallenge ? "Days shipped" : "Missions passed",
-      value: missions,
-      badge: e.certificateIssued ? "Certified" : undefined,
-    });
-  }
-  if (firstAttempt) roles.push({ title: "First-attempt passes", value: firstAttempt });
-  if (commits) roles.push({ title: "Verified commits", value: `${commits} commit days` });
-  if (projects) roles.push({ title: "Graded projects", value: projects });
-  if (typeof e.interviewOverall === "number") {
-    roles.push({ title: "Exit interview", value: `${e.interviewOverall}/5` });
-  }
-  if (typeof e.quizAverage === "number") {
-    roles.push({ title: "Weekly quiz average", value: String(e.quizAverage) });
-  }
+  const evidenceItems = trackEvidence?.items ?? [];
+  const evidenceRoles: Role[] = evidenceItems.map((item) => ({
+    key: item.key,
+    title: item.title,
+    value: item.detail ?? item.outcomeLabel,
+    badge: item.outcomeLabel,
+    note: item.occurredAt ? monthYearFromIso(item.occurredAt) : undefined,
+  }));
   if (preview) {
-    roles.push({
+    evidenceRoles.push({
       title: "Expected compensation",
       value: (
         <LockedField
@@ -538,7 +526,7 @@ export function CandidateInspector({
       ),
     });
   } else if (match.compensationBand) {
-    roles.push({
+    evidenceRoles.push({
       title: match.compensationDeclared ? "Expected CTC" : "Est. compensation",
       value: match.compensationBand,
       note: match.compensationDeclared ? undefined : COMPENSATION_DISCLAIMER,
@@ -578,8 +566,6 @@ export function CandidateInspector({
   const experienceSummary = [
     years ? `${years} year${years === 1 ? "" : "s"} total` : null,
   ].filter(Boolean);
-
-  const evidenceSummary = [track].filter(Boolean);
 
   const jobs = workHistory?.rows ?? [];
   const declaredLinks = (externalLinks ?? []).flatMap((link) => {
@@ -977,27 +963,22 @@ export function CandidateInspector({
           className="hire-profile__section hire-profile__section--ruled"
           aria-label="ABTalks Evidence"
         >
-          <h4 className="hire-profile__h">
-            ABTalks Evidence
-            {evidenceSummary.length > 0 && (
-              <small>· {evidenceSummary.join(" · ")}</small>
-            )}
-          </h4>
+          <h4 className="hire-profile__h">ABTalks Evidence</h4>
           <div className="hire-profile__org-block">
             <span className="hire-profile__tile" aria-hidden="true">
-              {monogram(track ?? match.jobRole)}
+              {monogram("ABTalks")}
             </span>
             <div className="hire-profile__org-main">
               <div>
-                <p className="hire-profile__org-name">
-                  {track ?? "Verified work on ABTalks"}
+                <p className="hire-profile__org-name">Verified work on ABTalks</p>
+                <p className="hire-profile__org-sub">
+                  Completions and placements only
                 </p>
-                <p className="hire-profile__org-sub">{match.jobRole}</p>
               </div>
-              {roles.length > 0 ? (
+              {evidenceRoles.length > 0 ? (
                 <ul className="hire-profile__roles">
-                  {roles.map((r) => (
-                    <li key={r.title} className="hire-profile__role">
+                  {evidenceRoles.map((r) => (
+                    <li key={r.key ?? r.title} className="hire-profile__role">
                       <span
                         className="hire-profile__timeline"
                         aria-hidden="true"
@@ -1019,7 +1000,7 @@ export function CandidateInspector({
                 <p className="hire-profile__meta">
                   {sample
                     ? "Figures are taken from your requirement, not from a candidate."
-                    : "No verified work recorded yet."}
+                    : "No completed tracks or placements recorded."}
                 </p>
               )}
             </div>

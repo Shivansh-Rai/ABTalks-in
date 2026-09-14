@@ -11,6 +11,7 @@ import {
   recordDetailView,
   viewerKeyFor,
 } from "@/features/profile/profile-events";
+import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import {
   listPublicWorkHistory,
   listSelfReportedExternalLinks,
@@ -184,5 +185,76 @@ export async function loadInspectorExternalLinksAction(
       error: String(error),
     });
     return { ok: false, message: "Could not load profile links." };
+  }
+}
+
+const trackEvidenceInputSchema = z.object({
+  candidateRef: candidateRefSchema,
+});
+
+export type InspectorTrackEvidenceItem = {
+  key: string;
+  title: string;
+  detail: string | null;
+  outcomeLabel: string;
+  occurredAt: string | null;
+};
+
+export type InspectorTrackEvidence = {
+  items: InspectorTrackEvidenceItem[];
+};
+
+const EMPTY_TRACK_EVIDENCE: InspectorTrackEvidence = { items: [] };
+
+/**
+ * Completed tracks and hackathon placements for the Scout inspector.
+ *
+ * Completions are not protected contact, so this does not wait on an unlock.
+ * It still re-tests the handle against the searchable pool — a guessed ref
+ * for someone who withdrew must not return their wins. Sample and ineligible
+ * refs resolve to empty rather than an error, so the UI cannot tell those
+ * cases apart.
+ */
+export async function loadInspectorTrackEvidenceAction(
+  input: unknown,
+): Promise<
+  { ok: true; data: InspectorTrackEvidence } | { ok: false; message: string }
+> {
+  const parsed = trackEvidenceInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid candidate." };
+  }
+
+  const raw = parsed.data.candidateRef;
+  if (raw.startsWith("SAMPLE:")) {
+    return { ok: true, data: EMPTY_TRACK_EVIDENCE };
+  }
+  if (!decodeCandidateRef(raw)) {
+    return { ok: true, data: EMPTY_TRACK_EVIDENCE };
+  }
+
+  try {
+    const [eligible] = await resolveEligibleCandidates([raw]);
+    if (!eligible) {
+      return { ok: true, data: EMPTY_TRACK_EVIDENCE };
+    }
+    const rows = await getVerifiedAccomplishments(eligible.userId, "wins-only");
+    return {
+      ok: true,
+      data: {
+        items: rows.map((row) => ({
+          key: row.key,
+          title: row.title,
+          detail: row.detail,
+          outcomeLabel: row.outcomeLabel,
+          occurredAt: row.occurredAt ? row.occurredAt.toISOString() : null,
+        })),
+      },
+    };
+  } catch (error) {
+    logger.error("[hire] loadInspectorTrackEvidenceAction", {
+      error: String(error),
+    });
+    return { ok: false, message: "Could not load evidence." };
   }
 }

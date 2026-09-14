@@ -585,6 +585,36 @@ suite("the same mirror exclusion guards verified accomplishments", () => {
   );
 });
 
+suite("wins-only accomplishments use 50-day Claude and placement-only hackathon", () => {
+  const src = code("src/features/profile/get-verified-accomplishments.ts");
+  assert(
+    src.includes('mode: VerifiedAccomplishmentMode = "profile"'),
+    "profile remains the default so /profile is unchanged",
+  );
+  assert(src.includes('"wins-only"'), "recruiter path is an explicit mode");
+  assert(
+    src.includes("Domain.CLAUDE"),
+    "Claude enrollments are in the 50-day path",
+  );
+  assert(
+    src.includes("if (!winsOnly && claude)"),
+    "profile still gates Claude on the certificate",
+  );
+  assert(
+    src.includes("winsOnly") && src.includes("best !== null"),
+    "wins-only hackathon requires a placement",
+  );
+  const profilePage = code("src/app/profile/page.tsx");
+  assert(
+    profilePage.includes("getVerifiedAccomplishments(userId)"),
+    "/profile still calls the default profile mode",
+  );
+  assert(
+    !profilePage.includes('"wins-only"'),
+    "/profile must not switch to recruiter wins-only",
+  );
+});
+
 suite("curriculum skills are data, not a hardcoded frontend list", () => {
   const content = JSON.parse(
     source("prisma/content/curriculum-skills.json"),
