@@ -673,7 +673,7 @@ export function CandidateInspector({
               aria-label={preview ? "View resume" : "Go to resume"}
               title="Resume"
               aria-haspopup={preview ? "dialog" : undefined}
-              onClick={() => (preview ? setGate("resume") : jump("resume"))}
+              onClick={() => (preview ? openUpgrade() : jump("resume"))}
             >
               <Eye size={16} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" />
             </button>
