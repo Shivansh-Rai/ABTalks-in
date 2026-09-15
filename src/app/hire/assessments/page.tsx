@@ -297,5 +297,6 @@ export default async function HireAssessmentsPage() {
         </>
       )}
     </div>
+    </div>
   );
 }
