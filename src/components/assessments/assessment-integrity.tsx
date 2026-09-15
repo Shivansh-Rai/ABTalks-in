@@ -166,9 +166,9 @@ export function StrictModeChecklist({
                 {cameraLive ? "✓" : "✗"}
               </span>
               <div>
-                {cameraLive ? (
+                {cameraLive ? ( 
                   <>
-                    <p>Camera on — only you can see this preview.</p>
+                    <p>Camera on  only you can see this preview.</p>
                     <video
                       className="hire-cand-assess-rules__preview"
                       autoPlay
@@ -197,6 +197,10 @@ export function StrictModeChecklist({
         </ul>
       )}
 
+      <p className="hire-cand-assess-rules__limit" role="note">
+        Switching tabs or leaving fullscreen ends the assessment automatically.
+      </p>
+
       <div className="hire-cand-assess-recorded">
         <h2>What&apos;s recorded</h2>
         <p>While you take this assessment, ABTalks records the time of each of these:</p>
@@ -206,13 +210,10 @@ export function StrictModeChecklist({
             The assessment page being hidden or shown again, and the browser window losing or
             regaining focus
           </li>
+          <li>Using extensions or other browser features.</li>
+    
           <li>
-            Leaving the assessment page ends it — you cannot continue later. Closing the tab or
-            navigating away submits what you have answered so far
-          </li>
-          <li>
-            Copy, cut and paste attempts — these are blocked, except pasting a link into a
-            file-link field
+            Copy, cut and paste attempts is not allowed.
           </li>
           <li>Opening an upload link</li>
           {cameraRequired ? (
@@ -222,7 +223,7 @@ export function StrictModeChecklist({
             </li>
           ) : null}
         </ul>
-        <p>Nothing outside this page is recorded. The recruiter sees these events with your answers.</p>
+        
       </div>
     </div>
   );
@@ -276,9 +277,17 @@ export function startBlockedReasonFor(
   return null;
 }
 
+export type StrikeKind = "TAB_SWITCH" | "FULLSCREEN_EXIT";
+
 type GuardProps = {
   assignmentId: string;
   cameraRequired: boolean;
+  /** Called on each strike: a return to the page after it was hidden (a tab
+   *  switch) or leaving fullscreen. The attempt counts and enforces the limit. */
+  onStrike: (kind: StrikeKind) => void;
+  /** Fullscreen exits so far, and the limit, for the blocking modal's warning. */
+  fullscreenExits: number;
+  strikeLimit: number;
   camera: MediaStream | null;
   onRequestCamera: () => Promise<boolean>;
   endingRef: { current: "submitted" | null };
@@ -301,6 +310,9 @@ function closestAttr(target: EventTarget | null, selector: string, attr: string)
 export function StrictModeGuard({
   assignmentId,
   cameraRequired,
+  onStrike,
+  fullscreenExits,
+  strikeLimit,
   camera,
   onRequestCamera,
   endingRef,
@@ -308,7 +320,11 @@ export function StrictModeGuard({
   children,
 }: GuardProps) {
   const recorderRef = useRef<IntegrityRecorder | null>(null);
-  const leaveBeaconedRef = useRef(false);
+  // The listeners are attached once; this keeps them calling the latest handler.
+  const onStrikeRef = useRef(onStrike);
+  useEffect(() => {
+    onStrikeRef.current = onStrike;
+  });
   const [outsideFullscreen, setOutsideFullscreen] = useState(() => !isPageFullscreen());
   const [exitedThisSession, setExitedThisSession] = useState(false);
   const [deadCameraId, setDeadCameraId] = useState<string | null>(null);
@@ -320,22 +336,9 @@ export function StrictModeGuard({
 
   useEffect(() => {
     const url = `/api/assessments/${assignmentId}/events`;
-    const leaveUrl = `/api/assessments/${assignmentId}/leave`;
-    const beaconLeaveClose = () => {
-      if (leaveBeaconedRef.current) return;
-      if (endingRef.current === "submitted") return;
-      leaveBeaconedRef.current = true;
-      const body = JSON.stringify({ reason: "leave" });
-      const blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
-      if (!navigator.sendBeacon(leaveUrl, blob)) {
-        void fetch(leaveUrl, {
-          method: "POST",
-          body,
-          keepalive: true,
-          headers: { "content-type": "text/plain;charset=UTF-8" },
-        });
-      }
-    };
+    // Leaving is recorded as activity only — it never submits the attempt.
+    // (This effect's cleanup also runs on React's dev double-mount; a submit
+    // from here closed attempts the moment they started.)
     const recorder = createIntegrityRecorder({
       assignmentId,
       send: (body) =>
@@ -367,6 +370,7 @@ export function StrictModeGuard({
       else {
         setExitedThisSession(true);
         recorder.record("FULLSCREEN_EXITED");
+        if (endingRef.current !== "submitted") onStrikeRef.current("FULLSCREEN_EXIT");
       }
     };
     const onVisibility = () => {
@@ -374,19 +378,19 @@ export function StrictModeGuard({
         recorder.record("VISIBILITY_HIDDEN");
         recorder.flushWithBeacon();
       } else {
+        // Counted on the way back, so a reload or a closed tab is not a switch.
         recorder.record("VISIBILITY_VISIBLE");
+        if (endingRef.current !== "submitted") onStrikeRef.current("TAB_SWITCH");
       }
     };
     const onBlur = () => recorder.record("WINDOW_BLURRED");
     const onFocus = () => recorder.record("WINDOW_FOCUSED");
     const onPageHide = () => {
       recorder.leave();
-      beaconLeaveClose();
     };
     const onPageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
-      // bfcache restore after leave-close: do not reopen a closed attempt's session.
-      leaveBeaconedRef.current = false;
+      // bfcache restore: a fresh page session for the same attempt.
       setExitedThisSession(false);
       recorder.startSession();
       if (isPageFullscreen()) recorder.record("FULLSCREEN_ENTERED");
@@ -468,10 +472,7 @@ export function StrictModeGuard({
       // Read at unmount: submitted vs leave. Intentionally not captured at mount.
       // eslint-disable-next-line react-hooks/exhaustive-deps -- endingRef is a mutable flag
       if (endingRef.current === "submitted") recorder.finish();
-      else {
-        recorder.leave();
-        beaconLeaveClose();
-      }
+      else recorder.leave();
     };
     // Mount-only: listeners capture the stream via the camera argument at start;
     // later camera changes are handled in the track effect.
@@ -526,6 +527,8 @@ export function StrictModeGuard({
       </div>
       {blocked ? (
         <BlockingModal
+          fullscreenExits={fullscreenExits}
+          strikeLimit={strikeLimit}
           fullscreenUnmet={outsideFullscreen}
           exitedThisSession={exitedThisSession}
           cameraUnmet={cameraRequired && !cameraLive}
@@ -552,12 +555,16 @@ export function StrictModeGuard({
 }
 
 function BlockingModal({
+  fullscreenExits,
+  strikeLimit,
   fullscreenUnmet,
   exitedThisSession,
   cameraUnmet,
   error,
   onAction,
 }: {
+  fullscreenExits: number;
+  strikeLimit: number;
   fullscreenUnmet: boolean;
   exitedThisSession: boolean;
   cameraUnmet: boolean;
@@ -600,6 +607,12 @@ function BlockingModal({
         <h2 id={titleId}>{title}</h2>
         <p id={descId}>{body}</p>
         <p>Your answers are saved.</p>
+        {fullscreenUnmet && exitedThisSession && fullscreenExits > 0 ? (
+          <p className="hire-cand-assess__error">
+            Fullscreen exits: {Math.min(fullscreenExits, strikeLimit)} of {strikeLimit}. At{" "}
+            {strikeLimit} the assessment ends automatically and can&apos;t be retaken.
+          </p>
+        ) : null}
         {error ? <p className="hire-cand-assess__error">{error}</p> : null}
         <button
           ref={buttonRef}

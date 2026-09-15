@@ -183,6 +183,25 @@ export const attemptActionSchema = z.object({
   assignmentId: z.string().min(1).max(64),
 });
 
+/** How an attempt closed. Mirrors the Prisma enum AssessmentEndReason. */
+export const ASSESSMENT_END_REASONS = [
+  "SUBMITTED",
+  "ENDED_EARLY",
+  "TIME_UP",
+  "TAB_SWITCH_LIMIT",
+  "FULLSCREEN_LIMIT",
+  "LEFT_PAGE",
+] as const;
+export type AssessmentEndReason = (typeof ASSESSMENT_END_REASONS)[number];
+
+/** Strict mode: this many tab switches, or fullscreen exits, ends the attempt. */
+export const STRIKE_LIMIT = 3;
+
+/** The reasons a candidate's own screen may close an attempt with. */
+export const endAttemptSchema = attemptActionSchema.extend({
+  reason: z.enum(["ENDED_EARLY", "TAB_SWITCH_LIMIT", "FULLSCREEN_LIMIT"]),
+});
+
 export const saveAnswerSchema = attemptActionSchema.extend({
   questionId: z.string().min(1).max(64),
   answer: answerPayloadSchema,

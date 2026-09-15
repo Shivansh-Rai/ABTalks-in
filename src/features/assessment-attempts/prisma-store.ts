@@ -52,6 +52,7 @@ export function prismaAttemptStore(): AttemptStore {
           status: true,
           startedAt: true,
           submittedAt: true,
+          endReason: true,
           assessment: {
             select: {
               status: true,
@@ -92,6 +93,7 @@ export function prismaAttemptStore(): AttemptStore {
         status: a.status,
         startedAt: a.startedAt,
         submittedAt: a.submittedAt,
+        endReason: a.endReason,
         assessment: {
           status: a.assessment.status,
           title: a.assessment.title,
@@ -189,7 +191,7 @@ export function prismaAttemptStore(): AttemptStore {
               candidateUserId,
               status: { in: ["ASSIGNED", "STARTED"] },
             },
-            data: { status: "SUBMITTED", submittedAt: at },
+            data: { status: "SUBMITTED", submittedAt: at, endReason: "SUBMITTED" },
           });
           if (flipped.count !== 1) return { outcome: "NOT_OPEN" as const };
 
@@ -256,7 +258,7 @@ export function prismaAttemptStore(): AttemptStore {
       }
     },
 
-    async submitForced(assignmentId, candidateUserId, at, finish) {
+    async submitForced(assignmentId, candidateUserId, at, finish, reason) {
       const existing = await prisma.recruiterAssessmentAssignment.findFirst({
         where: { id: assignmentId, candidateUserId },
         select: { status: true },
@@ -273,7 +275,7 @@ export function prismaAttemptStore(): AttemptStore {
               candidateUserId,
               status: "STARTED",
             },
-            data: { status: "SUBMITTED", submittedAt: at },
+            data: { status: "SUBMITTED", submittedAt: at, endReason: reason },
           });
           if (flipped.count !== 1) return { outcome: "NOT_OPEN" as const };
 
@@ -337,17 +339,25 @@ export function prismaAttemptStore(): AttemptStore {
       }
     },
 
-    async hasPageLeftEvent(assignmentId, candidateUserId) {
+    async countStrikes(assignmentId, candidateUserId) {
       const owned = await prisma.recruiterAssessmentAssignment.findFirst({
         where: { id: assignmentId, candidateUserId },
         select: { id: true },
       });
-      if (!owned) return false;
-      const row = await prisma.assessmentAttemptEvent.findFirst({
-        where: { assignmentId, type: "PAGE_LEFT" },
-        select: { id: true },
+      if (!owned) return { tabSwitches: 0, fullscreenExits: 0 };
+      const groups = await prisma.assessmentAttemptEvent.groupBy({
+        by: ["type"],
+        where: {
+          assignmentId,
+          type: { in: ["VISIBILITY_VISIBLE", "FULLSCREEN_EXITED"] },
+        },
+        _count: { _all: true },
       });
-      return row !== null;
+      const count = (type: string) => groups.find((g) => g.type === type)?._count._all ?? 0;
+      return {
+        tabSwitches: count("VISIBILITY_VISIBLE"),
+        fullscreenExits: count("FULLSCREEN_EXITED"),
+      };
     },
 
     async findEventContext(assignmentId, candidateUserId, clientSessionId): Promise<EventContext | null> {

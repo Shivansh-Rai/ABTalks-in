@@ -6560,7 +6560,7 @@ a.hire-assess-action {
 
 .hire-assess-detail__stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin: 0 0 18px;
 }
@@ -6584,6 +6584,40 @@ a.hire-assess-action {
   margin: 4px 0 0;
   font-size: 22px;
   font-weight: 700;
+}
+
+/* Strict-mode penalty: the attempt was auto-ended at the tab-switch or
+   fullscreen-exit limit. Factual label + reason; no accusation copy. */
+.hire-assess-detail__stat[data-tone="penalty"] {
+  border-color: rgba(185, 28, 28, 0.3);
+  background: #fef2f2;
+}
+
+.hire-assess-detail__stat[data-tone="penalty"] dd,
+.hire-assess-detail__role[data-tone="penalty"],
+.hire-assess-detail__facts[data-tone="penalty"] {
+  color: #b91c1c;
+}
+
+.hire-assess-detail__result {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hire-assess-penalty {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #b91c1c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .hire-assess-detail__monitor {
@@ -6701,6 +6735,12 @@ a.hire-assess-action {
   gap: 12px;
 }
 
+@media (max-width: 1024px) {
+  .hire-assess-detail__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .hire-assess-detail__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6794,7 +6834,7 @@ a.hire-assess-action {
 .hire-assess__callout {
   margin: 0 0 16px;
   padding: 10px 14px;
-  border-left: 3px solid var(--h-primary);
+  /* border-left: 3px solid var(--h-primary); */
   border-radius: 10px;
   background: var(--h-peach-wash, #eef6f6);
   font-size: 13px;

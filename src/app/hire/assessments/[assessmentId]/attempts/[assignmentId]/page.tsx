@@ -3,7 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { getAttemptActivity } from "@/features/recruiter-assessments/service";
+import {
+  endReasonCopy,
+  getAttemptActivity,
+  isPenalty,
+} from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
 import {
   ACTIVITY_DISCLAIMER,
@@ -67,9 +71,20 @@ export default async function AttemptActivityPage({ params }: Props) {
 
       <header className="hire-assess-detail__head">
         <p className="hire-assess__kicker">Candidate activity</p>
-        <h1>{row.label}</h1>
+        <div className="hire-assess-detail__title">
+          <h1>{row.label}</h1>
+          {isPenalty(row.endReason) ? <span className="hire-assess-penalty">Penalty</span> : null}
+        </div>
         {facts.length > 0 ? (
           <p className="hire-assess-detail__facts">{facts.join(" · ")}</p>
+        ) : null}
+        {endReasonCopy(row.endReason) ? (
+          <p
+            className="hire-assess-detail__facts"
+            data-tone={isPenalty(row.endReason) ? "penalty" : undefined}
+          >
+            {endReasonCopy(row.endReason)}
+          </p>
         ) : null}
       </header>
 

@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import {
+  endReasonCopy,
   getAssessmentMonitor,
+  isPenalty,
   type AssignmentRow,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
@@ -79,6 +81,7 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
     { label: "Completed", value: summary.completed },
     { label: "Passed", value: summary.passed },
     { label: "Failed", value: summary.failed },
+    { label: "Penalties", value: summary.penalties },
   ];
 
   return (
@@ -99,7 +102,11 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
       {!isDraft && (
         <dl className="hire-assess-detail__stats">
           {stats.map((s) => (
-            <div key={s.label} className="hire-assess-detail__stat">
+            <div
+              key={s.label}
+              className="hire-assess-detail__stat"
+              data-tone={s.label === "Penalties" && s.value > 0 ? "penalty" : undefined}
+            >
               <dt>{s.label}</dt>
               <dd>{s.value}</dd>
             </div>
@@ -160,7 +167,22 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
                         <td>{formatWhen(a.startedAt)}</td>
                         <td>{formatWhen(a.submittedAt)}</td>
                         <td>{a.scorePercent == null ? "—" : `${a.scorePercent}%`}</td>
-                        <td>{resultCopy(a)}</td>
+                        <td>
+                          <span className="hire-assess-detail__result">
+                            {resultCopy(a)}
+                            {isPenalty(a.endReason) ? (
+                              <span className="hire-assess-penalty">Penalty</span>
+                            ) : null}
+                          </span>
+                          {endReasonCopy(a.endReason) ? (
+                            <span
+                              className="hire-assess-detail__role"
+                              data-tone={isPenalty(a.endReason) ? "penalty" : undefined}
+                            >
+                              {endReasonCopy(a.endReason)}
+                            </span>
+                          ) : null}
+                        </td>
                         {assessment.strictMode ? (
                           <td>
                             {a.status === "ASSIGNED" ? (

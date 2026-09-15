@@ -15,6 +15,7 @@ import {
   getAssessment,
   getAssessmentMonitor,
   getAttemptActivity,
+  isPenalty,
   deleteAssessment,
   duplicateAssessment,
   listAssessments,
@@ -293,6 +294,7 @@ function inMemoryStore(): AssessmentStore & {
           submittedAt: null,
           scorePercent: null,
           passed: null,
+          endReason: null,
         });
         out.push({ id, candidateUserId: r.candidateUserId, created: true });
       }
@@ -314,6 +316,7 @@ function inMemoryStore(): AssessmentStore & {
           submittedAt: a.submittedAt,
           scorePercent: a.scorePercent,
           passed: a.passed,
+          endReason: a.endReason,
         }));
     },
     async countResults(scope, assessmentIds) {
@@ -353,6 +356,7 @@ function inMemoryStore(): AssessmentStore & {
         assignedAt: a.assignedAt,
         startedAt: a.startedAt,
         submittedAt: a.submittedAt,
+        endReason: a.endReason,
         assessment: {
           title: row.title,
           strictMode: row.strictMode,
@@ -1365,6 +1369,32 @@ async function run() {
 
     const foreign = await duplicateAssessment(store, SCOPE_B, source);
     assert(!foreign.ok && foreign.code === "NOT_FOUND", "other workspace");
+  });
+
+  await suite("L2. monitor counts penalties and carries each end reason", async () => {
+    const store = inMemoryStore();
+    const notifier = fakeNotifier();
+    const id = await publishedAssessment(store);
+    await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: id,
+      candidateRefs: FIRST_THREE,
+    });
+    const [a, b, c] = [...store.assignments.values()];
+    Object.assign(a!, { status: "SUBMITTED", endReason: "TAB_SWITCH_LIMIT", passed: false });
+    Object.assign(b!, { status: "SUBMITTED", endReason: "ENDED_EARLY", passed: false });
+    Object.assign(c!, { status: "SUBMITTED", endReason: "FULLSCREEN_LIMIT", passed: false });
+    const monitor = await getAssessmentMonitor(store, SCOPE_A, id);
+    assert(monitor.ok, "monitor ok");
+    if (!monitor.ok) return;
+    assert(monitor.data.summary.penalties === 2, "two penalties");
+    const reasons = monitor.data.assignments.map((r) => r.endReason).sort();
+    assert(
+      JSON.stringify(reasons) ===
+        JSON.stringify(["ENDED_EARLY", "FULLSCREEN_LIMIT", "TAB_SWITCH_LIMIT"]),
+      "reasons carried",
+    );
+    assert(isPenalty("TAB_SWITCH_LIMIT") && isPenalty("FULLSCREEN_LIMIT"), "limits are penalties");
+    assert(!isPenalty("ENDED_EARLY") && !isPenalty("TIME_UP") && !isPenalty(null), "others are not");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

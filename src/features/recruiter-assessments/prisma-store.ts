@@ -340,6 +340,7 @@ export function prismaAssessmentStore(): AssessmentStore {
           submittedAt: true,
           scorePercent: true,
           passed: true,
+          endReason: true,
         },
       });
       // The same repository reader the desk uses. No contact field is read.
@@ -395,6 +396,7 @@ export function prismaAssessmentStore(): AssessmentStore {
           assignedAt: true,
           startedAt: true,
           submittedAt: true,
+          endReason: true,
           assessment: {
             select: {
               title: true,
@@ -441,6 +443,7 @@ export function prismaAssessmentStore(): AssessmentStore {
         assignedAt: assignment.assignedAt,
         startedAt: assignment.startedAt,
         submittedAt: assignment.submittedAt,
+        endReason: assignment.endReason,
         assessment: {
           title: assignment.assessment.title,
           strictMode: assignment.assessment.strictMode,

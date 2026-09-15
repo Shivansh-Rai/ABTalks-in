@@ -57,8 +57,7 @@ export default async function AssessmentsPage() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
         <h1 className="font-display text-3xl font-bold tracking-tight">Assessments</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Assessments recruiters have invited you to. Your answers save as you
-          go, so you can pick up where you left off on any device.
+          Assessments recruiters have invited you to. 
         </p>
 
         {rows.length === 0 ? (
