@@ -1,22 +1,31 @@
 /**
- * Daily Career Guidance pack (plan 144).
+ * Daily Career Guidance pack (plan 146).
  *
- * Pure. Builds at most DAILY_CAP cards: profile recs first, then at most
- * one check-in and one quote from the catalog. Does not backfill — the
- * caller freezes pack ids for the IST day and only filters dismissals.
+ * Slot mix: NextStep (≤2 cohort/mock/hackathon) → Growth (≤1 challenge) →
+ * Catalog (≤1 check-in else quote). Remaining capacity may fill from later
+ * slots. Stable rotate by istDay. One-time refill helper for the deck.
  */
 
 import {
+  catalogSpecificity,
   catalogWhenMatches,
+  pickRotated,
   type CatalogItem,
   type GuidanceTargeting,
 } from "./catalog";
-import { DAILY_CAP, type DailyCard, type GuidanceItem, type GuidanceMemory } from "./types";
+import {
+  DAILY_CAP,
+  type DailyCard,
+  type GuidanceItem,
+  type GuidanceKind,
+  type GuidanceMemory,
+} from "./types";
 
 export type PickDailyInput = {
   profileItems: GuidanceItem[];
   catalog: CatalogItem[];
   targeting: GuidanceTargeting;
+  istDay: string;
   istWeek: string;
   onceSeen: string[];
   weeklySeen: Record<string, string>;
@@ -57,34 +66,109 @@ function catalogToCard(item: CatalogItem): DailyCard {
   };
 }
 
+const NEXT_STEP: ReadonlySet<GuidanceKind> = new Set([
+  "cohort",
+  "mock",
+  "hackathon",
+]);
+
+function takeRotated(
+  items: GuidanceItem[],
+  count: number,
+  istDay: string,
+  slotId: string,
+  used: Set<string>,
+): GuidanceItem[] {
+  const available = items.filter((i) => !used.has(i.id));
+  if (available.length === 0 || count <= 0) return [];
+  if (available.length <= count) return available;
+  // Rotate window: start at hash offset, take `count` wrapping.
+  const start = Math.abs(
+    Array.from(`${istDay}:${slotId}`).reduce(
+      (a, c) => (a * 31 + c.charCodeAt(0)) | 0,
+      0,
+    ),
+  ) % available.length;
+  const out: GuidanceItem[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(available[(start + i) % available.length]!);
+  }
+  return out;
+}
+
 export function pickDailyPack(input: PickDailyInput): DailyCard[] {
   const onceSeen = new Set(input.onceSeen);
+  const used = new Set<string>();
   const pack: DailyCard[] = [];
 
-  for (const item of input.profileItems) {
-    if (pack.length >= DAILY_CAP) break;
+  const nextStepPool = input.profileItems.filter((i) => NEXT_STEP.has(i.kind));
+  const growthPool = input.profileItems.filter((i) => i.kind === "challenge");
+
+  // Slot 1: NextStep up to 2
+  for (const item of takeRotated(nextStepPool, 2, input.istDay, "next", used)) {
+    used.add(item.id);
     pack.push(profileToCard(item));
   }
 
-  if (pack.length >= DAILY_CAP) return pack;
-
-  const eligible = input.catalog.filter(
-    (item) =>
-      cadenceOk(item, input.istWeek, onceSeen, input.weeklySeen) &&
-      catalogWhenMatches(item.when, input.targeting),
-  );
-
-  const checkin = eligible.find((item) => item.kind === "checkin");
-  if (checkin && pack.length < DAILY_CAP) {
-    pack.push(catalogToCard(checkin));
+  // Slot 2: Growth up to 1 (or fill remaining capacity later)
+  const growthRoom = Math.min(1, DAILY_CAP - pack.length);
+  for (const item of takeRotated(
+    growthPool,
+    growthRoom,
+    input.istDay,
+    "growth",
+    used,
+  )) {
+    used.add(item.id);
+    pack.push(profileToCard(item));
   }
 
-  if (pack.length >= DAILY_CAP) return pack;
+  // Slot 3: Catalog — check-in preferred, else quote
+  if (pack.length < DAILY_CAP) {
+    const eligible = input.catalog.filter(
+      (item) =>
+        cadenceOk(item, input.istWeek, onceSeen, input.weeklySeen) &&
+        catalogWhenMatches(item.when, input.targeting),
+    );
+    const checkins = eligible
+      .filter((i) => i.kind === "checkin")
+      .sort((a, b) => catalogSpecificity(b.when) - catalogSpecificity(a.when));
+    const quotes = eligible
+      .filter((i) => i.kind === "quote")
+      .sort((a, b) => catalogSpecificity(b.when) - catalogSpecificity(a.when));
 
-  const quote = eligible.find((item) => item.kind === "quote");
-  if (quote) pack.push(catalogToCard(quote));
+    const checkin = pickRotated(checkins, input.istDay, "checkin");
+    if (checkin) {
+      pack.push(catalogToCard(checkin));
+    } else {
+      const quote = pickRotated(quotes, input.istDay, "quote");
+      if (quote) pack.push(catalogToCard(quote));
+    }
+  }
 
-  return pack;
+  // Fill remaining capacity from leftover profile (next-step then growth)
+  if (pack.length < DAILY_CAP) {
+    const leftover = [
+      ...nextStepPool.filter((i) => !used.has(i.id)),
+      ...growthPool.filter((i) => !used.has(i.id)),
+      ...input.profileItems.filter(
+        (i) => !used.has(i.id) && !NEXT_STEP.has(i.kind) && i.kind !== "challenge",
+      ),
+    ];
+    for (const item of takeRotated(
+      leftover,
+      DAILY_CAP - pack.length,
+      input.istDay,
+      "fill",
+      used,
+    )) {
+      used.add(item.id);
+      pack.push(profileToCard(item));
+      if (pack.length >= DAILY_CAP) break;
+    }
+  }
+
+  return pack.slice(0, DAILY_CAP);
 }
 
 export function emptyGuidanceMemory(istDay: string): GuidanceMemory {
@@ -94,25 +178,30 @@ export function emptyGuidanceMemory(istDay: string): GuidanceMemory {
     dismissedIds: [],
     onceSeen: [],
     weeklySeen: {},
+    refillUsed: false,
   };
 }
 
-/** New IST day: drop today's dismissals and frozen pack; keep cadence memory. */
 export function rollGuidanceMemory(
   prev: GuidanceMemory,
   istDay: string,
 ): GuidanceMemory {
-  if (prev.istDay === istDay) return prev;
+  if (prev.istDay === istDay) {
+    return {
+      ...prev,
+      refillUsed: prev.refillUsed ?? false,
+    };
+  }
   return {
     istDay,
     packIds: null,
     dismissedIds: [],
     onceSeen: prev.onceSeen,
     weeklySeen: prev.weeklySeen,
+    refillUsed: false,
   };
 }
 
-/** Freeze pack ids and mark once/weekly catalog cards as seen for this week/life. */
 export function rememberPack(
   memory: GuidanceMemory,
   pack: DailyCard[],
@@ -137,6 +226,7 @@ export function rememberPack(
     packIds: pack.map((c) => c.id),
     onceSeen,
     weeklySeen,
+    refillUsed: memory.refillUsed ?? false,
   };
 }
 
@@ -166,4 +256,46 @@ export function cardsForFrozenIds(
     if (catalogItem) cards.push(catalogToCard(catalogItem));
   }
   return cards;
+}
+
+/**
+ * One unused eligible card for refill. Prefer remaining profile, then catalog.
+ */
+export function pickRefillCard(input: {
+  profileItems: GuidanceItem[];
+  catalog: CatalogItem[];
+  targeting: GuidanceTargeting;
+  istDay: string;
+  istWeek: string;
+  packIds: string[];
+  dismissedIds: string[];
+  onceSeen: string[];
+  weeklySeen: Record<string, string>;
+}): DailyCard | null {
+  const blocked = new Set([...input.packIds, ...input.dismissedIds]);
+  const leftover = input.profileItems.filter((i) => !blocked.has(i.id));
+  if (leftover[0]) return profileToCard(leftover[0]);
+
+  const onceSeen = new Set(input.onceSeen);
+  const eligible = input.catalog.filter(
+    (item) =>
+      !blocked.has(item.id) &&
+      cadenceOk(item, input.istWeek, onceSeen, input.weeklySeen) &&
+      catalogWhenMatches(item.when, input.targeting),
+  );
+  const checkins = eligible
+    .filter((i) => i.kind === "checkin")
+    .sort((a, b) => catalogSpecificity(b.when) - catalogSpecificity(a.when));
+  const picked =
+    pickRotated(checkins, input.istDay, "refill-checkin") ??
+    pickRotated(
+      eligible
+        .filter((i) => i.kind === "quote")
+        .sort(
+          (a, b) => catalogSpecificity(b.when) - catalogSpecificity(a.when),
+        ),
+      input.istDay,
+      "refill-quote",
+    );
+  return picked ? catalogToCard(picked) : null;
 }
