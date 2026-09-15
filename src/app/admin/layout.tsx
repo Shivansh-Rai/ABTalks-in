@@ -18,6 +18,14 @@ export default async function AdminLayout({
       label: "Notifications",
       icon: "notifications" as const,
     },
+    // T-268 delivery diagnosis: read-only search over NotificationDelivery
+    // (T-248) and OutboundDelivery (T-259) so support can say why a message
+    // did not arrive.
+    {
+      href: "/admin/deliveries",
+      label: "Deliveries",
+      icon: "deliveries" as const,
+    },
     { href: "/admin/students", label: "Students", icon: "students" as const },
     { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" as const },
     { href: "/admin/hackathon", label: "Hackathon", icon: "hackathon" as const },
