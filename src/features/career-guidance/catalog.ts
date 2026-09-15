@@ -37,7 +37,8 @@ export type CatalogItem = z.infer<typeof catalogItemSchema>;
 export type CatalogCadence = CatalogItem["cadence"];
 export type CatalogKind = CatalogItem["kind"];
 
-export const GUIDANCE_CATALOG: CatalogItem[] = catalogSchema.parse(rawCatalog).items;
+export const GUIDANCE_CATALOG: CatalogItem[] =
+  catalogSchema.parse(rawCatalog).items;
 
 export type GuidanceTargeting = {
   challengeDomains: ChallengeDomain[];
@@ -94,4 +95,41 @@ export function catalogWhenMatches(
   }
 
   return true;
+}
+
+/** Higher = more specific targeting (prefer over always-only). */
+export function catalogSpecificity(when: CatalogWhen | undefined): number {
+  if (!when) return 0;
+  let score = 0;
+  if (when.challengeDomains && when.challengeDomains.length > 0) score += 4;
+  if (when.aiCohortActive || when.aiCohortCompleted) score += 4;
+  if (when.skillsEmpty) score += 3;
+  if (when.skillIncludes && when.skillIncludes.length > 0) score += 3;
+  if (when.roleIncludes && when.roleIncludes.length > 0) score += 2;
+  if (when.always && score === 0) score = 0;
+  return score;
+}
+
+function stableHash(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) {
+    h = (h * 31 + key.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+/**
+ * Among items that share the top specificity score, rotate by istDay.
+ * Falls back to the full list if empty after filter.
+ */
+export function pickRotated<T extends { id: string; when?: CatalogWhen }>(
+  items: T[],
+  istDay: string,
+  slotId: string,
+): T | null {
+  if (items.length === 0) return null;
+  const top = catalogSpecificity(items[0]?.when);
+  const tied = items.filter((i) => catalogSpecificity(i.when) === top);
+  const pool = tied.length > 0 ? tied : items;
+  return pool[stableHash(`${istDay}:${slotId}`) % pool.length] ?? null;
 }

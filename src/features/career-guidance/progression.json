@@ -1,0 +1,328 @@
+{
+  "version": 1,
+  "edges": [
+    {
+      "id": "completed-ai-cohort-mock",
+      "family": "post-ai-cohort",
+      "when": {
+        "aiCohortStatus": "COMPLETED",
+        "mockSlug": "ai-fluency"
+      },
+      "then": {
+        "kind": "mock",
+        "title": "AI Fluency",
+        "href": "/mock-interviews/ai-fluency",
+        "cta": "Start interview",
+        "becauseKey": "ai_cohort_completed"
+      }
+    },
+    {
+      "id": "ai-cohort-continue-application",
+      "family": "ai-cohort-funnel",
+      "when": {
+        "flag": "program",
+        "aiCohortStatus": "APPLIED"
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "31 Days AI Cohort",
+        "href": "/program/ai-cohort/dashboard",
+        "cta": "Continue",
+        "becauseKey": "ai_cohort_applied"
+      }
+    },
+    {
+      "id": "ai-challenge-to-cohort",
+      "family": "ai-cohort-funnel",
+      "when": {
+        "flag": "program",
+        "aiCohortStatus": "none",
+        "challenge": { "domain": "AI", "status": "active_or_guidance_completed" }
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "31 Days AI Cohort",
+        "href": "/program/ai-cohort/apply",
+        "cta": "Apply",
+        "becauseKey": "challenge_fact",
+        "becauseDomain": "AI"
+      }
+    },
+    {
+      "id": "claude-completed-to-cohort",
+      "family": "ai-cohort-funnel",
+      "when": {
+        "flag": "program",
+        "aiCohortStatus": "none",
+        "claudeCompletedOrCredential": true
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "31 Days AI Cohort",
+        "href": "/program/ai-cohort/apply",
+        "cta": "Apply",
+        "becauseKey": "claude_completed"
+      }
+    },
+    {
+      "id": "ds-challenge-to-databricks",
+      "family": "ds-track",
+      "when": {
+        "flag": "databricks",
+        "databricksStatus": "none",
+        "challenge": { "domain": "DS", "status": "active_or_guidance_completed" }
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "31 Days Databricks",
+        "href": "/program/databricks",
+        "cta": "Open",
+        "becauseKey": "challenge_fact",
+        "becauseDomain": "DS"
+      }
+    },
+    {
+      "id": "databricks-to-ds-architect",
+      "family": "ds-track",
+      "when": {
+        "flag": "dsArchitect",
+        "databricksStatus": "COMPLETED",
+        "dsArchitectStatus": "none"
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "10 Days Data Solutions Architect",
+        "href": "/program/ds-architect",
+        "cta": "Open",
+        "becauseKey": "databricks_completed"
+      }
+    },
+    {
+      "id": "ds-to-powerbi",
+      "family": "powerbi-track",
+      "when": {
+        "flag": "powerBi",
+        "powerBiStatus": "none",
+        "dsOrDatabricks": true,
+        "skillNeedles": ["power bi", "powerbi", "tableau"]
+      },
+      "then": {
+        "kind": "cohort",
+        "title": "7 Days Power BI & Analytics",
+        "href": "/program/powerbi",
+        "cta": "Open",
+        "becauseKey": "skill_listed",
+        "skillNeedles": ["power bi", "powerbi", "tableau"]
+      }
+    },
+    {
+      "id": "challenge-to-hackathon",
+      "family": "hackathon",
+      "when": {
+        "hackathonOpen": true,
+        "notHackathonRegistered": true,
+        "seOrAnyGuidanceCompleted": true
+      },
+      "then": {
+        "kind": "hackathon",
+        "title": "ABTalks Vibe Code Hackathon",
+        "href": "/hackathon",
+        "cta": "Register",
+        "becauseKey": "hackathon_source"
+      }
+    },
+    {
+      "id": "skill-to-ds-challenge",
+      "family": "skill-challenge",
+      "when": {
+        "challenge": { "domain": "DS", "status": "not_joined" },
+        "skillNeedles": [
+          "databricks",
+          "spark",
+          "pandas",
+          "numpy",
+          "sql",
+          "tableau",
+          "power bi",
+          "powerbi",
+          "scikit-learn",
+          "statistics",
+          "data analysis",
+          "data science"
+        ],
+        "roleNeedles": [
+          "data scientist",
+          "data engineer",
+          "data analyst",
+          "analytics"
+        ],
+        "includeDataAiCategory": true
+      },
+      "then": {
+        "kind": "challenge",
+        "title": "Data Science",
+        "href": "/register?domain=DS",
+        "cta": "Join",
+        "becauseKey": "skill_or_role",
+        "skillNeedles": [
+          "databricks",
+          "spark",
+          "pandas",
+          "numpy",
+          "sql",
+          "tableau",
+          "power bi",
+          "powerbi",
+          "scikit-learn",
+          "statistics",
+          "data analysis",
+          "data science"
+        ],
+        "roleNeedles": [
+          "data scientist",
+          "data engineer",
+          "data analyst",
+          "analytics"
+        ],
+        "includeDataAiCategory": true
+      }
+    },
+    {
+      "id": "skill-to-ai-challenge",
+      "family": "skill-challenge",
+      "when": {
+        "challenge": { "domain": "AI", "status": "not_joined" },
+        "skillNeedles": [
+          "pytorch",
+          "tensorflow",
+          "langchain",
+          "huggingface",
+          "hugging face",
+          "machine learning",
+          "computer vision",
+          "keras",
+          "llm",
+          "nlp"
+        ],
+        "roleNeedles": [
+          "machine learning",
+          "ml engineer",
+          "ai engineer",
+          "llm"
+        ],
+        "includeDataAiCategory": true
+      },
+      "then": {
+        "kind": "challenge",
+        "title": "Artificial Intelligence",
+        "href": "/register?domain=AI",
+        "cta": "Join",
+        "becauseKey": "skill_or_role",
+        "skillNeedles": [
+          "pytorch",
+          "tensorflow",
+          "langchain",
+          "huggingface",
+          "hugging face",
+          "machine learning",
+          "computer vision",
+          "keras",
+          "llm",
+          "nlp"
+        ],
+        "roleNeedles": [
+          "machine learning",
+          "ml engineer",
+          "ai engineer",
+          "llm"
+        ],
+        "includeDataAiCategory": true
+      }
+    },
+    {
+      "id": "skill-to-se-challenge",
+      "family": "skill-challenge",
+      "when": {
+        "challenge": { "domain": "SE", "status": "not_joined" },
+        "skillNeedles": [
+          "react",
+          "typescript",
+          "javascript",
+          "kubernetes",
+          "next.js",
+          "nextjs",
+          "golang",
+          "go"
+        ],
+        "roleNeedles": [
+          "software",
+          "software engineer",
+          "backend",
+          "frontend",
+          "full stack",
+          "fullstack",
+          "sde"
+        ]
+      },
+      "then": {
+        "kind": "challenge",
+        "title": "Software Engineering",
+        "href": "/register?domain=SE",
+        "cta": "Join",
+        "becauseKey": "skill_or_role",
+        "skillNeedles": [
+          "react",
+          "typescript",
+          "javascript",
+          "kubernetes",
+          "next.js",
+          "nextjs",
+          "golang",
+          "go"
+        ],
+        "roleNeedles": [
+          "software",
+          "software engineer",
+          "backend",
+          "frontend",
+          "full stack",
+          "fullstack",
+          "sde"
+        ]
+      }
+    },
+    {
+      "id": "completed-challenge-mock-ai",
+      "family": "fallback-mock",
+      "when": {
+        "noMockYet": true,
+        "aiOrClaudeGuidanceCompleted": true,
+        "mockSlug": "ai-fluency"
+      },
+      "then": {
+        "kind": "mock",
+        "title": "AI Fluency",
+        "href": "/mock-interviews/ai-fluency",
+        "cta": "Start interview",
+        "becauseKey": "ai_or_claude_completed"
+      }
+    },
+    {
+      "id": "completed-challenge-mock-se",
+      "family": "fallback-mock",
+      "when": {
+        "noMockYet": true,
+        "challenge": { "domain": "SE", "status": "guidance_completed" },
+        "mockSlug": "agentic-coding"
+      },
+      "then": {
+        "kind": "mock",
+        "title": "Vibe Coding",
+        "href": "/mock-interviews/agentic-coding",
+        "cta": "Start interview",
+        "becauseKey": "challenge_fact",
+        "becauseDomain": "SE"
+      }
+    }
+  ]
+}

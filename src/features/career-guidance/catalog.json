@@ -6,8 +6,9 @@
       "kind": "checkin",
       "cadence": "daily",
       "title": "Did you solve a DSA question today?",
-      "body": "A short problem is enough. This is a reminder, not a log on your profile.",
-      "ctaLabel": "I did",
+      "body": "Even one question keeps you moving.",
+      "ctaLabel": "Practise",
+      "href": "/mock-interviews",
       "when": { "challengeDomains": ["SE"] }
     },
     {
@@ -15,8 +16,9 @@
       "kind": "checkin",
       "cadence": "daily",
       "title": "Did you solve a DSA question today?",
-      "body": "A short problem is enough. This is a reminder, not a log on your profile.",
-      "ctaLabel": "I did",
+      "body": "Even one question keeps you moving.",
+      "ctaLabel": "Practise",
+      "href": "/mock-interviews",
       "when": { "roleIncludes": ["software", "backend", "frontend", "sde"] }
     },
     {
@@ -24,8 +26,8 @@
       "kind": "checkin",
       "cadence": "daily",
       "title": "Did you open today's AI Cohort lesson?",
-      "body": "You are enrolled in the 31-day AI Cohort. This reminder is not recorded as evidence.",
-      "ctaLabel": "Open dashboard",
+      "body": "Keep your learning streak going.",
+      "ctaLabel": "Open",
       "href": "/program/ai-cohort/dashboard",
       "when": { "aiCohortActive": true }
     },
@@ -34,7 +36,7 @@
       "kind": "checkin",
       "cadence": "daily",
       "title": "Add a skill on your profile",
-      "body": "Your profile has no skills listed yet. Recruiters match on the names you add.",
+      "body": "Help recruiters understand what you work with.",
       "ctaLabel": "Add skills",
       "href": "/profile",
       "when": { "skillsEmpty": true }
@@ -44,8 +46,9 @@
       "kind": "checkin",
       "cadence": "daily",
       "title": "Did you practise for 30 minutes today?",
-      "body": "A small session counts. Tapping I did only clears this reminder for today.",
-      "ctaLabel": "I did",
+      "body": "A little practice today can make tomorrow easier.",
+      "ctaLabel": "Open mocks",
+      "href": "/mock-interviews",
       "when": { "always": true }
     },
     {

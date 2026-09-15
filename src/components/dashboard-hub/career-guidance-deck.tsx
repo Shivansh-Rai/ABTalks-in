@@ -13,6 +13,7 @@ import {
   cardsForFrozenIds,
   emptyGuidanceMemory,
   pickDailyPack,
+  pickRefillCard,
   rememberPack,
   rollGuidanceMemory,
   visibleDailyCards,
@@ -29,7 +30,6 @@ const KIND_LABEL: Record<DailyCardKind, string> = {
   cohort: "Cohort",
   hackathon: "Hackathon",
   challenge: "Challenge",
-  opportunity: "Opportunity",
   mock: "Mock",
   checkin: "Check-in",
   quote: "Quote",
@@ -50,7 +50,9 @@ function readMemory(userId: string, istDay: string): GuidanceMemory {
         istDay: parsed.istDay,
         packIds: Array.isArray(parsed.packIds) ? parsed.packIds : null,
         dismissedIds: Array.isArray(parsed.dismissedIds)
-          ? parsed.dismissedIds.filter((id): id is string => typeof id === "string")
+          ? parsed.dismissedIds.filter(
+              (id): id is string => typeof id === "string",
+            )
           : [],
         onceSeen: Array.isArray(parsed.onceSeen)
           ? parsed.onceSeen.filter((id): id is string => typeof id === "string")
@@ -61,10 +63,12 @@ function readMemory(userId: string, istDay: string): GuidanceMemory {
           !Array.isArray(parsed.weeklySeen)
             ? Object.fromEntries(
                 Object.entries(parsed.weeklySeen).filter(
-                  (entry): entry is [string, string] => typeof entry[1] === "string",
+                  (entry): entry is [string, string] =>
+                    typeof entry[1] === "string",
                 ),
               )
             : {},
+        refillUsed: parsed.refillUsed === true,
       },
       istDay,
     );
@@ -96,19 +100,37 @@ export function CareerGuidanceDeck({
   items,
   targeting,
 }: CareerGuidanceDeckProps) {
+  // Profile-first paint before localStorage hydrates (avoids null flash).
+  const bootstrapPack = useMemo(
+    () =>
+      pickDailyPack({
+        profileItems: items,
+        catalog: [],
+        targeting,
+        istDay,
+        istWeek,
+        onceSeen: [],
+        weeklySeen: {},
+      }),
+    [items, targeting, istDay, istWeek],
+  );
+
   const [memory, setMemory] = useState<GuidanceMemory | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const loaded = readMemory(userId, istDay);
     const catalogById = new Map(GUIDANCE_CATALOG.map((c) => [c.id, c]));
     if (loaded.packIds !== null) {
       setMemory(loaded);
+      setHydrated(true);
       return;
     }
     const pack = pickDailyPack({
       profileItems: items,
       catalog: GUIDANCE_CATALOG,
       targeting,
+      istDay,
       istWeek,
       onceSeen: loaded.onceSeen,
       weeklySeen: loaded.weeklySeen,
@@ -116,35 +138,87 @@ export function CareerGuidanceDeck({
     const next = rememberPack(loaded, pack, catalogById, istWeek);
     writeMemory(userId, next);
     setMemory(next);
+    setHydrated(true);
   }, [userId, istDay, istWeek, items, targeting]);
 
   const pack = useMemo(() => {
-    if (!memory?.packIds) return [];
+    if (!hydrated || !memory?.packIds) return bootstrapPack;
     return cardsForFrozenIds(memory.packIds, items, GUIDANCE_CATALOG);
-  }, [memory, items]);
+  }, [hydrated, memory, items, bootstrapPack]);
 
   const visible = useMemo(() => {
-    if (!memory) return [];
+    if (!hydrated || !memory) return bootstrapPack;
     return visibleDailyCards(pack, memory.dismissedIds);
-  }, [memory, pack]);
+  }, [hydrated, memory, pack, bootstrapPack]);
 
   const dismiss = useCallback(
     (id: string) => {
       setMemory((current) => {
-        if (!current) return current;
-        if (current.dismissedIds.includes(id)) return current;
-        const next: GuidanceMemory = {
-          ...current,
-          dismissedIds: [...current.dismissedIds, id],
+        const base =
+          current ??
+          rememberPack(
+            emptyGuidanceMemory(istDay),
+            pack,
+            new Map(GUIDANCE_CATALOG.map((c) => [c.id, c])),
+            istWeek,
+          );
+        if (base.dismissedIds.includes(id)) return base;
+
+        let next: GuidanceMemory = {
+          ...base,
+          packIds: base.packIds ?? pack.map((c) => c.id),
+          dismissedIds: [...base.dismissedIds, id],
         };
+
+        const remaining = visibleDailyCards(
+          cardsForFrozenIds(next.packIds ?? [], items, GUIDANCE_CATALOG),
+          next.dismissedIds,
+        );
+
+        if (remaining.length < 4 && !next.refillUsed) {
+          const refill = pickRefillCard({
+            profileItems: items,
+            catalog: GUIDANCE_CATALOG,
+            targeting,
+            istDay,
+            istWeek,
+            packIds: next.packIds ?? [],
+            dismissedIds: next.dismissedIds,
+            onceSeen: next.onceSeen,
+            weeklySeen: next.weeklySeen,
+          });
+          if (refill) {
+            const catalogById = new Map(GUIDANCE_CATALOG.map((c) => [c.id, c]));
+            const withCard = rememberPack(
+              {
+                ...next,
+                packIds: [...(next.packIds ?? []), refill.id],
+                refillUsed: true,
+              },
+              [refill],
+              catalogById,
+              istWeek,
+            );
+            next = {
+              ...withCard,
+              packIds: [...(next.packIds ?? []), refill.id],
+              dismissedIds: next.dismissedIds,
+              refillUsed: true,
+              onceSeen: withCard.onceSeen,
+              weeklySeen: withCard.weeklySeen,
+            };
+          } else {
+            next = { ...next, refillUsed: true };
+          }
+        }
+
         writeMemory(userId, next);
         return next;
       });
     },
-    [userId],
+    [userId, istDay, istWeek, items, targeting, pack],
   );
 
-  if (!memory) return null;
   if (visible.length === 0) return null;
 
   return (
@@ -193,23 +267,21 @@ function DailyCardView({
         <p className="mt-2 font-inter font-bold text-black">{card.title}</p>
         <p className="mt-1 text-sm text-[#4B4B4B]">{card.body}</p>
       </div>
-      {card.ctaLabel ? (
-        card.href ? (
-          <Link
-            href={card.href}
-            className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
-          >
-            {card.ctaLabel}
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
-            onClick={() => onDismiss(card.id)}
-          >
-            {card.ctaLabel}
-          </button>
-        )
+      {card.ctaLabel && card.href ? (
+        <Link
+          href={card.href}
+          className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+        >
+          {card.ctaLabel}
+        </Link>
+      ) : card.ctaLabel ? (
+        <button
+          type="button"
+          className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+          onClick={() => onDismiss(card.id)}
+        >
+          {card.ctaLabel}
+        </button>
       ) : null}
     </li>
   );

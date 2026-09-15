@@ -1,5 +1,5 @@
 /**
- * Career guidance rules — T-224.
+ * Career guidance — T-224 / plan 146.
  *
  * Pure-function checks. Every card must cite a fact on CandidateFacts;
  * invented statistics and generic market copy must never appear.
@@ -8,6 +8,7 @@
  */
 import { evaluateRules } from "@/features/career-guidance/rules";
 import {
+  catalogSpecificity,
   catalogWhenMatches,
   GUIDANCE_CATALOG,
   type CatalogItem,
@@ -16,13 +17,21 @@ import {
 import {
   cardsForFrozenIds,
   pickDailyPack,
+  pickRefillCard,
   rememberPack,
   visibleDailyCards,
 } from "@/features/career-guidance/pick-daily";
 import {
+  isGuidanceCompleted,
+  matchingSkillNames,
+  softDedupeProfileItems,
+} from "@/features/career-guidance/progression";
+import {
   DAILY_CAP,
-  GUIDANCE_CAP,
+  GUIDANCE_COMPLETED_DAYS,
+  GUIDANCE_POOL_CAP,
   type CandidateFacts,
+  type ChallengeFact,
   type GuidanceFlags,
   type GuidanceItem,
 } from "@/features/career-guidance/types";
@@ -60,6 +69,14 @@ const LIVE_MOCKS: CandidateFacts["mocks"] = [
   { slug: "agentic-coding", label: "Vibe Coding", attemptsLeft: 3 },
 ];
 
+function ch(
+  domain: ChallengeFact["domain"],
+  status: ChallengeFact["status"],
+  daysCompleted = 0,
+): ChallengeFact {
+  return { domain, status, daysCompleted };
+}
+
 function facts(over: Partial<CandidateFacts> = {}): CandidateFacts {
   return {
     challenges: [],
@@ -69,13 +86,11 @@ function facts(over: Partial<CandidateFacts> = {}): CandidateFacts {
     powerBiStatus: null,
     hackathonRegistered: false,
     hackathonRegistrationOpen: false,
+    hasClaudeCredential: false,
     skills: [],
     preferredRoles: [],
-    opportunityTypes: [],
     flags: FLAGS_ON,
     mocks: LIVE_MOCKS,
-    jobs: [],
-    appliedJobIds: [],
     ...over,
   };
 }
@@ -95,7 +110,7 @@ suite("completed AI cohort → mock, not another AI cohort apply", () => {
   const items = evaluateRules(
     facts({
       aiCohortStatus: "COMPLETED",
-      challenges: [{ domain: "AI", status: "COMPLETED" }],
+      challenges: [ch("AI", "COMPLETED", 60)],
     }),
   );
   const mock = byId(items, "completed-ai-cohort-mock");
@@ -112,9 +127,24 @@ suite("completed AI cohort → mock, not another AI cohort apply", () => {
   );
 });
 
+suite("APPLIED AI cohort → continue (not apply)", () => {
+  const items = evaluateRules(facts({ aiCohortStatus: "APPLIED" }));
+  const card = byId(items, "ai-cohort-continue-application");
+  assert(!!card, "missing continue");
+  assert(card?.href === "/program/ai-cohort/dashboard", card?.href ?? "");
+  assert(
+    card?.because === "You applied to the 31-day AI Cohort.",
+    card?.because ?? "",
+  );
+  assert(
+    !items.some((i) => i.href === "/program/ai-cohort/apply"),
+    "apply leaked",
+  );
+});
+
 suite("AI challenge ACTIVE → AI cohort", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "AI", status: "ACTIVE" }] }),
+    facts({ challenges: [ch("AI", "ACTIVE", 12)] }),
   );
   const card = byId(items, "ai-challenge-to-cohort");
   assert(!!card, "missing cohort card");
@@ -126,9 +156,28 @@ suite("AI challenge ACTIVE → AI cohort", () => {
   );
 });
 
+suite("AI challenge days≥50 counts as guidance-completed", () => {
+  assert(
+    isGuidanceCompleted(ch("AI", "ACTIVE", GUIDANCE_COMPLETED_DAYS)),
+    "gate",
+  );
+  const items = evaluateRules(
+    facts({
+      challenges: [ch("AI", "ACTIVE", GUIDANCE_COMPLETED_DAYS)],
+    }),
+  );
+  const card = byId(items, "ai-challenge-to-cohort");
+  assert(!!card, "missing");
+  assert(
+    card?.because ===
+      "You completed the Artificial Intelligence 60-day challenge.",
+    card?.because ?? "",
+  );
+});
+
 suite("AI challenge COMPLETED → AI cohort", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "AI", status: "COMPLETED" }] }),
+    facts({ challenges: [ch("AI", "COMPLETED", 60)] }),
   );
   const card = byId(items, "ai-challenge-to-cohort");
   assert(!!card, "missing");
@@ -143,28 +192,41 @@ suite("AI challenge skipped when already in AI cohort", () => {
   const items = evaluateRules(
     facts({
       aiCohortStatus: "ACTIVE",
-      challenges: [{ domain: "AI", status: "ACTIVE" }],
+      challenges: [ch("AI", "ACTIVE", 10)],
     }),
   );
   assert(
-    !items.some((i) => i.href === "/program/ai-cohort/apply"),
+    !items.some((i) => i.href.includes("/program/ai-cohort")),
     "already enrolled",
   );
 });
 
 suite("Claude COMPLETED → AI cohort", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "CLAUDE", status: "COMPLETED" }] }),
+    facts({ challenges: [ch("CLAUDE", "COMPLETED", 31)] }),
   );
   const card = byId(items, "claude-completed-to-cohort");
   assert(!!card, "missing");
-  assert(card?.because === "You completed the Claude Challenge.", card?.because ?? "");
+  assert(
+    card?.because === "You completed the Claude Challenge.",
+    card?.because ?? "",
+  );
   assert(card?.href === "/program/ai-cohort/apply", card?.href ?? "");
+});
+
+suite("Claude credential alone → AI cohort", () => {
+  const items = evaluateRules(facts({ hasClaudeCredential: true }));
+  const card = byId(items, "claude-completed-to-cohort");
+  assert(!!card, "missing");
+  assert(
+    card?.because === "You completed the Claude Challenge.",
+    card?.because ?? "",
+  );
 });
 
 suite("Claude ACTIVE does not recommend AI cohort", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "CLAUDE", status: "ACTIVE" }] }),
+    facts({ challenges: [ch("CLAUDE", "ACTIVE", 5)] }),
   );
   assert(
     !items.some((i) => i.href === "/program/ai-cohort/apply"),
@@ -174,7 +236,7 @@ suite("Claude ACTIVE does not recommend AI cohort", () => {
 
 suite("DS ACTIVE → Databricks", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "DS", status: "ACTIVE" }] }),
+    facts({ challenges: [ch("DS", "ACTIVE", 8)] }),
   );
   const card = byId(items, "ds-challenge-to-databricks");
   assert(!!card, "missing");
@@ -188,7 +250,7 @@ suite("DS ACTIVE → Databricks", () => {
 suite("DS ACTIVE skipped when Databricks flag off", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "DS", status: "ACTIVE" }],
+      challenges: [ch("DS", "ACTIVE", 8)],
       flags: { ...FLAGS_ON, databricks: false },
     }),
   );
@@ -201,7 +263,7 @@ suite("DS ACTIVE skipped when Databricks flag off", () => {
 suite("DS ACTIVE skipped when already on Databricks", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "DS", status: "ACTIVE" }],
+      challenges: [ch("DS", "ACTIVE", 8)],
       databricksStatus: "ACTIVE",
     }),
   );
@@ -212,9 +274,7 @@ suite("DS ACTIVE skipped when already on Databricks", () => {
 });
 
 suite("Databricks COMPLETED → DS Architect", () => {
-  const items = evaluateRules(
-    facts({ databricksStatus: "COMPLETED" }),
-  );
+  const items = evaluateRules(facts({ databricksStatus: "COMPLETED" }));
   const card = byId(items, "databricks-to-ds-architect");
   assert(!!card, "missing");
   assert(
@@ -226,7 +286,7 @@ suite("Databricks COMPLETED → DS Architect", () => {
 suite("Power BI skill + DS challenge → Power BI cohort", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "DS", status: "ACTIVE" }],
+      challenges: [ch("DS", "ACTIVE", 8)],
       skills: [{ name: "Power BI", categoryName: "Data & AI" }],
     }),
   );
@@ -238,92 +298,20 @@ suite("Power BI skill + DS challenge → Power BI cohort", () => {
   );
 });
 
-suite("job with overlapping skill cites that skill", () => {
+suite("no job / opportunity recommendations", () => {
   const items = evaluateRules(
     facts({
       skills: [{ name: "Pandas", categoryName: "Data & AI" }],
-      jobs: [
-        {
-          id: "job-1",
-          title: "Data Analyst",
-          company: "Acme",
-          skills: ["Pandas", "Excel"],
-          type: "FULL_TIME",
-        },
-      ],
-    }),
-  );
-  const card = byId(items, "job-job-1");
-  assert(!!card, "missing job card");
-  assert(
-    card?.because ===
-      "This listing asks for Pandas, which is on your profile.",
-    card?.because ?? "",
-  );
-  assert(card?.href === "/jobs/job-1", card?.href ?? "");
-  assert(!/salary|%|market/i.test(card?.because ?? ""), "invented stats");
-});
-
-suite("unrelated job does not appear", () => {
-  const items = evaluateRules(
-    facts({
-      skills: [{ name: "Pandas", categoryName: "Data & AI" }],
-      jobs: [
-        {
-          id: "job-2",
-          title: "Payroll Clerk",
-          company: "Acme",
-          skills: ["Excel"],
-          type: "FULL_TIME",
-        },
-      ],
-    }),
-  );
-  assert(
-    !items.some((i) => i.href === "/jobs/job-2"),
-    "unrelated job leaked",
-  );
-});
-
-suite("already-applied job is skipped", () => {
-  const items = evaluateRules(
-    facts({
-      skills: [{ name: "Pandas", categoryName: null }],
-      jobs: [
-        {
-          id: "job-3",
-          title: "Analyst",
-          company: "Acme",
-          skills: ["Pandas"],
-          type: "FULL_TIME",
-        },
-      ],
-      appliedJobIds: ["job-3"],
-    }),
-  );
-  assert(!items.some((i) => i.href === "/jobs/job-3"), "applied job leaked");
-});
-
-suite("preferred-role job match cites the role", () => {
-  const items = evaluateRules(
-    facts({
       preferredRoles: ["Data Scientist"],
-      jobs: [
-        {
-          id: "job-4",
-          title: "Junior Data Scientist",
-          company: "North",
-          skills: [],
-          type: "FULL_TIME",
-        },
-      ],
     }),
   );
-  const card = byId(items, "job-job-4");
-  assert(!!card, "missing");
   assert(
-    card?.because === "It matches your preferred role Data Scientist.",
-    card?.because ?? "",
+    !items.some((i) => i.href.startsWith("/jobs/")),
+    "job card leaked",
+  );
+  assert(
+    !items.some((i) => i.kind === ("opportunity" as GuidanceItem["kind"])),
+    "opportunity kind leaked",
   );
 });
 
@@ -358,10 +346,25 @@ suite("Pandas skill without a DS enrollment recommends the DS challenge", () => 
   );
 });
 
+suite("skill alias react.js matches React needle", () => {
+  const hits = matchingSkillNames(
+    [{ name: "react.js", categoryName: null }],
+    ["react"],
+  );
+  assert(hits.includes("react.js"), hits.join(","));
+  const items = evaluateRules(
+    facts({
+      skills: [{ name: "react.js", categoryName: null }],
+    }),
+  );
+  const card = byId(items, "skill-to-se-challenge");
+  assert(!!card, "missing SE from alias");
+});
+
 suite("abandoned DS domain is not re-recommended from skills", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "DS", status: "ABANDONED" }],
+      challenges: [ch("DS", "ABANDONED", 3)],
       skills: [{ name: "Pandas", categoryName: "Data & AI" }],
     }),
   );
@@ -374,7 +377,7 @@ suite("abandoned DS domain is not re-recommended from skills", () => {
 suite("SE challenge + open hackathon → register", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "SE", status: "ACTIVE" }],
+      challenges: [ch("SE", "ACTIVE", 10)],
       hackathonRegistrationOpen: true,
     }),
   );
@@ -390,7 +393,7 @@ suite("SE challenge + open hackathon → register", () => {
 suite("completed challenge (non-SE) still opens hackathon when SE did not", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "AI", status: "COMPLETED" }],
+      challenges: [ch("AI", "COMPLETED", 60)],
       hackathonRegistrationOpen: true,
     }),
   );
@@ -401,7 +404,7 @@ suite("completed challenge (non-SE) still opens hackathon when SE did not", () =
 suite("hackathon skipped when already registered", () => {
   const items = evaluateRules(
     facts({
-      challenges: [{ domain: "SE", status: "COMPLETED" }],
+      challenges: [ch("SE", "COMPLETED", 60)],
       hackathonRegistrationOpen: true,
       hackathonRegistered: true,
     }),
@@ -411,7 +414,7 @@ suite("hackathon skipped when already registered", () => {
 
 suite("completed SE → vibe-coding mock when no cohort mock fired", () => {
   const items = evaluateRules(
-    facts({ challenges: [{ domain: "SE", status: "COMPLETED" }] }),
+    facts({ challenges: [ch("SE", "COMPLETED", 60)] }),
   );
   const card = byId(items, "completed-challenge-mock-se");
   assert(!!card, "missing");
@@ -431,29 +434,21 @@ suite("exhausted mock attempts skip the mock card", () => {
   assert(!items.some((i) => i.kind === "mock"), "exhausted mock leaked");
 });
 
-suite("hrefs are unique and the list caps at 4", () => {
-  const jobs = Array.from({ length: 8 }, (_, i) => ({
-    id: `job-${i}`,
-    title: "Data Scientist",
-    company: `Co${i}`,
-    skills: ["Pandas"],
-    type: "FULL_TIME",
-  }));
+suite("hrefs are unique and the pool caps at GUIDANCE_POOL_CAP", () => {
   const items = evaluateRules(
     facts({
       challenges: [
-        { domain: "AI", status: "COMPLETED" },
-        { domain: "DS", status: "COMPLETED" },
-        { domain: "SE", status: "COMPLETED" },
-        { domain: "CLAUDE", status: "COMPLETED" },
+        ch("AI", "COMPLETED", 60),
+        ch("DS", "COMPLETED", 60),
+        ch("SE", "COMPLETED", 60),
+        ch("CLAUDE", "COMPLETED", 31),
       ],
       skills: [{ name: "Pandas", categoryName: "Data & AI" }],
       preferredRoles: ["Data Scientist"],
       hackathonRegistrationOpen: true,
-      jobs,
     }),
   );
-  assert(items.length <= GUIDANCE_CAP, `cap ${items.length}`);
+  assert(items.length <= GUIDANCE_POOL_CAP, `cap ${items.length}`);
   const hrefs = items.map((i) => i.href);
   assert(new Set(hrefs).size === hrefs.length, "duplicate href");
 });
@@ -462,17 +457,8 @@ suite("because lines never invent percentages or salary", () => {
   const items = evaluateRules(
     facts({
       aiCohortStatus: "COMPLETED",
-      challenges: [{ domain: "AI", status: "COMPLETED" }],
+      challenges: [ch("AI", "COMPLETED", 60)],
       skills: [{ name: "PyTorch", categoryName: "Data & AI" }],
-      jobs: [
-        {
-          id: "job-pay",
-          title: "ML Engineer",
-          company: "Acme",
-          skills: ["PyTorch"],
-          type: "FULL_TIME",
-        },
-      ],
     }),
   );
   assert(items.length > 0, "expected cards");
@@ -485,11 +471,49 @@ suite("because lines never invent percentages or salary", () => {
 });
 
 suite("source does not call an LLM", () => {
-  const src = readFileSync(
+  const rules = readFileSync(
     join(process.cwd(), "src/features/career-guidance/rules.ts"),
     "utf8",
   );
-  assert(!/openai|anthropic|generateText|AskJson/i.test(src), "llm import");
+  const progression = readFileSync(
+    join(process.cwd(), "src/features/career-guidance/progression.ts"),
+    "utf8",
+  );
+  assert(!/openai|anthropic|generateText|AskJson/i.test(rules), "llm rules");
+  assert(
+    !/openai|anthropic|generateText|AskJson/i.test(progression),
+    "llm progression",
+  );
+});
+
+suite("soft-dedupe drops ACTIVE challenge join already on hub", () => {
+  const f = facts({ challenges: [ch("DS", "ACTIVE", 5)] });
+  const filtered = softDedupeProfileItems(
+    [
+      {
+        id: "skill-to-ds-challenge",
+        kind: "challenge",
+        title: "Data Science",
+        because: "You listed Pandas on your profile.",
+        href: "/register?domain=DS",
+        cta: "Join",
+      },
+      {
+        id: "keep",
+        kind: "cohort",
+        title: "Keep",
+        because: "Fact.",
+        href: "/program/databricks",
+        cta: "Open",
+      },
+    ],
+    f,
+  );
+  assert(
+    !filtered.some((i) => i.href === "/register?domain=DS"),
+    "ACTIVE DS join must soft-dedupe",
+  );
+  assert(filtered.some((i) => i.id === "keep"), "unrelated kept");
 });
 
 const EMPTY_TARGETING: GuidanceTargeting = {
@@ -501,10 +525,13 @@ const EMPTY_TARGETING: GuidanceTargeting = {
   skillsEmpty: true,
 };
 
-function profileCard(id: string): GuidanceItem {
+function profileCard(
+  id: string,
+  kind: GuidanceItem["kind"] = "cohort",
+): GuidanceItem {
   return {
     id,
-    kind: "cohort",
+    kind,
     title: id,
     because: `Fact for ${id}.`,
     href: `/go/${id}`,
@@ -520,6 +547,7 @@ const SAMPLE_CATALOG: CatalogItem[] = [
     title: "DSA today?",
     body: "Reminder only.",
     ctaLabel: "I did",
+    href: "/mock-interviews",
     when: { challengeDomains: ["SE"] },
   },
   {
@@ -529,6 +557,7 @@ const SAMPLE_CATALOG: CatalogItem[] = [
     title: "Practise?",
     body: "Reminder only.",
     ctaLabel: "I did",
+    href: "/mock-interviews",
     when: { always: true },
   },
   {
@@ -549,7 +578,7 @@ const SAMPLE_CATALOG: CatalogItem[] = [
   },
 ];
 
-suite("daily pack caps at 4 and prefers profile recs", () => {
+suite("daily pack caps at 4 with slot mix (≤2 next-step + catalog)", () => {
   const pack = pickDailyPack({
     profileItems: [
       profileCard("p1"),
@@ -560,39 +589,86 @@ suite("daily pack caps at 4 and prefers profile recs", () => {
     ],
     catalog: SAMPLE_CATALOG,
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: {},
   });
   assert(pack.length === DAILY_CAP, `cap ${pack.length}`);
-  assert(
-    pack.every((c) => c.source === "profile"),
-    "catalog leaked while profile filled the cap",
-  );
-  assert(pack[3]?.id === "p4", pack[3]?.id ?? "");
+  const nextStep = pack.filter((c) => c.source === "profile").length;
+  const catalog = pack.filter((c) => c.source === "catalog").length;
+  assert(nextStep >= 2, `expected profile fill, got ${nextStep}`);
+  assert(catalog === 1, `expected one catalog slot, got ${catalog}`);
 });
 
-suite("profile recs come before a check-in and quote", () => {
+suite("slot mix: next-step then one check-in (not check-in+quote)", () => {
   const pack = pickDailyPack({
     profileItems: [profileCard("p1")],
     catalog: SAMPLE_CATALOG,
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: {},
   });
-  assert(pack.length === 3, `got ${pack.length}`);
+  assert(pack.length === 2, `got ${pack.length}`);
   assert(pack[0]?.id === "p1", "profile first");
-  assert(pack[1]?.kind === "checkin", "then check-in");
+  assert(pack[1]?.kind === "checkin", "then one check-in");
   assert(pack[1]?.id === "checkin-always", "generic check-in, not SE");
-  assert(pack[2]?.kind === "quote", "then quote");
+  assert(!pack.some((c) => c.kind === "quote"), "quote with check-in present");
+});
+
+suite("growth slot takes one challenge before fill", () => {
+  const pack = pickDailyPack({
+    profileItems: [
+      profileCard("c1", "cohort"),
+      profileCard("ch1", "challenge"),
+      profileCard("ch2", "challenge"),
+    ],
+    catalog: [],
+    targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
+    istWeek: "2026-W38",
+    onceSeen: [],
+    weeklySeen: {},
+  });
+  assert(pack.some((c) => c.id === "c1"), "cohort");
+  assert(pack.some((c) => c.kind === "challenge"), "growth challenge");
+  // Primary growth slot is ≤1; leftover fill may add a second challenge.
+  assert(pack.length <= DAILY_CAP, `cap ${pack.length}`);
+  assert(pack[0]?.kind === "cohort" || pack[1]?.kind === "challenge", "order");
+});
+
+suite("catalog specificity prefers targeted check-in", () => {
+  assert(
+    catalogSpecificity({ challengeDomains: ["SE"] }) >
+      catalogSpecificity({ always: true }),
+    "specificity order",
+  );
+  const pack = pickDailyPack({
+    profileItems: [],
+    catalog: SAMPLE_CATALOG,
+    targeting: {
+      ...EMPTY_TARGETING,
+      challengeDomains: ["SE"],
+      skillsEmpty: false,
+    },
+    istDay: "2026-09-15",
+    istWeek: "2026-W38",
+    onceSeen: [],
+    weeklySeen: {},
+  });
+  assert(pack[0]?.id === "checkin-se", pack[0]?.id ?? "");
 });
 
 suite("once catalog cards never return after seen", () => {
+  const quotes = SAMPLE_CATALOG.filter((i) => i.kind === "quote");
+  // Force the once-quote by excluding weekly from the first pack.
   const first = pickDailyPack({
     profileItems: [],
-    catalog: SAMPLE_CATALOG.filter((i) => i.kind === "quote"),
+    catalog: quotes.filter((i) => i.id === "quote-once"),
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: {},
@@ -600,11 +676,12 @@ suite("once catalog cards never return after seen", () => {
   assert(first[0]?.id === "quote-once", first[0]?.id ?? "");
   const remembered = rememberPack(
     {
-      istDay: "2026-09-14",
+      istDay: "2026-09-15",
       packIds: null,
       dismissedIds: [],
       onceSeen: [],
       weeklySeen: {},
+      refillUsed: false,
     },
     first,
     new Map(SAMPLE_CATALOG.map((i) => [i.id, i])),
@@ -612,8 +689,9 @@ suite("once catalog cards never return after seen", () => {
   );
   const second = pickDailyPack({
     profileItems: [],
-    catalog: SAMPLE_CATALOG.filter((i) => i.kind === "quote"),
+    catalog: quotes,
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: remembered.onceSeen,
     weeklySeen: remembered.weeklySeen,
@@ -630,6 +708,7 @@ suite("weekly catalog cards are blocked in the same week", () => {
     profileItems: [],
     catalog: SAMPLE_CATALOG.filter((i) => i.id === "quote-weekly"),
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: { "quote-weekly": "2026-W38" },
@@ -637,22 +716,24 @@ suite("weekly catalog cards are blocked in the same week", () => {
   assert(pack.length === 0, "same-week weekly quote leaked");
 });
 
-suite("dismissed id is removed and not replaced", () => {
+suite("dismissed id is removed; frozen pack does not backfill", () => {
   const pack = pickDailyPack({
     profileItems: [profileCard("p1"), profileCard("p2")],
     catalog: SAMPLE_CATALOG,
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: {},
   });
   const frozen = rememberPack(
     {
-      istDay: "2026-09-14",
+      istDay: "2026-09-15",
       packIds: null,
       dismissedIds: [],
       onceSeen: [],
       weeklySeen: {},
+      refillUsed: false,
     },
     pack,
     new Map(SAMPLE_CATALOG.map((i) => [i.id, i])),
@@ -669,25 +750,41 @@ suite("dismissed id is removed and not replaced", () => {
   assert(visible.length === pack.length - 1, `len ${visible.length}`);
 });
 
+suite("refill picks one unused profile card", () => {
+  const refill = pickRefillCard({
+    profileItems: [profileCard("p1"), profileCard("p2")],
+    catalog: SAMPLE_CATALOG,
+    targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
+    istWeek: "2026-W38",
+    packIds: ["p1"],
+    dismissedIds: ["p1"],
+    onceSeen: [],
+    weeklySeen: {},
+  });
+  assert(refill?.id === "p2", refill?.id ?? "missing refill");
+});
+
 suite("all dismissed yields an empty visible list", () => {
   const pack = pickDailyPack({
     profileItems: [profileCard("p1")],
     catalog: [],
     targeting: EMPTY_TARGETING,
+    istDay: "2026-09-15",
     istWeek: "2026-W38",
     onceSeen: [],
     weeklySeen: {},
   });
-  const visible = visibleDailyCards(pack, pack.map((c) => c.id));
+  const visible = visibleDailyCards(
+    pack,
+    pack.map((c) => c.id),
+  );
   assert(visible.length === 0, "expected empty");
 });
 
 suite("catalog when does not fire without the named domain", () => {
   assert(
-    !catalogWhenMatches(
-      { challengeDomains: ["SE"] },
-      EMPTY_TARGETING,
-    ),
+    !catalogWhenMatches({ challengeDomains: ["SE"] }, EMPTY_TARGETING),
     "SE check-in without SE enrollment",
   );
   assert(
@@ -706,13 +803,16 @@ suite("catalog when does not fire without the named domain", () => {
   );
 });
 
-suite("catalog.json parses", () => {
+suite("catalog.json parses with check-in hrefs", () => {
   assert(GUIDANCE_CATALOG.length >= 8, String(GUIDANCE_CATALOG.length));
   assert(
     GUIDANCE_CATALOG.some((i) => i.kind === "checkin") &&
       GUIDANCE_CATALOG.some((i) => i.kind === "quote"),
     "catalog must mix check-ins and quotes",
   );
+  for (const item of GUIDANCE_CATALOG.filter((i) => i.kind === "checkin")) {
+    assert(!!item.href, `${item.id} missing href`);
+  }
 });
 
 suite("catalog copy has no invented salary or market claims", () => {
@@ -721,6 +821,19 @@ suite("catalog copy has no invented salary or market claims", () => {
     "utf8",
   );
   assert(!/salary|LPA|market demand|job-ready|\d+\s*%/i.test(src), src);
+});
+
+suite("types and rules drop jobs", () => {
+  const types = readFileSync(
+    join(process.cwd(), "src/features/career-guidance/types.ts"),
+    "utf8",
+  );
+  const loader = readFileSync(
+    join(process.cwd(), "src/features/career-guidance/get-career-guidance.ts"),
+    "utf8",
+  );
+  assert(!/\bjobs\b|JobFact|opportunityTypes/.test(types), "types still jobs");
+  assert(!/listPublishedJobs|appliedJobIds|\/jobs\//.test(loader), "loader jobs");
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

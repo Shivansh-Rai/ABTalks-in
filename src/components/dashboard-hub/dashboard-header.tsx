@@ -22,7 +22,6 @@ type DashboardHeaderProps = {
 
 const HUB_SECTION_NAV: HeaderSectionNavItem[] = [
   { href: "#your-challenge", label: "Your Challenges" },
-  { href: "#career-guidance", label: "Career Guidance" },
   { href: "#prep-kit", label: "Prep Kit" },
   { href: "#domains", label: "Domains" },
   { href: "#events", label: "Events" },
