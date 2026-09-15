@@ -45,13 +45,20 @@ type Props = {
   onAnswerChange?: (questionId: string, answer: CandidateAnswer) => void;
   /** Shown under that question, keyed like `answers`. */
   questionErrors?: Record<string, string>;
-  /** The autosave indicator. */
+  /** The countdown and the autosave indicator. */
   statusSlot?: ReactNode;
   onStart?: () => void;
   onSubmit?: () => void;
   confirmingSubmit?: boolean;
   onConfirmSubmit?: () => void;
   onCancelSubmit?: () => void;
+  /** "End assessment": close it now, without the Submit checks. */
+  onEnd?: () => void;
+  confirmingEnd?: boolean;
+  onConfirmEnd?: () => void;
+  onCancelEnd?: () => void;
+  /** Why the attempt closed, shown with "Submitted". */
+  submittedNote?: string | null;
   submitBlockedReason?: string | null;
   busy?: boolean;
   submittedAtLabel?: string | null;
@@ -85,6 +92,11 @@ export function CandidateAssessmentScreen({
   confirmingSubmit = false,
   onConfirmSubmit,
   onCancelSubmit,
+  onEnd,
+  confirmingEnd = false,
+  onConfirmEnd,
+  onCancelEnd,
+  submittedNote = null,
   submitBlockedReason = null,
   busy = false,
   submittedAtLabel = null,
@@ -102,11 +114,12 @@ export function CandidateAssessmentScreen({
     else setLocalAnswers((prev) => ({ ...prev, [key]: next }));
   }
 
-  // Shown, not enforced (D-5): there is no countdown and no auto-submit.
+  // Enforced: the countdown (in `statusSlot`) starts when the candidate starts,
+  // and the attempt submits itself when it reaches 0:00.
   const durationLabel =
     draft.durationMinutes == null
       ? "Untimed"
-      : `Suggested time: ${plural(draft.durationMinutes, "minute")}`;
+      : `Time limit: ${plural(draft.durationMinutes, "minute")}`;
   const questionCount = draft.questions.length;
   const requiredCount = draft.questions.filter((q) => q.isRequired).length;
 
@@ -126,7 +139,7 @@ export function CandidateAssessmentScreen({
             <p className="hire-cand-assess__submitted-title">
               Submitted{submittedAtLabel ? ` ${submittedAtLabel}` : ""}.
             </p>
-            <p>Your answers are with the recruiter.</p>
+            <p>{submittedNote ?? "Your answers are with the recruiter."}</p>
           </div>
         </div>
       )}
@@ -232,7 +245,39 @@ export function CandidateAssessmentScreen({
 
           {stage === "taking" && (
             <div className="hire-cand-assess__submit-area">
-              {confirmingSubmit ? (
+              {confirmingEnd ? (
+                <div
+                  className="hire-cand-assess__confirm hire-cand-assess__confirm--end"
+                  role="group"
+                  aria-label="Confirm ending the assessment"
+                >
+                  <p>
+                    End the assessment now? Unanswered questions score zero, and you
+                    can&apos;t continue or retake it.
+                  </p>
+                  <div className="hire-cand-assess__confirm-actions">
+                    <button
+                      type="button"
+                      className="hire-cand-assess__secondary"
+                      disabled={busy}
+                      onClick={onCancelEnd}
+                    >
+                      Keep going
+                    </button>
+                    <button
+                      type="button"
+                      className="hire-cand-assess__danger"
+                      disabled={busy}
+                      onClick={onConfirmEnd}
+                    >
+                      {busy ? (
+                        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                      ) : null}
+                      End assessment
+                    </button>
+                  </div>
+                </div>
+              ) : confirmingSubmit ? (
                 <div
                   className="hire-cand-assess__confirm"
                   role="group"
@@ -273,6 +318,16 @@ export function CandidateAssessmentScreen({
                   </button>
                   {submitBlockedReason ? (
                     <p className="hire-cand-assess__hint">{submitBlockedReason}</p>
+                  ) : null}
+                  {onEnd ? (
+                    <button
+                      type="button"
+                      className="hire-cand-assess__endlink"
+                      disabled={busy}
+                      onClick={onEnd}
+                    >
+                      End assessment without submitting all answers
+                    </button>
                   ) : null}
                 </>
               )}

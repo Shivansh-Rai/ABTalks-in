@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   finishAttempt,
+  endAttempt,
   finishAttemptForced,
   finalizeStrictAttemptOnLeave,
   listCandidateAttempts,
@@ -43,6 +44,8 @@ import {
 import { createIntegrityRecorder } from "@/components/assessments/integrity-recorder";
 import {
   ATTEMPT_EVENT_TYPES,
+  ASSESSMENT_END_REASONS,
+  type AssessmentEndReason,
   type AttemptEventType,
 } from "@/lib/validations/assessment";
 import { $Enums } from "@prisma/client";
@@ -114,6 +117,7 @@ type StoredAssignment = {
   submittedAt: Date | null;
   scorePercent: number | null;
   passed: boolean | null;
+  endReason: AssessmentEndReason | null;
 };
 
 function inMemoryStore() {
@@ -150,6 +154,7 @@ function inMemoryStore() {
         status: a.status,
         startedAt: a.startedAt,
         submittedAt: a.submittedAt,
+        endReason: a.endReason,
         assessment: {
           status: s.status,
           title: s.title,
@@ -233,9 +238,10 @@ function inMemoryStore() {
       }
       a.scorePercent = result.scorePercent;
       a.passed = result.passed;
+      a.endReason = "SUBMITTED";
       return { outcome: "SUBMITTED" };
     },
-    async submitForced(assignmentId, candidateUserId, at, finish) {
+    async submitForced(assignmentId, candidateUserId, at, finish, reason) {
       const a = owned(assignmentId, candidateUserId);
       if (!a) return { outcome: "NOT_OPEN" };
       if (a.status === "SUBMITTED") return { outcome: "ALREADY" };
@@ -267,13 +273,16 @@ function inMemoryStore() {
       }
       a.scorePercent = result.scorePercent;
       a.passed = result.passed;
+      a.endReason = reason;
       return { outcome: "SUBMITTED" };
     },
-    async hasPageLeftEvent(assignmentId, candidateUserId) {
-      if (!owned(assignmentId, candidateUserId)) return false;
-      return [...events.values()].some(
-        (e) => e.assignmentId === assignmentId && e.type === "PAGE_LEFT",
-      );
+    async countStrikes(assignmentId, candidateUserId) {
+      if (!owned(assignmentId, candidateUserId)) return { tabSwitches: 0, fullscreenExits: 0 };
+      const mine = [...events.values()].filter((e) => e.assignmentId === assignmentId);
+      return {
+        tabSwitches: mine.filter((e) => e.type === "VISIBILITY_VISIBLE").length,
+        fullscreenExits: mine.filter((e) => e.type === "FULLSCREEN_EXITED").length,
+      };
     },
     async findEventContext(assignmentId, candidateUserId, clientSessionId) {
       const a = owned(assignmentId, candidateUserId);
@@ -412,6 +421,7 @@ function inMemoryStore() {
       submittedAt: null,
       scorePercent: null,
       passed: null,
+      endReason: null,
     });
     return id;
   }
@@ -900,7 +910,7 @@ async function run() {
     const src = read("src/app/actions/assessment-attempt-actions.ts");
     const exported = (src.match(/export async function /g) ?? []).length;
     const gated = (src.match(/await sessionUserId\(\)/g) ?? []).length;
-    assert(exported === 3 && gated === 3, `every action calls sessionUserId() (${gated}/${exported})`);
+    assert(exported === 4 && gated === 4, `every action calls sessionUserId() (${gated}/${exported})`);
     assert(!src.includes("candidateUserId"), "no user id is read from input");
     assert(!src.includes("console."), "no console");
     assert(!src.includes("scorePercent") && !/\bpassed\b/.test(src), "no score in responses");
@@ -1767,7 +1777,7 @@ async function run() {
     assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
   });
 
-  await suite("L6. loadAttempt with PAGE_LEFT force-closes strict STARTED", async () => {
+  await suite("L6. PAGE_LEFT is activity only — reopening keeps a strict attempt open", async () => {
     const f = fixture();
     f.assessments.get(f.s.id)!.strictMode = true;
     await startAttempt(f.store, C, { assignmentId: f.aC });
@@ -1784,7 +1794,245 @@ async function run() {
       },
     ]);
     const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "STARTED", "still open on load");
+    const put = await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    assert(put.ok, "answers still save");
+  });
+
+  // ---- Time limit: submit only on Submit or when the timer runs out --------
+
+  const MIN = 60_000;
+
+  await suite("TL1. loadAttempt: deadlineAt = startedAt + duration while STARTED; null untimed", async () => {
+    const f = await started();
+    const startedAt = f.assignments.get(f.aC)!.startedAt!;
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok, "loaded");
+    if (!loaded.ok) return;
+    assert(
+      loaded.data.deadlineAt?.getTime() === startedAt.getTime() + 30 * MIN,
+      "30-minute deadline from start",
+    );
+    assert(loaded.data.serverNow instanceof Date, "server clock returned");
+
+    const g = fixture();
+    g.assessments.get(g.s.id)!.durationMinutes = null;
+    await startAttempt(g.store, C, { assignmentId: g.aC });
+    const untimed = await loadAttempt(g.store, C, g.aC);
+    assert(untimed.ok && untimed.data.deadlineAt === null, "untimed has no deadline");
+
+    const notStarted = await loadAttempt(g.store, D, g.aD);
+    assert(notStarted.ok && notStarted.data.deadlineAt === null, "ASSIGNED has no deadline");
+  });
+
+  await suite("TL2. answering and reopening before the deadline never submits", async () => {
+    const f = await started();
+    await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "STARTED", "still STARTED after one answer");
+    assert(f.assignments.get(f.aC)!.submittedAt === null, "no submittedAt");
+  });
+
+  await suite("TL3. reopened after time ran out → SUBMITTED at the deadline, incomplete allowed", async () => {
+    const f = await started();
+    await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    const startedAt = new Date(Date.now() - 31 * MIN);
+    f.assignments.get(f.aC)!.startedAt = startedAt;
+    const loaded = await loadAttempt(f.store, C, f.aC);
     assert(loaded.ok && loaded.data.status === "SUBMITTED", "closed on load");
+    const a = f.assignments.get(f.aC)!;
+    assert(a.submittedAt?.getTime() === startedAt.getTime() + 30 * MIN, "submittedAt = deadline");
+    assert(a.scorePercent !== null, "scored");
+  });
+
+  await suite("TL4. a save after the deadline (+grace) is refused and closes the attempt", async () => {
+    const f = await started();
+    f.assignments.get(f.aC)!.startedAt = new Date(Date.now() - 31 * MIN);
+    const put = await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    assert(!put.ok && put.code === "CONFLICT", "CONFLICT");
+    assert(f.answers.size === 0, "nothing written");
+    assert(f.assignments.get(f.aC)!.status === "SUBMITTED", "closed");
+  });
+
+  await suite("TL5. a save just inside the grace window is still accepted", async () => {
+    const f = await started();
+    f.assignments.get(f.aC)!.startedAt = new Date(Date.now() - 30 * MIN - 5_000);
+    const put = await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    assert(put.ok, "saved within grace");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("TL6. submit at 0:00 with unanswered required questions → SUBMITTED", async () => {
+    const f = await started();
+    await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    f.assignments.get(f.aC)!.startedAt = new Date(Date.now() - 30 * MIN);
+    const res = await submitAttempt(f.store, C, { assignmentId: f.aC });
+    assert(res.ok, "time-up submit accepted");
+    assert(f.assignments.get(f.aC)!.status === "SUBMITTED", "submitted");
+    const again = await submitAttempt(f.store, C, { assignmentId: f.aC });
+    assert(!again.ok && again.code === "CONFLICT", "second submit refused");
+  });
+
+  await suite("TL7. submit before time is up still refuses incomplete answers", async () => {
+    const f = await started();
+    await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    f.assignments.get(f.aC)!.startedAt = new Date(Date.now() - 20 * MIN);
+    const res = await submitAttempt(f.store, C, { assignmentId: f.aC });
+    assert(!res.ok && res.code === "INVALID", "INVALID");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("TL8. untimed attempts never close on their own", async () => {
+    const f = fixture();
+    f.assessments.get(f.s.id)!.durationMinutes = null;
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    f.assignments.get(f.aC)!.startedAt = new Date(Date.now() - 24 * 60 * MIN);
+    const put = await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    assert(put.ok, "saves days later");
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "STARTED", "still open");
+  });
+
+  // ---- End early + strict strike limit --------------------------------------
+
+  const visibleEvent = (seq: number, at: number) => ev(seq, "VISIBILITY_VISIBLE", at);
+  const exitEvent = (seq: number, at: number) => ev(seq, "FULLSCREEN_EXITED", at);
+  async function sendEvents(f: Fixture, events: ReturnType<typeof ev>[], sid = SID) {
+    const t = Math.max(...events.map((e) => e.occurredAt)) + 10;
+    return recordAttemptEvents(f.store, C, f.aC, { sessionId: sid, sentAt: t, events }, new Date(t));
+  }
+
+  await suite("E0. the end-reason list mirrors the Prisma enum", () => {
+    const schema = read("prisma/schema.prisma");
+    const body = sliceBody(schema, "enum AssessmentEndReason {", /\n\}/);
+    const inSchema = body.split("\n").map((l) => l.trim()).filter((l) => /^[A-Z_]+$/.test(l));
+    assert(
+      JSON.stringify(inSchema) === JSON.stringify([...ASSESSMENT_END_REASONS]),
+      `enum mismatch: ${inSchema.join(",")}`,
+    );
+  });
+
+  await suite("E1. End assessment with required questions unanswered → SUBMITTED, ENDED_EARLY", async () => {
+    const f = await started();
+    await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    const res = await endAttempt(f.store, C, { assignmentId: f.aC, reason: "ENDED_EARLY" });
+    assert(res.ok && res.data.reason === "ENDED_EARLY", "ended");
+    const a = f.assignments.get(f.aC)!;
+    assert(a.status === "SUBMITTED" && a.endReason === "ENDED_EARLY", "stored reason");
+    assert(a.scorePercent !== null, "scored with what was saved");
+  });
+
+  await suite("E2. after ending: no saves, no second end, no restart", async () => {
+    const f = await started();
+    await endAttempt(f.store, C, { assignmentId: f.aC, reason: "ENDED_EARLY" });
+    const put = await save(f, f.q(1), { kind: "choice", selectedOptionIds: [f.o("1a")] });
+    assert(!put.ok && put.code === "CONFLICT", "save refused");
+    const again = await endAttempt(f.store, C, { assignmentId: f.aC, reason: "ENDED_EARLY" });
+    assert(!again.ok && again.code === "CONFLICT", "second end refused");
+    const restart = await startAttempt(f.store, C, { assignmentId: f.aC });
+    assert(!restart.ok && restart.code === "CONFLICT", "cannot retake");
+  });
+
+  await suite("E3. end: ASSIGNED → CONFLICT; foreign → NOT_FOUND; limit reason on non-strict → CONFLICT", async () => {
+    const f = fixture();
+    const early = await endAttempt(f.store, C, { assignmentId: f.aC, reason: "ENDED_EARLY" });
+    assert(!early.ok && early.code === "CONFLICT", "not started");
+    await startAttempt(f.store, C, { assignmentId: f.aC });
+    const foreign = await endAttempt(f.store, D, { assignmentId: f.aC, reason: "ENDED_EARLY" });
+    assert(!foreign.ok && foreign.code === "NOT_FOUND", "foreign");
+    const limit = await endAttempt(f.store, C, { assignmentId: f.aC, reason: "TAB_SWITCH_LIMIT" });
+    assert(!limit.ok && limit.code === "CONFLICT", "limit needs strict");
+    const bad = await endAttempt(f.store, C, { assignmentId: f.aC, reason: "SUBMITTED" });
+    assert(!bad.ok && bad.code === "INVALID", "client can't claim SUBMITTED");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("E4. normal Submit stores SUBMITTED; time-up close stores TIME_UP", async () => {
+    const f = await started();
+    await answerAll(f);
+    await submitAttempt(f.store, C, { assignmentId: f.aC });
+    assert(f.assignments.get(f.aC)!.endReason === "SUBMITTED", "SUBMITTED");
+    const g = await started();
+    g.assignments.get(g.aC)!.startedAt = new Date(Date.now() - 31 * MIN);
+    await loadAttempt(g.store, C, g.aC);
+    assert(g.assignments.get(g.aC)!.endReason === "TIME_UP", "TIME_UP");
+  });
+
+  await suite("E5. strict: the 3rd tab switch recorded closes the attempt with TAB_SWITCH_LIMIT", async () => {
+    const f = await strictFixture();
+    f.assessments.get(f.s.id)!.durationMinutes = null;
+    const base = Date.parse("2026-09-14T09:05:00Z");
+    const two = await sendEvents(f, [visibleEvent(0, base), visibleEvent(1, base + 1000)]);
+    assert(two.ok && two.data.ended === null, "two strikes: still open");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "open after 2");
+    const three = await sendEvents(f, [visibleEvent(2, base + 2000)]);
+    assert(three.ok && three.data.ended === "TAB_SWITCH_LIMIT", "third ends it");
+    const a = f.assignments.get(f.aC)!;
+    assert(a.status === "SUBMITTED" && a.endReason === "TAB_SWITCH_LIMIT", "stored penalty");
+  });
+
+  await suite("E6. strict: 3 fullscreen exits across page sessions → FULLSCREEN_LIMIT", async () => {
+    const f = await strictFixture();
+    f.assessments.get(f.s.id)!.durationMinutes = null;
+    const base = Date.parse("2026-09-14T09:05:00Z");
+    await sendEvents(f, [exitEvent(0, base), exitEvent(1, base + 1000)], SID);
+    // A reload is a new page session; the count carries over.
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.strikes.fullscreenExits === 2, "strikes survive a reload");
+    await sendEvents(f, [exitEvent(0, base + 5000)], SID2);
+    assert(f.assignments.get(f.aC)!.endReason === "FULLSCREEN_LIMIT", "FULLSCREEN_LIMIT");
+  });
+
+  await suite("E7. strict: hidden without a return (reload / closed tab) is not a strike", async () => {
+    const f = await strictFixture();
+    f.assessments.get(f.s.id)!.durationMinutes = null;
+    const base = Date.parse("2026-09-14T09:05:00Z");
+    await sendEvents(f, [
+      ev(0, "VISIBILITY_HIDDEN", base),
+      ev(1, "PAGE_LEFT", base + 10),
+      ev(2, "VISIBILITY_HIDDEN", base + 2000),
+      ev(3, "VISIBILITY_HIDDEN", base + 3000),
+      ev(4, "WINDOW_BLURRED", base + 4000),
+    ]);
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "still open");
+  });
+
+  await suite("E8. non-strict: strike events are refused, nothing closes", async () => {
+    const f = await started();
+    const base = Date.now();
+    const res = await sendEvents(f, [visibleEvent(0, base), visibleEvent(1, base), visibleEvent(2, base)]);
+    assert(!res.ok && res.code === "CONFLICT", "non-strict records no activity");
+    assert(f.assignments.get(f.aC)!.status === "STARTED", "open");
+  });
+
+  await suite("E9. loadAttempt closes a strict attempt already at the limit", async () => {
+    const f = await strictFixture();
+    f.assessments.get(f.s.id)!.durationMinutes = null;
+    const t = new Date("2026-09-14T09:05:00Z");
+    // Written straight to the store: as if the close after the batch failed.
+    await f.store.writeEventBatch(f.aC, SID, t, [0, 1, 2].map((seq) => ({
+      seq,
+      type: "VISIBILITY_VISIBLE" as const,
+      occurredAt: t,
+      clientOccurredAt: t,
+      receivedAt: t,
+      questionId: null,
+      count: 1,
+    })));
+    const loaded = await loadAttempt(f.store, C, f.aC);
+    assert(loaded.ok && loaded.data.status === "SUBMITTED", "closed on load");
+    assert(loaded.ok && loaded.data.endReason === "TAB_SWITCH_LIMIT", "penalty reason");
+  });
+
+  await suite("TL9. the candidate screen never calls the leave-finalize route", () => {
+    const guard = read("src/components/assessments/assessment-integrity.tsx");
+    assert(!guard.includes("/leave"), "integrity guard does not beacon /leave");
+    assert(!guard.includes("sendBeacon(leave"), "no leave beacon");
+    const attempt = read("src/components/assessments/assessment-attempt.tsx");
+    assert(!attempt.includes("/leave"), "attempt does not call /leave");
+    const service = read("src/features/assessment-attempts/service.ts");
+    const load = sliceBody(service, "export async function loadAttempt(", /\nexport /);
+    assert(!load.includes("PAGE_LEFT") && !load.includes("finalizeStrictAttemptOnLeave"), "load has no leave close");
   });
 
   await suite("L7. integrity UI has no clipboard toast string", () => {

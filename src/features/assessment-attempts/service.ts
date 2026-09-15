@@ -7,12 +7,15 @@ import {
   MAX_EVENTS_PER_ATTEMPT,
   MAX_PARAGRAPH_WORDS,
   MAX_SESSIONS_PER_ATTEMPT,
+  STRIKE_LIMIT,
   attemptActionSchema,
   attemptEventBatchSchema,
   countWords,
+  endAttemptSchema,
   incompleteMessage,
   isAnswerComplete,
   saveAnswerSchema,
+  type AssessmentEndReason,
   type AttemptEventType,
 } from "@/lib/validations/assessment";
 import type {
@@ -68,6 +71,8 @@ export type AttemptRow = {
   status: AttemptStatus;
   startedAt: Date | null;
   submittedAt: Date | null;
+  /** How it closed; null while open. Not a score — safe for the candidate. */
+  endReason: AssessmentEndReason | null;
   assessment: {
     status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
     title: string;
@@ -128,6 +133,11 @@ export type SubmitOutcome =
 
 export type DeviceHint = { mobile: boolean };
 
+/** Strict-mode strikes, counted from the attempt's recorded activity:
+ *  a tab switch is a return to the page (VISIBILITY_VISIBLE, so a reload or a
+ *  closed tab is not one); a fullscreen exit is FULLSCREEN_EXITED. */
+export type StrikeCounts = { tabSwitches: number; fullscreenExits: number };
+
 export type EventContext = {
   status: AttemptStatus;
   startedAt: Date | null;
@@ -184,9 +194,10 @@ export type AttemptStore = {
     candidateUserId: string,
     at: Date,
     finish: (input: FinishInput) => FinishResult,
+    reason: AssessmentEndReason,
   ): Promise<SubmitOutcome | { outcome: "ALREADY" }>;
-  /** True when any PAGE_LEFT event exists for this assignment (leave safety net). */
-  hasPageLeftEvent(assignmentId: string, candidateUserId: string): Promise<boolean>;
+  /** Tab switches and fullscreen exits recorded for this attempt, all sessions. */
+  countStrikes(assignmentId: string, candidateUserId: string): Promise<StrikeCounts>;
   findEventContext(
     assignmentId: string,
     candidateUserId: string,
@@ -354,10 +365,55 @@ function toView(row: AttemptRow): CandidateAssessmentView {
   };
 }
 
+/**
+ * The time limit. An attempt submits in exactly two ways: the candidate's own
+ * Submit, or its timer running out. The clock starts at `startedAt` and is
+ * enforced here, on the server — leaving the page does not pause it.
+ */
+/** A save still in flight when the clock hits zero is accepted for this long. */
+export const TIME_UP_GRACE_MS = 15_000;
+/** Client/server clock drift allowed when the screen submits at 0:00. */
+export const TIME_UP_EARLY_TOLERANCE_MS = 5_000;
+const TIME_UP_MSG = "Time is up — your answers were submitted.";
+
+export function attemptDeadline(row: {
+  startedAt: Date | null;
+  assessment: { durationMinutes: number | null };
+}): Date | null {
+  if (!row.startedAt || row.assessment.durationMinutes == null) return null;
+  return new Date(row.startedAt.getTime() + row.assessment.durationMinutes * 60_000);
+}
+
+/** Close a STARTED attempt whose time ran out: incomplete answers are allowed. */
+async function closeExpiredAttempt(
+  store: AttemptStore,
+  candidateUserId: string,
+  assignmentId: string,
+  at: Date,
+): Promise<SubmitOutcome | { outcome: "ALREADY" }> {
+  return store.submitForced(assignmentId, candidateUserId, at, finishAttemptForced, "TIME_UP");
+}
+
+/** The strict-mode penalty a strike count has reached, if any. */
+export function strikeLimitReason(counts: StrikeCounts): AssessmentEndReason | null {
+  if (counts.tabSwitches >= STRIKE_LIMIT) return "TAB_SWITCH_LIMIT";
+  if (counts.fullscreenExits >= STRIKE_LIMIT) return "FULLSCREEN_LIMIT";
+  return null;
+}
+
+const NO_STRIKES: StrikeCounts = { tabSwitches: 0, fullscreenExits: 0 };
+
 export type LoadedAttempt = {
   assignmentId: string;
   status: AttemptStatus;
   submittedAt: Date | null;
+  /** When a STARTED timed attempt closes. Null when untimed or not started. */
+  deadlineAt: Date | null;
+  endReason: AssessmentEndReason | null;
+  /** Strict STARTED attempts only (zeros otherwise), so a reload can't reset them. */
+  strikes: StrikeCounts;
+  /** The server clock at load, so the screen can correct for device drift. */
+  serverNow: Date;
   view: CandidateAssessmentView;
   answers: Record<string, CandidateAnswer>;
   rules: { strictMode: boolean; cameraRequired: boolean };
@@ -367,17 +423,30 @@ export async function loadAttempt(
   store: AttemptStore,
   candidateUserId: string,
   assignmentId: string,
-  device: DeviceHint = { mobile: false },
+  now: Date = new Date(),
 ): Promise<Result<LoadedAttempt>> {
   let row = await store.findAttempt(assignmentId, candidateUserId);
   if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
 
-  // Plan 141 safety net: if a strict attempt was left (PAGE_LEFT recorded) but
-  // keepalive finalize did not land, close it on the next open — no resume.
+  // Reopened after the timer ran out (tab closed, device asleep): close it now.
+  const deadline = attemptDeadline(row);
+  if (
+    row.status === "STARTED" &&
+    deadline &&
+    now.getTime() > deadline.getTime() + TIME_UP_GRACE_MS
+  ) {
+    await closeExpiredAttempt(store, candidateUserId, assignmentId, deadline);
+    row = await store.findAttempt(assignmentId, candidateUserId);
+    if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  }
+
+  let strikes = NO_STRIKES;
   if (row.assessment.strictMode && row.status === "STARTED") {
-    const left = await store.hasPageLeftEvent(assignmentId, candidateUserId);
-    if (left) {
-      await finalizeStrictAttemptOnLeave(store, candidateUserId, assignmentId, device);
+    strikes = await store.countStrikes(assignmentId, candidateUserId);
+    // The limit was reached but the close didn't land (e.g. the tab died).
+    const penalty = strikeLimitReason(strikes);
+    if (penalty) {
+      await store.submitForced(assignmentId, candidateUserId, now, finishAttemptForced, penalty);
       row = await store.findAttempt(assignmentId, candidateUserId);
       if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
     }
@@ -394,6 +463,10 @@ export async function loadAttempt(
     assignmentId: row.assignmentId,
     status: row.status,
     submittedAt: row.submittedAt,
+    deadlineAt: row.status === "STARTED" ? attemptDeadline(row) : null,
+    endReason: row.endReason,
+    strikes: row.status === "STARTED" ? strikes : NO_STRIKES,
+    serverNow: now,
     view: toView(row),
     answers,
     rules: {
@@ -404,8 +477,12 @@ export async function loadAttempt(
 }
 
 /**
- * Plan 141 — page leave / keepalive: force-submit a strict STARTED attempt.
- * Incomplete answers are allowed. Already SUBMITTED is OK (idempotent).
+ * Plan 141 — force-submit a strict STARTED attempt. Incomplete answers are
+ * allowed. Already SUBMITTED is OK (idempotent).
+ *
+ * No longer called by the candidate screen: an attempt submits only on the
+ * candidate's Submit or when its timer runs out. Kept because the leave route
+ * and its isolation test (src/features/hire/isolation.test.ts) still name it.
  */
 export async function finalizeStrictAttemptOnLeave(
   store: AttemptStore,
@@ -429,7 +506,13 @@ export async function finalizeStrictAttemptOnLeave(
   }
 
   const at = new Date();
-  const out = await store.submitForced(assignmentId, candidateUserId, at, finishAttemptForced);
+  const out = await store.submitForced(
+    assignmentId,
+    candidateUserId,
+    at,
+    finishAttemptForced,
+    "LEFT_PAGE",
+  );
   if (out.outcome === "ALREADY") {
     const again = await store.findAttempt(assignmentId, candidateUserId);
     return OK({
@@ -506,6 +589,12 @@ export async function saveAnswer(
     return CONFLICT("Start the assessment before answering.");
   }
 
+  const deadline = attemptDeadline(row);
+  if (deadline && Date.now() > deadline.getTime() + TIME_UP_GRACE_MS) {
+    await closeExpiredAttempt(store, candidateUserId, assignmentId, deadline);
+    return CONFLICT(TIME_UP_MSG);
+  }
+
   const q = row.questions.find((x) => x.id === questionId);
   if (!q) return NOT_FOUND("Question not found");
 
@@ -563,6 +652,23 @@ export async function submitAttempt(
   if (row.status === "SUBMITTED") return CONFLICT(ALREADY_SUBMITTED_MSG);
 
   const at = new Date();
+
+  // Time is up: the screen submits at 0:00 and whatever is saved is final, so
+  // unanswered required questions don't block it (server clock decides).
+  const deadline = attemptDeadline(row);
+  if (
+    row.status === "STARTED" &&
+    deadline &&
+    at.getTime() >= deadline.getTime() - TIME_UP_EARLY_TOLERANCE_MS
+  ) {
+    const closeAt = at.getTime() > deadline.getTime() ? deadline : at;
+    const forced = await closeExpiredAttempt(store, candidateUserId, assignmentId, closeAt);
+    if (forced.outcome === "SUBMITTED") return OK({ submittedAt: closeAt });
+    const again = await store.findAttempt(assignmentId, candidateUserId);
+    if (again?.status === "SUBMITTED") return CONFLICT(ALREADY_SUBMITTED_MSG);
+    return NOT_FOUND(NOT_FOUND_MSG);
+  }
+
   const out = await store.submit(assignmentId, candidateUserId, at, finishAttempt);
   if (out.outcome === "NOT_OPEN") {
     // Lost a race: another tab's or device's submit won the guard.
@@ -575,6 +681,50 @@ export async function submitAttempt(
   }
   // No score in the result: the candidate sees "Submitted" only (D-1).
   return OK({ submittedAt: at });
+}
+
+/**
+ * The candidate closes their own STARTED attempt without the Submit checks:
+ * "End assessment" (ENDED_EARLY), or strict mode's strike limit reached on
+ * their screen. Unanswered questions score as empty. It can't be reopened or
+ * retaken — start refuses a SUBMITTED attempt.
+ */
+export async function endAttempt(
+  store: AttemptStore,
+  candidateUserId: string,
+  input: unknown,
+  device: DeviceHint = { mobile: false },
+): Promise<Result<{ submittedAt: Date; reason: AssessmentEndReason }>> {
+  const parsed = endAttemptSchema.safeParse(input);
+  if (!parsed.success) return INVALID("Invalid input");
+  const { assignmentId } = parsed.data;
+
+  const row = await store.findAttempt(assignmentId, candidateUserId);
+  if (!isOpen(row)) return NOT_FOUND(NOT_FOUND_MSG);
+  if (row.assessment.strictMode && device.mobile) {
+    return CONFLICT("This assessment can only be taken on a laptop or desktop computer.");
+  }
+  if (row.status === "SUBMITTED") return CONFLICT(ALREADY_SUBMITTED_MSG);
+  if (row.status === "ASSIGNED") return CONFLICT("Start the assessment before ending it.");
+
+  let reason: AssessmentEndReason = parsed.data.reason;
+  if (reason !== "ENDED_EARLY" && !row.assessment.strictMode) {
+    return CONFLICT("Tab and fullscreen limits only apply to strict assessments.");
+  }
+
+  let at = new Date();
+  // Already out of time: that is what ended it.
+  const deadline = attemptDeadline(row);
+  if (deadline && at.getTime() > deadline.getTime()) {
+    at = deadline;
+    reason = "TIME_UP";
+  }
+
+  const out = await store.submitForced(assignmentId, candidateUserId, at, finishAttemptForced, reason);
+  if (out.outcome === "SUBMITTED") return OK({ submittedAt: at, reason });
+  const again = await store.findAttempt(assignmentId, candidateUserId);
+  if (again?.status === "SUBMITTED") return CONFLICT(ALREADY_SUBMITTED_MSG);
+  return NOT_FOUND(NOT_FOUND_MSG);
 }
 
 export async function listCandidateAttempts(
@@ -600,7 +750,14 @@ export async function recordAttemptEvents(
   assignmentId: string,
   body: unknown,
   receivedAt: Date,
-): Promise<Result<{ accepted: number; dropped: number; limitReached: boolean }>> {
+): Promise<
+  Result<{
+    accepted: number;
+    dropped: number;
+    limitReached: boolean;
+    ended: AssessmentEndReason | null;
+  }>
+> {
   const parsed = attemptEventBatchSchema.safeParse(body);
   if (!parsed.success) return INVALID("Invalid activity batch");
 
@@ -684,10 +841,31 @@ export async function recordAttemptEvents(
 
   await store.writeEventBatch(assignmentId, sessionId, receivedAt, accepted);
 
+  // Strict mode's strike limit, enforced here too: the screen ends the attempt
+  // at the third strike, and this closes it even if that call never arrives.
+  let ended: AssessmentEndReason | null = null;
+  if (
+    ctx.status === "STARTED" &&
+    accepted.some((e) => e.type === "VISIBILITY_VISIBLE" || e.type === "FULLSCREEN_EXITED")
+  ) {
+    const penalty = strikeLimitReason(await store.countStrikes(assignmentId, candidateUserId));
+    if (penalty) {
+      const out = await store.submitForced(
+        assignmentId,
+        candidateUserId,
+        receivedAt,
+        finishAttemptForced,
+        penalty,
+      );
+      if (out.outcome === "SUBMITTED") ended = penalty;
+    }
+  }
+
   return OK({
     accepted: accepted.length,
     dropped: parsed.data.events.length - kept.length,
     limitReached,
+    ended,
   });
 }
 

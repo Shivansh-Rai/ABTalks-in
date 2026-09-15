@@ -165,6 +165,10 @@ export function AppFooter() {
   }
   if (pathname === "/jobs" || pathname.startsWith("/jobs/")) return null;
   if (pathname === "/achievements") return null;
+  // Assessments render inside DashboardShell, which ships DashboardFooter.
+  if (pathname === "/assessments" || pathname.startsWith("/assessments/")) {
+    return null;
+  }
   // Marketplace renders inside DashboardShell, which ships DashboardFooter —
   // without this it stacked a second, black footer under the light one.
   if (isMarketplace) return null;

@@ -3484,6 +3484,9 @@ model RecruiterAssessmentAssignment {
   scorePercent    Int?
   /// T-218 only. scorePercent >= RecruiterAssessment.passMarkPercent.
   passed          Boolean?
+  /// How the attempt closed. Null until SUBMITTED (and on rows submitted
+  /// before this column existed).
+  endReason       AssessmentEndReason?
   updatedAt       DateTime                   @updatedAt
 
   assessment RecruiterAssessment        @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
@@ -3530,6 +3533,17 @@ model AssessmentAnswer {
 
 /// T-219: what the candidate's page reported. Facts about the page, never
 /// conclusions about the candidate — see src/features/assessment-attempts/activity.ts.
+/// How a candidate's attempt closed. TAB_SWITCH_LIMIT / FULLSCREEN_LIMIT are
+/// the strict-mode penalties the recruiter sees.
+enum AssessmentEndReason {
+  SUBMITTED
+  ENDED_EARLY
+  TIME_UP
+  TAB_SWITCH_LIMIT
+  FULLSCREEN_LIMIT
+  LEFT_PAGE
+}
+
 enum AssessmentAttemptEventType {
   SESSION_STARTED
   PAGE_LEFT

@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   AssessmentDraftInput,
+  AssessmentEndReason,
   AssessmentQuestionInput,
 } from "@/lib/validations/assessment";
 import {
@@ -95,7 +96,32 @@ export type AssignmentRow = {
   submittedAt: Date | null;
   scorePercent: number | null;
   passed: boolean | null;
+  /** How the attempt closed; null while open. */
+  endReason: AssessmentEndReason | null;
 };
+
+/** The strict-mode limits that end an attempt: shown to the recruiter as a penalty. */
+export function isPenalty(reason: AssessmentEndReason | null): boolean {
+  return reason === "TAB_SWITCH_LIMIT" || reason === "FULLSCREEN_LIMIT";
+}
+
+/** Factual, one line: why an attempt closed. Null for a normal Submit / open. */
+export function endReasonCopy(reason: AssessmentEndReason | null): string | null {
+  switch (reason) {
+    case "TAB_SWITCH_LIMIT":
+      return "Auto-ended: switched tabs 3 times";
+    case "FULLSCREEN_LIMIT":
+      return "Auto-ended: left fullscreen 3 times";
+    case "ENDED_EARLY":
+      return "Candidate ended the test early";
+    case "TIME_UP":
+      return "Time ran out";
+    case "LEFT_PAGE":
+      return "Ended when the candidate left the page";
+    default:
+      return null;
+  }
+}
 
 export type ResultCounts = { students: number; passed: number; failed: number };
 
@@ -130,6 +156,7 @@ export type AssessmentMonitor = {
     completed: number;
     passed: number;
     failed: number;
+    penalties: number;
   };
   assignments: AssignmentRow[];
   candidates: MonitorCandidate[];
@@ -164,6 +191,7 @@ export type AttemptActivityRow = {
   assignedAt: Date;
   startedAt: Date | null;
   submittedAt: Date | null;
+  endReason: AssessmentEndReason | null;
   assessment: { title: string; strictMode: boolean; cameraRequired: boolean };
   questionNumbers: Record<string, number>; // question id → 1-based position
   sessions: { clientSessionId: string; firstSeenAt: Date; lastSeenAt: Date }[];
@@ -497,6 +525,7 @@ export async function getAssessmentMonitor(
     completed: assignments.filter((a) => a.status === "SUBMITTED").length,
     passed: assignments.filter((a) => a.passed === true).length,
     failed: assignments.filter((a) => a.passed === false).length,
+    penalties: assignments.filter((a) => isPenalty(a.endReason)).length,
   };
 
   let candidates: MonitorCandidate[] = [];
