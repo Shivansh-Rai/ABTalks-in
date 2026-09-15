@@ -9,12 +9,14 @@ import {
   assignAssessment,
   createAssessment,
   createPublishAndAssign,
+  createPublishAndAssignFromPresets,
   listSendableCandidates,
   saveAssessmentDraft,
   getAssessment,
   getAssessmentMonitor,
   getAttemptActivity,
   deleteAssessment,
+  duplicateAssessment,
   listAssessments,
   publishAssessment,
   type AssessmentListStoreRow,
@@ -1180,6 +1182,87 @@ async function run() {
     assert(!page.includes("candidateUserId"), "no user id reaches the builder");
   });
 
+  await suite("T1. publishing a template sends to the picked candidates", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      candidateRefs: FIRST_THREE,
+    });
+    assert(res.ok, `preset send must succeed${res.ok ? "" : `: ${res.message}`}`);
+    if (!res.ok) return;
+    assert(res.data.assigned === 3, "three assigned");
+    assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+    assert(store.rows.get(res.data.id)?.title === "Frontend fundamentals", "preset title");
+    assert(notifier.calls.length === 3, "one notify each");
+  });
+
+  await suite("T2. unknown or empty preset ids write nothing", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const unknown = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["nope"],
+      candidateRefs: FIRST_THREE,
+    });
+    const mixed = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals", "nope"],
+      candidateRefs: FIRST_THREE,
+    });
+    const empty = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: [],
+      candidateRefs: FIRST_THREE,
+    });
+    assert(!unknown.ok && unknown.code === "INVALID", "unknown refused");
+    assert(!mixed.ok && mixed.code === "INVALID", "mixed unknown refused");
+    assert(!empty.ok && empty.code === "INVALID", "empty refused");
+    assert(store.rows.size === 0, "no draft saved");
+    assert(notifier.calls.length === 0, "nobody notified");
+  });
+
+  await suite("T3. zero, 26, or off-Shortlist refs write nothing", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const none = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      candidateRefs: [],
+    });
+    const many = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      candidateRefs: Array.from({ length: 26 }, (_, i) => `PROGRAM:bulk${i}`),
+    });
+    const ghost = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      candidateRefs: ["PROGRAM:m1", "PROGRAM:ghost"],
+    });
+    assert(!none.ok && none.code === "INVALID", "zero refused");
+    assert(!many.ok && many.code === "INVALID", "26 refused");
+    assert(!ghost.ok && ghost.code === "INVALID", "off-Shortlist refused");
+    assert(store.rows.size === 0, "no draft saved");
+    assert(notifier.calls.length === 0, "nobody notified");
+  });
+
+  await suite("T4. templates live on create-test; the action is gated and takes no client draft", () => {
+    const list = readSource("src/app/hire/assessments/page.tsx");
+    assert(!list.includes("AssessmentPresetPicker"), "list page has no picker");
+    assert(!list.includes("listAssessmentPresets"), "list page does not load presets");
+    const page = readSource("src/app/hire/create-test/page.tsx");
+    assert(page.includes("AssessmentPresetPicker"), "create-test landing has the picker");
+    assert(page.includes("from=scratch") || page.includes('from === "scratch"'), "scratch mode");
+    const actions = readSource("src/app/actions/recruiter-assessment-actions.ts");
+    assert(!actions.includes("createAssessmentFromPresetsAction"), "draft-only preset action is gone");
+    const start = actions.indexOf(
+      "export async function createAndSendFromPresetsAction(",
+    );
+    assert(start >= 0, "the preset send action exists");
+    const body = actions.slice(start);
+    assert(body.includes("requireRecruiterWorkspace()"), "preset send is workspace-gated");
+    assert(body.includes("createPublishAndAssignFromPresets("), "delegates to the service");
+    assert(!body.includes("createAndSendSchema"), "does not accept a client draft");
+    const picker = readSource("src/components/hire/assessment/preset-picker.tsx");
+    assert(picker.includes("createAndSendFromPresetsAction"), "picker publishes via the new action");
+    assert(!picker.includes("draft:"), "picker does not send a draft");
+  });
+
   await suite("P1. publish sets strictMode; publishing twice keeps it; save after publish is CONFLICT", async () => {
     const store = inMemoryStore();
     const created = await createAssessment(store, SCOPE_A, validMcqDraft());
@@ -1254,6 +1337,34 @@ async function run() {
     assert(!mismatch.ok && mismatch.code === "NOT_FOUND", "wrong assessmentId");
     const nonStrict = await getAttemptActivity(store, SCOPE_A, created.data.id, asg.id, new Date());
     assert(nonStrict.ok && nonStrict.data.summary === null, "non-strict summary null");
+  });
+
+  await suite("L1. duplicate: published → new DRAFT copy, content only; foreign → NOT_FOUND", async () => {
+    const store = inMemoryStore();
+    const notifier = fakeNotifier();
+    const source = await publishedAssessment(store);
+    await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: source,
+      candidateRefs: FIRST_THREE,
+    });
+    const assignmentsBefore = store.assignments.size;
+
+    const copy = await duplicateAssessment(store, SCOPE_A, source);
+    assert(copy.ok, "duplicate ok");
+    if (!copy.ok) return;
+    assert(copy.data.id !== source, "new id");
+    const original = store.rows.get(source)!;
+    const dup = store.rows.get(copy.data.id)!;
+    assert(dup.status === "DRAFT", "copy is DRAFT");
+    assert(dup.title === `Copy of ${original.title}`, "title prefixed");
+    assert(dup.questions.length === original.questions.length, "questions copied");
+    assert(dup.passMarkPercent === original.passMarkPercent, "pass mark copied");
+    assert(dup.durationMinutes === original.durationMinutes, "duration copied");
+    assert(original.status === "PUBLISHED", "source untouched");
+    assert(store.assignments.size === assignmentsBefore, "no assignments copied");
+
+    const foreign = await duplicateAssessment(store, SCOPE_B, source);
+    assert(!foreign.ok && foreign.code === "NOT_FOUND", "other workspace");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

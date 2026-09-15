@@ -113,6 +113,16 @@ export const createAndSendSchema = z.object({
 
 export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
 
+/** Direct publish from templates: preset ids + refs only, no client draft. */
+export const createAndSendFromPresetsSchema = z.object({
+  presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
+  candidateRefs: assignAssessmentSchema.shape.candidateRefs,
+});
+
+export type CreateAndSendFromPresetsInput = z.infer<
+  typeof createAndSendFromPresetsSchema
+>;
+
 // ---------------------------------------------------------------------------
 // T-218 (plan 129) — candidate answers. Shared by the candidate screen and the
 // server so the two can never disagree about what counts as an answer.

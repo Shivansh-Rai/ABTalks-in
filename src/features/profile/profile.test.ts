@@ -17,7 +17,7 @@ import {
   GradeType,
   OpportunityType,
 } from "@prisma/client";
-import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
+import { normalizeGithubUsername, gradeScoreIssue } from "@/lib/validations/candidate-profile";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -1426,6 +1426,34 @@ suite("grade type covers the scales Indian institutions actually use", () => {
   }
 });
 
+suite("education score type drops Other and caps numeric scales", () => {
+  const vocab = code("src/lib/candidate-vocab.ts");
+  assert(vocab.includes("SCORE_TYPE_OPTIONS"), "picker options are named");
+  assert(vocab.includes('"PERCENTAGE"'), "percentage is offered");
+  assert(vocab.includes('"CGPA_10"'), "CGPA is offered");
+  assert(vocab.includes('"GPA_4"'), "GPA is offered");
+  assert(vocab.includes('"GRADE"'), "letter grade is offered");
+  const optionsSlice = vocab.slice(
+    vocab.indexOf("SCORE_TYPE_OPTIONS"),
+    vocab.indexOf("GRADE_SCORE_MAX"),
+  );
+  assert(!optionsSlice.includes('"OTHER"'), "Other is not selectable");
+
+  const edu = code("src/components/profile/education-section.tsx");
+  assert(edu.includes("PwMenuSelect"), "score type uses the clay menu select");
+  assert(edu.includes("SCORE_TYPE_OPTIONS"), "and the filtered option list");
+  assert(edu.includes("gradeScoreIssue"), "score is validated against the scale");
+  assert(!edu.includes("Object.values(GradeType)"), "enum is not dumped raw into the picker");
+
+  assert(gradeScoreIssue("PERCENTAGE", "101") !== null, "percentage > 100 fails");
+  assert(gradeScoreIssue("PERCENTAGE", "100") === null, "percentage 100 is ok");
+  assert(gradeScoreIssue("CGPA_10", "10.5") !== null, "CGPA > 10 fails");
+  assert(gradeScoreIssue("CGPA_10", "9.2") === null, "CGPA within 10 is ok");
+  assert(gradeScoreIssue("GPA_4", "4.1") !== null, "GPA > 4 fails");
+  assert(gradeScoreIssue("GPA_4", "3.7") === null, "GPA within 4 is ok");
+  assert(gradeScoreIssue("GRADE", "A+") === null, "letter grades stay free text");
+});
+
 /* ─── Plan 136: UI QA findings ───────────────────────────────────────────── */
 
 suite("every dismissal of the sheet asks before dropping edits", () => {
@@ -1500,7 +1528,9 @@ suite("the profile card cannot strand its own content on short screens", () => {
     css.indexOf(".pw-quick-head {"),
   );
   assert(card.includes("max-height"), "a sticky card is capped to the viewport");
-  assert(card.includes("overflow: hidden auto"), "and scrolls inside itself");
+  assert(card.includes("overflow: hidden"), "and clips rather than scrolling inside");
+  assert(!card.includes("overflow: hidden auto"), "inner auto-scroll is gone");
+  assert(css.includes("padding: 8px 16px"), "Quick Links items are compacted");
 });
 
 suite("an open sheet leaves Quick Links pinned where it was", () => {
@@ -2275,8 +2305,15 @@ suite("B.E and B.Tech are one degree, and departments follow the degree", () => 
 
   // A degree offers its own branches, not everyone else's.
   const btech = departmentsForDegree("B.Tech");
-  assert(btech.includes("Computer Science and Engineering"), "engineering for B.Tech");
+  assert(
+    btech.includes("Computer Science and Engineering (CSE)"),
+    "engineering for B.Tech",
+  );
   assert(!btech.includes("Marketing"), "and not management");
+  assert(
+    btech.includes("Artificial Intelligence And Data Science"),
+    "AI & DS is offered for B.Tech",
+  );
   const bcom = departmentsForDegree("B.Com");
   assert(bcom.includes("Accounting and Finance"), "commerce for B.Com");
   assert(!bcom.includes("Mechanical Engineering"), "and not engineering");
@@ -2302,6 +2339,10 @@ suite("B.E and B.Tech are one degree, and departments follow the degree", () => 
   assert(
     section.includes("departmentsForDegree(degree"),
     "the Department field reads the degree beside it",
+  );
+  assert(
+    section.includes("maxSuggestions={80}"),
+    "department suggestions are not capped at a dozen rows",
   );
 });
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   createAndSendRecruiterAssessmentAction,
@@ -12,6 +13,13 @@ import {
   assessmentDraftSchema,
   type AssessmentDraftInput,
 } from "@/lib/validations/assessment";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CandidateAssessmentScreen } from "./candidate-assessment-screen";
 import { QuestionEditor } from "./question-editor";
 import type { AssessmentDraft, DraftQuestion } from "./assessment-types";
@@ -60,17 +68,21 @@ type Props = {
   candidates: SendableCandidate[];
   existingDraft: AssessmentDraft | null;
   presetLocked?: boolean;
+  /** Rendered under the template picker: an h2 instead of the page h1. */
+  embedded?: boolean;
 };
 
 export function AssessmentBuilder({
   candidates,
   existingDraft,
   presetLocked = false,
+  embedded = false,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [pendingAction, setPendingAction] = useState<"save" | "create" | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [assessmentId, setAssessmentId] = useState(
     existingDraft?.assessmentId,
   );
@@ -277,56 +289,86 @@ export function AssessmentBuilder({
     });
   }
 
+  const heading = presetLocked
+    ? "Customize a template"
+    : assessmentId
+      ? "Edit assessment"
+      : "Create an assessment";
+
   return (
-    <div className="hire-assess">
+    <div
+      className={cn("hire-assess hire-assess--builder", embedded && "hire-assess--embedded")}
+      id={embedded ? "blank-assessment" : undefined}
+    >
       <div className="hire-assess__top">
-        <div>
-          <p className="hire-assess__kicker">Assessment builder</p>
-          <h1>
-            {presetLocked
-              ? "Customize a template"
-              : assessmentId
-                ? "Edit assessment"
-                : "Create an assessment"}
-          </h1>
-          <p className="hire-assess__sub">
-            For {candidates.length} shortlisted candidate
-            {candidates.length === 1 ? "" : "s"}
-          </p>
-          {presetLocked ? (
-            <p className="hire-assess__note">
-              Template questions can’t be edited, but you can remove them or add
-              your own.
-            </p>
-          ) : null}
-          <p className="hire-assess__note">
-            Published assessments run in strict mode: laptop or desktop only,
-            fullscreen required, copy and paste blocked, and page activity
-            recorded for you to review.
-          </p>
+        <div className="hire-assess__heading">
+          {embedded ? (
+            <>
+              <h2 className="hire-assess__embedded-title">
+                Or start from a blank assessment
+              </h2>
+              <p className="hire-assess__sub">
+                Write your own questions for {candidates.length} shortlisted
+                candidate{candidates.length === 1 ? "" : "s"}.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="hire-assess__kicker">Assessment builder</p>
+              <h1>{heading}</h1>
+              <p className="hire-assess__sub">
+                For {candidates.length} shortlisted candidate
+                {candidates.length === 1 ? "" : "s"}
+              </p>
+            </>
+          )}
         </div>
-        {/* Phones only: at ≥1100px both panes are always on screen, so the
-            toggle is hidden there (hire-scout.css). */}
-        <div className="hire-assess__seg" role="tablist" aria-label="Edit or preview">
+        <div className="hire-assess__top-actions">
+          {/* Desktop: the preview opens in a modal, never beside the form. */}
           <button
             type="button"
-            role="tab"
-            aria-selected={mode === "edit"}
-            className={cn(mode === "edit" && "is-active")}
-            onClick={() => setMode("edit")}
+            className="hire-assess__previewbtn"
+            onClick={() => setPreviewOpen(true)}
           >
-            Edit
+            <Eye aria-hidden="true" />
+            Open preview
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "preview"}
-            className={cn(mode === "preview" && "is-active")}
-            onClick={() => setMode("preview")}
-          >
-            Preview
-          </button>
+          {/* Below 1100px: switch the one pane between edit and preview. */}
+          <div className="hire-assess__seg" role="tablist" aria-label="Edit or preview">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "edit"}
+              className={cn(mode === "edit" && "is-active")}
+              onClick={() => setMode("edit")}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "preview"}
+              className={cn(mode === "preview" && "is-active")}
+              onClick={() => setMode("preview")}
+            >
+              Preview
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="hire-assess__callout">
+        {presetLocked ? (
+          <p>
+            Template questions can’t be edited, but you can remove them or add
+            your own.
+          </p>
+        ) : null}
+        <p>
+          Published assessments run in strict mode: laptop or desktop only,
+          fullscreen required, copy and paste blocked, and page activity
+          recorded for you to review.
+        </p>
       </div>
 
       <div className="hire-assess__panes" data-mode={mode}>
@@ -334,102 +376,125 @@ export function AssessmentBuilder({
           className="hire-assess__form"
           data-active={mode === "edit" ? "true" : "false"}
         >
-          <label className="hire-assess-field">
-            <span>Assessment Title</span>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Backend fundamentals screen"
-              required
-            />
-            {fieldErrors.title ? (
-              <span className="hire-assess-error">{fieldErrors.title}</span>
-            ) : null}
-          </label>
+          <section className="hire-assess__card" aria-labelledby="assess-details-heading">
+            <h2 id="assess-details-heading" className="hire-assess__card-title">
+              Details
+            </h2>
+            <div className="hire-assess__grid">
+              <label className="hire-assess-field">
+                <span>Assessment title</span>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Backend fundamentals screen"
+                  required
+                />
+                {fieldErrors.title ? (
+                  <span className="hire-assess-error">{fieldErrors.title}</span>
+                ) : null}
+              </label>
 
-          <label className="hire-assess-field">
-            <span>Subheading</span>
-            <input
-              type="text"
-              value={subheading}
-              onChange={(e) => setSubheading(e.target.value)}
-              placeholder="Optional one-liner under the title"
-            />
-          </label>
+              <label className="hire-assess-field">
+                <span>Subheading</span>
+                <input
+                  type="text"
+                  value={subheading}
+                  onChange={(e) => setSubheading(e.target.value)}
+                  placeholder="Optional one-liner under the title"
+                />
+              </label>
 
-          <label className="hire-assess-field">
-            <span>Instructions</span>
-            <textarea
-              rows={4}
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="What the candidate should know before starting"
-            />
-          </label>
+              <label className="hire-assess-field hire-assess__grid-full">
+                <span>Instructions</span>
+                <textarea
+                  rows={4}
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  placeholder="What the candidate should know before starting"
+                />
+              </label>
+            </div>
+          </section>
 
-          <div className="hire-assess__settings">
-            <label className="hire-assess-field hire-assess-field--inline">
-              <span>Duration (minutes)</span>
-              <input
-                type="number"
-                min={1}
-                max={480}
-                disabled={untimed}
-                value={durationMinutes ?? ""}
-                onChange={(e) =>
-                  setDurationMinutes(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            </label>
-            <label className="hire-assess-q__required">
-              <input
-                type="checkbox"
-                checked={untimed}
-                onChange={(e) => {
-                  setUntimed(e.target.checked);
-                  if (e.target.checked) setDurationMinutes(null);
-                  else if (durationMinutes == null) setDurationMinutes(30);
-                }}
-              />
-              <span>Untimed</span>
-            </label>
-            <label className="hire-assess-field hire-assess-field--inline">
-              <span>Pass mark %</span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={passMarkPercent}
-                onChange={(e) =>
-                  setPassMarkPercent(Number(e.target.value) || 0)
-                }
-              />
-            </label>
-            <label className="hire-assess-q__required">
-              <input
-                type="checkbox"
-                checked={cameraRequired}
-                onChange={(e) => setCameraRequired(e.target.checked)}
-              />
-              <span>Require camera</span>
-            </label>
-          </div>
-          <p className="hire-assess-hint">
-            Candidates must keep their camera on to see the questions. ABTalks
-            never records or sees the video — only when the camera is on or off.
-          </p>
+          <section className="hire-assess__card" aria-labelledby="assess-settings-heading">
+            <h2 id="assess-settings-heading" className="hire-assess__card-title">
+              Settings
+            </h2>
+            <div className="hire-assess__settings">
+              <div className="hire-assess-setting">
+                <label className="hire-assess-field">
+                  <span>Duration (minutes)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={480}
+                    disabled={untimed}
+                    value={durationMinutes ?? ""}
+                    placeholder={untimed ? "Untimed" : undefined}
+                    onChange={(e) =>
+                      setDurationMinutes(
+                        e.target.value === "" ? null : Number(e.target.value),
+                      )
+                    }
+                  />
+                </label>
+                <label className="hire-assess-check">
+                  <input
+                    type="checkbox"
+                    checked={untimed}
+                    onChange={(e) => {
+                      setUntimed(e.target.checked);
+                      if (e.target.checked) setDurationMinutes(null);
+                      else if (durationMinutes == null) setDurationMinutes(30);
+                    }}
+                  />
+                  <span>Untimed</span>
+                </label>
+              </div>
+              <div className="hire-assess-setting">
+                <label className="hire-assess-field">
+                  <span>Pass mark (%)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={passMarkPercent}
+                    onChange={(e) =>
+                      setPassMarkPercent(Number(e.target.value) || 0)
+                    }
+                  />
+                </label>
+              </div>
+              <label className="hire-assess-setting hire-assess-setting--toggle">
+                <input
+                  type="checkbox"
+                  checked={cameraRequired}
+                  onChange={(e) => setCameraRequired(e.target.checked)}
+                />
+                <span className="hire-assess-setting__text">
+                  <span className="hire-assess-setting__label">Require camera</span>
+                  <span className="hire-assess-hint">
+                    Candidates keep their camera on to see the questions.
+                    ABTalks never records or sees the video — only when the
+                    camera is on or off.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </section>
 
-          <div className="hire-assess__questions">
+          <section className="hire-assess__questions" aria-labelledby="assess-questions-heading">
             <div className="hire-assess__questions-head">
-              <h2>Questions</h2>
+              <h2 id="assess-questions-heading">
+                Questions <span className="hire-assess__count">{questions.length}</span>
+              </h2>
               <button
                 type="button"
-                className="hire-assess-linkbtn"
+                className="hire-assess__addbtn"
                 onClick={() => setQuestions((q) => [...q, NEW_MCQ()])}
               >
+                <Plus aria-hidden="true" />
                 Add question
               </button>
             </div>
@@ -467,10 +532,18 @@ export function AssessmentBuilder({
                 }}
               />
             ))}
+            <button
+              type="button"
+              className="hire-assess__addrow"
+              onClick={() => setQuestions((q) => [...q, NEW_MCQ()])}
+            >
+              <Plus aria-hidden="true" />
+              Add another question
+            </button>
             {fieldErrors.questions ? (
               <span className="hire-assess-error">{fieldErrors.questions}</span>
             ) : null}
-          </div>
+          </section>
 
           <section className="hire-assess__send" aria-labelledby="assess-send-heading">
             <div className="hire-assess__send-head">
@@ -556,27 +629,29 @@ export function AssessmentBuilder({
               </div>
             ) : (
               <>
-                <button
-                  type="button"
-                  className="hire-assess__savebtn hire-assess__savebtn--ghost"
-                  disabled={pending}
-                  onClick={save}
-                >
-                  {pendingAction === "save" ? "Saving…" : "Save draft"}
-                </button>
-                <button
-                  type="button"
-                  className="hire-assess__savebtn"
-                  disabled={pending || Boolean(createBlockedReason)}
-                  aria-describedby="assess-create-hint"
-                  onClick={askCreate}
-                >
-                  Create
-                </button>
                 <p id="assess-create-hint" className="hire-assess-hint hire-assess__save-hint">
                   {createBlockedReason ??
                     `Sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`}
                 </p>
+                <div className="hire-assess__save-actions">
+                  <button
+                    type="button"
+                    className="hire-assess__savebtn hire-assess__savebtn--ghost"
+                    disabled={pending}
+                    onClick={save}
+                  >
+                    {pendingAction === "save" ? "Saving…" : "Save draft"}
+                  </button>
+                  <button
+                    type="button"
+                    className="hire-assess__savebtn"
+                    disabled={pending || Boolean(createBlockedReason)}
+                    aria-describedby="assess-create-hint"
+                    onClick={askCreate}
+                  >
+                    Create
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -589,6 +664,22 @@ export function AssessmentBuilder({
           <CandidateAssessmentScreen draft={previewDraft} readOnly />
         </div>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="hire-assess-preview-modal max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)] gap-3 p-5 sm:max-w-[min(880px,calc(100%-4rem))]">
+          <DialogHeader>
+            <DialogTitle>Candidate preview</DialogTitle>
+            <DialogDescription>
+              What candidates see when they open this assessment. Read-only.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="hire-assess-preview-modal__body">
+            {previewOpen ? (
+              <CandidateAssessmentScreen draft={previewDraft} readOnly />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="sr-only" aria-live="polite">
         {announce}

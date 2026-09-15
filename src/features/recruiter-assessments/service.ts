@@ -7,6 +7,7 @@ import type {
 import {
   assessmentDraftSchema,
   assignAssessmentSchema,
+  createAndSendFromPresetsSchema,
   createAndSendSchema,
 } from "@/lib/validations/assessment";
 import {
@@ -14,6 +15,10 @@ import {
   type ActivityEvent,
   type ActivitySummary,
 } from "@/features/assessment-attempts/activity";
+import {
+  buildContentFromPresets,
+  getAssessmentPreset,
+} from "./presets";
 
 export type Scope = { organizationId: string; createdByUserId: string };
 
@@ -320,6 +325,49 @@ export async function deleteAssessment(
   const removed = await store.delete(assessmentId, scope);
   if (!removed) return NOT_FOUND("Assessment not found");
   return OK({ id: assessmentId });
+}
+
+/**
+ * Copy any owned assessment (draft or published) into a new DRAFT. Only the
+ * content is copied — never assignments, results, publishedAt or strictMode.
+ * The copy goes through createAssessment, so it is validated like a fresh save.
+ */
+export async function duplicateAssessment(
+  store: AssessmentStore,
+  scope: Scope,
+  assessmentId: string,
+): Promise<Result<{ id: string }>> {
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+  return createAssessment(store, scope, {
+    title: `Copy of ${row.title}`.slice(0, 200),
+    subheading: row.subheading,
+    instructions: row.instructions,
+    durationMinutes: row.durationMinutes,
+    passMarkPercent: row.passMarkPercent,
+    cameraRequired: row.cameraRequired,
+    shortlistRefs: row.shortlistRefs,
+    questions: row.questions.map((q) => {
+      const base = {
+        title: q.title,
+        helpText: q.helpText,
+        isRequired: q.isRequired,
+        points: q.points,
+      };
+      if (q.type === "MULTIPLE_CHOICE") {
+        return {
+          ...base,
+          type: q.type,
+          allowMultipleCorrect: q.allowMultipleCorrect,
+          options: q.options.map((o) => ({ body: o.body, isCorrect: o.isCorrect })),
+        };
+      }
+      if (q.type === "PARAGRAPH") {
+        return { ...base, type: q.type, maxWords: q.maxWords ?? undefined };
+      }
+      return { ...base, type: q.type, uploadDestinationUrl: q.uploadDestinationUrl ?? "" };
+    }),
+  });
 }
 
 /**
@@ -632,4 +680,48 @@ export async function createPublishAndAssign(
   }
 
   return { ok: true, data: { id, ...assigned.data, assignError: null } };
+}
+
+/**
+ * Publish an ABTalks template (or a combination) and send it to the ticked
+ * Shortlisted candidates. The client sends preset ids + refs only — question
+ * bodies are looked up here so a recruiter cannot smuggle a draft in as a
+ * "template".
+ */
+export async function createPublishAndAssignFromPresets(
+  store: AssessmentStore,
+  notifier: AssessmentNotifier,
+  scope: Scope,
+  input: unknown,
+): Promise<CreateAndSendOutcome> {
+  const parsed = createAndSendFromPresetsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: parsed.error.issues[0]?.message ?? "Invalid input",
+      assessmentId: null,
+    };
+  }
+  if (parsed.data.presetIds.some((id) => !getAssessmentPreset(id))) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: "Template not found",
+      assessmentId: null,
+    };
+  }
+  const content = buildContentFromPresets(parsed.data.presetIds);
+  if (!content) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: "Template not found",
+      assessmentId: null,
+    };
+  }
+  return createPublishAndAssign(store, notifier, scope, {
+    draft: content,
+    candidateRefs: parsed.data.candidateRefs,
+  });
 }

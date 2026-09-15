@@ -119,7 +119,11 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
           questions and pass mark.
         </p>
       ) : (
-        <section className="hire-assess-detail__monitor" aria-label="Assigned candidates">
+        <section
+          id="results"
+          className="hire-assess-detail__monitor"
+          aria-label="Assigned candidates"
+        >
           <h2>Assigned candidates</h2>
           {assignments.length === 0 ? (
             <div className="hire-assess-list__empty">
