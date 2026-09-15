@@ -1,0 +1,329 @@
+import "server-only";
+import { PipelineStage, Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
+/**
+ * T-240 recruiter hiring pipeline — sole reader/writer for `TalentListItem`.
+ *
+ * Every read and write scopes on `TalentList.ownerRecruiterId`, so a recruiter
+ * only ever sees rows on a list they own. No other module in `src/` may touch
+ * `prisma.talentListItem.*` directly — go through this repository.
+ *
+ * The list itself (`TalentList`) is the recruiter's private, auto-provisioned
+ * pipeline. Its `name` is a reserved slug (`__pipeline:<recruiterProfileId>`)
+ * so `@@unique([organizationId, name])` can never collide with a recruiter's
+ * own custom list.
+ *
+ * Plan: [docs/plans/146-t240-recruiter-hiring-pipeline.md].
+ */
+
+const PIPELINE_LIST_NAME_PREFIX = "__pipeline:";
+const PIPELINE_LIST_DESCRIPTION = "Hiring pipeline";
+
+export function pipelineListName(recruiterProfileId: string): string {
+  return `${PIPELINE_LIST_NAME_PREFIX}${recruiterProfileId}`;
+}
+
+/**
+ * The nine stages in the order the board renders them, top-of-funnel first.
+ * REJECTED / WITHDRAWN are terminal off-track states, kept at the end.
+ */
+export const PIPELINE_STAGE_ORDER: PipelineStage[] = [
+  PipelineStage.SOURCED,
+  PipelineStage.SHORTLISTED,
+  PipelineStage.CONTACTED,
+  PipelineStage.SCREENING,
+  PipelineStage.INTERVIEWING,
+  PipelineStage.OFFER,
+  PipelineStage.HIRED,
+  PipelineStage.REJECTED,
+  PipelineStage.WITHDRAWN,
+];
+
+export type PipelineWorkspace = {
+  recruiterProfileId: string;
+  organizationId: string;
+  /** The userId of the recruiter — recorded as `addedByUserId` on new items. */
+  userId: string;
+};
+
+export type PipelineCardRow = {
+  itemId: string;
+  candidateUserId: string | null;
+  candidateLabel: string;
+  stage: PipelineStage;
+  addedAt: Date;
+  stageChangedAt: Date;
+};
+
+export type PipelineSnapshot = {
+  listId: string;
+  stages: Record<PipelineStage, PipelineCardRow[]>;
+  counts: Record<PipelineStage, number>;
+  candidateIds: Set<string>;
+};
+
+export type PipelineResult<T = undefined> = T extends undefined
+  ? { ok: true }
+  : { ok: true; data: T };
+export type PipelineError = { ok: false; message: string };
+
+/**
+ * Return the recruiter's private pipeline list, creating it on first use.
+ * Idempotent: rerunning it once the list exists is a single upsert with an
+ * empty update payload.
+ */
+export async function ensureRecruiterPipeline(
+  workspace: PipelineWorkspace,
+): Promise<{ id: string }> {
+  const name = pipelineListName(workspace.recruiterProfileId);
+  return prisma.talentList.upsert({
+    where: {
+      organizationId_name: {
+        organizationId: workspace.organizationId,
+        name,
+      },
+    },
+    create: {
+      organizationId: workspace.organizationId,
+      ownerRecruiterId: workspace.recruiterProfileId,
+      isSharedWithOrg: false,
+      name,
+      description: PIPELINE_LIST_DESCRIPTION,
+    },
+    update: {},
+    select: { id: true },
+  });
+}
+
+function emptyBuckets<T>(): Record<PipelineStage, T[]> {
+  return PIPELINE_STAGE_ORDER.reduce(
+    (acc, stage) => ({ ...acc, [stage]: [] as T[] }),
+    {} as Record<PipelineStage, T[]>,
+  );
+}
+
+function zeroCounts(): Record<PipelineStage, number> {
+  return PIPELINE_STAGE_ORDER.reduce(
+    (acc, stage) => ({ ...acc, [stage]: 0 }),
+    {} as Record<PipelineStage, number>,
+  );
+}
+
+/**
+ * The recruiter's full pipeline, bucketed by stage. Rows exclude tombstones
+ * where the candidate has deleted their account (candidateUserId is null) —
+ * the list still keeps the row so the recruiter's history is not silently
+ * shortened, but there is nothing meaningful to render for it on the board.
+ */
+export async function listPipeline(
+  workspace: PipelineWorkspace,
+): Promise<PipelineSnapshot> {
+  const list = await ensureRecruiterPipeline(workspace);
+
+  const rows = await prisma.talentListItem.findMany({
+    where: {
+      talentListId: list.id,
+      talentList: { ownerRecruiterId: workspace.recruiterProfileId },
+      candidateUserId: { not: null },
+    },
+    orderBy: [{ stage: "asc" }, { addedAt: "desc" }],
+    select: {
+      id: true,
+      candidateUserId: true,
+      candidateLabel: true,
+      stage: true,
+      addedAt: true,
+      stageChangedAt: true,
+    },
+  });
+
+  const stages = emptyBuckets<PipelineCardRow>();
+  const counts = zeroCounts();
+  const candidateIds = new Set<string>();
+
+  for (const row of rows) {
+    const bucket = stages[row.stage];
+    bucket.push({
+      itemId: row.id,
+      candidateUserId: row.candidateUserId,
+      candidateLabel: row.candidateLabel,
+      stage: row.stage,
+      addedAt: row.addedAt,
+      stageChangedAt: row.stageChangedAt,
+    });
+    counts[row.stage] = (counts[row.stage] ?? 0) + 1;
+    if (row.candidateUserId) candidateIds.add(row.candidateUserId);
+  }
+
+  return { listId: list.id, stages, counts, candidateIds };
+}
+
+/**
+ * Recruiter's cache of "which candidates are on my pipeline". Cheap enough to
+ * pass down to the Scout row buttons so an already-tracked candidate renders
+ * as a disabled "In pipeline" pill instead of another "Add to Pipeline"
+ * button.
+ */
+export async function listPipelineCandidateIds(
+  workspace: PipelineWorkspace,
+): Promise<Set<string>> {
+  const list = await ensureRecruiterPipeline(workspace);
+  const rows = await prisma.talentListItem.findMany({
+    where: {
+      talentListId: list.id,
+      talentList: { ownerRecruiterId: workspace.recruiterProfileId },
+      candidateUserId: { not: null },
+    },
+    select: { candidateUserId: true },
+  });
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.candidateUserId) ids.add(row.candidateUserId);
+  }
+  return ids;
+}
+
+/**
+ * Add a candidate to the recruiter's pipeline. Idempotent on
+ * `@@unique([talentListId, candidateUserId])`: adding an already-tracked
+ * candidate keeps their current stage — the Scout button must never demote
+ * someone the recruiter has already advanced.
+ *
+ * `label` is the display fallback stored on the row so a candidate deleting
+ * their account (which nulls `candidateUserId`) does not silently shrink the
+ * pipeline count.
+ */
+export async function addToPipeline(
+  workspace: PipelineWorkspace,
+  input: {
+    candidateUserId: string;
+    label: string;
+    stage?: PipelineStage;
+  },
+): Promise<PipelineResult<{ itemId: string; created: boolean }> | PipelineError> {
+  const list = await ensureRecruiterPipeline(workspace);
+  const stage = input.stage ?? PipelineStage.SHORTLISTED;
+  const label = input.label.trim() || "Candidate";
+
+  try {
+    const existing = await prisma.talentListItem.findUnique({
+      where: {
+        talentListId_candidateUserId: {
+          talentListId: list.id,
+          candidateUserId: input.candidateUserId,
+        },
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      return { ok: true, data: { itemId: existing.id, created: false } };
+    }
+
+    const created = await prisma.talentListItem.create({
+      data: {
+        talentListId: list.id,
+        candidateUserId: input.candidateUserId,
+        candidateLabel: label,
+        stage,
+        addedByUserId: workspace.userId,
+        stageChangedAt: new Date(),
+      },
+      select: { id: true },
+    });
+    return { ok: true, data: { itemId: created.id, created: true } };
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      // Race: another request added the same candidate between our findUnique
+      // and create. Treat as success — the row exists.
+      const row = await prisma.talentListItem.findUnique({
+        where: {
+          talentListId_candidateUserId: {
+            talentListId: list.id,
+            candidateUserId: input.candidateUserId,
+          },
+        },
+        select: { id: true },
+      });
+      if (row) return { ok: true, data: { itemId: row.id, created: false } };
+    }
+    logger.error("talent-pipeline.addToPipeline failed", {
+      recruiterProfileId: workspace.recruiterProfileId,
+      candidateUserId: input.candidateUserId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false, message: "Could not add candidate to pipeline." };
+  }
+}
+
+/**
+ * Move a pipeline item to a new stage. Enforces recruiter isolation by
+ * scoping the update to the caller's own list — an itemId belonging to a
+ * different recruiter's list matches zero rows and returns a not-found.
+ */
+export async function moveStage(
+  workspace: PipelineWorkspace,
+  input: { itemId: string; stage: PipelineStage },
+): Promise<PipelineResult | PipelineError> {
+  try {
+    const result = await prisma.talentListItem.updateMany({
+      where: {
+        id: input.itemId,
+        talentList: {
+          ownerRecruiterId: workspace.recruiterProfileId,
+        },
+      },
+      data: {
+        stage: input.stage,
+        stageChangedAt: new Date(),
+      },
+    });
+    if (result.count === 0) {
+      return { ok: false, message: "Pipeline item not found." };
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error("talent-pipeline.moveStage failed", {
+      recruiterProfileId: workspace.recruiterProfileId,
+      itemId: input.itemId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false, message: "Could not move candidate stage." };
+  }
+}
+
+/**
+ * Remove a candidate from the recruiter's pipeline. Same ownership guard as
+ * `moveStage` — deleteMany scopes through the parent list, so an itemId from
+ * a different recruiter's list is a silent no-op we surface as not-found.
+ */
+export async function removeFromPipeline(
+  workspace: PipelineWorkspace,
+  input: { itemId: string },
+): Promise<PipelineResult | PipelineError> {
+  try {
+    const result = await prisma.talentListItem.deleteMany({
+      where: {
+        id: input.itemId,
+        talentList: {
+          ownerRecruiterId: workspace.recruiterProfileId,
+        },
+      },
+    });
+    if (result.count === 0) {
+      return { ok: false, message: "Pipeline item not found." };
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error("talent-pipeline.removeFromPipeline failed", {
+      recruiterProfileId: workspace.recruiterProfileId,
+      itemId: input.itemId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false, message: "Could not remove candidate from pipeline." };
+  }
+}
