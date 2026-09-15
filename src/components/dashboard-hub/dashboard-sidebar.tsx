@@ -11,8 +11,6 @@ import {
   Grid3X3,
   LogIn,
   LogOut,
-  Menu,
-  MoreVertical,
   Presentation,
   Store,
   User,
@@ -30,6 +28,21 @@ import {
   type NavIconKey,
 } from "./nav-items";
 
+type NavIconProps = { className?: string; "aria-hidden"?: boolean };
+
+function DashboardNavIcon({ className, "aria-hidden": ariaHidden }: NavIconProps) {
+  return (
+    <Image
+      src="/dashboard-nav-icon.png"
+      alt=""
+      width={20}
+      height={20}
+      className={cn("size-5", className)}
+      aria-hidden={ariaHidden}
+    />
+  );
+}
+
 const ICON_MAP: Record<
   NavIconKey,
   React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
@@ -45,6 +58,7 @@ const ICON_MAP: Record<
 };
 
 const SIDEBAR_COLLAPSED_WIDTH_CLASS = "w-[72px]";
+const SIDEBAR_TOGGLE_SRC = "/sidebar-toggle.webp";
 
 type DashboardSidebarProps = {
   user: { name: string; email: string; image: string | null };
@@ -69,6 +83,19 @@ function initials(name: string) {
   return name.slice(0, 2).toUpperCase() || "?";
 }
 
+function SidebarToggleIcon({ className }: { className?: string }) {
+  return (
+    <Image
+      src={SIDEBAR_TOGGLE_SRC}
+      alt=""
+      width={20}
+      height={20}
+      className={cn("size-4", className)}
+      aria-hidden
+    />
+  );
+}
+
 export function DashboardSidebar({
   user,
   mobileOpen,
@@ -81,91 +108,6 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const displayName = user.name.trim() || user.email || "User";
   const isCollapsed = collapsible && collapsed;
-
-  // Hover-to-expand + hover-away-to-collapse, gated by a manual-mode latch.
-  //
-  //   - collapsed rail hovered for 700ms → auto-expand (marks expandedViaHover)
-  //   - mouse leaves an auto-expanded rail → auto-collapse ~200ms later
-  //   - ANY button click (expand or collapse) trips manualModeRef; while it's
-  //     on, no hover handler does anything. Manual mode stays on until the
-  //     next button click, so a click-driven state persists until the user
-  //     clicks again — no accidental re-open on hover, no auto-collapse on
-  //     mouse-move.
-  //
-  // Timers are always cleared on the opposite event, on manual toggle, on
-  // collapsed-state changes, and on unmount.
-  const expandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const expandedViaHoverRef = useRef(false);
-  // Session-scoped only — never persisted, so a page refresh always resets
-  // the sidebar back into hover-driven mode regardless of the last click.
-  const manualModeRef = useRef(false);
-
-  function clearExpandTimer() {
-    if (expandTimerRef.current !== null) {
-      clearTimeout(expandTimerRef.current);
-      expandTimerRef.current = null;
-    }
-  }
-  function clearCollapseTimer() {
-    if (collapseTimerRef.current !== null) {
-      clearTimeout(collapseTimerRef.current);
-      collapseTimerRef.current = null;
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      clearExpandTimer();
-      clearCollapseTimer();
-    };
-  }, []);
-
-  function handleRailEnter() {
-    clearCollapseTimer();
-    if (manualModeRef.current) return;
-    if (!collapsible || !onToggleCollapse || !isCollapsed) return;
-    clearExpandTimer();
-    expandTimerRef.current = setTimeout(() => {
-      expandTimerRef.current = null;
-      expandedViaHoverRef.current = true;
-      onToggleCollapse();
-    }, 700);
-  }
-  function handleRailLeave() {
-    clearExpandTimer();
-    // Any full exit clears the manual-mode latch, so the very next re-entry
-    // is treated as a fresh session — hover can auto-expand again without
-    // requiring a page refresh. The refresh reset still holds separately.
-    const wasManual = manualModeRef.current;
-    manualModeRef.current = false;
-    if (wasManual) return;
-    if (
-      !collapsible ||
-      !onToggleCollapse ||
-      isCollapsed ||
-      !expandedViaHoverRef.current
-    )
-      return;
-    clearCollapseTimer();
-    collapseTimerRef.current = setTimeout(() => {
-      collapseTimerRef.current = null;
-      expandedViaHoverRef.current = false;
-      onToggleCollapse();
-    }, 200);
-  }
-
-  // Button-driven toggle. Trips the manual-mode latch so hover handlers stop
-  // firing until the next button click, and clears any pending hover timers.
-  const handleManualToggle = onToggleCollapse
-    ? () => {
-        clearExpandTimer();
-        clearCollapseTimer();
-        expandedViaHoverRef.current = false;
-        manualModeRef.current = true;
-        onToggleCollapse();
-      }
-    : undefined;
 
   function renderNav(compact: boolean) {
     return (
@@ -305,7 +247,19 @@ export function DashboardSidebar({
 
   const expandedContent = (
     <>
-      <div className={cn(SIDEBAR_BRAND_ROW_CLASS, "justify-between gap-2")}>
+      <div className={cn(SIDEBAR_BRAND_ROW_CLASS, "justify-start gap-1.5")}>
+        {collapsible && onToggleCollapse ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-expanded={!isCollapsed}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+            className="abt-sidebar-toggle hidden size-8 shrink-0 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] md:inline-flex"
+          >
+            <SidebarToggleIcon className="size-5" />
+          </button>
+        ) : null}
         <Link href="/dashboard" onClick={onNavigate}>
           <Image
             src="/abtalks-logo.png"
@@ -315,18 +269,6 @@ export function DashboardSidebar({
             className="h-8 w-auto brightness-0"
           />
         </Link>
-        {collapsible && handleManualToggle ? (
-          <button
-            type="button"
-            onClick={handleManualToggle}
-            aria-expanded={!isCollapsed}
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
-            className="hidden size-8 items-center justify-center rounded-md text-[#4B4B4B] transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F]/10 hover:text-[#03535F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] md:inline-flex"
-          >
-            <MoreVertical className="size-4" aria-hidden />
-          </button>
-        ) : null}
       </div>
       {renderNav(false)}
       {renderFooter(false)}
@@ -336,31 +278,16 @@ export function DashboardSidebar({
   const collapsedContent = (
     <>
       <div className="flex h-[55px] shrink-0 items-center justify-center border-b border-[#E9E9E9]">
-        {handleManualToggle ? (
+        {onToggleCollapse ? (
           <button
             type="button"
-            onClick={handleManualToggle}
+            onClick={onToggleCollapse}
             aria-expanded={false}
             aria-label="Expand sidebar"
             title="Expand sidebar"
-            className="group relative flex size-9 items-center justify-center rounded-md text-black transition-colors duration-200 ease-[var(--ease-spark)] hover:bg-[#03535F]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F]"
+            className="abt-sidebar-toggle flex size-9 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F]"
           >
-            <span
-              aria-hidden
-              className="relative block h-6 w-[28px] overflow-hidden transition-opacity duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-0 group-focus-visible:opacity-0"
-            >
-              <Image
-                src="/abtalks-logo.png"
-                alt=""
-                width={120}
-                height={32}
-                className="absolute left-0 top-1/2 h-6 w-auto max-w-none -translate-y-1/2 brightness-0"
-              />
-            </span>
-            <Menu
-              aria-hidden
-              className="absolute size-4 text-[#03535F] opacity-0 transition-opacity duration-200 ease-[var(--ease-spark)] group-hover:opacity-100 group-focus-visible:opacity-100"
-            />
+            <SidebarToggleIcon className="size-5" />
           </button>
         ) : (
           <Link
@@ -391,8 +318,6 @@ export function DashboardSidebar({
   return (
     <>
       <aside
-        onMouseEnter={handleRailEnter}
-        onMouseLeave={handleRailLeave}
         className={cn(
           "sticky top-0 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-[#E9E9E9] bg-white md:flex",
           "transition-[width] duration-[420ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width]",

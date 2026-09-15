@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-15 [convention] Dashboard sidebar open/collapsed is click-only (no hover expand); brand row uses /sidebar-toggle.webp instead of cropped AB / three-dots.
 - 2026-09-15 [rule] T-224 Career Guidance algo v2: no jobs; progression.json edges (pool 8); days≥50 / Claude credential gates; slot daily mix (≤4) + one localStorage refill; soft-dedupe vs ACTIVE enrollments.
 - 2026-09-15 [rule] Recruiter assessment templates live on /hire/create-test; using a template publishes and assigns to ticked Shortlist candidates (preset ids + refs only). Customize still opens the locked builder. /hire/assessments is the list only.
 - 2026-09-15 [rule] Scout inspector non-contact reads (work history, External profiles, ABTalks Evidence) use resolveInspectorCandidate without challenge minDays; 50-day completion gate uses Math.max(attempts, Enrollment.daysCompleted); LeetCode/CodeChef bare hosts get https:// on save/display.
