@@ -1,5 +1,5 @@
 import { PipelineStage } from "@prisma/client";
-import { PIPELINE_STAGE_ORDER } from "@/repositories/talent-pipeline";
+import { PIPELINE_STAGE_ORDER } from "@/lib/pipeline-stages";
 
 /**
  * The nine stages in the order the board renders them, plus the human

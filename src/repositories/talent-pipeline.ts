@@ -2,6 +2,7 @@ import "server-only";
 import { PipelineStage, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { PIPELINE_STAGE_ORDER as SHARED_STAGE_ORDER } from "@/lib/pipeline-stages";
 
 /**
  * T-240 recruiter hiring pipeline — sole reader/writer for `TalentListItem`.
@@ -26,20 +27,12 @@ export function pipelineListName(recruiterProfileId: string): string {
 }
 
 /**
- * The nine stages in the order the board renders them, top-of-funnel first.
- * REJECTED / WITHDRAWN are terminal off-track states, kept at the end.
+ * Re-export the shared stage order so existing repository callers keep the
+ * `@/repositories/talent-pipeline` import — the leaf module in
+ * `@/lib/pipeline-stages.ts` is the one the client bundle sees, so a client
+ * component never pulls this server-only file through the graph.
  */
-export const PIPELINE_STAGE_ORDER: PipelineStage[] = [
-  PipelineStage.SOURCED,
-  PipelineStage.SHORTLISTED,
-  PipelineStage.CONTACTED,
-  PipelineStage.SCREENING,
-  PipelineStage.INTERVIEWING,
-  PipelineStage.OFFER,
-  PipelineStage.HIRED,
-  PipelineStage.REJECTED,
-  PipelineStage.WITHDRAWN,
-];
+export const PIPELINE_STAGE_ORDER = SHARED_STAGE_ORDER;
 
 export type PipelineWorkspace = {
   recruiterProfileId: string;
