@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { logger } from "@/lib/logger";
+import { fireAssessmentCompletedNotification } from "@/features/recruiter-notifications/hook-assessment-completed";
 import {
   attemptActionSchema,
   saveAnswerSchema,
@@ -125,6 +126,24 @@ export async function submitAssessmentAttemptAction(
       return { ok: false, message: result.message, status: statusFor(result.code) };
     }
     revalidateAttempt(parsed.data.assignmentId);
+
+    // T-249 #3: fire the assessment.completed notification for the
+    // recruiter who owns the assessment. Wrapped in try/catch by the
+    // helper itself; wrapped here again as belt-and-braces so a
+    // dispatch that somehow escapes still cannot fail the candidate's
+    // submit reply.
+    try {
+      await fireAssessmentCompletedNotification({
+        assignmentId: parsed.data.assignmentId,
+        candidateUserId: userId,
+      });
+    } catch (err) {
+      logger.warn("[assessment-attempt-actions] notify_wrapper_caught", {
+        assignmentId: parsed.data.assignmentId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     return {
       ok: true,
       data: { submittedAt: result.data.submittedAt.toISOString() },
