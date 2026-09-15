@@ -249,7 +249,7 @@ export function DashboardSidebar({
 
   const expandedContent = (
     <>
-      <div className={cn(SIDEBAR_BRAND_ROW_CLASS, "justify-start gap-1.5")}>
+      <div className={cn(SIDEBAR_BRAND_ROW_CLASS, "justify-start gap-2")}>
         {collapsible && onToggleCollapse ? (
           <button
             type="button"
@@ -262,13 +262,17 @@ export function DashboardSidebar({
             <SidebarToggleIcon className="size-5" />
           </button>
         ) : null}
-        <Link href="/dashboard" onClick={onNavigate}>
+        <Link
+          href="/dashboard"
+          onClick={onNavigate}
+          className="inline-flex h-8 items-center"
+        >
           <Image
             src="/abtalks-logo.png"
             alt="ABTalks"
             width={120}
             height={32}
-            className="h-8 w-auto brightness-0"
+            className="block h-7 w-auto brightness-0"
           />
         </Link>
       </div>
