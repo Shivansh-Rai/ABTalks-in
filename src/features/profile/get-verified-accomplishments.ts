@@ -187,11 +187,15 @@ export async function getVerifiedAccomplishments(
     })),
   );
   for (const { enrollment, stats } of challengeStats) {
-    if (stats.daysCompleted < CHALLENGE_ELIGIBLE_DAYS) continue;
+    // Prefer the higher of derived attempts and the Enrollment snapshot.
+    // ENABLE_NEW_PROGRESS can under-count when ActivityAttempt dual-write is
+    // incomplete while daysCompleted on the enrollment row is still correct.
+    const days = Math.max(stats.daysCompleted, enrollment.daysCompleted);
+    if (days < CHALLENGE_ELIGIBLE_DAYS) continue;
     out.push({
       key: `challenge-${enrollment.id}`,
       title: `60-Day ${certificateDomainLabel(enrollment.domain)} Challenge`,
-      detail: `${stats.daysCompleted} days completed`,
+      detail: `${days} days completed`,
       outcomeLabel: "Completed",
       occurredAt: enrollment.completedAt ?? enrollment.startedAt,
     });

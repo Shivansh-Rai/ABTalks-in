@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { decodeCandidateRef } from "@/features/hire/candidate-ref";
-import { resolveEligibleCandidates } from "@/features/hire/pool-policy";
+import { resolveInspectorCandidate } from "@/features/hire/pool-policy";
 import {
   hireViewSalt,
   istDayKey,
@@ -103,9 +103,9 @@ const EMPTY_WORK_HISTORY: InspectorWorkHistory = {
  * Jobs the candidate typed or resume-merge wrote, for the Scout inspector.
  *
  * Work history is not protected contact, so this does not wait on an unlock.
- * It still re-tests the handle against the searchable pool — a guessed ref
- * for someone who withdrew must not return their employers. Sample and
- * ineligible refs resolve to empty rather than an error, so the UI cannot
+ * It still re-tests the handle via {@link resolveInspectorCandidate} — a
+ * guessed ref for someone who withdrew must not return their employers. Sample
+ * and ineligible refs resolve to empty rather than an error, so the UI cannot
  * tell those cases apart.
  */
 export async function loadInspectorWorkHistoryAction(
@@ -127,7 +127,7 @@ export async function loadInspectorWorkHistoryAction(
   }
 
   try {
-    const [eligible] = await resolveEligibleCandidates([raw]);
+    const eligible = await resolveInspectorCandidate(raw);
     if (!eligible) {
       return { ok: true, data: EMPTY_WORK_HISTORY };
     }
@@ -152,8 +152,9 @@ export type InspectorExternalLinks = {
 /**
  * Declared GitHub / LeetCode / CodeChef profile URLs for View Detail (T-216).
  *
- * Same pool gate as work history. Protected contact stays off this payload.
- * UI must label every link SELF-REPORTED — these are not verified.
+ * Same addressability as work history ({@link resolveInspectorCandidate}).
+ * Protected contact stays off this payload. UI must label every link
+ * SELF-REPORTED — these are not verified.
  */
 export async function loadInspectorExternalLinksAction(
   input: unknown,
@@ -174,7 +175,7 @@ export async function loadInspectorExternalLinksAction(
   }
 
   try {
-    const [eligible] = await resolveEligibleCandidates([raw]);
+    const eligible = await resolveInspectorCandidate(raw);
     if (!eligible) {
       return { ok: true, data: { links: [] } };
     }
@@ -210,10 +211,10 @@ const EMPTY_TRACK_EVIDENCE: InspectorTrackEvidence = { items: [] };
  * Completed tracks and hackathon placements for the Scout inspector.
  *
  * Completions are not protected contact, so this does not wait on an unlock.
- * It still re-tests the handle against the searchable pool — a guessed ref
- * for someone who withdrew must not return their wins. Sample and ineligible
- * refs resolve to empty rather than an error, so the UI cannot tell those
- * cases apart.
+ * It still re-tests the handle via {@link resolveInspectorCandidate} — a
+ * guessed ref for someone who withdrew must not return their wins. Sample and
+ * ineligible refs resolve to empty rather than an error, so the UI cannot tell
+ * those cases apart.
  */
 export async function loadInspectorTrackEvidenceAction(
   input: unknown,
@@ -234,7 +235,7 @@ export async function loadInspectorTrackEvidenceAction(
   }
 
   try {
-    const [eligible] = await resolveEligibleCandidates([raw]);
+    const eligible = await resolveInspectorCandidate(raw);
     if (!eligible) {
       return { ok: true, data: EMPTY_TRACK_EVIDENCE };
     }

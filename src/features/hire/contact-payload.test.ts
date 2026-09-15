@@ -182,8 +182,8 @@ suite("inspector Experience is fetched jobs, not the track", () => {
 suite("work-history action gates on the pool and never selects contact", () => {
   const src = read("src/app/actions/hire-view-actions.ts");
   assert(
-    src.includes("resolveEligibleCandidates"),
-    "re-tests the ref against the searchable pool",
+    src.includes("resolveInspectorCandidate"),
+    "re-tests the ref for inspector addressability",
   );
   assert(
     src.includes("listPublicWorkHistory"),
@@ -206,8 +206,8 @@ suite("track-evidence action gates on the pool and uses wins-only accomplishment
   assert(start >= 0, "loadInspectorTrackEvidenceAction must exist");
   const fn = src.slice(start);
   assert(
-    fn.includes("resolveEligibleCandidates"),
-    "re-tests the ref against the searchable pool",
+    fn.includes("resolveInspectorCandidate"),
+    "re-tests the ref for inspector addressability",
   );
   assert(
     fn.includes('getVerifiedAccomplishments(eligible.userId, "wins-only")'),
@@ -221,12 +221,35 @@ suite("track-evidence action gates on the pool and uses wins-only accomplishment
   );
 });
 
+suite("inspector addressability skips challenge minDays", () => {
+  const src = read("src/features/hire/pool-policy.ts");
+  const start = src.indexOf("export async function resolveInspectorCandidate");
+  assert(start >= 0, "resolveInspectorCandidate must exist");
+  const fn = src.slice(start);
+  assert(
+    fn.includes("resolveChallengeRefs"),
+    "challenge refs still re-checked for enrollment + searchable",
+  );
+  assert(
+    !fn.includes("minDays") && !fn.includes("hireChallengePool"),
+    "inspector gate must not apply HIRE_CHALLENGE_POOL minDays",
+  );
+  const eligible = src.slice(
+    src.indexOf("export async function resolveEligibleCandidates"),
+    start,
+  );
+  assert(
+    eligible.includes("flag.minDays"),
+    "search/engagement eligibility still uses minDays",
+  );
+});
+
 suite("listPublicWorkHistory select has no contact fields", () => {
   const src = read("src/repositories/candidate-detail.ts");
   const start = src.indexOf("export async function listPublicWorkHistory");
-  const end = src.indexOf("/* ─── Legacy compatibility mirrors");
+  const end = src.indexOf("Declared GitHub / LeetCode / CodeChef links");
   assert(start >= 0 && end > start, "listPublicWorkHistory must exist");
-  const fn = src.slice(start, end);
+  const fn = stripComments(src.slice(start, end));
   assert(!fn.includes("phone: true"), "must not select phone");
   assert(!fn.includes("email: true"), "must not select email");
   assert(!fn.includes("linkedinUrl"), "must not select linkedinUrl");

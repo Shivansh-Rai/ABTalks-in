@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-15 [rule] Scout inspector non-contact reads (work history, External profiles, ABTalks Evidence) use resolveInspectorCandidate without challenge minDays; 50-day completion gate uses Math.max(attempts, Enrollment.daysCompleted); LeetCode/CodeChef bare hosts get https:// on save/display.
 - 2026-09-15 [convention] Scout inspector ABTalks Evidence lists pool-gated completions and hackathon placements only (50+ challenge days including Claude, finished ProgramEnrollment cohorts, ViCoDathon Winner/Runner Up/Second Runner Up/Top 5); in-progress track counts are not shown.
 - 2026-09-14 [convention] T-224 hub Career Guidance is a daily 4-card mix (profile recs first, then catalog check-ins/quotes with once/daily/weekly cadence); dismissals live in localStorage for the IST day and are not activity/evidence.
 - 2026-09-14 [rule] T-224: candidate dashboard Career Guidance recommends cohorts, hackathons, challenges, jobs and mocks only from the candidate's own profile and activity — no invented statistics.

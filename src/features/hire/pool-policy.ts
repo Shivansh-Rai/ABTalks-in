@@ -234,3 +234,47 @@ export async function resolveEligibleCandidates(
     return true;
   });
 }
+
+/**
+ * Addressability for Scout inspector non-contact reads (work history, declared
+ * coding links, completed-track evidence).
+ *
+ * Unlike {@link resolveEligibleCandidates}, challenge refs do **not** require
+ * `HIRE_CHALLENGE_POOL` or the submission minDays floor. That floor decides who
+ * enters search; once a recruiter already has a card open, employers / links /
+ * completions must still load. Unlock and shortlist keep the stricter gate.
+ *
+ * Still requires the discovery gate (`searchableUserWhere` via the resolve*
+ * helpers) and a real membership for the ref's source.
+ */
+export async function resolveInspectorCandidate(
+  candidateRef: string,
+): Promise<{ userId: string } | null> {
+  const ref = decodeCandidateRef(candidateRef);
+  if (!ref) return null;
+
+  if (ref.source === "PROGRAM") {
+    const [member] = await resolveProgramRefs([ref.id]);
+    return member ? { userId: member.userId } : null;
+  }
+  if (ref.source === "CLAUDE") {
+    const [row] = await resolveChallengeRefs([ref.id], [Domain.CLAUDE]);
+    return row ? { userId: row.userId } : null;
+  }
+  if (ref.source === "CHALLENGE_60") {
+    const [row] = await resolveChallengeRefs(
+      [ref.id],
+      [Domain.SE, Domain.DS, Domain.AI],
+    );
+    return row ? { userId: row.userId } : null;
+  }
+  if (ref.source === "HACKATHON") {
+    const [row] = await resolveHackathonRefs([ref.id]);
+    return row ? { userId: row.userId } : null;
+  }
+  if (ref.source === "PROFILE") {
+    const [row] = await resolveProfileRefs([ref.id]);
+    return row ? { userId: row.userId } : null;
+  }
+  return null;
+}

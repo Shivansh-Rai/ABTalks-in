@@ -158,7 +158,10 @@ function safeExternalProfileHref(
   url: string,
 ): string | null {
   try {
-    const parsed = new URL(url);
+    const withScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url.trim())
+      ? url.trim()
+      : `https://${url.trim()}`;
+    const parsed = new URL(withScheme);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
     const host = parsed.hostname.toLowerCase();
     if (provider === "GITHUB") {
