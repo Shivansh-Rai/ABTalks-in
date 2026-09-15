@@ -81,6 +81,11 @@ export function LoginClient({
     useState<LegalConsentValues>(DEFAULT_LEGAL_CONSENT);
 
   const target = safeRedirectPath(redirectTo, "/dashboard");
+  // Candidates headed for the dashboard pass through the Welcome Back screen,
+  // which forwards them on (see app/welcome/page.tsx).
+  const afterSignIn = /^\/dashboard(?:[/?#]|$)/.test(target)
+    ? `/welcome?next=${encodeURIComponent(target)}`
+    : target;
   const canSignIn = legalConsentAccepted(legalConsent);
 
   function ensureLegalAccepted(): boolean {
@@ -94,7 +99,7 @@ export function LoginClient({
     writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
-      await signIn("google", { callbackUrl: target });
+      await signIn("google", { callbackUrl: afterSignIn });
     } catch {
       toast.error("Could not start Google sign-in.");
       setPending(false);
@@ -113,7 +118,7 @@ export function LoginClient({
         redirect: false,
         // Relative path only — Auth.js may rewrite absolute URLs using AUTH_URL
         // (often localhost), which breaks login when the app is opened via a LAN IP.
-        callbackUrl: target,
+        callbackUrl: afterSignIn,
       });
       if (result?.error) {
         if (result.error !== "CredentialsSignin") {
@@ -129,7 +134,7 @@ export function LoginClient({
       }
       // Always stay on the origin the user opened (LAN IP vs localhost).
       // Do not follow result.url — it often points at AUTH_URL's host.
-      window.location.assign(target);
+      window.location.assign(afterSignIn);
     } catch {
       toast.error("Something went wrong. Try again.");
       setPending(false);
