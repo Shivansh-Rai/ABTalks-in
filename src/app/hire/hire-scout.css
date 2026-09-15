@@ -5844,18 +5844,13 @@ html.dark .vc-card {
 }
 
 /* ── /hire/assessments index: compact table (desktop) + cards (phones) ── */
+/* Fixed gutters, not a percentage: the page sits beside the ~350px recruiter
+   sidebar, and 70–80% of what's left squeezed the table into its compact
+   (icon-only, wrapped results) layout on normal laptop and desktop screens.
+   Phones keep the 720px card override below. */
 .hire-assess-list--index {
-  width: 80%;
-  margin: 20px auto 32px;
-}
-
-/* Extra side gutter on wide desktops so View results + ⋮ stay on the row.
-   721–1099px keeps 80% so the table is not narrower than its min-width.
-   Phones keep the 720px card override below — do not fold this into that. */
-@media (min-width: 1100px) {
-  .hire-assess-list--index {
-    width: 70%;
-  }
+  width: min(1440px, calc(100% - 64px));
+  margin: 24px auto 32px;
 }
 
 .hire-assess-list--index .hire-assess-list__head {
