@@ -184,7 +184,7 @@ export default async function CreateTestPage({
     );
   }
 
-  // 4) Template landing — picker only, no blank builder underneath.
+  // 4) Landing — templates first, then the blank builder underneath.
   const presetSummaries = listAssessmentPresets().map((p) => ({
     id: p.id,
     name: p.name,
@@ -207,6 +207,12 @@ export default async function CreateTestPage({
         </div>
       </div>
       <AssessmentPresetPicker presets={presetSummaries} candidates={candidates} />
+      <AssessmentBuilder
+        candidates={candidates}
+        existingDraft={null}
+        presetLocked={false}
+        embedded
+      />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createAndSendFromPresetsAction } from "@/app/actions/recruiter-assessment-actions";
@@ -141,9 +140,9 @@ export function AssessmentPresetPicker({
             then publish to shortlisted candidates or customize before sending.
           </p>
         </div>
-        <Link href="/hire/create-test?from=scratch" className="hire-assess-linkbtn">
-          Start from scratch
-        </Link>
+        <a href="#blank-assessment" className="hire-assess-linkbtn">
+          Start from blank ↓
+        </a>
       </div>
 
       <div className="hire-assess-presets__grid">

@@ -16,6 +16,7 @@ import {
   getAssessmentMonitor,
   getAttemptActivity,
   deleteAssessment,
+  duplicateAssessment,
   listAssessments,
   publishAssessment,
   type AssessmentListStoreRow,
@@ -1336,6 +1337,34 @@ async function run() {
     assert(!mismatch.ok && mismatch.code === "NOT_FOUND", "wrong assessmentId");
     const nonStrict = await getAttemptActivity(store, SCOPE_A, created.data.id, asg.id, new Date());
     assert(nonStrict.ok && nonStrict.data.summary === null, "non-strict summary null");
+  });
+
+  await suite("L1. duplicate: published → new DRAFT copy, content only; foreign → NOT_FOUND", async () => {
+    const store = inMemoryStore();
+    const notifier = fakeNotifier();
+    const source = await publishedAssessment(store);
+    await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: source,
+      candidateRefs: FIRST_THREE,
+    });
+    const assignmentsBefore = store.assignments.size;
+
+    const copy = await duplicateAssessment(store, SCOPE_A, source);
+    assert(copy.ok, "duplicate ok");
+    if (!copy.ok) return;
+    assert(copy.data.id !== source, "new id");
+    const original = store.rows.get(source)!;
+    const dup = store.rows.get(copy.data.id)!;
+    assert(dup.status === "DRAFT", "copy is DRAFT");
+    assert(dup.title === `Copy of ${original.title}`, "title prefixed");
+    assert(dup.questions.length === original.questions.length, "questions copied");
+    assert(dup.passMarkPercent === original.passMarkPercent, "pass mark copied");
+    assert(dup.durationMinutes === original.durationMinutes, "duration copied");
+    assert(original.status === "PUBLISHED", "source untouched");
+    assert(store.assignments.size === assignmentsBefore, "no assignments copied");
+
+    const foreign = await duplicateAssessment(store, SCOPE_B, source);
+    assert(!foreign.ok && foreign.code === "NOT_FOUND", "other workspace");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

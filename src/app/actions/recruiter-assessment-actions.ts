@@ -18,6 +18,7 @@ import {
   createPublishAndAssign,
   createPublishAndAssignFromPresets,
   deleteAssessment,
+  duplicateAssessment,
   publishAssessment,
   saveAssessmentDraft,
   type AssessmentNotifier,
@@ -114,6 +115,38 @@ export async function deleteRecruiterAssessmentAction(
       error: String(error),
     });
     return { ok: false, message: "Failed to delete assessment" };
+  }
+}
+
+export async function duplicateRecruiterAssessmentAction(
+  input: unknown,
+): Promise<ActionOk<{ id: string }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = deleteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+
+  try {
+    const result = await duplicateAssessment(
+      prismaAssessmentStore(),
+      scopeFrom(workspace.data),
+      parsed.data.assessmentId,
+    );
+    if (!result.ok) {
+      return {
+        ok: false,
+        message: result.message,
+        status: statusFor(result.code),
+      };
+    }
+    revalidatePath("/hire/assessments");
+    return { ok: true, data: { id: result.data.id } };
+  } catch (error) {
+    logger.error("[recruiter-assessment-actions] duplicate", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to duplicate assessment" };
   }
 }
 

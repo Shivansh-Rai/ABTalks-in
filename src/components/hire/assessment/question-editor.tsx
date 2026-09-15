@@ -118,6 +118,9 @@ export function QuestionEditor({
         <span className="hire-assess-q__badge">Provided by ABTalks</span>
       ) : null}
       <div className="hire-assess-q__head">
+        <span className="hire-assess-q__num" aria-hidden="true">
+          Q{index + 1}
+        </span>
         <label className="hire-assess-q__type">
           <span>Type</span>
           <select
@@ -340,7 +343,7 @@ export function QuestionEditor({
         )}
         <button
           type="button"
-          className="hire-assess-linkbtn"
+          className="hire-assess-linkbtn hire-assess-linkbtn--danger"
           disabled={total <= 1}
           onClick={onDelete}
         >

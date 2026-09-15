@@ -5451,20 +5451,22 @@ html.dark .vc-card {
 }
 
 @media (min-width: 1100px) {
-  .hire-assess__panes {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
+  /* Desktop: the form takes the full width and the candidate preview opens
+     in a modal ("Open preview"), so the inline preview pane and the
+     Edit/Preview toggle are hidden. Below 1100px the toggle switches panes. */
+  .hire-assess__form[data-active="false"] {
+    display: flex;
   }
 
-  .hire-assess__form[data-active="false"],
-  .hire-assess__preview[data-active="false"] {
-    display: block;
-  }
-
-  /* Both panes are always on screen here, so Edit/Preview has nothing to
-     switch (plan 131). It stays below 1100px, where the panes do switch. */
+  .hire-assess__preview,
   .hire-assess__seg {
     display: none;
+  }
+}
+
+@media (max-width: 1099px) {
+  .hire-assess__previewbtn {
+    display: none !important;
   }
 }
 
@@ -5671,7 +5673,23 @@ html.dark .vc-card {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(224, 82, 38, 0.28);
+  box-shadow: 0 4px 12px rgba(3, 83, 95, 0.22);
+  transition:
+    background-color 200ms var(--ease),
+    transform 200ms var(--ease),
+    box-shadow 200ms var(--ease);
+}
+
+.hire-assess__savebtn:not(:disabled):hover {
+  background: var(--h-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(3, 83, 95, 0.28);
+}
+
+.hire-assess__savebtn--ghost:not(:disabled):hover {
+  background: var(--h-peach, #e7f2f3);
+  color: var(--h-primary);
+  box-shadow: none;
 }
 
 .hire-assess__savebtn:disabled {
@@ -5817,6 +5835,419 @@ html.dark .vc-card {
   color: var(--h-gray-500, #78716c);
 }
 
+/* ── /hire/assessments index: compact table (desktop) + cards (phones) ── */
+.hire-assess-list--index {
+  width: 80%;
+  margin: 20px auto 32px;
+}
+
+.hire-assess-list--index .hire-assess-list__head {
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.hire-assess-list__heading {
+  min-width: 0;
+}
+
+.hire-assess-list__count {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--h-gray-600, #787878);
+}
+
+.hire-app a.hire-assess-list__cta,
+.hire-app a.hire-assess-list__cta:hover {
+  color: #fff;
+}
+
+.hire-assess-list__cta svg {
+  flex: none;
+  transition: transform 250ms var(--ease);
+}
+
+.hire-assess-list__cta:hover svg {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-assess-list__cta:hover svg {
+    transform: none;
+  }
+}
+
+.hire-assess-index__table-wrap {
+  background: var(--h-surface, #fff);
+  border-color: var(--h-border, #e9e9e9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.hire-assess-index__table {
+  min-width: 840px;
+  font-size: 14px;
+}
+
+.hire-assess-index__table th {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--h-surface, #fff);
+}
+
+.hire-assess-index__table td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  transition: background-color 150ms var(--ease);
+}
+
+.hire-assess-index__table th:first-child,
+.hire-assess-index__table td:first-child {
+  width: 36%;
+  min-width: 240px;
+  padding-left: 20px;
+}
+
+.hire-assess-index__table th:last-child,
+.hire-assess-index__table td:last-child {
+  padding-right: 12px;
+}
+
+.hire-assess-index__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.hire-assess-index__table tbody tr:hover td {
+  background: rgba(3, 83, 95, 0.035);
+}
+
+.hire-assess-index__table td.hire-assess-index__main {
+  white-space: normal;
+}
+
+.hire-assess-index__main .hire-assess-list__title,
+.hire-assess-card__title {
+  display: block;
+  color: var(--h-ink, #000);
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.hire-assess-index__main .hire-assess-list__title:hover,
+.hire-assess-card__title:hover {
+  color: var(--h-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hire-assess-index__setup,
+.hire-assess-card__setup {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--h-gray-600, #787878);
+}
+
+.hire-assess-index__date {
+  font-size: 13px;
+  color: var(--h-gray-500, #8f8f8f);
+}
+
+.hire-assess-index__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Status — readable at a glance, quieter than the title. */
+.hire-assess-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--h-pill, #f4f4f4);
+  color: var(--h-pill-ink, #4b4b4b);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hire-assess-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--h-gray-400, #a5a5a5);
+}
+
+.hire-assess-badge[data-status="published"] {
+  background: var(--h-peach, #e7f2f3);
+  color: var(--h-primary);
+}
+
+.hire-assess-badge[data-status="published"]::before {
+  background: var(--h-primary);
+}
+
+/* Results — one group, not three columns. */
+.hire-assess-results {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  font-size: 13px;
+  color: var(--h-gray-600, #787878);
+}
+
+.hire-assess-index__table .hire-assess-results {
+  flex-wrap: nowrap;
+}
+
+.hire-assess-results__item {
+  white-space: nowrap;
+}
+
+.hire-assess-results__item + .hire-assess-results__item::before {
+  content: "·";
+  margin: 0 8px;
+  color: var(--h-gray-400, #a5a5a5);
+}
+
+.hire-assess-results__item b {
+  font-weight: 700;
+  color: var(--h-ink, #000);
+  font-variant-numeric: tabular-nums;
+}
+
+.hire-assess-results__item[data-tone="pass"] b {
+  color: #197e23;
+}
+
+.hire-assess-results__item[data-tone="fail"] b {
+  color: #b91c1c;
+}
+
+.hire-assess-results__none {
+  font-size: 13px;
+  color: var(--h-gray-500, #8f8f8f);
+}
+
+/* Primary row action — a small secondary button: clearly clickable, never
+   louder than the page's one filled CTA. */
+a.hire-assess-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 152px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(3, 83, 95, 0.28);
+  border-radius: 10px;
+  background: var(--h-surface, #fff);
+  color: var(--h-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
+}
+
+.hire-assess-action svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+.hire-assess-action:hover {
+  border-color: var(--h-primary);
+  background: var(--h-peach, #e7f2f3);
+  box-shadow: 0 2px 6px rgba(3, 83, 95, 0.12);
+}
+
+.hire-assess-action:focus-visible,
+.hire-assess-more:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+/* ⋮ View more */
+.hire-assess-more {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--h-gray-700, #626262);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+
+.hire-assess-more svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hire-assess-more:hover,
+.hire-assess-more[data-popup-open] {
+  background: rgba(3, 83, 95, 0.08);
+  color: var(--h-primary);
+}
+
+.hire-assess-more:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.hire-app.hire-menu.hire-assess-menu {
+  width: 15rem;
+  padding: 6px;
+}
+
+.hire-app.hire-menu.hire-assess-menu [data-slot="dropdown-menu-item"] {
+  min-height: 38px;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.hire-app.hire-menu.hire-assess-menu [data-slot="dropdown-menu-item"] svg {
+  color: var(--h-gray-600, #787878);
+}
+
+.hire-app.hire-menu.hire-assess-menu .hire-assess-menu__danger,
+.hire-app.hire-menu.hire-assess-menu .hire-assess-menu__danger svg {
+  color: #b91c1c;
+}
+
+.hire-app.hire-menu.hire-assess-menu .hire-assess-menu__danger:hover,
+.hire-app.hire-menu.hire-assess-menu .hire-assess-menu__danger:focus {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.hire-assess-menu__locked span {
+  display: flex;
+  flex-direction: column;
+}
+
+.hire-assess-menu__locked small {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--h-gray-500, #8f8f8f);
+}
+
+/* Cards are the phone layout only. */
+.hire-assess-cards {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .hire-assess-list--index {
+    width: calc(100% - 24px);
+    margin: 16px auto 24px;
+  }
+
+  .hire-assess-list--index .hire-assess-list__head {
+    margin-bottom: 14px;
+  }
+
+  .hire-assess-index__table-wrap {
+    display: none;
+  }
+
+  .hire-assess-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hire-assess-card {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 14px 14px 16px;
+    border: 1px solid var(--h-border, #e9e9e9);
+    border-radius: 14px;
+    background: var(--h-surface, #fff);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .hire-assess-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .hire-assess-card__title {
+    padding-top: 2px;
+    font-size: 17px;
+    line-height: 23px;
+  }
+
+  /* ⋮ grows to a comfortable touch target, pulled into the card corner. */
+  .hire-assess-card .hire-assess-more {
+    width: 44px;
+    height: 44px;
+    margin: -8px -8px 0 0;
+  }
+
+  .hire-assess-card__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--h-gray-500, #8f8f8f);
+  }
+
+  .hire-assess-card__setup {
+    margin: 10px 0 0;
+  }
+
+  .hire-assess-card__results {
+    margin-top: 6px;
+  }
+
+  .hire-assess-card a.hire-assess-card__action {
+    width: 100%;
+    height: 44px;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hire-assess-list--index .hire-assess-list__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hire-assess-list__cta {
+    width: 100%;
+  }
+}
+
 /* ── Assessment templates (presets) ─────────────────────────────── */
 .hire-assess-presets {
   margin: 8px 0 28px;
@@ -5846,7 +6277,7 @@ html.dark .vc-card {
 
 .hire-assess-presets__back {
   display: block;
-  width: min(1120px, calc(100% - 32px));
+  width: min(1600px, calc(100% - 32px));
   margin: 24px auto 0;
   color: var(--h-gray-500, #78716c);
   font-size: 13px;
@@ -5950,8 +6381,7 @@ html.dark .vc-card {
 }
 
 .hire-assess-presets__bar {
-  position: sticky;
-  bottom: 16px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -6019,31 +6449,6 @@ html.dark .vc-card {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--h-gray-500, #78716c);
-}
-
-@media (max-width: 720px) {
-  .hire-assess-list__table thead {
-    display: none;
-  }
-
-  .hire-assess-list__table,
-  .hire-assess-list__table tbody,
-  .hire-assess-list__table tr,
-  .hire-assess-list__table td {
-    display: block;
-    width: 100%;
-  }
-
-  .hire-assess-list__table tr {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(28, 25, 23, 0.08);
-  }
-
-  .hire-assess-list__table td {
-    border: 0;
-    padding: 4px 0;
-    white-space: normal;
-  }
 }
 
 /* T-244 — assessment detail: publish, assign, monitor. Same palette and radii
@@ -6227,36 +6632,443 @@ html.dark .vc-card {
   }
 }
 
-/* The list table above collapses to label-less blocks on phones. The monitor
-   has three date columns, which only read as a table, so it stays one and
-   scrolls inside .hire-assess-list__table-wrap instead. Same specificity as
-   the collapse rules, later in source, so these win. */
+/* The monitor has three date columns, which only read as a table, so on phones
+   it stays one and scrolls inside .hire-assess-list__table-wrap. (The index
+   list swaps its table for .hire-assess-cards instead — see below.) */
+.hire-assess-detail__monitor {
+  scroll-margin-top: 16px;
+}
+
+/* ── Assessment builder (/hire/create-test) ───────────────────────── */
+.hire-assess {
+  width: min(1600px, calc(100% - 64px));
+}
+
+.hire-assess--embedded {
+  width: 100%;
+  margin: 40px 0 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--h-border, #e9e9e9);
+  scroll-margin-top: 16px;
+}
+
+.hire-assess__embedded-title {
+  margin: 0;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 600;
+}
+
+.hire-assess--builder .hire-assess__top {
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+
+.hire-assess__heading {
+  min-width: 0;
+}
+
+.hire-assess__top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hire-assess__previewbtn,
+.hire-assess__addbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(3, 83, 95, 0.28);
+  border-radius: 10px;
+  background: var(--h-surface, #fff);
+  color: var(--h-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
+}
+
+.hire-assess__previewbtn svg,
+.hire-assess__addbtn svg,
+.hire-assess__addrow svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.hire-assess__previewbtn:hover,
+.hire-assess__addbtn:hover {
+  border-color: var(--h-primary);
+  background: var(--h-peach, #e7f2f3);
+  box-shadow: 0 2px 6px rgba(3, 83, 95, 0.12);
+}
+
+.hire-assess__addbtn {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.hire-assess__callout {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--h-primary);
+  border-radius: 10px;
+  background: var(--h-peach-wash, #eef6f6);
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--h-gray-700, #626262);
+}
+
+.hire-assess__callout p {
+  margin: 0;
+}
+
+.hire-assess__callout p + p {
+  margin-top: 4px;
+}
+
+/* The form is a stack of section cards, not one white box. */
+.hire-assess--builder .hire-assess__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+@media (max-width: 1099px) {
+  .hire-assess--builder .hire-assess__form[data-active="false"] {
+    display: none;
+  }
+}
+
+.hire-assess__card,
+.hire-assess--builder .hire-assess__questions,
+.hire-assess--builder .hire-assess__send {
+  margin: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--h-border, #e9e9e9);
+  border-radius: 16px;
+  background: var(--h-surface, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.hire-assess__card-title,
+.hire-assess--builder .hire-assess__questions-head h2,
+.hire-assess--builder .hire-assess__send-head h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.hire-assess--builder .hire-assess__questions-head h2,
+.hire-assess--builder .hire-assess__send-head h2 {
+  margin: 0;
+}
+
+.hire-assess__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+
+.hire-assess__grid-full {
+  grid-column: 1 / -1;
+}
+
+.hire-assess--builder .hire-assess-field {
+  margin-bottom: 14px;
+  color: var(--h-gray-700, #626262);
+}
+
+.hire-assess--builder .hire-assess__grid > .hire-assess-field:last-child {
+  margin-bottom: 0;
+}
+
+.hire-assess--builder .hire-assess-field input,
+.hire-assess--builder .hire-assess-field textarea,
+.hire-assess--builder .hire-assess-q__type select,
+.hire-assess--builder .hire-assess-q__points input {
+  min-height: 42px;
+  color: var(--h-ink, #000);
+}
+
+.hire-assess--builder .hire-assess-field textarea {
+  resize: vertical;
+}
+
+.hire-assess--builder .hire-assess-field input:disabled {
+  background: var(--h-pill, #f4f4f4);
+  color: var(--h-gray-500, #8f8f8f);
+}
+
+.hire-assess--builder .hire-assess__settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 16px 20px;
+  margin: 0;
+}
+
+.hire-assess-setting .hire-assess-field {
+  margin-bottom: 8px;
+}
+
+.hire-assess-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--h-gray-700, #626262);
+  cursor: pointer;
+}
+
+.hire-assess-check input,
+.hire-assess-setting--toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--h-primary);
+}
+
+.hire-assess-setting--toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--h-border, #e9e9e9);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.hire-assess-setting--toggle input {
+  margin-top: 2px;
+  flex: none;
+}
+
+.hire-assess-setting--toggle:hover {
+  border-color: rgba(3, 83, 95, 0.35);
+}
+
+.hire-assess-setting--toggle:has(input:checked) {
+  border-color: var(--h-primary);
+  background: var(--h-peach-wash, #eef6f6);
+}
+
+.hire-assess-setting__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hire-assess-setting__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--h-ink, #000);
+}
+
+.hire-assess--builder .hire-assess__questions-head {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hire-assess__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--h-peach, #e7f2f3);
+  color: var(--h-primary);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.hire-assess--builder .hire-assess-q {
+  padding: 16px 18px;
+  border-color: var(--h-border, #e9e9e9);
+  border-radius: 14px;
+  background: #fbfbfb;
+}
+
+.hire-assess--builder .hire-assess-q__head {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 260px) 110px auto;
+  align-items: end;
+  gap: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.hire-assess--builder .hire-assess-q--locked .hire-assess-q__head {
+  padding-right: 150px;
+}
+
+.hire-assess-q__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 42px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--h-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hire-assess--builder .hire-assess-q__points input {
+  width: 100%;
+}
+
+.hire-assess--builder .hire-assess-q__head > .hire-assess-q__required {
+  height: 42px;
+}
+
+.hire-assess--builder .hire-assess-options li {
+  gap: 10px;
+}
+
+.hire-assess--builder .hire-assess-q__actions {
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--h-border, #e9e9e9);
+}
+
+.hire-assess__addrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  margin-top: 4px;
+  border: 1px dashed rgba(3, 83, 95, 0.35);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--h-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.hire-assess__addrow:hover {
+  border-color: var(--h-primary);
+  background: var(--h-peach-wash, #eef6f6);
+}
+
+.hire-assess--builder .hire-assess__send .hire-assess-assign__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.hire-assess--builder .hire-assess__save {
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0;
+  padding: 16px 24px;
+  border: 1px solid var(--h-border, #e9e9e9);
+  border-radius: 16px;
+  background: var(--h-surface, #fff);
+}
+
+.hire-assess__save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Candidate preview modal (portalled outside .hire-app). */
+.hire-assess-preview-modal__body {
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -20px -20px;
+  padding: 16px 20px 20px;
+  border-top: 1px solid #e9e9e9;
+  background: #f7f7f7;
+}
+
+@media (max-width: 900px) {
+  .hire-assess--builder .hire-assess__settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hire-assess-setting--toggle {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 720px) {
-  .hire-assess-detail__table {
-    display: table;
+  .hire-assess {
+    width: calc(100% - 24px);
+  }
+
+  .hire-assess--embedded {
     width: 100%;
   }
 
-  .hire-assess-detail__table thead {
-    display: table-header-group;
+  .hire-assess__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .hire-assess-detail__table tbody {
-    display: table-row-group;
+  .hire-assess__card,
+  .hire-assess--builder .hire-assess__questions,
+  .hire-assess--builder .hire-assess__send,
+  .hire-assess--builder .hire-assess__save {
+    padding: 16px;
   }
 
-  .hire-assess-detail__table tr {
-    display: table-row;
-    padding: 0;
-    border-bottom: 0;
+  .hire-assess--builder .hire-assess-q {
+    padding: 14px;
   }
 
-  .hire-assess-detail__table td {
-    display: table-cell;
-    width: auto;
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(28, 25, 23, 0.06);
-    white-space: nowrap;
+  .hire-assess--builder .hire-assess-q__head {
+    grid-template-columns: auto minmax(0, 1fr) 90px;
+  }
+
+  .hire-assess--builder .hire-assess-q--locked .hire-assess-q__head {
+    padding-right: 0;
+    padding-top: 28px;
+  }
+
+  .hire-assess--builder .hire-assess-q__head > .hire-assess-q__required {
+    grid-column: 1 / -1;
+    height: auto;
+  }
+
+  .hire-assess--builder .hire-assess-q__actions {
+    justify-content: flex-start;
+  }
+
+  .hire-assess__save-actions,
+  .hire-assess__save-actions .hire-assess__savebtn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hire-assess--builder .hire-assess__settings {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 /* ------------------------------------------------------------------

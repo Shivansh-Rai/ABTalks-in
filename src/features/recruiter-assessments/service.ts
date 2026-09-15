@@ -328,6 +328,49 @@ export async function deleteAssessment(
 }
 
 /**
+ * Copy any owned assessment (draft or published) into a new DRAFT. Only the
+ * content is copied — never assignments, results, publishedAt or strictMode.
+ * The copy goes through createAssessment, so it is validated like a fresh save.
+ */
+export async function duplicateAssessment(
+  store: AssessmentStore,
+  scope: Scope,
+  assessmentId: string,
+): Promise<Result<{ id: string }>> {
+  const row = await store.findOwned(assessmentId, scope);
+  if (!row) return NOT_FOUND("Assessment not found");
+  return createAssessment(store, scope, {
+    title: `Copy of ${row.title}`.slice(0, 200),
+    subheading: row.subheading,
+    instructions: row.instructions,
+    durationMinutes: row.durationMinutes,
+    passMarkPercent: row.passMarkPercent,
+    cameraRequired: row.cameraRequired,
+    shortlistRefs: row.shortlistRefs,
+    questions: row.questions.map((q) => {
+      const base = {
+        title: q.title,
+        helpText: q.helpText,
+        isRequired: q.isRequired,
+        points: q.points,
+      };
+      if (q.type === "MULTIPLE_CHOICE") {
+        return {
+          ...base,
+          type: q.type,
+          allowMultipleCorrect: q.allowMultipleCorrect,
+          options: q.options.map((o) => ({ body: o.body, isCorrect: o.isCorrect })),
+        };
+      }
+      if (q.type === "PARAGRAPH") {
+        return { ...base, type: q.type, maxWords: q.maxWords ?? undefined };
+      }
+      return { ...base, type: q.type, uploadDestinationUrl: q.uploadDestinationUrl ?? "" };
+    }),
+  });
+}
+
+/**
  * DRAFT → PUBLISHED. The store sets strictMode (T-219) in the same guarded write.
  */
 export async function publishAssessment(
