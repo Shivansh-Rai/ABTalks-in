@@ -3191,6 +3191,10 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app .hire-podbar button:not(.hir
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: flex-start;
+  justify-self: start;
   margin: 0 0 18px;
   height: 32px;
   padding: 0 12px 0 10px;
@@ -3441,7 +3445,11 @@ html.dark:not(:has(.theme-abtalks-light)) [data-slot="dialog-overlay"]:has(+ .hi
   --ring: 188 94% 19%;
   min-height: 0;
   height: auto;
-  max-height: 90vh;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
   width: calc(100% - 2rem);
   padding: 22px 22px 20px;
   background: var(--h-surface);
@@ -13191,10 +13199,28 @@ a.hire-credits:hover { border-color: var(--h-primary); }
 .hire-credits--empty { border-color: var(--h-warn-ink); }
 .hire-credits--empty .hire-credits__value { color: #b42318; }
 
-.hire-creditsx { display: grid; gap: 20px; }
-.hire-creditsx .hire-jobs__head { margin-bottom: 0; }
-.hire-creditsx h2 { margin: 0; font-size: 22px; line-height: 30px; font-weight: 700; }
-.hire-creditsx p { margin: 0; color: #626262; font-size: 15px; line-height: 24px; }
+.hire-creditsx { display: grid; gap: 16px; }
+.hire-creditsx > .hire-back {
+  justify-self: start;
+}
+.hire-creditsx .hire-jobs__head {
+  margin-bottom: 0;
+  gap: 6px;
+}
+.hire-creditsx .hire-jobs__head h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 38px;
+}
+.hire-creditsx .hire-jobs__head p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  max-width: none;
+  white-space: nowrap;
+}
+.hire-creditsx h2 { margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; }
+.hire-creditsx p { margin: 0; color: #626262; font-size: 14px; line-height: 22px; }
 .hire-creditsx__alert { display: grid; gap: 6px; padding: 16px 18px; border-radius: 14px; border: 1px solid; }
 .hire-creditsx__alert strong { font-size: 16px; }
 .hire-creditsx__alert a { color: var(--h-primary); font-weight: 600; font-size: 14px; }
@@ -13207,13 +13233,67 @@ a.hire-credits:hover { border-color: var(--h-primary); }
 .hire-creditsx__stat span { color: #787878; font-size: 13px; }
 .hire-creditsx__stat strong { font-size: 26px; line-height: 34px; font-variant-numeric: tabular-nums; }
 .hire-creditsx__stat.is-strong strong { color: var(--h-primary); }
-.hire-creditsx__grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.hire-creditsx__side { display: grid; gap: 16px; }
-.hire-creditsx__card { display: grid; gap: 10px; padding: 20px; border-radius: 15px; background: #ffffff; border: 1px solid var(--h-border); }
-.hire-creditsx__card .hire-jobs__btn { justify-self: start; text-decoration: none; }
+.hire-creditsx__grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.hire-creditsx__side { display: flex; flex-direction: column; gap: 14px; }
+.hire-creditsx__card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid var(--h-border);
+}
+.hire-creditsx__card > div:first-child,
+.hire-creditsx__card > p:first-child {
+  margin-bottom: 0;
+}
+.hire-creditsx__card--plan {
+  justify-content: flex-start;
+}
+.hire-creditsx__card--plan h2 {
+  margin: 4px 0 16px;
+}
+.hire-creditsx__side .hire-creditsx__card {
+  flex: 1;
+  padding: 18px 20px;
+  gap: 8px;
+}
+.hire-creditsx__side .hire-creditsx__card h2 {
+  font-size: 18px;
+  line-height: 24px;
+}
+.hire-creditsx__side .hire-creditsx__card p {
+  font-size: 13px;
+  line-height: 20px;
+}
+.hire-creditsx__card .hire-jobs__btn {
+  justify-self: end;
+  align-self: flex-end;
+  margin-top: auto;
+  padding-top: 10px;
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  text-decoration: none;
+}
 .hire-creditsx__card .hire-jobs__btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.hire-creditsx .hire-creditsx__kicker { display: flex; align-items: center; gap: 8px; color: #787878; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.hire-creditsx__badge { padding: 2px 8px; border-radius: 999px; background: var(--h-warn); color: var(--h-warn-ink); font-size: 11px; letter-spacing: 0.02em; }
+.hire-creditsx .hire-creditsx__kicker { display: flex; align-items: center; gap: 8px; color: #787878; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.hire-creditsx__kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hire-creditsx__badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--h-warn);
+  color: var(--h-warn-ink);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
 .hire-creditsx__facts { display: grid; margin: 0; }
 .hire-creditsx__facts > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--h-border); font-size: 14px; }
 .hire-creditsx__facts dt { color: #626262; }

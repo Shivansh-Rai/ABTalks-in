@@ -26,6 +26,8 @@ type DashboardShellProps = {
   sectionNavItems?: HeaderSectionNavItem[];
   /** Extra classes on the header/footer content pane. */
   contentClassName?: string;
+  /** False on public routes where user may be signed out. Default true. */
+  signedIn?: boolean;
 };
 
 export function DashboardShell({
@@ -36,6 +38,7 @@ export function DashboardShell({
   showSectionNav = true,
   sectionNavItems,
   contentClassName,
+  signedIn = true,
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   // Default to collapsed. Overridden after mount by whatever the user last
@@ -89,6 +92,7 @@ export function DashboardShell({
         collapsible={collapsible}
         collapsed={collapsible ? collapsed : false}
         onToggleCollapse={collapsible ? toggleCollapsed : undefined}
+        signedIn={signedIn}
       />
 
       {mobileOpen ? (

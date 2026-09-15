@@ -6,7 +6,8 @@ export type NavIconKey =
   | "award"
   | "zap"
   | "user"
-  | "clipboard";
+  | "clipboard"
+  | "bot";
 
 export type NavItem = {
   label: string;
@@ -76,6 +77,7 @@ export const SIDEBAR_FOOTER_ROW_CLASS =
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "grid" },
+  { label: "AI Mock Interviews", href: "/mock-interviews", icon: "bot" },
   { label: "Events And Workshops", href: "/workshop", icon: "presentation" },
   { label: "Marketplace", href: "/marketplace", icon: "store" },
   { label: "Jobs", href: "/jobs", icon: "briefcase" },

@@ -173,6 +173,9 @@ export function AppFooter() {
   if (pathname === "/ai" || pathname === "/ds" || pathname === "/se") {
     return null;
   }
+  if (pathname === "/mock-interviews" || pathname.startsWith("/mock-interviews/")) {
+    return null;
+  }
   if (pathname.startsWith("/challenge/")) return null;
   if (pathname === "/") return null;
 

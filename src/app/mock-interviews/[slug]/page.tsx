@@ -8,6 +8,7 @@ import { getPack } from "@/features/interview/platform/packs";
 import { getRubric } from "@/features/interview/platform/rubrics";
 import { MIN_ANSWERED_TO_SCORE } from "@/features/interview/platform/service";
 import { MockInterviewSession } from "@/components/mock-interview/session";
+import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -62,83 +63,112 @@ export default async function MockInterviewDomainPage({
       ? "Spoken, with a whiteboard"
       : "Spoken";
 
+  const shellUser = {
+    name: session?.user?.name ?? "",
+    email: session?.user?.email ?? "",
+    image: session?.user?.image ?? null,
+  };
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 md:py-14">
-      <Link
-        href="/mock-interviews"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
-      >
-        <ArrowLeft className="size-3.5" strokeWidth={2} />
-        All mock interviews
-      </Link>
-
-      <header className="mt-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8F8F8F]">
-          {domain.family}
-          {" · "}
-          Practice
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#000000]">
-          {domain.label}
-        </h1>
-        {/*
-          `domain.blurb` is deliberately NOT rendered here. It is the catalogue
-          card's one-line teaser, and the "What this interview is for" panel
-          below says the same thing at more length — showing both made the page
-          state its premise twice within a screen.
-        */}
-
-        <dl className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#4B4B4B]">
-          <div className="flex items-center gap-1.5">
-            <Clock className="size-4 text-[#8F8F8F]" strokeWidth={2} />
-            <dd>{minutes} minutes</dd>
-          </div>
-          {pack ? (
-            <div className="flex items-center gap-1.5">
-              <dd>{pack.questions.length} questions, plus follow-ups</dd>
-            </div>
-          ) : null}
-          <div className="flex items-center gap-1.5">
-            {usesEditor ? (
-              <Code2 className="size-4 text-[#8F8F8F]" strokeWidth={2} />
-            ) : (
-              <Mic className="size-4 text-[#8F8F8F]" strokeWidth={2} />
-            )}
-            <dd>{format}</dd>
-          </div>
-        </dl>
-      </header>
-
-      {domain.purpose ? (
-        <section
-          className="mt-7 rounded-[16px] border border-[#E0E0E0] bg-[#EEF6F6] p-5"
-          aria-labelledby="purpose"
+    <DashboardShell
+      user={shellUser}
+      isAdmin={session?.user?.isAdmin ?? false}
+      showSectionNav={false}
+      signedIn={signedIn}
+    >
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 md:py-12">
+        <Link
+          href="/mock-interviews"
+          className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
         >
-          <h2
-            id="purpose"
-            className="text-[15px] font-semibold text-[#000000]"
+          <ArrowLeft className="size-3.5" strokeWidth={2} />
+          All mock interviews
+        </Link>
+
+        <header className="mt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8F8F8F]">
+            {domain.family}
+            {" · "}
+            Practice
+          </p>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#000000]">
+            {domain.label}
+          </h1>
+
+          <dl className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#4B4B4B]">
+            <div className="flex items-center gap-1.5">
+              <Clock className="size-4 text-[#8F8F8F]" strokeWidth={2} />
+              <dd>{minutes} minutes</dd>
+            </div>
+            {pack ? (
+              <div className="flex items-center gap-1.5">
+                <dd>{pack.questions.length} questions, plus follow-ups</dd>
+              </div>
+            ) : null}
+            <div className="flex items-center gap-1.5">
+              {usesEditor ? (
+                <Code2 className="size-4 text-[#8F8F8F]" strokeWidth={2} />
+              ) : (
+                <Mic className="size-4 text-[#8F8F8F]" strokeWidth={2} />
+              )}
+              <dd>{format}</dd>
+            </div>
+          </dl>
+        </header>
+
+        {domain.purpose ? (
+          <section
+            className="mt-7 rounded-[16px] border border-[#E0E0E0] bg-[#EEF6F6] p-5"
+            aria-labelledby="purpose"
           >
-            What this interview is for
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#4B4B4B]">
-            {domain.purpose}
-          </p>
-        </section>
-      ) : null}
+            <h2
+              id="purpose"
+              className="text-[15px] font-semibold text-[#000000]"
+            >
+              What this interview is for
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#4B4B4B]">
+              {domain.purpose}
+            </p>
+          </section>
+        ) : null}
 
-      {!startable ? (
-        <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#F4F4F4] p-5">
-
-          <h2 className="text-[15px] font-semibold text-[#000000]">
-            Not available yet
-          </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-[#4B4B4B]">
-            This interview is on the roadmap. Its question pack has not been
-            written yet, so it cannot be started.
-          </p>
-        </div>
-      ) : (
-        <>
+        {!startable ? (
+          <div className="mt-8 rounded-[16px] border border-[#E0E0E0] bg-[#F4F4F4] p-5">
+            <h2 className="text-[15px] font-semibold text-[#000000]">
+              Not available yet
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-[#4B4B4B]">
+              This interview is on the roadmap. Its question pack has not been
+              written yet, so it cannot be started.
+            </p>
+          </div>
+        ) : (
+          <>
+            <section className="mt-8" aria-labelledby="start">
+              <h2 id="start" className="sr-only">
+                Start this interview
+              </h2>
+              {signedIn ? (
+                <MockInterviewSession
+                  domainSlug={domain.slug}
+                  domainLabel={domain.label}
+                  minAnsweredToScore={MIN_ANSWERED_TO_SCORE}
+                />
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/login"
+                    className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
+                  >
+                    Sign in to practise
+                  </Link>
+                  <span className="text-[13px] text-[#8F8F8F]">
+                    Free with any ABTalks account.
+                  </span>
+                </div>
+              )}
+            </section>
           {pack ? (
             <section className="mt-9" aria-labelledby="covers">
               <h2 id="covers" className="text-lg font-semibold text-[#000000]">
@@ -207,33 +237,9 @@ export default async function MockInterviewDomainPage({
               </li>
             </ul>
           </section>
-
-          <section className="mt-9" aria-labelledby="start">
-            <h2 id="start" className="sr-only">
-              Start this interview
-            </h2>
-            {signedIn ? (
-              <MockInterviewSession
-                domainSlug={domain.slug}
-                domainLabel={domain.label}
-                minAnsweredToScore={MIN_ANSWERED_TO_SCORE}
-              />
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/login"
-                  className="inline-flex h-11 items-center justify-center rounded-[12px] bg-[#03535F] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#076573]"
-                >
-                  Sign in to practise
-                </Link>
-                <span className="text-[13px] text-[#8F8F8F]">
-                  Free with any ABTalks account.
-                </span>
-              </div>
-            )}
-          </section>
         </>
       )}
-    </div>
+      </main>
+    </DashboardShell>
   );
 }

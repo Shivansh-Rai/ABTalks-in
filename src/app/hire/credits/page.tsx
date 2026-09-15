@@ -75,11 +75,20 @@ export default async function HireCreditsPage() {
 
   return (
     <div className="hire-jobs hire-creditsx">
-      <nav className="hire-jobs__crumb" aria-label="Breadcrumb">
-        <span>Hiring</span>
-        <span aria-hidden="true">›</span>
-        <span aria-current="page">Credits</span>
-      </nav>
+      <Link href="/hire" className="hire-back">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 19 8 12l7-7" />
+        </svg>
+        <span>Back to Scout</span>
+      </Link>
 
       <div className="hire-jobs__head">
         <div>
@@ -111,7 +120,7 @@ export default async function HireCreditsPage() {
       </section>
 
       <div className="hire-creditsx__grid">
-        <section className="hire-creditsx__card" aria-labelledby="plan-h">
+        <section className="hire-creditsx__card hire-creditsx__card--plan" aria-labelledby="plan-h">
           <p className="hire-creditsx__kicker">Current plan</p>
           <h2 id="plan-h">Free</h2>
           <dl className="hire-creditsx__facts">
@@ -151,12 +160,8 @@ export default async function HireCreditsPage() {
             <p className="hire-creditsx__kicker">Need more credits?</p>
             <h2 id="more-h">Contact ABTalks</h2>
             <p>
-              Email ABTalks at{" "}
-              <a href={CONTACT_HREF} className="hire-creditsx__mail">
-                {LEGAL_ENTITY.email}
-              </a>{" "}
-              and we will add credits to your account. There is no online
-              purchase yet.
+              Email us and we will add credits to your account. There is no
+              online purchase yet.
             </p>
             <a href={CONTACT_HREF} className="hire-jobs__btn">
               Email {LEGAL_ENTITY.email}
@@ -167,16 +172,17 @@ export default async function HireCreditsPage() {
             className="hire-creditsx__card hire-creditsx__card--soon"
             aria-labelledby="soon-h"
           >
-            <p className="hire-creditsx__kicker">
-              Bigger plans <span className="hire-creditsx__badge">Coming soon</span>
-            </p>
+            <div className="hire-creditsx__kicker-row">
+              <p className="hire-creditsx__kicker">Bigger plans</p>
+              <span className="hire-creditsx__badge">Coming soon</span>
+            </div>
             <h2 id="soon-h">Higher limits are on the way</h2>
             <p>
               Larger plans with more credits and higher limits are coming. Buying
               credits online is not available yet.
             </p>
             <button type="button" className="hire-jobs__btn" disabled>
-              Buy credits · Coming soon
+              Buy credits
             </button>
           </section>
         </div>
@@ -238,9 +244,6 @@ export default async function HireCreditsPage() {
         ) : null}
       </section>
 
-      <p className="hire-creditsx__foot">
-        <Link href="/hire/projects">Back to projects</Link>
-      </p>
     </div>
   );
 }

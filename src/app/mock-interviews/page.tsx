@@ -9,6 +9,7 @@ import {
 import { getCatalogue } from "@/features/interview/platform/service";
 import { resolvePlatformUserId } from "@/features/interview/platform/provider";
 import { MockInterviewCatalog } from "@/components/mock-interview/catalog";
+import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import type { CatalogueEntry } from "@/features/interview/platform/service";
 
 export const dynamic = "force-dynamic";
@@ -53,18 +54,30 @@ export default async function MockInterviewsPage() {
     }));
   }
 
+  const shellUser = {
+    name: session?.user?.name ?? "",
+    email: session?.user?.email ?? "",
+    image: session?.user?.image ?? null,
+  };
+
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 md:py-14">
-      {/* The only entry point into this section that is not reached FROM
-          somewhere, so it is the only one that needs its own way back. The
-          detail and report pages already carry theirs. */}
-      <Link
-        href={signedIn ? "/dashboard" : "/"}
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
-      >
-        <ArrowLeft className="size-3.5" strokeWidth={2} />
-        {signedIn ? "Back to dashboard" : "Back to ABTalks"}
-      </Link>
+    <DashboardShell
+      user={shellUser}
+      isAdmin={session?.user?.isAdmin ?? false}
+      showSectionNav={false}
+      signedIn={signedIn}
+    >
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        {/* The only entry point into this section that is not reached FROM
+            somewhere, so it is the only one that needs its own way back. The
+            detail and report pages already carry theirs. */}
+        <Link
+          href={signedIn ? "/dashboard" : "/"}
+          className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
+        >
+          <ArrowLeft className="size-3.5" strokeWidth={2} />
+          {signedIn ? "Back to dashboard" : "Back to ABTalks"}
+        </Link>
 
       {/* ------------------------------------------------------------ hero */}
       <header className="mt-5 max-w-2xl">
@@ -167,6 +180,7 @@ export default async function MockInterviewsPage() {
           ))}
         </ol>
       </section>
-    </div>
+      </main>
+    </DashboardShell>
   );
 }
