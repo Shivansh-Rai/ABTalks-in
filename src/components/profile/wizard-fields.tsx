@@ -286,12 +286,18 @@ export const PwSuggest = forwardRef<
      * every keystroke of a half-typed word.
      */
     onPick?: (value: string) => void;
+    /**
+     * How many matches to show. Cities stay capped so the panel stays short;
+     * education departments need the full branch list (~50).
+     */
+    maxSuggestions?: number;
   }
 >(function PwSuggest(
   {
     suggestions,
     search,
     onPick,
+    maxSuggestions = 12,
     className,
     onChange,
     onFocus,
@@ -323,7 +329,7 @@ export const PwSuggest = forwardRef<
         // is offerable, so an already-picked tag stays out of the list.
         search(q).filter((s) => allowed.has(s.toLowerCase()))
       : suggestions.filter((s) => (q ? s.toLowerCase().includes(q) : true))
-  ).slice(0, 12);
+  ).slice(0, maxSuggestions);
 
   function pick(value: string) {
     const el = inputRef.current;
@@ -373,7 +379,14 @@ export const PwSuggest = forwardRef<
       />
       {open && filtered.length > 0
         ? createPortal(
-            <ul ref={setMenu} className="pw-suggest-list pw-anchored" role="listbox">
+            <ul
+              ref={setMenu}
+              className="pw-suggest-list pw-anchored"
+              role="listbox"
+              // Keep the wheel inside the panel — otherwise the sheet behind
+              // scrolls and the list feels stuck after the first screenful.
+              onWheel={(e) => e.stopPropagation()}
+            >
               {filtered.map((s) => (
                 <li key={s} role="option" aria-selected={s === text}>
                   <button

@@ -2303,8 +2303,15 @@ suite("B.E and B.Tech are one degree, and departments follow the degree", () => 
 
   // A degree offers its own branches, not everyone else's.
   const btech = departmentsForDegree("B.Tech");
-  assert(btech.includes("Computer Science and Engineering"), "engineering for B.Tech");
+  assert(
+    btech.includes("Computer Science and Engineering (CSE)"),
+    "engineering for B.Tech",
+  );
   assert(!btech.includes("Marketing"), "and not management");
+  assert(
+    btech.includes("Artificial Intelligence And Data Science"),
+    "AI & DS is offered for B.Tech",
+  );
   const bcom = departmentsForDegree("B.Com");
   assert(bcom.includes("Accounting and Finance"), "commerce for B.Com");
   assert(!bcom.includes("Mechanical Engineering"), "and not engineering");
@@ -2330,6 +2337,10 @@ suite("B.E and B.Tech are one degree, and departments follow the degree", () => 
   assert(
     section.includes("departmentsForDegree(degree"),
     "the Department field reads the degree beside it",
+  );
+  assert(
+    section.includes("maxSuggestions={80}"),
+    "department suggestions are not capped at a dozen rows",
   );
 });
 

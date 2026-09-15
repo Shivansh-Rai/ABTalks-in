@@ -178,6 +178,7 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
                     id={`edu-field-${index}`}
                     placeholder="Enter your field of study"
                     suggestions={departmentsForDegree(degree ?? "")}
+                    maxSuggestions={80}
                     {...register(`rows.${index}.fieldOfStudy`)}
                   />
                 </PwField>
