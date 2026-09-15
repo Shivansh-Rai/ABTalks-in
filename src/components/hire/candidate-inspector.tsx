@@ -30,6 +30,7 @@ import {
   rememberEvidence,
 } from "@/components/hire/evidence-cache";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
+import { AddToPipelineButton } from "@/components/hire/pipeline/add-to-pipeline-button";
 import { PanelResizer } from "@/components/hire/panel-resizer";
 import { EvidenceResumeBody } from "@/components/hire/evidence-resume";
 import { HireScoreChart } from "@/components/hire/hire-score-chart";
@@ -700,6 +701,12 @@ export function CandidateInspector({
               candidateRef={match.candidateRef}
               jobRole={match.jobRole}
               match={match}
+            />
+            {/* T-240: promote the row into the persistent hiring pipeline
+                board. Idempotent, so a repeat click stays a no-op. */}
+            <AddToPipelineButton
+              candidateRef={match.candidateRef}
+              fallbackLabel={match.displayName ?? match.jobRole}
             />
             {/* For a locked preview this still opens the plan dialog. For a
                 readable candidate the resume is now a section of this panel,

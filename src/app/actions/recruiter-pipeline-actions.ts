@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
+import { resolveInspectorCandidate } from "@/features/hire/pool-policy";
 import {
   addToPipeline,
   moveStage,
@@ -13,6 +15,7 @@ import {
   addToPipelineInputSchema,
   moveStageInputSchema,
   removeItemInputSchema,
+  pipelineStageSchema,
 } from "@/lib/validations/pipeline";
 
 /**
@@ -83,6 +86,68 @@ export async function addCandidateToPipelineAction(
     },
     {
       candidateUserId: parsed.data.candidateUserId,
+      label,
+      stage: parsed.data.stage,
+    },
+  );
+
+  if (!result.ok) return { ok: false, message: result.message };
+
+  revalidatePath("/hire/pipeline");
+  return { ok: true, data: result.data };
+}
+
+const addRefInputSchema = z.object({
+  candidateRef: z.string().min(1).max(200),
+  stage: pipelineStageSchema.optional(),
+  fallbackLabel: z.string().max(200).optional(),
+});
+
+/**
+ * Bridge from the Scout candidate inspector: caller passes a `candidateRef`
+ * ("PROGRAM:xxx", "CLAUDE:xxx", …) and the server decodes it, resolves the
+ * User id via the same helper the inspector already uses for its own reads
+ * (`resolveInspectorCandidate`), then adds. Idempotent.
+ */
+export async function addCandidateRefToPipelineAction(
+  input: unknown,
+): Promise<ActionOk<{ itemId: string; created: boolean }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) {
+    return { ok: false, message: workspace.message, status: 403 };
+  }
+
+  const parsed = addRefInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid pipeline input.",
+      status: 400,
+    };
+  }
+
+  const resolved = await resolveInspectorCandidate(parsed.data.candidateRef);
+  if (!resolved) {
+    return {
+      ok: false,
+      message: "That candidate is no longer available.",
+      status: 404,
+    };
+  }
+
+  const label = await labelForCandidate(
+    resolved.userId,
+    parsed.data.fallbackLabel ?? "Candidate",
+  );
+
+  const result = await addToPipeline(
+    {
+      userId: workspace.data.userId,
+      recruiterProfileId: workspace.data.recruiterProfileId,
+      organizationId: workspace.data.organizationId,
+    },
+    {
+      candidateUserId: resolved.userId,
       label,
       stage: parsed.data.stage,
     },
