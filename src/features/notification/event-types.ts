@@ -100,6 +100,31 @@ export const EVENT_TYPE_REGISTRY: Record<string, EventTypeConfig> = {
     emailExempt: false,
     defaultEmailEnabled: true,
   },
+  // T-249: the recruiter's own assessment finished. Priority "important"
+  // opens the email path; the T-248 preference row still gates opt-in
+  // per-recruiter. Suppression-exempt so a busy day of completions is
+  // never quietly rolled up — every finish is one attention signal.
+  "assessment.completed": {
+    key: "assessment.completed",
+    label: "Assessment completed",
+    priority: "important",
+    suppressionExempt: true,
+    emailExempt: false,
+    defaultEmailEnabled: true,
+  },
+  // T-249: admin-broadcast system notice targeted at one recruiter. The
+  // emit site (broadcastRecruiterSystemNoticeAction) is gated by
+  // requireAdmin(), so the notification path itself does not enforce
+  // authorization — only surface. emailExempt is false because a system
+  // issue that matters enough to broadcast is worth the email.
+  "system.notice": {
+    key: "system.notice",
+    label: "System notice",
+    priority: "important",
+    suppressionExempt: true,
+    emailExempt: false,
+    defaultEmailEnabled: true,
+  },
 };
 
 export const EVENT_TYPES = Object.keys(EVENT_TYPE_REGISTRY);

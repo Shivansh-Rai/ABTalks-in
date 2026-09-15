@@ -178,11 +178,19 @@ suite("no code outside the T-240 repo writes TalentListItem", () => {
   );
 });
 
-suite("no notification dispatch from this ticket (T-249 boundary)", () => {
+suite("notifications only through the T-249 aggregator (no direct dispatch)", () => {
   const code = stripComments(helper ?? "");
+  // T-249 landed and now wires application.received here. The rule is
+  // that we go through the aggregator (notifyApplicationReceived) and
+  // never call notification-service.dispatch directly — a wording
+  // change must ripple through one file, not this one.
   assert(
-    !/notification-service|dispatch\s*\(/.test(code),
-    "T-247 must not fire notifications — that's T-249's ticket, separate branch",
+    !/from\s+"@\/features\/notification\/notification-service"/.test(code),
+    "T-247 helper must not import from notification-service directly; use the T-249 aggregator",
+  );
+  assert(
+    !/\bdispatch\s*\(/.test(code),
+    "T-247 helper must not call dispatch() directly; use the T-249 aggregator",
   );
 });
 

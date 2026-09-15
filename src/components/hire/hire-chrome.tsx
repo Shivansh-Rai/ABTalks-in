@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Bookmark, Briefcase, ClipboardCheck, FolderKanban, KanbanSquare, Menu, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
+import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { HireJourney } from "@/components/hire/hire-journey";
@@ -353,6 +354,12 @@ export function HireChrome({
                   <span>Search history</span>
                 </Link>
               )}
+              {/* T-249: recruiter needs a visible surface for the notifications
+                  this ticket writes (application.received, assessment.completed,
+                  application.status_changed, system.notice). Without the bell
+                  the sheet's "told when something needs you" acceptance line
+                  cannot be met inside /hire/*. Same component candidates use. */}
+              <NotificationBellButton className="abt-header-icon" />
               <RecruiterAccountMenu account={account} />
             </>
           ) : (

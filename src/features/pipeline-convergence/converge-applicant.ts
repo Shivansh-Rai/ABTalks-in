@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { ensureRecruiterWorkspace } from "@/features/hire/provision-recruiter";
 import { addToPipeline } from "@/repositories/talent-pipeline";
+import { notifyApplicationReceived } from "@/features/recruiter-notifications/notify-recruiter";
 
 /**
  * T-247 applicant → pipeline convergence.
@@ -116,5 +117,17 @@ export async function convergeApplicantToPipeline({
       candidateUserId: application.userId,
       message: result.message,
     });
+    // Pipeline write failed — deliberately do NOT dispatch the T-249
+    // notification. The href would point at an empty board.
+    return;
   }
+
+  // T-249 #1: fire application.received now that the pipeline row
+  // exists. The aggregator wraps dispatch in try/catch, so a failure
+  // here logs and returns without disturbing the applicant.
+  await notifyApplicationReceived({
+    recruiterUserId,
+    applicationId,
+    candidateLabel: label,
+  });
 }
