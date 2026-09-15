@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NotificationComposer } from "@/components/admin/notification-composer";
 import { NotificationsTable } from "@/components/admin/notifications-table";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getAdminNotifications } from "@/features/notification/admin-data";
 
 export default async function AdminNotificationsPage() {
@@ -9,16 +10,10 @@ export default async function AdminNotificationsPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">
-          Notifications
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Push an announcement to the notification bell. Workshop, hackathon and
-          cohort notifications are generated automatically from their dates and
-          do not appear here.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Communications"
+        description="In-app announcements. Email delivery is on Delivery Log. There is no SMS channel."
+      />
 
       <NotificationComposer />
 

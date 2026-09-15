@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StudentsFilters } from "@/components/admin/students-filters";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { formatDateIST } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import {
@@ -98,13 +99,10 @@ export default async function AdminStudentsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">Students</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Showing {Math.min(students.length, 100)} of {filteredCount} matching students
-          {students.length >= 100 ? " (max 100)" : ""}
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Candidates"
+        description={`Showing ${Math.min(students.length, 100)} of ${filteredCount} matching candidates${students.length >= 100 ? " (max 100)" : ""}.`}
+      />
 
       <StudentsFilters domainCounts={domainCounts} trackCounts={trackCounts} />
 

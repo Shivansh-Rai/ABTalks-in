@@ -29,6 +29,7 @@ import type {
 export function searchableUserWhere(): Prisma.UserWhereInput {
   return {
     deletedAt: null,
+    disabledAt: null,
     visibility: { is: { searchableByRecruiters: true, withdrawnAt: null } },
   };
 }

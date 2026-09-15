@@ -8,6 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { AdminActionFilterType } from "@/features/admin/get-admin-actions-feed";
 
@@ -52,7 +53,11 @@ export function AdminActionsFilters({
     );
   }, [admins, currentAdmin]);
 
-  function pushParams(next: { type?: AdminActionFilterType; admin?: string }) {
+  function pushParams(next: {
+    type?: AdminActionFilterType;
+    admin?: string;
+    q?: string;
+  }) {
     const params = new URLSearchParams(searchParams.toString());
     if (next.type !== undefined) {
       if (next.type === "all") params.delete("type");
@@ -61,6 +66,11 @@ export function AdminActionsFilters({
     if (next.admin !== undefined) {
       if (next.admin === "all") params.delete("admin");
       else params.set("admin", next.admin);
+    }
+    if (next.q !== undefined) {
+      const q = next.q.trim();
+      if (!q) params.delete("q");
+      else params.set("q", q);
     }
     params.delete("page");
     const qs = params.toString();
@@ -113,6 +123,26 @@ export function AdminActionsFilters({
           </SelectContent>
         </Select>
       </div>
+
+      <form
+        className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          pushParams({ q: String(fd.get("q") ?? "") });
+        }}
+      >
+        <label className="shrink-0 text-sm text-muted-foreground" htmlFor="admin-actions-q">
+          Search
+        </label>
+        <Input
+          id="admin-actions-q"
+          name="q"
+          defaultValue={searchParams.get("q") ?? ""}
+          placeholder="Action, entity id, reason, actor"
+          className="w-full sm:w-[320px]"
+        />
+      </form>
     </div>
   );
 }

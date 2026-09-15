@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
 import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
+import { AccountOpsDialog } from "@/components/admin/account-ops-dialog";
 import {
   removeFromChallengeAction,
   resetProgressAction,
@@ -29,6 +30,7 @@ interface StudentActionPanelProps {
   studentName: string;
   isReadyForInterview: boolean;
   isActive: boolean;
+  disabledAt: string | null;
 }
 
 function ActionDialog({
@@ -84,6 +86,7 @@ export function StudentActionPanel({
   studentName,
   isReadyForInterview,
   isActive,
+  disabledAt,
 }: StudentActionPanelProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -223,6 +226,24 @@ export function StudentActionPanel({
       </ActionDialog>
 
       <DeleteUserAccountDialog userId={studentId} userName={studentName} />
+
+      <AccountOpsDialog
+        targetUserId={studentId}
+        targetName={studentName}
+        op="disable"
+        disabled={Boolean(disabledAt)}
+      />
+      <AccountOpsDialog
+        targetUserId={studentId}
+        targetName={studentName}
+        op="restore"
+        disabled={!disabledAt}
+      />
+      <AccountOpsDialog
+        targetUserId={studentId}
+        targetName={studentName}
+        op="secure"
+      />
     </div>
   );
 }

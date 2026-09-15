@@ -17,6 +17,7 @@ import { PROFILE_QUICK_SKILLS } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
+import { DeleteOwnAccountDialog } from "@/components/profile/delete-own-account-dialog";
 import { BasicInfoSection } from "@/components/profile/basic-info-section";
 import { ExperienceSection } from "@/components/profile/experience-section";
 import { EducationSection } from "@/components/profile/education-section";
@@ -467,6 +468,15 @@ export default async function ProfilePage() {
         avatarUploadEnabled={isAvatarStorageConfigured()}
         performance={performance}
       />
+      <div className="border-t px-4 py-6">
+        <h2 className="font-display text-base font-semibold">Delete account</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          This removes your data from ABTalks and cannot be undone.
+        </p>
+        <div className="mt-3">
+          <DeleteOwnAccountDialog />
+        </div>
+      </div>
     </DashboardShell>
   );
 }

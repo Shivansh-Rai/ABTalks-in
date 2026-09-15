@@ -50,6 +50,7 @@ export async function anonymizeUser(
   await tx.adminAction.create({
     data: {
       adminUserId,
+      actorUserId: adminUserId,
       targetUserId: userId,
       actionType: "DELETE_USER_ACCOUNT",
       metadata: { softDelete: true },

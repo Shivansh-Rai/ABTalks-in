@@ -50,9 +50,11 @@ console.log("\nrecruiter visibility gate");
 suite("the gate requires searchable, not-withdrawn, not-deleted", () => {
   const g = searchableUserWhere() as {
     deletedAt: null;
+    disabledAt: null;
     visibility: { is: { searchableByRecruiters: boolean; withdrawnAt: null } };
   };
   assert(g.deletedAt === null, "deleted users must be excluded");
+  assert(g.disabledAt === null, "disabled users must be excluded");
   assert(
     g.visibility.is.searchableByRecruiters === true,
     "searchableByRecruiters must be required true",
@@ -520,7 +522,10 @@ suite("T-216 inspector external links are the only declared-URL surface", () => 
   const overviewIdx = inspector.indexOf('data-section="overview"');
   const moreIdx = inspector.indexOf('data-section="more"');
   const extIdx = inspector.indexOf("External profiles");
-  assert(overviewIdx > 0 && moreIdx > overviewIdx && extIdx > 0);
+  assert(
+    overviewIdx > 0 && moreIdx > overviewIdx && extIdx > 0,
+    "overview/more/external markers exist",
+  );
   assert(
     extIdx > overviewIdx && extIdx < moreIdx,
     "External profiles must render inside Overview, before More",

@@ -20,11 +20,13 @@ export type RecruiterState =
 
 export type RecruiterDirectoryRow = {
   id: string;
+  userId: string;
   fullName: string;
   company: string;
   phone: string | null;
   createdAt: string;
   email: string;
+  disabledAt: string | null;
   /** Whether the 078 workspace rows exist for this recruiter yet. */
   hasWorkspace: boolean;
   /** Open introduction requests this recruiter has placed. */
@@ -43,7 +45,7 @@ export async function listRecruiters(): Promise<RecruiterDirectoryRow[]> {
       company: true,
       phone: true,
       createdAt: true,
-      user: { select: { email: true } },
+      user: { select: { email: true, disabledAt: true } },
     },
   });
   if (rows.length === 0) return [];
@@ -72,11 +74,13 @@ export async function listRecruiters(): Promise<RecruiterDirectoryRow[]> {
 
   return rows.map((r) => ({
     id: r.id,
+    userId: r.userId,
     fullName: r.fullName,
     company: r.company,
     phone: r.phone,
     createdAt: r.createdAt.toISOString(),
     email: r.user.email ?? "",
+    disabledAt: r.user.disabledAt ? r.user.disabledAt.toISOString() : null,
     hasWorkspace: withWorkspace.has(r.userId),
     openCandidateAsks: asksByUser.get(r.userId) ?? 0,
   }));

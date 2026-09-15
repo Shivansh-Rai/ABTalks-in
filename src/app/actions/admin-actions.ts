@@ -127,6 +127,7 @@ export async function resetProgressAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId,
           actionType: "RESET_PROGRESS",
           reason,
@@ -207,6 +208,7 @@ export async function toggleReadyForInterviewAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId,
           actionType: "TOGGLE_READY_FOR_INTERVIEW",
           metadata: { newValue },
@@ -255,6 +257,7 @@ export async function removeFromChallengeAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId,
           actionType: "REMOVE_FROM_CHALLENGE",
           reason,
@@ -441,6 +444,7 @@ export async function rejectSubmissionAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId,
           actionType: "REJECT_SUBMISSION",
           metadata: {
@@ -528,6 +532,7 @@ export async function grantSynergyAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId,
           actionType: "GRANT_SYNERGY",
           metadata: { points },

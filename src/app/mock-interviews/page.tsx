@@ -6,7 +6,7 @@ import {
   listDomains,
   toDomainSummary,
 } from "@/features/interview/platform/domains";
-import { getCatalogue } from "@/features/interview/platform/service";
+import { getCatalogue, getFreeMockRemaining } from "@/features/interview/platform/service";
 import { resolvePlatformUserId } from "@/features/interview/platform/provider";
 import { MockInterviewCatalog } from "@/components/mock-interview/catalog";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
@@ -36,6 +36,7 @@ export default async function MockInterviewsPage() {
   const signedIn = Boolean(session?.user?.id);
 
   let entries: CatalogueEntry[];
+  let freeRemaining: number | null = null;
 
   if (signedIn) {
     const userId = await resolvePlatformUserId();
@@ -47,6 +48,9 @@ export default async function MockInterviewsPage() {
             ...toDomainSummary(d),
             completedAttempts: 0,
           }));
+    if (userId) {
+      freeRemaining = await getFreeMockRemaining(userId);
+    }
   } else {
     entries = listDomains().map((d) => ({
       ...toDomainSummary(d),
@@ -92,6 +96,11 @@ export default async function MockInterviewsPage() {
           know, follows up on what you actually say, and gives you a report that
           cites your own answers rather than a generic score.
         </p>
+        {freeRemaining !== null ? (
+          <p className="mt-3 text-sm text-[#4B4B4B]">
+            You have {freeRemaining} free mock interviews remaining.
+          </p>
+        ) : null}
 
         <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-sm text-[#4B4B4B]">
           <li className="flex items-center gap-2">

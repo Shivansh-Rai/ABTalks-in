@@ -137,6 +137,13 @@ export async function countCompletedAttempts(
   });
 }
 
+/** Completed attempts across every domain. Drives the free mock allowance. */
+export async function countAllCompletedAttempts(userId: string): Promise<number> {
+  return prisma.mockInterview.count({
+    where: { userId, status: "COMPLETED" },
+  });
+}
+
 /**
  * The next attempt number for a (user, domain).
  *
@@ -176,8 +183,10 @@ export async function createAttempt(params: {
   capabilities: string[];
   plan: InterviewPlan;
   state: InterviewState;
+  tx?: Prisma.TransactionClient;
 }): Promise<{ id: string }> {
-  return prisma.mockInterview.create({
+  const db = params.tx ?? prisma;
+  return db.mockInterview.create({
     data: {
       userId: params.userId,
       domainSlug: params.domainSlug,
@@ -433,6 +442,7 @@ export async function closeAttemptWithoutScoring(
   userId: string,
   status: "ABANDONED" | "INVALID",
   reason: string | null,
+  _technicalFailure = false,
 ): Promise<void> {
   await prisma.mockInterview.updateMany({
     where: { id: interviewId, userId, status: "IN_PROGRESS" },

@@ -75,6 +75,15 @@ export async function getOverviewStats() {
     liveSubmissionsRaw,
     recentAdminActionsRaw,
     recentRecruitersRaw,
+    totalRecruiters,
+    recruiterCreatedAt,
+    creditsThisWeek,
+    creditsLastWeek,
+    emailsSent,
+    emailsSentThisWeek,
+    emailsFailedThisWeek,
+    emailsFailedRecent,
+    disabledRecent,
   ] = await Promise.all([
     countRegisteredUsers(),
     prisma.submission.findMany({
@@ -112,7 +121,13 @@ export async function getOverviewStats() {
     prisma.adminAction.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
-      include: {
+      select: {
+        id: true,
+        actionType: true,
+        createdAt: true,
+        actorUserId: true,
+        entityType: true,
+        entityId: true,
         admin: {
           select: {
             email: true,
@@ -141,6 +156,60 @@ export async function getOverviewStats() {
         user: { select: { email: true } },
       },
     }),
+    prisma.recruiterProfile.count(),
+    prisma.recruiterProfile.findMany({
+      where: { createdAt: { gte: windowStart } },
+      select: { createdAt: true },
+    }),
+    prisma.creditTransaction.aggregate({
+      where: {
+        amount: { lt: 0 },
+        createdAt: { gte: thisWeekStart, lt: thisWeekEnd },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.creditTransaction.aggregate({
+      where: {
+        amount: { lt: 0 },
+        createdAt: { gte: lastWeekStart, lt: lastWeekEnd },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.outboundDelivery.count({ where: { status: "SENT" } }),
+    prisma.outboundDelivery.count({
+      where: { status: "SENT", createdAt: { gte: thisWeekStart, lt: thisWeekEnd } },
+    }),
+    prisma.outboundDelivery.count({
+      where: {
+        status: "FAILED",
+        createdAt: { gte: thisWeekStart, lt: thisWeekEnd },
+      },
+    }),
+    prisma.outboundDelivery.findMany({
+      where: { status: "FAILED" },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        kind: true,
+        failureReason: true,
+        createdAt: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: { disabledAt: { not: null }, deletedAt: null },
+      orderBy: { disabledAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        email: true,
+        disabledAt: true,
+        disabledReason: true,
+        name: true,
+        studentProfile: { select: { fullName: true } },
+        recruiterProfile: { select: { fullName: true } },
+      },
+    }),
   ]);
 
   const newStudentsThisWeek = registrationDates.filter(
@@ -162,6 +231,27 @@ export async function getOverviewStats() {
   }
   const totalStudentsSeries = last14Keys.map((key) => seriesBuckets.get(key) ?? 0);
 
+  const recruiterBuckets = new Map<string, number>();
+  for (const key of last14Keys) recruiterBuckets.set(key, 0);
+  for (const row of recruiterCreatedAt) {
+    const key = formatInTimeZone(row.createdAt, IST, "yyyy-MM-dd");
+    if (recruiterBuckets.has(key)) {
+      recruiterBuckets.set(key, (recruiterBuckets.get(key) ?? 0) + 1);
+    }
+  }
+  const totalRecruitersSeries = last14Keys.map(
+    (key) => recruiterBuckets.get(key) ?? 0,
+  );
+  const newRecruitersThisWeek = recruiterCreatedAt.filter(
+    (row) => row.createdAt >= thisWeekStart && row.createdAt < thisWeekEnd,
+  ).length;
+  const newRecruitersLastWeek = recruiterCreatedAt.filter(
+    (row) => row.createdAt >= lastWeekStart && row.createdAt < lastWeekEnd,
+  ).length;
+
+  const creditsUsedMinor = Math.abs(creditsThisWeek._sum.amount ?? 0);
+  const creditsUsedLastMinor = Math.abs(creditsLastWeek._sum.amount ?? 0);
+
   return {
     stats: {
       totalStudents,
@@ -173,7 +263,37 @@ export async function getOverviewStats() {
       day30ReachedDelta: null as number | null,
       day60ReachedDelta: null as number | null,
       totalStudentsSeries,
+      totalRecruiters,
+      totalRecruitersDelta: newRecruitersThisWeek - newRecruitersLastWeek,
+      totalRecruitersSeries,
+      creditsUsedMinor,
+      creditsUsedDeltaMinor: creditsUsedMinor - creditsUsedLastMinor,
+      emailsSent,
+      emailsSentThisWeek,
+      emailsFailedThisWeek,
     },
+    flagged: [
+      ...disabledRecent.map((row) => ({
+        id: row.id,
+        href: `/admin/students/${row.id}`,
+        title:
+          row.recruiterProfile?.fullName?.trim() ||
+          row.studentProfile?.fullName?.trim() ||
+          row.name?.trim() ||
+          row.email,
+        detail: row.disabledReason?.trim() || "Account disabled",
+        when: row.disabledAt
+          ? formatDistanceToNow(row.disabledAt, { addSuffix: true })
+          : "",
+      })),
+      ...emailsFailedRecent.map((row) => ({
+        id: row.id,
+        href: "/admin/deliveries",
+        title: row.kind,
+        detail: row.failureReason?.trim() || "Email failed",
+        when: formatDistanceToNow(row.createdAt, { addSuffix: true }),
+      })),
+    ].slice(0, 8),
     liveSubmissions: liveSubmissionsRaw.map((row) => ({
       id: row.id,
       userId: row.user.id,
@@ -188,14 +308,18 @@ export async function getOverviewStats() {
     recentAdminActions: recentAdminActionsRaw.map((row) => ({
       id: row.id,
       adminName:
-        row.admin.studentProfile?.fullName?.trim() || row.admin.email || "Admin",
+        row.admin?.studentProfile?.fullName?.trim() ||
+        row.admin?.email ||
+        row.actorUserId ||
+        "Admin",
       actionType: row.actionType,
       actionLabel: formatAdminActionType(row.actionType),
-      targetUserId: row.target.id,
-      targetName:
-        row.target.studentProfile?.fullName?.trim() ||
-        row.target.email ||
-        "Unknown",
+      targetUserId: row.target?.id ?? null,
+      targetName: row.target
+        ? row.target.studentProfile?.fullName?.trim() ||
+          row.target.email ||
+          "Unknown"
+        : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—",
       createdAt: row.createdAt,
       createdAtRelative: formatDistanceToNow(row.createdAt, { addSuffix: true }),
     })),

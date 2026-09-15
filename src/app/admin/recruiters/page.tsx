@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import { listRecruiters } from "@/features/talent-pool/recruiter-registration";
 import { AdminRecruitersPanel } from "@/components/talent/admin-recruiters-panel";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   RecruiterSeatsPanel,
   type SeatRow,
@@ -51,16 +52,10 @@ export default async function AdminRecruitersPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">
-          Recruiters
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Everyone who has registered to hire, and the work emails we have
-          pre-verified. Registering opens a workspace immediately — there is no
-          approval step.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Recruiters"
+        description="Everyone who has registered to hire. Disable / restore / secure is on each row. There is no approval queue."
+      />
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-semibold">

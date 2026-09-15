@@ -214,15 +214,17 @@ export default async function AdminHirePage() {
                 : undefined;
               const name =
                 member?.fullName ??
-                e.candidate.studentProfile?.fullName ??
-                e.candidate.name ??
+                e.candidate?.studentProfile?.fullName ??
+                e.candidate?.name ??
                 null;
-              const email = e.candidate.email;
+              const email = e.candidate?.email ?? null;
               const role =
-                member?.jobRole ?? e.candidate.studentProfile?.role ?? null;
+                member?.jobRole ?? e.candidate?.studentProfile?.role ?? null;
               const profileHref = member
                 ? `/admin/program/members/${member.id}`
-                : `/students/${e.candidate.id}`;
+                : e.candidate
+                  ? `/students/${e.candidate.id}`
+                  : null;
               return (
               <li
                 key={e.id}

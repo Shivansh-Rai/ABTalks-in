@@ -43,12 +43,11 @@ async function main() {
   }
 
   console.log(
-    "\nNote: credits.contact_unlock_cost_minor ships as a PLACEHOLDER.",
+    "\nNote: mock.free_allowance defaults to 3 and mock.point_cost to 50.",
   );
   console.log(
-    "T-228 specifies no unlock price and nothing reads this key yet.",
+    "Existing rows are left alone. Product can change them from /admin.\n",
   );
-  console.log("Product must set the real value before T-229 ships.\n");
 }
 
 main()
