@@ -167,18 +167,56 @@ export async function getNotificationsForUser(
     }),
   );
 
-  const derivedItems = deriveEventNotifications({
-    now,
-    enrollingCohorts,
-    programEnabled,
-    registeredWorkshopEventIds: new Set(
-      workshopRegistrations.map((r) => r.eventId),
-    ),
-    isHackathonRegistered: Boolean(hackathonMembership),
-    joinedCohortIds: new Set(programMemberships.map((m) => m.cohortId)),
-  });
+  // Derived event notifications (hackathon registration, workshop invites,
+  // cohort enrolment reminders) are candidate-side platform prompts. They
+  // do not belong on a recruiter's bell in /hire/* — the recruiter is not
+  // the audience of "register for the hackathon". Skip the derivation
+  // entirely when the viewer is a recruiter. Their own T-249 notifications
+  // (application.received, assessment.completed, application.status_changed,
+  // system.notice, outreach.reply_received) come through userItems, not
+  // through derivation.
+  const derivedItems = recruiterProfile
+    ? []
+    : deriveEventNotifications({
+        now,
+        enrollingCohorts,
+        programEnabled,
+        registeredWorkshopEventIds: new Set(
+          workshopRegistrations.map((r) => r.eventId),
+        ),
+        isHackathonRegistered: Boolean(hackathonMembership),
+        joinedCohortIds: new Set(programMemberships.map((m) => m.cohortId)),
+      });
 
-  const items: AppNotification[] = [...adminItems, ...derivedItems, ...userItems]
+  // Recruiter-side filters. Everything that survives here is either
+  // recruiter-relevant by event or a workspace-wide GENERAL announcement.
+  // Track-flavoured broadcasts (WORKSHOP/HACKATHON/COHORT/CHALLENGE) and
+  // candidate-side event types (profile.viewed, job.alert.match, etc.)
+  // stay off the /hire bell — the sheet's "told when something needs you"
+  // is scoped to hiring, not to platform-wide programme prompts.
+  const RECRUITER_EVENT_TYPES = new Set<string>([
+    "application.received",
+    "application.status_changed",
+    "assessment.completed",
+    "outreach.reply_received",
+    "outreach.message_received",
+    "system.notice",
+    "auth.password_reset",
+  ]);
+  const filteredAdminItems = recruiterProfile
+    ? adminItems.filter((item) => item.category === "GENERAL")
+    : adminItems;
+  const filteredUserItems = recruiterProfile
+    ? userItems.filter(
+        (item) => !item.eventType || RECRUITER_EVENT_TYPES.has(item.eventType),
+      )
+    : userItems;
+
+  const items: AppNotification[] = [
+    ...filteredAdminItems,
+    ...derivedItems,
+    ...filteredUserItems,
+  ]
     .map((item) => ({ ...item, isRead: readKeys.has(item.key) }))
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, FEED_LIMIT);
