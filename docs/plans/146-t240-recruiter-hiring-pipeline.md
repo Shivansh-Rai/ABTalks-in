@@ -352,6 +352,4 @@ notifications on pipeline actions).
 Sohail approved the cross-module scope (T-240 owned by Shashank on the
 CLAUDE.md ownership block; his call went to Manuvrtti for the Demo 1
 window).
-
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 ```
