@@ -1861,6 +1861,12 @@ enum NotificationAudience {
   CHALLENGE
   PROGRAM
   HACKATHON
+  /// T-249 follow-up. Every user without RecruiterProfile — the candidate
+  /// segment for admin broadcasts that are candidate-specific.
+  CANDIDATE
+  /// T-249 follow-up. Every user with a RecruiterProfile row. Paired with
+  /// system.notice events for workspace-wide admin messages.
+  RECRUITER
 }
 
 enum NotificationCategory {

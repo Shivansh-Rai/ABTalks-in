@@ -27,6 +27,8 @@ const categories = [
 
 const audiences = [
   { value: "ALL", label: "Everyone" },
+  { value: "CANDIDATE", label: "All candidates" },
+  { value: "RECRUITER", label: "All recruiters" },
   { value: "CHALLENGE", label: "60-Day Challenge students" },
   { value: "PROGRAM", label: "AI Cohort members" },
   { value: "HACKATHON", label: "Hackathon participants" },
