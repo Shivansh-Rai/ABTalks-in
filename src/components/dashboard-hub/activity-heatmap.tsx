@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const LEVEL_CLASS: Record<ActivityCell["level"], string> = {
   0: "bg-[#E9E9E9]",
-  1: "bg-[#D6F7EC]",
+  1: "bg-[#A3DFCD]",
   2: "bg-[#18D39B]",
   3: "bg-[#197E23]",
   4: "bg-[#197E23]",
