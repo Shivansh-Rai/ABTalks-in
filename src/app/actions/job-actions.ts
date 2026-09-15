@@ -8,6 +8,8 @@ import {
 } from "@/features/candidate-jobs/service";
 import { prismaApplicationStore } from "@/features/candidate-jobs/prisma-store";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
+import { convergeApplicantToPipeline } from "@/features/pipeline-convergence/converge-applicant";
+import { logger } from "@/lib/logger";
 
 const applySchema = z.object({
   jobId: z.string().min(1),
@@ -52,6 +54,19 @@ export async function applyToJobAction(input: {
       status: res.status ?? 400,
     };
   }
+
+  // T-247: applicants land on the recruiter's pipeline at SOURCED. Wrapped
+  // in try/catch so a broken pipeline never breaks the applicant — the
+  // apply already succeeded, converge is a side effect and stays one.
+  try {
+    await convergeApplicantToPipeline({ applicationId: res.data.id });
+  } catch (err) {
+    logger.warn("job-actions.converge_wrapper_caught", {
+      applicationId: res.data.id,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   return { ok: true as const, applicationId: res.data.id, status: res.data.status };
 }
 

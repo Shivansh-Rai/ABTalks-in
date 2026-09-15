@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Bookmark, Briefcase, ClipboardCheck, FolderKanban, Menu, UserCheck, X } from "lucide-react";
+import { Bookmark, Briefcase, ClipboardCheck, FolderKanban, KanbanSquare, Menu, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
@@ -317,6 +317,22 @@ export function HireChrome({
               >
                 <ClipboardCheck className="hire-hbtn__svg" aria-hidden="true" />
                 <span>Assessments</span>
+              </Link>
+              {/* T-240 hiring pipeline. Persistent, per-recruiter, nine
+                  stages — the "one hub, not two inboxes" the sheet asks for. */}
+              <Link
+                href="/hire/pipeline"
+                className={cn(
+                  "hire-hbtn",
+                  "hire-hbtn--label",
+                  pathname.startsWith("/hire/pipeline") && "is-current",
+                )}
+                aria-current={
+                  pathname.startsWith("/hire/pipeline") ? "page" : undefined
+                }
+              >
+                <KanbanSquare className="hire-hbtn__svg" aria-hidden="true" />
+                <span>Pipeline</span>
               </Link>
             </>
           )}

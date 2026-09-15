@@ -7,33 +7,36 @@ import {
   getAdminActionsFeed,
   parseAdminActionFilterType,
 } from "@/features/admin/get-admin-actions-feed";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { formatDateTimeIST } from "@/lib/date-utils";
 
 export default async function AdminActionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; type?: string; admin?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    type?: string;
+    admin?: string;
+    q?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
   const type = parseAdminActionFilterType(sp.type);
   const adminUserId = sp.admin?.trim() || null;
+  const q = sp.q?.trim() || null;
 
   const [data, admins] = await Promise.all([
-    getAdminActionsFeed({ page, type, adminUserId }),
+    getAdminActionsFeed({ page, type, adminUserId, q }),
     getAdminActionActors(),
   ]);
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">
-          Admin Actions
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          All admin actions across students, newest first
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Audit Log"
+        description="Every admin action, newest first. Search by type, entity, reason or actor."
+      />
 
       <Suspense fallback={null}>
         <AdminActionsFilters admins={admins} />
@@ -55,12 +58,18 @@ export default async function AdminActionsPage({
                 <span className="w-[9.5rem] shrink-0 truncate text-muted-foreground">
                   {row.actionLabel}
                 </span>
-                <Link
-                  href={`/admin/students/${row.targetUserId}`}
-                  className="w-[8.5rem] shrink-0 truncate text-primary hover:underline"
-                >
-                  {row.targetName}
-                </Link>
+                {row.targetUserId ? (
+                  <Link
+                    href={`/admin/students/${row.targetUserId}`}
+                    className="w-[8.5rem] shrink-0 truncate text-primary hover:underline"
+                  >
+                    {row.targetName}
+                  </Link>
+                ) : (
+                  <span className="w-[8.5rem] shrink-0 truncate text-muted-foreground">
+                    {row.targetName}
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">
                   {row.reason?.trim() || "-"}
                 </span>
@@ -79,6 +88,7 @@ export default async function AdminActionsPage({
         total={data.total}
         type={data.type}
         adminUserId={data.adminUserId}
+        q={data.q}
       />
     </div>
   );

@@ -4,7 +4,7 @@ type RecentAdminAction = {
   id: string;
   adminName: string;
   actionLabel: string;
-  targetUserId: string;
+  targetUserId: string | null;
   targetName: string;
   createdAtRelative: string;
 };
@@ -39,12 +39,16 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Target:{" "}
-              <Link
-                href={`/admin/students/${row.targetUserId}`}
-                className="text-primary hover:underline"
-              >
-                {row.targetName}
-              </Link>
+              {row.targetUserId ? (
+                <Link
+                  href={`/admin/students/${row.targetUserId}`}
+                  className="text-primary hover:underline"
+                >
+                  {row.targetName}
+                </Link>
+              ) : (
+                <span>{row.targetName}</span>
+              )}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">{row.createdAtRelative}</p>
           </div>

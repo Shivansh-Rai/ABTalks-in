@@ -164,8 +164,10 @@ export async function getWorkspaceCreditOverview(): Promise<WorkspaceCreditOverv
       : [];
   const labels = new Map<string, string>();
   for (const e of engagements) {
+    if (!e.candidateUserId) continue;
     if (labels.has(e.candidateUserId)) continue;
-    const name = e.status === "CONTACT_SHARED" ? e.candidate.name?.trim() : null;
+    const name =
+      e.status === "CONTACT_SHARED" ? e.candidate?.name?.trim() : null;
     labels.set(e.candidateUserId, name || e.candidatePublicId);
   }
 

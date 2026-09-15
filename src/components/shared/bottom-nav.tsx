@@ -88,6 +88,12 @@ export function BottomNav() {
     pathname === "/ds" ||
     pathname === "/se" ||
     pathname.startsWith("/challenge/") ||
+    pathname === "/marketplace" ||
+    pathname.startsWith("/marketplace/") ||
+    pathname === "/mock-interviews" ||
+    pathname.startsWith("/mock-interviews/") ||
+    pathname === "/messages" ||
+    pathname.startsWith("/messages/") ||
     pathname === "/workshop" ||
     pathname.startsWith("/workshop/") ||
     pathname === "/hackathon" ||

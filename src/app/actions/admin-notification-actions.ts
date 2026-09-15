@@ -86,6 +86,7 @@ export async function createNotificationAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId!,
+          actorUserId: admin.userId!,
           // AdminAction.targetUserId is required and FK-constrained; a broadcast
           // has no target student, so the acting admin stands in as the target.
           targetUserId: admin.userId!,
@@ -130,6 +131,7 @@ export async function deactivateNotificationAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId!,
+          actorUserId: admin.userId!,
           targetUserId: admin.userId!,
           actionType: "deactivateNotification",
           metadata: { notificationId: existing.id, title: existing.title },
@@ -171,6 +173,7 @@ export async function deleteNotificationAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId!,
+          actorUserId: admin.userId!,
           targetUserId: admin.userId!,
           actionType: "deleteNotification",
           metadata: { notificationId: existing.id, title: existing.title },

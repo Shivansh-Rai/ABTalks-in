@@ -1,12 +1,15 @@
 import { Badge } from "@/components/ui/badge";
+import { RecruiterAccountOps } from "@/components/admin/account-ops-dialog";
 
 type RecruiterRow = {
   id: string;
+  userId: string;
   fullName: string;
   company: string;
   phone: string | null;
   createdAt: string;
   email: string;
+  disabledAt: string | null;
   hasWorkspace: boolean;
   openCandidateAsks: number;
 };
@@ -14,11 +17,8 @@ type RecruiterRow = {
 /**
  * The recruiter directory.
  *
- * This used to be the approval queue: two buttons that flipped
- * `RecruiterProfile.approved` and mailed the applicant. Registering now
- * provisions the workspace outright, so there is nothing here to decide — the
- * panel reports who has signed up and whether their workspace rows landed.
- * A Server Component for the same reason: no state, no actions.
+ * Server Component: each row mounts RecruiterAccountOps (client) for disable /
+ * restore / secure. No password field.
  */
 export function AdminRecruitersPanel({
   recruiters,
@@ -42,6 +42,9 @@ export function AdminRecruitersPanel({
               <p className="font-medium">{row.fullName}</p>
               <p className="text-muted-foreground">{row.company}</p>
               <p className="mt-1 break-all text-muted-foreground">{row.email}</p>
+              {row.disabledAt ? (
+                <p className="mt-1 text-xs text-destructive">Disabled</p>
+              ) : null}
               {row.phone && (
                 <p className="text-xs text-muted-foreground">
                   Phone: {row.phone}
@@ -61,6 +64,13 @@ export function AdminRecruitersPanel({
                   year: "numeric",
                 })}
               </p>
+              <div className="mt-3">
+                <RecruiterAccountOps
+                  userId={row.userId}
+                  name={row.fullName}
+                  disabledAt={row.disabledAt}
+                />
+              </div>
             </div>
             <Badge variant={row.hasWorkspace ? "default" : "secondary"}>
               {row.hasWorkspace ? "Workspace ready" : "No workspace yet"}

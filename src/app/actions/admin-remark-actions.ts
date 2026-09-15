@@ -56,6 +56,7 @@ export async function createAdminRemarkAction(input: {
     await tx.adminAction.create({
       data: {
         adminUserId: admin.userId,
+        actorUserId: admin.userId,
         targetUserId: studentUserId,
         actionType: "ADD_REMARK",
         reason: reasonFromBody(body),
@@ -97,6 +98,7 @@ export async function updateAdminRemarkAction(input: {
     await tx.adminAction.create({
       data: {
         adminUserId: admin.userId,
+        actorUserId: admin.userId,
         targetUserId: existing.studentUserId,
         actionType: "UPDATE_REMARK",
         reason: reasonFromBody(body),
@@ -134,6 +136,7 @@ export async function deleteAdminRemarkAction(input: { remarkId: string }) {
     await tx.adminAction.create({
       data: {
         adminUserId: admin.userId,
+        actorUserId: admin.userId,
         targetUserId: existing.studentUserId,
         actionType: "DELETE_REMARK",
         reason: reasonFromBody(existing.body),

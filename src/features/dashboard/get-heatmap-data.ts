@@ -189,9 +189,10 @@ export async function getHeatmapData(
     const dayNumber = readDayNumberFromMetadata(action.metadata);
     if (!dayNumber || dayNumber < 1 || dayNumber > 60) continue;
     const adminName =
-      action.admin.studentProfile?.fullName?.trim() ||
-      action.admin.name?.trim() ||
-      action.admin.email;
+      action.admin?.studentProfile?.fullName?.trim() ||
+      action.admin?.name?.trim() ||
+      action.admin?.email ||
+      "Admin";
     if (!rejectActionByDay.has(dayNumber)) {
       rejectActionByDay.set(dayNumber, {
         reason: action.reason ?? null,

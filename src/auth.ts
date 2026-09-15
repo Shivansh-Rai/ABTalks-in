@@ -9,6 +9,7 @@ import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { logger } from "@/lib/logger";
 import { verifyRecruiterOtp } from "@/features/recruiter-auth/otp";
+import { isJwtInvalidated } from "@/lib/account-status";
 //auth is the full config with PrismaAdapter and real Credentials authorize. Used everywhere else.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -47,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // "we're reviewing you" page; every recruiter surface still checks
         // `approved` for itself.
         const existing = await prisma.user.findFirst({
-          where: { email, deletedAt: null },
+          where: { email, deletedAt: null, disabledAt: null },
           select: {
             id: true,
             email: true,
@@ -88,10 +89,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     role: true,
                     password: true,
                     deletedAt: true,
+                    disabledAt: true,
                   },
                 });
 
-                if (!user || !user.password || user.deletedAt) return null;
+                if (!user || !user.password || user.deletedAt || user.disabledAt) return null;
                 if (user.password !== String(credentials.password)) return null;
 
                 return {
@@ -123,9 +125,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!user?.id) return true;
       const row = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { deletedAt: true },
+        select: { deletedAt: true, disabledAt: true },
       });
-      if (row?.deletedAt) return false;
+      if (row?.deletedAt || row?.disabledAt) return false;
       return true;
     },
     async session({ session, token }) {
@@ -140,9 +142,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (userId) {
         const row = await prisma.user.findUnique({
           where: { id: userId },
-          select: { deletedAt: true },
+          select: {
+            deletedAt: true,
+            disabledAt: true,
+            sessionInvalidatedAt: true,
+          },
         });
-        if (row?.deletedAt) {
+        if (
+          row?.deletedAt ||
+          row?.disabledAt ||
+          isJwtInvalidated(token.iat, row?.sessionInvalidatedAt)
+        ) {
           return { ...session, user: undefined as never };
         }
       }

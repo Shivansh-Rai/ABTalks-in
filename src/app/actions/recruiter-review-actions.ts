@@ -162,6 +162,7 @@ export async function upsertRecruiterReviewAction(
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId: userId,
           actionType: "RECRUITER_REVIEW_UPDATED",
         },
@@ -212,6 +213,7 @@ export async function publishRecruiterProfileAction(input: { userId: string }) {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId: userId,
           actionType: "RECRUITER_PROFILE_PUBLISHED",
         },
@@ -247,6 +249,7 @@ export async function unpublishRecruiterProfileAction(input: { userId: string })
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId: userId,
           actionType: "RECRUITER_PROFILE_UNPUBLISHED",
         },
@@ -282,6 +285,7 @@ export async function regenerateShareTokenAction(input: { userId: string }) {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId: userId,
           actionType: "RECRUITER_LINK_REGENERATED",
         },

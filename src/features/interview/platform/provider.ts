@@ -23,7 +23,7 @@ export async function resolvePlatformUserId(): Promise<string | null> {
   if (!session?.user?.id) return null;
 
   const user = await prisma.user.findFirst({
-    where: { id: session.user.id, deletedAt: null },
+    where: { id: session.user.id, deletedAt: null, disabledAt: null },
     select: { id: true },
   });
 

@@ -104,6 +104,7 @@ export async function removeParticipant(args: {
         await tx.adminAction.create({
           data: {
             adminUserId: args.removedByUserId,
+            actorUserId: args.removedByUserId,
             targetUserId: target.userId,
             actionType: "REMOVE_HACKATHON_TEAM_MEMBER",
             metadata: {

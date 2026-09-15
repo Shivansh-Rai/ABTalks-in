@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalPhoneSchema } from "@/lib/validations/phone";
+import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
 
 function trimEmptyToUndefined(s: string | undefined): string | undefined {
   if (s === undefined) return undefined;
@@ -24,15 +25,10 @@ const profileCommonFields = {
     .string()
     .default("")
     .transform((s) => trimEmptyToUndefined(s.trim()))
-    .pipe(
-      z.union([
-        z.undefined(),
-        z.string().regex(/^[a-zA-Z0-9-]+$/, {
-          message:
-            "GitHub username may only contain letters, numbers, and hyphens",
-        }),
-      ]),
-    ),
+    .refine((v) => v === undefined || normalizeGithubUsername(v) !== null, {
+      message: "Enter a valid GitHub username or profile URL",
+    })
+    .transform((v) => (v === undefined ? undefined : normalizeGithubUsername(v)!)),
   phone: optionalPhoneSchema,
 };
 

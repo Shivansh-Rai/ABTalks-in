@@ -319,6 +319,7 @@ export async function overrideProjectScore(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: project.member.userId,
         actionType: "PROGRAM_OVERRIDE_PROJECT_SCORE",
         reason,

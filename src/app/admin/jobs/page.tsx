@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDateIST } from "@/lib/date-utils";
 import { getJobsAdmin } from "@/features/jobs/get-jobs-admin";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import type { JobType } from "@prisma/client";
 
 function jobTypeLabel(type: JobType): string {
@@ -27,12 +28,10 @@ export default async function AdminJobsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Jobs</h1>
-        <p className="text-sm text-muted-foreground">
-          Post roles for students and review applications.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Jobs"
+        description="Post roles and review applications. Recruiter-owned jobs stay on their workspace."
+      />
 
       <JobForm mode="create" />
 

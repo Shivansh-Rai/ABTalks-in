@@ -217,7 +217,7 @@ export function ActivityHeatmap({
   // lg/xl (laptop) trims the grid ~10% inside its own column — the dashboard
   // grid columns are untouched, so the streak card never moves. 2xl opts out.
   const wrapperClass = embedded
-    ? "w-full min-w-0 flex flex-col max-lg:-mx-4 max-lg:w-[calc(100%+2rem)] lg:min-h-[315px] lg:max-w-[90%] 2xl:max-w-none"
+    ? "w-full min-w-0 flex flex-col max-lg:-mx-4 max-lg:w-[calc(100%+2rem)] lg:max-w-[90%] 2xl:max-w-none"
     : "scroll-mt-20 px-4 py-8 sm:px-6";
 
   const gridSharedProps = {
@@ -260,17 +260,17 @@ export function ActivityHeatmap({
         gridCols={desktopGridCols}
         cellClassName="aspect-square w-[72%] min-w-0 justify-self-center"
         className={cn(
-          "mt-3 hidden w-full min-w-0 lg:grid",
-          embedded && "flex-1 lg:min-h-0",
+          "mt-2 hidden w-full min-w-0 lg:grid",
+          embedded && "lg:min-h-0",
         )}
       />
 
-      <p className="mt-2 ml-3 font-fredoka text-sm text-[#4B4B4B]">
+      <p className="mt-1 ml-3 font-fredoka text-sm text-[#4B4B4B]">
         {totalSubmissions} submission{totalSubmissions === 1 ? "" : "s"} in the
         last {HEATMAP_MONTHS} months
       </p>
 
-      <div className="mt-3 flex justify-end">
+      <div className="mt-1 flex justify-end">
         <div className="flex shrink-0 items-center gap-1 self-end text-[10px] text-[#A5A5A5] sm:self-auto">
           <span>Less</span>
           {([0, 1, 2, 3, 4] as const).map((level) => (

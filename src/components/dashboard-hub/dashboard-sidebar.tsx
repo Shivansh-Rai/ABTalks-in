@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Award,
+  Bot,
   Briefcase,
   ClipboardCheck,
   Grid3X3,
@@ -55,6 +56,7 @@ const ICON_MAP: Record<
   zap: Zap,
   user: User,
   clipboard: ClipboardCheck,
+  bot: Bot,
 };
 
 const SIDEBAR_COLLAPSED_WIDTH_CLASS = "w-[72px]";

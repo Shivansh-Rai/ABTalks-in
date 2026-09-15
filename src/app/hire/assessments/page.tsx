@@ -138,6 +138,22 @@ export default async function HireAssessmentsPage() {
   const currentYear = new Date().getFullYear();
 
   return (
+    <div className="hire-assess-list">
+      <Link href="/hire" className="hire-back">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 19 8 12l7-7" />
+        </svg>
+        <span>Back to Scout</span>
+      </Link>
+
     <div className="hire-assess-list hire-assess-list--index">
       <div className="hire-assess-list__head">
         <div className="hire-assess-list__heading">
@@ -280,6 +296,7 @@ export default async function HireAssessmentsPage() {
           </p>
         </>
       )}
+    </div>
     </div>
   );
 }

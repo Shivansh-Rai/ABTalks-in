@@ -124,7 +124,7 @@ model Certificate {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
@@ -297,6 +297,12 @@ model User {
   utmTerm                 String?
   utmContent              String?
   utmCapturedAt           DateTime?
+  /// T-272 reversible operator freeze. Distinct from deletedAt (plan 119).
+  disabledAt              DateTime?
+  disabledReason          String?
+  disabledByUserId        String?
+  /// JWT iat older than this is rejected. Set on disable and on secure.
+  sessionInvalidatedAt    DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   accounts                Account[]
@@ -386,6 +392,7 @@ model User {
   candidateCreditTransactions CreditTransaction[] @relation("CandidateCreditTransactions")
 
   @@index([deletedAt, createdAt(sort: Desc)])
+  @@index([disabledAt])
   @@index([createdAt(sort: Desc)])
   @@index([synergyPoints(sort: Desc)])
 }
@@ -702,7 +709,7 @@ model SynergyEvent {
   reason           String?
   createdByAdminId String?
   createdAt        DateTime    @default(now())
-  user             User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   submission       Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -710,18 +717,27 @@ model SynergyEvent {
 }
 
 model AdminAction {
-  id           String   @id @default(cuid())
-  adminUserId  String
-  targetUserId String
-  actionType   String
-  metadata     Json?
-  reason       String?
-  createdAt    DateTime @default(now())
-  admin        User     @relation("AdminActor", fields: [adminUserId], references: [id], onDelete: Cascade)
-  target       User     @relation("AdminTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  /// Snapshot of who acted. No FK — must survive actor deletion (self-delete).
+  actorUserId    String
+  adminUserId    String?
+  targetUserId   String?
+  entityType     String?
+  entityId       String?
+  previousState  Json?
+  newState       Json?
+  organizationId String?
+  actionType     String
+  metadata       Json?
+  reason         String?
+  createdAt      DateTime @default(now())
+  admin          User?    @relation("AdminActor", fields: [adminUserId], references: [id], onDelete: SetNull)
+  target         User?    @relation("AdminTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
 
   @@index([targetUserId])
   @@index([createdAt])
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+  @@index([actorUserId, createdAt(sort: Desc)])
 }
 
 model AdminRemark {
@@ -2195,6 +2211,7 @@ enum PointsSourceType {
   ADMIN_GRANT
   RECONCILIATION
   LEGACY
+  MOCK_INTERVIEW
 }
 
 /// Legally recognised categories in India. Nullable on the profile — "not
@@ -3211,8 +3228,8 @@ model Credential {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
-  /// Restrict, not Cascade — deleting a user must not destroy public credentials.
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Cascade — candidate self-delete (T-217) removes their public credentials.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([type, sourceType, sourceKey])
   @@index([userId, status])
@@ -3253,8 +3270,8 @@ model PointsTransaction {
   createdByUserId String?
   createdAt       DateTime         @default(now())
 
-  /// Restrict — the ledger is financial-grade history.
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Cascade — candidate self-delete removes their own SP ledger.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([sourceType, sourceId])
@@ -3279,7 +3296,7 @@ model CandidateAchievement {
   metadata     Json?
   createdAt    DateTime              @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([sourceType, sourceId])
   @@index([userId, occurredAt(sort: Desc)])
@@ -3671,7 +3688,7 @@ model CreditTransaction {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   recruiter    User         @relation("RecruiterCreditTransactions", fields: [recruiterUserId], references: [id], onDelete: Restrict)
-  candidate    User?        @relation("CandidateCreditTransactions", fields: [candidateUserId], references: [id], onDelete: Restrict)
+  candidate    User?        @relation("CandidateCreditTransactions", fields: [candidateUserId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, seq(sort: Desc)])
   @@index([recruiterUserId, createdAt(sort: Desc)])
@@ -3770,8 +3787,8 @@ model AssessmentReport {
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
 
-  /// Restrict — assessment history is evidence.
-  candidate User                    @relation("AssessedCandidate", fields: [candidateUserId], references: [id], onDelete: Restrict)
+  /// Cascade — candidate self-delete removes their assessment reports.
+  candidate User                    @relation("AssessedCandidate", fields: [candidateUserId], references: [id], onDelete: Cascade)
   scores    AssessmentScore[]
   shares    AssessmentReportShare[]
 
@@ -3898,7 +3915,7 @@ model TalentEngagementRequest {
   source            TalentCandidateSource  @default(PROGRAM)
   /// Provenance only. No FK, never an identity — the candidate is `candidateUserId`.
   programMemberId   String?
-  candidateUserId   String
+  candidateUserId   String?
   /// Denormalised AB-#### as shown to the recruiter, so admin and the
   /// recruiter are demonstrably talking about the same candidate.
   candidatePublicId String
@@ -3911,11 +3928,9 @@ model TalentEngagementRequest {
   updatedAt         DateTime               @updatedAt
 
   recruiter User                      @relation("RecruiterEngagements", fields: [recruiterUserId], references: [id], onDelete: Cascade)
-  /// Restrict, not SetNull: an engagement is the record of a recruiter having
-  /// been given access to a person. It must not quietly detach from them.
-  /// Matches the 078 Phase 1 posture on Certificate / SynergyEvent /
-  /// RecruiterShortlistItem.
-  candidate User                      @relation("CandidateEngagements", fields: [candidateUserId], references: [id], onDelete: Restrict)
+  /// SetNull: recruiter ticket survives candidate self-delete (T-217).
+  /// candidatePublicId is the remaining label.
+  candidate User?                     @relation("CandidateEngagements", fields: [candidateUserId], references: [id], onDelete: SetNull)
   request   TalentRequest?            @relation(fields: [requestId], references: [id], onDelete: SetNull)
   messages  TalentEngagementMessage[]
 

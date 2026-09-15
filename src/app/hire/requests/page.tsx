@@ -160,6 +160,10 @@ export default async function HireRequestsPage() {
                   email: contact.email,
                 }
               : null;
+            const outreachId =
+              e.source === "PROGRAM" && e.programMemberId
+                ? e.programMemberId
+                : e.candidateUserId;
 
             return (
               <li key={e.id} className="space-y-3 rounded-xl border p-4">
@@ -201,15 +205,12 @@ export default async function HireRequestsPage() {
                     </a>
                     {/* T-232. PROGRAM refs name the cohort member; every other
                         track names the user — the same encoding the pool uses. */}
-                    <OutreachComposeDialog
-                      candidateRef={encodeCandidateRef(
-                        e.source,
-                        e.source === "PROGRAM" && e.programMemberId
-                          ? e.programMemberId
-                          : e.candidateUserId,
-                      )}
-                      candidateLabel={identity.fullName ?? e.candidatePublicId}
-                    />
+                    {outreachId ? (
+                      <OutreachComposeDialog
+                        candidateRef={encodeCandidateRef(e.source, outreachId)}
+                        candidateLabel={identity.fullName ?? e.candidatePublicId}
+                      />
+                    ) : null}
                   </div>
                 )}
 

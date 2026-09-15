@@ -13,6 +13,8 @@ export type ChallengeStudentDetail = {
     image: string | null;
     joinedAt: Date;
     synergyPoints: number;
+    disabledAt: Date | null;
+    disabledReason: string | null;
   };
   profile: StudentProfile;
   enrollment: {
@@ -80,6 +82,8 @@ export type HackathonStudentDetail = {
     image: string | null;
     joinedAt: Date;
     synergyPoints: number;
+    disabledAt: Date | null;
+    disabledReason: string | null;
   };
   hackathon: {
     fullName: string;
@@ -108,6 +112,8 @@ export async function getStudentDetail(
       image: true,
       createdAt: true,
       deletedAt: true,
+      disabledAt: true,
+      disabledReason: true,
       studentProfile: true,
       enrollments: {
         orderBy: { createdAt: "desc" },
@@ -168,6 +174,8 @@ export async function getStudentDetail(
         image: user.image,
         joinedAt: participant.createdAt,
         synergyPoints,
+        disabledAt: user.disabledAt,
+        disabledReason: user.disabledReason,
       },
       hackathon: {
         fullName: participant.fullName,
@@ -272,6 +280,8 @@ export async function getStudentDetail(
       image: user.image,
       joinedAt: user.createdAt,
       synergyPoints,
+      disabledAt: user.disabledAt,
+      disabledReason: user.disabledReason,
     },
     profile,
     enrollment,
@@ -305,8 +315,8 @@ export async function getStudentDetail(
       reason: action.reason,
       createdAt: action.createdAt,
       adminName:
-        action.admin.studentProfile?.fullName?.trim() ||
-        action.admin.email ||
+        action.admin?.studentProfile?.fullName?.trim() ||
+        action.admin?.email ||
         "Admin",
     })),
     remarks: remarks.map((r) => ({
