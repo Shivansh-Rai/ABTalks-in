@@ -1,0 +1,159 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/db";
+import {
+  addToPipeline,
+  moveStage,
+  removeFromPipeline,
+} from "@/repositories/talent-pipeline";
+import {
+  addToPipelineInputSchema,
+  moveStageInputSchema,
+  removeItemInputSchema,
+} from "@/lib/validations/pipeline";
+
+/**
+ * T-240 recruiter pipeline server actions.
+ *
+ * Every action resolves the caller through `requireRecruiterWorkspace()`,
+ * which is the single boundary for "this row belongs to this recruiter" —
+ * no id ever comes from the client, so there is no "recruiter A passes
+ * recruiter B's id" bug to plug. Zod parses every input. Repository does
+ * the write. `revalidatePath("/hire/pipeline")` refreshes the board.
+ */
+
+type ActionOk<T = undefined> = T extends undefined
+  ? { ok: true }
+  : { ok: true; data: T };
+type ActionErr = { ok: false; message: string; status?: number };
+
+/**
+ * The candidate row Prisma stores has a name we use as the tombstone label
+ * (`TalentListItem.candidateLabel`) so a candidate deleting their account
+ * later does not silently shrink the recruiter's pipeline count. Fall back
+ * to the label the client passed if we cannot read a name.
+ */
+async function labelForCandidate(
+  candidateUserId: string,
+  fallback: string,
+): Promise<string> {
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: candidateUserId },
+      select: { name: true },
+    });
+    const name = row?.name?.trim();
+    if (name) return name;
+  } catch (err) {
+    logger.warn("pipeline-actions.labelForCandidate lookup failed", {
+      candidateUserId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+  return fallback.trim() || "Candidate";
+}
+
+export async function addCandidateToPipelineAction(
+  input: unknown,
+): Promise<ActionOk<{ itemId: string; created: boolean }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) {
+    return { ok: false, message: workspace.message, status: 403 };
+  }
+
+  const parsed = addToPipelineInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid pipeline input.",
+      status: 400,
+    };
+  }
+
+  const label = await labelForCandidate(parsed.data.candidateUserId, "Candidate");
+
+  const result = await addToPipeline(
+    {
+      userId: workspace.data.userId,
+      recruiterProfileId: workspace.data.recruiterProfileId,
+      organizationId: workspace.data.organizationId,
+    },
+    {
+      candidateUserId: parsed.data.candidateUserId,
+      label,
+      stage: parsed.data.stage,
+    },
+  );
+
+  if (!result.ok) return { ok: false, message: result.message };
+
+  revalidatePath("/hire/pipeline");
+  return { ok: true, data: result.data };
+}
+
+export async function moveCandidateStageAction(
+  input: unknown,
+): Promise<ActionOk | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) {
+    return { ok: false, message: workspace.message, status: 403 };
+  }
+
+  const parsed = moveStageInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid pipeline input.",
+      status: 400,
+    };
+  }
+
+  const result = await moveStage(
+    {
+      userId: workspace.data.userId,
+      recruiterProfileId: workspace.data.recruiterProfileId,
+      organizationId: workspace.data.organizationId,
+    },
+    parsed.data,
+  );
+
+  if (!result.ok) return { ok: false, message: result.message, status: 404 };
+
+  revalidatePath("/hire/pipeline");
+  return { ok: true };
+}
+
+export async function removeCandidateFromPipelineAction(
+  input: unknown,
+): Promise<ActionOk | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) {
+    return { ok: false, message: workspace.message, status: 403 };
+  }
+
+  const parsed = removeItemInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid pipeline input.",
+      status: 400,
+    };
+  }
+
+  const result = await removeFromPipeline(
+    {
+      userId: workspace.data.userId,
+      recruiterProfileId: workspace.data.recruiterProfileId,
+      organizationId: workspace.data.organizationId,
+    },
+    parsed.data,
+  );
+
+  if (!result.ok) return { ok: false, message: result.message, status: 404 };
+
+  revalidatePath("/hire/pipeline");
+  return { ok: true };
+}
