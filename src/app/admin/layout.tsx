@@ -10,72 +10,8 @@ export default async function AdminLayout({
 }) {
   const admin = await requireAdmin();
 
-  const navItems = [
-    { href: "/admin", label: "Overview", icon: "overview" as const },
-    { href: "/admin/actions", label: "Activity", icon: "submissions" as const },
-    {
-      href: "/admin/notifications",
-      label: "Notifications",
-      icon: "notifications" as const,
-    },
-    // T-268 delivery diagnosis: read-only search over NotificationDelivery
-    // (T-248) and OutboundDelivery (T-259) so support can say why a message
-    // did not arrive.
-    {
-      href: "/admin/deliveries",
-      label: "Deliveries",
-      icon: "deliveries" as const,
-    },
-    { href: "/admin/students", label: "Students", icon: "students" as const },
-    { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" as const },
-    { href: "/admin/hackathon", label: "Hackathon", icon: "hackathon" as const },
-    { href: "/admin/workshop", label: "Workshop", icon: "workshop" as const },
-    { href: "/admin/submissions", label: "Submissions", icon: "submissions" as const },
-    { href: "/admin/jobs", label: "Jobs", icon: "jobs" as const },
-    { href: "/admin/content", label: "Content", icon: "content" as const },
-    { href: "/admin/analytics", label: "Analytics", icon: "analytics" as const },
-    { href: "/admin/program", label: "Program", icon: "program" as const },
-    {
-      href: "/admin/campus-ambassadors",
-      label: "Campus Ambassadors",
-      icon: "ambassadors" as const,
-    },
-    { href: "/admin/referrals", label: "Referrals", icon: "referrals" as const },
-    {
-      href: "/admin/hackathon-links",
-      label: "Hackathon Links",
-      icon: "hackathonLinks" as const,
-    },
-    { href: "/admin/redemptions", label: "Redemptions", icon: "redemptions" as const },
-    {
-      href: "/admin/data-requests",
-      label: "Data Requests",
-      icon: "dataRequests" as const,
-    },
-    // Introduction requests and the demand they add up to are one page: the
-    // requests need a decision, the demand board is the context for it.
-    {
-      href: "/admin/hire",
-      label: "Hire",
-      icon: "jobs" as const,
-    },
-    // Read-only inspection of any recruiter's talent project (T-278).
-    {
-      href: "/admin/hire/projects",
-      label: "Talent Projects",
-      icon: "talentProjects" as const,
-    },
-    {
-      href: "/admin/platform-admins",
-      label: "Platform Admins",
-      icon: "platformAdmins" as const,
-    },
-    // No count badge: there is no approval queue to be behind on.
-    { href: "/admin/recruiters", label: "Recruiters", icon: "recruiters" as const },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F7FBFB]">
       <AppHeader
         user={{
           name: admin.name ?? "Admin",
@@ -86,13 +22,13 @@ export default async function AdminLayout({
         }}
       />
       <div className="flex md:h-[calc(100vh-55px)] md:overflow-hidden">
-        <div className="scrollbar-admin-brand hidden w-[250px] shrink-0 border-r bg-card md:block md:h-full md:overflow-y-auto">
-          <div className="flex min-h-full flex-col px-4 py-6">
-            <AdminSidebar navItems={navItems} />
+        <div className="scrollbar-admin-brand hidden w-[250px] shrink-0 border-r border-[#E9E9E9] bg-white md:block md:h-full md:overflow-y-auto">
+          <div className="flex min-h-full flex-col px-3 py-6">
+            <AdminSidebar />
           </div>
         </div>
-        <main className="scrollbar-admin-brand min-w-0 flex-1 px-4 py-6 md:overflow-y-auto md:px-8">
-          <AdminMobileNav navItems={navItems} />
+        <main className="scrollbar-admin-brand min-w-0 flex-1 px-4 py-6 md:overflow-y-auto md:px-10">
+          <AdminMobileNav />
           {children}
         </main>
       </div>

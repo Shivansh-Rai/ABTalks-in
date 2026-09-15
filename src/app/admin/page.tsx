@@ -1,43 +1,84 @@
 import Link from "next/link";
-import { Activity, Calendar, Trophy, Users } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { ActivityTimeline } from "@/components/admin/activity-timeline";
+import {
+  Briefcase,
+  Coins,
+  Mail,
+  Send,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { requireAdmin } from "@/lib/admin-auth";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatCard } from "@/components/admin/stat-card";
+import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { getOverviewStats } from "@/features/admin/get-overview-stats";
 import { cn } from "@/lib/utils";
 
-function domainBadgeClass(domain: string): string {
-  if (domain === "AI") return "border-domains-ai/50 bg-domains-ai-bg text-domains-ai";
-  if (domain === "DS") return "border-domains-ds/50 bg-domains-ds-bg text-domains-ds";
-  return "border-domains-se/50 bg-domains-se-bg text-domains-se";
+function greetingIst(now = new Date()): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      hour12: false,
+    }).format(now),
+  );
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0]![0] + parts[1]![0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase() || "?";
+function usdFromMinor(minor: number): string {
+  return (minor / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+}
+
+function ActivityBars({
+  candidates,
+  recruiters,
+}: {
+  candidates: number[];
+  recruiters: number[];
+}) {
+  const last = candidates.slice(-7);
+  const lastR = recruiters.slice(-7);
+  const max = Math.max(1, ...last, ...lastR);
+  return (
+    <div className="flex h-48 items-end gap-3">
+      {last.map((value, i) => (
+        <div key={i} className="flex min-w-0 flex-1 flex-col justify-end gap-1">
+          <div
+            className="w-full rounded-t bg-[#03535F]"
+            style={{ height: `${Math.max(8, (value / max) * 100)}%` }}
+            title={`${value} candidates`}
+          />
+          <div
+            className="w-full rounded-t bg-[#18D39B]"
+            style={{ height: `${Math.max(6, ((lastR[i] ?? 0) / max) * 80)}%` }}
+            title={`${lastR[i] ?? 0} recruiters`}
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default async function AdminHomePage() {
-  const data = await getOverviewStats();
+  const [admin, data] = await Promise.all([requireAdmin(), getOverviewStats()]);
+  const firstName = (admin.name ?? "there").trim().split(/\s+/)[0];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold md:text-3xl">Admin Overview</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Quick snapshot of what&apos;s happening on ABTalks.
-        </p>
-      </div>
+      <AdminPageHeader
+        title={`${greetingIst()}, ${firstName}`}
+        description="Here's what's happening on ABTalks today."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total Students"
+          label="Total Candidates"
           value={data.stats.totalStudents}
           delta={data.stats.totalStudentsDelta}
           accent="green"
@@ -45,156 +86,150 @@ export default async function AdminHomePage() {
           series={data.stats.totalStudentsSeries}
         />
         <StatCard
-          label="Active Today"
-          value={data.stats.activeToday}
-          delta={data.stats.activeTodayDelta}
-          accent="orange"
-          icon={<Activity className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Day 30 Reached"
-          value={data.stats.day30Reached}
-          delta={data.stats.day30ReachedDelta}
-          accent="orange"
-          icon={<Calendar className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Day 60 Reached"
-          value={data.stats.day60Reached}
-          delta={data.stats.day60ReachedDelta}
+          label="Total Recruiters"
+          value={data.stats.totalRecruiters}
+          delta={data.stats.totalRecruitersDelta}
           accent="blue"
-          icon={<Trophy className="h-4 w-4" />}
+          icon={<UserPlus className="h-4 w-4" />}
+          series={data.stats.totalRecruitersSeries}
+        />
+        <StatCard
+          label="Credits Used"
+          value={usdFromMinor(data.stats.creditsUsedMinor)}
+          delta={Math.round(data.stats.creditsUsedDeltaMinor / 100)}
+          deltaSuffix="USD this week"
+          accent="orange"
+          icon={<Coins className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Emails Sent"
+          value={data.stats.emailsSent}
+          delta={data.stats.emailsSentThisWeek}
+          deltaSuffix="this week"
+          accent="green"
+          icon={<Mail className="h-4 w-4" />}
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Pending Reviews</CardTitle>
-            <Link
-              href="/admin/submissions"
-              className="text-xs text-primary hover:underline"
-            >
-              View all →
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.liveSubmissions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No recent submissions</p>
-            ) : (
-              data.liveSubmissions.map((row) => (
-                <div
-                  key={row.id}
-                  className="flex items-center gap-3 rounded-lg border p-3 text-sm"
-                >
-                  <Avatar size="sm">
-                    <AvatarFallback className="text-xs">
-                      {initials(row.studentName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/admin/students/${row.userId}`}
-                      className="truncate font-medium hover:underline"
-                    >
-                      {row.studentName}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      Day {row.dayNumber} · {row.domain}
-                      {row.linkedinUrl ? (
-                        <>
-                          {" · "}
-                          <a
-                            href={row.linkedinUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            LinkedIn
-                          </a>
-                        </>
-                      ) : null}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {row.submittedAtRelative}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className={cn("hidden sm:inline-flex", domainBadgeClass(row.domain))}>
-                    {row.domain}
-                  </Badge>
-                  <Link
-                    href={`/admin/students/${row.userId}`}
-                    className={buttonVariants({ variant: "outline", size: "sm" })}
-                  >
-                    Review
-                  </Link>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+        <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-[#353535]">
+              Platform Activity
+            </h2>
+            <p className="text-xs text-[#8F8F8F]">Last 7 days · teal candidates, green recruiters</p>
+          </div>
+          <ActivityBars
+            candidates={data.stats.totalStudentsSeries}
+            recruiters={data.stats.totalRecruitersSeries}
+          />
+        </section>
 
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Recent recruiters</CardTitle>
-            <Link
-              href="/admin/recruiters"
-              className="text-xs text-primary hover:underline"
-            >
-              View all →
+        <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-[#353535]">
+              Recent Platform Events
+            </h2>
+            <Link href="/admin/actions" className="text-xs font-medium text-[#03535F] hover:underline">
+              View all
             </Link>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.recentRecruiters.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No recruiters yet.
-              </p>
-            ) : (
-              data.recentRecruiters.map((row) => (
-                <div
-                  key={row.id}
-                  className="flex items-center gap-3 rounded-lg border p-3 text-sm"
-                >
-                  <Avatar size="sm">
-                    <AvatarFallback className="text-xs">
-                      {initials(row.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{row.fullName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {row.company} · {row.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {row.createdAtRelative}
-                    </p>
-                  </div>
-                  <Link
-                    href="/admin/recruiters"
-                    className={buttonVariants({ variant: "outline", size: "sm" })}
-                  >
-                    View
-                  </Link>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          <ActivityTimeline items={data.recentAdminActions} />
+        </section>
+      </div>
 
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Recent Activity</CardTitle>
-            <Link
-              href="/admin/actions"
-              className="text-xs text-primary hover:underline"
-            >
-              View all Activity →
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <ActivityTimeline items={data.recentAdminActions} />
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-[#353535]">
+              Flagged for Review
+              {data.flagged.length > 0 ? (
+                <span className="ml-2 rounded-full bg-[#D92D20]/10 px-2 py-0.5 text-xs font-medium text-[#D92D20]">
+                  {data.flagged.length}
+                </span>
+              ) : null}
+            </h2>
+          </div>
+          {data.flagged.length === 0 ? (
+            <p className="text-sm text-[#787878]">Nothing flagged right now.</p>
+          ) : (
+            <ul className="divide-y divide-[#E9E9E9]">
+              {data.flagged.map((row) => (
+                <li key={row.id} className="py-3">
+                  <Link href={row.href} className="block hover:underline">
+                    <p className="text-sm font-medium text-[#353535]">{row.title}</p>
+                    <p className="text-xs text-[#787878]">
+                      {row.detail}
+                      {row.when ? ` · ${row.when}` : ""}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
+          <h2 className="mb-3 font-display text-lg font-semibold text-[#353535]">
+            Quick Actions
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                href: "/admin/students",
+                label: "View Candidates",
+                hint: "Search and inspect profiles",
+                icon: Users,
+              },
+              {
+                href: "/admin/recruiters",
+                label: "View Recruiters",
+                hint: "Accounts and freeze controls",
+                icon: UserPlus,
+              },
+              {
+                href: "/admin/credits",
+                label: "Credits & Plans",
+                hint: "Starting grant and unlock cost",
+                icon: Coins,
+              },
+              {
+                href: "/admin/deliveries",
+                label: "Failed Email",
+                hint: `${data.stats.emailsFailedThisWeek} failed this week`,
+                icon: Send,
+              },
+              {
+                href: "/admin/jobs",
+                label: "Jobs",
+                hint: "Postings and applications",
+                icon: Briefcase,
+              },
+              {
+                href: "/admin/notifications",
+                label: "Communications",
+                hint: "In-app announcements",
+                icon: Mail,
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border border-[#E9E9E9] p-3 hover:border-[#03535F]/40 hover:bg-[#EEF6F6]",
+                )}
+              >
+                <item.icon className="mt-0.5 size-4 text-[#03535F]" aria-hidden />
+                <span>
+                  <span className="block text-sm font-medium text-[#353535]">
+                    {item.label}
+                  </span>
+                  <span className="block text-xs text-[#787878]">{item.hint}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

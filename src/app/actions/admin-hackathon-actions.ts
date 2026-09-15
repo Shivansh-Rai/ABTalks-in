@@ -40,6 +40,7 @@ export async function updateHackathonProblemStatementAction(input: {
       await tx.adminAction.create({
         data: {
           adminUserId: admin.userId,
+          actorUserId: admin.userId,
           targetUserId: admin.userId,
           actionType: "UPDATE_HACKATHON_PROBLEM",
           metadata: {

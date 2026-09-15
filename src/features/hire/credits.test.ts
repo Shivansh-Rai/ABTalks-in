@@ -399,6 +399,8 @@ suite("only the repository and the setup action's batch write the ledger", () =>
   const allowed = new Set([
     join(process.cwd(), CREDITS_REPO),
     join(process.cwd(), SETUP_ACTION),
+    // T-217: nulls candidateUserId on existing rows. Never amount or balance.
+    join(process.cwd(), "src/features/profile/delete-own-account.ts"),
   ]);
   const extra = writers.filter((f) => !allowed.has(f));
   assert(extra.length === 0, `unexpected ledger writers: ${extra.join(", ")}`);

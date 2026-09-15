@@ -40,6 +40,17 @@ import { buildCandidateContext } from "@/features/interview/candidate-context";
 import { formatProfileContext } from "@/features/interview/platform/profile-context";
 import type { DomainSummary, TurnSubmission } from "@/features/interview/platform/types";
 import type { PlannedQuestion } from "@/features/interview/types";
+import { writeClient } from "@/lib/db";
+import {
+  MOCK_FREE_ALLOWANCE_KEY,
+  MOCK_POINT_COST_KEY,
+  getIntConfig,
+} from "@/lib/platform-config";
+import {
+  applyPointsChange,
+  withLegacyPointsMirrorFlush,
+} from "@/repositories/points";
+import { PointsSourceType } from "@prisma/client";
 
 /**
  * The interview platform's flows: start → (answer)* → finish, plus abandon.
@@ -173,6 +184,40 @@ export async function getCatalogue(
       completedAttempts: completedByDomain.get(domain.slug) ?? 0,
     })),
   };
+}
+
+export async function getFreeMockRemaining(userId: string): Promise<number> {
+  const [allowance, completed] = await Promise.all([
+    getIntConfig(MOCK_FREE_ALLOWANCE_KEY),
+    repo.countAllCompletedAttempts(userId),
+  ]);
+  return Math.max(allowance - completed, 0);
+}
+
+async function refundMockChargeIfAny(
+  attemptId: string,
+  userId: string,
+): Promise<void> {
+  const cost = await getIntConfig(MOCK_POINT_COST_KEY);
+  if (cost <= 0) return;
+  await withLegacyPointsMirrorFlush(() =>
+    writeClient().$transaction(async (tx) => {
+      const charged = await tx.pointsTransaction.findUnique({
+        where: { idempotencyKey: `mock-interview:charge:${attemptId}` },
+        select: { id: true },
+      });
+      if (!charged) return;
+      await applyPointsChange(tx, {
+        userId,
+        amount: cost,
+        sourceType: PointsSourceType.MOCK_INTERVIEW,
+        sourceId: attemptId,
+        idempotencyKey: `mock-interview:refund:${attemptId}`,
+        reason: "Refund technical mock interview failure",
+        mode: "credit",
+      });
+    }),
+  );
 }
 
 export type HistoryEntry = repo.AttemptSummary & {
@@ -314,9 +359,6 @@ export async function startAttempt(
   const state = appendLine(
     {
       ...startInterview(createInitialState()),
-      // The opening question counts as asked. Without this the planner would
-      // see it as an unassessed target and could route straight back to the one
-      // question we know for certain has already been put.
       askedQuestionIds: [first.id],
     },
     "interviewer",
@@ -324,16 +366,62 @@ export async function startAttempt(
     first.id,
   );
 
-  const attempt = await repo.createAttempt({
-    userId,
-    domainSlug: domain.slug,
-    packId: context.packId,
-    packVersion: context.packVersion,
-    attemptNumber,
-    capabilities: context.capabilities,
-    plan,
-    state,
-  });
+  class MockChargeError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "MockChargeError";
+    }
+  }
+
+  const completed = await repo.countAllCompletedAttempts(userId);
+  const [allowance, cost] = await Promise.all([
+    getIntConfig(MOCK_FREE_ALLOWANCE_KEY),
+    getIntConfig(MOCK_POINT_COST_KEY),
+  ]);
+  const needsCharge = completed >= allowance && cost > 0;
+
+  let attempt: { id: string };
+  try {
+    attempt = await withLegacyPointsMirrorFlush(() =>
+      writeClient().$transaction(async (tx) => {
+        const created = await repo.createAttempt({
+          userId,
+          domainSlug: domain.slug,
+          packId: context.packId,
+          packVersion: context.packVersion,
+          attemptNumber,
+          capabilities: context.capabilities,
+          plan,
+          state,
+          tx,
+        });
+        if (needsCharge) {
+          const debit = await applyPointsChange(tx, {
+            userId,
+            amount: -cost,
+            sourceType: PointsSourceType.MOCK_INTERVIEW,
+            sourceId: created.id,
+            idempotencyKey: `mock-interview:charge:${created.id}`,
+            reason: "Mock interview after free allowance",
+            mode: "debit_strict",
+          });
+          if (!debit.ok) {
+            throw new MockChargeError(
+              debit.reason === "insufficient"
+                ? "Not enough Synergy Points for another mock interview."
+                : "Could not start this mock interview.",
+            );
+          }
+        }
+        return created;
+      }),
+    );
+  } catch (error) {
+    if (error instanceof MockChargeError) {
+      return { ok: false, message: error.message };
+    }
+    throw error;
+  }
 
   logger.info("[mock-interview] attempt opened", {
     attemptId: attempt.id,
@@ -644,7 +732,9 @@ export async function finishAttempt(
       userId,
       "INVALID",
       "Report failed validation.",
+      true,
     );
+    await refundMockChargeIfAny(attemptId, userId);
     return { ok: false, message: "Could not produce a report for this attempt." };
   }
 

@@ -1,8 +1,9 @@
 import "server-only";
 
 import { cache } from "react";
-import { prisma } from "@/lib/db";
+import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { writeAudit } from "@/features/admin/audit";
 import {
   intConfigSchema,
   stringConfigSchema,
@@ -120,6 +121,29 @@ export const PLATFORM_CONFIG_KEYS = {
     default: "USD",
     description: "ISO currency code credit amounts are denominated in.",
   },
+  /**
+   * D-11: first N completed mock interviews are free. Missing row uses 3,
+   * never 0, so a config outage does not silently make every mock paid.
+   */
+  "mock.free_allowance": {
+    kind: "int",
+    default: 3,
+    min: 0,
+    max: 100,
+    description: "Completed mock interviews that cost zero Synergy Points.",
+  },
+  /**
+   * D-11: Synergy Points for a mock after the free allowance. Missing row uses
+   * 50, never 0, so a config outage does not make paid mocks free.
+   */
+  "mock.point_cost": {
+    kind: "int",
+    default: 50,
+    min: 0,
+    max: 1_000_000,
+    description:
+      "Synergy Points charged when completed mocks are at or above the free allowance. 0 means paid attempts stay free.",
+  },
 } as const satisfies Record<string, IntKeySpec | StringKeySpec>;
 
 type Registry = typeof PLATFORM_CONFIG_KEYS;
@@ -143,6 +167,8 @@ export const LOW_BALANCE_THRESHOLD_KEY =
 export const VERY_LOW_BALANCE_THRESHOLD_KEY =
   "credits.very_low_balance_threshold_minor" satisfies IntConfigKey;
 export const CREDITS_CURRENCY_KEY = "credits.currency" satisfies StringConfigKey;
+export const MOCK_FREE_ALLOWANCE_KEY = "mock.free_allowance" satisfies IntConfigKey;
+export const MOCK_POINT_COST_KEY = "mock.point_cost" satisfies IntConfigKey;
 
 /**
  * The fail-closed resolution rule, separated from the database so it can be
@@ -217,4 +243,56 @@ export async function getIntConfig(key: IntConfigKey): Promise<number> {
 export async function getStringConfig(key: StringConfigKey): Promise<string> {
   const row = await loadConfigRow(key);
   return resolveStringConfig(key, row?.stringValue);
+}
+
+export async function writeIntConfig(input: {
+  key: IntConfigKey;
+  intValue: number;
+  actorUserId: string;
+  reason: string;
+}): Promise<void> {
+  const spec = PLATFORM_CONFIG_KEYS[input.key];
+  if (spec.kind !== "int") {
+    throw new Error(`Unknown integer config key: ${input.key}`);
+  }
+  const parsed = intConfigSchema(spec.min, spec.max).safeParse(input.intValue);
+  if (!parsed.success) {
+    throw new Error(
+      `${input.key} must be an integer between ${spec.min} and ${spec.max}.`,
+    );
+  }
+
+  await writeClient().$transaction(async (tx) => {
+    const existing = await tx.platformConfig.findUnique({
+      where: { key: input.key },
+      select: { intValue: true },
+    });
+    const previous = resolveIntConfig(input.key, existing?.intValue);
+
+    await tx.platformConfig.upsert({
+      where: { key: input.key },
+      create: {
+        key: input.key,
+        intValue: parsed.data,
+        description: spec.description,
+        updatedByUserId: input.actorUserId,
+      },
+      update: {
+        intValue: parsed.data,
+        updatedByUserId: input.actorUserId,
+      },
+    });
+
+    await writeAudit(tx, {
+      actorUserId: input.actorUserId,
+      adminUserId: input.actorUserId,
+      targetUserId: null,
+      entityType: "PlatformConfig",
+      entityId: input.key,
+      actionType: "PLATFORM_CONFIG_UPDATE",
+      reason: input.reason,
+      previousState: { intValue: previous },
+      newState: { intValue: parsed.data },
+    });
+  });
 }

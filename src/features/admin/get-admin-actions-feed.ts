@@ -49,16 +49,33 @@ export function parseAdminActionFilterType(
   return "all";
 }
 
+function searchWhere(q: string | null | undefined): Prisma.AdminActionWhereInput {
+  const term = q?.trim();
+  if (!term) return {};
+  return {
+    OR: [
+      { actionType: { contains: term, mode: "insensitive" } },
+      { entityId: term },
+      { reason: { contains: term, mode: "insensitive" } },
+      { actorUserId: term },
+    ],
+  };
+}
+
 export async function getAdminActionActors(): Promise<
   { id: string; name: string }[]
 > {
   const groups = await prisma.adminAction.groupBy({
     by: ["adminUserId"],
+    where: { adminUserId: { not: null } },
   });
-  if (groups.length === 0) return [];
+  const ids = groups
+    .map((g) => g.adminUserId)
+    .filter((id): id is string => Boolean(id));
+  if (ids.length === 0) return [];
 
   const users = await prisma.user.findMany({
-    where: { id: { in: groups.map((g) => g.adminUserId) } },
+    where: { id: { in: ids } },
     select: {
       id: true,
       email: true,
@@ -78,14 +95,19 @@ export async function getAdminActionsFeed(input: {
   page?: number;
   type?: AdminActionFilterType;
   adminUserId?: string | null;
+  q?: string | null;
 }) {
   const page = Math.max(1, input.page ?? 1);
   const type = input.type ?? "all";
   const adminUserId = input.adminUserId?.trim() || null;
+  const q = input.q?.trim() || null;
 
   const where: Prisma.AdminActionWhereInput = {
-    ...actionTypeWhere(type),
-    ...(adminUserId ? { adminUserId } : {}),
+    AND: [
+      actionTypeWhere(type),
+      adminUserId ? { adminUserId } : {},
+      searchWhere(q),
+    ],
   };
   const skip = (page - 1) * ADMIN_ACTIONS_PAGE_SIZE;
 
@@ -101,6 +123,9 @@ export async function getAdminActionsFeed(input: {
         reason: true,
         metadata: true,
         createdAt: true,
+        actorUserId: true,
+        entityType: true,
+        entityId: true,
         admin: {
           select: {
             email: true,
@@ -122,25 +147,31 @@ export async function getAdminActionsFeed(input: {
   const totalPages = Math.max(1, Math.ceil(total / ADMIN_ACTIONS_PAGE_SIZE));
 
   return {
-    items: rows.map((row) => ({
-      id: row.id,
-      actionType: row.actionType,
-      actionLabel: formatAdminActionType(row.actionType),
-      reason: row.reason,
-      metadata: row.metadata,
-      createdAt: row.createdAt,
-      adminName: displayName(row.admin.studentProfile?.fullName, row.admin.email),
-      targetUserId: row.target.id,
-      targetName: displayName(
-        row.target.studentProfile?.fullName,
-        row.target.email,
-      ),
-    })),
+    items: rows.map((row) => {
+      const targetUserId = row.target?.id ?? null;
+      const targetName = row.target
+        ? displayName(row.target.studentProfile?.fullName, row.target.email)
+        : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—";
+      return {
+        id: row.id,
+        actionType: row.actionType,
+        actionLabel: formatAdminActionType(row.actionType),
+        reason: row.reason,
+        metadata: row.metadata,
+        createdAt: row.createdAt,
+        adminName: row.admin
+          ? displayName(row.admin.studentProfile?.fullName, row.admin.email)
+          : row.actorUserId,
+        targetUserId,
+        targetName,
+      };
+    }),
     total,
     page,
     pageSize: ADMIN_ACTIONS_PAGE_SIZE,
     totalPages,
     type,
     adminUserId,
+    q,
   };
 }

@@ -18,6 +18,7 @@ import { RejectSubmissionButton } from "@/components/admin/reject-submission-but
 import { StudentActionPanel } from "@/components/admin/student-action-panel";
 import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
 import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
+import { AccountOpsDialog } from "@/components/admin/account-ops-dialog";
 import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
@@ -61,6 +62,11 @@ export default async function AdminStudentDetailPage({
             </Avatar>
             <div>
               <h1 className="font-display text-2xl font-bold">{data.user.name}</h1>
+              {data.user.disabledAt ? (
+                <p className="mt-1 text-sm text-destructive">
+                  Disabled{data.user.disabledReason ? `: ${data.user.disabledReason}` : ""}
+                </p>
+              ) : null}
               <p className="text-sm text-muted-foreground">
                 {data.user.email} · Joined {formatDateIST(data.user.joinedAt)}
               </p>
@@ -86,6 +92,23 @@ export default async function AdminStudentDetailPage({
             <DeleteUserAccountDialog
               userId={data.user.id}
               userName={data.user.name}
+            />
+            <AccountOpsDialog
+              targetUserId={data.user.id}
+              targetName={data.user.name}
+              op="disable"
+              disabled={Boolean(data.user.disabledAt)}
+            />
+            <AccountOpsDialog
+              targetUserId={data.user.id}
+              targetName={data.user.name}
+              op="restore"
+              disabled={!data.user.disabledAt}
+            />
+            <AccountOpsDialog
+              targetUserId={data.user.id}
+              targetName={data.user.name}
+              op="secure"
             />
           </div>
         </div>
@@ -165,6 +188,11 @@ export default async function AdminStudentDetailPage({
           </Avatar>
           <div>
             <h1 className="font-display text-2xl font-bold">{data.user.name}</h1>
+            {data.user.disabledAt ? (
+              <p className="mt-1 text-sm text-destructive">
+                Disabled{data.user.disabledReason ? `: ${data.user.disabledReason}` : ""}
+              </p>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               {data.user.email} · Joined {formatDateIST(data.user.joinedAt)}
             </p>
@@ -188,6 +216,7 @@ export default async function AdminStudentDetailPage({
           studentName={data.student.fullName}
           isReadyForInterview={data.student.isReadyForInterview}
           isActive={data.student.enrollmentStatus === "ACTIVE"}
+          disabledAt={data.user.disabledAt ? data.user.disabledAt.toISOString() : null}
         />
       </div>
 

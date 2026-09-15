@@ -187,6 +187,7 @@ export async function createOrUpdateCohort(
         await tx.adminAction.create({
           data: {
             adminUserId: adminId,
+            actorUserId: adminId,
             targetUserId: adminId,
             actionType: "PROGRAM_UPDATE_COHORT",
             metadata: {
@@ -218,6 +219,7 @@ export async function createOrUpdateCohort(
       await tx.adminAction.create({
         data: {
           adminUserId: adminId,
+          actorUserId: adminId,
           targetUserId: adminId,
           actionType: "PROGRAM_CREATE_COHORT",
           metadata: {
@@ -258,6 +260,7 @@ export async function regenerateJoinCode(
       await tx.adminAction.create({
         data: {
           adminUserId: adminId,
+          actorUserId: adminId,
           targetUserId: adminId,
           actionType: "PROGRAM_REGENERATE_JOIN_CODE",
           metadata: {
@@ -297,6 +300,7 @@ export async function setCohortStatus(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: adminId,
         actionType: "PROGRAM_SET_COHORT_STATUS",
         metadata: { cohortId, from: cohort.status, to: status },
@@ -327,6 +331,7 @@ export async function publishResults(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: adminId,
         actionType: "PROGRAM_PUBLISH_RESULTS",
         metadata: { cohortId },
@@ -688,6 +693,7 @@ export async function promoteWaitlisted(
       await tx.adminAction.create({
         data: {
           adminUserId: adminId,
+          actorUserId: adminId,
           targetUserId: member.userId,
           actionType: "PROGRAM_PROMOTE_WAITLIST",
           metadata: { memberId },
@@ -726,6 +732,7 @@ export async function dropMember(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: member.userId,
         actionType: "PROGRAM_DROP_MEMBER",
         reason,
@@ -769,6 +776,7 @@ export async function adminUnlockDay(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: member.userId,
         actionType: "PROGRAM_UNLOCK_DAY",
         reason,
@@ -807,6 +815,7 @@ export async function grantSkipToken(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: member.userId,
         actionType: "PROGRAM_GRANT_SKIP_TOKEN",
         reason,
@@ -880,6 +889,7 @@ export async function regenerateMemberRecommendation(
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
+        actorUserId: adminId,
         targetUserId: member.userId,
         actionType: "PROGRAM_REGENERATE_RECOMMENDATION",
         metadata: { memberId },

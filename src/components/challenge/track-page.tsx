@@ -136,9 +136,9 @@ export async function TrackPage({ domain }: TrackPageProps) {
       },
     });
     const adminName =
-      endedAction?.admin.studentProfile?.fullName?.trim() ||
-      endedAction?.admin.name?.trim() ||
-      endedAction?.admin.email ||
+      endedAction?.admin?.studentProfile?.fullName?.trim() ||
+      endedAction?.admin?.name?.trim() ||
+      endedAction?.admin?.email ||
       "An admin";
 
     return (

@@ -45,6 +45,8 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-15 [convention] T-207: Platform Admin console IA (Overview, Search, Candidates, Recruiters, Credits, Assessments, Jobs, Communications, Audit, Delivery, Settings) wired to existing admin data. View As, SMS, and team plans are not shipped.
+- 2026-09-15 [schema|rule] T-272/T-270/T-277/T-217: User disable+sessionInvalidatedAt; AdminAction actor snapshot + nullable FKs SetNull; candidate-owned Restrict→Cascade and credit/engagement candidate FKs SetNull; runtime mock allowance/cost; candidate hard-delete. Operator never sees a password.
 - 2026-09-15 [rule] Recruiter assessment templates live on /hire/create-test; using a template publishes and assigns to ticked Shortlist candidates (preset ids + refs only). Customize still opens the locked builder. /hire/assessments is the list only.
 - 2026-09-15 [rule] Scout inspector non-contact reads (work history, External profiles, ABTalks Evidence) use resolveInspectorCandidate without challenge minDays; 50-day completion gate uses Math.max(attempts, Enrollment.daysCompleted); LeetCode/CodeChef bare hosts get https:// on save/display.
 - 2026-09-15 [convention] Scout inspector ABTalks Evidence lists pool-gated completions and hackathon placements only (50+ challenge days including Claude, finished ProgramEnrollment cohorts, ViCoDathon Winner/Runner Up/Second Runner Up/Top 5); in-progress track counts are not shown.

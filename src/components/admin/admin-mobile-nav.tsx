@@ -8,54 +8,50 @@ import {
   Bell,
   BookOpen,
   Briefcase,
+  ClipboardList,
   Code2,
+  Coins,
   FileText,
+  FolderSearch,
   Gift,
   GraduationCap,
   LayoutDashboard,
   Link2,
+  Mail,
   Megaphone,
   Menu,
   Package,
-  ShieldCheck,
-  FolderSearch,
   Presentation,
+  ScrollText,
+  Search,
   Send,
+  Settings,
+  ShieldCheck,
   UserPlus,
   Users,
   X,
 } from "lucide-react";
+import {
+  ADMIN_NAV_GROUPS,
+  isAdminNavActive,
+  type AdminNavIcon,
+} from "@/features/admin/admin-nav";
 import { cn } from "@/lib/utils";
 
-type IconName =
-  | "overview"
-  | "notifications"
-  | "deliveries"
-  | "students"
-  | "submissions"
-  | "jobs"
-  | "content"
-  | "analytics"
-  | "ambassadors"
-  | "referrals"
-  | "hackathonLinks"
-  | "redemptions"
-  | "dataRequests"
-  | "program"
-  | "cohort"
-  | "hackathon"
-  | "workshop"
-  | "recruiters"
-  | "talentProjects"
-  | "platformAdmins";
-
-const iconMap = {
+const iconMap: Record<AdminNavIcon, typeof LayoutDashboard> = {
   overview: LayoutDashboard,
-  notifications: Bell,
-  deliveries: Send,
+  search: Search,
   students: Users,
-  submissions: FileText,
+  recruiters: UserPlus,
+  credits: Coins,
+  assessments: ClipboardList,
   jobs: Briefcase,
+  communications: Mail,
+  audit: ScrollText,
+  delivery: Send,
+  settings: Settings,
+  notifications: Bell,
+  submissions: FileText,
   content: BookOpen,
   analytics: BarChart3,
   ambassadors: Megaphone,
@@ -67,27 +63,12 @@ const iconMap = {
   cohort: GraduationCap,
   hackathon: Code2,
   workshop: Presentation,
-  recruiters: UserPlus,
   talentProjects: FolderSearch,
   platformAdmins: ShieldCheck,
-} as const;
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: IconName;
+  hire: Briefcase,
 };
 
-interface AdminMobileNavProps {
-  navItems: NavItem[];
-}
-
-function isNavActive(pathname: string, href: string): boolean {
-  if (href === "/admin") return pathname === "/admin";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-export function AdminMobileNav({ navItems }: AdminMobileNavProps) {
+export function AdminMobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -105,7 +86,7 @@ export function AdminMobileNav({ navItems }: AdminMobileNavProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-card"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border bg-card"
         aria-label="Open admin menu"
       >
         <Menu className="h-5 w-5" />
@@ -119,53 +100,59 @@ export function AdminMobileNav({ navItems }: AdminMobileNavProps) {
             aria-label="Close admin menu"
             onClick={() => setOpen(false)}
           />
-          <div
-            className={cn(
-              "fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r bg-card p-4 shadow-xl transition-transform duration-200",
-              open ? "translate-x-0" : "-translate-x-full",
-            )}
-          >
-            <div className="mb-4 flex justify-end">
+          <div className="fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r bg-card p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8F8F8F]">
+                Platform Admin
+              </p>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl hover:bg-accent"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <nav className="flex-1 space-y-1">
-              {navItems.map((item) => {
-                const Icon = iconMap[item.icon];
-                const isActive = isNavActive(pathname, item.href);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "abt-nav-item gap-3 px-4",
-                      isActive ? "abt-nav-active" : "abt-nav-idle",
-                    )}
-                  >
-                    <Icon className="size-5 shrink-0" aria-hidden />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 space-y-5 overflow-y-auto">
+              {ADMIN_NAV_GROUPS.map((group) => (
+                <div key={group.id}>
+                  {group.id !== "console" && group.label ? (
+                    <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8F8F8F]">
+                      {group.label}
+                    </p>
+                  ) : null}
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const Icon = iconMap[item.icon];
+                      const isActive = isAdminNavActive(pathname, item);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            "abt-nav-item gap-3 px-4",
+                            isActive ? "abt-nav-active" : "abt-nav-idle",
+                          )}
+                        >
+                          <Icon className="size-5 shrink-0" aria-hidden />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
-            <div className="mt-auto border-t border-border pt-4">
-              <Link
-                href="/dashboard"
-                onClick={() => setOpen(false)}
-                className="text-xs text-primary hover:underline"
-              >
-                ← Back to student portal
-              </Link>
-            </div>
+            <Link
+              href="/"
+              onClick={() => setOpen(false)}
+              className="mt-4 border-t border-[#E9E9E9] pt-4 text-xs font-medium text-[#03535F] hover:underline"
+            >
+              ← Back to ABTalks
+            </Link>
           </div>
         </>
       ) : null}

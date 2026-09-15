@@ -7,10 +7,12 @@ function hrefForPage(
   page: number,
   type: AdminActionFilterType,
   adminUserId: string | null,
+  q: string | null,
 ): string {
   const params = new URLSearchParams();
   if (type !== "all") params.set("type", type);
   if (adminUserId) params.set("admin", adminUserId);
+  if (q) params.set("q", q);
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/admin/actions?${qs}` : "/admin/actions";
@@ -22,12 +24,14 @@ export function AdminActionsPagination({
   total,
   type,
   adminUserId,
+  q,
 }: {
   page: number;
   totalPages: number;
   total: number;
   type: AdminActionFilterType;
   adminUserId: string | null;
+  q: string | null;
 }) {
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
@@ -40,7 +44,7 @@ export function AdminActionsPagination({
       <div className="flex gap-2">
         {hasPrev ? (
           <Link
-            href={hrefForPage(page - 1, type, adminUserId)}
+            href={hrefForPage(page - 1, type, adminUserId, q)}
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             Previous
@@ -57,7 +61,7 @@ export function AdminActionsPagination({
         )}
         {hasNext ? (
           <Link
-            href={hrefForPage(page + 1, type, adminUserId)}
+            href={hrefForPage(page + 1, type, adminUserId, q)}
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             Next
