@@ -444,7 +444,7 @@ export function assertCodingProfileHost(
 ): string | null {
   let parsed: URL;
   try {
-    parsed = new URL(url.trim());
+    parsed = new URL(ensureHttpUrl(url.trim()));
   } catch {
     return type === "LEETCODE"
       ? "Enter a LeetCode profile URL (leetcode.com/…)"
@@ -464,11 +464,33 @@ export function assertCodingProfileHost(
   return "Enter a CodeChef profile URL (codechef.com/users/…)";
 }
 
+/**
+ * Bare hosts (`leetcode.com/u/…`) are common; Zod `.url()` and `new URL` need a
+ * scheme. Prepend https:// when none is present. Leaves already-absolute URLs
+ * and empty strings alone.
+ */
+export function ensureHttpUrl(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(t)) return t;
+  return `https://${t}`;
+}
+
+const codingProfileUrl = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const t = value.trim();
+  if (t === "") return null;
+  return ensureHttpUrl(t);
+}, z.string().url("Must be a valid URL").max(500).nullable().default(null));
+
 const extraLinkSchema = z
   .object({
     type: z.enum(CandidateLinkType),
     label: nullableText(80),
-    url: z.string().trim().url("Must be a valid URL").max(500),
+    url: z.preprocess((value) => {
+      if (typeof value !== "string") return value;
+      return ensureHttpUrl(value.trim());
+    }, z.string().trim().url("Must be a valid URL").max(500)),
   })
   .superRefine((row, ctx) => {
     if (row.type === CandidateLinkType.OTHER && !row.label) {
@@ -502,14 +524,14 @@ export const linksSectionSchema = z.object({
    * not CandidateProfile columns. Optional — they do not affect profile
    * completeness %.
    */
-  leetcodeUrl: nullableUrl.superRefine((value, ctx) => {
+  leetcodeUrl: codingProfileUrl.superRefine((value, ctx) => {
     if (value === null) return;
     const hostError = assertCodingProfileHost("LEETCODE", value);
     if (hostError) {
       ctx.addIssue({ code: "custom", message: hostError });
     }
   }),
-  codechefUrl: nullableUrl.superRefine((value, ctx) => {
+  codechefUrl: codingProfileUrl.superRefine((value, ctx) => {
     if (value === null) return;
     const hostError = assertCodingProfileHost("CODECHEF", value);
     if (hostError) {

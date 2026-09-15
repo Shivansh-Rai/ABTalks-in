@@ -604,6 +604,10 @@ suite("wins-only accomplishments use 50-day Claude and placement-only hackathon"
     src.includes("winsOnly") && src.includes("best !== null"),
     "wins-only hackathon requires a placement",
   );
+  assert(
+    src.includes("Math.max(stats.daysCompleted, enrollment.daysCompleted)"),
+    "50-day gate trusts Enrollment snapshot when attempts under-count",
+  );
   const profilePage = code("src/app/profile/page.tsx");
   assert(
     profilePage.includes("getVerifiedAccomplishments(userId)"),

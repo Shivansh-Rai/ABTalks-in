@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { CandidateLinkType } from "@prisma/client";
 import {
   assertCodingProfileHost,
+  ensureHttpUrl,
   linksSectionSchema,
   mergeCodingProfileLinks,
 } from "@/lib/validations/candidate-profile";
@@ -34,6 +35,35 @@ suite("assertCodingProfileHost accepts real hosts", () => {
     ),
     null,
   );
+  assert.equal(
+    assertCodingProfileHost("LEETCODE", "leetcode.com/u/alice"),
+    null,
+    "bare host is accepted after https normalize",
+  );
+});
+
+suite("ensureHttpUrl prepends https for bare hosts", () => {
+  assert.equal(ensureHttpUrl("leetcode.com/u/alice"), "https://leetcode.com/u/alice");
+  assert.equal(
+    ensureHttpUrl("https://codechef.com/users/alice"),
+    "https://codechef.com/users/alice",
+  );
+  assert.equal(ensureHttpUrl(""), "");
+});
+
+suite("linksSectionSchema normalizes bare coding URLs", () => {
+  const parsed = linksSectionSchema.safeParse({
+    linkedinUrl: null,
+    githubUsername: null,
+    portfolioUrl: null,
+    leetcodeUrl: "leetcode.com/u/alice",
+    codechefUrl: "www.codechef.com/users/bob",
+    extra: [],
+  });
+  assert.equal(parsed.success, true);
+  if (!parsed.success) return;
+  assert.equal(parsed.data.leetcodeUrl, "https://leetcode.com/u/alice");
+  assert.equal(parsed.data.codechefUrl, "https://www.codechef.com/users/bob");
 });
 
 suite("assertCodingProfileHost refuses nonsense hosts", () => {
@@ -173,6 +203,10 @@ suite("inspector action never selects protected contact fields", () => {
     );
   }
   assert.ok(fn.includes("listSelfReportedExternalLinks"));
+  assert.ok(
+    fn.includes("resolveInspectorCandidate"),
+    "external links use inspector addressability (no challenge minDays)",
+  );
 });
 
 suite("repository helper select stays contact-safe", () => {
