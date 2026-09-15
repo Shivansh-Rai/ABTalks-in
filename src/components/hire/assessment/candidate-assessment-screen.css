@@ -753,6 +753,24 @@
   position: relative;
 }
 
+/* A strict attempt in progress (the guard is only mounted then, in
+   fullscreen): nothing but the assessment on screen. Hides the dashboard
+   shell's sidebar, header and footer without touching DashboardShell — these
+   selectors follow its markup (dashboard-hub/dashboard-shell.tsx), so keep
+   them in step if that changes. They vanish again once the attempt closes,
+   because the guard unmounts. */
+.theme-abtalks-brand:has(.hire-cand-assess-guard) > aside,
+.theme-abtalks-brand:has(.hire-cand-assess-guard) > button,
+.abt-content-scroll:has(.hire-cand-assess-guard) .abt-header,
+.abt-content-scroll:has(.hire-cand-assess-guard) footer {
+  display: none !important;
+}
+
+/* With the header gone, the timer bar pins to the top of the screen. */
+.abt-content-scroll:has(.hire-cand-assess-guard) .hire-cand-assess__bar {
+  top: 12px;
+}
+
 .hire-cand-assess-guard[data-blocked="true"] .hire-cand-assess-guard__content {
   filter: blur(14px);
   pointer-events: none;
