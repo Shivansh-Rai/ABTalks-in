@@ -66,9 +66,10 @@ function PrimaryAction({
       <Link
         href={`/hire/create-test?id=${row.id}`}
         className={cn("hire-assess-action", className)}
+        title="Continue editing"
       >
         <PencilLine aria-hidden="true" />
-        Continue editing
+        <span className="hire-assess-action__label">Continue editing</span>
       </Link>
     );
   }
@@ -76,9 +77,10 @@ function PrimaryAction({
     <Link
       href={`/hire/assessments/${row.id}#results`}
       className={cn("hire-assess-action", className)}
+      title="View results"
     >
       <ChartColumn aria-hidden="true" />
-      View results
+      <span className="hire-assess-action__label">View results</span>
     </Link>
   );
 }

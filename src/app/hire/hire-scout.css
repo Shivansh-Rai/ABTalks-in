@@ -5841,6 +5841,15 @@ html.dark .vc-card {
   margin: 20px auto 32px;
 }
 
+/* Extra side gutter on wide desktops so View results + ⋮ stay on the row.
+   721–1099px keeps 80% so the table is not narrower than its min-width.
+   Phones keep the 720px card override below — do not fold this into that. */
+@media (min-width: 1100px) {
+  .hire-assess-list--index {
+    width: 70%;
+  }
+}
+
 .hire-assess-list--index .hire-assess-list__head {
   align-items: flex-end;
   gap: 16px;
@@ -5883,8 +5892,15 @@ html.dark .vc-card {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
+/* The table sizes to its own box (the sidebar + 15% side margins leave
+   ~800px at a 1440px screen), so it adapts via container queries below
+   instead of forcing a horizontal scroll. min-width is only a last resort. */
+.hire-assess-index__table-wrap {
+  container-type: inline-size;
+}
+
 .hire-assess-index__table {
-  min-width: 840px;
+  min-width: 620px;
   font-size: 14px;
 }
 
@@ -5903,14 +5919,15 @@ html.dark .vc-card {
 
 .hire-assess-index__table th:first-child,
 .hire-assess-index__table td:first-child {
-  width: 36%;
-  min-width: 240px;
+  min-width: 200px;
   padding-left: 20px;
 }
 
 .hire-assess-index__table th:last-child,
 .hire-assess-index__table td:last-child {
+  width: 1%;
   padding-right: 12px;
+  white-space: nowrap;
 }
 
 .hire-assess-index__table tbody tr:last-child td {
@@ -5960,6 +5977,7 @@ html.dark .vc-card {
 
 .hire-assess-index__actions {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
@@ -6010,6 +6028,51 @@ html.dark .vc-card {
 
 .hire-assess-index__table .hire-assess-results {
   flex-wrap: nowrap;
+}
+
+/* Narrower table box: drop the action label to an icon button, let the
+   results group wrap (without the dot separators) and tighten padding. */
+@container (max-width: 1020px) {
+  .hire-assess-index__table th,
+  .hire-assess-index__table td {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .hire-assess-index__table th:first-child,
+  .hire-assess-index__table td:first-child {
+    padding-left: 16px;
+  }
+
+  .hire-assess-index__table .hire-assess-results {
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    max-width: 190px;
+  }
+
+  .hire-assess-index__table .hire-assess-results__item + .hire-assess-results__item::before {
+    content: none;
+  }
+
+  .hire-assess-index__table a.hire-assess-action {
+    position: relative;
+    width: 36px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .hire-assess-index__table .hire-assess-action__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .hire-assess-index__actions {
+    gap: 4px;
+  }
 }
 
 .hire-assess-results__item {
@@ -6117,7 +6180,11 @@ a.hire-assess-action {
 
 .hire-app.hire-menu.hire-assess-menu {
   width: 15rem;
+  height: auto;
+  min-height: 0;
+  max-height: min(var(--available-height), 20rem);
   padding: 6px;
+  overflow-y: auto;
 }
 
 .hire-app.hire-menu.hire-assess-menu [data-slot="dropdown-menu-item"] {
@@ -11826,7 +11893,9 @@ a.hire-profile__ext-link:focus-visible {
 
    Desktop only — phones keep normal document scrolling. */
 @media (min-width: 901px) {
-  .hire-app:not(.hire-app--desk) {
+  /* :not(.hire-menu) — portaled dropdowns also carry .hire-app so tokens
+     apply; without this exclusion they inherit 100dvh and freeze scroll. */
+  .hire-app:not(.hire-app--desk):not(.hire-menu) {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
