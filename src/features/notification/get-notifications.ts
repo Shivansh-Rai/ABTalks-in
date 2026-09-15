@@ -119,10 +119,28 @@ export async function getNotificationsForUser(
     }),
   ]);
 
+  // T-249 audience gating for CANDIDATE / RECRUITER admin broadcasts.
+  // A recruiter is anyone with a RecruiterProfile row; a candidate is
+  // anyone signed in who isn't a recruiter. Kept off the Promise.all
+  // fan-out above because it only matters after audience-facing rows
+  // land — one small select is cheap and lets the check stay linear.
+  const recruiterProfile = await prisma.recruiterProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
   const audiences = new Set<string>(["ALL"]);
   if (challengeMembership) audiences.add("CHALLENGE");
   if (programMemberships.length > 0) audiences.add("PROGRAM");
   if (hackathonMembership) audiences.add("HACKATHON");
+  if (recruiterProfile) {
+    audiences.add("RECRUITER");
+  } else {
+    // Every signed-in non-recruiter counts as a candidate for
+    // broadcast targeting. T-249 admin composer uses CANDIDATE for
+    // messages that go to all applicants and platform users.
+    audiences.add("CANDIDATE");
+  }
 
   const readKeys = new Set(readRows.map((r) => r.notificationKey));
 
