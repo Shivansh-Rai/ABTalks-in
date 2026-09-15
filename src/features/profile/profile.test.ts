@@ -1528,7 +1528,9 @@ suite("the profile card cannot strand its own content on short screens", () => {
     css.indexOf(".pw-quick-head {"),
   );
   assert(card.includes("max-height"), "a sticky card is capped to the viewport");
-  assert(card.includes("overflow: hidden auto"), "and scrolls inside itself");
+  assert(card.includes("overflow: hidden"), "and clips rather than scrolling inside");
+  assert(!card.includes("overflow: hidden auto"), "inner auto-scroll is gone");
+  assert(css.includes("padding: 8px 16px"), "Quick Links items are compacted");
 });
 
 suite("an open sheet leaves Quick Links pinned where it was", () => {
