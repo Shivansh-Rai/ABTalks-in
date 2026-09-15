@@ -8,12 +8,14 @@ import { saveEducationAction } from "@/app/actions/candidate-profile-actions";
 import {
   DEGREES,
   GRADE_TYPE_LABELS,
+  SCORE_TYPE_OPTIONS,
   departmentsForDegree,
   searchDegrees,
 } from "@/lib/candidate-vocab";
 import {
   EDUCATION_MAX_SPAN_YEARS,
   EDUCATION_MIN_YEAR,
+  gradeScoreIssue,
 } from "@/lib/validations/candidate-profile";
 import { endBeforeStart, useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
@@ -25,9 +27,9 @@ import {
   PwField,
   PwInput,
   CURRENT_YEAR,
+  PwMenuSelect,
   PwMonthYear,
   PwRow,
-  PwSelect,
   PwSuggest,
   PwTextarea,
 } from "./wizard-fields";
@@ -69,7 +71,6 @@ const GRADE_PLACEHOLDER: Record<string, string> = {
   CGPA_10: "e.g. 8.6",
   GPA_4: "e.g. 3.7",
   GRADE: "e.g. A+",
-  OTHER: "e.g. Distinction",
 };
 
 export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
@@ -124,6 +125,10 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
           const startYear = watch(`rows.${index}.startYear`);
           const gradeType = watch(`rows.${index}.gradeType`);
           const degree = watch(`rows.${index}.degree`);
+          const numericScore =
+            gradeType === "PERCENTAGE" ||
+            gradeType === "CGPA_10" ||
+            gradeType === "GPA_4";
           return (
             <PwEntryCard
               key={field.id}
@@ -301,25 +306,42 @@ export function EducationSection({ initial }: { initial: EducationFormRow[] }) {
 
               <PwRow cols={2}>
                 <PwField label="Score type" htmlFor={`edu-grade-type-${index}`}>
-                  <PwSelect
-                    id={`edu-grade-type-${index}`}
-                    {...register(`rows.${index}.gradeType`)}
-                  >
-                    <option value="">Select</option>
-                    {Object.values(GradeType).map((g) => (
-                      <option key={g} value={g}>
-                        {GRADE_TYPE_LABELS[g] ?? g}
-                      </option>
-                    ))}
-                  </PwSelect>
+                  <Controller
+                    control={control}
+                    name={`rows.${index}.gradeType`}
+                    render={({ field: f }) => (
+                      <PwMenuSelect
+                        id={`edu-grade-type-${index}`}
+                        aria-label="Score type"
+                        placeholder="Select"
+                        value={f.value}
+                        options={SCORE_TYPE_OPTIONS}
+                        labels={GRADE_TYPE_LABELS}
+                        onChange={(v) => {
+                          f.onChange(v as GradeType | "");
+                          void trigger(`rows.${index}.grade`);
+                        }}
+                      />
+                    )}
+                  />
                 </PwField>
-                <PwField label="Score" htmlFor={`edu-grade-${index}`}>
+                <PwField
+                  label="Score"
+                  htmlFor={`edu-grade-${index}`}
+                  error={errors.rows?.[index]?.grade?.message}
+                >
                   <PwInput
                     id={`edu-grade-${index}`}
+                    inputMode={numericScore ? "decimal" : undefined}
                     placeholder={
                       gradeType ? GRADE_PLACEHOLDER[gradeType] : "e.g. 7.9"
                     }
-                    {...register(`rows.${index}.grade`)}
+                    {...register(`rows.${index}.grade`, {
+                      validate: (value, values) => {
+                        const type = values.rows[index]?.gradeType || null;
+                        return gradeScoreIssue(type, value) ?? true;
+                      },
+                    })}
                   />
                 </PwField>
               </PwRow>

@@ -17,7 +17,7 @@ import {
   GradeType,
   OpportunityType,
 } from "@prisma/client";
-import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
+import { normalizeGithubUsername, gradeScoreIssue } from "@/lib/validations/candidate-profile";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -1424,6 +1424,34 @@ suite("grade type covers the scales Indian institutions actually use", () => {
   for (const v of ["PERCENTAGE", "CGPA_10", "GPA_4", "GRADE", "OTHER"]) {
     assert(values.includes(v as GradeType), `${v} present`);
   }
+});
+
+suite("education score type drops Other and caps numeric scales", () => {
+  const vocab = code("src/lib/candidate-vocab.ts");
+  assert(vocab.includes("SCORE_TYPE_OPTIONS"), "picker options are named");
+  assert(vocab.includes('"PERCENTAGE"'), "percentage is offered");
+  assert(vocab.includes('"CGPA_10"'), "CGPA is offered");
+  assert(vocab.includes('"GPA_4"'), "GPA is offered");
+  assert(vocab.includes('"GRADE"'), "letter grade is offered");
+  const optionsSlice = vocab.slice(
+    vocab.indexOf("SCORE_TYPE_OPTIONS"),
+    vocab.indexOf("GRADE_SCORE_MAX"),
+  );
+  assert(!optionsSlice.includes('"OTHER"'), "Other is not selectable");
+
+  const edu = code("src/components/profile/education-section.tsx");
+  assert(edu.includes("PwMenuSelect"), "score type uses the clay menu select");
+  assert(edu.includes("SCORE_TYPE_OPTIONS"), "and the filtered option list");
+  assert(edu.includes("gradeScoreIssue"), "score is validated against the scale");
+  assert(!edu.includes("Object.values(GradeType)"), "enum is not dumped raw into the picker");
+
+  assert(gradeScoreIssue("PERCENTAGE", "101") !== null, "percentage > 100 fails");
+  assert(gradeScoreIssue("PERCENTAGE", "100") === null, "percentage 100 is ok");
+  assert(gradeScoreIssue("CGPA_10", "10.5") !== null, "CGPA > 10 fails");
+  assert(gradeScoreIssue("CGPA_10", "9.2") === null, "CGPA within 10 is ok");
+  assert(gradeScoreIssue("GPA_4", "4.1") !== null, "GPA > 4 fails");
+  assert(gradeScoreIssue("GPA_4", "3.7") === null, "GPA within 4 is ok");
+  assert(gradeScoreIssue("GRADE", "A+") === null, "letter grades stay free text");
 });
 
 /* ─── Plan 136: UI QA findings ───────────────────────────────────────────── */

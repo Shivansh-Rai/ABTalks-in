@@ -439,7 +439,7 @@ export const PwSelect = forwardRef<
 });
 
 /** Custom select that always opens downward (native `<select>` may flip up). */
-function PwMenuSelect({
+export function PwMenuSelect({
   id,
   name,
   "aria-label": ariaLabel,

@@ -6,6 +6,7 @@ import {
   GradeType,
   OpportunityType,
 } from "@prisma/client";
+import { GRADE_SCORE_MAX } from "@/lib/candidate-vocab";
 import { optionalPhoneSchema } from "@/lib/validations/phone";
 
 /* ─── shared helpers ─────────────────────────────────────────────────────── */
@@ -241,6 +242,25 @@ export type ExperienceRowInput = z.infer<typeof experienceRowSchema>;
 
 /* ─── Education ──────────────────────────────────────────────────────────── */
 
+/**
+ * Numeric score scales have a hard ceiling. Letter grades (and legacy OTHER)
+ * stay free text. Returns an error message, or null when the value is fine.
+ */
+export function gradeScoreIssue(
+  gradeType: string | null | undefined,
+  grade: string | null | undefined,
+): string | null {
+  const raw = grade?.trim() ?? "";
+  if (!gradeType || raw === "") return null;
+  const max = GRADE_SCORE_MAX[gradeType];
+  if (max === undefined) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return "Enter a number";
+  if (n < 0) return "Score cannot be negative";
+  if (n > max) return `Score cannot be more than ${max}`;
+  return null;
+}
+
 const educationRowSchema = z
   .object({
     institutionName: z.string().trim().max(200).default(""),
@@ -267,6 +287,14 @@ const educationRowSchema = z
       "institutionName",
       "Add the school or college",
     );
+    const gradeErr = gradeScoreIssue(row.gradeType, row.grade);
+    if (gradeErr) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["grade"],
+        message: gradeErr,
+      });
+    }
     const thisYear = new Date().getFullYear();
     if (row.startYear !== null) {
       if (row.startYear < EDUCATION_MIN_YEAR || row.startYear > thisYear) {

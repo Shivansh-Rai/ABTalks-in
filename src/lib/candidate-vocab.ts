@@ -463,6 +463,22 @@ export const GRADE_TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+/** Score types offered in the education picker. `OTHER` stays in the enum for
+ *  legacy rows but is no longer selectable. */
+export const SCORE_TYPE_OPTIONS = [
+  "PERCENTAGE",
+  "CGPA_10",
+  "GPA_4",
+  "GRADE",
+] as const;
+
+/** Numeric ceiling for each scale. Letter grades are free text. */
+export const GRADE_SCORE_MAX: Partial<Record<string, number>> = {
+  PERCENTAGE: 100,
+  CGPA_10: 10,
+  GPA_4: 4,
+};
+
 export const OPPORTUNITY_TYPE_LABELS: Record<string, string> = {
   INTERNSHIP: "Internship",
   FULL_TIME: "Full-time",
