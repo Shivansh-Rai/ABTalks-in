@@ -9,7 +9,20 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const isHackathon =
     pathname === "/hackathon" || pathname.startsWith("/hackathon/");
   const isDashboardShellRoute =
-    pathname === "/dashboard" || pathname === "/profile";
+    pathname === "/dashboard" ||
+    pathname === "/profile" ||
+    pathname === "/marketplace" ||
+    pathname.startsWith("/marketplace/") ||
+    pathname === "/messages" ||
+    pathname.startsWith("/messages/") ||
+    pathname === "/mock-interviews" ||
+    pathname.startsWith("/mock-interviews/") ||
+    pathname === "/claude" ||
+    pathname.startsWith("/claude/day") ||
+    pathname === "/ai" ||
+    pathname === "/ds" ||
+    pathname === "/se" ||
+    pathname.startsWith("/challenge/");
   const isLanding = pathname === "/";
   /**
    * `pb-16` below reserves room for the fixed mobile BottomNav. That component

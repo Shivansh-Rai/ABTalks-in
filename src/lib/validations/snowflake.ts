@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SNOWFLAKE_TOTAL_DAYS } from "@/features/snowflake/constants";
+import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
 
-const githubUsernameRegex = /^[a-zA-Z0-9-]{1,39}$/;
 const githubRepoRegex =
   /^https:\/\/github\.com\/([a-zA-Z0-9-]{1,39})\/([a-zA-Z0-9._-]{1,100})\/?$/;
 
@@ -19,7 +19,10 @@ export const snowflakeEnrollSchema = z
     githubUsername: z
       .string()
       .trim()
-      .regex(githubUsernameRegex, "Enter a valid GitHub username"),
+      .refine((v) => normalizeGithubUsername(v) !== null, {
+        message: "Enter a valid GitHub username or profile URL",
+      })
+      .transform((v) => normalizeGithubUsername(v)!),
     githubRepoUrl: z
       .string()
       .trim()

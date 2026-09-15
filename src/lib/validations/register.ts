@@ -5,6 +5,7 @@ import {
   optionalPhoneSchema,
 } from "@/lib/validations/phone";
 import { legalAcceptanceSchema } from "@/lib/validations/legal";
+import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
 
 const empty = z.literal("");
 
@@ -24,7 +25,12 @@ export const registerSchema = z.object({
   linkedinUrl: z.union([empty, z.string().url()]).default(""),
   phone: optionalPhoneSchema,
   githubUsername: z
-    .union([empty, z.string().regex(/^[a-zA-Z0-9-]+$/).max(50)])
+    .string()
+    .trim()
+    .refine((v) => v === "" || normalizeGithubUsername(v) !== null, {
+      message: "Enter a valid GitHub username or profile URL",
+    })
+    .transform((v) => (v === "" ? "" : normalizeGithubUsername(v)!))
     .default(""),
   referralCode: z
     .union([empty, z.string().length(6).regex(/^[A-Z0-9]{6}$/)])

@@ -79,11 +79,20 @@ export function RecruiterJobsBoard({ jobs }: { jobs: RecruiterJobBoardRow[] }) {
 
   return (
     <div className="hire-jobs">
-      <nav className="hire-jobs__crumb" aria-label="Breadcrumb">
-        <span>Hiring</span>
-        <span aria-hidden="true">›</span>
-        <span aria-current="page">Jobs</span>
-      </nav>
+      <Link href="/hire" className="hire-back">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 19 8 12l7-7" />
+        </svg>
+        <span>Back to Scout</span>
+      </Link>
 
       <div className="hire-jobs__head">
         <div>

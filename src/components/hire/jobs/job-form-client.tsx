@@ -473,8 +473,19 @@ export function JobFormClient({
   return (
     <div className="hire-jobs hire-jobs--compose">
       <div className="hire-jobs-form__top">
-        <Link href="/hire/jobs" className="hire-jobs__back">
-          ← All jobs
+        <Link href="/hire/jobs" className="hire-back">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 19 8 12l7-7" />
+          </svg>
+          <span>All jobs</span>
         </Link>
         <button
           type="button"
