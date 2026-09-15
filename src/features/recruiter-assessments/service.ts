@@ -7,6 +7,7 @@ import type {
 import {
   assessmentDraftSchema,
   assignAssessmentSchema,
+  createAndSendFromPresetsSchema,
   createAndSendSchema,
 } from "@/lib/validations/assessment";
 import {
@@ -14,6 +15,10 @@ import {
   type ActivityEvent,
   type ActivitySummary,
 } from "@/features/assessment-attempts/activity";
+import {
+  buildContentFromPresets,
+  getAssessmentPreset,
+} from "./presets";
 
 export type Scope = { organizationId: string; createdByUserId: string };
 
@@ -632,4 +637,48 @@ export async function createPublishAndAssign(
   }
 
   return { ok: true, data: { id, ...assigned.data, assignError: null } };
+}
+
+/**
+ * Publish an ABTalks template (or a combination) and send it to the ticked
+ * Shortlisted candidates. The client sends preset ids + refs only — question
+ * bodies are looked up here so a recruiter cannot smuggle a draft in as a
+ * "template".
+ */
+export async function createPublishAndAssignFromPresets(
+  store: AssessmentStore,
+  notifier: AssessmentNotifier,
+  scope: Scope,
+  input: unknown,
+): Promise<CreateAndSendOutcome> {
+  const parsed = createAndSendFromPresetsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: parsed.error.issues[0]?.message ?? "Invalid input",
+      assessmentId: null,
+    };
+  }
+  if (parsed.data.presetIds.some((id) => !getAssessmentPreset(id))) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: "Template not found",
+      assessmentId: null,
+    };
+  }
+  const content = buildContentFromPresets(parsed.data.presetIds);
+  if (!content) {
+    return {
+      ok: false,
+      code: "INVALID",
+      message: "Template not found",
+      assessmentId: null,
+    };
+  }
+  return createPublishAndAssign(store, notifier, scope, {
+    draft: content,
+    candidateRefs: parsed.data.candidateRefs,
+  });
 }

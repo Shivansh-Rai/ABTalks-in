@@ -4,10 +4,11 @@ import type { ContentInput } from "./service";
  * ABTalks-authored assessment templates.
  *
  * These are static blueprints, NOT database rows. A preset only reaches the DB
- * when a recruiter uses it — at that point its `content` is written through the
- * normal `createAssessment` path (see `createAssessmentFromPresetAction` and the
- * `?preset=` branch in `/hire/create-test`). Keep every preset valid against
- * `assessmentDraftSchema`; `presets.test.ts` enforces that at build time.
+ * when a recruiter uses it — Publish and send goes through
+ * `createAndSendFromPresetsAction` (preset ids + Shortlist refs, no client
+ * draft); Customize uses the `?presets=` branch on `/hire/create-test`. Keep
+ * every preset valid against `assessmentDraftSchema`; `presets.test.ts`
+ * enforces that at build time.
  *
  * `content` omits `assessmentId` (always a fresh create) and `shortlistRefs`
  * (attached from the recruiter's current shortlist at use time).
