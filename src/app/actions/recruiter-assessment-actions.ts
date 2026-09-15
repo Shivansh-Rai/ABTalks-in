@@ -16,16 +16,15 @@ import {
   candidateAssessmentHref,
   createAssessment,
   createPublishAndAssign,
+  createPublishAndAssignFromPresets,
   deleteAssessment,
+  duplicateAssessment,
   publishAssessment,
   saveAssessmentDraft,
   type AssessmentNotifier,
   type CreateAndSendResult,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
-import { buildContentFromPresets } from "@/features/recruiter-assessments/presets";
-import { getShortlist } from "@/features/talent-pool/pool";
-import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 
 type ActionOk<T = undefined> = T extends undefined
   ? { ok: true }
@@ -83,51 +82,6 @@ export async function saveRecruiterAssessmentAction(
   }
 }
 
-const presetsSchema = z.object({
-  presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
-});
-
-export async function createAssessmentFromPresetsAction(
-  input: unknown,
-): Promise<ActionOk<{ id: string }> | ActionErr> {
-  const workspace = await requireRecruiterWorkspace();
-  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
-
-  const parsed = presetsSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      ok: false,
-      message: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
-
-  const content = buildContentFromPresets(parsed.data.presetIds);
-  if (!content) return { ok: false, message: "Template not found", status: 404 };
-
-  try {
-    // Attach the recruiter's current shortlist, exactly as the builder does.
-    const list = await getShortlist(workspace.data.userId);
-    const shortlistRefs = list.ok
-      ? list.data.map((r) => encodeCandidateRef("PROGRAM", r.memberId))
-      : [];
-
-    const result = await createAssessment(
-      prismaAssessmentStore(),
-      scopeFrom(workspace.data),
-      { ...content, shortlistRefs },
-    );
-    if (!result.ok) return { ok: false, message: result.message };
-
-    revalidatePath("/hire/assessments");
-    return { ok: true, data: { id: result.data.id } };
-  } catch (error) {
-    logger.error("[recruiter-assessment-actions] createFromPresets", {
-      error: String(error),
-    });
-    return { ok: false, message: "Failed to create assessment from templates" };
-  }
-}
-
 const deleteSchema = z.object({
   assessmentId: z.string().min(1),
 });
@@ -161,6 +115,38 @@ export async function deleteRecruiterAssessmentAction(
       error: String(error),
     });
     return { ok: false, message: "Failed to delete assessment" };
+  }
+}
+
+export async function duplicateRecruiterAssessmentAction(
+  input: unknown,
+): Promise<ActionOk<{ id: string }> | ActionErr> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  const parsed = deleteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+
+  try {
+    const result = await duplicateAssessment(
+      prismaAssessmentStore(),
+      scopeFrom(workspace.data),
+      parsed.data.assessmentId,
+    );
+    if (!result.ok) {
+      return {
+        ok: false,
+        message: result.message,
+        status: statusFor(result.code),
+      };
+    }
+    revalidatePath("/hire/assessments");
+    return { ok: true, data: { id: result.data.id } };
+  } catch (error) {
+    logger.error("[recruiter-assessment-actions] duplicate", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to duplicate assessment" };
   }
 }
 
@@ -335,5 +321,55 @@ export async function createAndSendRecruiterAssessmentAction(
       error: String(error),
     });
     return { ok: false, message: "Failed to create assessment" };
+  }
+}
+
+/**
+ * Template landing's Publish and send: preset ids + Shortlist refs only.
+ * Question bodies are resolved on the server. Same notifier and envelope as
+ * the builder's Create.
+ */
+export async function createAndSendFromPresetsAction(
+  input: unknown,
+): Promise<
+  ActionOk<CreateAndSendResult> | (ActionErr & { assessmentId?: string })
+> {
+  const workspace = await requireRecruiterWorkspace();
+  if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
+
+  try {
+    const result = await createPublishAndAssignFromPresets(
+      prismaAssessmentStore(),
+      assessmentNotifier(),
+      scopeFrom(workspace.data),
+      input,
+    );
+    if (!result.ok) {
+      if (result.assessmentId) revalidatePath("/hire/assessments");
+      return {
+        ok: false,
+        message: result.message,
+        status: statusFor(result.code),
+        assessmentId: result.assessmentId ?? undefined,
+      };
+    }
+    if (result.data.notificationFailures > 0) {
+      logger.warn("[recruiter-assessment-actions] preset send notification failures", {
+        assessmentId: result.data.id,
+        notificationFailures: result.data.notificationFailures,
+      });
+    }
+    if (result.data.assignError) {
+      logger.warn("[recruiter-assessment-actions] preset published but not assigned", {
+        assessmentId: result.data.id,
+      });
+    }
+    revalidateAssessment(result.data.id);
+    return { ok: true, data: result.data };
+  } catch (error) {
+    logger.error("[recruiter-assessment-actions] createFromPresets", {
+      error: String(error),
+    });
+    return { ok: false, message: "Failed to create assessment from templates" };
   }
 }

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
-import { buildContentFromPresets } from "@/features/recruiter-assessments/presets";
+import {
+  buildContentFromPresets,
+  listAssessmentPresets,
+} from "@/features/recruiter-assessments/presets";
 import {
   getAssessment,
   listSendableCandidates,
@@ -10,6 +14,7 @@ import {
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
 import { MAX_PARAGRAPH_WORDS } from "@/lib/validations/assessment";
 import { AssessmentBuilder } from "@/components/hire/assessment/assessment-builder";
+import { AssessmentPresetPicker } from "@/components/hire/assessment/preset-picker";
 import type { AssessmentDraft } from "@/components/hire/assessment/assessment-types";
 
 export const metadata: Metadata = {
@@ -71,10 +76,42 @@ function rowToDraft(row: AssessmentRow): AssessmentDraft {
   };
 }
 
+function BuilderView({
+  candidates,
+  existingDraft,
+  presetLocked,
+  showBack,
+}: {
+  candidates: Awaited<ReturnType<typeof listSendableCandidates>>;
+  existingDraft: AssessmentDraft | null;
+  presetLocked: boolean;
+  showBack: boolean;
+}) {
+  return (
+    <>
+      {showBack ? (
+        <Link href="/hire/create-test" className="hire-assess-presets__back">
+          ← Templates
+        </Link>
+      ) : null}
+      <AssessmentBuilder
+        candidates={candidates}
+        existingDraft={existingDraft}
+        presetLocked={presetLocked}
+      />
+    </>
+  );
+}
+
 export default async function CreateTestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string; preset?: string; presets?: string }>;
+  searchParams: Promise<{
+    id?: string;
+    preset?: string;
+    presets?: string;
+    from?: string;
+  }>;
 }) {
   const { userId } = await requireRecruiter();
   // The same live Shortlist the assign panel uses — legacy and project halves,
@@ -82,7 +119,7 @@ export default async function CreateTestPage({
   const candidates = await listSendableCandidates(prismaAssessmentStore(), userId);
   const refs = candidates.map((c) => c.candidateRef);
 
-  const { id, preset, presets } = await searchParams;
+  const { id, preset, presets, from } = await searchParams;
 
   // 1) Editing an existing draft — load it (editable, not locked).
   if (id) {
@@ -98,15 +135,24 @@ export default async function CreateTestPage({
       );
       if (found.ok) {
         return (
-          <AssessmentBuilder
+          <BuilderView
             candidates={candidates}
             existingDraft={rowToDraft(found.data)}
             presetLocked={false}
+            showBack={false}
           />
         );
       }
     }
     // Fall through to a blank builder if the draft isn't found / not owned.
+    return (
+      <BuilderView
+        candidates={candidates}
+        existingDraft={null}
+        presetLocked={false}
+        showBack={false}
+      />
+    );
   }
 
   // 2) Customize from one or many templates (`?presets=a,b,c` or `?preset=a`).
@@ -115,12 +161,58 @@ export default async function CreateTestPage({
     .map((s) => s.trim())
     .filter(Boolean);
   const content = presetIds.length ? buildContentFromPresets(presetIds) : null;
+  if (content) {
+    return (
+      <BuilderView
+        candidates={candidates}
+        existingDraft={{ ...content, shortlistRefs: refs }}
+        presetLocked
+        showBack
+      />
+    );
+  }
+
+  // 3) Blank builder — Start from scratch.
+  if (from === "scratch") {
+    return (
+      <BuilderView
+        candidates={candidates}
+        existingDraft={null}
+        presetLocked={false}
+        showBack
+      />
+    );
+  }
+
+  // 4) Landing — templates first, then the blank builder underneath.
+  const presetSummaries = listAssessmentPresets().map((p) => ({
+    id: p.id,
+    name: p.name,
+    tagline: p.tagline,
+    tags: p.tags,
+    questionCount: p.content.questions.length,
+    durationMinutes: p.content.durationMinutes,
+  }));
 
   return (
-    <AssessmentBuilder
-      candidates={candidates}
-      existingDraft={content ? { ...content, shortlistRefs: refs } : null}
-      presetLocked={Boolean(content)}
-    />
+    <div className="hire-assess">
+      <div className="hire-assess__top">
+        <div>
+          <p className="hire-assess__kicker">Assessment builder</p>
+          <h1>Create an assessment</h1>
+          <p className="hire-assess__sub">
+            For {candidates.length} shortlisted candidate
+            {candidates.length === 1 ? "" : "s"}
+          </p>
+        </div>
+      </div>
+      <AssessmentPresetPicker presets={presetSummaries} candidates={candidates} />
+      <AssessmentBuilder
+        candidates={candidates}
+        existingDraft={null}
+        presetLocked={false}
+        embedded
+      />
+    </div>
   );
 }
