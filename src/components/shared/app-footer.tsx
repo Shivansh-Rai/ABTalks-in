@@ -155,6 +155,9 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard" || pathname === "/profile") return null;
+  if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {
+    return null;
+  }
   if (pathname === "/hire" || pathname.startsWith("/hire/")) return null;
   // Full-viewport, non-scrolling onboarding — a footer would push it past the fold.
   if (
