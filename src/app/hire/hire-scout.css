@@ -114,6 +114,13 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
   color: hsl(var(--destructive-foreground));
 }
 
+/* Same rule, for links that name a literal colour rather than a theme token.
+   `text-white` on a solid-teal CTA is the common one and was coming out black
+   for exactly the reason above. */
+.hire-app a[class*="text-white"] {
+  color: #fff;
+}
+
 /* Header — the Design System v2 global header: 55px, white frosted glass. */
 .hire-app__header {
   position: sticky;
@@ -8115,6 +8122,33 @@ a.hire-assess-action {
   gap: 2px;
 }
 
+/* Group label inside the nav (DISCOVER / WORK / COMMUNICATION). Deliberately
+   the same type treatment as `.hire-side__kicker`, which already labels
+   CURRENT PROJECT and ALL PROJECTS further down the rail — the rail should
+   read as one list with headings, not two labelling systems. */
+.hire-side__group {
+  margin: 0;
+  padding: 0 10px;
+  min-height: 24px;
+  display: flex;
+  align-items: flex-end;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--side-faint);
+}
+
+/* First group sits directly under Home; the rest get air above them. */
+.hire-side__group + .hire-side__item {
+  margin-top: 1px;
+}
+
+.hire-side__item + .hire-side__group {
+  margin-top: 10px;
+}
+
 .hire-app .hire-side__item {
   display: flex;
   align-items: center;
@@ -11858,6 +11892,129 @@ a.hire-profile__ext-link:focus-visible {
   margin-inline: auto;
 }
 
+/* T-240 pipeline — stage rail + one panel ---------------------------------
+
+   Replaces the nine side-by-side columns. Nine columns could never win: they
+   demanded ~2264px on a screen that offers ~1570px, so the board was either
+   cut off or squeezed to an unusable width, and when the pipeline was empty it
+   drew nine grey boxes each repeating a variant of "no one here yet".
+
+   A chevron rail is compact enough to fit at any realistic width, states the
+   nine-stage order as a sequence rather than a row of equal boxes, and leaves
+   the full page width to ONE stage's candidates. */
+.hire-pipe-rail {
+  display: flex;
+  gap: 4px;
+  /* No surface of its own. The chevrons already carry their own fills, so the
+     white card this used to sit in was a second rectangle drawn around shapes
+     that did not need one — it boxed the rail in and fought the page. Padding
+     goes too: it only existed to inset the chevrons from that border. */
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.hire-pipe-step {
+  flex: 1 1 0;
+  /* Below this the nine steps stop fitting and the rail scrolls. Scrolling a
+     short rail is cheap; scrolling whole columns of cards was not. */
+  min-width: 96px;
+  /* 44, not 56. Without the white card around it the rail is a single band of
+     colour against the page, and at 56px that band read as a slab that
+     outweighed everything under it. */
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  border: 0;
+  cursor: pointer;
+  padding: 0 6px 0 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: filter 120ms ease;
+  /* Arrow on the right, matching notch on the left, so the steps read as a
+     flow even with a gap between them. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 18px) 0,
+    100% 50%,
+    calc(100% - 18px) 100%,
+    0 100%,
+    18px 50%
+  );
+}
+
+/* The first step has nothing flowing into it, so it gets a flat left edge. */
+.hire-pipe-step:first-child {
+  padding-left: 10px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 18px) 0,
+    100% 50%,
+    calc(100% - 18px) 100%,
+    0 100%
+  );
+}
+
+.hire-pipe-step:hover {
+  filter: brightness(0.94);
+}
+
+.hire-pipe-step:focus-visible {
+  outline: 2px solid #03535f;
+  outline-offset: 2px;
+}
+
+/* Selection cannot be a ring or a box-shadow: `clip-path` crops both. A child
+   bar is inside the clip, so it survives and follows the chevron's edges. */
+.hire-pipe-step__bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.hire-pipe-step__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f2b31;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Plain. No card around the stage's contents either: the candidate cards are
+   already surfaces, and wrapping them in a second white rectangle just drew a
+   box around a box. Empty, the panel's own `py-14` carries the height, so the
+   420px min-height that propped the card open is gone with it. */
+.hire-pipe-panel {
+  padding-top: 8px;
+}
+
+/* Opt-out of the 880px measure for pages that are a BOARD or a wide table
+   rather than prose.
+
+   880px is the right measure for reading — Settings, Messages, Search history —
+   and it wins over a page's own Tailwind `max-w-[...]` because it is a
+   same-specificity rule loaded after Tailwind. That is deliberate for prose,
+   and wrong for the pipeline: nine 240px stage columns are 2264px, so the
+   board was clipped mid-column at the measure's edge with nothing to show it
+   could scroll. A page opts in to the full content width by name; the measure
+   stays the default for everything else. */
+.hire-shell__content > .hire-shell-wide {
+  max-width: none;
+}
+
 /* The rail holds the nav card at its declared size — 281px, the size the
    sidebar was designed at. The DESK is the one that has to come to this (see
    the zoom-cancel below), not the other way round: shrinking these pages to
@@ -13057,11 +13214,10 @@ a.hire-profile__ext-link:focus-visible {
   display: none;
 }
 
-@media (min-width: 901px) {
-  .hire-app .hire-side__item--phone {
-    display: none;
-  }
-}
+/* `.hire-side__item--phone` used to hide Jobs / Assessments on desktop, where
+   the header carried them as pills instead. The header no longer navigates, so
+   those rows are the only route to those pages at every width and the modifier
+   has no users left. */
 
 @media (max-width: 900px) {
   /* The step strip (1 · 2 · 3, "N matched candidates") cost ~120px of a

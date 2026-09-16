@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 import { decodeCandidateRef } from "@/features/hire/candidate-ref";
 import { resolveInspectorCandidate } from "@/features/hire/pool-policy";
 import {
@@ -12,6 +13,7 @@ import {
   viewerKeyFor,
 } from "@/features/profile/profile-events";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
+import { getVerifiedSkills, type VerifiedSkill } from "@/features/profile/get-verified-skills";
 import {
   listPublicWorkHistory,
   listSelfReportedExternalLinks,
@@ -257,5 +259,117 @@ export async function loadInspectorTrackEvidenceAction(
       error: String(error),
     });
     return { ok: false, message: "Could not load evidence." };
+  }
+}
+
+export type InspectorSkillEvidenceItem = {
+  name: string;
+  isEvidenceBacked: boolean;
+  sources: string[];
+};
+
+export type InspectorSkillEvidence = {
+  skills: InspectorSkillEvidenceItem[];
+};
+
+const EMPTY_SKILL_EVIDENCE: InspectorSkillEvidence = { skills: [] };
+
+/**
+ * T-241: Load skill provenance for a candidate in the Scout inspector.
+ * Distinguishes self-declared skills from platform evidence-backed skills
+ * (completed challenges/cohorts/assessments) and names their sources.
+ */
+export async function loadInspectorSkillEvidenceAction(
+  input: unknown,
+): Promise<
+  { ok: true; data: InspectorSkillEvidence } | { ok: false; message: string }
+> {
+  const parsed = trackEvidenceInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid candidate." };
+  }
+
+  const raw = parsed.data.candidateRef;
+  if (raw.startsWith("SAMPLE:")) {
+    return { ok: true, data: EMPTY_SKILL_EVIDENCE };
+  }
+  if (!decodeCandidateRef(raw)) {
+    return { ok: true, data: EMPTY_SKILL_EVIDENCE };
+  }
+
+  try {
+    let userId: string | null = null;
+    const eligible = await resolveInspectorCandidate(raw);
+    if (eligible) {
+      userId = eligible.userId;
+    } else {
+      const decoded = decodeCandidateRef(raw);
+      if (decoded?.id) {
+        // Many refs store user.id directly as id
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: { id: true },
+        });
+        if (user) userId = user.id;
+      }
+    }
+
+    if (!userId) {
+      return { ok: true, data: EMPTY_SKILL_EVIDENCE };
+    }
+
+    // Get verified skills with their source programs and candidate skill evidence
+    const [verified, profileEvidence] = await Promise.all([
+      getVerifiedSkills(userId),
+      prisma.candidateSkill.findMany({
+        where: { userId, evidence: { some: {} } },
+        select: {
+          skill: { select: { name: true } },
+          evidence: {
+            select: { sourceLabel: true, sourceType: true },
+          },
+        },
+      }),
+    ]);
+
+    const verifiedMap = new Map<string, Set<string>>();
+    for (const v of verified) {
+      const key = v.name.trim().toLowerCase();
+      if (!verifiedMap.has(key)) verifiedMap.set(key, new Set());
+      for (const s of v.sources) verifiedMap.get(key)!.add(s);
+    }
+
+    for (const row of profileEvidence) {
+      const key = row.skill.name.trim().toLowerCase();
+      if (!verifiedMap.has(key)) verifiedMap.set(key, new Set());
+      for (const ev of row.evidence) {
+        if (ev.sourceLabel) {
+          verifiedMap.get(key)!.add(ev.sourceLabel);
+        } else if (ev.sourceType) {
+          verifiedMap.get(key)!.add(ev.sourceType.replace(/_/g, " "));
+        }
+      }
+    }
+
+    const skillsResult: { name: string; isEvidenceBacked: boolean; sources: string[] }[] = [];
+    for (const [nameKey, sourcesSet] of verifiedMap.entries()) {
+      skillsResult.push({
+        name: nameKey,
+        isEvidenceBacked: true,
+        sources: Array.from(sourcesSet),
+      });
+    }
+
+    return {
+      ok: true,
+      data: {
+        skills: skillsResult,
+      },
+    };
+  } catch (error) {
+    logger.error("[hire] loadInspectorSkillEvidenceAction", {
+      error: String(error),
+    });
+    return { ok: false, message: "Could not load skill evidence." };
   }
 }

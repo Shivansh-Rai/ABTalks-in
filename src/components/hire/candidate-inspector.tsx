@@ -47,8 +47,10 @@ import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog
 import { revealContactAction } from "@/app/actions/hire-unlock-actions";
 import {
   loadInspectorExternalLinksAction,
+  loadInspectorSkillEvidenceAction,
   loadInspectorTrackEvidenceAction,
   loadInspectorWorkHistoryAction,
+  type InspectorSkillEvidenceItem,
   type InspectorTrackEvidence,
   type InspectorWorkHistory,
 } from "@/app/actions/hire-view-actions";
@@ -309,6 +311,9 @@ export function CandidateInspector({
   >(null);
   const [trackEvidence, setTrackEvidence] =
     useState<InspectorTrackEvidence | null>(null);
+  const [verifiedSkills, setVerifiedSkills] = useState<
+    InspectorSkillEvidenceItem[] | null
+  >(null);
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -337,6 +342,7 @@ export function CandidateInspector({
       setWorkHistory({ hasNoWorkExperience: false, rows: [] });
       setExternalLinks([]);
       setTrackEvidence({ items: [] });
+      setVerifiedSkills([]);
       return () => {
         alive = false;
       };
@@ -344,8 +350,9 @@ export function CandidateInspector({
     setWorkHistory(null);
     setExternalLinks(null);
     setTrackEvidence(null);
+    setVerifiedSkills(null);
     void (async () => {
-      const [historyResult, linksResult, evidenceResult] = await Promise.all([
+      const [historyResult, linksResult, evidenceResult, skillEvidenceResult] = await Promise.all([
         loadInspectorWorkHistoryAction({
           candidateRef: match.candidateRef,
         }),
@@ -353,6 +360,9 @@ export function CandidateInspector({
           candidateRef: match.candidateRef,
         }),
         loadInspectorTrackEvidenceAction({
+          candidateRef: match.candidateRef,
+        }),
+        loadInspectorSkillEvidenceAction({
           candidateRef: match.candidateRef,
         }),
       ]);
@@ -365,6 +375,9 @@ export function CandidateInspector({
       setExternalLinks(linksResult.ok ? linksResult.data.links : []);
       setTrackEvidence(
         evidenceResult.ok ? evidenceResult.data : { items: [] },
+      );
+      setVerifiedSkills(
+        skillEvidenceResult.ok ? skillEvidenceResult.data.skills : [],
       );
     })();
     return () => {
@@ -1050,25 +1063,63 @@ export function CandidateInspector({
 
           <div data-section="skills" className="hire-profile__block">
             <h4 className="hire-profile__h">Skill Map</h4>
-            {skills.length > 0 ? (
-              <div className="hire-profile__group">
-                <p className="hire-profile__group-h">Declared by the candidate</p>
-                <ul className="hire-profile__chips">
-                  {skills.slice(0, 10).map((s) => (
-                    <li key={s} className="hire-profile__chip">
-                      {s}
-                    </li>
-                  ))}
-                  {skills.length > 10 && (
-                    <li className="hire-profile__count">+{skills.length - 10}</li>
-                  )}
-                </ul>
-              </div>
-            ) : (
-              <p className="hire-profile__meta">No skills declared.</p>
-            )}
+            {(() => {
+              const verifiedMap = new Map<string, string[]>();
+              for (const vs of verifiedSkills ?? []) {
+                verifiedMap.set(vs.name.trim().toLowerCase(), vs.sources);
+              }
+              const hasSkills = skills.length > 0;
+              const hasVerified = (verifiedSkills ?? []).length > 0;
+
+              if (!hasSkills && !hasVerified) {
+                return <p className="hire-profile__meta">No skills declared.</p>;
+              }
+
+              return (
+                <div className="space-y-4">
+                  <div className="hire-profile__group">
+                    <p className="hire-profile__group-h">
+                      Candidate Skills · <small className="text-xs text-muted-foreground">Proven & Declared</small>
+                    </p>
+                    <ul className="hire-profile__chips">
+                      {skills.map((s) => {
+                        const sources = verifiedMap.get(s.trim().toLowerCase());
+                        const isVerified = Boolean(sources && sources.length > 0);
+                        return (
+                          <li
+                            key={s}
+                            className={cn(
+                              "hire-profile__chip flex flex-col items-start gap-1 py-2 px-3",
+                              isVerified ? "border-[#03535f]/40 bg-[#03535f]/5" : "border-zinc-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-zinc-900">{s}</span>
+                              {isVerified ? (
+                                <span className="inline-flex items-center rounded-full bg-[#03535f] px-2 py-0.5 text-[10px] font-semibold text-white tracking-wide uppercase">
+                                  Evidence-backed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 tracking-wide uppercase">
+                                  Self-declared
+                                </span>
+                              )}
+                            </div>
+                            {isVerified && sources && sources.length > 0 && (
+                              <p className="text-[11px] text-[#03535f] font-normal leading-tight">
+                                Source: {sources.join(", ")}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })()}
             {languages.length > 0 && (
-              <div className="hire-profile__group">
+              <div className="hire-profile__group mt-4">
                 <p className="hire-profile__group-h">Verified working languages</p>
                 <ul className="hire-profile__chips">
                   {languages.map((l) => (
