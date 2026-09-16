@@ -15,6 +15,9 @@ export type ChallengeStudentDetail = {
     synergyPoints: number;
     disabledAt: Date | null;
     disabledReason: string | null;
+    deletedAt: Date | null;
+    sessionInvalidatedAt: Date | null;
+    anonymizedAt: Date | null;
   };
   profile: StudentProfile;
   enrollment: {
@@ -84,6 +87,9 @@ export type HackathonStudentDetail = {
     synergyPoints: number;
     disabledAt: Date | null;
     disabledReason: string | null;
+    deletedAt: Date | null;
+    sessionInvalidatedAt: Date | null;
+    anonymizedAt: Date | null;
   };
   hackathon: {
     fullName: string;
@@ -114,6 +120,8 @@ export async function getStudentDetail(
       deletedAt: true,
       disabledAt: true,
       disabledReason: true,
+      sessionInvalidatedAt: true,
+      anonymizedAt: true,
       studentProfile: true,
       enrollments: {
         orderBy: { createdAt: "desc" },
@@ -150,7 +158,7 @@ export async function getStudentDetail(
     },
   });
 
-  if (!user || user.deletedAt) {
+  if (!user) {
     return null;
   }
 
@@ -176,6 +184,9 @@ export async function getStudentDetail(
         synergyPoints,
         disabledAt: user.disabledAt,
         disabledReason: user.disabledReason,
+        deletedAt: user.deletedAt,
+        sessionInvalidatedAt: user.sessionInvalidatedAt,
+        anonymizedAt: user.anonymizedAt,
       },
       hackathon: {
         fullName: participant.fullName,
@@ -282,6 +293,9 @@ export async function getStudentDetail(
       synergyPoints,
       disabledAt: user.disabledAt,
       disabledReason: user.disabledReason,
+      deletedAt: user.deletedAt,
+      sessionInvalidatedAt: user.sessionInvalidatedAt,
+      anonymizedAt: user.anonymizedAt,
     },
     profile,
     enrollment,
