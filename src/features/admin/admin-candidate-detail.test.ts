@@ -60,8 +60,7 @@ suite("assembler calls the existing read helpers", () => {
   const src = code(ASSEMBLER);
   for (const helper of [
     "getCandidateDetail",
-    "getProfileEvidence",
-    "getVerifiedSkills",
+    "getEvidenceProvenance",
     "getResumeView",
     "getVerifiedAccomplishments",
     "getHistory",

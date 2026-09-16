@@ -5,8 +5,6 @@ import { logger } from "@/lib/logger";
 import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { listChallengeEnrollments } from "@/repositories/learning";
 import { programMember } from "@/repositories/legacy/program-member";
-import { getProfileEvidence } from "@/features/profile/get-evidence";
-import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import { getResumeView } from "@/features/resume/service";
 import { getHistory } from "@/features/interview/platform/service";
@@ -17,14 +15,14 @@ import { listCandidateAttempts } from "@/features/assessment-attempts/service";
 import { prismaAttemptStore } from "@/features/assessment-attempts/prisma-store";
 import { searchDeliveries } from "@/features/notification/delivery-diagnosis";
 import { getCandidateDiscoverability } from "@/features/admin/get-candidate-discoverability";
+import { getEvidenceProvenance } from "@/features/admin/get-evidence-provenance";
 import {
   getStudentDetail,
   type StudentDetail,
 } from "@/features/admin/get-student-detail";
 import type { CandidateDiscoverability } from "@/features/admin/candidate-discoverability";
+import type { EvidenceProvenance } from "@/features/admin/evidence-provenance";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
-import type { ProfileEvidence } from "@/features/profile/get-evidence";
-import type { VerifiedSkill } from "@/features/profile/get-verified-skills";
 import type { VerifiedAccomplishment } from "@/features/profile/get-verified-accomplishments";
 import type { ResumeView } from "@/features/resume/types";
 import type { HistoryEntry } from "@/features/interview/platform/service";
@@ -72,8 +70,6 @@ export type AdminCandidateDetail = {
   account: AdminCandidateAccount;
   ops: StudentDetail | null;
   profile: CandidateDetail | null;
-  evidence: ProfileEvidence;
-  curriculumSkills: VerifiedSkill[];
   resume: ResumeView | null;
   accomplishments: VerifiedAccomplishment[];
   mockInterviews: HistoryEntry[];
@@ -83,6 +79,8 @@ export type AdminCandidateDetail = {
   deliveries: DeliveryRow[];
   /** Why this candidate does or does not appear in recruiter search. */
   discoverability: CandidateDiscoverability | null;
+  /** Every evidence badge resolved to the row that earned it, with its date. */
+  evidenceProvenance: EvidenceProvenance;
 };
 
 function accountStatus(user: {
@@ -93,13 +91,6 @@ function accountStatus(user: {
   if (user.disabledAt) return "DISABLED";
   return "ACTIVE";
 }
-
-const EMPTY_EVIDENCE: ProfileEvidence = {
-  verifiedSkills: [],
-  credentials: [],
-  achievements: [],
-  hasAny: false,
-};
 
 /**
  * T-264 — one privileged read of a candidate for the admin console.
@@ -139,8 +130,6 @@ export async function getAdminCandidateDetail(
   const [
     ops,
     profile,
-    evidence,
-    curriculumSkills,
     resume,
     accomplishments,
     mockHistory,
@@ -151,11 +140,10 @@ export async function getAdminCandidateDetail(
     members,
     deliveries,
     discoverability,
+    evidenceProvenance,
   ] = await Promise.all([
     getStudentDetail(userId),
     getCandidateDetail(userId),
-    getProfileEvidence(userId),
-    getVerifiedSkills(userId),
     getResumeView(userId),
     getVerifiedAccomplishments(userId),
     getHistory(userId).catch((e: unknown) => {
@@ -196,6 +184,7 @@ export async function getAdminCandidateDetail(
     }),
     searchDeliveries({ recipient: userId, limit: 50 }),
     getCandidateDiscoverability(userId),
+    getEvidenceProvenance(userId),
   ]);
 
   const memberByCohort = new Map(members.map((m) => [m.cohortId, m.id]));
@@ -245,8 +234,6 @@ export async function getAdminCandidateDetail(
     },
     ops,
     profile,
-    evidence: evidence ?? EMPTY_EVIDENCE,
-    curriculumSkills,
     resume,
     accomplishments,
     mockInterviews: mockHistory.ok ? mockHistory.data : [],
@@ -255,5 +242,6 @@ export async function getAdminCandidateDetail(
     programmes,
     deliveries,
     discoverability,
+    evidenceProvenance,
   };
 }

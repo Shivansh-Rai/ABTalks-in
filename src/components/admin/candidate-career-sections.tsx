@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { CheckCircle2, ExternalLink } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   GENDER_LABELS,
   LINK_TYPE_LABELS,
@@ -15,6 +17,11 @@ import {
   WORK_MODE_LABEL,
 } from "@/components/jobs/job-ui";
 import type { AdminCandidateDetail } from "@/features/admin/get-admin-candidate-detail";
+import {
+  SOURCE_KIND_LABEL,
+  tracedCount,
+  type ProvenanceItem,
+} from "@/features/admin/evidence-provenance";
 import type { DeliveryRow } from "@/features/notification/delivery-diagnosis";
 
 /**
@@ -23,14 +30,6 @@ import type { DeliveryRow } from "@/features/notification/delivery-diagnosis";
  * Server Component. No `"use client"`, no `@/app/actions/*`. The candidate's
  * own writers and the recruiter inspector stay off this surface.
  */
-
-const EVIDENCE_SOURCE_LABEL: Record<string, string> = {
-  ACTIVITY_EVALUATION: "Activity",
-  ASSESSMENT_SCORE: "Assessment",
-  HACKATHON: "Hackathon",
-  CREDENTIAL: "Credential",
-  EXTERNAL: "External",
-};
 
 const ASSESSMENT_STATUS_LABEL: Record<string, string> = {
   ASSIGNED: "Not started",
@@ -101,6 +100,57 @@ function Fact({
   );
 }
 
+/**
+ * One evidence badge and where it came from. A traced row names the real source
+ * activity and its date; an untraced row says so and why, and never borrows the
+ * badge's own label as if it were the source.
+ */
+function ProvenanceRow({
+  item,
+  prefix,
+}: {
+  item: ProvenanceItem;
+  prefix?: string;
+}) {
+  if (!item.traced) {
+    return (
+      <li className="rounded-lg border border-[#FFE2B8] bg-[#FFF7EB] px-3 py-2 text-sm">
+        <p className="flex flex-wrap items-center gap-2 text-[#353535]">
+          <span className="rounded-full bg-[#B54708] px-1.5 py-0.5 text-xs font-medium text-white">
+            Not traced
+          </span>
+          {prefix ? <span className="text-[#787878]">{prefix}</span> : null}
+          <span>{item.storedLabel}</span>
+        </p>
+        <p className="mt-1 text-xs text-[#5C5C5C]">{item.reason}</p>
+        <p className="mt-0.5 text-xs text-[#8F8F8F]">Points at: {item.record}</p>
+      </li>
+    );
+  }
+  const { source } = item;
+  return (
+    <li className="rounded-lg border border-[#E9E9E9] px-3 py-2 text-sm">
+      <p className="flex flex-wrap items-center gap-2 text-[#353535]">
+        <span className="rounded-full bg-[#F6F6F6] px-1.5 py-0.5 text-xs text-[#5C5C5C]">
+          {SOURCE_KIND_LABEL[source.kind]}
+        </span>
+        {prefix ? <span className="text-[#787878]">{prefix}</span> : null}
+        <span className="font-medium">{source.name}</span>
+      </p>
+      <p className="mt-1 text-xs text-[#5C5C5C]">
+        {source.dateBasis} {formatDateIST(source.earnedAt)}
+        {source.detail ? ` · ${source.detail}` : ""}
+      </p>
+      <p className="mt-0.5 text-xs text-[#8F8F8F]">
+        Source record: {source.record}
+        {item.storedLabel && item.storedLabel !== source.name
+          ? ` · recorded on the badge as “${item.storedLabel}”`
+          : ""}
+      </p>
+    </li>
+  );
+}
+
 function TableWrap({
   columns,
   children,
@@ -134,7 +184,11 @@ export function CandidateCareerSections({
 }: {
   detail: AdminCandidateDetail;
 }) {
-  const { account, profile, evidence, curriculumSkills } = detail;
+  const { account, profile } = detail;
+  const provenance = detail.evidenceProvenance;
+  const evidenceBySkill = new Map(
+    provenance.skills.map((skill) => [skill.skillId, skill.items]),
+  );
   const claimedSkills = (profile?.skills ?? []).filter((s) => s.claimedByCandidate);
   const deliveryHref = `/admin/deliveries?recipient=${encodeURIComponent(account.email)}`;
 
@@ -481,47 +535,61 @@ export function CandidateCareerSections({
       </Section>
 
       <Section title="Skills">
-        {claimedSkills.length === 0 && curriculumSkills.length === 0 ? (
+        {claimedSkills.length === 0 && provenance.programmeSkills.length === 0 ? (
           <Empty>No skills claimed or programme-verified.</Empty>
         ) : (
           <div className="space-y-4">
             {claimedSkills.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {claimedSkills.map((skill) => {
-                  const backed = skill.verified || skill.evidenceCount > 0;
+                  const sources = evidenceBySkill.get(skill.skillId) ?? [];
+                  const traced = tracedCount(sources);
+                  const untracedOnly = traced === 0 && sources.length > 0;
                   return (
                     <span
                       key={skill.skillId}
                       className="inline-flex items-center gap-1.5 rounded-full border border-[#E9E9E9] px-2.5 py-1 text-xs text-[#353535]"
                     >
                       {skill.name}
-                      {backed ? (
-                        <span className="rounded-full bg-[#D6F7EC] px-1.5 py-0.5 font-medium text-[#197E23]">
-                          Evidence-backed
-                        </span>
+                      {traced > 0 ? (
+                        <a
+                          href={`#evidence-${skill.skillId}`}
+                          className="rounded-full bg-[#D6F7EC] px-1.5 py-0.5 font-medium text-[#197E23] underline-offset-2 hover:underline"
+                        >
+                          Evidence-backed · {traced} {traced === 1 ? "source" : "sources"}
+                        </a>
                       ) : (
                         <span className="rounded-full border border-[#D2D2D2] px-1.5 py-0.5 text-[#787878]">
                           Self-declared
                         </span>
                       )}
+                      {untracedOnly ? (
+                        <a
+                          href={`#evidence-${skill.skillId}`}
+                          className="rounded-full bg-[#FFF7EB] px-1.5 py-0.5 text-[#B54708] underline-offset-2 hover:underline"
+                        >
+                          evidence on file, not traceable
+                        </a>
+                      ) : null}
                     </span>
                   );
                 })}
               </div>
             ) : null}
-            {curriculumSkills.length > 0 ? (
+            {provenance.programmeSkills.length > 0 ? (
               <div>
                 <h3 className="text-sm font-semibold text-[#353535]">
                   Programme-verified
                 </h3>
-                <ul className="mt-2 space-y-1 text-sm text-[#353535]">
-                  {curriculumSkills.map((skill) => (
+                <ul className="mt-2 space-y-3">
+                  {provenance.programmeSkills.map((skill) => (
                     <li key={skill.skillId}>
-                      {skill.name}
-                      <span className="text-[#787878]">
-                        {" "}
-                        · {skill.sources.join(", ")}
-                      </span>
+                      <p className="text-sm font-medium text-[#353535]">{skill.name}</p>
+                      <ul className="mt-1 space-y-2">
+                        {skill.items.map((item) => (
+                          <ProvenanceRow key={item.key} item={item} />
+                        ))}
+                      </ul>
                     </li>
                   ))}
                 </ul>
@@ -532,59 +600,61 @@ export function CandidateCareerSections({
       </Section>
 
       <Section title="Evidence">
-        {!evidence.hasAny ? (
+        {provenance.skills.length === 0 &&
+        provenance.credentials.length === 0 &&
+        provenance.achievements.length === 0 ? (
           <Empty>No evidence records for this candidate.</Empty>
         ) : (
-          <div className="space-y-4">
-            {evidence.verifiedSkills.map((skill) => (
-              <div key={skill.skillId}>
-                <p className="text-sm font-medium text-[#353535]">
-                  {skill.name}
-                  <span className="ml-2 text-xs font-normal text-[#787878]">
-                    {skill.evidenceCount} source
-                    {skill.evidenceCount === 1 ? "" : "s"}
-                  </span>
-                </p>
-                <ul className="mt-1 space-y-0.5 text-xs text-[#787878]">
-                  {skill.items.map((item, i) => (
-                    <li key={`${skill.skillId}-${i}`}>
-                      {EVIDENCE_SOURCE_LABEL[item.sourceType] ?? item.sourceType}
-                      {" · "}
-                      {item.sourceLabel}
-                      {" · "}
-                      {formatDateIST(item.occurredAt)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-            {evidence.credentials.length > 0 ? (
+          <div className="space-y-5">
+            <p className="text-xs text-[#8F8F8F]">
+              Every badge below is followed back to the record that earned it. Names and
+              dates come from that record; a badge whose record cannot be found, or no
+              longer counts, is marked Not traced and says why.
+            </p>
+            {provenance.skills.length > 0 ? (
               <div>
-                <h3 className="text-sm font-semibold text-[#353535]">Credentials</h3>
-                <ul className="mt-1 space-y-1 text-sm text-[#353535]">
-                  {evidence.credentials.map((row) => (
-                    <li key={row.credentialId}>
-                      {row.title}
-                      <span className="text-[#787878]">
-                        {" "}
-                        · {formatDateIST(row.issuedAt)}
-                      </span>
+                <h3 className="text-sm font-semibold text-[#353535]">
+                  Evidence-backed skills
+                </h3>
+                <ul className="mt-2 space-y-3">
+                  {provenance.skills.map((skill) => (
+                    <li key={skill.skillId} id={`evidence-${skill.skillId}`}>
+                      <p className="text-sm font-medium text-[#353535]">
+                        {skill.name}
+                        <span className="ml-2 text-xs font-normal text-[#787878]">
+                          {tracedCount(skill.items)} of {skill.items.length} traced
+                        </span>
+                      </p>
+                      <ul className="mt-1 space-y-2">
+                        {skill.items.map((item) => (
+                          <ProvenanceRow key={item.key} item={item} />
+                        ))}
+                      </ul>
                     </li>
                   ))}
                 </ul>
               </div>
             ) : null}
-            {evidence.achievements.length > 0 ? (
+            {provenance.credentials.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-[#353535]">Credentials</h3>
+                <ul className="mt-2 space-y-2">
+                  {provenance.credentials.map((row) => (
+                    <ProvenanceRow
+                      key={row.credentialId}
+                      item={row.item}
+                      prefix={`${row.credentialId} · ${row.typeLabel}`}
+                    />
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {provenance.achievements.length > 0 ? (
               <div>
                 <h3 className="text-sm font-semibold text-[#353535]">Achievements</h3>
-                <ul className="mt-1 space-y-1 text-sm text-[#353535]">
-                  {evidence.achievements.map((row) => (
-                    <li key={row.id}>
-                      {row.title}
-                      {row.outcomeLabel ? (
-                        <span className="text-[#787878]"> · {row.outcomeLabel}</span>
-                      ) : null}
-                    </li>
+                <ul className="mt-2 space-y-2">
+                  {provenance.achievements.map((item) => (
+                    <ProvenanceRow key={item.key} item={item} />
                   ))}
                 </ul>
               </div>
@@ -630,7 +700,7 @@ export function CandidateCareerSections({
           <Empty>No recruiter assessments assigned.</Empty>
         ) : (
           <TableWrap
-            columns={["Assessment", "Status", "Assigned", "Submitted"]}
+            columns={["Assessment", "Status", "Assigned", "Submitted", ""]}
             empty={false}
           >
             {detail.assessments.map((row) => (
@@ -652,8 +722,19 @@ export function CandidateCareerSections({
                 <td className="px-3 py-2 text-[#787878]">
                   {formatDateIST(row.assignedAt)}
                 </td>
-                <td className="px-3 py-2 text-[#787878] last:pr-0">
+                <td className="px-3 py-2 text-[#787878]">
                   {row.submittedAt ? formatDateIST(row.submittedAt) : "—"}
+                </td>
+                <td className="px-3 py-2 text-right last:pr-0">
+                  <Link
+                    href={`/admin/students/${account.userId}/assessments/${row.assignmentId}`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "whitespace-nowrap",
+                    )}
+                  >
+                    View details
+                  </Link>
                 </td>
               </tr>
             ))}

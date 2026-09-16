@@ -2100,6 +2100,10 @@ async function run() {
       "src/app/hire/assessments/[assessmentId]/attempts/[assignmentId]/page.tsx",
       "src/components/assessments/assessment-integrity.tsx",
       "src/components/hire/assessment/assessment-builder.tsx",
+      // T-265: the admin reads the same attempt and is held to the same rule.
+      "src/app/admin/students/[id]/assessments/[assignmentId]/page.tsx",
+      "src/components/admin/candidate-attempt-detail.tsx",
+      "src/features/admin/attempt-outcome.ts",
     ]) {
       const src = read(rel);
       assert(!BANNED_CLAIM_PATTERN.test(src), rel);
