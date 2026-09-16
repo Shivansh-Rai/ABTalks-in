@@ -30,6 +30,7 @@ export type AdminNavIcon =
   | "cohort"
   | "hackathon"
   | "workshop"
+  | "mock-interview"
   | "talentProjects"
   | "platformAdmins"
   | "hire";
@@ -101,6 +102,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { href: "/admin/ai-cohort", label: "AI Cohort", icon: "cohort" },
       { href: "/admin/hackathon", label: "Hackathon", icon: "hackathon" },
       { href: "/admin/workshop", label: "Workshop", icon: "workshop" },
+      { href: "/admin/mock-interview", label: "Mock interviews", icon: "mock-interview", match: ["/admin/mock-interview"] },
       { href: "/admin/submissions", label: "Submissions", icon: "submissions" },
       { href: "/admin/program", label: "Program", icon: "program" },
       { href: "/admin/hire", label: "Hire requests", icon: "hire" },

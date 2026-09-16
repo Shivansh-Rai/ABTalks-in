@@ -2,10 +2,12 @@
 
 import { Fragment, useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Download, UserMinus } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, RotateCcw, Trash2, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import {
   adminRemoveHackathonTeamMemberAction,
+  disqualifyHackathonTeamAction,
+  resetHackathonTeamSubmissionAction,
   updateHackathonProblemStatementAction,
 } from "@/app/actions/admin-hackathon-actions";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
@@ -110,6 +112,46 @@ export function HackathonView({ data }: Props) {
     });
   }
 
+  /** T-276 — hard-delete a team, cascading to participants + submission. */
+  function handleDisqualifyTeam(teamId: string, teamLabel: string) {
+    const reason = window.prompt(
+      `Disqualify ${teamLabel}? Team + members + submission will be deleted. This cannot be undone.\n\nReason (required):`,
+      "",
+    );
+    if (!reason) return;
+    startTransition(async () => {
+      const result = await disqualifyHackathonTeamAction({
+        teamId,
+        reason,
+      });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(`Disqualified ${teamLabel}`);
+    });
+  }
+
+  /** T-276 — delete just the team's HackathonSubmission so they can resubmit. */
+  function handleResetSubmission(teamId: string, teamLabel: string) {
+    const reason = window.prompt(
+      `Reset ${teamLabel}'s submission so they can submit again?\n\nReason (required):`,
+      "",
+    );
+    if (!reason) return;
+    startTransition(async () => {
+      const result = await resetHackathonTeamSubmissionAction({
+        teamId,
+        reason,
+      });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(`Reset ${teamLabel}'s submission`);
+    });
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -147,12 +189,13 @@ export function HackathonView({ data }: Props) {
                 <TableHead>Type</TableHead>
                 <TableHead>Member(s)</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.teams.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">
+                  <TableCell colSpan={7} className="text-muted-foreground">
                     No registrations yet.
                   </TableCell>
                 </TableRow>
@@ -198,6 +241,45 @@ export function HackathonView({ data }: Props) {
                             timeZone: "Asia/Kolkata",
                           })}
                         </TableCell>
+                        <TableCell className="text-right">
+                          {/* T-276 — Disqualify (hard-delete team) and Reset
+                              (delete just the submission). Both prompt for a
+                              reason and audit through admin-hackathon-actions. */}
+                          <div className="inline-flex gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={pending}
+                              onClick={() =>
+                                handleResetSubmission(
+                                  team.id,
+                                  team.teamName ?? team.teamCode,
+                                )
+                              }
+                              title="Delete this team's submission so they can submit again"
+                            >
+                              <RotateCcw className="size-3.5" />
+                              <span className="ml-1 text-xs">Reset</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              disabled={pending}
+                              onClick={() =>
+                                handleDisqualifyTeam(
+                                  team.id,
+                                  team.teamName ?? team.teamCode,
+                                )
+                              }
+                              title="Delete team + members + submission (cannot be undone)"
+                            >
+                              <Trash2 className="size-3.5" />
+                              <span className="ml-1 text-xs">Disqualify</span>
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                       {open
                         ? team.members.map((m) => (
@@ -206,7 +288,7 @@ export function HackathonView({ data }: Props) {
                               className="bg-muted/30"
                             >
                               <TableCell />
-                              <TableCell colSpan={5}>
+                              <TableCell colSpan={6}>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                   <span className="font-medium">
                                     {m.fullName}
