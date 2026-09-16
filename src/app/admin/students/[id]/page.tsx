@@ -15,15 +15,13 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RejectSubmissionButton } from "@/components/admin/reject-submission-button";
-import { StudentActionPanel } from "@/components/admin/student-action-panel";
-import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
-import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
-import { AccountOpsDialog } from "@/components/admin/account-ops-dialog";
 import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { CandidateCareerSections } from "@/components/admin/candidate-career-sections";
 import { CandidateDiscoverabilityPanel } from "@/components/admin/candidate-discoverability-panel";
+import { CandidateDetailViewSwitch } from "@/components/admin/candidate-detail-view-switch";
+import { CandidateAdminActionsMenu } from "@/components/admin/candidate-admin-actions-menu";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAdminCandidateDetail } from "@/features/admin/get-admin-candidate-detail";
@@ -73,96 +71,79 @@ export default async function AdminStudentDetailPage({
         title={account.name}
         description={`${account.email} · Joined ${formatDateIST(account.joinedAt)}`}
         actions={
-          ops?.kind === "challenge" ? (
-            <StudentActionPanel
-              studentId={ops.student.userId}
-              studentName={ops.student.fullName}
-              isReadyForInterview={ops.student.isReadyForInterview}
-              isActive={ops.student.enrollmentStatus === "ACTIVE"}
-              disabledAt={account.disabledAt ? account.disabledAt.toISOString() : null}
-            />
-          ) : (
-            <GenericAccountOps
-              userId={account.userId}
-              name={account.name}
-              disabledAt={account.disabledAt}
-            />
-          )
+          <CandidateAdminActionsMenu
+            userId={account.userId}
+            name={account.name}
+            disabledAt={
+              account.disabledAt ? account.disabledAt.toISOString() : null
+            }
+            challenge={
+              ops?.kind === "challenge"
+                ? {
+                    isReadyForInterview: ops.student.isReadyForInterview,
+                    isActive: ops.student.enrollmentStatus === "ACTIVE",
+                  }
+                : undefined
+            }
+          />
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Avatar className="size-14">
-          {account.image ? <AvatarImage src={account.image} alt="" /> : null}
-          <AvatarFallback>{initials(account.name)}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-wrap gap-2">
-          {ops?.kind === "hackathon" ? (
-            <>
-              <Badge variant="outline" className={domainBadgeClass("HACKATHON")}>
-                HACKATHON
-              </Badge>
-              <Badge>{ops.hackathon.entryType}</Badge>
-            </>
-          ) : ops?.kind === "challenge" ? (
-            <>
-              {ops.profile.domain ? (
-                <Badge variant="outline" className={domainBadgeClass(ops.profile.domain)}>
-                  {ops.profile.domain}
+      <CandidateDetailViewSwitch
+        avatar={
+          <Avatar className="size-14">
+            {account.image ? <AvatarImage src={account.image} alt="" /> : null}
+            <AvatarFallback>{initials(account.name)}</AvatarFallback>
+          </Avatar>
+        }
+        badges={
+          <div className="flex flex-wrap gap-2">
+            {ops?.kind === "hackathon" ? (
+              <>
+                <Badge variant="outline" className={domainBadgeClass("HACKATHON")}>
+                  HACKATHON
                 </Badge>
-              ) : (
-                <Badge variant="outline">—</Badge>
-              )}
-              <Badge>{ops.enrollment?.status ?? "UNASSIGNED"}</Badge>
-              {ops.profile.isReadyForInterview ? (
-                <Badge variant="secondary">Ready for Interview</Badge>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-      </div>
-
-      {detail.discoverability ? (
-        <CandidateDiscoverabilityPanel state={detail.discoverability} />
-      ) : null}
-
-      <CandidateCareerSections detail={detail} />
-
-      {ops?.kind === "hackathon" ? <HackathonCard data={ops} /> : null}
-
-      {ops?.kind === "challenge" && review ? (
-        <ChallengeOps data={ops} review={review} />
-      ) : null}
-    </div>
-  );
-}
-
-function GenericAccountOps({
-  userId,
-  name,
-  disabledAt,
-}: {
-  userId: string;
-  name: string;
-  disabledAt: Date | null;
-}) {
-  return (
-    <div className="flex flex-col items-start gap-2 md:items-end">
-      <GrantSynergyDialog studentId={userId} studentName={name} />
-      <DeleteUserAccountDialog userId={userId} userName={name} />
-      <AccountOpsDialog
-        targetUserId={userId}
-        targetName={name}
-        op="disable"
-        disabled={Boolean(disabledAt)}
+                <Badge>{ops.hackathon.entryType}</Badge>
+              </>
+            ) : ops?.kind === "challenge" ? (
+              <>
+                {ops.profile.domain ? (
+                  <Badge
+                    variant="outline"
+                    className={domainBadgeClass(ops.profile.domain)}
+                  >
+                    {ops.profile.domain}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">—</Badge>
+                )}
+                <Badge>{ops.enrollment?.status ?? "UNASSIGNED"}</Badge>
+                {ops.profile.isReadyForInterview ? (
+                  <Badge variant="secondary">Ready for Interview</Badge>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        }
+        diagnosis={
+          detail.discoverability ? (
+            <CandidateDiscoverabilityPanel state={detail.discoverability} />
+          ) : (
+            <p className="rounded-xl border border-[#E9E9E9] bg-white p-5 text-sm text-[#787878]">
+              No diagnosis for this account.
+            </p>
+          )
+        }
+        profile={
+          <div className="space-y-6">
+            <CandidateCareerSections detail={detail} />
+            {ops?.kind === "hackathon" ? <HackathonCard data={ops} /> : null}
+            {ops?.kind === "challenge" && review ? (
+              <ChallengeOps data={ops} review={review} />
+            ) : null}
+          </div>
+        }
       />
-      <AccountOpsDialog
-        targetUserId={userId}
-        targetName={name}
-        op="restore"
-        disabled={!disabledAt}
-      />
-      <AccountOpsDialog targetUserId={userId} targetName={name} op="secure" />
     </div>
   );
 }

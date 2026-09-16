@@ -105,11 +105,35 @@ suite("soft-deleted users are not 404'd", () => {
   assert(assembler.includes("deletedAt"), "assembler must expose deletedAt");
 });
 
-suite("page mounts career sections", () => {
+suite("page mounts career sections and Profile/Diagnosis switch", () => {
   const src = code(PAGE);
   assert(src.includes("CandidateCareerSections"), "page must render career sections");
   assert(src.includes("getAdminCandidateDetail"), "page must load the assembler");
-  assert(src.includes("StudentActionPanel"), "challenge ops must stay");
+  assert(src.includes("CandidateDetailViewSwitch"), "page must mount the view switch");
+  assert(src.includes("CandidateAdminActionsMenu"), "page must mount the actions menu");
+  assert(!src.includes("StudentActionPanel"), "header button cluster is replaced");
+});
+
+const SWITCH = "src/components/admin/candidate-detail-view-switch.tsx";
+const MENU = "src/components/admin/candidate-admin-actions-menu.tsx";
+
+suite("view switch defaults to Profile and labels Diagnosis", () => {
+  const src = code(SWITCH);
+  assert(src.includes('"profile"'), "default view is profile");
+  assert(src.includes("Profile"), "toggle shows Profile");
+  assert(src.includes("Diagnosis"), "toggle shows Diagnosis");
+});
+
+suite("actions menu confirms before running", () => {
+  const src = code(MENU);
+  assert(src.includes("Perform admin action"), "dropdown trigger copy");
+  assert(
+    src.includes("Are you sure you want to perform this"),
+    "every action must ask for confirmation",
+  );
+  assert(src.includes("disableAccountAction"), "disable stays wired");
+  assert(src.includes('confirm: deleteConfirm'), "delete still requires typing delete");
+  assert(src.includes("reason.trim().length >= 8"), "account ops still require a reason");
 });
 
 if (failed > 0) {
