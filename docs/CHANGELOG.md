@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-16 [convention] T-264: admin candidate detail at /admin/students/[id] assembles the candidate's own profile, skills (self-declared vs evidence-backed), evidence, applications, assessments (status only), programmes, notification deliveries and account state; search and Candidates list already open this route.
 - 2026-09-15 [convention] Dashboard sidebar open/collapsed is click-only (no hover expand); brand row uses /sidebar-toggle.webp instead of cropped AB / three-dots.
 - 2026-09-15 [rule] T-224 Career Guidance algo v2: no jobs; progression.json edges (pool 8); days≥50 / Claude credential gates; slot daily mix (≤4) + one localStorage refill; soft-dedupe vs ACTIVE enrollments.
 - 2026-09-15 [convention] T-207: Platform Admin console IA (Overview, Search, Candidates, Recruiters, Credits, Assessments, Jobs, Communications, Audit, Delivery, Settings) wired to existing admin data. View As, SMS, and team plans are not shipped.
