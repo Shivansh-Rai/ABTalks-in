@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { CheckCircle2, ExternalLink } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   GENDER_LABELS,
   LINK_TYPE_LABELS,
@@ -630,7 +632,7 @@ export function CandidateCareerSections({
           <Empty>No recruiter assessments assigned.</Empty>
         ) : (
           <TableWrap
-            columns={["Assessment", "Status", "Assigned", "Submitted"]}
+            columns={["Assessment", "Status", "Assigned", "Submitted", ""]}
             empty={false}
           >
             {detail.assessments.map((row) => (
@@ -652,8 +654,19 @@ export function CandidateCareerSections({
                 <td className="px-3 py-2 text-[#787878]">
                   {formatDateIST(row.assignedAt)}
                 </td>
-                <td className="px-3 py-2 text-[#787878] last:pr-0">
+                <td className="px-3 py-2 text-[#787878]">
                   {row.submittedAt ? formatDateIST(row.submittedAt) : "—"}
+                </td>
+                <td className="px-3 py-2 text-right last:pr-0">
+                  <Link
+                    href={`/admin/students/${account.userId}/assessments/${row.assignmentId}`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "whitespace-nowrap",
+                    )}
+                  >
+                    View details
+                  </Link>
                 </td>
               </tr>
             ))}

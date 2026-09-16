@@ -259,6 +259,65 @@ export function toCandidateAnswer(
 }
 
 /**
+ * What auto-grading did with one question.
+ *
+ * `NOT_AUTO_GRADED` covers PARAGRAPH, FILE_UPLOAD and any question worth zero
+ * points: none of them reach the score at all, so they are not in the
+ * denominator either. `NO_KEY` is an MCQ the recruiter published without marking
+ * a correct option — it counts toward the total and can never be earned, which
+ * is worth saying out loud rather than showing as a wrong answer.
+ */
+export type QuestionOutcome =
+  | { kind: "CORRECT"; points: number }
+  | { kind: "INCORRECT"; points: number }
+  | { kind: "NO_KEY"; points: number }
+  | { kind: "NOT_AUTO_GRADED" };
+
+/**
+ * The scoring rule for ONE question, extracted so the recruiter's stored score
+ * and any later per-question breakdown cannot disagree: a question earns its
+ * points only when the selected set EQUALS the correct set — the same rule for
+ * single- and multi-select.
+ */
+export function gradeQuestion(
+  q: Pick<GradeQuestion, "type" | "points" | "correctOptionIds">,
+  answer: Pick<AnswerRow, "selectedOptionIds"> | undefined,
+): QuestionOutcome {
+  if (q.type !== "MULTIPLE_CHOICE" || q.points <= 0) {
+    return { kind: "NOT_AUTO_GRADED" };
+  }
+  const correct = new Set(q.correctOptionIds);
+  if (correct.size === 0) return { kind: "NO_KEY", points: q.points };
+  const picked = new Set(answer?.selectedOptionIds ?? []);
+  const exact =
+    picked.size === correct.size && [...correct].every((id) => picked.has(id));
+  return exact
+    ? { kind: "CORRECT", points: q.points }
+    : { kind: "INCORRECT", points: q.points };
+}
+
+/** Totals over {@link gradeQuestion}. `total` is the auto-gradeable denominator. */
+export function scoreAnswers(
+  questions: Pick<GradeQuestion, "id" | "type" | "points" | "correctOptionIds">[],
+  answers: AnswerRow[],
+): { earned: number; total: number; scorePercent: number } {
+  const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
+  let total = 0;
+  let earned = 0;
+  for (const q of questions) {
+    const outcome = gradeQuestion(q, byQuestion.get(q.id));
+    if (outcome.kind === "NOT_AUTO_GRADED") continue;
+    total += outcome.points;
+    if (outcome.kind === "CORRECT") earned += outcome.points;
+  }
+  return {
+    earned,
+    total,
+    scorePercent: total === 0 ? 0 : Math.round((100 * earned) / total),
+  };
+}
+
+/**
  * Required check, word caps, then the score plan 128 §10 defined:
  * round(100 × MCQ points earned ÷ total MCQ points). PARAGRAPH and FILE_UPLOAD
  * are not auto-scored. A question earns its points only when the selected set
@@ -286,20 +345,7 @@ export function finishAttempt(input: FinishInput): FinishResult {
     return { ok: false, missingRequired, overLimit };
   }
 
-  let total = 0;
-  let earned = 0;
-  for (const q of input.questions) {
-    if (q.type !== "MULTIPLE_CHOICE" || q.points <= 0) continue;
-    total += q.points;
-    const picked = new Set(byQuestion.get(q.id)?.selectedOptionIds ?? []);
-    const correct = new Set(q.correctOptionIds);
-    const exact =
-      correct.size > 0 &&
-      picked.size === correct.size &&
-      [...correct].every((id) => picked.has(id));
-    if (exact) earned += q.points;
-  }
-  const scorePercent = total === 0 ? 0 : Math.round((100 * earned) / total);
+  const { scorePercent } = scoreAnswers(input.questions, input.answers);
   return { ok: true, scorePercent, passed: scorePercent >= input.passMarkPercent };
 }
 
@@ -310,24 +356,9 @@ export function finishAttempt(input: FinishInput): FinishResult {
  * Submit still uses finishAttempt and refuses incomplete / over-limit.
  */
 export function finishAttemptForced(input: FinishInput): FinishResult {
-  const byQuestion = new Map(input.answers.map((a) => [a.questionId, a]));
-
-  let total = 0;
-  let earned = 0;
-  for (const q of input.questions) {
-    if (q.type !== "MULTIPLE_CHOICE" || q.points <= 0) continue;
-    total += q.points;
-    const row = byQuestion.get(q.id);
-    // Over-limit only applies to paragraphs; MCQ path is unchanged.
-    const picked = new Set(row?.selectedOptionIds ?? []);
-    const correct = new Set(q.correctOptionIds);
-    const exact =
-      correct.size > 0 &&
-      picked.size === correct.size &&
-      [...correct].every((id) => picked.has(id));
-    if (exact) earned += q.points;
-  }
-  const scorePercent = total === 0 ? 0 : Math.round((100 * earned) / total);
+  // Over-limit only applies to paragraphs; the MCQ path is the same one an
+  // intentional Submit takes.
+  const { scorePercent } = scoreAnswers(input.questions, input.answers);
   return { ok: true, scorePercent, passed: scorePercent >= input.passMarkPercent };
 }
 
