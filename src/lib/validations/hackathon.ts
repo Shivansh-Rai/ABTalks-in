@@ -58,6 +58,21 @@ export const removeTeamMemberSchema = z.object({
 
 export type RemoveTeamMemberInput = z.infer<typeof removeTeamMemberSchema>;
 
+/** T-276 admin ops for hackathon teams — disqualify (delete team) + reset submission. */
+export const disqualifyTeamSchema = z.object({
+  teamId: z.string().trim().min(1, "Missing team"),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export type DisqualifyTeamInput = z.infer<typeof disqualifyTeamSchema>;
+
+export const resetTeamSubmissionSchema = z.object({
+  teamId: z.string().trim().min(1, "Missing team"),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export type ResetTeamSubmissionInput = z.infer<typeof resetTeamSubmissionSchema>;
+
 const hackathonRepoRegex =
   /^https:\/\/github\.com\/([a-zA-Z0-9-]{1,39})\/([a-zA-Z0-9._-]{1,100})\/?$/;
 

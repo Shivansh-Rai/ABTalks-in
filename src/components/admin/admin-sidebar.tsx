@@ -60,6 +60,7 @@ const iconMap: Record<AdminNavIcon, typeof LayoutDashboard> = {
   cohort: GraduationCap,
   hackathon: Code2,
   workshop: Presentation,
+  "mock-interview": Presentation,
   talentProjects: FolderSearch,
   platformAdmins: ShieldCheck,
   hire: Briefcase,
