@@ -287,20 +287,20 @@ check("budget: ₹6L expectation out of ₹5L, in at ₹10L", () => {
   assert(has(search([skill("React"), f("salaryMax", 1_000_000)]), "QA032"), "₹10L budget");
 });
 
-knownBug("QA-KI-002", "\"not decided\" budget (0/0) keeps a candidate with a stated expectation", () => {
+check("\"not decided\" budget (0/0) keeps a candidate with a stated expectation", () => {
   assert(has(search([skill("React"), f("salaryMax", 0)]), "QA032"), "QA032 excluded by the 0 sentinel");
 });
 
-check("work mode: On-site out of REMOTE, unstated in", () => {
+check("work mode: On-site stays out of a REMOTE search, unstated stays in", () => {
   const ev = search([skill("React"), f("workMode", "REMOTE")]);
   assert(!has(ev, "QA025"), "On-site → out");
   assert(has(ev, "QA026"), "unstated → in");
 });
 
-knownBug("QA-KI-001", "work mode: a candidate who chose \"Remote\" is found by a REMOTE search", () => {
+check("work mode: a candidate who chose \"Remote\" is found by a REMOTE search", () => {
   assert(has(search([skill("React"), f("workMode", "REMOTE")]), "QA001"), "QA001 prefers Remote");
 });
-knownBug("QA-KI-001", "work mode: a \"Flexible\" candidate is found by any work-mode search", () => {
+check("work mode: a \"Flexible\" candidate is found by any work-mode search", () => {
   assert(has(search([skill("React"), f("workMode", "HYBRID")]), "QA024"), "QA024 is Flexible");
 });
 
@@ -327,7 +327,7 @@ knownBug("QA-KI-009", "Python + Bengaluru finds QA002, who wrote \"Bangalore\"",
   assert(has(search([skill("Python"), f("locationCity", "Bengaluru")]), "QA002"), "Bangalore ↔ Bengaluru");
 });
 
-knownBug("QA-KI-003", "skipped city (\"Any\") does not exclude candidates with stated cities", () => {
+check("skipped city (\"Any\") does not exclude candidates with stated cities", () => {
   assert(has(search([skill("React"), f("locationCity", "Any")]), "QA027"), "QA027 prefers Delhi NCR");
 });
 
@@ -612,9 +612,9 @@ check("cohort member with no canonical skills matched on application skills → 
 });
 
 check("known-issue failures classify under their pinned issue", () => {
-  const r = faultCase([f("workMode", "REMOTE")], "fault-ki");
-  const hit = findingFor(r, uid("QA001"));
-  assert(hit?.knownIssue === "QA-KI-001" && hit.category === "SEARCH_FILTER_ERROR", JSON.stringify(hit));
+  const r = goldenCase([skill("UI/UX")], "ki-classify");
+  const hit = findingFor(r, uid("QA010"));
+  assert(hit?.knownIssue === "QA-KI-004" && hit.category === "SEARCH_INDEX_STALE", JSON.stringify(hit));
 });
 
 check("withdrawn-but-evidenced skill match is a product decision, not a failure", () => {
@@ -683,12 +683,24 @@ check("a clean profile has no document drift", () => {
   assert(driftOf("QA002").length === 0, JSON.stringify(driftOf("QA002")));
 });
 
-check("drift detector names the split-skill and NULLS-FIRST causes", () => {
+check("drift detector names the split-skill cause", () => {
   assert(driftOf("QA010").some((d) => d.cause === "LOADER_SPLIT_SKILL"), JSON.stringify(driftOf("QA010")));
-  assert(driftOf("QA056").some((d) => d.cause === "NULLS_FIRST_EDUCATION_PICK"), JSON.stringify(driftOf("QA056")));
 });
 
-knownBug("QA-KI-005", "document graduation year equals the candidate's latest entered year", () => {
+check("a graduation year hidden by a year-less education row is still detected if it ever returns", () => {
+  // The loader now orders NULLS LAST, so QA056's document carries 2024 and the
+  // pool is clean. The detector still has to name the old shape on sight.
+  assert(driftOf("QA056").length === 0, `QA056 should have no drift: ${JSON.stringify(driftOf("QA056"))}`);
+  const member = POOL.members.find((m) => m.userId === uid("QA056"))!;
+  const stale = {
+    ...member,
+    dossier: { ...member.dossier!, education: { ...member.dossier!.education, value: { level: null, university: null, gradYear: null } } },
+  };
+  const drift = documentDrift(goldenFixture("QA056").canonical, stale);
+  assert(drift.some((d) => d.cause === "NULLS_FIRST_EDUCATION_PICK"), JSON.stringify(drift));
+});
+
+check("document graduation year equals the candidate's latest entered year (NULLS LAST)", () => {
   const member = POOL.members.find((m) => m.userId === uid("QA056"))!;
   assert(member.dossier?.education.value.gradYear === 2024, `document gradYear ${member.dossier?.education.value.gradYear}`);
 });

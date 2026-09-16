@@ -348,16 +348,14 @@ const workMode: FilterDef = {
       return {
         category: "SEARCH_FILTER_ERROR",
         cause: "WORK_MODE_LABEL_VS_ENUM",
-        message: `candidate stored the profile picker value "${raw}", which the filter compares to ${String(v)} literally`,
-        knownIssue: "QA-KI-001",
+        message: `candidate stored the profile picker value "${raw}" and the filter did not fold it to ${String(v)}`,
       };
     }
     if (oracle.pass) {
       return {
         category: "NORMALIZATION_ERROR",
         cause: "WORK_MODE_SPELLING",
-        message: `stored work mode "${raw}" means ${normalizeWorkMode(raw)} but is not normalized`,
-        knownIssue: "QA-KI-001",
+        message: `stored work mode "${raw}" means ${normalizeWorkMode(raw)} but was not normalized`,
       };
     }
     return {
@@ -425,7 +423,6 @@ const locationCity: FilterDef = {
         category: "SEARCH_FILTER_ERROR",
         cause: "ANY_CITY_SENTINEL_APPLIED",
         message: `"${String(v)}" means no city but was matched as a city name`,
-        knownIssue: "QA-KI-003",
       };
     }
     if (oracle.pass && oracle.normalized) {
@@ -557,7 +554,6 @@ const salaryMax: FilterDef = {
         category: "SEARCH_FILTER_ERROR",
         cause: "SALARY_ZERO_SENTINEL_APPLIED",
         message: "a not-decided budget (0/0) excluded a candidate with a stated expectation",
-        knownIssue: "QA-KI-002",
       };
     }
     return { category: "SEARCH_FILTER_ERROR", cause: "SALARY_DISAGREES", message: "budget comparison disagrees" };

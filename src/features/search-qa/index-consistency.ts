@@ -227,7 +227,6 @@ export function documentDrift(c: CanonicalCandidate, m: ScoreableMember): Docume
           : "EDUCATION_DRIFT",
       canonical: String(canonGrad ?? "—"),
       document: String(docGrad ?? "—"),
-      knownIssue: nullsFirst ? "QA-KI-005" : undefined,
     });
   }
 

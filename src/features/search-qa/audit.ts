@@ -925,7 +925,7 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
           searchImpact: true,
           distinct: n.workModes.length,
           clusters: workModeClusters,
-          note: `Picker values (${n.workModes.filter((w) => isPickerWorkMode(w.raw)).map((w) => `${w.raw} ${w.count}`).join(", ") || "none"}) are valid but still mismatch the recruiter enum (QA-KI-001).`,
+          note: `Picker values (${n.workModes.filter((w) => isPickerWorkMode(w.raw)).map((w) => `${w.raw} ${w.count}`).join(", ") || "none"}) are folded to the recruiter enum by evaluateHardFilters; anything listed here is not.`,
         },
         {
           entity: "profile city (CandidateProfile.locationCity)",

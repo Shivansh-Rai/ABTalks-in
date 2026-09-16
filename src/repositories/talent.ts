@@ -110,7 +110,10 @@ export async function loadRecruiterIdentities(
           select: { skill: { select: { name: true } } },
         },
         education: {
-          orderBy: { graduationYear: "desc" },
+          // NULLS LAST, not Postgres' default NULLS FIRST for DESC: a row with
+          // no graduation year used to sort first and hide the year the
+          // candidate actually entered (audit 2026-09-16, QA-KI-005).
+          orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
           take: 1,
           select: {
             degree: true,
@@ -290,7 +293,7 @@ export async function searchCandidates(
             },
           },
           education: {
-            orderBy: { graduationYear: "desc" },
+            orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
             take: 1,
             select: {
               institutionName: true,

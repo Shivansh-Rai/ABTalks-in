@@ -24,38 +24,12 @@ export type KnownIssue = {
   proposedFix: string;
 };
 
+/**
+ * Fixed on 2026-09-16 and therefore removed from this registry (their tests are
+ * now ordinary assertions): QA-KI-001 work-mode label/enum, QA-KI-002 zero-budget
+ * sentinel, QA-KI-003 "Any" city sentinel, QA-KI-005 NULLS-FIRST education pick.
+ */
 export const KNOWN_ISSUES = {
-  "QA-KI-001": {
-    id: "QA-KI-001",
-    category: "SEARCH_FILTER_ERROR",
-    severity: "CRITICAL",
-    title: "Work-mode filter compares profile labels to recruiter enums",
-    location: "src/features/hire/score-candidate.ts:303",
-    evidence:
-      "The profile picker stores CandidatePreference.remotePreference as \"Remote\" / \"Hybrid\" / \"On-site\" / \"Flexible\" (candidate-vocab WORK_MODES); the recruiter spec carries REMOTE / HYBRID / ONSITE / FLEXIBLE and evaluateHardFilters compares them with !==. Every candidate who stated any work mode is excluded from every work-mode search, including exact matches and \"Flexible\".",
-    proposedFix:
-      "Normalize preferredWorkMode to the enum in listCandidateAvailability (or at write time) before evaluateHardFilters compares it.",
-  },
-  "QA-KI-002": {
-    id: "QA-KI-002",
-    category: "SEARCH_FILTER_ERROR",
-    severity: "ERROR",
-    title: "\"Not decided\" budget (0/0) is applied as a ₹0 salary ceiling",
-    location: "src/features/hire/score-candidate.ts:278",
-    evidence:
-      "Scout's skip:salary chip stores salaryMin 0 / salaryMax 0 as the not-specified sentinel (hire-filter-dialog isUnsetSalary agrees). evaluateHardFilters checks salaryMax != null, so any candidate with expectedSalaryMin > 0 is hard-filtered as \"Expected salary above budget\".",
-    proposedFix: "Treat salaryMax === 0 (with salaryMin 0/null) as no budget in evaluateHardFilters.",
-  },
-  "QA-KI-003": {
-    id: "QA-KI-003",
-    category: "SEARCH_FILTER_ERROR",
-    severity: "ERROR",
-    title: "Skipped city (\"Any\") is applied as a city named \"any\"",
-    location: "src/features/hire/score-candidate.ts:312",
-    evidence:
-      "scout-conversation mergeIntoSlot stores locationCity \"Any\" for skip:locationCity; the filter dialog treats \"Any\" as blank, but evaluateHardFilters matches it by substring, excluding every candidate with stated preferred cities who is not open to relocate (unless a city happens to contain \"any\", e.g. Germany).",
-    proposedFix: "Ignore the Any / anywhere sentinel in evaluateHardFilters.",
-  },
   "QA-KI-004": {
     id: "QA-KI-004",
     category: "SEARCH_INDEX_STALE",
@@ -65,16 +39,6 @@ export const KNOWN_ISSUES = {
     evidence:
       "splitSkills was written for pasted legacy StudentProfile strings and is also applied to CandidateSkill names on the 078 read path. \"AI/ML\", \"UI/UX\", \"CI/CD\" become [\"AI\",\"ML\"] etc., and the two-letter pieces cannot match by containment, so a candidate who claimed \"UI/UX\" is not found by a \"UI/UX\" requirement.",
     proposedFix: "Only split legacy free-text skills; keep catalog CandidateSkill names whole.",
-  },
-  "QA-KI-005": {
-    id: "QA-KI-005",
-    category: "SEARCH_INDEX_STALE",
-    severity: "WARNING",
-    title: "Education pick orders graduationYear desc with Postgres NULLS FIRST",
-    location: "src/repositories/talent.ts:113",
-    evidence:
-      "loadRecruiterIdentities selects education orderBy graduationYear desc take 1; a row with no graduation year sorts first, so the document's gradYear (and the challenge track's years-since-graduation) is null while the candidate entered one.",
-    proposedFix: "orderBy { graduationYear: { sort: \"desc\", nulls: \"last\" } }.",
   },
   "QA-KI-006": {
     id: "QA-KI-006",

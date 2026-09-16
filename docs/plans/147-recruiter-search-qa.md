@@ -105,11 +105,11 @@ capped at 600 (challenge, profile) and 200 (hackathon, unordered).
 
 ### Bugs found during discovery (evidence and proposed fixes in `src/features/search-qa/known-issues.ts`)
 
-1. Work-mode filter compares profile labels `Remote/Hybrid/On-site/Flexible` to enums `REMOTE/HYBRID/ONSITE` with `!==`: every candidate with a stated work mode fails every work-mode search.
-2. "Not decided" salary (`salaryMin 0, salaryMax 0`) is treated as a ₹0 budget.
-3. Skipped city (`locationCity "Any"`) is treated as a city named "any".
+1. ~~Work-mode filter compares profile labels `Remote/Hybrid/On-site/Flexible` to enums with `!==`~~ — **FIXED 2026-09-16**: `normalizeWorkMode` folds both sides in `evaluateHardFilters`; an unparseable value now reads as unstated.
+2. ~~"Not decided" salary (`salaryMin 0, salaryMax 0`) is treated as a ₹0 budget~~ — **FIXED 2026-09-16** (`effectiveBudget`).
+3. ~~Skipped city (`locationCity "Any"`) is treated as a city named "any"~~ — **FIXED 2026-09-16** (`effectiveCity`).
 4. `splitSkills` breaks canonical skill names containing `/` or `&` ("AI/ML", "UI/UX", "CI/CD"), so they cannot match themselves.
-5. `loadRecruiterIdentities` picks education `orderBy graduationYear desc` — Postgres puts NULLs first.
+5. ~~`loadRecruiterIdentities` picks education `orderBy graduationYear desc` — Postgres puts NULLs first~~ — **FIXED 2026-09-16** (`nulls: "last"`, both call sites in `repositories/talent.ts`).
 6. Rank window of 100 is taken before the must-have gate: matching candidates can be pushed out by non-matching higher scorers.
 7. `loadRequestMatches` renders `PROFILE` matches as `CLAUDE:` refs.
 8. Profile-only candidates with only declared skills can outrank evidence-backed ones (coverage reweighting).

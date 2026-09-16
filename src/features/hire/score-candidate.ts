@@ -100,6 +100,55 @@ function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
+type WorkMode = "REMOTE" | "HYBRID" | "ONSITE" | "FLEXIBLE";
+
+/**
+ * One work-mode vocabulary for both sides of the filter.
+ *
+ * `/profile` stores the PICKER LABELS on `CandidatePreference.remotePreference`
+ * — "Remote", "Hybrid", "On-site", "Flexible" (`candidate-vocab.ts`) — while a
+ * recruiter spec carries the ENUMS. Comparing them literally excluded every
+ * candidate who had ever chosen a work mode, exact matches included: a
+ * "Remote" candidate failed a REMOTE search, and "Flexible" failed all of them.
+ * The 2026-09-16 audit found 9 candidates hidden this way across 43 searches.
+ *
+ * An unparseable value reads as UNSTATED rather than as a mismatch. A string
+ * nobody can interpret is not evidence that the candidate refused the role, and
+ * the null convention here has always been "unstated never excludes".
+ */
+function normalizeWorkMode(raw: string | null | undefined): WorkMode | null {
+  if (!raw) return null;
+  const key = raw.toLowerCase().replace(/[^a-z]/g, "");
+  if (key === "remote" || key === "wfh" || key === "workfromhome") return "REMOTE";
+  if (key === "hybrid") return "HYBRID";
+  if (key === "onsite" || key === "inoffice" || key === "office") return "ONSITE";
+  if (key === "flexible" || key === "any") return "FLEXIBLE";
+  return null;
+}
+
+/**
+ * The budget to filter on, or null when the recruiter never set one.
+ *
+ * `skip:salary` stores 0/0 as "not decided" (`scout-conversation.ts`, and
+ * `hire-filter-dialog.ts` reads it back the same way). Treated as a real
+ * ceiling it excluded everyone who had stated any salary expectation.
+ */
+function effectiveBudget(spec: JobSpec): number | null {
+  if (spec.salaryMax == null) return null;
+  if (spec.salaryMax === 0 && (spec.salaryMin ?? 0) === 0) return null;
+  return spec.salaryMax;
+}
+
+/** Recruiter-side sentinels that mean "no city", not a city with that name. */
+const ANY_CITY = /^(any|any city|anywhere)$/i;
+
+/** The city to filter on, or null when the recruiter skipped the question. */
+function effectiveCity(spec: JobSpec): string | null {
+  const city = spec.locationCity?.trim();
+  if (!city || ANY_CITY.test(city)) return null;
+  return city;
+}
+
 /**
  * Weights for this search: recruiter priorities applied, then dimensions the
  * pool cannot produce dropped and their share redistributed.
@@ -275,10 +324,11 @@ export function evaluateHardFilters(
     if (extra.openToWork === true && !avail.openToWork) {
       reasons.push("Not open to work");
     }
+    const budget = effectiveBudget(spec);
     if (
-      spec.salaryMax != null &&
+      budget != null &&
       avail.expectedSalaryMin != null &&
-      avail.expectedSalaryMin > spec.salaryMax
+      avail.expectedSalaryMin > budget
     ) {
       reasons.push("Expected salary above budget");
     }
@@ -300,21 +350,24 @@ export function evaluateHardFilters(
     ) {
       reasons.push("Not open to this engagement type");
     }
+    const wantedMode = normalizeWorkMode(spec.workMode);
+    const candidateMode = normalizeWorkMode(avail.preferredWorkMode);
     if (
-      spec.workMode &&
-      avail.preferredWorkMode &&
-      avail.preferredWorkMode !== "FLEXIBLE" &&
-      spec.workMode !== "FLEXIBLE" &&
-      avail.preferredWorkMode !== spec.workMode
+      wantedMode &&
+      wantedMode !== "FLEXIBLE" &&
+      candidateMode &&
+      candidateMode !== "FLEXIBLE" &&
+      candidateMode !== wantedMode
     ) {
       reasons.push("Work mode mismatch");
     }
+    const wantedCity = effectiveCity(spec);
     if (
-      spec.locationCity &&
+      wantedCity &&
       !avail.openToRelocate &&
       avail.preferredCities.length > 0
     ) {
-      const city = normToken(spec.locationCity);
+      const city = normToken(wantedCity);
       const hit = avail.preferredCities.some(
         (c) =>
           normToken(c) === city ||

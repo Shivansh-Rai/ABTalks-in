@@ -378,12 +378,12 @@ function availabilityOf(p: CanonicalPreference | null): AvailabilitySnapshot {
   };
 }
 
-/** `loadRecruiterIdentities`: every CandidateSkill row by evidence, education `desc` with NULLS FIRST. */
+/** `loadRecruiterIdentities`: every CandidateSkill row by evidence, education `desc` NULLS LAST. */
 function identityOf(c: CanonicalCandidate) {
   const months = c.experience.reduce((n, e) => n + (e.totalMonths ?? 0), 0);
   const sortedEdu = [...c.education].sort((a, b) => {
-    if (a.graduationYear == null) return b.graduationYear == null ? 0 : -1;
-    if (b.graduationYear == null) return 1;
+    if (a.graduationYear == null) return b.graduationYear == null ? 0 : 1;
+    if (b.graduationYear == null) return -1;
     return b.graduationYear - a.graduationYear;
   });
   return {
