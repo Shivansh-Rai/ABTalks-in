@@ -119,6 +119,19 @@ async function main() {
     );
   });
 
+  await suite("login expires leftover oauth check cookies", async () => {
+    const res = await run("https://abtalks.in/login");
+    const setCookie = res.headers.getSetCookie().join("\n");
+    assert(
+      setCookie.includes("authjs.pkce.code_verifier.v2="),
+      "login must expire the versioned pkce cookie so a stale Google verifier cannot 500 the next sign-in",
+    );
+    assert(
+      UUID_RE.test(res.headers.get(REQUEST_ID_HEADER) ?? ""),
+      "expiring oauth cookies must not drop the request id",
+    );
+  });
+
   await suite("the id is forwarded to the app, not only to the client", async () => {
     const incoming = "0198f2c1-aaaa-bbbb-cccc-000000000002";
     const res = await run("https://abtalks.in/", {

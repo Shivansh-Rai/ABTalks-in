@@ -18,7 +18,12 @@ import {
 } from "@/features/registration/registration-gate";
 
 type Props = {
-  searchParams: Promise<{ from?: string; ref?: string; as?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    ref?: string;
+    as?: string;
+    error?: string;
+  }>;
 };
 
 /** Valid same-origin `from`, or null. */
@@ -106,6 +111,7 @@ export default async function LoginPage({ searchParams }: Props) {
               showDev={showDev}
               redirectTo={redirectTo}
               referralRef={referralRef}
+              authError={params.error}
             />
           </CardContent>
         </Card>
