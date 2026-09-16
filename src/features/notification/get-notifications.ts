@@ -4,6 +4,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { deriveEventNotifications } from "./derive-event-notifications";
+import { filterFeedForView } from "./recruiter-feed-filter";
 import { programMember } from "@/repositories/legacy/program-member";
 import type {
   AppNotification,
@@ -167,7 +168,11 @@ export async function getNotificationsForUser(
     }),
   );
 
-  const derivedItems = deriveEventNotifications({
+  // Derived event notifications (hackathon registration, workshop invites,
+  // cohort enrolment reminders) are candidate-side platform prompts. They
+  // are computed unconditionally and then dropped for a recruiter viewer
+  // by filterFeedForView below.
+  const rawDerivedItems = deriveEventNotifications({
     now,
     enrollingCohorts,
     programEnabled,
@@ -178,7 +183,22 @@ export async function getNotificationsForUser(
     joinedCohortIds: new Set(programMemberships.map((m) => m.cohortId)),
   });
 
-  const items: AppNotification[] = [...adminItems, ...derivedItems, ...userItems]
+  // T-249 recruiter-side gate. Pure function, unit-tested in
+  // recruiter-feed-filter.test.ts. Candidate viewers see the raw arrays.
+  const filtered = filterFeedForView(
+    {
+      adminItems,
+      derivedItems: rawDerivedItems,
+      userItems,
+    },
+    Boolean(recruiterProfile),
+  );
+
+  const items: AppNotification[] = [
+    ...filtered.adminItems,
+    ...filtered.derivedItems,
+    ...filtered.userItems,
+  ]
     .map((item) => ({ ...item, isRead: readKeys.has(item.key) }))
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, FEED_LIMIT);
