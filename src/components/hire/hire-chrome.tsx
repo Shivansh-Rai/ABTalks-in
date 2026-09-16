@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Bookmark, Briefcase, ClipboardCheck, FolderKanban, KanbanSquare, Menu, UserCheck, X } from "lucide-react";
+import { Bookmark, FolderKanban, Menu, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
@@ -280,63 +280,25 @@ export function HireChrome({
               </button>
             </>
           )}
-          {/* Credits and Assessments are plain navigation/information and are
-              correct on every page except the hero, so they keep the wider
-              guard. */}
-          {!isLanding && (
-            <>
-              {credits ? (
-                <CreditBalancePill
-                  balanceMinor={credits.balanceMinor}
-                  currency={credits.currency}
-                  level={credits.level}
-                  current={pathname.startsWith("/hire/credits")}
-                />
-              ) : null}
-              <Link
-                href="/hire/jobs"
-                className={cn(
-                  "hire-hbtn",
-                  "hire-hbtn--label",
-                  pathname.startsWith("/hire/jobs") && "is-current",
-                )}
-                aria-current={
-                  pathname.startsWith("/hire/jobs") ? "page" : undefined
-                }
-              >
-                <Briefcase className="hire-hbtn__svg" aria-hidden="true" />
-                <span>Jobs</span>
-              </Link>
-              <Link
-                href="/hire/assessments"
-                className={cn(
-                  "hire-hbtn",
-                  "hire-hbtn--label",
-                  pathname === "/hire/assessments" && "is-current",
-                )}
-                aria-current={pathname === "/hire/assessments" ? "page" : undefined}
-              >
-                <ClipboardCheck className="hire-hbtn__svg" aria-hidden="true" />
-                <span>Assessments</span>
-              </Link>
-              {/* T-240 hiring pipeline. Persistent, per-recruiter, nine
-                  stages — the "one hub, not two inboxes" the sheet asks for. */}
-              <Link
-                href="/hire/pipeline"
-                className={cn(
-                  "hire-hbtn",
-                  "hire-hbtn--label",
-                  pathname.startsWith("/hire/pipeline") && "is-current",
-                )}
-                aria-current={
-                  pathname.startsWith("/hire/pipeline") ? "page" : undefined
-                }
-              >
-                <KanbanSquare className="hire-hbtn__svg" aria-hidden="true" />
-                <span>Pipeline</span>
-              </Link>
-            </>
-          )}
+          {/* The header is account utilities, not navigation.
+              Jobs / Assessments / Pipeline / Analytics used to live here as
+              pills, duplicating the sidebar and forcing every new destination
+              to be registered in two places — which is how Pipeline and
+              Analytics ended up with a header pill and no phone fallback at
+              all. They belong to `HireSidebar` now, which is the single source
+              of truth for where a recruiter can go.
+
+              Credits stays: it is an account resource, not a destination, and
+              its persistent visibility is the point — spending it is part of
+              the recruiter's normal actions. It still links to /hire/credits. */}
+          {!isLanding && credits ? (
+            <CreditBalancePill
+              balanceMinor={credits.balanceMinor}
+              currency={credits.currency}
+              level={credits.level}
+              current={pathname.startsWith("/hire/credits")}
+            />
+          ) : null}
           {account ? (
             <>
               {isLanding && (
