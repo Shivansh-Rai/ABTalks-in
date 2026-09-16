@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { RecruiterAccountOps } from "@/components/admin/account-ops-dialog";
 
 type RecruiterRow = {
@@ -72,9 +74,18 @@ export function AdminRecruitersPanel({
                 />
               </div>
             </div>
-            <Badge variant={row.hasWorkspace ? "default" : "secondary"}>
-              {row.hasWorkspace ? "Workspace ready" : "No workspace yet"}
-            </Badge>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant={row.hasWorkspace ? "default" : "secondary"}>
+                {row.hasWorkspace ? "Workspace ready" : "No workspace yet"}
+              </Badge>
+              {/* T-266: the one page that tells support the truth about them. */}
+              <Link
+                href={`/admin/recruiters/${row.userId}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                View detail
+              </Link>
+            </div>
           </div>
         </li>
       ))}
