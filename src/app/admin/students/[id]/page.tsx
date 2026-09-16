@@ -23,6 +23,7 @@ import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { CandidateCareerSections } from "@/components/admin/candidate-career-sections";
+import { CandidateDiscoverabilityPanel } from "@/components/admin/candidate-discoverability-panel";
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAdminCandidateDetail } from "@/features/admin/get-admin-candidate-detail";
@@ -120,6 +121,10 @@ export default async function AdminStudentDetailPage({
           ) : null}
         </div>
       </div>
+
+      {detail.discoverability ? (
+        <CandidateDiscoverabilityPanel state={detail.discoverability} />
+      ) : null}
 
       <CandidateCareerSections detail={detail} />
 

@@ -16,10 +16,12 @@ import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
 import { listCandidateAttempts } from "@/features/assessment-attempts/service";
 import { prismaAttemptStore } from "@/features/assessment-attempts/prisma-store";
 import { searchDeliveries } from "@/features/notification/delivery-diagnosis";
+import { getCandidateDiscoverability } from "@/features/admin/get-candidate-discoverability";
 import {
   getStudentDetail,
   type StudentDetail,
 } from "@/features/admin/get-student-detail";
+import type { CandidateDiscoverability } from "@/features/admin/candidate-discoverability";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
 import type { ProfileEvidence } from "@/features/profile/get-evidence";
 import type { VerifiedSkill } from "@/features/profile/get-verified-skills";
@@ -79,6 +81,8 @@ export type AdminCandidateDetail = {
   assessments: AttemptListRow[];
   programmes: AdminProgrammeRow[];
   deliveries: DeliveryRow[];
+  /** Why this candidate does or does not appear in recruiter search. */
+  discoverability: CandidateDiscoverability | null;
 };
 
 function accountStatus(user: {
@@ -146,6 +150,7 @@ export async function getAdminCandidateDetail(
     programRows,
     members,
     deliveries,
+    discoverability,
   ] = await Promise.all([
     getStudentDetail(userId),
     getCandidateDetail(userId),
@@ -190,6 +195,7 @@ export async function getAdminCandidateDetail(
       select: { id: true, cohortId: true },
     }),
     searchDeliveries({ recipient: userId, limit: 50 }),
+    getCandidateDiscoverability(userId),
   ]);
 
   const memberByCohort = new Map(members.map((m) => [m.cohortId, m.id]));
@@ -248,5 +254,6 @@ export async function getAdminCandidateDetail(
     assessments: assessmentsResult.ok ? assessmentsResult.data : [],
     programmes,
     deliveries,
+    discoverability,
   };
 }
