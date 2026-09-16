@@ -585,8 +585,11 @@ export type HackathonCandidateRow = {
   recruiterIdentity: RecruiterPublicIdentity;
 };
 
+/** Default hackathon rows per search. Exported for the search QA probe's cap check. */
+export const HACKATHON_POOL_TAKE = 200;
+
 export async function listHackathonCandidates(
-  take = 200,
+  take = HACKATHON_POOL_TAKE,
 ): Promise<HackathonCandidateRow[]> {
   if (newModelActive()) {
     const rows = await prisma.hackathonParticipant.findMany({

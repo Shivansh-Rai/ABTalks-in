@@ -54,6 +54,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { href: "/admin", label: "Overview", icon: "overview" },
       { href: "/admin/search", label: "Global Search", icon: "search" },
+      { href: "/admin/search-health", label: "Search Health", icon: "search" },
       {
         href: "/admin/students",
         label: "Candidates",

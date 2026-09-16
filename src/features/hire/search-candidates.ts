@@ -41,7 +41,7 @@ export type SearchCandidatesResult =
  * left short. Five is enough to read a pool from; a strict list of one tells
  * the recruiter nothing about who else is here.
  */
-const MIN_RESULTS = 5;
+export const MIN_RESULTS = 5;
 
 /**
  * How many challenge candidates are loaded before ranking.
@@ -53,7 +53,14 @@ const MIN_RESULTS = 5;
  * Rows are ordered by days submitted before the cap, so the ceiling can only
  * ever trim the least-evidenced people.
  */
-const CHALLENGE_POOL_CAP = 600;
+export const CHALLENGE_POOL_CAP = 600;
+
+/**
+ * How many ranked candidates `pickSearchMatches` chooses the page from.
+ * Exported with the two constants above so the search QA probe
+ * (features/search-qa) reproduces this pipeline without copying its numbers.
+ */
+export const RANK_WINDOW = 100;
 
 
 /**
@@ -108,7 +115,7 @@ export async function searchCandidates(
     const limit = hardCap ?? opts?.limit ?? 25;
     const ranked = rankCandidates(scoreable, spec, {
       includeHardFiltered: true,
-      limit: 100,
+      limit: RANK_WINDOW,
       coverage,
     });
 
