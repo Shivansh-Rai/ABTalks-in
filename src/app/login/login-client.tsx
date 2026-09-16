@@ -60,12 +60,31 @@ function safeRedirectPath(from: string | undefined, fallback: string) {
   return from;
 }
 
+/** Auth.js maps InvalidCheck / PKCE failures to error=Configuration. */
+function messageForAuthError(error: string | undefined): string | null {
+  if (!error) return null;
+  switch (error) {
+    case "OAuthAccountNotLinked":
+      return "That Google account's email is already used by another ABTalks login. Sign in with the original method, or use a different Google account.";
+    case "AccessDenied":
+      return "Sign-in was cancelled. Please try again.";
+    case "Configuration":
+    case "OAuthCallback":
+    case "Callback":
+    case "Default":
+      return "Sign-in was interrupted. If you were switching accounts, sign out first, then try Google again.";
+    default:
+      return "Sign-in was interrupted. Please try again.";
+  }
+}
+
 type LoginClientProps = {
   showGoogle: boolean;
   showDev: boolean;
   redirectTo: string;
   /** Captured from ?ref= for future registration / OAuth (informational for now). */
   referralRef?: string;
+  authError?: string;
 };
 
 export function LoginClient({
@@ -73,6 +92,7 @@ export function LoginClient({
   showDev,
   redirectTo,
   referralRef,
+  authError,
 }: LoginClientProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -87,6 +107,7 @@ export function LoginClient({
     ? `/welcome?next=${encodeURIComponent(target)}`
     : target;
   const canSignIn = legalConsentAccepted(legalConsent);
+  const authErrorMessage = messageForAuthError(authError);
 
   function ensureLegalAccepted(): boolean {
     if (legalConsentAccepted(legalConsent)) return true;
@@ -151,6 +172,11 @@ export function LoginClient({
 
   return (
     <div className="flex flex-col gap-6">
+      {authErrorMessage ? (
+        <p className="rounded-md border border-[#D92D20]/30 bg-[#D92D20]/5 px-3 py-2.5 text-sm text-foreground">
+          {authErrorMessage}
+        </p>
+      ) : null}
       {referralRef ? (
         <div className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2.5">
           <p className="text-sm text-foreground">

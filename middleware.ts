@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import authConfig from "@/auth.config";
+import authConfig, { OAUTH_CHECK_COOKIE_NAMES } from "@/auth.config";
 
 const REF_COOKIE_NAME = "abtalks_ref";
 const REF_COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
@@ -121,6 +121,27 @@ function applySourceCookie(
   return response;
 }
 
+/**
+ * Drop leftover Auth.js PKCE/state/nonce cookies (host-only and .abtalks.in).
+ * A stale verifier from a previous Google attempt decrypts as InvalidCheck and
+ * 500s /api/auth/error — especially when switching accounts or bouncing www.
+ */
+function expireOAuthCheckCookies(response: NextResponse) {
+  const domains: (string | undefined)[] = [undefined, ".abtalks.in"];
+  for (const name of OAUTH_CHECK_COOKIE_NAMES) {
+    for (const domain of domains) {
+      response.cookies.set(name, "", {
+        path: "/",
+        maxAge: 0,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: name.startsWith("__Secure-"),
+        ...(domain ? { domain } : {}),
+      });
+    }
+  }
+}
+
 function withTracking(
   response: NextResponse,
   ref: string | null,
@@ -186,6 +207,8 @@ export default auth((req) => {
       exactProtectedPaths.includes(pathname));
   const isAuthPage = pathname === "/login";
 
+  let response: NextResponse;
+
   if (isProtected && !isLoggedIn) {
     // Send people to their own door. A signed-out recruiter opening a
     // bookmarked /hire used to land on the candidate's Google button, which is
@@ -200,7 +223,7 @@ export default auth((req) => {
       req.nextUrl,
     );
     url.searchParams.set("from", pathname + req.nextUrl.search);
-    return withTracking(
+    response = withTracking(
       NextResponse.redirect(url),
       ref,
       src,
@@ -209,16 +232,29 @@ export default auth((req) => {
       hasAttributionCookies,
       requestId,
     );
-  }
-
-  if (isAuthPage && isLoggedIn) {
+  } else if (isAuthPage && isLoggedIn) {
     const from = req.nextUrl.searchParams.get("from");
     const destination =
       from && from.startsWith("/") && !from.startsWith("//")
         ? from
         : "/";
-    return withTracking(
+    response = withTracking(
       NextResponse.redirect(new URL(destination, req.nextUrl)),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+  } else {
+    // Forwarded so Server Components, Server Actions and route handlers can read
+    // the id back out of `headers()` — see `@/lib/observability/request-id`.
+    const forwarded = new Headers(req.headers);
+    forwarded.set(REQUEST_ID_HEADER, requestId);
+
+    response = withTracking(
+      NextResponse.next({ request: { headers: forwarded } }),
       ref,
       src,
       alreadyAttributed,
@@ -228,20 +264,8 @@ export default auth((req) => {
     );
   }
 
-  // Forwarded so Server Components, Server Actions and route handlers can read
-  // the id back out of `headers()` — see `@/lib/observability/request-id`.
-  const forwarded = new Headers(req.headers);
-  forwarded.set(REQUEST_ID_HEADER, requestId);
-
-  return withTracking(
-    NextResponse.next({ request: { headers: forwarded } }),
-    ref,
-    src,
-    alreadyAttributed,
-    consent,
-    hasAttributionCookies,
-    requestId,
-  );
+  if (pathname === "/login") expireOAuthCheckCookies(response);
+  return response;
 });
 
 export const config = {
