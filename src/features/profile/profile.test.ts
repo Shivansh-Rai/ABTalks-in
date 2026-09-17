@@ -468,6 +468,19 @@ suite("preferences never touch CandidateVisibility", () => {
     !src.includes("candidateVisibility"),
     "the profile editor cannot change recruiter discoverability",
   );
+  // The one exception is not a choice: once a name and a claimed skill exist,
+  // the platform creates its default discovery record if none exists
+  // (repositories/discovery-record.ts, pinned in the visibility suite). The
+  // preferences save must not trigger it.
+  const prefs = src.slice(
+    src.indexOf("export async function savePreferences"),
+    src.indexOf("export async function saveSkillClaims"),
+  );
+  assert(prefs.length > 0, "savePreferences located");
+  assert(
+    !prefs.includes("ensureDiscoveryRecord"),
+    "saving preferences never creates a discovery record",
+  );
   assert(src.includes("candidatePreference.upsert"), "preferences still saved");
 });
 
