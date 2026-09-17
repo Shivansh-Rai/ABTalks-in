@@ -179,6 +179,33 @@ export async function listPipelineCandidateIds(
 }
 
 /**
+ * How many candidates this recruiter has at one pipeline stage.
+ *
+ * Exists so T-242's recruiter analytics can report its "Contacted" figure
+ * without reaching for `prisma.talentListItem` itself — this repository is the
+ * only module allowed to touch that table, and the suite in
+ * `talent-pipeline.test.ts` enforces it.
+ *
+ * Scoped on `ownerRecruiterId` like every other read here, so the count can
+ * only ever be the calling recruiter's own.
+ *
+ * Deliberately does NOT call `ensureRecruiterPipeline`: counting is a read and
+ * must not create a list as a side effect for a recruiter who has never opened
+ * their board. No list means no items, which is the honest answer — zero.
+ */
+export async function countPipelineAtStage(
+  workspace: PipelineWorkspace,
+  stage: PipelineStage,
+): Promise<number> {
+  return prisma.talentListItem.count({
+    where: {
+      stage,
+      talentList: { ownerRecruiterId: workspace.recruiterProfileId },
+    },
+  });
+}
+
+/**
  * Add a candidate to the recruiter's pipeline. Idempotent on
  * `@@unique([talentListId, candidateUserId])`: adding an already-tracked
  * candidate keeps their current stage — the Scout button must never demote
@@ -320,3 +347,4 @@ export async function removeFromPipeline(
     return { ok: false, message: "Could not remove candidate from pipeline." };
   }
 }
+

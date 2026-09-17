@@ -50,8 +50,13 @@ export default async function PipelinePage() {
   }
 
   return (
-    <div className="hire-pipeline mx-auto w-full max-w-[1400px] px-3 py-4 md:px-6 md:py-6">
-      <PipelineBoard rows={rows} />
+    /* `hire-shell-wide` opts out of the shell's 880px prose measure — a nine
+       stage board is not prose. Padding and the page gutter come from
+       `.hire-shell__content`, the same as every other plain /hire page, so this
+       no longer sets its own and no longer sits on a different rhythm to
+       Analytics. */
+    <div className="hire-pipeline hire-shell-wide">
+      <PipelineBoard rows={rows} companyName={workspace.data.company} />
     </div>
   );
 }

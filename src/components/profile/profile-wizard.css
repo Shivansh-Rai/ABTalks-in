@@ -421,11 +421,14 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   flex-direction: column;
 }
 .pw-review-card {
-  background: #f4f4f4;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .pw-review-body {
-  padding: 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -576,8 +579,8 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   gap: 10px;
   padding: 11px 16px;
   border-radius: 12px;
-  background: var(--pw-warning-soft);
-  border: 1px dashed #e0c56a;
+  background: #fff6eb;
+  border: 1px dashed #FF0F0F;
 }
 .pw-rv-gaps-k {
   flex: none;
@@ -585,7 +588,7 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   font-size: 13px;
   line-height: 18px;
   font-weight: 600;
-  color: var(--pw-warning);
+  color: #FF0F0F;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -3216,7 +3219,7 @@ body.pw-sheet-open .abt-content-scroll {
     padding-bottom: 18px;
   }
   .pw-review-body {
-    padding: 16px;
+    padding: 0;
   }
   .pw-row.pw-cols-3 {
     grid-template-columns: 1fr 1fr;

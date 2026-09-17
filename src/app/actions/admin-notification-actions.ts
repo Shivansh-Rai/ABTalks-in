@@ -15,7 +15,14 @@ const categoryEnum = z.enum([
   "COHORT",
   "CHALLENGE",
 ]);
-const audienceEnum = z.enum(["ALL", "CHALLENGE", "PROGRAM", "HACKATHON"]);
+const audienceEnum = z.enum([
+  "ALL",
+  "CHALLENGE",
+  "PROGRAM",
+  "HACKATHON",
+  "CANDIDATE",
+  "RECRUITER",
+]);
 
 const hrefSchema = z
   .string()

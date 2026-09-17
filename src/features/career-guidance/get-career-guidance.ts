@@ -1,15 +1,17 @@
 import "server-only";
 import {
+  CertificateStatus,
+  CertificateType,
   EnrollmentStatusV2,
   ProgramMemberStatus,
 } from "@prisma/client";
-import { prismaApplicationStore } from "@/features/candidate-jobs/prisma-store";
 import { isHackathonRegistrationOpen } from "@/components/hackathon/hackathon-config";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
 import { evaluateRules } from "@/features/career-guidance/rules";
 import { getIstDateKey, getIstWeekKey } from "@/lib/date-utils";
 import type { GuidanceTargeting } from "@/features/career-guidance/catalog";
 import type {
+  AiCohortStatus,
   CandidateFacts,
   ChallengeFact,
   GuidanceItem,
@@ -23,7 +25,6 @@ import {
   isPowerBiEnabled,
   isProgramEnabled,
 } from "@/lib/feature-flags";
-import { logger } from "@/lib/logger";
 import { getCareerGuidanceFacts } from "@/repositories/candidate-detail";
 import { findDatabricksEnrollment } from "@/repositories/databricks";
 import { findDsArchitectEnrollment } from "@/repositories/ds-architect";
@@ -32,6 +33,8 @@ import {
   listChallengeEnrollments,
 } from "@/repositories/learning";
 import { findPowerBiEnrollment } from "@/repositories/powerbi";
+import { listForUser } from "@/repositories/credentials";
+import { certificateTypeFromCredentialTitle } from "@/features/certificate/constants";
 
 function peToTrackStatus(
   status: EnrollmentStatusV2 | undefined,
@@ -47,49 +50,20 @@ function peToTrackStatus(
   return "ACTIVE";
 }
 
-function memberToTrackStatus(
+function memberToAiCohortStatus(
   status: ProgramMemberStatus | undefined,
-): TrackStatus | null {
+): AiCohortStatus {
   if (!status) return null;
   if (status === ProgramMemberStatus.DROPPED) return null;
   if (status === ProgramMemberStatus.COMPLETED) return "COMPLETED";
   if (
-    status === ProgramMemberStatus.ENROLLED ||
     status === ProgramMemberStatus.APPLIED ||
     status === ProgramMemberStatus.WAITLISTED
   ) {
-    return "ACTIVE";
+    return "APPLIED";
   }
+  if (status === ProgramMemberStatus.ENROLLED) return "ACTIVE";
   return null;
-}
-
-async function loadJobs(userId: string): Promise<{
-  jobs: CandidateFacts["jobs"];
-  appliedJobIds: string[];
-}> {
-  try {
-    const store = prismaApplicationStore();
-    const [published, applications] = await Promise.all([
-      store.listPublishedJobsFiltered({}),
-      store.listByCandidate(userId),
-    ]);
-    return {
-      jobs: published.map((job) => ({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        skills: job.skills,
-        type: job.type,
-      })),
-      appliedJobIds: applications.map((row) => row.jobId),
-    };
-  } catch (err) {
-    logger.warn("[career-guidance] jobs unavailable; omitting opportunities", {
-      userId,
-      err,
-    });
-    return { jobs: [], appliedJobIds: [] };
-  }
 }
 
 export type CareerGuidancePayload = {
@@ -100,10 +74,8 @@ export type CareerGuidancePayload = {
 };
 
 /**
- * Assemble this candidate's facts and evaluate the T-224 rule table.
- *
- * Mocks are passed in because the hub already loaded them; a second history
- * read would duplicate a path that is allowed to fail independently.
+ * Assemble this candidate's facts and evaluate the progression edge table.
+ * Mocks are passed in from the hub (already loaded).
  */
 export async function getCareerGuidance(
   userId: string,
@@ -117,7 +89,7 @@ export async function getCareerGuidance(
     powerBi,
     hackathonRegistered,
     profile,
-    jobBundle,
+    credentials,
   ] = await Promise.all([
     listChallengeEnrollments(userId),
     findActiveMembership(userId),
@@ -126,25 +98,35 @@ export async function getCareerGuidance(
     findPowerBiEnrollment(userId),
     isUserRegistered(userId),
     getCareerGuidanceFacts(userId),
-    loadJobs(userId),
+    listForUser(userId),
   ]);
 
   const challenges: ChallengeFact[] = challengeRows.map((row) => ({
     domain: row.domain,
     status: row.status,
+    daysCompleted: row.daysCompleted,
   }));
+
+  const hasClaudeCredential = credentials.some((row) => {
+    if (row.status === CertificateStatus.REVOKED) return false;
+    if (row.type === CertificateType.CLAUDE_CHALLENGE) return true;
+    return (
+      certificateTypeFromCredentialTitle(row.title) ===
+      CertificateType.CLAUDE_CHALLENGE
+    );
+  });
 
   const facts: CandidateFacts = {
     challenges,
-    aiCohortStatus: memberToTrackStatus(membership?.member.status),
+    aiCohortStatus: memberToAiCohortStatus(membership?.member.status),
     databricksStatus: peToTrackStatus(databricks?.status),
     dsArchitectStatus: peToTrackStatus(dsArchitect?.status),
     powerBiStatus: peToTrackStatus(powerBi?.status),
     hackathonRegistered,
     hackathonRegistrationOpen: isHackathonRegistrationOpen(),
+    hasClaudeCredential,
     skills: profile.skills,
     preferredRoles: profile.preferredRoles,
-    opportunityTypes: profile.opportunityTypes,
     flags: {
       program: isProgramEnabled(),
       databricks: isDatabricksEnabled(),
@@ -153,8 +135,6 @@ export async function getCareerGuidance(
       claude: isClaudeEnabled(),
     },
     mocks,
-    jobs: jobBundle.jobs,
-    appliedJobIds: jobBundle.appliedJobIds,
   };
 
   return {

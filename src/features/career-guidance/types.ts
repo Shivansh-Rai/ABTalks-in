@@ -1,16 +1,10 @@
 /**
- * Career guidance (T-224) — recommendation shapes.
+ * Career guidance (T-224 / plan 146) — recommendation shapes.
  *
- * Pure data. No Prisma, no server-only. `evaluateRules` consumes these and
- * returns cards the hub can render without a second interpretation pass.
+ * Pure data. No Prisma, no server-only.
  */
 
-export type GuidanceKind =
-  | "cohort"
-  | "hackathon"
-  | "challenge"
-  | "opportunity"
-  | "mock";
+export type GuidanceKind = "cohort" | "hackathon" | "challenge" | "mock";
 
 export type GuidanceItem = {
   id: string;
@@ -28,22 +22,18 @@ export type ChallengeStatus = "ACTIVE" | "COMPLETED" | "ABANDONED";
 
 export type TrackStatus = "ACTIVE" | "COMPLETED";
 
+/** AI Cohort funnel — APPLIED covers APPLIED + WAITLISTED. */
+export type AiCohortStatus = "APPLIED" | "ACTIVE" | "COMPLETED" | null;
+
 export type ChallengeFact = {
   domain: ChallengeDomain;
   status: ChallengeStatus;
+  daysCompleted: number;
 };
 
 export type SkillFact = {
   name: string;
   categoryName: string | null;
-};
-
-export type JobFact = {
-  id: string;
-  title: string;
-  company: string;
-  skills: string[];
-  type: string;
 };
 
 export type MockFact = {
@@ -63,25 +53,28 @@ export type GuidanceFlags = {
 
 export type CandidateFacts = {
   challenges: ChallengeFact[];
-  /** Null when they have no AI-cohort membership we treat as occupied. */
-  aiCohortStatus: TrackStatus | null;
+  aiCohortStatus: AiCohortStatus;
   databricksStatus: TrackStatus | null;
   dsArchitectStatus: TrackStatus | null;
   powerBiStatus: TrackStatus | null;
   hackathonRegistered: boolean;
   hackathonRegistrationOpen: boolean;
+  hasClaudeCredential: boolean;
   skills: SkillFact[];
   preferredRoles: string[];
-  opportunityTypes: string[];
   flags: GuidanceFlags;
   mocks: MockFact[];
-  jobs: JobFact[];
-  appliedJobIds: string[];
 };
 
-export const GUIDANCE_CAP = 4;
+/** Hub daily rail. */
 export const DAILY_CAP = 4;
-export const MAX_JOB_CARDS = 2;
+/** Pool size from evaluateRules before daily slot pick. */
+export const GUIDANCE_POOL_CAP = 8;
+/** @deprecated use DAILY_CAP / GUIDANCE_POOL_CAP — kept as alias for older tests. */
+export const GUIDANCE_CAP = GUIDANCE_POOL_CAP;
+
+/** Days completed that count as guidance-completed (matches accomplishments). */
+export const GUIDANCE_COMPLETED_DAYS = 50;
 
 /** Hub daily mix card — profile rec or catalog check-in/quote. */
 export type DailyCardKind = GuidanceKind | "checkin" | "quote";
@@ -103,4 +96,6 @@ export type GuidanceMemory = {
   dismissedIds: string[];
   onceSeen: string[];
   weeklySeen: Record<string, string>;
+  /** True after the one allowed refill for this IST day. */
+  refillUsed: boolean;
 };

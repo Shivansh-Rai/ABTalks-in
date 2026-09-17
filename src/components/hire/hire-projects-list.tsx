@@ -1,9 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Clock, Folder } from "lucide-react";
+import {
+  ChevronDown,
+  Clock,
+  Folder,
+  MoreHorizontal,
+  Pin,
+  PinOff,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DeleteProjectDialog } from "@/components/hire/delete-project-dialog";
+import { usePinnedProjects } from "@/components/hire/desk-pinned-projects";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type HistorySession = {
   id: string;
@@ -19,6 +36,7 @@ export type HistoryProject = {
   label: string;
   updatedAt: string;
   createdAt: string;
+  isPinned?: boolean;
   sessions: HistorySession[];
 };
 
@@ -54,6 +72,25 @@ export function HireProjectsList({ projects }: { projects: HistoryProject[] }) {
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(projects[0] ? [projects[0].id] : []),
   );
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+
+  const serverPinnedIds = useMemo(
+    () => projects.filter((p) => p.isPinned).map((p) => p.id),
+    [projects],
+  );
+  const { isPinned, togglePin } = usePinnedProjects(serverPinnedIds);
+
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const aPin = isPinned(a.id);
+      const bPin = isPinned(b.id);
+      if (aPin && !bPin) return -1;
+      if (!aPin && bPin) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [projects, isPinned]);
 
   function toggle(id: string) {
     setOpen((prev) => {
@@ -65,94 +102,160 @@ export function HireProjectsList({ projects }: { projects: HistoryProject[] }) {
   }
 
   return (
-    <ul className="hire-history__list">
-      {projects.map((p) => {
-        const isOpen = open.has(p.id);
-        const count = p.sessions.length;
-        return (
-          <li key={p.id} className="hire-history__project">
-            <div className="hire-history__row">
-              <button
-                type="button"
-                className="hire-history__toggle"
-                onClick={() => toggle(p.id)}
-                aria-expanded={isOpen}
-                aria-label={
-                  isOpen
-                    ? `Hide searches in ${p.label}`
-                    : `Show searches in ${p.label}`
-                }
-              >
-                <ChevronDown
-                  className={cn(
-                    "hire-history__chevron",
-                    isOpen && "is-open",
-                  )}
-                  aria-hidden="true"
-                />
-              </button>
+    <>
+      <ul className="hire-history__list">
+        {sortedProjects.map((p) => {
+          const isOpen = open.has(p.id);
+          const count = p.sessions.length;
+          const pinned = isPinned(p.id);
+          return (
+            <li key={p.id} className="hire-history__project">
+              <div className="hire-history__row">
+                <button
+                  type="button"
+                  className="hire-history__toggle"
+                  onClick={() => toggle(p.id)}
+                  aria-expanded={isOpen}
+                  aria-label={
+                    isOpen
+                      ? `Hide searches in ${p.label}`
+                      : `Show searches in ${p.label}`
+                  }
+                >
+                  <ChevronDown
+                    className={cn(
+                      "hire-history__chevron",
+                      isOpen && "is-open",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
 
-              <Folder className="hire-history__folder" aria-hidden="true" />
+                <Folder className="hire-history__folder" aria-hidden="true" />
 
-              <Link href={`/hire/${p.id}`} className="hire-history__name">
-                {p.label}
-              </Link>
+                <Link href={`/hire/${p.id}`} className="hire-history__name">
+                  {p.label}
+                </Link>
 
-              {/* suppressHydrationWarning: server and browser read the clock a
-                  few ms apart, so a relative time can straddle a boundary. */}
-              <span className="hire-history__meta" suppressHydrationWarning>
-                {count} {count === 1 ? "search" : "searches"} · Updated{" "}
-                {ago(p.updatedAt)}
-              </span>
-
-              <Link href={`/hire/${p.id}`} className="hire-history__open">
-                Open
-              </Link>
-            </div>
-
-            {isOpen && (
-              <div className="hire-history__searches">
-                {count === 0 ? (
-                  <p className="hire-history__none">
-                    No searches in this project yet.
-                  </p>
-                ) : (
-                  <ul className="hire-history__sessions">
-                    {p.sessions.map((s) => (
-                      <li key={s.id}>
-                        <Link
-                          href={`/hire/${p.id}?session=${s.id}`}
-                          className="hire-history__session"
-                          title={s.title}
-                        >
-                          <Clock
-                            className="hire-history__clock"
-                            aria-hidden="true"
-                          />
-                          <span className="hire-history__stext">
-                            <span className="hire-history__stitle">
-                              {s.ordinal}. {s.title}
-                            </span>
-                            <span
-                              className="hire-history__smeta"
-                              suppressHydrationWarning
-                            >
-                              {ago(s.createdAt)}
-                              {typeof s.matchCount === "number"
-                                ? ` · ${s.matchCount} result${s.matchCount === 1 ? "" : "s"}`
-                                : ""}
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                {pinned && (
+                  <span
+                    className="hire-history__pinbadge"
+                    title="Pinned project"
+                    aria-label="Pinned project"
+                  >
+                    <Pin
+                      className="size-3.5 text-[#03535f] fill-[#03535f]/25 shrink-0"
+                      aria-hidden="true"
+                    />
+                  </span>
                 )}
+
+                {/* suppressHydrationWarning: server and browser read the clock a
+                    few ms apart, so a relative time can straddle a boundary. */}
+                <span className="hire-history__meta" suppressHydrationWarning>
+                  {count} {count === 1 ? "search" : "searches"} · Updated{" "}
+                  {ago(p.updatedAt)}
+                </span>
+
+                <Link href={`/hire/${p.id}`} className="hire-history__open">
+                  Open
+                </Link>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <button
+                        type="button"
+                        className="hire-history__more"
+                        aria-label={`Actions for ${p.label}`}
+                      />
+                    }
+                  >
+                    <MoreHorizontal className="size-4" aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => togglePin(p.id)}
+                    >
+                      {pinned ? (
+                        <>
+                          <PinOff className="size-3.5" aria-hidden="true" />
+                          Unpin project
+                        </>
+                      ) : (
+                        <>
+                          <Pin className="size-3.5" aria-hidden="true" />
+                          Pin project
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onClick={() =>
+                        setDeleting({ id: p.id, name: p.label })
+                      }
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      Delete project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+
+              {isOpen && (
+                <div className="hire-history__searches">
+                  {count === 0 ? (
+                    <p className="hire-history__none">
+                      No searches in this project yet.
+                    </p>
+                  ) : (
+                    <ul className="hire-history__sessions">
+                      {p.sessions.map((s) => (
+                        <li key={s.id}>
+                          <Link
+                            href={`/hire/${p.id}?session=${s.id}`}
+                            className="hire-history__session"
+                            title={s.title}
+                          >
+                            <Clock
+                              className="hire-history__clock"
+                              aria-hidden="true"
+                            />
+                            <span className="hire-history__stext">
+                              <span className="hire-history__stitle">
+                                {s.ordinal}. {s.title}
+                              </span>
+                              <span
+                                className="hire-history__smeta"
+                                suppressHydrationWarning
+                              >
+                                {ago(s.createdAt)}
+                                {typeof s.matchCount === "number"
+                                  ? ` · ${s.matchCount} result${s.matchCount === 1 ? "" : "s"}`
+                                  : ""}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      <DeleteProjectDialog
+        key={`delete-${deleting?.id ?? "none"}`}
+        open={deleting !== null}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        project={deleting}
+      />
+    </>
   );
 }

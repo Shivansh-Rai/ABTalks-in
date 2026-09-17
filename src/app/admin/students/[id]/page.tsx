@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,18 +15,19 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RejectSubmissionButton } from "@/components/admin/reject-submission-button";
-import { StudentActionPanel } from "@/components/admin/student-action-panel";
-import { GrantSynergyDialog } from "@/components/admin/grant-synergy-dialog";
-import { DeleteUserAccountDialog } from "@/components/admin/delete-user-account-dialog";
-import { AccountOpsDialog } from "@/components/admin/account-ops-dialog";
 import { StudentRemarksPanel } from "@/components/admin/student-remarks-panel";
-import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { RecruiterReviewPanel } from "@/components/admin/recruiter-review-panel";
-import { getStudentDetail } from "@/features/admin/get-student-detail";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { CandidateCareerSections } from "@/components/admin/candidate-career-sections";
+import { CandidateDiscoverabilityPanel } from "@/components/admin/candidate-discoverability-panel";
+import { CandidateDetailViewSwitch } from "@/components/admin/candidate-detail-view-switch";
+import { CandidateAdminActionsMenu } from "@/components/admin/candidate-admin-actions-menu";
+import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
+import { requireAdmin } from "@/lib/admin-auth";
+import { getAdminCandidateDetail } from "@/features/admin/get-admin-candidate-detail";
 import { getRecruiterReview } from "@/features/recruiter/get-recruiter-review";
-import { userTypeLabel } from "@/lib/profile-display";
 import { cn } from "@/lib/utils";
-import { UserType } from "@prisma/client";
+import type { ChallengeStudentDetail, HackathonStudentDetail } from "@/features/admin/get-student-detail";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -47,315 +48,196 @@ export default async function AdminStudentDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
-  const data = await getStudentDetail(id);
-  if (!data) notFound();
+  const detail = await getAdminCandidateDetail(id);
+  if (!detail) notFound();
 
-  if (data.kind === "hackathon") {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col justify-between gap-4 rounded-xl border p-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
-            <Avatar className="size-14">
-              {data.user.image ? <AvatarImage src={data.user.image} alt="" /> : null}
-              <AvatarFallback>{initials(data.user.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="font-display text-2xl font-bold">{data.user.name}</h1>
-              {data.user.disabledAt ? (
-                <p className="mt-1 text-sm text-destructive">
-                  Disabled{data.user.disabledReason ? `: ${data.user.disabledReason}` : ""}
-                </p>
-              ) : null}
-              <p className="text-sm text-muted-foreground">
-                {data.user.email} · Joined {formatDateIST(data.user.joinedAt)}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge variant="outline" className={domainBadgeClass("HACKATHON")}>
-                  HACKATHON
-                </Badge>
-                <Badge>{data.hackathon.entryType}</Badge>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-start gap-2 md:items-end">
-            <p className="text-sm">
-              <span className="text-muted-foreground">Synergy Points:</span>{" "}
-              <span className="font-semibold tabular-nums">
-                {data.user.synergyPoints}
-              </span>
-            </p>
-            <GrantSynergyDialog
-              studentId={data.user.id}
-              studentName={data.user.name}
-            />
-            <DeleteUserAccountDialog
-              userId={data.user.id}
-              userName={data.user.name}
-            />
-            <AccountOpsDialog
-              targetUserId={data.user.id}
-              targetName={data.user.name}
-              op="disable"
-              disabled={Boolean(data.user.disabledAt)}
-            />
-            <AccountOpsDialog
-              targetUserId={data.user.id}
-              targetName={data.user.name}
-              op="restore"
-              disabled={!data.user.disabledAt}
-            />
-            <AccountOpsDialog
-              targetUserId={data.user.id}
-              targetName={data.user.name}
-              op="secure"
-            />
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hackathon registration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Full name:</span>{" "}
-              {data.hackathon.fullName}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Email:</span>{" "}
-              {data.hackathon.email}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Phone:</span>{" "}
-              <a
-                className="text-primary underline"
-                href={`tel:${encodeURIComponent(data.hackathon.phone)}`}
-              >
-                {data.hackathon.phone}
-              </a>
-            </p>
-            <p>
-              <span className="text-muted-foreground">College:</span>{" "}
-              {data.hackathon.college}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Graduation year:</span>{" "}
-              {data.hackathon.graduationYear}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Entry type:</span>{" "}
-              {data.hackathon.entryType}
-            </p>
-            {data.hackathon.entryType === "TEAM" ? (
-              <p>
-                <span className="text-muted-foreground">Team name:</span>{" "}
-                {data.hackathon.teamName ?? "-"}
-              </p>
-            ) : null}
-            <p>
-              <span className="text-muted-foreground">Team code:</span>{" "}
-              {data.hackathon.teamCode}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Registered:</span>{" "}
-              {formatDateIST(data.hackathon.createdAt)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <div>
-          <Link
-            href="/admin/students"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Back to Students
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const review = await getRecruiterReview(id);
+  const { account, ops } = detail;
+  const review =
+    ops?.kind === "challenge" ? await getRecruiterReview(id) : null;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 rounded-xl border p-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-3">
-          <Avatar className="size-14">
-            {data.user.image ? <AvatarImage src={data.user.image} alt="" /> : null}
-            <AvatarFallback>{initials(data.user.name)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="font-display text-2xl font-bold">{data.user.name}</h1>
-            {data.user.disabledAt ? (
-              <p className="mt-1 text-sm text-destructive">
-                Disabled{data.user.disabledReason ? `: ${data.user.disabledReason}` : ""}
-              </p>
-            ) : null}
-            <p className="text-sm text-muted-foreground">
-              {data.user.email} · Joined {formatDateIST(data.user.joinedAt)}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {data.profile.domain ? (
-                <Badge variant="outline" className={domainBadgeClass(data.profile.domain)}>
-                  {data.profile.domain}
-                </Badge>
-              ) : (
-                <Badge variant="outline">—</Badge>
-              )}
-              <Badge>{data.enrollment?.status ?? "UNASSIGNED"}</Badge>
-              {data.profile.isReadyForInterview ? (
-                <Badge variant="secondary">Ready for Interview</Badge>
-              ) : null}
-            </div>
-          </div>
-        </div>
-        <StudentActionPanel
-          studentId={data.student.userId}
-          studentName={data.student.fullName}
-          isReadyForInterview={data.student.isReadyForInterview}
-          isActive={data.student.enrollmentStatus === "ACTIVE"}
-          disabledAt={data.user.disabledAt ? data.user.disabledAt.toISOString() : null}
-        />
-      </div>
+      <Link
+        href="/admin/students"
+        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1")}
+      >
+        <ArrowLeft className="size-4" />
+        Candidates
+      </Link>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Info</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Type:</span>{" "}
-              {userTypeLabel(data.profile.userType)}
-            </p>
-            {data.profile.userType === UserType.STUDENT ? (
+      <AdminPageHeader
+        title={account.name}
+        description={`${account.email} · Joined ${formatDateIST(account.joinedAt)}`}
+        actions={
+          <CandidateAdminActionsMenu
+            userId={account.userId}
+            name={account.name}
+            disabledAt={
+              account.disabledAt ? account.disabledAt.toISOString() : null
+            }
+            challenge={
+              ops?.kind === "challenge"
+                ? {
+                    isReadyForInterview: ops.student.isReadyForInterview,
+                    isActive: ops.student.enrollmentStatus === "ACTIVE",
+                  }
+                : undefined
+            }
+          />
+        }
+      />
+
+      <CandidateDetailViewSwitch
+        avatar={
+          <Avatar className="size-14">
+            {account.image ? <AvatarImage src={account.image} alt="" /> : null}
+            <AvatarFallback>{initials(account.name)}</AvatarFallback>
+          </Avatar>
+        }
+        badges={
+          <div className="flex flex-wrap gap-2">
+            {ops?.kind === "hackathon" ? (
               <>
-                <p>
-                  <span className="text-muted-foreground">College:</span>{" "}
-                  {data.profile.college ?? "-"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Graduation Year:</span>{" "}
-                  {data.profile.graduationYear ?? "-"}
-                </p>
+                <Badge variant="outline" className={domainBadgeClass("HACKATHON")}>
+                  HACKATHON
+                </Badge>
+                <Badge>{ops.hackathon.entryType}</Badge>
               </>
-            ) : (
+            ) : ops?.kind === "challenge" ? (
               <>
-                <p>
-                  <span className="text-muted-foreground">Organization:</span>{" "}
-                  {data.profile.organization ?? "-"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Role:</span>{" "}
-                  {data.profile.role ?? "-"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Years of Experience:</span>{" "}
-                  {data.profile.yearsExperience ?? "-"}
-                </p>
-              </>
-            )}
-            <p>
-              <span className="text-muted-foreground">Referral Code:</span>{" "}
-              {data.profile.referralCode}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Phone:</span>{" "}
-              {data.profile.phone ? (
-                <a
-                  className="text-primary underline"
-                  href={`tel:${encodeURIComponent(data.profile.phone)}`}
-                >
-                  {data.profile.phone}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">Not provided</span>
-              )}
-              {data.profile.phone ? (
-                data.profile.phoneVerified ? (
-                  <Badge className="ml-2 gap-1 bg-[#D6F7EC] text-[#197E23] dark:bg-[#197E23]/50 dark:text-[#197E23]">
-                    <CheckCircle2 className="size-3.5" aria-hidden />
-                    Verified
-                  </Badge>
-                ) : (
+                {ops.profile.domain ? (
                   <Badge
                     variant="outline"
-                    className="ml-2 text-muted-foreground"
+                    className={domainBadgeClass(ops.profile.domain)}
                   >
-                    Not verified
+                    {ops.profile.domain}
                   </Badge>
-                )
-              ) : null}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {data.profile.skills.map((skill: string) => (
-                <Badge key={skill} variant="outline">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-            {data.profile.linkedinUrl ? (
-              <Link className="inline-flex items-center gap-1 text-primary underline" href={data.profile.linkedinUrl} target="_blank" rel="noreferrer">
-                LinkedIn <ExternalLink className="size-3" />
-              </Link>
+                ) : (
+                  <Badge variant="outline">—</Badge>
+                )}
+                <Badge>{ops.enrollment?.status ?? "UNASSIGNED"}</Badge>
+                {ops.profile.isReadyForInterview ? (
+                  <Badge variant="secondary">Ready for Interview</Badge>
+                ) : null}
+              </>
             ) : null}
-            {data.profile.githubUsername ? (
-              <p>
-                <span className="text-muted-foreground">GitHub:</span> @{data.profile.githubUsername}
-              </p>
-            ) : null}
-            <p>
-              <span className="text-muted-foreground">Resume:</span>{" "}
-              {data.profile.resumeUrl ? (
-                <Link
-                  className="inline-flex items-center gap-1 text-primary underline"
-                  href={data.profile.resumeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View Resume <ExternalLink className="size-3" />
-                </Link>
-              ) : (
-                <span className="text-muted-foreground">No resume link</span>
-              )}
+          </div>
+        }
+        diagnosis={
+          detail.discoverability ? (
+            <CandidateDiscoverabilityPanel state={detail.discoverability} />
+          ) : (
+            <p className="rounded-xl border border-[#E9E9E9] bg-white p-5 text-sm text-[#787878]">
+              No diagnosis for this account.
             </p>
-          </CardContent>
-        </Card>
+          )
+        }
+        profile={
+          <div className="space-y-6">
+            <CandidateCareerSections detail={detail} />
+            {ops?.kind === "hackathon" ? <HackathonCard data={ops} /> : null}
+            {ops?.kind === "challenge" && review ? (
+              <ChallengeOps data={ops} review={review} />
+            ) : null}
+          </div>
+        }
+      />
+    </div>
+  );
+}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Progress Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Days Completed:</span>{" "}
-              {data.progress.daysCompleted} / {data.progress.totalDays}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Current Streak:</span>{" "}
-              {data.progress.currentStreak}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Longest Streak:</span>{" "}
-              {data.progress.longestStreak}
-            </p>
-            <p>
-              <span className="text-muted-foreground">On-time submissions:</span>{" "}
-              {data.progress.onTimeCount}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Last Submitted Day:</span>{" "}
-              {data.progress.lastSubmittedDay ?? "-"}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Synergy Points:</span>{" "}
-              {data.user.synergyPoints}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+function HackathonCard({ data }: { data: HackathonStudentDetail }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Hackathon registration</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <p>
+          <span className="text-muted-foreground">Full name:</span> {data.hackathon.fullName}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Email:</span> {data.hackathon.email}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Phone:</span>{" "}
+          <a
+            className="text-primary underline"
+            href={`tel:${encodeURIComponent(data.hackathon.phone)}`}
+          >
+            {data.hackathon.phone}
+          </a>
+        </p>
+        <p>
+          <span className="text-muted-foreground">College:</span> {data.hackathon.college}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Graduation year:</span>{" "}
+          {data.hackathon.graduationYear}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Entry type:</span> {data.hackathon.entryType}
+        </p>
+        {data.hackathon.entryType === "TEAM" ? (
+          <p>
+            <span className="text-muted-foreground">Team name:</span>{" "}
+            {data.hackathon.teamName ?? "-"}
+          </p>
+        ) : null}
+        <p>
+          <span className="text-muted-foreground">Team code:</span> {data.hackathon.teamCode}
+        </p>
+        <p>
+          <span className="text-muted-foreground">Registered:</span>{" "}
+          {formatDateIST(data.hackathon.createdAt)}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChallengeOps({
+  data,
+  review,
+}: {
+  data: ChallengeStudentDetail;
+  review: Awaited<ReturnType<typeof getRecruiterReview>>;
+}) {
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Progress Stats</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p>
+            <span className="text-muted-foreground">Days Completed:</span>{" "}
+            {data.progress.daysCompleted} / {data.progress.totalDays}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Current Streak:</span>{" "}
+            {data.progress.currentStreak}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Longest Streak:</span>{" "}
+            {data.progress.longestStreak}
+          </p>
+          <p>
+            <span className="text-muted-foreground">On-time submissions:</span>{" "}
+            {data.progress.onTimeCount}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Last Submitted Day:</span>{" "}
+            {data.progress.lastSubmittedDay ?? "-"}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Synergy Points:</span>{" "}
+            {data.user.synergyPoints}
+          </p>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="submissions">
         <TabsList>
@@ -386,7 +268,12 @@ export default async function AdminStudentDetailPage({
                     <TableCell>{row.status}</TableCell>
                     <TableCell>
                       {row.githubUrl ? (
-                        <a href={row.githubUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary underline">
+                        <a
+                          href={row.githubUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary underline"
+                        >
                           Open <ExternalLink className="size-3" />
                         </a>
                       ) : (
@@ -395,7 +282,12 @@ export default async function AdminStudentDetailPage({
                     </TableCell>
                     <TableCell>
                       {row.linkedinUrl ? (
-                        <a href={row.linkedinUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary underline">
+                        <a
+                          href={row.linkedinUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary underline"
+                        >
                           Open <ExternalLink className="size-3" />
                         </a>
                       ) : (
@@ -488,15 +380,6 @@ export default async function AdminStudentDetailPage({
           />
         </TabsContent>
       </Tabs>
-
-      <div>
-        <Link
-          href="/admin/students"
-          className={cn(buttonVariants({ variant: "outline" }))}
-        >
-          Back to Students
-        </Link>
-      </div>
-    </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { deriveEventNotifications } from "./derive-event-notifications";
+import { filterFeedForView } from "./recruiter-feed-filter";
 import { programMember } from "@/repositories/legacy/program-member";
 import type {
   AppNotification,
@@ -119,10 +120,28 @@ export async function getNotificationsForUser(
     }),
   ]);
 
+  // T-249 audience gating for CANDIDATE / RECRUITER admin broadcasts.
+  // A recruiter is anyone with a RecruiterProfile row; a candidate is
+  // anyone signed in who isn't a recruiter. Kept off the Promise.all
+  // fan-out above because it only matters after audience-facing rows
+  // land — one small select is cheap and lets the check stay linear.
+  const recruiterProfile = await prisma.recruiterProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
   const audiences = new Set<string>(["ALL"]);
   if (challengeMembership) audiences.add("CHALLENGE");
   if (programMemberships.length > 0) audiences.add("PROGRAM");
   if (hackathonMembership) audiences.add("HACKATHON");
+  if (recruiterProfile) {
+    audiences.add("RECRUITER");
+  } else {
+    // Every signed-in non-recruiter counts as a candidate for
+    // broadcast targeting. T-249 admin composer uses CANDIDATE for
+    // messages that go to all applicants and platform users.
+    audiences.add("CANDIDATE");
+  }
 
   const readKeys = new Set(readRows.map((r) => r.notificationKey));
 
@@ -149,7 +168,11 @@ export async function getNotificationsForUser(
     }),
   );
 
-  const derivedItems = deriveEventNotifications({
+  // Derived event notifications (hackathon registration, workshop invites,
+  // cohort enrolment reminders) are candidate-side platform prompts. They
+  // are computed unconditionally and then dropped for a recruiter viewer
+  // by filterFeedForView below.
+  const rawDerivedItems = deriveEventNotifications({
     now,
     enrollingCohorts,
     programEnabled,
@@ -160,7 +183,22 @@ export async function getNotificationsForUser(
     joinedCohortIds: new Set(programMemberships.map((m) => m.cohortId)),
   });
 
-  const items: AppNotification[] = [...adminItems, ...derivedItems, ...userItems]
+  // T-249 recruiter-side gate. Pure function, unit-tested in
+  // recruiter-feed-filter.test.ts. Candidate viewers see the raw arrays.
+  const filtered = filterFeedForView(
+    {
+      adminItems,
+      derivedItems: rawDerivedItems,
+      userItems,
+    },
+    Boolean(recruiterProfile),
+  );
+
+  const items: AppNotification[] = [
+    ...filtered.adminItems,
+    ...filtered.derivedItems,
+    ...filtered.userItems,
+  ]
     .map((item) => ({ ...item, isRead: readKeys.has(item.key) }))
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, FEED_LIMIT);

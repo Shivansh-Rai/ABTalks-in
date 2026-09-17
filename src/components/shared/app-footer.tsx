@@ -155,6 +155,9 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard" || pathname === "/profile") return null;
+  if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {
+    return null;
+  }
   if (pathname === "/hire" || pathname.startsWith("/hire/")) return null;
   // Full-viewport, non-scrolling onboarding — a footer would push it past the fold.
   if (
@@ -165,6 +168,10 @@ export function AppFooter() {
   }
   if (pathname === "/jobs" || pathname.startsWith("/jobs/")) return null;
   if (pathname === "/achievements") return null;
+  // Assessments render inside DashboardShell, which ships DashboardFooter.
+  if (pathname === "/assessments" || pathname.startsWith("/assessments/")) {
+    return null;
+  }
   // Marketplace renders inside DashboardShell, which ships DashboardFooter —
   // without this it stacked a second, black footer under the light one.
   if (isMarketplace) return null;

@@ -148,7 +148,7 @@ console.log("T-253 instrumentation structure: transport, emit sites, exclusions"
 const EMIT_SITES: Record<keyof typeof ANALYTICS_EVENTS, readonly string[]> = {
   recruiterRegSubmitted: [
     "src/components/talent/recruiter-register-form.tsx",
-    "src/components/recruiter-onboarding/signup-screen.tsx",
+    "src/components/recruiter-onboarding/recruiter-onboarding-wizard.tsx",
   ],
   recruiterCandidateViewed: ["src/components/talent/track-candidate-view.tsx"],
   recruiterContactUnlocked: ["src/components/admin/engagement-decision.tsx"],

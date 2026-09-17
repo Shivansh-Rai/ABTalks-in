@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireRecruiter } from "@/lib/program-auth";
 import { getRecruiterProfileAction } from "@/app/actions/recruiter-profile-actions";
 import { RecruiterProfileForm } from "@/components/hire/recruiter-profile-form";
@@ -20,29 +19,15 @@ export default async function HireSettingsPage() {
 
   if (!res.ok) {
     return (
-      <div className="space-y-6">
-        <Link href="/hire" className="hire-back">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M15 19 8 12l7-7" />
-          </svg>
-          <span>Back to Scout</span>
-        </Link>
+      <div className="hire-settings space-y-6 pb-12">
         <div className="space-y-2">
-          <p className="text-xs font-medium tracking-wide text-primary uppercase">
+          <p className="text-xs font-semibold tracking-wider text-primary uppercase">
             Workspace
           </p>
-          <h2 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
             Settings
-          </h2>
-          <p className="max-w-xl text-sm text-destructive">
+          </h1>
+          <p className="max-w-2xl text-sm text-destructive">
             {res.message}
           </p>
         </div>
@@ -51,30 +36,15 @@ export default async function HireSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
-      <Link href="/hire" className="hire-back">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 19 8 12l7-7" />
-        </svg>
-        <span>Back to Scout</span>
-      </Link>
-
+    <div className="hire-settings space-y-6 pb-12">
       <div className="space-y-2">
-        <p className="text-xs font-medium tracking-wide text-primary uppercase">
+        <p className="text-xs font-semibold tracking-wider text-primary uppercase">
           Workspace
         </p>
-        <h2 className="font-display text-2xl font-bold tracking-tight">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
           Settings
-        </h2>
-        <p className="max-w-xl text-sm text-muted-foreground">
+        </h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Manage your personal recruiter profile and company identity. Changes
           reflect on your outreach messages, candidate searches, and job posts.
         </p>

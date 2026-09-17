@@ -35,8 +35,11 @@ console.log("\nT-282 pre-September journeys");
 
 suite("1 candidate sign-in", () => {
   const auth = read("src/auth.ts");
+  const cfg = read("src/auth.config.ts");
   assert(auth.includes("export const { handlers, auth, signIn, signOut }"), "auth exports");
   assert(exists("src/app/login/page.tsx"), "login page");
+  assert(cfg.includes("pkce.code_verifier.v2"), "pkce cookie versioned");
+  assert(cfg.includes('error: "/login"'), "oauth errors return to login");
 });
 
 suite("2 60-day challenge submit", () => {

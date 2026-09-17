@@ -60,12 +60,31 @@ function safeRedirectPath(from: string | undefined, fallback: string) {
   return from;
 }
 
+/** Auth.js maps InvalidCheck / PKCE failures to error=Configuration. */
+function messageForAuthError(error: string | undefined): string | null {
+  if (!error) return null;
+  switch (error) {
+    case "OAuthAccountNotLinked":
+      return "That Google account's email is already used by another ABTalks login. Sign in with the original method, or use a different Google account.";
+    case "AccessDenied":
+      return "Sign-in was cancelled. Please try again.";
+    case "Configuration":
+    case "OAuthCallback":
+    case "Callback":
+    case "Default":
+      return "Sign-in was interrupted. If you were switching accounts, sign out first, then try Google again.";
+    default:
+      return "Sign-in was interrupted. Please try again.";
+  }
+}
+
 type LoginClientProps = {
   showGoogle: boolean;
   showDev: boolean;
   redirectTo: string;
   /** Captured from ?ref= for future registration / OAuth (informational for now). */
   referralRef?: string;
+  authError?: string;
 };
 
 export function LoginClient({
@@ -73,6 +92,7 @@ export function LoginClient({
   showDev,
   redirectTo,
   referralRef,
+  authError,
 }: LoginClientProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,7 +101,13 @@ export function LoginClient({
     useState<LegalConsentValues>(DEFAULT_LEGAL_CONSENT);
 
   const target = safeRedirectPath(redirectTo, "/dashboard");
+  // Candidates headed for the dashboard pass through the Welcome Back screen,
+  // which forwards them on (see app/welcome/page.tsx).
+  const afterSignIn = /^\/dashboard(?:[/?#]|$)/.test(target)
+    ? `/welcome?next=${encodeURIComponent(target)}`
+    : target;
   const canSignIn = legalConsentAccepted(legalConsent);
+  const authErrorMessage = messageForAuthError(authError);
 
   function ensureLegalAccepted(): boolean {
     if (legalConsentAccepted(legalConsent)) return true;
@@ -94,7 +120,7 @@ export function LoginClient({
     writeNewsletterPrefCookie(legalConsent.newsletterOptIn);
     setPending(true);
     try {
-      await signIn("google", { callbackUrl: target });
+      await signIn("google", { callbackUrl: afterSignIn });
     } catch {
       toast.error("Could not start Google sign-in.");
       setPending(false);
@@ -113,7 +139,7 @@ export function LoginClient({
         redirect: false,
         // Relative path only — Auth.js may rewrite absolute URLs using AUTH_URL
         // (often localhost), which breaks login when the app is opened via a LAN IP.
-        callbackUrl: target,
+        callbackUrl: afterSignIn,
       });
       if (result?.error) {
         if (result.error !== "CredentialsSignin") {
@@ -129,7 +155,7 @@ export function LoginClient({
       }
       // Always stay on the origin the user opened (LAN IP vs localhost).
       // Do not follow result.url — it often points at AUTH_URL's host.
-      window.location.assign(target);
+      window.location.assign(afterSignIn);
     } catch {
       toast.error("Something went wrong. Try again.");
       setPending(false);
@@ -146,6 +172,11 @@ export function LoginClient({
 
   return (
     <div className="flex flex-col gap-6">
+      {authErrorMessage ? (
+        <p className="rounded-md border border-[#D92D20]/30 bg-[#D92D20]/5 px-3 py-2.5 text-sm text-foreground">
+          {authErrorMessage}
+        </p>
+      ) : null}
       {referralRef ? (
         <div className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2.5">
           <p className="text-sm text-foreground">

@@ -6,6 +6,7 @@ import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/worksp
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
 import { resolveInspectorCandidate } from "@/features/hire/pool-policy";
+import { decodeCandidateRef } from "@/features/hire/candidate-ref";
 import {
   addToPipeline,
   moveStage,
@@ -126,8 +127,22 @@ export async function addCandidateRefToPipelineAction(
     };
   }
 
+  let candidateUserId: string | null = null;
   const resolved = await resolveInspectorCandidate(parsed.data.candidateRef);
-  if (!resolved) {
+  if (resolved) {
+    candidateUserId = resolved.userId;
+  } else {
+    const decoded = decodeCandidateRef(parsed.data.candidateRef);
+    if (decoded?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true },
+      });
+      if (user) candidateUserId = user.id;
+    }
+  }
+
+  if (!candidateUserId) {
     return {
       ok: false,
       message: "That candidate is no longer available.",
@@ -136,7 +151,7 @@ export async function addCandidateRefToPipelineAction(
   }
 
   const label = await labelForCandidate(
-    resolved.userId,
+    candidateUserId,
     parsed.data.fallbackLabel ?? "Candidate",
   );
 
@@ -147,7 +162,7 @@ export async function addCandidateRefToPipelineAction(
       organizationId: workspace.data.organizationId,
     },
     {
-      candidateUserId: resolved.userId,
+      candidateUserId,
       label,
       stage: parsed.data.stage,
     },

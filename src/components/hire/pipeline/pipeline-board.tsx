@@ -1,11 +1,43 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { PipelineStage } from "@prisma/client";
-import { PipelineCard } from "./pipeline-card";
-import { PipelineEmptyState } from "./pipeline-empty-state";
-import { STAGE_LABEL, STAGE_ORDER } from "./stage-labels";
+import { dsButtonVariants } from "@/components/design/ds-button";
+import { CLAY_CTA } from "@/components/jobs/job-ui";
 import { cn } from "@/lib/utils";
+import { PipelineCard } from "./pipeline-card";
+import { STAGE_EMPTY_HINT, STAGE_LABEL, STAGE_ORDER } from "./stage-labels";
+
+/**
+ * The rail's colour ramp, dark to pale along the nine stages, so the sequence
+ * is readable at a glance and not just nine identical arrows. Indexed by
+ * position in `STAGE_ORDER`.
+ */
+const STAGE_FILL = [
+  "#0b555f",
+  "#1a636c",
+  "#2c727a",
+  "#448289",
+  "#5d9299",
+  "#78a4aa",
+  "#94b6bb",
+  "#b1c8cc",
+  "#cddcde",
+] as const;
+
+/** White on the dark half, near-black on the pale half — contrast, not taste. */
+const STAGE_INK = [
+  "#ffffff",
+  "#ffffff",
+  "#ffffff",
+  "#ffffff",
+  "#0f2b31",
+  "#0f2b31",
+  "#0f2b31",
+  "#0f2b31",
+  "#0f2b31",
+] as const;
 
 /** Row shape as the server component sends it. Dates are ISO strings so the
  *  Server→Client props boundary carries only plain data. */
@@ -20,17 +52,23 @@ export type PipelineBoardRow = {
 
 export type PipelineBoardProps = {
   rows: PipelineBoardRow[];
+  /** Workspace name for the page eyebrow, matching Recruiter Analytics. */
+  companyName?: string;
 };
 
 /**
- * Nine-column kanban board. Owns the local optimistic bucket state so a
+ * The hiring pipeline: a chevron rail of the nine stages, and one panel showing
+ * the selected stage's candidates. Owns the local optimistic bucket state so a
  * move/remove reshuffles instantly and reverts if the server refuses.
  *
- * Mobile: horizontal snap-scroll of columns, one column per screen.
- * Desktop (md+): a fixed-height flex row that scrolls horizontally when the
- * viewport can't fit all nine columns at once.
+ * This replaced a nine-column kanban. Nine columns could not be made to work at
+ * a realistic width — they needed ~2264px against the ~1570px the shell offers,
+ * so the board was either clipped or squeezed — and an empty pipeline rendered
+ * as nine grey boxes each repeating a variant of "no one here yet". The rail
+ * fits at any width, states the sequence honestly, and gives one stage the
+ * whole page to show its people in.
  */
-export function PipelineBoard({ rows }: PipelineBoardProps) {
+export function PipelineBoard({ rows, companyName }: PipelineBoardProps) {
   const [items, setItems] = useState<PipelineBoardRow[]>(rows);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,19 +114,36 @@ export function PipelineBoard({ rows }: PipelineBoardProps) {
 
   const total = items.length;
 
+  // Open on the first stage that actually has someone in it, so a recruiter
+  // whose pipeline starts at INTERVIEWING does not land on an empty SOURCED
+  // and conclude the board is broken. Falls back to the first stage.
+  const [selected, setSelected] = useState<PipelineStage>(() => {
+    const seeded = STAGE_ORDER.find((s) => rows.some((r) => r.stage === s));
+    return seeded ?? STAGE_ORDER[0]!;
+  });
+
+  const bucket = buckets[selected];
+
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex items-center justify-between gap-2 px-1">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">
-            Hiring pipeline
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {total === 0
-              ? "No one in your pipeline yet. Add candidates from Scout or from a job's applicants."
-              : `${total} candidate${total === 1 ? "" : "s"} across ${STAGE_ORDER.length} stages.`}
+      {/* Same eyebrow / title / description treatment as Recruiter Analytics.
+          The two are sibling recruiter pages and were reading as different
+          products: this had an 18px heading with no workspace line while
+          Analytics had a 36px one. */}
+      <header className="mb-8">
+        {companyName && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Company Workspace · {companyName}
           </p>
-        </div>
+        )}
+        <h1 className="mt-1 font-heading text-3xl font-bold tracking-tight text-foreground">
+          Hiring Pipeline
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {total === 0
+            ? "No one in your pipeline yet. Add candidates from Scout or from a job's applicants."
+            : `${total} candidate${total === 1 ? "" : "s"} across ${STAGE_ORDER.length} stages.`}
+        </p>
       </header>
 
       {error && (
@@ -100,55 +155,115 @@ export function PipelineBoard({ rows }: PipelineBoardProps) {
         </div>
       )}
 
-      <div
-        className={cn(
-          "-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2",
-          "md:snap-none",
-        )}
-      >
-        {STAGE_ORDER.map((stage) => {
-          const bucket = buckets[stage];
+      {/* The stage rail. Buttons, not links: choosing a stage filters the
+          panel below and is not a navigation. */}
+      <nav className="hire-pipe-rail" aria-label="Pipeline stages">
+        {STAGE_ORDER.map((stage, i) => {
+          const isCurrent = stage === selected;
+          const n = buckets[stage].length;
           return (
-            <section
+            <button
               key={stage}
+              type="button"
               data-stage={stage}
-              className={cn(
-                "flex min-w-[280px] shrink-0 snap-start flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-2",
-                "md:min-w-[240px] md:snap-none",
-              )}
+              aria-current={isCurrent ? "true" : undefined}
+              onClick={() => setSelected(stage)}
+              className="hire-pipe-step"
+              style={{ background: STAGE_FILL[i], color: STAGE_INK[i] }}
             >
-              <header className="flex items-center justify-between px-1">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground/80">
-                  {STAGE_LABEL[stage]}
-                </h2>
-                <span className="rounded-full bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {bucket.length}
-                </span>
-              </header>
-              <div className="flex flex-col gap-2">
-                {bucket.length === 0 ? (
-                  <PipelineEmptyState stage={stage} />
-                ) : (
-                  bucket.map((row) => (
-                    <PipelineCard
-                      key={row.itemId}
-                      itemId={row.itemId}
-                      candidateLabel={row.candidateLabel}
-                      candidateUserId={row.candidateUserId}
-                      stage={row.stage}
-                      addedAtIso={row.addedAtIso}
-                      stageChangedAtIso={row.stageChangedAtIso}
-                      onMoved={handleMoved}
-                      onRemoved={handleRemoved}
-                      onError={handleError}
-                    />
-                  ))
-                )}
-              </div>
-            </section>
+              <span>{STAGE_LABEL[stage]}</span>
+              {n > 0 && <span className="hire-pipe-step__n">{n}</span>}
+              {isCurrent && <span className="hire-pipe-step__bar" aria-hidden="true" />}
+            </button>
           );
         })}
-      </div>
+      </nav>
+
+      {/* One stage at a time, with the whole page width to show it in. */}
+      <section className="hire-pipe-panel" aria-label={`${STAGE_LABEL[selected]} candidates`}>
+        {bucket.length === 0 ? (
+          /* Tighter than it was inside the card. With no surface holding it,
+             a 14-unit pad left the text, the mark and the button floating far
+             apart in open page — the spacing has to do the grouping the box
+             used to do. */
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+            <EmptyIllustration />
+            <p className="text-sm text-muted-foreground">{STAGE_EMPTY_HINT[selected]}</p>
+            {/* Only the first stage is something the recruiter can act on from
+                here — you cannot "add someone to Offer". The rest simply have
+                nobody in them yet. */}
+            {selected === STAGE_ORDER[0] && (
+              <Link
+                href="/hire"
+                className={cn(dsButtonVariants({ size: "default" }), CLAY_CTA, "mt-1")}
+              >
+                Start a search
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {bucket.map((row) => (
+              <PipelineCard
+                key={row.itemId}
+                itemId={row.itemId}
+                candidateLabel={row.candidateLabel}
+                candidateUserId={row.candidateUserId}
+                stage={row.stage}
+                addedAtIso={row.addedAtIso}
+                stageChangedAtIso={row.stageChangedAtIso}
+                onMoved={handleMoved}
+                onRemoved={handleRemoved}
+                onError={handleError}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
+  );
+}
+
+/** Muted "nothing here" mark. Inline so the page ships no extra asset. */
+function EmptyIllustration() {
+  return (
+    <svg
+      width="92"
+      height="92"
+      viewBox="0 0 92 92"
+      fill="none"
+      aria-hidden="true"
+      className="opacity-70"
+    >
+      <rect
+        x="16.5"
+        y="12.5"
+        width="42"
+        height="52"
+        rx="4"
+        stroke="#c7cdd1"
+        strokeWidth="2"
+        strokeDasharray="5 4"
+      />
+      <rect
+        x="30.5"
+        y="20.5"
+        width="42"
+        height="52"
+        rx="4"
+        fill="#fff"
+        stroke="#9aa4aa"
+        strokeWidth="2"
+      />
+      <path
+        d="M44 36l14 14M58 36L44 50"
+        stroke="#9aa4aa"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="40" cy="62" r="12" fill="#fff" stroke="#6b7a82" strokeWidth="2.5" />
+      <path d="M49 71l7 7" stroke="#6b7a82" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="48" cy="84" rx="22" ry="3" fill="#e6eaec" />
+    </svg>
   );
 }
