@@ -58,6 +58,7 @@ const EMPTY: ChallengeDossierSet = {
       consistency: false,
       interview: false,
       experience: false,
+      role: false,
     },
     note: "No challenge candidates in the pool yet.",
   },

@@ -13,7 +13,7 @@ import {
 } from "@/features/hire/search-candidates";
 import { toPublicMatch } from "@/features/hire/to-public-match";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
-import { loadTrack, mergeTrackLoads } from "@/features/hire/track-loaders";
+import { attachRoleTitles, loadTrack, mergeTrackLoads } from "@/features/hire/track-loaders";
 import { HACKATHON_POOL_TAKE } from "@/repositories/hire";
 import type { SearchEnv } from "@/features/search-qa/canonical";
 import type {
@@ -76,6 +76,8 @@ export async function loadServicePool(tracks: string[], minEvidenceDays: number)
     }),
   );
   const merged = mergeTrackLoads(loads);
+  // The same step `searchCandidates` runs, so role ranking is measured as served.
+  await attachRoleTitles(merged.members);
   const seen = new Set<string>();
   const duplicateUserIds: string[] = [];
   for (const m of merged.members) {

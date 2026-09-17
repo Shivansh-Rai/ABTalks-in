@@ -53,6 +53,8 @@ export type CanonicalPreference = {
   remotePreference: string | null;
   expectedSalaryMin: number | null;
   expectedSalaryMax: number | null;
+  /** Target roles. Read by the role dimension, never by a filter. */
+  preferredRoles: string[];
 };
 
 export type CanonicalCandidate = {

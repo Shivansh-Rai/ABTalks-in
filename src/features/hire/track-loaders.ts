@@ -18,6 +18,8 @@ import {
 } from "@/features/hire/pool-policy";
 import type { EvidenceCoverage, ScoreableMember } from "@/features/hire/types";
 import { findTrack } from "@/features/hire/track-registry";
+import { collectRoleTitles } from "@/features/hire/role-match";
+import { loadRoleTitleSources } from "@/repositories/talent";
 
 /**
  * One loader per track, behind one signature.
@@ -62,6 +64,7 @@ export const EMPTY_COVERAGE: EvidenceCoverage = {
     consistency: false,
     interview: false,
     experience: false,
+    role: false,
   },
   note: "No candidates in the pool yet.",
 };
@@ -415,4 +418,47 @@ export function mergeTrackLoads(loads: TrackLoad[]): {
     cohortName: ordered.find((l) => l.cohortName)?.cohortName ?? null,
     stage: ordered.find((l) => l.stage)?.stage ?? null,
   };
+}
+
+/**
+ * Give every loaded candidate the titles the role dimension ranks on.
+ *
+ * One query for the whole merged pool rather than one per track loader: the
+ * titles live on the candidate's profile whichever track found them, and a
+ * cohort member's `jobRole` is only what they typed at application time — the
+ * headline, target roles and work history they have filled in since are the
+ * richer answer.
+ *
+ * A cohort `jobRole` leads the list. The other tracks' `jobRole` is a card label
+ * that falls back to a placeholder ("Candidate", "Not stated"), so only a
+ * DECLARED label is kept, and that is the headline the profile read returns
+ * anyway.
+ *
+ * Mutates and returns the same members. A failed read leaves each candidate on
+ * their `jobRole` alone — a ranking signal lost, never a search failed.
+ */
+export async function attachRoleTitles(
+  members: ScoreableMember[],
+): Promise<ScoreableMember[]> {
+  let sources: Awaited<ReturnType<typeof loadRoleTitleSources>>;
+  try {
+    sources = await loadRoleTitleSources(members.map((m) => m.userId));
+  } catch (error) {
+    logger.error("[hire] role titles could not be loaded", {
+      error: String(error).slice(0, 240),
+    });
+    return members;
+  }
+  for (const m of members) {
+    const s = sources.get(m.userId);
+    const declaredLabel =
+      m.dossier?.rawRoleLabel.provenance === "DECLARED" ? m.dossier.rawRoleLabel.value : null;
+    m.roleTitles = collectRoleTitles({
+      jobRole: (m.source ?? "PROGRAM") === "PROGRAM" ? m.jobRole : declaredLabel,
+      headline: s?.headline,
+      preferredRoles: s?.preferredRoles,
+      experienceTitles: s?.experienceTitles,
+    });
+  }
+  return members;
 }

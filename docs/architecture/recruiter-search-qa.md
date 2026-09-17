@@ -85,11 +85,17 @@ Source of truth for the inventory: `filter-registry.ts`.
 | Minimum verified days | pool | range | challenge submissions ≥ max(flag, days) | ignored on non-day tracks |
 | Result count | pool | cap | 1–25 cards, no padding | caller's limit |
 | Experience, seniority, nice-to-have, evidence priority | **rank only** | — | never exclude | — |
+| Role / job title (`title`) | **rank only** | — | `role` dimension = title fit against cohort job role, headline, target roles and work-history titles (same role 1.0, the role a title only mentions 0.7, a neighbouring role 0.3–0.7, unknown roles by shared words); with no skills named, the role's typical skills (catalog groups + named skills, `role-match.ts`) are the stack score; no title and no typical skill caps the tier at PARTIAL | no title, or seniority words only → no role dimension, scores exactly as before |
 
-Not recruiter filters today: graduation year, college, degree, branch, role
-(`title` is unused), profile completion, verified skills/evidence, GitHub,
-LeetCode/coding profiles, projects, assessments, certifications. Hackathon and
-cohort exist only as tracks.
+Role never excludes anybody, but it does move scores: a candidate with no
+connection to the role can fall to NONE, and NONE is only shown as padding when
+fewer than five better matches exist — so a title-only search can show fewer
+cards than an untitled one.
+
+Not recruiter filters today: graduation year, college, degree, branch, profile
+completion, verified skills/evidence, GitHub, LeetCode/coding profiles,
+projects, assessments, certifications. Hackathon and cohort exist only as
+tracks.
 
 Sort: one — tier (STRONG, PARTIAL, NONE), then score desc, then name /
 candidateRef asc. Saved match lists use the same order, with first-seen and
@@ -227,7 +233,7 @@ OVERALL STATUS       READY | READY WITH WARNINGS | NOT READY + reasons
 1. `npm run audit:search-explain -- --user=<id> --skills=... [--city=...]`.
 2. Read `summary` and `gate`. A failing gate with the candidate loaded is a **VISIBILITY_ERROR** — stop and fix the loader query.
 3. Read the filter table: `DISAGREE` rows carry the classification.
-   - `SEARCH_INDEX_STALE` → compare `drift` (document vs canonical). Legacy mirror? `ENABLE_NEW_TALENT`. Split skill? QA-KI-004.
+   - `SEARCH_INDEX_STALE` → compare `drift` (document vs canonical). Legacy mirror? `ENABLE_NEW_TALENT`. Split skill? QA-KI-004. `roleTitles` drift: `ROLE_TITLES_NOT_ATTACHED` (ERROR — a path scored without `attachRoleTitles`) or `ROLE_TITLE_MISSING` (a headline, target role or job title the document lacks).
    - `DATA_QUALITY_ERROR` → the candidate's data explains it (pasted skill list, cohort skills never synced). Search is correct.
    - `SEARCH_FILTER_ERROR` → the matcher is looser than documented; write a golden test first.
 

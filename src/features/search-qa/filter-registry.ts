@@ -697,6 +697,26 @@ const niceToHave: FilterDef = {
   apply: (spec, v) => ({ ...spec, niceToHaveStack: asStrings(v) }),
   describe: (v) => `nice to have [${asStrings(v).join(", ")}] (rank only)`,
 };
+const role: FilterDef = {
+  id: "role",
+  label: "Role / job title",
+  kind: "RANK_ONLY",
+  criticality: "CORE",
+  semantics: {
+    valueType: "text",
+    logic: "N/A",
+    match:
+      "title fit (headline, target roles, work-history titles, cohort job role) is the role dimension; with no skills named, the role's typical skills stand in for the stack; no connection at all caps the tier at PARTIAL; never excludes",
+    nullPolicy: "absent, or seniority words only = no role dimension (scores exactly as before)",
+    implementedAt: "src/features/hire/role-match.ts + score-candidate.ts assessRole",
+    surfaces: ["Scout chat (spec.title)"],
+  },
+  productQuestions: [
+    "A candidate with no connection to the role scores low enough to be NONE, and NONE is only shown as padding when fewer than five better matches exist — so a title-only search can show fewer cards than before.",
+  ],
+  apply: (spec, v) => ({ ...spec, title: String(v) }),
+  describe: (v) => `role "${String(v)}" (rank only)`,
+};
 
 const evidencePriority: FilterDef = {
   id: "evidencePriority",
@@ -749,12 +769,12 @@ export const FILTERS: readonly FilterDef[] = [
   experience,
   seniority,
   niceToHave,
+  role,
   evidencePriority,
   notImplemented("graduationYear", "Graduation year", "not read by /hire search; shown on the card only"),
   notImplemented("college", "College", "not read by /hire search (withheld from challenge cards)"),
   notImplemented("degree", "Degree", "not read by /hire search; requiresDegree is stored and never used"),
   notImplemented("branch", "Branch / field of study", "not read by /hire search"),
-  notImplemented("role", "Current / target role", "spec.title is stored and never used by search"),
   notImplemented("profileCompletion", "Profile completion", "computed at read time (features/profile/completeness.ts); not a search input"),
   notImplemented("verifiedSkills", "Verified skills / evidence", "CandidateSkill.verified is not read by search; SkillEvidence has no live writer (CLAUDE.md)"),
   notImplemented("github", "GitHub connected", "a card boolean only; not filterable"),

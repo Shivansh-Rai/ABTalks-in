@@ -486,7 +486,7 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         check: "coverage:no-visibility-row",
         sample: s,
         productDecision: true,
-        message: `PRODUCT DECISION REQUIRED — ${noRow} candidate(s) have a usable profile but no CandidateVisibility row, so search hides them (plan 117 expected profile-only discoverability; rows are only created on enrolment)`,
+        message: `PRODUCT DECISION REQUIRED — ${noRow} candidate(s) have a usable profile but no CandidateVisibility row, so search hides them (plan 117 expected profile-only discoverability). Since 2026-09-17 a row is created on the candidate's next name or skill save (repositories/discovery-record.ts); these existing profiles need that save or a backfill`,
       }));
     }
   }
@@ -821,7 +821,7 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
   if (want.has("filters") && accumulators.length) {
     const rows = report.checks.ranking;
     const invariance = findings.filter((x) => x.message.includes("rank-only field changed"));
-    rows.push({ id: "rank-only", label: "Experience / seniority / nice-to-have / priority never change who is admitted", status: invariance.length ? "FAIL" : "PASS", detail: `${accumulators.filter((a) => a.spec.rankOnly?.length).length} cases` });
+    rows.push({ id: "rank-only", label: "Experience / seniority / nice-to-have / priority / role never change who is admitted", status: invariance.length ? "FAIL" : "PASS", detail: `${accumulators.filter((a) => a.spec.rankOnly?.length).length} cases` });
     const unscoped = accumulators.find((a) => a.spec.filters.length === 0 && a.spec.tracks.length === 0 && a.spec.minEvidenceDays === 0);
     if (unscoped) {
       const strong = unscoped.ev.ranked.filter((r) => r.tier === "STRONG");

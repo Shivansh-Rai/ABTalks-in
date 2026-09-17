@@ -490,6 +490,49 @@ check("evidence-backed cohort graduate (B) ranks above a declared-skills-only pr
   assert(pos("QA035") < pos("QA040"), `B #${pos("QA035") + 1} (${b.score}, ${b.tier}) vs A #${pos("QA040") + 1} (${a.score}, ${a.tier})`);
 });
 
+check("role (spec.title) ranks on titles and typical skills — QA067–QA071", () => {
+  const order = (title: string, codes: string[]) => {
+    const ev = search([f("role", title)]);
+    return codes
+      .map((code) => ({ code, at: ev.ranked.findIndex((r) => r.userId === uid(code)) }))
+      .sort((a, b) => a.at - b.at)
+      .map((x) => x.code);
+  };
+  const cast = ["QA067", "QA068", "QA069", "QA070", "QA071"];
+  const fe = order("Frontend developer", cast);
+  assert(fe[0] === "QA067", `headline Frontend Developer leads a frontend search: ${fe}`);
+  assert(fe.indexOf("QA070") < fe.indexOf("QA071"), `frontend skills with no title outrank an unrelated student: ${fe}`);
+  assert(order("Data analyst", cast)[0] === "QA068", `target role Data Analyst leads: ${order("Data analyst", cast)}`);
+  assert(order("AI engineer", cast)[0] === "QA069", `work-history ML engineer leads: ${order("AI engineer", cast)}`);
+  assert(
+    order("Frontend developer", cast).join() !== order("Data analyst", cast).join(),
+    "two roles must not produce the same order (the 2026-09-17 production symptom)",
+  );
+});
+
+check("role is rank-only: it never changes who is admitted", () => {
+  for (const [filters, title] of [
+    [[], "Frontend developer"],
+    [[skill("React")], "Data analyst"],
+    [[f("workMode", "REMOTE")], "Sales executive"],
+  ] as [AppliedFilter[], string][]) {
+    const base: SpecCase = {
+      id: "role-invariance", kind: "PAIR", filters, tracks: [], minEvidenceDays: 0, criticality: "CORE",
+      rankOnly: [f("role", title)],
+    };
+    const flipped = rankOnlyChangesAdmission(POOL, base, K);
+    assert(flipped.length === 0, `"${title}" flipped admission for ${flipped.join(", ")}`);
+  }
+});
+
+check("no role asked: the role dimension is absent and weighs nothing", () => {
+  const r = search([]).byUser.get(uid("QA067"))!;
+  assert(r.scoreBreakdown.role == null, `role reported ${r.scoreBreakdown.role}`);
+  assert(!r.scoreBreakdown.dimensionsUsed.includes("role"), "role in the rubric without a title");
+  const asked = search([f("role", "Frontend developer")]).byUser.get(uid("QA067"))!;
+  assert(asked.scoreBreakdown.role === 100, `title fit ${asked.scoreBreakdown.role}`);
+});
+
 /* ── pagination ──────────────────────────────────────────────────────────── */
 
 section("pagination (top-N; the search API has no page / cursor)");
@@ -558,7 +601,7 @@ function challengeMember(i: number, skills: string[], submissions: number, strea
     maxEarnableMissions: 60,
     consistencyWindow: 60,
     coverage: {
-      dimensions: { stack: true, experience: true, missions: true, consistency: true, cleanPass: false, projects: false, interview: false },
+      dimensions: { stack: true, experience: true, missions: true, consistency: true, cleanPass: false, projects: false, interview: false, role: true },
       note: "challenge",
     },
   };
@@ -571,7 +614,7 @@ const WINDOW_POOL: PoolSnapshot = {
     ...Array.from({ length: 110 }, (_, i) => challengeMember(i, ["Python"], 60, 60)),
     ...Array.from({ length: 3 }, (_, i) => challengeMember(1000 + i, ["React"], 10, 1)),
   ],
-  coverage: { dimensions: { stack: true, experience: true, missions: true, consistency: true, cleanPass: false, projects: false, interview: false }, note: "" },
+  coverage: { dimensions: { stack: true, experience: true, missions: true, consistency: true, cleanPass: false, projects: false, interview: false, role: true }, note: "" },
   loads: [],
   duplicateUserIds: [],
 };
@@ -829,6 +872,23 @@ check("document graduation year equals the candidate's latest entered year (NULL
   assert(member.dossier?.education.value.gradYear === 2024, `document gradYear ${member.dossier?.education.value.gradYear}`);
 });
 
+check("role titles reach the search document; a missing or unattached list is named", () => {
+  for (const code of ["QA067", "QA068", "QA069"]) {
+    assert(!driftOf(code).some((d) => d.field === "roleTitles"), `${code}: ${JSON.stringify(driftOf(code))}`);
+  }
+  const member = POOL.members.find((m) => m.userId === uid("QA068"))!;
+  const missing = documentDrift(goldenFixture("QA068").canonical, { ...member, roleTitles: [] });
+  assert(missing.some((d) => d.cause === "ROLE_TITLE_MISSING"), JSON.stringify(missing));
+  const unattached = documentDrift(goldenFixture("QA068").canonical, { ...member, roleTitles: undefined });
+  assert(unattached.some((d) => d.cause === "ROLE_TITLES_NOT_ATTACHED" && d.severity === "ERROR"), JSON.stringify(unattached));
+});
+
+check("the search service and the probe both attach role titles before ranking", () => {
+  const read = (rel: string) => readFileSync(join(process.cwd(), rel), "utf8");
+  assert(/attachRoleTitles\(merged\.members\)/.test(read("src/features/hire/search-candidates.ts")), "searchCandidates");
+  assert(/attachRoleTitles\(merged\.members\)/.test(read("src/features/search-qa/probe.ts")), "search-qa probe");
+});
+
 /* ── data quality ────────────────────────────────────────────────────────── */
 
 section("data quality (audited, never a search verdict)");
@@ -997,7 +1057,9 @@ check("every filter in the inventory is well-formed", () => {
     }
     if (def.kind !== "NOT_IMPLEMENTED") assert(def.apply, `${def.id} cannot be applied`);
   }
-  const spec: JobSpec = specFor([skill("React"), f("workMode", "REMOTE"), f("salaryMax", 0)]);
+  const role = FILTERS.filter((d) => d.id === "role");
+  assert(role.length === 1 && role[0]!.kind === "RANK_ONLY", "role is registered once, as rank-only");
+  const spec: JobSpec = specFor([skill("React"), f("workMode", "REMOTE"), f("salaryMax", 0), f("role", "Frontend developer")]);
   assert(jobSpecSchema.safeParse(spec).success, "generated specs are valid JobSpecs");
 });
 

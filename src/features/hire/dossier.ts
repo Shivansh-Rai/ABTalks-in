@@ -378,6 +378,7 @@ function fullCoverage(value: boolean): Record<ScoreDimension, boolean> {
     consistency: value,
     interview: value,
     experience: value,
+    role: value,
   };
 }
 
@@ -413,6 +414,8 @@ export function computeCoverage(
     consistency: anyCommit,
     projects: anyProject,
     interview: anyInterview,
+    // Declared, like stack: titles are there whenever a role is asked for.
+    role: true,
   };
 
   const missing: string[] = [];

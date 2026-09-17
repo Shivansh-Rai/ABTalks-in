@@ -1,6 +1,14 @@
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { canonicalSkillName } from "@/lib/skill-catalog";
 import type { JobSpec } from "@/lib/validations/hire";
+import {
+  parseRoleQuery,
+  roleSkillFit,
+  roleTitleFit,
+  type RoleQuery,
+  type SkillFit,
+  type TitleFit,
+} from "@/features/hire/role-match";
 import type {
   EvidenceCoverage,
   MatchTier,
@@ -10,7 +18,15 @@ import type {
   ScoredCandidate,
 } from "@/features/hire/types";
 
-/** Default dimension weights — sum to 100 before priority and coverage. */
+/**
+ * Default dimension weights — the evidence seven sum to 100 before priority and
+ * coverage.
+ *
+ * `role` sits on top of them and is zeroed unless the recruiter named a role, so
+ * it only ever takes a share when there is a role to fit. With one named it is
+ * about a sixth of a full cohort rubric, and two fifths of a profile-only one,
+ * where declared skills and titles are all there is to rank on.
+ */
 const BASE_WEIGHTS: Record<ScoreDimension, number> = {
   stack: 25,
   missions: 20,
@@ -19,6 +35,7 @@ const BASE_WEIGHTS: Record<ScoreDimension, number> = {
   consistency: 10,
   interview: 10,
   experience: 5,
+  role: 20,
 };
 
 /** Everything counts, for callers that have no pool to measure. */
@@ -31,6 +48,7 @@ const FULL_COVERAGE: EvidenceCoverage = {
     consistency: true,
     interview: true,
     experience: true,
+    role: true,
   },
   note: "Ranked on all 7 evidence dimensions.",
 };
@@ -263,8 +281,12 @@ function effectiveCity(spec: JobSpec): string | null {
 function reweight(
   priority: string[] | undefined,
   coverage: EvidenceCoverage = FULL_COVERAGE,
+  roleAsked = false,
 ): Record<ScoreDimension, number> {
   const w = { ...BASE_WEIGHTS };
+  // No role named, no role dimension: the other weights rescale exactly as they
+  // did before it existed.
+  if (!roleAsked) w.role = 0;
   const boost = new Set<ScoreDimension>();
   for (const p of priority ?? []) {
     const key = PRIORITY_TO_DIM[normToken(p).replace(/ /g, "_")] ??
@@ -281,7 +303,7 @@ function reweight(
   // Every dimension uncovered would mean nothing to rank on. Fall back to the
   // declared dimensions rather than dividing by zero.
   if (sum <= 0) {
-    return { ...BASE_WEIGHTS, missions: 0, cleanPass: 0, projects: 0, consistency: 0, interview: 0, stack: 83.3, experience: 16.7 };
+    return { ...BASE_WEIGHTS, missions: 0, cleanPass: 0, projects: 0, consistency: 0, interview: 0, stack: 83.3, experience: 16.7, role: 0 };
   }
   const scale = 100 / sum;
   for (const k of Object.keys(w) as ScoreDimension[]) {
@@ -290,12 +312,21 @@ function reweight(
   return w;
 }
 
-function stackScore(memberSkills: string[], spec: JobSpec): { score: number; missing: string[] } {
+/**
+ * @param roleSkills the role's typical-skill fit, used only when the recruiter
+ *   named no skills at all. Without it every candidate scored the same neutral
+ *   0.5 on a title-only search, and the stack dimension ranked nobody.
+ */
+function stackScore(
+  memberSkills: string[],
+  spec: JobSpec,
+  roleSkills: SkillFit | null = null,
+): { score: number; missing: string[] } {
   const must = spec.mustHaveStack ?? [];
   const nice = spec.niceToHaveStack ?? [];
   const missing = must.filter((m) => !stackTokensMatch(memberSkills, m));
   if (must.length === 0 && nice.length === 0) {
-    return { score: 0.5, missing: [] };
+    return { score: roleSkills ? roleSkills.fit : 0.5, missing: [] };
   }
   const mustHit = must.length === 0 ? 1 : (must.length - missing.length) / must.length;
   const niceHit =
@@ -376,10 +407,16 @@ function tierFor(
   score: number,
   missingMust: string[],
   missionsPassed = 1,
+  roleMismatch = false,
 ): MatchTier {
   if (missingMust.length > 0) {
     return score >= 40 ? "PARTIAL" : "NONE";
   }
+  // STRONG is also a claim about fit. A cohort graduate with a strong record
+  // and nothing — no title, no typical skill — connecting them to the role
+  // asked for is a strong candidate, not a strong match for THIS role. Before
+  // the role counted, the same six such people headed every title-only search.
+  if (roleMismatch && score >= 70) return "PARTIAL";
   // STRONG is a claim about proven work, so it cannot be reached without any.
   //
   // Dropping the uncovered dimensions leaves declared skills carrying most of
@@ -521,6 +558,49 @@ function effectiveExperienceBand(spec: {
   return band ? { min: band.min, max: band.max } : { min: null, max: null };
 }
 
+/** Parsed once per distinct title; a search scores the whole pool against one. */
+const roleQueryCache = new Map<string, RoleQuery | null>();
+
+function roleQueryFor(title: string | null | undefined): RoleQuery | null {
+  const key = title ?? "";
+  if (!roleQueryCache.has(key)) {
+    if (roleQueryCache.size >= 500) roleQueryCache.clear();
+    roleQueryCache.set(key, parseRoleQuery(title));
+  }
+  return roleQueryCache.get(key) ?? null;
+}
+
+export type RoleAssessment = {
+  query: RoleQuery;
+  title: TitleFit;
+  /** Null when the role has no typical skills to count. */
+  skills: SkillFit | null;
+  /**
+   * Nothing connects this candidate to the role: no title reads as it or a
+   * close neighbour, and not one typical skill. Only judged when the recruiter
+   * named no must-have skills — a stated must-have is their own definition of
+   * relevance, and it already gates STRONG.
+   */
+  mismatch: boolean;
+};
+
+/** Title fit this strong or better counts as a connection to the role. */
+const ROLE_CONNECTED_TITLE_FIT = 0.5;
+
+/** The role reading for one candidate, or null when no role was asked. */
+export function assessRole(member: ScoreableMember, spec: JobSpec): RoleAssessment | null {
+  const query = roleQueryFor(spec.title);
+  if (!query) return null;
+  const titles = member.roleTitles ?? (member.jobRole ? [member.jobRole] : []);
+  const title = roleTitleFit(query, titles);
+  const skills = roleSkillFit(query, member.skills, stackTokensMatch);
+  const mismatch =
+    (spec.mustHaveStack ?? []).length === 0 &&
+    title.fit < ROLE_CONNECTED_TITLE_FIT &&
+    (skills == null || skills.hits.length === 0);
+  return { query, title, skills, mismatch };
+}
+
 export function scoreCandidate(
   member: ScoreableMember,
   spec: JobSpec,
@@ -539,11 +619,12 @@ export function scoreCandidate(
   // ranked up for looking or down for not — see the note on ScoredCandidate.
   const openToWork = member.availability?.openToWork === true;
 
-  const stack = stackScore(member.skills, spec);
+  const role = assessRole(member, spec);
+  const stack = stackScore(member.skills, spec, role?.skills ?? null);
   // Prefer hard-filter missing list when present; stackScore missing aligns.
   const missing = missingMust.length > 0 ? missingMust : stack.missing;
 
-  const weights = reweight(spec.evidencePriority, coverage);
+  const weights = reweight(spec.evidencePriority, coverage, role != null);
   const cohortDay = member.cohortDay > 0 ? member.cohortDay : 1;
   const dims: Record<ScoreDimension, number> = {
     stack: stack.score,
@@ -564,6 +645,7 @@ export function scoreCandidate(
       const band = effectiveExperienceBand(spec);
       return experienceScore(member.yearsExperience, band.min, band.max);
     })(),
+    role: role?.title.fit ?? 0,
   };
 
   const dimensionsUsed = (Object.keys(dims) as ScoreDimension[]).filter(
@@ -591,6 +673,7 @@ export function scoreCandidate(
     experience: coverage.dimensions.experience
       ? Math.round(dims.experience * 100)
       : null,
+    role: role && coverage.dimensions.role ? Math.round(dims.role * 100) : null,
     weights,
     total: t,
     dimensionsUsed,
@@ -644,8 +727,11 @@ export function scoreCandidate(
   if (availabilityUnknown) {
     gaps.push("Availability not shared — confirm salary/notice/location at outreach");
   }
+  if (role?.mismatch) {
+    gaps.push(`Nothing in their titles or skills points to "${role.query.label}"`);
+  }
 
-  const tier = tierFor(total, missing, member.missionsPassed);
+  const tier = tierFor(total, missing, member.missionsPassed, role?.mismatch ?? false);
 
   return {
     programMemberId,
@@ -833,6 +919,7 @@ export const __test = {
   interviewScore,
   experienceScore,
   tierFor,
+  assessRole,
   normToken,
   BASE_WEIGHTS,
   FULL_COVERAGE,

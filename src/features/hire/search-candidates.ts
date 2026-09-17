@@ -8,6 +8,7 @@ import { estimateCompensation } from "@/features/hire/compensation";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
   EMPTY_COVERAGE,
+  attachRoleTitles,
   loadTrack,
   mergeTrackLoads,
 } from "@/features/hire/track-loaders";
@@ -86,7 +87,7 @@ export async function searchCandidates(
     );
 
     const merged = mergeTrackLoads(loads);
-    const scoreable: ScoreableMember[] = merged.members;
+    const scoreable: ScoreableMember[] = await attachRoleTitles(merged.members);
     const { coverage, belowEvidenceFloor } = merged;
 
     if (scoreable.length === 0) {

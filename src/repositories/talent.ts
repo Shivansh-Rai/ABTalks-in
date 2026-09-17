@@ -153,6 +153,54 @@ export async function loadRecruiterIdentities(
 }
 
 /**
+ * The role titles a candidate has given, for search ranking: headline, target
+ * roles, then work-history titles (current first, then most recent).
+ *
+ * Titles only. Employer names, dates and descriptions are not selected — the
+ * role dimension needs what someone does, not where. Nothing here is shown on a
+ * card; the scorer reads it and the recruiter sees a score.
+ */
+export async function loadRoleTitleSources(userIds: string[]): Promise<
+  Map<string, { headline: string | null; preferredRoles: string[]; experienceTitles: string[] }>
+> {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  const out = new Map<
+    string,
+    { headline: string | null; preferredRoles: string[]; experienceTitles: string[] }
+  >();
+  if (ids.length === 0) return out;
+  // Three flat reads in parallel rather than one nested one, which Prisma runs
+  // as the same three queries one after another — this sits on every search.
+  const [profiles, preferences, experience] = await Promise.all([
+    prisma.candidateProfile.findMany({
+      where: { userId: { in: ids }, headline: { not: null } },
+      select: { userId: true, headline: true },
+    }),
+    prisma.candidatePreference.findMany({
+      where: { userId: { in: ids }, NOT: { preferredRoles: { isEmpty: true } } },
+      select: { userId: true, preferredRoles: true },
+    }),
+    prisma.candidateExperience.findMany({
+      where: { userId: { in: ids } },
+      orderBy: [{ userId: "asc" }, { isCurrent: "desc" }, { startedOn: "desc" }],
+      select: { userId: true, title: true },
+    }),
+  ]);
+  const entry = (userId: string) => {
+    let e = out.get(userId);
+    if (!e) {
+      e = { headline: null, preferredRoles: [], experienceTitles: [] };
+      out.set(userId, e);
+    }
+    return e;
+  };
+  for (const p of profiles) entry(p.userId).headline = p.headline;
+  for (const p of preferences) entry(p.userId).preferredRoles = p.preferredRoles;
+  for (const x of experience) entry(x.userId).experienceTitles.push(x.title);
+  return out;
+}
+
+/**
  * Set-membership form of {@link searchableUserWhere}, for the paths that hold
  * candidate ids already and need to drop the ones that must not be shown.
  */

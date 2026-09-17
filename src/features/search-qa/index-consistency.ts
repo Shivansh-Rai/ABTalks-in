@@ -22,7 +22,7 @@ import type { KnownIssueId } from "@/features/search-qa/known-issues";
 import { normKey } from "@/features/search-qa/normalize";
 import type { QaCategory, Severity } from "@/features/search-qa/types";
 
-export type DriftField = "skills" | "gradYear" | "yearsExperience" | "availability" | "links";
+export type DriftField = "skills" | "gradYear" | "yearsExperience" | "availability" | "links" | "roleTitles";
 
 export type DocumentDrift = {
   field: DriftField;
@@ -262,6 +262,40 @@ export function documentDrift(c: CanonicalCandidate, m: ScoreableMember): Docume
       canonical: canonAvail,
       document: docAvail,
     });
+  }
+
+  /* role titles — the role dimension ranks on these */
+  const canonTitles = [
+    c.profile?.headline ?? "",
+    ...(c.preference?.preferredRoles ?? []),
+    ...c.experience.map((e) => e.title),
+  ]
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (canonTitles.length > 0) {
+    if (m.roleTitles === undefined) {
+      out.push({
+        field: "roleTitles",
+        category: "SEARCH_INDEX_STALE",
+        severity: "ERROR",
+        cause: "ROLE_TITLES_NOT_ATTACHED",
+        canonical: canonTitles.slice(0, 5).join(" | "),
+        document: "— (attachRoleTitles did not run)",
+      });
+    } else {
+      const docKeys = new Set(m.roleTitles.map((t) => t.trim().toLowerCase()));
+      const missingTitles = canonTitles.filter((t) => !docKeys.has(t.toLowerCase()));
+      if (missingTitles.length) {
+        out.push({
+          field: "roleTitles",
+          category: "SEARCH_INDEX_STALE",
+          severity: "WARNING",
+          cause: "ROLE_TITLE_MISSING",
+          canonical: missingTitles.slice(0, 5).join(" | "),
+          document: m.roleTitles.slice(0, 5).join(" | ") || "—",
+        });
+      }
+    }
   }
 
   /* links (booleans only) */

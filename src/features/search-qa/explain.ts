@@ -165,8 +165,8 @@ export function explainFromPool(input: {
         tier: scored.tier,
         hardFiltered: scored.hardFiltered,
         hardFilterReasons: scored.hardFilterReasons,
-        contributions: (["stack", "missions", "cleanPass", "projects", "consistency", "interview", "experience"] as const).map((dim) => {
-          const value = scored.scoreBreakdown[dim];
+        contributions: (["stack", "missions", "cleanPass", "projects", "consistency", "interview", "experience", "role"] as const).map((dim) => {
+          const value = scored.scoreBreakdown[dim] ?? null;
           const weight = scored.scoreBreakdown.weights[dim] ?? 0;
           const used = scored.scoreBreakdown.dimensionsUsed.includes(dim);
           return {

@@ -20,6 +20,7 @@ import { declared, derived, verified } from "@/features/hire/dossier-provenance"
 import { computeCoverage } from "@/features/hire/dossier";
 import { mergeTrackLoads, type TrackLoad } from "@/features/hire/track-loaders";
 import { splitSkills, yearsFor } from "@/features/hire/challenge-dossier";
+import { collectRoleTitles } from "@/features/hire/role-match";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { candidatePublicId } from "@/features/hire/public-id";
 import type {
@@ -71,6 +72,7 @@ export type GoldenFixture = {
   fault?: {
     documentSkills?: string[];
     documentAvailability?: AvailabilitySnapshot;
+    documentRoleTitles?: string[];
     forceTrack?: TrackSlug;
     dropFromPool?: boolean;
   };
@@ -78,6 +80,7 @@ export type GoldenFixture = {
 
 type Opts = {
   name?: string;
+  headline?: string | null;
   role?: string;
   emailDomain?: string;
   deleted?: boolean;
@@ -174,6 +177,7 @@ function fixture(n: number, note: string, o: Opts): GoldenFixture {
           remotePreference: null,
           expectedSalaryMin: null,
           expectedSalaryMax: null,
+          preferredRoles: [],
           ...(o.pref ?? {}),
         };
   return {
@@ -197,7 +201,7 @@ function fixture(n: number, note: string, o: Opts): GoldenFixture {
           : { searchable: vis !== "hidden", withdrawn: vis === "withdrawn" },
       profile: {
         fullName: o.name ?? `QA Candidate ${pad(n)}`,
-        headline: null,
+        headline: o.headline ?? null,
         locationCity: null,
         linkedinUrl: o.linkedin ?? null,
         githubUsername: o.github ?? null,
@@ -333,6 +337,27 @@ export const GOLDEN_FIXTURES: readonly GoldenFixture[] = [
   fixture(65, "Git & GitHub claimed as one skill", { skills: ["Git & GitHub"] }),
   fixture(66, "a paste with a long part: Python Data Structures & Algorithms (DSA) SQL Git", {
     skills: ["Python Data Structures & Algorithms (DSA) SQL Git"],
+  }),
+  // Role (spec.title) — ranked, never filtered. Skills chosen so no skill
+  // search elsewhere in this dataset changes.
+  fixture(67, "role: headline Frontend Developer; Vue.js, Tailwind CSS", {
+    headline: "Frontend Developer",
+    skills: ["Vue.js", "Tailwind CSS"],
+  }),
+  fixture(68, "role: target role Data Analyst only; Power BI", {
+    pref: { preferredRoles: ["Data Analyst"] },
+    skills: ["Power BI"],
+  }),
+  fixture(69, "role: work history Machine Learning Engineer only; PyTorch", {
+    expRows: [{ startedOn: "2024-06-01", endedOn: null, totalMonths: 27, title: "Machine Learning Engineer" }],
+    skills: ["PyTorch"],
+  }),
+  fixture(70, "role: no titles; Angular, Sass (frontend by skills alone)", {
+    skills: ["Angular", "Sass"],
+  }),
+  fixture(71, "role: headline Student; Tableau (no frontend connection)", {
+    headline: "Student",
+    skills: ["Tableau"],
   }),
   fixture(56, "React, graduation year hidden behind a year-less education row", {
     skills: ["React"], grad: 2024, extraEducation: [{ graduationYear: null }],
@@ -498,6 +523,14 @@ function memberFor(f: GoldenFixture, slug: TrackSlug, env: SearchEnv): Scoreable
   }
   if (f.fault?.documentSkills) skills = f.fault.documentSkills;
   void env;
+  // attachRoleTitles: headline, target roles, then work history current-first.
+  const roleTitles = f.fault?.documentRoleTitles ?? collectRoleTitles({
+    headline: c.profile?.headline,
+    preferredRoles: c.preference?.preferredRoles,
+    experienceTitles: [...c.experience]
+      .sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent) || b.startedOn.getTime() - a.startedOn.getTime())
+      .map((e) => e.title),
+  });
   const dossier = dossierFor(c, slug, skills, years, idn.graduationYear, availability, ev);
   return {
     id: slug === "PROGRAM" ? `pm_${c.userId}` : c.userId,
@@ -507,6 +540,7 @@ function memberFor(f: GoldenFixture, slug: TrackSlug, env: SearchEnv): Scoreable
     fullName: c.profile?.fullName ?? "",
     jobRole: "",
     company: "",
+    roleTitles,
     yearsExperience: years,
     skills,
     missionPoints: 0,
@@ -556,7 +590,7 @@ export function buildGoldenPool(
     const members = rows.map((f) => memberFor(f, slug, env));
     const coverage: EvidenceCoverage = members.length
       ? computeCoverage(members.map((m) => m.dossier!))
-      : { dimensions: { stack: false, missions: false, cleanPass: false, projects: false, consistency: false, interview: false, experience: false }, note: "empty" };
+      : { dimensions: { stack: false, missions: false, cleanPass: false, projects: false, consistency: false, interview: false, experience: false, role: false }, note: "empty" };
     for (const m of members) m.coverage = coverage;
     loads.push({ slug, members, coverage, belowEvidenceFloor: 0, cohortName: null, stage: null });
     infos.push({ slug, count: members.length, cap, truncated: cap != null && members.length >= cap, userIds: members.map((m) => m.userId) });

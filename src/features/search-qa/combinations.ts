@@ -150,6 +150,16 @@ export function buildCases(stats: ValueStats, opts: CaseOptions = {}): SpecCase[
     [[{ id: "locationCity", value: cities[0]! }, { id: "workMode", value: "HYBRID" }], {}],
   ];
   for (const [filters, extra] of named) out.push(mk("PAIR", filters, { ...extra, criticality: "CORE" }));
+
+  /* ROLE — spec.title is rank-only: it must never change who is admitted */
+  for (const [filters, title] of [
+    [[], "Frontend developer"],
+    [[{ id: "workMode", value: "REMOTE" }], "Data analyst"],
+    [[{ id: "mustHaveStack", value: s0 }], "Backend developer"],
+    [[], "Sales executive"],
+  ] as [AppliedFilter[], string][]) {
+    out.push(mk(filters.length ? "PAIR" : "SINGLE", filters, { rankOnly: [{ id: "role", value: title }], criticality: "CORE" }));
+  }
   if (opts.lite) return out;
 
   const dims = dimensions(stats);

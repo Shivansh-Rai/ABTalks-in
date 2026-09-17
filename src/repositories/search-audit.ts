@@ -84,6 +84,7 @@ const CANONICAL_SELECT = {
           remotePreference: true,
           expectedSalaryMin: true,
           expectedSalaryMax: true,
+          preferredRoles: true,
         },
       },
     },
