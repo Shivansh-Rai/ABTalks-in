@@ -73,9 +73,9 @@ Source of truth for the inventory: `filter-registry.ts`.
 
 | Filter | Kind | Logic | Match | Unstated / null |
 |---|---|---|---|---|
-| Required skills (`mustHaveStack`) | match gate | **AND** | whole-word containment on skill names; single letters by equality | no skills never match |
+| Required skills (`mustHaveStack`) | match gate | **AND** | whole-word containment on skill names; single letters by equality; a part of a compound ("ML" in "AI/ML") by equality; the same catalog skill under an alias ("golang" = Go), including a compound part ("AI/ML" answers "Machine Learning") | no skills never match |
 | Work mode | hard filter | single | equal enum; FLEXIBLE either side matches | passes |
-| Location (`locationCity`) | hard filter | ANY preferred city | substring either way (oracle: same city / whole words) | no preference, no cities, or willing to relocate → passes |
+| Location (`locationCity`) | hard filter | ANY preferred city | same city after unambiguous renames/typos (Bangalore = Bengaluru), else substring either way (oracle: whole words); NCR cities never merged; "Any" = no city | no preference, no cities, or willing to relocate → passes |
 | Engagement type | hard filter | ANY overlap | role type ∈ candidate opportunity types | empty list passes |
 | Open to work only | hard filter | single | `openToWork = true` | **no preference row passes** |
 | Budget ceiling (`salaryMax`) | hard filter | range | expected minimum ≤ budget | no expectation passes; 0/0 = not decided |
@@ -109,7 +109,7 @@ Symbols are never folded away: C, C++ and C# stay distinct.
 ### Adding a normalization rule
 
 1. Confirm the two spellings can only mean one thing. If not, add it to the ambiguous set instead.
-2. Skills: add the alias to `src/lib/skill-catalog.ts` (the product's own catalog). Cities: add to `CITY_ALIASES` in `normalize.ts` with the right kind. Work modes: `WORK_MODE_BY_SQUASH`.
+2. Skills: add the alias to `src/lib/skill-catalog.ts` (the product's own catalog) — search and the oracle both read it, so one edit changes both. Cities and work modes are deliberately defined twice, because the oracle must stay independent of the code under test: add the city to `CITY_ALIASES` in `src/features/hire/score-candidate.ts` (search) **and** `src/features/search-qa/normalize.ts` (oracle, with its kind); a work mode to `normalizeWorkMode` in the scorer **and** `WORK_MODE_BY_SQUASH` in `normalize.ts`.
 3. Add an assertion to the `normalization` section of `search-qa.test.ts`.
 4. Run `npm run test:recruiter-search` and `npm run audit:candidate-data` — the cluster should now show as SAFE / SAFE_TYPO.
 

@@ -972,8 +972,7 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         check: "normalization:skills",
         affected: skillSplit.reduce((n2, c) => n2 + c.total, 0),
         userIds: [],
-        message: `${skillSplit.length} skill(s) exist under several spellings in the catalog (e.g. ${skillSplit.slice(0, 3).map((c) => c.variants.map((v) => v.raw).join(" / ")).join("; ")})`,
-        knownIssue: "QA-KI-009",
+        message: `${skillSplit.length} skill(s) exist under several spellings in the catalog (e.g. ${skillSplit.slice(0, 3).map((c) => c.variants.map((v) => v.raw).join(" / ")).join("; ")}) — search folds catalog aliases and punctuation, but not wording differences like "&" vs "and"`,
         detail: { canonicalSkillNameExample: canonicalSkillName(skillSplit[0]!.variants[0]!.raw) },
       });
     }

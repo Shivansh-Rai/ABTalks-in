@@ -327,6 +327,13 @@ export const GOLDEN_FIXTURES: readonly GoldenFixture[] = [
   fixture(61, "Claude challenge, 5 submissions (below the floor), profile with no claimed skills", {
     challenge: [{ domain: "CLAUDE", submissions: 5 }], streak: 2,
   }),
+  fixture(62, "AI/ML claimed as one skill", { skills: ["AI/ML"] }),
+  fixture(63, "C/C++ claimed as one skill", { skills: ["C/C++"] }),
+  fixture(64, "Data Structures & Algorithms (catalog name)", { skills: ["Data Structures & Algorithms"] }),
+  fixture(65, "Git & GitHub claimed as one skill", { skills: ["Git & GitHub"] }),
+  fixture(66, "a paste with a long part: Python Data Structures & Algorithms (DSA) SQL Git", {
+    skills: ["Python Data Structures & Algorithms (DSA) SQL Git"],
+  }),
   fixture(56, "React, graduation year hidden behind a year-less education row", {
     skills: ["React"], grad: 2024, extraEducation: [{ graduationYear: null }],
   }),

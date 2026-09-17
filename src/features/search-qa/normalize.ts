@@ -230,15 +230,25 @@ export function skillMatchesToken(skillName: string, token: string): SkillTokenM
   const s = words(skillName);
   const t = words(token);
   if (!t) return { literal: true, normalized: true, ambiguous: null };
+  // A compound claim ("AI/ML", "C/C++", "Git & GitHub") is several whole
+  // tokens: a requirement equal to one part is a literal match, at any length.
+  const parts = skillName.split(/\s*\/\s*|\s+(?:and|&)\s+/i).map(words).filter(Boolean);
   const literal =
-    s === t || (t.length >= MIN_WORD_TOKEN && containsWholeWordsLoose(s, t));
+    s === t ||
+    (t.length >= MIN_WORD_TOKEN && containsWholeWordsLoose(s, t)) ||
+    (parts.length > 1 && parts.includes(t));
   // Squash equality folds "React.js" / "reactjs" but must never fold symbols
   // that ARE the name: "C", "C++" and "C#" all squash to "c".
   const symbolic = /[+#]/.test(skillName) || /[+#]/.test(token);
+  const sameCatalogSkill = (a: string, b: string) =>
+    canonicalSkillName(a).toLowerCase() === canonicalSkillName(b).toLowerCase();
   const normalized =
     literal ||
-    canonicalSkillName(skillName).toLowerCase() === canonicalSkillName(token).toLowerCase() ||
-    (!symbolic && squash(skillName).length > 1 && squash(skillName) === squash(token));
+    sameCatalogSkill(skillName, token) ||
+    // A part of a compound is a skill in its own right, so the catalog's aliases
+    // apply to it: "AI/ML" answers "Machine Learning" because "ml" is its alias.
+    (parts.length > 1 && parts.some((p) => sameCatalogSkill(p, token))) ||
+    (!symbolic && squash(skillName).length >= 3 && squash(skillName) === squash(token));
   const ambiguous =
     !literal &&
     !normalized &&

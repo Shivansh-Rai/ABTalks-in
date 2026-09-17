@@ -108,12 +108,13 @@ capped at 600 (challenge, profile) and 200 (hackathon, unordered).
 1. ~~Work-mode filter compares profile labels `Remote/Hybrid/On-site/Flexible` to enums with `!==`~~ — **FIXED 2026-09-16**: `normalizeWorkMode` folds both sides in `evaluateHardFilters`; an unparseable value now reads as unstated.
 2. ~~"Not decided" salary (`salaryMin 0, salaryMax 0`) is treated as a ₹0 budget~~ — **FIXED 2026-09-16** (`effectiveBudget`).
 3. ~~Skipped city (`locationCity "Any"`) is treated as a city named "any"~~ — **FIXED 2026-09-16** (`effectiveCity`).
-4. `splitSkills` breaks canonical skill names containing `/` or `&` ("AI/ML", "UI/UX", "CI/CD"), so they cannot match themselves.
+4. ~~`splitSkills` breaks canonical skill names containing `/` or `&` ("AI/ML", "UI/UX", "CI/CD"), so they cannot match themselves~~ — **FIXED 2026-09-17**: catalog names and short compounds stay whole; `stackTokensMatch` matches a compound part exactly. Pastes split as before.
 5. ~~`loadRecruiterIdentities` picks education `orderBy graduationYear desc` — Postgres puts NULLs first~~ — **FIXED 2026-09-16** (`nulls: "last"`, both call sites in `repositories/talent.ts`).
 6. Rank window of 100 is taken before the must-have gate: matching candidates can be pushed out by non-matching higher scorers.
 7. `loadRequestMatches` renders `PROFILE` matches as `CLAUDE:` refs.
 8. Profile-only candidates with only declared skills can outrank evidence-backed ones (coverage reweighting).
-9. (Found 2026-09-17 after merging master) The admin "Recruiter search" panel (`features/admin/candidate-discoverability.ts`, T-265) counts any challenge submission and any `ProgramMember` row as a carrying track, ignoring the challenge floor/flag and cohort status/openness — QA-KI-011. Production check: 1 wrong "appears" verdict, 19 wrong route explanations.
+9. ~~Skill and city matching ignore the catalog's own aliases (golang/Go, reactjs/React, Bangalore/Bengaluru)~~ — **FIXED 2026-09-17** (QA-KI-009): `sameSkill` folds through `canonicalSkillName` (+ symbol-safe squash), `cityKey` folds unambiguous renames and typos; NCR cities are never merged.
+10. (Found 2026-09-17 after merging master) The admin "Recruiter search" panel (`features/admin/candidate-discoverability.ts`, T-265) counts any challenge submission and any `ProgramMember` row as a carrying track, ignoring the challenge floor/flag and cohort status/openness — QA-KI-011. Production check: 1 wrong "appears" verdict, 19 wrong route explanations.
 
 ## 4. Files to touch
 

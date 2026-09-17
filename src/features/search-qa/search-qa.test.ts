@@ -20,6 +20,7 @@ import { join } from "node:path";
 import { jobSpecSchema, type JobSpec } from "@/lib/validations/hire";
 import { CHALLENGE_POOL_CAP, MIN_RESULTS, RANK_WINDOW } from "@/features/hire/search-candidates";
 import { extractPoolBrief } from "@/features/hire/pool-brief";
+import { splitSkills } from "@/features/hire/challenge-dossier";
 import type { ScoreableMember } from "@/features/hire/types";
 import {
   evaluateDiscoverability,
@@ -260,14 +261,66 @@ check("search text: case, symbols and dotted names", () => {
   assert(search([skill("qa-zero-match-skill")]).admitted.size === 0, "zero-match skill returns nobody");
 });
 
-knownBug("QA-KI-009", "catalog aliases: golang → Go, k8s → Kubernetes, nextjs → Next.js", () => {
+check("catalog aliases: golang → Go, k8s → Kubernetes, nextjs → Next.js, cpp → C++", () => {
   assert(has(search([skill("golang")]), "QA005"), "golang should find QA005 (Go)");
+  assert(has(search([skill("k8s")]), "QA051"), "k8s should find QA051 (Kubernetes)");
+  assert(has(search([skill("nextjs")]), "QA009"), "nextjs should find QA009 (Next.js)");
+  assert(has(search([skill("cpp")]), "QA006"), "cpp should find QA006 (C++)");
+  assert(!has(search([skill("cpp")]), "QA052"), "cpp must not find QA052 (C)");
+  assert(!has(search([skill("js")]), "QA050"), "js (JavaScript) must not find QA050 (Java)");
 });
-knownBug("QA-KI-009", "catalog alias: reactjs requirement finds React candidates", () => {
+
+check("a compound part answers through the catalog: AI/ML is found by Machine Learning", () => {
+  assert(has(search([skill("Machine Learning")]), "QA062"), "QA062 claims AI/ML");
+  assert(!has(search([skill("Deep Learning")]), "QA062"), "Deep Learning is not ML");
+});
+check("catalog alias: reactjs requirement finds React candidates", () => {
   assert(has(search([skill("reactjs")]), "QA001"), "reactjs should find QA001 (React)");
 });
-knownBug("QA-KI-004", "UI/UX claimed → found by a UI/UX requirement", () => {
-  assert(has(search([skill("UI/UX")]), "QA010"), "QA010 claims UI/UX");
+check("compound skills: found whole and by any single part, never by a fragment", () => {
+  const expect: [string, string, boolean][] = [
+    ["UI/UX", "QA010", true],
+    ["UX", "QA010", true],
+    ["AI/ML", "QA062", true],
+    ["ML", "QA062", true],
+    ["AI", "QA062", true],
+    ["C/C++", "QA063", true],
+    ["C", "QA063", true],
+    ["C++", "QA063", true],
+    ["C#", "QA063", false],
+    ["Data Structures & Algorithms", "QA064", true],
+    ["Algorithms", "QA064", true],
+    ["Git & GitHub", "QA065", true],
+    ["Git", "QA065", true],
+    ["GitHub", "QA065", true],
+    ["React", "QA063", false],
+    ["Java", "QA064", false],
+  ];
+  const wrong = expect.filter(([token, code, want]) => has(search([skill(token)]), code) !== want);
+  assert(wrong.length === 0, wrong.map(([t, c, w]) => `${t} → ${c} expected ${w ? "in" : "out"}`).join("; "));
+});
+
+check("splitSkills keeps compounds and catalog names whole, still splits pastes", () => {
+  const cases: [string[], string[]][] = [
+    [["UI/UX"], ["UI/UX"]],
+    [["C/C++"], ["C/C++"]],
+    [["Git & GitHub"], ["Git & GitHub"]],
+    [["UI/UX Design"], ["UI/UX Design"]],
+    [["Data Structures & Algorithms"], ["Data Structures & Algorithms"]],
+    [["python c++ html css js react"], ["python", "c++", "html", "css", "js", "react"]],
+    [["Python | React | SQL |"], ["Python", "React", "SQL"]],
+    [["HTML CSS JAVASCRIPT JAVA"], ["HTML", "CSS", "JAVASCRIPT", "JAVA"]],
+    [["Python Data Structures & Algorithms (DSA) SQL Git"], ["Python Data Structures", "Algorithms", "(DSA)", "SQL", "Git"]],
+    [["Machine Learning", "machine learning"], ["Machine Learning"]],
+  ];
+  for (const [input, want] of cases) {
+    const got = splitSkills(input);
+    assert(JSON.stringify(got) === JSON.stringify(want), `${JSON.stringify(input)} → ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+  }
+});
+
+check("a pasted list with a long part still matches its pieces (unchanged)", () => {
+  assert(has(search([skill("SQL")]), "QA066") && has(search([skill("Git")]), "QA066"), "QA066 pieces");
 });
 
 check("engagement type: ANY overlap, empty list = unstated", () => {
@@ -330,8 +383,11 @@ check("Python + Bangalore + 2–3 years → QA002 in, and experience never exclu
   assert(has(ev, "QA039"), "a 0-year candidate with no stated cities is still admitted (experience is rank-only)");
 });
 
-knownBug("QA-KI-009", "Python + Bengaluru finds QA002, who wrote \"Bangalore\"", () => {
+check("city renames and typos fold; NCR cities do not", () => {
   assert(has(search([skill("Python"), f("locationCity", "Bengaluru")]), "QA002"), "Bangalore ↔ Bengaluru");
+  assert(has(search([skill("React"), f("locationCity", "Bengaluru")]), "QA029"), "banglore ↔ Bengaluru");
+  assert(!has(search([skill("React"), f("locationCity", "Noida")]), "QA027"), "Delhi NCR is not Noida");
+  assert(!has(search([skill("React"), f("locationCity", "Gurugram")]), "QA028"), "Noida is not Gurugram");
 });
 
 check("skipped city (\"Any\") does not exclude candidates with stated cities", () => {
@@ -619,9 +675,16 @@ check("cohort member with no canonical skills matched on application skills → 
 });
 
 check("known-issue failures classify under their pinned issue", () => {
-  const r = goldenCase([skill("UI/UX")], "ki-classify");
-  const hit = findingFor(r, uid("QA010"));
-  assert(hit?.knownIssue === "QA-KI-004" && hit.category === "SEARCH_INDEX_STALE", JSON.stringify(hit));
+  const { result } = runCase(
+    { id: "ki-classify", kind: "SINGLE", filters: [skill("React")], tracks: [], minEvidenceDays: 0, criticality: "CORE" },
+    WINDOW_POOL,
+    [],
+    GOLDEN_ENV,
+    GOLDEN_COHORTS,
+    K,
+  );
+  const hit = result.findings.find((x) => x.detail?.cause === "RANK_WINDOW");
+  assert(hit?.knownIssue === "QA-KI-006" && hit.category === "PAGINATION_ERROR", JSON.stringify(hit));
 });
 
 check("withdrawn-but-evidenced skill match is a product decision, not a failure", () => {
@@ -690,8 +753,16 @@ check("a clean profile has no document drift", () => {
   assert(driftOf("QA002").length === 0, JSON.stringify(driftOf("QA002")));
 });
 
-check("drift detector names the split-skill cause", () => {
-  assert(driftOf("QA010").some((d) => d.cause === "LOADER_SPLIT_SKILL"), JSON.stringify(driftOf("QA010")));
+check("compound claims reach the search document whole — no split drift", () => {
+  for (const code of ["QA010", "QA062", "QA063", "QA064", "QA065"]) {
+    assert(!driftOf(code).some((d) => d.cause === "LOADER_SPLIT_SKILL"), `${code}: ${JSON.stringify(driftOf(code))}`);
+  }
+});
+
+check("the drift detector still names a split catalog skill if one ever returns", () => {
+  const member = POOL.members.find((m) => m.userId === uid("QA064"))!;
+  const drift = documentDrift(goldenFixture("QA064").canonical, { ...member, skills: ["Data Structures", "Algorithms"] });
+  assert(drift.some((d) => d.cause === "LOADER_SPLIT_SKILL"), JSON.stringify(drift));
 });
 
 check("a graduation year hidden by a year-less education row is still detected if it ever returns", () => {

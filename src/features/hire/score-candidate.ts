@@ -1,4 +1,5 @@
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
+import { canonicalSkillName } from "@/lib/skill-catalog";
 import type { JobSpec } from "@/lib/validations/hire";
 import type {
   EvidenceCoverage,
@@ -86,12 +87,56 @@ function containsWord(haystack: string, needle: string): boolean {
   return isBoundary(before) && isBoundary(after);
 }
 
+/**
+ * The parts of a compound skill — "AI/ML" → ai, ml; "Git & GitHub" → git,
+ * github — or none for a single skill.
+ *
+ * Compounds stay whole on the dossier (see `splitSkills`), so a two-letter part
+ * can no longer be reached by containment. Each part is a whole token in its own
+ * right, so it matches by equality: "ML" finds "AI/ML" and "C" finds "C/C++",
+ * while "C" still never matches inside "C++" or "react".
+ */
+function compoundParts(skill: string): string[] {
+  const parts = skill.split(/\s*\/\s*|\s+(?:and|&)\s+/i);
+  return parts.length > 1 ? parts.map(normToken).filter(Boolean) : [];
+}
+
+/** Letters and digits only: "Tailwind CSS", "TailwindCSS", "tailwind-css" collide. */
+function squashToken(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * The same skill under two spellings.
+ *
+ * `skill-catalog.ts` exists to fold how people actually type onto one name —
+ * "golang" → Go, "reactjs" → React, "k8s" → Kubernetes, "cpp" → C++ — and search
+ * ignored it: a "reactjs" requirement found none of the 17 searchable React
+ * candidates (QA-KI-009). Both sides now fold through the catalog.
+ *
+ * Squash equality covers spellings the catalog has not heard of ("Nest JS" /
+ * "NestJS"), but never for names whose symbols ARE the name: "C", "C++" and "C#"
+ * all squash to "c". Three characters is the floor for the same reason
+ * `containsWord` has one.
+ */
+function sameSkill(a: string, b: string): boolean {
+  if (canonicalSkillName(a).toLowerCase() === canonicalSkillName(b).toLowerCase()) {
+    return true;
+  }
+  if (/[+#]/.test(a) || /[+#]/.test(b)) return false;
+  const sa = squashToken(a);
+  return sa.length >= 3 && sa === squashToken(b);
+}
+
 function stackTokensMatch(have: string[], need: string): boolean {
   const n = normToken(need);
   if (!n) return true;
   return have.some((h) => {
     const x = normToken(h);
-    return x === n || containsWord(x, n) || containsWord(n, x);
+    if (x === n || containsWord(x, n) || containsWord(n, x)) return true;
+    const parts = compoundParts(h);
+    if (parts.includes(n)) return true;
+    return sameSkill(h, need) || parts.some((p) => sameSkill(p, need));
   });
 }
 
@@ -141,6 +186,40 @@ function effectiveBudget(spec: JobSpec): number | null {
 
 /** Recruiter-side sentinels that mean "no city", not a city with that name. */
 const ANY_CITY = /^(any|any city|anywhere)$/i;
+
+/**
+ * One spelling per city, for renames and misspellings that cannot mean anything
+ * else. Keyed by letters only.
+ *
+ * Scout itself rewrites "bangalore" to "Bengaluru", so a candidate who typed
+ * "Bangalore" was filtered out of every Bengaluru search (QA-KI-009). Regions are
+ * deliberately absent: "Delhi NCR" contains Noida, but a recruiter asking for
+ * Noida has not agreed to Gurugram, so NCR cities are never folded together.
+ */
+const CITY_ALIASES: Record<string, string> = {
+  bangalore: "bengaluru",
+  banglore: "bengaluru",
+  bangaluru: "bengaluru",
+  bengluru: "bengaluru",
+  blr: "bengaluru",
+  bombay: "mumbai",
+  newdelhi: "delhi",
+  gurgaon: "gurugram",
+  hydrabad: "hyderabad",
+  hyd: "hyderabad",
+  madras: "chennai",
+  calcutta: "kolkata",
+  poona: "pune",
+  mysore: "mysuru",
+  cochin: "kochi",
+  trivandrum: "thiruvananthapuram",
+  vizag: "visakhapatnam",
+};
+
+function cityKey(raw: string): string {
+  const letters = raw.toLowerCase().replace(/[^a-z]/g, "");
+  return CITY_ALIASES[letters] ?? normToken(raw);
+}
 
 /** The city to filter on, or null when the recruiter skipped the question. */
 function effectiveCity(spec: JobSpec): string | null {
@@ -367,13 +446,11 @@ export function evaluateHardFilters(
       !avail.openToRelocate &&
       avail.preferredCities.length > 0
     ) {
-      const city = normToken(wantedCity);
-      const hit = avail.preferredCities.some(
-        (c) =>
-          normToken(c) === city ||
-          normToken(c).includes(city) ||
-          city.includes(normToken(c)),
-      );
+      const city = cityKey(wantedCity);
+      const hit = avail.preferredCities.some((c) => {
+        const have = cityKey(c);
+        return have === city || have.includes(city) || city.includes(have);
+      });
       if (!hit) reasons.push("Location mismatch");
     }
   }

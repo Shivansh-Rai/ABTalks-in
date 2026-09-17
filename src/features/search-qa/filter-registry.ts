@@ -184,7 +184,7 @@ const mustHaveSkills: FilterDef = {
   },
   productQuestions: [
     "A requirement \"React\" also matches a candidate whose only skill is \"React Native\" (documented containment). Confirm that is intended.",
-    "Catalog aliases (golang → Go, k8s → Kubernetes) are not applied by search today.",
+    "Catalog aliases apply to compound parts too: a claim of \"AI/ML\" answers a \"Machine Learning\" requirement. Confirm that is intended.",
   ],
   apply: (spec, v) => ({ ...spec, mustHaveStack: asStrings(v) }),
   oracle: (c, v) => {
@@ -245,7 +245,6 @@ const mustHaveSkills: FilterDef = {
             return stale(
               "LOADER_SPLIT_SKILL",
               `claimed skill "${matched}" was split into ${pieces.join(" + ")} in the search document`,
-              "QA-KI-004",
             );
           }
           return stale(
@@ -259,7 +258,6 @@ const mustHaveSkills: FilterDef = {
           category: "NORMALIZATION_ERROR",
           cause: "SKILL_ALIAS_NOT_APPLIED",
           message: `requirement ${asString(v)} matches a claimed skill only through the skill catalog's aliases`,
-          knownIssue: "QA-KI-009",
         };
       }
       return {
@@ -430,7 +428,6 @@ const locationCity: FilterDef = {
         category: "NORMALIZATION_ERROR",
         cause: "CITY_ALIAS_NOT_APPLIED",
         message: `${c.preference?.preferredLocations.join(" / ")} is the same city as ${String(v)} after safe normalization`,
-        knownIssue: "QA-KI-009",
       };
     }
     if (!oracle.pass) {

@@ -28,18 +28,10 @@ export type KnownIssue = {
  * Fixed on 2026-09-16 and therefore removed from this registry (their tests are
  * now ordinary assertions): QA-KI-001 work-mode label/enum, QA-KI-002 zero-budget
  * sentinel, QA-KI-003 "Any" city sentinel, QA-KI-005 NULLS-FIRST education pick.
+ * Fixed 2026-09-17: QA-KI-004 compound / catalog skill names split apart,
+ * QA-KI-009 catalog skill aliases and city renames ignored by matching.
  */
 export const KNOWN_ISSUES = {
-  "QA-KI-004": {
-    id: "QA-KI-004",
-    category: "SEARCH_INDEX_STALE",
-    severity: "ERROR",
-    title: "splitSkills breaks canonical skill names containing / or &",
-    location: "src/features/hire/challenge-dossier.ts:105",
-    evidence:
-      "splitSkills was written for pasted legacy StudentProfile strings and is also applied to CandidateSkill names on the 078 read path. \"AI/ML\", \"UI/UX\", \"CI/CD\" become [\"AI\",\"ML\"] etc., and the two-letter pieces cannot match by containment, so a candidate who claimed \"UI/UX\" is not found by a \"UI/UX\" requirement.",
-    proposedFix: "Only split legacy free-text skills; keep catalog CandidateSkill names whole.",
-  },
   "QA-KI-006": {
     id: "QA-KI-006",
     category: "PAGINATION_ERROR",
@@ -69,16 +61,6 @@ export const KNOWN_ISSUES = {
     evidence:
       "Per-member coverage drops every evidence dimension for PROFILE candidates and reweights stack to ~83%, so a profile that merely lists React scores ~85 while a cohort member with passed missions, projects and interview who also lists React scores lower. Sorting is by score, not tier, so the unproven PARTIAL candidate is listed above the proven STRONG one.",
     proposedFix: "Rank by tier before score, or cap evidence-free scores below the evidence-backed band. Needs a ranking product decision.",
-  },
-  "QA-KI-009": {
-    id: "QA-KI-009",
-    category: "NORMALIZATION_ERROR",
-    severity: "WARNING",
-    title: "Skill and city matching ignore the catalog's own aliases",
-    location: "src/features/hire/score-candidate.ts:89",
-    evidence:
-      "stackTokensMatch compares literal names: \"golang\" does not find Go, \"reactjs\" does not find React.js, \"k8s\" does not find Kubernetes, although skill-catalog.ts lists those aliases. Location matching likewise misses Bangalore ↔ Bengaluru (Scout itself rewrites \"bangalore\" to \"Bengaluru\") and Gurgaon ↔ Gurugram.",
-    proposedFix: "Fold both sides through canonicalSkillName / a city alias map before matching.",
   },
   "QA-KI-010": {
     id: "QA-KI-010",

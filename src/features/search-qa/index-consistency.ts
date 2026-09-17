@@ -126,7 +126,6 @@ export function documentDrift(c: CanonicalCandidate, m: ScoreableMember): Docume
       cause: "LOADER_SPLIT_SKILL",
       canonical: destroyed.join(", "),
       document: destroyed.map((s) => splitPieces(s).join(" + ")).join(", "),
-      knownIssue: "QA-KI-004",
     });
   }
   if (rescued.length) {
