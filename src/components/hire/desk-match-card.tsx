@@ -8,7 +8,7 @@ import {
   Clock,
   GraduationCap,
   MapPin,
-  ShoppingCart,
+  UserCheck,
   UserRound,
   X,
 } from "lucide-react";
@@ -513,7 +513,7 @@ export function DeskMatchCard({
             {decision === "SHORTLISTED" ? (
               <X className="size-3.5" aria-hidden="true" />
             ) : (
-              <ShoppingCart
+              <UserCheck
                 size={14}
                 strokeWidth={2}
                 absoluteStrokeWidth

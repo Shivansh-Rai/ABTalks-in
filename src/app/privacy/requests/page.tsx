@@ -3,6 +3,8 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { DataRightsRequestForm } from "@/components/legal/data-rights-request-form";
 
+import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
+
 export const metadata: Metadata = {
   title: "Data rights request · ABTalks",
   description: "Request access, correction, or deletion of your ABTalks data",
@@ -14,19 +16,7 @@ export default async function PrivacyRequestsPage() {
 
   return (
     <div className="min-h-svh bg-background">
-      <div className="border-b border-border/60">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="font-display text-sm font-semibold text-foreground">
-            ABTalks
-          </Link>
-          <Link
-            href="/privacy"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Privacy Policy
-          </Link>
-        </div>
-      </div>
+      <EcosystemPageHeader />
       <div className="mx-auto max-w-lg space-y-6 px-5 py-12 md:px-8">
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-semibold tracking-tight">

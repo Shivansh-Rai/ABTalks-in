@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Bookmark, FolderKanban, Menu, UserCheck, X } from "lucide-react";
+import { Bookmark, FolderKanban, LayoutDashboard, Menu, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
 import { CreditBalancePill } from "@/components/hire/credit-balance-pill";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
@@ -310,10 +310,10 @@ export function HireChrome({
                     "hire-hbtn--landing-projects",
                     pathname.startsWith("/hire/projects") && "is-current",
                   )}
-                  title="Your past searches, grouped by project"
+                  title="Go to My Dashboard"
                 >
-                  <FolderKanban className="hire-hbtn__svg" aria-hidden="true" />
-                  <span>Search history</span>
+                  <LayoutDashboard className="hire-hbtn__svg" aria-hidden="true" />
+                  <span>Go to My Dashboard</span>
                 </Link>
               )}
               {/* T-249: recruiter needs a visible surface for the notifications

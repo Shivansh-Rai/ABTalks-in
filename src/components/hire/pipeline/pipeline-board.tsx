@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PipelineStage } from "@prisma/client";
+import { dsButtonVariants } from "@/components/design/ds-button";
+import { CLAY_CTA } from "@/components/jobs/job-ui";
+import { cn } from "@/lib/utils";
 import { PipelineCard } from "./pipeline-card";
 import { STAGE_EMPTY_HINT, STAGE_LABEL, STAGE_ORDER } from "./stage-labels";
 
@@ -129,14 +132,14 @@ export function PipelineBoard({ rows, companyName }: PipelineBoardProps) {
           Analytics had a 36px one. */}
       <header className="mb-8">
         {companyName && (
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#03535F]">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Company Workspace · {companyName}
           </p>
         )}
-        <h1 className="mt-1 font-outfit text-3xl font-bold tracking-tight text-[#18181b] md:text-4xl">
+        <h1 className="mt-1 font-heading text-3xl font-bold tracking-tight text-foreground">
           Hiring Pipeline
         </h1>
-        <p className="mt-2 text-sm text-[#71717a]">
+        <p className="mt-2 text-sm text-muted-foreground">
           {total === 0
             ? "No one in your pipeline yet. Add candidates from Scout or from a job's applicants."
             : `${total} candidate${total === 1 ? "" : "s"} across ${STAGE_ORDER.length} stages.`}
@@ -185,14 +188,14 @@ export function PipelineBoard({ rows, companyName }: PipelineBoardProps) {
              used to do. */
           <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
             <EmptyIllustration />
-            <p className="text-sm text-[#71717a]">{STAGE_EMPTY_HINT[selected]}</p>
+            <p className="text-sm text-muted-foreground">{STAGE_EMPTY_HINT[selected]}</p>
             {/* Only the first stage is something the recruiter can act on from
                 here — you cannot "add someone to Offer". The rest simply have
                 nobody in them yet. */}
             {selected === STAGE_ORDER[0] && (
               <Link
                 href="/hire"
-                className="rounded-lg bg-[#03535F] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#03535F]/90"
+                className={cn(dsButtonVariants({ size: "default" }), CLAY_CTA, "mt-1")}
               >
                 Start a search
               </Link>
