@@ -7,20 +7,20 @@ import { RecruiterOnboardingWizard } from "@/components/recruiter-onboarding/rec
 import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Create a recruiter account | ABTalks",
+  title: "Set up your recruiting workspace | Hire with ABTalks",
   description:
-    "Find top talent, manage your hiring pipeline, and connect with the right candidates, all from one recruiter dashboard.",
+    "Create your ABTalks recruiter workspace in a few short steps: your details, your company and who you're hiring.",
 };
 
 /**
- * Public. The onboarding wizard, opened at its first question rather than the
- * welcome — for links that promise "create an account".
+ * Public. The recruiter onboarding wizard — the same account rules as
+ * /talent/register (it calls the same two actions), spread over short steps.
  *
- * Same account rules as /talent/register — it calls the same two actions.
- * Recruiters are passwordless: the email is verified by a 6-digit code, and
- * the wizard signs them in with a second code before /hire.
+ * Deliberately NOT under /hire: that layout wraps every page in HireChrome,
+ * and the middleware's `/hire` prefix check would put anything named /hire-*
+ * behind a session. Same guards as /recruiter-onboarding/signup.
  */
-export default async function RecruiterSignupPage() {
+export default async function RecruiterOnboardingPage() {
   const session = await auth();
   if (session?.user?.id) {
     const state = await getRecruiterState(session.user.id);
@@ -31,5 +31,5 @@ export default async function RecruiterSignupPage() {
     return <RecruiterAuthClosed />;
   }
 
-  return <RecruiterOnboardingWizard initialScreen="identity" />;
+  return <RecruiterOnboardingWizard />;
 }
