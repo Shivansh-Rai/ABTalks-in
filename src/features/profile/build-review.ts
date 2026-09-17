@@ -290,7 +290,7 @@ export function buildProfileReview({
 
   /* ---- education ---- */
   const educationItems: ReviewItem[] = detail.education.map((e) => {
-    const head = join([e.degree, e.fieldOfStudy], " — ");
+    const head = join([e.degree, e.fieldOfStudy], "  ");
     const gradeLabel = e.gradeType
       ? (GRADE_TYPE_LABELS[e.gradeType] ?? e.gradeType)
       : null;
@@ -522,7 +522,7 @@ export function buildProfileReview({
       at("projects"),
       "Projects",
       "projects",
-      "Show what you have built — with links a recruiter can open.",
+      "Show what you have built.",
       projectItems.length > 0 ? [{ kind: "items", items: projectItems }] : [],
       { count: projectItems.length },
     ),
@@ -530,7 +530,7 @@ export function buildProfileReview({
       at("mock"),
       "Mock Interview",
       "summary",
-      "No mock interview yet — they are live AI interviews, and each one you finish keeps its own scored report.",
+      "You have not completed any mock interviews yet.",
       mockBlocks,
       { count: mockInterviewCount, noGap: true },
     ),
