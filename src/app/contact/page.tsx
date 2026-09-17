@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_ENTITY } from "@/lib/legal";
+import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
   title: "Contact · ABTalks",
@@ -80,24 +81,7 @@ function DetailTable({ rows }: { rows: Row[] }) {
 export default function ContactPage() {
   return (
     <div className="min-h-svh bg-background">
-      <div className="border-b border-border/60">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4 md:px-8">
-          <Link
-            href="/"
-            className="font-display text-sm font-semibold text-foreground"
-          >
-            ABTalks
-          </Link>
-          <div className="flex gap-4 text-sm text-muted-foreground">
-            <Link href="/terms" className="hover:text-foreground">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground">
-              Privacy
-            </Link>
-          </div>
-        </div>
-      </div>
+      <EcosystemPageHeader />
 
       <div className="mx-auto max-w-3xl px-5 py-10 md:px-8 md:py-14">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
