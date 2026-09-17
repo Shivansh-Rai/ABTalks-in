@@ -9,7 +9,6 @@ import type { JobSpec } from "@/lib/validations/hire";
 import {
   CHALLENGE_POOL_CAP,
   MIN_RESULTS,
-  RANK_WINDOW,
   searchCandidates,
 } from "@/features/hire/search-candidates";
 import { toPublicMatch } from "@/features/hire/to-public-match";
@@ -37,7 +36,6 @@ import type {
 export const RECRUITER_PAGE_LIMIT = 20;
 
 export const PIPELINE: PipelineConstants = {
-  rankWindow: RANK_WINDOW,
   minResults: MIN_RESULTS,
   defaultLimit: RECRUITER_PAGE_LIMIT,
 };
@@ -112,6 +110,7 @@ export type ServiceCall = {
   ok: boolean;
   refs: string[];
   scores: number[];
+  tiers: string[];
   tiebreak: string[];
   /** The browser payload (`toPublicMatch`) — only for the privacy scan. */
   publicJson: string;
@@ -123,11 +122,12 @@ export async function callSearchService(spec: JobSpec, limit = RECRUITER_PAGE_LI
   const t0 = performance.now();
   const res = await searchCandidates(spec, { limit });
   const ms = performance.now() - t0;
-  if (!res.ok) return { ok: false, refs: [], scores: [], tiebreak: [], publicJson: "[]", ms, message: res.message };
+  if (!res.ok) return { ok: false, refs: [], scores: [], tiers: [], tiebreak: [], publicJson: "[]", ms, message: res.message };
   return {
     ok: true,
     refs: res.data.matches.map((m) => m.candidateRef),
     scores: res.data.matches.map((m) => m.score),
+    tiers: res.data.matches.map((m) => m.tier),
     tiebreak: res.data.matches.map((m) => m.fullName || m.candidateRef),
     publicJson: JSON.stringify(res.data.matches.map((m) => toPublicMatch(m))),
     ms,

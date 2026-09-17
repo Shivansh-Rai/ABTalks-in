@@ -74,7 +74,6 @@ export type ExplainResult = {
     admitted: boolean;
     admittedRank: number | null;
     admittedOf: number;
-    inRankWindow: boolean;
     onPage: boolean;
     pageRank: number | null;
     pageSize: number;
@@ -199,9 +198,7 @@ export function explainFromPool(input: {
   } else if (pageIdx >= 0) {
     summary = `On the page at #${pageIdx + 1} of ${ev.page.length} (score ${scored?.score}, ${scored?.tier}).`;
   } else if (ev.admitted.has(input.userId)) {
-    summary = rankIdx >= input.constants.rankWindow
-      ? `Passes every filter but ranks #${rankIdx + 1} — outside the ${input.constants.rankWindow}-candidate rank window, so no page can show them.`
-      : `Passes every filter and ranks #${admittedIdx + 1} among ${admittedList.length} matches — beyond the ${ev.page.length}-result page (no pagination).`;
+    summary = `Passes every filter and ranks #${admittedIdx + 1} among ${admittedList.length} matches — beyond the ${ev.page.length}-result page (no pagination).`;
   } else {
     const reasons = [
       ...(scored?.hardFilterReasons ?? []),
@@ -237,7 +234,6 @@ export function explainFromPool(input: {
       admitted: ev.admitted.has(input.userId),
       admittedRank: admittedIdx >= 0 ? admittedIdx + 1 : null,
       admittedOf: admittedList.length,
-      inRankWindow: rankIdx >= 0 && rankIdx < input.constants.rankWindow,
       onPage: pageIdx >= 0,
       pageRank: pageIdx >= 0 ? pageIdx + 1 : null,
       pageSize: ev.page.length,

@@ -15,7 +15,7 @@ import {
 } from "@/features/search-qa/audit";
 import type { ExplainResult } from "@/features/search-qa/explain";
 import { FILTERS, type AppliedFilter } from "@/features/search-qa/filter-registry";
-import { KNOWN_ISSUES } from "@/features/search-qa/known-issues";
+import { openKnownIssues } from "@/features/search-qa/known-issues";
 import type { QaFinding } from "@/features/search-qa/types";
 
 export const metadata = { title: "Recruiter Search Health | Admin" };
@@ -390,17 +390,23 @@ export default async function SearchHealthPage({
       </Card>
 
       <Card title="Known recruiter-search issues">
-        <ul className="divide-y divide-[#E9E9E9]">
-          {Object.values(KNOWN_ISSUES).map((k) => (
-            <li key={k.id} className="py-2">
-              <p className="text-sm text-[#353535]">
-                <span className="font-mono text-xs text-[#B45309]">{k.id}</span> {k.title}{" "}
-                <span className="text-xs text-[#787878]">· {k.category} · {k.severity}</span>
-              </p>
-              <p className="text-xs text-[#787878]">{k.location} — {k.proposedFix}</p>
-            </li>
-          ))}
-        </ul>
+        {openKnownIssues().length === 0 ? (
+          <p className="text-sm text-[#787878]">
+            None open. Every confirmed issue so far is fixed and asserted by an ordinary regression test.
+          </p>
+        ) : (
+          <ul className="divide-y divide-[#E9E9E9]">
+            {openKnownIssues().map((k) => (
+              <li key={k.id} className="py-2">
+                <p className="text-sm text-[#353535]">
+                  <span className="font-mono text-xs text-[#B45309]">{k.id}</span> {k.title}{" "}
+                  <span className="text-xs text-[#787878]">· {k.category} · {k.severity}</span>
+                </p>
+                <p className="text-xs text-[#787878]">{k.location} — {k.proposedFix}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
     </div>
   );

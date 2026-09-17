@@ -18,8 +18,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { jobSpecSchema, type JobSpec } from "@/lib/validations/hire";
-import { CHALLENGE_POOL_CAP, MIN_RESULTS, RANK_WINDOW } from "@/features/hire/search-candidates";
+import { CHALLENGE_POOL_CAP, MIN_RESULTS } from "@/features/hire/search-candidates";
+import { __test as scoreInternals, selectSearchResults } from "@/features/hire/score-candidate";
 import { extractPoolBrief } from "@/features/hire/pool-brief";
+import { decodeCandidateRef } from "@/features/hire/candidate-ref";
+import { savedMatchRef } from "@/features/hire/load-request-matches";
 import { splitSkills } from "@/features/hire/challenge-dossier";
 import type { ScoreableMember } from "@/features/hire/types";
 import {
@@ -27,6 +30,7 @@ import {
   type DiscoverabilityFacts,
 } from "@/features/admin/candidate-discoverability";
 import {
+  cohortIsOpen,
   eligibility,
   expectedTracks,
   gateReasons,
@@ -96,7 +100,12 @@ function check(name: string, fn: () => void): void {
   }
 }
 
-/** Strict expected failure: reproducing is XFAIL, not reproducing is a FAIL. */
+/**
+ * Strict expected failure: reproducing is XFAIL, not reproducing is a FAIL.
+ * Unused while the registry is empty — kept so the next confirmed bug is pinned
+ * the same way (see known-issues.ts).
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function knownBug(id: KnownIssueId, name: string, fn: () => void): void {
   pinnedSeen.add(id);
   try {
@@ -114,7 +123,7 @@ function section(title: string): void {
   console.log(`\n${title}`);
 }
 
-const K: PipelineConstants = { rankWindow: RANK_WINDOW, minResults: MIN_RESULTS, defaultLimit: 20 };
+const K: PipelineConstants = { minResults: MIN_RESULTS, defaultLimit: 20 };
 const POOL = buildGoldenPool(GOLDEN_FIXTURES);
 const POP = goldenPopulation(false);
 
@@ -142,7 +151,7 @@ function has(ev: ReturnType<typeof search>, code: string): boolean {
 
 console.log("recruiter search QA — offline suite");
 console.log(
-  `pipeline: rank window ${RANK_WINDOW}, min results ${MIN_RESULTS}, pool cap ${CHALLENGE_POOL_CAP}; golden candidates ${GOLDEN_FIXTURES.length} (+${FAULT_FIXTURES.length} fault injections)`,
+  `pipeline: full-pool ranking, min results ${MIN_RESULTS}, pool cap ${CHALLENGE_POOL_CAP}; golden candidates ${GOLDEN_FIXTURES.length} (+${FAULT_FIXTURES.length} fault injections)`,
 );
 
 /* ── normalization ───────────────────────────────────────────────────────── */
@@ -268,6 +277,29 @@ check("catalog aliases: golang → Go, k8s → Kubernetes, nextjs → Next.js, c
   assert(has(search([skill("cpp")]), "QA006"), "cpp should find QA006 (C++)");
   assert(!has(search([skill("cpp")]), "QA052"), "cpp must not find QA052 (C)");
   assert(!has(search([skill("js")]), "QA050"), "js (JavaScript) must not find QA050 (Java)");
+});
+
+check("spelling variants that never change the skill: & / and, plurals — with guarded plural folding", () => {
+  const m = scoreInternals.stackTokensMatch;
+  const yes: [string, string][] = [
+    ["Data Structures & Algorithms", "Data structures and algorithm"],
+    ["Data Structures and Algorithms", "Data Structures & Algorithms"],
+    ["Data structure", "data structures"],
+    ["Pandas", "panda"],
+    ["Kubernetes", "Kubernete"],
+    ["NestJS", "Nest JS"],
+  ];
+  const no: [string, string][] = [
+    ["C", "C++"],
+    ["C++", "C#"],
+    ["Java", "JavaScript"],
+    ["Express", "Expres"],
+    ["Status", "Statu"],
+    ["Analysis", "Analysi"],
+    ["NestJS", "Nest J"],
+  ];
+  for (const [have, need] of yes) assert(m([have], need), `${have} should match ${need}`);
+  for (const [have, need] of no) assert(!m([have], need), `${have} must not match ${need}`);
 });
 
 check("a compound part answers through the catalog: AI/ML is found by Machine Learning", () => {
@@ -450,7 +482,7 @@ check("STRONG tier is unreachable without verified work", () => {
   assert(ev.byUser.get(uid("QA035"))!.tier === "STRONG", `cohort graduate is STRONG (got ${ev.byUser.get(uid("QA035"))!.tier})`);
 });
 
-knownBug("QA-KI-008", "evidence-backed cohort graduate (B) ranks above a declared-skills-only profile (A)", () => {
+check("evidence-backed cohort graduate (B) ranks above a declared-skills-only profile (A)", () => {
   const ev = search([skill("React")]);
   const pos = (code: string) => ev.ranked.findIndex((r) => r.userId === uid(code));
   const a = ev.byUser.get(uid("QA040"))!;
@@ -535,7 +567,8 @@ function challengeMember(i: number, skills: string[], submissions: number, strea
 const WINDOW_POOL: PoolSnapshot = {
   key: "window",
   members: [
-    ...Array.from({ length: RANK_WINDOW + 10 }, (_, i) => challengeMember(i, ["Python"], 60, 60)),
+    // 110 strong non-matching candidates: more than the 100-card window search used to cut at.
+    ...Array.from({ length: 110 }, (_, i) => challengeMember(i, ["Python"], 60, 60)),
     ...Array.from({ length: 3 }, (_, i) => challengeMember(1000 + i, ["React"], 10, 1)),
   ],
   coverage: { dimensions: { stack: true, experience: true, missions: true, consistency: true, cleanPass: false, projects: false, interview: false }, note: "" },
@@ -543,27 +576,45 @@ const WINDOW_POOL: PoolSnapshot = {
   duplicateUserIds: [],
 };
 
-check("rank-window loss is detected and named by the engine", () => {
-  const ev = evaluateSpec(WINDOW_POOL, specFor([skill("React")]), K);
-  assert(ev.admitted.size === 3, `3 React candidates admitted, got ${ev.admitted.size}`);
-  assert(ev.pageWithoutWindow.length === 3, "without the window all three would be shown");
+check("matching candidates outranked by 100+ non-matching ones still reach the page", () => {
+  const selection = selectSearchResults(WINDOW_POOL.members, specFor([skill("React")]), {
+    coverage: WINDOW_POOL.coverage,
+    limit: 20,
+    minResults: MIN_RESULTS,
+  });
+  assert(selection.matches.length === 3, `recruiter sees ${selection.matches.length} of 3 React candidates`);
+  assert(selection.ranked.length === WINDOW_POOL.members.length, "the whole pool is ranked, not a window");
 });
 
-knownBug("QA-KI-006", "matching candidates outranked by 100+ non-matching ones still reach the page", () => {
-  const ev = evaluateSpec(WINDOW_POOL, specFor([skill("React")]), K);
-  assert(ev.page.length === 3, `recruiter sees ${ev.page.length} of 3 React candidates`);
+check("searchCandidates selects from the whole ranked pool (no rank window can come back unnoticed)", () => {
+  const src = readFileSync(join(process.cwd(), "src/features/hire/search-candidates.ts"), "utf8");
+  assert(/selectSearchResults\(/.test(src), "searchCandidates must delegate to selectSearchResults");
+  assert(!/rankCandidates\(/.test(src), "searchCandidates must not rank (and truncate) on its own");
+});
+
+check("gap report keeps non-cohort candidates (near misses keyed by candidateRef)", () => {
+  const selection = selectSearchResults(WINDOW_POOL.members, specFor([skill("React")]), {
+    coverage: WINDOW_POOL.coverage,
+    limit: 20,
+    minResults: MIN_RESULTS,
+  });
+  assert(selection.nearMisses.length > 0, "non-matching challenge candidates must reach the gap report");
+  assert(selection.nearMisses.every((n) => !selection.matches.some((m) => m.candidateRef === n.candidateRef)), "a shown card is never a near miss");
 });
 
 /* ── sort ────────────────────────────────────────────────────────────────── */
 
-section("sort (one order: score desc, then name / ref asc)");
+section("sort (one order: tier, then score desc, then name / ref asc)");
 
-check("every ranking is score-descending with a stable tiebreak, and the page keeps rank order", () => {
+check("every ranking is tier-first, score-descending with a stable tiebreak, and the page keeps rank order", () => {
+  const tierRank = { STRONG: 0, PARTIAL: 1, NONE: 2 } as const;
   for (const spec of [specFor([]), specFor([skill("React")]), specFor([skill("Python"), f("experience", ["2", "5"])])]) {
     const ev = evaluateSpec(POOL, spec, K);
     for (let i = 1; i < ev.ranked.length; i++) {
       const a = ev.ranked[i - 1]!;
       const b = ev.ranked[i]!;
+      assert(tierRank[a.tier] <= tierRank[b.tier], `tier order broken at ${i}`);
+      if (a.tier !== b.tier) continue;
       assert(a.score >= b.score, `score order broken at ${i}`);
       if (a.score === b.score) {
         assert((a.fullName || a.candidateRef).localeCompare(b.fullName || b.candidateRef) <= 0, `tiebreak broken at ${i}`);
@@ -674,17 +725,12 @@ check("cohort member with no canonical skills matched on application skills → 
   assert(r.status !== "FAIL", `a data-explained case must not FAIL (got ${r.status})`);
 });
 
-check("known-issue failures classify under their pinned issue", () => {
-  const { result } = runCase(
-    { id: "ki-classify", kind: "SINGLE", filters: [skill("React")], tracks: [], minEvidenceDays: 0, criticality: "CORE" },
-    WINDOW_POOL,
-    [],
-    GOLDEN_ENV,
-    GOLDEN_COHORTS,
-    K,
-  );
-  const hit = result.findings.find((x) => x.detail?.cause === "RANK_WINDOW");
-  assert(hit?.knownIssue === "QA-KI-006" && hit.category === "PAGINATION_ERROR", JSON.stringify(hit));
+check("readiness: a pinned (known) failure is still NOT READY; a data finding is only a warning", () => {
+  const pinned = readinessOf([{ category: "SEARCH_FILTER_ERROR", severity: "ERROR", searchVerdict: "FAIL", check: "x", affected: 1, userIds: ["u1"], message: "m", knownIssue: "QA-KI-000" }]);
+  assert(pinned.readiness === "NOT_READY", `pinned failure → ${pinned.readiness}`);
+  const data = readinessOf([{ category: "DATA_QUALITY_ERROR", severity: "WARNING", searchVerdict: "PASS", check: "x", affected: 1, userIds: ["u1"], message: "m" }]);
+  assert(data.readiness === "READY_WITH_WARNINGS", `data finding → ${data.readiness}`);
+  assert(readinessOf([]).readiness === "READY", "no findings → READY");
 });
 
 check("withdrawn-but-evidenced skill match is a product decision, not a failure", () => {
@@ -828,19 +874,39 @@ check("case-insensitive extraction of the supported stack words", () => {
   assert(!extractPoolBrief("javascript engineer").mustHaveStack.includes("java"), "javascript ≠ java");
 });
 
-knownBug("QA-KI-010", "\"need a c++ developer\" extracts c++", () => {
-  const stack = extractPoolBrief("need a c++ developer").mustHaveStack;
-  assert(stack.includes("c++"), `got [${stack.join(", ")}]`);
+check("symbol-bearing stack words parse at every position (c++)", () => {
+  for (const text of ["need a c++ developer", "c++", "C++ and python", "strong in c++."]) {
+    const stack = extractPoolBrief(text).mustHaveStack;
+    assert(stack.includes("c++"), `"${text}" → [${stack.join(", ")}]`);
+  }
+  assert(!extractPoolBrief("javascript and postgresql").mustHaveStack.some((t) => t === "java" || t === "sql"), "java/sql never parsed out of longer words");
+  assert(extractPoolBrief("golang backend").mustHaveStack.includes("golang"), "golang");
+  assert(!extractPoolBrief("golang backend").mustHaveStack.includes("go"), "go not parsed out of golang");
 });
 
 /* ── persisted results (saved match lists) ───────────────────────────────── */
 
 section("persisted results");
 
-knownBug("QA-KI-007", "saved PROFILE matches keep a PROFILE ref (source scan of loadRequestMatches)", () => {
+check("saved matches keep the ref the live search gave them, PROFILE included", () => {
+  const expect: [string, string | null, string, string][] = [
+    ["PROFILE", null, "u1", "PROFILE:u1"],
+    ["PROGRAM", "pm1", "u1", "PROGRAM:pm1"],
+    ["CLAUDE", null, "u1", "CLAUDE:u1"],
+    ["CHALLENGE_60", null, "u1", "CHALLENGE_60:u1"],
+    ["HACKATHON", null, "u1", "HACKATHON:u1"],
+  ];
+  for (const [stored, member, user, want] of expect) {
+    const { source, candidateRef } = savedMatchRef(stored, member, user);
+    assert(candidateRef === want && source === stored, `${stored} → ${candidateRef}`);
+    assert(decodeCandidateRef(candidateRef)?.source === stored, `${candidateRef} must decode to ${stored}`);
+  }
+  assert(savedMatchRef("NOT_A_TRACK", null, "u1").candidateRef === "PROFILE:u1", "unknown source falls back to PROFILE");
+});
+
+check("saved match lists order like live search, with a deterministic tiebreak", () => {
   const src = readFileSync(join(process.cwd(), "src/features/hire/load-request-matches.ts"), "utf8");
-  const block = src.slice(src.indexOf("candidateRef: encodeCandidateRef("), src.indexOf("programMemberId: m.programMemberId"));
-  assert(/PROFILE|isKnownTrack|findTrack/.test(block), "any source outside the four legacy slugs is rewritten to CLAUDE");
+  assert(/orderBy:\s*\[\s*\{ tier: "asc" \},\s*\{ score: "desc" \},\s*\{ firstSeenAt: "asc" \},\s*\{ candidateUserId: "asc" \}/.test(src), "matches orderBy must be tier, score, firstSeenAt, candidateUserId");
 });
 
 /* ── admin discoverability panel vs the loaders ───────────────────────────── */
@@ -879,32 +945,36 @@ function discoverabilityFacts(c: CanonicalCandidate): DiscoverabilityFacts {
     inProfilePool: gatePass && hasUsableProfile(c),
     profilePoolAhead: 0,
     profilePoolCap: CHALLENGE_POOL_CAP,
+    // What get-candidate-discoverability.ts now probes: only memberships the
+    // loaders carry. The live audit checks the real loader against the oracle.
     tracks: {
-      challengeWithSubmissions: c.memberships.challenge.filter((e) => e.submissions > 0).length,
-      programMemberships: c.memberships.program.length,
+      challengeWithSubmissions: GOLDEN_ENV.challengePool.enabled
+        ? c.memberships.challenge.filter((e) => e.submissions >= GOLDEN_ENV.challengePool.minDays).length
+        : 0,
+      programMemberships: c.memberships.program.filter(
+        (m) => (m.status === "ENROLLED" || m.status === "COMPLETED") && cohortIsOpen(GOLDEN_COHORTS.get(m.cohortId), GOLDEN_ENV),
+      ).length,
       hackathonWithSubmission: c.memberships.hackathonWithSubmission ? 1 : 0,
     },
   };
 }
 
-check("the panel's verdict matches the loaders for every fixture the two rule sets agree on", () => {
-  // Excludes the fixtures pinned below, so a NEW disagreement still fails CI.
-  const pinned = new Set(["QA061"]);
-  const wrong = GOLDEN_FIXTURES.filter((fx) => !pinned.has(fx.code)).filter(
+check("the panel's verdict matches the loaders for every golden candidate", () => {
+  const wrong = GOLDEN_FIXTURES.filter(
     (fx) => evaluateDiscoverability(discoverabilityFacts(fx.canonical)).appears !==
       eligibility(fx.canonical, GOLDEN_ENV, GOLDEN_COHORTS).eligible,
   );
   assert(wrong.length === 0, `panel disagrees on ${wrong.map((fx) => fx.code).join(", ")}`);
 });
 
-knownBug("QA-KI-011", "a sub-floor challenge participant with no usable profile is not reported as appearing", () => {
+check("a sub-floor challenge participant with no usable profile is not reported as appearing", () => {
   const c = goldenFixture("QA061").canonical;
   assert(!eligibility(c, GOLDEN_ENV, GOLDEN_COHORTS).eligible, "oracle: no loader returns QA061");
   const panel = evaluateDiscoverability(discoverabilityFacts(c));
   assert(!panel.appears, `panel verdict: "${panel.verdict}"`);
 });
 
-knownBug("QA-KI-011", "the panel never names a track the loaders do not load (closed cohort, sub-floor challenge)", () => {
+check("the panel never names a track the loaders do not load (closed cohort, sub-floor challenge)", () => {
   for (const code of ["QA036", "QA037"]) {
     const c = goldenFixture(code).canonical;
     const detail = evaluateDiscoverability(discoverabilityFacts(c)).checks.find((x) => x.id === "track-pools")?.detail ?? "";

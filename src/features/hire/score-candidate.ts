@@ -125,7 +125,27 @@ function sameSkill(a: string, b: string): boolean {
   }
   if (/[+#]/.test(a) || /[+#]/.test(b)) return false;
   const sa = squashToken(a);
-  return sa.length >= 3 && sa === squashToken(b);
+  if (sa.length >= 3 && sa === squashToken(b)) return true;
+  const ka = spellingKey(a);
+  return ka.length >= 3 && ka === spellingKey(b);
+}
+
+/**
+ * Two spelling differences that never change the skill: "&" for "and", and a
+ * plural. "Data Structures and Algorithms", "Data structures & Algorithm" and
+ * "DSA" (a catalog alias) are one skill.
+ *
+ * The plural fold is deliberately narrow: only a word of five or more letters,
+ * and never an "s" after s / j / u / i, so "NestJS", "Express", "Status" and
+ * "Analysis" keep their final letter.
+ */
+function spellingKey(raw: string): string {
+  return squashToken(
+    canonicalSkillName(raw)
+      .toLowerCase()
+      .replace(/\s*&\s*/g, " and ")
+      .replace(/\b([a-z]{3,}[^\W\dsjui])s\b/g, "$1"),
+  );
 }
 
 function stackTokensMatch(have: string[], need: string): boolean {
@@ -669,6 +689,9 @@ function toEvidence(member: ScoreableMember) {
 }
 
 /** Rank non-hard-filtered candidates; optionally include near-miss for gap analysis. */
+/** Listing order of tiers: proven work first. */
+const TIER_ORDER: Record<MatchTier, number> = { STRONG: 0, PARTIAL: 1, NONE: 2 };
+
 export function rankCandidates(
   members: ScoreableMember[],
   spec: JobSpec,
@@ -682,11 +705,20 @@ export function rankCandidates(
   const list = opts?.includeHardFiltered
     ? scored
     : scored.filter((s) => !s.hardFiltered);
+  // Tier first, then score. The score is a fair reading of the evidence each
+  // track can produce, but it is not comparable ACROSS tracks: a profile with
+  // nothing but a typed skill list has every evidence dimension dropped and its
+  // stack weight rescaled to ~83%, so "lists React" scored 85 while a cohort
+  // graduate with 22 passed missions and three graded projects scored 81 — and
+  // was listed below it (QA-KI-008). STRONG is the claim about proven work, so
+  // proven work is listed first; within a tier the score decides.
+  //
   // Name is the tiebreak where there is one. Candidates outside the program
   // carry no name by design, so their ties fall back to the handle — arbitrary,
   // but stable, which is what a tiebreak is for.
   list.sort(
     (a, b) =>
+      TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
       b.score - a.score ||
       (a.fullName || a.candidateRef).localeCompare(
         b.fullName || b.candidateRef,
@@ -728,6 +760,64 @@ export function pickSearchMatches(
       ? primary
       : [...primary, ...shown.filter((r) => r.tier === "NONE")];
   return padded.slice(0, limit);
+}
+
+export type SearchSelection = {
+  /** Every loaded candidate, hard-filtered ones included, in listing order. */
+  ranked: ScoredCandidate[];
+  /** The result cards. */
+  matches: ScoredCandidate[];
+  /** Up to ten people who were not shown, for the gap report only. */
+  nearMisses: ScoredCandidate[];
+};
+
+/**
+ * Everything a search returns, chosen from the WHOLE ranked pool.
+ *
+ * `searchCandidates` used to rank, cut the list to the top 100, and only then
+ * apply hard filters and required skills. When a hundred people who did not
+ * have the required skill outscored the ones who did, the matching candidates
+ * were cut before anyone checked — a recruiter saw zero cards while matches
+ * existed (QA-KI-006). Scoring already touched every candidate, so ranking all
+ * of them costs one sort, not a query.
+ *
+ * Pure, and the single implementation: the search and the search-QA probe both
+ * call it, so the audit measures exactly what recruiters get.
+ */
+export function selectSearchResults(
+  members: ScoreableMember[],
+  spec: JobSpec,
+  opts: {
+    coverage?: EvidenceCoverage;
+    hardCap?: number | null;
+    limit: number;
+    minResults: number;
+  },
+): SearchSelection {
+  const ranked = rankCandidates(members, spec, {
+    includeHardFiltered: true,
+    limit: Number.MAX_SAFE_INTEGER,
+    coverage: opts.coverage,
+  });
+  const matches = pickSearchMatches(ranked, spec, {
+    hardCap: opts.hardCap,
+    limit: opts.limit,
+    minResults: opts.minResults,
+  });
+  // Keyed by candidateRef. It was programMemberId, which is null for every
+  // challenge, hackathon and profile candidate — so `has(null)` excluded all of
+  // them from the gap report the moment one of them was shown.
+  const shown = new Set(matches.map((m) => m.candidateRef));
+  const nearMisses = ranked
+    .filter(
+      (r) =>
+        !shown.has(r.candidateRef) &&
+        (r.hardFiltered ||
+          r.tier === "NONE" ||
+          (r.tier === "PARTIAL" && r.gaps.length > 0)),
+    )
+    .slice(0, 10);
+  return { ranked, matches, nearMisses };
 }
 
 // ─── Pure helpers exported for unit tests (no DB) ───────────────────────────

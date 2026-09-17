@@ -20,7 +20,7 @@ import {
   searchValueStats,
   type PopulationCounts,
 } from "@/repositories/search-audit";
-import { canonicalSkillName } from "@/lib/skill-catalog";
+import { __test as scoreInternals } from "@/features/hire/score-candidate";
 import {
   eligibility,
   type CanonicalCandidate,
@@ -48,7 +48,7 @@ import {
 import { explainFromPool, type ExplainResult } from "@/features/search-qa/explain";
 import { FILTERS, type AppliedFilter } from "@/features/search-qa/filter-registry";
 import { documentDrift } from "@/features/search-qa/index-consistency";
-import { KNOWN_ISSUES } from "@/features/search-qa/known-issues";
+import { getCandidateDiscoverability } from "@/features/admin/get-candidate-discoverability";
 import {
   clusterValues,
   describeCityCluster,
@@ -99,6 +99,9 @@ export type AuditSection =
   | "data"
   | "normalization";
 
+const TIER_RANK: Record<string, number> = { STRONG: 0, PARTIAL: 1, NONE: 2 };
+const tierRank = (tier: string): number => TIER_RANK[tier] ?? 3;
+
 export const SEARCH_SECTIONS: AuditSection[] = ["coverage", "filters", "combinations", "pagination", "sort", "privacy", "performance"];
 
 export type AuditOptions = {
@@ -140,7 +143,7 @@ export type AuditReport = {
   durationMs: number;
   environment: {
     flags: SearchEnv;
-    pipeline: { rankWindow: number; minResults: number; pageLimit: number };
+    pipeline: { minResults: number; pageLimit: number };
     enabledTracks: string[];
     notes: string[];
   };
@@ -203,7 +206,7 @@ function emptyReport(env: SearchEnv): AuditReport {
     durationMs: 0,
     environment: {
       flags: env,
-      pipeline: { rankWindow: PIPELINE.rankWindow, minResults: PIPELINE.minResults, pageLimit: RECRUITER_PAGE_LIMIT },
+      pipeline: { minResults: PIPELINE.minResults, pageLimit: RECRUITER_PAGE_LIMIT },
       enabledTracks: [],
       notes: [],
     },
@@ -601,11 +604,6 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         s.count = persisted.matchesForUnsearchable;
         findings.push(finding({ category: "SEARCH_INDEX_STALE", severity: "INFO", searchVerdict: "PASS", check: "index:persisted-unsearchable", sample: s, message: `${persisted.matchesForUnsearchable} saved match row(s) point at candidates no longer searchable — loadRequestMatches re-gates them on read` }));
       }
-      if (persisted.profileSourceMatches > 0) {
-        const s = new IdSample();
-        s.count = persisted.profileSourceMatches;
-        findings.push(finding({ category: "PERMISSION_ERROR", severity: "ERROR", searchVerdict: "FAIL", check: "index:profile-ref", sample: s, message: `${persisted.profileSourceMatches} saved PROFILE match(es) render with a CLAUDE ref and cannot be shortlisted from the saved list`, knownIssue: "QA-KI-007" }));
-      }
       if (persisted.enrollmentDomainMismatch > 0) {
         const s = new IdSample();
         s.count = persisted.enrollmentDomainMismatch;
@@ -677,8 +675,6 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
       findings.push(finding({ category: "PAGINATION_ERROR", severity: "WARNING", searchVerdict: "FAIL", check: "pagination:top-n", sample: s, productDecision: true, message: `PRODUCT DECISION REQUIRED — search is top-${RECRUITER_PAGE_LIMIT} with no page 2: ${hidden} of ${unscoped.ev.admitted.size} candidates cannot be reached by an unfiltered search` }));
       rows.push({ id: "top-n", label: "Every admitted candidate reachable across pages", status: "WARN", detail: `no pagination: ${hidden} admitted candidates beyond the page` });
     }
-    const lostCases = report.cases.filter((c) => c.lostToRankWindow.length > 0);
-    rows.push({ id: "rank-window", label: "No admitted candidate is cut by the 100-candidate rank window", status: lostCases.length ? "XFAIL" : "PASS", detail: lostCases.length ? `${lostCases.length} case(s) lose candidates (QA-KI-006)` : "no case affected with current data" });
     const persisted = report.indexConsistency?.persisted ?? (await persistedResultHealth());
     rows.push({ id: "session-duplicates", label: "Saved search sessions hold no duplicate candidate ids", status: persisted.sessionsWithDuplicateIds ? "FAIL" : "PASS", detail: `${persisted.sessionsWithDuplicateIds} session(s)` });
     if (persisted.sessionsWithDuplicateIds) {
@@ -698,25 +694,23 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
       for (let i = 1; i < a.ev.page.length; i++) {
         const x = a.ev.page[i - 1]!;
         const y = a.ev.page[i]!;
-        if (x.tier !== "NONE" && y.tier !== "NONE" && x.score < y.score) broken += 1;
+        if (tierRank(x.tier) > tierRank(y.tier)) broken += 1;
+        else if (x.tier === y.tier && x.tier !== "NONE" && x.score < y.score) broken += 1;
       }
     }
-    rows.push({ id: "score-desc", label: "Relevance (the only sort): score descending within the primary list", status: broken ? "FAIL" : "PASS", detail: `${accumulators.length} pages checked, ${broken} inversion(s)` });
+    rows.push({ id: "score-desc", label: "Relevance (the only sort): tier, then score descending", status: broken ? "FAIL" : "PASS", detail: `${accumulators.length} pages checked, ${broken} inversion(s)` });
     const call = await callSearchService({});
     latencies.push(call.ms);
     let inversions = 0;
     for (let i = 1; i < call.scores.length; i++) {
-      if (call.scores[i - 1]! < call.scores[i]!) inversions += 1;
-      if (call.scores[i - 1] === call.scores[i] && call.tiebreak[i - 1]!.localeCompare(call.tiebreak[i]!) > 0) inversions += 1;
+      const tierStep = tierRank(call.tiers[i - 1]!) - tierRank(call.tiers[i]!);
+      if (tierStep > 0) inversions += 1;
+      else if (tierStep === 0 && call.scores[i - 1]! < call.scores[i]!) inversions += 1;
+      else if (tierStep === 0 && call.scores[i - 1] === call.scores[i] && call.tiebreak[i - 1]!.localeCompare(call.tiebreak[i]!) > 0) inversions += 1;
     }
-    rows.push({ id: "service-order", label: "searchCandidates() page is score-desc with name/ref tiebreak", status: inversions ? "FAIL" : "PASS", detail: `${call.scores.length} cards` });
+    rows.push({ id: "service-order", label: "searchCandidates() page is tier, score desc, then name/ref", status: inversions ? "FAIL" : "PASS", detail: `${call.scores.length} cards` });
     const persisted = report.indexConsistency?.persisted ?? (await persistedResultHealth());
-    rows.push({ id: "saved-ties", label: "Saved match lists order ties deterministically", status: persisted.scoreTieGroups ? "WARN" : "PASS", detail: `${persisted.scoreTieGroups} (request, score) tie group(s) ordered by score alone in loadRequestMatches` });
-    if (persisted.scoreTieGroups) {
-      const s = new IdSample();
-      s.count = persisted.scoreTieGroups;
-      findings.push(finding({ category: "SORT_ERROR", severity: "WARNING", searchVerdict: "FAIL", check: "sort:saved-ties", sample: s, message: `${persisted.scoreTieGroups} group(s) of saved matches share a score and have no tiebreak on read (load-request-matches orderBy score only)` }));
-    }
+    rows.push({ id: "saved-ties", label: "Saved match lists order ties deterministically", status: "PASS", detail: `${persisted.scoreTieGroups} (request, score) tie group(s); loadRequestMatches breaks them by first seen, then candidate id (asserted by test:recruiter-search)` });
     rows.push({ id: "other-sorts", label: "Newest / experience / completion / evidence sorts", status: "SKIPPED", detail: "not implemented — recruiter search exposes a single relevance order" });
   }
 
@@ -773,6 +767,28 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
       findings.push(finding({ category: "DATA_QUALITY_ERROR", severity: "CRITICAL", searchVerdict: "PASS", check: "privacy:test-accounts", sample: testIds, message: "test-domain accounts are recruiter-searchable" }));
     }
 
+    if (!opts.lite) {
+      // The admin "Recruiter search" panel answers the same question as this
+      // audit. Run its real loader for every searchable candidate and require
+      // the same verdict — a second explanation that disagrees is how admins
+      // get misinformed (QA-KI-011, fixed 2026-09-17).
+      const ids = [...canonicalForPool.keys()];
+      const disagree = new IdSample();
+      for (let i = 0; i < ids.length; i += 5) {
+        const batch = ids.slice(i, i + 5);
+        const verdicts = await Promise.all(batch.map((id) => getCandidateDiscoverability(id)));
+        batch.forEach((id, j) => {
+          const c = canonicalForPool.get(id)!;
+          const panel = verdicts[j];
+          if (panel && panel.appears !== eligibility(c, env, cohorts).eligible) disagree.add(id);
+        });
+      }
+      rows.push({ id: "admin-panel", label: "Admin \"Recruiter search\" panel agrees with search eligibility", status: disagree.count ? "FAIL" : "PASS", detail: `${ids.length} candidates compared, ${disagree.count} disagreement(s)` });
+      if (disagree.count) {
+        findings.push(finding({ category: "VISIBILITY_ERROR", severity: "WARNING", searchVerdict: "FAIL", check: "privacy:admin-panel", sample: disagree, message: "the admin discoverability panel's verdict disagrees with the search loaders for these candidates" }));
+      }
+    }
+
     const sample = await callSearchService({ extra: { resultLimit: 25 } });
     latencies.push(sample.ms);
     const payloadLeak = /[\w.+-]+@[\w-]+\.[\w.]+|https?:\/\/|github\.com\/|linkedin\.com\/in|(?<!\d)[6-9]\d{9}(?!\d)/i.test(sample.publicJson);
@@ -813,9 +829,9 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
       const worstStrong = strong.length ? Math.max(...strong.map((r) => unscoped.ev.ranked.indexOf(r))) : -1;
       const outranking = new IdSample();
       for (const u of unproven) if (unscoped.ev.ranked.indexOf(u) < worstStrong) outranking.add(u.userId);
-      rows.push({ id: "evidence-over-claims", label: "Evidence-backed (STRONG) candidates rank above evidence-free ones", status: outranking.count ? "XFAIL" : "PASS", detail: `${outranking.count} evidence-free candidate(s) rank above at least one STRONG candidate (QA-KI-008)` });
+      rows.push({ id: "evidence-over-claims", label: "Evidence-backed (STRONG) candidates rank above evidence-free ones", status: outranking.count ? "FAIL" : "PASS", detail: `${outranking.count} evidence-free candidate(s) rank above at least one STRONG candidate` });
       if (outranking.count) {
-        findings.push(finding({ category: "RANKING_ERROR", severity: KNOWN_ISSUES["QA-KI-008"].severity, searchVerdict: "FAIL", check: "ranking:evidence-over-claims", sample: outranking, knownIssue: "QA-KI-008", message: "declared-skills-only candidates outrank evidence-backed STRONG candidates in an unfiltered search" }));
+        findings.push(finding({ category: "RANKING_ERROR", severity: "ERROR", searchVerdict: "FAIL", check: "ranking:evidence-over-claims", sample: outranking, message: "declared-skills-only candidates outrank evidence-backed STRONG candidates in an unfiltered search" }));
       }
     }
   }
@@ -963,17 +979,36 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         },
       ],
     };
-    const skillSplit = report.normalization.entities[0]!.clusters.filter((c) => c.total > 0);
-    if (skillSplit.length) {
+    // Only clusters search still treats as different skills count as a search
+    // gap: a recruiter typing one spelling must find a candidate who claimed any
+    // other. Clusters search already folds (Python / Py, C++ / CPP) are catalog
+    // hygiene for prisma/scripts/dedupe-skills.ts, reported as INFO.
+    const clusters = report.normalization.entities[0]!.clusters.filter((c) => c.total > 0);
+    const unfolded = clusters.filter((c) =>
+      c.variants.some((a) => c.variants.some((b) => a.raw !== b.raw && !scoreInternals.stackTokensMatch([a.raw], b.raw))),
+    );
+    const folded = clusters.length - unfolded.length;
+    if (unfolded.length) {
       findings.push({
         category: "NORMALIZATION_ERROR",
         severity: "WARNING",
         searchVerdict: "FAIL",
         check: "normalization:skills",
-        affected: skillSplit.reduce((n2, c) => n2 + c.total, 0),
+        affected: unfolded.reduce((n2, c) => n2 + c.total, 0),
         userIds: [],
-        message: `${skillSplit.length} skill(s) exist under several spellings in the catalog (e.g. ${skillSplit.slice(0, 3).map((c) => c.variants.map((v) => v.raw).join(" / ")).join("; ")}) — search folds catalog aliases and punctuation, but not wording differences like "&" vs "and"`,
-        detail: { canonicalSkillNameExample: canonicalSkillName(skillSplit[0]!.variants[0]!.raw) },
+        message: `${unfolded.length} skill(s) are claimed under spellings search does not match to each other (e.g. ${unfolded.slice(0, 3).map((c) => c.variants.map((v) => v.raw).join(" / ")).join("; ")})`,
+        detail: { unfolded: unfolded.map((c) => c.variants.map((v) => v.raw)) },
+      });
+    }
+    if (folded > 0) {
+      findings.push({
+        category: "DATA_QUALITY_ERROR",
+        severity: "INFO",
+        searchVerdict: "PASS",
+        check: "normalization:skills-catalog",
+        affected: folded,
+        userIds: [],
+        message: `${folded} skill(s) exist as several catalog rows that search already matches to each other — merge them with prisma/scripts/dedupe-skills.ts`,
       });
     }
   }

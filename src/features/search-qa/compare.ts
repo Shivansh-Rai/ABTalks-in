@@ -4,11 +4,11 @@
  *
  * Two halves:
  *
- *  - `evaluateSpec` runs the service's own pure stages over a loaded pool —
- *    `rankCandidates` → the must-have gate → `pickSearchMatches` — exactly as
- *    `searchCandidates` sequences them, but keeps the FULL ranking instead of
- *    the top 20. The probe asserts its page equals `searchCandidates`' page, so
- *    this cannot silently drift from production.
+ *  - `evaluateSpec` runs the service's own selection over a loaded pool —
+ *    `selectSearchResults`, the one function `searchCandidates` calls — and
+ *    keeps the full ranking alongside the page. The probe asserts its page
+ *    equals `searchCandidates`' page, so this cannot silently drift from
+ *    production.
  *
  *  - `CaseAccumulator` consumes canonical candidates one at a time (the audit
  *    streams them in batches, so memory is bounded by the pool plus a capped
@@ -29,8 +29,7 @@
 import type { JobSpec } from "@/lib/validations/hire";
 import {
   __test as scoreInternals,
-  pickSearchMatches,
-  rankCandidates,
+  selectSearchResults,
 } from "@/features/hire/score-candidate";
 import { readPoolExtra } from "@/features/hire/pool-brief";
 import type {
@@ -84,7 +83,6 @@ export type PoolSnapshot = {
 };
 
 export type PipelineConstants = {
-  rankWindow: number;
   minResults: number;
   defaultLimit: number;
 };
@@ -98,8 +96,6 @@ export type SpecEvaluation = {
   admitted: Set<string>;
   /** What `searchCandidates` returns: the page, in order. */
   page: ScoredCandidate[];
-  /** The page the same rules would produce with no rank window. */
-  pageWithoutWindow: ScoredCandidate[];
   /** Admitted but tier NONE — shown only as padding. A ranking outcome, not a filter one. */
   belowThreshold: Set<string>;
 };
@@ -116,14 +112,15 @@ export function evaluateSpec(
   k: PipelineConstants,
   opts: { limit?: number } = {},
 ): SpecEvaluation {
-  const ranked = rankCandidates(pool.members, spec, {
-    includeHardFiltered: true,
-    limit: Number.MAX_SAFE_INTEGER,
-    coverage: pool.coverage,
-  });
   const extra = readPoolExtra(spec);
   const hardCap = extra.resultLimit;
   const limit = hardCap ?? opts.limit ?? k.defaultLimit;
+  const { ranked, matches: page } = selectSearchResults(pool.members, spec, {
+    coverage: pool.coverage,
+    hardCap,
+    limit,
+    minResults: k.minResults,
+  });
 
   const byUser = new Map<string, ScoredCandidate>();
   const admitted = new Set<string>();
@@ -140,16 +137,6 @@ export function evaluateSpec(
     pool.members.map((m) => [m.userId || m.candidateRef || m.id, m]),
   );
 
-  const page = pickSearchMatches(ranked.slice(0, k.rankWindow), spec, {
-    hardCap,
-    limit,
-    minResults: k.minResults,
-  });
-  const pageWithoutWindow = pickSearchMatches(ranked, spec, {
-    hardCap,
-    limit,
-    minResults: k.minResults,
-  });
   return {
     spec,
     ranked,
@@ -157,7 +144,6 @@ export function evaluateSpec(
     memberByUser,
     admitted,
     page,
-    pageWithoutWindow,
     belowThreshold,
   };
 }
@@ -220,8 +206,6 @@ export type CaseResult = {
   explainedByData: number;
   /** Admitted candidates the page can never show (no pagination). */
   beyondPage: number;
-  /** Admitted candidates lost to the rank window before the page was cut. */
-  lostToRankWindow: string[];
 };
 
 type Bucket = {
@@ -236,7 +220,8 @@ type Bucket = {
 };
 
 function severityFor(d: Diagnosis): Severity {
-  if (d.knownIssue) return knownIssue(d.knownIssue).severity;
+  const pinned = d.knownIssue ? knownIssue(d.knownIssue) : null;
+  if (pinned) return pinned.severity;
   if (d.category === "VISIBILITY_ERROR") return "CRITICAL";
   if (d.category === "NORMALIZATION_ERROR" || d.searchVerdict === "PASS") return "WARNING";
   return "ERROR";
@@ -446,22 +431,6 @@ export class CaseAccumulator {
       });
     }
 
-    const lostToRankWindow = this.evaluation.pageWithoutWindow
-      .map((r) => r.userId)
-      .filter((id) => !this.evaluation.page.some((p) => p.userId === id));
-    if (lostToRankWindow.length > 0) {
-      findings.push({
-        category: "PAGINATION_ERROR",
-        severity: knownIssue("QA-KI-006").severity,
-        searchVerdict: "FAIL",
-        check: `case:${this.spec.id}`,
-        affected: lostToRankWindow.length,
-        userIds: lostToRankWindow.slice(0, 25),
-        message: `${label} — ${lostToRankWindow.length} admitted candidate(s) would be on the page but were cut by the rank window`,
-        knownIssue: "QA-KI-006",
-        detail: { cause: "RANK_WINDOW" },
-      });
-    }
 
     const fp = this.fpIds.count;
     const fn = this.fnIds.count;
@@ -498,7 +467,6 @@ export class CaseAccumulator {
       falseNegativeIds: this.fnIds.ids,
       explainedByData: [...this.buckets.values()].filter((b) => b.searchVerdict === "PASS").reduce((n, b) => n + b.sample.count, 0),
       beyondPage: Math.max(0, actualCount - this.evaluation.page.length),
-      lostToRankWindow,
     };
   }
 }

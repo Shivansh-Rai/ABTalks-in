@@ -110,11 +110,12 @@ capped at 600 (challenge, profile) and 200 (hackathon, unordered).
 3. ~~Skipped city (`locationCity "Any"`) is treated as a city named "any"~~ — **FIXED 2026-09-16** (`effectiveCity`).
 4. ~~`splitSkills` breaks canonical skill names containing `/` or `&` ("AI/ML", "UI/UX", "CI/CD"), so they cannot match themselves~~ — **FIXED 2026-09-17**: catalog names and short compounds stay whole; `stackTokensMatch` matches a compound part exactly. Pastes split as before.
 5. ~~`loadRecruiterIdentities` picks education `orderBy graduationYear desc` — Postgres puts NULLs first~~ — **FIXED 2026-09-16** (`nulls: "last"`, both call sites in `repositories/talent.ts`).
-6. Rank window of 100 is taken before the must-have gate: matching candidates can be pushed out by non-matching higher scorers.
-7. `loadRequestMatches` renders `PROFILE` matches as `CLAUDE:` refs.
-8. Profile-only candidates with only declared skills can outrank evidence-backed ones (coverage reweighting).
+6. ~~Rank window of 100 is taken before the must-have gate~~ — **FIXED 2026-09-17** (QA-KI-006): `selectSearchResults` (score-candidate.ts) ranks the whole pool; `searchCandidates` and the QA probe both call it. Near misses are keyed by `candidateRef` (they were keyed by `programMemberId`, which dropped every non-cohort candidate from the gap report).
+7. ~~`loadRequestMatches` renders `PROFILE` matches as `CLAUDE:` refs~~ — **FIXED 2026-09-17** (QA-KI-007): `savedMatchRef` validates against the track registry; saved lists order tier, score, first seen, candidate id.
+8. ~~Profile-only candidates with only declared skills can outrank evidence-backed ones~~ — **FIXED 2026-09-17** (QA-KI-008): `rankCandidates` lists by tier (STRONG, PARTIAL, NONE), then score.
 9. ~~Skill and city matching ignore the catalog's own aliases (golang/Go, reactjs/React, Bangalore/Bengaluru)~~ — **FIXED 2026-09-17** (QA-KI-009): `sameSkill` folds through `canonicalSkillName` (+ symbol-safe squash), `cityKey` folds unambiguous renames and typos; NCR cities are never merged.
-10. (Found 2026-09-17 after merging master) The admin "Recruiter search" panel (`features/admin/candidate-discoverability.ts`, T-265) counts any challenge submission and any `ProgramMember` row as a carrying track, ignoring the challenge floor/flag and cohort status/openness — QA-KI-011. Production check: 1 wrong "appears" verdict, 19 wrong route explanations.
+10. ~~(Found 2026-09-17 after merging master) The admin "Recruiter search" panel counts any challenge submission and any `ProgramMember` row as a carrying track~~ — **FIXED 2026-09-17** (QA-KI-011): `get-candidate-discoverability.ts` probes the `HIRE_CHALLENGE_POOL` floor and `resolvePoolCohorts`; the full audit runs the real panel loader for every searchable candidate.
+11. ~~Scout's stack parser misses "c++"~~ — **FIXED 2026-09-17** (QA-KI-010): explicit edges instead of `\b` in `pool-brief.ts`.
 
 ## 4. Files to touch
 

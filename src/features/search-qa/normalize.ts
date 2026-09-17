@@ -248,7 +248,10 @@ export function skillMatchesToken(skillName: string, token: string): SkillTokenM
     // A part of a compound is a skill in its own right, so the catalog's aliases
     // apply to it: "AI/ML" answers "Machine Learning" because "ml" is its alias.
     (parts.length > 1 && parts.some((p) => sameCatalogSkill(p, token))) ||
-    (!symbolic && squash(skillName).length >= 3 && squash(skillName) === squash(token));
+    (!symbolic && squash(skillName).length >= 3 && squash(skillName) === squash(token)) ||
+    // "&" for "and" and plurals never change the skill ("Data structures and
+    // algorithm" = "Data Structures & Algorithms").
+    (!symbolic && skillClusterKey(skillName).length >= 3 && skillClusterKey(skillName) === skillClusterKey(token));
   const ambiguous =
     !literal &&
     !normalized &&
@@ -364,7 +367,8 @@ export function skillClusterKey(raw: string): string {
     .replace(/\+/g, "plus")
     .replace(/#/g, "sharp")
     .replace(/\s+&\s+|\s+and\s+/g, " and ")
-    // Plural folding only on real words, so "CSS" never collides with "CS".
-    .replace(/([a-z]{5,})s\b/g, "$1");
+    // Plural folding only on real words, so "CSS" never collides with "CS",
+    // and never after s / j / u / i ("Express", "NestJS", "Status", "Analysis").
+    .replace(/\b([a-z]{3,}[^\W\dsjui])s\b/g, "$1");
   return squash(folded);
 }

@@ -7,7 +7,7 @@
  * PURE.
  */
 import type { AuditReport, CheckRow } from "@/features/search-qa/audit";
-import { KNOWN_ISSUES } from "@/features/search-qa/known-issues";
+import { knownIssue, type KnownIssueId } from "@/features/search-qa/known-issues";
 import type { QaFinding } from "@/features/search-qa/types";
 
 const ICON: Record<string, string> = { PASS: "✅", FAIL: "❌", WARN: "⚠️ ", XFAIL: "🟠", SKIPPED: "⏭️ ", "N/A": "—" };
@@ -40,7 +40,7 @@ export function formatAuditReport(r: AuditReport, opts: { verbose?: boolean } = 
   out.push(
     `flags: ENABLE_NEW_TALENT=${r.environment.flags.newTalentRead} · HIRE_CHALLENGE_POOL=${r.environment.flags.challengePool.enabled ? r.environment.flags.challengePool.minDays : "off"} · HIRE_OPEN_COHORT_IDS=${Array.isArray(r.environment.flags.openCohortIds) ? r.environment.flags.openCohortIds.join(",") : r.environment.flags.openCohortIds ?? "unset"}`,
   );
-  out.push(`pipeline: page ${r.environment.pipeline.pageLimit}, rank window ${r.environment.pipeline.rankWindow}, min results ${r.environment.pipeline.minResults}; tracks searched: ${r.environment.enabledTracks.join(", ") || "—"}`);
+  out.push(`pipeline: page ${r.environment.pipeline.pageLimit}, full-pool ranking, min results ${r.environment.pipeline.minResults}; tracks searched: ${r.environment.enabledTracks.join(", ") || "—"}`);
   for (const n of r.environment.notes) out.push(`note: ${n}`);
 
   if (r.population) {
@@ -153,10 +153,12 @@ export function formatAuditReport(r: AuditReport, opts: { verbose?: boolean } = 
   out.push("", "PRODUCT DECISIONS REQUIRED");
   out.push(...(decisions.length ? dedupeFindings(decisions).map(findingLine) : ["  none"]));
 
-  const pinned = [...new Set(r.findings.map((f) => f.knownIssue).filter((x): x is keyof typeof KNOWN_ISSUES => Boolean(x)))];
+  const pinned = [...new Set(r.findings.map((f) => f.knownIssue).filter((x): x is KnownIssueId => Boolean(x)))]
+    .map((id) => knownIssue(id))
+    .filter((k): k is NonNullable<typeof k> => k !== null);
   if (pinned.length) {
     out.push("", "KNOWN ISSUES OBSERVED IN THIS DATA");
-    for (const id of pinned) out.push(`  ${id} [${KNOWN_ISSUES[id].severity}] ${KNOWN_ISSUES[id].title} — ${KNOWN_ISSUES[id].location}`);
+    for (const k of pinned) out.push(`  ${k.id} [${k.severity}] ${k.title} — ${k.location}`);
   }
 
   out.push("", `OVERALL STATUS: ${r.readiness.readiness.replace(/_/g, " ")}`);

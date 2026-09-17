@@ -18,8 +18,9 @@ Scout chat · filter dialog · guest desk
       → enabledTracks()                           PROGRAM · CLAUDE* · CHALLENGE_60* · PROFILE · HACKATHON
       → loadTrack(slug)                           track-loaders → repositories/hire (visibility gate merged in)
       → mergeTrackLoads                           one card per person (PROGRAM > CLAUDE > CHALLENGE_60 > HACKATHON > PROFILE)
-      → rankCandidates(limit RANK_WINDOW=100)     score-candidate (pure, deterministic)
-      → pickSearchMatches(limit 20)               hard filters + must-have AND gate + tier gate + padding
+      → selectSearchResults                       score-candidate (pure, deterministic): ranks the WHOLE pool
+          rankCandidates                          tier first (STRONG, PARTIAL, NONE), then score, then name/ref
+          pickSearchMatches(limit 20)             hard filters + must-have AND gate + tier gate + padding
   → explainMatches (rationale text) → TalentRequestMatch + TalentSearchSession
 ```
 
@@ -73,7 +74,7 @@ Source of truth for the inventory: `filter-registry.ts`.
 
 | Filter | Kind | Logic | Match | Unstated / null |
 |---|---|---|---|---|
-| Required skills (`mustHaveStack`) | match gate | **AND** | whole-word containment on skill names; single letters by equality; a part of a compound ("ML" in "AI/ML") by equality; the same catalog skill under an alias ("golang" = Go), including a compound part ("AI/ML" answers "Machine Learning") | no skills never match |
+| Required skills (`mustHaveStack`) | match gate | **AND** | whole-word containment on skill names; single letters by equality; a part of a compound ("ML" in "AI/ML") by equality; the same catalog skill under an alias ("golang" = Go), including a compound part ("AI/ML" answers "Machine Learning"); "&" = "and" and plurals ("Data structures and algorithm" = "Data Structures & Algorithms"; no plural fold after s/j/u/i, so "NestJS" and "Express" are safe) | no skills never match |
 | Work mode | hard filter | single | equal enum; FLEXIBLE either side matches | passes |
 | Location (`locationCity`) | hard filter | ANY preferred city | same city after unambiguous renames/typos (Bangalore = Bengaluru), else substring either way (oracle: whole words); NCR cities never merged; "Any" = no city | no preference, no cities, or willing to relocate → passes |
 | Engagement type | hard filter | ANY overlap | role type ∈ candidate opportunity types | empty list passes |
@@ -90,8 +91,10 @@ Not recruiter filters today: graduation year, college, degree, branch, role
 LeetCode/coding profiles, projects, assessments, certifications. Hackathon and
 cohort exist only as tracks.
 
-Sort: one — score desc, then name / candidateRef asc. Pagination: none — the
-page is the top 20 (≤ 25) of a 100-candidate rank window.
+Sort: one — tier (STRONG, PARTIAL, NONE), then score desc, then name /
+candidateRef asc. Saved match lists use the same order, with first-seen and
+candidate id as tiebreaks. Pagination: none — the page is the top 20 (≤ 25) of
+the whole ranked pool.
 
 ---
 
@@ -171,6 +174,10 @@ turns them into the documents the real loaders produce. Expectations in
 issue fixed — remove it". Readiness stays NOT READY while any pinned ERROR or
 CRITICAL issue is observed.
 
+As of 2026-09-17 the registry is **empty**: all eleven issues the first audit
+found (QA-KI-001…011) are fixed and asserted by ordinary tests. The `knownBug`
+harness stays in `search-qa.test.ts` for the next one.
+
 ---
 
 ## 6. Error classification
@@ -228,7 +235,7 @@ OVERALL STATUS       READY | READY WITH WARNINGS | NOT READY + reasons
 
 1. Explain as above. `document.loaded = false` → coverage: which track should have loaded them, and was it `TRUNCATED` at its cap (PAGINATION_ERROR) or not loaded at all (SEARCH_INDEX_MISSING)?
 2. Loaded but `excluded` → the summary names the hard-filter reason and, when the canonical profile disagrees, the category and known issue.
-3. Admitted but not on the page → rank and page position are shown: beyond page 20 (no pagination) or outside the rank window.
+3. Admitted but not on the page → rank and page position are shown: beyond page 20 (no pagination).
 
 ### Data vs search vs index vs ranking
 

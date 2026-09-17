@@ -208,10 +208,20 @@ function extractRoleStack(msg: string): {
   }
   const mustHaveStack: string[] = [];
   for (const token of STACK_HINTS) {
+    // Explicit edges, not `\b`: a word boundary needs a word character on one
+    // side, so `\bc\+\+\b` could never match "c++ developer" — the second `\b`
+    // sits between "+" and a space, two non-word characters (QA-KI-010).
+    // `(^|[^a-z0-9])` / `(?![a-z0-9])` mean "not glued to a letter or digit",
+    // which is what `\b` meant for the alphanumeric tokens and still keeps
+    // "java" out of "javascript" and "sql" out of "postgresql". No lookbehind:
+    // this file ships to the browser, and older Safari rejects it.
     const re =
       token === "go"
         ? /\bgo\b(?!lang)/
-        : new RegExp(`\\b${token.replace(/\+/g, "\\+")}\\b`, "i");
+        : new RegExp(
+            `(^|[^a-z0-9])${token.replace(/\+/g, "\\+")}(?![a-z0-9])`,
+            "i",
+          );
     if (re.test(msg)) {
       mustHaveStack.push(
         token === "nodejs"

@@ -29,64 +29,27 @@ export type KnownIssue = {
  * now ordinary assertions): QA-KI-001 work-mode label/enum, QA-KI-002 zero-budget
  * sentinel, QA-KI-003 "Any" city sentinel, QA-KI-005 NULLS-FIRST education pick.
  * Fixed 2026-09-17: QA-KI-004 compound / catalog skill names split apart,
- * QA-KI-009 catalog skill aliases and city renames ignored by matching.
+ * QA-KI-009 catalog skill aliases and city renames ignored by matching,
+ * QA-KI-006 rank window cut before the must-have gate, QA-KI-008 evidence-free
+ * candidates listed above evidence-backed ones, QA-KI-010 "c++" never parsed,
+ * QA-KI-007 saved PROFILE matches rendered as CLAUDE refs, QA-KI-011 admin
+ * discoverability panel reporting tracks the loaders do not load.
+ *
+ * The registry is empty on purpose, not by accident: every confirmed issue is
+ * fixed and asserted by an ordinary test. Pin the next one here.
  */
-export const KNOWN_ISSUES = {
-  "QA-KI-006": {
-    id: "QA-KI-006",
-    category: "PAGINATION_ERROR",
-    severity: "ERROR",
-    title: "Rank window of 100 is cut before the must-have gate",
-    location: "src/features/hire/search-candidates.ts:109",
-    evidence:
-      "rankCandidates(limit: 100) ranks everyone — including hard-filtered and non-matching candidates — and pickSearchMatches applies must-have skills to that window only. When 100+ non-matching candidates outscore the matching ones, matching candidates are dropped and the recruiter sees fewer results than exist.",
-    proposedFix: "Apply hard filters and the must-have gate before truncating to the rank window.",
-  },
-  "QA-KI-007": {
-    id: "QA-KI-007",
-    category: "PERMISSION_ERROR",
-    severity: "ERROR",
-    title: "Saved PROFILE matches are rendered as CLAUDE refs",
-    location: "src/features/hire/load-request-matches.ts:200",
-    evidence:
-      "loadRequestMatches maps any source outside PROGRAM/CLAUDE/CHALLENGE_60/HACKATHON to \"CLAUDE\", so a saved PROFILE match gets candidateRef CLAUDE:<userId>; resolveEligibleCandidates then re-tests it against Claude enrolment and drops it, so it cannot be shortlisted or introduced from the saved list.",
-    proposedFix: "Pass PROFILE (any registry-known source) through unchanged.",
-  },
-  "QA-KI-008": {
-    id: "QA-KI-008",
-    category: "RANKING_ERROR",
-    severity: "ERROR",
-    title: "Declared-skill-only candidates outrank evidence-backed candidates",
-    location: "src/features/hire/score-candidate.ts:115",
-    evidence:
-      "Per-member coverage drops every evidence dimension for PROFILE candidates and reweights stack to ~83%, so a profile that merely lists React scores ~85 while a cohort member with passed missions, projects and interview who also lists React scores lower. Sorting is by score, not tier, so the unproven PARTIAL candidate is listed above the proven STRONG one.",
-    proposedFix: "Rank by tier before score, or cap evidence-free scores below the evidence-backed band. Needs a ranking product decision.",
-  },
-  "QA-KI-010": {
-    id: "QA-KI-010",
-    category: "SEARCH_FILTER_ERROR",
-    severity: "WARNING",
-    title: "Scout's stack parser misses C++ / C# from free text",
-    location: "src/features/hire/pool-brief.ts:214",
-    evidence:
-      "extractRoleStack builds /\\bc\\+\\+\\b/; \\b after \"+\" needs a following word character, so \"need a c++ developer\" extracts no stack.",
-    proposedFix: "Use lookarounds (?<![a-z0-9]) / (?![a-z0-9]) instead of \\b for symbol-bearing tokens.",
-  },
-  "QA-KI-011": {
-    id: "QA-KI-011",
-    category: "VISIBILITY_ERROR",
-    severity: "WARNING",
-    title: "Admin \"Recruiter search\" panel reports tracks the loaders do not load",
-    location: "src/features/admin/candidate-discoverability.ts:156",
-    evidence:
-      "evaluateDiscoverability counts any challenge enrolment with one submission and any ProgramMember row as a carrying track. The loaders also require HIRE_CHALLENGE_POOL with its 10-submission floor, and an ENROLLED/COMPLETED member of a published or open cohort. Read-only production check 2026-09-17 (production flags): the panel says 1 candidate appears whom no loader returns, and names a non-carrying track for 19 (18 still reach recruiters through the profile pool). Recruiters are not exposed; admins are misinformed.",
-    proposedFix:
-      "Derive track membership from the loaders' real rules — challenge floor and flag, member status and cohort openness — e.g. via features/search-qa canonical expectedTracks with currentSearchEnv(). Owner: T-265 (Shivansh).",
-  },
-} as const satisfies Record<string, KnownIssue>;
+/** Registry ids keep one shape so a typo in a pin still reads as an id. */
+export type KnownIssueId = `QA-KI-${string}`;
 
-export type KnownIssueId = keyof typeof KNOWN_ISSUES;
+export const KNOWN_ISSUES: Readonly<Partial<Record<KnownIssueId, KnownIssue>>> = {};
 
-export function knownIssue(id: KnownIssueId): KnownIssue {
-  return KNOWN_ISSUES[id];
+export function knownIssue(id: KnownIssueId): KnownIssue | null {
+  return KNOWN_ISSUES[id] ?? null;
+}
+
+/** Open issues, in id order, for reports and the admin page. */
+export function openKnownIssues(): KnownIssue[] {
+  return Object.values(KNOWN_ISSUES)
+    .filter((k): k is KnownIssue => Boolean(k))
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
