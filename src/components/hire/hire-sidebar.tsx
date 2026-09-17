@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { DeleteProjectDialog } from "@/components/hire/delete-project-dialog";
+import { usePinnedProjects } from "@/components/hire/desk-pinned-projects";
 import {
   Briefcase,
   ChartColumn,
@@ -28,13 +30,17 @@ import {
   FolderKanban,
   FolderOpen,
   House,
+  KanbanSquare,
   LifeBuoy,
   LogOut,
   MessageSquare,
   MoreHorizontal,
   Pencil,
+  Pin,
+  PinOff,
   Plus,
   Settings,
+  Trash2,
 } from "lucide-react";
 
 /** Projects shown before "Show more" takes over. */
@@ -80,8 +86,16 @@ function initials(name: string): string {
  * to "this account", so the thing a recruiter is looking at is always nearer
  * the top than the thing they might switch to.
  *
- * Analytics has no page yet, so it stays a disabled row rather than a link to
- * nowhere. "+ New Project" and the "+" beside CURRENT PROJECT open the same
+ * This is the SINGLE source of truth for recruiter navigation. The header used
+ * to carry Jobs / Assessments / Pipeline / Analytics as pills and this rail
+ * repeated two of them for phones only, so every new destination had to be
+ * registered twice — and the last two were not: Pipeline and Analytics had a
+ * header pill and no phone fallback, which left them unreachable on a phone,
+ * while Analytics ALSO sat here as a disabled "coming soon" row months after
+ * T-242 shipped the page. The header is account utilities now (credits,
+ * identity); everything a recruiter navigates to is one of the groups below.
+ *
+ * "+ New Project" and the "+" beside CURRENT PROJECT open the same
  * dialog; "+ New search" asks ScoutChat to start a search inside the open
  * project through the desk context, because that conversation state lives
  * there, not here.
@@ -96,7 +110,7 @@ export function HireSidebar({
   /** T-232: outreach threads where the candidate replied since this recruiter last looked. */
   unreadMessages?: number;
   /** Plan 133: the recruiter's projects, for switching. */
-  projects?: { id: string; label: string; updatedAt: string }[];
+  projects?: { id: string; label: string; updatedAt: string; isPinned?: boolean }[];
   /** Plan 133: the project in the URL, if any. */
   openProjectId?: string | null;
 }) {
@@ -108,7 +122,16 @@ export function HireSidebar({
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
     null,
   );
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const [showAllProjects, setShowAllProjects] = useState(false);
+
+  const serverPinnedIds = useMemo(
+    () => projects.filter((p) => p.isPinned).map((p) => p.id),
+    [projects],
+  );
+  const { isPinned, togglePin } = usePinnedProjects(serverPinnedIds);
 
   // Only the project actually in the URL. The desk context outlives the page
   // that set it, so a project left behind must not keep showing here.
@@ -119,9 +142,19 @@ export function HireSidebar({
     [projects, openProjectId],
   );
 
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const aPin = isPinned(a.id);
+      const bPin = isPinned(b.id);
+      if (aPin && !bPin) return -1;
+      if (!aPin && bPin) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [projects, isPinned]);
+
   const visibleProjects = showAllProjects
-    ? projects
-    : projects.slice(0, PROJECTS_COLLAPSED);
+    ? sortedProjects
+    : sortedProjects.slice(0, PROJECTS_COLLAPSED);
 
   const name = account?.fullName ?? "Guest";
   const sub = account
@@ -162,6 +195,11 @@ export function HireSidebar({
           <House className="hire-side__icon" aria-hidden="true" />
           Home
         </Link>
+
+        {/* DISCOVER — finding candidates. */}
+        <p className="hire-side__group" id="hire-side-discover">
+          Discover
+        </p>
         {/* The Projects/History page, not the contact-request tracker — the
             label and the destination now describe the same thing. */}
         <Link
@@ -177,76 +215,89 @@ export function HireSidebar({
           <FolderKanban className="hire-side__icon" aria-hidden="true" />
           Search history
         </Link>
+
+        {/* WORK — what the recruiter is running. Every destination here was
+            previously a header pill; the header no longer navigates, so these
+            rows are the only route to them and must not be phone-only. */}
         {account && (
-          <Link
-            href="/hire/messages"
-            className={cn(
-              "hire-side__item",
-              pathname.startsWith("/hire/messages") && "is-current",
-            )}
-            aria-current={
-              pathname.startsWith("/hire/messages") ? "page" : undefined
-            }
-          >
-            <MessageSquare className="hire-side__icon" aria-hidden="true" />
-            Messages
-            {unreadMessages > 0 && (
-              <span className="hire-side__badge">
-                {unreadMessages}
-                <span className="sr-only"> unread</span>
-              </span>
-            )}
-          </Link>
+          <>
+            <p className="hire-side__group">Work</p>
+            <Link
+              href="/hire/jobs"
+              className={cn(
+                "hire-side__item",
+                pathname.startsWith("/hire/jobs") && "is-current",
+              )}
+              aria-current={
+                pathname.startsWith("/hire/jobs") ? "page" : undefined
+              }
+            >
+              <Briefcase className="hire-side__icon" aria-hidden="true" />
+              Jobs
+            </Link>
+            <Link
+              href="/hire/assessments"
+              className={cn(
+                "hire-side__item",
+                pathname.startsWith("/hire/assessments") && "is-current",
+              )}
+              aria-current={
+                pathname.startsWith("/hire/assessments") ? "page" : undefined
+              }
+            >
+              <ClipboardCheck className="hire-side__icon" aria-hidden="true" />
+              Assessments
+            </Link>
+            <Link
+              href="/hire/pipeline"
+              className={cn(
+                "hire-side__item",
+                pathname.startsWith("/hire/pipeline") && "is-current",
+              )}
+              aria-current={
+                pathname.startsWith("/hire/pipeline") ? "page" : undefined
+              }
+            >
+              <KanbanSquare className="hire-side__icon" aria-hidden="true" />
+              Pipeline
+            </Link>
+            <Link
+              href="/hire/analytics"
+              className={cn(
+                "hire-side__item",
+                pathname.startsWith("/hire/analytics") && "is-current",
+              )}
+              aria-current={
+                pathname.startsWith("/hire/analytics") ? "page" : undefined
+              }
+            >
+              <ChartColumn className="hire-side__icon" aria-hidden="true" />
+              Analytics
+            </Link>
+
+            {/* COMMUNICATION */}
+            <p className="hire-side__group">Communication</p>
+            <Link
+              href="/hire/messages"
+              className={cn(
+                "hire-side__item",
+                pathname.startsWith("/hire/messages") && "is-current",
+              )}
+              aria-current={
+                pathname.startsWith("/hire/messages") ? "page" : undefined
+              }
+            >
+              <MessageSquare className="hire-side__icon" aria-hidden="true" />
+              Messages
+              {unreadMessages > 0 && (
+                <span className="hire-side__badge">
+                  {unreadMessages}
+                  <span className="sr-only"> unread</span>
+                </span>
+              )}
+            </Link>
+          </>
         )}
-        {account && (
-          <Link
-            href="/hire/settings"
-            className={cn(
-              "hire-side__item",
-              pathname.startsWith("/hire/settings") && "is-current",
-            )}
-            aria-current={
-              pathname.startsWith("/hire/settings") ? "page" : undefined
-            }
-          >
-            <Settings className="hire-side__icon" aria-hidden="true" />
-            Settings
-          </Link>
-        )}
-        {/* Phones only: the header drops its Jobs / Assessments pills to fit
-            the menu button, so the drawer carries them instead. */}
-        <Link
-          href="/hire/jobs"
-          className={cn(
-            "hire-side__item hire-side__item--phone",
-            pathname.startsWith("/hire/jobs") && "is-current",
-          )}
-          aria-current={pathname.startsWith("/hire/jobs") ? "page" : undefined}
-        >
-          <Briefcase className="hire-side__icon" aria-hidden="true" />
-          Jobs
-        </Link>
-        <Link
-          href="/hire/assessments"
-          className={cn(
-            "hire-side__item hire-side__item--phone",
-            pathname.startsWith("/hire/assessments") && "is-current",
-          )}
-          aria-current={
-            pathname.startsWith("/hire/assessments") ? "page" : undefined
-          }
-        >
-          <ClipboardCheck className="hire-side__icon" aria-hidden="true" />
-          Assessments
-        </Link>
-        <span
-          className="hire-side__item is-disabled"
-          aria-disabled="true"
-          title="Coming soon"
-        >
-          <ChartColumn className="hire-side__icon" aria-hidden="true" />
-          Analytics
-        </span>
       </nav>
 
       {/* Current project ------------------------------------------------- */}
@@ -269,7 +320,15 @@ export function HireSidebar({
         <div className="hire-side__card">
           <FolderOpen className="hire-side__cardicon" aria-hidden="true" />
           <span className="hire-side__cardtext">
-            <span className="hire-side__cardname">{currentLabel}</span>
+            <span className="hire-side__cardname">
+              {currentLabel}
+              {openProject && isPinned(openProject.id) && (
+                <Pin
+                  className="size-3 text-primary fill-primary/30 shrink-0 inline-block ml-1.5 align-middle"
+                  aria-label="Pinned project"
+                />
+              )}
+            </span>
             {/* suppressHydrationWarning: the server and the browser call
                 Date.now() milliseconds apart, so "2d ago" can straddle a
                 boundary and render as two different strings. The browser's is
@@ -306,6 +365,36 @@ export function HireSidebar({
                 >
                   <Pencil className="size-3.5" aria-hidden="true" />
                   Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => togglePin(openProject.id)}
+                >
+                  {isPinned(openProject.id) ? (
+                    <>
+                      <PinOff className="size-3.5" aria-hidden="true" />
+                      Unpin project
+                    </>
+                  ) : (
+                    <>
+                      <Pin className="size-3.5" aria-hidden="true" />
+                      Pin project
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() =>
+                    setDeleting({
+                      id: openProject.id,
+                      name: openProject.label,
+                    })
+                  }
+                >
+                  <Trash2 className="size-3.5" aria-hidden="true" />
+                  Delete project
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -408,6 +497,7 @@ export function HireSidebar({
           <ul className="hire-side__list">
             {visibleProjects.map((p) => {
               const active = p.id === openProjectId;
+              const pinned = isPinned(p.id);
               return (
                 <li key={p.id} className="hire-side__projectli">
                   <Link
@@ -420,6 +510,12 @@ export function HireSidebar({
                     <span className="hire-side__rowtext">
                       <span className="hire-side__rowname">{p.label}</span>
                     </span>
+                    {pinned && (
+                      <Pin
+                        className="size-3 text-primary fill-primary/30 shrink-0 ml-auto"
+                        aria-label="Pinned project"
+                      />
+                    )}
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -445,6 +541,33 @@ export function HireSidebar({
                       >
                         <Pencil className="size-3.5" aria-hidden="true" />
                         Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => togglePin(p.id)}
+                      >
+                        {pinned ? (
+                          <>
+                            <PinOff className="size-3.5" aria-hidden="true" />
+                            Unpin project
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="size-3.5" aria-hidden="true" />
+                            Pin project
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                        onClick={() =>
+                          setDeleting({ id: p.id, name: p.label })
+                        }
+                      >
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                        Delete project
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -497,8 +620,33 @@ export function HireSidebar({
         requestId={renaming?.id ?? null}
         currentName={renaming?.name ?? ""}
       />
+      <DeleteProjectDialog
+        key={`delete-${deleting?.id ?? "none"}`}
+        open={deleting !== null}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        project={deleting}
+      />
 
       <div className="hire-side__foot">
+        {/* Settings is configuration, not day-to-day workflow, so it sits below
+            the navigation groups rather than inside them. It stays a first-class
+            row here as well as in the account menu below: the menu is where you
+            look for "my account", this is where you look for "the product". */}
+        {account && (
+          <Link
+            href="/hire/settings"
+            className={cn(
+              "hire-side__item",
+              pathname.startsWith("/hire/settings") && "is-current",
+            )}
+            aria-current={
+              pathname.startsWith("/hire/settings") ? "page" : undefined
+            }
+          >
+            <Settings className="hire-side__icon" aria-hidden="true" />
+            Settings
+          </Link>
+        )}
         <Link href="/contact" className="hire-side__item hire-side__item--quiet">
           <LifeBuoy className="hire-side__icon" aria-hidden="true" />
           Support

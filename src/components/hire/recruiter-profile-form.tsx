@@ -7,7 +7,6 @@ import {
   isValidRecruiterPhone,
 } from "@/lib/validations/recruiter-profile";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -15,6 +14,9 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { dsButtonVariants } from "@/components/design/ds-button";
+import { CLAY_CTA } from "@/components/jobs/job-ui";
+import { cn } from "@/lib/utils";
 import { CheckCircle2, AlertCircle, Loader2, Building2, User } from "lucide-react";
 
 function validatePhoneInput(val: string): string | null {
@@ -118,7 +120,7 @@ export function RecruiterProfileForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full">
       {success && (
         <div
           role="status"
@@ -140,22 +142,28 @@ export function RecruiterProfileForm({
       )}
 
       {/* Recruiter Identity */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="size-5 text-primary" />
-            <CardTitle className="text-lg">Recruiter Profile</CardTitle>
+      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs">
+        <CardHeader className="p-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <User className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="font-heading text-lg font-bold text-foreground">
+                Recruiter Profile
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground mt-0.5">
+                Your personal information visible to candidates when you reach out.
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            Your personal information visible to candidates when you reach out.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-2">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
+        <CardContent className="p-6 pt-2 space-y-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
               <label
                 htmlFor="fullName"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground flex items-center gap-1"
               >
                 Full Name <span className="text-destructive">*</span>
               </label>
@@ -167,13 +175,14 @@ export function RecruiterProfileForm({
                 placeholder="e.g. Jane Doe"
                 required
                 disabled={isPending}
+                className="h-10 rounded-xl"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="phone"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground"
               >
                 Phone Number
               </label>
@@ -194,11 +203,10 @@ export function RecruiterProfileForm({
                 disabled={isPending}
                 aria-invalid={Boolean(phoneError)}
                 aria-describedby={phoneError ? "phone-error" : "phone-hint"}
-                className={
-                  phoneError
-                    ? "border-destructive focus-visible:ring-destructive"
-                    : ""
-                }
+                className={cn(
+                  "h-10 rounded-xl",
+                  phoneError && "border-destructive focus-visible:ring-destructive",
+                )}
               />
               {phoneError ? (
                 <p
@@ -210,51 +218,59 @@ export function RecruiterProfileForm({
                   <span>{phoneError}</span>
                 </p>
               ) : (
-                <p id="phone-hint" className="text-[11px] text-muted-foreground">
+                <p id="phone-hint" className="text-xs text-muted-foreground">
                   Optional contact detail for candidates (7-15 digits, optional +).
                 </p>
               )}
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="email"
-              className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
-            >
-              Work Email
-            </label>
-            <Input
-              id="email"
-              value={initialData.email}
-              disabled
-              readOnly
-              className="cursor-not-allowed bg-muted/50"
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Work email is your verified login credential and cannot be edited.
-            </p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-sm font-semibold text-foreground"
+              >
+                Work Email
+              </label>
+              <Input
+                id="email"
+                value={initialData.email}
+                disabled
+                readOnly
+                className="h-10 rounded-xl cursor-not-allowed bg-muted/60 text-muted-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                Work email is your verified login credential and cannot be edited.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Company Identity */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Building2 className="size-5 text-primary" />
-            <CardTitle className="text-lg">Company Identity</CardTitle>
+      <Card className="rounded-2xl border border-border/80 bg-card shadow-xs">
+        <CardHeader className="p-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Building2 className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="font-heading text-lg font-bold text-foreground">
+                Company Identity
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground mt-0.5">
+                Company details shown on your outreach messages and job listings.
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            Company details shown on your outreach messages and job listings.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-2">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
+        <CardContent className="p-6 pt-2 space-y-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
               <label
                 htmlFor="companyName"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground flex items-center gap-1"
               >
                 Company Name <span className="text-destructive">*</span>
               </label>
@@ -266,13 +282,14 @@ export function RecruiterProfileForm({
                 placeholder="Acme Corp"
                 required
                 disabled={isPending}
+                className="h-10 rounded-xl"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="website"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground"
               >
                 Company Website
               </label>
@@ -292,11 +309,10 @@ export function RecruiterProfileForm({
                 disabled={isPending}
                 aria-invalid={Boolean(websiteError)}
                 aria-describedby={websiteError ? "website-error" : undefined}
-                className={
-                  websiteError
-                    ? "border-destructive focus-visible:ring-destructive"
-                    : ""
-                }
+                className={cn(
+                  "h-10 rounded-xl",
+                  websiteError && "border-destructive focus-visible:ring-destructive",
+                )}
               />
               {websiteError && (
                 <p
@@ -311,11 +327,11 @@ export function RecruiterProfileForm({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5">
+          <div className="grid gap-5 sm:grid-cols-3">
+            <div className="space-y-2">
               <label
                 htmlFor="industry"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground"
               >
                 Industry
               </label>
@@ -326,13 +342,14 @@ export function RecruiterProfileForm({
                 onChange={(e) => setIndustry(e.target.value)}
                 placeholder="e.g. FinTech, AI, SaaS"
                 disabled={isPending}
+                className="h-10 rounded-xl"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="companySize"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground"
               >
                 Company Size
               </label>
@@ -343,13 +360,14 @@ export function RecruiterProfileForm({
                 onChange={(e) => setCompanySize(e.target.value)}
                 placeholder="e.g. 50-200 employees"
                 disabled={isPending}
+                className="h-10 rounded-xl"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="location"
-                className="text-xs font-semibold tracking-wide uppercase text-muted-foreground"
+                className="text-sm font-semibold text-foreground"
               >
                 Headquarters / Location
               </label>
@@ -360,27 +378,32 @@ export function RecruiterProfileForm({
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. San Francisco, CA"
                 disabled={isPending}
+                className="h-10 rounded-xl"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-3">
-        <Button
+      <div className="flex items-center justify-end pt-2">
+        <button
           type="submit"
           disabled={isPending}
-          className="min-w-[140px]"
+          className={cn(
+            dsButtonVariants({ size: "default" }),
+            CLAY_CTA,
+            "min-w-[150px] gap-2 font-semibold",
+          )}
         >
           {isPending ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
               Saving...
             </>
           ) : (
             "Save Changes"
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );

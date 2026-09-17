@@ -6,10 +6,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import {
+  deleteTalentProjectSchema,
   markMatchViewedSchema,
   markProjectOpenedSchema,
   renameTalentProjectSchema,
   setMatchDecisionSchema,
+  togglePinTalentProjectSchema,
 } from "@/lib/validations/hire";
 import { dispatch as dispatchNotification } from "@/features/notification/notification-service";
 import { prismaProfileViewStore } from "@/features/profile-view-notification/store";
@@ -48,6 +50,7 @@ async function requireApprovedRecruiter(): Promise<
 function revalidateHire(requestId: string) {
   revalidatePath("/hire");
   revalidatePath(`/hire/${requestId}`);
+  revalidatePath("/hire/projects");
   // "layout" scope, not the bare path: the header's shortlist count and panel
   // are built in the /hire LAYOUT (app/hire/layout.tsx), which a page-scoped
   // revalidate leaves untouched. Without this a project shortlist landed in
@@ -80,6 +83,87 @@ export async function renameTalentProjectAction(
   } catch (error) {
     logger.error("[hire] renameTalentProjectAction", { error: String(error) });
     return { ok: false, message: "Could not rename this project." };
+  }
+}
+
+export async function deleteTalentProjectAction(
+  input: unknown,
+): Promise<ActionResult<{ id: string }>> {
+  const gate = await requireApprovedRecruiter();
+  if (!gate.ok) return gate;
+  const parsed = deleteTalentProjectSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid request." };
+
+  try {
+    const result = await prisma.talentRequest.updateMany({
+      where: {
+        id: parsed.data.requestId,
+        recruiterUserId: gate.data.userId,
+      },
+      data: { archivedAt: new Date() },
+    });
+    if (result.count === 0) {
+      return { ok: false, message: "Request not found." };
+    }
+    revalidateHire(parsed.data.requestId);
+    return { ok: true, data: { id: parsed.data.requestId } };
+  } catch (error) {
+    logger.error("[hire] deleteTalentProjectAction", { error: String(error) });
+    return { ok: false, message: "Could not delete this project." };
+  }
+}
+
+export async function togglePinTalentProjectAction(
+  input: unknown,
+): Promise<ActionResult<{ pinned: boolean }>> {
+  const gate = await requireApprovedRecruiter();
+  if (!gate.ok) return gate;
+  const parsed = togglePinTalentProjectSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Invalid request." };
+
+  try {
+    const existing = await prisma.talentRequest.findFirst({
+      where: {
+        id: parsed.data.requestId,
+        recruiterUserId: gate.data.userId,
+      },
+      select: { extra: true },
+    });
+    if (!existing) {
+      return { ok: false, message: "Request not found." };
+    }
+
+    const currentExtra =
+      existing.extra &&
+      typeof existing.extra === "object" &&
+      !Array.isArray(existing.extra)
+        ? (existing.extra as Record<string, unknown>)
+        : {};
+
+    const nextPinned =
+      typeof parsed.data.pinned === "boolean"
+        ? parsed.data.pinned
+        : !Boolean(currentExtra.pinned);
+
+    const mergedExtra = { ...currentExtra, pinned: nextPinned };
+
+    const result = await prisma.talentRequest.updateMany({
+      where: {
+        id: parsed.data.requestId,
+        recruiterUserId: gate.data.userId,
+      },
+      data: { extra: mergedExtra },
+    });
+    if (result.count === 0) {
+      return { ok: false, message: "Request not found." };
+    }
+    revalidateHire(parsed.data.requestId);
+    return { ok: true, data: { pinned: nextPinned } };
+  } catch (error) {
+    logger.error("[hire] togglePinTalentProjectAction", {
+      error: String(error),
+    });
+    return { ok: false, message: "Could not update project pin status." };
   }
 }
 

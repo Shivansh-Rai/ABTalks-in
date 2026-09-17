@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRecruiter } from "@/lib/program-auth";
 import { listRecruiterThreads } from "@/features/hire/outreach";
-import { buttonVariants } from "@/components/ui/button";
+import { dsButtonVariants } from "@/components/design/ds-button";
+import { CLAY_CTA } from "@/components/jobs/job-ui";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -21,25 +22,28 @@ export default async function HireMessagesPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <p className="font-heading text-[13px] leading-[18px] font-semibold text-primary">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Outreach
         </p>
-        <h1 className="font-heading text-[40px] leading-[48px] font-bold tracking-normal max-md:text-[32px] max-md:leading-[36px]">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
           Messages
         </h1>
-        <p className="max-w-xl text-[17px] leading-7 text-muted-foreground max-md:text-base max-md:leading-[25px]">
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
           Candidates you email from ABTalks reply here. Replies reach you alone,
           and you&apos;re notified by email when one arrives.
         </p>
       </div>
 
       {threads.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center">
+        <div className="rounded-xl border border-dashed border-border/80 bg-card/30 p-8 text-center flex flex-col items-center justify-center gap-3">
           <p className="text-sm text-muted-foreground">
             No conversations yet. Unlock a candidate&apos;s contact details, then
             choose Email candidate.
           </p>
-          <Link href="/hire" className={cn(buttonVariants({ size: "sm" }), "mt-4")}>
+          <Link
+            href="/hire"
+            className={cn(dsButtonVariants({ size: "default" }), CLAY_CTA, "mt-1")}
+          >
             Find candidates
           </Link>
         </div>

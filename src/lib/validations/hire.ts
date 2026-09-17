@@ -452,6 +452,15 @@ export const renameTalentProjectSchema = z.object({
   name: z.string().trim().min(1).max(80),
 });
 
+export const deleteTalentProjectSchema = z.object({
+  requestId: z.string().cuid(),
+});
+
+export const togglePinTalentProjectSchema = z.object({
+  requestId: z.string().cuid(),
+  pinned: z.boolean().optional(),
+});
+
 export const markProjectOpenedSchema = z.object({
   requestId: z.string().cuid(),
 });

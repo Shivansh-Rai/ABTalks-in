@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { RecruiterAuthClosed } from "@/components/talent/recruiter-auth-closed";
-import { SignupScreen } from "@/components/recruiter-onboarding/signup-screen";
+import { RecruiterOnboardingWizard } from "@/components/recruiter-onboarding/recruiter-onboarding-wizard";
 import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
@@ -13,11 +13,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * Public. The end of the recruiter onboarding (Connect → Let's Go).
+ * Public. The onboarding wizard, opened at its first question rather than the
+ * welcome — for links that promise "create an account".
  *
- * Same account rules as /talent/register — it calls the same two actions —
- * with the onboarding's look. Recruiters are passwordless: the email is
- * verified by a 6-digit code, and sign-in afterwards is /talent/login.
+ * Same account rules as /talent/register — it calls the same two actions.
+ * Recruiters are passwordless: the email is verified by a 6-digit code, and
+ * the wizard signs them in with a second code before /hire.
  */
 export default async function RecruiterSignupPage() {
   const session = await auth();
@@ -30,5 +31,5 @@ export default async function RecruiterSignupPage() {
     return <RecruiterAuthClosed />;
   }
 
-  return <SignupScreen />;
+  return <RecruiterOnboardingWizard initialScreen="identity" />;
 }

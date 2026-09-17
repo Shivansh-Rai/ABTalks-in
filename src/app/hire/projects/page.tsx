@@ -38,6 +38,7 @@ export default async function HireProjectsPage() {
       title: true,
       createdAt: true,
       updatedAt: true,
+      extra: true,
       sessions: {
         orderBy: { ordinal: "desc" },
         select: {
@@ -52,20 +53,27 @@ export default async function HireProjectsPage() {
     },
   });
 
-  const rows = projects.map((p) => ({
-    id: p.id,
-    label: p.name?.trim() || p.title.trim() || "Untitled project",
-    // ISO across the Server→Client boundary; a Date instance does not survive it.
-    updatedAt: p.updatedAt.toISOString(),
-    createdAt: p.createdAt.toISOString(),
-    sessions: p.sessions.map((s) => ({
-      id: s.id,
-      ordinal: s.ordinal,
-      title: s.title,
-      matchCount: s.matchCount,
-      createdAt: (s.lastRunAt ?? s.createdAt).toISOString(),
-    })),
-  }));
+  const rows = projects.map((p) => {
+    const extra =
+      p.extra && typeof p.extra === "object" && !Array.isArray(p.extra)
+        ? (p.extra as Record<string, unknown>)
+        : null;
+    return {
+      id: p.id,
+      label: p.name?.trim() || p.title.trim() || "Untitled project",
+      // ISO across the Server→Client boundary; a Date instance does not survive it.
+      updatedAt: p.updatedAt.toISOString(),
+      createdAt: p.createdAt.toISOString(),
+      isPinned: Boolean(extra?.pinned),
+      sessions: p.sessions.map((s) => ({
+        id: s.id,
+        ordinal: s.ordinal,
+        title: s.title,
+        matchCount: s.matchCount,
+        createdAt: (s.lastRunAt ?? s.createdAt).toISOString(),
+      })),
+    };
+  });
 
   const searchTotal = rows.reduce((n, p) => n + p.sessions.length, 0);
 

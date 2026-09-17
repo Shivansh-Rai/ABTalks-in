@@ -1,0 +1,42 @@
+<title>ABTalks Proof Film</title>
+<meta name="description" content="Concept film of the ABTalks gamified candidate journey in three cuts: mobile, web and Instagram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+{{styles}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="flag" viewBox="0 0 48 48"><path d="M13 42V7M13 9h20l-4 7 4 7H13" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="page-head">
+    <div class="who"><img src="data:image/png;base64,__LOGO__" alt="AB Talks"><h1>Proof Film</h1></div>
+    <div class="cuts" role="tablist" aria-label="Film cut">
+      <button type="button" role="tab" data-cut="mobile" aria-selected="true">Mobile <small></small></button>
+      <button type="button" role="tab" data-cut="web" aria-selected="false">Web <small></small></button>
+      <button type="button" role="tab" data-cut="ig" aria-selected="false">Instagram 9:16 <small></small></button>
+    </div>
+    <p>Gamification concept · sample data · turn on sound for music and effects</p>
+  </header>
+
+  <div class="viewport" data-cut="mobile">{{stage:mobile}}</div>
+  <div class="viewport" data-cut="web" hidden>{{stage:web}}</div>
+  <div class="viewport" data-cut="ig" hidden>{{stage:ig}}</div>
+
+  <div class="controls">
+    <button class="play" id="play" type="button" aria-label="Pause"><svg viewBox="0 0 16 16"></svg></button>
+    <span class="time" id="time">0:00 / 1:07</span>
+    <input class="scrub" id="scrub" type="range" min="0" max="67" step="0.05" value="0" aria-label="Film position">
+    <button class="sound" id="sound" type="button" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"></svg><span>Sound off</span></button>
+    <div class="chaps" id="chaps"></div>
+  </div>
+</div>
+
+{{audio}}
+
+<script>
+{{engine}}
+</script>
