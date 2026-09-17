@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { DeleteProjectDialog } from "@/components/hire/delete-project-dialog";
+import { usePinnedProjects } from "@/components/hire/desk-pinned-projects";
 import {
   Briefcase,
   ChartColumn,
@@ -34,8 +36,11 @@ import {
   MessageSquare,
   MoreHorizontal,
   Pencil,
+  Pin,
+  PinOff,
   Plus,
   Settings,
+  Trash2,
 } from "lucide-react";
 
 /** Projects shown before "Show more" takes over. */
@@ -105,7 +110,7 @@ export function HireSidebar({
   /** T-232: outreach threads where the candidate replied since this recruiter last looked. */
   unreadMessages?: number;
   /** Plan 133: the recruiter's projects, for switching. */
-  projects?: { id: string; label: string; updatedAt: string }[];
+  projects?: { id: string; label: string; updatedAt: string; isPinned?: boolean }[];
   /** Plan 133: the project in the URL, if any. */
   openProjectId?: string | null;
 }) {
@@ -117,7 +122,16 @@ export function HireSidebar({
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
     null,
   );
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const [showAllProjects, setShowAllProjects] = useState(false);
+
+  const serverPinnedIds = useMemo(
+    () => projects.filter((p) => p.isPinned).map((p) => p.id),
+    [projects],
+  );
+  const { isPinned, togglePin } = usePinnedProjects(serverPinnedIds);
 
   // Only the project actually in the URL. The desk context outlives the page
   // that set it, so a project left behind must not keep showing here.
@@ -128,9 +142,19 @@ export function HireSidebar({
     [projects, openProjectId],
   );
 
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const aPin = isPinned(a.id);
+      const bPin = isPinned(b.id);
+      if (aPin && !bPin) return -1;
+      if (!aPin && bPin) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [projects, isPinned]);
+
   const visibleProjects = showAllProjects
-    ? projects
-    : projects.slice(0, PROJECTS_COLLAPSED);
+    ? sortedProjects
+    : sortedProjects.slice(0, PROJECTS_COLLAPSED);
 
   const name = account?.fullName ?? "Guest";
   const sub = account
@@ -296,7 +320,15 @@ export function HireSidebar({
         <div className="hire-side__card">
           <FolderOpen className="hire-side__cardicon" aria-hidden="true" />
           <span className="hire-side__cardtext">
-            <span className="hire-side__cardname">{currentLabel}</span>
+            <span className="hire-side__cardname">
+              {currentLabel}
+              {openProject && isPinned(openProject.id) && (
+                <Pin
+                  className="size-3 text-primary fill-primary/30 shrink-0 inline-block ml-1.5 align-middle"
+                  aria-label="Pinned project"
+                />
+              )}
+            </span>
             {/* suppressHydrationWarning: the server and the browser call
                 Date.now() milliseconds apart, so "2d ago" can straddle a
                 boundary and render as two different strings. The browser's is
@@ -333,6 +365,36 @@ export function HireSidebar({
                 >
                   <Pencil className="size-3.5" aria-hidden="true" />
                   Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => togglePin(openProject.id)}
+                >
+                  {isPinned(openProject.id) ? (
+                    <>
+                      <PinOff className="size-3.5" aria-hidden="true" />
+                      Unpin project
+                    </>
+                  ) : (
+                    <>
+                      <Pin className="size-3.5" aria-hidden="true" />
+                      Pin project
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() =>
+                    setDeleting({
+                      id: openProject.id,
+                      name: openProject.label,
+                    })
+                  }
+                >
+                  <Trash2 className="size-3.5" aria-hidden="true" />
+                  Delete project
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -435,6 +497,7 @@ export function HireSidebar({
           <ul className="hire-side__list">
             {visibleProjects.map((p) => {
               const active = p.id === openProjectId;
+              const pinned = isPinned(p.id);
               return (
                 <li key={p.id} className="hire-side__projectli">
                   <Link
@@ -447,6 +510,12 @@ export function HireSidebar({
                     <span className="hire-side__rowtext">
                       <span className="hire-side__rowname">{p.label}</span>
                     </span>
+                    {pinned && (
+                      <Pin
+                        className="size-3 text-primary fill-primary/30 shrink-0 ml-auto"
+                        aria-label="Pinned project"
+                      />
+                    )}
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -472,6 +541,33 @@ export function HireSidebar({
                       >
                         <Pencil className="size-3.5" aria-hidden="true" />
                         Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => togglePin(p.id)}
+                      >
+                        {pinned ? (
+                          <>
+                            <PinOff className="size-3.5" aria-hidden="true" />
+                            Unpin project
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="size-3.5" aria-hidden="true" />
+                            Pin project
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                        onClick={() =>
+                          setDeleting({ id: p.id, name: p.label })
+                        }
+                      >
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                        Delete project
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -523,6 +619,12 @@ export function HireSidebar({
         onOpenChange={(next) => !next && setRenaming(null)}
         requestId={renaming?.id ?? null}
         currentName={renaming?.name ?? ""}
+      />
+      <DeleteProjectDialog
+        key={`delete-${deleting?.id ?? "none"}`}
+        open={deleting !== null}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        project={deleting}
       />
 
       <div className="hire-side__foot">
