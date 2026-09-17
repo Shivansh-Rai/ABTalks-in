@@ -55,7 +55,14 @@ function EventRail({
       <h3 className="text-sm font-semibold tracking-wide text-black uppercase">
         {title}
       </h3>
-      <div className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory 2xl:flex-wrap 2xl:overflow-visible">
+      <div
+        className={cn(
+          "mt-3 gap-4 pt-1 pb-3",
+          past
+            ? "grid grid-cols-1 items-stretch sm:grid-cols-2 xl:grid-cols-3"
+            : "no-scrollbar flex overflow-x-auto snap-x snap-mandatory 2xl:flex-wrap 2xl:overflow-visible",
+        )}
+      >
         {events.map((event) => (
           <EventCard key={event.id} event={event} past={past} />
         ))}
@@ -79,22 +86,46 @@ function EventCard({
   return (
     <article
       className={cn(
-        "flex w-[280px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-[#E0E0E0] p-5 sm:w-[300px] 2xl:min-w-[300px] 2xl:max-w-[420px] 2xl:shrink 2xl:grow 2xl:basis-0",
+        "flex flex-col rounded-2xl border border-[#E0E0E0] p-5",
         HUB_CARD_HOVER_CLASS,
-        past ? "bg-white" : "bg-white shadow-sm",
+        past
+          ? "h-full w-full min-w-0 bg-white"
+          : "w-[280px] shrink-0 snap-start justify-between bg-white shadow-sm sm:w-[300px] 2xl:min-w-[300px] 2xl:max-w-[420px] 2xl:shrink 2xl:grow 2xl:basis-0",
       )}
     >
       <div className="min-w-0">
-        <h4 className="font-inter text-base font-bold leading-snug text-black">
+        <h4
+          className={cn(
+            "font-inter text-base font-bold leading-snug text-black",
+            past && "line-clamp-2 min-h-[2.75rem]",
+          )}
+        >
           {event.title}
         </h4>
-        <p className="mt-2 text-xs text-[#4B4B4B]">
+        <p
+          className={cn(
+            "mt-2 text-xs text-[#4B4B4B]",
+            past && "line-clamp-1 min-h-4",
+          )}
+        >
           {event.date} · {event.time}
         </p>
-        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-[#4B4B4B]">
+        <p
+          className={cn(
+            "mt-3 text-sm leading-relaxed text-[#4B4B4B]",
+            past ? "line-clamp-3 min-h-[4.875rem]" : "line-clamp-3",
+          )}
+        >
           {event.desc}
         </p>
-        <p className="mt-3 text-xs text-[#4B4B4B]">{event.location}</p>
+        <p
+          className={cn(
+            "mt-3 text-xs text-[#4B4B4B]",
+            past && "line-clamp-1 min-h-4",
+          )}
+        >
+          {event.location}
+        </p>
       </div>
       {past ? null : (
         <Link
