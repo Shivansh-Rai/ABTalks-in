@@ -6,7 +6,6 @@ import { StreakCard } from "@/components/dashboard-hub/streak-card";
 import { ActivityHeatmap } from "@/components/dashboard-hub/activity-heatmap";
 import { ContinueJourney } from "@/components/dashboard-hub/continue-journey";
 import { CareerGuidance } from "@/components/dashboard-hub/career-guidance";
-import { MockInterviews } from "@/components/dashboard-hub/mock-interviews";
 import { getCareerGuidance } from "@/features/career-guidance/get-career-guidance";
 import { OtherChallenges } from "@/components/dashboard-hub/other-challenges";
 import { Roadmaps } from "@/components/dashboard-hub/roadmaps";
@@ -15,7 +14,6 @@ import { FaqSection } from "@/components/dashboard-hub/faq-section";
 import { HUB_CARD_HOVER_CLASS } from "@/components/dashboard-hub/nav-items";
 import { getHubData } from "@/features/dashboard/get-hub-data";
 import { registrationRedirect } from "@/features/registration/registration-gate";
-import { loadAvailableInterviews } from "@/features/dashboard/load-available-interviews";
 import type { Domain } from "@prisma/client";
 
 const TRACK_PATH: Record<Domain, string> = {
@@ -56,15 +54,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     redirect("/api/auth/signout?callbackUrl=/login");
   }
 
-  const availableInterviews = await loadAvailableInterviews(session.user.id);
-  const guidance = await getCareerGuidance(
-    session.user.id,
-    availableInterviews.mock.map((m) => ({
-      slug: m.slug,
-      label: m.label,
-      attemptsLeft: m.attemptsLeft,
-    })),
-  );
+  const guidance = await getCareerGuidance(session.user.id, []);
 
   const firstName =
     data.profile?.fullName.split(/\s+/)[0] ??
@@ -119,11 +109,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           </div>
         </section>
       ) : null}
-
-      <MockInterviews
-        mock={availableInterviews.mock}
-        cohort={availableInterviews.cohort}
-      />
 
       <ContinueJourney enrollments={data.enrollments} />
       <CareerGuidance

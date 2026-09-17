@@ -100,6 +100,9 @@ export function CareerGuidanceDeck({
   items,
   targeting,
 }: CareerGuidanceDeckProps) {
+  const isMockCard = (card: DailyCard) =>
+    card.kind === "mock" || (card.href ? card.href.startsWith("/mock-interviews") : false);
+
   // Profile-first paint before localStorage hydrates (avoids null flash).
   const bootstrapPack = useMemo(
     () =>
@@ -111,7 +114,7 @@ export function CareerGuidanceDeck({
         istWeek,
         onceSeen: [],
         weeklySeen: {},
-      }),
+      }).filter((c) => !isMockCard(c)),
     [items, targeting, istDay, istWeek],
   );
 
@@ -148,7 +151,9 @@ export function CareerGuidanceDeck({
 
   const visible = useMemo(() => {
     if (!hydrated || !memory) return bootstrapPack;
-    return visibleDailyCards(pack, memory.dismissedIds);
+    return visibleDailyCards(pack, memory.dismissedIds).filter(
+      (c) => !isMockCard(c),
+    );
   }, [hydrated, memory, pack, bootstrapPack]);
 
   const dismiss = useCallback(

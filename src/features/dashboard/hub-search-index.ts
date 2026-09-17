@@ -215,33 +215,7 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
     keywords: "browse challenges tracks join",
   });
 
-  items.push(
-    {
-      id: "interview:all",
-      group: "Interviews",
-      title: "All mock interviews",
-      href: "/mock-interviews",
-      keywords: "interview mock interviews all",
-    },
-    {
-      id: "interview:history",
-      group: "Interviews",
-      title: "Practice history",
-      href: "/mock-interviews/history",
-      keywords: "interview practice history reports",
-    },
-  );
 
-  for (const mock of input.mock) {
-    items.push({
-      id: `interview:mock:${mock.slug}`,
-      group: "Interviews",
-      title: mock.label,
-      subtitle: mock.blurb,
-      href: `/mock-interviews/${mock.slug}`,
-      keywords: `interview mock ${mock.label} ${mock.blurb} ${mock.slug}`,
-    });
-  }
 
   for (const cohort of input.cohort) {
     items.push({
