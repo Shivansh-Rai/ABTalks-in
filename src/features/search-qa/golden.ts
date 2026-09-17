@@ -324,6 +324,9 @@ export const GOLDEN_FIXTURES: readonly GoldenFixture[] = [
     program: { cohortId: "cohort_open" }, legacyProgramSkills: ["Python"],
     evidence: { missionsPassed: 4, cleanPassCount: 3, commitDays: 4, projectScores: [], cohortDay: 31 },
   }),
+  fixture(61, "Claude challenge, 5 submissions (below the floor), profile with no claimed skills", {
+    challenge: [{ domain: "CLAUDE", submissions: 5 }], streak: 2,
+  }),
   fixture(56, "React, graduation year hidden behind a year-less education row", {
     skills: ["React"], grad: 2024, extraEducation: [{ graduationYear: null }],
   }),

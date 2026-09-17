@@ -90,6 +90,17 @@ export const KNOWN_ISSUES = {
       "extractRoleStack builds /\\bc\\+\\+\\b/; \\b after \"+\" needs a following word character, so \"need a c++ developer\" extracts no stack.",
     proposedFix: "Use lookarounds (?<![a-z0-9]) / (?![a-z0-9]) instead of \\b for symbol-bearing tokens.",
   },
+  "QA-KI-011": {
+    id: "QA-KI-011",
+    category: "VISIBILITY_ERROR",
+    severity: "WARNING",
+    title: "Admin \"Recruiter search\" panel reports tracks the loaders do not load",
+    location: "src/features/admin/candidate-discoverability.ts:156",
+    evidence:
+      "evaluateDiscoverability counts any challenge enrolment with one submission and any ProgramMember row as a carrying track. The loaders also require HIRE_CHALLENGE_POOL with its 10-submission floor, and an ENROLLED/COMPLETED member of a published or open cohort. Read-only production check 2026-09-17 (production flags): the panel says 1 candidate appears whom no loader returns, and names a non-carrying track for 19 (18 still reach recruiters through the profile pool). Recruiters are not exposed; admins are misinformed.",
+    proposedFix:
+      "Derive track membership from the loaders' real rules — challenge floor and flag, member status and cohort openness — e.g. via features/search-qa canonical expectedTracks with currentSearchEnv(). Owner: T-265 (Shivansh).",
+  },
 } as const satisfies Record<string, KnownIssue>;
 
 export type KnownIssueId = keyof typeof KNOWN_ISSUES;

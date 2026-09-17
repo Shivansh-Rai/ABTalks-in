@@ -113,6 +113,7 @@ capped at 600 (challenge, profile) and 200 (hackathon, unordered).
 6. Rank window of 100 is taken before the must-have gate: matching candidates can be pushed out by non-matching higher scorers.
 7. `loadRequestMatches` renders `PROFILE` matches as `CLAUDE:` refs.
 8. Profile-only candidates with only declared skills can outrank evidence-backed ones (coverage reweighting).
+9. (Found 2026-09-17 after merging master) The admin "Recruiter search" panel (`features/admin/candidate-discoverability.ts`, T-265) counts any challenge submission and any `ProgramMember` row as a carrying track, ignoring the challenge floor/flag and cohort status/openness — QA-KI-011. Production check: 1 wrong "appears" verdict, 19 wrong route explanations.
 
 ## 4. Files to touch
 

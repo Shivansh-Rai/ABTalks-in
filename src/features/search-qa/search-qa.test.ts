@@ -22,9 +22,16 @@ import { CHALLENGE_POOL_CAP, MIN_RESULTS, RANK_WINDOW } from "@/features/hire/se
 import { extractPoolBrief } from "@/features/hire/pool-brief";
 import type { ScoreableMember } from "@/features/hire/types";
 import {
+  evaluateDiscoverability,
+  type DiscoverabilityFacts,
+} from "@/features/admin/candidate-discoverability";
+import {
   eligibility,
+  expectedTracks,
   gateReasons,
+  hasUsableProfile,
   noVisibilityRowIsProductDecision,
+  type CanonicalCandidate,
 } from "@/features/search-qa/canonical";
 import {
   caseSpec,
@@ -763,6 +770,79 @@ knownBug("QA-KI-007", "saved PROFILE matches keep a PROFILE ref (source scan of 
   const src = readFileSync(join(process.cwd(), "src/features/hire/load-request-matches.ts"), "utf8");
   const block = src.slice(src.indexOf("candidateRef: encodeCandidateRef("), src.indexOf("programMemberId: m.programMemberId"));
   assert(/PROFILE|isKnownTrack|findTrack/.test(block), "any source outside the four legacy slugs is rewritten to CLAUDE");
+});
+
+/* ── admin discoverability panel vs the loaders ───────────────────────────── */
+
+section("admin \"Recruiter search\" panel agrees with search eligibility");
+
+function discoverabilityFacts(c: CanonicalCandidate): DiscoverabilityFacts {
+  const gatePass = gateReasons(c).length === 0;
+  const at = new Date("2026-09-01T00:00:00.000Z");
+  return {
+    deletedAt: c.deleted ? at : null,
+    anonymizedAt: c.anonymized ? at : null,
+    disabledAt: c.disabled ? at : null,
+    disabledReason: null,
+    sessionInvalidatedAt: null,
+    gate: {
+      exists: c.visibility != null,
+      searchableByRecruiters: c.visibility?.searchable ?? false,
+      withdrawnAt: c.visibility?.withdrawn ? at : null,
+    },
+    passesSearchGate: gatePass,
+    profile: {
+      exists: c.profile != null,
+      fullName: c.profile?.fullName ?? "",
+      headline: c.profile?.headline ?? null,
+      locationCity: c.profile?.locationCity ?? null,
+      countryCode: null,
+      educationCount: c.education.length,
+      experienceCount: c.experience.length,
+      hasNoWorkExperience: false,
+    },
+    skills: {
+      claimed: c.skills.filter((sk) => sk.claimed).length,
+      withEvidence: c.skills.filter((sk) => sk.evidenceCount > 0).length,
+    },
+    inProfilePool: gatePass && hasUsableProfile(c),
+    profilePoolAhead: 0,
+    profilePoolCap: CHALLENGE_POOL_CAP,
+    tracks: {
+      challengeWithSubmissions: c.memberships.challenge.filter((e) => e.submissions > 0).length,
+      programMemberships: c.memberships.program.length,
+      hackathonWithSubmission: c.memberships.hackathonWithSubmission ? 1 : 0,
+    },
+  };
+}
+
+check("the panel's verdict matches the loaders for every fixture the two rule sets agree on", () => {
+  // Excludes the fixtures pinned below, so a NEW disagreement still fails CI.
+  const pinned = new Set(["QA061"]);
+  const wrong = GOLDEN_FIXTURES.filter((fx) => !pinned.has(fx.code)).filter(
+    (fx) => evaluateDiscoverability(discoverabilityFacts(fx.canonical)).appears !==
+      eligibility(fx.canonical, GOLDEN_ENV, GOLDEN_COHORTS).eligible,
+  );
+  assert(wrong.length === 0, `panel disagrees on ${wrong.map((fx) => fx.code).join(", ")}`);
+});
+
+knownBug("QA-KI-011", "a sub-floor challenge participant with no usable profile is not reported as appearing", () => {
+  const c = goldenFixture("QA061").canonical;
+  assert(!eligibility(c, GOLDEN_ENV, GOLDEN_COHORTS).eligible, "oracle: no loader returns QA061");
+  const panel = evaluateDiscoverability(discoverabilityFacts(c));
+  assert(!panel.appears, `panel verdict: "${panel.verdict}"`);
+});
+
+knownBug("QA-KI-011", "the panel never names a track the loaders do not load (closed cohort, sub-floor challenge)", () => {
+  for (const code of ["QA036", "QA037"]) {
+    const c = goldenFixture(code).canonical;
+    const detail = evaluateDiscoverability(discoverabilityFacts(c)).checks.find((x) => x.id === "track-pools")?.detail ?? "";
+    const loaded = expectedTracks(c, GOLDEN_ENV, GOLDEN_COHORTS);
+    const claimsChallenge = /challenge pool/.test(detail);
+    const claimsCohort = /AI cohort pool/.test(detail);
+    assert(!claimsChallenge || loaded.some((t) => t === "CLAUDE" || t === "CHALLENGE_60"), `${code}: "${detail.slice(0, 90)}"`);
+    assert(!claimsCohort || loaded.includes("PROGRAM"), `${code}: "${detail.slice(0, 90)}"`);
+  }
 });
 
 /* ── registry integrity ──────────────────────────────────────────────────── */
