@@ -12,7 +12,7 @@ These Terms of Service (“Terms”) govern your access to and use of ABTalks we
 | **Enterprise scale** | Micro (Udyam) |
 | **Major activity** | Services |
 | **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
-| **Proprietor** | Suman Shukla |
+| **Proprietor** | Divya Shukla |
 | **Trading name** | ABTalks |
 | **Unit name** | ABTalksOnAI |
 | **Registered address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
@@ -146,7 +146,7 @@ For complaints about the Service, your content, or your data:
 
 | Field | Detail |
 |---|---|
-| **Name** | Suman Shukla |
+| **Name** | Divya Shukla |
 | **Designation** | Proprietor and Grievance Officer |
 | **Email** | [team@abtalks.in](mailto:team@abtalks.in) |
 | **Address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |

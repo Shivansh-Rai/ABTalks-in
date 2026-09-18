@@ -25,7 +25,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 **Industry (NIC)**
 - NIC 62099 — Other information technology and computer service activities n.e.c.
 **Proprietor**
-- Suman Shukla
+- Divya Shukla
 **Trading name**
 - ABTalks
 **Unit name**
@@ -46,7 +46,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 For complaints about the Service, your content, or how we handle your personal data. We acknowledge grievances within 24 hours and aim to resolve them within 15 days. If you are not satisfied with our response, you may escalate to the Data Protection Board of India.
 
 **Name**
-- Suman Shukla
+- Divya Shukla
 **Designation**
 - Proprietor and Grievance Officer
 **Email**
