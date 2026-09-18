@@ -1,9 +1,15 @@
 import Link from "next/link";
 import {
+  Activity,
+  Award,
   Briefcase,
   Coins,
+  FileSignature,
+  Flame,
   Mail,
   Send,
+  Sparkles,
+  Target,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -11,6 +17,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatCard } from "@/components/admin/stat-card";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
+import { PlatformActivityKpis } from "@/components/admin/platform-activity-kpis";
 import { getOverviewStats } from "@/features/admin/get-overview-stats";
 import { cn } from "@/lib/utils";
 
@@ -117,12 +124,74 @@ export default async function AdminHomePage() {
             <h2 className="font-display text-lg font-semibold text-[#353535]">
               Platform Activity
             </h2>
-            <p className="text-xs text-[#8F8F8F]">Last 7 days · teal candidates, green recruiters</p>
+            <p className="text-xs text-[#8F8F8F]">
+              Live counts · deltas are this week vs last week (IST)
+            </p>
           </div>
-          <ActivityBars
-            candidates={data.stats.totalStudentsSeries}
-            recruiters={data.stats.totalRecruitersSeries}
+          <PlatformActivityKpis
+            tiles={[
+              {
+                label: "Active today",
+                value: data.stats.activeToday,
+                hint: "Candidates who submitted today (IST)",
+                icon: <Flame className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Day 30 reached",
+                value: data.stats.day30Reached,
+                hint: "Half-way milestone",
+                icon: <Target className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Day 60 reached",
+                value: data.stats.day60Reached,
+                hint: "Full completion",
+                icon: <Award className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Applications",
+                value: data.stats.applicationsTotal,
+                delta: data.stats.applicationsDelta,
+                hint: `${data.stats.applicationsThisWeek.toLocaleString()} this week`,
+                icon: <FileSignature className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Published jobs",
+                value: data.stats.jobsPublished,
+                hint: "Currently open",
+                icon: <Briefcase className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Assessments done",
+                value: data.stats.assessmentsCompletedTotal,
+                delta: data.stats.assessmentsCompletedDelta,
+                hint: `${data.stats.assessmentsCompletedThisWeek.toLocaleString()} this week`,
+                icon: <Sparkles className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Contact unlocks",
+                value: data.stats.contactUnlocksThisWeek,
+                delta: data.stats.contactUnlocksDelta,
+                hint: "This week only",
+                icon: <Users className="size-3.5" aria-hidden />,
+              },
+              {
+                label: "Active talent projects",
+                value: data.stats.talentProjectsActive,
+                hint: `${data.stats.talentProjectsThisWeek.toLocaleString()} started this week`,
+                icon: <Activity className="size-3.5" aria-hidden />,
+              },
+            ]}
           />
+          <div className="mt-5 border-t border-[#E9E9E9] pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#787878]">
+              Last 7 days · teal candidates, green recruiters
+            </p>
+            <ActivityBars
+              candidates={data.stats.totalStudentsSeries}
+              recruiters={data.stats.totalRecruitersSeries}
+            />
+          </div>
         </section>
 
         <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
