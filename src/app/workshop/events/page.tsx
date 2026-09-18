@@ -3,7 +3,10 @@ import Link from "next/link";
 import EventsTimeline from "@/components/workshop/EventsTimeline";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
 import WorkshopThemeStyles from "@/components/workshop/WorkshopThemeStyles";
-import { WorkshopShell } from "@/components/workshop/WorkshopShell";
+import {
+  WorkshopMenuButton,
+  WorkshopShell,
+} from "@/components/workshop/WorkshopShell";
 import { DashboardFooter } from "@/components/dashboard-hub/dashboard-footer";
 import { SiteSearchSlot } from "@/components/dashboard-hub/site-search-slot";
 import { auth } from "@/auth";
@@ -55,7 +58,8 @@ export default async function WorkshopEventsPage() {
               so nothing else in the app changes.
             */}
               {/* Hidden from `md` up, where the sidebar shows the mark. */}
-              <div className="flex items-center gap-3 md:hidden">
+              <div className="flex items-center gap-2 md:hidden">
+                <WorkshopMenuButton />
                 <WorkshopLogo />
               </div>
               <div className="flex items-center gap-2">
