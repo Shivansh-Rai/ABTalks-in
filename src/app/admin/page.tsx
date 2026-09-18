@@ -270,11 +270,14 @@ export default async function AdminHomePage() {
         </section>
       </div>
 
-      <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
-        <div className="mb-4 flex items-baseline justify-between gap-2">
+      <details className="group rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)] open:pb-5">
+        <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden">
           <div>
             <h2 className="font-display text-lg font-semibold text-[#353535]">
               Traffic details (Google Analytics)
+              <span className="ml-2 text-xs font-normal text-[#8F8F8F] group-open:hidden">
+                click to expand
+              </span>
             </h2>
             <p className="text-xs text-[#8F8F8F]">
               Live GA4 data, last 7 days. Audience, acquisition,
@@ -288,9 +291,17 @@ export default async function AdminHomePage() {
               .
             </p>
           </div>
+          <span
+            aria-hidden
+            className="shrink-0 rounded-full border border-[#E9E9E9] px-2 py-0.5 text-[11px] font-medium text-[#03535F] transition-transform group-open:rotate-180"
+          >
+            ▾
+          </span>
+        </summary>
+        <div className="mt-4">
+          <TrafficAnalyticsLoader data={gaTraffic.data} />
         </div>
-        <TrafficAnalyticsLoader data={gaTraffic.data} />
-      </section>
+      </details>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
