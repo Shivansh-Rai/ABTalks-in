@@ -35,7 +35,7 @@ export const LEGAL_ENTITY = {
   /** Udyam / certificate: NAME OF ENTERPRISE */
   name: "ABTalksOnAI",
   /** Udyam: Owner Name */
-  proprietor: "Divya Shukla",
+  proprietor: "Suman Shukla",
   /** Type of Organisation — Proprietary */
   entityType: "Sole Proprietorship (Proprietary)",
   /** Public trading / brand name */
@@ -68,7 +68,7 @@ export const LEGAL_ENTITY = {
    */
   email: "team@abtalks.in",
   grievanceOfficer: {
-    name: "Divya Shukla",
+    name: "Suman Shukla",
     designation: "Proprietor and Grievance Officer",
     email: "team@abtalks.in",
     acknowledgeWithin: "24 hours",

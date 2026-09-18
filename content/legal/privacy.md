@@ -25,7 +25,7 @@ We are the **Data Fiduciary** for the personal data described in this Policy.
 | **Enterprise scale** | Micro (Udyam) |
 | **Major activity** | Services |
 | **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
-| **Proprietor** | Divya Shukla |
+| **Proprietor** | Suman Shukla |
 | **Trading name** | ABTalks |
 | **Unit name** | ABTalksOnAI |
 | **Registered address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
@@ -42,7 +42,7 @@ In accordance with the Digital Personal Data Protection Act, 2023, the Informati
 
 | Field | Detail |
 |---|---|
-| **Name** | Divya Shukla |
+| **Name** | Suman Shukla |
 | **Designation** | Proprietor and Grievance Officer |
 | **Email** | [team@abtalks.in](mailto:team@abtalks.in) |
 | **Address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
