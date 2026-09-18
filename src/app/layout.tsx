@@ -22,7 +22,7 @@ import "./globals.css";
 /*
  * ABTalks UI Design System v2: two families only.
  *   Inter  — body and UI (self-hosted, 400/500/600/700)
- *   Outfit — headings (400/500/600/700)
+ *   Outfit — headings (300/400/500/600/700)
  * The retired display, serif, mono and seven-segment faces are no longer loaded.
  */
 // next/font requires literal options, so the file list is written out in full
@@ -53,7 +53,7 @@ const hubSans = localFont({
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {

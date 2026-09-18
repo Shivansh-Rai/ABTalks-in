@@ -1,4 +1,3 @@
-import { Outfit } from "next/font/google";
 import "./welcome-screen.css";
 
 /*
@@ -6,10 +5,9 @@ import "./welcome-screen.css";
  * (Figma Abtalks node 1899:777). Server Component: the only motion is the
  * CSS ellipse loop, so it ships no client JavaScript. Geometry and effects
  * are documented in welcome-screen.css.
+ *
+ * Outfit comes from the root layout (`--font-outfit`, including Light 300).
  */
-
-// The root layout loads Outfit 400–700; this screen needs Light (300) too.
-const outfit = Outfit({ subsets: ["latin"], weight: ["300", "500"] });
 
 const ELLIPSES = [1, 2, 3, 4] as const;
 const COLUMNS = Array.from({ length: 19 }, (_, i) => i);
@@ -18,12 +16,15 @@ const ROW_TOPS = [0, 104, 204, 304, 404, 504, 600, 700, 800] as const;
 
 export function WelcomeScreen() {
   return (
-    <div aria-busy="true" className="cwelcome">
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      role="status"
+      className="cwelcome theme-abtalks-light"
+    >
       {ELLIPSES.map((n) => (
         <div key={n} aria-hidden className={`cwelcome__ellipse cwelcome__ellipse--${n}`} />
       ))}
-
-      <div aria-hidden className="cwelcome__backdrop" />
 
       <div aria-hidden className="cwelcome__grid">
         {COLUMNS.map((i) => (
@@ -38,7 +39,7 @@ export function WelcomeScreen() {
       </div>
 
       <div className="cwelcome__frame">
-        <h1 className={`cwelcome__text ${outfit.className}`}>
+        <h1 className="cwelcome__text">
           <span className="cwelcome__title">Welcome Back</span>
           <span className="cwelcome__subtitle">Your dashboard will be ready soon</span>
         </h1>

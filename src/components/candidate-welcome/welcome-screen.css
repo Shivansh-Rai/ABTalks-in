@@ -1,38 +1,55 @@
 /*
  * Candidate "Welcome Back" interstitial — Figma Abtalks node 1899:777.
  *
- * Authored on the 1920×900 frame. Every position is in frame units so the
- * composition holds at any viewport: 1cqw = 19.2px and 1cqh = 9px at design
- * size. Figma's blur radius is twice CSS's blur() argument, so the 350px
- * layer blur is blur(175px) and the 80px background blur is blur(40px).
- * Figma's Glass effect (refraction, dispersion, light) has no CSS equivalent
- * and is intentionally not approximated.
+ * Authored on the 1920×900 frame. Every position is in viewport units so the
+ * composition holds at any size: the layer is exactly 100vw × 100dvh, so
+ * 1vw = 19.2px and 1dvh = 9px at design size. Figma's blur radius is twice
+ * CSS's blur() argument, so the 350px layer blur is blur(175px). Figma's
+ * Glass effect (refraction, dispersion, light) has no CSS equivalent and is
+ * intentionally not approximated.
  *
- * Back to front: ellipses → background blur → vertical grid → horizontal
- * grid → text. The grid rectangles blend (overlay) straight onto the
- * ellipses, so none of their wrappers may create a stacking context.
+ * The Figma layers stack the grid on the ellipses with an Overlay blend and a
+ * backdrop blur. Both were ported literally and both render wrong in Safari:
+ * the blend group resolves against the page instead of this layer and the grid
+ * comes out as grey metal. So the result of that blend is painted directly
+ * instead — the ellipses are the only colour, and the grid is a white veil that
+ * cuts seams into them. Over the white field the veil is invisible; over a
+ * glow it reads as cells. Same picture, no blend mode, no backdrop-filter, no
+ * container queries — nothing whose backdrop a browser can resolve differently.
+ *
+ * Back to front: ellipses → vertical grid → horizontal grid → text.
  */
 
 /*
- * A fixed full-viewport layer above the shared app chrome (BottomNav z-40,
- * chat launcher z-50), so the screen stays clean without adding /welcome to
- * every shell's hide list.
+ * A fixed full-viewport layer above shared chrome (cookie banner z-100,
+ * chat launcher z-50). /welcome is also on the footer/nav hide lists so
+ * nothing is left to peek around the overlay.
  */
 .cwelcome {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 200; /* Above cookie banner (z-100) and chat (z-50). */
   overflow: hidden;
   background: #ffffff;
-  container-type: size;
+  color-scheme: light;
 }
 
-/* 1. Aqua ellipses — translation only, 6s seamless loop. */
+/*
+ * 1. Forest-green ellipses — Figma fill #03535F, translation-only loop.
+ * Opacity is the Overlay result, not Figma's 55% source: the darkest cell in
+ * the reference render is #E2EBEC, i.e. this fill at ~12% over white, and
+ * blur(175px) knocks the peak of a shape this size down to roughly half. Set
+ * a little above that so the green reads on a screen rather than only on the
+ * canvas; this is the one number to turn if the wash wants to be softer.
+ */
 .cwelcome__ellipse {
   position: absolute;
   border-radius: 50%;
-  background: #7cd0dd;
-  filter: blur(9.1146cqw); /* 175px */
+  background: #03535f;
+  opacity: 0.32;
+  filter: blur(9.1146vw); /* 175px */
   animation-duration: 6s;
   animation-iteration-count: infinite;
   /* Applies between every pair of keyframes. */
@@ -41,64 +58,64 @@
 }
 
 .cwelcome__ellipse--1 {
-  left: -12.1875cqw;
-  top: 79.1111cqh;
-  width: 29.5313cqw;
-  height: 31.2222cqh;
+  left: -12.1875vw;
+  top: 79.1111dvh;
+  width: 29.5313vw;
+  height: 31.2222dvh;
   animation-name: cwelcome-ellipse-1;
 }
 
 .cwelcome__ellipse--2 {
-  left: 52.0833cqw;
-  top: 74cqh;
-  width: 13.9063cqw;
-  height: 20.7778cqh;
+  left: 52.0833vw;
+  top: 74dvh;
+  width: 13.9063vw;
+  height: 20.7778dvh;
   animation-name: cwelcome-ellipse-2;
 }
 
 .cwelcome__ellipse--3 {
-  left: 22.1354cqw;
-  top: 4.3333cqh;
-  width: 13.0208cqw;
-  height: 22.4444cqh;
+  left: 22.1354vw;
+  top: 4.3333dvh;
+  width: 13.0208vw;
+  height: 22.4444dvh;
   animation-name: cwelcome-ellipse-3;
 }
 
 .cwelcome__ellipse--4 {
-  left: 80.7292cqw;
+  left: 80.7292vw;
   top: 0;
-  width: 23.9063cqw;
-  height: 23.4444cqh;
+  width: 23.9063vw;
+  height: 23.4444dvh;
   animation-name: cwelcome-ellipse-4;
 }
 
-/* Keyframes at 0 / 1.5 / 3 / 4.5 / 6s. */
+/* Keyframes at 0 / 1.5 / 3 / 4.5 / 6s; comments are the 1920×900 distances. */
 @keyframes cwelcome-ellipse-1 {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(15cqw, -18.1333cqh); } /* +288, -163.2 */
-  50% { transform: translate(5.5cqw, -35.2cqh); } /* +105.6, -316.8 */
-  75% { transform: translate(-9cqw, -12.2667cqh); } /* -172.8, -110.4 */
+  25% { transform: translate(15vw, -18.1333dvh); } /* +288, -163.2 */
+  50% { transform: translate(5.5vw, -35.2dvh); } /* +105.6, -316.8 */
+  75% { transform: translate(-9vw, -12.2667dvh); } /* -172.8, -110.4 */
 }
 
 @keyframes cwelcome-ellipse-2 {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-12cqw, 19.2cqh); } /* -230.4, +172.8 */
-  50% { transform: translate(-18.5cqw, -6.4cqh); } /* -355.2, -57.6 */
-  75% { transform: translate(-4.75cqw, -27.7333cqh); } /* -91.2, -249.6 */
+  25% { transform: translate(-12vw, 19.2dvh); } /* -230.4, +172.8 */
+  50% { transform: translate(-18.5vw, -6.4dvh); } /* -355.2, -57.6 */
+  75% { transform: translate(-4.75vw, -27.7333dvh); } /* -91.2, -249.6 */
 }
 
 @keyframes cwelcome-ellipse-3 {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(10.5cqw, 28.8cqh); } /* +201.6, +259.2 */
-  50% { transform: translate(-4.5cqw, 41.0667cqh); } /* -86.4, +369.6 */
-  75% { transform: translate(-14.75cqw, 11.2cqh); } /* -283.2, +100.8 */
+  25% { transform: translate(10.5vw, 28.8dvh); } /* +201.6, +259.2 */
+  50% { transform: translate(-4.5vw, 41.0667dvh); } /* -86.4, +369.6 */
+  75% { transform: translate(-14.75vw, 11.2dvh); } /* -283.2, +100.8 */
 }
 
 @keyframes cwelcome-ellipse-4 {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-16.5cqw, 14.4cqh); } /* -316.8, +129.6 */
-  50% { transform: translate(-8cqw, 37.8667cqh); } /* -153.6, +340.8 */
-  75% { transform: translate(11.5cqw, 22.9333cqh); } /* +220.8, +206.4 */
+  25% { transform: translate(-16.5vw, 14.4dvh); } /* -316.8, +129.6 */
+  50% { transform: translate(-8vw, 37.8667dvh); } /* -153.6, +340.8 */
+  75% { transform: translate(11.5vw, 22.9333dvh); } /* +220.8, +206.4 */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -107,29 +124,24 @@
   }
 }
 
-/* 2a. Vertical group's background blur, over the ellipses only. */
-.cwelcome__backdrop {
-  position: absolute;
-  inset: 0;
-  -webkit-backdrop-filter: blur(2.0833cqw); /* 40px */
-  backdrop-filter: blur(2.0833cqw);
-}
-
-/* 2b / 3. Grid groups — plain wrappers, no stacking context. */
+/* 2 / 3. Grid groups — plain wrappers. */
 .cwelcome__grid {
   position: absolute;
   inset: 0;
 }
 
 /*
- * Shared Overlay paint. The gradient transform [[1,0,0],[0,81,-40]] keeps the
- * gradient on the rectangle's own x axis: across a column's width, and — the
- * bands being rotated -90° — down a band's height.
+ * The veil is white only, so it disappears over the white field and shows up
+ * solely where a glow is behind it — which is what Overlay did in Figma, and
+ * why the reference render has clean white through the middle. Each cell runs
+ * clear to 55% of its own axis, then washes to a white seam at 100%.
+ * The gradient transform [[1,0,0],[0,81,-40]] keeps it on the rectangle's own
+ * x axis: across a column's width, and — the bands being rotated -90° — down
+ * a band's height.
  */
 .cwelcome__col,
 .cwelcome__row {
   position: absolute;
-  mix-blend-mode: overlay;
 }
 
 .cwelcome__col {
@@ -138,9 +150,9 @@
   height: 100%;
   background: linear-gradient(
     90deg,
-    rgba(217, 217, 217, 0) 0%,
-    rgba(15.462, 15.462, 15.462, 0.77) 75%,
-    #ffffff 100%
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.9) 100%
   );
 }
 
@@ -150,9 +162,9 @@
   height: 11.1111%; /* 100px */
   background: linear-gradient(
     180deg,
-    rgba(217, 217, 217, 0) 0%,
-    rgba(15.462, 15.462, 15.462, 0.77) 75%,
-    #ffffff 100%
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.9) 100%
   );
 }
 
@@ -168,13 +180,20 @@
 
 .cwelcome__text {
   margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: min(18rem, 100%);
+  padding-inline: 8px;
   text-align: center;
   letter-spacing: 0;
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 }
 
 .cwelcome__title,
 .cwelcome__subtitle {
   display: block;
+  white-space: normal;
 }
 
 .cwelcome__title {
@@ -185,39 +204,40 @@
 }
 
 .cwelcome__subtitle {
-  font-size: clamp(20px, 5.2vw, 40px);
+  font-size: clamp(18px, 4.8vw, 40px);
   font-weight: 300;
   line-height: 1.25; /* 50 / 40 */
   color: #4b4b4b;
+  text-wrap: balance;
 }
 
 @media (min-width: 1024px) {
-  /* 751×180 clipping frame at (584, 360). */
+  /* 751×180 frame at (584, 360). Flex-centres the copy so the subtitle
+     cannot clip the way the old nowrap + overflow:hidden box did. */
   .cwelcome__frame {
     inset: auto;
-    left: 30.4167cqw;
-    top: 40cqh;
-    width: 39.1146cqw;
-    height: 20cqh;
-    display: block;
+    left: 30.4167vw;
+    top: 40dvh;
+    width: 39.1146vw;
+    height: 20dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
-  /* Text layer at (86, 37), auto width and height, 605 wide at design size. */
   .cwelcome__text {
-    position: absolute;
-    left: 11.4514%;
-    top: 20.5556%;
     width: 80.5593%;
-    white-space: nowrap;
+    max-width: none;
+    padding-inline: 0;
   }
 
   .cwelcome__title {
-    font-size: 3.0208cqw; /* 58px */
+    font-size: 3.0208vw; /* 58px */
   }
 
   .cwelcome__subtitle {
-    font-size: 2.0833cqw; /* 40px */
+    font-size: 2.0833vw; /* 40px */
   }
 }

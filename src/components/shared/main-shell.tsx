@@ -36,6 +36,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const isRecruiterOnboarding =
     pathname === "/recruiter-onboarding" ||
     pathname.startsWith("/recruiter-onboarding/");
+  const isWelcome = pathname === "/welcome";
 
   useEffect(() => {
     document.body.classList.toggle("landing-page", isLanding);
@@ -53,6 +54,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
           !isWorkshop &&
           !isHire &&
           !isRecruiterOnboarding &&
+          !isWelcome &&
           "pb-16 md:pb-0",
       )}
     >

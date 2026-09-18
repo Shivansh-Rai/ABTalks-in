@@ -155,6 +155,8 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard" || pathname === "/profile") return null;
+  // Full-viewport sign-in interstitial — do not stack the generic footer under it.
+  if (pathname === "/welcome") return null;
   if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {
     return null;
   }
