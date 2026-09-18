@@ -245,6 +245,26 @@ export default async function AdminHomePage() {
               )}
             </div>
 
+            <details className="group border-t border-[#E9E9E9] pt-4">
+              <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#787878]">
+                  Traffic details
+                  <span className="ml-2 font-normal normal-case tracking-normal text-[#8F8F8F] group-open:hidden">
+                    · click to expand
+                  </span>
+                </p>
+                <span
+                  aria-hidden
+                  className="shrink-0 rounded-full border border-[#E9E9E9] px-1.5 py-0.5 text-[11px] font-medium text-[#03535F] transition-transform group-open:rotate-180"
+                >
+                  ▾
+                </span>
+              </summary>
+              <div className="mt-4">
+                <TrafficAnalyticsLoader data={gaTraffic.data} />
+              </div>
+            </details>
+
             <div className="border-t border-[#E9E9E9] pt-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#787878]">
                 Last 7 days · teal candidates, green recruiters
@@ -269,39 +289,6 @@ export default async function AdminHomePage() {
           <ActivityTimeline items={data.recentAdminActions} />
         </section>
       </div>
-
-      <details className="group rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)] open:pb-5">
-        <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden">
-          <div>
-            <h2 className="font-display text-lg font-semibold text-[#353535]">
-              Traffic details (Google Analytics)
-              <span className="ml-2 text-xs font-normal text-[#8F8F8F] group-open:hidden">
-                click to expand
-              </span>
-            </h2>
-            <p className="text-xs text-[#8F8F8F]">
-              Live GA4 data, last 7 days. Audience, acquisition,
-              demographics and behavior — all filters live on{" "}
-              <Link
-                href="/admin/analytics"
-                className="text-[#03535F] hover:underline"
-              >
-                /admin/analytics
-              </Link>
-              .
-            </p>
-          </div>
-          <span
-            aria-hidden
-            className="shrink-0 rounded-full border border-[#E9E9E9] px-2 py-0.5 text-[11px] font-medium text-[#03535F] transition-transform group-open:rotate-180"
-          >
-            ▾
-          </span>
-        </summary>
-        <div className="mt-4">
-          <TrafficAnalyticsLoader data={gaTraffic.data} />
-        </div>
-      </details>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
