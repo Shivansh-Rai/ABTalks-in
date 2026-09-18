@@ -2,22 +2,16 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Send, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { placeBulkEngagementRequestAction } from "@/app/actions/hire-request-actions";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
 import { setMatchDecisionAction } from "@/app/actions/talent-project-actions";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
-import {
-  DESK_REQUESTED_EVENT,
-  markRequested,
-  readRequested,
-} from "@/components/hire/desk-requested";
+
 import { readGuestCart, toggleGuestCart } from "@/components/hire/guest-cart";
-import { savePendingCheckout } from "@/components/hire/pending-checkout";
 import { decodeCandidateRef, refPublicId } from "@/features/hire/candidate-ref";
 import type { CartRow } from "@/components/hire/shortlist-cart";
 import { hydrateMatch } from "@/components/hire/evidence-cache";
@@ -66,17 +60,24 @@ function isAsked(row: CartRow, requested: string[]): boolean {
 export function HireTalentPod({
   serverRows,
   scopeLabel,
+  projectId = null,
 }: {
   serverRows: CartRow[];
   scopeLabel?: string;
+  /**
+   * The open project, from the same `projectIdFromPath` that scoped
+   * `serverRows`. Carried into Create assessment: without it the builder fell
+   * back to the recruiter-wide shortlist and offered people this pod is not
+   * showing. Null = off-project.
+   */
+  projectId?: string | null;
 }) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
-  const { approved, openAuth } = useHireAuth();
+  const { approved } = useHireAuth();
   const [extra, setExtra] = useState<CartRow[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -109,14 +110,14 @@ export function HireTalentPod({
           engagementStatus: null,
         })),
       );
-      setRequested(readRequested());
+
     };
     sync();
     window.addEventListener("abtalks-hire-cart", sync);
-    window.addEventListener(DESK_REQUESTED_EVENT, sync);
+
     return () => {
       window.removeEventListener("abtalks-hire-cart", sync);
-      window.removeEventListener(DESK_REQUESTED_EVENT, sync);
+
     };
   }, []);
 
@@ -200,45 +201,6 @@ export function HireTalentPod({
     toast.success("Removed from Shortlist");
   }
 
-  function place() {
-    const refs = selectable
-      .map((r) => r.candidateRef)
-      .filter((ref) => selected.has(ref));
-    if (refs.length === 0) {
-      toast.error("Select at least one candidate who is not already requested.");
-      return;
-    }
-    if (!approved) {
-      savePendingCheckout({
-        candidateRefs: refs,
-        note: note.trim() || undefined,
-      });
-      openAuth("checkout");
-      return;
-    }
-    startTransition(async () => {
-      const res = await placeBulkEngagementRequestAction({
-        candidateRefs: refs,
-        note: note.trim() || undefined,
-      });
-      if (!res.ok) {
-        toast.error(res.message);
-        return;
-      }
-      toast.success(
-        res.data.placed === 0
-          ? "Those were already requested."
-          : `${res.data.placed} request${res.data.placed === 1 ? "" : "s"} placed.`,
-      );
-      if (res.data.placed > 0) {
-        markRequested(refs);
-        setSelected(new Set());
-        setNote("");
-        router.refresh();
-      }
-    });
-  }
-
   const allSelected =
     selectable.length > 0 && selected.size === selectable.length;
 
@@ -249,10 +211,32 @@ export function HireTalentPod({
           <ChevronLeft aria-hidden="true" />
           Back to Scout
         </button>
-        <h1 className="hire-pod__title">Your Shortlist</h1>
-        {/* Plan 133: whose list this is — one project's, or the legacy
-            saved list that belongs to no project. */}
-        {scopeLabel && <p className="text-sm text-muted-foreground">{scopeLabel}</p>}
+        <div className="hire-pod__header-row">
+          <div className="hire-pod__header-text">
+            <h1 className="hire-pod__title">Your Shortlist</h1>
+            {/* Plan 133: whose list this is — one project's, or the legacy
+                saved list that belongs to no project. */}
+            {scopeLabel && <p className="text-sm text-muted-foreground">{scopeLabel}</p>}
+          </div>
+          <div className="hire-pod__header-actions">
+            {rows.length === 0 ? (
+              <button
+                type="button"
+                disabled
+                className="hire-pod__assess is-disabled"
+                title="Add candidates to your Shortlist first"
+              >
+                <ClipboardList className="size-4" aria-hidden="true" />
+                Create assessment for Shortlisted
+              </button>
+            ) : (
+              <Link href="/hire/create-test" className="hire-pod__assess">
+                <ClipboardList className="size-4" aria-hidden="true" />
+                Create assessment for Shortlisted
+              </Link>
+            )}
+          </div>
+        </div>
       </header>
 
       <div className="hire-pod__main">
@@ -279,8 +263,7 @@ export function HireTalentPod({
             {rows.length === 0 ? (
               <div className="pod-empty">
                 <p className="pod-empty__copy">
-                  Your Shortlist is empty. Add candidates from a search, then
-                  tick the ones you want to request.
+                  Your Shortlist is empty. Add candidates from a search to view them here and create assessments.
                 </p>
                 <PodEmptyArt />
                 <button
@@ -381,54 +364,6 @@ export function HireTalentPod({
             )}
           </div>
         </div>
-
-        <aside className="hire-pod__request">
-          <p className="hire-pod__kicker">Request</p>
-          <h2>
-            Add a comment for our team <span>(optional)</span>
-          </h2>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={2000}
-            placeholder="e.g. we can interview these next week; budget is flexible for the right person"
-          />
-          <p className="hire-pod__note">
-            Only the ticked people are sent. Already requested stay in the pod
-            and are not sent again.
-          </p>
-          <button
-            type="button"
-            className="hire-pod__submit"
-            disabled={pending || selected.size === 0}
-            onClick={place}
-          >
-            {pending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
-            )}
-            Place request for {selected.size} candidate
-            {selected.size === 1 ? "" : "s"}
-          </button>
-          <div className="hire-pod__assess-divider" aria-hidden="true" />
-          {rows.length === 0 ? (
-            <button
-              type="button"
-              disabled
-              className="hire-pod__assess is-disabled"
-              title="Add candidates to your Shortlist first"
-            >
-              <ClipboardList className="size-4" aria-hidden="true" />
-              Create assessment for Shortlisted
-            </button>
-          ) : (
-            <Link href="/hire/create-test" className="hire-pod__assess">
-              <ClipboardList className="size-4" aria-hidden="true" />
-              Create assessment for Shortlisted
-            </Link>
-          )}
-        </aside>
       </div>
     </section>
   );

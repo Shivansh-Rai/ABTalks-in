@@ -10,9 +10,13 @@ import {
   type AssignmentRow,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
+import { findProjectIdForAssessment } from "@/features/hire/project-assessments";
 import { AssessmentAssignPanel } from "@/components/hire/assessment/assessment-assign-panel";
 
-type Props = { params: Promise<{ assessmentId: string }> };
+type Props = {
+  params: Promise<{ assessmentId: string }>;
+  searchParams: Promise<{ projectId?: string }>;
+};
 
 export const metadata: Metadata = { title: "Assessment | ABTalks Hire" };
 // Assign sends up to MAX_ASSIGN_PER_CALL notifications inline; the server
@@ -41,11 +45,25 @@ function resultCopy(a: AssignmentRow): string {
   return "—";
 }
 
-export default async function HireAssessmentDetailPage({ params }: Props) {
+export default async function HireAssessmentDetailPage({
+  params,
+  searchParams,
+}: Props) {
   await requireRecruiter();
   const workspace = await requireRecruiterWorkspace();
   if (!workspace.ok) notFound();
   const { assessmentId } = await params;
+  const { projectId: projectIdParam } = await searchParams;
+
+  // Plan 133 D-4: the assign panel offers the SAME shortlist the header would
+  // show for this context, never a union of every project. The project the
+  // recruiter arrived from wins; failing that, the one this assessment is filed
+  // under (an existing link — nothing is filed here); failing both it is
+  // off-project, which is the legacy saved list.
+  const projectId =
+    projectIdParam?.trim() ||
+    (await findProjectIdForAssessment(workspace.data.userId, assessmentId));
+
   const monitor = await getAssessmentMonitor(
     prismaAssessmentStore(),
     {
@@ -53,6 +71,7 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
       createdByUserId: workspace.data.userId,
     },
     assessmentId,
+    { projectId },
   );
   // A foreign or unknown id is a 404, never a 403 — ids are not enumerable.
   if (!monitor.ok) notFound();
@@ -118,6 +137,7 @@ export default async function HireAssessmentDetailPage({ params }: Props) {
         assessmentId={assessment.id}
         status={assessment.status}
         candidates={candidates}
+        projectId={projectId}
       />
 
       {isDraft ? (

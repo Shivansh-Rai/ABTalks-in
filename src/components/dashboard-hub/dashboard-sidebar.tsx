@@ -13,6 +13,7 @@ import {
   LogIn,
   LogOut,
   Presentation,
+  Shield,
   Store,
   User,
   Zap,
@@ -69,6 +70,8 @@ type DashboardSidebarProps = {
   collapsible?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  /** Renders the Admin entry inside the mobile drawer (the header pill is md+ only). */
+  isAdmin?: boolean;
   /**
    * False on the public routes that render this sidebar to signed-out
    * visitors (`/hackathon`). Every other DashboardShell route is gated by
@@ -105,6 +108,7 @@ export function DashboardSidebar({
   collapsible = false,
   collapsed = false,
   onToggleCollapse,
+  isAdmin = false,
   signedIn = true,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
@@ -277,6 +281,21 @@ export function DashboardSidebar({
         </Link>
       </div>
       {renderNav(false)}
+      {/* Drawer-only: below `md` the header drops its Admin pill, so this is
+          the only route into /admin on a phone. `md:hidden` keeps it out of the
+          desktop sidebar, where the header pill still shows. */}
+      {isAdmin ? (
+        <div className="px-4 pb-2 md:hidden">
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className={cn("abt-nav-item gap-2.5 px-3", HUB_NAV_IDLE_CLASS)}
+          >
+            <Shield className="size-5 shrink-0" aria-hidden />
+            <span className="min-w-0 truncate whitespace-nowrap">Admin</span>
+          </Link>
+        </div>
+      ) : null}
       {renderFooter(false)}
     </>
   );

@@ -92,6 +92,7 @@ export function DashboardShell({
         collapsible={collapsible}
         collapsed={collapsible ? collapsed : false}
         onToggleCollapse={collapsible ? toggleCollapsed : undefined}
+        isAdmin={isAdmin}
         signedIn={signedIn}
       />
 

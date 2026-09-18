@@ -125,7 +125,11 @@ suite("the one-row-per-person shortlist the assessment builder reads is unchange
   assert(src.includes("return loadShortlist(recruiterUserId, (r) => r.candidateUserId);"), "listProjectShortlist must still dedupe per person");
 });
 
-suite("the assessment system is not modified (plan 133, D-3)", () => {
+suite("the assessment system does not own project filing (plan 133, D-3)", () => {
+  // Filing an assessment under a project stays in TalentProjectAssessment, read
+  // and written by the hire module alone. The assessment system may be TOLD
+  // which project's shortlist to offer (D-4: a projectId filter on the
+  // assignable pool) — that is a scope argument, not a link it owns.
   for (const f of [
     "src/features/recruiter-assessments/service.ts",
     "src/features/recruiter-assessments/prisma-store.ts",
@@ -133,6 +137,19 @@ suite("the assessment system is not modified (plan 133, D-3)", () => {
   ]) {
     assert(!/talentProjectAssessment|projectLink|project-assessments/.test(read(f)), `${f} was touched`);
   }
+});
+
+suite("the assessment send list is one project's, never a union (plan 133, D-4)", () => {
+  const store = strip(read("src/features/recruiter-assessments/prisma-store.ts"));
+  const pool = store.slice(store.indexOf("async listAssignableCandidates("));
+  assert(pool.includes("listProjectShortlistForProject("), "the pool must read ONE project's shortlist");
+  assert(!pool.includes("listProjectShortlist("), "the recruiter-wide union must not be the send list");
+  // Off-project it is the legacy list, on-project it is the project's — the
+  // same two cases scopePodRows has, and never both at once.
+  assert(/projectId \? null : getShortlist\(/.test(pool), "legacy half must be off-project only");
+
+  const pod = read("src/components/hire/hire-talent-pod.tsx");
+  assert(pod.includes("/hire/create-test?projectId="), "the pod CTA must carry the open project");
 });
 
 suite("New project creates a real project; New search stays in it", () => {

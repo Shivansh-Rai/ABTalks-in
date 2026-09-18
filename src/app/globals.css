@@ -282,6 +282,20 @@
     }
   }
 
+  /* Mobile: solid, square, edge-to-edge. The frosted glass reads as a floating
+     pill on a phone, where the bar is the only chrome at the top — so below
+     `md` it becomes an opaque navbar with no radius and no blur. */
+  @media (max-width: 767px) {
+    .abt-header {
+      background: #ffffff;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border-radius: 0;
+      box-shadow: none;
+      border-bottom: 1px solid #e9e9e9;
+    }
+  }
+
   .abt-header-inner {
     display: flex;
     align-items: center;

@@ -217,7 +217,7 @@ export function ActivityHeatmap({
   // lg/xl (laptop) trims the grid ~10% inside its own column — the dashboard
   // grid columns are untouched, so the streak card never moves. 2xl opts out.
   const wrapperClass = embedded
-    ? "w-full min-w-0 flex flex-col max-lg:-mx-4 max-lg:w-[calc(100%+2rem)] lg:max-w-[90%] 2xl:max-w-none"
+    ? "w-full min-w-0 flex flex-col lg:max-w-[90%] 2xl:max-w-none"
     : "scroll-mt-20 px-4 py-8 sm:px-6";
 
   const gridSharedProps = {
@@ -242,7 +242,7 @@ export function ActivityHeatmap({
       {/* Mobile: fixed cell size + horizontal scroll with orange scrollbar */}
       <div
         ref={scrollRef}
-        className="scrollbar-admin-brand mt-3 overflow-x-auto overscroll-x-contain pb-1.5 pl-5 lg:hidden"
+        className="scrollbar-admin-brand mt-3 overflow-x-auto overscroll-x-contain px-4 pb-1.5 lg:hidden"
       >
         <HeatmapGrid
           {...gridSharedProps}

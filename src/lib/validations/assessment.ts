@@ -92,8 +92,19 @@ export const publishAssessmentSchema = z.object({
   assessmentId: z.string().min(1),
 });
 
+/**
+ * Which project's Shortlist the refs were picked from (plan 133 D-4).
+ *
+ * Absent or null means off-project, which is the legacy saved list — the same
+ * thing the header shows there. It only ever narrows the pool: a project the
+ * sender does not own resolves to nothing, so it cannot be used to reach
+ * another recruiter's shortlist.
+ */
+const shortlistProjectId = z.string().trim().min(1).max(64).nullish();
+
 export const assignAssessmentSchema = z.object({
   assessmentId: z.string().min(1),
+  projectId: shortlistProjectId,
   candidateRefs: z
     .array(z.string().trim().min(3).max(200))
     .min(1, "Pick at least one candidate")
@@ -108,6 +119,7 @@ export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
 /** Plan 131 — the builder's Create: save, publish and send in one step. */
 export const createAndSendSchema = z.object({
   draft: assessmentDraftSchema,
+  projectId: shortlistProjectId,
   candidateRefs: assignAssessmentSchema.shape.candidateRefs,
 });
 
@@ -116,6 +128,7 @@ export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
 /** Direct publish from templates: preset ids + refs only, no client draft. */
 export const createAndSendFromPresetsSchema = z.object({
   presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
+  projectId: shortlistProjectId,
   candidateRefs: assignAssessmentSchema.shape.candidateRefs,
 });
 
