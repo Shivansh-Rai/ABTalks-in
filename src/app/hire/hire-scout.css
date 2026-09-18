@@ -11699,6 +11699,28 @@ a.hire-profile__ext-link:focus-visible {
   color: #6b7477;
 }
 
+.hire-history__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hire-history__section + .hire-history__section {
+  margin-top: 24px;
+}
+
+.hire-history__section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 2px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: #03535f;
+}
+
 .hire-history__list {
   display: flex;
   flex-direction: column;

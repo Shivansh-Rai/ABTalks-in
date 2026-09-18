@@ -152,9 +152,17 @@ export function HireSidebar({
     });
   }, [projects, isPinned]);
 
-  const visibleProjects = showAllProjects
-    ? sortedProjects
-    : sortedProjects.slice(0, PROJECTS_COLLAPSED);
+  const pinnedInSidebar = useMemo(
+    () => sortedProjects.filter((p) => isPinned(p.id)),
+    [sortedProjects, isPinned],
+  );
+  const unpinnedInSidebar = useMemo(
+    () => sortedProjects.filter((p) => !isPinned(p.id)),
+    [sortedProjects, isPinned],
+  );
+  const visibleUnpinned = showAllProjects
+    ? unpinnedInSidebar
+    : unpinnedInSidebar.slice(0, PROJECTS_COLLAPSED);
 
   const name = account?.fullName ?? "Guest";
   const sub = account
@@ -479,25 +487,16 @@ export function HireSidebar({
         </section>
       )}
 
-      {/* All projects ----------------------------------------------------- */}
-      {account && projects.length > 0 && (
-        <section className="hire-side__section" aria-label="All projects">
+      {/* Pinned projects --------------------------------------------------- */}
+      {account && pinnedInSidebar.length > 0 && (
+        <section className="hire-side__section" aria-label="Pinned projects">
           <div className="hire-side__head">
-            <h2 className="hire-side__kicker">All projects</h2>
-            <button
-              type="button"
-              className="hire-side__headlink"
-              onClick={() => setNewProjectOpen(true)}
-            >
-              <Plus className="hire-side__headicon" aria-hidden="true" />
-              New Project
-            </button>
+            <h2 className="hire-side__kicker">Pinned</h2>
           </div>
 
           <ul className="hire-side__list">
-            {visibleProjects.map((p) => {
+            {pinnedInSidebar.map((p) => {
               const active = p.id === openProjectId;
-              const pinned = isPinned(p.id);
               return (
                 <li key={p.id} className="hire-side__projectli">
                   <Link
@@ -510,12 +509,10 @@ export function HireSidebar({
                     <span className="hire-side__rowtext">
                       <span className="hire-side__rowname">{p.label}</span>
                     </span>
-                    {pinned && (
-                      <Pin
-                        className="size-3 text-primary fill-primary/30 shrink-0 ml-auto"
-                        aria-label="Pinned project"
-                      />
-                    )}
+                    <Pin
+                      className="size-3 text-primary fill-primary/30 shrink-0 ml-auto"
+                      aria-label="Pinned project"
+                    />
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -546,17 +543,91 @@ export function HireSidebar({
                         className="cursor-pointer"
                         onClick={() => togglePin(p.id)}
                       >
-                        {pinned ? (
-                          <>
-                            <PinOff className="size-3.5" aria-hidden="true" />
-                            Unpin project
-                          </>
-                        ) : (
-                          <>
-                            <Pin className="size-3.5" aria-hidden="true" />
-                            Pin project
-                          </>
-                        )}
+                        <PinOff className="size-3.5" aria-hidden="true" />
+                        Unpin project
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                        onClick={() =>
+                          setDeleting({ id: p.id, name: p.label })
+                        }
+                      >
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                        Delete project
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* All projects (unpinned) ------------------------------------------- */}
+      {account && unpinnedInSidebar.length > 0 && (
+        <section className="hire-side__section" aria-label="All projects">
+          <div className="hire-side__head">
+            <h2 className="hire-side__kicker">All projects</h2>
+            <button
+              type="button"
+              className="hire-side__headlink"
+              onClick={() => setNewProjectOpen(true)}
+            >
+              <Plus className="hire-side__headicon" aria-hidden="true" />
+              New Project
+            </button>
+          </div>
+
+          <ul className="hire-side__list">
+            {visibleUnpinned.map((p) => {
+              const active = p.id === openProjectId;
+              return (
+                <li key={p.id} className="hire-side__projectli">
+                  <Link
+                    href={`/hire/${p.id}`}
+                    className={cn("hire-side__row", active && "is-current")}
+                    aria-current={active ? "page" : undefined}
+                    title={p.label}
+                  >
+                    <Folder className="hire-side__rowicon" aria-hidden="true" />
+                    <span className="hire-side__rowtext">
+                      <span className="hire-side__rowname">{p.label}</span>
+                    </span>
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="hire-side__more hire-side__more--row"
+                          aria-label={`Actions for ${p.label}`}
+                        />
+                      }
+                    >
+                      <MoreHorizontal
+                        className="hire-side__moreicon"
+                        aria-hidden="true"
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() =>
+                          setRenaming({ id: p.id, name: p.label })
+                        }
+                      >
+                        <Pencil className="size-3.5" aria-hidden="true" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => togglePin(p.id)}
+                      >
+                        <Pin className="size-3.5" aria-hidden="true" />
+                        Pin project
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -576,7 +647,7 @@ export function HireSidebar({
             })}
           </ul>
 
-          {projects.length > PROJECTS_COLLAPSED && (
+          {unpinnedInSidebar.length > PROJECTS_COLLAPSED && (
             <button
               type="button"
               className="hire-side__showmore"
@@ -592,7 +663,7 @@ export function HireSidebar({
               />
               {showAllProjects
                 ? "Show less"
-                : `Show more (${projects.length - PROJECTS_COLLAPSED})`}
+                : `Show more (${unpinnedInSidebar.length - PROJECTS_COLLAPSED})`}
             </button>
           )}
         </section>
