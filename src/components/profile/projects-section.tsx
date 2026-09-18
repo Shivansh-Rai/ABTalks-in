@@ -125,7 +125,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                       searchSuggestions={searchCanonicalSkillNames}
                       normalize={canonicalSkillName}
                       placeholder="Start typing a technology"
-                      helper="Descriptive only — this does not add to your skills."
+                      // helper="Descriptive only — this does not add to your skills."
                     />
                   )}
                 />
