@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard-hub/dashboard-sidebar";
 
 export type WorkshopShellUser = {
@@ -8,6 +16,37 @@ export type WorkshopShellUser = {
   email: string;
   image: string | null;
 };
+
+type WorkshopMobileNav = {
+  menuOpen: boolean;
+  openMenu: () => void;
+};
+
+const WorkshopMobileNavContext = createContext<WorkshopMobileNav | null>(null);
+
+function useWorkshopMobileNav(): WorkshopMobileNav {
+  const ctx = useContext(WorkshopMobileNavContext);
+  if (!ctx) {
+    throw new Error("useWorkshopMobileNav must be used inside WorkshopShell");
+  }
+  return ctx;
+}
+
+/** Mobile-only hamburger — opens the shared DashboardSidebar drawer. */
+export function WorkshopMenuButton() {
+  const { menuOpen, openMenu } = useWorkshopMobileNav();
+  return (
+    <button
+      type="button"
+      className="abt-header-icon md:hidden"
+      aria-label="Open menu"
+      aria-expanded={menuOpen}
+      onClick={openMenu}
+    >
+      <Menu aria-hidden />
+    </button>
+  );
+}
 
 type Props = {
   user: WorkshopShellUser;
@@ -36,21 +75,52 @@ type Props = {
  * a Server Component cannot hand across the boundary.
  */
 export function WorkshopShell({ user, isAuthed, children }: Props) {
-  // Desktop-only: `DashboardSidebar`'s own column is `hidden md:flex`, and
-  // `BottomNav` deliberately returns null on /workshop, so the mobile
-  // marketing view stays exactly as it was. Nothing opens the drawer here.
-  const [mobileOpen] = useState(false);
-  const noop = useCallback(() => {}, []);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const openMenu = useCallback(() => setMobileOpen(true), []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeMobile();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen, closeMobile]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    function onWide(e: MediaQueryListEvent) {
+      if (e.matches) closeMobile();
+    }
+    mq.addEventListener("change", onWide);
+    return () => mq.removeEventListener("change", onWide);
+  }, [closeMobile]);
 
   return (
-    <div className="flex min-h-svh">
-      <DashboardSidebar
-        user={user}
-        mobileOpen={mobileOpen}
-        onNavigate={noop}
-        signedIn={isAuthed}
-      />
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
+    <WorkshopMobileNavContext.Provider
+      value={{ menuOpen: mobileOpen, openMenu }}
+    >
+      <div className="flex min-h-svh">
+        <DashboardSidebar
+          user={user}
+          mobileOpen={mobileOpen}
+          onNavigate={closeMobile}
+          signedIn={isAuthed}
+        />
+
+        {mobileOpen ? (
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            aria-label="Close menu"
+            onClick={closeMobile}
+          />
+        ) : null}
+
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    </WorkshopMobileNavContext.Provider>
   );
 }

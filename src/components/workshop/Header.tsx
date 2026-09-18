@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import WorkshopLogo from "@/components/workshop/WorkshopLogo";
+import { WorkshopMenuButton } from "@/components/workshop/WorkshopShell";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 import { SiteSearchSlot } from "@/components/dashboard-hub/site-search-slot";
 
@@ -18,12 +19,10 @@ export default function WorkshopHeader({ isSignedIn }: { isSignedIn: boolean }) 
           the logo hidden below it would otherwise leave the actions stranded
           against the left edge. */}
       <div className="abt-header-inner md:justify-end">
-        {/* The sidebar carries the ABTalks mark from `md` up — that is exactly
-            where it becomes visible — so showing this one too put two logos on
-            one screen. Below `md` there is no sidebar at all, which is why this
-            is hidden rather than deleted: it is the page's only branding there,
-            and /workshop is a public marketing page. */}
-        <div className="md:hidden">
+        {/* Hamburger (mobile) + logo. From `md` up the shared sidebar carries
+            the ABTalks mark, so the logo is mobile-only here. */}
+        <div className="flex items-center gap-2 md:hidden">
+          <WorkshopMenuButton />
           <WorkshopLogo />
         </div>
 
