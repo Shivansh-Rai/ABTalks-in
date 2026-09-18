@@ -1,15 +1,15 @@
 import Link from "next/link";
 import {
-  Activity,
-  Award,
+  BarChart3,
   Briefcase,
+  Clock,
   Coins,
-  FileSignature,
-  Flame,
+  Globe2,
+  LogIn,
   Mail,
+  MousePointerClick,
   Send,
   Sparkles,
-  Target,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -18,7 +18,14 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatCard } from "@/components/admin/stat-card";
 import { ActivityTimeline } from "@/components/admin/activity-timeline";
 import { PlatformActivityKpis } from "@/components/admin/platform-activity-kpis";
+import { TrafficAnalyticsLoader } from "@/components/admin/traffic-analytics-loader";
 import { getOverviewStats } from "@/features/admin/get-overview-stats";
+import { getAdminGaTraffic } from "@/features/admin/get-ga-traffic";
+import {
+  formatCompactNumber,
+  formatDuration,
+  formatRatioAsPercent,
+} from "@/lib/analytics/format";
 import { cn } from "@/lib/utils";
 
 function greetingIst(now = new Date()): string {
@@ -72,9 +79,27 @@ function ActivityBars({
   );
 }
 
+/**
+ * Plan 154: default GA window for the overview page. Kept at 7 days to match
+ * the "Last 7 days" framing of the candidates/recruiters bar chart directly
+ * below — one window, one story.
+ */
+function ga7DayWindow(): { start: string; end: string } {
+  const now = new Date();
+  const end = now.toISOString().slice(0, 10);
+  const start = new Date(now);
+  start.setUTCDate(start.getUTCDate() - 6);
+  return { start: start.toISOString().slice(0, 10), end };
+}
+
 export default async function AdminHomePage() {
-  const [admin, data] = await Promise.all([requireAdmin(), getOverviewStats()]);
+  const [admin, data, gaTraffic] = await Promise.all([
+    requireAdmin(),
+    getOverviewStats(),
+    getAdminGaTraffic(ga7DayWindow()),
+  ]);
   const firstName = (admin.name ?? "there").trim().split(/\s+/)[0];
+  const ga = gaTraffic.data.available ? gaTraffic.data : null;
 
   return (
     <div className="space-y-6">
@@ -128,69 +153,107 @@ export default async function AdminHomePage() {
               Live counts · deltas are this week vs last week (IST)
             </p>
           </div>
-          <PlatformActivityKpis
-            tiles={[
-              {
-                label: "Active today",
-                value: data.stats.activeToday,
-                hint: "Candidates who submitted today (IST)",
-                icon: <Flame className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Day 30 reached",
-                value: data.stats.day30Reached,
-                hint: "Half-way milestone",
-                icon: <Target className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Day 60 reached",
-                value: data.stats.day60Reached,
-                hint: "Full completion",
-                icon: <Award className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Applications",
-                value: data.stats.applicationsTotal,
-                delta: data.stats.applicationsDelta,
-                hint: `${data.stats.applicationsThisWeek.toLocaleString()} this week`,
-                icon: <FileSignature className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Published jobs",
-                value: data.stats.jobsPublished,
-                hint: "Currently open",
-                icon: <Briefcase className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Assessments done",
-                value: data.stats.assessmentsCompletedTotal,
-                delta: data.stats.assessmentsCompletedDelta,
-                hint: `${data.stats.assessmentsCompletedThisWeek.toLocaleString()} this week`,
-                icon: <Sparkles className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Contact unlocks",
-                value: data.stats.contactUnlocksThisWeek,
-                delta: data.stats.contactUnlocksDelta,
-                hint: "This week only",
-                icon: <Users className="size-3.5" aria-hidden />,
-              },
-              {
-                label: "Active talent projects",
-                value: data.stats.talentProjectsActive,
-                hint: `${data.stats.talentProjectsThisWeek.toLocaleString()} started this week`,
-                icon: <Activity className="size-3.5" aria-hidden />,
-              },
-            ]}
-          />
-          <div className="mt-5 border-t border-[#E9E9E9] pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#787878]">
-              Last 7 days · teal candidates, green recruiters
-            </p>
-            <ActivityBars
-              candidates={data.stats.totalStudentsSeries}
-              recruiters={data.stats.totalRecruitersSeries}
-            />
+          <div className="space-y-4">
+            <div>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8F8F]">
+                  Traffic · from Google Analytics (last 7 days)
+                </p>
+                <Link
+                  href="/admin/analytics"
+                  className="text-[11px] font-medium text-[#03535F] hover:underline"
+                >
+                  Open full analytics →
+                </Link>
+              </div>
+              {ga ? (
+                <PlatformActivityKpis
+                  tiles={[
+                    {
+                      label: "Sessions",
+                      value: formatCompactNumber(ga.summary.sessions),
+                      hint: `${formatCompactNumber(ga.summary.activeUsers)} active users`,
+                      icon: <BarChart3 className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "New users",
+                      value: formatCompactNumber(ga.summary.newUsers),
+                      hint: "First-time visitors",
+                      icon: <UserPlus className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Pageviews",
+                      value: formatCompactNumber(ga.summary.screenPageViews),
+                      hint: `${formatCompactNumber(ga.topPages[0]?.pageviews ?? 0)} on top page`,
+                      icon: <MousePointerClick className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Avg. session",
+                      value: formatDuration(ga.summary.averageSessionDurationSec),
+                      hint: "Time on site",
+                      icon: <Clock className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Engagement rate",
+                      value: formatRatioAsPercent(ga.summary.engagementRate),
+                      hint: "Sessions with real interaction",
+                      icon: <Sparkles className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Recruiter sign-ins",
+                      value: formatCompactNumber(
+                        ga.eventCounts.recruiter_reg_submitted ?? 0,
+                      ),
+                      hint: "site event · last 7 days",
+                      icon: <LogIn className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Top country",
+                      value: ga.countries[0]?.country ?? "—",
+                      hint: ga.countries[0]
+                        ? `${formatCompactNumber(ga.countries[0].users)} users`
+                        : undefined,
+                      icon: <Globe2 className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                    {
+                      label: "Top source",
+                      value: ga.sources[0]?.source ?? "—",
+                      hint: ga.sources[0]
+                        ? `${formatCompactNumber(ga.sources[0].sessions)} sessions`
+                        : undefined,
+                      icon: <Globe2 className="size-3.5" aria-hidden />,
+                      href: "/admin/analytics",
+                    },
+                  ]}
+                />
+              ) : (
+                <Link
+                  href="/admin/analytics"
+                  className="block rounded-lg border border-dashed border-[#E9E9E9] bg-[#FAFAFA] p-4 text-center text-xs text-[#787878] hover:border-[#03535F]/40 hover:bg-[#EEF6F6]"
+                >
+                  Google Analytics is not configured for this environment.
+                  Open <span className="underline">/admin/analytics</span> for
+                  the full setup details.
+                </Link>
+              )}
+            </div>
+
+            <div className="border-t border-[#E9E9E9] pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#787878]">
+                Last 7 days · teal candidates, green recruiters
+              </p>
+              <ActivityBars
+                candidates={data.stats.totalStudentsSeries}
+                recruiters={data.stats.totalRecruitersSeries}
+              />
+            </div>
           </div>
         </section>
 
@@ -206,6 +269,28 @@ export default async function AdminHomePage() {
           <ActivityTimeline items={data.recentAdminActions} />
         </section>
       </div>
+
+      <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
+        <div className="mb-4 flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-[#353535]">
+              Traffic details (Google Analytics)
+            </h2>
+            <p className="text-xs text-[#8F8F8F]">
+              Live GA4 data, last 7 days. Audience, acquisition,
+              demographics and behavior — all filters live on{" "}
+              <Link
+                href="/admin/analytics"
+                className="text-[#03535F] hover:underline"
+              >
+                /admin/analytics
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+        <TrafficAnalyticsLoader data={gaTraffic.data} />
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-xl border border-[#E9E9E9] bg-white p-5 shadow-[var(--shadow-card)]">
