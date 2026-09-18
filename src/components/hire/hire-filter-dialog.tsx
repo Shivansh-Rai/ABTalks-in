@@ -31,6 +31,71 @@ const EMPLOYMENT_OPTIONS = [
   { value: "FREELANCE", label: "Freelance" },
 ] as const;
 
+const POPULAR_ROLES = [
+  "Frontend Engineer",
+  "Backend Engineer",
+  "Full Stack Developer",
+  "Mobile Developer (React Native / iOS / Android)",
+  "DevOps / Cloud Engineer",
+  "Data Scientist / AI Engineer",
+  "UI/UX Designer",
+  "Product Manager",
+  "QA / Automation Engineer",
+] as const;
+
+const POPULAR_LOCATIONS = [
+  "Any / Remote",
+  "Bengaluru",
+  "Mumbai",
+  "Delhi NCR",
+  "Hyderabad",
+  "Pune",
+  "Chennai",
+  "Kolkata",
+  "Ahmedabad",
+  "Chandigarh",
+  "Remote - India",
+  "Remote - Global",
+] as const;
+
+const EXPERIENCE_OPTIONS = [
+  { label: "Any experience", min: "", max: "" },
+  { label: "Fresher / Entry (0-1 yrs)", min: "0", max: "1" },
+  { label: "Junior (1-3 yrs)", min: "1", max: "3" },
+  { label: "Mid-level (3-5 yrs)", min: "3", max: "5" },
+  { label: "Senior (5-8 yrs)", min: "5", max: "8" },
+  { label: "Lead / Principal (8+ yrs)", min: "8", max: "50" },
+] as const;
+
+const BUDGET_OPTIONS = [
+  { value: "", label: "No budget limit" },
+  { value: "6", label: "Up to ₹6 LPA" },
+  { value: "10", label: "Up to ₹10 LPA" },
+  { value: "15", label: "Up to ₹15 LPA" },
+  { value: "20", label: "Up to ₹20 LPA" },
+  { value: "30", label: "Up to ₹30 LPA" },
+  { value: "50", label: "Up to ₹50 LPA" },
+  { value: "75", label: "Up to ₹75 LPA" },
+  { value: "100", label: "₹1 Cr+ (₹100 LPA)" },
+] as const;
+
+const SUGGESTED_SKILLS = [
+  "React",
+  "Next.js",
+  "TypeScript",
+  "Node.js",
+  "Python",
+  "Java",
+  "Go",
+  "AWS",
+  "Docker",
+  "PostgreSQL",
+  "MongoDB",
+  "Tailwind CSS",
+  "GraphQL",
+  "Kubernetes",
+] as const;
+
 export type HireFilterDraft = {
   title: string;
   skills: string[];
@@ -205,6 +270,11 @@ export function HireFilterDialog({
     setSkillText("");
   }
 
+  // Check which experience preset matches
+  const currentExpPreset = EXPERIENCE_OPTIONS.find(
+    (e) => e.min === draft.minExperience && e.max === draft.maxExperience
+  ) ? `${draft.minExperience}-${draft.maxExperience}` : "custom";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -214,8 +284,7 @@ export function HireFilterDialog({
         <DialogHeader>
           <DialogTitle>Edit filters</DialogTitle>
           <DialogDescription>
-            Only fields on the candidate profile that ranking already applies.
-            Empty means not set.
+            Choose from popular options or customize fields. Empty means any.
           </DialogDescription>
         </DialogHeader>
 
@@ -229,44 +298,56 @@ export function HireFilterDialog({
             onApply(mergeFilterDraft(spec, next));
           }}
         >
-          <label className="hire-filter-field">
-            <span>Role</span>
-            <input
-              type="text"
-              value={draft.title}
-              maxLength={200}
-              placeholder="Not set"
-              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-            />
-          </label>
-
-          <fieldset className="hire-filter-field">
-            <legend>Skills</legend>
-            <div className="hire-filter-skills">
-              {draft.skills.map((s) => (
-                <span key={s} className="hire-filter-chip">
-                  {s}
-                  <button
-                    type="button"
-                    className="hire-filter-chip__x"
-                    aria-label={`Remove ${s}`}
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        skills: d.skills.filter((x) => x !== s),
-                      }))
-                    }
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+          {/* Role / Designation with dropdown suggestions */}
+          <div className="hire-filter-field">
+            <span>Target Role</span>
+            <div className="hire-filter-input-group">
+              <input
+                type="text"
+                list="hire-popular-roles"
+                value={draft.title}
+                maxLength={200}
+                placeholder="Select or type role (e.g. Frontend Engineer)"
+                onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+              />
+              <datalist id="hire-popular-roles">
+                {POPULAR_ROLES.map((r) => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
             </div>
+          </div>
+
+          {/* Skills with tags and quick suggestions */}
+          <fieldset className="hire-filter-field">
+            <legend>Must-Have Skills</legend>
+            {draft.skills.length > 0 && (
+              <div className="hire-filter-skills">
+                {draft.skills.map((s) => (
+                  <span key={s} className="hire-filter-chip">
+                    {s}
+                    <button
+                      type="button"
+                      className="hire-filter-chip__x"
+                      aria-label={`Remove ${s}`}
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          skills: d.skills.filter((x) => x !== s),
+                        }))
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <input
               type="text"
               value={skillText}
               maxLength={60}
-              placeholder="Type a skill and press Enter"
+              placeholder="Type skill & press Enter, or click suggestions below"
               onChange={(e) => setSkillText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === ",") {
@@ -281,50 +362,82 @@ export function HireFilterDialog({
                 if (skillText.trim()) addSkill(skillText);
               }}
             />
+            {/* Quick Skill Suggestions */}
+            <div className="hire-filter-suggestions">
+              <span className="hire-filter-suggestions__label">Suggested:</span>
+              <div className="hire-filter-suggestions__list">
+                {SUGGESTED_SKILLS.filter(
+                  (s) => !draft.skills.some((existing) => existing.toLowerCase() === s.toLowerCase())
+                ).slice(0, 8).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="hire-filter-sugg-btn"
+                    onClick={() => addSkill(s)}
+                  >
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            </div>
           </fieldset>
 
-          <label className="hire-filter-field">
+          {/* Location with dropdown suggestions */}
+          <div className="hire-filter-field">
             <span>Location</span>
-            <input
-              type="text"
-              value={draft.locationCity}
-              maxLength={80}
-              placeholder="Not set"
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, locationCity: e.target.value }))
-              }
-            />
-          </label>
+            <div className="hire-filter-input-group">
+              <input
+                type="text"
+                list="hire-popular-locations"
+                value={draft.locationCity}
+                maxLength={80}
+                placeholder="Select or type city (e.g. Bengaluru, Remote)"
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, locationCity: e.target.value }))
+                }
+              />
+              <datalist id="hire-popular-locations">
+                {POPULAR_LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc === "Any / Remote" ? "" : loc}>
+                    {loc}
+                  </option>
+                ))}
+              </datalist>
+            </div>
+          </div>
 
-          <div className="hire-filter-row">
-            <label className="hire-filter-field">
-              <span>Min years</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={50}
-                value={draft.minExperience}
-                placeholder="Not set"
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, minExperience: e.target.value }))
+          {/* Experience Range with preset dropdown */}
+          <div className="hire-filter-field">
+            <span>Experience Level</span>
+            <select
+              value={currentExpPreset}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "custom") return;
+                const found = EXPERIENCE_OPTIONS.find(
+                  (opt) => `${opt.min}-${opt.max}` === val
+                );
+                if (found) {
+                  setDraft((d) => ({
+                    ...d,
+                    minExperience: found.min,
+                    maxExperience: found.max,
+                  }));
                 }
-              />
-            </label>
-            <label className="hire-filter-field">
-              <span>Max years</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={50}
-                value={draft.maxExperience}
-                placeholder="Not set"
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, maxExperience: e.target.value }))
-                }
-              />
-            </label>
+              }}
+            >
+              {EXPERIENCE_OPTIONS.map((opt) => (
+                <option
+                  key={`${opt.min}-${opt.max}`}
+                  value={`${opt.min}-${opt.max}`}
+                >
+                  {opt.label}
+                </option>
+              ))}
+              {currentExpPreset === "custom" && (
+                <option value="custom">Custom experience ({draft.minExperience || "0"} - {draft.maxExperience || "50+"} yrs)</option>
+              )}
+            </select>
           </div>
 
           <div className="hire-filter-row">
@@ -360,20 +473,21 @@ export function HireFilterDialog({
             </label>
           </div>
 
+          {/* Budget Ceiling dropdown */}
           <label className="hire-filter-field">
-            <span>Budget ceiling (LPA)</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={1000}
-              step={0.5}
+            <span>Budget Ceiling (CTC / Salary)</span>
+            <select
               value={draft.salaryMaxLpa}
-              placeholder="Not set"
               onChange={(e) =>
                 setDraft((d) => ({ ...d, salaryMaxLpa: e.target.value }))
               }
-            />
+            >
+              {BUDGET_OPTIONS.map((b) => (
+                <option key={b.value || "none"} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="hire-filter-check">
@@ -384,7 +498,7 @@ export function HireFilterDialog({
                 setDraft((d) => ({ ...d, openToWork: e.target.checked }))
               }
             />
-            Only candidates open to work
+            Only candidates immediately open to work
           </label>
 
           <div className="hire-filter-actions">
@@ -400,7 +514,7 @@ export function HireFilterDialog({
               Reset filters
             </button>
             <button type="submit" className="hire-filter-apply" disabled={pending}>
-              {pending ? "Applying…" : "Apply"}
+              {pending ? "Applying…" : "Apply Filters"}
             </button>
           </div>
         </form>

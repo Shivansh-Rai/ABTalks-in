@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Menu } from "lucide-react";
 import { NotificationBellButton } from "@/components/shared/notification-bell-button";
 import { SiteSearchSlot } from "@/components/dashboard-hub/site-search-slot";
@@ -56,6 +57,22 @@ export function DashboardHeader({
             <Menu aria-hidden />
           </button>
 
+          {/* Mobile only: the desktop sidebar already carries the wordmark, so
+              below `md` the header is the only place the brand can live. */}
+          <Link
+            href="/dashboard"
+            className="inline-flex h-8 shrink-0 items-center md:hidden"
+            aria-label="ABTalks dashboard"
+          >
+            <Image
+              src="/abtalks-logo.png"
+              alt="ABTalks"
+              width={120}
+              height={32}
+              className="block h-6 w-auto brightness-0"
+            />
+          </Link>
+
           {customNav ? (
             <nav
               className="abt-header-nav hidden md:flex"
@@ -84,10 +101,14 @@ export function DashboardHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <SiteSearchSlot />
+          {/* Search and the Admin pill are desktop-only — on a phone the bar is
+              logo + hamburger + bell, and Admin moves into the drawer. */}
+          <div className="hidden md:flex md:items-center">
+            <SiteSearchSlot />
+          </div>
           <NotificationBellButton className={bellClassName} />
           {isAdmin ? (
-            <Link href="/admin" className="abt-header-cta">
+            <Link href="/admin" className="abt-header-cta hidden md:inline-flex">
               Admin
             </Link>
           ) : null}
