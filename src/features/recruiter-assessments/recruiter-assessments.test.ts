@@ -89,16 +89,22 @@ type StoredAssignment = AssignmentRow & { assessmentId: string };
 
 function inMemoryStore(): AssessmentStore & {
   rows: Map<string, AssessmentRow>;
-  /** What listAssignableCandidates returns — the recruiter's Shortlist. */
+  /** The off-project Shortlist — the legacy saved list. */
   pool: AssignableCandidate[];
+  /** Plan 133 D-4: one shortlist per project, keyed by project id. */
+  poolByProject: Map<string, AssignableCandidate[]>;
   /** Which recruiter ids the service asked for a Shortlist. */
   poolCalls: string[];
+  /** Which project scope each of those asks carried. Null = off-project. */
+  poolScopes: (string | null)[];
   assignments: Map<string, StoredAssignment>;
   activity: Map<string, number>;
 } {
   const rows = new Map<string, AssessmentRow>();
   const pool: AssignableCandidate[] = [];
+  const poolByProject = new Map<string, AssignableCandidate[]>();
   const poolCalls: string[] = [];
+  const poolScopes: (string | null)[] = [];
   const assignments = new Map<string, StoredAssignment>();
   const activity = new Map<string, number>();
   let seq = 0;
@@ -167,7 +173,9 @@ function inMemoryStore(): AssessmentStore & {
   return {
     rows,
     pool,
+    poolByProject,
     poolCalls,
+    poolScopes,
     assignments,
     activity,
     async create(scope, input) {
@@ -265,9 +273,14 @@ function inMemoryStore(): AssessmentStore & {
       row.strictMode = true;
       return true;
     },
-    async listAssignableCandidates(recruiterUserId) {
+    async listAssignableCandidates(recruiterUserId, options) {
       poolCalls.push(recruiterUserId);
-      return pool.map((c) => ({ ...c }));
+      // The real store reads ONE scope: inside a project that project's
+      // shortlist, outside one the legacy list. Never both, never a union.
+      const projectId = options?.projectId ?? null;
+      poolScopes.push(projectId);
+      const rows = projectId ? (poolByProject.get(projectId) ?? []) : pool;
+      return rows.map((c) => ({ ...c }));
     },
     async upsertAssignments(assessmentId, input) {
       const out: { id: string; candidateUserId: string; created: boolean }[] = [];
@@ -1395,6 +1408,160 @@ async function run() {
     );
     assert(isPenalty("TAB_SWITCH_LIMIT") && isPenalty("FULLSCREEN_LIMIT"), "limits are penalties");
     assert(!isPenalty("ENDED_EARLY") && !isPenalty("TIME_UP") && !isPenalty(null), "others are not");
+  });
+
+  console.log("\nPlan 133 D-4 — the send list is the shortlist the recruiter is looking at\n");
+
+  const PROJECT_A = "proj_a";
+  const PROJECT_B = "proj_b";
+  /** Project A: one person. Project B: three. Legacy: one, in no project. */
+  function storeWithProjects() {
+    const store = inMemoryStore();
+    store.pool.push(POOL[3]!); // the legacy saved list
+    store.poolByProject.set(PROJECT_A, [POOL[0]!]);
+    store.poolByProject.set(PROJECT_B, POOL.slice(1, 4));
+    return store;
+  }
+
+  /** Publish one, leaving the pools this block set up exactly as they are. */
+  async function publishedInProjects(store: ReturnType<typeof inMemoryStore>) {
+    const created = await createAssessment(store, SCOPE_A, validMcqDraft());
+    if (!created.ok) throw new Error("setup create failed");
+    const pub = await publishAssessment(store, SCOPE_A, created.data.id);
+    if (!pub.ok) throw new Error(`setup publish failed: ${pub.message}`);
+    return created.data.id;
+  }
+
+  await suite("S1. one project's send list is that project's shortlist, not a union", async () => {
+    const store = storeWithProjects();
+    const a = await listSendableCandidates(store, SCOPE_A.createdByUserId, {
+      projectId: PROJECT_A,
+    });
+    const b = await listSendableCandidates(store, SCOPE_A.createdByUserId, {
+      projectId: PROJECT_B,
+    });
+    assert(a.length === 1 && a[0]!.candidateRef === POOL[0]!.candidateRef, "A shows its one");
+    assert(b.length === 3, "B shows its three");
+    assert(!a.some((c) => c.candidateRef === POOL[3]!.candidateRef), "legacy is not inside a project");
+  });
+
+  await suite("S2. off-project the send list is the legacy list, not every project", async () => {
+    const store = storeWithProjects();
+    const off = await listSendableCandidates(store, SCOPE_A.createdByUserId);
+    assert(off.length === 1 && off[0]!.candidateRef === POOL[3]!.candidateRef, JSON.stringify(off));
+    const explicitNull = await listSendableCandidates(store, SCOPE_A.createdByUserId, {
+      projectId: null,
+    });
+    assert(explicitNull.length === 1, "an absent project and a null one are the same case");
+  });
+
+  await suite("S3. assign resolves refs against the project it was sent, and refuses the rest", async () => {
+    const store = storeWithProjects();
+    const notifier = fakeNotifier();
+    const id = await publishedInProjects(store);
+
+    // B's candidate cannot be assigned from inside A, even though both are this
+    // recruiter's own shortlists.
+    const crossed = await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: id,
+      projectId: PROJECT_A,
+      candidateRefs: [POOL[1]!.candidateRef],
+    });
+    assert(!crossed.ok && crossed.code === "INVALID", "B's pick refused inside A");
+    assert(store.assignments.size === 0 && notifier.calls.length === 0, "nothing assigned");
+
+    const ok = await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: id,
+      projectId: PROJECT_A,
+      candidateRefs: [POOL[0]!.candidateRef],
+    });
+    assert(ok.ok && ok.data.assigned === 1, "A's own pick goes through");
+    assert(store.poolScopes.at(-1) === PROJECT_A, "assign asked for the project it was told");
+  });
+
+  await suite("S4. a project the recruiter does not own widens nothing", async () => {
+    const store = storeWithProjects();
+    const notifier = fakeNotifier();
+    const id = await publishedInProjects(store);
+    // The real store scopes on `request: { recruiterUserId }`, so a foreign id
+    // finds no rows at all — here, an unknown project is an empty pool.
+    const list = await listSendableCandidates(store, SCOPE_A.createdByUserId, {
+      projectId: "proj_someone_else",
+    });
+    assert(list.length === 0, "a foreign project offers nobody");
+    const res = await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: id,
+      projectId: "proj_someone_else",
+      candidateRefs: [POOL[0]!.candidateRef],
+    });
+    assert(!res.ok && res.code === "INVALID", "and cannot be used to assign");
+    assert(store.assignments.size === 0, "nothing assigned");
+  });
+
+  await suite("S5. Create and send checks and assigns in ONE project scope", async () => {
+    const store = storeWithProjects();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      projectId: PROJECT_B,
+      candidateRefs: store.poolByProject.get(PROJECT_B)!.map((c) => c.candidateRef),
+    });
+    assert(res.ok, `send must succeed${res.ok ? "" : `: ${res.message}`}`);
+    if (!res.ok) return;
+    assert(res.data.assigned === 3, "B's three are sent");
+    assert(
+      store.poolScopes.every((s) => s === PROJECT_B),
+      `pre-check and assign must use one scope: ${JSON.stringify(store.poolScopes)}`,
+    );
+
+    // The same refs, sent as if from Project A, are refused before anything is
+    // written — the client's list is never taken at its word.
+    const store2 = storeWithProjects();
+    const crossed = await createPublishAndAssign(store2, fakeNotifier(), SCOPE_A, {
+      draft: validMcqDraft(),
+      projectId: PROJECT_A,
+      candidateRefs: store2.poolByProject.get(PROJECT_B)!.map((c) => c.candidateRef),
+    });
+    assert(!crossed.ok && crossed.code === "INVALID", "cross-project refs refused");
+    assert(store2.rows.size === 0, "no draft saved, nothing published");
+  });
+
+  await suite("S6. a template send carries the project too", async () => {
+    const store = storeWithProjects();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      projectId: PROJECT_A,
+      candidateRefs: [POOL[0]!.candidateRef],
+    });
+    assert(res.ok, `preset send must succeed${res.ok ? "" : `: ${res.message}`}`);
+    assert(store.poolScopes.every((s) => s === PROJECT_A), "one scope throughout");
+  });
+
+  await suite("S7. the monitor's assign panel is scoped the same way", async () => {
+    const store = storeWithProjects();
+    const id = await publishedInProjects(store);
+    const inA = await getAssessmentMonitor(store, SCOPE_A, id, { projectId: PROJECT_A });
+    const off = await getAssessmentMonitor(store, SCOPE_A, id);
+    assert(inA.ok && inA.data.candidates.length === 1, "A's panel offers A's one");
+    assert(off.ok && off.data.candidates.length === 1, "off-project offers the legacy one");
+    if (!inA.ok || !off.ok) return;
+    assert(
+      inA.data.candidates[0]!.candidateRef !== off.data.candidates[0]!.candidateRef,
+      "and they are not the same person",
+    );
+  });
+
+  await suite("S8. the surfaces that render the checkboxes carry a project", () => {
+    const page = readSource("src/app/hire/create-test/page.tsx");
+    assert(page.includes("projectId"), "create-test reads the project from the URL");
+    assert(/listSendableCandidates\([\s\S]{0,120}projectId/.test(page), "and scopes the pool with it");
+    const detail = readSource("src/app/hire/assessments/[assessmentId]/page.tsx");
+    assert(detail.includes("{ projectId }"), "the detail page scopes its assign panel");
+    const panel = readSource("src/components/hire/assessment/assessment-assign-panel.tsx");
+    assert(/assignRecruiterAssessmentAction\(\{[\s\S]{0,120}projectId/.test(panel), "assign sends it back");
+    const picker = readSource("src/components/hire/assessment/preset-picker.tsx");
+    assert(picker.includes('params.set("projectId"'), "Customize forwards the project");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

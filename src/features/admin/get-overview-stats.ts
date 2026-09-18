@@ -84,6 +84,19 @@ export async function getOverviewStats() {
     emailsFailedThisWeek,
     emailsFailedRecent,
     disabledRecent,
+    // Plan 154: KPIs shown inside the "Platform Activity" section.
+    jobsPublished,
+    applicationsTotal,
+    applicationsThisWeek,
+    applicationsLastWeek,
+    applicationDatesRecent,
+    assessmentsCompletedTotal,
+    assessmentsCompletedThisWeek,
+    assessmentsCompletedLastWeek,
+    contactUnlocksThisWeek,
+    contactUnlocksLastWeek,
+    talentProjectsActive,
+    talentProjectsThisWeek,
   ] = await Promise.all([
     countRegisteredUsers(),
     prisma.submission.findMany({
@@ -210,6 +223,53 @@ export async function getOverviewStats() {
         recruiterProfile: { select: { fullName: true } },
       },
     }),
+    // Plan 154: Platform Activity KPIs.
+    prisma.job.count({ where: { status: "PUBLISHED" } }),
+    prisma.jobApplication.count(),
+    prisma.jobApplication.count({
+      where: { createdAt: { gte: thisWeekStart, lt: thisWeekEnd } },
+    }),
+    prisma.jobApplication.count({
+      where: { createdAt: { gte: lastWeekStart, lt: lastWeekEnd } },
+    }),
+    prisma.jobApplication.findMany({
+      where: { createdAt: { gte: windowStart } },
+      select: { createdAt: true },
+    }),
+    prisma.recruiterAssessmentAssignment.count({
+      where: { status: "SUBMITTED" },
+    }),
+    prisma.recruiterAssessmentAssignment.count({
+      where: {
+        status: "SUBMITTED",
+        updatedAt: { gte: thisWeekStart, lt: thisWeekEnd },
+      },
+    }),
+    prisma.recruiterAssessmentAssignment.count({
+      where: {
+        status: "SUBMITTED",
+        updatedAt: { gte: lastWeekStart, lt: lastWeekEnd },
+      },
+    }),
+    prisma.creditTransaction.count({
+      where: {
+        amount: { lt: 0 },
+        createdAt: { gte: thisWeekStart, lt: thisWeekEnd },
+      },
+    }),
+    prisma.creditTransaction.count({
+      where: {
+        amount: { lt: 0 },
+        createdAt: { gte: lastWeekStart, lt: lastWeekEnd },
+      },
+    }),
+    prisma.talentRequest.count({ where: { archivedAt: null } }),
+    prisma.talentRequest.count({
+      where: {
+        archivedAt: null,
+        createdAt: { gte: thisWeekStart, lt: thisWeekEnd },
+      },
+    }),
   ]);
 
   const newStudentsThisWeek = registrationDates.filter(
@@ -252,6 +312,21 @@ export async function getOverviewStats() {
   const creditsUsedMinor = Math.abs(creditsThisWeek._sum.amount ?? 0);
   const creditsUsedLastMinor = Math.abs(creditsLastWeek._sum.amount ?? 0);
 
+  // Plan 154: applications-per-day series for the trend chart under
+  // "Platform Activity". Bucketed against the same 14-day IST calendar the
+  // registration series uses, so the two chart series align pixel-for-pixel.
+  const applicationsBuckets = new Map<string, number>();
+  for (const key of last14Keys) applicationsBuckets.set(key, 0);
+  for (const row of applicationDatesRecent) {
+    const key = formatInTimeZone(row.createdAt, IST, "yyyy-MM-dd");
+    if (applicationsBuckets.has(key)) {
+      applicationsBuckets.set(key, (applicationsBuckets.get(key) ?? 0) + 1);
+    }
+  }
+  const applicationsSeries = last14Keys.map(
+    (key) => applicationsBuckets.get(key) ?? 0,
+  );
+
   return {
     stats: {
       totalStudents,
@@ -271,6 +346,21 @@ export async function getOverviewStats() {
       emailsSent,
       emailsSentThisWeek,
       emailsFailedThisWeek,
+      // Plan 154 additions.
+      jobsPublished,
+      applicationsTotal,
+      applicationsThisWeek,
+      applicationsDelta: applicationsThisWeek - applicationsLastWeek,
+      applicationsSeries,
+      assessmentsCompletedTotal,
+      assessmentsCompletedThisWeek,
+      assessmentsCompletedDelta:
+        assessmentsCompletedThisWeek - assessmentsCompletedLastWeek,
+      contactUnlocksThisWeek,
+      contactUnlocksDelta: contactUnlocksThisWeek - contactUnlocksLastWeek,
+      talentProjectsActive,
+      talentProjectsThisWeek,
+      last14DayKeys: last14Keys,
     },
     flagged: [
       ...disabledRecent.map((row) => ({

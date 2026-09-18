@@ -45,6 +45,28 @@ export async function listProjectAssessments(
   });
 }
 
+/**
+ * Which project an assessment is filed under, if the recruiter owns both.
+ *
+ * Read-only, and it files nothing: the assign panel uses it to offer the same
+ * shortlist the project's pod shows. An assessment with no row here is
+ * Unassigned, which reads as off-project — the legacy saved list.
+ */
+export async function findProjectIdForAssessment(
+  recruiterUserId: string,
+  assessmentId: string,
+): Promise<string | null> {
+  const link = await prisma.talentProjectAssessment.findFirst({
+    where: {
+      assessmentId,
+      assessment: { createdByUserId: recruiterUserId },
+      request: { recruiterUserId, archivedAt: null },
+    },
+    select: { requestId: true },
+  });
+  return link?.requestId ?? null;
+}
+
 /** The recruiter's assessments that belong to no project. */
 export async function listUnassignedAssessments(
   recruiterUserId: string,

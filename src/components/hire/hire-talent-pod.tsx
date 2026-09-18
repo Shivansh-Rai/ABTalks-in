@@ -64,9 +64,17 @@ function isAsked(row: CartRow, requested: string[]): boolean {
 export function HireTalentPod({
   serverRows,
   scopeLabel,
+  projectId = null,
 }: {
   serverRows: CartRow[];
   scopeLabel?: string;
+  /**
+   * The open project, from the same `projectIdFromPath` that scoped
+   * `serverRows`. Carried into Create assessment: without it the builder fell
+   * back to the recruiter-wide shortlist and offered people this pod is not
+   * showing. Null = off-project.
+   */
+  projectId?: string | null;
 }) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
@@ -360,6 +368,61 @@ export function HireTalentPod({
             )}
           </div>
         </div>
+
+        <aside className="hire-pod__request">
+          <p className="hire-pod__kicker">Request</p>
+          <h2>
+            Add a comment for our team <span>(optional)</span>
+          </h2>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={2000}
+            placeholder="e.g. we can interview these next week; budget is flexible for the right person"
+          />
+          <p className="hire-pod__note">
+            Only the ticked people are sent. Already requested stay in the pod
+            and are not sent again.
+          </p>
+          <button
+            type="button"
+            className="hire-pod__submit"
+            disabled={pending || selected.size === 0}
+            onClick={place}
+          >
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            Place request for {selected.size} candidate
+            {selected.size === 1 ? "" : "s"}
+          </button>
+          <div className="hire-pod__assess-divider" aria-hidden="true" />
+          {rows.length === 0 ? (
+            <button
+              type="button"
+              disabled
+              className="hire-pod__assess is-disabled"
+              title="Add candidates to your Shortlist first"
+            >
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </button>
+          ) : (
+            <Link
+              href={
+                projectId
+                  ? `/hire/create-test?projectId=${encodeURIComponent(projectId)}`
+                  : "/hire/create-test"
+              }
+              className="hire-pod__assess"
+            >
+              <ClipboardList className="size-4" aria-hidden="true" />
+              Create assessment for Shortlisted
+            </Link>
+          )}
+        </aside>
       </div>
     </section>
   );

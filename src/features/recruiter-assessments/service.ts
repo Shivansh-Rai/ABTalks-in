@@ -85,6 +85,19 @@ export type AssignableCandidate = {
   jobRole: string;
 };
 
+/**
+ * Which Shortlist the sendable pool is drawn from — the same scope the header
+ * uses (`scopePodRows`), so the checkboxes can never list someone the recruiter
+ * is not looking at.
+ *
+ * `projectId` set: that project's shortlisted candidates alone. Absent or null:
+ * the legacy saved list, which belongs to no project. Never a union of both,
+ * and never a union of projects.
+ */
+export type AssignablePoolScope = {
+  projectId?: string | null;
+};
+
 export type AssignmentRow = {
   id: string;
   candidateUserId: string;
@@ -210,8 +223,11 @@ export type AssessmentStore = {
   delete(assessmentId: string, scope: Scope): Promise<boolean>;
   /** DRAFT → PUBLISHED in one guarded write. False when nothing moved. */
   publish(assessmentId: string, scope: Scope, at: Date): Promise<boolean>;
-  /** The recruiter's live Shortlist, both halves, searchable candidates only. */
-  listAssignableCandidates(recruiterUserId: string): Promise<AssignableCandidate[]>;
+  /** The recruiter's live Shortlist for ONE scope, searchable candidates only. */
+  listAssignableCandidates(
+    recruiterUserId: string,
+    options?: AssignablePoolScope,
+  ): Promise<AssignableCandidate[]>;
   upsertAssignments(
     assessmentId: string,
     rows: { candidateUserId: string; candidateRef: string }[],
@@ -460,9 +476,13 @@ export async function assignAssessment(
 
   // Refs are names, not capabilities: every one is re-resolved against the
   // recruiter's own live Shortlist, and the whole call is refused if any is
-  // missing so the result message is never half true.
+  // missing so the result message is never half true. The Shortlist is the one
+  // the caller's project scope names, so a ref the checkboxes never offered is
+  // refused here too — the client list is not trusted to have been narrow.
   const refs = [...new Set(parsed.data.candidateRefs)];
-  const pool = await store.listAssignableCandidates(scope.createdByUserId);
+  const pool = await store.listAssignableCandidates(scope.createdByUserId, {
+    projectId: parsed.data.projectId ?? null,
+  });
   const byRef = new Map(pool.map((c) => [c.candidateRef, c]));
 
   const targets: { candidateUserId: string; candidateRef: string }[] = [];
@@ -514,6 +534,8 @@ export async function getAssessmentMonitor(
   store: AssessmentStore,
   scope: Scope,
   assessmentId: string,
+  /** Whose Shortlist the assign panel offers. Omitted = the legacy saved list. */
+  poolScope?: AssignablePoolScope,
 ): Promise<Result<AssessmentMonitor>> {
   const row = await store.findOwned(assessmentId, scope);
   if (!row) return NOT_FOUND("Assessment not found");
@@ -530,7 +552,10 @@ export async function getAssessmentMonitor(
 
   let candidates: MonitorCandidate[] = [];
   if (row.status === "PUBLISHED") {
-    const pool = await store.listAssignableCandidates(scope.createdByUserId);
+    const pool = await store.listAssignableCandidates(
+      scope.createdByUserId,
+      poolScope,
+    );
     const assignedUserIds = new Set(assignments.map((a) => a.candidateUserId));
     candidates = pool.map((c) => ({
       candidateRef: c.candidateRef,
@@ -596,12 +621,17 @@ export type SendableCandidate = {
   jobRole: string;
 };
 
-/** The recruiter's live Shortlist (both halves, searchable only), for the builder. */
+/**
+ * The recruiter's live Shortlist for ONE scope (searchable only), for the
+ * builder. Pass the project the recruiter came from; with no project this is
+ * the legacy saved list, exactly as the off-project header shows it.
+ */
 export async function listSendableCandidates(
   store: AssessmentStore,
   recruiterUserId: string,
+  poolScope?: AssignablePoolScope,
 ): Promise<SendableCandidate[]> {
-  const pool = await store.listAssignableCandidates(recruiterUserId);
+  const pool = await store.listAssignableCandidates(recruiterUserId, poolScope);
   return pool.map((c) => ({
     candidateRef: c.candidateRef,
     label: c.label,
@@ -657,11 +687,15 @@ export async function createPublishAndAssign(
   }
   const { draft } = parsed.data;
   const refs = [...new Set(parsed.data.candidateRefs)];
+  const projectId = parsed.data.projectId ?? null;
 
   // Checked before anything is saved: a stale pick must not leave a live
-  // assessment behind. assignAssessment re-checks (the Shortlist can change
-  // in between; that rare race lands in the assignError branch).
-  const pool = await store.listAssignableCandidates(scope.createdByUserId);
+  // assessment behind. assignAssessment re-checks against the SAME scope (the
+  // Shortlist can change in between; that rare race lands in the assignError
+  // branch).
+  const pool = await store.listAssignableCandidates(scope.createdByUserId, {
+    projectId,
+  });
   const onShortlist = new Set(pool.map((c) => c.candidateRef));
   if (refs.some((ref) => !onShortlist.has(ref))) {
     return {
@@ -694,6 +728,7 @@ export async function createPublishAndAssign(
   const assigned = await assignAssessment(store, notifier, scope, {
     assessmentId: id,
     candidateRefs: refs,
+    projectId,
   });
   if (!assigned.ok) {
     return {
@@ -752,5 +787,6 @@ export async function createPublishAndAssignFromPresets(
   return createPublishAndAssign(store, notifier, scope, {
     draft: content,
     candidateRefs: parsed.data.candidateRefs,
+    projectId: parsed.data.projectId ?? null,
   });
 }

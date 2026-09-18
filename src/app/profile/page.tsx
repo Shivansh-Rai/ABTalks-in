@@ -22,7 +22,7 @@ import { BasicInfoSection } from "@/components/profile/basic-info-section";
 import { ExperienceSection } from "@/components/profile/experience-section";
 import { EducationSection } from "@/components/profile/education-section";
 import { ProjectsSection } from "@/components/profile/projects-section";
-import { MockInterviewsSection } from "@/components/profile/mock-interviews-section";
+// import { MockInterviewsSection } from "@/components/profile/mock-interviews-section";
 import { SkillsSection } from "@/components/profile/skills-section";
 import { AccomplishmentsSection } from "@/components/profile/accomplishments-section";
 import { LinksSection } from "@/components/profile/links-section";
@@ -282,25 +282,25 @@ export default async function ProfilePage() {
         />
       ),
     },
-    {
-      key: "mock",
-      title: "Mock Interview",
-      description: "Live AI interviews you have taken. Earned, not entered.",
-      checklist: "mock",
-      complete: mockComplete,
-      attention: !mockComplete && !activeAttempt,
-      // Outside `computeCompleteness` on purpose — an interview is earned, not
-      // filled in. Quick Links says so rather than showing it as unfinished
-      // work that cannot move Profile strength either way.
-      optional: true,
-      savable: false,
-      node: (
-        <MockInterviewsSection
-          attempts={mockInterviews}
-          activeAttempt={activeAttempt}
-        />
-      ),
-    },
+    // {
+    //   key: "mock",
+    //   title: "Mock Interview",
+    //   description: "Live AI interviews you have taken. Earned, not entered.",
+    //   checklist: "mock",
+    //   complete: mockComplete,
+    //   attention: !mockComplete && !activeAttempt,
+    //   // Outside `computeCompleteness` on purpose — an interview is earned, not
+    //   // filled in. Quick Links says so rather than showing it as unfinished
+    //   // work that cannot move Profile strength either way.
+    //   optional: true,
+    //   savable: false,
+    //   node: (
+    //     <MockInterviewsSection
+    //       attempts={mockInterviews}
+    //       activeAttempt={activeAttempt}
+    //     />
+    //   ),
+    // },
     {
       key: "skills",
       title: "Skills",

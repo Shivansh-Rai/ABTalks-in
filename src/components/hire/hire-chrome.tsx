@@ -361,6 +361,7 @@ export function HireChrome({
             <div className="hire-pod-region">
               <HireTalentPod
                 serverRows={scopedRows}
+                projectId={openProjectId}
                 scopeLabel={
                   openProjectLabel
                     ? `Project: ${openProjectLabel}`

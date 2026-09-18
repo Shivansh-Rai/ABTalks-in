@@ -59,6 +59,15 @@ function roleFromEvidence(evidence: unknown): string | null {
   return typeof role === "string" && role.trim().length > 0 ? role.trim() : null;
 }
 
+/**
+ * Every project's shortlist, one row per person, recruiter-wide.
+ *
+ * Nothing reads this today: the assessment send list moved to the scoped
+ * `listProjectShortlistForProject` below, because a union of every project is
+ * precisely what no surface shows. Kept because "the recruiter's shortlisted
+ * people, whichever project they came from" is a real question — but a new
+ * caller must mean the union, not merely want a shortlist.
+ */
 export async function listProjectShortlist(
   recruiterUserId: string,
 ): Promise<ProjectShortlistRow[]> {
@@ -69,8 +78,7 @@ export async function listProjectShortlist(
  * Plan 133. The same rows, one per PROJECT × candidate instead of one per
  * person, so the header can show each project's own shortlist. A person
  * shortlisted in Project A and Project B appears once in each and is never
- * attributed to only one of them. `listProjectShortlist` above is unchanged —
- * the assessment builder reads it and wants one row per person.
+ * attributed to only one of them. `listProjectShortlist` above is unchanged.
  */
 export async function listProjectShortlistByProject(
   recruiterUserId: string,
@@ -78,13 +86,34 @@ export async function listProjectShortlistByProject(
   return loadShortlist(recruiterUserId, (r) => `${r.requestId}:${r.candidateUserId}`);
 }
 
+/**
+ * ONE project's shortlist, one row per person.
+ *
+ * The scoped half of the assessment send list. `scopePodRows` shows the header
+ * only the open project's rows, so the "Send to shortlisted" checkboxes have to
+ * be drawn from that same project — reading every project here is what listed
+ * strangers next to a shortlist of one.
+ *
+ * Ownership lives in the WHERE, not in a check before it: another recruiter's
+ * project id simply finds nothing, so a forged id cannot widen the pool.
+ */
+export async function listProjectShortlistForProject(
+  recruiterUserId: string,
+  requestId: string,
+): Promise<ProjectShortlistRow[]> {
+  return loadShortlist(recruiterUserId, (r) => r.candidateUserId, requestId);
+}
+
 async function loadShortlist(
   recruiterUserId: string,
   dedupeKey: (r: { requestId: string; candidateUserId: string }) => string,
+  /** Set = that project alone. Omitted = every unarchived project's rows. */
+  requestId?: string,
 ): Promise<ProjectShortlistRow[]> {
   const rows = await prisma.talentRequestMatch.findMany({
     where: {
       decision: "SHORTLISTED",
+      ...(requestId ? { requestId } : {}),
       request: { recruiterUserId, archivedAt: null },
     },
     orderBy: { createdAt: "desc" },

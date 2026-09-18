@@ -81,16 +81,25 @@ function BuilderView({
   existingDraft,
   presetLocked,
   showBack,
+  projectId,
 }: {
   candidates: Awaited<ReturnType<typeof listSendableCandidates>>;
   existingDraft: AssessmentDraft | null;
   presetLocked: boolean;
   showBack: boolean;
+  projectId: string | null;
 }) {
   return (
     <>
       {showBack ? (
-        <Link href="/hire/create-test" className="hire-assess-presets__back">
+        <Link
+          href={
+            projectId
+              ? `/hire/create-test?projectId=${encodeURIComponent(projectId)}`
+              : "/hire/create-test"
+          }
+          className="hire-assess-presets__back"
+        >
           ← Templates
         </Link>
       ) : null}
@@ -98,6 +107,7 @@ function BuilderView({
         candidates={candidates}
         existingDraft={existingDraft}
         presetLocked={presetLocked}
+        projectId={projectId}
       />
     </>
   );
@@ -111,15 +121,24 @@ export default async function CreateTestPage({
     preset?: string;
     presets?: string;
     from?: string;
+    projectId?: string;
   }>;
 }) {
   const { userId } = await requireRecruiter();
-  // The same live Shortlist the assign panel uses — legacy and project halves,
-  // searchable candidates only. Refs and labels only; no user id is sent down.
-  const candidates = await listSendableCandidates(prismaAssessmentStore(), userId);
-  const refs = candidates.map((c) => c.candidateRef);
+  const { id, preset, presets, from, projectId: projectIdParam } = await searchParams;
 
-  const { id, preset, presets, from } = await searchParams;
+  // Plan 133 D-4: the Shortlist the recruiter is actually looking at. Coming
+  // from a project's pod, that project's shortlisted candidates and nobody
+  // else; opened bare, the legacy saved list — the same two cases the header's
+  // `scopePodRows` has. Ownership is enforced in the query, so a project id
+  // belonging to someone else yields an empty pool rather than their people.
+  //
+  // Refs and labels only; no user id is sent down.
+  const projectId = projectIdParam?.trim() || null;
+  const candidates = await listSendableCandidates(prismaAssessmentStore(), userId, {
+    projectId,
+  });
+  const refs = candidates.map((c) => c.candidateRef);
 
   // 1) Editing an existing draft — load it (editable, not locked).
   if (id) {
@@ -140,6 +159,7 @@ export default async function CreateTestPage({
             existingDraft={rowToDraft(found.data)}
             presetLocked={false}
             showBack={false}
+            projectId={projectId}
           />
         );
       }
@@ -151,6 +171,7 @@ export default async function CreateTestPage({
         existingDraft={null}
         presetLocked={false}
         showBack={false}
+        projectId={projectId}
       />
     );
   }
@@ -168,6 +189,7 @@ export default async function CreateTestPage({
         existingDraft={{ ...content, shortlistRefs: refs }}
         presetLocked
         showBack
+        projectId={projectId}
       />
     );
   }
@@ -180,6 +202,7 @@ export default async function CreateTestPage({
         existingDraft={null}
         presetLocked={false}
         showBack
+        projectId={projectId}
       />
     );
   }
@@ -206,11 +229,16 @@ export default async function CreateTestPage({
           </p>
         </div>
       </div>
-      <AssessmentPresetPicker presets={presetSummaries} candidates={candidates} />
+      <AssessmentPresetPicker
+        presets={presetSummaries}
+        candidates={candidates}
+        projectId={projectId}
+      />
       <AssessmentBuilder
         candidates={candidates}
         existingDraft={null}
         presetLocked={false}
+        projectId={projectId}
         embedded
       />
     </div>
