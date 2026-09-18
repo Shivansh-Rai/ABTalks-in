@@ -26,6 +26,7 @@ const EMPTY: HackathonDossierSet = {
       consistency: false,
       interview: false,
       experience: false,
+      role: false,
     },
     note: "No hackathon submissions in the pool yet.",
   },

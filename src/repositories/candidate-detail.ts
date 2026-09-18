@@ -11,6 +11,7 @@ import {
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { ensureCandidateProfile } from "@/repositories/candidate";
+import { ensureDiscoveryRecordAfterProfileSave } from "@/repositories/discovery-record";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -701,6 +702,9 @@ export async function saveBasicInfo(
       },
     });
   });
+  // A name is half of a usable profile. After commit, and never able to fail
+  // the save: see repositories/discovery-record.ts.
+  await ensureDiscoveryRecordAfterProfileSave(userId);
 }
 
 export type EducationWrite = {
@@ -1098,4 +1102,6 @@ export async function saveSkillClaims(
 
     await mirrorSkillsToLegacy(tx, userId);
   });
+  // A claimed skill is the other half of a usable profile.
+  await ensureDiscoveryRecordAfterProfileSave(userId);
 }

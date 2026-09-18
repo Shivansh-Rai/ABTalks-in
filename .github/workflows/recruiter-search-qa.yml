@@ -1,0 +1,51 @@
+name: Recruiter search QA
+
+# Offline recruiter-search regression: golden dataset, filter/combination engine,
+# pagination, sort, privacy and classifier self-tests. No database, no secrets.
+# A new failure (or a pinned known issue that stops reproducing) fails the job.
+# Live read-only audits (npm run audit:recruiter-search) are run separately.
+
+on:
+  pull_request:
+    paths:
+      - "src/features/hire/**"
+      - "src/features/search-qa/**"
+      - "src/repositories/hire.ts"
+      - "src/repositories/talent.ts"
+      - "src/repositories/candidate.ts"
+      - "src/repositories/candidate-detail.ts"
+      - "src/repositories/search-audit.ts"
+      - "src/lib/validations/hire.ts"
+      - "src/lib/skill-catalog.ts"
+      - "src/lib/candidate-vocab.ts"
+      - "prisma/schema.prisma"
+      - ".github/workflows/recruiter-search-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recruiter-search-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Prisma's client is constructed at import time; nothing connects.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Recruiter search QA (offline)
+        run: npm run test:recruiter-search
+      - name: Hire scoring
+        run: npm run test:hire-score
+      - name: Recruiter visibility gate
+        run: npm run test:visibility

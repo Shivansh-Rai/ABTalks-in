@@ -2,12 +2,13 @@ import "server-only";
 
 import { logger } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
-import { pickSearchMatches, rankCandidates } from "@/features/hire/score-candidate";
+import { selectSearchResults } from "@/features/hire/score-candidate";
 import { readPoolExtra } from "@/features/hire/pool-brief";
 import { estimateCompensation } from "@/features/hire/compensation";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
   EMPTY_COVERAGE,
+  attachRoleTitles,
   loadTrack,
   mergeTrackLoads,
 } from "@/features/hire/track-loaders";
@@ -41,7 +42,7 @@ export type SearchCandidatesResult =
  * left short. Five is enough to read a pool from; a strict list of one tells
  * the recruiter nothing about who else is here.
  */
-const MIN_RESULTS = 5;
+export const MIN_RESULTS = 5;
 
 /**
  * How many challenge candidates are loaded before ranking.
@@ -53,7 +54,7 @@ const MIN_RESULTS = 5;
  * Rows are ordered by days submitted before the cap, so the ceiling can only
  * ever trim the least-evidenced people.
  */
-const CHALLENGE_POOL_CAP = 600;
+export const CHALLENGE_POOL_CAP = 600;
 
 
 /**
@@ -86,7 +87,7 @@ export async function searchCandidates(
     );
 
     const merged = mergeTrackLoads(loads);
-    const scoreable: ScoreableMember[] = merged.members;
+    const scoreable: ScoreableMember[] = await attachRoleTitles(merged.members);
     const { coverage, belowEvidenceFloor } = merged;
 
     if (scoreable.length === 0) {
@@ -106,15 +107,23 @@ export async function searchCandidates(
 
     const hardCap = extra.resultLimit;
     const limit = hardCap ?? opts?.limit ?? 25;
-    const ranked = rankCandidates(scoreable, spec, {
-      includeHardFiltered: true,
-      limit: 100,
+
+    // A recruiter with nobody on screen cannot judge the pool, the role or us.
+    // So the shortlist is the ranked STRONG/PARTIAL list, and when that comes
+    // back thin it is topped up with the next best people the pool has — still
+    // carrying their real tier and their real gaps, never dressed up. Chosen
+    // from the whole ranked pool, never a truncated window (QA-KI-006).
+    const { matches, nearMisses } = selectSearchResults(scoreable, spec, {
       coverage,
+      hardCap,
+      limit,
+      minResults: MIN_RESULTS,
     });
 
     // The band needs the tier, and the tier needs the score — so the estimate
-    // is attached after ranking rather than during dossier assembly.
-    for (const r of ranked) {
+    // is attached after ranking rather than during dossier assembly, and only
+    // for the people this search actually returns.
+    for (const r of [...matches, ...nearMisses]) {
       const d = r.dossier;
       if (!d) continue;
       d.compensation.estimate = estimateCompensation({
@@ -124,27 +133,6 @@ export async function searchCandidates(
         missionsPassed: d.evidence.missionsPassed.value,
       });
     }
-
-    // A recruiter with nobody on screen cannot judge the pool, the role or us.
-    // So the shortlist is the ranked STRONG/PARTIAL list, and when that comes
-    // back thin it is topped up with the next best people the pool has — still
-    // carrying their real tier and their real gaps, never dressed up.
-    const matches = pickSearchMatches(ranked, spec, {
-      hardCap,
-      limit,
-      minResults: MIN_RESULTS,
-    });
-
-    const shownIds = new Set(matches.map((m) => m.programMemberId));
-    const nearMisses = ranked
-      .filter(
-        (r) =>
-          !shownIds.has(r.programMemberId) &&
-          (r.hardFiltered ||
-            r.tier === "NONE" ||
-            (r.tier === "PARTIAL" && r.gaps.length > 0)),
-      )
-      .slice(0, 10);
 
     return {
       ok: true,

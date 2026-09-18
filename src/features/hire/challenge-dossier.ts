@@ -16,6 +16,7 @@ import {
 } from "@/features/hire/dossier-provenance";
 import { candidatePublicId } from "@/features/hire/public-id";
 import { roleFamilyFor, tidyRoleLabel, type RoleFamily } from "@/features/hire/role-family";
+import { isCanonicalSkill } from "@/lib/skill-catalog";
 import type { CandidateDossier, EvidenceCoverage } from "@/features/hire/types";
 
 /**
@@ -57,6 +58,7 @@ const EMPTY: ChallengeDossierSet = {
       consistency: false,
       interview: false,
       experience: false,
+      role: false,
     },
     note: "No challenge candidates in the pool yet.",
   },
@@ -81,6 +83,9 @@ const NOT_A_SKILL = new Set([
   "basics",
 ]);         
 
+/** Joiners inside ONE compound skill: "UI/UX", "Git & GitHub", "AI and ML". */
+const COMPOUND_JOINER = /\s*\/\s*|\s+(?:and|&)\s+/i;
+
 /**
  * Skills as typed, split into skills.
  *
@@ -88,31 +93,48 @@ const NOT_A_SKILL = new Set([
  * real row reads `["php mysql react-js  js  html css python"]` — one array
  * entry holding seven skills, which matches nothing a recruiter searches for.
  *
- * Three rules, each earned from a real row:
+ * The rules, each earned from a real row:
  *
- * - Punctuation and the word "and" always separate. `"C++ Git and GitHub"` is a
- *   list, and a list is what the recruiter is searching against.
- * - Whitespace separates only in an entry of **four or more** words. Three-word
- *   skills are real — "Full Stack Development" — while four-word entries in
- *   this data are always a paste: `"HTML CSS JAVASCRIPT JAVA"`.
+ * - `,` `;` `|` always separate — they only ever appear in pastes.
+ * - A catalog skill is never split ("UI/UX Design", "CI/CD",
+ *   "Data Structures & Algorithms").
+ * - `/`, `&` and "and" join a COMPOUND skill, which stays whole when every part
+ *   is a short phrase: "AI/ML", "C/C++", "Git & GitHub", "PL/SQL". The scorer
+ *   matches a single part of a compound exactly (`compoundParts`), so "ML" still
+ *   finds "AI/ML". Splitting these was QA-KI-004: a candidate who claimed "UI/UX"
+ *   could not be found by a "UI/UX" requirement, because the two-letter pieces
+ *   cannot match anything by containment.
+ * - A compound with a part of four or more words is a paste, not a skill, and is
+ *   split as before: at the joiners, then long parts at whitespace. Three-word
+ *   skills are real — "Full Stack Development" — while four-word runs in this
+ *   data are always a paste: `"HTML CSS JAVASCRIPT JAVA"`.
  * - Glue words are dropped, so nobody's profile claims "and" as a skill.
  *
  * Single letters survive: "C" and "R" are languages. What stops them matching
  * everything is `containsWord` in the scorer, not a filter here.
  */
-
-
 export function splitSkills(raw: string[]): string[] {
   const out: string[] = [];
+  const push = (p: string) => {
+    if (p && !NOT_A_SKILL.has(p.toLowerCase())) out.push(p);
+  };
   for (const entry of raw) {
-    for (const part of entry.split(/[,;/|]+|\s+(?:and|&)\s+/i)) {
-      const token = part.trim().replace(/\s+/g, " ");
+    for (const chunk of entry.split(/[,;|]+/)) {
+      const token = chunk.trim().replace(/\s+/g, " ");
       if (!token) continue;
-      const words = token.split(" ");
-      const pieces = words.length >= 4 ? words : [token];
-      for (const p of pieces) {
-        if (!p || NOT_A_SKILL.has(p.toLowerCase())) continue;
-        out.push(p);
+      const parts = token
+        .split(COMPOUND_JOINER)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const compound =
+        parts.length > 1 && parts.every((p) => p.split(" ").length < 4);
+      if (isCanonicalSkill(token) || compound) {
+        push(token);
+        continue;
+      }
+      for (const part of parts) {
+        const words = part.split(" ");
+        for (const p of words.length >= 4 ? words : [part]) push(p);
       }
     }
   }

@@ -637,6 +637,8 @@ suite("only platform and admin code writes CandidateVisibility", () => {
   const allowed = new Set([
     "src/repositories/dual-write.ts",
     "src/features/admin/anonymize-user.ts",
+    // The platform default for a usable profile — create-only, pinned below.
+    "src/repositories/discovery-record.ts",
   ]);
   const unexpected = writers.filter((p) => !allowed.has(p));
   assert(
@@ -654,6 +656,53 @@ suite("only platform and admin code writes CandidateVisibility", () => {
     actions.length === 0,
     `a server action writes the old consent column: ${actions.join(", ")}`,
   );
+});
+
+suite("the usable-profile default can only ever create a record", () => {
+  // Plan 117: a usable profile is discoverable. The row it needs is created by
+  // the platform from stored state — never updated, never removed, and never
+  // shaped by anything the candidate submits (plan 133 still holds).
+  const src = stripComments(
+    readFileSync(join(process.cwd(), "src/repositories/discovery-record.ts"), "utf8"),
+  );
+  const writes = [...src.matchAll(/candidateVisibility\.(\w+)\(/g)].map((m) => m[1]);
+  assert(
+    writes.every((w) => w === "findUnique" || w === "createMany"),
+    `only findUnique and createMany are allowed, saw: ${writes.join(", ")}`,
+  );
+  assert(src.includes("skipDuplicates: true"), "a racing save must not fail or duplicate");
+  assert(
+    /if \(existing\) return false;/.test(src),
+    "any existing record — hidden, withdrawn, closed or open — is left exactly as it is",
+  );
+  for (const clause of ['fullName: { not: "" }', "claimedByCandidate: true"]) {
+    assert(src.includes(clause), `usable-profile rule mirrors listProfileCandidates (${clause})`);
+  }
+  assert(
+    /export async function ensureDiscoveryRecordForUsableProfile\(\s*userId: string,?\s*\)/.test(src),
+    "the helper takes a user id and nothing a candidate could shape",
+  );
+  assert(!src.includes("withdrawnAt:"), "never writes withdrawal state");
+  assert(
+    src.includes("role: Role.STUDENT") && src.includes("deletedAt: null") && src.includes("disabledAt: null"),
+    "live candidate accounts only — never a recruiter, admin, deleted or disabled account",
+  );
+  const repo = stripComments(
+    readFileSync(join(process.cwd(), "src/repositories/candidate-detail.ts"), "utf8"),
+  );
+  const calls = repo.match(/ensureDiscoveryRecordAfterProfileSave\(userId\)/g) ?? [];
+  assert(
+    calls.length === 2,
+    `called after the basic-info and skills saves only, saw ${calls.length}`,
+  );
+  const actions = readdirSync(join(process.cwd(), "src/app/actions"))
+    .filter((f) => f.endsWith(".ts"))
+    .filter((f) =>
+      stripComments(
+        readFileSync(join(process.cwd(), "src/app/actions", f), "utf8"),
+      ).includes("discovery-record"),
+    );
+  assert(actions.length === 0, `no server action may call it directly: ${actions.join(", ")}`);
 });
 
 suite("no candidate surface asks for or accepts a visibility choice", () => {

@@ -9,6 +9,13 @@ import {
   __test,
 } from "@/features/hire/score-candidate";
 import { toPublicMatch } from "@/features/hire/to-public-match";
+import {
+  collectRoleTitles,
+  parseRoleQuery,
+  roleKeysForTitle,
+  roleSkillFit,
+  roleTitleFit,
+} from "@/features/hire/role-match";
 import type {
   EvidenceCoverage,
   ScoreableMember,
@@ -81,6 +88,7 @@ function coverage(over: Partial<Record<ScoreDimension, boolean>> = {}): Evidence
       consistency: true,
       interview: true,
       experience: true,
+      role: true,
       ...over,
     },
     note: "test",
@@ -652,6 +660,155 @@ console.log("score-candidate tests");
   assert(stray.length === 3, "an unknown merged id drops nothing extra");
 
   ok("guest cart survives a failed or partial merge");
+}
+
+
+/* ── Role: spec.title ranks, never filters (audit 2026-09-17) ───────────── */
+
+{
+  assert(parseRoleQuery("Frontend developer")?.key === "FRONTEND", "frontend");
+  assert(parseRoleQuery("Senior Front-End Developer (Intern)")?.key === "FRONTEND", "seniority words ignored");
+  assert(parseRoleQuery("React Native developer")?.key === "MOBILE", "react native is mobile, not frontend");
+  assert(parseRoleQuery("Data scientist")?.key === "DATA_SCIENTIST", "data scientist before AI");
+  assert(parseRoleQuery("Data analyst")?.key === "DATA_ANALYST", "data analyst");
+  assert(parseRoleQuery("AI/ML Intern")?.key === "AI_ML", "compound AI/ML");
+  assert(parseRoleQuery("Embedded software engineer")?.key === "EMBEDDED", "embedded before generic software");
+  assert(parseRoleQuery("Software engineer")?.key === "SOFTWARE", "generic software");
+  assert(parseRoleQuery("Sales executive")?.key === "SALES", "sales");
+  const chef = parseRoleQuery("Pastry chef");
+  assert(chef !== null && chef.key === null && chef.tokens.join(" ") === "pastry chef", "unknown role keeps its words");
+  assert(parseRoleQuery("Intern") === null, "a seniority word alone is no role");
+  assert(parseRoleQuery("   ") === null && parseRoleQuery(undefined) === null, "blank is no role");
+  assert(
+    roleKeysForTitle("Reporting Analyst in sales & marketing")[0] === "DATA_ANALYST",
+    "a title's leading role comes first",
+  );
+  assert(
+    !roleKeysForTitle("Frontend developer").includes("SOFTWARE"),
+    "generic key dropped when a specific one names the title",
+  );
+  ok("role query parsing");
+}
+
+{
+  const fe = parseRoleQuery("Frontend developer")!;
+  assert(roleTitleFit(fe, ["Front-End Developer"]).fit === 1, "same role, other spelling");
+  assert(roleTitleFit(fe, ["Full Stack Developer"]).fit === 0.7, "neighbouring role");
+  assert(roleTitleFit(fe, ["Software Engineer"]).fit === 0.6, "generic engineer is some of it");
+  assert(roleTitleFit(fe, ["Data Analyst", "Student"]).fit === 0, "unrelated titles");
+  assert(roleTitleFit(fe, []).fit === 0, "no titles");
+  const best = roleTitleFit(fe, ["Student", "UI Developer"]);
+  assert(best.fit === 1 && best.matched === "UI Developer", "best title wins and is named");
+  const sales = parseRoleQuery("Sales executive")!;
+  assert(
+    roleTitleFit(sales, ["Reporting Analyst in sales & marketing"]).fit === 0.7,
+    "a role mentioned after the leading one is capped",
+  );
+  const chef = parseRoleQuery("Pastry chef")!;
+  assert(roleTitleFit(chef, ["Head pastry chef"]).fit === 1, "phrase match for an unknown role");
+  assert(roleTitleFit(chef, ["Chef de partie"]).fit === 0.5, "share of words for an unknown role");
+  assert(
+    collectRoleTitles({
+      jobRole: "Student",
+      headline: " student ",
+      preferredRoles: ["Data Analyst"],
+      experienceTitles: ["", "MIS Analyst"],
+    }).join("|") === "Student|Data Analyst|MIS Analyst",
+    "titles collected in order, blanks and repeats dropped",
+  );
+  ok("role title fit");
+}
+
+{
+  const match = __test.stackTokensMatch;
+  const fe = parseRoleQuery("Frontend developer")!;
+  const three = roleSkillFit(fe, ["ReactJS", "Tailwind CSS", "JavaScript", "Python"], match)!;
+  assert(three.fit === 1 && three.hits.length === 3, `group + alias + named skill: ${three.hits.join(",")}`);
+  const one = roleSkillFit(fe, ["HTML", "Python", "SQL"], match)!;
+  assert(Math.abs(one.fit - 1 / 3) < 1e-9, `one typical skill is a third: ${one.fit}`);
+  assert(roleSkillFit(fe, ["Python", "SQL"], match)!.fit === 0, "no typical skill");
+  const da = parseRoleQuery("Data analyst")!;
+  assert(roleSkillFit(da, ["sql", "MS Excel", "PowerBI"], match)!.hits.length >= 2, "analyst tools fold through aliases");
+  assert(roleSkillFit(parseRoleQuery("Sales executive")!, ["Excel"], match) === null, "a role with no typical skills is not measured");
+  ok("role skill fit");
+}
+
+{
+  // A pool the way profile-only search sees it: no evidence dimensions.
+  const profileOnly = coverage({ missions: false, cleanPass: false, projects: false, consistency: false, interview: false });
+  const person = (id: string, titles: string[], skills: string[]) =>
+    baseMember({
+      id, userId: id, fullName: id, jobRole: "", roleTitles: titles, skills,
+      missionsPassed: 0, missionsAttempted: 0, cleanPassCount: 0, commitDayCount: 0,
+      projectScores: [], interview: null, cohortDay: 0, yearsExperience: 1,
+    });
+  const pool = [
+    person("fe", ["Frontend Developer"], ["React", "JavaScript", "CSS"]),
+    person("da", ["Data Analyst"], ["SQL", "Excel", "Power BI"]),
+    person("ml", ["Machine Learning Engineer"], ["Python", "PyTorch", "NLP"]),
+    person("be", ["Backend Developer"], ["Java", "Spring Boot", "PostgreSQL"]),
+    person("blank", [], ["Git"]),
+  ];
+  const top = (title: string) =>
+    rankCandidates(pool, { title }, { coverage: profileOnly }).map((r) => r.userId);
+  assert(top("Frontend developer")[0] === "fe", `frontend first: ${top("Frontend developer")}`);
+  assert(top("Data analyst")[0] === "da", `analyst first: ${top("Data analyst")}`);
+  assert(top("AI engineer")[0] === "ml", `ml first: ${top("AI engineer")}`);
+  assert(top("Java backend developer")[0] === "be", `backend first: ${top("Java backend developer")}`);
+  assert(
+    top("Frontend developer").join() !== top("Data analyst").join(),
+    "different roles, different order — the bug this fixes",
+  );
+
+  // Ranking, never filtering: every candidate is still ranked and none is
+  // hard-filtered by the role.
+  const all = rankCandidates(pool, { title: "Data analyst" }, { coverage: profileOnly, includeHardFiltered: true });
+  assert(all.length === pool.length && all.every((r) => !r.hardFiltered), "role excludes nobody");
+  const noTitle = scoreCandidate(pool[0]!, {}, profileOnly);
+  assert(noTitle.scoreBreakdown.role === null, "no role asked → role reports null");
+  assert(!noTitle.scoreBreakdown.dimensionsUsed.includes("role"), "no role asked → not in the rubric");
+  assert((noTitle.scoreBreakdown.weights.role ?? 0) === 0, "no role asked → no weight");
+  assert(noTitle.scoreBreakdown.stack === 50, "no role and no skills → neutral stack, as before");
+  const withTitle = scoreCandidate(pool[0]!, { title: "Frontend developer" }, profileOnly);
+  assert(withTitle.scoreBreakdown.role === 100 && withTitle.scoreBreakdown.stack === 100, "title and typical skills both read");
+  ok("title-only search ranks by role and excludes nobody");
+}
+
+{
+  // The production symptom: a strong cohort graduate with nothing connecting
+  // them to the role headed every title-only search as STRONG.
+  const graduate = (roleTitles: string[], skills: string[]) =>
+    baseMember({ roleTitles, skills, missionsPassed: 20, cleanPassCount: 18, commitDayCount: 20, cohortDay: 20 });
+  // With nice-to-haves named, the stack dimension is theirs, not the role's —
+  // so strong evidence plus a matched nice-to-have clears 70 with no
+  // connection to the role at all. That is the case the cap exists for.
+  const niceOnly: JobSpec = { title: "Frontend developer", niceToHaveStack: ["Python"] };
+  const unrelated = scoreCandidate(graduate(["Student"], ["Python", "SQL"]), niceOnly);
+  assert(unrelated.score >= 70, `the case must clear the STRONG score to test the cap: ${unrelated.score}`);
+  assert(
+    __test.tierFor(unrelated.score, [], 20, false) === "STRONG",
+    "without the cap this candidate would be STRONG",
+  );
+  assert(unrelated.tier === "PARTIAL", `no connection to the role is not STRONG: ${unrelated.tier}`);
+  assert(unrelated.gaps.some((g) => g.includes("Frontend developer")), "and the card says why");
+  const byTitle = scoreCandidate(graduate(["Frontend Engineer"], ["Python", "SQL"]), niceOnly);
+  const bySkill = scoreCandidate(graduate(["Student"], ["React", "Python", "CSS"]), niceOnly);
+  assert(byTitle.tier === "STRONG", `title connects: ${byTitle.tier} ${byTitle.score}`);
+  assert(bySkill.tier === "STRONG", `typical skills connect: ${bySkill.tier} ${bySkill.score}`);
+  const statedMust = scoreCandidate(graduate(["Student"], ["Python", "SQL"]), {
+    title: "Frontend developer",
+    mustHaveStack: ["Python"],
+  });
+  assert(
+    !statedMust.gaps.some((g) => g.includes("Frontend developer")),
+    "a stated must-have is the recruiter's own definition of relevance",
+  );
+  const fallback = scoreCandidate(
+    baseMember({ roleTitles: undefined, jobRole: "Data Analyst" }),
+    { title: "Data analyst" },
+  );
+  assert(fallback.scoreBreakdown.role === 100, "without loaded titles the cohort job role still counts");
+  ok("role mismatch caps STRONG; title or typical skills connect");
 }
 
 console.log(`\n${passed} passed`);

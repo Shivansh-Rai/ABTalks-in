@@ -18,7 +18,13 @@ export type EvidencePriorityKey =
   | "communication"
   | "ship_speed";
 
-/** The seven weighted dimensions. Keys match ScoreBreakdown and BASE_WEIGHTS. */
+/**
+ * The weighted dimensions. Keys match ScoreBreakdown and BASE_WEIGHTS.
+ *
+ * `role` carries weight only when the recruiter named a role (`spec.title`); on
+ * every other search it is absent from the rubric, so a search without a title
+ * scores exactly as it did before the dimension existed.
+ */
 export type ScoreDimension =
   | "stack"
   | "missions"
@@ -26,7 +32,8 @@ export type ScoreDimension =
   | "projects"
   | "consistency"
   | "interview"
-  | "experience";
+  | "experience"
+  | "role";
 
 /**
  * Which dimensions the open pool can actually produce evidence for.
@@ -54,6 +61,9 @@ export type ScoreBreakdown = {
   consistency: number | null;
   interview: number | null;
   experience: number | null;
+  /** Title fit to the requested role, 0–100. Null when no role was asked.
+   *  Optional because stored breakdowns written before it existed lack it. */
+  role?: number | null;
   weights: Record<string, number>;
   total: number;
   /** Which dimensions carried weight for this score, for the card's note. */
@@ -204,6 +214,13 @@ export type ScoreableMember = {
   fullName: string;
   jobRole: string;
   company: string;
+  /**
+   * Every title the candidate has given — cohort job role, headline, target
+   * roles, work-history titles — for the role dimension. Attached after the
+   * pool is loaded (`attachRoleTitles`). When absent the scorer falls back to
+   * `jobRole` alone.
+   */
+  roleTitles?: string[];
   yearsExperience: number;
   skills: string[];
   missionPoints: number;

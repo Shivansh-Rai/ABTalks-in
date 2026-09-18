@@ -17,8 +17,10 @@ import { formatDateTimeIST } from "@/lib/date-utils";
  *    (`src/repositories/hire.ts`): the gate, plus a non-empty `fullName`, plus at
  *    least one `CandidateSkill` with `claimedByCandidate: true`, newest-first by
  *    sign-up date and capped.
- *  - the track pools: a challenge enrolment with at least one submission, a
- *    `ProgramMember` row, or hackathon participation on a team that submitted.
+ *  - the track pools, as the loaders gate them: a challenge enrolment at or above
+ *    the `HIRE_CHALLENGE_POOL` submission floor (and only while that flag is on),
+ *    an ENROLLED/COMPLETED `ProgramMember` in a cohort `/hire` opens, or
+ *    hackathon participation on a team that submitted.
  *
  * There is no candidate-facing switch anywhere in that list. `CandidateVisibility`
  * is an admin moderation record and its own schema comment says so — "not a
@@ -102,8 +104,11 @@ export type DiscoverabilityFacts = {
   /** Usable profiles that signed up later; the pool loads the newest `profilePoolCap`. */
   profilePoolAhead: number;
   profilePoolCap: number;
+  /** Only memberships the search loaders actually carry — see the loader. */
   tracks: {
+    /** Challenge enrolments at or above the HIRE_CHALLENGE_POOL floor; 0 when the pool is off. */
     challengeWithSubmissions: number;
+    /** ENROLLED/COMPLETED members of a cohort `/hire` opens. */
     programMemberships: number;
     hackathonWithSubmission: number;
   };
