@@ -264,6 +264,7 @@ export function CandidateInspector({
   onCartToggle,
   onPrev,
   onNext,
+  onContactRevealed,
   decision = null,
 }: {
   match: MatchCardData;
@@ -272,6 +273,8 @@ export function CandidateInspector({
   /** The panel's arrows walk the result list; absent at either end. */
   onPrev?: () => void;
   onNext?: () => void;
+  /** Fired once this recruiter's CONTACT_SHARED contact payload is in hand. */
+  onContactRevealed?: () => void;
   /** Project triage state, when this candidate sits in a talent project. */
   decision?: MatchDecision | null;
 }) {
@@ -303,6 +306,13 @@ export function CandidateInspector({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [contact, setContact] = useState<RevealedContact | null>(null);
+  const onContactRevealedRef = useRef(onContactRevealed);
+  onContactRevealedRef.current = onContactRevealed;
+
+  function applyContact(found: RevealedContact | null) {
+    setContact(found);
+    if (found) onContactRevealedRef.current?.();
+  }
   const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
     null,
   );
@@ -329,7 +339,7 @@ export function CandidateInspector({
       const found = sample
         ? null
         : await revealContactAction({ candidateRef: match.candidateRef });
-      if (alive) setContact(found);
+      if (alive) applyContact(found);
     })();
     return () => {
       alive = false;
@@ -386,7 +396,9 @@ export function CandidateInspector({
   }, [match.candidateRef, sample]);
 
   async function loadContact() {
-    setContact(await revealContactAction({ candidateRef: match.candidateRef }));
+    applyContact(
+      await revealContactAction({ candidateRef: match.candidateRef }),
+    );
   }
 
   // A click sets the tab AND suppresses the spy for the length of the smooth
@@ -515,8 +527,14 @@ export function CandidateInspector({
       onReveal={openUpgrade}
     />
   ) : match.displayName ? (
-    // Same treatment as the result card — see `MaskedName`.
-    <MaskedName name={match.displayName} />
+    // Same treatment as the result card — see `MaskedName`. Unblur only after
+    // this recruiter has paid (contact loaded) or already holds CONTACT_SHARED.
+    <MaskedName
+      name={match.displayName}
+      revealed={
+        contact !== null || match.engagementStatus === "CONTACT_SHARED"
+      }
+    />
   ) : (
     match.jobRole
   );

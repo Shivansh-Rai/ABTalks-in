@@ -367,6 +367,23 @@ export function ScoutChat({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMatch, setOpenMatch] = useState<MatchCardData | null>(null);
+  const [unlockedRefs, setUnlockedRefs] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  function markContactRevealed(candidateRef: string) {
+    setUnlockedRefs((prev) => {
+      if (prev.has(candidateRef)) return prev;
+      const next = new Set(prev);
+      next.add(candidateRef);
+      return next;
+    });
+    setOpenMatch((m) =>
+      m && m.candidateRef === candidateRef
+        ? { ...m, engagementStatus: "CONTACT_SHARED" }
+        : m,
+    );
+  }
   /**
    * Where the results were scrolled to before the panel opened.
    *
@@ -571,6 +588,9 @@ export function ScoutChat({
   const deskMatches = deskMatchesRaw.map((m) => ({
     ...m,
     ...(triageByRef[m.candidateRef] ?? {}),
+    ...(unlockedRefs.has(m.candidateRef)
+      ? { engagementStatus: "CONTACT_SHARED" as const }
+      : {}),
   }));
   const visibleDeskMatches = hideRejected
     ? deskMatches.filter((m) => m.decision !== "REJECTED")
@@ -1876,6 +1896,9 @@ export function ScoutChat({
             }
             onCartToggle={(inCart) =>
               setOpenMatch((m) => (m ? { ...m, shortlisted: inCart } : m))
+            }
+            onContactRevealed={() =>
+              markContactRevealed(openMatch.candidateRef)
             }
           />
         )}
