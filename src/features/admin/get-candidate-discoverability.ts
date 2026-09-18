@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { programMember } from "@/repositories/legacy/program-member";
 import { resolveProfileRefs } from "@/repositories/hire";
 import { searchableUserWhere } from "@/repositories/talent";
+import { hireChallengePool } from "@/lib/feature-flags";
+import { CHALLENGE_POOL_CAP } from "@/features/hire/search-candidates";
+import { resolvePoolCohorts } from "@/features/hire/pool-policy";
 import {
   evaluateDiscoverability,
   type CandidateDiscoverability,
@@ -39,11 +42,11 @@ const USABLE_PROFILE = {
 
 /**
  * The profile pool's row cap. `searchCandidates` passes `CHALLENGE_POOL_CAP`
- * (600) into every track loader, and `loadProfile` hands it straight to
- * `listProfileCandidates`, which orders newest-first by sign-up date. Copied
- * rather than imported: that constant is private to the recruiter search module.
+ * into every track loader, and `loadProfile` hands it straight to
+ * `listProfileCandidates`, which orders newest-first by sign-up date. Imported,
+ * so the panel moves with the search if the cap changes.
  */
-const PROFILE_POOL_CAP = 600;
+const PROFILE_POOL_CAP = CHALLENGE_POOL_CAP;
 
 export async function getCandidateDiscoverability(
   userId: string,
@@ -60,6 +63,7 @@ export async function getCandidateDiscoverability(
     },
   });
   if (!user) return null;
+  const challengePool = hireChallengePool();
 
   const [
     gateRow,
@@ -69,7 +73,7 @@ export async function getCandidateDiscoverability(
     claimedSkills,
     skillsWithEvidence,
     profilePoolAhead,
-    challengeWithSubmissions,
+    challengeEnrollments,
     programMemberships,
     hackathonWithSubmission,
   ] = await Promise.all([
@@ -101,8 +105,26 @@ export async function getCandidateDiscoverability(
         createdAt: { gt: user.createdAt },
       },
     }),
-    prisma.enrollment.count({ where: { userId, submissions: { some: {} } } }),
-    programMember.count({ where: { userId } }),
+    // Track pools are LIVE PROBES of the loaders' own gates, not "has a row".
+    // Counting any enrolment with one submission and any ProgramMember row told
+    // admins a candidate reached recruiters through a pool the search never
+    // loads — below the HIRE_CHALLENGE_POOL floor, or in a cohort that is not
+    // open, or DROPPED (search-qa QA-KI-011: 1 wrong verdict, 19 wrong routes).
+    prisma.enrollment.findMany({
+      where: { userId },
+      select: { _count: { select: { submissions: true } } },
+    }),
+    resolvePoolCohorts().then((gate) =>
+      gate.ok
+        ? programMember.count({
+            where: {
+              userId,
+              status: { in: ["ENROLLED", "COMPLETED"] },
+              cohortId: { in: gate.cohorts.map((c) => c.id) },
+            },
+          })
+        : 0,
+    ),
     prisma.hackathonParticipant.count({
       where: { userId, team: { submission: { isNot: null } } },
     }),
@@ -135,7 +157,11 @@ export async function getCandidateDiscoverability(
     profilePoolAhead,
     profilePoolCap: PROFILE_POOL_CAP,
     tracks: {
-      challengeWithSubmissions,
+      challengeWithSubmissions: challengePool.enabled
+        ? challengeEnrollments.filter(
+            (e) => e._count.submissions >= challengePool.minDays,
+          ).length
+        : 0,
       programMemberships,
       hackathonWithSubmission,
     },

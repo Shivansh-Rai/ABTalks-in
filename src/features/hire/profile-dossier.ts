@@ -45,6 +45,7 @@ const EMPTY: ProfileDossierSet = {
       consistency: false,
       interview: false,
       experience: false,
+      role: false,
     },
     note: "No profile-only candidates in the pool yet.",
   },

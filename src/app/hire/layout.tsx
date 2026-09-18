@@ -146,7 +146,10 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         displayName: r.displayName,
         skills: r.skills,
         source: r.source,
-        revealedName: null,
+        revealedName:
+          engagements.get(r.candidateUserId)?.status === "CONTACT_SHARED"
+            ? r.displayName
+            : null,
         engagementStatus: engagements.get(r.candidateUserId)?.status ?? null,
         yearsExperience: r.yearsExperience,
         missionsPassed: r.missionsPassed,

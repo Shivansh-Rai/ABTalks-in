@@ -128,6 +128,34 @@ suite("unlock reveal selects email/phone only through loadProtectedContact", () 
   );
 });
 
+suite("full name unblurs only after CONTACT_SHARED", () => {
+  const card = stripComments(read("src/components/hire/desk-match-card.tsx"));
+  assert(
+    /function MaskedName\([\s\S]*revealed\?: boolean/.test(card) ||
+      card.includes("revealed?: boolean"),
+    "MaskedName must take a revealed flag",
+  );
+  assert(
+    card.includes('match.engagementStatus === "CONTACT_SHARED"'),
+    "desk card must show the full name after CONTACT_SHARED",
+  );
+  const inspector = stripComments(
+    read("src/components/hire/candidate-inspector.tsx"),
+  );
+  assert(
+    inspector.includes('match.engagementStatus === "CONTACT_SHARED"'),
+    "inspector must unmask when this recruiter already holds CONTACT_SHARED",
+  );
+  assert(
+    inspector.includes("contact !== null"),
+    "inspector must unmask as soon as revealContactAction returns contact",
+  );
+  assert(
+    inspector.includes("<MaskedName"),
+    "locked inspector names still go through MaskedName",
+  );
+});
+
 suite("inspector resume uses credit unlock, not the billing placeholder", () => {
   const src = read("src/components/hire/candidate-inspector.tsx");
   assert(

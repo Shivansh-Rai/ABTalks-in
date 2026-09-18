@@ -148,8 +148,20 @@ export function splitName(name: string): { given: string; masked: string | null 
  * identical thing. Two hand-rolled copies would drift, and the surname showing
  * clear in the panel while blurred on the card is exactly the inconsistency
  * this exists to stop.
+ *
+ * `revealed` is true only after this recruiter has CONTACT_SHARED access.
+ * Until then the family name stays a decoy behind the blur (D-1.7).
  */
-export function MaskedName({ name }: { name: string }) {
+export function MaskedName({
+  name,
+  revealed = false,
+}: {
+  name: string;
+  revealed?: boolean;
+}) {
+  if (revealed) {
+    return <span className="desk-name">{name}</span>;
+  }
   const { given, masked } = splitName(name);
   return (
     <span className="desk-name">
@@ -376,7 +388,10 @@ export function DeskMatchCard({
               <div className="desk-card__header">
                 <h3 className="desk-card__name">
                   {match.displayName ? (
-                    <MaskedName name={match.displayName} />
+                    <MaskedName
+                      name={match.displayName}
+                      revealed={match.engagementStatus === "CONTACT_SHARED"}
+                    />
                   ) : (
                     match.jobRole
                   )}

@@ -6,7 +6,8 @@ import {
   listUserDisplayNames,
 } from "@/repositories/hire";
 import { filterSearchableUserIds } from "@/repositories/talent";
-import { encodeCandidateRef } from "@/features/hire/candidate-ref";
+import { encodeCandidateRef, type CandidateSource } from "@/features/hire/candidate-ref";
+import { isKnownTrack } from "@/features/hire/track-registry";
 import { existingEngagements } from "@/features/hire/contact-access";
 import { loadAvailabilityByUserId } from "@/features/hire/dossier";
 import { getOwnedSession, snapshotFromJson } from "@/features/hire/search-sessions";
@@ -74,7 +75,17 @@ export async function loadRequestMatches(
       archivedAt: true,
       mustHaveStack: true,
       matches: {
-        orderBy: { score: "desc" },
+        // Same listing order as live search (`rankCandidates`): tier first, then
+        // score — `TalentMatchTier` is declared STRONG, PARTIAL, NONE, so enum
+        // order is tier order. First-seen and candidate id break ties, which
+        // `score` alone left to the database's whim (114 tied groups on
+        // 2026-09-16), so a saved list no longer reshuffles between visits.
+        orderBy: [
+          { tier: "asc" },
+          { score: "desc" },
+          { firstSeenAt: "asc" },
+          { candidateUserId: "asc" },
+        ],
         select: {
           candidateUserId: true,
           programMemberId: true,
@@ -176,8 +187,11 @@ export async function loadRequestMatches(
         typeof raw.locationLabel === "string" && raw.locationLabel.trim()
           ? raw.locationLabel.trim()
           : null;
-      const source = m.source === "PROGRAM" ? "PROGRAM" : m.source;
-      const isProgram = source === "PROGRAM";
+      const { source, candidateRef } = savedMatchRef(
+        m.source,
+        m.programMemberId,
+        m.candidateUserId,
+      );
       const member = m.programMemberId
         ? memberById.get(m.programMemberId)
         : undefined;
@@ -197,22 +211,8 @@ export async function loadRequestMatches(
         missionsPassed: evidence.missionsPassed ?? 0,
       });
       return {
-        candidateRef: encodeCandidateRef(
-          source === "PROGRAM" ||
-            source === "CLAUDE" ||
-            source === "CHALLENGE_60" ||
-            source === "HACKATHON"
-            ? source
-            : "CLAUDE",
-          (isProgram ? m.programMemberId : m.candidateUserId) ?? "",
-        ),
-        source:
-          source === "PROGRAM" ||
-          source === "CLAUDE" ||
-          source === "CHALLENGE_60" ||
-          source === "HACKATHON"
-            ? source
-            : "CLAUDE",
+        candidateRef,
+        source,
         programMemberId: m.programMemberId,
         displayName:
           (member?.fullName?.trim() || nameByUser.get(m.candidateUserId)) ?? null,
@@ -247,6 +247,28 @@ export async function loadRequestMatches(
       };
     }),
   };
+}
+
+/**
+ * The handle a saved match is addressed by — the same one the live search gave
+ * the card.
+ *
+ * This used to accept only the four original track slugs and rewrite anything
+ * else to CLAUDE, so a saved PROFILE match became `CLAUDE:<userId>`.
+ * `resolveEligibleCandidates` then re-tested it against Claude enrolment and
+ * dropped it: 655 saved matches could not be shortlisted or introduced from the
+ * saved list (QA-KI-007). The registry is the validator now, so a track added
+ * later works here without an edit. An unknown stored source falls back to
+ * PROFILE, the route re-gated on nothing but a usable, searchable profile.
+ */
+export function savedMatchRef(
+  storedSource: string,
+  programMemberId: string | null,
+  candidateUserId: string,
+): { source: CandidateSource; candidateRef: string } {
+  const source = isKnownTrack(storedSource) ? storedSource : "PROFILE";
+  const id = source === "PROGRAM" ? (programMemberId ?? "") : candidateUserId;
+  return { source, candidateRef: encodeCandidateRef(source, id) };
 }
 
 type StoredMatch = {
