@@ -115,6 +115,69 @@ export async function listPipeline(
 ): Promise<PipelineSnapshot> {
   const list = await ensureRecruiterPipeline(workspace);
 
+  // Sync discovered candidates from the recruiter's projects into SOURCED
+  // so candidates discovered in search/projects automatically appear in Sourced pipeline.
+  try {
+    const discoveredMatches = await prisma.talentRequestMatch.findMany({
+      where: {
+        request: {
+          recruiterUserId: workspace.userId,
+        },
+      },
+      select: {
+        candidateUserId: true,
+        firstSeenAt: true,
+        candidate: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: { firstSeenAt: "asc" },
+    });
+
+    if (discoveredMatches.length > 0) {
+      // Find which candidates already exist in the recruiter's pipeline
+      const existingItems = await prisma.talentListItem.findMany({
+        where: {
+          talentListId: list.id,
+          talentList: { ownerRecruiterId: workspace.recruiterProfileId },
+          candidateUserId: { not: null },
+        },
+        select: { candidateUserId: true },
+      });
+      const existingUserIds = new Set(
+        existingItems
+          .map((i) => i.candidateUserId)
+          .filter((id): id is string => Boolean(id)),
+      );
+
+      // Add missing discovered candidates at SOURCED stage
+      const toAdd = new Map<string, { label: string; addedAt: Date }>();
+      for (const m of discoveredMatches) {
+        if (!existingUserIds.has(m.candidateUserId) && !toAdd.has(m.candidateUserId)) {
+          toAdd.set(m.candidateUserId, {
+            label: m.candidate?.name?.trim() || "Candidate",
+            addedAt: m.firstSeenAt,
+          });
+        }
+      }
+
+      for (const [candidateUserId, info] of toAdd.entries()) {
+        await addToPipeline(workspace, {
+          candidateUserId,
+          label: info.label,
+          stage: PipelineStage.SOURCED,
+        });
+      }
+    }
+  } catch (err) {
+    logger.warn("talent-pipeline.syncDiscoveredToSourced failed", {
+      recruiterProfileId: workspace.recruiterProfileId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   const rows = await prisma.talentListItem.findMany({
     where: {
       talentListId: list.id,

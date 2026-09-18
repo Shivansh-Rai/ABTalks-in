@@ -2610,11 +2610,35 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
   flex: none;
 }
 
+.hire-pod__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.hire-pod__header-text {
+  min-width: 0;
+}
+
+.hire-pod__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hire-pod__header-actions .hire-pod__assess {
+  width: auto;
+  white-space: nowrap;
+}
+
 .hire-pod__title {
   margin: 0;
   font-family: var(--font-outfit), sans-serif;
-  font-size: 40px;
-  line-height: 48px;
+  font-size: 32px;
+  line-height: 40px;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -2631,7 +2655,7 @@ body:has(.hire-app--desk) button.fixed.bottom-4.right-4 {
   min-height: 0;
   margin-top: 20px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 390px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 28px;
 }
 
@@ -3554,10 +3578,58 @@ html.dark:not(:has(.theme-abtalks-light))
   background: rgba(9, 9, 11, 0.62);
 }
 
+/* All portalled dialogs carrying .hire-app (or child classes) must NOT inherit the desk's min-height: 100dvh */
+[data-slot="dialog-content"].hire-app,
+.hire-app[data-slot="dialog-content"],
+.hire-app.hire-unlock,
+.hire-app.hire-auth,
+.hire-app.hire-filter-dialog {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: calc(100dvh - 2rem) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(3, 83, 95, 0.3) transparent !important;
+}
+
+[data-slot="dialog-content"].hire-app::-webkit-scrollbar,
+.hire-app[data-slot="dialog-content"]::-webkit-scrollbar,
+.hire-app.hire-unlock::-webkit-scrollbar,
+.hire-app.hire-auth::-webkit-scrollbar,
+.hire-app.hire-filter-dialog::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+[data-slot="dialog-content"].hire-app::-webkit-scrollbar-track,
+.hire-app[data-slot="dialog-content"]::-webkit-scrollbar-track,
+.hire-app.hire-unlock::-webkit-scrollbar-track,
+.hire-app.hire-auth::-webkit-scrollbar-track,
+.hire-app.hire-filter-dialog::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+[data-slot="dialog-content"].hire-app::-webkit-scrollbar-thumb,
+.hire-app[data-slot="dialog-content"]::-webkit-scrollbar-thumb,
+.hire-app.hire-unlock::-webkit-scrollbar-thumb,
+.hire-app.hire-auth::-webkit-scrollbar-thumb,
+.hire-app.hire-filter-dialog::-webkit-scrollbar-thumb {
+  background: rgba(3, 83, 95, 0.28) !important;
+  border-radius: 999px !important;
+}
+
+[data-slot="dialog-content"].hire-app::-webkit-scrollbar-thumb:hover,
+.hire-app[data-slot="dialog-content"]::-webkit-scrollbar-thumb:hover,
+.hire-app.hire-unlock::-webkit-scrollbar-thumb:hover,
+.hire-app.hire-auth::-webkit-scrollbar-thumb:hover,
+.hire-app.hire-filter-dialog::-webkit-scrollbar-thumb:hover {
+  background: rgba(3, 83, 95, 0.5) !important;
+}
+
 .hire-app.hire-unlock {
   --ring: 14 76% 51%;
-  min-height: 0;
-  height: auto;
   width: calc(100% - 2rem);
   padding: 22px 22px 20px;
   background: var(--h-surface);

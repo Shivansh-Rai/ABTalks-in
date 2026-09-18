@@ -1445,6 +1445,58 @@
   .abtalks-landing .nav__cta { display: none; }
   .abtalks-landing .nav__burger { display: flex; margin-left: auto; }
   .abtalks-landing .nav { position: relative; }
+
+  /* ---------- Mobile navbar: solid, square, edge-to-edge ----------
+     Above this range the nav is a floating frosted pill that sits inside the
+     hero. On a phone that pill is the only chrome at the top and the blur
+     reads as a detached widget over the photo, so here it becomes a real
+     navbar: no outer padding, no radius, no translucency, no blur. */
+  .abtalks-landing .nav-wrap,
+  .abtalks-landing .nav-wrap.is-stuck { padding-block: 0; }
+  .abtalks-landing .nav-wrap > .container {
+    padding-inline: 0;
+    max-width: none;
+  }
+  .abtalks-landing .nav,
+  .abtalks-landing .nav-wrap.is-stuck .nav {
+    height: 56px;
+    gap: var(--lp-space-12);
+    padding-inline: var(--lp-pad);
+    border-radius: 0;
+    background: #ffffff;
+    border: 0;
+    border-bottom: 1px solid var(--lp-color-border);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  /* The invert() exists only because the pill was 42% white over a dark hero.
+     On an opaque white bar the mark is black-on-white and must not invert. */
+  .abtalks-landing .nav__logo img,
+  .abtalks-landing .nav-wrap.is-stuck .nav__logo img {
+    height: 26px;
+    filter: none;
+  }
+  /* The drawer hangs off a full-bleed bar now, so it matches it: opaque,
+     flush to the bar, square at the top. */
+  .abtalks-landing .nav__links {
+    left: 0; right: 0; top: 100%;
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 0;
+    border-bottom: 1px solid var(--lp-color-border);
+    border-radius: 0;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    padding: var(--lp-space-12) var(--lp-pad);
+    max-height: calc(100svh - 56px);
+  }
+  /* The active pill is 78% white — invisible on an opaque white drawer. */
+  .abtalks-landing .nav__links .nav__link.is-active {
+    background: #F4F4F4;
+    box-shadow: none;
+  }
+  .abtalks-landing .nav__links .nav__link:hover { background: #F4F4F4; }
 }
 
 /* =========================================================

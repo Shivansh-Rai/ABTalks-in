@@ -150,7 +150,7 @@ export function AssessmentRowMenu({
       </DropdownMenu>
 
       <Dialog open={confirmOpen} onOpenChange={(open) => !pending && setConfirmOpen(open)}>
-        <DialogContent showCloseButton={false}>
+        <DialogContent className="hire-app sm:max-w-md" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Delete this draft?</DialogTitle>
             <DialogDescription>
