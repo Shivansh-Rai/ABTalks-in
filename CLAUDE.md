@@ -135,96 +135,14 @@ Your first responsibility is to respect module ownership.
 
 ## My Ownership
 
-Developer: Shivansh
-
-I own these modules/features:
-- Candidate profile
-- Candidate skills
-- Education / experience / projects
-- Opportunity preferences
-- Candidate-side assessments
-- Evidence
-- Assessment Builder
-- Career guidance
-- Recruiter-side assessment builder
-
-Typical files/folders related to my ownership:
-Typical files/folders related to my ownership:
-
-Candidate profile
-- src/app/profile/
-- src/app/actions/profile-actions.ts
-- src/app/actions/candidate-profile-actions.ts
-- src/app/api/profile/
-- src/features/profile/
-- src/components/profile/
-- src/lib/validations/candidate-profile.ts
-- src/lib/validations/profile.ts
-- src/lib/profile-display.ts
-- src/repositories/candidate.ts
-- src/repositories/candidate-detail.ts
-- src/repositories/candidate-primary.ts
-- src/repositories/candidate-resume.ts
-- src/repositories/candidate-merge.ts
-
-Candidate skills
-- src/components/profile/skills-section.tsx
-- src/components/profile/skill-combobox.tsx
-- src/features/profile/get-verified-skills.ts
-- src/features/skill/
-- src/lib/skill-catalog.ts
-- src/app/api/skills/search/route.ts
-
-Education / experience / projects
-- src/components/profile/education-section.tsx
-- src/components/profile/experience-section.tsx
-- src/components/profile/projects-section.tsx
-- src/components/profile/accomplishments-section.tsx
-- src/components/profile/resume-section.tsx
-- src/components/profile/links-section.tsx
-- src/components/profile/basic-info-section.tsx
-
-Opportunity preferences
-- src/components/profile/preferences-section.tsx
-- src/lib/validations/candidate-profile.ts
-
-Candidate-side assessments (T-218)
-- src/app/assessments/
-- src/app/actions/assessment-attempt-actions.ts
-- src/features/assessment-attempts/
-- src/components/hire/assessment/candidate-assessment-screen.tsx
-- src/components/hire/assessment/candidate-assessment-screen.css
-- src/components/hire/assessment/assessment-types.ts
-- prisma/migrations/20260911210000_assessment_answer/
-- docs/plans/129-t218-assessment-taking-autosave.md
-
-Evidence
-- src/repositories/skill-evidence.ts
-- src/features/profile/get-evidence.ts
-- src/components/profile/evidence-section.tsx
-- src/features/interview/evidence.ts
-- src/app/hire/evidence/page.tsx
-- src/components/hire/evidence-resume.tsx
-- src/components/hire/evidence-cache.ts
-
-Assessment builder + recruiter-side assessments (T-243 / T-244)
-- src/app/hire/create-test/
-- src/app/hire/assessments/
-- src/app/actions/recruiter-assessment-actions.ts
-- src/features/recruiter-assessments/
-- src/components/hire/assessment/assessment-builder.tsx
-- src/components/hire/assessment/question-editor.tsx
-- src/components/hire/assessment/assessment-assign-panel.tsx
-- src/lib/validations/assessment.ts
-- prisma/migrations/20260911090000_recruiter_assessment_builder/
-- prisma/migrations/20260911180000_recruiter_assessment_assignment/
-- docs/plans/121-recruiter-assessment-builder.md
-- docs/plans/128-t244-assessment-publish-assign-results.md
-
-Career guidance
-- (no dedicated src/ folder yet — T-224; mock-interview report is adjacent:
-  src/components/profile/mock-interviews-section.tsx)
-
+Manuvrtti:
+- Jobs
+- Applications
+- Job alerts
+- Notifications
+- Notification delivery
+- Analytics events
+- UTM tracking
 ## Modules I Do NOT Own
 
 Do not modify functionality owned by other developers unless explicitly approved.
@@ -251,14 +169,16 @@ Shashank:
 
 - Recruiter analytics
 
-Manuvrtti:
-- Jobs
-- Applications
-- Job alerts
-- Notifications
-- Notification delivery
-- Analytics events
-- UTM tracking
+
+Shivansh:
+- Candidate profile
+- Candidate skills
+- Education / experience / projects
+- Opportunity preferences
+- Candidate-side assessments
+- Evidence
+- Assessment Builder
+- Career guidance
 
 Sohail:
 - Authentication architecture
