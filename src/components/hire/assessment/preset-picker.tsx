@@ -21,9 +21,16 @@ type SendableCandidate = { candidateRef: string; label: string; jobRole: string 
 export function AssessmentPresetPicker({
   presets,
   candidates,
+  projectId = null,
 }: {
   presets: PresetSummary[];
   candidates: SendableCandidate[];
+  /**
+   * Which project `candidates` came from. Carried into Customize and sent with
+   * Publish, so the builder and the server see the same Shortlist this picker
+   * ticked. Null = off-project, which is the legacy saved list.
+   */
+  projectId?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -80,7 +87,11 @@ export function AssessmentPresetPicker({
 
   function customize() {
     if (selectedIds.length === 0) return;
-    router.push(`/hire/create-test?presets=${selectedIds.join(",")}`);
+    // The project rides along: dropping it here is what put the recruiter back
+    // in front of every project's shortlist one click after picking a template.
+    const params = new URLSearchParams({ presets: selectedIds.join(",") });
+    if (projectId) params.set("projectId", projectId);
+    router.push(`/hire/create-test?${params.toString()}`);
   }
 
   function askPublish() {
@@ -103,6 +114,7 @@ export function AssessmentPresetPicker({
       const res = await createAndSendFromPresetsAction({
         presetIds: selectedIds,
         candidateRefs,
+        projectId,
       });
       if (!res.ok) {
         setConfirming(false);

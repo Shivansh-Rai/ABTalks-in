@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { getShortlist } from "@/features/talent-pool/pool";
-import { listProjectShortlist } from "@/features/hire/project-shortlist";
+import { listProjectShortlistForProject } from "@/features/hire/project-shortlist";
 import { encodeCandidateRef, refPublicId } from "@/features/hire/candidate-ref";
 import { filterSearchableUserIds } from "@/repositories/talent";
 import { listUserDisplayNames } from "@/repositories/hire";
@@ -244,13 +244,22 @@ export function prismaAssessmentStore(): AssessmentStore {
       return res.count === 1;
     },
 
-    async listAssignableCandidates(recruiterUserId): Promise<AssignableCandidate[]> {
-      // The same two stores and the same precedence as app/hire/layout.tsx
-      // (legacy first), so the panel lists who the Shortlist shows. Deduped on
-      // the person, because an assignment is unique per person.
+    async listAssignableCandidates(
+      recruiterUserId,
+      options,
+    ): Promise<AssignableCandidate[]> {
+      // The same two stores as app/hire/layout.tsx, scoped the SAME way the
+      // header is (`scopePodRows`): inside a project, that project's rows and
+      // nothing else; outside one, the legacy saved list, which belongs to no
+      // project. The two halves are never merged and the projects are never
+      // unioned — listing every project's shortlist here is what showed a
+      // recruiter twelve names next to a Shortlist pod of one.
+      //
+      // Deduped on the person, because an assignment is unique per person.
+      const projectId = options?.projectId ?? null;
       const [legacy, project] = await Promise.all([
-        getShortlist(recruiterUserId),
-        listProjectShortlist(recruiterUserId),
+        projectId ? null : getShortlist(recruiterUserId),
+        projectId ? listProjectShortlistForProject(recruiterUserId, projectId) : [],
       ]);
       const merged: {
         candidateRef: string;
@@ -260,7 +269,7 @@ export function prismaAssessmentStore(): AssessmentStore {
       }[] = [];
       const seen = new Set<string>();
       // No published cohort is not an error here — that half just adds nobody.
-      for (const r of legacy.ok ? legacy.data : []) {
+      for (const r of legacy?.ok ? legacy.data : []) {
         if (seen.has(r.userId)) continue;
         seen.add(r.userId);
         merged.push({
