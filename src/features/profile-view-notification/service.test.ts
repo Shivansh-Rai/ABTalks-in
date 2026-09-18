@@ -40,9 +40,7 @@ type Row = {
   createdAt: Date;
 };
 
-function inMemoryStore(
-  recruiterNames: Record<string, string | null> = {},
-): ProfileViewStore & { rows: Row[] } {
+function inMemoryStore(): ProfileViewStore & { rows: Row[] } {
   const rows: Row[] = [];
   return {
     rows,
@@ -53,9 +51,6 @@ function inMemoryStore(
           r.recruiterUserId === recruiterUserId &&
           r.createdAt.getTime() >= since.getTime(),
       );
-    },
-    async loadRecruiterName(userId) {
-      return recruiterNames[userId] ?? null;
     },
   };
 }
@@ -105,7 +100,7 @@ async function run() {
   await suite(
     "TC-C-018.1: first view by a recruiter fires exactly one dispatch",
     async () => {
-      const store = inMemoryStore({ recA: "Acme Recruiter" });
+      const store = inMemoryStore();
       const dispatch = fakeDispatcher(store);
       const res = await notifyProfileViewed(
         { store, dispatch },
@@ -260,39 +255,31 @@ async function run() {
     },
   );
 
-  // --- Extra: named recruiter appears in the title ---
+  // --- Anonymous copy: recruiter identity must not leak into title/body ---
 
   await suite(
-    "recruiter's display name is used in the title when available",
+    "title and body are the anonymous copy — recruiter name is never revealed",
     async () => {
-      const store = inMemoryStore({ recA: "Acme Talent" });
-      let captured: string | null = null;
+      const store = inMemoryStore();
+      let capturedTitle: string | null = null;
+      let capturedBody: string | undefined;
       const dispatch: DispatchFn = async (event) => {
-        captured = event.title;
+        capturedTitle = event.title;
+        capturedBody = event.body;
         return { ok: true, deduplicated: false };
       };
       await notifyProfileViewed(
         { store, dispatch },
         { candidateUserId: "candX", recruiterUserId: "recA" },
       );
-      assert(captured === "Acme Talent viewed your profile", `wrong title: ${captured}`);
-    },
-  );
-
-  await suite(
-    'null recruiter name falls back to "A recruiter"',
-    async () => {
-      const store = inMemoryStore({ recA: null });
-      let captured: string | null = null;
-      const dispatch: DispatchFn = async (event) => {
-        captured = event.title;
-        return { ok: true, deduplicated: false };
-      };
-      await notifyProfileViewed(
-        { store, dispatch },
-        { candidateUserId: "candX", recruiterUserId: "recA" },
+      assert(
+        capturedTitle === "You're getting noticed",
+        `wrong title: ${capturedTitle}`,
       );
-      assert(captured === "A recruiter viewed your profile", `wrong title: ${captured}`);
+      assert(
+        capturedBody === "1 more recruiter viewed your profile.",
+        `wrong body: ${capturedBody}`,
+      );
     },
   );
 

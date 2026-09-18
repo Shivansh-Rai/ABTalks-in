@@ -13,11 +13,6 @@ export type ProfileViewStore = {
     recruiterUserId: string,
     since: Date,
   ): Promise<boolean>;
-  /**
-   * Recruiter's display name for the notification title / body. Returns
-   * null when the recruiter row is gone (edge case) or has no `name`.
-   */
-  loadRecruiterName(userId: string): Promise<string | null>;
 };
 
 export function prismaProfileViewStore(): ProfileViewStore {
@@ -33,14 +28,6 @@ export function prismaProfileViewStore(): ProfileViewStore {
         select: { id: true },
       });
       return row !== null;
-    },
-
-    async loadRecruiterName(userId) {
-      const row = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true },
-      });
-      return row?.name?.trim() || null;
     },
   };
 }

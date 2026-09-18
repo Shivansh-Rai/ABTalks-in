@@ -62,24 +62,24 @@ export async function notifyProfileViewed(
   );
   if (recent) return { ok: true, sent: false, reason: "window" };
 
-  const recruiterName =
-    (await deps.store.loadRecruiterName(input.recruiterUserId)) ??
-    "A recruiter";
-
   // Bucket rotates every ROLLING_WINDOW_MS. Two attempts inside the same
   // bucket collide on this key at the DB unique index; the next bucket
   // opens a new key.
   const bucket = Math.floor(now.getTime() / ROLLING_WINDOW_MS);
   const dedupeKey = `profile.viewed:${input.candidateUserId}:${input.recruiterUserId}:${bucket}`;
 
+  // Anonymous copy: never name the recruiter in title or body. Candidates
+  // should feel noticed, not surveilled — and revealing which company/user
+  // was looking at them turned out to be a privacy and product concern.
+  // The `recruiterUserId` stays in `metadata` for the audit trail and for
+  // any admin surface, but nothing that reaches the candidate's inbox or
+  // bell exposes it.
   const res = await deps.dispatch({
     eventType: "profile.viewed",
     recipientUserId: input.candidateUserId,
     primaryEntityId: input.recruiterUserId,
-    title: `${recruiterName} viewed your profile`,
-    body:
-      "They opened your profile from a recruiter surface. " +
-      "You will not be notified again for this recruiter for the next 24 hours.",
+    title: "You're getting noticed",
+    body: "1 more recruiter viewed your profile.",
     href: "/profile",
     metadata: {
       recruiterUserId: input.recruiterUserId,
