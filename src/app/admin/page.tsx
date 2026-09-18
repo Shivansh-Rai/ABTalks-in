@@ -49,36 +49,6 @@ function usdFromMinor(minor: number): string {
   });
 }
 
-function ActivityBars({
-  candidates,
-  recruiters,
-}: {
-  candidates: number[];
-  recruiters: number[];
-}) {
-  const last = candidates.slice(-7);
-  const lastR = recruiters.slice(-7);
-  const max = Math.max(1, ...last, ...lastR);
-  return (
-    <div className="flex h-48 items-end gap-3">
-      {last.map((value, i) => (
-        <div key={i} className="flex min-w-0 flex-1 flex-col justify-end gap-1">
-          <div
-            className="w-full rounded-t bg-[#03535F]"
-            style={{ height: `${Math.max(8, (value / max) * 100)}%` }}
-            title={`${value} candidates`}
-          />
-          <div
-            className="w-full rounded-t bg-[#18D39B]"
-            style={{ height: `${Math.max(6, ((lastR[i] ?? 0) / max) * 80)}%` }}
-            title={`${lastR[i] ?? 0} recruiters`}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /**
  * Plan 154: default GA window for the overview page. Kept at 7 days to match
  * the "Last 7 days" framing of the candidates/recruiters bar chart directly
@@ -245,34 +215,11 @@ export default async function AdminHomePage() {
               )}
             </div>
 
-            <details className="group border-t border-[#E9E9E9] pt-4">
-              <summary className="flex cursor-pointer list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#787878]">
-                  Traffic details
-                  <span className="ml-2 font-normal normal-case tracking-normal text-[#8F8F8F] group-open:hidden">
-                    · click to expand
-                  </span>
-                </p>
-                <span
-                  aria-hidden
-                  className="shrink-0 rounded-full border border-[#E9E9E9] px-1.5 py-0.5 text-[11px] font-medium text-[#03535F] transition-transform group-open:rotate-180"
-                >
-                  ▾
-                </span>
-              </summary>
-              <div className="mt-4">
-                <TrafficAnalyticsLoader data={gaTraffic.data} />
-              </div>
-            </details>
-
             <div className="border-t border-[#E9E9E9] pt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#787878]">
-                Last 7 days · teal candidates, green recruiters
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#787878]">
+                Traffic details
               </p>
-              <ActivityBars
-                candidates={data.stats.totalStudentsSeries}
-                recruiters={data.stats.totalRecruitersSeries}
-              />
+              <TrafficAnalyticsLoader data={gaTraffic.data} />
             </div>
           </div>
         </section>

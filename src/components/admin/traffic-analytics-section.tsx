@@ -502,12 +502,13 @@ function AcquisitionTab({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={sources}
+                  data={sources.filter((s) => s.sessions > 0)}
                   dataKey="sessions"
                   nameKey="source"
-                  innerRadius={55}
-                  outerRadius={95}
-                  paddingAngle={2}
+                  innerRadius="55%"
+                  outerRadius="85%"
+                  paddingAngle={0}
+                  stroke="none"
                   isAnimationActive={false}
                 >
                   {sources.map((_, index) => (
@@ -929,7 +930,11 @@ function Donut({
   description?: string;
   rows: Array<{ name: string; value: number }>;
 }) {
-  const total = rows.reduce((s, r) => s + r.value, 0);
+  // Drop zero-value slices — recharts renders them as invisible gaps that
+  // still take an index in the color palette, which is why the previous
+  // Device chart looked malformed when `tablet` was 0.
+  const nonZero = rows.filter((r) => r.value > 0);
+  const total = nonZero.reduce((s, r) => s + r.value, 0);
   return (
     <Card>
       <CardHeader>
@@ -937,19 +942,20 @@ function Donut({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="h-[240px]">
-        {rows.length > 0 ? (
+        {nonZero.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={rows}
+                data={nonZero}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={45}
-                outerRadius={80}
-                paddingAngle={2}
+                innerRadius="55%"
+                outerRadius="85%"
+                paddingAngle={0}
+                stroke="none"
                 isAnimationActive={false}
               >
-                {rows.map((_, index) => (
+                {nonZero.map((_, index) => (
                   <Cell
                     key={index}
                     fill={PALETTE[index % PALETTE.length]}
@@ -963,9 +969,9 @@ function Donut({
           <EmptyMsg>No data.</EmptyMsg>
         )}
       </CardContent>
-      {rows.length > 0 && total > 0 && (
+      {nonZero.length > 0 && total > 0 && (
         <div className="flex flex-wrap gap-x-3 gap-y-1 px-6 pb-4 text-[11px] text-muted-foreground">
-          {rows.slice(0, 5).map((r, i) => (
+          {nonZero.slice(0, 5).map((r, i) => (
             <span key={r.name} className="inline-flex items-center gap-1">
               <span
                 aria-hidden
