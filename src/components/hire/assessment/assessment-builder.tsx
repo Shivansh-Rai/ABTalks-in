@@ -64,10 +64,16 @@ function stripKeys(questions: DraftQuestion[]) {
 type SendableCandidate = { candidateRef: string; label: string; jobRole: string };
 
 type Props = {
-  /** The recruiter's live Shortlist (legacy + project halves, searchable only). */
+  /** The live Shortlist for ONE scope — this project's, or the legacy list. */
   candidates: SendableCandidate[];
   existingDraft: AssessmentDraft | null;
   presetLocked?: boolean;
+  /**
+   * Which project `candidates` came from, sent back with Create so the server
+   * resolves the refs against the same Shortlist the checkboxes were drawn
+   * from. Null = off-project, which is the legacy saved list.
+   */
+  projectId?: string | null;
   /** Rendered under the template picker: an h2 instead of the page h1. */
   embedded?: boolean;
 };
@@ -76,6 +82,7 @@ export function AssessmentBuilder({
   candidates,
   existingDraft,
   presetLocked = false,
+  projectId = null,
   embedded = false,
 }: Props) {
   const router = useRouter();
@@ -258,6 +265,7 @@ export function AssessmentBuilder({
       const res = await createAndSendRecruiterAssessmentAction({
         draft,
         candidateRefs,
+        projectId,
       });
       setPendingAction(null);
       if (!res.ok) {

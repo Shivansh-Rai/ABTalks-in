@@ -22,16 +22,29 @@ type AssignPanelProps = {
     jobRole: string;
     alreadyAssigned: boolean;
   }[];
+  /**
+   * Which project `candidates` was scoped to, sent back with Assign so the
+   * server resolves the refs against that same Shortlist. Null = off-project,
+   * which is the legacy saved list.
+   */
+  projectId?: string | null;
 };
 
 export function AssessmentAssignPanel({
   assessmentId,
   status,
   candidates,
+  projectId = null,
 }: AssignPanelProps) {
   if (status === "DRAFT") return <PublishBlock assessmentId={assessmentId} />;
   if (status === "PUBLISHED") {
-    return <AssignBlock assessmentId={assessmentId} candidates={candidates} />;
+    return (
+      <AssignBlock
+        assessmentId={assessmentId}
+        candidates={candidates}
+        projectId={projectId}
+      />
+    );
   }
   // Nothing writes ARCHIVED yet.
   return null;
@@ -99,9 +112,11 @@ function PublishBlock({ assessmentId }: { assessmentId: string }) {
 function AssignBlock({
   assessmentId,
   candidates,
+  projectId,
 }: {
   assessmentId: string;
   candidates: AssignPanelProps["candidates"];
+  projectId: string | null;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
@@ -133,6 +148,7 @@ function AssignBlock({
       const res = await assignRecruiterAssessmentAction({
         assessmentId,
         candidateRefs,
+        projectId,
       });
       if (!res.ok) {
         toast.error(res.message);

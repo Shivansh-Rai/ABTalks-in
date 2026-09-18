@@ -66,9 +66,17 @@ function isAsked(row: CartRow, requested: string[]): boolean {
 export function HireTalentPod({
   serverRows,
   scopeLabel,
+  projectId = null,
 }: {
   serverRows: CartRow[];
   scopeLabel?: string;
+  /**
+   * The open project, from the same `projectIdFromPath` that scoped
+   * `serverRows`. Carried into Create assessment: without it the builder fell
+   * back to the recruiter-wide shortlist and offered people this pod is not
+   * showing. Null = off-project.
+   */
+  projectId?: string | null;
 }) {
   const router = useRouter();
   const { closePod, openInspect } = useHireDesk();
@@ -423,7 +431,14 @@ export function HireTalentPod({
               Create assessment for Shortlisted
             </button>
           ) : (
-            <Link href="/hire/create-test" className="hire-pod__assess">
+            <Link
+              href={
+                projectId
+                  ? `/hire/create-test?projectId=${encodeURIComponent(projectId)}`
+                  : "/hire/create-test"
+              }
+              className="hire-pod__assess"
+            >
               <ClipboardList className="size-4" aria-hidden="true" />
               Create assessment for Shortlisted
             </Link>
