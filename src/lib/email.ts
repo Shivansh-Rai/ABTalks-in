@@ -53,6 +53,8 @@ export type SendEmailResult =
 
 export async function sendEmail(opts: {
   to: string;
+  /** Optional recipient display name — improves deliverability (recipient `name`). */
+  toName?: string;
   subject: string;
   html: string;
   text: string;
@@ -68,6 +70,19 @@ export async function sendEmail(opts: {
   /** T-259: the domain entity it belongs to, when there is one. */
   subjectType?: string;
   subjectId?: string;
+  /**
+   * Plan 152: extra custom headers merged over the defaults. Every mail gets
+   * a `List-Unsubscribe` + `List-Unsubscribe-Post` (Gmail 2024 bulk-sender
+   * rules score this even for transactional), a `X-Entity-Ref-ID` = the
+   * `deliveryId` (dedupes duplicates in the recipient MUA), and a
+   * `Precedence: bulk` fallback. Callers can add e.g. `In-Reply-To`.
+   */
+  headers?: Record<string, string>;
+  /**
+   * Plan 152: Brevo tags for dashboard filtering. Defaulted to `[kind]` so
+   * every send is filterable in Brevo's Statistics tab by message type.
+   */
+  tags?: string[];
 }): Promise<SendEmailResult> {
   const deliveryId = newDeliveryId();
   const kind = opts.kind ?? "generic";
@@ -112,13 +127,33 @@ export async function sendEmail(opts: {
 
   try {
     const brevo = new BrevoClient({ apiKey });
+    // Deliverability headers, plan 152. All three are what modern mailbox
+    // providers look for on transactional mail — omitting them is the biggest
+    // single reason mail lands in spam even with SPF/DKIM/DMARC passing.
+    const unsubMailto = `mailto:${REPLY_TO}?subject=Unsubscribe`;
+    const defaultHeaders: Record<string, string> = {
+      "List-Unsubscribe": `<${unsubMailto}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      "X-Entity-Ref-ID": deliveryId,
+      "X-Mailer": "ABTalks",
+      Precedence: "bulk",
+    };
+    const mergedHeaders = { ...defaultHeaders, ...(opts.headers ?? {}) };
+    const tags = opts.tags ?? [kind];
+
     await brevo.transactionalEmails.sendTransacEmail({
       sender: { name: FROM_NAME, email: FROM_EMAIL },
       replyTo: { email: opts.replyTo ?? REPLY_TO },
-      to: [{ email: opts.to }],
+      to: [
+        opts.toName
+          ? { email: opts.to, name: opts.toName }
+          : { email: opts.to },
+      ],
       subject: opts.subject,
       htmlContent: opts.html,
       textContent: opts.text,
+      headers: mergedHeaders,
+      tags,
       // Brevo wants base64, not a Buffer. No caller passes attachments today,
       // but the signature offered them, and a silently dropped attachment is
       // worse than one that was never offered.

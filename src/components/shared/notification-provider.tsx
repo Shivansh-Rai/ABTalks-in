@@ -28,6 +28,7 @@ import type {
   NotificationCategoryKey,
   NotificationFeed,
 } from "@/features/notification/types";
+import { shouldRefetch } from "@/features/notification/refetch-policy";
 import { cn } from "@/lib/utils";
 import { NotificationAnalyticsTracker } from "@/components/shared/notification-analytics-tracker";
 
@@ -44,7 +45,22 @@ type Ctx = {
 
 const NotificationContext = createContext<Ctx | null>(null);
 const KEY = "abtalks_notifications";
-const TTL_MS = 60_000;
+/**
+ * The sessionStorage cache is treated as fresh for this long. Older than this,
+ * an `ensureLoaded` call or a tab-focus event refetches.
+ *
+ * Was 60_000 (60s). Reduced to 20s so a notification created while the
+ * candidate has the tab in the background lands in the bell within 20s of
+ * refocus, instead of up to a full minute.
+ */
+const TTL_MS = 20_000;
+/**
+ * How stale the cache must be for a live event (tab focus, panel open) to
+ * trigger a background refetch. Smaller than `TTL_MS` so a user who just
+ * refocuses a tab does NOT re-query the server needlessly, but a user who
+ * has been away long enough for something to have changed does.
+ */
+const REFETCH_STALE_AFTER_MS = 10_000;
 
 const NOOP_CTX: Ctx = {
   feed: null,
@@ -118,6 +134,22 @@ export function NotificationProvider({
   }, [writeCache]);
 
   /**
+   * Fire-and-forget refetch when the cache is older than
+   * `REFETCH_STALE_AFTER_MS`. Used by the tab-focus listener and by
+   * `openPanel` — both cases where the user has done something that
+   * implies "show me the latest".
+   *
+   * Never wipes the existing feed while refetching, so the bell doesn't
+   * flash empty. The next resolved fetch replaces the state atomically.
+   */
+  const refetchIfStale = useCallback(() => {
+    const cached = readCache();
+    if (shouldRefetch(cached?.t, Date.now(), REFETCH_STALE_AFTER_MS)) {
+      fetchFeed();
+    }
+  }, [fetchFeed]);
+
+  /**
    * This provider sits in the root layout, which renders on the public landing
    * page too. Fetching on mount would hit a Server Action for every anonymous
    * visitor, so loading is driven by the bell trigger instead — the feed is
@@ -129,7 +161,7 @@ export function NotificationProvider({
 
     const cached = readCache();
     if (cached) setFeed(cached.feed);
-    if (!cached || Date.now() - cached.t > TTL_MS) fetchFeed();
+    if (shouldRefetch(cached?.t, Date.now(), TTL_MS)) fetchFeed();
   }, [fetchFeed]);
 
   const closePanel = useCallback(() => setOpen(false), []);
@@ -137,6 +169,12 @@ export function NotificationProvider({
   const openPanel = useCallback(() => {
     measureAnchor();
     setOpen(true);
+
+    // A refetch in the background catches notifications created since the
+    // last mount (e.g. a recruiter viewed the candidate's profile while the
+    // tab was already open). Fire-and-forget so the panel opens instantly;
+    // the fresh feed replaces whatever the user briefly saw.
+    refetchIfStale();
 
     // Opening the bell counts as seeing everything in it. Optimistic: the badge
     // clears instantly and the write is fire-and-forget.
@@ -154,7 +192,24 @@ export function NotificationProvider({
       void markNotificationsReadAction(unreadKeys);
       return next;
     });
-  }, [writeCache, measureAnchor]);
+  }, [writeCache, measureAnchor, refetchIfStale]);
+
+  // Refetch when the tab regains focus. Without this the bell never picks
+  // up a notification created while the candidate had the tab in the
+  // background — the previous behaviour was "fetch once on mount, then
+  // never again in this session", which was the root cause of T-XXX
+  // (mail arrives but bell stays quiet).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && loadedRef.current) {
+        refetchIfStale();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibility);
+  }, [refetchIfStale]);
 
   useEffect(() => {
     if (!open) return;
