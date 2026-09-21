@@ -174,6 +174,33 @@ export function isNewLearningRepoEnabled(): boolean {
 export function isNewProgressRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_PROGRESS === "true";
 }
+
+/**
+ * W6-A write authority for challenge/quiz/AI-cohort activity attempts.
+ * Separate from ENABLE_NEW_PROGRESS (reads). Off unless explicitly `"true"`.
+ *
+ * When off (dark deploy): Submission / QuizAttempt / ProgramMissionSubmission
+ * still write first, then ActivityAttempt + ActivityEvaluation are dual-written.
+ * When on: attempt + evaluation commit first; legacy rows are compatibility
+ * mirrors while ENABLE_LEGACY_PROGRESS_MIRROR is not `"false"`.
+ * Dual-write stays on either way. Do not freeze legacy progress tables in W6-A.
+ * Do not take Enrollment / ProgramEnrollment / StudentProfile.domain authority.
+ */
+export function isNewProgressWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_PROGRESS_WRITES === "true";
+}
+
+/**
+ * W6-A compatibility mirror onto Submission / QuizAttempt /
+ * ProgramMissionSubmission. Independent of ENABLE_DUAL_WRITE.
+ *
+ * Default ON so a dark deploy (flag unset) keeps current mirroring.
+ * Off only when explicitly `"false"` (W6-B): canonical attempts still write;
+ * legacy progress rows freeze. Do not set false in W6-A.
+ */
+export function isLegacyProgressMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_PROGRESS_MIRROR !== "false";
+}
 export function isNewTalentRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_TALENT === "true";
 }

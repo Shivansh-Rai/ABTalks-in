@@ -14,9 +14,13 @@ import {
   isCohortFrozen,
   isSkippedPayload,
 } from "@/features/program/progression";
-import { isDayLockBypassEnabled } from "@/lib/feature-flags";
+import { isDayLockBypassEnabled, isNewProgressWritesEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
-import { dualWriteMissionAttempt } from "@/repositories/dual-write";
+import { applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
+import {
+  activityIdForProgramDay,
+  peIdForMember,
+} from "@/repositories/ids";
 import {
   getProgramUnlockFloor,
   listProgramMissionAttemptsForDay,
@@ -298,16 +302,36 @@ export async function submitMissionRun(
     githubRepoUrl: avail.member.githubRepoUrl,
   });
 
-  const attemptCount = await prisma.programMissionSubmission.count({
+  const pmsCount = await prisma.programMissionSubmission.count({
     where: { memberId, dayNumber },
   });
-  const attemptNumber = attemptCount + 1;
-  const isFirstPass =
+  let aaCount = 0;
+  if (isNewProgressWritesEnabled()) {
+    aaCount = await prisma.activityAttempt.count({
+      where: {
+        enrollmentId: peIdForMember(memberId),
+        activityId: activityIdForProgramDay(day.id),
+      },
+    });
+  }
+  const attemptNumber = Math.max(pmsCount, aaCount) + 1;
+  let isFirstPass =
     verifyResult.passed &&
     !(await prisma.programMissionSubmission.findFirst({
       where: { memberId, dayNumber, passed: true },
       select: { id: true },
     }));
+  if (isFirstPass && isNewProgressWritesEnabled()) {
+    const passedAttempt = await prisma.activityAttempt.findFirst({
+      where: {
+        enrollmentId: peIdForMember(memberId),
+        activityId: activityIdForProgramDay(day.id),
+        passed: true,
+      },
+      select: { id: true },
+    });
+    if (passedAttempt) isFirstPass = false;
+  }
 
   let pointsAwarded = 0;
   let unlockedDay: number | undefined;
@@ -318,28 +342,16 @@ export async function submitMissionRun(
       pointsAwarded = day.missionPoints;
     }
 
-    const created = await tx.programMissionSubmission.create({
-      data: {
-        memberId,
-        dayNumber,
-        attemptNumber,
-        payload: payload as Prisma.InputJsonValue,
-        verdict: verifyResult.verdict as Prisma.InputJsonValue,
-        passed: verifyResult.passed,
-        pointsAwarded,
-      },
-      select: { id: true, createdAt: true },
-    });
-    await dualWriteMissionAttempt(tx, {
-      id: created.id,
+    await applyProgramMissionAttemptChange(tx, {
       memberId,
       programDayId: day.id,
+      dayNumber,
       attemptNumber,
       payload: payload as Prisma.InputJsonValue,
       verdict: verifyResult.verdict as Prisma.InputJsonValue,
       passed: verifyResult.passed,
       pointsAwarded,
-      createdAt: created.createdAt,
+      createdAt: new Date(),
     });
 
     if (verifyResult.passed && isFirstPass) {

@@ -15,9 +15,11 @@ import { applyCandidateIdentityChange } from "@/repositories/candidate-identity"
 import { getCandidateProfile } from "@/repositories/candidate";
 import {
   dualWriteChallengeEnrollmentById,
-  dualWriteDeleteEnrollmentSubmissions,
-  dualWriteDeleteSubmissionAttempt,
 } from "@/repositories/dual-write";
+import {
+  applyDeleteChallengeSubmission,
+  applyDeleteEnrollmentChallengeAttempts,
+} from "@/repositories/progress-writes";
 import {
   anonymizeUser,
   AnonymizeUserError,
@@ -99,10 +101,7 @@ export async function resetProgressAction(input: {
         }
       }
 
-      await tx.submission.deleteMany({
-        where: { enrollmentId: enrollment.id },
-      });
-      await dualWriteDeleteEnrollmentSubmissions(tx, enrollment.id);
+      await applyDeleteEnrollmentChallengeAttempts(tx, enrollment.id);
 
       await tx.enrollment.update({
         where: { id: enrollment.id },
@@ -398,8 +397,7 @@ export async function rejectSubmissionAction(input: {
         }
       }
 
-      await tx.submission.delete({ where: { id: submissionId } });
-      await dualWriteDeleteSubmissionAttempt(tx, submissionId);
+      await applyDeleteChallengeSubmission(tx, submissionId);
 
       const remainingCount = await tx.submission.count({
         where: { enrollmentId: submission.enrollmentId },

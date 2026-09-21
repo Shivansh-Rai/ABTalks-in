@@ -4,7 +4,10 @@ import {
   findChallengeEnrollment,
   getQuizDefinition,
 } from "@/repositories/learning";
-import { dualWriteQuizAttempt } from "@/repositories/dual-write";
+import {
+  applyQuizAttemptChange,
+  findQuizAttemptId,
+} from "@/repositories/progress-writes";
 
 export type QuizSubmitResultRow = {
   questionId: string;
@@ -34,17 +37,6 @@ export async function submitQuiz(input: {
 }): Promise<SubmitQuizResult> {
   const { userId, quizId, answers } = input;
 
-  const existing = await prisma.quizAttempt.findUnique({
-    where: {
-      userId_quizId: { userId, quizId },
-    },
-    select: { id: true },
-  });
-
-  if (existing) {
-    return { ok: false, message: "Quiz already submitted" };
-  }
-
   const quiz = await getQuizDefinition(quizId);
   if (!quiz) {
     return { ok: false, message: "Quiz not found" };
@@ -56,6 +48,15 @@ export async function submitQuiz(input: {
   });
   if (!enrollment) {
     return { ok: false, message: "No enrollment for this quiz" };
+  }
+
+  const existing = await findQuizAttemptId(prisma, {
+    userId,
+    quizId,
+    enrollmentId: enrollment.id,
+  });
+  if (existing) {
+    return { ok: false, message: "Quiz already submitted" };
   }
 
   const questions = quiz.questions;
@@ -85,22 +86,13 @@ export async function submitQuiz(input: {
   });
 
   await writeClient().$transaction(async (tx) => {
-    const created = await tx.quizAttempt.create({
-      data: {
-        userId,
-        quizId,
-        score,
-        answers: answers as Prisma.InputJsonValue,
-      },
-      select: { id: true, attemptedAt: true },
-    });
-    await dualWriteQuizAttempt(tx, {
-      id: created.id,
+    await applyQuizAttemptChange(tx, {
+      userId,
       enrollmentId: enrollment.id,
       quizId,
       score,
       answers: answers as Prisma.InputJsonValue,
-      attemptedAt: created.attemptedAt,
+      attemptedAt: new Date(),
     });
   });
 

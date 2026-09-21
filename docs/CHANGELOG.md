@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [env|convention] W6-A Progress write authority: ENABLE_NEW_PROGRESS_WRITES (default off) commits ActivityAttempt+ActivityEvaluation before Submission/QuizAttempt/ProgramMissionSubmission mirrors; ENABLE_LEGACY_PROGRESS_MIRROR (default on); Enrollment/domain stay later; dual-write stays; W6-B not started
 - 2026-09-21 [env] W5-B COMPLETE: production ENABLE_LEGACY_AMBASSADOR_MIRROR=false W5B_CUTOVER_TIME=2026-09-21T17:51:14.000Z; CampusAmbassadorApplication is sole ambassador current-state+write authority; StudentProfile ambassador fields frozen (anonymize still scrubs); dual-write stays; W6 not started
 - 2026-09-21 [env|convention] W5-B StudentProfile ambassador freeze: ENABLE_LEGACY_AMBASSADOR_MIRROR=false stops apply/dismiss SP ambassador mirrors; CampusAmbassadorApplication is sole current-state source; anonymize wipe still scrubs frozen SP ambassador snapshots; dual-write stays; W6 not started
 - 2026-09-21 [env] W5-A COMPLETE: production ENABLE_NEW_AMBASSADOR_WRITES=true ENABLE_LEGACY_AMBASSADOR_MIRROR=true; CampusAmbassadorApplication is ambassador write authority; StudentProfile ambassador fields remain compatibility mirrors; dual-write stays; W5-B/W6 not started

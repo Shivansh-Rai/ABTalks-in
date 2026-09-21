@@ -1,4 +1,5 @@
 /** Stable ids shared with prisma/scripts/migrate-078-shared.ts. */
+import { randomBytes } from "node:crypto";
 export function peIdForEnrollment(enrollmentId: string): string {
   return `pe_enr_${enrollmentId}`;
 }
@@ -71,6 +72,45 @@ export function attemptIdForMission(id: string): string {
 
 export function attemptIdForQuizAttempt(id: string): string {
   return `aa_qa_${id}`;
+}
+
+export function evaluationIdForSubmission(id: string): string {
+  return `ev_sub_${id}`;
+}
+
+export function evaluationIdForQuizAttempt(id: string): string {
+  return `ev_qa_${id}`;
+}
+
+export function evaluationIdForMission(id: string): string {
+  return `ev_ms_${id}`;
+}
+
+export function submissionIdFromAttemptId(attemptId: string): string | null {
+  return attemptId.startsWith("aa_sub_")
+    ? attemptId.slice("aa_sub_".length)
+    : null;
+}
+
+export function quizAttemptIdFromAttemptId(attemptId: string): string | null {
+  return attemptId.startsWith("aa_qa_")
+    ? attemptId.slice("aa_qa_".length)
+    : null;
+}
+
+export function missionSubmissionIdFromAttemptId(
+  attemptId: string,
+): string | null {
+  return attemptId.startsWith("aa_ms_")
+    ? attemptId.slice("aa_ms_".length)
+    : null;
+}
+
+/** Prisma-style 25-char id used to pre-mint legacy progress PKs before W6-A canonical writes. */
+export function mintProgressRowId(): string {
+  const time = Date.now().toString(36);
+  const rand = randomBytes(12).toString("hex");
+  return `c${time}${rand}`.slice(0, 25);
 }
 
 export function cohortSlugForDomain(domain: string): string {

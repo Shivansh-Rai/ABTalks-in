@@ -1,9 +1,6 @@
 import type { Prisma } from "@prisma/client";
-import {
-  dualWriteCommitDay,
-  dualWriteDeleteMissionAttempt,
-  dualWriteMissionAttempt,
-} from "@/repositories/dual-write";
+import { dualWriteCommitDay } from "@/repositories/dual-write";
+import { applyDeleteProgramMissionAttempt, applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   addCalendarDaysToKey,
@@ -225,34 +222,20 @@ export async function bootstrapMemberStartDay(
       };
     });
 
-    await tx.programMissionSubmission.createMany({ data: rows });
-    const created = await tx.programMissionSubmission.findMany({
-      where: { memberId, dayNumber: { in: missingDays } },
-      select: {
-        id: true,
-        dayNumber: true,
-        attemptNumber: true,
-        payload: true,
-        verdict: true,
-        passed: true,
-        pointsAwarded: true,
-        createdAt: true,
-      },
-    });
     const dayIdByNumber = new Map(days.map((d) => [d.dayNumber, d.id]));
-    for (const row of created) {
+    for (const row of rows) {
       const programDayId = dayIdByNumber.get(row.dayNumber);
       if (!programDayId) continue;
-      await dualWriteMissionAttempt(tx, {
-        id: row.id,
-        memberId,
+      await applyProgramMissionAttemptChange(tx, {
+        memberId: row.memberId,
         programDayId,
+        dayNumber: row.dayNumber,
         attemptNumber: row.attemptNumber,
-        payload: row.payload as Prisma.InputJsonValue,
-        verdict: row.verdict as Prisma.InputJsonValue,
+        payload: row.payload,
+        verdict: row.verdict,
         passed: row.passed,
         pointsAwarded: row.pointsAwarded,
-        createdAt: row.createdAt,
+        createdAt: new Date(),
       });
     }
   }
@@ -277,11 +260,8 @@ export async function bootstrapMemberStartDay(
     pointsRemoved = staleWaivers.reduce((sum, row) => sum + row.pointsAwarded, 0);
     cleanPassesRemoved = staleWaivers.length;
     for (const row of staleWaivers) {
-      await dualWriteDeleteMissionAttempt(tx, row.id);
+      await applyDeleteProgramMissionAttempt(tx, row.id);
     }
-    await tx.programMissionSubmission.deleteMany({
-      where: { id: { in: staleWaivers.map((row) => row.id) } },
-    });
   }
 
   const nextUnlocked =

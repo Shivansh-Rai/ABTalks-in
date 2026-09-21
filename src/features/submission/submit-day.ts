@@ -18,10 +18,12 @@ import { withLegacyPointsMirrorFlush } from "@/repositories/points";
 import {
   applyCandidateIdentityChange,
 } from "@/repositories/candidate-identity";
+import { dualWriteChallengeEnrollmentById } from "@/repositories/dual-write";
 import {
-  dualWriteChallengeEnrollmentById,
-  dualWriteSubmissionAttempt,
-} from "@/repositories/dual-write";
+  applyChallengeSubmissionChange,
+  findChallengeSubmissionId,
+} from "@/repositories/progress-writes";
+import { mintProgressRowId } from "@/repositories/ids";
 
 /**
  * Relaxation window: today + previous 4 days = 5 calendar days total.
@@ -201,61 +203,39 @@ export async function submitDay(input: {
   try {
     const result = await withLegacyPointsMirrorFlush(() =>
       writeClient().$transaction(async (tx) => {
-      const existing = await tx.submission.findUnique({
-        where: {
-          enrollmentId_dayNumber: {
-            enrollmentId: enrollment.id,
-            dayNumber,
-          },
-        },
-        select: { id: true },
+      const existingId = await findChallengeSubmissionId(tx, {
+        enrollmentId: enrollment.id,
+        dailyTaskId: task.id,
+        dayNumber,
       });
-
-      let submission;
+      const isCreate = !existingId;
+      const submissionId = existingId ?? mintProgressRowId();
+      const submittedAt = new Date();
       let synergyAwarded: number | undefined;
 
-      if (!existing) {
-        submission = await tx.submission.create({
-          data: {
-            userId,
-            enrollmentId: enrollment.id,
-            dailyTaskId: task.id,
-            dayNumber,
-            githubUrl: githubNormalized,
-            linkedinUrl: linkedinStored,
-            status: newStatus,
-            submittedAt: new Date(),
-          },
-        });
+      if (isCreate) {
         synergyAwarded = await awardSubmissionSynergy(tx, {
           userId,
-          submissionId: submission.id,
+          submissionId,
           enrollmentId: enrollment.id,
           challengeId: enrollment.challengeId,
           dayNumber,
           istDateKey: submittedAtIst,
         });
-      } else {
-        submission = await tx.submission.update({
-          where: { id: existing.id },
-          data: {
-            githubUrl: githubNormalized,
-            linkedinUrl: linkedinStored,
-            status: newStatus,
-            submittedAt: new Date(),
-          },
-        });
       }
 
-      await dualWriteSubmissionAttempt(tx, {
-        id: submission.id,
+      await applyChallengeSubmissionChange(tx, {
+        id: submissionId,
+        userId,
         enrollmentId: enrollment.id,
         dailyTaskId: task.id,
+        dayNumber,
         githubUrl: githubNormalized,
         linkedinUrl: linkedinStored,
         status: newStatus,
-        submittedAt: submission.submittedAt,
+        submittedAt,
         pointsAwarded: synergyAwarded ?? 0,
+        mode: isCreate ? "create" : "update",
       });
 
       const daysCompleted = await tx.submission.count({
@@ -300,7 +280,7 @@ export async function submitDay(input: {
       }
 
       return {
-        submissionId: submission.id,
+        submissionId,
         newStreak,
         daysCompleted,
         synergyAwarded,

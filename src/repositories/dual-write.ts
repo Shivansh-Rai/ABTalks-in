@@ -279,7 +279,7 @@ export async function dualWriteProgramDayMissionType(
   });
 }
 
-export async function dualWriteSubmissionAttempt(
+export async function upsertSubmissionAttemptRows(
   tx: Tx,
   submission: {
     id: string;
@@ -292,7 +292,6 @@ export async function dualWriteSubmissionAttempt(
     pointsAwarded: number;
   },
 ): Promise<void> {
-  await runDualWrite(tx, "submitDay", async () => {
     const attemptId = attemptIdForSubmission(submission.id);
     await tx.activityAttempt.upsert({
       where: { id: attemptId },
@@ -348,10 +347,27 @@ export async function dualWriteSubmissionAttempt(
       },
       update: { passed: true },
     });
-  });
 }
 
-export async function dualWriteMissionAttempt(
+export async function dualWriteSubmissionAttempt(
+  tx: Tx,
+  submission: {
+    id: string;
+    enrollmentId: string;
+    dailyTaskId: string;
+    githubUrl: string | null;
+    linkedinUrl: string | null;
+    status: string;
+    submittedAt: Date;
+    pointsAwarded: number;
+  },
+): Promise<void> {
+  await runDualWrite(tx, "submitDay", () =>
+    upsertSubmissionAttemptRows(tx, submission),
+  );
+}
+
+export async function upsertMissionAttemptRows(
   tx: Tx,
   row: {
     id: string;
@@ -365,7 +381,6 @@ export async function dualWriteMissionAttempt(
     createdAt: Date;
   },
 ): Promise<void> {
-  await runDualWrite(tx, "verifyMission", async () => {
     const attemptId = attemptIdForMission(row.id);
     await tx.activityAttempt.upsert({
       where: { id: attemptId },
@@ -408,10 +423,28 @@ export async function dualWriteMissionAttempt(
       },
       update: { passed: row.passed, detailJson: row.verdict },
     });
-  });
 }
 
-export async function dualWriteQuizAttempt(
+export async function dualWriteMissionAttempt(
+  tx: Tx,
+  row: {
+    id: string;
+    memberId: string;
+    programDayId: string;
+    attemptNumber: number;
+    payload: Prisma.InputJsonValue;
+    verdict: Prisma.InputJsonValue;
+    passed: boolean;
+    pointsAwarded: number;
+    createdAt: Date;
+  },
+): Promise<void> {
+  await runDualWrite(tx, "verifyMission", () =>
+    upsertMissionAttemptRows(tx, row),
+  );
+}
+
+export async function upsertQuizAttemptRows(
   tx: Tx,
   row: {
     id: string;
@@ -422,7 +455,6 @@ export async function dualWriteQuizAttempt(
     attemptedAt: Date;
   },
 ): Promise<void> {
-  await runDualWrite(tx, "submitQuiz", async () => {
     const attemptId = attemptIdForQuizAttempt(row.id);
     const passed = row.score >= 60;
     await tx.activityAttempt.upsert({
@@ -470,7 +502,20 @@ export async function dualWriteQuizAttempt(
       },
       update: { passed, score: row.score },
     });
-  });
+}
+
+export async function dualWriteQuizAttempt(
+  tx: Tx,
+  row: {
+    id: string;
+    enrollmentId: string;
+    quizId: string;
+    score: number;
+    answers: Prisma.InputJsonValue;
+    attemptedAt: Date;
+  },
+): Promise<void> {
+  await runDualWrite(tx, "submitQuiz", () => upsertQuizAttemptRows(tx, row));
 }
 
 export async function dualWriteDeleteSubmissionAttempt(

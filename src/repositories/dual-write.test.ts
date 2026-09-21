@@ -564,25 +564,22 @@ suite("ProgramDay missionType is stored exactly on ContentActivityConfig", () =>
 
 suite("quiz submit dual-writes ActivityAttempt", () => {
   const src = source("src/features/quiz/submit-quiz.ts");
-  assert(src.includes("dualWriteQuizAttempt"), "helper called");
-  assert(src.includes("quizAttempt.create"), "legacy still written");
+  assert(src.includes("applyQuizAttemptChange"), "helper called");
+  assert(src.includes("findQuizAttemptId"), "duplicate gate");
   assert(src.includes("writeClient()"), "direct client for SAVEPOINT");
 });
 
 suite("admin reset/reject delete 078 submission attempts", () => {
   const src = source("src/app/actions/admin-actions.ts");
-  assert(src.includes("dualWriteDeleteEnrollmentSubmissions"), "reset");
-  assert(src.includes("dualWriteDeleteSubmissionAttempt"), "reject");
-  assert(src.includes("submission.deleteMany"), "legacy reset still deletes");
-  assert(src.includes("submission.delete"), "legacy reject still deletes");
+  assert(src.includes("applyDeleteEnrollmentChallengeAttempts"), "reset");
+  assert(src.includes("applyDeleteChallengeSubmission"), "reject");
 });
 
 suite("bootstrap waivers and commits dual-write 078 state", () => {
   const src = source("src/features/program/bootstrap-start-day.ts");
-  assert(src.includes("dualWriteMissionAttempt"), "waiver attempts");
-  assert(src.includes("dualWriteDeleteMissionAttempt"), "stale waiver delete");
+  assert(src.includes("applyProgramMissionAttemptChange"), "waiver attempts");
+  assert(src.includes("applyDeleteProgramMissionAttempt"), "stale waiver delete");
   assert(src.includes("dualWriteCommitDay"), "early commit days");
-  assert(src.includes("programMissionSubmission.createMany"), "legacy waivers");
 });
 
 suite("adminUnlockDay and grantSkipToken dual-write ProgramEnrollment", () => {
@@ -610,7 +607,7 @@ suite("programCommitDay dual-writes EnrollmentDayActivity", () => {
 
 suite("submission resubmit keeps lateness and submittedAt in sync", () => {
   const src = source("src/repositories/dual-write.ts");
-  const fn = src.slice(src.indexOf("export async function dualWriteSubmissionAttempt"));
+  const fn = src.slice(src.indexOf("export async function upsertSubmissionAttemptRows"));
   const update = fn.slice(fn.indexOf("update:"), fn.indexOf("await tx.activityEvaluation"));
   assert(update.includes("submittedAt: submission.submittedAt"), "timestamp");
   assert(update.includes("passed: true"), "pass state");
