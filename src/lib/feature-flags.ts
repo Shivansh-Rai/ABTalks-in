@@ -179,6 +179,33 @@ export function isNewCredentialRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_CREDENTIAL === "true";
 }
 
+/**
+ * W3-A write authority for certificate/credential issuance. Separate from
+ * `ENABLE_NEW_CREDENTIAL` (reads). Off unless explicitly `"true"`.
+ *
+ * When off (dark deploy): Certificate is still minted first, then
+ * `dualWriteCredential` mirrors Credential.
+ * When on: Credential commits first; Certificate is a compatibility mirror
+ * while ENABLE_LEGACY_CERTIFICATE_MIRROR is not `"false"`.
+ * Dual-write stays on either way. Do not enable without ENABLE_NEW_CREDENTIAL
+ * already on.
+ */
+export function isNewCredentialWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_CREDENTIAL_WRITES === "true";
+}
+
+/**
+ * W3-A compatibility mirror onto legacy Certificate. Independent of
+ * ENABLE_DUAL_WRITE.
+ *
+ * Default ON so a dark deploy (flag unset) keeps current W3-A behaviour.
+ * Off only when explicitly `"false"` (future W3-B): authoritative Credential
+ * still writes; Certificate rows freeze.
+ */
+export function isLegacyCertificateMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR !== "false";
+}
+
 /** Plan 078 Phase 4. Off = skip new-table writes; legacy stays authoritative. */
 export function isDualWriteEnabled(): boolean {
   return process.env.ENABLE_DUAL_WRITE === "true";

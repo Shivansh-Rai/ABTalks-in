@@ -30,6 +30,13 @@ export {
 } from "./points";
 export { getByPublicId, listForUser } from "./credentials";
 export {
+  applyCredentialIssue,
+  generatePublicCredentialId,
+  issueClaudeCredential,
+  issueHackathonParticipationCredential,
+  issueHackathonPlacementCredential,
+} from "./credentials-write";
+export {
   listProgramCandidates,
   listMissionAttempts,
   listCurriculumDays,

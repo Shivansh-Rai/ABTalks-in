@@ -164,15 +164,19 @@ suite("profile update dual-writes CandidateProfile", () => {
 });
 
 suite("Claude issuance dual-writes Credential, including alreadyIssued", () => {
-  const src = source("src/features/certificate/issue-certificate.ts");
-  const count = src.split("dualWriteCredential").length - 1;
-  assert(count >= 3, `expected ≥3 call sites, got ${count}`);
+  const src = source("src/repositories/credentials-write.ts");
+  assert(src.includes("dualWriteCredential"), "legacy path still dual-writes");
+  const issue = source("src/features/certificate/issue-certificate.ts");
+  assert(issue.includes("issueClaudeCredential"), "claude goes through write boundary");
 });
 
 suite("hackathon issuance dual-writes Credential", () => {
-  const src = source("src/features/certificate/issue-hackathon-certificate.ts");
-  const count = src.split("dualWriteCredential").length - 1;
-  assert(count >= 4, `expected ≥4 call sites, got ${count}`);
+  const src = source("src/repositories/credentials-write.ts");
+  assert(src.includes("hackathon_participation"), "participation");
+  assert(src.includes("hackathon_placement"), "placement");
+  const issue = source("src/features/certificate/issue-hackathon-certificate.ts");
+  assert(issue.includes("issueHackathonParticipationCredential"), "participation boundary");
+  assert(issue.includes("issueHackathonPlacementCredential"), "placement boundary");
 });
 
 suite("lazy achievements path still goes through ensureClaudeCertificate", () => {
