@@ -1,5 +1,7 @@
 # 101 — W1-B Points mirror prep (audit + repair; do not stop writes)
 
+> **Status (2026-09-21):** W1-B COMPLETE in production. `ENABLE_LEGACY_POINTS_MIRROR=false`, `W1B_CUTOVER_TIME=2026-09-21T11:07:46.000Z`. PointsTransaction = sole ledger; PointsAccount = sole wallet; User/SP/SynergyEvent = frozen snapshots. Dual-write still on. Legacy tables not dropped. W2 not started.
+
 ## 1. Goal
 
 Prepare W1-B without stopping `User.synergyPoints` / `SynergyEvent` writes:
