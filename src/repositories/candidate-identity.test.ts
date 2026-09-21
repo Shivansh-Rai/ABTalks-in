@@ -570,8 +570,13 @@ async function main() {
 
   await suite("W4-B freeze does not gate later-family StudentProfile writers", () => {
     const ambassador = source("src/app/actions/campus-ambassador-actions.ts");
-    assert(ambassador.includes("studentProfile.update"), "W5 ambassador still writes SP");
+    assert(ambassador.includes("applyAmbassadorChange"), "W5 write boundary");
     assert(!ambassador.includes("runStudentProfileMirror"), "ambassador not W4-gated");
+    assert(!ambassador.includes("studentProfile.update"), "no direct SP write in actions");
+    const amb = source("src/repositories/ambassador.ts");
+    assert(amb.includes("studentProfile.update"), "W5 still mirrors SP ambassador");
+    assert(amb.includes("isLegacyAmbassadorMirrorEnabled"), "own mirror flag");
+    assert(!amb.includes("isLegacyStudentProfileMirrorEnabled"), "not W4-gated");
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
     assert(enroll.includes("studentProfile.updateMany"), "domain denorm still writes SP");
     const points = source("src/repositories/points.ts");

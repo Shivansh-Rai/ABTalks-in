@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/admin-auth";
-import { prisma } from "@/lib/db";
+import { listAmbassadorCandidates } from "@/repositories/ambassador";
 import {
   Card,
   CardContent,
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Phone, ExternalLink, Calendar } from "lucide-react";
 import { formatDateIST } from "@/lib/date-utils";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 
 export default async function CampusAmbassadorsPage({
   searchParams,
@@ -22,35 +21,7 @@ export default async function CampusAmbassadorsPage({
   const sp = await searchParams;
   const search = sp.q?.trim() ?? "";
 
-  const candidates = await studentProfile.findMany({
-    where: {
-      isCampusAmbassadorCandidate: true,
-      ...(search
-        ? {
-            OR: [
-              { fullName: { contains: search, mode: "insensitive" } },
-              { college: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { ambassadorAppliedAt: "desc" },
-    select: {
-      userId: true,
-      fullName: true,
-      phone: true,
-      college: true,
-      graduationYear: true,
-      linkedinUrl: true,
-      domain: true,
-      ambassadorAppliedAt: true,
-      user: {
-        select: {
-          email: true,
-        },
-      },
-    },
-  });
+  const candidates = await listAmbassadorCandidates(search);
 
   return (
     <div className="space-y-4">
@@ -105,7 +76,7 @@ export default async function CampusAmbassadorsPage({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg truncate">
-                      {candidate.fullName ?? "Unnamed"}
+                      {candidate.fullName}
                     </CardTitle>
                     <CardDescription className="mt-1">
                       {candidate.college ?? "No college"}
@@ -120,11 +91,11 @@ export default async function CampusAmbassadorsPage({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <a
-                  href={`mailto:${candidate.user.email}`}
+                  href={`mailto:${candidate.email}`}
                   className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                 >
                   <Mail className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{candidate.user.email}</span>
+                  <span className="truncate">{candidate.email}</span>
                 </a>
 
                 {candidate.phone && (

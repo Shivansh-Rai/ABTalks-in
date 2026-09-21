@@ -345,6 +345,7 @@ model User {
   roleAssignments            UserRoleAssignment[]   @relation("RoleSubject")
   rolesGranted               UserRoleAssignment[]   @relation("RoleGranter")
   candidateProfile           CandidateProfile?
+  campusAmbassadorApplication CampusAmbassadorApplication?
   visibility                 CandidateVisibility?
   resume                     CandidateResume?
   pointsAccount              PointsAccount?
@@ -2423,6 +2424,28 @@ model CandidateProfile {
   @@index([locationCity, countryCode])
   @@index([isReadyForInterview])
   @@index([updatedAt(sort: Desc)])
+}
+
+/// W5-A canonical Campus Ambassador candidacy. Not a platform role and not
+/// candidate identity. Dashboard opt-in (`isCandidate` + `appliedAt`) and
+/// banner-dismiss (`dismissedAt`) only — approval/active ambassador state is
+/// not in this product. StudentProfile ambassador columns remain a W5-A
+/// compatibility mirror. CandidateProfile ambassador columns are leftover
+/// identity dual-write copies, not this domain.
+model CampusAmbassadorApplication {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  /// Maps StudentProfile.isCampusAmbassadorCandidate. True = opted in as a
+  /// candidate. Does not mean approved or active ambassador.
+  isCandidate Boolean   @default(false)
+  appliedAt   DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isCandidate])
+  @@index([appliedAt(sort: Desc)])
 }
 
 /// Recruiter-discovery enforcement. Kept for moderation, deletion, and policy —

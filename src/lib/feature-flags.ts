@@ -141,6 +141,33 @@ export function isLegacyStudentProfileMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR !== "false";
 }
 
+/**
+ * W5-A write authority for Campus Ambassador candidacy. Separate from
+ * ENABLE_NEW_CANDIDATE / ENABLE_NEW_CANDIDATE_WRITES. Off unless explicitly
+ * `"true"`.
+ *
+ * When off (dark deploy): StudentProfile ambassador columns are still written
+ * first, then CampusAmbassadorApplication is dual-written.
+ * When on: CampusAmbassadorApplication commits first; StudentProfile
+ * ambassador columns are a compatibility mirror while
+ * ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
+ * Dual-write stays on either way. Do not freeze those SP columns in W5-A.
+ */
+export function isNewAmbassadorWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_AMBASSADOR_WRITES === "true";
+}
+
+/**
+ * W5-A StudentProfile ambassador compatibility mirror.
+ * Default ON so a dark deploy (flag unset) keeps current mirroring.
+ * Off only when explicitly `"false"` (W5-B): canonical ambassador still writes;
+ * StudentProfile ambassador columns freeze. Identity, points, and domain on
+ * the same table are not gated here.
+ */
+export function isLegacyAmbassadorMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_AMBASSADOR_MIRROR !== "false";
+}
+
 export function isNewLearningRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_LEARNING === "true";
 }

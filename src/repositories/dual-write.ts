@@ -898,7 +898,6 @@ export type CandidateIdentitySubmitted = {
   experience?: boolean;
   skills?: boolean;
   isReadyForInterview?: boolean;
-  ambassador?: boolean;
 };
 
 function submittedAll(): Required<CandidateIdentitySubmitted> {
@@ -913,7 +912,6 @@ function submittedAll(): Required<CandidateIdentitySubmitted> {
     experience: true,
     skills: true,
     isReadyForInterview: true,
-    ambassador: true,
   };
 }
 
@@ -953,9 +951,6 @@ export async function dualWriteCandidateIdentity(
         referralCode: true,
         skills: true,
         isReadyForInterview: true,
-        isCampusAmbassadorCandidate: true,
-        ambassadorAppliedAt: true,
-        ambassadorDismissedAt: true,
       },
     });
     if (!sp) {
@@ -990,11 +985,6 @@ export async function dualWriteCandidateIdentity(
     if (fields.isReadyForInterview) {
       update.isReadyForInterview = sp.isReadyForInterview;
     }
-    if (fields.ambassador) {
-      update.isCampusAmbassadorCandidate = sp.isCampusAmbassadorCandidate;
-      update.ambassadorAppliedAt = sp.ambassadorAppliedAt;
-      update.ambassadorDismissedAt = sp.ambassadorDismissedAt;
-    }
 
     await tx.candidateProfile.upsert({
       where: { userId },
@@ -1011,9 +1001,6 @@ export async function dualWriteCandidateIdentity(
         resumeUrl: sp.resumeUrl,
         referralCode: sp.referralCode,
         isReadyForInterview: sp.isReadyForInterview,
-        isCampusAmbassadorCandidate: sp.isCampusAmbassadorCandidate,
-        ambassadorAppliedAt: sp.ambassadorAppliedAt,
-        ambassadorDismissedAt: sp.ambassadorDismissedAt,
       },
       update,
     });

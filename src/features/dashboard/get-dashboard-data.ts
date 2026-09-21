@@ -7,6 +7,7 @@ import type {
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { resolveDashboardEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
 import { getCandidateProfile } from "@/repositories/candidate";
+import { getAmbassadorState } from "@/repositories/ambassador";
 import { getDailyTasksCached } from "@/features/challenge/get-daily-tasks-cached";
 import { prisma } from "@/lib/db";
 import { getDailyTaskByChallengeDay } from "@/repositories/learning";
@@ -99,7 +100,7 @@ export async function getDashboardData(
   userId: string,
   enrollmentId?: string | null,
 ): Promise<DashboardData> {
-  const [user, candidate] = await Promise.all([
+  const [user, candidate, ambassador] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -111,6 +112,7 @@ export async function getDashboardData(
       },
     }),
     getCandidateProfile(userId),
+    getAmbassadorState(userId),
   ]);
 
   if (!user) {
@@ -130,8 +132,8 @@ export async function getDashboardData(
     role: candidate.role,
     referralCode: candidate.referralCode,
     isReadyForInterview: candidate.isReadyForInterview,
-    isCampusAmbassadorCandidate: candidate.isCampusAmbassadorCandidate,
-    ambassadorDismissedAt: candidate.ambassadorDismissedAt,
+    isCampusAmbassadorCandidate: ambassador.isCandidate,
+    ambassadorDismissedAt: ambassador.dismissedAt,
     phone: candidate.phone,
     phoneVerified: candidate.phoneVerified,
   };

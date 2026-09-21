@@ -9,6 +9,7 @@ import {
   dualWriteProgramMember,
 } from "@/repositories/dual-write";
 import { applyVisibilityChange } from "@/repositories/visibility";
+import { applyAmbassadorChange } from "@/repositories/ambassador";
 
 type Tx = Prisma.TransactionClient;
 
@@ -116,10 +117,9 @@ export async function anonymizeUser(
     skills: [] as string[],
     referralCode: deletedReferralCode,
     isReadyForInterview: false,
-    isCampusAmbassadorCandidate: false,
-    ambassadorAppliedAt: null,
-    ambassadorDismissedAt: null,
   };
+
+  await applyAmbassadorChange(tx, userId, { kind: "wipe", at: now });
 
   await tx.candidateProfile.updateMany({
     where: { userId },

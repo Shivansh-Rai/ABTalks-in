@@ -1,15 +1,16 @@
 import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
+import { getAmbassadorState } from "@/repositories/ambassador";
 
 /**
  * User plus current identity. Candidate identity/referral come from
- * CandidateProfile; StudentProfile remains for later-family columns (domain,
- * ambassador). Wrapped in React `cache()` so repeat calls within a single
- * render collapse.
+ * CandidateProfile; StudentProfile remains for later-family columns (domain).
+ * Ambassador candidacy comes from CampusAmbassadorApplication.
+ * Wrapped in React `cache()` so repeat calls within a single render collapse.
  */
 export const getUserWithProfile = cache(async (userId: string) => {
-  const [user, identity] = await Promise.all([
+  const [user, identity, ambassador] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -20,13 +21,12 @@ export const getUserWithProfile = cache(async (userId: string) => {
         studentProfile: {
           select: {
             domain: true,
-            isCampusAmbassadorCandidate: true,
-            ambassadorDismissedAt: true,
           },
         },
       },
     }),
     getCandidateProfile(userId),
+    getAmbassadorState(userId),
   ]);
   if (!user) return null;
   const sp = user.studentProfile;
@@ -42,11 +42,8 @@ export const getUserWithProfile = cache(async (userId: string) => {
           role: identity.role,
           referralCode: identity.referralCode,
           isReadyForInterview: identity.isReadyForInterview,
-          isCampusAmbassadorCandidate:
-            identity.isCampusAmbassadorCandidate ||
-            (sp?.isCampusAmbassadorCandidate ?? false),
-          ambassadorDismissedAt:
-            identity.ambassadorDismissedAt ?? sp?.ambassadorDismissedAt ?? null,
+          isCampusAmbassadorCandidate: ambassador.isCandidate,
+          ambassadorDismissedAt: ambassador.dismissedAt,
           phone: identity.phone,
           phoneVerified: identity.phoneVerified,
         }

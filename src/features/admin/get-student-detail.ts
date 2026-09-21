@@ -3,6 +3,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { getBalance } from "@/repositories/points";
 import { getCandidateProfile, canonicalFullNameByUserId } from "@/repositories/candidate";
+import { getAmbassadorState } from "@/repositories/ambassador";
 
 export type ChallengeStudentDetail = {
   kind: "challenge";
@@ -163,7 +164,10 @@ export async function getStudentDetail(
   }
 
   const synergyPoints = await getBalance(user.id);
-  const candidate = await getCandidateProfile(user.id);
+  const [candidate, ambassador] = await Promise.all([
+    getCandidateProfile(user.id),
+    getAmbassadorState(user.id),
+  ]);
 
   if (!user.studentProfile && !candidate) {
     const participant = user.hackathonParticipants[0];
@@ -289,14 +293,19 @@ export async function getStudentDetail(
         githubUsername: candidate.githubUsername,
         referralCode: candidate.referralCode,
         isReadyForInterview: candidate.isReadyForInterview,
-        isCampusAmbassadorCandidate: candidate.isCampusAmbassadorCandidate,
-        ambassadorAppliedAt: sp?.ambassadorAppliedAt ?? null,
-        ambassadorDismissedAt: candidate.ambassadorDismissedAt,
+        isCampusAmbassadorCandidate: ambassador.isCandidate,
+        ambassadorAppliedAt: ambassador.appliedAt,
+        ambassadorDismissedAt: ambassador.dismissedAt,
         synergyPoints: sp?.synergyPoints ?? 0,
         createdAt: sp?.createdAt ?? user.createdAt,
         updatedAt: sp?.updatedAt ?? user.createdAt,
       }
-    : sp!;
+    : {
+        ...sp!,
+        isCampusAmbassadorCandidate: ambassador.isCandidate,
+        ambassadorAppliedAt: ambassador.appliedAt,
+        ambassadorDismissedAt: ambassador.dismissedAt,
+      };
 
   return {
     kind: "challenge",
