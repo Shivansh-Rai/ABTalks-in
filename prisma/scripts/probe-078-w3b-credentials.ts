@@ -12,6 +12,7 @@ config();
 if (process.env.DATABASE_URL?.includes("-pooler.")) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace("-pooler.", ".");
 }
+process.env.DIRECT_URL = process.env.DATABASE_URL;
 
 import { Domain } from "@prisma/client";
 import { assertChildBranch } from "./migrate-078-shared";

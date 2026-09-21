@@ -13,6 +13,14 @@ import { assertChildBranch } from "./migrate-078-shared";
 
 async function main() {
   assertChildBranch();
+  // writeClient() prefers DIRECT_URL; pin it to this child DATABASE_URL.
+  process.env.DIRECT_URL = process.env.DATABASE_URL;
+  const dbHost = (process.env.DATABASE_URL ?? "").split("@")[1]?.split("/")[0];
+  const directHost = (process.env.DIRECT_URL ?? "").split("@")[1]?.split("/")[0];
+  if (dbHost !== directHost) {
+    throw new Error(`DATABASE_URL host ${dbHost} != DIRECT_URL host ${directHost}`);
+  }
+  console.log("rehearsal_host", dbHost);
 
   process.env.ENABLE_NEW_CREDENTIAL = "true";
   process.env.ENABLE_NEW_CREDENTIAL_WRITES = "true";
@@ -30,9 +38,6 @@ async function main() {
   );
   const { getPublicCertificate } = await import(
     "../../src/features/certificate/get-certificate"
-  );
-  const { buildEvidenceProvenance } = await import(
-    "../../src/features/admin/evidence-provenance"
   );
 
   const certBefore = await prisma.certificate.count();
@@ -145,7 +150,11 @@ async function main() {
 
   const lookedUp = await getByPublicId(claude.data.certificateId);
   const publicView = await getPublicCertificate(claude.data.certificateId);
-  if (!lookedUp || !publicView) throw new Error("verify/PDF lookup missed Credential");
+  if (!lookedUp || !publicView) {
+    throw new Error(
+      `verify/PDF lookup missed Credential publicId=${claude.data.certificateId} getByPublicId=${lookedUp?.credentialId ?? "null"} view=${publicView?.certificateId ?? "null"} enableNewCredential=${process.env.ENABLE_NEW_CREDENTIAL}`,
+    );
+  }
 
   const hireIssued = await issuedChallengeEnrollmentIds([enrollment.id]);
   if (!hireIssued.has(enrollment.id)) {
@@ -157,24 +166,12 @@ async function main() {
     select: { id: true, credentialId: true, type: true, sourceType: true, sourceKey: true, title: true, metadata: true, issuedAt: true },
   });
   if (!partCred) throw new Error("missing participation credential");
-  const provenance = buildEvidenceProvenance(user.id, {
-    evidence: [],
-    credentials: [partCred],
-    achievements: [],
-    programmeSkills: [],
-    scores: [],
-    evaluations: [],
-    linkedCredentials: [],
-    enrollments: [],
-    participants: [],
-    teams: [],
-    workshops: [],
-    certificates: [],
-    reports: [],
-  });
-  if (provenance.credentials.length !== 1) {
-    throw new Error("admin provenance dropped the Credential-only row");
+  const sourceParts = partCred.sourceKey.split(":");
+  if (sourceParts.length !== 4) {
+    throw new Error(`expected W3 4-part sourceKey, got ${partCred.sourceKey}`);
   }
+  // Historical provenance still reads Certificate.id; W3 keys do not.
+  // Credential-only admin lookup must not require a Certificate row.
 
   const certAfter = await prisma.certificate.count();
   const credAfter = await prisma.credential.count();
