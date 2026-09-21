@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [rule] Recruiter registration uses one emailed 6-digit code to verify the address and open the session; a second sign-in OTP is recovery only (failed session or a restored draft with no cookie).
 - 2026-09-21 [env] W2 COMPLETE: production ENABLE_NEW_VISIBILITY_WRITES=true ENABLE_LEGACY_VISIBILITY_MIRROR=true; CandidateVisibility is the sole recruiter-discovery write/read gate; recruiterVisibilityConsentAt retained as historical label only; dual-write stays; W3 not started
 - 2026-09-21 [env|convention] W2 recruiter visibility: CandidateVisibility is the sole write boundary (applyVisibilityChange); ENABLE_NEW_VISIBILITY_WRITES (default off) commits CV before the dual-write savepoint; recruiterVisibilityConsentAt is historical label only, not a gate; V4 accepts platform_default_profile; dual-write stays; W3 not started
 - 2026-09-21 [env] W1-B COMPLETE: production ENABLE_LEGACY_POINTS_MIRROR=false W1B_CUTOVER_TIME=2026-09-21T11:07:46.000Z; PointsTransaction sole ledger, PointsAccount sole wallet; User/SP/SynergyEvent frozen; dual-write stays; W2 not started

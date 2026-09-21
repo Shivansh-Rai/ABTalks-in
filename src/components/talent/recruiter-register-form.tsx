@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, Mail } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import {
   registerRecruiterWithOtpAction,
@@ -74,17 +75,22 @@ export function RecruiterRegisterForm() {
         return;
       }
       track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
-      // The account and its workspace are both written by now, but this action
-      // does NOT create a session — nothing is signed in. So the next step is
-      // signing in, and /talent/login goes on to /hire once the code is
-      // verified. Sending them straight to /hire would only bounce off the
-      // middleware's session guard.
-      //
-      // A full navigation rather than router.push: an App Router transition
-      // that lands on a server redirect leaves useTransition pending forever,
-      // which is exactly how this button ended up spinning after the write had
-      // already succeeded. The email rides along so they do not retype it.
-      window.location.href = `/talent/login?email=${encodeURIComponent(email)}`;
+      const signin = await signIn("recruiter-otp", {
+        email,
+        code,
+        redirect: false,
+      });
+      if (!signin || signin.error) {
+        // Account exists; this code did not open a session. Sign-in can
+        // issue a fresh one so they are not stranded.
+        toast.error("Account created. Sign in with a new code.");
+        window.location.href = `/talent/login?email=${encodeURIComponent(email)}`;
+        return;
+      }
+      // Full navigation: the session cookie is new and every guard downstream
+      // reads it server-side. An App Router transition that lands on a
+      // server redirect leaves useTransition pending forever.
+      window.location.href = "/hire";
     });
   }
 

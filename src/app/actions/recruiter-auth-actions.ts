@@ -262,7 +262,9 @@ export async function registerRecruiterWithOtpAction(
   }
 
   try {
-    const verified = await verifyRecruiterOtp(normalised, code);
+    const verified = await verifyRecruiterOtp(normalised, code, {
+      consume: false,
+    });
     if (!verified.ok) {
       return {
         ok: false,
@@ -333,9 +335,9 @@ export async function registerRecruiterWithOtpAction(
       return id;
       // The same window ensureRecruiterWorkspace and the credit grant use.
       // Prisma's 5s default is not enough for this many sequential writes over
-      // Neon: it timed out at ~5.3s, rolled everything back, and — because the
-      // code had already been consumed — the retry told the recruiter a correct
-      // code "isn't right".
+      // Neon: it timed out at ~5.3s and rolled everything back. The code is
+      // only peeked here, so a retry can reuse it, but the recruiter still
+      // waits on this commit.
     }, { maxWait: 20_000, timeout: 20_000 });
 
     // Credentials sign-ins bypass the adapter, so no createUser event fires —
@@ -367,11 +369,10 @@ export async function registerRecruiterWithOtpAction(
     logger.error("[recruiter-auth] registerRecruiterWithOtpAction", {
       error: String(error),
     });
-    // The code was consumed before this failed, so it cannot be reused. Say
-    // so — otherwise the retry reports a correct code as wrong.
+    // The code was only peeked, so a retry can use the same digits until TTL.
     return {
       ok: false,
-      message: `Could not complete registration. Request a new code and try again, or write to ${SUPPORT_EMAIL} if this keeps happening.`,
+      message: `Could not complete registration. Try the same code again, or request a new one if it has expired. Write to ${SUPPORT_EMAIL} if this keeps happening.`,
     };
   }
 }

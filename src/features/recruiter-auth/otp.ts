@@ -137,16 +137,20 @@ export type VerifyResult =
   | { ok: false; reason: "invalid" | "expired" | "too-many" };
 
 /**
- * Check a code and consume it.
+ * Check a code. By default it is consumed: deleted on success, so one code
+ * buys one sign-in. Deleted after the attempt budget too — a code someone is
+ * guessing at is a code that should stop existing.
  *
- * Deleted on success, so one code buys one sign-in. Deleted after the attempt
- * budget too — a code someone is guessing at is a code that should stop
- * existing.
+ * Registration peeks with `{ consume: false }` so the same digits can then
+ * open the session through `signIn("recruiter-otp")`. Wrong, expired and
+ * over-attempted codes are still spent.
  */
 export async function verifyRecruiterOtp(
   rawEmail: string,
   code: string,
+  opts?: { consume?: boolean },
 ): Promise<VerifyResult> {
+  const consume = opts?.consume !== false;
   const email = normaliseEmail(rawEmail);
 
   const row = await prisma.recruiterEmailOtp.findFirst({
@@ -185,7 +189,9 @@ export async function verifyRecruiterOtp(
     return { ok: false, reason: "invalid" };
   }
 
-  await prisma.recruiterEmailOtp.delete({ where: { id: row.id } });
+  if (consume) {
+    await prisma.recruiterEmailOtp.delete({ where: { id: row.id } });
+  }
   return {
     ok: true,
     email,

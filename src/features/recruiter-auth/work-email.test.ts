@@ -233,6 +233,13 @@ suite(
     const create = register.indexOf("recruiterProfile.create");
     assert(check > 0, "the creation path re-checks the normalised address");
     assert(check < create, "it refuses before the profile is written");
+    const verified = register.indexOf("verifyRecruiterOtp");
+    const consume = register.indexOf("consume: false");
+    assert(verified > 0, "registration still verifies the emailed code");
+    assert(
+      consume > verified && consume < create,
+      "it peeks the code so sign-in can consume it",
+    );
   },
 );
 

@@ -198,24 +198,20 @@ suite("the application screens are gone, and nothing links to them", () => {
   );
 });
 
-suite("registration hands off to sign-in, not a terminal panel", () => {
+suite("registration signs in with the same code, not a second OTP", () => {
   const src = source("src/components/talent/recruiter-register-form.tsx");
   const finish = src.slice(src.indexOf("function finish()"));
   const stop = finish.indexOf("if (step === ");
   const body = stop > 0 ? finish.slice(0, stop) : finish;
 
-  // Two bugs live here. The original one: registration flipped a local step to
-  // "done" and rendered a panel the recruiter could not act on, so none of the
-  // server-side guards ever ran. The one that replaced it: navigating to
-  // /talent/setup, which registration cannot reach because it creates no
-  // session — and doing it with router.push + router.refresh, which left
-  // useTransition pending forever and spun the button after the write had
-  // already committed.
   assert(
-    body.includes("window.location.href = `/talent/login"),
-    "registration hands off to sign-in with a full navigation",
+    body.includes('signIn("recruiter-otp"'),
+    "registration opens the session with the same code",
   );
-  // Calls, not prose — the comment above the fix names both by design.
+  assert(
+    body.includes('window.location.href = "/hire"'),
+    "a successful session goes to /hire with a full navigation",
+  );
   assert(
     !body.includes("router.push(") && !body.includes("router.refresh("),
     "no App Router transition — it never settles across a server redirect",
@@ -224,9 +220,10 @@ suite("registration hands off to sign-in, not a terminal panel", () => {
     !src.includes('setStep("done")') && !src.includes("we'll reach out soon"),
     "the terminal done panel is gone",
   );
+  const happy = body.slice(0, body.indexOf("signin.error"));
   assert(
-    body.includes("encodeURIComponent(email)"),
-    "the email is carried over so it is not retyped",
+    !happy.includes("/talent/login"),
+    "the happy path must not send them to a second OTP",
   );
 });
 
@@ -328,6 +325,36 @@ suite("existing recruiters are migrated as already set up", () => {
   assert(
     !/DROP\s+(TABLE|COLUMN)/i.test(sql),
     "additive only — nothing dropped",
+  );
+});
+
+suite("the onboarding wizard uses one OTP on the happy path", () => {
+  const src = source(
+    "src/components/recruiter-onboarding/recruiter-onboarding-wizard.tsx",
+  );
+  const register = src.slice(
+    src.indexOf("function register()"),
+    src.indexOf("function openWorkspace()"),
+  );
+  assert(
+    register.includes('signIn("recruiter-otp"'),
+    "the register code also opens the session",
+  );
+  assert(
+    register.includes('go("ready"'),
+    "a successful session skips the second code card",
+  );
+  const errorAt = register.indexOf("signin.error");
+  assert(errorAt > 0, "sign-in failure is handled");
+  const happy = register.slice(0, errorAt);
+  assert(
+    !happy.includes('intent: "signin"'),
+    "the happy path must not email a second code",
+  );
+  const recovery = register.slice(errorAt);
+  assert(
+    recovery.includes('intent: "signin"') && recovery.includes('go("signin-code"'),
+    "a failed session still recovers with a sign-in code",
   );
 });
 

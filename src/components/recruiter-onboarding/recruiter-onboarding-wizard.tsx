@@ -37,15 +37,15 @@ import { WelcomeStep } from "./steps/welcome-step";
  * Recruiter onboarding: one route, one card stack.
  *
  *   welcome → identity → company → verify → verify-code
- *     → [registerRecruiterWithOtpAction] → signin-code
- *     → [signIn("recruiter-otp")] → ready → /hire
+ *     → [registerRecruiterWithOtpAction] → [signIn("recruiter-otp")]
+ *     → ready → /hire
  *
  * The account rules are exactly the old sign-up screen's — the same two
  * server actions, the same analytics event, the same passwordless sign-in —
- * with the steps between them spread over cards. Registering still opens no
- * session, so signing in still takes its own code; the wizard just requests
- * it the moment the account exists instead of sending the recruiter to
- * another page to ask for it.
+ * with the steps between them spread over cards. One emailed code both
+ * proves the address and opens the session. A second sign-in code is only
+ * requested if that sign-in fails after the account exists, or a saved
+ * draft resumes with `registered: true` and no session.
  *
  * After sign-in, on "Start discovering talent", any optional company details
  * are saved through the settings action before /hire. That save happens on
@@ -172,6 +172,19 @@ export function RecruiterOnboardingWizard({
     if (target !== initialScreen) {
       setInstant(true);
       setScreen(target);
+    }
+    if (target === "signin-code" && saved.email.trim()) {
+      void requestRecruiterOtpAction({
+        email: saved.email.trim(),
+        intent: "signin",
+      }).then((issued) => {
+        if (!issued.ok) {
+          setCodeError(issued.message);
+          return;
+        }
+        setDevCode(issued.data.devCode ?? null);
+        startCooldown();
+      });
     }
   }, [initialScreen]);
 
@@ -309,24 +322,35 @@ export function RecruiterOnboardingWizard({
         return;
       }
       track(ANALYTICS_EVENTS.recruiterRegSubmitted, { method: "otp" });
-      setCode("");
-      setDevCode(null);
-      setResendUntil(0);
       update({ registered: true });
-      go("signin-code", 1);
 
-      // Registration writes the account but opens no session. Signing in
-      // takes its own code, so ask for it now instead of making them.
-      const signin = await requestRecruiterOtpAction({
+      const signin = await signIn("recruiter-otp", {
         email: draft.email.trim(),
-        intent: "signin",
+        code,
+        redirect: false,
       });
-      if (!signin.ok) {
-        setCodeError(signin.message);
+      if (!signin || signin.error) {
+        // Account exists; the register code did not open a session. Fall
+        // back to a dedicated sign-in code so they are not stranded.
+        setCode("");
+        setDevCode(null);
+        setResendUntil(0);
+        go("signin-code", 1);
+        const issued = await requestRecruiterOtpAction({
+          email: draft.email.trim(),
+          intent: "signin",
+        });
+        if (!issued.ok) {
+          setCodeError(issued.message);
+          return;
+        }
+        setDevCode(issued.data.devCode ?? null);
+        startCooldown();
         return;
       }
-      setDevCode(signin.data.devCode ?? null);
-      startCooldown();
+      setCode("");
+      setDevCode(null);
+      go("ready", 1);
     });
   }
 
