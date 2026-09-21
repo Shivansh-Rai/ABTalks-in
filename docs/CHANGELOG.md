@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [env] W5-A COMPLETE: production ENABLE_NEW_AMBASSADOR_WRITES=true ENABLE_LEGACY_AMBASSADOR_MIRROR=true; CampusAmbassadorApplication is ambassador write authority; StudentProfile ambassador fields remain compatibility mirrors; dual-write stays; W5-B/W6 not started
 - 2026-09-21 [schema|env|convention] W5-A Ambassador write authority: CampusAmbassadorApplication is the canonical candidacy model; ENABLE_NEW_AMBASSADOR_WRITES (default off) commits it before the StudentProfile ambassador compatibility mirror; ENABLE_LEGACY_AMBASSADOR_MIRROR (default on); dual-write stays; W5-B/W6 not started
 - 2026-09-21 [env] W4-B COMPLETE: production ENABLE_LEGACY_STUDENT_PROFILE_MIRROR=false W4B_CUTOVER_TIME=2026-09-21T16:45:57.000Z; Candidate models are sole identity/referral current-state source; StudentProfile identity/referral fields frozen; SP table remains for later families; dual-write stays; W5 not started
 - 2026-09-21 [env|convention] W4-B StudentProfile identity/referral freeze: ENABLE_LEGACY_STUDENT_PROFILE_MIRROR=false stops W4-owned SP identity mirrors; Candidate models are sole current-state source; SP table stays for later families; dual-write stays; W5 not started
