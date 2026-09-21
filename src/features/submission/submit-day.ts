@@ -16,7 +16,9 @@ import { resolveChallengeEnrollment } from "@/features/enrollment/resolve-dashbo
 import { awardSubmissionSynergy } from "@/features/synergy/award-submission-synergy";
 import { withLegacyPointsMirrorFlush } from "@/repositories/points";
 import {
-  dualWriteCandidateIdentity,
+  applyCandidateIdentityChange,
+} from "@/repositories/candidate-identity";
+import {
   dualWriteChallengeEnrollmentById,
   dualWriteSubmissionAttempt,
 } from "@/repositories/dual-write";
@@ -285,11 +287,7 @@ export async function submitDay(input: {
       await dualWriteChallengeEnrollmentById(tx, enrollment.id);
 
       if (completed) {
-        await tx.studentProfile.updateMany({
-          where: { userId },
-          data: { isReadyForInterview: true },
-        });
-        await dualWriteCandidateIdentity(tx, userId, {
+        await applyCandidateIdentityChange(tx, userId, {
           isReadyForInterview: true,
         });
       }

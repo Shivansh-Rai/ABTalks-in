@@ -2,6 +2,8 @@ import { UserType } from "@prisma/client";
 import { writeClient } from "@/lib/db";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { dualWriteCandidateIdentity } from "@/repositories/dual-write";
+import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
+import { isNewCandidateWritesEnabled } from "@/lib/feature-flags";
 import {
   updateProfessionalProfileSchema,
   updateStudentProfileSchema,
@@ -72,6 +74,16 @@ export async function updateProfile(
 
     await writeClient().$transaction(
       async (tx) => {
+        if (isNewCandidateWritesEnabled()) {
+          await applyCandidateIdentityChange(tx, userId, {
+            fullName: data.fullName,
+            phone: data.phone === "" ? null : data.phone,
+            linkedinUrl: data.linkedinUrl ?? null,
+            resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
+            githubUsername: data.githubUsername ?? null,
+          });
+          return;
+        }
         await tx.studentProfile.update({
           where: { userId },
           data: {
@@ -129,6 +141,16 @@ export async function updateProfile(
 
   await writeClient().$transaction(
     async (tx) => {
+      if (isNewCandidateWritesEnabled()) {
+        await applyCandidateIdentityChange(tx, userId, {
+          fullName: data.fullName,
+          phone: data.phone === "" ? null : data.phone,
+          linkedinUrl: data.linkedinUrl ?? null,
+          resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
+          githubUsername: data.githubUsername ?? null,
+        });
+        return;
+      }
       await tx.studentProfile.update({
         where: { userId },
         data: {

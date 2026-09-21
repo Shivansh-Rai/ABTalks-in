@@ -112,6 +112,33 @@ export function isRecruiterAuthEnabled(): boolean {
 export function isNewCandidateRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_CANDIDATE === "true";
 }
+
+/**
+ * W4-A write authority for candidate identity/profile/referral.
+ * Separate from ENABLE_NEW_CANDIDATE (reads). Off unless explicitly `"true"`.
+ *
+ * When off (dark deploy): StudentProfile is still written first, then
+ * dualWriteCandidateIdentity copies CandidateProfile.
+ * When on: CandidateProfile + structured tables commit first; StudentProfile
+ * identity/referral fields are a compatibility mirror while
+ * ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is not `"false"`.
+ * Dual-write stays on either way. Do not enable without ENABLE_NEW_CANDIDATE
+ * already on. Does not freeze StudentProfile (that is W4-B).
+ */
+export function isNewCandidateWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_CANDIDATE_WRITES === "true";
+}
+
+/**
+ * W4-A StudentProfile identity/referral compatibility mirror.
+ * Default ON so a dark deploy (flag unset) keeps current mirroring.
+ * Off only when explicitly `"false"` (W4-B): canonical candidate still writes;
+ * StudentProfile identity fields freeze.
+ */
+export function isLegacyStudentProfileMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR !== "false";
+}
+
 export function isNewLearningRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_LEARNING === "true";
 }

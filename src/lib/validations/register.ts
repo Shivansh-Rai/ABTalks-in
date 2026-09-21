@@ -21,7 +21,7 @@ export const registerSchema = z.object({
   college: z.string().min(1, "College is required").max(200),
   graduationYear: z.number().int().min(2020).max(2035),
   domain: domainSchema,
-  skills: z.array(z.string().min(1).max(50)).max(10).default([]),
+  skills: z.array(z.string().min(1).max(50)).max(100).default([]),
   linkedinUrl: z.union([empty, z.string().url()]).default(""),
   phone: optionalPhoneSchema,
   githubUsername: z

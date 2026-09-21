@@ -13,10 +13,7 @@ import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin"
 import { generateUniqueReferralCode } from "./generate-referral-code";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findUserIdByReferralCode } from "@/repositories/candidate";
-import {
-  dualWriteCandidateBasicInfo,
-  dualWriteCandidateIdentity,
-} from "@/repositories/dual-write";
+import { createCandidateIdentity } from "@/repositories/candidate-identity";
 import { lockWalletBalance, withLegacyPointsMirrorFlush } from "@/repositories/points";
 
 export type CompleteRegistrationResult =
@@ -42,12 +39,18 @@ export async function completeRegistration(
     };
   }
 
-  const existingProfile = await studentProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
+  const [existingStudent, existingCandidate] = await Promise.all([
+    studentProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    }),
+    prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    }),
+  ]);
 
-  if (existingProfile) {
+  if (existingStudent || existingCandidate) {
     return {
       ok: false,
       reason: "already_registered",
@@ -127,60 +130,31 @@ export async function completeRegistration(
       // fills them in straight after this, through the candidate tables. Writing
       // a placeholder here would make the merge think the candidate had already
       // answered — the merge only ever fills what is empty.
-      const profile = await tx.studentProfile.create({
-        data:
-          input.userType === UserType.STUDENT
-            ? {
-                userId,
-                fullName: input.fullName,
-                userType: UserType.STUDENT,
-                college: input.college,
-                collegeId: input.collegeId || null,
-                graduationYear: null,
-                organization: null,
-                role: null,
-                yearsExperience: null,
-                domain: null,
-                skills: [],
-                linkedinUrl: null,
-                phone,
-                phoneVerified,
-                githubUsername: null,
-                referralCode: newReferralCode,
-                synergyPoints,
-              }
-            : {
-                userId,
-                fullName: input.fullName,
-                userType: UserType.PROFESSIONAL,
-                college: null,
-                collegeId: null,
-                graduationYear: null,
-                organization: input.organization,
-                role: input.role,
-                yearsExperience: input.yearsExperience,
-                domain: null,
-                skills: [],
-                linkedinUrl: null,
-                phone,
-                phoneVerified,
-                githubUsername: null,
-                referralCode: newReferralCode,
-                synergyPoints,
-              },
-      });
-
-      await dualWriteCandidateIdentity(tx, userId);
-      // Runs second: the identity dual-write is what creates the
-      // CandidateProfile row these four columns live on.
-      await dualWriteCandidateBasicInfo(tx, userId, {
+      const created = await createCandidateIdentity(tx, {
+        userId,
+        fullName: input.fullName,
+        userType: input.userType,
+        referralCode: newReferralCode,
+        phone,
+        phoneVerified,
+        college: input.userType === UserType.STUDENT ? input.college : null,
+        collegeId:
+          input.userType === UserType.STUDENT ? input.collegeId || null : null,
+        organization:
+          input.userType === UserType.PROFESSIONAL ? input.organization : null,
+        role: input.userType === UserType.PROFESSIONAL ? input.role : null,
+        yearsExperience:
+          input.userType === UserType.PROFESSIONAL
+            ? input.yearsExperience
+            : null,
         headline: input.headline,
         locationCity: input.locationCity,
         locationRegion: input.locationRegion,
         countryCode: input.countryCode,
+        synergyPoints,
       });
 
-      return profile.id;
+      return created.profileId;
     }, {
       maxWait: 10000,
       timeout: 20000,

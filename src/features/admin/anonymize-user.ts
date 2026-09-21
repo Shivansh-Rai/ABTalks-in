@@ -74,55 +74,60 @@ export async function anonymizeUser(
   await tx.account.deleteMany({ where: { userId } });
   await tx.session.deleteMany({ where: { userId } });
 
-  await tx.studentProfile.updateMany({
-    where: { userId },
-    data: {
-      fullName: "Deleted User",
-      phone: null,
-      phoneVerified: false,
-      phoneVerifiedAt: null,
-      college: null,
-      collegeId: null,
-      graduationYear: null,
-      organization: null,
-      role: null,
-      yearsExperience: null,
-      linkedinUrl: null,
-      githubUsername: null,
-      resumeUrl: null,
-      skills: [],
-      referralCode: `del_${userId}`,
-      isReadyForInterview: false,
-      isCampusAmbassadorCandidate: false,
-      ambassadorAppliedAt: null,
-      ambassadorDismissedAt: null,
-    },
-  });
+  // One deleted referral code on both tables. Never mint a second deleted
+  // namespace — CandidateProfile.referralCode must stay equal to StudentProfile.
+  const deletedReferralCode = `del_${userId}`;
+  const candidateWipe = {
+    fullName: "Deleted User",
+    headline: null,
+    summary: null,
+    awards: null,
+    gender: null,
+    phone: null,
+    phoneVerified: false,
+    phoneVerifiedAt: null,
+    locationCity: null,
+    locationRegion: null,
+    countryCode: null,
+    linkedinUrl: null,
+    githubUsername: null,
+    portfolioUrl: null,
+    resumeUrl: null,
+    referralCode: deletedReferralCode,
+    isReadyForInterview: false,
+    isCampusAmbassadorCandidate: false,
+    ambassadorAppliedAt: null,
+    ambassadorDismissedAt: null,
+  };
+  const studentWipe = {
+    fullName: "Deleted User",
+    phone: null,
+    phoneVerified: false,
+    phoneVerifiedAt: null,
+    college: null,
+    collegeId: null,
+    graduationYear: null,
+    organization: null,
+    role: null,
+    yearsExperience: null,
+    linkedinUrl: null,
+    githubUsername: null,
+    resumeUrl: null,
+    skills: [] as string[],
+    referralCode: deletedReferralCode,
+    isReadyForInterview: false,
+    isCampusAmbassadorCandidate: false,
+    ambassadorAppliedAt: null,
+    ambassadorDismissedAt: null,
+  };
 
   await tx.candidateProfile.updateMany({
     where: { userId },
-    data: {
-      fullName: "Deleted User",
-      headline: null,
-      summary: null,
-      awards: null,
-      gender: null,
-      phone: null,
-      phoneVerified: false,
-      phoneVerifiedAt: null,
-      locationCity: null,
-      locationRegion: null,
-      countryCode: null,
-      linkedinUrl: null,
-      githubUsername: null,
-      portfolioUrl: null,
-      resumeUrl: null,
-      referralCode: `delc_${userId}`,
-      isReadyForInterview: false,
-      isCampusAmbassadorCandidate: false,
-      ambassadorAppliedAt: null,
-      ambassadorDismissedAt: null,
-    },
+    data: candidateWipe,
+  });
+  await tx.studentProfile.updateMany({
+    where: { userId },
+    data: studentWipe,
   });
 
   await tx.phoneVerification.deleteMany({ where: { userId } });

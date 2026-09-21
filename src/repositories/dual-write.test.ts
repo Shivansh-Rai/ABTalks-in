@@ -152,8 +152,9 @@ suite("revoked certificate maps to REVOKED credential", () => {
 
 suite("registration dual-writes CandidateProfile", () => {
   const src = source("src/features/registration/complete-registration.ts");
-  assert(src.includes("dualWriteCandidateIdentity"), "helper called");
-  assert(src.includes("studentProfile.create"), "legacy still written");
+  assert(src.includes("createCandidateIdentity"), "W4-A identity create");
+  const identity = source("src/repositories/candidate-identity.ts");
+  assert(identity.includes("studentProfile.create"), "legacy still written");
   assert(!src.includes("domain: input.domain"), "does not copy domain into identity write");
 });
 
@@ -327,10 +328,10 @@ suite("candidate flag ON reads only new candidate tables", () => {
   );
 });
 
-suite("registration lookup uses findUserIdByReferralCode not CandidateProfile", () => {
+suite("registration lookup uses findUserIdByReferralCode", () => {
   const src = source("src/features/registration/complete-registration.ts");
   assert(src.includes("findUserIdByReferralCode"), "repo lookup");
-  assert(!src.includes("candidateProfile.findUnique"), "no CP lookup");
+  assert(src.includes("candidateProfile.findUnique"), "already-registered checks CP");
 });
 
 suite("new referral codes are unique on StudentProfile and CandidateProfile", () => {
@@ -364,8 +365,8 @@ suite("OTP dual-write submits phone only", () => {
 
 suite("admin interview toggle dual-writes isReadyForInterview", () => {
   const src = source("src/app/actions/admin-actions.ts");
-  assert(src.includes("dualWriteCandidateIdentity"), "identity dual-write");
-  assert(src.includes("isReadyForInterview: true"), "submitted flag");
+  assert(src.includes("applyCandidateIdentityChange"), "identity write boundary");
+  assert(src.includes("isReadyForInterview: newValue"), "submitted flag");
 });
 
 suite("talent search is not switched in this phase", () => {

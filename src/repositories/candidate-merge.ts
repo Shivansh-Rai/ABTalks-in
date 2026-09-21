@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { ensureCandidateProfile } from "@/repositories/candidate";
+import { runStudentProfileMirror } from "@/repositories/candidate-identity";
 import { canonicalTerm } from "@/features/resume/merge/terms";
 import type { MergePlan, MergeSection } from "@/features/resume/merge/plan";
 
@@ -95,14 +96,16 @@ export async function applyResumeMerge(
       // Legacy mirror, matching `saveLinks`. Only the two columns
       // StudentProfile has, and only when this merge actually set them.
       if (plan.links.linkedinUrl || plan.links.githubUsername) {
-        await tx.studentProfile.updateMany({
-          where: { userId },
-          data: {
-            ...(plan.links.linkedinUrl ? { linkedinUrl: plan.links.linkedinUrl } : {}),
-            ...(plan.links.githubUsername
-              ? { githubUsername: plan.links.githubUsername }
-              : {}),
-          },
+        await runStudentProfileMirror(tx, "mergeLinks", async () => {
+          await tx.studentProfile.updateMany({
+            where: { userId },
+            data: {
+              ...(plan.links.linkedinUrl ? { linkedinUrl: plan.links.linkedinUrl } : {}),
+              ...(plan.links.githubUsername
+                ? { githubUsername: plan.links.githubUsername }
+                : {}),
+            },
+          });
         });
       }
 

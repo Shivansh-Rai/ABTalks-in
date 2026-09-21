@@ -11,6 +11,7 @@ import {
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { ensureCandidateProfile } from "@/repositories/candidate";
+import { runStudentProfileMirror } from "@/repositories/candidate-identity";
 import { ensureDiscoveryRecordAfterProfileSave } from "@/repositories/discovery-record";
 import {
   pickPrimaryEducation,
@@ -569,13 +570,15 @@ async function mirrorEducationToLegacy(tx: Tx, userId: string): Promise<void> {
   // admin and recruiter surfaces that read the legacy row.
   const primary = pickPrimaryEducation(rows);
 
-  await tx.studentProfile.updateMany({
-    where: { userId },
-    data: {
-      college: primary?.institutionName ?? null,
-      collegeId: primary?.collegeId ?? null,
-      graduationYear: primary?.graduationYear ?? null,
-    },
+  await runStudentProfileMirror(tx, "education", async () => {
+    await tx.studentProfile.updateMany({
+      where: { userId },
+      data: {
+        college: primary?.institutionName ?? null,
+        collegeId: primary?.collegeId ?? null,
+        graduationYear: primary?.graduationYear ?? null,
+      },
+    });
   });
 }
 
@@ -609,16 +612,18 @@ async function mirrorExperienceToLegacy(tx: Tx, userId: string): Promise<void> {
   // Cleared on an empty list, for the same reason as education.
   const primary = pickPrimaryExperience(shaped);
 
-  await tx.studentProfile.updateMany({
-    where: { userId },
-    data: {
-      organization: primary?.companyName ?? null,
-      role: primary?.title ?? null,
-      yearsExperience:
-        shaped.length > 0
-          ? Math.floor(totalExperienceMonths(shaped) / 12)
-          : null,
-    },
+  await runStudentProfileMirror(tx, "experience", async () => {
+    await tx.studentProfile.updateMany({
+      where: { userId },
+      data: {
+        organization: primary?.companyName ?? null,
+        role: primary?.title ?? null,
+        yearsExperience:
+          shaped.length > 0
+            ? Math.floor(totalExperienceMonths(shaped) / 12)
+            : null,
+      },
+    });
   });
 }
 
@@ -635,9 +640,11 @@ async function mirrorSkillsToLegacy(tx: Tx, userId: string): Promise<void> {
     orderBy: { createdAt: "asc" },
     select: { skill: { select: { name: true } } },
   });
-  await tx.studentProfile.updateMany({
-    where: { userId },
-    data: { skills: claimed.map((c) => c.skill.name) },
+  await runStudentProfileMirror(tx, "skills", async () => {
+    await tx.studentProfile.updateMany({
+      where: { userId },
+      data: { skills: claimed.map((c) => c.skill.name) },
+    });
   });
 }
 
@@ -690,16 +697,18 @@ export async function saveBasicInfo(
     });
 
     // Legacy mirror: only the columns StudentProfile actually has.
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: {
-        fullName: input.fullName,
-        phone: input.phone,
-        userType:
-          input.primaryPersona === CandidatePersona.PROFESSIONAL
-            ? UserType.PROFESSIONAL
-            : UserType.STUDENT,
-      },
+    await runStudentProfileMirror(tx, "basic", async () => {
+      await tx.studentProfile.updateMany({
+        where: { userId },
+        data: {
+          fullName: input.fullName,
+          phone: input.phone,
+          userType:
+            input.primaryPersona === CandidatePersona.PROFESSIONAL
+              ? UserType.PROFESSIONAL
+              : UserType.STUDENT,
+        },
+      });
     });
   });
   // A name is half of a usable profile. After commit, and never able to fail
@@ -961,13 +970,15 @@ export async function saveLinks(
     }
 
     // StudentProfile has no portfolio column — only the three it knows about.
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: {
-        linkedinUrl: input.linkedinUrl,
-        githubUsername: input.githubUsername,
-        ...(input.resumeUrl === undefined ? {} : { resumeUrl: input.resumeUrl }),
-      },
+    await runStudentProfileMirror(tx, "links", async () => {
+      await tx.studentProfile.updateMany({
+        where: { userId },
+        data: {
+          linkedinUrl: input.linkedinUrl,
+          githubUsername: input.githubUsername,
+          ...(input.resumeUrl === undefined ? {} : { resumeUrl: input.resumeUrl }),
+        },
+      });
     });
   });
 }

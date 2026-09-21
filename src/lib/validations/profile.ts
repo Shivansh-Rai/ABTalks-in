@@ -12,7 +12,7 @@ const profileCommonFields = {
   fullName: z.string().trim().min(1, "Full name is required").max(200),
   skills: z
     .array(z.string().trim().min(1, "Skills cannot be blank").max(80))
-    .max(10, "At most 10 skills"),
+    .max(100, "At most 100 skills"),
   linkedinUrl: z
     .string()
     .default("")

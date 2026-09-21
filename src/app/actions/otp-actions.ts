@@ -4,10 +4,12 @@ import { auth } from "@/auth";
 import { writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { verifyAccessToken } from "@/lib/msg91";
-import { isOtpDevBypassEnabled, otpDevCode } from "@/lib/feature-flags";
+import { isNewCandidateWritesEnabled, isOtpDevBypassEnabled, otpDevCode } from "@/lib/feature-flags";
 import { otpVerifySchema } from "@/lib/validations/otp";
 import { toE164, toWidgetMobile } from "@/lib/validations/phone";
+import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
 import { dualWriteCandidateIdentity } from "@/repositories/dual-write";
+import { ensureCandidateProfile } from "@/repositories/candidate";
 
 type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -86,7 +88,22 @@ export async function verifyOtpAction(input: {
         where: { userId },
         select: { id: true },
       });
-      if (existingProfile) {
+      const existingCandidate = await tx.candidateProfile.findUnique({
+        where: { userId },
+        select: { userId: true },
+      });
+      if (isNewCandidateWritesEnabled()) {
+        if (existingCandidate || existingProfile) {
+          if (!existingCandidate) {
+            await ensureCandidateProfile(tx, userId);
+          }
+          await applyCandidateIdentityChange(tx, userId, {
+            phone: e164,
+            phoneVerified: true,
+            phoneVerifiedAt: new Date(),
+          });
+        }
+      } else if (existingProfile) {
         await tx.studentProfile.update({
           where: { userId },
           data: { phone: e164, phoneVerified: true, phoneVerifiedAt: new Date() },

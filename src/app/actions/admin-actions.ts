@@ -7,11 +7,12 @@ import { z } from "zod";
 import { prisma, writeClient } from "@/lib/db";
 import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
+import { isNewCandidateWritesEnabled } from "@/lib/feature-flags";
 import { computeStreakStats } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
 import { studentProfile } from "@/repositories/legacy/student-profile";
+import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
 import {
-  dualWriteCandidateIdentity,
   dualWriteChallengeEnrollmentById,
   dualWriteDeleteEnrollmentSubmissions,
   dualWriteDeleteSubmissionAttempt,
@@ -116,12 +117,8 @@ export async function resetProgressAction(input: {
       });
       await dualWriteChallengeEnrollmentById(tx, enrollment.id);
 
-      await tx.studentProfile.updateMany({
-        where: { userId: targetUserId },
-        data: { isReadyForInterview: false },
-      });
-      await dualWriteCandidateIdentity(tx, targetUserId, {
-        isReadyForInterview: true,
+      await applyCandidateIdentityChange(tx, targetUserId, {
+        isReadyForInterview: false,
       });
 
       await tx.adminAction.create({
@@ -188,21 +185,22 @@ export async function toggleReadyForInterviewAction(input: {
   const { targetUserId, reason } = parsed.data;
 
   try {
-    const profile = await studentProfile.findUnique({
-      where: { userId: targetUserId },
-      select: { isReadyForInterview: true },
-    });
+    const profile = isNewCandidateWritesEnabled()
+      ? await prisma.candidateProfile.findUnique({
+          where: { userId: targetUserId },
+          select: { isReadyForInterview: true },
+        })
+      : await studentProfile.findUnique({
+          where: { userId: targetUserId },
+          select: { isReadyForInterview: true },
+        });
     if (!profile) throw new Error("Profile not found");
 
     const newValue = !profile.isReadyForInterview;
 
     await writeClient().$transaction(async (tx) => {
-      await tx.studentProfile.update({
-        where: { userId: targetUserId },
-        data: { isReadyForInterview: newValue },
-      });
-      await dualWriteCandidateIdentity(tx, targetUserId, {
-        isReadyForInterview: true,
+      await applyCandidateIdentityChange(tx, targetUserId, {
+        isReadyForInterview: newValue,
       });
 
       await tx.adminAction.create({

@@ -282,18 +282,11 @@ suite("the deferred merge runs after the profile exists", () => {
 
 suite("registration writes the CandidateProfile-only basic-info fields", () => {
   const src = source("src/features/registration/complete-registration.ts");
-  const identity = src.indexOf("dualWriteCandidateIdentity(tx");
-  const basic = src.indexOf("dualWriteCandidateBasicInfo(tx");
-  assert(identity > 0, "identity dual-write present");
-  assert(
-    basic > identity,
-    "basic info runs after the row it writes to is created",
-  );
+  assert(src.includes("createCandidateIdentity"), "W4-A identity create");
+  assert(src.includes("headline: input.headline"), "headline passed through");
 
   const dw = source("src/repositories/dual-write.ts");
   const fn = dw.slice(dw.indexOf("export async function dualWriteCandidateBasicInfo"));
-  // `update` would throw when the identity savepoint rolled back and left no
-  // CandidateProfile row; zero rows written is the right outcome there.
   assert(fn.includes("updateMany"), "tolerates a missing row");
   assert(fn.includes("runDualWrite"), "goes through the dual-write guard");
 });

@@ -6,7 +6,7 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
+import { isNewCandidateRepoEnabled, isNewCandidateWritesEnabled } from "@/lib/feature-flags";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -14,6 +14,11 @@ import {
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
 import { studentProfile } from "@/repositories/legacy/student-profile";
+import {
+  applyCandidateIdentityChange,
+  runStudentProfileMirror,
+} from "@/repositories/candidate-identity";
+import { syncCandidateSkillsFromLegacy } from "@/repositories/dual-write";
 import type { CandidateProfileView } from "@/repositories/types";
 
 const legacyIdentitySelect = {
@@ -304,6 +309,25 @@ export async function updateCandidateLinks(
 ): Promise<void> {
   await writeClient().$transaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
+    if (isNewCandidateWritesEnabled()) {
+      await applyCandidateIdentityChange(tx, userId, {
+        linkedinUrl: data.linkedinUrl,
+        githubUsername: data.githubUsername,
+      });
+      await syncCandidateSkillsFromLegacy(tx, userId, data.skills);
+      const claimed = await tx.candidateSkill.findMany({
+        where: { userId, claimedByCandidate: true },
+        orderBy: { createdAt: "asc" },
+        select: { skill: { select: { name: true } } },
+      });
+      await runStudentProfileMirror(tx, "enrollSkills", async () => {
+        await tx.studentProfile.updateMany({
+          where: { userId },
+          data: { skills: claimed.map((c) => c.skill.name) },
+        });
+      });
+      return;
+    }
     await tx.candidateProfile.update({
       where: { userId },
       data: {
@@ -311,21 +335,21 @@ export async function updateCandidateLinks(
         githubUsername: data.githubUsername,
       },
     });
-  });
-  const sp = await studentProfile.findUnique({
-    where: { userId },
-    select: { userId: true },
-  });
-  if (sp) {
-    await studentProfile.update({
+    const sp = await tx.studentProfile.findUnique({
       where: { userId },
-      data: {
-        linkedinUrl: data.linkedinUrl,
-        githubUsername: data.githubUsername,
-        skills: data.skills,
-      },
+      select: { userId: true },
     });
-  }
+    if (sp) {
+      await tx.studentProfile.update({
+        where: { userId },
+        data: {
+          linkedinUrl: data.linkedinUrl,
+          githubUsername: data.githubUsername,
+          skills: data.skills,
+        },
+      });
+    }
+  });
 }
 
 /* ─── Candidate availability (078 `CandidatePreference`) ────────────────────

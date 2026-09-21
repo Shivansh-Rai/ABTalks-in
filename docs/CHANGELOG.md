@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [env|convention] W4-A Candidate identity write authority: ENABLE_NEW_CANDIDATE_WRITES (default off) commits CandidateProfile/structured tables before the StudentProfile identity/referral mirror; ENABLE_LEGACY_STUDENT_PROFILE_MIRROR (default on); dual-write stays; W4-B/W5 not started
 - 2026-09-21 [env] W3-B COMPLETE: production ENABLE_LEGACY_CERTIFICATE_MIRROR=false W3B_CUTOVER_TIME=2026-09-21T15:18:05.000Z; Credential is the sole issuance write model; Certificate is frozen historical; dual-write stays; W4 not started
 - 2026-09-21 [env|convention] W3-B Certificate mirror shutdown: ENABLE_LEGACY_CERTIFICATE_MIRROR=false freezes Certificate; /hire completion uses Credential (pe_enr_ enrollment source); admin provenance keeps historical Certificate.id reads only; dual-write stays; W4 not started
 - 2026-09-21 [env] W3-A COMPLETE: production ENABLE_NEW_CREDENTIAL_WRITES=true ENABLE_LEGACY_CERTIFICATE_MIRROR=true; Credential is the issuance write model; Certificate remains the compatibility mirror; dual-write stays; W3-B/W4 not started

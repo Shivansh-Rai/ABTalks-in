@@ -14,6 +14,7 @@ import { sendWorkshopConfirmationEmail } from "@/lib/workshop-email";
 import { getWorkshopConfig } from "@/lib/workshop-supabase";
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
+import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
 
 /**
  * `email` is deliberately absent: it comes from the session, never the client.
@@ -100,23 +101,15 @@ export async function submitWorkshopRegistrationAction(
         where: { userId },
         select: { id: true },
       });
-      if (!profile) return;
-
-      await tx.studentProfile.update({
+      const candidate = await tx.candidateProfile.findUnique({
         where: { userId },
-        data: {
-          fullName: name,
-          // Phone is captured but never marked verified from this form.
-          ...(phone ? { phone } : {}),
-          ...(role === "Student"
-            ? {
-                ...(organization ? { college: organization } : {}),
-                ...(graduationYear ? { graduationYear } : {}),
-              }
-            : {
-                ...(organization ? { organization } : {}),
-              }),
-        },
+        select: { userId: true },
+      });
+      if (!profile && !candidate) return;
+
+      await applyCandidateIdentityChange(tx, userId, {
+        fullName: name,
+        ...(phone ? { phone } : {}),
       });
     });
   } catch (err) {
