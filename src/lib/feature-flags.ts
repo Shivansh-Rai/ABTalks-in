@@ -206,7 +206,7 @@ export function isLegacyProgressMirrorEnabled(): boolean {
  * W7-A canonical enrollment denorm current-state reads.
  * Off unless explicitly `"true"`. Dark deploy keeps Enrollment /
  * StudentProfile.domain as the live read source.
- * Dual-write stays on. Do not freeze Enrollment denorm writes (W7-B).
+ * Dual-write stays on. W7-B sets ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR=false.
  * Do not overload ENABLE_NEW_PROGRESS / ENABLE_NEW_LEARNING.
  */
 export function isNewEnrollmentStateEnabled(): boolean {
@@ -214,9 +214,10 @@ export function isNewEnrollmentStateEnabled(): boolean {
 }
 
 /**
- * W7-A compatibility mirror onto Enrollment.daysCompleted /
- * currentStreak / longestStreak / lastSubmittedDay and StudentProfile.domain.
- * Default ON. Set `"false"` only at W7-B.
+ * W7 Enrollment denorm compatibility mirror onto Enrollment.daysCompleted /
+ * lastSubmittedDay / currentStreak / longestStreak and StudentProfile.domain.
+ * Default ON. Set `"false"` at W7-B to freeze those fields only.
+ * Does not gate Enrollment.status / startedAt / completedAt or other SP families.
  */
 export function isLegacyEnrollmentDenormMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR !== "false";

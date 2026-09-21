@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { istDateRangeToUtc } from "@/lib/date-utils";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { displayedChallengeDomains } from "@/repositories/enrollment-state";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 type Range = { startKey?: string; endKey?: string };
 
@@ -93,7 +95,13 @@ export async function getReferredByUser(
             enrollments: {
               orderBy: { createdAt: "desc" },
               take: 1,
-              select: { daysCompleted: true },
+              select: {
+                id: true,
+                daysCompleted: true,
+                currentStreak: true,
+                longestStreak: true,
+                lastSubmittedDay: true,
+              },
             },
           },
         },
@@ -106,16 +114,31 @@ export async function getReferredByUser(
     ...referrals.map((r) => r.referred.id),
   ];
   const names = await listCandidateProfiles(identityIds);
+  const enrollmentRows = referrals
+    .map((r) => r.referred.enrollments[0])
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const overlaidEnrollments = await overlayChallengeProgressFields(enrollmentRows);
+  const daysByEnrollmentId = new Map(
+    overlaidEnrollments.map((row) => [row.id, row.daysCompleted]),
+  );
+  const domains = await displayedChallengeDomains(
+    referrals.map((r) => ({
+      userId: r.referred.id,
+      legacy: r.referred.studentProfile?.domain ?? null,
+    })),
+  );
 
   const rows: ReferredRow[] = referrals.map((r) => ({
     userId: r.referred.id,
     fullName:
       names.get(r.referred.id)?.fullName?.trim() || r.referred.email || "Unknown",
     email: r.referred.email,
-    domain: r.referred.studentProfile?.domain ?? null,
+    domain: domains.get(r.referred.id) ?? null,
     signedUpAt: r.createdAt,
     rewardGiven: r.rewardGiven,
-    daysCompleted: r.referred.enrollments[0]?.daysCompleted ?? 0,
+    daysCompleted: r.referred.enrollments[0]
+      ? (daysByEnrollmentId.get(r.referred.enrollments[0].id) ?? 0)
+      : 0,
   }));
 
   return {

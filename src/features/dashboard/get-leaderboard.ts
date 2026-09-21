@@ -1,5 +1,6 @@
 import { Domain } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { isNewEnrollmentStateEnabled } from "@/lib/feature-flags";
 import { listCandidateProfiles } from "@/repositories/candidate";
 import { overlayChallengeProgressFields } from "@/repositories/progress";
 
@@ -72,7 +73,7 @@ export async function getLeaderboard(
         { longestStreak: "desc" },
         { startedAt: "asc" },
       ],
-      take: limit,
+      ...(isNewEnrollmentStateEnabled() ? {} : { take: limit }),
       select: {
         id: true,
         userId: true,
@@ -105,7 +106,8 @@ export async function getLeaderboard(
     if (b.longestStreak !== a.longestStreak) return b.longestStreak - a.longestStreak;
     return 0;
   });
-  const rows: LeaderboardRow[] = overlaid.map((e, index) => {
+  const ranked = isNewEnrollmentStateEnabled() ? overlaid.slice(0, limit) : overlaid;
+  const rows: LeaderboardRow[] = ranked.map((e, index) => {
     const identity = identities.get(e.userId);
     const sp = e.user.studentProfile;
     return {

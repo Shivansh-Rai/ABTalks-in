@@ -78,16 +78,26 @@ function latenessToStatus(lateness: AttemptLateness): SubmissionStatus {
     : SubmissionStatus.ON_TIME;
 }
 
-async function challengeCompletionFromAttempts(
-  enrollmentId: string,
-): Promise<{ daysCompleted: number; lastSubmittedDay: number | null }> {
+/**
+ * Highest passed challenge day number (not latest timestamp, not ON_TIME-only).
+ * Matches submit-day daysCompletedFromCanonical / lastSubmittedDay.
+ */
+export async function listChallengeCompletions(
+  enrollmentIds: string[],
+): Promise<Map<string, { daysCompleted: number; lastSubmittedDay: number | null }>> {
+  const out = new Map<
+    string,
+    { daysCompleted: number; lastSubmittedDay: number | null }
+  >();
+  if (enrollmentIds.length === 0) return out;
   const attempts = await prisma.activityAttempt.findMany({
     where: {
-      enrollmentId: peIdForEnrollment(enrollmentId),
+      enrollmentId: { in: enrollmentIds.map(peIdForEnrollment) },
       id: { startsWith: "aa_sub_" },
       activityId: { startsWith: "act_dt_" },
     },
     select: {
+      enrollmentId: true,
       passed: true,
       activity: { select: { dayNumber: true } },
       evaluations: {
@@ -97,20 +107,74 @@ async function challengeCompletionFromAttempts(
       },
     },
   });
-
-  const passedDays = new Set<number>();
-  let lastSubmittedDay: number | null = null;
+  const daysByEnrollment = new Map<string, Set<number>>();
   for (const row of attempts) {
+    const enrollmentId = enrollmentIdFromPe(row.enrollmentId);
+    if (!enrollmentId) continue;
     const dayNumber = row.activity.dayNumber;
     if (dayNumber == null) continue;
     const passed = row.evaluations[0]?.passed ?? row.passed;
     if (!passed) continue;
-    passedDays.add(dayNumber);
-    if (lastSubmittedDay == null || dayNumber > lastSubmittedDay) {
-      lastSubmittedDay = dayNumber;
+    let days = daysByEnrollment.get(enrollmentId);
+    if (!days) {
+      days = new Set();
+      daysByEnrollment.set(enrollmentId, days);
     }
+    days.add(dayNumber);
   }
-  return { daysCompleted: passedDays.size, lastSubmittedDay };
+  for (const id of enrollmentIds) {
+    const days = daysByEnrollment.get(id);
+    if (!days || days.size === 0) {
+      out.set(id, { daysCompleted: 0, lastSubmittedDay: null });
+      continue;
+    }
+    let lastSubmittedDay: number | null = null;
+    for (const dayNumber of days) {
+      if (lastSubmittedDay == null || dayNumber > lastSubmittedDay) {
+        lastSubmittedDay = dayNumber;
+      }
+    }
+    out.set(id, { daysCompleted: days.size, lastSubmittedDay });
+  }
+  return out;
+}
+
+async function challengeCompletionFromAttempts(
+  enrollmentId: string,
+): Promise<{ daysCompleted: number; lastSubmittedDay: number | null }> {
+  const map = await listChallengeCompletions([enrollmentId]);
+  return map.get(enrollmentId) ?? { daysCompleted: 0, lastSubmittedDay: null };
+}
+
+export async function countChallengeEnrollmentsWithDaysGte(
+  minDays: number,
+): Promise<number> {
+  if (!isNewProgressRepoEnabled() && !isNewEnrollmentStateEnabled()) {
+    return prisma.enrollment.count({ where: { daysCompleted: { gte: minDays } } });
+  }
+  const rows = await prisma.$queryRaw<Array<{ n: bigint }>>`
+    WITH canon AS (
+      SELECT
+        substr(aa."enrollmentId", 8) AS enrollment_id,
+        count(DISTINCT act."dayNumber") FILTER (
+          WHERE act."dayNumber" IS NOT NULL
+            AND COALESCE(ev.passed, aa.passed)
+        )::int AS days
+      FROM "ActivityAttempt" aa
+      JOIN "Activity" act ON act.id = aa."activityId"
+      LEFT JOIN LATERAL (
+        SELECT ev.passed
+        FROM "ActivityEvaluation" ev
+        WHERE ev."attemptId" = aa.id AND ev."isAuthoritative" = true
+        LIMIT 1
+      ) ev ON true
+      WHERE aa.id LIKE 'aa_sub_%'
+        AND aa."activityId" LIKE 'act_dt_%'
+      GROUP BY 1
+    )
+    SELECT count(*)::bigint AS n FROM canon WHERE days >= ${minDays}
+  `;
+  return Number(rows[0]?.n ?? 0);
 }
 
 /**
@@ -161,17 +225,19 @@ export async function overlayChallengeProgressFields<
 >(rows: T[]): Promise<T[]> {
   if (rows.length === 0) return rows;
   let next = rows;
-  if (isNewProgressRepoEnabled()) {
-    next = await Promise.all(
-      next.map(async (row) => {
-        const derived = await challengeCompletionFromAttempts(row.id);
-        return {
-          ...row,
-          daysCompleted: derived.daysCompleted,
-          lastSubmittedDay: derived.lastSubmittedDay,
-        };
-      }),
-    );
+  if (isNewProgressRepoEnabled() || isNewEnrollmentStateEnabled()) {
+    const derived = await listChallengeCompletions(next.map((row) => row.id));
+    next = next.map((row) => {
+      const completion = derived.get(row.id);
+      if (!completion) {
+        return { ...row, daysCompleted: 0, lastSubmittedDay: null };
+      }
+      return {
+        ...row,
+        daysCompleted: completion.daysCompleted,
+        lastSubmittedDay: completion.lastSubmittedDay,
+      };
+    });
   }
   if (isNewEnrollmentStateEnabled()) {
     const snaps = await listTrackStreakSnapshots(next.map((row) => row.id));

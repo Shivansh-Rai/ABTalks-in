@@ -6,7 +6,7 @@ import {
   getRegistrationDatesSince,
 } from "@/features/admin/get-registration-dates";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
-import { listCanonicalChallengeFeed } from "@/repositories/progress";
+import { listCanonicalChallengeFeed, countChallengeEnrollmentsWithDaysGte } from "@/repositories/progress";
 
 const IST = "Asia/Kolkata";
 
@@ -112,8 +112,8 @@ export async function getOverviewStats() {
   ] = await Promise.all([
     countRegisteredUsers(),
     distinctAttemptUsers(start, end),
-    prisma.enrollment.count({ where: { daysCompleted: { gte: 30 } } }),
-    prisma.enrollment.count({ where: { daysCompleted: { gte: 60 } } }),
+    countChallengeEnrollmentsWithDaysGte(30),
+    countChallengeEnrollmentsWithDaysGte(60),
     distinctAttemptUsers(thisWeekStart, thisWeekEnd),
     distinctAttemptUsers(lastWeekStart, lastWeekEnd),
     getRegistrationDatesSince(windowStart),

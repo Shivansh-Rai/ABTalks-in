@@ -1,11 +1,13 @@
 /**
- * W7-A enrollment denorm current-state boundary.
+ * W7-A/B enrollment denorm current-state boundary.
  *
  * Days/lastSubmittedDay: derived from challenge ActivityAttempt (already W6-B).
  * Track streaks: ProgramEnrollment.trackCurrentStreak / trackLongestStreak
  * (historical snapshots are not fully re-derivable from AA).
  * StudentProfile.domain: first-joined challenge track; SP write is a
- * best-effort mirror and must not fail canonical enrollment.
+ * best-effort mirror gated by ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR and
+ * must not fail canonical enrollment. W7-B freezes those compatibility
+ * fields only; Enrollment.status / startedAt / completedAt stay live.
  *
  * Does not take EnrollmentProgress, ProgramMember, points, certificate,
  * candidate identity, or W6 frozen progress tables.

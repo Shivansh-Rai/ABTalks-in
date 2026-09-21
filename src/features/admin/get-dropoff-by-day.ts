@@ -2,6 +2,8 @@ import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { enrollmentIdFromPe, peIdForEnrollment } from "@/repositories/ids";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 const DROPOFF_GAP_DAYS = 3;
 
@@ -43,6 +45,9 @@ export async function getDropoffStudents(
       domain: true,
       status: true,
       startedAt: true,
+      daysCompleted: true,
+      currentStreak: true,
+      longestStreak: true,
       lastSubmittedDay: true,
       challenge: { select: { startsAt: true } },
       user: {
@@ -60,31 +65,53 @@ export async function getDropoffStudents(
           },
         },
       },
-      submissions: {
-        orderBy: { submittedAt: "desc" },
-        take: 1,
-        select: { submittedAt: true, dayNumber: true },
-      },
     },
   });
 
-  const rows: DropoffStudentRow[] = [];
-
-  for (const e of enrollments) {
+  const overlaid = await overlayChallengeProgressFields(enrollments);
+  const candidates = overlaid.filter((e) => {
     const currentDay = getCurrentDayNumber(
       { startedAt: e.startedAt },
       e.challenge,
     );
     const effectiveLast = e.lastSubmittedDay ?? 0;
     const gap = currentDay - effectiveLast;
-
-    const include =
+    return (
       e.status === EnrollmentStatus.ABANDONED ||
-      (e.status === EnrollmentStatus.ACTIVE && gap >= DROPOFF_GAP_DAYS);
+      (e.status === EnrollmentStatus.ACTIVE && gap >= DROPOFF_GAP_DAYS)
+    );
+  });
 
-    if (!include) continue;
+  const latestByEnrollment = new Map<string, Date>();
+  if (candidates.length > 0) {
+    const attempts = await prisma.activityAttempt.findMany({
+      where: {
+        enrollmentId: { in: candidates.map((e) => peIdForEnrollment(e.id)) },
+        id: { startsWith: "aa_sub_" },
+        submittedAt: { not: null },
+      },
+      select: { enrollmentId: true, submittedAt: true },
+      orderBy: { submittedAt: "desc" },
+    });
+    for (const row of attempts) {
+      const enrollmentId = enrollmentIdFromPe(row.enrollmentId);
+      if (!enrollmentId || !row.submittedAt) continue;
+      if (!latestByEnrollment.has(enrollmentId)) {
+        latestByEnrollment.set(enrollmentId, row.submittedAt);
+      }
+    }
+  }
 
-    const lastSub = e.submissions[0];
+  const rows: DropoffStudentRow[] = [];
+
+  for (const e of candidates) {
+    const currentDay = getCurrentDayNumber(
+      { startedAt: e.startedAt },
+      e.challenge,
+    );
+    const effectiveLast = e.lastSubmittedDay ?? 0;
+    const gap = currentDay - effectiveLast;
+    const lastSubmittedAt = latestByEnrollment.get(e.id);
     rows.push({
       enrollmentId: e.id,
       userId: e.user.id,
@@ -98,7 +125,7 @@ export async function getDropoffStudents(
       status: e.status,
       startedAtIso: e.startedAt.toISOString(),
       lastSubmittedDay: e.lastSubmittedDay,
-      lastSubmissionDateIso: lastSub?.submittedAt.toISOString() ?? null,
+      lastSubmissionDateIso: lastSubmittedAt?.toISOString() ?? null,
       currentDay,
       daysInactive: gap,
     });

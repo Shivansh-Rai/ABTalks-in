@@ -618,8 +618,8 @@ suite("wins-only accomplishments use 50-day Claude and placement-only hackathon"
     "wins-only hackathon requires a placement",
   );
   assert(
-    src.includes("Math.max(stats.daysCompleted, enrollment.daysCompleted)"),
-    "50-day gate trusts Enrollment snapshot when attempts under-count",
+    src.includes("const days = stats.daysCompleted;"),
+    "50-day gate uses canonical AA days, not frozen Enrollment.daysCompleted",
   );
   const profilePage = code("src/app/profile/page.tsx");
   assert(

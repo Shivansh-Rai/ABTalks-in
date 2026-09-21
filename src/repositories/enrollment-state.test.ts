@@ -272,6 +272,125 @@ async function main() {
     );
   });
 
+  await suite("W7-B reporting current-state uses canonical overlay", () => {
+    assert(
+      source("src/features/admin/get-overview-stats.ts").includes(
+        "countChallengeEnrollmentsWithDaysGte",
+      ),
+      "admin 30/60",
+    );
+    assert(
+      source("src/features/admin/get-analytics-data.ts").includes(
+        "overlayChallengeProgressFields",
+      ),
+      "analytics dropoff/top",
+    );
+    assert(
+      source("src/features/admin/get-dropoff-by-day.ts").includes(
+        "overlayChallengeProgressFields",
+      ),
+      "dropoff lastSubmittedDay",
+    );
+    assert(
+      source("src/features/admin/get-referrals-report.ts").includes(
+        "overlayChallengeProgressFields",
+      ),
+      "referrals days",
+    );
+    assert(
+      source("src/features/admin/get-referrals-report.ts").includes(
+        "displayedChallengeDomains",
+      ),
+      "referrals domain",
+    );
+    assert(
+      source("src/app/actions/admin-export-actions.ts").includes(
+        "overlayChallengeProgressFields",
+      ),
+      "CSV overlay",
+    );
+    assert(
+      !source("src/features/profile/get-verified-accomplishments.ts").includes(
+        "Math.max(stats.daysCompleted",
+      ),
+      "accomplishments do not Math.max frozen days",
+    );
+    assert(
+      source("src/features/certificate/issue-certificate.ts").includes(
+        "progress.daysCompleted",
+      ),
+      "new certificates mint canonical metadata",
+    );
+  });
+
+  await suite("lastSubmittedDay canonical semantic is max passed day", () => {
+    const progress = source("src/repositories/progress.ts");
+    const streak = source("src/features/submission/streak-utils.ts");
+    assert(
+      progress.includes("Highest passed challenge day number"),
+      "overlay documents max passed day",
+    );
+    assert(
+      streak.includes("lastSubmittedDay = row.dayNumber"),
+      "submit derivation is max dayNumber",
+    );
+    assert(
+      source("src/features/admin/get-dropoff-by-day.ts").includes(
+        'id: { startsWith: "aa_sub_" }',
+      ),
+      "dropoff date from AA not frozen Submission",
+    );
+  });
+
+  await suite("operational Enrollment writes are not denorm-gated", () => {
+    const submit = source("src/features/submission/submit-day.ts");
+    const admin = source("src/app/actions/admin-actions.ts");
+    const denorm = source("src/repositories/enrollment-state.ts");
+    assert(submit.includes("status: EnrollmentStatus.COMPLETED"), "status stays live");
+    assert(admin.includes('status: "ACTIVE"'), "reset status stays live");
+    assert(
+      denorm.includes("daysCompleted: input.daysCompleted"),
+      "denorm helper only writes W7 fields",
+    );
+    assert(
+      !denorm.includes("status:"),
+      "denorm helper does not write Enrollment.status",
+    );
+  });
+
+  await suite("domain mirror off skips SP write and does not mint SP", async () => {
+    await withFlags(
+      { ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR: "false" },
+      async () => {
+        const tx = makeTx();
+        await applyEnrollmentDomainMirror(tx as never, "u1", Domain.AI);
+        assert(!tx.writes.includes("sp.updateMany"), "SP.domain skipped");
+      },
+    );
+    assert(
+      source("src/features/enrollment/create-core-enrollment.ts").includes(
+        "applyEnrollmentDomainMirror",
+      ),
+      "create still calls helper",
+    );
+    assert(
+      !source("src/features/enrollment/create-core-enrollment.ts").includes(
+        "studentProfile.create",
+      ),
+      "create does not mint SP for domain",
+    );
+  });
+
+  await suite("leaderboard/admin list re-rank after overlay when frozen", () => {
+    const lb = source("src/features/dashboard/get-leaderboard.ts");
+    assert(lb.includes("overlaid.slice(0, limit)"), "leaderboard ranks overlay");
+    const students = source("src/features/admin/get-students.ts");
+    assert(
+      students.includes('sortBy === "days" || sortBy === "streak"'),
+      "admin days/streak fetch all then overlay",
+    );
+  });
+
   console.log(`\n${passed} passed, ${failed} failed\n`);
   if (failed > 0) process.exit(1);
 }

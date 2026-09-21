@@ -14,6 +14,7 @@ import { getReferrersInRange } from "@/features/admin/get-referrals-report";
 import { getSubmissionsFeed } from "@/features/admin/get-submissions-feed";
 import { getHackathonSubmissionsFeed } from "@/features/admin/get-hackathon-submissions-feed";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 const SUBMISSIONS_EXPORT_CAP = 10_000;
 
@@ -80,6 +81,7 @@ export async function getStudentsForExport(filters: {
             daysCompleted: true,
             currentStreak: true,
             longestStreak: true,
+            lastSubmittedDay: true,
             user: {
               select: {
                 id: true,
@@ -104,7 +106,7 @@ export async function getStudentsForExport(filters: {
               },
             },
           },
-          orderBy: [{ lastSubmittedDay: "desc" }, { createdAt: "desc" }],
+          orderBy: [{ createdAt: "desc" }],
         })
       : Promise.resolve([]),
     wantHackathon
@@ -167,8 +169,15 @@ export async function getStudentsForExport(filters: {
   );
 
   const identities = await listCandidateProfiles(userIds);
+  const overlaidEnrollments = await overlayChallengeProgressFields(enrollments);
+  overlaidEnrollments.sort((a, b) => {
+    const aLast = a.lastSubmittedDay ?? -1;
+    const bLast = b.lastSubmittedDay ?? -1;
+    if (bLast !== aLast) return bLast - aLast;
+    return b.startedAt.getTime() - a.startedAt.getTime();
+  });
 
-  const challengeExport = enrollments.map((e) => {
+  const challengeExport = overlaidEnrollments.map((e) => {
     const identity = identities.get(e.user.id);
     const sp = e.user.studentProfile;
     return {

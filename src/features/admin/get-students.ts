@@ -112,8 +112,8 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
             },
           },
           orderBy: challengeOrderBy,
-          // Fetch enough to merge; final cap applied after merge+sort.
-          take: 100,
+          // Days/streak ranking must overlay all matching rows after freeze.
+          ...(sortBy === "days" || sortBy === "streak" ? {} : { take: 100 }),
           include: {
             user: {
               select: {

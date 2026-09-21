@@ -112,7 +112,6 @@ export async function getVerifiedAccomplishments(
         select: {
           id: true,
           domain: true,
-          daysCompleted: true,
           completedAt: true,
           startedAt: true,
         },
@@ -181,16 +180,11 @@ export async function getVerifiedAccomplishments(
   const challengeStats = await Promise.all(
     enrollments.map(async (e) => ({
       enrollment: e,
-      // Flag-aware: derives from attempts when the 078 progress read is on,
-      // and falls back to the legacy Enrollment snapshot when it is not.
       stats: await getChallengeProgressStats(e.id),
     })),
   );
   for (const { enrollment, stats } of challengeStats) {
-    // Prefer the higher of derived attempts and the Enrollment snapshot.
-    // ENABLE_NEW_PROGRESS can under-count when ActivityAttempt dual-write is
-    // incomplete while daysCompleted on the enrollment row is still correct.
-    const days = Math.max(stats.daysCompleted, enrollment.daysCompleted);
+    const days = stats.daysCompleted;
     if (days < CHALLENGE_ELIGIBLE_DAYS) continue;
     out.push({
       key: `challenge-${enrollment.id}`,

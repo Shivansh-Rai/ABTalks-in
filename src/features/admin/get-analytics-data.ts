@@ -95,7 +95,6 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     hackathonRegistered,
     allEnrollments,
     allSubmissions,
-    topPerformersRaw,
   ] = await Promise.all([
     getRegistrationDatesSince(start),
     prisma.activityAttempt.findMany({
@@ -113,16 +112,14 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
       where: { eventId: HACKATHON.eventId },
     }),
     prisma.enrollment.findMany({
-      select: { daysCompleted: true },
-    }),
-    prisma.activityAttempt.findMany({
-      where: { id: { startsWith: "aa_sub_" }, submittedAt: { not: null } },
-      select: { submittedAt: true },
-    }),
-    prisma.enrollment.findMany({
-      orderBy: [{ daysCompleted: "desc" }, { currentStreak: "desc" }],
-      take: 10,
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        domain: true,
+        daysCompleted: true,
+        currentStreak: true,
+        longestStreak: true,
+        lastSubmittedDay: true,
         user: {
           select: {
             id: true,
@@ -133,6 +130,10 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
           },
         },
       },
+    }),
+    prisma.activityAttempt.findMany({
+      where: { id: { startsWith: "aa_sub_" }, submittedAt: { not: null } },
+      select: { submittedAt: true },
     }),
   ]);
 
@@ -172,10 +173,11 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     { name: "Hackathon", value: hackathonRegistered },
   ];
 
+  const overlaidEnrollments = await overlayChallengeProgressFields(allEnrollments);
   const milestones = [1, 7, 14, 30, 45, 60];
   const dropOff = milestones.map((milestone) => ({
     milestone: `Day ${milestone}`,
-    count: allEnrollments.filter((row) => row.daysCompleted >= milestone).length,
+    count: overlaidEnrollments.filter((row) => row.daysCompleted >= milestone).length,
   }));
 
   const submissionsByHourBuckets = Array.from({ length: 24 }, (_, hour) => ({
@@ -189,9 +191,12 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   }
 
   const identities = await listCandidateProfiles(
-    topPerformersRaw.map((row) => row.user.id),
+    overlaidEnrollments.map((row) => row.user.id),
   );
-  const topOverlaid = await overlayChallengeProgressFields(topPerformersRaw);
+  const topOverlaid = [...overlaidEnrollments].sort((a, b) => {
+    if (b.daysCompleted !== a.daysCompleted) return b.daysCompleted - a.daysCompleted;
+    return b.currentStreak - a.currentStreak;
+  }).slice(0, 10);
   const topPerformers = topOverlaid.map((row) => {
     const identity = identities.get(row.user.id);
     return {

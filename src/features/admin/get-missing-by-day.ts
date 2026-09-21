@@ -131,6 +131,10 @@ export async function getMissingStudentsForDay(
 
   const names = await canonicalFullNameByUserId(rows.map((r) => r.user.id));
   const overlaid = await overlayChallengeProgressFields(rows);
+  overlaid.sort((a, b) => {
+    if (b.daysCompleted !== a.daysCompleted) return b.daysCompleted - a.daysCompleted;
+    return 0;
+  });
   return overlaid.map((r) => ({
     enrollmentId: r.id,
     userId: r.user.id,
