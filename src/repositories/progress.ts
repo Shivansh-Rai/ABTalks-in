@@ -8,9 +8,12 @@ import {
 import { prisma } from "@/lib/db";
 import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
 import {
+  enrollmentIdFromPe,
+  memberIdFromPe,
   peIdForEnrollment,
   peIdForMember,
   quizIdFromActivity,
+  missionSubmissionIdFromAttemptId,
 } from "@/repositories/ids";
 
 export type ChallengeProgressStats = {
@@ -203,13 +206,32 @@ function isBookkeepingMissionPayload(payload: Prisma.JsonValue | null): boolean 
 
 /** AI Cohort mission runs — every verification run, pass or fail. */
 async function listProgramMissionTimes(userId: string): Promise<Date[]> {
-  const rows = await prisma.programMissionSubmission.findMany({
-    where: { member: { userId } },
-    select: { createdAt: true, payload: true },
+  if (!isNewProgressRepoEnabled()) {
+    const rows = await prisma.programMissionSubmission.findMany({
+      where: { member: { userId } },
+      select: { createdAt: true, payload: true },
+    });
+    return rows
+      .filter((r) => !isBookkeepingMissionPayload(r.payload))
+      .map((r) => r.createdAt);
+  }
+
+  const pes = await prisma.programEnrollment.findMany({
+    where: { userId, id: { startsWith: "pe_pm_" } },
+    select: { id: true },
+  });
+  if (pes.length === 0) return [];
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      enrollmentId: { in: pes.map((p) => p.id) },
+      id: { startsWith: "aa_ms_" },
+      activityId: { startsWith: "act_pd_" },
+    },
+    select: { submittedAt: true, createdAt: true, payload: true },
   });
   return rows
     .filter((r) => !isBookkeepingMissionPayload(r.payload))
-    .map((r) => r.createdAt);
+    .map((r) => r.submittedAt ?? r.createdAt);
 }
 
 /** Databricks mission runs — every verification run, pass or fail. */
@@ -482,6 +504,244 @@ export async function listProgramMissionAttemptsForDay(
   }));
 }
 
+export type CanonicalMissionAttemptRow = {
+  id: string;
+  memberId: string;
+  dayNumber: number;
+  attemptNumber: number;
+  passed: boolean;
+  payload: Prisma.JsonValue | null;
+  createdAt: Date;
+  pointsAwarded: number;
+  aiFeedback: string | null;
+};
+
+function aiFeedbackFromPayload(
+  payload: Prisma.JsonValue | null | undefined,
+): string | null {
+  const value = jsonObject(payload).aiFeedback;
+  return typeof value === "string" ? value : null;
+}
+
+export async function listCanonicalMissionAttempts(input: {
+  memberIds: string[];
+}): Promise<CanonicalMissionAttemptRow[]> {
+  if (input.memberIds.length === 0) return [];
+  if (!isNewProgressRepoEnabled()) {
+    const rows = await prisma.programMissionSubmission.findMany({
+      where: { memberId: { in: input.memberIds } },
+      select: {
+        id: true,
+        memberId: true,
+        dayNumber: true,
+        attemptNumber: true,
+        passed: true,
+        payload: true,
+        createdAt: true,
+        pointsAwarded: true,
+        aiFeedback: true,
+      },
+      orderBy: [{ dayNumber: "asc" }, { attemptNumber: "asc" }],
+    });
+    return rows;
+  }
+
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      enrollmentId: { in: input.memberIds.map((id) => peIdForMember(id)) },
+      id: { startsWith: "aa_ms_" },
+      activityId: { startsWith: "act_pd_" },
+    },
+    select: {
+      id: true,
+      enrollmentId: true,
+      attemptNumber: true,
+      passed: true,
+      payload: true,
+      pointsAwarded: true,
+      submittedAt: true,
+      createdAt: true,
+      activity: { select: { dayNumber: true } },
+      evaluations: {
+        where: { isAuthoritative: true },
+        select: { passed: true },
+        take: 1,
+      },
+    },
+    orderBy: [{ attemptNumber: "asc" }],
+  });
+
+  const out: CanonicalMissionAttemptRow[] = [];
+  for (const row of rows) {
+    const memberId = memberIdFromPe(row.enrollmentId);
+    const dayNumber = row.activity.dayNumber;
+    if (!memberId || dayNumber == null) continue;
+    const id = missionSubmissionIdFromAttemptId(row.id) ?? row.id;
+    out.push({
+      id,
+      memberId,
+      dayNumber,
+      attemptNumber: row.attemptNumber,
+      passed: row.evaluations[0]?.passed ?? row.passed,
+      payload: row.payload,
+      createdAt: row.submittedAt ?? row.createdAt,
+      pointsAwarded: row.pointsAwarded,
+      aiFeedback: aiFeedbackFromPayload(row.payload),
+    });
+  }
+  return out;
+}
+
+export type CanonicalChallengeFeedRow = {
+  id: string;
+  userId: string;
+  dayNumber: number;
+  status: SubmissionStatus;
+  githubUrl: string | null;
+  linkedinUrl: string | null;
+  submittedAt: Date;
+  domain: string;
+};
+
+export async function listCanonicalChallengeFeed(input: {
+  domain?: string;
+  status?: SubmissionStatus;
+  minDay?: number;
+  maxDay?: number;
+  take?: number;
+  submittedAtGte?: Date;
+  submittedAtLt?: Date;
+}): Promise<CanonicalChallengeFeedRow[]> {
+  if (!isNewProgressRepoEnabled()) {
+    const rows = await prisma.submission.findMany({
+      where: {
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.minDay != null || input.maxDay != null
+          ? {
+              dayNumber: {
+                ...(input.minDay != null ? { gte: input.minDay } : {}),
+                ...(input.maxDay != null ? { lte: input.maxDay } : {}),
+              },
+            }
+          : {}),
+        ...(input.submittedAtGte || input.submittedAtLt
+          ? {
+              submittedAt: {
+                ...(input.submittedAtGte ? { gte: input.submittedAtGte } : {}),
+                ...(input.submittedAtLt ? { lt: input.submittedAtLt } : {}),
+              },
+            }
+          : {}),
+        ...(input.domain
+          ? { enrollment: { domain: input.domain as never } }
+          : {}),
+      },
+      orderBy: { submittedAt: "desc" },
+      take: input.take,
+      select: {
+        id: true,
+        userId: true,
+        dayNumber: true,
+        status: true,
+        githubUrl: true,
+        linkedinUrl: true,
+        submittedAt: true,
+        enrollment: { select: { domain: true } },
+      },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      dayNumber: row.dayNumber,
+      status: row.status,
+      githubUrl: row.githubUrl,
+      linkedinUrl: row.linkedinUrl,
+      submittedAt: row.submittedAt,
+      domain: row.enrollment.domain,
+    }));
+  }
+
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      id: { startsWith: "aa_sub_" },
+      activityId: { startsWith: "act_dt_" },
+      submittedAt: {
+        not: null,
+        ...(input.submittedAtGte ? { gte: input.submittedAtGte } : {}),
+        ...(input.submittedAtLt ? { lt: input.submittedAtLt } : {}),
+      },
+      ...(input.status === "LATE"
+        ? { lateness: "LATE" }
+        : input.status === "ON_TIME"
+          ? { lateness: "ON_TIME" }
+          : {}),
+      ...(input.minDay != null || input.maxDay != null
+        ? {
+            activity: {
+              dayNumber: {
+                ...(input.minDay != null ? { gte: input.minDay } : {}),
+                ...(input.maxDay != null ? { lte: input.maxDay } : {}),
+              },
+            },
+          }
+        : {}),
+    },
+    orderBy: { submittedAt: "desc" },
+    take: input.take ?? 5000,
+    select: {
+      id: true,
+      enrollmentId: true,
+      lateness: true,
+      payload: true,
+      submittedAt: true,
+      enrollment: { select: { userId: true } },
+      activity: { select: { dayNumber: true } },
+    },
+  });
+
+  const enrollmentIds = [
+    ...new Set(
+      rows
+        .map((row) => enrollmentIdFromPe(row.enrollmentId))
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const enrollments = await prisma.enrollment.findMany({
+    where: { id: { in: enrollmentIds } },
+    select: { id: true, domain: true },
+  });
+  const domainByEnrollment = new Map(enrollments.map((e) => [e.id, e.domain]));
+
+  const out: CanonicalChallengeFeedRow[] = [];
+  for (const row of rows) {
+    const enrollmentId = enrollmentIdFromPe(row.enrollmentId);
+    const dayNumber = row.activity.dayNumber;
+    if (!enrollmentId || dayNumber == null || !row.submittedAt) continue;
+    const domain = domainByEnrollment.get(enrollmentId);
+    if (!domain) continue;
+    if (input.domain && domain !== input.domain) continue;
+    const payload = jsonObject(row.payload);
+    const legacyId =
+      typeof payload.legacySubmissionId === "string"
+        ? payload.legacySubmissionId
+        : row.id.startsWith("aa_sub_")
+          ? row.id.slice("aa_sub_".length)
+          : row.id;
+    out.push({
+      id: legacyId,
+      userId: row.enrollment.userId,
+      dayNumber,
+      status: latenessToStatus(row.lateness),
+      githubUrl: typeof payload.githubUrl === "string" ? payload.githubUrl : null,
+      linkedinUrl:
+        typeof payload.linkedinUrl === "string" ? payload.linkedinUrl : null,
+      submittedAt: row.submittedAt,
+      domain,
+    });
+  }
+  return out;
+}
+
 export async function listProgramRecentMissionAttempts(
   memberId: string,
   take: number,
@@ -644,8 +904,18 @@ export async function getQuizAttemptForUser(
     },
     select: { payload: true },
   });
+  const fromCanonical = answersFromPayload(attempt?.payload ?? null);
+  if (Object.keys(fromCanonical).length > 0) {
+    return { ...match, answers: fromCanonical };
+  }
+  const historical = await prisma.quizAttempt.findUnique({
+    where: { id: match.id },
+    select: { answers: true },
+  });
   return {
     ...match,
-    answers: answersFromPayload(attempt?.payload ?? null),
+    answers: answersFromPayload(
+      historical ? { answers: historical.answers } : attempt?.payload ?? null,
+    ),
   };
 }

@@ -6,6 +6,7 @@ import {
   getMemberDayStates,
   getMemberProgressDay,
 } from "@/features/program/progression";
+import { listCanonicalMissionAttempts } from "@/repositories/progress";
 import {
   BLUEPRINT_SCOPE,
   maxScopeDay,
@@ -136,17 +137,7 @@ export async function buildCohortCandidateContext(
         cohort: { select: { name: true } },
       },
     }),
-    prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: {
-        dayNumber: true,
-        passed: true,
-        payload: true,
-        attemptNumber: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "asc" },
-    }),
+    listCanonicalMissionAttempts({ memberIds: [memberId] }),
     prisma.programProject.findMany({
       where: { memberId },
       select: {

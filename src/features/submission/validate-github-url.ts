@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
+import { enrollmentIdFromPe } from "@/repositories/ids";
 
 const GITHUB_REPO =
   /^https:\/\/github\.com\/[\w-]+\/[\w.-]+(\/.*)?$/;
@@ -11,6 +13,41 @@ export type ValidateGithubResult =
 
 export function normalizeGithubUrl(url: string): string {
   return url.trim().replace(/\/+$/, "");
+}
+
+export type GithubUrlOwner = {
+  enrollmentId: string;
+  dayNumber: number;
+};
+
+/**
+ * Canonical GitHub uniqueness: partial unique index
+ * `attempt_github_url_unique` on ActivityAttempt (payload->>'githubUrl').
+ * Global, nulls excluded. Same rule as Submission.githubUrl @unique.
+ */
+export async function listGithubUrlOwners(
+  normalized: string,
+): Promise<GithubUrlOwner[]> {
+  if (!isNewProgressRepoEnabled()) {
+    const rows = await prisma.submission.findMany({
+      where: { githubUrl: normalized },
+      select: { enrollmentId: true, dayNumber: true },
+    });
+    return rows;
+  }
+  const rows = await prisma.$queryRaw<
+    Array<{ enrollmentId: string; dayNumber: number | null }>
+  >`
+    SELECT a."enrollmentId", act."dayNumber"
+    FROM "ActivityAttempt" a
+    JOIN "Activity" act ON act.id = a."activityId"
+    WHERE a.payload->>'githubUrl' = ${normalized}
+  `;
+  return rows.flatMap((row) => {
+    const enrollmentId = enrollmentIdFromPe(row.enrollmentId);
+    if (!enrollmentId || row.dayNumber == null) return [];
+    return [{ enrollmentId, dayNumber: row.dayNumber }];
+  });
 }
 
 /**
@@ -32,17 +69,8 @@ export async function validateGithubUrl(
   }
 
   const normalized = normalizeGithubUrl(trimmed);
-
-  const rows = await prisma.submission.findMany({
-    where: { githubUrl: normalized },
-    select: {
-      userId: true,
-      enrollmentId: true,
-      dayNumber: true,
-    },
-  });
-
-  const blocking = rows.filter(
+  const owners = await listGithubUrlOwners(normalized);
+  const blocking = owners.filter(
     (r) =>
       !allowSlot ||
       r.enrollmentId !== allowSlot.enrollmentId ||
@@ -80,3 +108,4 @@ export async function validateGithubUrl(
 
   return { ok: true };
 }
+

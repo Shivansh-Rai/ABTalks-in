@@ -24,6 +24,7 @@ import {
 import { generateProgramJoinCode } from "@/lib/program-auth";
 import { programMember } from "@/repositories/legacy/program-member";
 import { dualWriteProgramMember } from "@/repositories/dual-write";
+import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
 export type CohortOverview = {
   cohort: {
@@ -360,7 +361,7 @@ export async function getCohortOverview(
   });
   if (!cohort) return null;
 
-  const [statusCounts, members, modules, submissions, commitRows, atRisk] =
+  const [statusCounts, members, modules, commitRows, atRisk] =
     await Promise.all([
       programMember.groupBy({
         by: ["status"],
@@ -388,15 +389,6 @@ export async function getCohortOverview(
           endDay: true,
         },
       }),
-      prisma.programMissionSubmission.findMany({
-        where: { member: { cohortId } },
-        select: {
-          memberId: true,
-          dayNumber: true,
-          passed: true,
-          createdAt: true,
-        },
-      }),
       prisma.programCommitDay.findMany({
         where: {
           member: { cohortId },
@@ -406,6 +398,9 @@ export async function getCohortOverview(
       }),
       getAtRiskMembers(cohortId),
     ]);
+  const submissions = await listCanonicalMissionAttempts({
+    memberIds: members.map((m) => m.id),
+  });
 
   const enrolled =
     statusCounts.find((s) => s.status === "ENROLLED")?._count.id ?? 0;
@@ -611,15 +606,7 @@ export async function getCohortMembers(
       },
       orderBy: { attemptNumber: "desc" },
     }),
-    prisma.programMissionSubmission.findMany({
-      where: { memberId: { in: memberIds } },
-      select: {
-        memberId: true,
-        dayNumber: true,
-        passed: true,
-        payload: true,
-      },
-    }),
+    listCanonicalMissionAttempts({ memberIds }),
   ]);
 
   const subsByMember = new Map<string, typeof missionSubs>();

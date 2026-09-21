@@ -143,6 +143,19 @@ export async function findChallengeSubmissionId(
   tx: Tx,
   input: { enrollmentId: string; dailyTaskId: string; dayNumber: number },
 ): Promise<string | null> {
+  if (isNewProgressWritesEnabled()) {
+    const attempt = await tx.activityAttempt.findUnique({
+      where: {
+        enrollmentId_activityId_attemptNumber: {
+          enrollmentId: peIdForEnrollment(input.enrollmentId),
+          activityId: activityIdForDailyTask(input.dailyTaskId),
+          attemptNumber: 1,
+        },
+      },
+      select: { id: true },
+    });
+    return attempt ? submissionIdFromAttemptId(attempt.id) : null;
+  }
   const existing = await tx.submission.findUnique({
     where: {
       enrollmentId_dayNumber: {
@@ -152,19 +165,7 @@ export async function findChallengeSubmissionId(
     },
     select: { id: true },
   });
-  if (existing) return existing.id;
-  if (!isNewProgressWritesEnabled()) return null;
-  const attempt = await tx.activityAttempt.findUnique({
-    where: {
-      enrollmentId_activityId_attemptNumber: {
-        enrollmentId: peIdForEnrollment(input.enrollmentId),
-        activityId: activityIdForDailyTask(input.dailyTaskId),
-        attemptNumber: 1,
-      },
-    },
-    select: { id: true },
-  });
-  return attempt ? submissionIdFromAttemptId(attempt.id) : null;
+  return existing?.id ?? null;
 }
 
 export async function applyChallengeSubmissionChange(
@@ -281,23 +282,24 @@ export async function findQuizAttemptId(
   tx: Tx,
   input: { userId: string; quizId: string; enrollmentId: string },
 ): Promise<string | null> {
+  if (isNewProgressWritesEnabled()) {
+    const attempt = await tx.activityAttempt.findUnique({
+      where: {
+        enrollmentId_activityId_attemptNumber: {
+          enrollmentId: peIdForEnrollment(input.enrollmentId),
+          activityId: activityIdForQuiz(input.quizId),
+          attemptNumber: 1,
+        },
+      },
+      select: { id: true },
+    });
+    return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
+  }
   const existing = await tx.quizAttempt.findUnique({
     where: { userId_quizId: { userId: input.userId, quizId: input.quizId } },
     select: { id: true },
   });
-  if (existing) return existing.id;
-  if (!isNewProgressWritesEnabled()) return null;
-  const attempt = await tx.activityAttempt.findUnique({
-    where: {
-      enrollmentId_activityId_attemptNumber: {
-        enrollmentId: peIdForEnrollment(input.enrollmentId),
-        activityId: activityIdForQuiz(input.quizId),
-        attemptNumber: 1,
-      },
-    },
-    select: { id: true },
-  });
-  return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
+  return existing?.id ?? null;
 }
 
 export async function applyQuizAttemptChange(

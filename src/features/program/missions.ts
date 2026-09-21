@@ -14,13 +14,10 @@ import {
   isCohortFrozen,
   isSkippedPayload,
 } from "@/features/program/progression";
-import { isDayLockBypassEnabled, isNewProgressWritesEnabled } from "@/lib/feature-flags";
+import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
 import { applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
-import {
-  activityIdForProgramDay,
-  peIdForMember,
-} from "@/repositories/ids";
+import { peIdForMember } from "@/repositories/ids";
 import {
   getProgramUnlockFloor,
   listProgramMissionAttemptsForDay,
@@ -171,12 +168,7 @@ async function checkRateLimit(
   memberId: string,
   dayNumber: number,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const runs = await prisma.programMissionSubmission.findMany({
-    where: { memberId, dayNumber },
-    select: { createdAt: true, payload: true },
-    orderBy: { createdAt: "desc" },
-  });
-
+  const runs = await listProgramMissionAttemptsForDay(memberId, dayNumber);
   const realRuns = runs.filter((r) => !isSkippedPayload(r.payload));
   if (realRuns.length >= MAX_RUNS_PER_DAY) {
     return { ok: false, message: "Daily run limit reached for this mission." };
@@ -302,36 +294,12 @@ export async function submitMissionRun(
     githubRepoUrl: avail.member.githubRepoUrl,
   });
 
-  const pmsCount = await prisma.programMissionSubmission.count({
-    where: { memberId, dayNumber },
-  });
-  let aaCount = 0;
-  if (isNewProgressWritesEnabled()) {
-    aaCount = await prisma.activityAttempt.count({
-      where: {
-        enrollmentId: peIdForMember(memberId),
-        activityId: activityIdForProgramDay(day.id),
-      },
-    });
-  }
-  const attemptNumber = Math.max(pmsCount, aaCount) + 1;
+  const dayAttempts = await listProgramMissionAttemptsForDay(memberId, dayNumber);
+  const attemptNumber = dayAttempts.length + 1;
+  const allProgress = await listProgramMissionProgress(memberId);
   let isFirstPass =
     verifyResult.passed &&
-    !(await prisma.programMissionSubmission.findFirst({
-      where: { memberId, dayNumber, passed: true },
-      select: { id: true },
-    }));
-  if (isFirstPass && isNewProgressWritesEnabled()) {
-    const passedAttempt = await prisma.activityAttempt.findFirst({
-      where: {
-        enrollmentId: peIdForMember(memberId),
-        activityId: activityIdForProgramDay(day.id),
-        passed: true,
-      },
-      select: { id: true },
-    });
-    if (passedAttempt) isFirstPass = false;
-  }
+    !allProgress.some((row) => row.dayNumber === dayNumber && row.passed);
 
   let pointsAwarded = 0;
   let unlockedDay: number | undefined;
@@ -378,11 +346,24 @@ export async function submitMissionRun(
           memberAfter.cohort,
           memberAfter.highestUnlockedDay,
         );
-        const allSubs = await tx.programMissionSubmission.findMany({
-          where: { memberId },
-          select: { dayNumber: true, passed: true, payload: true },
+        const allSubs = await tx.activityAttempt.findMany({
+          where: {
+            enrollmentId: peIdForMember(memberId),
+            id: { startsWith: "aa_ms_" },
+          },
+          select: {
+            passed: true,
+            payload: true,
+            activity: { select: { dayNumber: true } },
+          },
         });
-        const { passedDays, skippedDays } = collectPassSkipSets(allSubs);
+        const { passedDays, skippedDays } = collectPassSkipSets(
+          allSubs.flatMap((row) => {
+            const dn = row.activity.dayNumber;
+            if (dn == null) return [];
+            return [{ dayNumber: dn, passed: row.passed, payload: row.payload }];
+          }),
+        );
         const nextState = deriveDayState(
           nextDay,
           maxContentDay,

@@ -527,6 +527,174 @@ async function main() {
     assert(!source("src/repositories/progress-writes.ts").includes("databricks"), "no cohort pull-in");
   });
 
+  await suite("W6-B mirror off skips legacy Submission write", async () => {
+    await withFlags(
+      {
+        ENABLE_NEW_PROGRESS_WRITES: "true",
+        ENABLE_LEGACY_PROGRESS_MIRROR: "false",
+      },
+      async () => {
+        const tx = makeTx();
+        const result = await applyChallengeSubmissionChange(tx as never, {
+          id: "sub1",
+          userId: "u1",
+          enrollmentId: "enr1",
+          dailyTaskId: "dt1",
+          dayNumber: 1,
+          githubUrl: "https://github.com/a/b",
+          linkedinUrl: null,
+          status: SubmissionStatus.ON_TIME,
+          submittedAt: new Date("2026-09-22T00:00:00Z"),
+          pointsAwarded: 10,
+          mode: "create",
+        });
+        assert(result.id === "sub1", "id");
+        assert(tx.attempts.has(attemptIdForSubmission("sub1")), "canonical");
+        assert(!tx.writes.some((w) => w.startsWith("submission.create")), "no legacy");
+      },
+    );
+  });
+
+  await suite("W6-B identity lookup prefers canonical AA over frozen Submission", () => {
+    const src = source("src/repositories/progress-writes.ts");
+    const fn = src.slice(src.indexOf("export async function findChallengeSubmissionId"));
+    const aaIdx = fn.indexOf("activityAttempt.findUnique");
+    const subIdx = fn.indexOf("submission.findUnique");
+    assert(aaIdx >= 0 && (subIdx < 0 || aaIdx < subIdx), "AA first when writes on");
+    const quizFn = src.slice(src.indexOf("export async function findQuizAttemptId"));
+    const quizAa = quizFn.indexOf("activityAttempt.findUnique");
+    const quizQa = quizFn.indexOf("quizAttempt.findUnique");
+    assert(quizAa >= 0 && (quizQa < 0 || quizAa < quizQa), "quiz AA first when writes on");
+  });
+
+  await suite("W6-B quiz create skips QuizAttempt", async () => {
+    await withFlags(
+      {
+        ENABLE_NEW_PROGRESS_WRITES: "true",
+        ENABLE_LEGACY_PROGRESS_MIRROR: "false",
+      },
+      async () => {
+        const tx = makeTx();
+        await applyQuizAttemptChange(tx as never, {
+          id: "qa1",
+          userId: "u1",
+          enrollmentId: "enr1",
+          quizId: "quiz1",
+          score: 40,
+          answers: { q1: "A" },
+          attemptedAt: new Date("2026-09-22T00:00:00Z"),
+        });
+        assert(tx.attempts.has("aa_qa_qa1"), "canonical");
+        assert(!tx.writes.some((w) => w.startsWith("quizAttempt.create")), "no legacy");
+      },
+    );
+  });
+
+  await suite("W6-B mission fail then pass skips PMS", async () => {
+    await withFlags(
+      {
+        ENABLE_NEW_PROGRESS_WRITES: "true",
+        ENABLE_LEGACY_PROGRESS_MIRROR: "false",
+      },
+      async () => {
+        const tx = makeTx();
+        await applyProgramMissionAttemptChange(tx as never, {
+          id: "pms_fail",
+          memberId: "m1",
+          programDayId: "pd1",
+          dayNumber: 5,
+          attemptNumber: 1,
+          payload: {},
+          verdict: [],
+          passed: false,
+          pointsAwarded: 0,
+          createdAt: new Date("2026-09-22T00:00:00Z"),
+        });
+        await applyProgramMissionAttemptChange(tx as never, {
+          id: "pms_pass",
+          memberId: "m1",
+          programDayId: "pd1",
+          dayNumber: 5,
+          attemptNumber: 2,
+          payload: {},
+          verdict: [],
+          passed: true,
+          pointsAwarded: 10,
+          createdAt: new Date("2026-09-22T00:01:00Z"),
+        });
+        assert(tx.attempts.has("aa_ms_pms_fail"), "fail attempt");
+        assert(tx.attempts.has("aa_ms_pms_pass"), "pass attempt");
+        assert(!tx.writes.some((w) => w.startsWith("pms.create")), "no legacy");
+      },
+    );
+  });
+
+  await suite("W6-B reject deletes canonical and skips frozen Submission delete", async () => {
+    await withFlags(
+      {
+        ENABLE_NEW_PROGRESS_WRITES: "true",
+        ENABLE_LEGACY_PROGRESS_MIRROR: "false",
+      },
+      async () => {
+        const tx = makeTx();
+        tx.submissions.set("sub1", { id: "sub1", githubUrl: null, status: "ON_TIME" });
+        tx.attempts.set("aa_sub_sub1", { id: "aa_sub_sub1", passed: true });
+        await applyDeleteChallengeSubmission(tx as never, "sub1");
+        assert(!tx.attempts.has("aa_sub_sub1"), "canonical gone");
+        assert(tx.submissions.has("sub1"), "frozen leftover remains");
+        assert(!tx.writes.some((w) => w.includes("submission.delete")), "no legacy delete");
+      },
+    );
+  });
+
+  await suite("W6-B GitHub uniqueness uses canonical AA index not Submission", () => {
+    const src = source("src/features/submission/validate-github-url.ts");
+    assert(src.includes("payload->>'githubUrl'"), "expression unique");
+    assert(src.includes("listGithubUrlOwners"), "canonical owners");
+    assert(
+      source("prisma/migrations/20260820120000_platform_data_architecture_phase1/migration.sql").includes(
+        "attempt_github_url_unique",
+      ),
+      "db unique exists",
+    );
+  });
+
+  await suite("W6-B streak and daysCompleted source is ActivityAttempt", () => {
+    const streak = source("src/features/submission/streak-utils.ts");
+    assert(streak.includes("activityAttempt.findMany"), "canonical days");
+    assert(
+      source("src/features/submission/submit-day.ts").includes("listCanonicalChallengeDays"),
+      "submit uses canonical count",
+    );
+    assert(
+      source("src/app/actions/admin-actions.ts").includes("listCanonicalChallengeDays"),
+      "reject/reset uses canonical count",
+    );
+  });
+
+  await suite("W6-B admin/current-state consumers left Submission", () => {
+    assert(
+      source("src/features/admin/get-submissions-feed.ts").includes("listCanonicalChallengeFeed"),
+      "feed",
+    );
+    assert(
+      source("src/features/admin/get-student-detail.ts").includes("listQuizAttemptsForUser"),
+      "quiz list",
+    );
+    assert(
+      !source("src/features/admin/get-analytics-data.ts").includes("prisma.submission"),
+      "analytics",
+    );
+    assert(
+      source("src/repositories/progress.ts").includes('startsWith: "aa_ms_"'),
+      "mission times",
+    );
+    assert(
+      source("src/features/program/mentor.ts").includes("activityAttempt.update"),
+      "mentor writes AA payload",
+    );
+  });
+
   await suite("no live Submission.create outside progress-writes in product paths", () => {
     const root = join(process.cwd(), "src");
     const allowed = new Set([
@@ -538,16 +706,8 @@ async function main() {
       if (allowed.has(file)) continue;
       if (file.includes(".test.ts")) continue;
       const rel = file.slice(root.length + 1);
-      if (
-        rel.startsWith("features/submission/submit-day.ts") ||
-        rel.startsWith("features/quiz/submit-quiz.ts") ||
-        rel.startsWith("features/program/missions.ts") ||
-        rel.startsWith("features/program/bootstrap-start-day.ts") ||
-        rel.startsWith("app/actions/admin-actions.ts")
-      ) {
-        const text = readFileSync(file, "utf8");
-        assert(!re.test(text), `${rel} still creates legacy directly`);
-      }
+      const text = readFileSync(file, "utf8");
+      assert(!re.test(text), `${rel} still creates legacy directly`);
     }
   });
 

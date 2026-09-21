@@ -4,6 +4,10 @@ import { prisma } from "@/lib/db";
 import { getBalance } from "@/repositories/points";
 import { getCandidateProfile, canonicalFullNameByUserId } from "@/repositories/candidate";
 import { getAmbassadorState } from "@/repositories/ambassador";
+import {
+  listChallengeSubmissions,
+  listQuizAttemptsForUser,
+} from "@/repositories/progress";
 
 export type ChallengeStudentDetail = {
   kind: "challenge";
@@ -206,26 +210,17 @@ export async function getStudentDetail(
     };
   }
 
-  const [submissions, quizAttempts, adminActions, remarks] = await Promise.all([
-    prisma.submission.findMany({
-      where: { userId },
-      orderBy: [{ dayNumber: "asc" }, { submittedAt: "desc" }],
-      select: {
-        id: true,
-        dayNumber: true,
-        status: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        submittedAt: true,
-      },
-    }),
-    prisma.quizAttempt.findMany({
-      where: { userId },
-      orderBy: { attemptedAt: "desc" },
-      include: {
-        quiz: { select: { weekNumber: true, title: true } },
-      },
-    }),
+  const quizzes = await prisma.quiz.findMany({
+    select: { id: true, weekNumber: true, title: true },
+  });
+  const quizById = new Map(quizzes.map((q) => [q.id, q]));
+  const enrollmentId = user.enrollments[0]?.id;
+  const [submissions, quizAttemptRows, adminActions, remarks] = await Promise.all([
+    enrollmentId ? listChallengeSubmissions(enrollmentId) : Promise.resolve([]),
+    listQuizAttemptsForUser(
+      userId,
+      quizzes.map((q) => q.id),
+    ),
     prisma.adminAction.findMany({
       where: { targetUserId: userId },
       orderBy: { createdAt: "desc" },
@@ -340,13 +335,16 @@ export async function getStudentDetail(
       lateCount,
     },
     submissions,
-    quizAttempts: quizAttempts.map((attempt) => ({
-      id: attempt.id,
-      weekNumber: attempt.quiz.weekNumber,
-      quizTitle: attempt.quiz.title,
-      score: attempt.score,
-      attemptedAt: attempt.attemptedAt,
-    })),
+    quizAttempts: quizAttemptRows.map((attempt) => {
+      const quiz = quizById.get(attempt.quizId);
+      return {
+        id: attempt.id,
+        weekNumber: quiz?.weekNumber ?? 0,
+        quizTitle: quiz?.title ?? "Quiz",
+        score: attempt.score,
+        attemptedAt: attempt.attemptedAt,
+      };
+    }),
     adminActions: adminActions.map((action) => ({
       id: action.id,
       actionType: action.actionType,

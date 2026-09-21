@@ -1,6 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { applyDeleteProgramMissionAttempt, applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
+import {
+  missionSubmissionIdFromAttemptId,
+  peIdForMember,
+} from "@/repositories/ids";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   addCalendarDaysToKey,
@@ -158,15 +162,20 @@ export async function bootstrapMemberStartDay(
   const existingPassed =
     WAIVED_DAYS.length === 0
       ? []
-      : await tx.programMissionSubmission.findMany({
+      : await tx.activityAttempt.findMany({
           where: {
-            memberId,
-            dayNumber: { in: WAIVED_DAYS },
+            enrollmentId: peIdForMember(memberId),
+            id: { startsWith: "aa_ms_" },
             passed: true,
+            activity: { dayNumber: { in: WAIVED_DAYS } },
           },
-          select: { dayNumber: true },
+          select: { activity: { select: { dayNumber: true } } },
         });
-  const passedSet = new Set(existingPassed.map((s) => s.dayNumber));
+  const passedSet = new Set(
+    existingPassed
+      .map((s) => s.activity.dayNumber)
+      .filter((n): n is number => n != null),
+  );
   const missingDays = WAIVED_DAYS.filter((d) => !passedSet.has(d));
 
   let pointsAdded = 0;
@@ -180,9 +189,16 @@ export async function bootstrapMemberStartDay(
         where: { dayNumber: { in: missingDays } },
         select: { id: true, dayNumber: true, missionPoints: true },
       }),
-      tx.programMissionSubmission.findMany({
-        where: { memberId, dayNumber: { in: missingDays } },
-        select: { dayNumber: true, attemptNumber: true },
+      tx.activityAttempt.findMany({
+        where: {
+          enrollmentId: peIdForMember(memberId),
+          id: { startsWith: "aa_ms_" },
+          activity: { dayNumber: { in: missingDays } },
+        },
+        select: {
+          attemptNumber: true,
+          activity: { select: { dayNumber: true } },
+        },
       }),
     ]);
 
@@ -191,9 +207,11 @@ export async function bootstrapMemberStartDay(
     );
     const maxAttemptByDay = new Map<number, number>();
     for (const row of existingAttempts) {
-      const prev = maxAttemptByDay.get(row.dayNumber) ?? 0;
+      const dayNumber = row.activity.dayNumber;
+      if (dayNumber == null) continue;
+      const prev = maxAttemptByDay.get(dayNumber) ?? 0;
       if (row.attemptNumber > prev) {
-        maxAttemptByDay.set(row.dayNumber, row.attemptNumber);
+        maxAttemptByDay.set(dayNumber, row.attemptNumber);
       }
     }
 
@@ -240,27 +258,35 @@ export async function bootstrapMemberStartDay(
     }
   }
 
-  const passedRows = await tx.programMissionSubmission.findMany({
-    where: { memberId, passed: true },
+  const passedRows = await tx.activityAttempt.findMany({
+    where: {
+      enrollmentId: peIdForMember(memberId),
+      id: { startsWith: "aa_ms_" },
+      passed: true,
+    },
     select: {
       id: true,
-      dayNumber: true,
       payload: true,
       pointsAwarded: true,
+      activity: { select: { dayNumber: true } },
     },
   });
   const hasEarnedPass = passedRows.some((row) => !isStartDayWaiver(row.payload));
   const staleWaivers = passedRows.filter((row) => {
     if (!isStartDayWaiver(row.payload)) return false;
     if (hasEarnedPass) return false;
-    return !WAIVED_DAYS.includes(row.dayNumber);
+    const dayNumber = row.activity.dayNumber;
+    if (dayNumber == null) return false;
+    return !WAIVED_DAYS.includes(dayNumber);
   });
 
   if (staleWaivers.length > 0) {
     pointsRemoved = staleWaivers.reduce((sum, row) => sum + row.pointsAwarded, 0);
     cleanPassesRemoved = staleWaivers.length;
     for (const row of staleWaivers) {
-      await applyDeleteProgramMissionAttempt(tx, row.id);
+      const legacyId = missionSubmissionIdFromAttemptId(row.id);
+      if (!legacyId) continue;
+      await applyDeleteProgramMissionAttempt(tx, legacyId);
     }
   }
 

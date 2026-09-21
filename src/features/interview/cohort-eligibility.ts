@@ -4,6 +4,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import { collectPassSkipSets } from "@/features/program/progression";
+import { listCanonicalMissionAttempts } from "@/repositories/progress";
 import {
   BLUEPRINT_SCOPE,
   type InterviewBlueprintKey,
@@ -76,10 +77,7 @@ export async function getCohortInterviewState(
   memberId: string,
 ): Promise<CohortInterviewState> {
   const [submissions, interviews] = await Promise.all([
-    prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: { dayNumber: true, passed: true, payload: true },
-    }),
+    listCanonicalMissionAttempts({ memberIds: [memberId] }),
     prisma.generalInterview.findMany({
       where: { memberId },
       select: {
@@ -129,10 +127,7 @@ export async function getBlueprintEligibility(
   blueprint: InterviewBlueprintKey,
 ): Promise<CohortEligibility> {
   const [submissions, interviews] = await Promise.all([
-    prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: { dayNumber: true, passed: true, payload: true },
-    }),
+    listCanonicalMissionAttempts({ memberIds: [memberId] }),
     prisma.generalInterview.findMany({
       where: { memberId, blueprint },
       select: {

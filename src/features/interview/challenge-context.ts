@@ -5,6 +5,7 @@ import type {
   ChallengeContext,
   CompletedChallengeTask,
 } from "@/features/interview/types";
+import { listChallengeSubmissions } from "@/repositories/progress";
 
 /**
  * Ranks a completed task by how much interview signal it carries. Proof-of-work
@@ -66,21 +67,16 @@ function selectTasksForContext(
 /**
  * Builds verified challenge context for a candidate.
  *
- * A day is assessable only when a Submission row exists for it — there is no
- * partial-completion state in the challenge schema. A student 30 days into a
+ * A day is assessable only when a canonical challenge ActivityAttempt exists
+ * for it — there is no partial-completion state. A student 30 days into a
  * 60-day challenge therefore yields exactly 30 eligible tasks, and unsubmitted
- * days are never visible to the question planner.
+ * days are never visible to the question planner. Frozen leftover Submission
+ * rows must not resurrect a rejected/reset day.
  */
 export async function buildChallengeContext(
   userId: string,
 ): Promise<ChallengeContext> {
-  const [enrollments, submissions] = await Promise.all([
-    // Plan 078 Phase 3 ships no shim for Enrollment/Submission, and
-    // listChallengeEnrollments() drops `challengeId`, which the task join
-    // below needs. Direct prisma is correct here until a shim exists.
-    prisma.enrollment.findMany({
-      where: { userId },
-      select: {
+  const enrollmentSelect = {
         id: true,
         challengeId: true,
         domain: true,
@@ -88,55 +84,63 @@ export async function buildChallengeContext(
         currentStreak: true,
         longestStreak: true,
         challenge: { select: { title: true, totalDays: true } },
-      },
-    }),
-    prisma.submission.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        enrollmentId: true,
-        dayNumber: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        submittedAt: true,
-        dailyTask: {
-          select: {
-            id: true,
-            challengeId: true,
-            title: true,
-            problemStatement: true,
-            learningObjectives: true,
-            tags: true,
-            difficulty: true,
-          },
-        },
-      },
-      orderBy: { dayNumber: "asc" },
-    }),
-  ]);
+      } as const;
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId },
+    select: enrollmentSelect,
+  });
+  const submissionLists = await Promise.all(
+    enrollments.map(async (enrollment) => ({
+      enrollmentId: enrollment.id,
+      challengeId: enrollment.challengeId,
+      rows: await listChallengeSubmissions(enrollment.id),
+    })),
+  );
+  const dailyTasks = await prisma.dailyTask.findMany({
+    where: { challengeId: { in: enrollments.map((e) => e.challengeId) } },
+    select: {
+      id: true,
+      challengeId: true,
+      dayNumber: true,
+      title: true,
+      problemStatement: true,
+      learningObjectives: true,
+      tags: true,
+      difficulty: true,
+    },
+  });
+  const taskByKey = new Map(
+    dailyTasks.map((t) => [`${t.challengeId}:${t.dayNumber}`, t]),
+  );
 
   const enrollmentById = new Map(enrollments.map((e) => [e.id, e]));
 
-  const tasks: CompletedChallengeTask[] = submissions.map((s) => {
-    const enrollment = enrollmentById.get(s.enrollmentId);
-    return {
-      submissionId: s.id,
-      enrollmentId: s.enrollmentId,
-      challengeId: s.dailyTask.challengeId,
-      domain: enrollment?.domain ?? "",
-      challengeTitle: enrollment?.challenge.title ?? "",
-      dayNumber: s.dayNumber,
-      dailyTaskId: s.dailyTask.id,
-      title: s.dailyTask.title,
-      problemStatement: s.dailyTask.problemStatement,
-      learningObjectives: s.dailyTask.learningObjectives,
-      tags: s.dailyTask.tags,
-      difficulty: s.dailyTask.difficulty,
-      hasGithubProof: Boolean(s.githubUrl),
-      hasLinkedinProof: Boolean(s.linkedinUrl),
-      submittedAt: s.submittedAt,
-    };
-  });
+  const tasks: CompletedChallengeTask[] = [];
+  for (const list of submissionLists) {
+    const enrollment = enrollmentById.get(list.enrollmentId);
+    for (const s of list.rows) {
+      const dailyTask = taskByKey.get(`${list.challengeId}:${s.dayNumber}`);
+      if (!dailyTask) continue;
+      tasks.push({
+        submissionId: s.id,
+        enrollmentId: list.enrollmentId,
+        challengeId: dailyTask.challengeId,
+        domain: enrollment?.domain ?? "",
+        challengeTitle: enrollment?.challenge.title ?? "",
+        dayNumber: s.dayNumber,
+        dailyTaskId: dailyTask.id,
+        title: dailyTask.title,
+        problemStatement: dailyTask.problemStatement,
+        learningObjectives: dailyTask.learningObjectives,
+        tags: dailyTask.tags,
+        difficulty: dailyTask.difficulty,
+        hasGithubProof: Boolean(s.githubUrl),
+        hasLinkedinProof: Boolean(s.linkedinUrl),
+        submittedAt: s.submittedAt,
+      });
+    }
+  }
+  tasks.sort((a, b) => a.dayNumber - b.dayNumber);
 
   const completedPerEnrollment = new Map<string, number>();
   for (const task of tasks) {

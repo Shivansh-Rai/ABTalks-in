@@ -11,7 +11,7 @@ import {
 import { normalizeGithubUrl } from "./validate-github-url";
 import { validateSubmissionUrl } from "@/lib/validations/submission";
 import { validateLinkedinUrl } from "./validate-linkedin-url";
-import { computeStreakStats } from "./streak-utils";
+import { computeStreakStats, daysCompletedFromCanonical, listCanonicalChallengeDays } from "./streak-utils";
 import { resolveChallengeEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
 import { awardSubmissionSynergy } from "@/features/synergy/award-submission-synergy";
 import { withLegacyPointsMirrorFlush } from "@/repositories/points";
@@ -23,7 +23,8 @@ import {
   applyChallengeSubmissionChange,
   findChallengeSubmissionId,
 } from "@/repositories/progress-writes";
-import { mintProgressRowId } from "@/repositories/ids";
+import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
+import { mintProgressRowId, peIdForEnrollment } from "@/repositories/ids";
 
 /**
  * Relaxation window: today + previous 4 days = 5 calendar days total.
@@ -52,13 +53,25 @@ export async function assertPastDaySubmittable(
   const elapsedDay = getElapsedDayNumber(enrollment, challenge);
   if (currentDay > 0 && dayNumber >= elapsedDay) return { ok: true };
 
-  const existing = await prisma.submission.findUnique({
-    where: {
-      enrollmentId_dayNumber: { enrollmentId: enrollment.id, dayNumber },
-    },
-    select: { id: true },
-  });
-  if (existing) return { ok: true };
+  if (isNewProgressRepoEnabled()) {
+    const existingAttempt = await prisma.activityAttempt.findFirst({
+      where: {
+        enrollmentId: peIdForEnrollment(enrollment.id),
+        id: { startsWith: "aa_sub_" },
+        activity: { dayNumber },
+      },
+      select: { id: true },
+    });
+    if (existingAttempt) return { ok: true };
+  } else {
+    const existing = await prisma.submission.findUnique({
+      where: {
+        enrollmentId_dayNumber: { enrollmentId: enrollment.id, dayNumber },
+      },
+      select: { id: true },
+    });
+    if (existing) return { ok: true };
+  }
 
   const actions = await prisma.adminAction.findMany({
     where: {
@@ -238,9 +251,9 @@ export async function submitDay(input: {
         mode: isCreate ? "create" : "update",
       });
 
-      const daysCompleted = await tx.submission.count({
-        where: { enrollmentId: enrollment.id },
-      });
+      const dayRows = await listCanonicalChallengeDays(tx, enrollment.id);
+      const { daysCompleted, lastSubmittedDay } =
+        daysCompletedFromCanonical(dayRows);
 
       const { currentStreak: newStreak, longestStreak: recomputedLongest } =
         await computeStreakStats(tx, {
@@ -255,7 +268,10 @@ export async function submitDay(input: {
           daysCompleted,
           currentStreak: newStreak,
           longestStreak: recomputedLongest,
-          lastSubmittedDay: Math.max(enrollment.lastSubmittedDay ?? 0, dayNumber),
+          lastSubmittedDay: Math.max(
+            enrollment.lastSubmittedDay ?? 0,
+            lastSubmittedDay ?? dayNumber,
+          ),
           ...(completed
             ? {
                 status: EnrollmentStatus.COMPLETED,

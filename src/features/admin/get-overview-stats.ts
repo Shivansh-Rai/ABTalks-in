@@ -6,8 +6,17 @@ import {
   getRegistrationDatesSince,
 } from "@/features/admin/get-registration-dates";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
+import { listCanonicalChallengeFeed } from "@/repositories/progress";
 
-const IST = "Asia/Kolkata";
+function distinctAttemptUsers(gte: Date, lt: Date) {
+  return prisma.activityAttempt.findMany({
+    where: {
+      id: { startsWith: "aa_sub_" },
+      submittedAt: { gte, lt },
+    },
+    select: { enrollment: { select: { userId: true } } },
+  });
+}
 
 function getIstDayBounds(now: Date = new Date()) {
   const istDay = new Intl.DateTimeFormat("en-CA", {
@@ -100,38 +109,13 @@ export async function getOverviewStats() {
     talentProjectsThisWeek,
   ] = await Promise.all([
     countRegisteredUsers(),
-    prisma.submission.findMany({
-      where: { submittedAt: { gte: start, lt: end } },
-      distinct: ["userId"],
-      select: { userId: true },
-    }),
+    distinctAttemptUsers(start, end),
     prisma.enrollment.count({ where: { daysCompleted: { gte: 30 } } }),
     prisma.enrollment.count({ where: { daysCompleted: { gte: 60 } } }),
-    prisma.submission.findMany({
-      where: { submittedAt: { gte: thisWeekStart, lt: thisWeekEnd } },
-      distinct: ["userId"],
-      select: { userId: true },
-    }),
-    prisma.submission.findMany({
-      where: { submittedAt: { gte: lastWeekStart, lt: lastWeekEnd } },
-      distinct: ["userId"],
-      select: { userId: true },
-    }),
+    distinctAttemptUsers(thisWeekStart, thisWeekEnd),
+    distinctAttemptUsers(lastWeekStart, lastWeekEnd),
     getRegistrationDatesSince(windowStart),
-    prisma.submission.findMany({
-      orderBy: { submittedAt: "desc" },
-      take: 10,
-      include: {
-        enrollment: { select: { domain: true } },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            studentProfile: { select: { fullName: true } },
-          },
-        },
-      },
-    }),
+    listCanonicalChallengeFeed({ take: 10 }),
     prisma.adminAction.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -331,7 +315,7 @@ export async function getOverviewStats() {
 
   const identityIds = [
     ...disabledRecent.map((row) => row.id),
-    ...liveSubmissionsRaw.map((row) => row.user.id),
+    ...liveSubmissionsRaw.map((row) => row.userId),
     ...recentAdminActionsRaw.map((row) => row.admin?.id),
     ...recentAdminActionsRaw.map((row) => row.target?.id),
   ].filter((id): id is string => Boolean(id));
@@ -340,11 +324,13 @@ export async function getOverviewStats() {
   return {
     stats: {
       totalStudents,
-      activeToday: activeToday.length,
+      activeToday: new Set(activeToday.map((row) => row.enrollment.userId)).size,
       day30Reached,
       day60Reached,
       totalStudentsDelta: newStudentsThisWeek - newStudentsLastWeek,
-      activeTodayDelta: activeThisWeek.length - activeLastWeek.length,
+      activeTodayDelta:
+        new Set(activeThisWeek.map((row) => row.enrollment.userId)).size -
+        new Set(activeLastWeek.map((row) => row.enrollment.userId)).size,
       day30ReachedDelta: null as number | null,
       day60ReachedDelta: null as number | null,
       totalStudentsSeries,
@@ -397,14 +383,10 @@ export async function getOverviewStats() {
     ].slice(0, 8),
     liveSubmissions: liveSubmissionsRaw.map((row) => ({
       id: row.id,
-      userId: row.user.id,
-      studentName:
-        names.get(row.user.id)?.trim() ||
-        row.user.studentProfile?.fullName?.trim() ||
-        row.user.email ||
-        "Unknown",
+      userId: row.userId,
+      studentName: names.get(row.userId)?.trim() || "Unknown",
       dayNumber: row.dayNumber,
-      domain: row.enrollment.domain,
+      domain: row.domain,
       linkedinUrl: row.linkedinUrl,
       submittedAt: row.submittedAt,
       submittedAtRelative: formatDistanceToNow(row.submittedAt, { addSuffix: true }),

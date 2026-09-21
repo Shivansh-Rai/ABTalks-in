@@ -1,6 +1,7 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
+import { enrollmentIdFromPe, peIdForEnrollment } from "@/repositories/ids";
 
 type Filters = {
   domain?: Domain | "ALL";
@@ -36,20 +37,29 @@ export async function getMissingByDayCounts(
     ...(domain ? { domain } : {}),
   };
 
-  const totalEnrollments = await prisma.enrollment.count({
+  const enrollments = await prisma.enrollment.findMany({
     where: enrollmentWhere,
+    select: { id: true },
   });
-
-  const grouped = await prisma.submission.groupBy({
-    by: ["dayNumber"],
-    where: {
-      enrollment: enrollmentWhere,
-      dayNumber: { gte: 1, lte: 60 },
-    },
-    _count: { _all: true },
-  });
-
-  const byDay = new Map(grouped.map((g) => [g.dayNumber, g._count._all]));
+  const totalEnrollments = enrollments.length;
+  const peIds = enrollments.map((row) => peIdForEnrollment(row.id));
+  const attempts =
+    peIds.length === 0
+      ? []
+      : await prisma.activityAttempt.findMany({
+          where: {
+            enrollmentId: { in: peIds },
+            id: { startsWith: "aa_sub_" },
+            activity: { dayNumber: { gte: 1, lte: 60 } },
+          },
+          select: { activity: { select: { dayNumber: true } } },
+        });
+  const byDay = new Map<number, number>();
+  for (const row of attempts) {
+    const dayNumber = row.activity.dayNumber;
+    if (dayNumber == null) continue;
+    byDay.set(dayNumber, (byDay.get(dayNumber) ?? 0) + 1);
+  }
 
   const rows: MissingDaySummaryRow[] = [];
   for (let d = 1; d <= 60; d++) {
@@ -80,11 +90,24 @@ export async function getMissingStudentsForDay(
   const domain =
     filters.domain && filters.domain !== "ALL" ? filters.domain : undefined;
 
+  const submitted = await prisma.activityAttempt.findMany({
+    where: {
+      id: { startsWith: "aa_sub_" },
+      activity: { dayNumber: day },
+    },
+    select: { enrollmentId: true },
+  });
+  const submittedEnrollmentIds = submitted
+    .map((row) => enrollmentIdFromPe(row.enrollmentId))
+    .filter((id): id is string => Boolean(id));
+
   const rows = await prisma.enrollment.findMany({
     where: {
       status: { in: ["ACTIVE", "COMPLETED"] },
       ...(domain ? { domain } : {}),
-      submissions: { none: { dayNumber: day } },
+      ...(submittedEnrollmentIds.length > 0
+        ? { id: { notIn: submittedEnrollmentIds } }
+        : {}),
     },
     select: {
       id: true,

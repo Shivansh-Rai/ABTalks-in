@@ -97,8 +97,11 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     topPerformersRaw,
   ] = await Promise.all([
     getRegistrationDatesSince(start),
-    prisma.submission.findMany({
-      where: { submittedAt: { gte: start } },
+    prisma.activityAttempt.findMany({
+      where: {
+        id: { startsWith: "aa_sub_" },
+        submittedAt: { gte: start },
+      },
       select: { submittedAt: true },
     }),
     prisma.enrollment.groupBy({
@@ -111,7 +114,8 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     prisma.enrollment.findMany({
       select: { daysCompleted: true },
     }),
-    prisma.submission.findMany({
+    prisma.activityAttempt.findMany({
+      where: { id: { startsWith: "aa_sub_" }, submittedAt: { not: null } },
       select: { submittedAt: true },
     }),
     prisma.enrollment.findMany({
@@ -140,6 +144,7 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
 
   const submissionsCountByKey = new Map<string, number>();
   for (const submission of rangedSubmissions) {
+    if (!submission.submittedAt) continue;
     const key = timeKeyFor(submission.submittedAt, range);
     if (!bucketSet.has(key)) continue;
     submissionsCountByKey.set(key, (submissionsCountByKey.get(key) ?? 0) + 1);
@@ -178,6 +183,7 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   }));
 
   for (const submission of allSubmissions) {
+    if (!submission.submittedAt) continue;
     submissionsByHourBuckets[getIstHour(submission.submittedAt)]!.count += 1;
   }
 

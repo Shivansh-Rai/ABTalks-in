@@ -183,7 +183,7 @@ export function isNewProgressRepoEnabled(): boolean {
  * still write first, then ActivityAttempt + ActivityEvaluation are dual-written.
  * When on: attempt + evaluation commit first; legacy rows are compatibility
  * mirrors while ENABLE_LEGACY_PROGRESS_MIRROR is not `"false"`.
- * Dual-write stays on either way. Do not freeze legacy progress tables in W6-A.
+ * Dual-write stays on either way.
  * Do not take Enrollment / ProgramEnrollment / StudentProfile.domain authority.
  */
 export function isNewProgressWritesEnabled(): boolean {
@@ -196,7 +196,7 @@ export function isNewProgressWritesEnabled(): boolean {
  *
  * Default ON so a dark deploy (flag unset) keeps current mirroring.
  * Off only when explicitly `"false"` (W6-B): canonical attempts still write;
- * legacy progress rows freeze. Do not set false in W6-A.
+ * legacy progress rows freeze. After W6-B they are historical snapshots.
  */
 export function isLegacyProgressMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_PROGRESS_MIRROR !== "false";

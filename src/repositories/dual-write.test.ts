@@ -668,7 +668,14 @@ suite("student progress surfaces go through the progress repo", () => {
     "program day states",
   );
   const adminAnalytics = source("src/features/admin/get-analytics-data.ts");
-  assert(adminAnalytics.includes("prisma.submission"), "admin analytics stay legacy");
+  assert(
+    adminAnalytics.includes("activityAttempt"),
+    "admin analytics read canonical attempts",
+  );
+  assert(
+    !adminAnalytics.includes("prisma.submission"),
+    "admin analytics no longer read Submission",
+  );
 });
 
 suite("learning repo still has no ActivityAttempt reads", () => {

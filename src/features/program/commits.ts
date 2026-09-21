@@ -25,6 +25,7 @@ import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { programMember } from "@/repositories/legacy/program-member";
+import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
 const MAX_COMMIT_POINTS = PROGRAM_MAX_COMMIT_POINTS;
 const CHUNK_SIZE = 10;
@@ -470,9 +471,8 @@ async function evaluateMemberAtRisk(
 ): Promise<AtRiskMember["reasons"]> {
   const reasons: AtRiskMember["reasons"] = [];
 
-  const submissions = await prisma.programMissionSubmission.findMany({
-    where: { memberId: member.id },
-    select: { dayNumber: true, passed: true, payload: true, createdAt: true },
+  const submissions = await listCanonicalMissionAttempts({
+    memberIds: [member.id],
   });
   const { passedDays } = collectPassSkipSets(submissions);
   const progressDay = getMemberProgressDay(passedDays);
@@ -557,9 +557,8 @@ export async function getMemberAtRiskStatus(
     return { atRisk: false, reasons: [], behindBy: 0 };
   }
 
-  const submissions = await prisma.programMissionSubmission.findMany({
-    where: { memberId: member.id },
-    select: { dayNumber: true, passed: true, payload: true },
+  const submissions = await listCanonicalMissionAttempts({
+    memberIds: [member.id],
   });
   const { passedDays } = collectPassSkipSets(submissions);
   const progressDay = getMemberProgressDay(passedDays);

@@ -1,7 +1,7 @@
 import type { Domain } from "@prisma/client";
-import { prisma } from "@/lib/db";
 import type { ValidateGithubResult } from "@/features/submission/validate-github-url";
 import {
+  listGithubUrlOwners,
   normalizeGithubUrl,
   validateGithubUrl,
 } from "@/features/submission/validate-github-url";
@@ -72,14 +72,10 @@ export async function checkClaudeCommitDuplicate(
 ): Promise<ValidateGithubResult> {
   const normalized = normalizeGithubUrl(url.trim());
 
-  const existing = await prisma.submission.findFirst({
-    where: {
-      enrollmentId,
-      githubUrl: normalized,
-      dayNumber: { not: dayNumber },
-    },
-    select: { dayNumber: true },
-  });
+  const owners = await listGithubUrlOwners(normalized);
+  const existing = owners.find(
+    (row) => row.enrollmentId === enrollmentId && row.dayNumber !== dayNumber,
+  );
 
   if (existing) {
     return {

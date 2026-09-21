@@ -8,7 +8,7 @@ import { prisma, writeClient } from "@/lib/db";
 import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { isNewCandidateWritesEnabled } from "@/lib/feature-flags";
-import { computeStreakStats } from "@/features/submission/streak-utils";
+import { computeStreakStats, daysCompletedFromCanonical, listCanonicalChallengeDays } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
@@ -20,6 +20,12 @@ import {
   applyDeleteChallengeSubmission,
   applyDeleteEnrollmentChallengeAttempts,
 } from "@/repositories/progress-writes";
+import {
+  attemptIdForSubmission,
+  enrollmentIdFromPe,
+  peIdForEnrollment,
+  submissionIdFromAttemptId,
+} from "@/repositories/ids";
 import {
   anonymizeUser,
   AnonymizeUserError,
@@ -76,12 +82,17 @@ export async function resetProgressAction(input: {
       // Serialize reset against every balance writer before reading the ledger.
       await lockWalletBalance(tx, targetUserId);
 
-      const submissions = await tx.submission.findMany({
-        where: { enrollmentId: enrollment.id },
+      const attempts = await tx.activityAttempt.findMany({
+        where: {
+          enrollmentId: peIdForEnrollment(enrollment.id),
+          id: { startsWith: "aa_sub_" },
+        },
         select: { id: true },
       });
       const pointsToRemove = await submissionAwardTotal(tx, {
-        submissionIds: submissions.map((s) => s.id),
+        submissionIds: attempts
+          .map((row) => submissionIdFromAttemptId(row.id))
+          .filter((id): id is string => Boolean(id)),
         enrollmentId: enrollment.id,
       });
       if (pointsToRemove > 0) {
@@ -356,33 +367,43 @@ export async function rejectSubmissionAction(input: {
 
     await withLegacyPointsMirrorFlush(() =>
       writeClient().$transaction(async (tx) => {
-      const submission = await tx.submission.findUnique({
-        where: { id: submissionId },
+      const attempt = await tx.activityAttempt.findUnique({
+        where: { id: attemptIdForSubmission(submissionId) },
         select: {
-          id: true,
-          userId: true,
-          enrollmentId: true,
-          dayNumber: true,
-          githubUrl: true,
-          enrollment: {
-            select: {
-              id: true,
-              startedAt: true,
-              challenge: { select: { startsAt: true } },
-            },
-          },
+          payload: true,
+          enrollment: { select: { id: true, userId: true } },
+          activity: { select: { dayNumber: true } },
         },
       });
-      if (!submission) throw new Error("Submission not found");
+      if (!attempt) throw new Error("Submission not found");
+      const enrollmentId = enrollmentIdFromPe(attempt.enrollment.id);
+      if (!enrollmentId) throw new Error("Submission not found");
+      const enrollmentRow = await tx.enrollment.findUnique({
+        where: { id: enrollmentId },
+        select: {
+          id: true,
+          startedAt: true,
+          challenge: { select: { startsAt: true } },
+        },
+      });
+      if (!enrollmentRow) throw new Error("Submission not found");
 
-      targetUserId = submission.userId;
+      targetUserId = attempt.enrollment.userId;
+      const payload =
+        attempt.payload &&
+        typeof attempt.payload === "object" &&
+        !Array.isArray(attempt.payload)
+          ? (attempt.payload as Record<string, unknown>)
+          : {};
+      const githubUrl =
+        typeof payload.githubUrl === "string" ? payload.githubUrl : null;
 
       const pointsToRemove = await submissionAwardTotal(tx, {
         submissionIds: [submissionId],
       });
       if (pointsToRemove > 0) {
         const applied = await applyPointsChange(tx, {
-          userId: submission.userId,
+          userId: attempt.enrollment.userId,
           amount: -pointsToRemove,
           mode: "debit_clamp",
           sourceType: PointsSourceType.RECONCILIATION,
@@ -399,42 +420,33 @@ export async function rejectSubmissionAction(input: {
 
       await applyDeleteChallengeSubmission(tx, submissionId);
 
-      const remainingCount = await tx.submission.count({
-        where: { enrollmentId: submission.enrollmentId },
-      });
-
-      const lastSubmission = await tx.submission.findFirst({
-        where: { enrollmentId: submission.enrollmentId },
-        orderBy: { dayNumber: "desc" },
-        select: { dayNumber: true },
-      });
+      const remainingRows = await listCanonicalChallengeDays(tx, enrollmentId);
+      const { daysCompleted, lastSubmittedDay } =
+        daysCompletedFromCanonical(remainingRows);
 
       await tx.enrollment.update({
-        where: { id: submission.enrollmentId },
+        where: { id: enrollmentId },
         data: {
-          daysCompleted: remainingCount,
-          lastSubmittedDay: lastSubmission?.dayNumber ?? null,
-          status: remainingCount >= 60 ? "COMPLETED" : "ACTIVE",
-          completedAt: remainingCount >= 60 ? new Date() : null,
+          daysCompleted,
+          lastSubmittedDay,
+          status: daysCompleted >= 60 ? "COMPLETED" : "ACTIVE",
+          completedAt: daysCompleted >= 60 ? new Date() : null,
         },
       });
 
       const { currentStreak, longestStreak } = await computeStreakStats(tx, {
-        enrollmentId: submission.enrollmentId,
-        endDay: getCurrentDayNumber(
-          submission.enrollment,
-          submission.enrollment.challenge,
-        ),
+        enrollmentId,
+        endDay: getCurrentDayNumber(enrollmentRow, enrollmentRow.challenge),
       });
 
       await tx.enrollment.update({
-        where: { id: submission.enrollmentId },
+        where: { id: enrollmentId },
         data: {
           currentStreak,
           longestStreak,
         },
       });
-      await dualWriteChallengeEnrollmentById(tx, submission.enrollmentId);
+      await dualWriteChallengeEnrollmentById(tx, enrollmentId);
 
       await tx.adminAction.create({
         data: {
@@ -444,8 +456,8 @@ export async function rejectSubmissionAction(input: {
           actionType: "REJECT_SUBMISSION",
           metadata: {
             submissionId,
-            dayNumber: submission.dayNumber,
-            githubUrl: submission.githubUrl,
+            dayNumber: attempt.activity.dayNumber,
+            githubUrl,
           },
           reason,
         },

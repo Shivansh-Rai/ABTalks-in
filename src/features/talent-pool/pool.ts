@@ -15,6 +15,7 @@ import {
   searchableUserWhere,
 } from "@/repositories/talent";
 import { contactAccessFor } from "@/features/hire/contact-access";
+import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
 export type MissionPortfolioDay = {
   dayNumber: number;
@@ -182,17 +183,7 @@ async function buildMissionPortfolio(
         missionType: true,
       },
     }),
-    prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: {
-        dayNumber: true,
-        attemptNumber: true,
-        passed: true,
-        aiFeedback: true,
-        payload: true,
-      },
-      orderBy: [{ dayNumber: "asc" }, { attemptNumber: "asc" }],
-    }),
+    listCanonicalMissionAttempts({ memberIds: [memberId] }),
   ]);
 
   const byDay = new Map<number, typeof submissions>();
