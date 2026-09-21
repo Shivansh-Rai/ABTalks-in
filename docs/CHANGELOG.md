@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [env|convention] W2 recruiter visibility: CandidateVisibility is the sole write boundary (applyVisibilityChange); ENABLE_NEW_VISIBILITY_WRITES (default off) commits CV before the dual-write savepoint; recruiterVisibilityConsentAt is historical label only, not a gate; V4 accepts platform_default_profile; dual-write stays; W3 not started
 - 2026-09-21 [env] W1-B COMPLETE: production ENABLE_LEGACY_POINTS_MIRROR=false W1B_CUTOVER_TIME=2026-09-21T11:07:46.000Z; PointsTransaction sole ledger, PointsAccount sole wallet; User/SP/SynergyEvent frozen; dual-write stays; W2 not started
 - 2026-09-21 [env|convention] W1-B Points legacy-mirror switch ENABLE_LEGACY_POINTS_MIRROR (default on); applyPointsChange skips User/SP/SynergyEvent when false; recon/drift treat User/event diffs as informational in that mode; dual-write stays on; W2 not started
 - 2026-09-18 [rule] Legal proprietor and Grievance Officer name on /terms, /privacy, /contact is Suman Shukla (Divya Shukla removed).

@@ -18,7 +18,8 @@ import {
   UserType,
 } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import { isDualWriteEnabled } from "@/lib/feature-flags";
+import { isDualWriteEnabled, isNewVisibilityWritesEnabled } from "@/lib/feature-flags";
+import { applyVisibilityChange } from "@/repositories/visibility";
 import {
   activityIdForDailyTask,
   activityIdForProgramDay,
@@ -77,20 +78,7 @@ export async function runDualWrite(
 }
 
 async function ensureCandidateVisibility(tx: Tx, userId: string): Promise<void> {
-  const existing = await tx.candidateVisibility.findUnique({
-    where: { userId },
-    select: { withdrawnAt: true },
-  });
-  if (existing?.withdrawnAt) return;
-  if (existing) return;
-  await tx.candidateVisibility.create({
-    data: {
-      userId,
-      searchableByRecruiters: true,
-      consentSource: "platform_default",
-      consentedAt: new Date(),
-    },
-  });
+  await applyVisibilityChange(tx, { userId, kind: "challenge_enroll" });
 }
 
 /**
@@ -103,37 +91,10 @@ async function ensureProgramMemberDiscoverable(
   userId: string,
   consentedAt: Date | null,
 ): Promise<void> {
-  const existing = await tx.candidateVisibility.findUnique({
-    where: { userId },
-    select: {
-      withdrawnAt: true,
-      searchableByRecruiters: true,
-      consentSource: true,
-      consentedAt: true,
-    },
-  });
-  if (existing?.withdrawnAt) return;
-  const source = consentedAt ? "program_apply_migrated" : "platform_default";
-  if (!existing) {
-    await tx.candidateVisibility.create({
-      data: {
-        userId,
-        searchableByRecruiters: true,
-        consentSource: source,
-        consentedAt: consentedAt ?? new Date(),
-      },
-    });
-    return;
-  }
-  if (existing.searchableByRecruiters) return;
-  await tx.candidateVisibility.update({
-    where: { userId },
-    data: {
-      searchableByRecruiters: true,
-      consentSource: existing.consentSource ?? source,
-      consentedAt: existing.consentedAt ?? consentedAt ?? new Date(),
-      withdrawnAt: null,
-    },
+  await applyVisibilityChange(tx, {
+    userId,
+    kind: "program_member",
+    consentedAt,
   });
 }
 
@@ -171,6 +132,10 @@ export async function dualWriteChallengeEnrollment(
     completedAt: Date | null;
   },
 ): Promise<void> {
+  const visibilityFirst = isNewVisibilityWritesEnabled();
+  if (visibilityFirst) {
+    await ensureCandidateVisibility(tx, enrollment.userId);
+  }
   await runDualWrite(tx, "enrollment", async () => {
     const cohort = await tx.cohort.findUnique({
       where: { slug: cohortSlugForDomain(enrollment.domain) },
@@ -193,7 +158,9 @@ export async function dualWriteChallengeEnrollment(
         completedAt: enrollment.completedAt,
       },
     });
-    await ensureCandidateVisibility(tx, enrollment.userId);
+    if (!visibilityFirst) {
+      await ensureCandidateVisibility(tx, enrollment.userId);
+    }
   });
 }
 
@@ -220,6 +187,19 @@ export async function dualWriteProgramMember(
   tx: Tx,
   memberId: string,
 ): Promise<void> {
+  const visibilityFirst = isNewVisibilityWritesEnabled();
+  if (visibilityFirst) {
+    const member = await tx.programMember.findUnique({
+      where: { id: memberId },
+      select: { userId: true, recruiterVisibilityConsentAt: true },
+    });
+    if (!member) throw new Error(`Missing ProgramMember ${memberId}`);
+    await ensureProgramMemberDiscoverable(
+      tx,
+      member.userId,
+      member.recruiterVisibilityConsentAt,
+    );
+  }
   await runDualWrite(tx, "programMember", async () => {
     const member = await tx.programMember.findUnique({
       where: { id: memberId },
@@ -268,11 +248,13 @@ export async function dualWriteProgramMember(
         skipTokensUsed: member.skipTokensUsed,
       },
     });
-    await ensureProgramMemberDiscoverable(
-      tx,
-      member.userId,
-      member.recruiterVisibilityConsentAt,
-    );
+    if (!visibilityFirst) {
+      await ensureProgramMemberDiscoverable(
+        tx,
+        member.userId,
+        member.recruiterVisibilityConsentAt,
+      );
+    }
   });
 }
 

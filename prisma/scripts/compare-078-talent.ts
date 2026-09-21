@@ -146,8 +146,14 @@ async function main() {
           AND NOT EXISTS (
             SELECT 1 FROM "ProgramMember" m WHERE m."userId" = v."userId")
           AND (
-            v."consentSource" IS DISTINCT FROM 'platform_default'
-            OR u."createdAt" < TIMESTAMPTZ '${cutoffIso}'
+            (
+              v."consentSource" IS DISTINCT FROM 'platform_default'
+              AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
+            )
+            OR (
+              u."createdAt" < TIMESTAMPTZ '${cutoffIso}'
+              AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
+            )
           )) AS historical_non_cohort_exposed,
       (SELECT COUNT(*)::int FROM "CandidateVisibility" v
         WHERE v."searchableByRecruiters" = true
@@ -158,6 +164,7 @@ async function main() {
       (SELECT COUNT(*)::int FROM "CandidateVisibility" v
         WHERE v."searchableByRecruiters" = true
           AND v."consentSource" IS DISTINCT FROM 'platform_default'
+          AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
           AND NOT EXISTS (
             SELECT 1 FROM "ProgramMember" m WHERE m."userId" = v."userId"))
         AS visibility_leak,
@@ -189,8 +196,14 @@ async function main() {
        AND v."withdrawnAt" IS NULL
        AND NOT EXISTS (SELECT 1 FROM "ProgramMember" m WHERE m."userId" = v."userId")
        AND (
-         v."consentSource" IS DISTINCT FROM 'platform_default'
-         OR u."createdAt" < TIMESTAMPTZ '${cutoffIso}'
+         (
+           v."consentSource" IS DISTINCT FROM 'platform_default'
+           AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
+         )
+         OR (
+           u."createdAt" < TIMESTAMPTZ '${cutoffIso}'
+           AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
+         )
        )
      ORDER BY u."createdAt" ASC
      LIMIT 20

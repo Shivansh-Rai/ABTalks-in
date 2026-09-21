@@ -82,6 +82,7 @@ async function main() {
     `SELECT v."userId" FROM "CandidateVisibility" v
      WHERE v."searchableByRecruiters" = true
        AND v."consentSource" IS DISTINCT FROM 'platform_default'
+       AND v."consentSource" IS DISTINCT FROM 'platform_default_profile'
        AND ${sqlIn('v."userId"', sample)}
        AND NOT EXISTS (
          SELECT 1 FROM "ProgramMember" m

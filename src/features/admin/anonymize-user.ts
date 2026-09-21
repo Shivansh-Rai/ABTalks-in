@@ -8,6 +8,7 @@ import {
   dualWriteChallengeEnrollmentById,
   dualWriteProgramMember,
 } from "@/repositories/dual-write";
+import { applyVisibilityChange } from "@/repositories/visibility";
 
 type Tx = Prisma.TransactionClient;
 
@@ -126,16 +127,15 @@ export async function anonymizeUser(
 
   await tx.phoneVerification.deleteMany({ where: { userId } });
 
-  // Admin-only moderation stop. `withdrawnAt` is what keeps it durable: both
-  // dual-write visibility helpers return early on it, so no later enrollment
-  // can make this user searchable again. There are no per-field flags to clear
-  // — what a recruiter sees is the platform's RECRUITER_FIELD_POLICY (plan 133).
-  await tx.candidateVisibility.updateMany({
-    where: { userId },
-    data: {
-      searchableByRecruiters: false,
-      withdrawnAt: now,
-    },
+  // Admin-only moderation stop. `withdrawnAt` is what keeps it durable: W2
+  // applyVisibilityChange and both dual-write helpers return early on it, so
+  // no later enrollment can make this user searchable again. There are no
+  // per-field flags to clear — what a recruiter sees is RECRUITER_FIELD_POLICY
+  // (plan 133).
+  await applyVisibilityChange(tx, {
+    userId,
+    kind: "admin_withdraw",
+    at: now,
   });
 
   const activeEnrollments = await tx.enrollment.findMany({

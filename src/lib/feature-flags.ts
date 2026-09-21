@@ -149,6 +149,32 @@ export function isNewPointsWritesEnabled(): boolean {
 export function isLegacyPointsMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_POINTS_MIRROR !== "false";
 }
+
+/**
+ * W2 write authority for recruiter discovery. Separate from ENABLE_NEW_TALENT
+ * (reads). Off unless explicitly `"true"`.
+ *
+ * When off (dark deploy): CandidateVisibility still writes inside the 078
+ * dual-write savepoint, matching today's enrolment path.
+ * When on: CandidateVisibility commits in the outer transaction first.
+ * Dual-write stays on either way. Do not use this as a candidate opt-in.
+ */
+export function isNewVisibilityWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_VISIBILITY_WRITES === "true";
+}
+
+/**
+ * W2 compatibility handling of ProgramMember.recruiterVisibilityConsentAt.
+ * Independent of ENABLE_DUAL_WRITE.
+ *
+ * Default ON so a dark deploy (flag unset) keeps current labelling behaviour
+ * (read the historical timestamp; never invent a consent that was not asked).
+ * Off only when explicitly `"false"`: still do not stamp the column, and skip
+ * the labelled-from-legacy-consent path.
+ */
+export function isLegacyVisibilityMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_VISIBILITY_MIRROR !== "false";
+}
 export function isNewCredentialRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_CREDENTIAL === "true";
 }

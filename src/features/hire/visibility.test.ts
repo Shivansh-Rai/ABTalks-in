@@ -635,9 +635,9 @@ suite("only platform and admin code writes CandidateVisibility", () => {
       ),
   );
   const allowed = new Set([
+    "src/repositories/visibility.ts",
     "src/repositories/dual-write.ts",
     "src/features/admin/anonymize-user.ts",
-    // The platform default for a usable profile — create-only, pinned below.
     "src/repositories/discovery-record.ts",
   ]);
   const unexpected = writers.filter((p) => !allowed.has(p));
@@ -665,16 +665,11 @@ suite("the usable-profile default can only ever create a record", () => {
   const src = stripComments(
     readFileSync(join(process.cwd(), "src/repositories/discovery-record.ts"), "utf8"),
   );
-  const writes = [...src.matchAll(/candidateVisibility\.(\w+)\(/g)].map((m) => m[1]);
   assert(
-    writes.every((w) => w === "findUnique" || w === "createMany"),
-    `only findUnique and createMany are allowed, saw: ${writes.join(", ")}`,
+    src.includes('kind: "usable_profile"') && src.includes("applyVisibilityChange"),
+    "profile default goes through applyVisibilityChange usable_profile",
   );
-  assert(src.includes("skipDuplicates: true"), "a racing save must not fail or duplicate");
-  assert(
-    /if \(existing\) return false;/.test(src),
-    "any existing record — hidden, withdrawn, closed or open — is left exactly as it is",
-  );
+  assert(!src.includes("candidateVisibility."), "discovery-record does not write the table directly");
   for (const clause of ['fullName: { not: "" }', "claimedByCandidate: true"]) {
     assert(src.includes(clause), `usable-profile rule mirrors listProfileCandidates (${clause})`);
   }
@@ -686,6 +681,14 @@ suite("the usable-profile default can only ever create a record", () => {
   assert(
     src.includes("role: Role.STUDENT") && src.includes("deletedAt: null") && src.includes("disabledAt: null"),
     "live candidate accounts only — never a recruiter, admin, deleted or disabled account",
+  );
+  const vis = stripComments(
+    readFileSync(join(process.cwd(), "src/repositories/visibility.ts"), "utf8"),
+  );
+  const usableFn = vis.slice(vis.indexOf('input.kind === "usable_profile"'));
+  assert(
+    usableFn.includes("already_exists") && usableFn.includes("candidateVisibility.create"),
+    "usable_profile creates only when no row exists",
   );
   const repo = stripComments(
     readFileSync(join(process.cwd(), "src/repositories/candidate-detail.ts"), "utf8"),
@@ -750,17 +753,24 @@ suite("moderation stays admin-only, server-side and durable", () => {
   );
   assert(anonymize.includes("deletedAt: now"), "deletion stamps User.deletedAt");
   assert(
-    anonymize.includes("searchableByRecruiters: false") &&
-      anonymize.includes("withdrawnAt: now"),
+    anonymize.includes("kind: \"admin_withdraw\"") &&
+      anonymize.includes("applyVisibilityChange"),
     "deletion withdraws the candidate from discovery",
   );
   assert(anonymize.includes("adminAction.create"), "deletion is audited");
 
   // `withdrawnAt` is the hard stop: neither dual-write helper may reopen it.
+  const visSrc = repoSrc("visibility.ts");
+  assert(
+    visSrc.includes('if (existing?.withdrawnAt)') &&
+      visSrc.includes('skipReason: "withdrawn"'),
+    "applyVisibilityChange must stop on withdrawnAt",
+  );
   const dual = repoSrc("dual-write.ts");
   assert(
-    dual.split("if (existing?.withdrawnAt) return;").length - 1 === 2,
-    "both dual-write visibility helpers must stop on withdrawnAt",
+    dual.includes("kind: \"challenge_enroll\"") &&
+      dual.includes("kind: \"program_member\""),
+    "both dual-write visibility helpers go through applyVisibilityChange",
   );
 
   // The only way in is an admin action behind requireAdmin().
