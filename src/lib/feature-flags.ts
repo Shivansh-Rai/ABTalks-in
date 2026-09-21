@@ -161,8 +161,8 @@ export function isNewAmbassadorWritesEnabled(): boolean {
  * W5-A StudentProfile ambassador compatibility mirror.
  * Default ON so a dark deploy (flag unset) keeps current mirroring.
  * Off only when explicitly `"false"` (W5-B): canonical ambassador still writes;
- * StudentProfile ambassador columns freeze. Identity, points, and domain on
- * the same table are not gated here.
+ * StudentProfile ambassador columns freeze except the anonymize/wipe compliance
+ * scrub. Identity, points, and domain on the same table are not gated here.
  */
 export function isLegacyAmbassadorMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_AMBASSADOR_MIRROR !== "false";

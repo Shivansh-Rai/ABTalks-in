@@ -529,6 +529,130 @@ async function main() {
     );
   });
 
+  const w5bFlags = {
+    ENABLE_NEW_AMBASSADOR_WRITES: "true",
+    ENABLE_LEGACY_AMBASSADOR_MIRROR: "false",
+    AMBASSADOR_FAIL_LEGACY_MIRROR: undefined,
+  };
+
+  await suite("W5-B apply: canonical changes, SP ambassador frozen", async () => {
+    await withFlags(w5bFlags, async () => {
+      const tx = makeTx();
+      const before = tx.getSp()!;
+      const at = new Date("2026-09-21T10:00:00.000Z");
+      const result = await applyAmbassadorChange(tx as never, "u1", {
+        kind: "apply",
+        at,
+      });
+      assert(result.state.isCandidate === true, "canonical candidate");
+      assert(result.state.appliedAt?.toISOString() === at.toISOString(), "appliedAt");
+      assert(tx.getCaa("u1")?.isCandidate === true, "row");
+      assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "SP flag frozen");
+      assert(tx.getSp()?.ambassadorAppliedAt === null, "SP applied frozen");
+      assert(tx.getSp()?.fullName === before.fullName, "identity");
+      assert(tx.getSp()?.synergyPoints === 42, "points");
+      assert(tx.getSp()?.domain === Domain.SE, "domain");
+      assert(
+        !tx.writes.some((w) => w.startsWith("sp.update")),
+        `no SP write, got ${tx.writes.join(",")}`,
+      );
+    });
+  });
+
+  await suite("W5-B retry apply keeps appliedAt and frozen SP", async () => {
+    await withFlags(w5bFlags, async () => {
+      const tx = makeTx();
+      const first = new Date("2026-09-21T10:00:00.000Z");
+      await applyAmbassadorChange(tx as never, "u1", { kind: "apply", at: first });
+      const retry = await applyAmbassadorChange(tx as never, "u1", {
+        kind: "apply",
+        at: new Date("2026-09-21T11:00:00.000Z"),
+      });
+      assert(retry.created === false, "no duplicate");
+      assert(retry.state.appliedAt?.toISOString() === first.toISOString(), "timestamp");
+      assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "SP still frozen");
+    });
+  });
+
+  await suite("W5-B dismiss sets canonical dismissedAt, keeps candidate, freezes SP", async () => {
+    await withFlags(w5bFlags, async () => {
+      const tx = makeTx();
+      await applyAmbassadorChange(tx as never, "u1", {
+        kind: "apply",
+        at: new Date("2026-09-21T10:00:00.000Z"),
+      });
+      const dismissed = new Date("2026-09-21T12:00:00.000Z");
+      const result = await applyAmbassadorChange(tx as never, "u1", {
+        kind: "dismiss",
+        at: dismissed,
+      });
+      assert(result.state.isCandidate === true, "still candidate");
+      assert(result.state.dismissedAt?.toISOString() === dismissed.toISOString(), "dismissed");
+      assert(tx.getSp()?.ambassadorDismissedAt === null, "SP dismissed frozen");
+    });
+  });
+
+  await suite("W5-B dismiss without apply is banner-dismiss only and freezes SP", async () => {
+    await withFlags(w5bFlags, async () => {
+      const tx = makeTx();
+      const at = new Date("2026-09-21T12:00:00.000Z");
+      const result = await applyAmbassadorChange(tx as never, "u1", {
+        kind: "dismiss",
+        at,
+      });
+      assert(result.state.isCandidate === false, "not candidate");
+      assert(result.state.appliedAt === null, "no appliedAt");
+      assert(result.state.dismissedAt?.toISOString() === at.toISOString(), "dismissed");
+      assert(tx.getSp()?.ambassadorDismissedAt === null, "SP frozen");
+    });
+  });
+
+  await suite("W5-B anonymize wipe scrubs canonical and frozen SP ambassador", async () => {
+    await withFlags(w5bFlags, async () => {
+      const tx = makeTx({
+        sp: {
+          userId: "u1",
+          fullName: "Ada",
+          phone: "+91000",
+          referralCode: "REF1",
+          skills: ["sql"],
+          college: "IIT",
+          organization: null,
+          synergyPoints: 42,
+          domain: Domain.SE,
+          isCampusAmbassadorCandidate: true,
+          ambassadorAppliedAt: new Date("2026-01-01T00:00:00.000Z"),
+          ambassadorDismissedAt: null,
+        },
+      });
+      await applyAmbassadorChange(tx as never, "u1", {
+        kind: "apply",
+        at: new Date("2026-09-21T10:00:00.000Z"),
+      });
+      const wiped = await applyAmbassadorChange(tx as never, "u1", { kind: "wipe" });
+      assert(wiped.state.isCandidate === false, "canonical cleared");
+      assert(tx.getCaa("u1")?.isCandidate === false, "row cleared");
+      assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "compliance SP scrub");
+      assert(tx.getSp()?.ambassadorAppliedAt === null, "SP applied scrubbed");
+      assert(tx.getSp()?.synergyPoints === 42, "points untouched");
+      assert(tx.getSp()?.domain === Domain.SE, "domain untouched");
+      assert(tx.getSp()?.fullName === "Ada", "identity untouched");
+    });
+  });
+
+  await suite("W5-B current-state readers do not use SP fallback while writes are on", () => {
+    const amb = source("src/repositories/ambassador.ts");
+    const getFn = amb.slice(amb.indexOf("export async function getAmbassadorState"));
+    assert(getFn.includes("isNewAmbassadorWritesEnabled()"), "no SP current-state when writes on");
+    const dash = source("src/features/dashboard/get-dashboard-data.ts");
+    assert(dash.includes("getAmbassadorState"), "dashboard canonical");
+    assert(!dash.includes("studentProfile") || dash.includes("domain"), "dashboard domain only from SP");
+    const admin = source("src/app/admin/campus-ambassadors/page.tsx");
+    assert(admin.includes("listAmbassadorCandidates"), "admin canonical");
+    const detail = source("src/features/admin/get-student-detail.ts");
+    assert(detail.includes("getAmbassadorState"), "detail canonical");
+  });
+
   console.log(`\n${passed} passed, ${failed} failed\n`);
   if (failed > 0) process.exit(1);
 }

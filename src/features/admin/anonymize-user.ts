@@ -119,6 +119,10 @@ export async function anonymizeUser(
     isReadyForInterview: false,
   };
 
+  // Canonical wipe always. W5-B still scrubs frozen SP ambassador snapshots
+  // here (workflow data on a deleted account), even when the apply/dismiss
+  // mirror is off. CandidateProfile leftover ambassador columns stay in
+  // candidateWipe below.
   await applyAmbassadorChange(tx, userId, { kind: "wipe", at: now });
 
   await tx.candidateProfile.updateMany({

@@ -155,14 +155,58 @@ async function main() {
 
   console.log(JSON.stringify(report, null, 2));
 
-  const unexplained =
-    legacyMissingCanonical +
-    mismatch +
-    canonicalWithoutUser +
-    duplicates;
-  if (unexplained !== 0) {
+  if (canonicalWithoutUser !== 0 || duplicates !== 0) {
     throw new Error(
-      `W5-A ambassador recon unexplained drift = ${unexplained} (missing=${legacyMissingCanonical} mismatch=${mismatch} noUser=${canonicalWithoutUser} dupes=${duplicates})`,
+      `W5 ambassador recon blocking: noUser=${canonicalWithoutUser} dupes=${duplicates}`,
+    );
+  }
+
+  const invalidCanonical = n(await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT COUNT(*)::bigint AS n
+    FROM "CampusAmbassadorApplication"
+    WHERE "isCandidate" = true AND "appliedAt" IS NULL
+  `);
+  if (invalidCanonical !== 0) {
+    throw new Error(`W5 ambassador recon invalid canonical states=${invalidCanonical}`);
+  }
+
+  if (isLegacyAmbassadorMirrorEnabled()) {
+    const unexplained = legacyMissingCanonical + mismatch;
+    if (unexplained !== 0) {
+      throw new Error(
+        `W5-A ambassador recon unexplained drift = ${unexplained} (missing=${legacyMissingCanonical} mismatch=${mismatch})`,
+      );
+    }
+  } else {
+    const frozenAmbassadorCandidateDrift = n(await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(*)::bigint AS n
+      FROM "CampusAmbassadorApplication" caa
+      JOIN "StudentProfile" sp ON sp."userId" = caa."userId"
+      WHERE caa."isCandidate" IS DISTINCT FROM sp."isCampusAmbassadorCandidate"
+    `);
+    const frozenAmbassadorAppliedAtDrift = n(await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(*)::bigint AS n
+      FROM "CampusAmbassadorApplication" caa
+      JOIN "StudentProfile" sp ON sp."userId" = caa."userId"
+      WHERE caa."appliedAt" IS DISTINCT FROM sp."ambassadorAppliedAt"
+    `);
+    const frozenAmbassadorDismissedAtDrift = n(await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(*)::bigint AS n
+      FROM "CampusAmbassadorApplication" caa
+      JOIN "StudentProfile" sp ON sp."userId" = caa."userId"
+      WHERE caa."dismissedAt" IS DISTINCT FROM sp."ambassadorDismissedAt"
+    `);
+    console.log(
+      JSON.stringify(
+        {
+          frozenAmbassadorCandidateDrift,
+          frozenAmbassadorAppliedAtDrift,
+          frozenAmbassadorDismissedAtDrift,
+          note: "CP/CAA ≠ SP ambassador drift is expected after W5-B. Do not remirror.",
+        },
+        null,
+        2,
+      ),
     );
   }
 }

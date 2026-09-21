@@ -1,5 +1,5 @@
 /**
- * W5-A Campus Ambassador write/read boundary.
+ * W5 Campus Ambassador write/read boundary.
  *
  * ENABLE_NEW_AMBASSADOR_WRITES off (dark deploy): StudentProfile ambassador
  * columns stay the write that dual-writes onto CampusAmbassadorApplication.
@@ -7,8 +7,9 @@
  * StudentProfile ambassador columns are a compatibility mirror only while
  * ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
  *
- * W5-B (not this slice) sets ENABLE_LEGACY_AMBASSADOR_MIRROR=false.
- * Does not touch W4 identity, W1 points, or StudentProfile.domain.
+ * W5-B: ENABLE_LEGACY_AMBASSADOR_MIRROR=false freezes those three SP columns.
+ * Apply/dismiss do not write them. Anonymize wipe still scrubs them as a
+ * documented compliance exception. Identity, points, and domain are untouched.
  */
 import "server-only";
 import type { Domain, Prisma, PrismaClient } from "@prisma/client";
@@ -117,6 +118,7 @@ async function loadCurrent(tx: Tx, userId: string): Promise<AmbassadorState> {
       dismissedAt: canonical.dismissedAt,
     };
   }
+  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
   const sp = await tx.studentProfile.findUnique({
     where: { userId },
     select: {
@@ -262,6 +264,16 @@ export async function applyAmbassadorChange(
       });
     },
   );
+  if (input.kind === "wipe" && !isLegacyAmbassadorMirrorEnabled()) {
+    await tx.studentProfile.updateMany({
+      where: { userId },
+      data: ambassadorStudentProfileData(state),
+    });
+    logger.info(
+      "[ambassador] compliance wipe of frozen StudentProfile ambassador snapshots",
+      { userId },
+    );
+  }
   return {
     state,
     created,
@@ -277,8 +289,9 @@ function unspecifiedToNull(value: string | null | undefined): string | null {
 }
 
 /**
- * Current-state ambassador candidacy. Canonical first; StudentProfile is a
- * fallback only when no canonical row exists (W5-B debt).
+ * Current-state ambassador candidacy. Canonical is the live source while
+ * ENABLE_NEW_AMBASSADOR_WRITES is on. StudentProfile is a flag-off fallback
+ * only (dormant W5-A rollback), never a current-state product read after W5-B.
  */
 export async function getAmbassadorState(
   userId: string,
@@ -294,6 +307,7 @@ export async function getAmbassadorState(
       dismissedAt: canonical.dismissedAt,
     };
   }
+  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
   const sp = await prisma.studentProfile.findUnique({
     where: { userId },
     select: {
