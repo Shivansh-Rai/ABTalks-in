@@ -72,16 +72,35 @@ async function main() {
     };
   }
 
-  const target = await prisma.user.findFirst({
+  let target = await prisma.user.findFirst({
     where: {
       email: TARGET_EMAIL,
       deletedAt: null,
-      visibility: { isNot: null },
     },
     select: { id: true, email: true },
   });
   if (!target) {
-    throw new Error(`Probe refused: no live user with CandidateVisibility (${TARGET_EMAIL})`);
+    target = await prisma.user.findFirst({
+      where: {
+        email: { endsWith: "@abtalks.dev" },
+        deletedAt: null,
+      },
+      orderBy: { email: "asc" },
+      select: { id: true, email: true },
+    });
+  }
+  if (!target) {
+    throw new Error(`Probe refused: no live @abtalks.dev user (tried ${TARGET_EMAIL})`);
+  }
+
+  const existing = await prisma.candidateVisibility.findUnique({
+    where: { userId: target.id },
+    select: { id: true },
+  });
+  if (!existing) {
+    await prisma.$transaction((tx) =>
+      applyVisibilityChange(tx, { userId: target.id, kind: "challenge_enroll" }),
+    );
   }
 
   const before = await snapshot(target.id);
