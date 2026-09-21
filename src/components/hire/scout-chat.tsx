@@ -707,8 +707,10 @@ export function ScoutChat({
   useEffect(() => {
     const root = scrollRef.current;
     if (!root) return;
+    // Results snap to rank 1. Smooth-scrolling the list made the cards
+    // travel down the pane; the enter motion is CSS `hire-results-in`.
     const behavior: ScrollBehavior =
-      pending || prefersReducedMotion() ? "auto" : "smooth";
+      searched || pending || prefersReducedMotion() ? "auto" : "smooth";
     const frame = window.requestAnimationFrame(() => {
       root.scrollTo({
         top: searched ? 0 : root.scrollHeight,
