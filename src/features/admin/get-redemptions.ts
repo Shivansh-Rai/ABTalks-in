@@ -1,5 +1,6 @@
 import { RedemptionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 export type AdminRedemptionRow = {
   id: string;
@@ -39,6 +40,7 @@ export async function getRedemptions(filter: {
       trackingNote: true,
       user: {
         select: {
+          id: true,
           email: true,
           studentProfile: { select: { fullName: true } },
         },
@@ -47,11 +49,15 @@ export async function getRedemptions(filter: {
     take: 500,
   });
 
+  const names = await canonicalFullNameByUserId(rows.map((r) => r.user.id));
   return rows.map((r) => ({
     id: r.id,
     createdAtIso: r.createdAt.toISOString(),
     updatedAtIso: r.updatedAt.toISOString(),
-    studentName: r.user.studentProfile?.fullName?.trim() || r.user.email,
+    studentName:
+      names.get(r.user.id)?.trim() ||
+      r.user.studentProfile?.fullName?.trim() ||
+      r.user.email,
     email: r.user.email,
     itemTitle: r.itemTitle,
     selectedSize: r.selectedSize,

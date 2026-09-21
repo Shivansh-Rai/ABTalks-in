@@ -13,6 +13,7 @@ import { getMissingStudentsForDay } from "@/features/admin/get-missing-by-day";
 import { getReferrersInRange } from "@/features/admin/get-referrals-report";
 import { getSubmissionsFeed } from "@/features/admin/get-submissions-feed";
 import { getHackathonSubmissionsFeed } from "@/features/admin/get-hackathon-submissions-feed";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 const SUBMISSIONS_EXPORT_CAP = 10_000;
 
@@ -58,6 +59,11 @@ export async function getStudentsForExport(filters: {
                       { email: { contains: q, mode: "insensitive" } },
                       {
                         studentProfile: {
+                          fullName: { contains: q, mode: "insensitive" },
+                        },
+                      },
+                      {
+                        candidateProfile: {
                           fullName: { contains: q, mode: "insensitive" },
                         },
                       },
@@ -160,29 +166,35 @@ export async function getStudentsForExport(filters: {
     referralCountRows.map((r) => [r.referrerId, r._count.id]),
   );
 
-  const challengeExport = enrollments.map((e) => ({
+  const identities = await listCandidateProfiles(userIds);
+
+  const challengeExport = enrollments.map((e) => {
+    const identity = identities.get(e.user.id);
+    const sp = e.user.studentProfile;
+    return {
     Track: "CHALLENGE",
-    "Full Name": e.user.studentProfile?.fullName ?? e.user.name ?? "",
+    "Full Name": identity?.fullName ?? sp?.fullName ?? e.user.name ?? "",
     Email: e.user.email,
-    Phone: e.user.studentProfile?.phone ?? "",
-    "User Type": e.user.studentProfile?.userType ?? "",
+    Phone: identity?.phone ?? sp?.phone ?? "",
+    "User Type": identity?.userType ?? sp?.userType ?? "",
     Domain: e.domain,
     Status: e.status,
     "Started At": e.startedAt.toISOString().split("T")[0],
     "Days Completed": e.daysCompleted,
     "Current Streak": e.currentStreak,
     "Longest Streak": e.longestStreak,
-    College: e.user.studentProfile?.college ?? "",
-    "Graduation Year": e.user.studentProfile?.graduationYear ?? "",
-    Organization: e.user.studentProfile?.organization ?? "",
-    Role: e.user.studentProfile?.role ?? "",
-    "Years Experience": e.user.studentProfile?.yearsExperience ?? "",
-    LinkedIn: e.user.studentProfile?.linkedinUrl ?? "",
-    GitHub: e.user.studentProfile?.githubUsername ?? "",
-    "Ready For Interview": e.user.studentProfile?.isReadyForInterview ?? false,
-    "Referral Code": e.user.studentProfile?.referralCode ?? "",
+    College: identity?.college ?? sp?.college ?? "",
+    "Graduation Year": identity?.graduationYear ?? sp?.graduationYear ?? "",
+    Organization: identity?.organization ?? sp?.organization ?? "",
+    Role: identity?.role ?? sp?.role ?? "",
+    "Years Experience": identity?.yearsExperience ?? sp?.yearsExperience ?? "",
+    LinkedIn: identity?.linkedinUrl ?? sp?.linkedinUrl ?? "",
+    GitHub: identity?.githubUsername ?? sp?.githubUsername ?? "",
+    "Ready For Interview": identity?.isReadyForInterview ?? sp?.isReadyForInterview ?? false,
+    "Referral Code": identity?.referralCode ?? sp?.referralCode ?? "",
     "Referral Count": referralCountMap.get(e.user.id) ?? 0,
-  }));
+  };
+  });
 
   const hackathonExport = hackathonRows.map((row) => {
     const entryType = row.team.entryType === "SOLO" ? "SOLO" : "TEAM";

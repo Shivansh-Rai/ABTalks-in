@@ -9,6 +9,7 @@ import { getDemandAnalytics } from "@/features/hire/demand-analytics";
 import { isVirtualCandidatesEnabled } from "@/lib/feature-flags";
 import { VirtualCandidateQueue } from "@/components/admin/virtual-candidate-queue";
 import { cn } from "@/lib/utils";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export const metadata: Metadata = {
   title: "Hire | Admin",
@@ -98,6 +99,11 @@ export default async function AdminHirePage() {
         })
       : [];
   const memberById = new Map(members.map((m) => [m.id, m]));
+  const identities = await listCandidateProfiles(
+    engagements
+      .map((e) => e.candidate?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
 
   const sorted = [...engagements].sort(
     (a, b) => OPEN_FIRST.indexOf(a.status) - OPEN_FIRST.indexOf(b.status),
@@ -212,14 +218,21 @@ export default async function AdminHirePage() {
               const member = e.programMemberId
                 ? memberById.get(e.programMemberId)
                 : undefined;
+              const identity = e.candidate
+                ? identities.get(e.candidate.id)
+                : undefined;
               const name =
                 member?.fullName ??
+                identity?.fullName ??
                 e.candidate?.studentProfile?.fullName ??
                 e.candidate?.name ??
                 null;
               const email = e.candidate?.email ?? null;
               const role =
-                member?.jobRole ?? e.candidate?.studentProfile?.role ?? null;
+                member?.jobRole ??
+                identity?.role ??
+                e.candidate?.studentProfile?.role ??
+                null;
               const profileHref = member
                 ? `/admin/program/members/${member.id}`
                 : e.candidate

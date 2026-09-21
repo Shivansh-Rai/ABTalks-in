@@ -1,5 +1,6 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 type Filters = {
   domain?: Domain | "ALL";
@@ -102,11 +103,15 @@ export async function getMissingStudentsForDay(
     orderBy: [{ daysCompleted: "desc" }, { startedAt: "asc" }],
   });
 
+  const names = await canonicalFullNameByUserId(rows.map((r) => r.user.id));
   return rows.map((r) => ({
     enrollmentId: r.id,
     userId: r.user.id,
     studentName:
-      r.user.studentProfile?.fullName?.trim() || r.user.email || "Unknown",
+      names.get(r.user.id)?.trim() ||
+      r.user.studentProfile?.fullName?.trim() ||
+      r.user.email ||
+      "Unknown",
     email: r.user.email,
     domain: r.domain,
     status: r.status,

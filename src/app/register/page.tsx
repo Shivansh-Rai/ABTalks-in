@@ -16,9 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RegistrationForm } from "./registration-form";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findChallengeEnrollment } from "@/repositories/learning";
-import { safeNextPath } from "@/features/registration/registration-gate";
+import { safeNextPath, isCandidateRegistered } from "@/features/registration/registration-gate";
 import { getResumeView } from "@/features/resume/service";
 
 type PageProps = {
@@ -49,13 +48,11 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     redirect("/api/auth/signout?callbackUrl=/login");
   }
 
-  const profile = await studentProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { id: true },
-  });
+  const registered = await isCandidateRegistered(session.user.id);
 
-  // Registered = has a StudentProfile (registration no longer creates an enrollment).
-  if (profile) {
+  // Registered = CandidateProfile (W4-B). Registration no longer requires a
+  // StudentProfile identity row.
+  if (registered) {
     if (isCoreDomain(requestedDomain)) {
       const existing = await findChallengeEnrollment(session.user.id, {
         domain: requestedDomain,

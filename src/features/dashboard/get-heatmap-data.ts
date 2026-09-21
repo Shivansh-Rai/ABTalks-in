@@ -12,6 +12,7 @@ import {
   getDailyTaskTitlesLive,
   getDailyTasksCached,
 } from "@/features/challenge/get-daily-tasks-cached";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 /** Pre-resolved enrollment the dashboard can thread in to avoid a re-query. */
 type ResolvedHeatmapEnrollment = {
@@ -130,6 +131,7 @@ export async function getHeatmapData(
         createdAt: true,
         admin: {
           select: {
+            id: true,
             name: true,
             email: true,
             studentProfile: { select: { fullName: true } },
@@ -181,6 +183,11 @@ export async function getHeatmapData(
     });
   }
 
+  const adminNames = await canonicalFullNameByUserId(
+    adminActions
+      .map((action) => action.admin?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
   const rejectActionByDay = new Map<
     number,
     { reason: string | null; createdAt: Date; adminName: string }
@@ -189,6 +196,7 @@ export async function getHeatmapData(
     const dayNumber = readDayNumberFromMetadata(action.metadata);
     if (!dayNumber || dayNumber < 1 || dayNumber > 60) continue;
     const adminName =
+      (action.admin?.id ? adminNames.get(action.admin.id)?.trim() : undefined) ||
       action.admin?.studentProfile?.fullName?.trim() ||
       action.admin?.name?.trim() ||
       action.admin?.email ||

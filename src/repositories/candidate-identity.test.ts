@@ -438,6 +438,159 @@ async function main() {
     assert(!block.includes("noticePeriod"), "no SP notice");
   });
 
+  await suite("W4-B: mirror OFF skips StudentProfile identity create on registration", async () => {
+    process.env.ENABLE_NEW_CANDIDATE_WRITES = "true";
+    process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR = "false";
+    delete process.env.STUDENT_PROFILE_FAIL_LEGACY_MIRROR;
+    const { client, studentProfiles, candidateProfiles, writes } = makeDb();
+    const result = await createCandidateIdentity(client as never, createInput);
+    assert(result.mirrorFailed === false, "no-op is not a failure");
+    assert(writes[0] === "candidateProfile.create", `first write ${writes[0]}`);
+    assert(candidateProfiles.length === 1, "CP created");
+    assert(candidateProfiles[0]?.referralCode === "ABC123", "referral on CP");
+    assert(!writes.includes("studentProfile.create"), "no SP identity create");
+    assert(studentProfiles.length === 0, "SP absent");
+  });
+
+  await suite("W4-B: mirror OFF profile scalar update freezes StudentProfile identity", async () => {
+    process.env.ENABLE_NEW_CANDIDATE_WRITES = "true";
+    process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR = "false";
+    const { client, candidateProfiles, studentProfiles, writes } = makeDb();
+    candidateProfiles.push({
+      id: "cp_u1",
+      userId: "u1",
+      fullName: "Ada",
+      primaryPersona: CandidatePersona.STUDENT,
+      referralCode: "ABC123",
+      phone: null,
+      phoneVerified: false,
+      linkedinUrl: null,
+      githubUsername: null,
+      resumeUrl: null,
+      headline: null,
+    });
+    studentProfiles.push({
+      id: "sp_u1",
+      userId: "u1",
+      fullName: "Ada",
+      userType: UserType.STUDENT,
+      referralCode: "ABC123",
+      phone: null,
+      phoneVerified: false,
+      linkedinUrl: null,
+      githubUsername: null,
+      resumeUrl: null,
+      skills: [],
+      college: "IIT",
+      organization: null,
+      isReadyForInterview: false,
+    });
+    writes.length = 0;
+    await applyCandidateIdentityChange(client as never, "u1", {
+      fullName: "Ada Byron",
+      phone: "+919999999999",
+      linkedinUrl: "https://linkedin.com/in/ada",
+      githubUsername: "ada",
+      resumeUrl: "https://example.com/ada.pdf",
+    });
+    assert(writes.includes("candidateProfile.update"), "CP updated");
+    assert(!writes.includes("studentProfile.updateMany"), "SP identity frozen");
+    assert(candidateProfiles[0]?.fullName === "Ada Byron", "CP name");
+    assert(studentProfiles[0]?.fullName === "Ada", "SP name frozen");
+    assert(studentProfiles[0]?.phone === null, "SP phone frozen");
+    assert(studentProfiles[0]?.linkedinUrl === null, "SP linkedin frozen");
+    assert(studentProfiles[0]?.githubUsername === null, "SP github frozen");
+    assert(studentProfiles[0]?.resumeUrl === null, "SP resume frozen");
+    assert(candidateProfiles[0]?.referralCode === "ABC123", "referral unchanged");
+    assert(studentProfiles[0]?.referralCode === "ABC123", "SP referral frozen");
+  });
+
+  await suite("W4-B: mirror OFF OTP / ready flags freeze StudentProfile verification", async () => {
+    process.env.ENABLE_NEW_CANDIDATE_WRITES = "true";
+    process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR = "false";
+    const { client, candidateProfiles, studentProfiles, writes } = makeDb();
+    candidateProfiles.push({
+      id: "cp_u1",
+      userId: "u1",
+      fullName: "Ada",
+      primaryPersona: CandidatePersona.STUDENT,
+      referralCode: "ABC123",
+      phone: "+919876543210",
+      phoneVerified: false,
+      linkedinUrl: null,
+      githubUsername: null,
+      resumeUrl: null,
+      headline: null,
+    });
+    studentProfiles.push({
+      id: "sp_u1",
+      userId: "u1",
+      fullName: "Ada",
+      userType: UserType.STUDENT,
+      referralCode: "ABC123",
+      phone: "+919876543210",
+      phoneVerified: false,
+      linkedinUrl: null,
+      githubUsername: null,
+      resumeUrl: null,
+      skills: [],
+      college: null,
+      organization: null,
+      isReadyForInterview: false,
+    });
+    writes.length = 0;
+    await applyCandidateIdentityChange(client as never, "u1", {
+      phoneVerified: true,
+      isReadyForInterview: true,
+    });
+    assert(candidateProfiles[0]?.phoneVerified === true, "canonical OTP");
+    assert(studentProfiles[0]?.phoneVerified === false, "SP phoneVerified frozen");
+    assert(studentProfiles[0]?.isReadyForInterview === false, "SP ready frozen");
+    assert(!writes.includes("studentProfile.updateMany"), "no SP identity write");
+  });
+
+  await suite("W4-B consumers read current identity from CandidateProfile", () => {
+    const exportSrc = source("src/app/actions/admin-export-actions.ts");
+    assert(exportSrc.includes("listCandidateProfiles"), "admin export");
+    const otp = source("src/app/actions/otp-actions.ts");
+    assert(otp.includes("applyCandidateIdentityChange"), "OTP write");
+    const leaderboard = source("src/features/dashboard/get-leaderboard.ts");
+    assert(leaderboard.includes("listCandidateProfiles"), "leaderboard");
+    const gate = source("src/features/registration/registration-gate.ts");
+    assert(gate.includes("prisma.candidateProfile.findUnique"), "registered = CP");
+    const hire = source("src/repositories/hire.ts");
+    assert(hire.includes("loadRecruiterIdentities"), "recruiter identity");
+    const students = source("src/features/admin/get-students.ts");
+    assert(students.includes("listCandidateProfiles"), "admin students");
+    const dropoff = source("src/features/admin/get-dropoff-by-day.ts");
+    assert(dropoff.includes("listCandidateProfiles"), "dropoff");
+    const referrals = source("src/features/admin/get-referrals-report.ts");
+    assert(referrals.includes("listCandidateProfiles"), "referrals report");
+  });
+
+  await suite("W4-B freeze does not gate later-family StudentProfile writers", () => {
+    const ambassador = source("src/app/actions/campus-ambassador-actions.ts");
+    assert(ambassador.includes("studentProfile.update"), "W5 ambassador still writes SP");
+    assert(!ambassador.includes("runStudentProfileMirror"), "ambassador not W4-gated");
+    const enroll = source("src/features/enrollment/create-core-enrollment.ts");
+    assert(enroll.includes("studentProfile.updateMany"), "domain denorm still writes SP");
+    const points = source("src/repositories/points.ts");
+    assert(points.includes("studentProfile.updateMany"), "W1-B points path unchanged");
+    const mirror = source("src/repositories/candidate-identity.ts");
+    const fn = mirror.slice(mirror.indexOf("export async function runStudentProfileMirror"));
+    assert(fn.includes("isLegacyStudentProfileMirrorEnabled()"), "W4 freeze flag");
+    assert(!fn.includes("isCampusAmbassador"), "does not swallow ambassador");
+  });
+
+  await suite("W4-B education/experience/skills mirrors remain behind runStudentProfileMirror", () => {
+    const src = source("src/repositories/candidate-detail.ts");
+    assert(src.includes('runStudentProfileMirror(tx, "education"'), "education");
+    assert(src.includes('runStudentProfileMirror(tx, "experience"'), "experience");
+    assert(src.includes('runStudentProfileMirror(tx, "skills"'), "skills");
+    const resume = source("src/repositories/candidate-resume.ts");
+    assert(resume.includes("runStudentProfileMirror"), "resume URL");
+  });
+
   console.log(`\n${passed} passed, ${failed} failed\n`);
   if (failed > 0) process.exit(1);
 }

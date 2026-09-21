@@ -1,11 +1,15 @@
 import "server-only";
+import { prisma } from "@/lib/db";
+import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 
 /**
  * The post-auth registration gate.
  *
- * Registered = has a `StudentProfile` — the same rule `/register` and `/login`
- * already apply, kept in one place so no surface can drift from it.
+ * Registered = has a CandidateProfile when ENABLE_NEW_CANDIDATE is on
+ * (W4-B: StudentProfile identity is a frozen snapshot and may be missing on
+ * new registrations). Flag off keeps the legacy StudentProfile row check.
+ * Recruiter surfaces (`/hire`, `/talent`) must never call this.
  *
  * Being signed in is NOT being registered. OAuth creates the `User` row before
  * any form is reached, so a candidate can complete Google sign-in and land
@@ -90,6 +94,13 @@ export function postRegisterDestination(intended: string): string {
 }
 
 export async function isCandidateRegistered(userId: string): Promise<boolean> {
+  if (isNewCandidateRepoEnabled()) {
+    const profile = await prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return profile !== null;
+  }
   const profile = await studentProfile.findUnique({
     where: { userId },
     select: { id: true },

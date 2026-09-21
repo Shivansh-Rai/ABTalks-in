@@ -52,9 +52,9 @@ export async function getProfile(userId: string): Promise<{
 
   const { studentProfile, ...userFields } = user;
 
-  // Challenge registration gate stays on StudentProfile. Identity fields come
-  // through the candidate repository (legacy SP or CandidateProfile by flag).
-  if (!studentProfile || !candidate) {
+  // Challenge domain stays on StudentProfile (later family). Identity requires
+  // CandidateProfile. A W4-B registration may have no StudentProfile row.
+  if (!candidate) {
     return {
       user: userFields,
       profile: null,
@@ -76,7 +76,7 @@ export async function getProfile(userId: string): Promise<{
       organization: candidate.organization,
       role: candidate.role,
       yearsExperience: candidate.yearsExperience,
-      domain: studentProfile.domain,
+      domain: studentProfile?.domain ?? null,
       skills: candidate.skills,
       resumeUrl: candidate.resumeUrl,
       phone: candidate.phone,

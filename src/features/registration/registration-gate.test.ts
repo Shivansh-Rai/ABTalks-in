@@ -162,12 +162,12 @@ suite("login no longer waves /dashboard or /hackathon past the check", () => {
   const src = source("src/app/login/page.tsx");
   const bypass = src.slice(
     src.indexOf("redirectTo.startsWith(\"/program\")"),
-    src.indexOf("const profile = await studentProfile.findUnique"),
+    src.indexOf("const registered = await isCandidateRegistered"),
   );
   assert(bypass.length > 0, "bypass block located");
   assert(!bypass.includes("/hackathon"), "hackathon no longer bypasses");
   assert(!bypass.includes("\"/dashboard\""), "dashboard no longer bypasses");
-  // Recruiters have no StudentProfile and never will — they must still bypass,
+  // Recruiters have no CandidateProfile and never will — they must still bypass,
   // or the candidate check would loop them forever.
   assert(bypass.includes("/hire"), "recruiters still bypass");
   assert(bypass.includes("/talent"), "talent still bypasses");

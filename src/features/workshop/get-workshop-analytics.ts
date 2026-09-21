@@ -83,6 +83,7 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
       email: true,
       createdAt: true,
       studentProfile: { select: { id: true } },
+      candidateProfile: { select: { id: true } },
       _count: { select: { enrollments: true } },
     },
   });
@@ -145,7 +146,7 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
     repeatPeople,
     memberRegistrations: rows.filter((r) => {
       const a = accountByEmail.get(r.email);
-      return a?.studentProfile != null;
+      return a?.candidateProfile != null || a?.studentProfile != null;
     }).length,
     newToABTalks,
     existingMembers,

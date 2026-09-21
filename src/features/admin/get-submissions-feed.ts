@@ -1,5 +1,6 @@
 import { Domain, SubmissionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 export async function getSubmissionsFeed(input: {
   domain?: string;
@@ -69,11 +70,15 @@ export async function getSubmissionsFeed(input: {
     },
   });
 
+  const names = await canonicalFullNameByUserId(rows.map((row) => row.user.id));
   return rows.map((row) => ({
     id: row.id,
     userId: row.user.id,
     studentName:
-      row.user.studentProfile?.fullName?.trim() || row.user.email || "Unknown",
+      names.get(row.user.id)?.trim() ||
+      row.user.studentProfile?.fullName?.trim() ||
+      row.user.email ||
+      "Unknown",
     domain: row.enrollment.domain,
     dayNumber: row.dayNumber,
     status: row.status,

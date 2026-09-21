@@ -1,6 +1,7 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 const DROPOFF_GAP_DAYS = 3;
 
@@ -101,6 +102,17 @@ export async function getDropoffStudents(
       currentDay,
       daysInactive: gap,
     });
+  }
+
+  const identities = await listCandidateProfiles(rows.map((r) => r.userId));
+  for (const row of rows) {
+    const identity = identities.get(row.userId);
+    if (!identity) continue;
+    row.fullName = identity.fullName.trim() || row.fullName;
+    row.phone = identity.phone ?? row.phone;
+    row.userType = identity.userType;
+    row.college = identity.college ?? row.college;
+    row.organization = identity.organization ?? row.organization;
   }
 
   rows.sort((a, b) => {

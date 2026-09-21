@@ -14,7 +14,7 @@ import { JoinCodeGate } from "@/components/program/join-code-gate";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import { getEntryState } from "@/features/program/entry";
 import { getCandidateProfile } from "@/repositories/candidate";
-import { studentProfile } from "@/repositories/legacy/student-profile";
+import { isCandidateRegistered } from "@/features/registration/registration-gate";
 import { cn } from "@/lib/utils";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -47,19 +47,16 @@ export default async function ProgramApplyPage({ searchParams }: Props) {
   // Only gate people who are about to apply. Existing members (enrolled /
   // waitlisted / closed / status screens) must never be bounced to /register —
   // legacy cohort members have no StudentProfile and keep full access (D5).
-  const profile =
+  const registered =
     state.screen === "form"
-      ? await studentProfile.findUnique({
-          where: { userId: session.user.id },
-          select: { id: true },
-        })
-      : null;
+      ? await isCandidateRegistered(session.user.id)
+      : false;
   const candidate =
-    state.screen === "form" && profile
+    state.screen === "form" && registered
       ? await getCandidateProfile(session.user.id)
       : null;
 
-  if (state.screen === "form" && !profile) {
+  if (state.screen === "form" && !registered) {
     redirect("/register");
   }
 

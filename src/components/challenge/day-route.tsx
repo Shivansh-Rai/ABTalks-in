@@ -15,6 +15,7 @@ import { dsButtonVariants } from "@/components/design/ds-button";
 import { getDayData } from "@/features/challenge/get-day-data";
 import { prisma } from "@/lib/db";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
+import { getCandidateProfile } from "@/repositories/candidate";
 import { cn } from "@/lib/utils";
 
 type DayRouteProps = {
@@ -54,10 +55,7 @@ export async function ChallengeDayRoute({
     redirect("/api/auth/signout?callbackUrl=/login");
   }
 
-  const profile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { fullName: true },
-  });
+  const profile = await getCandidateProfile(session.user.id);
 
   const shellUser = {
     name: profile?.fullName ?? session.user.name ?? "",

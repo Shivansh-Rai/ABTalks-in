@@ -11,6 +11,7 @@ import {
   getChallengeDaySubmission,
   getChallengeProgressStats,
 } from "@/repositories/progress";
+import { getCandidateProfile } from "@/repositories/candidate";
 
 const CERTIFICATE_ELIGIBLE_DAYS = 50;
 const CERTIFICATE_REQUIRED_DAY = 60;
@@ -27,13 +28,6 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
       daysCompleted: true,
       longestStreak: true,
       completedAt: true,
-      user: {
-        select: {
-          studentProfile: {
-            select: { fullName: true, college: true, organization: true },
-          },
-        },
-      },
     },
   });
 
@@ -54,7 +48,8 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
     return { ok: false, message: "Challenge not completed yet" };
   }
 
-  const fullName = enrollment.user.studentProfile?.fullName?.trim() ?? "";
+  const candidate = await getCandidateProfile(userId);
+  const fullName = candidate?.fullName?.trim() ?? "";
   if (!fullName) {
     const [existingCert, existingCred] = await Promise.all([
       prisma.certificate.findUnique({
@@ -80,8 +75,8 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
     }
   }
 
-  const college = enrollment.user.studentProfile?.college ?? null;
-  const organization = enrollment.user.studentProfile?.organization ?? null;
+  const college = candidate?.college ?? null;
+  const organization = candidate?.organization ?? null;
 
   return issueClaudeCredential({
     userId,

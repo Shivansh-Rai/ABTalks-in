@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatAdminActionType } from "@/features/admin/get-overview-stats";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 export const ADMIN_ACTIONS_PAGE_SIZE = 20;
 
@@ -83,10 +84,11 @@ export async function getAdminActionActors(): Promise<
     },
   });
 
+  const names = await canonicalFullNameByUserId(ids);
   return users
     .map((user) => ({
       id: user.id,
-      name: displayName(user.studentProfile?.fullName, user.email),
+      name: displayName(names.get(user.id) ?? user.studentProfile?.fullName, user.email),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -128,6 +130,7 @@ export async function getAdminActionsFeed(input: {
         entityId: true,
         admin: {
           select: {
+            id: true,
             email: true,
             studentProfile: { select: { fullName: true } },
           },
@@ -146,11 +149,20 @@ export async function getAdminActionsFeed(input: {
 
   const totalPages = Math.max(1, Math.ceil(total / ADMIN_ACTIONS_PAGE_SIZE));
 
+  const nameIds = [
+    ...rows.map((row) => row.admin?.id),
+    ...rows.map((row) => row.target?.id),
+  ].filter((id): id is string => Boolean(id));
+  const names = await canonicalFullNameByUserId(nameIds);
+
   return {
     items: rows.map((row) => {
       const targetUserId = row.target?.id ?? null;
       const targetName = row.target
-        ? displayName(row.target.studentProfile?.fullName, row.target.email)
+        ? displayName(
+            names.get(row.target.id) ?? row.target.studentProfile?.fullName,
+            row.target.email,
+          )
         : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—";
       return {
         id: row.id,
@@ -160,7 +172,10 @@ export async function getAdminActionsFeed(input: {
         metadata: row.metadata,
         createdAt: row.createdAt,
         adminName: row.admin
-          ? displayName(row.admin.studentProfile?.fullName, row.admin.email)
+          ? displayName(
+              names.get(row.admin.id) ?? row.admin.studentProfile?.fullName,
+              row.admin.email,
+            )
           : row.actorUserId,
         targetUserId,
         targetName,

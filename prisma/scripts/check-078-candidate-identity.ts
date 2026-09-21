@@ -296,14 +296,14 @@ async function main() {
     referralMismatch,
     referralCollision,
     orphanSpReferralTakenByOtherCandidate,
-    nameMismatch,
-    phoneMismatch,
-    linkedinMismatch,
-    githubMismatch,
-    resumeMismatch,
-    claimedSkillMirrorMismatch,
-    primaryEducationMirrorMismatch,
-    primaryExperienceMirrorMismatch,
+    frozenStudentProfileNameDrift: nameMismatch,
+    frozenStudentProfilePhoneDrift: phoneMismatch,
+    frozenStudentProfileLinkedinDrift: linkedinMismatch,
+    frozenStudentProfileGithubDrift: githubMismatch,
+    frozenStudentProfileResumeDrift: resumeMismatch,
+    frozenStudentProfileSkillDrift: claimedSkillMirrorMismatch,
+    frozenStudentProfileEducationDrift: primaryEducationMirrorMismatch,
+    frozenStudentProfileExperienceDrift: primaryExperienceMirrorMismatch,
     missingCandidateProfileClassified: missingClassified,
     missingByClassification: missingClassified.reduce<Record<string, number>>(
       (acc, row) => {
@@ -322,10 +322,13 @@ async function main() {
   console.log(JSON.stringify(report, (_, v) => (typeof v === "bigint" ? Number(v) : v), 2));
 
   if (referralMismatch !== 0 || referralCollision !== 0) {
-    throw new Error("W4-A referral identity is not unique/aligned");
+    throw new Error("W4 referral identity is not unique/aligned");
+  }
+  if (spMissingCp !== 0) {
+    throw new Error("W4: StudentProfile rows missing CandidateProfile");
   }
   console.log(
-    "W4-A candidate identity recon finished (SP↔CP presence and lossy field diffs are informational).",
+    "W4 candidate identity recon finished (frozen SP identity drift is informational after W4-B).",
   );
 }
 

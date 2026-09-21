@@ -123,17 +123,19 @@ export function isNewCandidateRepoEnabled(): boolean {
  * identity/referral fields are a compatibility mirror while
  * ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is not `"false"`.
  * Dual-write stays on either way. Do not enable without ENABLE_NEW_CANDIDATE
- * already on. Does not freeze StudentProfile (that is W4-B).
+ * already on. W4-B sets ENABLE_LEGACY_STUDENT_PROFILE_MIRROR=false to freeze
+ * StudentProfile identity/referral fields only.
  */
 export function isNewCandidateWritesEnabled(): boolean {
   return process.env.ENABLE_NEW_CANDIDATE_WRITES === "true";
 }
 
 /**
- * W4-A StudentProfile identity/referral compatibility mirror.
+ * W4 StudentProfile identity/referral compatibility mirror.
  * Default ON so a dark deploy (flag unset) keeps current mirroring.
  * Off only when explicitly `"false"` (W4-B): canonical candidate still writes;
- * StudentProfile identity fields freeze.
+ * StudentProfile identity/referral/profile fields freeze. Ambassador, domain,
+ * and other later-family columns on the same table are not gated here.
  */
 export function isLegacyStudentProfileMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR !== "false";

@@ -12,6 +12,7 @@ import { computeStreakStats } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
+import { getCandidateProfile } from "@/repositories/candidate";
 import {
   dualWriteChallengeEnrollmentById,
   dualWriteDeleteEnrollmentSubmissions,
@@ -144,17 +145,15 @@ export async function resetProgressAction(input: {
     if (resetDomain === "CLAUDE") {
       const target = await prisma.user.findUnique({
         where: { id: targetUserId },
-        select: {
-          email: true,
-          studentProfile: { select: { fullName: true } },
-        },
+        select: { email: true },
       });
+      const identity = await getCandidateProfile(targetUserId);
       const to = target?.email;
       if (to) {
         const appUrl =
           process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in";
         const firstName =
-          target?.studentProfile?.fullName?.trim().split(/\s+/)[0] || "there";
+          identity?.fullName?.trim().split(/\s+/)[0] || "there";
         after(async () => {
           await sendChallengeResetEmail({
             to,

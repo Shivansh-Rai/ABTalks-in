@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export async function GET() {
         startedAt: true,
         user: {
           select: {
+            id: true,
             studentProfile: {
               select: {
                 fullName: true,
@@ -30,9 +32,11 @@ export async function GET() {
       where: { domain: "CLAUDE" },
     });
 
+    const identities = await listCandidateProfiles(recent.map((e) => e.user.id));
     const signups = recent
       .map((e) => {
-        const profile = e.user.studentProfile;
+        const identity = identities.get(e.user.id);
+        const profile = identity ?? e.user.studentProfile;
         if (!profile?.fullName) return null;
 
         const firstName = profile.fullName.split(" ")[0];

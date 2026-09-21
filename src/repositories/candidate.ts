@@ -33,6 +33,7 @@ const legacyIdentitySelect = {
   yearsExperience: true,
   phone: true,
   phoneVerified: true,
+  phoneVerifiedAt: true,
   linkedinUrl: true,
   githubUsername: true,
   resumeUrl: true,
@@ -50,6 +51,7 @@ const newIdentitySelect = {
   primaryPersona: true,
   phone: true,
   phoneVerified: true,
+  phoneVerifiedAt: true,
   linkedinUrl: true,
   githubUsername: true,
   resumeUrl: true,
@@ -105,6 +107,7 @@ function viewFromLegacy(row: {
   yearsExperience: number | null;
   phone: string | null;
   phoneVerified: boolean;
+  phoneVerifiedAt: Date | null;
   linkedinUrl: string | null;
   githubUsername: string | null;
   resumeUrl: string | null;
@@ -120,6 +123,7 @@ function viewFromLegacy(row: {
     headline: null,
     phone: row.phone,
     phoneVerified: row.phoneVerified,
+    phoneVerifiedAt: row.phoneVerifiedAt,
     linkedinUrl: row.linkedinUrl,
     githubUsername: row.githubUsername,
     resumeUrl: row.resumeUrl,
@@ -146,6 +150,7 @@ function viewFromNew(
     primaryPersona: CandidatePersona;
     phone: string | null;
     phoneVerified: boolean;
+    phoneVerifiedAt: Date | null;
     linkedinUrl: string | null;
     githubUsername: string | null;
     resumeUrl: string | null;
@@ -196,6 +201,7 @@ function viewFromNew(
     headline: row.headline,
     phone: row.phone,
     phoneVerified: row.phoneVerified,
+    phoneVerifiedAt: row.phoneVerifiedAt,
     linkedinUrl: row.linkedinUrl,
     githubUsername: row.githubUsername,
     resumeUrl: row.resumeUrl,
@@ -265,6 +271,16 @@ export async function listCandidateProfiles(
   return new Map(rows.map((row) => [row.userId, viewFromLegacy(row)]));
 }
 
+/** Current-state display names for admin/CSV. Never reads frozen SP identity. */
+export async function canonicalFullNameByUserId(
+  userIds: string[],
+): Promise<Map<string, string>> {
+  const profiles = await listCandidateProfiles(userIds);
+  const out = new Map<string, string>();
+  for (const [id, profile] of profiles) out.set(id, profile.fullName);
+  return out;
+}
+
 export async function getProfileSummary(userId: string): Promise<{
   fullName: string;
   referralCode: string;
@@ -277,7 +293,8 @@ export async function getProfileSummary(userId: string): Promise<{
 /**
  * Resolve a pasted/shared referral code to a user.
  * Flag off: StudentProfile (legacy unique). Flag on: CandidateProfile
- * (canonical unique). Both tables must hold the same live code.
+ * (canonical unique). Frozen StudentProfile.referralCode remains a collision
+ * namespace for generation, not a live lookup source.
  */
 export async function findUserIdByReferralCode(
   code: string,

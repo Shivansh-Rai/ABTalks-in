@@ -1,13 +1,16 @@
 /**
- * W4-A candidate identity write boundary.
+ * W4 candidate identity write boundary.
  *
  * ENABLE_NEW_CANDIDATE_WRITES off (dark deploy): StudentProfile stays the
  * write that dual-write copies onto CandidateProfile.
  * ENABLE_NEW_CANDIDATE_WRITES on: CandidateProfile (and structured rows)
- * commit first; StudentProfile is a compatibility mirror while
- * ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is not `"false"`.
+ * commit first; StudentProfile identity/referral/profile fields are a
+ * compatibility mirror only while ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is
+ * not `"false"`.
  *
- * Does not touch Points, Visibility, Credentials, or ambassador fields.
+ * W4-B: setting the mirror flag to `"false"` freezes those W4-owned fields
+ * on StudentProfile. Ambassador, domain, and other later-family columns
+ * are not gated here. Does not touch Points, Visibility, or Credentials.
  */
 import "server-only";
 import {
@@ -137,9 +140,10 @@ function candidateProfileData(
 }
 
 /**
- * StudentProfile compatibility write. W4-A keeps this ON.
- * When candidate writes are authoritative, a mirror failure is logged and
- * does not roll back CandidateProfile (savepoint).
+ * StudentProfile compatibility write for W4 identity/referral/profile fields.
+ * When ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is `"false"`, this is a no-op so
+ * those columns stay frozen. Later-family writers (ambassador, domain) must
+ * not go through this helper.
  */
 export async function runStudentProfileMirror(
   tx: Tx,
@@ -388,8 +392,11 @@ function studentProfileCreateData(
 
 /**
  * Registration identity create. Flag off keeps StudentProfile authoritative.
- * Flag on commits CandidateProfile first; StudentProfile is the compatibility
- * snapshot. Referral code is the one already generated against both namespaces.
+ * Flag on commits CandidateProfile first. When the W4 mirror is on,
+ * StudentProfile is created as the compatibility snapshot. When the mirror
+ * is off, registration succeeds with CandidateProfile only — a StudentProfile
+ * row is not required for W4 identity. Referral code is the one already
+ * generated against both namespaces.
  */
 export async function createCandidateIdentity(
   tx: Tx,

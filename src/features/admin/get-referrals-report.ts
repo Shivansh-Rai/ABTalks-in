@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { istDateRangeToUtc } from "@/lib/date-utils";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 type Range = { startKey?: string; endKey?: string };
 
@@ -30,21 +31,20 @@ export async function getReferrersInRange(range: Range): Promise<ReferrerRow[]> 
   if (grouped.length === 0) return [];
 
   const ids = grouped.map((g) => g.referrerId);
-  const users = await prisma.user.findMany({
-    where: { id: { in: ids } },
-    select: {
-      id: true,
-      email: true,
-      studentProfile: { select: { fullName: true } },
-    },
-  });
+  const [users, names] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, email: true },
+    }),
+    listCandidateProfiles(ids),
+  ]);
   const byId = new Map(users.map((u) => [u.id, u]));
 
   return grouped.map((g) => {
     const u = byId.get(g.referrerId);
     return {
       userId: g.referrerId,
-      fullName: u?.studentProfile?.fullName?.trim() || u?.email || "Unknown",
+      fullName: names.get(g.referrerId)?.fullName?.trim() || u?.email || "Unknown",
       email: u?.email ?? "",
       referralCount: g._count._all,
     };
@@ -77,10 +77,7 @@ export async function getReferredByUser(
   const [referrerUser, referrals] = await Promise.all([
     prisma.user.findUnique({
       where: { id: referrerId },
-      select: {
-        email: true,
-        studentProfile: { select: { fullName: true } },
-      },
+      select: { email: true },
     }),
     prisma.referral.findMany({
       where: { referrerId, ...(createdAt ? { createdAt } : {}) },
@@ -92,7 +89,7 @@ export async function getReferredByUser(
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true, domain: true } },
+            studentProfile: { select: { domain: true } },
             enrollments: {
               orderBy: { createdAt: "desc" },
               take: 1,
@@ -104,10 +101,16 @@ export async function getReferredByUser(
     }),
   ]);
 
+  const identityIds = [
+    referrerId,
+    ...referrals.map((r) => r.referred.id),
+  ];
+  const names = await listCandidateProfiles(identityIds);
+
   const rows: ReferredRow[] = referrals.map((r) => ({
     userId: r.referred.id,
     fullName:
-      r.referred.studentProfile?.fullName?.trim() || r.referred.email || "Unknown",
+      names.get(r.referred.id)?.fullName?.trim() || r.referred.email || "Unknown",
     email: r.referred.email,
     domain: r.referred.studentProfile?.domain ?? null,
     signedUpAt: r.createdAt,
@@ -119,7 +122,7 @@ export async function getReferredByUser(
     referrer: referrerUser
       ? {
           fullName:
-            referrerUser.studentProfile?.fullName?.trim() ||
+            names.get(referrerId)?.fullName?.trim() ||
             referrerUser.email ||
             "Unknown",
           email: referrerUser.email,

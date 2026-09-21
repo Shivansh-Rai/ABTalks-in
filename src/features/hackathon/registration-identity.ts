@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/db";
+import { getCandidateProfile } from "@/repositories/candidate";
 
 /**
  * What the register popup still has to ask a signed-in student.
@@ -32,10 +32,7 @@ export const EMPTY_PREFILL: RegistrationPrefill = {
 export async function getRegistrationPrefill(
   userId: string,
 ): Promise<RegistrationPrefill> {
-  const profile = await prisma.studentProfile.findUnique({
-    where: { userId },
-    select: { college: true, graduationYear: true, phone: true },
-  });
+  const profile = await getCandidateProfile(userId);
   if (!profile) return EMPTY_PREFILL;
 
   return {
@@ -54,10 +51,7 @@ export async function getParticipantIdentity(
   userId: string,
   sessionName: string,
 ): Promise<{ fullName: string; phone: string }> {
-  const profile = await prisma.studentProfile.findUnique({
-    where: { userId },
-    select: { fullName: true, phone: true },
-  });
+  const profile = await getCandidateProfile(userId);
 
   return {
     fullName: (profile?.fullName ?? sessionName ?? "").trim(),

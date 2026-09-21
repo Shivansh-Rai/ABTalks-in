@@ -1,6 +1,7 @@
 import { Domain, EnrollmentStatus, Prisma } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export type StudentTrack = "ALL" | "CHALLENGE" | "HACKATHON";
 
@@ -90,6 +91,14 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
                       { email: { contains: q, mode: "insensitive" as const } },
                       {
                         studentProfile: {
+                          fullName: {
+                            contains: q,
+                            mode: "insensitive" as const,
+                          },
+                        },
+                      },
+                      {
+                        candidateProfile: {
                           fullName: {
                             contains: q,
                             mode: "insensitive" as const,
@@ -233,6 +242,19 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     }),
   ];
 
+  const identities = await listCandidateProfiles(students.map((s) => s.userId));
+  for (const row of students) {
+    const identity = identities.get(row.userId);
+    if (!identity) continue;
+    row.fullName = identity.fullName.trim() || row.fullName;
+    row.isReadyForInterview = identity.isReadyForInterview;
+    row.userType = identity.userType;
+    row.affiliation =
+      identity.userType === "PROFESSIONAL"
+        ? (identity.organization ?? "-")
+        : (identity.college ?? "-");
+  }
+
   if (sortBy === "referrals") {
     students.sort((a, b) => {
       if (b.referralCount !== a.referralCount) {
@@ -320,6 +342,11 @@ export async function getStudentTrackCounts(input?: {
               { email: { contains: q, mode: "insensitive" as const } },
               {
                 studentProfile: {
+                  fullName: { contains: q, mode: "insensitive" as const },
+                },
+              },
+              {
+                candidateProfile: {
                   fullName: { contains: q, mode: "insensitive" as const },
                 },
               },

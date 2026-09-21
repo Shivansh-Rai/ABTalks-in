@@ -35,21 +35,22 @@ export async function getJobApplicants(jobId: string) {
   return rows.map((row) => {
     const identity = identities.get(row.user.id);
     const sp = row.user.studentProfile;
-    if (!identity || !sp) return row;
+    const merged = {
+      fullName: identity?.fullName ?? sp?.fullName ?? null,
+      phone: identity?.phone ?? sp?.phone ?? null,
+      domain: sp?.domain ?? null,
+      linkedinUrl: identity?.linkedinUrl ?? sp?.linkedinUrl ?? null,
+      githubUsername: identity?.githubUsername ?? sp?.githubUsername ?? null,
+      college: identity?.college ?? sp?.college ?? null,
+      graduationYear: identity?.graduationYear ?? sp?.graduationYear ?? null,
+      isReadyForInterview:
+        identity?.isReadyForInterview ?? sp?.isReadyForInterview ?? false,
+    };
     return {
       ...row,
       user: {
         ...row.user,
-        studentProfile: {
-          ...sp,
-          fullName: identity.fullName,
-          phone: identity.phone,
-          linkedinUrl: identity.linkedinUrl,
-          githubUsername: identity.githubUsername,
-          college: identity.college,
-          graduationYear: identity.graduationYear,
-          isReadyForInterview: identity.isReadyForInterview,
-        },
+        studentProfile: merged,
       },
     };
   });

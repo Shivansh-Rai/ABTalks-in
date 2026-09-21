@@ -4,6 +4,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { getRegistrationDatesSince } from "@/features/admin/get-registration-dates";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export type TimeRange = "daily" | "weekly" | "monthly";
 
@@ -119,6 +120,7 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
       include: {
         user: {
           select: {
+            id: true,
             email: true,
             studentProfile: {
               select: { fullName: true, domain: true },
@@ -179,13 +181,22 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     submissionsByHourBuckets[getIstHour(submission.submittedAt)]!.count += 1;
   }
 
-  const topPerformers = topPerformersRaw.map((row) => ({
-    name:
-      row.user.studentProfile?.fullName?.trim() || row.user.email || "Unknown",
-    domain: row.user.studentProfile?.domain || row.domain,
-    daysCompleted: row.daysCompleted,
-    currentStreak: row.currentStreak,
-  }));
+  const identities = await listCandidateProfiles(
+    topPerformersRaw.map((row) => row.user.id),
+  );
+  const topPerformers = topPerformersRaw.map((row) => {
+    const identity = identities.get(row.user.id);
+    return {
+      name:
+        identity?.fullName?.trim() ||
+        row.user.studentProfile?.fullName?.trim() ||
+        row.user.email ||
+        "Unknown",
+      domain: row.user.studentProfile?.domain || row.domain,
+      daysCompleted: row.daysCompleted,
+      currentStreak: row.currentStreak,
+    };
+  });
 
   return {
     range,

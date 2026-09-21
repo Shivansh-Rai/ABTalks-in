@@ -2,7 +2,7 @@ import type { StudentProfile, UserType } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { getBalance } from "@/repositories/points";
-import { getCandidateProfile } from "@/repositories/candidate";
+import { getCandidateProfile, canonicalFullNameByUserId } from "@/repositories/candidate";
 
 export type ChallengeStudentDetail = {
   kind: "challenge";
@@ -165,7 +165,7 @@ export async function getStudentDetail(
   const synergyPoints = await getBalance(user.id);
   const candidate = await getCandidateProfile(user.id);
 
-  if (!user.studentProfile) {
+  if (!user.studentProfile && !candidate) {
     const participant = user.hackathonParticipants[0];
     if (!participant) {
       return null;
@@ -228,6 +228,7 @@ export async function getStudentDetail(
       include: {
         admin: {
           select: {
+            id: true,
             email: true,
             studentProfile: { select: { fullName: true } },
           },
@@ -244,6 +245,7 @@ export async function getStudentDetail(
         updatedAt: true,
         admin: {
           select: {
+            id: true,
             email: true,
             studentProfile: { select: { fullName: true } },
           },
@@ -258,9 +260,17 @@ export async function getStudentDetail(
   ).length;
   const lateCount = 0;
 
+  const adminNameIds = [
+    ...adminActions.map((action) => action.admin?.id),
+    ...remarks.map((r) => r.admin.id),
+  ].filter((id): id is string => Boolean(id));
+  const adminNames = await canonicalFullNameByUserId(adminNameIds);
+
+  const sp = user.studentProfile;
   const profile = candidate
     ? {
-        ...user.studentProfile,
+        id: sp?.id ?? `sp_missing_${user.id}`,
+        userId: user.id,
         fullName: candidate.fullName,
         userType: candidate.userType as UserType,
         college: candidate.college,
@@ -269,18 +279,24 @@ export async function getStudentDetail(
         organization: candidate.organization,
         role: candidate.role,
         yearsExperience: candidate.yearsExperience,
+        domain: sp?.domain ?? null,
         skills: candidate.skills,
         resumeUrl: candidate.resumeUrl,
         phone: candidate.phone,
         phoneVerified: candidate.phoneVerified,
+        phoneVerifiedAt: candidate.phoneVerifiedAt ?? sp?.phoneVerifiedAt ?? null,
         linkedinUrl: candidate.linkedinUrl,
         githubUsername: candidate.githubUsername,
         referralCode: candidate.referralCode,
         isReadyForInterview: candidate.isReadyForInterview,
         isCampusAmbassadorCandidate: candidate.isCampusAmbassadorCandidate,
+        ambassadorAppliedAt: sp?.ambassadorAppliedAt ?? null,
         ambassadorDismissedAt: candidate.ambassadorDismissedAt,
+        synergyPoints: sp?.synergyPoints ?? 0,
+        createdAt: sp?.createdAt ?? user.createdAt,
+        updatedAt: sp?.updatedAt ?? user.createdAt,
       }
-    : user.studentProfile;
+    : sp!;
 
   return {
     kind: "challenge",
@@ -329,6 +345,7 @@ export async function getStudentDetail(
       reason: action.reason,
       createdAt: action.createdAt,
       adminName:
+        (action.admin?.id ? adminNames.get(action.admin.id)?.trim() : undefined) ||
         action.admin?.studentProfile?.fullName?.trim() ||
         action.admin?.email ||
         "Admin",
@@ -339,7 +356,10 @@ export async function getStudentDetail(
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       adminName:
-        r.admin.studentProfile?.fullName?.trim() || r.admin.email || "Admin",
+        adminNames.get(r.admin.id)?.trim() ||
+        r.admin.studentProfile?.fullName?.trim() ||
+        r.admin.email ||
+        "Admin",
     })),
   };
 }

@@ -15,8 +15,13 @@ import { studentProfile } from "@/repositories/legacy/student-profile";
  * predates `since` is correctly excluded by the caller's window filter.
  */
 export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
-  const [profileHits, participantHits, workshopHits] = await Promise.all([
+  const [profileHits, candidateHits, participantHits, workshopHits] =
+    await Promise.all([
     studentProfile.findMany({
+      where: { createdAt: { gte: since } },
+      select: { userId: true },
+    }),
+    prisma.candidateProfile.findMany({
       where: { createdAt: { gte: since } },
       select: { userId: true },
     }),
@@ -32,15 +37,24 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
   ]);
 
   const candidates = new Set<string>();
-  for (const r of [...profileHits, ...participantHits, ...workshopHits]) {
+  for (const r of [
+    ...profileHits,
+    ...candidateHits,
+    ...participantHits,
+    ...workshopHits,
+  ]) {
     candidates.add(r.userId);
   }
   if (candidates.size === 0) return [];
 
   const userIds = [...candidates];
 
-  const [profiles, participants, workshops] = await Promise.all([
+  const [profiles, candidateProfiles, participants, workshops] = await Promise.all([
     studentProfile.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, createdAt: true },
+    }),
+    prisma.candidateProfile.findMany({
       where: { userId: { in: userIds } },
       select: { userId: true, createdAt: true },
     }),
@@ -67,6 +81,7 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
   };
 
   for (const row of profiles) note(row.userId, row.createdAt);
+  for (const row of candidateProfiles) note(row.userId, row.createdAt);
   for (const row of participants) note(row.userId, row.createdAt);
   for (const row of workshops) note(row.userId, row._min.createdAt);
 
@@ -83,6 +98,7 @@ export async function countRegisteredUsers(): Promise<number> {
     where: {
       OR: [
         { studentProfile: { isNot: null } },
+        { candidateProfile: { isNot: null } },
         { hackathonParticipants: { some: { eventId: HACKATHON.eventId } } },
         { workshopRegistrations: { some: {} } },
       ],

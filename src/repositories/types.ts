@@ -45,6 +45,7 @@ export type CandidateProfileView = {
   headline: string | null;
   phone: string | null;
   phoneVerified: boolean;
+  phoneVerifiedAt: Date | null;
   linkedinUrl: string | null;
   githubUsername: string | null;
   resumeUrl: string | null;

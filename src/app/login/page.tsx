@@ -11,10 +11,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LoginClient } from "./login-client";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import {
   postRegisterDestination,
   registerHref,
+  isCandidateRegistered,
 } from "@/features/registration/registration-gate";
 
 type Props = {
@@ -59,14 +59,11 @@ export default async function LoginPage({ searchParams }: Props) {
       redirect(redirectTo);
     }
 
-    const profile = await studentProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
+    const registered = await isCandidateRegistered(session.user.id);
 
-    // Registered = has a StudentProfile. Registration no longer creates an
-    // enrollment, so requiring one here would loop every new user back to /register.
-    if (profile) {
+    // Registered = CandidateProfile (W4-B). Registration no longer requires a
+    // StudentProfile identity row.
+    if (registered) {
       redirect(redirectTo);
     }
 

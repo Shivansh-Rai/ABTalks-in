@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export async function searchAdminConsole(q: string) {
   const term = q.trim();
@@ -16,6 +17,11 @@ export async function searchAdminConsole(q: string) {
           { name: { contains: term, mode: "insensitive" } },
           {
             studentProfile: {
+              fullName: { contains: term, mode: "insensitive" },
+            },
+          },
+          {
+            candidateProfile: {
               fullName: { contains: term, mode: "insensitive" },
             },
           },
@@ -74,5 +80,14 @@ export async function searchAdminConsole(q: string) {
     }),
   ]);
 
-  return { candidates, recruiters, jobs, assessments };
+  const names = await listCandidateProfiles(candidates.map((c) => c.id));
+  const namedCandidates = candidates.map((c) => ({
+    ...c,
+    studentProfile: {
+      fullName:
+        names.get(c.id)?.fullName ?? c.studentProfile?.fullName ?? c.name ?? c.email,
+    },
+  }));
+
+  return { candidates: namedCandidates, recruiters, jobs, assessments };
 }

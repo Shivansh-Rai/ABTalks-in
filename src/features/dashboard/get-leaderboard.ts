@@ -1,5 +1,6 @@
 import { Domain } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { listCandidateProfiles } from "@/repositories/candidate";
 
 export type LeaderboardRow = {
   rank: number;
@@ -44,9 +45,18 @@ export async function getLeaderboard(
     ...(search
       ? {
           user: {
-            studentProfile: {
-              fullName: { contains: search, mode: "insensitive" as const },
-            },
+            OR: [
+              {
+                studentProfile: {
+                  fullName: { contains: search, mode: "insensitive" as const },
+                },
+              },
+              {
+                candidateProfile: {
+                  fullName: { contains: search, mode: "insensitive" as const },
+                },
+              },
+            ],
           },
         }
       : {}),
@@ -85,21 +95,25 @@ export async function getLeaderboard(
     prisma.enrollment.count({ where }),
   ]);
 
-  const rows: LeaderboardRow[] = enrollments
-    .filter((e) => !!e.user.studentProfile)
-    .map((e, index) => ({
+  const identities = await listCandidateProfiles(enrollments.map((e) => e.userId));
+  const rows: LeaderboardRow[] = enrollments.map((e, index) => {
+    const identity = identities.get(e.userId);
+    const sp = e.user.studentProfile;
+    return {
       rank: index + 1,
       enrollmentId: e.id,
       userId: e.userId,
-      fullName: e.user.studentProfile?.fullName ?? "Unknown",
-      college: e.user.studentProfile?.college || "Unknown",
+      fullName: identity?.fullName?.trim() || sp?.fullName || "Unknown",
+      college: identity?.college || sp?.college || "Unknown",
       domain: e.domain,
       daysCompleted: e.daysCompleted,
       currentStreak: e.currentStreak,
       longestStreak: e.longestStreak,
-      isReadyForInterview: e.user.studentProfile?.isReadyForInterview ?? false,
+      isReadyForInterview:
+        identity?.isReadyForInterview ?? sp?.isReadyForInterview ?? false,
       isViewer: e.userId === input.viewerUserId,
-    }));
+    };
+  });
 
   return { rows, totalCount };
 }

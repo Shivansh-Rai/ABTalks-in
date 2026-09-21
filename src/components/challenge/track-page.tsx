@@ -25,6 +25,7 @@ import { isEnrollmentPreStart, formatDateIST } from "@/lib/date-utils";
 import { prisma } from "@/lib/db";
 import { mapHeatmapCellToUiState } from "@/features/claude/map-day-ui-state";
 import { findChallengeEnrollment } from "@/repositories/learning";
+import { getCandidateProfile } from "@/repositories/candidate";
 
 function buildContinueInfo(
   data: DashboardDataWithEnrollment,
@@ -128,6 +129,7 @@ export async function TrackPage({ domain }: TrackPageProps) {
         createdAt: true,
         admin: {
           select: {
+            id: true,
             name: true,
             email: true,
             studentProfile: { select: { fullName: true } },
@@ -135,7 +137,11 @@ export async function TrackPage({ domain }: TrackPageProps) {
         },
       },
     });
+    const adminIdentity = endedAction?.admin?.id
+      ? await getCandidateProfile(endedAction.admin.id)
+      : null;
     const adminName =
+      adminIdentity?.fullName?.trim() ||
       endedAction?.admin?.studentProfile?.fullName?.trim() ||
       endedAction?.admin?.name?.trim() ||
       endedAction?.admin?.email ||

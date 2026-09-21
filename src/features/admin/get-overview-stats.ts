@@ -5,6 +5,7 @@ import {
   countRegisteredUsers,
   getRegistrationDatesSince,
 } from "@/features/admin/get-registration-dates";
+import { canonicalFullNameByUserId } from "@/repositories/candidate";
 
 const IST = "Asia/Kolkata";
 
@@ -143,6 +144,7 @@ export async function getOverviewStats() {
         entityId: true,
         admin: {
           select: {
+            id: true,
             email: true,
             studentProfile: { select: { fullName: true } },
           },
@@ -327,6 +329,14 @@ export async function getOverviewStats() {
     (key) => applicationsBuckets.get(key) ?? 0,
   );
 
+  const identityIds = [
+    ...disabledRecent.map((row) => row.id),
+    ...liveSubmissionsRaw.map((row) => row.user.id),
+    ...recentAdminActionsRaw.map((row) => row.admin?.id),
+    ...recentAdminActionsRaw.map((row) => row.target?.id),
+  ].filter((id): id is string => Boolean(id));
+  const names = await canonicalFullNameByUserId(identityIds);
+
   return {
     stats: {
       totalStudents,
@@ -368,6 +378,7 @@ export async function getOverviewStats() {
         href: `/admin/students/${row.id}`,
         title:
           row.recruiterProfile?.fullName?.trim() ||
+          names.get(row.id)?.trim() ||
           row.studentProfile?.fullName?.trim() ||
           row.name?.trim() ||
           row.email,
@@ -388,7 +399,10 @@ export async function getOverviewStats() {
       id: row.id,
       userId: row.user.id,
       studentName:
-        row.user.studentProfile?.fullName?.trim() || row.user.email || "Unknown",
+        names.get(row.user.id)?.trim() ||
+        row.user.studentProfile?.fullName?.trim() ||
+        row.user.email ||
+        "Unknown",
       dayNumber: row.dayNumber,
       domain: row.enrollment.domain,
       linkedinUrl: row.linkedinUrl,
@@ -398,6 +412,7 @@ export async function getOverviewStats() {
     recentAdminActions: recentAdminActionsRaw.map((row) => ({
       id: row.id,
       adminName:
+        (row.admin?.id ? names.get(row.admin.id)?.trim() : undefined) ||
         row.admin?.studentProfile?.fullName?.trim() ||
         row.admin?.email ||
         row.actorUserId ||
@@ -406,7 +421,8 @@ export async function getOverviewStats() {
       actionLabel: formatAdminActionType(row.actionType),
       targetUserId: row.target?.id ?? null,
       targetName: row.target
-        ? row.target.studentProfile?.fullName?.trim() ||
+        ? names.get(row.target.id)?.trim() ||
+          row.target.studentProfile?.fullName?.trim() ||
           row.target.email ||
           "Unknown"
         : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—",

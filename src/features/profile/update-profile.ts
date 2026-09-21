@@ -1,5 +1,5 @@
 import { UserType } from "@prisma/client";
-import { writeClient } from "@/lib/db";
+import { prisma, writeClient } from "@/lib/db";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { dualWriteCandidateIdentity } from "@/repositories/dual-write";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
@@ -35,16 +35,29 @@ export async function updateProfile(
     ? input.skills.filter((x): x is string => typeof x === "string")
     : [];
 
-  const existing = await studentProfile.findUnique({
-    where: { userId },
-    select: { id: true, userType: true },
-  });
-
-  if (!existing) {
-    return { ok: false, message: "Profile not found" };
+  let savedType: UserType;
+  if (isNewCandidateWritesEnabled()) {
+    const existing = await prisma.candidateProfile.findUnique({
+      where: { userId },
+      select: { primaryPersona: true },
+    });
+    if (!existing) {
+      return { ok: false, message: "Profile not found" };
+    }
+    savedType =
+      existing.primaryPersona === "PROFESSIONAL"
+        ? UserType.PROFESSIONAL
+        : UserType.STUDENT;
+  } else {
+    const existing = await studentProfile.findUnique({
+      where: { userId },
+      select: { id: true, userType: true },
+    });
+    if (!existing) {
+      return { ok: false, message: "Profile not found" };
+    }
+    savedType = existing.userType;
   }
-
-  const savedType = existing.userType;
 
   if (savedType === UserType.STUDENT) {
     const parsed = updateStudentProfileSchema.safeParse({

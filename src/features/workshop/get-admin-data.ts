@@ -49,13 +49,18 @@ export async function getWorkshopRegistrations(
       createdAt: true,
       // Every row has a userId now (auth is mandatory), so the useful signal is
       // whether they are a full ABTalks member rather than workshop-only.
-      user: { select: { studentProfile: { select: { id: true } } } },
+      user: {
+        select: {
+          candidateProfile: { select: { id: true } },
+          studentProfile: { select: { id: true } },
+        },
+      },
     },
   });
 
   return rows.map(({ user, ...r }) => ({
     ...r,
-    isMember: user.studentProfile !== null,
+    isMember: user.candidateProfile !== null || user.studentProfile !== null,
   }));
 }
 

@@ -12,7 +12,6 @@ import {
 import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
 import { programMember } from "@/repositories/legacy/program-member";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { dualWriteProgramMember } from "@/repositories/dual-write";
 import {
@@ -249,14 +248,6 @@ export async function createApplication(
   const alreadyIn = await resolveProgramMemberForUser(userId);
   if (alreadyIn) {
     return { ok: false, message: "You are already enrolled in a program cohort." };
-  }
-
-  const existingStudent = await studentProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-  if (!existingStudent) {
-    return { ok: false, message: "Complete your registration before applying." };
   }
 
   const candidate = await getCandidateProfile(userId);

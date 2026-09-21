@@ -2,13 +2,13 @@ import "server-only";
 
 import { Domain } from "@prisma/client";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import { isUserRegistered } from "@/features/hackathon/registration-status";
 import { findChallengeEnrollment } from "@/repositories/learning";
+import { isCandidateRegistered } from "@/features/registration/registration-gate";
 
 export type LandingUser = {
   name: string | null;
@@ -52,12 +52,9 @@ export async function getLandingState(): Promise<LandingState> {
   };
 
   try {
-    const [profile, claudeEnrollment, programMember, hackathonRegistered] =
+    const [registered, claudeEnrollment, programMember, hackathonRegistered] =
       await Promise.all([
-        prisma.studentProfile.findUnique({
-          where: { userId },
-          select: { id: true },
-        }),
+        isCandidateRegistered(userId),
         findChallengeEnrollment(userId, { domain: Domain.CLAUDE }),
         isProgramEnabled()
           ? resolveProgramMemberForUser(userId)
@@ -67,8 +64,8 @@ export async function getLandingState(): Promise<LandingState> {
 
     return {
       user,
-      getStartedHref: profile ? "/dashboard" : "/register",
-      challengeCta: profile
+      getStartedHref: registered ? "/dashboard" : "/register",
+      challengeCta: registered
         ? { href: "/dashboard", ctaLabel: "Open dashboard" }
         : null,
       claudeCta: claudeEnrollment

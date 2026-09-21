@@ -117,13 +117,13 @@ export async function getDashboardData(
     return { hasUser: false };
   }
 
-  if (!user.studentProfile || !candidate) {
+  if (!candidate) {
     return { hasUser: true, hasEnrollment: false, profile: null, enrollment: null };
   }
 
   const profileSnapshot: DashboardDataWithEnrollment["profile"] = {
     fullName: candidate.fullName,
-    domain: user.studentProfile.domain,
+    domain: user.studentProfile?.domain ?? null,
     userType: candidate.userType,
     college: candidate.college,
     organization: candidate.organization,
@@ -139,7 +139,7 @@ export async function getDashboardData(
   const enrollment = await resolveDashboardEnrollment(
     userId,
     enrollmentId ?? undefined,
-    user.studentProfile.domain,
+    user.studentProfile?.domain ?? null,
   );
 
   if (!enrollment) {

@@ -4,8 +4,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isClaudeEnabled } from "@/lib/feature-flags";
 import { ClaudeOnboardingClient } from "@/components/claude/claude-onboarding-client";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findChallengeEnrollment } from "@/repositories/learning";
+import { isCandidateRegistered } from "@/features/registration/registration-gate";
 
 export default async function ClaudeSignupPage() {
   if (!isClaudeEnabled()) {
@@ -26,12 +26,9 @@ export default async function ClaudeSignupPage() {
       );
     }
 
-    const profile = await studentProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
+    const registered = await isCandidateRegistered(session.user.id);
 
-    if (profile) {
+    if (registered) {
       const claudeEnrollment = await findChallengeEnrollment(
         session.user.id,
         { domain: Domain.CLAUDE },

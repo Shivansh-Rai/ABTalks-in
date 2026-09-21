@@ -85,14 +85,14 @@ export async function getPublicProfile(
     resolvePublicProfileEnrollment(userId),
   ]);
 
-  if (!user?.studentProfile || !candidate) {
+  if (!user || !candidate) {
     return null;
   }
 
   return {
     fullName: candidate.fullName,
     userType: candidate.userType as UserType,
-    domain: user.studentProfile.domain,
+    domain: user.studentProfile?.domain ?? null,
     college: candidate.college,
     graduationYear: candidate.graduationYear,
     organization: candidate.organization,

@@ -296,12 +296,11 @@ suite("referral stats identity through candidate repo", () => {
 });
 
 suite("program apply prefill through getCandidateProfile", () => {
-  const apply = source("src/app/program/apply/page.tsx");
+  const apply = source("src/app/program/ai-cohort/apply/page.tsx");
   const entry = source("src/features/program/entry.ts");
   assert(apply.includes("getCandidateProfile"), "apply prefill");
-  assert(apply.includes("studentProfile.findUnique"), "registration gate stays SP");
+  assert(apply.includes("isCandidateRegistered"), "registration gate is CP");
   assert(entry.includes("getCandidateProfile"), "apply copy");
-  assert(entry.includes('select: { id: true }'), "existence still SP");
 });
 
 suite("candidate flag ON reads only new candidate tables", () => {
