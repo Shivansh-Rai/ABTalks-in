@@ -1,6 +1,6 @@
 import "server-only";
 import { Prisma, type ResumeSourceType } from "@prisma/client";
-import { writeClient } from "@/lib/db";
+import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { runStudentProfileMirror } from "@/repositories/candidate-identity";
 import {
