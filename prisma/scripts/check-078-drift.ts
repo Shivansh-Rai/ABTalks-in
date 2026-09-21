@@ -3,16 +3,21 @@
  * backfilled user slice. Unscoped counts on this child are not defects.
  *
  * Points count-drift excludes `idempotencyKey LIKE 'reconciliation:phase2:%'`.
- * Those rows are Phase 2f plugs so SUM(PointsTransaction) = User.synergyPoints
+ * Those rows are Phase 2f plugs so SUM(PointsTransaction) = PointsAccount.balance
  * when the legacy event ledger already disagreed with the wallet. They have no
  * SynergyEvent by design. Do not delete them; V3 / ledger-vs-account still
  * include them.
+ *
+ * After W1-B (ENABLE_LEGACY_POINTS_MIRROR=false) the SynergyEvent vs
+ * PointsTransaction count delta is informational and does not fail the gate.
+ * Submission / mission / enrollment deltas remain failing.
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
 config();
 
 import { PrismaClient } from "@prisma/client";
+import { isLegacyPointsMirrorEnabled } from "../../src/lib/feature-flags";
 import {
   PRODUCTION_NEON_HOST_ID,
   SAMPLE_DAY_CAP,
@@ -86,6 +91,7 @@ async function main() {
     `);
     const r = rows[0];
     if (!r) throw new Error("No drift row");
+    const mirrorOn = isLegacyPointsMirrorEnabled();
     const deltas = {
       submitDay: Number(r.submissions) - Number(r.submission_attempts),
       verifyMission: Number(r.missions) - Number(r.mission_attempts),
@@ -93,13 +99,27 @@ async function main() {
         Number(r.enrollments) + Number(r.members) - (Number(r.challenge_pe) + Number(r.program_pe)),
       points: Number(r.synergy) - Number(r.points_tx),
     };
+    const legacySynergyEventDelta = deltas.points;
     console.log(
       JSON.stringify(
-        { scoped: Boolean(sample), counts: r, deltas },
+        {
+          scoped: Boolean(sample),
+          legacyPointsMirror: mirrorOn ? "on" : "off",
+          counts: r,
+          deltas,
+          legacySynergyEventDelta,
+        },
         (_, v) => (typeof v === "bigint" ? Number(v) : v),
       ),
     );
-    const hasDrift = Object.values(deltas).some((d) => d !== 0);
+    const gateDeltas = mirrorOn
+      ? deltas
+      : {
+          submitDay: deltas.submitDay,
+          verifyMission: deltas.verifyMission,
+          enrollment: deltas.enrollment,
+        };
+    const hasDrift = Object.values(gateDeltas).some((d) => d !== 0);
     if (hasDrift) {
       console.error("[078 dual-write] drift detected");
       process.exitCode = 1;

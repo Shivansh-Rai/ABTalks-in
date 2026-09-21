@@ -13,6 +13,7 @@ config({ path: ".env.local" });
 config();
 
 import { PrismaClient, ProgramMemberStatus } from "@prisma/client";
+import { isLegacyPointsMirrorEnabled } from "../../src/lib/feature-flags";
 import {
   assertChildBranch,
   assertNotSampleChildForFullRun,
@@ -241,6 +242,7 @@ async function main() {
 
   const report = {
     intervalStart: since.toISOString(),
+    legacyPointsMirror: isLegacyPointsMirrorEnabled() ? "on" : "off",
     pointsAccountVsUserSynergy: Number(pointsVsUser[0]?.n ?? 0),
     pointsLedgerVsAccount: Number(ledgerVsAccount[0]?.n ?? 0),
     credentialsMissing: Number(credentialsMissing[0]?.n ?? 0),
@@ -277,7 +279,9 @@ async function main() {
   console.log(JSON.stringify(report, null, 2));
 
   const failures: string[] = [];
-  if (report.pointsAccountVsUserSynergy !== 0) failures.push("pointsAccountVsUserSynergy");
+  if (isLegacyPointsMirrorEnabled() && report.pointsAccountVsUserSynergy !== 0) {
+    failures.push("pointsAccountVsUserSynergy");
+  }
   if (report.pointsLedgerVsAccount !== 0) failures.push("pointsLedgerVsAccount");
   if (report.credentialsMissing !== 0) failures.push("credentialsMissing");
   if (report.cohortMembersNotSearchable !== 0) failures.push("cohortMembersNotSearchable");

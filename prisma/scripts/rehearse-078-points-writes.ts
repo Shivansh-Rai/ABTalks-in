@@ -58,6 +58,25 @@ async function assertAccountLedgerParity(userId: string, label: string) {
   }
 }
 
+async function snapshotLegacy(userId: string) {
+  const [user, profile, eventCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { synergyPoints: true },
+    }),
+    prisma.studentProfile.findUnique({
+      where: { userId },
+      select: { synergyPoints: true },
+    }),
+    prisma.synergyEvent.count({ where: { userId } }),
+  ]);
+  return {
+    userSynergy: user?.synergyPoints ?? 0,
+    profileSynergy: profile?.synergyPoints ?? 0,
+    eventCount,
+  };
+}
+
 async function assertLegacyMirrorParity(userId: string, label: string) {
   const pa = await prisma.pointsAccount.findUnique({
     where: { userId },
@@ -70,6 +89,29 @@ async function assertLegacyMirrorParity(userId: string, label: string) {
   if ((pa?.balance ?? 0) !== (user?.synergyPoints ?? 0)) {
     throw new Error(
       `${label}: PointsAccount ${pa?.balance} !== User.synergyPoints ${user?.synergyPoints}`,
+    );
+  }
+}
+
+async function assertLegacyFrozen(
+  userId: string,
+  before: Awaited<ReturnType<typeof snapshotLegacy>>,
+  label: string,
+) {
+  const after = await snapshotLegacy(userId);
+  if (after.userSynergy !== before.userSynergy) {
+    throw new Error(
+      `${label}: User.synergyPoints ${before.userSynergy} → ${after.userSynergy}`,
+    );
+  }
+  if (after.profileSynergy !== before.profileSynergy) {
+    throw new Error(
+      `${label}: StudentProfile.synergyPoints ${before.profileSynergy} → ${after.profileSynergy}`,
+    );
+  }
+  if (after.eventCount !== before.eventCount) {
+    throw new Error(
+      `${label}: SynergyEvent count ${before.eventCount} → ${after.eventCount}`,
     );
   }
 }
@@ -117,6 +159,7 @@ async function cleanupUser(userId: string) {
   await prisma.pointsTransaction.deleteMany({ where: { userId } });
   await prisma.synergyEvent.deleteMany({ where: { userId } });
   await prisma.pointsAccount.deleteMany({ where: { userId } });
+  await prisma.studentProfile.deleteMany({ where: { userId } });
   await prisma.user.delete({ where: { id: userId } }).catch(() => undefined);
 }
 
@@ -148,6 +191,14 @@ async function main() {
   });
   const userId = user.id;
   const failUserId = failUser.id;
+  await prisma.studentProfile.create({
+    data: {
+      userId,
+      fullName: "W1B Points Rehearsal",
+      referralCode: `w1b-${stamp}`,
+      synergyPoints: 0,
+    },
+  });
   log("test_user", userId);
   log("fail_user", failUserId);
 
@@ -156,6 +207,14 @@ async function main() {
     process.env.ENABLE_NEW_POINTS_WRITES = "true";
     process.env.ENABLE_DUAL_WRITE = process.env.ENABLE_DUAL_WRITE ?? "true";
     delete process.env.POINTS_FAIL_LEGACY_MIRROR;
+    const mirrorOff = process.env.ENABLE_LEGACY_POINTS_MIRROR === "false";
+    log("legacy_points_mirror", mirrorOff ? "off" : "on");
+    const frozen = await snapshotLegacy(userId);
+
+    const assertLegacySide = async (label: string) => {
+      if (mirrorOff) await assertLegacyFrozen(userId, frozen, label);
+      else await assertLegacyMirrorParity(userId, label);
+    };
 
     const grant = await applyViaRepo(userId, {
       amount: 100,
@@ -168,7 +227,7 @@ async function main() {
       throw new Error(`grant failed: ${JSON.stringify(grant)}`);
     }
     await assertAccountLedgerParity(userId, "grant ledger");
-    await assertLegacyMirrorParity(userId, "grant mirror");
+    await assertLegacySide("grant mirror");
     log("grant", grant);
 
     const grantTxnBefore = await txnCount(userId);
@@ -199,7 +258,7 @@ async function main() {
       throw new Error(`spend failed: ${JSON.stringify(spend)}`);
     }
     await assertAccountLedgerParity(userId, "spend ledger");
-    await assertLegacyMirrorParity(userId, "spend mirror");
+    await assertLegacySide("spend mirror");
     log("spend", spend);
 
     const refund = await applyViaRepo(userId, {
@@ -213,7 +272,7 @@ async function main() {
       throw new Error(`refund failed: ${JSON.stringify(refund)}`);
     }
     await assertAccountLedgerParity(userId, "refund ledger");
-    await assertLegacyMirrorParity(userId, "refund mirror");
+    await assertLegacySide("refund mirror");
     log("refund", refund);
 
     const debit = await applyViaRepo(userId, {
@@ -227,7 +286,7 @@ async function main() {
       throw new Error(`debit failed: ${JSON.stringify(debit)}`);
     }
     await assertAccountLedgerParity(userId, "debit ledger");
-    await assertLegacyMirrorParity(userId, "debit mirror");
+    await assertLegacySide("debit mirror");
     log("debit", debit);
 
     const creditsBeforeReset = await prisma.pointsTransaction.count({
@@ -260,7 +319,7 @@ async function main() {
       throw new Error(`reset compensating txn missing: ${JSON.stringify(compensating)}`);
     }
     await assertAccountLedgerParity(userId, "reset ledger");
-    await assertLegacyMirrorParity(userId, "reset mirror");
+    await assertLegacySide("reset mirror");
     log("reset", reset);
 
     const raceGrant = await applyViaRepo(userId, {

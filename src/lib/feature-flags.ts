@@ -130,11 +130,24 @@ export function isNewPointsRepoEnabled(): boolean {
  * `ENABLE_NEW_POINTS` (reads). Off unless explicitly `"true"`.
  *
  * When on: PointsAccount + PointsTransaction are authoritative;
- * User.synergyPoints and SynergyEvent are compatibility mirrors.
+ * User.synergyPoints and SynergyEvent are compatibility mirrors while
+ * ENABLE_LEGACY_POINTS_MIRROR is not `"false"`.
  * Do not enable without ENABLE_NEW_POINTS already on. Dual-write stays on.
  */
 export function isNewPointsWritesEnabled(): boolean {
   return process.env.ENABLE_NEW_POINTS_WRITES === "true";
+}
+
+/**
+ * W1-B compatibility mirror onto User.synergyPoints / StudentProfile.synergyPoints
+ * / SynergyEvent. Independent of ENABLE_DUAL_WRITE.
+ *
+ * Default ON so a dark deploy (flag unset) keeps current W1-A behaviour.
+ * Off only when explicitly `"false"`: authoritative PointsAccount +
+ * PointsTransaction still write; legacy columns/tables freeze.
+ */
+export function isLegacyPointsMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_POINTS_MIRROR !== "false";
 }
 export function isNewCredentialRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_CREDENTIAL === "true";

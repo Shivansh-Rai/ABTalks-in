@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { isLegacyPointsMirrorEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 
 export type DriftDelta = {
@@ -83,11 +84,19 @@ export async function checkDualWriteDrift(): Promise<DriftReport> {
     },
   ];
 
-  const hasDrift = deltas.some((d) => d.delta !== 0);
+  const mirrorOn = isLegacyPointsMirrorEnabled();
+  const hasDrift = deltas.some((d) => {
+    if (d.path === "points" && !mirrorOn) return false;
+    return d.delta !== 0;
+  });
   if (hasDrift) {
-    logger.error("[078 dual-write] drift detected", { deltas });
+    logger.error("[078 dual-write] drift detected", { deltas, legacyPointsMirror: mirrorOn ? "on" : "off" });
   } else {
-    logger.info("[078 dual-write] drift check clean", { deltas });
+    logger.info("[078 dual-write] drift check clean", {
+      deltas,
+      legacyPointsMirror: mirrorOn ? "on" : "off",
+      legacySynergyEventDelta: deltas.find((d) => d.path === "points")?.delta ?? 0,
+    });
   }
   return { deltas, hasDrift };
 }

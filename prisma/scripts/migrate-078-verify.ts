@@ -63,6 +63,20 @@ async function main() {
      GROUP BY pa."userId", pa.balance
      HAVING pa.balance <> COALESCE(SUM(pt.amount), 0)`,
   );
+  const legacyUserMirrorDrift = await count(
+    "legacyUserMirrorDrift (informational after W1-B)",
+    `SELECT pa."userId" FROM "PointsAccount" pa
+      JOIN "User" u ON u.id = pa."userId"
+     WHERE pa.balance <> u."synergyPoints"
+       AND ${sqlIn('pa."userId"', sample)}`,
+  );
+  const legacyStudentProfileMirrorDrift = await count(
+    "legacyStudentProfileMirrorDrift (informational after W1-B)",
+    `SELECT pa."userId" FROM "PointsAccount" pa
+      JOIN "StudentProfile" sp ON sp."userId" = pa."userId"
+     WHERE pa.balance <> sp."synergyPoints"
+       AND ${sqlIn('pa."userId"', sample)}`,
+  );
   const v4 = await count(
     "V4 visibility leak",
     `SELECT v."userId" FROM "CandidateVisibility" v
@@ -147,6 +161,12 @@ async function main() {
 
   const failed = { v1, v2, v3, v4, v4b, v5, v6, v7, v8, v9, v10 };
   const bad = Object.entries(failed).filter(([, n]) => n > 0);
+  console.log(
+    JSON.stringify({
+      legacyUserMirrorDrift,
+      legacyStudentProfileMirrorDrift,
+    }),
+  );
   if (bad.length > 0) {
     throw new Error(`Verification failed: ${JSON.stringify(Object.fromEntries(bad))}`);
   }
