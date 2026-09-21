@@ -436,12 +436,6 @@ export function ScoutChat({
     timer = window.setTimeout(done, 600);
     body.addEventListener("transitionend", settle);
   }
-  /** Cards sit under this message index so a later turn starts below them. */
-  const [resultsPin, setResultsPin] = useState<number | null>(
-    initialSearched || (results?.length ?? 0) > 0
-      ? Math.max(0, (initialMessages.length || 1) - 1)
-      : null,
-  );
   const {
     setDesk,
     view,
@@ -709,32 +703,20 @@ export function ScoutChat({
     }
   }, [persist, initialMessages.length, initialRequestId]);
 
-  // ChatGPT-style: always land on the latest turn. Cards pin under the
-  // search message so the next question is below them, not above.
-  useEffect(() => {
-    if (searched && resultsPin == null && messages.length > 0) {
-      setResultsPin(messages.length - 1);
-    }
-  }, [searched, resultsPin, messages.length]);
-
+  // Results: land on rank 1. Pre-search thread: follow the latest question.
   useEffect(() => {
     const root = scrollRef.current;
     if (!root) return;
+    const behavior: ScrollBehavior =
+      pending || prefersReducedMotion() ? "auto" : "smooth";
     const frame = window.requestAnimationFrame(() => {
       root.scrollTo({
-        top: root.scrollHeight,
-        behavior: pending ? "auto" : "smooth",
+        top: searched ? 0 : root.scrollHeight,
+        behavior,
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [
-    messages.length,
-    pending,
-    searched,
-    deskMatches.length,
-    resultsPin,
-    detailsOpen,
-  ]);
+  }, [messages.length, pending, searched, deskMatches.length]);
 
   useEffect(() => {
     if (!detailsOpen) return;
@@ -847,14 +829,10 @@ export function ScoutChat({
             setSearched(true);
             setMatchCount(match.data.matchCount);
             if (!hideThread) {
-              setMessages((m) => {
-                const next: Msg[] = [
-                  ...m,
-                  { role: "assistant", content: match.data.overallGap },
-                ];
-                setResultsPin(next.length - 1);
-                return next;
-              });
+              setMessages((m) => [
+                ...m,
+                { role: "assistant", content: match.data.overallGap },
+              ]);
             }
           }
         }
@@ -944,14 +922,10 @@ export function ScoutChat({
         setSearched(true);
         setMatchCount(res.data.matchCount);
         if (!quiet) {
-          setMessages((m) => {
-            const next: Msg[] = [
-              ...m,
-              { role: "assistant", content: res.data.overallGap },
-            ];
-            setResultsPin(next.length - 1);
-            return next;
-          });
+          setMessages((m) => [
+            ...m,
+            { role: "assistant", content: res.data.overallGap },
+          ]);
         }
         router.refresh();
         return;
@@ -999,7 +973,6 @@ export function ScoutChat({
             ...m,
             { role: "assistant", content: res.data.overallGap },
           ];
-          setResultsPin(next.length - 1);
           writeGuestSession({
             spec: active,
             messages: next,
@@ -1217,7 +1190,6 @@ export function ScoutChat({
     setReadyToSearch(false);
     setSearched(false);
     setMatchCount(null);
-    setResultsPin(null);
     setActiveSearchId("");
     setText("");
     setDetailsOpen(false);
