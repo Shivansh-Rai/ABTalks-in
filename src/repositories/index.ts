@@ -28,7 +28,7 @@ export {
   hasEarnedSubmissionPointsOnIstDate,
   withLegacyPointsMirrorFlush,
 } from "./points";
-export { getByPublicId, listForUser } from "./credentials";
+export { getByPublicId, listForUser, issuedChallengeEnrollmentIds } from "./credentials";
 export {
   applyCredentialIssue,
   generatePublicCredentialId,

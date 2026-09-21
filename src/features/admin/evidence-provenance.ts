@@ -20,8 +20,10 @@ import {
  *                                 CREDENTIAL            → Credential
  *                                 HACKATHON             → HackathonParticipant, else HackathonTeam
  *   Credential.sourceKey          PROGRAM_ENROLLMENT    → ProgramEnrollment
- *                                 HACKATHON_TEAM        → "<teamId>:<certId>" → HackathonTeam
- *                                 COHORT / WORKSHOP     → Certificate
+ *                                 HACKATHON_TEAM        → W3 "{event}:{teamId}:{userId}:…"
+ *                                                         or historical "{teamId}:{certId}"
+ *                                                         → HackathonTeam
+ *                                 COHORT / WORKSHOP     → historical Certificate.id (frozen)
  *                                 ASSESSMENT_REPORT     → AssessmentReport
  *   CandidateAchievement.sourceId PROGRAM_ENROLLMENT    → ProgramEnrollment
  *                                 HACKATHON_TEAM        → HackathonParticipant
@@ -254,9 +256,9 @@ export function collectSourceIds(rows: Pick<EvidenceSourceRows, "evidence" | "cr
   for (const c of rows.credentials) {
     if (c.sourceType === "PROGRAM_ENROLLMENT") ids.enrollment.add(c.sourceKey);
     else if (c.sourceType === "HACKATHON_TEAM") {
-      const [teamId, certId] = splitHackathonKey(c.sourceKey);
-      if (teamId) ids.team.add(teamId);
-      ids.certificate.add(certId);
+      const parsed = parseHackathonCredentialSourceKey(c.sourceKey);
+      if (parsed.teamId) ids.team.add(parsed.teamId);
+      if (parsed.historicalCertId) ids.certificate.add(parsed.historicalCertId);
     } else if (c.sourceType === "COHORT" || c.sourceType === "WORKSHOP_REGISTRATION") {
       ids.certificate.add(c.sourceKey);
     } else if (c.sourceType === "ASSESSMENT_REPORT") {
@@ -277,10 +279,27 @@ export function collectSourceIds(rows: Pick<EvidenceSourceRows, "evidence" | "cr
 
 type Resolved = TracedSource | { reason: string };
 
-/** `"<teamId>:<certId>"` since teams were recorded; the certificate id alone before. */
-function splitHackathonKey(key: string): [string | null, string] {
-  const i = key.indexOf(":");
-  return i === -1 ? [null, key] : [key.slice(0, i), key.slice(i + 1)];
+const W3_HACKATHON_TAIL = /^(participation|winner|second|third|top5)$/;
+
+/**
+ * W3 stable key: `{event}:{teamId}:{userId}:participation|variant`
+ * Phase 2g: `{teamId}:{certificateId}` or a bare Certificate.id.
+ */
+export function parseHackathonCredentialSourceKey(key: string): {
+  teamId: string | null;
+  historicalCertId: string | null;
+} {
+  const parts = key.split(":");
+  if (parts.length === 4 && W3_HACKATHON_TAIL.test(parts[3] ?? "")) {
+    return { teamId: parts[1] ?? null, historicalCertId: null };
+  }
+  if (parts.length === 1) {
+    return { teamId: null, historicalCertId: key };
+  }
+  return {
+    teamId: parts[0] ?? null,
+    historicalCertId: parts.slice(1).join(":") || null,
+  };
 }
 
 function meta(value: Json): Record<string, unknown> {
@@ -505,10 +524,11 @@ export function buildEvidenceProvenance(
       case "PROGRAM_ENROLLMENT":
         return fromEnrollment(c.sourceKey, c.issuedAt);
       case "HACKATHON_TEAM": {
-        const [teamId, certId] = splitHackathonKey(c.sourceKey);
-        if (teamId) return fromTeam(teamId, outcome);
-        // Older keys are the certificate id alone; its snapshot may name the team.
-        const snapshotTeam = meta(certificateById.get(certId)?.metadata ?? null).teamId;
+        const parsed = parseHackathonCredentialSourceKey(c.sourceKey);
+        if (parsed.teamId) return fromTeam(parsed.teamId, outcome);
+        const snapshotTeam = meta(
+          certificateById.get(parsed.historicalCertId ?? "")?.metadata ?? null,
+        ).teamId;
         return typeof snapshotTeam === "string"
           ? fromTeam(snapshotTeam, outcome)
           : { reason: "The credential does not record which hackathon team earned it." };

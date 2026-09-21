@@ -1,9 +1,16 @@
 /**
- * W3-A Credential comparison (read-only).
+ * W3 Credential comparison (read-only).
+ *
+ * Mirror ON (ENABLE_LEGACY_CERTIFICATE_MIRROR !== "false"):
+ *   Certificate ↔ Credential parity is a gate.
+ *
+ * Mirror OFF (ENABLE_LEGACY_CERTIFICATE_MIRROR=false):
+ *   Credential uniqueness/semantic gates remain.
+ *   credentialMissingCertificate is expected for post-cutover issues
+ *   and is informational. Certificate missing Credential is still a gate.
  *
  * Child by default. Production: PHASE2_ALLOW_PRODUCTION=1 + direct host.
- * Does not mutate. Does not enable ENABLE_NEW_CREDENTIAL_WRITES.
- * Does not repair Points or Visibility.
+ * Does not mutate. Does not enable write flags.
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -14,6 +21,7 @@ if (process.env.DATABASE_URL?.includes("-pooler.")) {
 }
 
 import { PrismaClient } from "@prisma/client";
+import { isLegacyCertificateMirrorEnabled } from "../../src/lib/feature-flags";
 import { assertChildBranch } from "./migrate-078-shared";
 
 const prisma = new PrismaClient();
@@ -127,13 +135,23 @@ async function main() {
      )
   `);
 
+  const invalidCredentialRows = n(await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT COUNT(*)::bigint AS n
+      FROM "Credential"
+     WHERE "credentialId" = ''
+        OR "sourceKey" = ''
+        OR "recipientName" = ''
+  `);
+
+  const mirrorOn = isLegacyCertificateMirrorEnabled();
   const report = {
+    legacyCertificateMirror: mirrorOn ? "on" : "off",
     certificateCount,
     credentialCount,
     certificateMissingCredential: certMissingCredential,
     credentialMissingCertificate: credMissingCertificate,
     publicIdMismatch:
-      certMissingCredential + credMissingCertificate,
+      certMissingCredential + (mirrorOn ? credMissingCertificate : 0),
     userMismatch,
     typeMismatch,
     statusMismatch,
@@ -143,12 +161,13 @@ async function main() {
     duplicatePublicIds,
     duplicateSourceKeys,
     sourceKeyMappingDrift,
+    invalidCredentialRows,
+    postW3bCredentialsWithoutCertificate: mirrorOn ? 0 : credMissingCertificate,
   };
   console.log(JSON.stringify(report, null, 2));
 
   const blocking = [
     certMissingCredential,
-    credMissingCertificate,
     userMismatch,
     typeMismatch,
     statusMismatch,
@@ -157,11 +176,17 @@ async function main() {
     titleMismatch,
     duplicatePublicIds,
     duplicateSourceKeys,
+    invalidCredentialRows,
   ];
+  if (mirrorOn) blocking.push(credMissingCertificate);
   if (blocking.some((v) => v !== 0)) {
     throw new Error("W3 credential recon failed: missing or semantic mismatch is non-zero");
   }
-  console.log("W3 credential recon passed (sourceKeyMappingDrift is informational).");
+  console.log(
+    mirrorOn
+      ? "W3 credential recon passed (sourceKeyMappingDrift is informational)."
+      : "W3-B credential recon passed (Credential-without-Certificate is expected).",
+  );
 }
 
 main()

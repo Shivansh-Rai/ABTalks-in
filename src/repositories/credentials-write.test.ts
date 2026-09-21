@@ -521,9 +521,75 @@ async function main() {
     assert(!hack.includes("revokedAt"), "hackathon issue does not revoke");
   });
 
-  await suite("hire still consumes the Certificate mirror during W3-A", () => {
+  await suite("hire scores challenge completion from Credential, not Certificate", () => {
     const hire = source("src/repositories/hire.ts");
-    assert(hire.includes("certificate: { select: { status: true } }"), "enrollment.certificate");
+    assert(hire.includes("issuedChallengeEnrollmentIds"), "credential lookup");
+    assert(!hire.includes("certificate: { select: { status: true } }"), "no enrollment.certificate");
+    const dossier = source("src/features/hire/challenge-dossier.ts");
+    assert(dossier.includes("e.certificateIssued"), "uses precomputed flag");
+    assert(!dossier.includes("e.certificate?"), "no Certificate join");
+  });
+
+  await suite("mirror OFF: Credential created, Certificate unchanged", async () => {
+    process.env.ENABLE_NEW_CREDENTIAL_WRITES = "true";
+    process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "false";
+    process.env.ENABLE_DUAL_WRITE = "true";
+    delete process.env.CERTIFICATE_FAIL_LEGACY_MIRROR;
+    const { db, certificates, credentials } = makeDb();
+    const r = await applyCredentialIssue(db, claudeInput);
+    assert(r.ok === true, "ok");
+    if (!r.ok) return;
+    assert(credentials.length === 1, "one credential");
+    assert(certificates.length === 0, "no certificate");
+    assert(r.data.certificateId.startsWith("ABT-CC-"), "public id");
+    const second = await applyCredentialIssue(db, claudeInput);
+    assert(second.ok === true && second.data.alreadyIssued === true, "lazy repeat");
+    if (!second.ok) return;
+    assert(second.data.certificateId === r.data.certificateId, "same public id");
+    assert(credentials.length === 1, "still one credential");
+    assert(certificates.length === 0, "certificate still absent");
+  });
+
+  await suite("mirror OFF concurrent retry: one Credential, no Certificate", async () => {
+    process.env.ENABLE_NEW_CREDENTIAL_WRITES = "true";
+    process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "false";
+    const { db, certificates, credentials } = makeDb();
+    const [a, b] = await Promise.all([
+      applyCredentialIssue(db, claudeInput),
+      applyCredentialIssue(db, claudeInput),
+    ]);
+    assert(a.ok && b.ok, "both ok");
+    if (!a.ok || !b.ok) return;
+    assert(a.data.certificateId === b.data.certificateId, "same public id");
+    assert(credentials.length === 1, "one credential");
+    assert(certificates.length === 0, "no certificate");
+  });
+
+  await suite("mirror OFF hackathon participation and placement", async () => {
+    process.env.ENABLE_NEW_CREDENTIAL_WRITES = "true";
+    process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "false";
+    const { db, certificates, credentials } = makeDb();
+    const part = await applyCredentialIssue(db, participationInput);
+    const place = await applyCredentialIssue(db, placementInput);
+    assert(part.ok && place.ok, "both ok");
+    if (!part.ok || !place.ok) return;
+    assert(credentials.length === 2, "two credentials");
+    assert(certificates.length === 0, "no certificates");
+    assert(
+      credentials.some((c) => c.type === CredentialType.PARTICIPATION),
+      "participation",
+    );
+    assert(
+      credentials.some((c) => c.type === CredentialType.PLACEMENT),
+      "placement",
+    );
+  });
+
+  await suite("certificate.create is gated by mirror or flag-off rollback", () => {
+    const src = source("src/repositories/credentials-write.ts");
+    assert(src.includes("isLegacyCertificateMirrorEnabled"), "mirror gate");
+    assert(src.includes("if (!isLegacyCertificateMirrorEnabled()) return"), "skip create when off");
+    assert(src.includes("issueLegacyAuthoritative"), "flag-off rollback still Certificate-first");
   });
 
   restoreEnv(prevWrites, prevMirror, prevDual, prevFail);

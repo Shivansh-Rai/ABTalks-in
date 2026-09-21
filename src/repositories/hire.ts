@@ -4,6 +4,7 @@ import { Domain, ProgramCohortStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
+import { issuedChallengeEnrollmentIds } from "@/repositories/credentials";
 import {
   loadRecruiterIdentities,
   RECRUITER_FIELD_POLICY,
@@ -340,7 +341,6 @@ const CHALLENGE_EVIDENCE_SELECT = {
   completedAt: true,
   longestStreak: true,
   currentStreak: true,
-  certificate: { select: { status: true } },
   _count: { select: { submissions: true } },
   user: { select: { name: true } },
 } satisfies Prisma.EnrollmentSelect;
@@ -354,7 +354,7 @@ export type ChallengeCandidateRow = {
   completedAt: Date | null;
   longestStreak: number;
   currentStreak: number;
-  certificate: { status: string } | null;
+  certificateIssued: boolean;
   _count: { submissions: number };
   user: { name: string | null };
   recruiterIdentity: RecruiterPublicIdentity;
@@ -373,8 +373,10 @@ export async function listChallengeCandidates(
       select: CHALLENGE_EVIDENCE_SELECT,
     });
     const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
+    const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
     return rows.map((r) => ({
       ...r,
+      certificateIssued: issued.has(r.id),
       recruiterIdentity:
         identities.get(r.userId) ?? identityFromLegacyProfile(null),
     }));
@@ -408,6 +410,7 @@ export async function listChallengeCandidates(
       },
     },
   });
+  const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
   return rows.map((r) => ({
     id: r.id,
     userId: r.userId,
@@ -417,7 +420,7 @@ export async function listChallengeCandidates(
     completedAt: r.completedAt,
     longestStreak: r.longestStreak,
     currentStreak: r.currentStreak,
-    certificate: r.certificate,
+    certificateIssued: issued.has(r.id),
     _count: r._count,
     user: { name: r.user.name },
     recruiterIdentity: identityFromLegacyProfile(r.user.studentProfile),

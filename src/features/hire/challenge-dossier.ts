@@ -335,7 +335,7 @@ export async function buildChallengeDossierSet(opts: {
         workingLanguages: derived([]),
         missionTypesPassed: verified([]),
         cohortProgress: derived({ day: elapsed, ofDays: CHALLENGE_TOTAL_DAYS }),
-        certificateIssued: verified(e.certificate?.status === "ISSUED"),
+        certificateIssued: verified(e.certificateIssued),
         quizAverage: verified(
           RECRUITER_FIELD_POLICY.assessmentScores &&
             q &&

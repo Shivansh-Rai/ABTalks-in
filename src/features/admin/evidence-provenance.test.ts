@@ -17,6 +17,7 @@ import {
   allItems,
   buildEvidenceProvenance,
   collectSourceIds,
+  parseHackathonCredentialSourceKey,
   tracedCount,
   type EvidenceSourceRows,
   type ProvenanceItem,
@@ -414,6 +415,32 @@ suite("the loader reads sources by id so foreign pointers are caught", () => {
   assert(loader.includes("collectSourceIds("), "one pointer map");
   const assembler = code("src/features/admin/get-admin-candidate-detail.ts");
   assert(assembler.includes("getEvidenceProvenance(userId)"), "the admin page loads provenance");
+});
+
+suite("W3 hackathon source keys trace to the team without Certificate", () => {
+  const parsed = parseHackathonCredentialSourceKey(
+    "vicodathon-2026:team_1:user_me:participation",
+  );
+  assert(parsed.teamId === "team_1", parsed.teamId ?? "missing team");
+  assert(parsed.historicalCertId === null, "new keys do not load Certificate.id");
+  const historical = parseHackathonCredentialSourceKey("team_1:cert_a");
+  assert(historical.teamId === "team_1", "phase 2g team");
+  assert(historical.historicalCertId === "cert_a", "phase 2g cert id");
+
+  const rows = screenshotCandidate();
+  rows.credentials[0]!.sourceKey = "vicodathon-2026:team_1:user_me:participation";
+  rows.credentials[1]!.sourceKey = "vicodathon-2026:team_1:user_me:second";
+  rows.certificates = [];
+  const ids = collectSourceIds(rows);
+  assert(ids.team.has("team_1"), "loads the team");
+  assert(ids.certificate.size === 0, "does not require Certificate for W3 keys");
+  const p = buildEvidenceProvenance(ME, rows);
+  assert(p.credentials.length === 2, "both listed");
+  for (const c of p.credentials) {
+    const s = tracedOrThrow(c.item);
+    assert(s.kind === "HACKATHON", s.kind);
+    assert(s.record === "HackathonTeam · team_1", s.record);
+  }
 });
 
 suite("the 50th-day date reads the same rows the day count does", () => {

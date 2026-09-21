@@ -199,7 +199,7 @@ export function isNewCredentialWritesEnabled(): boolean {
  * ENABLE_DUAL_WRITE.
  *
  * Default ON so a dark deploy (flag unset) keeps current W3-A behaviour.
- * Off only when explicitly `"false"` (future W3-B): authoritative Credential
+ * Off only when explicitly `"false"` (W3-B): authoritative Credential
  * still writes; Certificate rows freeze.
  */
 export function isLegacyCertificateMirrorEnabled(): boolean {

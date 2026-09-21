@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-21 [env|convention] W3-B Certificate mirror shutdown: ENABLE_LEGACY_CERTIFICATE_MIRROR=false freezes Certificate; /hire completion uses Credential (pe_enr_ enrollment source); admin provenance keeps historical Certificate.id reads only; dual-write stays; W4 not started
 - 2026-09-21 [env] W3-A COMPLETE: production ENABLE_NEW_CREDENTIAL_WRITES=true ENABLE_LEGACY_CERTIFICATE_MIRROR=true; Credential is the issuance write model; Certificate remains the compatibility mirror; dual-write stays; W3-B/W4 not started
 - 2026-09-21 [env|convention] W3-A Credential write authority: ENABLE_NEW_CREDENTIAL_WRITES (default off) commits Credential before the Certificate compatibility mirror; ENABLE_LEGACY_CERTIFICATE_MIRROR (default on); dual-write stays; W3-B/W4 not started
 - 2026-09-21 [rule] Recruiter registration uses one emailed 6-digit code to verify the address and open the session; a second sign-in OTP is recovery only (failed session or a restored draft with no cookie).

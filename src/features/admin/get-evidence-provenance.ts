@@ -182,6 +182,9 @@ export async function getEvidenceProvenance(userId: string): Promise<EvidencePro
       : [],
     ids.certificate.size
       ? prisma.certificate.findMany({
+          // Historical SkillEvidence / COHORT / WORKSHOP / Phase 2g hackathon
+          // keys point at frozen Certificate.id. New W3 issues do not mint
+          // Certificate rows and do not need this lookup.
           where: inIds(ids.certificate),
           select: { id: true, userId: true, type: true, status: true, issuedAt: true, metadata: true },
         })
