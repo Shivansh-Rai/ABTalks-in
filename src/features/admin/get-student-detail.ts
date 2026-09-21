@@ -132,6 +132,7 @@ export async function getStudentDetail(
         orderBy: { createdAt: "desc" },
         take: 1,
         select: {
+          id: true,
           domain: true,
           status: true,
           daysCompleted: true,

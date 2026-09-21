@@ -8,6 +8,8 @@ import {
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
 import { listCanonicalChallengeFeed } from "@/repositories/progress";
 
+const IST = "Asia/Kolkata";
+
 function distinctAttemptUsers(gte: Date, lt: Date) {
   return prisma.activityAttempt.findMany({
     where: {
