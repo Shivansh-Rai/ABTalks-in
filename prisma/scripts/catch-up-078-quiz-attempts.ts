@@ -5,14 +5,17 @@
  * PHASE2_ALLOW_PRODUCTION=1 + direct URL required for production.
  */
 import { config } from "dotenv";
+config({ path: ".env.local" });
+config();
+if (process.env.DATABASE_URL?.includes("-pooler.")) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace("-pooler.", ".");
+}
+process.env.DIRECT_URL = process.env.DATABASE_URL;
+process.env.ENABLE_DUAL_WRITE = "true";
+
 import { Prisma, PrismaClient } from "@prisma/client";
 import { assertChildBranch } from "./migrate-078-shared";
 import { dualWriteQuizAttempt } from "../../src/repositories/dual-write";
-
-config({ path: ".env.local" });
-config();
-
-process.env.ENABLE_DUAL_WRITE = "true";
 
 const prisma = new PrismaClient();
 
