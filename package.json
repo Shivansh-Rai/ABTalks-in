@@ -131,6 +131,8 @@
     "db:check:078:credentials:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 tsx prisma/scripts/check-078-credentials.ts",
     "db:check:078:hire-certificates": "tsx prisma/scripts/check-078-hire-certificates.ts",
     "db:check:078:hire-certificates:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 tsx prisma/scripts/check-078-hire-certificates.ts",
+    "db:check:078:w3b-provenance": "tsx prisma/scripts/check-078-w3b-provenance.ts",
+    "db:check:078:w3b-provenance:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 tsx prisma/scripts/check-078-w3b-provenance.ts",
     "db:rehearse:078:credential-writes": "NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/rehearse-078-credential-writes.ts",
     "db:rehearse:078:w3b": "NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/rehearse-078-w3b.ts",
     "db:probe:078:w3-credentials:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 ENABLE_NEW_CREDENTIAL_WRITES=true NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/probe-078-w3-credentials.ts",
