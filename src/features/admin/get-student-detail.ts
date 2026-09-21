@@ -7,7 +7,9 @@ import { getAmbassadorState } from "@/repositories/ambassador";
 import {
   listChallengeSubmissions,
   listQuizAttemptsForUser,
+  overlayChallengeProgressFields,
 } from "@/repositories/progress";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 export type ChallengeStudentDetail = {
   kind: "challenge";
@@ -254,7 +256,10 @@ export async function getStudentDetail(
     }),
   ]);
 
-  const enrollment = user.enrollments[0] ?? null;
+  const enrollmentRaw = user.enrollments[0] ?? null;
+  const [enrollment] = enrollmentRaw
+    ? await overlayChallengeProgressFields([enrollmentRaw])
+    : [null];
   const onTimeCount = submissions.filter(
     (s) => s.status === "ON_TIME" || s.status === "LATE",
   ).length;
@@ -279,7 +284,7 @@ export async function getStudentDetail(
         organization: candidate.organization,
         role: candidate.role,
         yearsExperience: candidate.yearsExperience,
-        domain: sp?.domain ?? null,
+        domain: await displayedChallengeDomain(userId, sp?.domain ?? null),
         skills: candidate.skills,
         resumeUrl: candidate.resumeUrl,
         phone: candidate.phone,

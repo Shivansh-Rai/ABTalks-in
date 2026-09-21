@@ -18,6 +18,8 @@ import {
   type Project,
   type SkillGroup,
 } from "@/lib/validations/recruiter";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 export type RecruiterProfileView = {
   fullName: string;
@@ -153,11 +155,13 @@ export async function getRecruiterProfileByToken(
             where: { status: { not: EnrollmentStatus.ABANDONED } },
             orderBy: { startedAt: "asc" },
             select: {
+              id: true,
               domain: true,
               status: true,
               daysCompleted: true,
               currentStreak: true,
               longestStreak: true,
+              lastSubmittedDay: true,
               challenge: { select: { totalDays: true } },
             },
           },
@@ -168,12 +172,16 @@ export async function getRecruiterProfileByToken(
 
   if (!review || !review.isPublished || !review.user.studentProfile) return null;
   const p = review.user.studentProfile;
+  const domain = await displayedChallengeDomain(review.user.id, p.domain);
+  const overlaidEnrollments = await overlayChallengeProgressFields(
+    review.user.enrollments,
+  );
   const enr =
-    review.user.enrollments.find(
-      (e) => e.domain === p.domain && e.status === "ACTIVE",
+    overlaidEnrollments.find(
+      (e) => e.domain === domain && e.status === "ACTIVE",
     ) ??
-    review.user.enrollments.find((e) => e.domain === p.domain) ??
-    review.user.enrollments[0] ??
+    overlaidEnrollments.find((e) => e.domain === domain) ??
+    overlaidEnrollments[0] ??
     null;
 
   return {
@@ -185,7 +193,7 @@ export async function getRecruiterProfileByToken(
     linkedinUrl: p.linkedinUrl,
     githubUsername: p.githubUsername,
     userType: p.userType,
-    domain: p.domain,
+    domain,
     college: p.college,
     graduationYear: p.graduationYear,
     organization: p.organization,

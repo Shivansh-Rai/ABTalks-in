@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 import { buildChallengeContext } from "@/features/interview/challenge-context";
 import { buildResumeContext } from "@/features/interview/resume-context";
 import type { CandidateContext } from "@/features/interview/types";
@@ -28,7 +29,7 @@ export async function buildCandidateContext(
   return {
     userId,
     fullName: profile.fullName,
-    domain: domainRow?.domain ?? "",
+    domain: await displayedChallengeDomain(userId, domainRow?.domain ?? null) ?? "",
     role: profile.role,
     organization: profile.organization,
     yearsExperience: profile.yearsExperience,

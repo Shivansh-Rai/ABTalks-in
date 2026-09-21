@@ -3,6 +3,7 @@ import {
   getCandidateProfile,
   listCandidateProfiles,
 } from "@/repositories/candidate";
+import { displayedChallengeDomains } from "@/repositories/enrollment-state";
 
 export type ReferralBadgeTier = "none" | "bronze" | "silver" | "gold" | "platinum";
 
@@ -73,6 +74,12 @@ export async function getReferralStats(
   });
 
   const identities = await listCandidateProfiles(rows.map((r) => r.referred.id));
+  const domains = await displayedChallengeDomains(
+    rows.map((r) => ({
+      userId: r.referred.id,
+      legacy: r.referred.studentProfile?.domain ?? null,
+    })),
+  );
 
   const totalReferrals = rows.length;
   const rewardedReferrals = rows.filter((r) => r.rewardGiven).length;
@@ -85,7 +92,7 @@ export async function getReferralStats(
     const identity = identities.get(r.referred.id);
     const referredName =
       identity?.fullName?.trim() || r.referred.email || "Unknown";
-    const referredDomain = r.referred.studentProfile?.domain ?? "-";
+    const referredDomain = domains.get(r.referred.id) ?? "-";
     return {
       id: r.id,
       referredName,

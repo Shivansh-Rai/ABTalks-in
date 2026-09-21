@@ -19,6 +19,7 @@ import {
   applyCandidateIdentityChange,
 } from "@/repositories/candidate-identity";
 import { dualWriteChallengeEnrollmentById } from "@/repositories/dual-write";
+import { applyEnrollmentProgressDenorm } from "@/repositories/enrollment-state";
 import {
   applyChallengeSubmissionChange,
   findChallengeSubmissionId,
@@ -261,25 +262,27 @@ export async function submitDay(input: {
           endDay: currentDay,
         });
       const completed = daysCompleted >= 60;
+      const nextLastSubmittedDay = Math.max(
+        enrollment.lastSubmittedDay ?? 0,
+        lastSubmittedDay ?? dayNumber,
+      );
 
-      await tx.enrollment.update({
-        where: { id: enrollment.id },
-        data: {
-          daysCompleted,
-          currentStreak: newStreak,
-          longestStreak: recomputedLongest,
-          lastSubmittedDay: Math.max(
-            enrollment.lastSubmittedDay ?? 0,
-            lastSubmittedDay ?? dayNumber,
-          ),
-          ...(completed
-            ? {
-                status: EnrollmentStatus.COMPLETED,
-                completedAt: new Date(),
-              }
-            : {}),
-        },
+      await applyEnrollmentProgressDenorm(tx, {
+        enrollmentId: enrollment.id,
+        daysCompleted,
+        currentStreak: newStreak,
+        longestStreak: recomputedLongest,
+        lastSubmittedDay: nextLastSubmittedDay,
       });
+      if (completed) {
+        await tx.enrollment.update({
+          where: { id: enrollment.id },
+          data: {
+            status: EnrollmentStatus.COMPLETED,
+            completedAt: new Date(),
+          },
+        });
+      }
       await dualWriteChallengeEnrollmentById(tx, enrollment.id);
 
       if (completed) {

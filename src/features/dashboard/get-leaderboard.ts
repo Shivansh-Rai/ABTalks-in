@@ -1,6 +1,7 @@
 import { Domain } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 export type LeaderboardRow = {
   rank: number;
@@ -79,6 +80,7 @@ export async function getLeaderboard(
         daysCompleted: true,
         currentStreak: true,
         longestStreak: true,
+        lastSubmittedDay: true,
         user: {
           select: {
             studentProfile: {
@@ -96,7 +98,14 @@ export async function getLeaderboard(
   ]);
 
   const identities = await listCandidateProfiles(enrollments.map((e) => e.userId));
-  const rows: LeaderboardRow[] = enrollments.map((e, index) => {
+  const overlaid = await overlayChallengeProgressFields(enrollments);
+  overlaid.sort((a, b) => {
+    if (b.daysCompleted !== a.daysCompleted) return b.daysCompleted - a.daysCompleted;
+    if (b.currentStreak !== a.currentStreak) return b.currentStreak - a.currentStreak;
+    if (b.longestStreak !== a.longestStreak) return b.longestStreak - a.longestStreak;
+    return 0;
+  });
+  const rows: LeaderboardRow[] = overlaid.map((e, index) => {
     const identity = identities.get(e.userId);
     const sp = e.user.studentProfile;
     return {

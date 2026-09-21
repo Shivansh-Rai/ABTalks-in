@@ -3116,6 +3116,10 @@ model ProgramEnrollment {
   /// Admin floor override on the unlock ceiling.
   unlockFloorDay Int?
   skipTokensUsed Int                @default(0)
+  /// W7-A challenge-track streak snapshot. Not EnrollmentProgress (stale cache).
+  /// Historical current/longest streak is not fully re-derivable from AA.
+  trackCurrentStreak Int            @default(0)
+  trackLongestStreak Int            @default(0)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

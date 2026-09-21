@@ -2,6 +2,7 @@ import { Domain, EnrollmentStatus, Prisma } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 export type StudentTrack = "ALL" | "CHALLENGE" | "HACKATHON";
 
@@ -196,8 +197,10 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     referralCounts.map((r) => [r.referrerId, r._count._all]),
   );
 
+  const overlaidEnrollments = await overlayChallengeProgressFields(enrollmentRows);
+
   const students: AdminStudentRow[] = [
-    ...enrollmentRows.map((row) => ({
+    ...overlaidEnrollments.map((row) => ({
       track: "CHALLENGE" as const,
       rowId: row.id,
       enrollmentId: row.id,

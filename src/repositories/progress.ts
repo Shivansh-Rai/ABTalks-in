@@ -6,7 +6,7 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
+import { isNewProgressRepoEnabled, isNewEnrollmentStateEnabled } from "@/lib/feature-flags";
 import {
   enrollmentIdFromPe,
   memberIdFromPe,
@@ -15,6 +15,7 @@ import {
   quizIdFromActivity,
   missionSubmissionIdFromAttemptId,
 } from "@/repositories/ids";
+import { listTrackStreakSnapshots } from "@/repositories/enrollment-state";
 
 export type ChallengeProgressStats = {
   daysCompleted: number;
@@ -113,9 +114,9 @@ async function challengeCompletionFromAttempts(
 }
 
 /**
- * Phase 6: completed days come from attempts. Track streak stays the
- * Enrollment.currentStreak / longestStreak snapshot written on submit.
- * Live-recomputing streak is a separate product decision (Phase 7).
+ * Days come from attempts. Track streak is the historical snapshot:
+ * Enrollment while W7-A reads are off; ProgramEnrollment.track* when on.
+ * Live-recomputing streak from AA would change ~208 historical snapshots.
  */
 export async function getChallengeProgressStats(
   enrollmentId: string,
@@ -129,10 +130,15 @@ export async function getChallengeProgressStats(
       lastSubmittedDay: true,
     },
   });
-  const streaks = {
+  let streaks = {
     currentStreak: snapshot?.currentStreak ?? 0,
     longestStreak: snapshot?.longestStreak ?? 0,
   };
+  if (isNewEnrollmentStateEnabled()) {
+    const pe = await listTrackStreakSnapshots([enrollmentId]);
+    const canon = pe.get(enrollmentId);
+    if (canon) streaks = canon;
+  }
   if (!isNewProgressRepoEnabled()) {
     return {
       daysCompleted: snapshot?.daysCompleted ?? 0,
@@ -153,17 +159,33 @@ export async function overlayChallengeProgressFields<
     lastSubmittedDay: number | null;
   },
 >(rows: T[]): Promise<T[]> {
-  if (!isNewProgressRepoEnabled() || rows.length === 0) return rows;
-  return Promise.all(
-    rows.map(async (row) => {
-      const derived = await challengeCompletionFromAttempts(row.id);
+  if (rows.length === 0) return rows;
+  let next = rows;
+  if (isNewProgressRepoEnabled()) {
+    next = await Promise.all(
+      next.map(async (row) => {
+        const derived = await challengeCompletionFromAttempts(row.id);
+        return {
+          ...row,
+          daysCompleted: derived.daysCompleted,
+          lastSubmittedDay: derived.lastSubmittedDay,
+        };
+      }),
+    );
+  }
+  if (isNewEnrollmentStateEnabled()) {
+    const snaps = await listTrackStreakSnapshots(next.map((row) => row.id));
+    next = next.map((row) => {
+      const snap = snaps.get(row.id);
+      if (!snap) return row;
       return {
         ...row,
-        daysCompleted: derived.daysCompleted,
-        lastSubmittedDay: derived.lastSubmittedDay,
+        currentStreak: snap.currentStreak,
+        longestStreak: snap.longestStreak,
       };
-    }),
-  );
+    });
+  }
+  return next;
 }
 
 async function listChallengeSubmissionTimes(userId: string): Promise<Date[]> {

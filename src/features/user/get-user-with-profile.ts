@@ -2,6 +2,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { getAmbassadorState } from "@/repositories/ambassador";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 /**
  * User plus current identity. Candidate identity/referral come from
@@ -30,12 +31,15 @@ export const getUserWithProfile = cache(async (userId: string) => {
   ]);
   if (!user) return null;
   const sp = user.studentProfile;
+  const domain = identity
+    ? await displayedChallengeDomain(userId, sp?.domain ?? null)
+    : null;
   return {
     ...user,
     studentProfile: identity
       ? {
           fullName: identity.fullName,
-          domain: sp?.domain ?? null,
+          domain,
           userType: identity.userType,
           college: identity.college,
           organization: identity.organization,

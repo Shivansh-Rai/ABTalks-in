@@ -245,6 +245,7 @@ suite("ENABLE_NEW_* are not flipped in dual-write helpers", () => {
 suite("profile page identity reads through getCandidateProfile", () => {
   const src = source("src/features/profile/get-profile.ts");
   assert(src.includes("getCandidateProfile"), "repo");
+  assert(src.includes("displayedChallengeDomain"), "domain from first-track PE");
   assert(src.includes("studentProfile: { select: { domain: true } }"), "domain stays learning");
 });
 
@@ -620,8 +621,8 @@ suite("progress repo derives from attempts, not EnrollmentProgress", () => {
   assert(src.includes("listHubSubmissionTimes"), "hub heatmap");
   assert(src.includes('startsWith: "aa_sub_"'), "challenge attempts only");
   assert(
-    !src.includes("computeTrackStreakFromOnTimeDays"),
-    "Phase 6 keeps Enrollment streak snapshot",
+    source("src/repositories/progress.ts").includes("listTrackStreakSnapshots"),
+    "W7-A PE streak snapshot",
   );
   assert(src.includes("snapshot?.currentStreak"), "compat currentStreak");
   assert(src.includes("snapshot?.longestStreak"), "compat longestStreak");

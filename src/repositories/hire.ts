@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
 import { issuedChallengeEnrollmentIds } from "@/repositories/credentials";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 import {
   loadRecruiterIdentities,
   RECRUITER_FIELD_POLICY,
@@ -341,6 +342,8 @@ const CHALLENGE_EVIDENCE_SELECT = {
   completedAt: true,
   longestStreak: true,
   currentStreak: true,
+  lastSubmittedDay: true,
+  daysCompleted: true,
   _count: { select: { submissions: true } },
   user: { select: { name: true } },
 } satisfies Prisma.EnrollmentSelect;
@@ -374,7 +377,8 @@ export async function listChallengeCandidates(
     });
     const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
     const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
-    return rows.map((r) => ({
+    const overlaid = await overlayChallengeProgressFields(rows);
+    return overlaid.map((r) => ({
       ...r,
       certificateIssued: issued.has(r.id),
       recruiterIdentity:
@@ -411,7 +415,8 @@ export async function listChallengeCandidates(
     },
   });
   const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
-  return rows.map((r) => ({
+  const overlaid = await overlayChallengeProgressFields(rows);
+  return overlaid.map((r) => ({
     id: r.id,
     userId: r.userId,
     domain: r.domain,

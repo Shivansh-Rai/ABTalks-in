@@ -8,6 +8,7 @@ import { getCurrentDayNumber } from "@/lib/date-utils";
 import { resolveDashboardEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { getAmbassadorState } from "@/repositories/ambassador";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 import { getDailyTasksCached } from "@/features/challenge/get-daily-tasks-cached";
 import { prisma } from "@/lib/db";
 import { getDailyTaskByChallengeDay } from "@/repositories/learning";
@@ -123,9 +124,14 @@ export async function getDashboardData(
     return { hasUser: true, hasEnrollment: false, profile: null, enrollment: null };
   }
 
+  const profileDomain = await displayedChallengeDomain(
+    userId,
+    user.studentProfile?.domain ?? null,
+  );
+
   const profileSnapshot: DashboardDataWithEnrollment["profile"] = {
     fullName: candidate.fullName,
-    domain: user.studentProfile?.domain ?? null,
+    domain: profileDomain,
     userType: candidate.userType,
     college: candidate.college,
     organization: candidate.organization,
@@ -141,7 +147,7 @@ export async function getDashboardData(
   const enrollment = await resolveDashboardEnrollment(
     userId,
     enrollmentId ?? undefined,
-    user.studentProfile?.domain ?? null,
+    profileDomain,
   );
 
   if (!enrollment) {

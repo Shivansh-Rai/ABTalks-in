@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { getRegistrationDatesSince } from "@/features/admin/get-registration-dates";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 export type TimeRange = "daily" | "weekly" | "monthly";
 
@@ -190,7 +191,8 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   const identities = await listCandidateProfiles(
     topPerformersRaw.map((row) => row.user.id),
   );
-  const topPerformers = topPerformersRaw.map((row) => {
+  const topOverlaid = await overlayChallengeProgressFields(topPerformersRaw);
+  const topPerformers = topOverlaid.map((row) => {
     const identity = identities.get(row.user.id);
     return {
       name:
@@ -198,7 +200,7 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
         row.user.studentProfile?.fullName?.trim() ||
         row.user.email ||
         "Unknown",
-      domain: row.user.studentProfile?.domain || row.domain,
+      domain: row.domain,
       daysCompleted: row.daysCompleted,
       currentStreak: row.currentStreak,
     };

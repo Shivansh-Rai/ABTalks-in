@@ -16,6 +16,7 @@ import { getCandidateProfile } from "@/repositories/candidate";
 import {
   dualWriteChallengeEnrollmentById,
 } from "@/repositories/dual-write";
+import { applyEnrollmentProgressDenorm } from "@/repositories/enrollment-state";
 import {
   applyDeleteChallengeSubmission,
   applyDeleteEnrollmentChallengeAttempts,
@@ -114,13 +115,16 @@ export async function resetProgressAction(input: {
 
       await applyDeleteEnrollmentChallengeAttempts(tx, enrollment.id);
 
+      await applyEnrollmentProgressDenorm(tx, {
+        enrollmentId: enrollment.id,
+        daysCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastSubmittedDay: null,
+      });
       await tx.enrollment.update({
         where: { id: enrollment.id },
         data: {
-          daysCompleted: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          lastSubmittedDay: null,
           status: "ACTIVE",
           completedAt: null,
           startedAt: new Date(),
@@ -424,26 +428,23 @@ export async function rejectSubmissionAction(input: {
       const { daysCompleted, lastSubmittedDay } =
         daysCompletedFromCanonical(remainingRows);
 
-      await tx.enrollment.update({
-        where: { id: enrollmentId },
-        data: {
-          daysCompleted,
-          lastSubmittedDay,
-          status: daysCompleted >= 60 ? "COMPLETED" : "ACTIVE",
-          completedAt: daysCompleted >= 60 ? new Date() : null,
-        },
-      });
-
       const { currentStreak, longestStreak } = await computeStreakStats(tx, {
         enrollmentId,
         endDay: getCurrentDayNumber(enrollmentRow, enrollmentRow.challenge),
       });
 
+      await applyEnrollmentProgressDenorm(tx, {
+        enrollmentId,
+        daysCompleted,
+        currentStreak,
+        longestStreak,
+        lastSubmittedDay,
+      });
       await tx.enrollment.update({
         where: { id: enrollmentId },
         data: {
-          currentStreak,
-          longestStreak,
+          status: daysCompleted >= 60 ? "COMPLETED" : "ACTIVE",
+          completedAt: daysCompleted >= 60 ? new Date() : null,
         },
       });
       await dualWriteChallengeEnrollmentById(tx, enrollmentId);

@@ -578,7 +578,7 @@ async function main() {
     assert(amb.includes("isLegacyAmbassadorMirrorEnabled"), "own mirror flag");
     assert(!amb.includes("isLegacyStudentProfileMirrorEnabled"), "not W4-gated");
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(enroll.includes("studentProfile.updateMany"), "domain denorm still writes SP");
+    assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
     const points = source("src/repositories/points.ts");
     assert(points.includes("studentProfile.updateMany"), "W1-B points path unchanged");
     const mirror = source("src/repositories/candidate-identity.ts");

@@ -484,7 +484,7 @@ async function main() {
 
   await suite("W5 flag does not suppress domain writers", () => {
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(enroll.includes("studentProfile.updateMany"), "domain denorm still writes SP");
+    assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
     assert(!enroll.includes("isNewAmbassadorWritesEnabled"), "domain not gated by W5");
     const points = source("src/repositories/points.ts");
     assert(points.includes("studentProfile.updateMany"), "points path unchanged");

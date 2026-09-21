@@ -5,7 +5,10 @@ import type {
   ChallengeContext,
   CompletedChallengeTask,
 } from "@/features/interview/types";
-import { listChallengeSubmissions } from "@/repositories/progress";
+import {
+  listChallengeSubmissions,
+  overlayChallengeProgressFields,
+} from "@/repositories/progress";
 
 /**
  * Ranks a completed task by how much interview signal it carries. Proof-of-work
@@ -81,14 +84,17 @@ export async function buildChallengeContext(
         challengeId: true,
         domain: true,
         status: true,
+        daysCompleted: true,
         currentStreak: true,
         longestStreak: true,
+        lastSubmittedDay: true,
         challenge: { select: { title: true, totalDays: true } },
       } as const;
-  const enrollments = await prisma.enrollment.findMany({
+  const enrollmentsRaw = await prisma.enrollment.findMany({
     where: { userId },
     select: enrollmentSelect,
   });
+  const enrollments = await overlayChallengeProgressFields(enrollmentsRaw);
   const submissionLists = await Promise.all(
     enrollments.map(async (enrollment) => ({
       enrollmentId: enrollment.id,

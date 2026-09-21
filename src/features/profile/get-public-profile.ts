@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { overlayChallengeProgressFields } from "@/repositories/progress";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 export type PublicProfile = {
   fullName: string;
@@ -31,7 +32,7 @@ type ProfileDomainEnrollment = {
   longestStreak: number;
 };
 
-/** Enrollment for public profile heatmap + stats — matches studentProfile.domain. */
+/** Enrollment for public profile heatmap + stats — first-joined track. */
 async function resolvePublicProfileEnrollment(
   userId: string,
 ): Promise<ProfileDomainEnrollment | null> {
@@ -39,15 +40,16 @@ async function resolvePublicProfileEnrollment(
     where: { userId },
     select: { domain: true },
   });
+  const domain = await displayedChallengeDomain(userId, profile?.domain ?? null);
 
-  if (!profile?.domain) {
+  if (!domain) {
     return null;
   }
 
   const enrollments = await prisma.enrollment.findMany({
     where: {
       userId,
-      domain: profile.domain,
+      domain,
       status: { not: EnrollmentStatus.ABANDONED },
     },
     orderBy: { startedAt: "asc" },
@@ -92,7 +94,10 @@ export async function getPublicProfile(
   return {
     fullName: candidate.fullName,
     userType: candidate.userType as UserType,
-    domain: user.studentProfile?.domain ?? null,
+    domain: await displayedChallengeDomain(
+      userId,
+      user.studentProfile?.domain ?? null,
+    ),
     college: candidate.college,
     graduationYear: candidate.graduationYear,
     organization: candidate.organization,

@@ -1,6 +1,7 @@
 import type { Domain, UserType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
+import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 export type ProfileUser = {
   email: string;
@@ -76,7 +77,10 @@ export async function getProfile(userId: string): Promise<{
       organization: candidate.organization,
       role: candidate.role,
       yearsExperience: candidate.yearsExperience,
-      domain: studentProfile?.domain ?? null,
+      domain: await displayedChallengeDomain(
+        userId,
+        studentProfile?.domain ?? null,
+      ),
       skills: candidate.skills,
       resumeUrl: candidate.resumeUrl,
       phone: candidate.phone,

@@ -2,6 +2,7 @@ import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
 import { enrollmentIdFromPe, peIdForEnrollment } from "@/repositories/ids";
+import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 type Filters = {
   domain?: Domain | "ALL";
@@ -114,6 +115,8 @@ export async function getMissingStudentsForDay(
       domain: true,
       status: true,
       daysCompleted: true,
+      currentStreak: true,
+      longestStreak: true,
       lastSubmittedDay: true,
       user: {
         select: {
@@ -127,7 +130,8 @@ export async function getMissingStudentsForDay(
   });
 
   const names = await canonicalFullNameByUserId(rows.map((r) => r.user.id));
-  return rows.map((r) => ({
+  const overlaid = await overlayChallengeProgressFields(rows);
+  return overlaid.map((r) => ({
     enrollmentId: r.id,
     userId: r.user.id,
     studentName:

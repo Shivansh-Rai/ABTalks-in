@@ -2,6 +2,7 @@ import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { dualWriteChallengeEnrollment } from "@/repositories/dual-write";
+import { applyEnrollmentDomainMirror } from "@/repositories/enrollment-state";
 import { findChallengeEnrollment, getChallengeByDomain } from "@/repositories/learning";
 
 export type CreateClaudeEnrollmentResult =
@@ -83,12 +84,8 @@ export async function createClaudeEnrollment(
           completedAt: true,
         },
       });
-      // First track joined becomes the profile's primary domain. Never overwrite.
-      await tx.studentProfile.updateMany({
-        where: { userId, domain: null },
-        data: { domain: Domain.CLAUDE },
-      });
       await dualWriteChallengeEnrollment(tx, enrollment);
+      await applyEnrollmentDomainMirror(tx, userId, Domain.CLAUDE);
     });
     return { ok: true };
   } catch (e) {
