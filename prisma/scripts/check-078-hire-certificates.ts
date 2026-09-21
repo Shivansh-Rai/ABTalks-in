@@ -16,6 +16,7 @@ if (process.env.DATABASE_URL?.includes("-pooler.")) {
 }
 
 import { PrismaClient } from "@prisma/client";
+import { isLegacyCertificateMirrorEnabled } from "../../src/lib/feature-flags";
 import { assertChildBranch } from "./migrate-078-shared";
 
 const prisma = new PrismaClient();
@@ -66,21 +67,26 @@ async function main() {
        AND c.status::text <> cr.status::text
   `);
 
+  const mirrorOn = isLegacyCertificateMirrorEnabled();
   const report = {
+    legacyCertificateMirror: mirrorOn ? "on" : "off",
     challengeCertIssuedMissingCredential: certIssuedNotCredential,
     challengeCredentialIssuedMissingCertificate: credentialIssuedNotCert,
     challengeStatusMismatch: statusMismatch,
   };
   console.log(JSON.stringify(report, null, 2));
 
-  if (
-    certIssuedNotCredential !== 0 ||
-    credentialIssuedNotCert !== 0 ||
-    statusMismatch !== 0
-  ) {
+  if (certIssuedNotCredential !== 0 || statusMismatch !== 0) {
     throw new Error("hire Certificate vs Credential comparison has unexpected differences");
   }
-  console.log("W3-B hire Certificate vs Credential comparison passed.");
+  if (mirrorOn && credentialIssuedNotCert !== 0) {
+    throw new Error("hire Certificate vs Credential comparison has unexpected differences");
+  }
+  console.log(
+    mirrorOn
+      ? "W3-B hire Certificate vs Credential comparison passed."
+      : "W3-B hire comparison passed (Credential-without-Certificate is expected).",
+  );
 }
 
 main()
