@@ -106,6 +106,13 @@ function mapPeStatusToMember(
   }
 }
 
+function pmGithubData(
+  githubRepoUrl: string | null | undefined,
+): { githubRepoUrl: string } | Record<string, never> {
+  if (githubRepoUrl === undefined) return {};
+  return { githubRepoUrl: githubRepoUrl ?? "" };
+}
+
 function totalFrom(parts: {
   missionPoints: number;
   conceptPoints: number;
@@ -375,9 +382,7 @@ export async function applyProgramUnlockChange(
         ...(input.skipTokensUsed !== undefined
           ? { skipTokensUsed: input.skipTokensUsed }
           : {}),
-        ...(input.githubRepoUrl !== undefined
-          ? { githubRepoUrl: input.githubRepoUrl }
-          : {}),
+        ...pmGithubData(input.githubRepoUrl),
       },
     });
     await dualWriteProgramMember(tx as Prisma.TransactionClient, input.memberId);
@@ -415,9 +420,7 @@ export async function applyProgramUnlockChange(
         ...(input.skipTokensUsed !== undefined
           ? { skipTokensUsed: input.skipTokensUsed }
           : {}),
-        ...(input.githubRepoUrl !== undefined
-          ? { githubRepoUrl: input.githubRepoUrl }
-          : {}),
+        ...pmGithubData(input.githubRepoUrl),
       },
     });
   });
@@ -674,11 +677,13 @@ export async function overlayProgramMemberState<T extends { id: string }>(
   return rows.map((row) => {
     const snap = snaps.get(row.id);
     if (!snap) return row;
-    const next = { ...row } as T & Record<string, unknown>;
+    const next: Record<string, unknown> = { ...row };
     for (const key of OVERLAY_KEYS) {
-      if (key in row) next[key] = snap[key];
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        next[key] = snap[key];
+      }
     }
-    return next;
+    return next as T;
   });
 }
 
