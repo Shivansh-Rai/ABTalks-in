@@ -20,6 +20,17 @@
       "port": 3000
     },
     {
+      "name": "abtalks-dev-databricks-ai",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "cross-env",
+        "ENABLE_DATABRICKS_AI=true",
+        "next",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
       "name": "abtalks-attach-3000",
       "url": "http://localhost:3000",
       "port": 3000

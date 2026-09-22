@@ -130,6 +130,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         showDsArchitect={data.hasDsArchitectAccess}
         showPowerBi={data.hasPowerBiAccess}
         showSnowflake={data.hasSnowflakeAccess}
+        showDatabricksAi={data.hasDatabricksAiAccess}
       />
       <EventsSection />
       

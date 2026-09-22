@@ -1,0 +1,116 @@
+[
+  {
+    "moduleNumber": 1,
+    "title": "Milestone 1 — Governed Platform Foundations",
+    "criteria": [
+      {
+        "name": "Workspace & Git setup",
+        "weight": 20,
+        "description": "Free Edition workspace and Git folder connected to GitHub. Notebooks commit in Source format, and the control plane vs compute plane split is explained in the learner's own words."
+      },
+      {
+        "name": "Unity Catalog structure",
+        "weight": 30,
+        "description": "Catalog with bronze, silver and gold schemas. A Volume-backed governed table with visible lineage, and a clear, correct governance note."
+      },
+      {
+        "name": "Access control & security",
+        "weight": 25,
+        "description": "GRANT and REVOKE demonstrated. Row filter and column mask expressed as SQL functions, with the service-principal rationale for production explained."
+      },
+      {
+        "name": "Delta Lake operations",
+        "weight": 25,
+        "description": "History read correctly, time travel by version and timestamp, schema evolution, Liquid Clustering with OPTIMIZE, safe VACUUM and a verified MERGE upsert."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 3,
+    "title": "Milestone 2 — Data Engineering Pipelines",
+    "criteria": [
+      {
+        "name": "Ingestion design",
+        "weight": 20,
+        "description": "Idempotent COPY INTO, incremental Auto Loader on the availableNow trigger, nested JSON flattened, and a justified tool-choice table."
+      },
+      {
+        "name": "Transformation & modeling",
+        "weight": 20,
+        "description": "Silver is typed and deduplicated, and Gold aggregates and views are chosen deliberately. Joins and the query plan are understood, and the data quality check is asserted."
+      },
+      {
+        "name": "Declarative pipelines",
+        "weight": 20,
+        "description": "Bronze and silver streaming tables and a gold materialized view run end-to-end, with an expectation that drops the bad row and metrics read correctly."
+      },
+      {
+        "name": "Orchestration & CI/CD",
+        "weight": 25,
+        "description": "Multi-task job with dependencies, a parameter, a trigger, retries and an alert tested by a real failure. Bundle validated and deployed to dev and prod from the CLI."
+      },
+      {
+        "name": "Performance diagnosis",
+        "weight": 15,
+        "description": "Skew, shuffle and spill found in the query profile, with before/after numbers for the fix and a credible diagnosis of the slowest job run."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 5,
+    "title": "Milestone 3 — Analytics & ML Engineering",
+    "criteria": [
+      {
+        "name": "Self-service analytics",
+        "weight": 25,
+        "description": "Three-visual AI/BI dashboard on Gold, a working SQL alert, and a curated Genie space whose generated SQL has been checked."
+      },
+      {
+        "name": "Experiment tracking",
+        "weight": 20,
+        "description": "Autologged, manual and AutoML (or fallback) runs compared in MLflow, with a reasoned production recommendation."
+      },
+      {
+        "name": "Features & Feature Store",
+        "weight": 25,
+        "description": "EDA findings acted on, meaningful engineered features, a Unity Catalog feature table with a timeseries key, and a point-in-time training set with leakage explained."
+      },
+      {
+        "name": "Model quality & deployment",
+        "weight": 30,
+        "description": "Spark ML pipeline cross-validated, Optuna search logged as nested runs, metric choice justified, model registered with @champion, and batch predictions written."
+      }
+    ]
+  },
+  {
+    "moduleNumber": 6,
+    "title": "Milestone 4 — Generative AI Capstone",
+    "criteria": [
+      {
+        "name": "Retrieval & grounding",
+        "weight": 25,
+        "description": "Chunked corpus with Change Data Feed, a working AI Search index, relevant top-k results, and traced answers checked for grounding."
+      },
+      {
+        "name": "Agent design & tool routing",
+        "weight": 30,
+        "description": "Two well-described tools, correct tool choice across mixed questions, and traces kept for every test."
+      },
+      {
+        "name": "Governed deployment",
+        "weight": 15,
+        "description": "Agent registered in Unity Catalog and served, or deployment steps documented precisely where the tier blocks it."
+      },
+      {
+        "name": "Cost & architecture narrative",
+        "weight": 20,
+        "description": "DBU usage reviewed with three concrete savings, and an end-to-end architecture walkthrough that ties every day's component together."
+      },
+      {
+        "name": "Certification plan",
+        "weight": 10,
+        "description": "Capstone mapped to exam guide sections, with a realistic one-week plan for the gaps."
+      }
+    ]
+  }
+]

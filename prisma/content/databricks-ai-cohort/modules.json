@@ -1,0 +1,50 @@
+[
+  {
+    "number": 1,
+    "title": "Platform Foundations & Governance",
+    "subtitle": "Free Edition · Workspace · Unity Catalog · Volumes · Delta Lake · Time Travel",
+    "color": "#0ea5e9",
+    "startDay": 1,
+    "endDay": 3
+  },
+  {
+    "number": 2,
+    "title": "Data Engineering: Ingestion to Gold",
+    "subtitle": "COPY INTO · Auto Loader · Medallion · PySpark & Spark SQL · Lakeflow Declarative Pipelines",
+    "color": "#6366f1",
+    "startDay": 4,
+    "endDay": 6
+  },
+  {
+    "number": 3,
+    "title": "Orchestration, CI/CD & Production Ops",
+    "subtitle": "Lakeflow Jobs · Bundles · Databricks CLI · Git Folders · Query Profile",
+    "color": "#14b8a6",
+    "startDay": 7,
+    "endDay": 9
+  },
+  {
+    "number": 4,
+    "title": "Analytics & BI",
+    "subtitle": "Databricks SQL · AI/BI Dashboards · Genie",
+    "color": "#f59e0b",
+    "startDay": 10,
+    "endDay": 10
+  },
+  {
+    "number": 5,
+    "title": "Machine Learning Engineering",
+    "subtitle": "MLflow · AutoML · Feature Store · Spark ML · Model Registry",
+    "color": "#ec4899",
+    "startDay": 11,
+    "endDay": 13
+  },
+  {
+    "number": 6,
+    "title": "Generative AI Engineering & Capstone",
+    "subtitle": "Foundation Model APIs · AI Search · RAG · Mosaic AI Agent Framework",
+    "color": "#22c55e",
+    "startDay": 14,
+    "endDay": 15
+  }
+]

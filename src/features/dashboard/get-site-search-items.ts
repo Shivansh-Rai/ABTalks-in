@@ -4,6 +4,7 @@ import { listChallengeEnrollments } from "@/repositories/learning";
 import { resolveProgramMemberForUser } from "@/lib/program-auth";
 import {
   isClaudeEnabled,
+  isDatabricksAiEnabled,
   isDatabricksEnabled,
   isDsArchitectEnabled,
   isPowerBiEnabled,
@@ -27,6 +28,7 @@ function guestCatalog(): HubSearchItem[] {
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
     hasSnowflakeAccess: isSnowflakeEnabled(),
+    hasDatabricksAiAccess: isDatabricksAiEnabled(),
     isAdmin: false,
     claudeEnabled: isClaudeEnabled(),
     programEnabled: isProgramEnabled(),
@@ -83,6 +85,7 @@ export const getSiteSearchItems = cache(async (): Promise<HubSearchItem[]> => {
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
     hasSnowflakeAccess: isSnowflakeEnabled(),
+    hasDatabricksAiAccess: isDatabricksAiEnabled(),
     isAdmin: session.user.isAdmin ?? false,
     claudeEnabled: isClaudeEnabled(),
     programEnabled,

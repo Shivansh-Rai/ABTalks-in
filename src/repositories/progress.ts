@@ -370,23 +370,43 @@ async function listSnowflakeAttemptTimes(userId: string): Promise<Date[]> {
   return rows.map((r) => r.submittedAt ?? r.createdAt);
 }
 
+/** Databricks Data & AI (15-day) mission runs — every run, pass or fail. */
+async function listDatabricksAiAttemptTimes(userId: string): Promise<Date[]> {
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      enrollment: { userId },
+      activityId: { startsWith: "act_dbai_day_" },
+    },
+    select: { submittedAt: true, createdAt: true },
+  });
+  return rows.map((r) => r.submittedAt ?? r.createdAt);
+}
+
 /**
  * Every submission the hub heatmap and streak card count, across all tracks
  * the user can be in: 60-Day Challenge, AI Cohort, Databricks, DS Architect,
- * Power BI, Snowflake.
+ * Power BI, Snowflake, Databricks Data & AI.
  */
 export async function listHubSubmissionTimes(
   userId: string,
 ): Promise<Date[]> {
-  const [challenge, program, databricks, dsArchitect, powerBi, snowflake] =
-    await Promise.all([
-      listChallengeSubmissionTimes(userId),
-      listProgramMissionTimes(userId),
-      listDatabricksAttemptTimes(userId),
-      listDsArchitectAttemptTimes(userId),
-      listPowerBiAttemptTimes(userId),
-      listSnowflakeAttemptTimes(userId),
-    ]);
+  const [
+    challenge,
+    program,
+    databricks,
+    dsArchitect,
+    powerBi,
+    snowflake,
+    databricksAi,
+  ] = await Promise.all([
+    listChallengeSubmissionTimes(userId),
+    listProgramMissionTimes(userId),
+    listDatabricksAttemptTimes(userId),
+    listDsArchitectAttemptTimes(userId),
+    listPowerBiAttemptTimes(userId),
+    listSnowflakeAttemptTimes(userId),
+    listDatabricksAiAttemptTimes(userId),
+  ]);
   return [
     ...challenge,
     ...program,
@@ -394,6 +414,7 @@ export async function listHubSubmissionTimes(
     ...dsArchitect,
     ...powerBi,
     ...snowflake,
+    ...databricksAi,
   ];
 }
 

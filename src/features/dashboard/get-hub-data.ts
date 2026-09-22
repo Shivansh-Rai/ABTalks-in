@@ -1,5 +1,6 @@
 import type { Domain } from "@prisma/client";
 import {
+  isDatabricksAiEnabled,
   isDatabricksEnabled,
   isDsArchitectEnabled,
   isPowerBiEnabled,
@@ -42,6 +43,7 @@ export type HubData = {
   hasDsArchitectAccess: boolean;
   hasPowerBiAccess: boolean;
   hasSnowflakeAccess: boolean;
+  hasDatabricksAiAccess: boolean;
   isHackathonRegistered: boolean;
   heatmap: ActivityHeatmap;
   streak: ActivityStreak;
@@ -110,6 +112,7 @@ export async function getHubData(
     hasDsArchitectAccess: isDsArchitectEnabled(),
     hasPowerBiAccess: isPowerBiEnabled(),
     hasSnowflakeAccess: isSnowflakeEnabled(),
+    hasDatabricksAiAccess: isDatabricksAiEnabled(),
     isHackathonRegistered,
     heatmap,
     streak: heatmap.streak,

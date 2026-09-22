@@ -68,6 +68,7 @@ export type HubSearchIndexInput = {
   hasDsArchitectAccess: boolean;
   hasPowerBiAccess: boolean;
   hasSnowflakeAccess: boolean;
+  hasDatabricksAiAccess: boolean;
   isAdmin: boolean;
   claudeEnabled: boolean;
   programEnabled: boolean;
@@ -285,6 +286,18 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
       href: "/program/snowflake",
       keywords:
         "prep kit snowflake data engineering snowpark dbt cortex ai snowpro 15 days",
+    });
+  }
+
+  if (input.hasDatabricksAiAccess) {
+    items.push({
+      id: "prep:databricks-ai",
+      group: "Prep Kit",
+      title: "15 Days Databricks Data & AI",
+      subtitle: "Build a governed Data + AI lakehouse on Databricks in 15 days.",
+      href: "/program/databricks-ai",
+      keywords:
+        "prep kit databricks data engineering lakeflow unity catalog mlflow mosaic ai genie 15 days",
     });
   }
 

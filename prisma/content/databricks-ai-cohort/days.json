@@ -1,0 +1,903 @@
+[
+  {
+    "dayNumber": 1,
+    "moduleNumber": 1,
+    "title": "Databricks Intelligence Platform Overview & Free Edition Setup",
+    "missionType": "DATA_ROOM",
+    "briefMd": "## Mission: Databricks Intelligence Platform Overview & Free Edition Setup\n\n**Sign up for Databricks Free Edition, tour the workspace, and understand the lakehouse architecture before touching any data**\n\nOver the next 15 days you grow one running project — a retail/e-commerce lakehouse — from raw files into governed Bronze/Silver/Gold tables, orchestrated pipelines, dashboards, a trained and registered ML model and a governed GenAI agent. Everything runs on Databricks Free Edition (no credit card, no cloud account) using built-in sample data and small synthetic files you create yourself — never real customer or production data. Free Edition is serverless-only and quota-limited: where a step is restricted on your tier, the brief tells you what to read and document instead, so you're never blocked from finishing the day.\n\n**Exam alignment:** Data Engineer Associate — Section 1: Databricks Intelligence Platform (6%)\n\n**Concepts to learn**\n\n- **Lakehouse architecture** — one open storage format (Delta Lake on Parquet) serving both warehouse and data-lake workloads\n- **Control plane vs compute plane** — what Databricks manages (UI, job scheduler, notebooks) vs where your data and Spark execution live\n- **Workspace anatomy** — Workspace, Catalog Explorer, Jobs & Pipelines, Compute, SQL Editor and Git folders\n- **Compute options** — all-purpose clusters, job clusters and SQL warehouses, and Free Edition's serverless-only model\n- **Free Edition** — how it differs from a paid workspace and from the retired Community Edition\n- **Notebooks** — Python and SQL cells, magic commands (%sql, %md, %pip, %fs) and widgets\n\n**Deliverable:** a working Databricks Free Edition workspace, a Git folder connected to GitHub, and a notebook that queries a built-in sample dataset in both SQL and Python.\n\n### Your repo layout (set this up today)\n\n```text\n<your program repo>/   linked to your workspace as a Git folder\n├── README.md\n├── notebooks/         one Python notebook per day (dayNN_*.py)\n├── pipelines/         Lakeflow Declarative Pipeline source (Day 6)\n├── jobs/              Lakeflow Job exported as YAML (Day 7)\n├── retail_bundle/     Declarative Automation Bundle (Day 8)\n├── sql/               SQL Editor queries (Day 10)\n├── dashboards/        AI/BI dashboard (Day 10)\n├── screenshots/       PNG evidence\n└── docs/              notes, decision tables, reviews\n```\n\nFolders appear as you commit files into them. Every path the verifier checks is relative to the repo root on your default branch. Screenshots and notes can also be committed straight from github.com (Add file → Upload files or Create new file) — pull in your Git folder afterwards so the workspace stays in sync.\n\n### Build steps\n\n1. **Sign up:** Create a Free Edition account at databricks.com/learn/free-edition (no credit card, no cloud account) and confirm you land in a workspace with serverless compute and default storage already provisioned.\n2. **Tour the workspace:** Click once into each sidebar area so you know where things live: Workspace, Catalog, Jobs & Pipelines, Compute and SQL Editor.\n3. **Set the notebook format:** Open Settings → Developer and set the default file format for new notebooks to Source. Each Python notebook then commits to GitHub as a `.py` file, which is what every check in this program looks for.\n4. **Connect GitHub:** Create a public GitHub repo for this program with a README (the one you register below — Git folders can't clone an empty repo), then add it under Workspace → Create → Git folder. Every notebook, SQL file and note you write from now on lives inside this Git folder.\n5. **Run your first cell:** Inside the Git folder create a Python notebook at `notebooks/day01_setup`, attach serverless compute and run `spark.range(10).show()` to confirm Spark is working.\n6. **Explore the sample data:** Run `SHOW CATALOGS` in a `%sql` cell, then `SHOW SCHEMAS IN samples`, then `SELECT * FROM samples.tpch.orders LIMIT 10` (table names can vary slightly by workspace, so pick any table you find under samples).\n7. **Switch languages:** Pull the same query into Python with `spark.sql(\"SELECT * FROM samples.tpch.orders LIMIT 10\").toPandas()` and get comfortable moving between `%sql` and Python cells in one notebook.\n8. **Read the compute settings:** Open Compute and read the serverless settings. Note that Free Edition compute is serverless-only, quota-limited and shuts down when idle, and compare that with the configurable all-purpose and job clusters of a paid workspace.\n9. **Write your note-to-self:** In a `%md` cell, explain in your own words the difference between the control plane (Databricks-managed UI, job scheduler and notebooks) and the compute plane where your data and Spark execution live. This distinction shows up again in governance and security questions.\n10. **Ship to your repo:** Add an About this repo heading to README.md with one line on what you're building, commit and push from the Git folder, then answer below.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which magic command switches a notebook cell to SQL? (one token, including the %)\n2. Which catalog holds the built-in sample datasets every workspace ships with? (one word)\n3. Which type of compute is the only one Free Edition gives you? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "SQL magic command",
+          "value": "%sql",
+          "caseInsensitive": true
+        },
+        {
+          "check": "sample data catalog",
+          "value": "samples",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Free Edition compute type",
+          "value": "serverless",
+          "caseInsensitive": true
+        }
+      ]
+    },
+    "objectives": [
+      "Explain the lakehouse architecture and the control plane vs compute plane split",
+      "Navigate the workspace: Catalog Explorer, Jobs & Pipelines, Compute and SQL Editor",
+      "Connect a Git folder to GitHub with notebooks saved in Source format",
+      "Query the built-in sample data from both SQL and Python cells"
+    ],
+    "tools": [
+      "Databricks Free Edition",
+      "Notebooks",
+      "Git folders",
+      "GitHub"
+    ],
+    "estimatedMin": 120,
+    "missionPoints": 10,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 2,
+    "moduleNumber": 1,
+    "title": "Unity Catalog & Data Governance",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Unity Catalog & Data Governance\n\n**Build a governed catalog and schema structure and learn the access-control primitives that underpin everything else in this program**\n\nEvery object you create from here on — tables, volumes, pipelines, models, search indexes, agents — lives in Unity Catalog and is governed by the grants you learn today. You build the bronze/silver/gold structure the medallion layers will fill, land your first file in a Volume, and trace its lineage.\n\n**Exam alignment:** Data Engineer Associate — Section 7: Governance and Security (15%)\n\n**Concepts to learn**\n\n- **Three-level namespace** — catalog.schema.table, and how it maps to cloud storage underneath\n- **Metastore** — one per region and account, attached to workspaces\n- **Securable objects** — catalogs, schemas, tables, views, volumes, functions and models\n- **Access control** — GRANT, REVOKE and DENY for principals (users, groups and service principals)\n- **Row filters and column masks** — row-level security and column-level masking defined as SQL functions\n- **Lineage** — the upstream/downstream graph Catalog Explorer builds automatically\n\n**Deliverable:** a Unity Catalog catalog with bronze, silver and gold schemas, one governed table showing lineage back to a Volume file, and written notes on grants and row/column security.\n\n### Build steps\n\n1. **Create the catalog:** In a new notebook `notebooks/day02_unity_catalog`, run `CREATE CATALOG IF NOT EXISTS retail_lakehouse`. If Free Edition doesn't let you create a catalog, use your default workspace catalog instead and substitute its name wherever this program says retail_lakehouse.\n2. **Create the medallion schemas:** Create `retail_lakehouse.bronze`, `retail_lakehouse.silver` and `retail_lakehouse.gold` with `CREATE SCHEMA IF NOT EXISTS`. These mirror the layers you start filling on Day 5.\n3. **Create a Volume:** Run `CREATE VOLUME IF NOT EXISTS retail_lakehouse.bronze.landing` — a Unity Catalog-governed folder for non-tabular files.\n4. **Land your first file:** Write a small `products.csv` (about 10 rows) with the columns product_id, product_name, category and price, and upload it through Catalog Explorer into a `products` folder of the landing Volume, so it sits at `/Volumes/retail_lakehouse/bronze/landing/products/products.csv`.\n5. **Create a governed table:** Run `CREATE TABLE retail_lakehouse.bronze.raw_products AS SELECT * FROM read_files('/Volumes/retail_lakehouse/bronze/landing/products/products.csv', format => 'csv', header => true)` and confirm the table appears in Catalog Explorer.\n6. **Practice grants:** Run ``GRANT SELECT ON TABLE retail_lakehouse.bronze.raw_products TO `account users` `` and then take it back with ``REVOKE SELECT ON TABLE retail_lakehouse.bronze.raw_products FROM `account users` ``.\n7. **Mask and filter:** Create a tiny `retail_lakehouse.bronze.customers_demo` table with email and region columns. Write a column-mask function that returns the email only when `current_user()` is you and apply it with `ALTER TABLE ... ALTER COLUMN email SET MASK`, then write a row-filter function on region and apply it with `ALTER TABLE ... SET ROW FILTER`. If your tier blocks either, keep the SQL in the notebook and explain what it would do.\n8. **Trace lineage:** Open the Lineage tab on raw_products and confirm it shows the Volume file as its upstream source. You extend this same graph every day.\n9. **Write the governance note:** In `docs/day02_governance_note.md`, explain GRANT vs REVOKE vs DENY, what a service principal is, and why production jobs should run as one instead of as your personal user.\n10. **Ship to your repo:** Commit and push `notebooks/day02_unity_catalog.py` (your notebook in Source format) and the note. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many levels does a Unity Catalog object name have? (number)\n2. Which SQL command takes back a privilege you granted earlier? (one word)\n3. Which Unity Catalog object governs non-tabular files like your uploaded CSV? (one word, singular)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "namespace levels",
+          "value": "3",
+          "caseInsensitive": true
+        },
+        {
+          "check": "command that removes a grant",
+          "value": "REVOKE",
+          "caseInsensitive": true
+        },
+        {
+          "check": "object for non-tabular files",
+          "value": "volume",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day02_unity_catalog.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day02_unity_catalog.py"
+        },
+        {
+          "check": "notebook creates the bronze table from the Volume",
+          "kind": "contentMatches",
+          "path": "notebooks/day02_unity_catalog.py",
+          "regex": "read_files"
+        },
+        {
+          "check": "docs/day02_governance_note.md exists",
+          "kind": "fileExists",
+          "path": "docs/day02_governance_note.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Build a catalog with bronze, silver and gold schemas in Unity Catalog",
+      "Land a file in a Volume and create a governed Delta table from it",
+      "Use GRANT and REVOKE, and express row filters and column masks as SQL functions",
+      "Read table lineage in Catalog Explorer"
+    ],
+    "tools": [
+      "Unity Catalog",
+      "Catalog Explorer",
+      "SQL",
+      "GitHub"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 3,
+    "moduleNumber": 1,
+    "title": "Delta Lake Deep Dive",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Delta Lake Deep Dive\n\n**Master the transactional storage layer underneath every table in this program: ACID, time travel, schema evolution and performance tuning**\n\nEvery table you touch is a Delta table. Today you read its transaction log, travel back to an earlier version, evolve its schema, cluster it, clean up old files and upsert into it — the operations the exam and real pipelines lean on most.\n\n**Exam alignment:** Data Engineer Associate — Section 6: Troubleshooting, Monitoring & Optimization (10%), plus Section 3 fundamentals\n\n**Concepts to learn**\n\n- **ACID transactions** — the Delta transaction log and the `_delta_log` folder behind every table\n- **Time travel** — VERSION AS OF, TIMESTAMP AS OF and DESCRIBE HISTORY\n- **Schema enforcement and evolution** — rejecting bad writes vs adding columns on purpose\n- **Layout tuning** — OPTIMIZE, ZORDER BY, VACUUM, and how Liquid Clustering replaces most manual tuning\n- **MERGE INTO** — upserts that update matched rows and insert new ones in one atomic statement\n\n**Deliverable:** a Delta table with a multi-version history you can time-travel through, Liquid Clustering enabled, and a working MERGE INTO upsert.\n\n### Build steps\n\n1. **Read the history:** In a new notebook `notebooks/day03_delta_lake`, run `DESCRIBE HISTORY retail_lakehouse.bronze.raw_products` and note the version number and timestamp of your original CREATE TABLE.\n2. **Make a change:** Run an UPDATE on one row (for example, change one product's price), then run DESCRIBE HISTORY again and note the new version.\n3. **Time travel two ways:** Query the table with `VERSION AS OF` the original version and with `TIMESTAMP AS OF` a timestamp from the history, and confirm both return the pre-update data.\n4. **Evolve the schema:** Run `ALTER TABLE retail_lakehouse.bronze.raw_products ADD COLUMN ingested_at TIMESTAMP`, insert one new row that sets it, and query the old rows to see they now show NULL for that column.\n5. **Enable Liquid Clustering:** Run `ALTER TABLE retail_lakehouse.bronze.raw_products CLUSTER BY (category)`, then `OPTIMIZE retail_lakehouse.bronze.raw_products`, and read the returned metrics for files added and removed.\n6. **Clean up safely:** Run `VACUUM retail_lakehouse.bronze.raw_products RETAIN 168 HOURS` and add a comment explaining why running VACUUM with a too-short retention window breaks time travel.\n7. **Upsert with MERGE:** Build a small DataFrame of one changed and two new products, register it with `createOrReplaceTempView(\"product_updates\")`, and run `MERGE INTO retail_lakehouse.bronze.raw_products AS t USING product_updates AS s ON t.product_id = s.product_id WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *`. Check that the row counts before and after match what you expect.\n8. **Ship to your repo:** Commit and push `notebooks/day03_delta_lake.py`. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which folder inside a Delta table's storage holds its transaction log? (folder name)\n2. What is VACUUM's default retention threshold, in hours? (number)\n3. Which SQL command performs the upsert in the MERGE step? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "transaction log folder",
+          "value": "_delta_log",
+          "caseInsensitive": true
+        },
+        {
+          "check": "default VACUUM retention hours",
+          "value": "168",
+          "caseInsensitive": true
+        },
+        {
+          "check": "upsert command",
+          "value": "MERGE",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day03_delta_lake.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day03_delta_lake.py"
+        },
+        {
+          "check": "notebook upserts with MERGE INTO",
+          "kind": "contentMatches",
+          "path": "notebooks/day03_delta_lake.py",
+          "regex": "MERGE INTO"
+        },
+        {
+          "check": "notebook time-travels to an earlier version",
+          "kind": "contentMatches",
+          "path": "notebooks/day03_delta_lake.py",
+          "regex": "VERSION AS OF"
+        }
+      ]
+    },
+    "objectives": [
+      "Read DESCRIBE HISTORY and time-travel by version and by timestamp",
+      "Evolve a table's schema and explain schema enforcement",
+      "Enable Liquid Clustering and run OPTIMIZE and VACUUM safely",
+      "Upsert with MERGE INTO"
+    ],
+    "tools": [
+      "Delta Lake",
+      "Spark SQL",
+      "PySpark",
+      "GitHub"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 4,
+    "moduleNumber": 2,
+    "title": "Data Ingestion & Loading",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Data Ingestion & Loading\n\n**Load data into Bronze using every major Databricks ingestion pattern — batch, incremental and streaming**\n\nIngestion is the biggest single section of the Data Engineer exam. You load new files idempotently with COPY INTO, pick up arriving JSON with Auto Loader, flatten nested data, pull from a REST API, and decide which tool fits which situation.\n\n**Exam alignment:** Data Engineer Associate — Section 2: Data Ingestion and Loading (21%)\n\n**Concepts to learn**\n\n- **COPY INTO** — idempotent batch loading that remembers which files it already loaded\n- **Auto Loader** — the cloudFiles source for arriving files, with schema inference and evolution\n- **Lakeflow Connect** — standard vs managed connectors for SaaS and database sources\n- **API ingestion** — pulling JSON from a REST endpoint into a DataFrame\n- **Semi-structured data** — flattening nested JSON with dot notation and explode()\n\n**Deliverable:** Bronze tables loaded via COPY INTO and Auto Loader, one flattened semi-structured table, and a written ingestion-method decision table.\n\n### Build steps\n\n1. **Land more files:** Upload two small orders CSVs (order_id, customer_id, product_id, quantity, order_date) to `/Volumes/retail_lakehouse/bronze/landing/orders/`, and a JSON Lines file to `/Volumes/retail_lakehouse/bronze/landing/customers/` where each line looks like `{\"customer\": {\"id\": 1, \"name\": \"Asha\", \"address\": {\"city\": \"Pune\"}}, \"interests\": [\"electronics\", \"books\"]}`.\n2. **Load with COPY INTO:** In a new notebook `notebooks/day04_ingestion`, run `CREATE TABLE IF NOT EXISTS retail_lakehouse.bronze.raw_orders` and then `COPY INTO retail_lakehouse.bronze.raw_orders FROM '/Volumes/retail_lakehouse/bronze/landing/orders/' FILEFORMAT = CSV FORMAT_OPTIONS ('header' = 'true', 'inferSchema' = 'true', 'mergeSchema' = 'true') COPY_OPTIONS ('mergeSchema' = 'true')`. Run it a second time and read num_inserted_rows.\n3. **Stream with Auto Loader:** Read the customers folder with `spark.readStream.format(\"cloudFiles\")`, setting `cloudFiles.format` to json, `cloudFiles.inferColumnTypes` to true and `cloudFiles.schemaLocation` to `/Volumes/retail_lakehouse/bronze/landing/_checkpoints/customers`. Write it with a checkpointLocation in the same folder, `.trigger(availableNow=True)` and `.toTable(\"retail_lakehouse.bronze.raw_customers\")`. Serverless compute only supports the availableNow trigger, so each run processes whatever is new and then stops.\n4. **Prove it's incremental:** Upload one more customers JSON file, re-run the Auto Loader cell, and confirm only the new file's rows were added.\n5. **Flatten the nested JSON:** Select `customer.id`, `customer.address.city` and `explode(interests)` from raw_customers into top-level columns and save the result as `retail_lakehouse.silver.customer_interests` — your first Silver table. This exact DataFrame skill is tested directly on the exam.\n6. **Pull from a REST API:** Use `requests` to fetch a free public JSON API (for example `https://jsonplaceholder.typicode.com/users`) and load it with `spark.createDataFrame`. Free Edition restricts outbound internet to a set of trusted domains, so if the call is blocked, paste a saved sample response into a Python string, parse it with `json.loads` and note the restriction.\n7. **Explore Lakeflow Connect:** Open Jobs & Pipelines → Ingestion (Add data) and read through the managed connectors (Salesforce, SharePoint, database sources) to see when you'd reach for a connector instead of Auto Loader or COPY INTO.\n8. **Write the decision table:** In `docs/day04_ingestion_decisions.md`, pick the best tool and explain why for three scenarios: a partner drops CSVs into cloud storage nightly, a source database needs continuous sync, and a one-time historical backfill.\n9. **Ship to your repo:** Commit and push `notebooks/day04_ingestion.py` and the decision table. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many new rows does the second, identical COPY INTO run load? (number)\n2. Which format name do you pass to `spark.readStream.format()` for Auto Loader? (one word)\n3. Which function turns each element of an array column into its own row? (function name, no parentheses)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "rows loaded by the repeated COPY INTO",
+          "value": "0",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Auto Loader source format",
+          "value": "cloudFiles",
+          "caseInsensitive": true
+        },
+        {
+          "check": "array-to-rows function",
+          "value": "explode",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day04_ingestion.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day04_ingestion.py"
+        },
+        {
+          "check": "notebook uses Auto Loader",
+          "kind": "contentMatches",
+          "path": "notebooks/day04_ingestion.py",
+          "regex": "cloudFiles"
+        },
+        {
+          "check": "notebook uses COPY INTO",
+          "kind": "contentMatches",
+          "path": "notebooks/day04_ingestion.py",
+          "regex": "COPY INTO"
+        },
+        {
+          "check": "docs/day04_ingestion_decisions.md exists",
+          "kind": "fileExists",
+          "path": "docs/day04_ingestion_decisions.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Load files idempotently with COPY INTO",
+      "Ingest arriving files incrementally with Auto Loader on serverless",
+      "Flatten nested JSON with dot notation and explode()",
+      "Choose between COPY INTO, Auto Loader and Lakeflow Connect for a scenario"
+    ],
+    "tools": [
+      "Auto Loader",
+      "COPY INTO",
+      "PySpark",
+      "Volumes"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 5,
+    "moduleNumber": 2,
+    "title": "Data Transformation & Modeling",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Data Transformation & Modeling\n\n**Turn Bronze into governed Silver and Gold tables using both PySpark and Spark SQL**\n\nTransformation is the largest exam section. You clean and deduplicate Bronze into Silver, practise every join type, aggregate into Gold, decide between a view and a table, and add the data quality check that Day 6 turns into a pipeline expectation.\n\n**Exam alignment:** Data Engineer Associate — Section 3: Data Transformation and Modeling (22%)\n\n**Concepts to learn**\n\n- **DataFrame operations** — joins (inner, left, broadcast, multi-key, cross), union, explode, dedup and approx_count_distinct\n- **Spark SQL vs PySpark** — when to reach for each on the same data\n- **Medallion layers** — Silver is cleaned and conformed, Gold is business-level aggregates\n- **Gold objects** — views, materialized views and streaming tables\n- **Data quality** — validation rules that must hold before a layer counts as done\n- **Tuning parameters** — spark.sql.shuffle.partitions, and why serverless sets it to auto\n\n**Deliverable:** Silver tables (cleaned, deduped, typed) and Gold tables and views built with a mix of PySpark and Spark SQL, plus one documented data quality check.\n\n### Build steps\n\n1. **Build Silver:** In a new notebook `notebooks/day05_silver_gold`, read the Bronze products and orders, drop rows missing required fields, cast types (price to double, order_date to date), and deduplicate orders by keeping `ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_date DESC) = 1`. Save the results as `retail_lakehouse.silver.products` and `retail_lakehouse.silver.orders`.\n2. **Practise the joins:** Run an inner join of orders to products, a left join that surfaces orders with no matching product (a data quality signal), and a join hinted with `broadcast(products_df)`. Call `.explain()` on the last one and confirm a BroadcastHashJoin in the plan.\n3. **Build a Gold aggregate:** Group by category to compute total revenue (quantity × price), order count and `approx_count_distinct(customer_id)`, and save it as `retail_lakehouse.gold.category_summary`.\n4. **Add a Gold view:** Create `retail_lakehouse.gold.top_products` as a view (not a table) listing the top products by revenue, and add a comment on why a view fits a slice whose definition changes often.\n5. **Check data quality:** Count Silver orders with a null required field or a product_id that doesn't exist in Silver products, and assert the count is zero before calling Silver done. Day 6 turns this into a pipeline expectation.\n6. **Tune a query:** Read `spark.conf.get(\"spark.sql.shuffle.partitions\")` (serverless reports auto), set it to 8, re-run your Gold aggregation and compare the query profile. Serverless only lets you change a handful of Spark settings, and autoBroadcastJoinThreshold is not one of them, so the broadcast() hint is how you force a broadcast there.\n7. **Explain the flow:** In `docs/day05_medallion_flow.md`, explain bronze → silver → gold in one paragraph using your own tables as the example.\n8. **Ship to your repo:** Commit and push `notebooks/day05_silver_gold.py` and the note. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which PySpark function wraps the small DataFrame to hint a broadcast join? (function name, no parentheses)\n2. Which DataFrame method prints the query plan? (method name, no parentheses)\n3. Which window function numbers rows so you can keep just the first one per key? (function name, no parentheses)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "broadcast hint function",
+          "value": "broadcast",
+          "caseInsensitive": true
+        },
+        {
+          "check": "plan method",
+          "value": "explain",
+          "caseInsensitive": true
+        },
+        {
+          "check": "dedup window function",
+          "value": "ROW_NUMBER",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day05_silver_gold.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day05_silver_gold.py"
+        },
+        {
+          "check": "notebook builds the Gold category summary",
+          "kind": "contentMatches",
+          "path": "notebooks/day05_silver_gold.py",
+          "regex": "category_summary"
+        },
+        {
+          "check": "docs/day05_medallion_flow.md exists",
+          "kind": "fileExists",
+          "path": "docs/day05_medallion_flow.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Clean, type and deduplicate Bronze data into Silver",
+      "Use inner, left and broadcast joins and read the query plan",
+      "Build Gold aggregates and choose between a view and a table",
+      "Write a data quality check and tune shuffle partitions on serverless"
+    ],
+    "tools": [
+      "PySpark",
+      "Spark SQL",
+      "Delta Lake",
+      "Unity Catalog"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 6,
+    "moduleNumber": 2,
+    "title": "Lakeflow Declarative Pipelines",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Lakeflow Declarative Pipelines\n\n**Rebuild your medallion flow declaratively — describe the tables you want and let Databricks handle orchestration, retries and data quality enforcement**\n\nLakeflow Declarative Pipelines (formerly Delta Live Tables) turn the hand-written flow of Days 4–5 into a few table definitions. You define bronze and silver streaming tables and a gold materialized view, enforce a data quality expectation, and watch the pipeline drop a bad row for you.\n\n**Exam alignment:** Data Engineer Associate — Sections 3 & 4 (Transformation and Lakeflow Jobs), formerly Delta Live Tables\n\n**Concepts to learn**\n\n- **Declarative vs imperative** — describe what the tables should contain and let the pipeline decide how to build them\n- **Streaming tables vs materialized views** — incremental append processing vs a result that is kept up to date\n- **Expectations** — CONSTRAINT ... EXPECT with ON VIOLATION DROP ROW or FAIL UPDATE\n- **Development vs production mode** — and the pipeline DAG view\n- **When to choose which** — a declarative pipeline vs the hand-written flow of Days 4–5\n\n**Deliverable:** a working Lakeflow Declarative Pipeline with a bronze streaming table, a silver streaming table with a data quality expectation, and a gold materialized view, run successfully end-to-end.\n\n### Build steps\n\n1. **Prepare the source:** Upload `products_v2.csv` to `/Volumes/retail_lakehouse/bronze/landing/pipeline_products/` with the same columns as products.csv and exactly one row that has a negative price, then run `CREATE SCHEMA IF NOT EXISTS retail_lakehouse.pipeline`.\n2. **Create the source file:** In your Git folder create the file `pipelines/retail_pipeline.sql` (Create → File). All three table definitions go in this one file.\n3. **Define Bronze:** Add `CREATE OR REFRESH STREAMING TABLE products_bronze AS SELECT * FROM STREAM read_files('/Volumes/retail_lakehouse/bronze/landing/pipeline_products/', format => 'csv', header => true)`.\n4. **Define Silver with an expectation:** Add `CREATE OR REFRESH STREAMING TABLE products_silver (CONSTRAINT valid_price EXPECT (price > 0) ON VIOLATION DROP ROW) AS SELECT product_id, product_name, category, CAST(price AS DOUBLE) AS price FROM STREAM(products_bronze)`.\n5. **Define Gold:** Add `CREATE OR REFRESH MATERIALIZED VIEW category_summary_gold AS SELECT category, COUNT(*) AS product_count, ROUND(AVG(price), 2) AS avg_price FROM products_silver GROUP BY category`.\n6. **Create and run the pipeline:** Open Jobs & Pipelines → Create → ETL pipeline, add `pipelines/retail_pipeline.sql` as its source code, and set the default catalog to retail_lakehouse and the default schema to pipeline. Run it and watch the DAG populate bronze, then silver, then gold.\n7. **Check the expectation:** Open products_silver in the pipeline graph and read its data quality metrics: the valid_price expectation should report the one negative-price row as dropped. Free Edition allows one active pipeline per type, so stop other pipelines first if the run won't start.\n8. **Switch to production mode:** Turn development mode off, run the pipeline again from the pipeline page, and note how compute behaves when the update finishes and what that means for cost.\n9. **Compare the approaches:** In `docs/day06_declarative_vs_manual.md`, write three differences between today's pipeline and your hand-written COPY INTO, Auto Loader and PySpark flow from Days 4–5, and when you'd choose each. Save a screenshot of the completed DAG as `screenshots/day06_pipeline_dag.png`.\n10. **Ship to your repo:** Commit and push the pipeline file, the note and the screenshot. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which keyword follows CONSTRAINT valid_price to define the rule? (one word)\n2. How many rows did the valid_price expectation drop? (number)\n3. Which SQL keyword makes the silver table read products_bronze incrementally, as in `FROM ___(products_bronze)`? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "expectation keyword",
+          "value": "EXPECT",
+          "caseInsensitive": true
+        },
+        {
+          "check": "rows dropped by valid_price",
+          "value": "1",
+          "caseInsensitive": true
+        },
+        {
+          "check": "incremental read keyword",
+          "value": "STREAM",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "pipelines/retail_pipeline.sql exists",
+          "kind": "fileExists",
+          "path": "pipelines/retail_pipeline.sql"
+        },
+        {
+          "check": "pipeline defines the valid_price expectation",
+          "kind": "contentMatches",
+          "path": "pipelines/retail_pipeline.sql",
+          "regex": "EXPECT"
+        },
+        {
+          "check": "docs/day06_declarative_vs_manual.md exists",
+          "kind": "fileExists",
+          "path": "docs/day06_declarative_vs_manual.md"
+        },
+        {
+          "check": "screenshots/day06_pipeline_dag.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day06_pipeline_dag.png"
+        }
+      ]
+    },
+    "objectives": [
+      "Define streaming tables and a materialized view in a Lakeflow Declarative Pipeline",
+      "Enforce data quality with an expectation and read its drop metrics",
+      "Explain development vs production mode",
+      "Compare a declarative pipeline with a hand-written medallion flow"
+    ],
+    "tools": [
+      "Lakeflow Declarative Pipelines",
+      "SQL",
+      "Auto Loader",
+      "Unity Catalog"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 7,
+    "moduleNumber": 3,
+    "title": "Lakeflow Jobs — Orchestration & Scheduling",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Lakeflow Jobs — Orchestration & Scheduling\n\n**Wire your ingestion, pipeline and reporting steps into one scheduled, monitored, alertable job**\n\nA pipeline nobody schedules is a demo. You chain ingestion, the Day 6 pipeline and a reporting notebook into one Lakeflow Job with dependencies, a parameter, a trigger, retries and a failure alert — then break it on purpose to see the alerting work.\n\n**Exam alignment:** Data Engineer Associate — Section 4: Lakeflow Jobs (16%)\n\n**Concepts to learn**\n\n- **Lakeflow Jobs** — formerly Workflows: tasks, dependencies (a DAG) and task types (notebook, pipeline, SQL, Python script, dbt)\n- **Triggers** — scheduled (cron), file arrival, continuous and run now\n- **Parameters** — job and task parameters, and passing values between tasks\n- **Reliability** — retries, and alerts on success or failure\n- **Operations** — disabling a task without removing it, and comparing run history against a baseline\n\n**Deliverable:** a multi-task Lakeflow Job with dependencies, a parameter, a trigger, a retry policy and a failure alert, tested end-to-end including one intentional failure.\n\n### Build steps\n\n1. **Prepare the task notebooks:** Create `notebooks/day07_ingest` with just your Day 4 COPY INTO and Auto Loader cells (no REST call, so outbound-internet limits can't break the job), and `notebooks/day07_summary` that reads `retail_lakehouse.pipeline.category_summary_gold` and prints the top rows.\n2. **Create the job:** Create a Lakeflow Job named retail_daily_job with three tasks: ingest runs day07_ingest, refresh_pipeline runs your Day 6 pipeline, and summary runs day07_summary. Make refresh_pipeline depend on ingest and summary depend on refresh_pipeline.\n3. **Add a parameter:** Give the summary task a parameter top_n with a default of 3, read it with `dbutils.widgets.get(\"top_n\")`, and run the job once with the default and once overriding it from Run now with different parameters.\n4. **Add a trigger:** Set a daily schedule at a fixed time, then switch the trigger to File arrival on your landing Volume and back again, noting which situations suit each.\n5. **Add retries and an alert:** Give the ingest task 2 retries with a delay, and add a failure notification to your email. Break ingest on purpose by misspelling a table name, run the job, and confirm you see the retry attempts in run history and receive the alert. Then fix it.\n6. **Disable a task:** Disable the summary task without deleting it, run the job, confirm it runs ingest and refresh_pipeline only, then re-enable it.\n7. **Compare runs:** Open the job's run history, compare the duration of your last three runs, and save a screenshot as `screenshots/day07_run_history.png`. This is the view you'd use in production to spot a job that is quietly getting slower.\n8. **Export the job:** Open the job's YAML view (⋮ menu → View as code) and save it as `jobs/retail_daily_job.yml` — you deploy it as code tomorrow.\n9. **Ship to your repo:** Commit and push `notebooks/day07_ingest.py`, `notebooks/day07_summary.py`, the job YAML and the screenshot. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many tasks does retail_daily_job have? (number)\n2. Complete the call that reads the top_n parameter: `dbutils.widgets.___(\"top_n\")` (one word)\n3. How many retries did you give the ingest task? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "job task count",
+          "value": "3",
+          "caseInsensitive": true
+        },
+        {
+          "check": "widget read method",
+          "value": "get",
+          "caseInsensitive": true
+        },
+        {
+          "check": "ingest task retries",
+          "value": "2",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "jobs/retail_daily_job.yml exists",
+          "kind": "fileExists",
+          "path": "jobs/retail_daily_job.yml"
+        },
+        {
+          "check": "notebooks/day07_ingest.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day07_ingest.py"
+        },
+        {
+          "check": "notebooks/day07_summary.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day07_summary.py"
+        },
+        {
+          "check": "summary notebook reads the top_n parameter",
+          "kind": "contentMatches",
+          "path": "notebooks/day07_summary.py",
+          "regex": "top_n"
+        },
+        {
+          "check": "screenshots/day07_run_history.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day07_run_history.png"
+        }
+      ]
+    },
+    "objectives": [
+      "Build a multi-task Lakeflow Job with dependencies and parameters",
+      "Configure schedule and file-arrival triggers",
+      "Add retries and failure alerts and test them with a deliberate failure",
+      "Use run history to compare runs against a baseline"
+    ],
+    "tools": [
+      "Lakeflow Jobs",
+      "Notebooks",
+      "Lakeflow Declarative Pipelines",
+      "GitHub"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 8,
+    "moduleNumber": 3,
+    "title": "CI/CD — Git Folders, Databricks CLI & Declarative Automation Bundles",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: CI/CD — Git Folders, Databricks CLI & Declarative Automation Bundles\n\n**Move from clicking around the UI to deploying jobs and pipelines as versioned code across dev and prod**\n\nDeclarative Automation Bundles (formerly Databricks Asset Bundles, still called DABs) describe jobs and pipelines as YAML you can review, version and deploy with the Databricks CLI. You scaffold a bundle, give it dev and prod targets, deploy and run it from your laptop, and practise the branch-and-pull-request flow in Git folders.\n\n**Exam alignment:** Data Engineer Associate — Section 5: Implementing CI/CD (10%)\n\n**Concepts to learn**\n\n- **Git folders** — formerly Repos: branches, commits and pull requests from inside the workspace\n- **Declarative Automation Bundles** — jobs and pipelines defined as YAML in databricks.yml and deployed with the CLI\n- **Targets** — environment-specific overrides for dev, test and prod\n- **Databricks CLI** — authentication plus bundle validate, deploy and run\n- **Promotion** — moving the same bundle from dev to prod\n\n**Deliverable:** a Declarative Automation Bundle with dev and prod targets, validated, deployed and run with the Databricks CLI, plus a Git folder branch and pull request.\n\n### Build steps\n\n1. **Install the CLI:** Install the Databricks CLI on your laptop (Homebrew `brew tap databricks/tap` then `brew install databricks` on macOS, winget on Windows, or the install script on Linux) and check it with `databricks -v`.\n2. **Authenticate:** Run `databricks auth login --host <your workspace URL>` and finish the browser sign-in.\n3. **Scaffold the bundle:** Clone your program repo locally, and from its root run `databricks bundle init default-python` with the project name retail_bundle. Open the generated `retail_bundle/databricks.yml` and find how it declares a job, its tasks and its targets.\n4. **Point it at your work:** Replace the template's sample job with one that runs a copy of your day07_summary notebook, or pull your Day 7 job in with `databricks bundle generate job --existing-job-id <job id>`. Keep exactly two targets, dev and prod, and give top_n a different value in each.\n5. **Validate and deploy to dev:** From `retail_bundle/` run `databricks bundle validate`, fix any errors, then `databricks bundle deploy -t dev` and confirm the job appears in the Jobs UI under your dev path.\n6. **Run from the CLI:** Run `databricks bundle run -t dev <job key>` and watch it execute exactly like a run started from the UI.\n7. **Branch and review:** In your Git folder create a branch, change a notebook, commit, push and open a pull request against main on GitHub.\n8. **Promote to prod:** Run `databricks bundle deploy -t prod`. In `docs/day08_ci_cd_note.md`, write what you'd add before trusting this in real CI — for example a GitHub Actions workflow that runs validate and deploy automatically when a pull request merges to main.\n9. **Ship to your repo:** Commit and push the bundle folder and the note. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which bundle command checks the configuration for errors before you deploy? `databricks bundle ___` (one word)\n2. What is the filename of a bundle's main configuration file? (filename with extension)\n3. How many targets does your databricks.yml define? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "pre-deploy check command",
+          "value": "validate",
+          "caseInsensitive": true
+        },
+        {
+          "check": "bundle configuration file",
+          "value": "databricks.yml",
+          "caseInsensitive": true
+        },
+        {
+          "check": "bundle target count",
+          "value": "2",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "retail_bundle/databricks.yml exists",
+          "kind": "fileExists",
+          "path": "retail_bundle/databricks.yml"
+        },
+        {
+          "check": "bundle defines a prod target",
+          "kind": "contentMatches",
+          "path": "retail_bundle/databricks.yml",
+          "regex": "prod"
+        },
+        {
+          "check": "docs/day08_ci_cd_note.md exists",
+          "kind": "fileExists",
+          "path": "docs/day08_ci_cd_note.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Install and authenticate the Databricks CLI",
+      "Define a job as code in a Declarative Automation Bundle with dev and prod targets",
+      "Validate, deploy and run a bundle from the CLI",
+      "Use Git folder branches and pull requests"
+    ],
+    "tools": [
+      "Declarative Automation Bundles",
+      "Databricks CLI",
+      "Git folders",
+      "GitHub"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 9,
+    "moduleNumber": 3,
+    "title": "Troubleshooting, Monitoring & Optimization",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Troubleshooting, Monitoring & Optimization\n\n**Learn to read a query's execution the way a mechanic reads a dashboard — find skew, shuffle and spill before they become an outage**\n\nFree Edition runs serverless-only, and serverless compute doesn't expose the classic Spark UI. You use the query profile instead, which tells the same story operator by operator: where the time went, how many rows moved, how much data was shuffled and whether anything spilled to disk.\n\n**Exam alignment:** Data Engineer Associate — Section 6: Troubleshooting, Monitoring & Optimization (10%)\n\n**Concepts to learn**\n\n- **Query profile** — operator time, rows, shuffle bytes and spill (the serverless replacement for the Spark UI stages view)\n- **Diagnosis** — data skew, excessive shuffling and disk spilling\n- **Fixes** — broadcast joins, salting a hot key, and reducing data before wide operations\n- **Automatic tuning** — Liquid Clustering, Predictive Optimization and Adaptive Query Execution\n- **Failures** — diagnosing startup failures, library conflicts and out-of-memory errors, and comparing runs to a baseline\n\n**Deliverable:** a documented before/after performance fix for a skewed join, plus a written diagnosis of your slowest Day 7 job run.\n\n### Build steps\n\n1. **Create skewed data:** In a new notebook `notebooks/day09_performance`, generate 5 million order rows with `spark.range(5000000)` where about 90% share product_id 1 and the rest are spread over 1,000 ids, save them as `retail_lakehouse.silver.orders_skewed`, and build a 1,000-row product lookup table.\n2. **Find the skew:** Join the skewed orders to the lookup, then open the query profile for that cell (See performance). Note which join operator dominates the time and how unevenly rows flow into it, and whether Adaptive Query Execution already split the skewed partition for you.\n3. **Fix it two ways:** Re-run the join with a broadcast hint, then again by salting the hot key (add a random 0–9 suffix on the big side and replicate the lookup ten times). Compare durations in the profiles before and after.\n4. **Watch a shuffle:** Run a groupBy on a high-cardinality column of samples.tpch.lineitem, find the shuffle metrics in the profile, set `spark.sql.shuffle.partitions` to one other value and compare.\n5. **Look for spill:** Look for spilled bytes in the profile of your heaviest query. If nothing spilled, explain why, and what you'd do if it did (more memory, more partitions, or less data before the wide operation).\n6. **Compare automatic tuning:** If your tier allows it, run `ALTER CATALOG retail_lakehouse ENABLE PREDICTIVE OPTIMIZATION`, and compare it with the manual OPTIMIZE and VACUUM you ran on Day 3 — when would you still want manual control?\n7. **Diagnose a real run:** Open your Day 7 job's run history, pick the slowest run, open the query profile of its slowest task, and write a 3-bullet diagnosis (what was slow, why, what you'd change) in `docs/day09_diagnosis.md`. Add your before/after skew numbers to the same file, and save a screenshot of the skewed join's profile as `screenshots/day09_query_profile.png`.\n8. **Ship to your repo:** Commit and push `notebooks/day09_performance.py`, the diagnosis and the screenshot. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What is the problem called when one join key value holds most of the rows? (one word)\n2. Which technique adds a random suffix to a hot key so its rows spread across partitions? (one word, ending in -ing)\n3. What is it called when a task writes data from memory to disk because it ran out of memory? (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "uneven key distribution",
+          "value": "skew",
+          "caseInsensitive": true
+        },
+        {
+          "check": "hot-key fix",
+          "value": "salting",
+          "caseInsensitive": true
+        },
+        {
+          "check": "memory overflow to disk",
+          "value": "spill",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day09_performance.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day09_performance.py"
+        },
+        {
+          "check": "docs/day09_diagnosis.md exists",
+          "kind": "fileExists",
+          "path": "docs/day09_diagnosis.md"
+        },
+        {
+          "check": "screenshots/day09_query_profile.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day09_query_profile.png"
+        }
+      ]
+    },
+    "objectives": [
+      "Read a query profile on serverless compute",
+      "Diagnose skew, shuffle and spill",
+      "Fix a skewed join with a broadcast and with salting, and measure the difference",
+      "Diagnose a slow job run from its history"
+    ],
+    "tools": [
+      "Query profile",
+      "PySpark",
+      "Lakeflow Jobs",
+      "Delta Lake"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 10,
+    "moduleNumber": 4,
+    "title": "Databricks SQL, Dashboards & Genie (AI/BI)",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Databricks SQL, Dashboards & Genie (AI/BI)\n\n**Turn your Gold tables into dashboards and a natural-language Q&A experience business users can self-serve from**\n\nYour Gold layer exists to answer business questions. You query it in the SQL Editor, build an AI/BI Dashboard, alert on a metric, and curate a Genie space so business users can ask questions in plain English — governed by the same Unity Catalog permissions as everything else.\n\n**Exam alignment:** Data Engineer Associate — supports Section 3 (Gold-layer objects for BI), plus core Databricks SQL and AI/BI skills\n\n**Concepts to learn**\n\n- **SQL warehouses** — the compute behind Databricks SQL, and how it differs from notebook compute\n- **SQL Editor** — saved queries, query history and the query profile\n- **AI/BI Dashboards** — visualizations backed by your Gold tables\n- **AI/BI Genie** — natural-language Q&A over governed data, curated with sample questions and trusted assets\n- **Alerts** — notifications driven by query results\n\n**Deliverable:** saved SQL queries, an AI/BI Dashboard with three visualizations, a SQL alert, and a working Genie space answering natural-language questions correctly against your Gold tables.\n\n### Build steps\n\n1. **Query Gold:** Start your SQL warehouse (Free Edition gives you one 2X-Small warehouse), open the SQL Editor and write a query against `retail_lakehouse.gold.category_summary`, plus one for orders per day from Silver orders. Save the query text in your Git folder as `sql/day10_queries.sql`.\n2. **Read the query profile:** Open the query profile for the Gold query and note where the time went — the same execution story as yesterday, presented for SQL.\n3. **Build the dashboard:** In your Git folder's `dashboards/` folder create an AI/BI Dashboard named retail_dashboard with exactly three visualizations: a bar chart of revenue by category, a line chart of orders over time and a counter for total revenue. It's stored as `dashboards/retail_dashboard.lvdash.json` (if yours was created elsewhere, export it and commit it under that name).\n4. **Add an alert:** Create a SQL alert on a query such as total orders today that would notify you if the value drops below a threshold — the same alerting pattern as a Lakeflow Job alert, applied to data instead of runs.\n5. **Create a Genie space:** Create a Genie space on your gold schema, add exactly 5 sample questions in business language (for example, what were our top 3 categories by revenue?) and mark category_summary as a trusted asset.\n6. **Test Genie:** Ask 3 questions you didn't pre-write, check the SQL Genie generated for each, and confirm it used the right tables without inventing columns. Record each question, the SQL and your verdict in `docs/day10_genie_checks.md`, and save a screenshot as `screenshots/day10_genie.png`.\n7. **Share it:** Share the dashboard with viewer permission (or note how you would), and explain in one sentence why Genie answers obey the same Unity Catalog permissions as everything else.\n8. **Ship to your repo:** Commit and push the queries, the dashboard, the Genie checks and the screenshot. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. What kind of compute runs Databricks SQL queries and dashboards? SQL `___` (one word)\n2. Which AI/BI dashboard visualization shows a single big-number KPI? (one word)\n3. How many sample questions did you add to your Genie space? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "Databricks SQL compute",
+          "value": "warehouse",
+          "caseInsensitive": true
+        },
+        {
+          "check": "single-number visualization",
+          "value": "counter",
+          "caseInsensitive": true
+        },
+        {
+          "check": "Genie sample question count",
+          "value": "5",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "sql/day10_queries.sql exists",
+          "kind": "fileExists",
+          "path": "sql/day10_queries.sql"
+        },
+        {
+          "check": "dashboards/retail_dashboard.lvdash.json exists",
+          "kind": "fileExists",
+          "path": "dashboards/retail_dashboard.lvdash.json"
+        },
+        {
+          "check": "docs/day10_genie_checks.md exists",
+          "kind": "fileExists",
+          "path": "docs/day10_genie_checks.md"
+        },
+        {
+          "check": "screenshots/day10_genie.png exists",
+          "kind": "fileExists",
+          "path": "screenshots/day10_genie.png"
+        }
+      ]
+    },
+    "objectives": [
+      "Query Gold tables in the SQL Editor on a SQL warehouse",
+      "Build an AI/BI Dashboard and a SQL alert",
+      "Curate a Genie space and check the SQL it generates",
+      "Explain how Unity Catalog governs BI and Genie access"
+    ],
+    "tools": [
+      "Databricks SQL",
+      "AI/BI Dashboards",
+      "Genie",
+      "SQL warehouses"
+    ],
+    "estimatedMin": 150,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 11,
+    "moduleNumber": 5,
+    "title": "Machine Learning Fundamentals — AutoML & MLflow Tracking",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Machine Learning Fundamentals — AutoML & MLflow Tracking\n\n**Train your first models on Databricks and learn the MLflow tracking layer that logs everything from here on**\n\nThe ML half of the program starts here. Your Gold tables are too small to train on, so you generate a realistic synthetic customer dataset, train a baseline with autologging, log a run by hand, let AutoML search for you, and compare all three in the MLflow UI.\n\n**Exam alignment:** ML Associate — Domain 1: Databricks Machine Learning (38%) — clusters, AutoML and MLflow Tracking\n\n**Concepts to learn**\n\n- **ML compute** — what ML runtimes pre-install, and adding libraries with %pip on serverless\n- **MLflow Tracking** — experiments, runs, parameters, metrics and artifacts\n- **The MLflow UI** — comparing runs and plotting metrics\n- **AutoML** — what it automates (data exploration, baseline notebooks, a leaderboard) and its limits\n- **Autologging** — mlflow.autolog() for supported libraries\n\n**Deliverable:** three logged MLflow runs (autologged, manual and the best AutoML trial) compared in the MLflow UI, with a written recommendation.\n\n### Build steps\n\n1. **Generate training data:** In a new notebook `notebooks/day11_mlflow`, run `CREATE SCHEMA IF NOT EXISTS retail_lakehouse.ml`, then generate 5,000 synthetic customers with `spark.range(5000)` and `rand()`: customer_id, category, orders_count, total_spend, days_since_last_order, event_ts, and a 0/1 label churned (for example 1 when days_since_last_order is over 60, plus some random noise). Save it as `retail_lakehouse.ml.customer_training`.\n2. **Get your libraries:** Serverless notebooks don't pre-install every ML library, so if an import fails, run `%pip install mlflow scikit-learn` in the first cell and then `dbutils.library.restartPython()`.\n3. **Autolog a baseline:** Call `mlflow.autolog()`, train a scikit-learn RandomForestClassifier on the table (converted with toPandas), and confirm a run appears in the Experiments UI with its parameters and metrics logged for you.\n4. **Log a run by hand:** Open a run with `mlflow.start_run()` and explicitly log two or three hyperparameters, two metrics and one artifact (a confusion matrix or feature-importance plot). Compare it side by side with the autologged run.\n5. **Run AutoML:** Create an AutoML experiment (Experiments → Create AutoML experiment) on the same table as a classification problem with churned as the target. While it runs, read what it produces: a data exploration notebook, trial notebooks and a leaderboard. If AutoML isn't available on your tier, log a third run by hand with a different algorithm instead and say so in your recommendation.\n6. **Inspect the winner:** Open the best trial's generated notebook and identify the algorithm and hyperparameters it chose — it's a normal editable notebook, not a black box.\n7. **Compare and recommend:** Select all three runs in the MLflow comparison view, and in `docs/day11_recommendation.md` write one paragraph on which you'd take to production and why.\n8. **Ship to your repo:** Commit and push `notebooks/day11_mlflow.py` and the recommendation. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Complete the call that turns on automatic logging: `mlflow.___()` (one word)\n2. Complete the call that opens a manual run: `mlflow.___()` (function name)\n3. How many runs do you compare in the MLflow UI at the end of today? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "automatic logging function",
+          "value": "autolog",
+          "caseInsensitive": true
+        },
+        {
+          "check": "manual run function",
+          "value": "start_run",
+          "caseInsensitive": true
+        },
+        {
+          "check": "compared run count",
+          "value": "3",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day11_mlflow.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day11_mlflow.py"
+        },
+        {
+          "check": "notebook uses MLflow tracking",
+          "kind": "contentMatches",
+          "path": "notebooks/day11_mlflow.py",
+          "regex": "mlflow"
+        },
+        {
+          "check": "docs/day11_recommendation.md exists",
+          "kind": "fileExists",
+          "path": "docs/day11_recommendation.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Track experiments, runs, parameters, metrics and artifacts with MLflow",
+      "Use autologging and manual logging and compare runs in the MLflow UI",
+      "Run an AutoML experiment and read its generated notebooks",
+      "Recommend a model for production with a written justification"
+    ],
+    "tools": [
+      "MLflow",
+      "AutoML",
+      "scikit-learn",
+      "Notebooks"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 12,
+    "moduleNumber": 5,
+    "title": "Feature Engineering, Feature Store & EDA",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Feature Engineering, Feature Store & EDA\n\n**Do proper exploratory data analysis, engineer features, and register them in a governed feature table with point-in-time correctness**\n\nGood models come from good features that are defined once and reused. You explore the data, engineer three features, register them as a feature table in Unity Catalog, and build a training set with point-in-time lookups so no future information leaks into training.\n\n**Exam alignment:** ML Associate — Domain 1 (Feature Store, 38%) and Domain 2: ML Workflows (EDA, feature engineering, data cleaning — 19%)\n\n**Concepts to learn**\n\n- **EDA on Spark** — summary(), dbutils.data.summarize and correlations\n- **Feature engineering** — encoding categoricals, scaling and handling missing values\n- **Feature tables in Unity Catalog** — any Delta table with a primary key can be a feature table\n- **Point-in-time lookups** — joining features as of each label's timestamp to prevent label leakage\n- **Online serving** — publishing features for low-latency lookups, and when batch lookups are enough\n\n**Deliverable:** a governed feature table in Unity Catalog with three engineered features, a point-in-time training set built from it, and a re-trained model logged to MLflow using those features.\n\n### Build steps\n\n1. **Explore the data:** In a new notebook `notebooks/day12_features`, run `dbutils.data.summarize(df)` on `retail_lakehouse.ml.customer_training` (or `df.summary()`), and flag any columns with unexpected nulls or outliers.\n2. **Engineer features:** Add three features: an encoding of category (one-hot or ordinal), a log transform of total_spend, and a time-based feature such as days since first order.\n3. **Install the client:** Run `%pip install databricks-feature-engineering` and restart Python, then create a `FeatureEngineeringClient`.\n4. **Create the feature table:** Write the features with `create_table` as `retail_lakehouse.ml.customer_features`, with customer_id and event_ts as the primary key and event_ts as the timeseries column, and confirm Catalog Explorer shows it as a feature table.\n5. **Build a point-in-time training set:** Create `retail_lakehouse.ml.churn_labels` (customer_id, label_ts, churned), then call `create_training_set` with a FeatureLookup that uses customer_id as the lookup key and label_ts as the timestamp lookup key. Add a comment explaining why this prevents label leakage where a plain join would not.\n6. **Read about online serving:** Read how feature tables are published for real-time serving and note when you'd need it (real-time inference) vs when today's batch lookups are enough. Online tables are not available on Free Edition, so this step is reading only.\n7. **Re-train on the features:** Re-train your Day 11 baseline on the training set, log it as a new MLflow run, and compare its metric with yesterday's baseline.\n8. **Write it up:** In `docs/day12_feature_notes.md`, record your EDA findings, the three features and why you chose them, and the before/after metric.\n9. **Ship to your repo:** Commit and push `notebooks/day12_features.py` and the notes. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Complete the EDA call: `dbutils.data.___(df)` (one word)\n2. Which FeatureEngineeringClient method builds the training set? (method name)\n3. Point-in-time lookups prevent label `___` (one word)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "EDA summary utility",
+          "value": "summarize",
+          "caseInsensitive": true
+        },
+        {
+          "check": "training set method",
+          "value": "create_training_set",
+          "caseInsensitive": true
+        },
+        {
+          "check": "problem point-in-time lookups prevent",
+          "value": "leakage",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day12_features.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day12_features.py"
+        },
+        {
+          "check": "notebook builds a point-in-time training set",
+          "kind": "contentMatches",
+          "path": "notebooks/day12_features.py",
+          "regex": "create_training_set"
+        },
+        {
+          "check": "docs/day12_feature_notes.md exists",
+          "kind": "fileExists",
+          "path": "docs/day12_feature_notes.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Run EDA on Spark DataFrames and act on what it shows",
+      "Engineer categorical, numeric and time-based features",
+      "Register a feature table in Unity Catalog with a timeseries key",
+      "Build a point-in-time training set and explain label leakage"
+    ],
+    "tools": [
+      "Feature Engineering in Unity Catalog",
+      "MLflow",
+      "PySpark",
+      "Notebooks"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 13,
+    "moduleNumber": 5,
+    "title": "Model Development & Deployment — Spark ML, Tuning, Registry & Serving",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Model Development & Deployment — Spark ML, Tuning, Registry & Serving\n\n**Tune a real Spark ML pipeline two ways, register the winner in Unity Catalog, and deploy it for batch and (if available) real-time inference**\n\nYou build a Spark ML pipeline, tune it with cross-validation and with a hyperparameter search, pick the metric that fits the business problem, register the winner in Unity Catalog with a @champion alias, and use it to score a table. Hyperopt is no longer shipped in Databricks ML runtimes and Databricks now recommends Optuna, so you search with Optuna and learn the Hyperopt vocabulary older exam questions still use.\n\n**Exam alignment:** ML Associate — Domain 3: Model Development (31%) and Domain 4: Model Deployment (12%)\n\n**Concepts to learn**\n\n- **Spark MLlib pipelines** — Estimators, Transformers, Pipeline and CrossValidator\n- **Hyperparameter search** — Optuna (recommended today) and Hyperopt (fmin, hp.choice, SparkTrials), logged to MLflow\n- **Evaluation metrics** — F1 and AUC for classification, RMSE and MAE for regression, and when each fits\n- **Model Registry in Unity Catalog** — registering, versioning and aliasing (@champion, @challenger)\n- **Deployment** — batch inference with a Spark UDF, real-time Model Serving endpoints and streaming inference\n\n**Deliverable:** a Spark ML pipeline tuned with CrossValidator and with an Optuna search, the best model registered in Unity Catalog with a @champion alias, and predictions generated with batch inference (plus a real-time endpoint if available).\n\n### Build steps\n\n1. **Use a Spark ML-ready environment:** In a new notebook `notebooks/day13_model`, open the Environment side panel and pick serverless environment version 4 or later, which adds Spark ML (pyspark.ml) support on serverless.\n2. **Build a Spark ML pipeline:** Load your Day 12 training set as a Spark DataFrame and build a Pipeline with a StringIndexer and OneHotEncoder for category, a VectorAssembler and a classifier such as LogisticRegression.\n3. **Cross-validate:** Wrap it in a CrossValidator with a ParamGridBuilder sweeping two or three hyperparameters and 3-fold cross-validation, fit it, and log the best parameters and metric to MLflow.\n4. **Search with Optuna:** Define an objective that trains a scikit-learn model and returns a loss, and run an Optuna study of about 20 trials with each trial logged as a nested MLflow run (`%pip install optuna` if needed). Add a comment mapping it to Hyperopt's `fmin`, `hp.choice` and `SparkTrials`.\n5. **Pick the right metric:** Evaluate your best model with F1 or AUC, and write one sentence in `docs/day13_metric_choice.md` on why that metric fits churn (for example, why recall can matter more than accuracy).\n6. **Register the winner:** Log the best model with a signature (`infer_signature`), register it as `retail_lakehouse.ml.churn_model`, and set the alias champion on that version with `MlflowClient().set_registered_model_alias`.\n7. **Score in batch:** Load `models:/retail_lakehouse.ml.churn_model@champion` with `mlflow.pyfunc.spark_udf`, score your customers and save the predictions as `retail_lakehouse.ml.churn_predictions`.\n8. **Try real-time serving:** If your tier allows it, create a Model Serving endpoint for the champion version and send it one test request. If not, walk through the endpoint-creation screen and explain in your metric-choice note what scale to zero means for cost.\n9. **Ship to your repo:** Commit and push `notebooks/day13_model.py` and the note. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Spark ML class chains stages into one estimator? (class name)\n2. Which library does Databricks now recommend for hyperparameter search in place of Hyperopt? (one word)\n3. Which alias do you set on the winning model version? (one word, without the @)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "stage-chaining class",
+          "value": "Pipeline",
+          "caseInsensitive": true
+        },
+        {
+          "check": "recommended tuning library",
+          "value": "Optuna",
+          "caseInsensitive": true
+        },
+        {
+          "check": "production model alias",
+          "value": "champion",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day13_model.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day13_model.py"
+        },
+        {
+          "check": "notebook sets the champion alias",
+          "kind": "contentMatches",
+          "path": "notebooks/day13_model.py",
+          "regex": "champion"
+        },
+        {
+          "check": "docs/day13_metric_choice.md exists",
+          "kind": "fileExists",
+          "path": "docs/day13_metric_choice.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Build and cross-validate a Spark ML pipeline",
+      "Run a hyperparameter search with nested MLflow runs",
+      "Choose an evaluation metric that fits the business problem",
+      "Register a model in Unity Catalog with an alias and use it for batch inference"
+    ],
+    "tools": [
+      "Spark MLlib",
+      "Optuna",
+      "MLflow Model Registry",
+      "Model Serving"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 15,
+    "isProjectDay": false
+  },
+  {
+    "dayNumber": 14,
+    "moduleNumber": 6,
+    "title": "Generative AI on Databricks — Mosaic AI, RAG & AI Search",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Generative AI on Databricks — Mosaic AI, RAG & AI Search\n\n**Build a governed retrieval-augmented generation pipeline: Foundation Model APIs for generation, AI Search for retrieval**\n\nProject day one. You chunk a small document corpus, index it in AI Search (the new name for Vector Search since June 2026), and build a RAG chain that retrieves context and calls a Foundation Model API — traced end-to-end in MLflow so you can prove every answer is grounded.\n\n**Exam alignment:** Generative AI Engineer Associate — RAG application design, AI Search (formerly Vector Search) and Foundation Model APIs\n\n**Concepts to learn**\n\n- **Foundation Model APIs** — pay-per-token serving of open models with no infrastructure to manage\n- **AI Search** — vector, full-text and hybrid retrieval indexes (renamed from Vector Search)\n- **Chunking and embeddings** — preparing a document corpus for retrieval\n- **RAG chains** — retrieve, augment the prompt, generate — traced end-to-end with MLflow\n- **Governance** — every RAG component (index, model, endpoint) is a Unity Catalog object\n\n**Deliverable:** a working RAG chain — chunked documents, an AI Search index and a generation step calling a Foundation Model API — with MLflow traces for 3 test questions.\n\n### Build steps\n\n1. **Try the AI Playground:** Open the Playground from the sidebar and chat with a Foundation Model API model with no setup. Note the pay-per-token pricing and that there is no cluster to manage.\n2. **Build a corpus:** In a new notebook `notebooks/day14_rag`, run `CREATE SCHEMA IF NOT EXISTS retail_lakehouse.genai` and load 5–10 short synthetic documents (product FAQs, return and shipping policies — never real customer data) into `retail_lakehouse.genai.product_docs` with columns id, text and source.\n3. **Chunk the documents:** Split each document into paragraph-sized chunks and write them to `retail_lakehouse.genai.product_doc_chunks` with a chunk_id primary key, then run `ALTER TABLE retail_lakehouse.genai.product_doc_chunks SET TBLPROPERTIES (delta.enableChangeDataFeed = true)`. AI Search indexes sync from the Change Data Feed.\n4. **Create the index:** Create an AI Search endpoint (Free Edition allows one) and a Delta Sync index on the chunks table, using a Databricks-hosted embedding model and hybrid (vector plus keyword) search if your tier offers it.\n5. **Check retrieval first:** Query the index with a test question and inspect the top-k chunks. Confirm they are actually relevant before building anything on top.\n6. **Build the chain:** Write retrieve and generate functions decorated with `@mlflow.trace`: retrieve the top-k chunks, assemble a prompt (system instructions, the retrieved context and the question) and call a Foundation Model API chat endpoint listed on your Serving page.\n7. **Prove it's grounded:** Ask 3 test questions, open each trace, and confirm the answer comes from a retrieved chunk rather than being invented. Record each question, the chunks used and your verdict in `docs/day14_grounding_checks.md`, with what you'd change if an answer wasn't grounded.\n8. **Ship to your repo:** Commit and push `notebooks/day14_rag.py` and the grounding checks. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. Which Delta table property must be true for AI Search to sync from the table? `delta.___` (property name)\n2. What is the first step of a RAG chain, before augment and generate? (one word)\n3. How many test questions do you trace today? (number)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "table property AI Search syncs from",
+          "value": "enableChangeDataFeed",
+          "caseInsensitive": true
+        },
+        {
+          "check": "first RAG step",
+          "value": "retrieve",
+          "caseInsensitive": true
+        },
+        {
+          "check": "traced test question count",
+          "value": "3",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day14_rag.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day14_rag.py"
+        },
+        {
+          "check": "notebook traces the chain with MLflow",
+          "kind": "contentMatches",
+          "path": "notebooks/day14_rag.py",
+          "regex": "mlflow"
+        },
+        {
+          "check": "docs/day14_grounding_checks.md exists",
+          "kind": "fileExists",
+          "path": "docs/day14_grounding_checks.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Serve generation through Foundation Model APIs",
+      "Chunk documents and build an AI Search Delta Sync index",
+      "Build a retrieve-augment-generate chain traced with MLflow",
+      "Verify that answers are grounded in retrieved context"
+    ],
+    "tools": [
+      "Mosaic AI",
+      "AI Search",
+      "Foundation Model APIs",
+      "MLflow Tracing"
+    ],
+    "estimatedMin": 210,
+    "missionPoints": 25,
+    "isProjectDay": true
+  },
+  {
+    "dayNumber": 15,
+    "moduleNumber": 6,
+    "title": "Capstone — Agent Framework, Governance & Cost Wrap-up, Certification Prep",
+    "missionType": "SHIP_IT",
+    "briefMd": "## Mission: Capstone — Agent Framework, Governance & Cost Wrap-up, Certification Prep\n\n**Turn your RAG chain into a tool-using agent, deploy it governed, review cost, and leave with a study plan for your next certification**\n\nEverything you built comes together. Your agent chooses between document retrieval and a structured lookup on your Gold tables, gets registered and served through Unity Catalog, and then you audit what the program cost and tell the end-to-end story as your portfolio narrative.\n\n**Exam alignment:** Generative AI Engineer Associate — Agent Framework; wraps up Data Engineer Associate and ML Associate coverage from Days 1–14\n\n**Concepts to learn**\n\n- **Mosaic AI Agent Framework** — tools, the agent loop and evaluation\n- **Choosing a builder** — AI Playground vs Agent Bricks (low-code) vs the Agent Framework (full-code)\n- **Governed deployment** — registering an agent in Unity Catalog and serving it from a Model Serving endpoint\n- **Cost visibility** — DBU consumption, and serverless vs classic compute trade-offs\n- **Certification prep** — exam-day logistics and a study plan for your next exam\n\n**Deliverable:** a working tool-using agent deployed (or with its deployment documented) through Unity Catalog and Model Serving, a written cost review with 3 concrete savings, and a personal certification study plan.\n\n### Build steps\n\n1. **Wrap retrieval as a tool:** In a new notebook `notebooks/day15_agent`, turn your Day 14 retrieval step into a Python function with a clear docstring and give a tool-calling Foundation Model API model the ability to call it. Compare this with yesterday's fixed retrieve-then-generate chain.\n2. **Add a Gold-table tool:** Add a second tool that queries one of your Gold tables directly (for example, look up total revenue for a category), so the agent chooses between document retrieval and a structured lookup depending on the question.\n3. **Test tool choice:** Ask the agent 5 mixed questions (some needing documents, some needing the Gold-table tool and one needing both), confirm it picks the right tools each time, and keep every run's MLflow trace. Log each question, the tools chosen and your verdict in `docs/day15_agent_tests.md`.\n4. **Deploy it governed:** Log the agent with MLflow, register it in Unity Catalog as `retail_lakehouse.genai.retail_agent` and deploy it to a Model Serving endpoint so it's callable the same governed way as any other model. If your tier doesn't allow the endpoint, document the exact steps you would take.\n5. **Review the cost:** Query `system.billing.usage` if your workspace exposes system tables (otherwise use Compute and job run history) to find what consumed the most DBUs this program. In `docs/day15_cost_review.md`, write 3 concrete cost-saving moves for a real production deployment, such as serverless vs classic compute, job clusters that auto-terminate and warehouse auto-stop.\n6. **Tell the story:** Write the full architecture walkthrough in `docs/architecture.md` (link a recording if you make one): bronze → silver → gold → Lakeflow pipeline → Lakeflow Job → bundle and CI/CD → dashboard and Genie → feature table → registered model → RAG agent. This is your portfolio narrative.\n7. **Plan your certification:** Pick your next target (Data Engineer Associate and/or Machine Learning Associate), map today's capstone components back to the exam guide sections, and write a 1-week study plan for the gaps in `docs/day15_study_plan.md`. Always cross-check the current exam guide on databricks.com before registering.\n8. **Ship to your repo:** Commit and push `notebooks/day15_agent.py` and all four docs. Then Verify.\n\n### Submit your answers\n\nAnswer these below in order (they prove you actually did the build):\n\n1. How many tools does your agent have by the end of today? (number)\n2. How many mixed questions do you test the agent with? (number)\n3. What unit does Databricks bill compute consumption in? (acronym)\n",
+    "missionSpec": {
+      "answers": [
+        {
+          "check": "agent tool count",
+          "value": "2",
+          "caseInsensitive": true
+        },
+        {
+          "check": "agent test question count",
+          "value": "5",
+          "caseInsensitive": true
+        },
+        {
+          "check": "billing unit",
+          "value": "DBU",
+          "caseInsensitive": true
+        }
+      ],
+      "repoChecks": [
+        {
+          "check": "notebooks/day15_agent.py exists",
+          "kind": "fileExists",
+          "path": "notebooks/day15_agent.py"
+        },
+        {
+          "check": "docs/day15_agent_tests.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_agent_tests.md"
+        },
+        {
+          "check": "docs/day15_cost_review.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_cost_review.md"
+        },
+        {
+          "check": "docs/architecture.md exists",
+          "kind": "fileExists",
+          "path": "docs/architecture.md"
+        },
+        {
+          "check": "docs/day15_study_plan.md exists",
+          "kind": "fileExists",
+          "path": "docs/day15_study_plan.md"
+        }
+      ]
+    },
+    "objectives": [
+      "Build a tool-using agent that routes between retrieval and a structured lookup",
+      "Register and serve an agent through Unity Catalog and Model Serving",
+      "Review DBU consumption and propose concrete cost savings",
+      "Present the end-to-end architecture and plan the next certification"
+    ],
+    "tools": [
+      "Mosaic AI Agent Framework",
+      "Model Serving",
+      "Unity Catalog",
+      "MLflow"
+    ],
+    "estimatedMin": 180,
+    "missionPoints": 30,
+    "isProjectDay": true
+  }
+]

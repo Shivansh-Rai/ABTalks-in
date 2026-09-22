@@ -1,0 +1,977 @@
+[
+  {
+    "dayNumber": 1,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What problem does the lakehouse architecture solve?",
+        "options": [
+          "It replaces SQL with Python",
+          "It serves warehouse and data-lake workloads from one open storage format",
+          "It removes the need for any compute",
+          "It stores data only in memory"
+        ],
+        "correctIndex": 1,
+        "explanation": "A lakehouse keeps data in an open format such as Delta Lake so BI, data engineering and ML all work on the same copy."
+      },
+      {
+        "order": 2,
+        "question": "Which of these lives in the Databricks-managed control plane?",
+        "options": [
+          "Your Delta table files",
+          "The Spark executors running your query",
+          "The notebook UI and job scheduler",
+          "Your Volume's CSV files"
+        ],
+        "correctIndex": 2,
+        "explanation": "The control plane holds the web application, notebooks and scheduler. Data and Spark execution live in the compute plane."
+      },
+      {
+        "order": 3,
+        "question": "What kind of compute does Databricks Free Edition provide?",
+        "options": [
+          "Only serverless compute",
+          "Only all-purpose clusters",
+          "GPU clusters",
+          "Any cluster type you configure"
+        ],
+        "correctIndex": 0,
+        "explanation": "Free Edition is serverless-only and quota-limited."
+      },
+      {
+        "order": 4,
+        "question": "Which magic command runs a single notebook cell as SQL?",
+        "options": [
+          "%python",
+          "%md",
+          "%sql",
+          "%fs"
+        ],
+        "correctIndex": 2,
+        "explanation": "%sql switches one cell to SQL regardless of the notebook's default language."
+      },
+      {
+        "order": 5,
+        "question": "Why connect a Git folder to GitHub at the start of the program?",
+        "options": [
+          "It makes notebooks run faster",
+          "It versions every notebook and file so your work can be reviewed and verified",
+          "It is required to create a catalog",
+          "It gives you more compute quota"
+        ],
+        "correctIndex": 1,
+        "explanation": "Git folders put notebooks and files under version control. This program verifies your repo every day."
+      }
+    ]
+  },
+  {
+    "dayNumber": 2,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What is Unity Catalog's namespace for a table?",
+        "options": [
+          "schema.table",
+          "catalog.schema.table",
+          "metastore.table",
+          "workspace.catalog.schema.table"
+        ],
+        "correctIndex": 1,
+        "explanation": "Unity Catalog uses a three-level namespace: catalog, schema, then table (or view, volume, function or model)."
+      },
+      {
+        "order": 2,
+        "question": "Which object governs non-tabular files such as CSVs, images or PDFs?",
+        "options": [
+          "A view",
+          "A volume",
+          "A materialized view",
+          "A metastore"
+        ],
+        "correctIndex": 1,
+        "explanation": "Volumes are Unity Catalog securables for files, addressed as /Volumes/catalog/schema/volume/..."
+      },
+      {
+        "order": 3,
+        "question": "Which statement removes a privilege that was previously granted?",
+        "options": [
+          "DENY",
+          "DROP",
+          "REVOKE",
+          "ALTER"
+        ],
+        "correctIndex": 2,
+        "explanation": "REVOKE takes back a grant. DENY explicitly blocks a privilege even if it is granted elsewhere."
+      },
+      {
+        "order": 4,
+        "question": "Why should production jobs run as a service principal?",
+        "options": [
+          "Service principals get free compute",
+          "The job doesn't break or change behaviour when a person leaves or loses access",
+          "Service principals bypass Unity Catalog",
+          "It is the only way to schedule a job"
+        ],
+        "correctIndex": 1,
+        "explanation": "A service principal is a non-human identity, so production access isn't tied to one employee's account."
+      },
+      {
+        "order": 5,
+        "question": "How are row filters and column masks defined in Unity Catalog?",
+        "options": [
+          "As SQL functions attached to a table",
+          "As JSON files in a Volume",
+          "As notebook widgets",
+          "As cluster policies"
+        ],
+        "correctIndex": 0,
+        "explanation": "You write a SQL UDF and attach it with SET ROW FILTER or ALTER COLUMN ... SET MASK."
+      }
+    ]
+  },
+  {
+    "dayNumber": 3,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Where does Delta Lake record every committed change to a table?",
+        "options": [
+          "In the Hive metastore only",
+          "In the _delta_log transaction log",
+          "In the notebook revision history",
+          "In the SQL warehouse cache"
+        ],
+        "correctIndex": 1,
+        "explanation": "Each commit is a JSON entry in _delta_log, which is what makes ACID transactions and time travel possible."
+      },
+      {
+        "order": 2,
+        "question": "Which query reads a table as it was at an earlier version?",
+        "options": [
+          "SELECT * FROM t HISTORY 0",
+          "SELECT * FROM t VERSION AS OF 0",
+          "RESTORE t AT 0",
+          "DESCRIBE t VERSION 0"
+        ],
+        "correctIndex": 1,
+        "explanation": "VERSION AS OF (or TIMESTAMP AS OF) reads a past snapshot. DESCRIBE HISTORY lists the versions."
+      },
+      {
+        "order": 3,
+        "question": "Why can VACUUM with a very short retention break time travel?",
+        "options": [
+          "It deletes the transaction log",
+          "It removes old data files that earlier versions still point to",
+          "It drops the table",
+          "It disables Liquid Clustering"
+        ],
+        "correctIndex": 1,
+        "explanation": "VACUUM deletes unreferenced data files older than the retention threshold, so older versions can no longer be read."
+      },
+      {
+        "order": 4,
+        "question": "What does Liquid Clustering replace for most tables?",
+        "options": [
+          "MERGE INTO",
+          "Manual partitioning and ZORDER tuning",
+          "Time travel",
+          "Schema enforcement"
+        ],
+        "correctIndex": 1,
+        "explanation": "Liquid Clustering lays data out by clustering keys incrementally, replacing most hand-tuned partitioning and Z-ordering."
+      },
+      {
+        "order": 5,
+        "question": "What does MERGE INTO do in a single atomic statement?",
+        "options": [
+          "Copies files between Volumes",
+          "Updates matched rows and inserts unmatched rows",
+          "Merges two catalogs",
+          "Combines two notebooks"
+        ],
+        "correctIndex": 1,
+        "explanation": "MERGE is Delta's upsert: WHEN MATCHED THEN UPDATE, WHEN NOT MATCHED THEN INSERT."
+      }
+    ]
+  },
+  {
+    "dayNumber": 4,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What happens when you run the same COPY INTO a second time with no new files?",
+        "options": [
+          "It duplicates every row",
+          "It fails",
+          "It loads zero new rows because it tracks files it already loaded",
+          "It truncates the table"
+        ],
+        "correctIndex": 2,
+        "explanation": "COPY INTO is idempotent: files already loaded into the target are skipped."
+      },
+      {
+        "order": 2,
+        "question": "Which source format name is used for Auto Loader?",
+        "options": [
+          "autoloader",
+          "cloudFiles",
+          "delta",
+          "stream"
+        ],
+        "correctIndex": 1,
+        "explanation": "Auto Loader is spark.readStream.format(\"cloudFiles\") with cloudFiles.* options."
+      },
+      {
+        "order": 3,
+        "question": "Which streaming trigger does serverless compute support for an Auto Loader stream?",
+        "options": [
+          "Trigger.Continuous",
+          "Trigger.ProcessingTime(\"1 minute\")",
+          "Trigger.AvailableNow",
+          "No trigger at all"
+        ],
+        "correctIndex": 2,
+        "explanation": "Serverless supports AvailableNow (and the deprecated Once). It processes all available data and then stops."
+      },
+      {
+        "order": 4,
+        "question": "What does cloudFiles.schemaLocation store?",
+        "options": [
+          "The table's data files",
+          "The inferred schema and its evolution over time",
+          "The job's run history",
+          "The Volume's permissions"
+        ],
+        "correctIndex": 1,
+        "explanation": "Auto Loader keeps the inferred schema there so it can detect and evolve new columns across runs."
+      },
+      {
+        "order": 5,
+        "question": "A source database needs continuous sync into Databricks. What fits best?",
+        "options": [
+          "A one-off COPY INTO",
+          "A managed Lakeflow Connect connector",
+          "Uploading CSV exports by hand",
+          "A SQL alert"
+        ],
+        "correctIndex": 1,
+        "explanation": "Managed Lakeflow Connect connectors handle incremental database and SaaS ingestion for you."
+      }
+    ]
+  },
+  {
+    "dayNumber": 5,
+    "questions": [
+      {
+        "order": 1,
+        "question": "Which medallion layer holds cleaned, deduplicated and typed data?",
+        "options": [
+          "Bronze",
+          "Silver",
+          "Gold",
+          "Landing"
+        ],
+        "correctIndex": 1,
+        "explanation": "Bronze is raw, Silver is cleaned and conformed, and Gold is business-level aggregates."
+      },
+      {
+        "order": 2,
+        "question": "What does broadcast(df) do in a join?",
+        "options": [
+          "Sends the small DataFrame to every executor so the big side isn't shuffled",
+          "Writes the DataFrame to a Volume",
+          "Caches the DataFrame on disk",
+          "Splits the DataFrame into more partitions"
+        ],
+        "correctIndex": 0,
+        "explanation": "A broadcast hash join copies the small table everywhere and avoids shuffling the large one."
+      },
+      {
+        "order": 3,
+        "question": "Which function gives a fast, approximate distinct count?",
+        "options": [
+          "count_distinct_fast",
+          "approx_count_distinct",
+          "countDistinctEstimate",
+          "distinct().count()"
+        ],
+        "correctIndex": 1,
+        "explanation": "approx_count_distinct uses HyperLogLog++ to estimate distinct counts cheaply on large data."
+      },
+      {
+        "order": 4,
+        "question": "When is a view a better Gold object than a table?",
+        "options": [
+          "When the result must be stored for fast reads",
+          "When the definition changes often and the data is cheap to recompute",
+          "When you need time travel",
+          "When you need to VACUUM it"
+        ],
+        "correctIndex": 1,
+        "explanation": "A view stores only the query, so changing its logic never leaves stale materialized data behind."
+      },
+      {
+        "order": 5,
+        "question": "What is spark.sql.shuffle.partitions set to by default on serverless compute?",
+        "options": [
+          "200",
+          "auto",
+          "1",
+          "It cannot be read"
+        ],
+        "correctIndex": 1,
+        "explanation": "Open-source Spark defaults to 200, but serverless sets it to auto and lets the engine size shuffles."
+      }
+    ]
+  },
+  {
+    "dayNumber": 6,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What was Lakeflow Declarative Pipelines previously called?",
+        "options": [
+          "Workflows",
+          "Delta Live Tables",
+          "Auto Loader",
+          "Delta Sharing"
+        ],
+        "correctIndex": 1,
+        "explanation": "Delta Live Tables was renamed Lakeflow Declarative Pipelines."
+      },
+      {
+        "order": 2,
+        "question": "What does ON VIOLATION DROP ROW do in an expectation?",
+        "options": [
+          "Fails the whole update",
+          "Drops invalid rows and keeps processing",
+          "Keeps invalid rows and logs a warning",
+          "Deletes the table"
+        ],
+        "correctIndex": 1,
+        "explanation": "DROP ROW discards failing rows and records them in the data quality metrics. FAIL UPDATE stops the update instead."
+      },
+      {
+        "order": 3,
+        "question": "Which object type recomputes an aggregate over its full input and keeps it up to date?",
+        "options": [
+          "Streaming table",
+          "Materialized view",
+          "Temporary view",
+          "Volume"
+        ],
+        "correctIndex": 1,
+        "explanation": "Materialized views keep query results current. Streaming tables process append-only data incrementally."
+      },
+      {
+        "order": 4,
+        "question": "What does STREAM(products_bronze) mean in a pipeline query?",
+        "options": [
+          "Read the table incrementally as a stream",
+          "Export the table to a file",
+          "Copy the table to another schema",
+          "Read only the schema"
+        ],
+        "correctIndex": 0,
+        "explanation": "STREAM() reads only new data from the upstream table, which is what a streaming table needs."
+      },
+      {
+        "order": 5,
+        "question": "What is the main benefit of a declarative pipeline over hand-written ingestion and transforms?",
+        "options": [
+          "It uses no compute",
+          "The platform handles ordering, retries, dependencies and data quality enforcement for you",
+          "It only works with CSV files",
+          "It removes the need for Unity Catalog"
+        ],
+        "correctIndex": 1,
+        "explanation": "You declare the tables and rules, and the pipeline manages execution order, retries and expectations."
+      }
+    ]
+  },
+  {
+    "dayNumber": 7,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What was Lakeflow Jobs previously called?",
+        "options": [
+          "Workflows",
+          "Pipelines",
+          "Tasks",
+          "Repos"
+        ],
+        "correctIndex": 0,
+        "explanation": "Databricks Workflows was renamed Lakeflow Jobs."
+      },
+      {
+        "order": 2,
+        "question": "How does a notebook task read a parameter named top_n?",
+        "options": [
+          "spark.conf.get(\"top_n\")",
+          "dbutils.widgets.get(\"top_n\")",
+          "os.environ[\"top_n\"]",
+          "sys.argv[\"top_n\"]"
+        ],
+        "correctIndex": 1,
+        "explanation": "Task parameters arrive as notebook widgets, read with dbutils.widgets.get."
+      },
+      {
+        "order": 3,
+        "question": "Which trigger starts a job when new files land in a location?",
+        "options": [
+          "Scheduled",
+          "Continuous",
+          "File arrival",
+          "Run now"
+        ],
+        "correctIndex": 2,
+        "explanation": "File arrival triggers watch a storage location or Volume and start a run when new files appear."
+      },
+      {
+        "order": 4,
+        "question": "Why add retries to an ingestion task?",
+        "options": [
+          "To run it faster",
+          "To recover automatically from transient failures",
+          "To skip failed rows",
+          "To avoid alerts"
+        ],
+        "correctIndex": 1,
+        "explanation": "Retries absorb transient errors such as timeouts without anyone having to re-run the job by hand."
+      },
+      {
+        "order": 5,
+        "question": "Why compare a job's run durations over time?",
+        "options": [
+          "To change its schedule",
+          "To catch a pipeline that is silently getting slower",
+          "To delete old runs",
+          "To reduce retries"
+        ],
+        "correctIndex": 1,
+        "explanation": "Run history against a baseline reveals gradual regressions before they become outages."
+      }
+    ]
+  },
+  {
+    "dayNumber": 8,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What are Declarative Automation Bundles?",
+        "options": [
+          "A pricing plan",
+          "Jobs, pipelines and other resources defined as YAML and deployed with the CLI",
+          "A notebook export format",
+          "A type of cluster"
+        ],
+        "correctIndex": 1,
+        "explanation": "Bundles (formerly Databricks Asset Bundles) describe resources as code in databricks.yml."
+      },
+      {
+        "order": 2,
+        "question": "Which command checks a bundle for configuration errors without deploying it?",
+        "options": [
+          "databricks bundle run",
+          "databricks bundle validate",
+          "databricks bundle init",
+          "databricks bundle destroy"
+        ],
+        "correctIndex": 1,
+        "explanation": "validate catches config and permission problems before anything is deployed."
+      },
+      {
+        "order": 3,
+        "question": "What is a bundle target?",
+        "options": [
+          "A table the bundle writes to",
+          "An environment such as dev or prod with its own overrides",
+          "A GitHub branch",
+          "A SQL warehouse"
+        ],
+        "correctIndex": 1,
+        "explanation": "Targets let the same bundle deploy with different settings to dev, test and prod."
+      },
+      {
+        "order": 4,
+        "question": "Which command deploys a bundle to its prod target?",
+        "options": [
+          "databricks bundle deploy -t prod",
+          "databricks deploy prod",
+          "databricks jobs create prod",
+          "databricks bundle run prod"
+        ],
+        "correctIndex": 0,
+        "explanation": "deploy -t <target> pushes the bundle's resources to that environment."
+      },
+      {
+        "order": 5,
+        "question": "What should a CI pipeline typically run when a pull request merges to main?",
+        "options": [
+          "Nothing",
+          "bundle validate and bundle deploy",
+          "Only unit tests on the laptop",
+          "databricks auth logout"
+        ],
+        "correctIndex": 1,
+        "explanation": "Automating validate and deploy on merge keeps environments in sync with reviewed code."
+      }
+    ]
+  },
+  {
+    "dayNumber": 9,
+    "questions": [
+      {
+        "order": 1,
+        "question": "On serverless compute, where do you inspect a query's execution details?",
+        "options": [
+          "The Spark UI stages tab",
+          "The query profile",
+          "The cluster event log",
+          "The driver logs only"
+        ],
+        "correctIndex": 1,
+        "explanation": "The Spark UI isn't available on serverless. The query profile shows operator-level time, rows, shuffle and spill."
+      },
+      {
+        "order": 2,
+        "question": "What is data skew?",
+        "options": [
+          "Too many small files",
+          "A few keys holding a disproportionate share of rows, overloading some tasks",
+          "A schema mismatch",
+          "A missing partition"
+        ],
+        "correctIndex": 1,
+        "explanation": "Skew makes a handful of tasks do most of the work while the rest sit idle."
+      },
+      {
+        "order": 3,
+        "question": "How does salting help with a skewed join key?",
+        "options": [
+          "It encrypts the key",
+          "It adds a random suffix so the hot key's rows spread across partitions",
+          "It removes duplicate keys",
+          "It sorts the data"
+        ],
+        "correctIndex": 1,
+        "explanation": "Salting splits one hot key into many sub-keys, with the other side replicated to match."
+      },
+      {
+        "order": 4,
+        "question": "What does spill mean in a query profile?",
+        "options": [
+          "Data written from memory to disk because a task ran out of memory",
+          "Rows dropped by an expectation",
+          "Data sent to another workspace",
+          "A failed retry"
+        ],
+        "correctIndex": 0,
+        "explanation": "Spill slows queries down. Fixes include more memory, more partitions or reducing data before the wide operation."
+      },
+      {
+        "order": 5,
+        "question": "What does Predictive Optimization do for Unity Catalog managed tables?",
+        "options": [
+          "Runs OPTIMIZE and VACUUM automatically when they're worthwhile",
+          "Predicts query results",
+          "Chooses the cluster size for notebooks",
+          "Rewrites SQL queries"
+        ],
+        "correctIndex": 0,
+        "explanation": "It schedules maintenance like OPTIMIZE and VACUUM for you based on how tables are used."
+      }
+    ]
+  },
+  {
+    "dayNumber": 10,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What compute runs Databricks SQL queries and AI/BI dashboards?",
+        "options": [
+          "A SQL warehouse",
+          "A job cluster",
+          "A Volume",
+          "A Model Serving endpoint"
+        ],
+        "correctIndex": 0,
+        "explanation": "SQL warehouses are the compute behind the SQL Editor, dashboards, alerts and Genie."
+      },
+      {
+        "order": 2,
+        "question": "Which AI/BI dashboard visualization shows a single KPI number?",
+        "options": [
+          "Bar",
+          "Counter",
+          "Line",
+          "Pivot"
+        ],
+        "correctIndex": 1,
+        "explanation": "A counter widget displays one big number, optionally against a target."
+      },
+      {
+        "order": 3,
+        "question": "What is AI/BI Genie?",
+        "options": [
+          "A data ingestion tool",
+          "Natural-language Q&A that generates SQL over governed data",
+          "A notebook theme",
+          "A job scheduler"
+        ],
+        "correctIndex": 1,
+        "explanation": "Genie turns business questions into SQL against the tables you curate in a Genie space."
+      },
+      {
+        "order": 4,
+        "question": "How do you make Genie answer more reliably?",
+        "options": [
+          "Give it write access",
+          "Curate the space with trusted assets, instructions and sample questions",
+          "Use a larger warehouse only",
+          "Disable Unity Catalog"
+        ],
+        "correctIndex": 1,
+        "explanation": "Curation grounds Genie in the right tables and in how your business phrases questions."
+      },
+      {
+        "order": 5,
+        "question": "Whose permissions govern what a Genie user can see?",
+        "options": [
+          "Genie has its own separate permission model",
+          "The user's Unity Catalog permissions",
+          "Everyone sees everything",
+          "Only the dashboard owner's"
+        ],
+        "correctIndex": 1,
+        "explanation": "Genie queries run under Unity Catalog governance, so users only see data they're allowed to read."
+      }
+    ]
+  },
+  {
+    "dayNumber": 11,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does mlflow.autolog() do?",
+        "options": [
+          "Deploys the model",
+          "Automatically logs parameters, metrics and models for supported libraries",
+          "Deletes old runs",
+          "Tunes hyperparameters"
+        ],
+        "correctIndex": 1,
+        "explanation": "Autologging records training details without explicit log calls."
+      },
+      {
+        "order": 2,
+        "question": "Which call opens a run for manual logging?",
+        "options": [
+          "mlflow.begin()",
+          "mlflow.start_run()",
+          "mlflow.open_run()",
+          "mlflow.new_experiment()"
+        ],
+        "correctIndex": 1,
+        "explanation": "mlflow.start_run() is usually used as a context manager around log_param, log_metric and log_artifact calls."
+      },
+      {
+        "order": 3,
+        "question": "What does an MLflow artifact typically hold?",
+        "options": [
+          "Only numeric metrics",
+          "Files such as plots, models and data samples",
+          "The cluster configuration",
+          "Git credentials"
+        ],
+        "correctIndex": 1,
+        "explanation": "Artifacts are files attached to a run, including the serialized model itself."
+      },
+      {
+        "order": 4,
+        "question": "What does Databricks AutoML produce besides the best model?",
+        "options": [
+          "Nothing else",
+          "Editable notebooks for data exploration and every trial, plus a leaderboard",
+          "A SQL dashboard",
+          "A feature table"
+        ],
+        "correctIndex": 1,
+        "explanation": "AutoML is a glass box: every trial is a notebook you can read, edit and re-run."
+      },
+      {
+        "order": 5,
+        "question": "Why compare runs in the MLflow UI before choosing a model?",
+        "options": [
+          "To delete the worse runs",
+          "To weigh metrics, parameters and artifacts side by side on the same data",
+          "Because it retrains them",
+          "Because Model Serving requires it"
+        ],
+        "correctIndex": 1,
+        "explanation": "The comparison view makes trade-offs visible before you commit a model to production."
+      }
+    ]
+  },
+  {
+    "dayNumber": 12,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What does dbutils.data.summarize(df) show?",
+        "options": [
+          "The table's permissions",
+          "Summary statistics and distributions for each column",
+          "The query plan",
+          "The Delta history"
+        ],
+        "correctIndex": 1,
+        "explanation": "It's a quick EDA view of nulls, distributions and basic statistics per column."
+      },
+      {
+        "order": 2,
+        "question": "What makes a Delta table usable as a feature table in Unity Catalog?",
+        "options": [
+          "It must be in a Volume",
+          "It has a primary key",
+          "It must be a view",
+          "It must be partitioned"
+        ],
+        "correctIndex": 1,
+        "explanation": "Any Delta table with a primary key constraint can act as a feature table."
+      },
+      {
+        "order": 3,
+        "question": "What does a point-in-time lookup prevent?",
+        "options": [
+          "Schema drift",
+          "Label leakage from feature values recorded after the label's timestamp",
+          "Data skew",
+          "Duplicate runs"
+        ],
+        "correctIndex": 1,
+        "explanation": "Joining features as of each label's timestamp keeps future information out of training."
+      },
+      {
+        "order": 4,
+        "question": "Which method builds a training set with feature lookups?",
+        "options": [
+          "fe.create_training_set",
+          "fe.join_features",
+          "mlflow.log_features",
+          "spark.read.features"
+        ],
+        "correctIndex": 0,
+        "explanation": "FeatureEngineeringClient.create_training_set joins labels to feature tables using FeatureLookup definitions."
+      },
+      {
+        "order": 5,
+        "question": "When do you need features published for online serving?",
+        "options": [
+          "For nightly batch scoring",
+          "For real-time inference with low-latency lookups",
+          "For EDA",
+          "For AutoML"
+        ],
+        "correctIndex": 1,
+        "explanation": "Batch scoring can read the Delta feature table directly. Real-time endpoints need low-latency lookups."
+      }
+    ]
+  },
+  {
+    "dayNumber": 13,
+    "questions": [
+      {
+        "order": 1,
+        "question": "In Spark ML, what is a Transformer?",
+        "options": [
+          "Something that fits on data and returns a model",
+          "Something that converts one DataFrame into another",
+          "A cross-validation strategy",
+          "A metric"
+        ],
+        "correctIndex": 1,
+        "explanation": "Transformers implement transform(). Estimators implement fit() and return a Transformer (the model)."
+      },
+      {
+        "order": 2,
+        "question": "What does CrossValidator do?",
+        "options": [
+          "Splits data into k folds and picks the parameter set with the best average metric",
+          "Validates the schema",
+          "Deploys the best model",
+          "Removes outliers"
+        ],
+        "correctIndex": 0,
+        "explanation": "It trains every parameter combination on k folds and keeps the best-scoring one."
+      },
+      {
+        "order": 3,
+        "question": "What does Databricks recommend for hyperparameter search now that Hyperopt is no longer shipped?",
+        "options": [
+          "AutoML only",
+          "Optuna",
+          "Grid search by hand",
+          "SparkTrials"
+        ],
+        "correctIndex": 1,
+        "explanation": "Hyperopt left Databricks ML runtimes after 16.4 LTS ML. Optuna is the recommended replacement."
+      },
+      {
+        "order": 4,
+        "question": "Why use a model alias such as @champion?",
+        "options": [
+          "It trains the model faster",
+          "Consumers load a stable name while you promote or roll back versions behind it",
+          "It encrypts the model",
+          "It is required to log a run"
+        ],
+        "correctIndex": 1,
+        "explanation": "Aliases decouple what callers load from specific version numbers."
+      },
+      {
+        "order": 5,
+        "question": "For churn, where missing a real churner is costly, which metric often matters more than accuracy?",
+        "options": [
+          "Recall",
+          "RMSE",
+          "MAE",
+          "R-squared"
+        ],
+        "correctIndex": 0,
+        "explanation": "On imbalanced problems accuracy can look high while most churners are missed. Recall measures how many you catch."
+      }
+    ]
+  },
+  {
+    "dayNumber": 14,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What are Foundation Model APIs?",
+        "options": [
+          "Pay-per-token access to hosted models with no infrastructure to manage",
+          "A way to train models from scratch",
+          "A SQL function library",
+          "A vector index"
+        ],
+        "correctIndex": 0,
+        "explanation": "They serve open and proprietary models behind managed endpoints."
+      },
+      {
+        "order": 2,
+        "question": "Which table property must be enabled for an AI Search Delta Sync index?",
+        "options": [
+          "delta.appendOnly",
+          "delta.enableChangeDataFeed",
+          "delta.autoOptimize",
+          "delta.columnMapping"
+        ],
+        "correctIndex": 1,
+        "explanation": "Delta Sync indexes read the Change Data Feed to stay in sync with the source table."
+      },
+      {
+        "order": 3,
+        "question": "Why chunk documents before indexing them?",
+        "options": [
+          "To save storage",
+          "So retrieval returns focused passages that fit in the prompt",
+          "Because PDFs can't be indexed",
+          "To encrypt them"
+        ],
+        "correctIndex": 1,
+        "explanation": "Smaller, coherent chunks improve relevance and keep the context window manageable."
+      },
+      {
+        "order": 4,
+        "question": "What are the three steps of a RAG chain in order?",
+        "options": [
+          "Generate, retrieve, augment",
+          "Retrieve, augment, generate",
+          "Augment, generate, retrieve",
+          "Embed, deploy, serve"
+        ],
+        "correctIndex": 1,
+        "explanation": "Retrieve relevant chunks, augment the prompt with them, then generate the answer."
+      },
+      {
+        "order": 5,
+        "question": "Why trace a RAG chain with MLflow?",
+        "options": [
+          "To make it faster",
+          "To inspect retrieval and generation together and check whether answers are grounded",
+          "To reduce token costs",
+          "To deploy it"
+        ],
+        "correctIndex": 1,
+        "explanation": "A trace shows which chunks were retrieved and how the model used them."
+      }
+    ]
+  },
+  {
+    "dayNumber": 15,
+    "questions": [
+      {
+        "order": 1,
+        "question": "What makes an agent different from a fixed RAG chain?",
+        "options": [
+          "It never calls a model",
+          "The model decides which tools to call, and when, for each question",
+          "It only runs SQL",
+          "It has no prompt"
+        ],
+        "correctIndex": 1,
+        "explanation": "An agent loop lets the model choose tools dynamically instead of always retrieving then generating."
+      },
+      {
+        "order": 2,
+        "question": "Which builder suits a low-code agent?",
+        "options": [
+          "Agent Bricks",
+          "Lakeflow Jobs",
+          "Declarative Automation Bundles",
+          "Auto Loader"
+        ],
+        "correctIndex": 0,
+        "explanation": "Agent Bricks is the low-code option. The Mosaic AI Agent Framework is full-code."
+      },
+      {
+        "order": 3,
+        "question": "Why register an agent in Unity Catalog?",
+        "options": [
+          "It becomes a governed, versioned object with access control like any other model",
+          "It trains the agent",
+          "It is cheaper",
+          "It removes the need for serving"
+        ],
+        "correctIndex": 0,
+        "explanation": "Registration brings versioning, lineage and permissions to agents."
+      },
+      {
+        "order": 4,
+        "question": "What is a DBU?",
+        "options": [
+          "A data backup unit",
+          "The Databricks Unit used to measure and bill compute",
+          "A dashboard widget",
+          "A database user"
+        ],
+        "correctIndex": 1,
+        "explanation": "Compute consumption is metered in DBUs, priced by compute type."
+      },
+      {
+        "order": 5,
+        "question": "Which change typically cuts cost for idle workloads?",
+        "options": [
+          "Disabling auto-stop on warehouses",
+          "Serverless compute or auto-terminating job clusters",
+          "Running all jobs continuously",
+          "Larger warehouses"
+        ],
+        "correctIndex": 1,
+        "explanation": "Paying only while work runs removes idle spend."
+      }
+    ]
+  }
+]

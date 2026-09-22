@@ -51,6 +51,16 @@ export function isSnowflakeEnabled(): boolean {
 }
 
 /**
+ * 15-day Databricks Data & AI Engineering cohort at /program/databricks-ai
+ * (separate from the 31-day Databricks cohort behind ENABLE_DATABRICKS).
+ * Unset/false 404s the route and hides the Prep Kit card.
+ * Set to true in Vercel to launch.
+ */
+export function isDatabricksAiEnabled(): boolean {
+  return process.env.ENABLE_DATABRICKS_AI === "true";
+}
+
+/**
  * Entry assessment quiz is removed from the program cohort product surface.
  * Apply enrolls/waitlists directly. Kept as a always-on flag for call sites.
  */

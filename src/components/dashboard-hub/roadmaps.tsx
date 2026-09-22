@@ -22,6 +22,7 @@ type RoadmapsProps = {
   showDsArchitect?: boolean;
   showPowerBi?: boolean;
   showSnowflake?: boolean;
+  showDatabricksAi?: boolean;
 };
 
 export function Roadmaps({
@@ -32,6 +33,7 @@ export function Roadmaps({
   showDsArchitect = false,
   showPowerBi = false,
   showSnowflake = false,
+  showDatabricksAi = false,
 }: RoadmapsProps) {
   const joined = new Set(joinedDomains);
   const abandoned = new Set(abandonedDomains);
@@ -209,6 +211,29 @@ export function Roadmaps({
                 </div>
                 <Link
                   href="/program/snowflake"
+                  className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
+                >
+                  Open
+                </Link>
+              </div>
+            ) : null}
+            {showDatabricksAi ? (
+              <div
+                className={cn(
+                  "flex flex-col justify-between rounded-2xl border border-[#E0E0E0] bg-white p-5 sm:p-6",
+                  HUB_CARD_HOVER_CLASS,
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="font-inter text-lg font-bold text-black">
+                    15 Days Databricks Data &amp; AI
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm text-[#4B4B4B]">
+                    Build a governed Data + AI lakehouse on Databricks in 15 days.
+                  </p>
+                </div>
+                <Link
+                  href="/program/databricks-ai"
                   className={cn(HUB_CARD_CTA_CLASS, "mt-2 self-end")}
                 >
                   Open
