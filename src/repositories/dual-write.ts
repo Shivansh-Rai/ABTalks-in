@@ -125,6 +125,10 @@ export function mapMemberStatus(status: ProgramMemberStatus): EnrollmentStatusV2
   }
 }
 
+/**
+ * Rollback / tooling compatibility. Production challenge PE writes go through
+ * applyChallengeProgramEnrollment (enrollment-state) and do not use this helper.
+ */
 export async function dualWriteChallengeEnrollment(
   tx: Tx,
   enrollment: {

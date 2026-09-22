@@ -14,9 +14,9 @@ import { studentProfile } from "@/repositories/legacy/student-profile";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
 import { getCandidateProfile } from "@/repositories/candidate";
 import {
-  dualWriteChallengeEnrollmentById,
-} from "@/repositories/dual-write";
-import { applyEnrollmentProgressDenorm } from "@/repositories/enrollment-state";
+  applyChallengeProgramEnrollmentById,
+  applyEnrollmentProgressDenorm,
+} from "@/repositories/enrollment-state";
 import {
   applyDeleteChallengeSubmission,
   applyDeleteEnrollmentChallengeAttempts,
@@ -130,7 +130,7 @@ export async function resetProgressAction(input: {
           startedAt: new Date(),
         },
       });
-      await dualWriteChallengeEnrollmentById(tx, enrollment.id);
+      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       await applyCandidateIdentityChange(tx, targetUserId, {
         isReadyForInterview: false,
@@ -263,7 +263,7 @@ export async function removeFromChallengeAction(input: {
         where: { id: enrollment.id },
         data: { status: "ABANDONED" },
       });
-      await dualWriteChallengeEnrollmentById(tx, enrollment.id);
+      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       await tx.adminAction.create({
         data: {
@@ -447,7 +447,7 @@ export async function rejectSubmissionAction(input: {
           completedAt: daysCompleted >= 60 ? new Date() : null,
         },
       });
-      await dualWriteChallengeEnrollmentById(tx, enrollmentId);
+      await applyChallengeProgramEnrollmentById(tx, enrollmentId);
 
       await tx.adminAction.create({
         data: {

@@ -1,5 +1,5 @@
 /**
- * W7-A/B enrollment denorm current-state boundary.
+ * W7-A/B enrollment denorm current-state boundary + Phase 8-B challenge PE writer.
  *
  * Days/lastSubmittedDay: derived from challenge ActivityAttempt (already W6-B).
  * Track streaks: ProgramEnrollment.trackCurrentStreak / trackLongestStreak
@@ -9,20 +9,102 @@
  * must not fail canonical enrollment. W7-B freezes those compatibility
  * fields only; Enrollment.status / startedAt / completedAt stay live.
  *
- * Does not take EnrollmentProgress, ProgramMember, points, certificate,
- * candidate identity, or W6 frozen progress tables.
+ * Challenge ProgramEnrollment `pe_enr_<Enrollment.id>` is written here and
+ * does not go through runDualWrite / ENABLE_DUAL_WRITE. CandidateVisibility
+ * stays on the W2 applyVisibilityChange boundary. Does not take
+ * EnrollmentProgress, ProgramMember, points, certificate, candidate identity,
+ * or W6 frozen progress tables.
  */
 import "server-only";
-import { Domain, type Prisma, type PrismaClient } from "@prisma/client";
+import {
+  Domain,
+  EnrollmentStatus,
+  EnrollmentStatusV2,
+  type Prisma,
+  type PrismaClient,
+} from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { isLegacyEnrollmentDenormMirrorEnabled, isNewEnrollmentStateEnabled } from "@/lib/feature-flags";
 import {
+  cohortSlugForDomain,
   enrollmentIdFromPe,
   peIdForEnrollment,
 } from "@/repositories/ids";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
+
+export type ChallengeEnrollmentState = {
+  id: string;
+  userId: string;
+  domain: string;
+  status: EnrollmentStatus;
+  startedAt: Date;
+  completedAt: Date | null;
+};
+
+export function mapChallengeEnrollmentStatus(
+  status: EnrollmentStatus,
+): EnrollmentStatusV2 {
+  if (status === EnrollmentStatus.COMPLETED) return EnrollmentStatusV2.COMPLETED;
+  if (status === EnrollmentStatus.ABANDONED) return EnrollmentStatusV2.DROPPED;
+  return EnrollmentStatusV2.ACTIVE;
+}
+
+/**
+ * Canonical challenge ProgramEnrollment writer (`pe_enr_<Enrollment.id>`).
+ * Independent of ENABLE_DUAL_WRITE. Does not stamp CandidateVisibility.
+ * Does not remirror frozen Enrollment denorms or StudentProfile.domain.
+ */
+export async function applyChallengeProgramEnrollment(
+  tx: Tx,
+  enrollment: ChallengeEnrollmentState,
+): Promise<{ id: string }> {
+  const peId = peIdForEnrollment(enrollment.id);
+  const slug = cohortSlugForDomain(enrollment.domain);
+  const cohort = await tx.cohort.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (!cohort) throw new Error(`Missing cohort ${slug}`);
+  const status = mapChallengeEnrollmentStatus(enrollment.status);
+  await tx.programEnrollment.upsert({
+    where: { id: peId },
+    create: {
+      id: peId,
+      userId: enrollment.userId,
+      cohortId: cohort.id,
+      status,
+      startedAt: enrollment.startedAt,
+      enrolledAt: enrollment.startedAt,
+      completedAt: enrollment.completedAt,
+    },
+    update: {
+      status,
+      completedAt: enrollment.completedAt,
+    },
+  });
+  return { id: peId };
+}
+
+export async function applyChallengeProgramEnrollmentById(
+  tx: Tx,
+  enrollmentId: string,
+): Promise<{ id: string } | null> {
+  const enrollment = await tx.enrollment.findUnique({
+    where: { id: enrollmentId },
+    select: {
+      id: true,
+      userId: true,
+      domain: true,
+      status: true,
+      startedAt: true,
+      completedAt: true,
+    },
+  });
+  if (!enrollment) return null;
+  return applyChallengeProgramEnrollment(tx, enrollment);
+}
 
 export type EnrollmentProgressDenorm = {
   enrollmentId: string;

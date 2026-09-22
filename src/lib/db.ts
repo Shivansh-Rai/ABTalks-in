@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { isDualWriteEnabled } from "@/lib/feature-flags";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -14,12 +13,21 @@ function neonDirectUrl(url: string | undefined): string | undefined {
 export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+function resolveWriteUrl(): string | undefined {
+  return process.env.DIRECT_URL?.trim() || neonDirectUrl(process.env.DATABASE_URL);
+}
+
 function directClient(): PrismaClient {
-  const url =
-    process.env.DIRECT_URL?.trim() ||
-    neonDirectUrl(process.env.DATABASE_URL);
+  const url = resolveWriteUrl();
   if (!url) return prisma;
-  if (url === process.env.DATABASE_URL && !url.includes("-pooler.")) {
+  // Interactive $transaction / SAVEPOINT need a Neon session host, not the
+  // transaction-mode pooler. Fail here instead of dying mid-request.
+  if (url.includes("-pooler.")) {
+    throw new Error(
+      "[db] writeClient() requires a non-pooler Postgres URL. Set DIRECT_URL to the Neon direct host (not *-pooler.*).",
+    );
+  }
+  if (url === process.env.DATABASE_URL) {
     return prisma;
   }
   globalForPrisma.prismaDirect ??= new PrismaClient({
@@ -28,7 +36,11 @@ function directClient(): PrismaClient {
   return globalForPrisma.prismaDirect;
 }
 
-/** Interactive transactions / SAVEPOINT dual-write must use the Neon session (direct) endpoint. */
+/**
+ * Transaction-safe writer. Always the Neon direct (non-pooler) session when a
+ * write URL can be resolved. Independent of ENABLE_DUAL_WRITE — that flag only
+ * gates 078 compatibility SAVEPOINTs, not database transport.
+ */
 export function writeClient(): PrismaClient {
-  return isDualWriteEnabled() ? directClient() : prisma;
+  return directClient();
 }

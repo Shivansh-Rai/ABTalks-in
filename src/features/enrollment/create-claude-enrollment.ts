@@ -1,8 +1,11 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { dualWriteChallengeEnrollment } from "@/repositories/dual-write";
-import { applyEnrollmentDomainMirror } from "@/repositories/enrollment-state";
+import {
+  applyChallengeProgramEnrollment,
+  applyEnrollmentDomainMirror,
+} from "@/repositories/enrollment-state";
+import { applyVisibilityChange } from "@/repositories/visibility";
 import { findChallengeEnrollment, getChallengeByDomain } from "@/repositories/learning";
 
 export type CreateClaudeEnrollmentResult =
@@ -84,7 +87,11 @@ export async function createClaudeEnrollment(
           completedAt: true,
         },
       });
-      await dualWriteChallengeEnrollment(tx, enrollment);
+      await applyVisibilityChange(tx, {
+        userId,
+        kind: "challenge_enroll",
+      });
+      await applyChallengeProgramEnrollment(tx, enrollment);
       await applyEnrollmentDomainMirror(tx, userId, Domain.CLAUDE);
     });
     return { ok: true };

@@ -18,8 +18,10 @@ import { withLegacyPointsMirrorFlush } from "@/repositories/points";
 import {
   applyCandidateIdentityChange,
 } from "@/repositories/candidate-identity";
-import { dualWriteChallengeEnrollmentById } from "@/repositories/dual-write";
-import { applyEnrollmentProgressDenorm } from "@/repositories/enrollment-state";
+import {
+  applyChallengeProgramEnrollmentById,
+  applyEnrollmentProgressDenorm,
+} from "@/repositories/enrollment-state";
 import {
   applyChallengeSubmissionChange,
   findChallengeSubmissionId,
@@ -283,7 +285,7 @@ export async function submitDay(input: {
           },
         });
       }
-      await dualWriteChallengeEnrollmentById(tx, enrollment.id);
+      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       if (completed) {
         await applyCandidateIdentityChange(tx, userId, {

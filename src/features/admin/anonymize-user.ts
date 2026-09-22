@@ -4,9 +4,7 @@ import {
   EnrollmentStatusV2,
   ProgramMemberStatus,
 } from "@prisma/client";
-import {
-  dualWriteChallengeEnrollmentById,
-} from "@/repositories/dual-write";
+import { applyChallengeProgramEnrollmentById } from "@/repositories/enrollment-state";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
 import {
@@ -161,7 +159,7 @@ export async function anonymizeUser(
       where: { id: enrollment.id },
       data: { status: EnrollmentStatus.ABANDONED },
     });
-    await dualWriteChallengeEnrollmentById(tx, enrollment.id);
+    await applyChallengeProgramEnrollmentById(tx, enrollment.id);
   }
 
   const openMembers = isNewProgramStateEnabled()

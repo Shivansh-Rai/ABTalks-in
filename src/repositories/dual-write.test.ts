@@ -484,15 +484,15 @@ suite("membership sort prefers ACTIVE/ENROLLED over COMPLETED, then enrolledAt, 
   assert(tied[0]?.id === "m1", "id asc when enrolledAt ties");
 });
 
-suite("submit-day dual-writes enrollment on COMPLETED", () => {
+suite("submit-day syncs enrollment on COMPLETED", () => {
   const src = source("src/features/submission/submit-day.ts");
   assert(src.includes("EnrollmentStatus.COMPLETED"), "sets COMPLETED");
-  assert(src.includes("dualWriteChallengeEnrollmentById"), "continuous dual-write");
+  assert(src.includes("applyChallengeProgramEnrollmentById"), "canonical PE writer");
 });
 
-suite("admin enrollment status writers dual-write", () => {
+suite("admin enrollment status writers sync canonical PE", () => {
   const src = source("src/app/actions/admin-actions.ts");
-  const count = src.split("dualWriteChallengeEnrollmentById").length - 1;
+  const count = src.split("applyChallengeProgramEnrollmentById").length - 1;
   assert(count >= 3, `reset/remove/reject expected ≥3, got ${count}`);
   assert(src.includes('status: "ABANDONED"'), "ABANDONED path");
   assert(src.includes('status: "ACTIVE"'), "reset ACTIVE");
@@ -606,6 +606,16 @@ suite("programCommitDay dual-writes EnrollmentDayActivity", () => {
   const commits = source("src/features/program/commits.ts");
   assert(commits.includes("dualWriteCommitDay"), "credit path");
   assert(commits.includes("writeClient()"), "cron upsert uses direct client");
+});
+
+suite("AI-cohort commit heatmap does not read EnrollmentDayActivity", () => {
+  const commits = source("src/features/program/commits.ts");
+  const start = commits.indexOf("export async function getCommitHeatmap");
+  const heatmap = commits.slice(start);
+  const end = heatmap.indexOf("\nexport async function", 1);
+  const fn = end === -1 ? heatmap : heatmap.slice(0, end);
+  assert(fn.includes("programCommitDay.findMany"), "reads ProgramCommitDay");
+  assert(!fn.includes("enrollmentDayActivity"), "does not read EDA");
 });
 
 suite("submission resubmit keeps lateness and submittedAt in sync", () => {
