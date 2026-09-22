@@ -1,23 +1,19 @@
 /**
- * W6-A progress write boundary.
+ * W6 progress write boundary.
  *
- * ENABLE_NEW_PROGRESS_WRITES off (dark deploy): Submission / QuizAttempt /
- * ProgramMissionSubmission stay the write that dual-writes onto
- * ActivityAttempt + ActivityEvaluation.
- * ENABLE_NEW_PROGRESS_WRITES on: attempt + evaluation commit first; legacy
- * rows are a compatibility mirror while ENABLE_LEGACY_PROGRESS_MIRROR is not
- * `"false"`.
+ * Canonical writers are always ActivityAttempt + ActivityEvaluation.
+ * ENABLE_NEW_PROGRESS_WRITES is ignored (Phase 8-D): frozen Submission /
+ * QuizAttempt / ProgramMissionSubmission must not become write authority.
+ * Legacy rows are a compatibility mirror only while
+ * ENABLE_LEGACY_PROGRESS_MIRROR is not `"false"`.
  *
  * Typed per family. Does not take Enrollment / ProgramEnrollment /
- * StudentProfile.domain / Points authority. Dual-write stays on.
+ * StudentProfile.domain / Points authority.
  */
 import "server-only";
 import type { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import {
-  isLegacyProgressMirrorEnabled,
-  isNewProgressWritesEnabled,
-} from "@/lib/feature-flags";
+import { isLegacyProgressMirrorEnabled } from "@/lib/feature-flags";
 import {
   activityIdForDailyTask,
   activityIdForQuiz,
@@ -27,12 +23,6 @@ import {
   submissionIdFromAttemptId,
 } from "@/repositories/ids";
 import {
-  dualWriteDeleteEnrollmentSubmissions,
-  dualWriteDeleteMissionAttempt,
-  dualWriteDeleteSubmissionAttempt,
-  dualWriteMissionAttempt,
-  dualWriteQuizAttempt,
-  dualWriteSubmissionAttempt,
   upsertMissionAttemptRows,
   upsertQuizAttemptRows,
   upsertSubmissionAttemptRows,
@@ -143,29 +133,18 @@ export async function findChallengeSubmissionId(
   tx: Tx,
   input: { enrollmentId: string; dailyTaskId: string; dayNumber: number },
 ): Promise<string | null> {
-  if (isNewProgressWritesEnabled()) {
-    const attempt = await tx.activityAttempt.findUnique({
-      where: {
-        enrollmentId_activityId_attemptNumber: {
-          enrollmentId: peIdForEnrollment(input.enrollmentId),
-          activityId: activityIdForDailyTask(input.dailyTaskId),
-          attemptNumber: 1,
-        },
-      },
-      select: { id: true },
-    });
-    return attempt ? submissionIdFromAttemptId(attempt.id) : null;
-  }
-  const existing = await tx.submission.findUnique({
+  void input.dayNumber;
+  const attempt = await tx.activityAttempt.findUnique({
     where: {
-      enrollmentId_dayNumber: {
-        enrollmentId: input.enrollmentId,
-        dayNumber: input.dayNumber,
+      enrollmentId_activityId_attemptNumber: {
+        enrollmentId: peIdForEnrollment(input.enrollmentId),
+        activityId: activityIdForDailyTask(input.dailyTaskId),
+        attemptNumber: 1,
       },
     },
     select: { id: true },
   });
-  return existing?.id ?? null;
+  return attempt ? submissionIdFromAttemptId(attempt.id) : null;
 }
 
 export async function applyChallengeSubmissionChange(
@@ -186,46 +165,6 @@ export async function applyChallengeSubmissionChange(
     submittedAt: input.submittedAt,
     pointsAwarded: input.pointsAwarded,
   };
-
-  if (!isNewProgressWritesEnabled()) {
-    if (input.mode === "create") {
-      const created = await tx.submission.create({
-        data: {
-          ...(input.id ? { id: input.id } : {}),
-          userId: input.userId,
-          enrollmentId: input.enrollmentId,
-          dailyTaskId: input.dailyTaskId,
-          dayNumber: input.dayNumber,
-          githubUrl: input.githubUrl,
-          linkedinUrl: input.linkedinUrl,
-          status: input.status,
-          submittedAt: input.submittedAt,
-        },
-        select: { id: true },
-      });
-      await dualWriteSubmissionAttempt(tx, {
-        ...payload,
-        id: created.id,
-      });
-      return {
-        id: created.id,
-        created: true,
-        updated: false,
-        mirrorFailed: false,
-      };
-    }
-    await tx.submission.update({
-      where: { id },
-      data: {
-        githubUrl: input.githubUrl,
-        linkedinUrl: input.linkedinUrl,
-        status: input.status,
-        submittedAt: input.submittedAt,
-      },
-    });
-    await dualWriteSubmissionAttempt(tx, payload);
-    return { id, created: false, updated: true, mirrorFailed: false };
-  }
 
   await upsertSubmissionAttemptRows(tx, payload);
   const mirrorFailed = await runLegacyProgressMirror(
@@ -282,58 +221,24 @@ export async function findQuizAttemptId(
   tx: Tx,
   input: { userId: string; quizId: string; enrollmentId: string },
 ): Promise<string | null> {
-  if (isNewProgressWritesEnabled()) {
-    const attempt = await tx.activityAttempt.findUnique({
-      where: {
-        enrollmentId_activityId_attemptNumber: {
-          enrollmentId: peIdForEnrollment(input.enrollmentId),
-          activityId: activityIdForQuiz(input.quizId),
-          attemptNumber: 1,
-        },
+  void input.userId;
+  const attempt = await tx.activityAttempt.findUnique({
+    where: {
+      enrollmentId_activityId_attemptNumber: {
+        enrollmentId: peIdForEnrollment(input.enrollmentId),
+        activityId: activityIdForQuiz(input.quizId),
+        attemptNumber: 1,
       },
-      select: { id: true },
-    });
-    return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
-  }
-  const existing = await tx.quizAttempt.findUnique({
-    where: { userId_quizId: { userId: input.userId, quizId: input.quizId } },
+    },
     select: { id: true },
   });
-  return existing?.id ?? null;
+  return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
 }
 
 export async function applyQuizAttemptChange(
   tx: Tx,
   input: QuizAttemptWrite,
 ): Promise<ApplyProgressResult> {
-  if (!isNewProgressWritesEnabled()) {
-    const created = await tx.quizAttempt.create({
-      data: {
-        ...(input.id ? { id: input.id } : {}),
-        userId: input.userId,
-        quizId: input.quizId,
-        score: input.score,
-        answers: input.answers,
-        attemptedAt: input.attemptedAt,
-      },
-      select: { id: true, attemptedAt: true },
-    });
-    await dualWriteQuizAttempt(tx, {
-      id: created.id,
-      enrollmentId: input.enrollmentId,
-      quizId: input.quizId,
-      score: input.score,
-      answers: input.answers,
-      attemptedAt: created.attemptedAt,
-    });
-    return {
-      id: created.id,
-      created: true,
-      updated: false,
-      mirrorFailed: false,
-    };
-  }
-
   const id = input.id ?? mintProgressRowId();
   const attemptedAt = input.attemptedAt;
   await upsertQuizAttemptRows(tx, {
@@ -381,40 +286,6 @@ export async function applyProgramMissionAttemptChange(
   tx: Tx,
   input: ProgramMissionAttemptWrite,
 ): Promise<ApplyProgressResult> {
-  if (!isNewProgressWritesEnabled()) {
-    const created = await tx.programMissionSubmission.create({
-      data: {
-        ...(input.id ? { id: input.id } : {}),
-        memberId: input.memberId,
-        dayNumber: input.dayNumber,
-        attemptNumber: input.attemptNumber,
-        payload: input.payload,
-        verdict: input.verdict,
-        passed: input.passed,
-        pointsAwarded: input.pointsAwarded,
-        createdAt: input.createdAt,
-      },
-      select: { id: true, createdAt: true },
-    });
-    await dualWriteMissionAttempt(tx, {
-      id: created.id,
-      memberId: input.memberId,
-      programDayId: input.programDayId,
-      attemptNumber: input.attemptNumber,
-      payload: input.payload,
-      verdict: input.verdict,
-      passed: input.passed,
-      pointsAwarded: input.pointsAwarded,
-      createdAt: created.createdAt,
-    });
-    return {
-      id: created.id,
-      created: true,
-      updated: false,
-      mirrorFailed: false,
-    };
-  }
-
   const id = input.id ?? mintProgressRowId();
   await upsertMissionAttemptRows(tx, {
     id,
@@ -454,11 +325,6 @@ export async function applyDeleteChallengeSubmission(
   tx: Tx,
   submissionId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await tx.submission.delete({ where: { id: submissionId } });
-    await dualWriteDeleteSubmissionAttempt(tx, submissionId);
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: { id: `aa_sub_${submissionId}` },
   });
@@ -477,11 +343,6 @@ export async function applyDeleteEnrollmentChallengeAttempts(
   tx: Tx,
   enrollmentId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await tx.submission.deleteMany({ where: { enrollmentId } });
-    await dualWriteDeleteEnrollmentSubmissions(tx, enrollmentId);
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: {
       enrollmentId: peIdForEnrollment(enrollmentId),
@@ -503,13 +364,6 @@ export async function applyDeleteProgramMissionAttempt(
   tx: Tx,
   missionSubmissionId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await dualWriteDeleteMissionAttempt(tx, missionSubmissionId);
-    await tx.programMissionSubmission.deleteMany({
-      where: { id: missionSubmissionId },
-    });
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: { id: `aa_ms_${missionSubmissionId}` },
   });

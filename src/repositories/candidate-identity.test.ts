@@ -224,13 +224,14 @@ async function main() {
     assert(src.includes("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR"), "mirror flag");
   });
 
-  await suite("flag OFF: StudentProfile create remains the first write in createCandidateIdentity", () => {
+  await suite("flag OFF: CandidateProfile is still created first (flag ignored)", () => {
     process.env.ENABLE_NEW_CANDIDATE_WRITES = "false";
     const src = source("src/repositories/candidate-identity.ts");
     const fn = src.slice(src.indexOf("export async function createCandidateIdentity"));
-    assert(fn.includes("if (!isNewCandidateWritesEnabled())"), "branches on write flag");
-    assert(fn.includes("tx.studentProfile.create"), "legacy create");
-    assert(fn.includes("dualWriteCandidateIdentity"), "CP copied from SP");
+    assert(!fn.includes("if (!isNewCandidateWritesEnabled())"), "no SP-first branch");
+    assert(!fn.includes("dualWriteCandidateIdentity"), "no dualWriteCandidateIdentity");
+    assert(src.includes("tx.candidateProfile.create"), "canonical create");
+    assert(fn.includes("createCanonicalIdentity"), "canonical helper");
   });
 
   await suite("flag ON: CandidateProfile created first, StudentProfile mirrored, same code", async () => {

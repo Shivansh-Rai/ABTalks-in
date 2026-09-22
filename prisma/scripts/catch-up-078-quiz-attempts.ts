@@ -11,11 +11,10 @@ if (process.env.DATABASE_URL?.includes("-pooler.")) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace("-pooler.", ".");
 }
 process.env.DIRECT_URL = process.env.DATABASE_URL;
-process.env.ENABLE_DUAL_WRITE = "true";
 
 import { Prisma, PrismaClient } from "@prisma/client";
 import { assertChildBranch } from "./migrate-078-shared";
-import { dualWriteQuizAttempt } from "../../src/repositories/dual-write";
+import { upsertQuizAttemptRows } from "../../src/repositories/dual-write";
 
 const prisma = new PrismaClient();
 
@@ -64,7 +63,7 @@ async function main() {
       continue;
     }
     await prisma.$transaction(async (tx) => {
-      await dualWriteQuizAttempt(tx, {
+      await upsertQuizAttemptRows(tx, {
         id: row.id,
         enrollmentId: enrollment.id,
         quizId: row.quizId,

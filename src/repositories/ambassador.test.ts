@@ -511,7 +511,7 @@ async function main() {
     assert(amb.includes('"apply" | "dismiss" | "wipe"'), "real kinds only");
   });
 
-  await suite("dark-deploy flag-off still writes SP first", async () => {
+  await suite("ENABLE_NEW_AMBASSADOR_WRITES=false still writes canonical first", async () => {
     await withFlags(
       {
         ENABLE_NEW_AMBASSADOR_WRITES: undefined,
@@ -521,10 +521,9 @@ async function main() {
         const tx = makeTx();
         const at = new Date("2026-09-21T10:00:00.000Z");
         await applyAmbassadorChange(tx as never, "u1", { kind: "apply", at });
-        assert(tx.writes[0]?.startsWith("sp.update:"), `SP first, got ${tx.writes[0]}`);
-        assert(tx.writes.includes("caa.create"), "then canonical");
-        assert(tx.getSp()?.isCampusAmbassadorCandidate === true, "SP written");
-        assert(tx.getCaa("u1")?.isCandidate === true, "canonical dual-written");
+        assert(tx.writes[0]?.startsWith("caa."), `canonical first, got ${tx.writes[0]}`);
+        assert(!tx.writes[0]?.startsWith("sp.update:"), "SP-first retired");
+        assert(tx.getCaa("u1")?.isCandidate === true, "canonical written");
       },
     );
   });
@@ -643,7 +642,8 @@ async function main() {
   await suite("W5-B current-state readers do not use SP fallback while writes are on", () => {
     const amb = source("src/repositories/ambassador.ts");
     const getFn = amb.slice(amb.indexOf("export async function getAmbassadorState"));
-    assert(getFn.includes("isNewAmbassadorWritesEnabled()"), "no SP current-state when writes on");
+    assert(!getFn.includes("isNewAmbassadorWritesEnabled()"), "write flag unused in reader");
+    assert(!getFn.includes("studentProfile.findUnique"), "no SP current-state fallback");
     const dash = source("src/features/dashboard/get-dashboard-data.ts");
     assert(dash.includes("getAmbassadorState"), "dashboard canonical");
     assert(!dash.includes("studentProfile") || dash.includes("domain"), "dashboard domain only from SP");

@@ -1,5 +1,4 @@
 import type { Prisma } from "@prisma/client";
-import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { applyDeleteProgramMissionAttempt, applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
 import {
   applyProgramScoreChange,
@@ -71,24 +70,15 @@ async function seedEarlyCommitDays(
       const commitDate = parseCalendarKeyToUtcDate(dateKey);
       const existing = existingByIso.get(commitDate.toISOString()) ?? 0;
       const nextCount = Math.max(existing, 1);
-      return tx.programCommitDay
-        .upsert({
-          where: { memberId_date: { memberId, date: commitDate } },
-          create: {
-            memberId,
-            date: commitDate,
-            commitCount: nextCount,
-          },
-          update: { commitCount: nextCount },
-        })
-        .then((row) =>
-          dualWriteCommitDay(tx, {
-            id: row.id,
-            memberId,
-            date: row.date,
-            commitCount: row.commitCount,
-          }),
-        );
+      return tx.programCommitDay.upsert({
+        where: { memberId_date: { memberId, date: commitDate } },
+        create: {
+          memberId,
+          date: commitDate,
+          commitCount: nextCount,
+        },
+        update: { commitCount: nextCount },
+      });
     }),
   );
 

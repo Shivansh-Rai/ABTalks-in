@@ -7,7 +7,6 @@ import { z } from "zod";
 import { prisma, writeClient } from "@/lib/db";
 import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
-import { isNewCandidateWritesEnabled } from "@/lib/feature-flags";
 import { computeStreakStats, daysCompletedFromCanonical, listCanonicalChallengeDays } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
 import { studentProfile } from "@/repositories/legacy/student-profile";
@@ -198,15 +197,10 @@ export async function toggleReadyForInterviewAction(input: {
   const { targetUserId, reason } = parsed.data;
 
   try {
-    const profile = isNewCandidateWritesEnabled()
-      ? await prisma.candidateProfile.findUnique({
-          where: { userId: targetUserId },
-          select: { isReadyForInterview: true },
-        })
-      : await studentProfile.findUnique({
-          where: { userId: targetUserId },
-          select: { isReadyForInterview: true },
-        });
+    const profile = await prisma.candidateProfile.findUnique({
+      where: { userId: targetUserId },
+      select: { isReadyForInterview: true },
+    });
     if (!profile) throw new Error("Profile not found");
 
     const newValue = !profile.isReadyForInterview;

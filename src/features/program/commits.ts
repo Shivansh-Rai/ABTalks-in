@@ -22,7 +22,6 @@ import {
 } from "@/features/program/constants";
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
-import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { applyProgramScoreChange, overlayProgramMemberState, listCanonicalProgramMemberIds } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
@@ -209,12 +208,6 @@ export async function creditCommitDayInTx(
     },
     update: { commitCount: nextCount },
   });
-  await dualWriteCommitDay(tx, {
-    id: row.id,
-    memberId,
-    date: row.date,
-    commitCount: row.commitCount,
-  });
   return true;
 }
 
@@ -335,7 +328,7 @@ export async function processMemberCommitDay(
   const nextCount = Math.max(existing?.commitCount ?? 0, count);
 
   await writeClient().$transaction(async (tx) => {
-    const row = await tx.programCommitDay.upsert({
+    await tx.programCommitDay.upsert({
       where: {
         memberId_date: { memberId: member.id, date: commitDate },
       },
@@ -345,12 +338,6 @@ export async function processMemberCommitDay(
         commitCount: nextCount,
       },
       update: { commitCount: nextCount },
-    });
-    await dualWriteCommitDay(tx, {
-      id: row.id,
-      memberId: member.id,
-      date: row.date,
-      commitCount: row.commitCount,
     });
   });
 

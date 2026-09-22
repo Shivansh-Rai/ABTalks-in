@@ -1,9 +1,6 @@
 import { UserType } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import { studentProfile } from "@/repositories/legacy/student-profile";
-import { dualWriteCandidateIdentity } from "@/repositories/dual-write";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
-import { isNewCandidateWritesEnabled } from "@/lib/feature-flags";
 import {
   updateProfessionalProfileSchema,
   updateStudentProfileSchema,
@@ -36,28 +33,17 @@ export async function updateProfile(
     : [];
 
   let savedType: UserType;
-  if (isNewCandidateWritesEnabled()) {
-    const existing = await prisma.candidateProfile.findUnique({
-      where: { userId },
-      select: { primaryPersona: true },
-    });
-    if (!existing) {
-      return { ok: false, message: "Profile not found" };
-    }
-    savedType =
-      existing.primaryPersona === "PROFESSIONAL"
-        ? UserType.PROFESSIONAL
-        : UserType.STUDENT;
-  } else {
-    const existing = await studentProfile.findUnique({
-      where: { userId },
-      select: { id: true, userType: true },
-    });
-    if (!existing) {
-      return { ok: false, message: "Profile not found" };
-    }
-    savedType = existing.userType;
+  const existing = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: { primaryPersona: true },
+  });
+  if (!existing) {
+    return { ok: false, message: "Profile not found" };
   }
+  savedType =
+    existing.primaryPersona === "PROFESSIONAL"
+      ? UserType.PROFESSIONAL
+      : UserType.STUDENT;
 
   if (savedType === UserType.STUDENT) {
     const parsed = updateStudentProfileSchema.safeParse({
@@ -87,38 +73,12 @@ export async function updateProfile(
 
     await writeClient().$transaction(
       async (tx) => {
-        if (isNewCandidateWritesEnabled()) {
-          await applyCandidateIdentityChange(tx, userId, {
-            fullName: data.fullName,
-            phone: data.phone === "" ? null : data.phone,
-            linkedinUrl: data.linkedinUrl ?? null,
-            resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
-            githubUsername: data.githubUsername ?? null,
-          });
-          return;
-        }
-        await tx.studentProfile.update({
-          where: { userId },
-          data: {
-            fullName: data.fullName,
-            college: data.college,
-            collegeId: data.collegeId || null,
-            graduationYear: data.graduationYear,
-            skills: data.skills,
-            linkedinUrl: data.linkedinUrl ?? null,
-            resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
-            githubUsername: data.githubUsername ?? null,
-            phone: data.phone === "" ? null : data.phone,
-          },
-        });
-        await dualWriteCandidateIdentity(tx, userId, {
-          fullName: true,
-          education: true,
-          skills: true,
-          linkedinUrl: true,
-          resumeUrl: true,
-          githubUsername: true,
-          phone: true,
+        await applyCandidateIdentityChange(tx, userId, {
+          fullName: data.fullName,
+          phone: data.phone === "" ? null : data.phone,
+          linkedinUrl: data.linkedinUrl ?? null,
+          resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
+          githubUsername: data.githubUsername ?? null,
         });
       },
       { maxWait: 10000, timeout: 20000 },
@@ -154,38 +114,12 @@ export async function updateProfile(
 
   await writeClient().$transaction(
     async (tx) => {
-      if (isNewCandidateWritesEnabled()) {
-        await applyCandidateIdentityChange(tx, userId, {
-          fullName: data.fullName,
-          phone: data.phone === "" ? null : data.phone,
-          linkedinUrl: data.linkedinUrl ?? null,
-          resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
-          githubUsername: data.githubUsername ?? null,
-        });
-        return;
-      }
-      await tx.studentProfile.update({
-        where: { userId },
-        data: {
-          fullName: data.fullName,
-          organization: data.organization,
-          role: data.role,
-          yearsExperience: data.yearsExperience,
-          skills: data.skills,
-          linkedinUrl: data.linkedinUrl ?? null,
-          resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
-          githubUsername: data.githubUsername ?? null,
-          phone: data.phone === "" ? null : data.phone,
-        },
-      });
-      await dualWriteCandidateIdentity(tx, userId, {
-        fullName: true,
-        experience: true,
-        skills: true,
-        linkedinUrl: true,
-        resumeUrl: true,
-        githubUsername: true,
-        phone: true,
+      await applyCandidateIdentityChange(tx, userId, {
+        fullName: data.fullName,
+        phone: data.phone === "" ? null : data.phone,
+        linkedinUrl: data.linkedinUrl ?? null,
+        resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
+        githubUsername: data.githubUsername ?? null,
       });
     },
     { maxWait: 10000, timeout: 20000 },

@@ -158,15 +158,18 @@ suite("registration dual-writes CandidateProfile", () => {
   assert(!src.includes("domain: input.domain"), "does not copy domain into identity write");
 });
 
-suite("profile update dual-writes CandidateProfile", () => {
+suite("profile update writes CandidateProfile through applyCandidateIdentityChange", () => {
   const src = source("src/features/profile/update-profile.ts");
-  assert(src.includes("dualWriteCandidateIdentity"), "helper called");
+  assert(src.includes("applyCandidateIdentityChange"), "canonical writer");
+  assert(!src.includes("dualWriteCandidateIdentity"), "no dual-write helper");
   assert(src.includes("writeClient()"), "direct client for SAVEPOINT");
 });
 
-suite("Claude issuance dual-writes Credential, including alreadyIssued", () => {
+suite("Claude issuance writes Credential first; Certificate is a mirror", () => {
   const src = source("src/repositories/credentials-write.ts");
-  assert(src.includes("dualWriteCredential"), "legacy path still dual-writes");
+  assert(src.includes("mapCertificateToCredential"), "historical Certificate catch-up");
+  assert(!src.includes("dualWriteCredential"), "no dualWriteCredential runtime path");
+  assert(!src.includes("issueLegacyAuthoritative"), "Certificate-first issuance retired");
   const issue = source("src/features/certificate/issue-certificate.ts");
   assert(issue.includes("issueClaudeCredential"), "claude goes through write boundary");
 });
@@ -231,14 +234,14 @@ suite("redeem display balance uses getBalance after dual-write", () => {
   const points = source("src/repositories/points.ts");
   assert(src.includes("getBalance"), "repo");
   assert(src.includes("applyPointsChange"), "wallet boundary");
-  assert(points.includes("dualWritePoints"), "flag-off still dual-writes");
-  assert(points.includes("synergyPoints: { gte: requested }"), "legacy write guard");
+  assert(!points.includes("dualWritePoints"), "dualWritePoints retired from runtime");
+  assert(!points.includes("applyLegacyAuthoritative"), "legacy wallet writer retired");
   assert(points.includes("balance: { gte: requested }"), "new write guard");
 });
 
 suite("ENABLE_NEW_* are not flipped in dual-write helpers", () => {
   const src = source("src/repositories/dual-write.ts");
-  assert(src.includes("isDualWriteEnabled"), "gated on dual-write");
+  assert(!src.includes("isDualWriteEnabled"), "Phase 8-D: no global DW gate");
   assert(!src.includes("ENABLE_NEW_"), "no new-read flags");
 });
 
@@ -352,15 +355,17 @@ suite("dual-write copies live StudentProfile.referralCode and submitted fields o
 
 suite("profile save dual-writes only form identity fields", () => {
   const src = source("src/features/profile/update-profile.ts");
-  assert(src.includes("education: true"), "student education");
-  assert(src.includes("experience: true"), "professional experience");
-  assert(src.includes("phone: true"), "phone is submitted");
-  assert(!src.includes("ambassador: true"), "ambassador untouched");
+  assert(src.includes("applyCandidateIdentityChange"), "canonical identity writer");
+  assert(src.includes("fullName: data.fullName"), "name submitted");
+  assert(src.includes("phone: data.phone"), "phone submitted");
+  assert(!src.includes("ambassador"), "ambassador untouched");
 });
 
 suite("OTP dual-write submits phone only", () => {
   const src = source("src/app/actions/otp-actions.ts");
-  assert(src.includes("{ phone: true }"), "phone-only submitted map");
+  assert(src.includes("applyCandidateIdentityChange"), "canonical identity writer");
+  assert(src.includes("phone: e164"), "phone submitted");
+  assert(src.includes("phoneVerified: true"), "verified flag");
 });
 
 suite("admin interview toggle dual-writes isReadyForInterview", () => {
@@ -509,7 +514,7 @@ suite("program member APPLIED/WAITLISTED/ENROLLED/DROPPED dual-write", () => {
   assert(admin.includes("applyProgramMembershipChange"), "admin membership");
   assert(admin.includes('status: "ENROLLED"'), "promote ENROLLED");
   assert(admin.includes('status: "DROPPED"'), "drop DROPPED");
-  assert(programState.includes("dualWriteProgramMember"), "dark-path dual-write");
+  assert(!programState.includes("dualWriteProgramMember"), "PM-first dual-write retired");
 });
 
 suite("learning repo is the flag-gated compatibility boundary", () => {
@@ -550,9 +555,10 @@ suite("ProgramDay missionType is stored exactly on ContentActivityConfig", () =>
   const admin = source("src/features/program/admin.ts");
   assert(schema.includes("model ContentActivityConfig"), "config model");
   assert(schema.includes("missionType      ProgramMissionType?"), "typed enum field");
-  assert(dw.includes("dualWriteProgramDayMissionType"), "dual-write helper");
+  assert(dw.includes("dualWriteProgramDayMissionType"), "dual-write helper retained for tooling");
   assert(dw.includes("missionType: day.missionType"), "copies exact enum");
-  assert(seed.includes("dualWriteProgramDayMissionType"), "seed writer");
+  assert(seed.includes("contentActivityConfig.upsert"), "seed writes canonical config");
+  assert(!seed.includes("dualWriteProgramDayMissionType"), "seed does not use DW helper");
   assert(admin.includes("getProgramContentTree"), "admin reads content");
   assert(!admin.includes("programDay.update"), "admin does not update ProgramDay");
   assert(learning.includes("contentConfig?.missionType"), "ON path reads stored type");
@@ -582,7 +588,7 @@ suite("bootstrap waivers and commits dual-write 078 state", () => {
   const src = source("src/features/program/bootstrap-start-day.ts");
   assert(src.includes("applyProgramMissionAttemptChange"), "waiver attempts");
   assert(src.includes("applyDeleteProgramMissionAttempt"), "stale waiver delete");
-  assert(src.includes("dualWriteCommitDay"), "early commit days");
+  assert(!src.includes("dualWriteCommitDay"), "obsolete AI-cohort EDA copy retired");
 });
 
 suite("adminUnlockDay and grantSkipToken dual-write ProgramEnrollment", () => {
@@ -602,9 +608,9 @@ suite("adminUnlockDay and grantSkipToken dual-write ProgramEnrollment", () => {
   );
 });
 
-suite("programCommitDay dual-writes EnrollmentDayActivity", () => {
+suite("programCommitDay does not copy EnrollmentDayActivity for AI cohort", () => {
   const commits = source("src/features/program/commits.ts");
-  assert(commits.includes("dualWriteCommitDay"), "credit path");
+  assert(!commits.includes("dualWriteCommitDay"), "credit path has no EDA copy");
   assert(commits.includes("writeClient()"), "cron upsert uses direct client");
 });
 
@@ -629,15 +635,13 @@ suite("submission resubmit keeps lateness and submittedAt in sync", () => {
 
 suite("progress repo derives from attempts, not EnrollmentProgress", () => {
   const src = source("src/repositories/progress.ts");
-  assert(src.includes("isNewProgressRepoEnabled"), "flag");
+  assert(!src.includes("isNewProgressRepoEnabled"), "no frozen-progress current-state flag");
   assert(src.includes("listHubSubmissionTimes"), "hub heatmap");
   assert(src.includes('startsWith: "aa_sub_"'), "challenge attempts only");
   assert(
     source("src/repositories/progress.ts").includes("listTrackStreakSnapshots"),
     "W7-A PE streak snapshot",
   );
-  assert(src.includes("snapshot?.currentStreak"), "compat currentStreak");
-  assert(src.includes("snapshot?.longestStreak"), "compat longestStreak");
   assert(src.includes("getProgramUnlockFloor"), "program unlock");
   assert(!src.includes("enrollmentProgress"), "no EnrollmentProgress reads");
   assert(!src.includes("getDashboardPrograms"), "unused card helper removed");

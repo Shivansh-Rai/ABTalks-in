@@ -6,7 +6,7 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import { isNewCandidateRepoEnabled, isNewCandidateWritesEnabled } from "@/lib/feature-flags";
+import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -326,46 +326,22 @@ export async function updateCandidateLinks(
 ): Promise<void> {
   await writeClient().$transaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
-    if (isNewCandidateWritesEnabled()) {
-      await applyCandidateIdentityChange(tx, userId, {
-        linkedinUrl: data.linkedinUrl,
-        githubUsername: data.githubUsername,
-      });
-      await syncCandidateSkillsFromLegacy(tx, userId, data.skills);
-      const claimed = await tx.candidateSkill.findMany({
-        where: { userId, claimedByCandidate: true },
-        orderBy: { createdAt: "asc" },
-        select: { skill: { select: { name: true } } },
-      });
-      await runStudentProfileMirror(tx, "enrollSkills", async () => {
-        await tx.studentProfile.updateMany({
-          where: { userId },
-          data: { skills: claimed.map((c) => c.skill.name) },
-        });
-      });
-      return;
-    }
-    await tx.candidateProfile.update({
-      where: { userId },
-      data: {
-        linkedinUrl: data.linkedinUrl,
-        githubUsername: data.githubUsername,
-      },
+    await applyCandidateIdentityChange(tx, userId, {
+      linkedinUrl: data.linkedinUrl,
+      githubUsername: data.githubUsername,
     });
-    const sp = await tx.studentProfile.findUnique({
-      where: { userId },
-      select: { userId: true },
+    await syncCandidateSkillsFromLegacy(tx, userId, data.skills);
+    const claimed = await tx.candidateSkill.findMany({
+      where: { userId, claimedByCandidate: true },
+      orderBy: { createdAt: "asc" },
+      select: { skill: { select: { name: true } } },
     });
-    if (sp) {
-      await tx.studentProfile.update({
+    await runStudentProfileMirror(tx, "enrollSkills", async () => {
+      await tx.studentProfile.updateMany({
         where: { userId },
-        data: {
-          linkedinUrl: data.linkedinUrl,
-          githubUsername: data.githubUsername,
-          skills: data.skills,
-        },
+        data: { skills: claimed.map((c) => c.skill.name) },
       });
-    }
+    });
   });
 }
 

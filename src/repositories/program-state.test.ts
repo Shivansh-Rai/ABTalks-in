@@ -475,7 +475,7 @@ async function main() {
     assert(!impl.includes("synergyPoints"), "no points");
     assert(!impl.includes("daysCompleted"), "no W7 denorm");
     assert(!impl.includes("isCampusAmbassadorCandidate"), "no W5");
-    assert(!source("src/lib/feature-flags.ts").includes("ENABLE_DUAL_WRITE=false"), "dual-write stays");
+    assert(!source("src/lib/feature-flags.ts").includes("ENABLE_DUAL_WRITE=false"), "no hardcoded DW=false");
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

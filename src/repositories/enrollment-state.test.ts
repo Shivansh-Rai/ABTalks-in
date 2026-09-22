@@ -267,10 +267,12 @@ async function main() {
   });
 
   await suite("missing StudentProfile domain mirror is a no-op", async () => {
-    const tx = makeTx();
-    tx.sp.exists = false;
-    await applyEnrollmentDomainMirror(tx as never, "u1", Domain.AI);
-    assert(tx.writes.includes("sp.updateMany"), "attempted");
+    await withFlags({ ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR: "true" }, async () => {
+      const tx = makeTx();
+      tx.sp.exists = false;
+      await applyEnrollmentDomainMirror(tx as never, "u1", Domain.AI);
+      assert(tx.writes.includes("sp.updateMany"), "attempted");
+    });
   });
 
   await suite("second enrollment does not overwrite first-track domain", () => {

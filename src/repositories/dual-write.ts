@@ -19,7 +19,6 @@ import {
 } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import {
-  isDualWriteEnabled,
   isNewProgramStateWritesEnabled,
   isNewVisibilityWritesEnabled,
 } from "@/lib/feature-flags";
@@ -49,10 +48,8 @@ export async function runDualWrite(
   label: string,
   fn: () => Promise<void>,
 ): Promise<void> {
-  if (!isDualWriteEnabled()) return;
-  // SAVEPOINT needs a session that supports interactive transactions.
-  // Neon transaction-mode pooler can drop the tx; app call sites already set
-  // maxWait/timeout. Probe with the direct (non-pooler) child URL.
+  // Phase 8-D: ENABLE_DUAL_WRITE no longer gates production. These helpers
+  // remain for historical tooling; live product writers must not call them.
   const sp = savepointName(label);
   try {
     await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);

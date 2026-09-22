@@ -219,10 +219,10 @@ async function main() {
     const src = source("src/lib/feature-flags.ts");
     assert(src.includes("ENABLE_NEW_PROGRESS_WRITES"), "write flag");
     assert(
-      source("src/repositories/progress-writes.ts").includes(
+      !source("src/repositories/progress-writes.ts").includes(
         "isNewProgressWritesEnabled",
       ),
-      "boundary uses write flag",
+      "runtime writer ignores write flag",
     );
     assert(
       !source("src/repositories/progress-writes.ts").includes(
@@ -486,7 +486,7 @@ async function main() {
     });
   });
 
-  await suite("dark-deploy writes legacy first", async () => {
+  await suite("ENABLE_NEW_PROGRESS_WRITES=false still writes ActivityAttempt first", async () => {
     await withFlags(
       {
         ENABLE_NEW_PROGRESS_WRITES: undefined,
@@ -507,7 +507,11 @@ async function main() {
           pointsAwarded: 0,
           mode: "create",
         });
-        assert(tx.writes[0]?.startsWith("submission.create:"), `legacy first ${tx.writes[0]}`);
+        assert(
+          tx.writes[0]?.startsWith("aa.upsert:") || tx.writes[0]?.includes("activityAttempt"),
+          `canonical first ${tx.writes[0]}`,
+        );
+        assert(!tx.writes[0]?.startsWith("submission.create:"), "legacy-first retired");
       },
     );
   });

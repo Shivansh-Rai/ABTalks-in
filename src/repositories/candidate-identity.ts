@@ -1,12 +1,11 @@
 /**
  * W4 candidate identity write boundary.
  *
- * ENABLE_NEW_CANDIDATE_WRITES off (dark deploy): StudentProfile stays the
- * write that dual-write copies onto CandidateProfile.
- * ENABLE_NEW_CANDIDATE_WRITES on: CandidateProfile (and structured rows)
- * commit first; StudentProfile identity/referral/profile fields are a
- * compatibility mirror only while ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is
- * not `"false"`.
+ * Canonical writers are always CandidateProfile + structured candidate tables.
+ * ENABLE_NEW_CANDIDATE_WRITES is ignored (Phase 8-D): frozen StudentProfile
+ * identity rows must not become write authority.
+ * StudentProfile identity/referral/profile fields are a compatibility mirror
+ * only while ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is not `"false"`.
  *
  * W4-B: setting the mirror flag to `"false"` freezes those W4-owned fields
  * on StudentProfile. Ambassador, domain, and other later-family columns
@@ -22,15 +21,11 @@ import {
 import { logger } from "@/lib/logger";
 import {
   isLegacyStudentProfileMirrorEnabled,
-  isNewCandidateWritesEnabled,
 } from "@/lib/feature-flags";
 import {
-  dualWriteCandidateBasicInfo,
-  dualWriteCandidateIdentity,
   educationIdForStudentProfile,
   experienceIdForStudentProfile,
   personaFromUserType,
-  type CandidateIdentitySubmitted,
 } from "@/repositories/dual-write";
 
 type Tx = Prisma.TransactionClient;
@@ -74,23 +69,6 @@ function savepointName(label: string): string {
 
 function shouldInjectStudentProfileMirrorFailure(): boolean {
   return process.env.STUDENT_PROFILE_FAIL_LEGACY_MIRROR === "1";
-}
-
-function submittedFromPatch(
-  patch: CandidateIdentityPatch,
-): CandidateIdentitySubmitted {
-  return {
-    fullName: patch.fullName !== undefined,
-    phone:
-      patch.phone !== undefined ||
-      patch.phoneVerified !== undefined ||
-      patch.phoneVerifiedAt !== undefined,
-    linkedinUrl: patch.linkedinUrl !== undefined,
-    githubUsername: patch.githubUsername !== undefined,
-    resumeUrl: patch.resumeUrl !== undefined,
-    userType: patch.userType !== undefined,
-    isReadyForInterview: patch.isReadyForInterview !== undefined,
-  };
 }
 
 function studentProfileData(
@@ -151,10 +129,6 @@ export async function runStudentProfileMirror(
   fn: () => Promise<void>,
 ): Promise<boolean> {
   if (!isLegacyStudentProfileMirrorEnabled()) return false;
-  if (!isNewCandidateWritesEnabled()) {
-    await fn();
-    return false;
-  }
   if (shouldInjectStudentProfileMirrorFailure()) {
     logger.error("[candidate] legacy StudentProfile mirror failed; new candidate kept", {
       label,
@@ -264,18 +238,6 @@ export async function applyCandidateIdentityChange(
   userId: string,
   patch: CandidateIdentityPatch,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewCandidateWritesEnabled()) {
-    const data = studentProfileData(patch);
-    const result = await tx.studentProfile.updateMany({
-      where: { userId },
-      data,
-    });
-    if (result.count > 0) {
-      await dualWriteCandidateIdentity(tx, userId, submittedFromPatch(patch));
-    }
-    return { mirrorFailed: false };
-  }
-
   await ensureCanonicalProfileForIdentityWrite(tx, userId);
   await tx.candidateProfile.update({
     where: { userId },
@@ -402,21 +364,6 @@ export async function createCandidateIdentity(
   tx: Tx,
   input: CreateCandidateIdentityInput,
 ): Promise<{ profileId: string; mirrorFailed: boolean }> {
-  if (!isNewCandidateWritesEnabled()) {
-    const profile = await tx.studentProfile.create({
-      data: studentProfileCreateData(input),
-      select: { id: true },
-    });
-    await dualWriteCandidateIdentity(tx, input.userId);
-    await dualWriteCandidateBasicInfo(tx, input.userId, {
-      headline: input.headline,
-      locationCity: input.locationCity,
-      locationRegion: input.locationRegion,
-      countryCode: input.countryCode,
-    });
-    return { profileId: profile.id, mirrorFailed: false };
-  }
-
   const profileId = await createCanonicalIdentity(tx, input);
   const mirrorFailed = await runStudentProfileMirror(
     tx,
@@ -431,7 +378,7 @@ export async function createCandidateIdentity(
 }
 
 export function isCandidateWritesAuthoritative(): boolean {
-  return isNewCandidateWritesEnabled();
+  return true;
 }
 
 export type { Db };

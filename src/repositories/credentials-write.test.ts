@@ -353,7 +353,7 @@ async function main() {
     assert(flags.includes("ENABLE_NEW_CREDENTIAL_WRITES"), "write flag");
     assert(flags.includes("ENABLE_NEW_CREDENTIAL === \"true\""), "read flag stays");
     const write = source("src/repositories/credentials-write.ts");
-    assert(write.includes("isNewCredentialWritesEnabled"), "write helper");
+    assert(!write.includes("isNewCredentialWritesEnabled"), "write flag ignored at runtime");
     assert(write.includes("isLegacyCertificateMirrorEnabled"), "mirror helper");
     assert(
       write.includes("[credential] legacy certificate mirror failed; new credential kept"),
@@ -371,9 +371,10 @@ async function main() {
     assert(gen.includes("generatePublicCredentialId"), "extracted into write boundary");
   });
 
-  await suite("flag OFF: Certificate authoritative, Credential mirrors", async () => {
+  await suite("flag OFF: Credential remains canonical (Certificate-first retired)", async () => {
     process.env.ENABLE_NEW_CREDENTIAL_WRITES = "false";
     process.env.ENABLE_DUAL_WRITE = "true";
+    process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "true";
     delete process.env.CERTIFICATE_FAIL_LEGACY_MIRROR;
     const { db, certificates, credentials, writes } = makeDb();
     const r = await applyCredentialIssue(db, claudeInput);
@@ -386,8 +387,8 @@ async function main() {
     assert(credentials[0]?.credentialId === r.data.certificateId, "mirrored public id");
     assert(credentials[0]?.type === CredentialType.COMPLETION, "completion");
     assert(credentials[0]?.sourceKey === claudeSourceKey("enr_1"), "pe_enr");
-    assert(writes[0] === "certificate", "certificate first");
-    assert(writes.includes("credential"), "credential mirrored");
+    assert(writes[0] === "credential", "credential first even when flag off");
+    assert(writes.includes("certificate"), "certificate mirrored");
   });
 
   await suite("flag ON: Credential authoritative, Certificate mirrors", async () => {
@@ -585,11 +586,11 @@ async function main() {
     );
   });
 
-  await suite("certificate.create is gated by mirror or flag-off rollback", () => {
+  await suite("certificate.create is gated by the compatibility mirror only", () => {
     const src = source("src/repositories/credentials-write.ts");
     assert(src.includes("isLegacyCertificateMirrorEnabled"), "mirror gate");
     assert(src.includes("if (!isLegacyCertificateMirrorEnabled()) return"), "skip create when off");
-    assert(src.includes("issueLegacyAuthoritative"), "flag-off rollback still Certificate-first");
+    assert(!src.includes("issueLegacyAuthoritative"), "Certificate-first issuance retired");
   });
 
   restoreEnv(prevWrites, prevMirror, prevDual, prevFail);

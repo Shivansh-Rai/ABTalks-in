@@ -359,7 +359,7 @@ export function isLegacyCertificateMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR !== "false";
 }
 
-/** Plan 078 Phase 4. Off = skip new-table writes; legacy stays authoritative. */
+/** Plan 078 Phase 8-D. Runtime no longer consults this; kept for tests/docs. */
 export function isDualWriteEnabled(): boolean {
   return process.env.ENABLE_DUAL_WRITE === "true";
 }

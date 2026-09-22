@@ -173,6 +173,7 @@
     "db:probe:078:w6b-progress:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 ENABLE_NEW_PROGRESS=true ENABLE_NEW_PROGRESS_WRITES=true ENABLE_LEGACY_PROGRESS_MIRROR=false NODE_OPTIONS=--conditions=react-server tsx prisma/scripts/probe-078-w6b-progress.ts",
     "test:078-enrollment-state": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/enrollment-state.test.ts",
     "test:078-write-client": "NODE_OPTIONS=--conditions=react-server tsx src/lib/db.test.ts",
+    "test:078-legacy-writer-unreachable": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/legacy-writer-unreachable.test.ts",
     "db:check:078:w7a-enrollment": "tsx prisma/scripts/check-078-w7a-enrollment.ts",
     "db:check:078:w7a-enrollment:production": "cross-env PHASE2_ALLOW_PRODUCTION=1 tsx prisma/scripts/check-078-w7a-enrollment.ts",
     "db:backfill:078:w7a-track-streak": "tsx prisma/scripts/backfill-078-w7a-track-streak.ts",

@@ -3,15 +3,10 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { PointsSourceType, type Prisma } from "@prisma/client";
 import { istDateRangeToUtc } from "@/lib/date-utils";
 import { prisma, writeClient } from "@/lib/db";
-import {
-  isLegacyPointsMirrorEnabled,
-  isNewPointsRepoEnabled,
-  isNewPointsWritesEnabled,
-} from "@/lib/feature-flags";
+import { isLegacyPointsMirrorEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import { captureFailure } from "@/lib/observability/capture";
 import { logMoney } from "@/lib/observability/domain-log";
-import { dualWritePoints } from "@/repositories/dual-write";
 
 type PointsReadClient = Pick<typeof prisma, "pointsAccount" | "user">;
 type Tx = Prisma.TransactionClient;
@@ -41,7 +36,7 @@ export async function withLegacyPointsMirrorFlush<T>(
 }
 
 function enqueueLegacyMirror(input: ApplyPointsInput, amount: number): void {
-  if (!isNewPointsWritesEnabled() || amount === 0) return;
+  if (amount === 0) return;
   if (!isLegacyPointsMirrorEnabled()) return;
   const bag = pendingLegacyMirrors.getStore();
   if (!bag) {
@@ -118,18 +113,11 @@ export async function getBalance(
   userId: string,
   db: PointsReadClient = prisma,
 ): Promise<number> {
-  if (isNewPointsRepoEnabled()) {
-    const account = await db.pointsAccount.findUnique({
-      where: { userId },
-      select: { balance: true },
-    });
-    return account?.balance ?? 0;
-  }
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { synergyPoints: true },
+const account = await db.pointsAccount.findUnique({
+    where: { userId },
+    select: { balance: true },
   });
-  return user?.synergyPoints ?? 0;
+  return account?.balance ?? 0;
 }
 
 /**
@@ -140,56 +128,33 @@ export async function lockWalletBalance(
   tx: Tx,
   userId: string,
 ): Promise<number> {
-  if (isNewPointsWritesEnabled()) {
-    const pa = await tx.pointsAccount.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-    if (!pa) return 0;
-    const locked = await tx.pointsAccount.update({
-      where: { userId },
-      data: { version: { increment: 0 } },
-      select: { balance: true },
-    });
-    return locked.balance;
-  }
-  const user = await tx.user.update({
-    where: { id: userId },
-    data: { synergyPoints: { increment: 0 } },
-    select: { synergyPoints: true },
+  const pa = await tx.pointsAccount.findUnique({
+    where: { userId },
+    select: { id: true },
   });
-  return user.synergyPoints;
+  if (!pa) return 0;
+  const locked = await tx.pointsAccount.update({
+    where: { userId },
+    data: { version: { increment: 0 } },
+    select: { balance: true },
+  });
+  return locked.balance;
 }
 
 export async function submissionAwardTotal(
   tx: Tx,
   opts: { submissionIds: string[]; enrollmentId?: string },
 ): Promise<number> {
-  if (isNewPointsWritesEnabled()) {
-    if (opts.submissionIds.length === 0) return 0;
-    const agg = await tx.pointsTransaction.aggregate({
-      where: {
-        sourceType: PointsSourceType.ACTIVITY_ATTEMPT,
-        sourceId: { in: opts.submissionIds },
-      },
-      _sum: { amount: true },
-    });
-    return agg._sum.amount ?? 0;
-  }
-  if (opts.enrollmentId) {
-    const removed = await tx.synergyEvent.aggregate({
-      where: { enrollmentId: opts.enrollmentId, type: "SUBMISSION" },
-      _sum: { points: true },
-    });
-    return removed._sum.points ?? 0;
-  }
-  const submissionId = opts.submissionIds[0];
-  if (!submissionId) return 0;
-  const event = await tx.synergyEvent.findUnique({
-    where: { submissionId },
-    select: { points: true },
+  void opts.enrollmentId;
+  if (opts.submissionIds.length === 0) return 0;
+  const agg = await tx.pointsTransaction.aggregate({
+    where: {
+      sourceType: PointsSourceType.ACTIVITY_ATTEMPT,
+      sourceId: { in: opts.submissionIds },
+    },
+    _sum: { amount: true },
   });
-  return event?.points ?? 0;
+  return agg._sum.amount ?? 0;
 }
 
 /**
@@ -209,24 +174,11 @@ export async function hasEarnedSubmissionPointsOnIstDate(
   if (!startUtc || !endExclusiveUtc) return false;
   const createdAt = { gte: startUtc, lt: endExclusiveUtc };
 
-  if (isNewPointsWritesEnabled()) {
-    const hit = await tx.pointsTransaction.findFirst({
-      where: {
-        userId: opts.userId,
-        sourceType: PointsSourceType.ACTIVITY_ATTEMPT,
-        amount: { gt: 0 },
-        createdAt,
-      },
-      select: { id: true },
-    });
-    return hit !== null;
-  }
-
-  const hit = await tx.synergyEvent.findFirst({
+  const hit = await tx.pointsTransaction.findFirst({
     where: {
       userId: opts.userId,
-      type: "SUBMISSION",
-      points: { gt: 0 },
+      sourceType: PointsSourceType.ACTIVITY_ATTEMPT,
+      amount: { gt: 0 },
       createdAt,
     },
     select: { id: true },
@@ -262,7 +214,7 @@ export async function applyPointsChange(
     sourceType: input.sourceType,
     sourceId: input.sourceId ?? undefined,
     idempotencyKey: input.idempotencyKey,
-    writesAuthoritative: isNewPointsWritesEnabled() ? "new" : "legacy",
+    writesAuthoritative: "new",
   };
 
   if (input.mode === "credit" && input.amount < 0) {
@@ -288,9 +240,7 @@ export async function applyPointsChange(
       return { ok: false, reason: "not_found" };
     }
 
-    result = isNewPointsWritesEnabled()
-      ? await applyNewAuthoritative(tx, input)
-      : await applyLegacyAuthoritative(tx, input);
+    result = await applyNewAuthoritative(tx, input);
   } catch (error) {
     // The transaction is about to roll back. Reporting here rather than at the
     // caller keeps every money failure in one shape, whichever surface it came
@@ -324,115 +274,6 @@ export async function applyPointsChange(
     duplicate: result.duplicate,
   });
   return result;
-}
-
-async function applyLegacyAuthoritative(
-  tx: Tx,
-  input: ApplyPointsInput,
-): Promise<ApplyPointsResult> {
-  if (input.mode === "credit") {
-    if (input.amount === 0) {
-      return {
-        ok: true,
-        newBalance: await getBalance(input.userId, tx),
-        appliedAmount: 0,
-        shortfall: 0,
-        duplicate: false,
-      };
-    }
-    await writeLegacyEventOnly(tx, input, input.amount);
-    await writeLegacyWalletOnly(tx, input.userId, input.amount);
-    await dualWritePoints(tx, dualWritePayload(input, input.amount));
-    return {
-      ok: true,
-      newBalance: await getBalance(input.userId, tx),
-      appliedAmount: input.amount,
-      shortfall: 0,
-      duplicate: false,
-    };
-  }
-
-  const requested = -input.amount;
-  if (input.mode === "debit_strict") {
-    const debit = await tx.user.updateMany({
-      where: {
-        id: input.userId,
-        synergyPoints: { gte: requested },
-      },
-      data: { synergyPoints: { decrement: requested } },
-    });
-    if (debit.count === 0) return { ok: false, reason: "insufficient" };
-    await tx.studentProfile.updateMany({
-      where: { userId: input.userId },
-      data: { synergyPoints: { decrement: requested } },
-    });
-    await writeLegacyEventOnly(tx, input, input.amount);
-    await dualWritePoints(tx, dualWritePayload(input, input.amount));
-    return {
-      ok: true,
-      newBalance: await getBalance(input.userId, tx),
-      appliedAmount: input.amount,
-      shortfall: 0,
-      duplicate: false,
-    };
-  }
-
-  const locked = await tx.user.update({
-    where: { id: input.userId },
-    data: { synergyPoints: { increment: 0 } },
-    select: { synergyPoints: true },
-  });
-  const actualDebit = Math.min(requested, Math.max(locked.synergyPoints, 0));
-  const shortfall = requested - actualDebit;
-  if (actualDebit > 0) {
-    await tx.user.update({
-      where: { id: input.userId },
-      data: { synergyPoints: { decrement: actualDebit } },
-    });
-    const profile = await tx.studentProfile.findUnique({
-      where: { userId: input.userId },
-      select: { synergyPoints: true },
-    });
-    if (profile) {
-      await tx.studentProfile.update({
-        where: { userId: input.userId },
-        data: {
-          synergyPoints: Math.max(0, profile.synergyPoints - actualDebit),
-        },
-      });
-    }
-    // Flag-off reset/reject never dual-wrote the clawback itself — only the
-    // spent-shortfall recon credit below. Keep that shape until W1-A is on.
-  }
-  if (shortfall > 0) {
-    const clampReason =
-      input.reason ??
-      "Clamped synergy to 0 after removing points that were already spent.";
-    const event = await tx.synergyEvent.create({
-      data: {
-        userId: input.userId,
-        points: shortfall,
-        type: "BALANCE_RECONCILIATION",
-        reason: clampReason,
-      },
-      select: { id: true },
-    });
-    await dualWritePoints(tx, {
-      userId: input.userId,
-      amount: shortfall,
-      sourceType: PointsSourceType.RECONCILIATION,
-      sourceId: event.id,
-      idempotencyKey: `legacy:${event.id}`,
-      reason: clampReason,
-    });
-  }
-  return {
-    ok: true,
-    newBalance: await getBalance(input.userId, tx),
-    appliedAmount: -actualDebit,
-    shortfall,
-    duplicate: false,
-  };
 }
 
 async function applyNewAuthoritative(
@@ -618,18 +459,6 @@ async function accountBalance(tx: Tx, userId: string): Promise<number> {
     select: { balance: true },
   });
   return row?.balance ?? 0;
-}
-
-function dualWritePayload(input: ApplyPointsInput, amount: number) {
-  return {
-    userId: input.userId,
-    amount,
-    sourceType: input.sourceType,
-    sourceId: input.sourceId,
-    idempotencyKey: input.idempotencyKey,
-    reason: input.reason,
-    createdByUserId: input.createdByUserId,
-  };
 }
 
 async function writeLegacyWalletOnly(

@@ -1,9 +1,10 @@
 /**
- * W8-A ProgramMember current-state / write-authority boundary.
+ * W8 ProgramMember current-state / write-authority boundary.
  *
- * Membership, unlock, skip tokens, score snapshots, and AI recommendations:
- * ProgramEnrollment pe_pm_<memberId> is canonical when
- * ENABLE_NEW_PROGRAM_STATE / ENABLE_NEW_PROGRAM_STATE_WRITES are on.
+ * Membership, unlock, skip tokens, score snapshots, and AI recommendations
+ * always write ProgramEnrollment pe_pm_<memberId>. ENABLE_NEW_PROGRAM_STATE
+ * / ENABLE_NEW_PROGRAM_STATE_WRITES are ignored (Phase 8-D): frozen
+ * ProgramMember mutable values must not overwrite ProgramEnrollment.
  * ProgramMember mutable current-state is a compatibility mirror while
  * ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is not `"false"`.
  *
@@ -27,14 +28,9 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import {
   isLegacyProgramMemberMirrorEnabled,
-  isNewProgramStateEnabled,
-  isNewProgramStateWritesEnabled,
   isNewVisibilityWritesEnabled,
 } from "@/lib/feature-flags";
-import {
-  dualWriteProgramMember,
-  mapMemberStatus,
-} from "@/repositories/dual-write";
+import { mapMemberStatus } from "@/repositories/dual-write";
 import {
   cohortSlugForProgramCohort,
   memberIdFromPe,
@@ -261,7 +257,7 @@ export async function applyProgramMembershipChange(
     select: { id: true },
   });
   let memberId = input.memberId ?? existing?.id;
-  if (!memberId && isNewProgramStateWritesEnabled()) {
+  if (!memberId) {
     const cohortId = await resolveCohortId(tx, input.programCohortId);
     const existingPe = await tx.programEnrollment.findUnique({
       where: { userId_cohortId: { userId: input.userId, cohortId } },
@@ -272,42 +268,6 @@ export async function applyProgramMembershipChange(
   }
   memberId = memberId ?? mintProgressRowId();
   const created = !existing;
-
-  if (!isNewProgramStateWritesEnabled()) {
-    const identity = input.identity;
-    if (!identity && created) {
-      throw new Error("ProgramMember create requires identity snapshot");
-    }
-    const row = existing
-      ? await tx.programMember.update({
-          where: { id: memberId },
-          data: {
-            status: input.status,
-            ...(input.enrolledAt !== undefined
-              ? { enrolledAt: input.enrolledAt }
-              : {}),
-            ...(input.completedAt !== undefined
-              ? { completedAt: input.completedAt }
-              : {}),
-            ...(identity ?? {}),
-          },
-          select: { id: true },
-        })
-      : await tx.programMember.create({
-          data: {
-            id: memberId,
-            userId: input.userId,
-            cohortId: input.programCohortId,
-            status: input.status,
-            enrolledAt: input.enrolledAt ?? null,
-            completedAt: input.completedAt ?? null,
-            ...identity!,
-          },
-          select: { id: true },
-        });
-    await dualWriteProgramMember(tx as Prisma.TransactionClient, row.id);
-    return { memberId: row.id, created, mirrorFailed: false };
-  }
 
   const visibilityFirst = isNewVisibilityWritesEnabled();
   if (visibilityFirst) {
@@ -405,23 +365,6 @@ export async function applyProgramUnlockChange(
     githubRepoUrl?: string | null;
   },
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: {
-        ...(input.highestUnlockedDay !== undefined
-          ? { highestUnlockedDay: input.highestUnlockedDay }
-          : {}),
-        ...(input.skipTokensUsed !== undefined
-          ? { skipTokensUsed: input.skipTokensUsed }
-          : {}),
-        ...pmGithubData(input.githubRepoUrl),
-      },
-    });
-    await dualWriteProgramMember(tx as Prisma.TransactionClient, input.memberId);
-    return { mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data: {
@@ -488,24 +431,6 @@ export async function applyProgramScoreChange(
   };
   next.totalScore = totalFrom(next);
 
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: next,
-    });
-    const peUpdated = await tx.programEnrollment.updateMany({
-      where: { id: peIdForMember(input.memberId) },
-      data: next,
-    });
-    if (peUpdated.count === 0) {
-      logger.error(
-        "[program-state] ProgramEnrollment missing for score dual-write",
-        { memberId: input.memberId },
-      );
-    }
-    return { snapshot: next, mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data: next,
@@ -540,18 +465,6 @@ export async function applyProgramRecommendationChange(
     aiRecommendationAt: at,
   };
 
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data,
-    });
-    await tx.programEnrollment.updateMany({
-      where: { id: peIdForMember(input.memberId) },
-      data,
-    });
-    return { mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data,
@@ -580,22 +493,8 @@ async function readScoreAuthority(
   tx: Tx,
   memberId: string,
 ): Promise<ProgramScoreSnapshot> {
-  if (isNewProgramStateWritesEnabled() || isNewProgramStateEnabled()) {
-    const pe = await tx.programEnrollment.findUnique({
-      where: { id: peIdForMember(memberId) },
-      select: {
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-      },
-    });
-    if (pe) return pe;
-  }
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
+  const pe = await tx.programEnrollment.findUnique({
+    where: { id: peIdForMember(memberId) },
     select: {
       missionPoints: true,
       conceptPoints: true,
@@ -605,35 +504,28 @@ async function readScoreAuthority(
       cleanPassCount: true,
     },
   });
-  if (!member) {
-    return {
-      missionPoints: 0,
-      conceptPoints: 0,
-      commitPoints: 0,
-      projectPoints: 0,
-      totalScore: 0,
-      cleanPassCount: 0,
-    };
-  }
-  return member;
+  if (pe) return pe;
+  return {
+    missionPoints: 0,
+    conceptPoints: 0,
+    commitPoints: 0,
+    projectPoints: 0,
+    totalScore: 0,
+    cleanPassCount: 0,
+  };
 }
 
 export async function countEnrolledProgramMembers(
   tx: Tx,
   programCohortId: string,
 ): Promise<number> {
-  if (isNewProgramStateEnabled() || isNewProgramStateWritesEnabled()) {
-    const slug = cohortSlugForProgramCohort(programCohortId);
-    return tx.programEnrollment.count({
-      where: {
-        id: { startsWith: "pe_pm_" },
-        status: EnrollmentStatusV2.ACTIVE,
-        cohort: { slug },
-      },
-    });
-  }
-  return tx.programMember.count({
-    where: { cohortId: programCohortId, status: "ENROLLED" },
+  const slug = cohortSlugForProgramCohort(programCohortId);
+  return tx.programEnrollment.count({
+    where: {
+      id: { startsWith: "pe_pm_" },
+      status: EnrollmentStatusV2.ACTIVE,
+      cohort: { slug },
+    },
   });
 }
 
@@ -684,7 +576,7 @@ function asIdList(value: unknown): string[] | undefined {
 }
 
 /**
- * Live membership ids from ProgramEnrollment when ENABLE_NEW_PROGRAM_STATE.
+ * Live membership ids from ProgramEnrollment.
  * Frozen ProgramMember.status is not used.
  */
 export async function listCanonicalProgramMemberIds(
@@ -700,19 +592,6 @@ export async function listCanonicalProgramMemberIds(
     ...(input.programCohortId ? [input.programCohortId] : []),
     ...(input.programCohortIds ?? []),
   ];
-  if (!isNewProgramStateEnabled()) {
-    const rows = await prisma.programMember.findMany({
-      where: {
-        status: { in: statuses },
-        ...(programCohortIds.length
-          ? { cohortId: { in: programCohortIds } }
-          : {}),
-        ...(input.userId ? { userId: input.userId } : {}),
-      },
-      select: { id: true },
-    });
-    return rows.map((r) => r.id);
-  }
   const slugs = programCohortIds.map(cohortSlugForProgramCohort);
   const pes = await prisma.programEnrollment.findMany({
     where: {
@@ -736,7 +615,6 @@ export async function listCanonicalProgramMemberIds(
 export async function canonicalProgramMemberWhere(
   where: Prisma.ProgramMemberWhereInput,
 ): Promise<Prisma.ProgramMemberWhereInput> {
-  if (!isNewProgramStateEnabled()) return where;
   const statuses = asStatusList(where.status);
   if (!statuses) return where;
   const ids = await listCanonicalProgramMemberIds({
@@ -752,17 +630,6 @@ export async function canonicalProgramMemberWhere(
 export async function countCanonicalMembersByStatus(
   programCohortId: string,
 ): Promise<Array<{ status: ProgramMemberStatus; _count: { id: number } }>> {
-  if (!isNewProgramStateEnabled()) {
-    const groups = await prisma.programMember.groupBy({
-      by: ["status"],
-      where: { cohortId: programCohortId },
-      _count: { id: true },
-    });
-    return groups.map((g) => ({
-      status: g.status,
-      _count: { id: g._count.id },
-    }));
-  }
   const slug = cohortSlugForProgramCohort(programCohortId);
   const groups = await prisma.programEnrollment.groupBy({
     by: ["status"],
@@ -880,7 +747,7 @@ const OVERLAY_KEYS = [
 export async function overlayProgramMemberState<T extends { id: string }>(
   rows: T[],
 ): Promise<T[]> {
-  if (!isNewProgramStateEnabled() || rows.length === 0) return rows;
+  if (rows.length === 0) return rows;
   const snaps = await listProgramMemberSnapshots(rows.map((r) => r.id));
   return rows.map((row) => {
     const snap = snaps.get(row.id);

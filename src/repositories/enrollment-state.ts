@@ -25,7 +25,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { isLegacyEnrollmentDenormMirrorEnabled, isNewEnrollmentStateEnabled } from "@/lib/feature-flags";
+import { isLegacyEnrollmentDenormMirrorEnabled } from "@/lib/feature-flags";
 import {
   cohortSlugForDomain,
   enrollmentIdFromPe,
@@ -246,7 +246,7 @@ export async function displayedChallengeDomain(
   userId: string,
   legacy: Domain | null | undefined,
 ): Promise<Domain | null> {
-  if (!isNewEnrollmentStateEnabled()) return legacy ?? null;
+  void legacy;
   return getPrimaryChallengeDomain(userId);
 }
 
@@ -255,9 +255,5 @@ export async function displayedChallengeDomains(
 ): Promise<Map<string, Domain | null>> {
   const out = new Map<string, Domain | null>();
   if (entries.length === 0) return out;
-  if (!isNewEnrollmentStateEnabled()) {
-    for (const entry of entries) out.set(entry.userId, entry.legacy ?? null);
-    return out;
-  }
   return listPrimaryChallengeDomains(entries.map((entry) => entry.userId));
 }

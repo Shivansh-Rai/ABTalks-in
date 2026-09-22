@@ -92,8 +92,8 @@ suite("every balance writer goes through applyPointsChange", () => {
 
 suite("legacy User guard and new PointsAccount guard both live in points.ts", () => {
   const src = source("src/repositories/points.ts");
-  assert(src.includes("isNewPointsWritesEnabled"), "write flag");
-  assert(src.includes("synergyPoints: { gte: requested }"), "legacy strict debit");
+  assert(!src.includes("applyLegacyAuthoritative"), "legacy wallet writer retired");
+  assert(!src.includes("dualWritePoints"), "no dualWritePoints");
   assert(src.includes("balance: { gte: requested }"), "atomic account debit");
   assert(src.includes("legacy mirror failed; new wallet kept"), "mirror failure log");
   assert(src.includes("withLegacyPointsMirrorFlush"), "post-commit mirror flush");
@@ -142,22 +142,15 @@ suite("registration locks wallet through lockWalletBalance", () => {
   assert(src.includes("isLegacyPointsMirrorEnabled"), "W1-B gates SP snapshot");
 });
 
-suite("flag-on lockWalletBalance does not fall through to User", () => {
+suite("lockWalletBalance always uses PointsAccount", () => {
   const src = source("src/repositories/points.ts");
   const start = src.indexOf("export async function lockWalletBalance");
   const end = src.indexOf("export async function submissionAwardTotal");
   const slice = src.slice(start, end);
-  const flagOn = slice.slice(
-    slice.indexOf("if (isNewPointsWritesEnabled())"),
-    slice.indexOf("const user = await tx.user.update"),
-  );
-  assert(slice.includes("isNewPointsWritesEnabled"), "write flag");
-  assert(flagOn.includes("if (!pa) return 0"), "missing account is 0");
-  assert(!flagOn.includes("synergyPoints"), "flag-on branch never reads User");
-  assert(
-    slice.includes("synergyPoints: { increment: 0 }"),
-    "flag-off rollback still locks User",
-  );
+  assert(slice.includes("pointsAccount.findUnique"), "locks PointsAccount");
+  assert(slice.includes("if (!pa) return 0"), "missing account is 0");
+  assert(!slice.includes("synergyPoints"), "never reads User.synergyPoints");
+  assert(!slice.includes("isNewPointsWritesEnabled"), "write flag ignored");
 });
 
 suite("enqueueLegacyMirror no-ops when the W1-B mirror is off", () => {
@@ -286,7 +279,7 @@ async function runBehavioralLockTests() {
   );
 
   await asyncSuite(
-    "flag-off lockWalletBalance still uses User.synergyPoints",
+    "ENABLE_NEW_POINTS_WRITES=false still uses PointsAccount, not User",
     async () => {
       process.env.ENABLE_NEW_POINTS_WRITES = "false";
       const { tx, wasUserLocked } = fakeTx({
@@ -294,8 +287,8 @@ async function runBehavioralLockTests() {
         userSynergy: 99,
       });
       const result = await lockWalletBalance(tx as never, "user-1");
-      assert(result === 99, `expected 99, got ${result}`);
-      assert(wasUserLocked(), "flag-off rollback still locks User");
+      assert(result === 0, `expected 0, got ${result}`);
+      assert(!wasUserLocked(), "must not restore User.synergyPoints authority");
     },
   );
 

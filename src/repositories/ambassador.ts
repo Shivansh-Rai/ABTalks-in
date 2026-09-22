@@ -1,11 +1,10 @@
 /**
  * W5 Campus Ambassador write/read boundary.
  *
- * ENABLE_NEW_AMBASSADOR_WRITES off (dark deploy): StudentProfile ambassador
- * columns stay the write that dual-writes onto CampusAmbassadorApplication.
- * ENABLE_NEW_AMBASSADOR_WRITES on: CampusAmbassadorApplication commits first;
- * StudentProfile ambassador columns are a compatibility mirror only while
- * ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
+ * Canonical writer is always CampusAmbassadorApplication. ENABLE_NEW_AMBASSADOR_WRITES
+ * is ignored (Phase 8-D): frozen StudentProfile ambassador columns must not
+ * become write authority. StudentProfile ambassador columns are a compatibility
+ * mirror only while ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
  *
  * W5-B: ENABLE_LEGACY_AMBASSADOR_MIRROR=false freezes those three SP columns.
  * Apply/dismiss do not write them. Anonymize wipe still scrubs them as a
@@ -17,7 +16,6 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
 import {
   isLegacyAmbassadorMirrorEnabled,
-  isNewAmbassadorWritesEnabled,
 } from "@/lib/feature-flags";
 import { pickPrimaryEducation } from "@/repositories/candidate-primary";
 
@@ -118,21 +116,7 @@ async function loadCurrent(tx: Tx, userId: string): Promise<AmbassadorState> {
       dismissedAt: canonical.dismissedAt,
     };
   }
-  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
-  const sp = await tx.studentProfile.findUnique({
-    where: { userId },
-    select: {
-      isCampusAmbassadorCandidate: true,
-      ambassadorAppliedAt: true,
-      ambassadorDismissedAt: true,
-    },
-  });
-  if (!sp) return EMPTY_STATE;
-  return {
-    isCandidate: sp.isCampusAmbassadorCandidate,
-    appliedAt: sp.ambassadorAppliedAt,
-    dismissedAt: sp.ambassadorDismissedAt,
-  };
+  return EMPTY_STATE;
 }
 
 async function upsertCanonical(
@@ -230,28 +214,6 @@ export async function applyAmbassadorChange(
   const current = await loadCurrent(tx, userId);
   const state = nextState(input.kind, current, at);
 
-  if (!isNewAmbassadorWritesEnabled()) {
-    if (input.kind === "wipe") {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    } else {
-      await tx.studentProfile.update({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    }
-    const { created } = await upsertCanonical(tx, userId, state);
-    return {
-      state,
-      created,
-      updated: !created,
-      skipped: sameState(current, state),
-      mirrorFailed: false,
-    };
-  }
-
   const { created } = await upsertCanonical(tx, userId, state);
   const mirrorFailed = await runStudentProfileAmbassadorMirror(
     tx,
@@ -289,9 +251,9 @@ function unspecifiedToNull(value: string | null | undefined): string | null {
 }
 
 /**
- * Current-state ambassador candidacy. Canonical is the live source while
- * ENABLE_NEW_AMBASSADOR_WRITES is on. StudentProfile is a flag-off fallback
- * only (dormant W5-A rollback), never a current-state product read after W5-B.
+ * Current-state ambassador candidacy. Canonical CampusAmbassadorApplication
+ * is the sole live source. Frozen StudentProfile ambassador columns are never
+ * current-state product reads.
  */
 export async function getAmbassadorState(
   userId: string,
@@ -307,21 +269,7 @@ export async function getAmbassadorState(
       dismissedAt: canonical.dismissedAt,
     };
   }
-  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
-  const sp = await prisma.studentProfile.findUnique({
-    where: { userId },
-    select: {
-      isCampusAmbassadorCandidate: true,
-      ambassadorAppliedAt: true,
-      ambassadorDismissedAt: true,
-    },
-  });
-  if (!sp) return EMPTY_STATE;
-  return {
-    isCandidate: sp.isCampusAmbassadorCandidate,
-    appliedAt: sp.ambassadorAppliedAt,
-    dismissedAt: sp.ambassadorDismissedAt,
-  };
+  return EMPTY_STATE;
 }
 
 /**

@@ -6,7 +6,6 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewProgressRepoEnabled, isNewEnrollmentStateEnabled } from "@/lib/feature-flags";
 import {
   enrollmentIdFromPe,
   memberIdFromPe,
@@ -149,9 +148,6 @@ async function challengeCompletionFromAttempts(
 export async function countChallengeEnrollmentsWithDaysGte(
   minDays: number,
 ): Promise<number> {
-  if (!isNewProgressRepoEnabled() && !isNewEnrollmentStateEnabled()) {
-    return prisma.enrollment.count({ where: { daysCompleted: { gte: minDays } } });
-  }
   const rows = await prisma.$queryRaw<Array<{ n: bigint }>>`
     WITH canon AS (
       SELECT
@@ -178,38 +174,18 @@ export async function countChallengeEnrollmentsWithDaysGte(
 }
 
 /**
- * Days come from attempts. Track streak is the historical snapshot:
- * Enrollment while W7-A reads are off; ProgramEnrollment.track* when on.
- * Live-recomputing streak from AA would change ~208 historical snapshots.
+ * Days come from ActivityAttempt. Track streak is the ProgramEnrollment
+ * historical snapshot (live-recomputing streak from AA would change ~208
+ * historical snapshots). Frozen Enrollment denorms are not current-state.
  */
 export async function getChallengeProgressStats(
   enrollmentId: string,
 ): Promise<ChallengeProgressStats> {
-  const snapshot = await prisma.enrollment.findUnique({
-    where: { id: enrollmentId },
-    select: {
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-    },
-  });
-  let streaks = {
-    currentStreak: snapshot?.currentStreak ?? 0,
-    longestStreak: snapshot?.longestStreak ?? 0,
+  const pe = await listTrackStreakSnapshots([enrollmentId]);
+  const streaks = pe.get(enrollmentId) ?? {
+    currentStreak: 0,
+    longestStreak: 0,
   };
-  if (isNewEnrollmentStateEnabled()) {
-    const pe = await listTrackStreakSnapshots([enrollmentId]);
-    const canon = pe.get(enrollmentId);
-    if (canon) streaks = canon;
-  }
-  if (!isNewProgressRepoEnabled()) {
-    return {
-      daysCompleted: snapshot?.daysCompleted ?? 0,
-      lastSubmittedDay: snapshot?.lastSubmittedDay ?? null,
-      ...streaks,
-    };
-  }
   const derived = await challengeCompletionFromAttempts(enrollmentId);
   return { ...derived, ...streaks };
 }
@@ -225,44 +201,33 @@ export async function overlayChallengeProgressFields<
 >(rows: T[]): Promise<T[]> {
   if (rows.length === 0) return rows;
   let next = rows;
-  if (isNewProgressRepoEnabled() || isNewEnrollmentStateEnabled()) {
-    const derived = await listChallengeCompletions(next.map((row) => row.id));
-    next = next.map((row) => {
-      const completion = derived.get(row.id);
-      if (!completion) {
-        return { ...row, daysCompleted: 0, lastSubmittedDay: null };
-      }
-      return {
-        ...row,
-        daysCompleted: completion.daysCompleted,
-        lastSubmittedDay: completion.lastSubmittedDay,
-      };
-    });
-  }
-  if (isNewEnrollmentStateEnabled()) {
-    const snaps = await listTrackStreakSnapshots(next.map((row) => row.id));
-    next = next.map((row) => {
-      const snap = snaps.get(row.id);
-      if (!snap) return row;
-      return {
-        ...row,
-        currentStreak: snap.currentStreak,
-        longestStreak: snap.longestStreak,
-      };
-    });
-  }
+  const derived = await listChallengeCompletions(next.map((row) => row.id));
+  next = next.map((row) => {
+    const completion = derived.get(row.id);
+    if (!completion) {
+      return { ...row, daysCompleted: 0, lastSubmittedDay: null };
+    }
+    return {
+      ...row,
+      daysCompleted: completion.daysCompleted,
+      lastSubmittedDay: completion.lastSubmittedDay,
+    };
+  });
+  const snaps = await listTrackStreakSnapshots(next.map((row) => row.id));
+  next = next.map((row) => {
+    const snap = snaps.get(row.id);
+    if (!snap) return row;
+    return {
+      ...row,
+      currentStreak: snap.currentStreak,
+      longestStreak: snap.longestStreak,
+    };
+  });
   return next;
 }
 
 async function listChallengeSubmissionTimes(userId: string): Promise<Date[]> {
-  if (!isNewProgressRepoEnabled()) {
-    const rows = await prisma.submission.findMany({
-      where: { enrollment: { userId } },
-      select: { submittedAt: true },
-    });
-    return rows.map((r) => r.submittedAt);
-  }
-
+  
   const pes = await prisma.programEnrollment.findMany({
     where: { userId, id: { startsWith: "pe_enr_" } },
     select: { id: true },
@@ -294,16 +259,7 @@ function isBookkeepingMissionPayload(payload: Prisma.JsonValue | null): boolean 
 
 /** AI Cohort mission runs — every verification run, pass or fail. */
 async function listProgramMissionTimes(userId: string): Promise<Date[]> {
-  if (!isNewProgressRepoEnabled()) {
-    const rows = await prisma.programMissionSubmission.findMany({
-      where: { member: { userId } },
-      select: { createdAt: true, payload: true },
-    });
-    return rows
-      .filter((r) => !isBookkeepingMissionPayload(r.payload))
-      .map((r) => r.createdAt);
-  }
-
+  
   const pes = await prisma.programEnrollment.findMany({
     where: { userId, id: { startsWith: "pe_pm_" } },
     select: { id: true },
@@ -421,21 +377,7 @@ export async function listHubSubmissionTimes(
 export async function listChallengeSubmissions(
   enrollmentId: string,
 ): Promise<ChallengeSubmissionRow[]> {
-  if (!isNewProgressRepoEnabled()) {
-    return prisma.submission.findMany({
-      where: { enrollmentId },
-      orderBy: { submittedAt: "desc" },
-      select: {
-        id: true,
-        dayNumber: true,
-        status: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        submittedAt: true,
-      },
-    });
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       enrollmentId: peIdForEnrollment(enrollmentId),
@@ -486,19 +428,7 @@ export async function getChallengeDaySubmission(
   enrollmentId: string,
   dayNumber: number,
 ): Promise<Omit<ChallengeSubmissionRow, "id" | "dayNumber"> | null> {
-  if (!isNewProgressRepoEnabled()) {
-    const row = await prisma.submission.findUnique({
-      where: { enrollmentId_dayNumber: { enrollmentId, dayNumber } },
-      select: {
-        status: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        submittedAt: true,
-      },
-    });
-    return row;
-  }
-
+  
   const rows = await listChallengeSubmissions(enrollmentId);
   const row = rows.find((r) => r.dayNumber === dayNumber);
   if (!row) return null;
@@ -526,13 +456,7 @@ export async function getChallengeCompletionState(
 export async function listProgramMissionProgress(
   memberId: string,
 ): Promise<ProgramMissionProgressRow[]> {
-  if (!isNewProgressRepoEnabled()) {
-    return prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: { dayNumber: true, passed: true, payload: true },
-    });
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       enrollmentId: peIdForMember(memberId),
@@ -568,20 +492,7 @@ export async function listProgramMissionAttemptsForDay(
   memberId: string,
   dayNumber: number,
 ): Promise<ProgramMissionAttemptRow[]> {
-  if (!isNewProgressRepoEnabled()) {
-    return prisma.programMissionSubmission.findMany({
-      where: { memberId, dayNumber },
-      select: {
-        attemptNumber: true,
-        passed: true,
-        verdict: true,
-        payload: true,
-        createdAt: true,
-      },
-      orderBy: { attemptNumber: "asc" },
-    });
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       enrollmentId: peIdForMember(memberId),
@@ -636,25 +547,7 @@ export async function listCanonicalMissionAttempts(input: {
   memberIds: string[];
 }): Promise<CanonicalMissionAttemptRow[]> {
   if (input.memberIds.length === 0) return [];
-  if (!isNewProgressRepoEnabled()) {
-    const rows = await prisma.programMissionSubmission.findMany({
-      where: { memberId: { in: input.memberIds } },
-      select: {
-        id: true,
-        memberId: true,
-        dayNumber: true,
-        attemptNumber: true,
-        passed: true,
-        payload: true,
-        createdAt: true,
-        pointsAwarded: true,
-        aiFeedback: true,
-      },
-      orderBy: [{ dayNumber: "asc" }, { attemptNumber: "asc" }],
-    });
-    return rows;
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       enrollmentId: { in: input.memberIds.map((id) => peIdForMember(id)) },
@@ -721,55 +614,7 @@ export async function listCanonicalChallengeFeed(input: {
   submittedAtGte?: Date;
   submittedAtLt?: Date;
 }): Promise<CanonicalChallengeFeedRow[]> {
-  if (!isNewProgressRepoEnabled()) {
-    const rows = await prisma.submission.findMany({
-      where: {
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.minDay != null || input.maxDay != null
-          ? {
-              dayNumber: {
-                ...(input.minDay != null ? { gte: input.minDay } : {}),
-                ...(input.maxDay != null ? { lte: input.maxDay } : {}),
-              },
-            }
-          : {}),
-        ...(input.submittedAtGte || input.submittedAtLt
-          ? {
-              submittedAt: {
-                ...(input.submittedAtGte ? { gte: input.submittedAtGte } : {}),
-                ...(input.submittedAtLt ? { lt: input.submittedAtLt } : {}),
-              },
-            }
-          : {}),
-        ...(input.domain
-          ? { enrollment: { domain: input.domain as never } }
-          : {}),
-      },
-      orderBy: { submittedAt: "desc" },
-      take: input.take,
-      select: {
-        id: true,
-        userId: true,
-        dayNumber: true,
-        status: true,
-        githubUrl: true,
-        linkedinUrl: true,
-        submittedAt: true,
-        enrollment: { select: { domain: true } },
-      },
-    });
-    return rows.map((row) => ({
-      id: row.id,
-      userId: row.userId,
-      dayNumber: row.dayNumber,
-      status: row.status,
-      githubUrl: row.githubUrl,
-      linkedinUrl: row.linkedinUrl,
-      submittedAt: row.submittedAt,
-      domain: row.enrollment.domain,
-    }));
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       id: { startsWith: "aa_sub_" },
@@ -863,21 +708,7 @@ export async function listProgramRecentMissionAttempts(
     payload: unknown;
   }>
 > {
-  if (!isNewProgressRepoEnabled()) {
-    return prisma.programMissionSubmission.findMany({
-      where: { memberId },
-      select: {
-        dayNumber: true,
-        passed: true,
-        verdict: true,
-        createdAt: true,
-        payload: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take,
-    });
-  }
-
+  
   const rows = await prisma.activityAttempt.findMany({
     where: {
       enrollmentId: peIdForMember(memberId),
@@ -919,8 +750,7 @@ export async function getProgramUnlockFloor(
   memberId: string,
   fallback: number,
 ): Promise<number> {
-  if (!isNewProgressRepoEnabled()) return fallback;
-  const pe = await prisma.programEnrollment.findUnique({
+    const pe = await prisma.programEnrollment.findUnique({
     where: { id: peIdForMember(memberId) },
     select: { unlockFloorDay: true },
   });
@@ -932,14 +762,7 @@ export async function listQuizAttemptsForUser(
   quizIds: string[],
 ): Promise<Array<Pick<QuizAttemptRow, "id" | "quizId" | "score" | "attemptedAt">>> {
   if (quizIds.length === 0) return [];
-  if (!isNewProgressRepoEnabled()) {
-    return prisma.quizAttempt.findMany({
-      where: { userId, quizId: { in: quizIds } },
-      select: { id: true, score: true, quizId: true, attemptedAt: true },
-      orderBy: { attemptedAt: "desc" },
-    });
-  }
-
+  
   const pes = await prisma.programEnrollment.findMany({
     where: { userId, id: { startsWith: "pe_enr_" } },
     select: { id: true },
@@ -987,21 +810,6 @@ export async function getQuizAttemptForUser(
   userId: string,
   quizId: string,
 ): Promise<QuizAttemptRow | null> {
-  if (!isNewProgressRepoEnabled()) {
-    const row = await prisma.quizAttempt.findUnique({
-      where: { userId_quizId: { userId, quizId } },
-      select: { id: true, quizId: true, score: true, answers: true, attemptedAt: true },
-    });
-    if (!row) return null;
-    return {
-      id: row.id,
-      quizId: row.quizId,
-      score: row.score,
-      answers: (row.answers as Record<string, string>) ?? {},
-      attemptedAt: row.attemptedAt,
-    };
-  }
-
   const rows = await listQuizAttemptsForUser(userId, [quizId]);
   const match = rows.find((r) => r.quizId === quizId);
   if (!match) return null;
