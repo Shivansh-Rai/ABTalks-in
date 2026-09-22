@@ -3,7 +3,6 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { PointsSourceType, type Prisma } from "@prisma/client";
 import { istDateRangeToUtc } from "@/lib/date-utils";
 import { prisma, writeClient } from "@/lib/db";
-import { isLegacyPointsMirrorEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import { captureFailure } from "@/lib/observability/capture";
 import { logMoney } from "@/lib/observability/domain-log";
@@ -36,17 +35,7 @@ export async function withLegacyPointsMirrorFlush<T>(
 }
 
 function enqueueLegacyMirror(input: ApplyPointsInput, amount: number): void {
-  if (amount === 0) return;
-  if (!isLegacyPointsMirrorEnabled()) return;
-  const bag = pendingLegacyMirrors.getStore();
-  if (!bag) {
-    logger.error(
-      "[points] legacy mirror not queued; wrap the writer in withLegacyPointsMirrorFlush",
-      { userId: input.userId, idempotencyKey: input.idempotencyKey },
-    );
-    return;
-  }
-  bag.push({ input, amount });
+  void input; void amount;
 }
 
 function shouldInjectLegacyMirrorFailure(): boolean {

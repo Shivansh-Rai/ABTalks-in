@@ -13,12 +13,12 @@
 import "server-only";
 import type { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import { isLegacyProgressMirrorEnabled } from "@/lib/feature-flags";
 import {
   activityIdForDailyTask,
   activityIdForQuiz,
   mintProgressRowId,
   peIdForEnrollment,
+  peIdForMember,
   quizAttemptIdFromAttemptId,
   submissionIdFromAttemptId,
 } from "@/repositories/ids";
@@ -65,54 +65,8 @@ async function runLegacyProgressMirror(
   label: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyProgressMirrorEnabled()) return false;
-  if (injectedMirrorFamily() === family) {
-    logger.error(
-      "[progress] legacy progress mirror failed; canonical attempt kept",
-      { label, family, error: "PROGRESS_FAIL_LEGACY_MIRROR" },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[progress] legacy progress mirror rollback failed", {
-          label,
-          family,
-          error: String(rollbackErr),
-        });
-      }
-      if (isPrismaUniqueConflict(err)) throw err;
-      logger.error(
-        "[progress] legacy progress mirror failed; canonical attempt kept",
-        {
-          label,
-          family,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    if (isPrismaUniqueConflict(err)) throw err;
-    logger.error(
-      "[progress] legacy progress mirror failed; canonical attempt kept",
-      {
-        label,
-        family,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return true;
-  }
+  void tx; void family; void label; void fn;
+  return false;
 }
 
 export type ChallengeSubmissionWrite = {
@@ -307,6 +261,7 @@ export async function applyProgramMissionAttemptChange(
         data: {
           id,
           memberId: input.memberId,
+          programEnrollmentId: peIdForMember(input.memberId),
           dayNumber: input.dayNumber,
           attemptNumber: input.attemptNumber,
           payload: input.payload,

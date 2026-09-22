@@ -26,7 +26,6 @@ import {
   applyChallengeSubmissionChange,
   findChallengeSubmissionId,
 } from "@/repositories/progress-writes";
-import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
 import { mintProgressRowId, peIdForEnrollment } from "@/repositories/ids";
 
 /**
@@ -56,25 +55,15 @@ export async function assertPastDaySubmittable(
   const elapsedDay = getElapsedDayNumber(enrollment, challenge);
   if (currentDay > 0 && dayNumber >= elapsedDay) return { ok: true };
 
-  if (isNewProgressRepoEnabled()) {
-    const existingAttempt = await prisma.activityAttempt.findFirst({
-      where: {
-        enrollmentId: peIdForEnrollment(enrollment.id),
-        id: { startsWith: "aa_sub_" },
-        activity: { dayNumber },
-      },
-      select: { id: true },
-    });
-    if (existingAttempt) return { ok: true };
-  } else {
-    const existing = await prisma.submission.findUnique({
-      where: {
-        enrollmentId_dayNumber: { enrollmentId: enrollment.id, dayNumber },
-      },
-      select: { id: true },
-    });
-    if (existing) return { ok: true };
-  }
+const existingAttempt = await prisma.activityAttempt.findFirst({
+  where: {
+    enrollmentId: peIdForEnrollment(enrollment.id),
+    id: { startsWith: "aa_sub_" },
+    activity: { dayNumber },
+  },
+  select: { id: true },
+});
+if (existingAttempt) return { ok: true };
 
   const actions = await prisma.adminAction.findMany({
     where: {

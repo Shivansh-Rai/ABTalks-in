@@ -1,10 +1,6 @@
 import "server-only";
 
-import {
-  hireChallengePool,
-  hireOpenCohortIds,
-  isNewTalentRepoEnabled,
-} from "@/lib/feature-flags";
+import { hireChallengePool, hireOpenCohortIds } from "@/lib/feature-flags";
 import type { JobSpec } from "@/lib/validations/hire";
 import {
   CHALLENGE_POOL_CAP,
@@ -42,7 +38,7 @@ export const PIPELINE: PipelineConstants = {
 
 export function currentSearchEnv(): SearchEnv {
   return {
-    newTalentRead: isNewTalentRepoEnabled(),
+    newTalentRead: true,
     challengePool: hireChallengePool(),
     openCohortIds: hireOpenCohortIds(),
   };

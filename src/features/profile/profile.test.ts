@@ -1406,12 +1406,12 @@ suite("the migration is additive and drops nothing", () => {
 suite("flags and dual-write are untouched by this slice", () => {
   const flags = source("src/lib/feature-flags.ts");
   assert(
-    flags.includes('process.env.ENABLE_DUAL_WRITE === "true"'),
-    "dual-write flag unchanged",
+    !flags.includes("ENABLE_DUAL_WRITE"),
+    "dual-write migration flag retired",
   );
   assert(
-    flags.includes('process.env.ENABLE_NEW_CANDIDATE === "true"'),
-    "candidate flag unchanged",
+    !flags.includes("ENABLE_NEW_CANDIDATE"),
+    "candidate migration flag retired",
   );
   const runDualWrite = source("src/repositories/dual-write.ts");
   assert(runDualWrite.includes("export async function runDualWrite"), "still there");

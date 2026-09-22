@@ -4,7 +4,6 @@ import { askClaudeJson } from "@/lib/anthropic";
 import { isCohortFrozen } from "@/features/program/progression";
 import { programMember } from "@/repositories/legacy/program-member";
 import { peIdForMember } from "@/repositories/ids";
-import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
 import type { Prisma } from "@prisma/client";
 
 const MAX_PAYLOAD_CHARS = 8000;
@@ -43,19 +42,7 @@ async function findPassedCanonicalMission(
   memberId: string,
   dayNumber: number,
 ): Promise<{ id: string; payload: Prisma.JsonValue | null; aiFeedback: string | null } | null> {
-  if (!isNewProgressRepoEnabled()) {
-    const submission = await prisma.programMissionSubmission.findFirst({
-      where: { memberId, dayNumber, passed: true },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, aiFeedback: true, payload: true },
-    });
-    if (!submission) return null;
-    return {
-      id: submission.id,
-      payload: submission.payload,
-      aiFeedback: submission.aiFeedback,
-    };
-  }
+
   const attempt = await prisma.activityAttempt.findFirst({
     where: {
       enrollmentId: peIdForMember(memberId),
@@ -129,21 +116,14 @@ export async function reviewMission(
 
   const feedback = formatMentorMarkdown(ai.data);
 
-  if (!isNewProgressRepoEnabled()) {
-    await prisma.programMissionSubmission.update({
-      where: { id: submission.id },
-      data: { aiFeedback: feedback },
-    });
-  } else {
-    const nextPayload = {
-      ...jsonObject(submission.payload),
-      aiFeedback: feedback,
-    };
-    await prisma.activityAttempt.update({
-      where: { id: submission.id },
-      data: { payload: nextPayload },
-    });
-  }
+const nextPayload = {
+  ...jsonObject(submission.payload),
+  aiFeedback: feedback,
+};
+await prisma.activityAttempt.update({
+  where: { id: submission.id },
+  data: { payload: nextPayload },
+});
 
   return { ok: true, feedback };
 }

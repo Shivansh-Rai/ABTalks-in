@@ -379,6 +379,7 @@ export async function submitMissionRun(
         },
         create: {
           memberId,
+          programEnrollmentId: peIdForMember(memberId),
           moduleNumber,
           repoUrl: bossPayload.repoUrl,
           writeup: bossPayload.writeup,

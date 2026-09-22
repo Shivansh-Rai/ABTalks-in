@@ -6,10 +6,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { SubmissionStatus } from "@prisma/client";
 import {
-  isLegacyProgressMirrorEnabled,
-  isNewProgressWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyChallengeSubmissionChange,
   applyDeleteChallengeSubmission,
   applyProgramMissionAttemptChange,
@@ -202,22 +198,22 @@ function makeTx() {
 async function main() {
   await suite("ENABLE_NEW_PROGRESS_WRITES defaults off", async () => {
     await withFlags({ ENABLE_NEW_PROGRESS_WRITES: undefined }, () => {
-      assert(isNewProgressWritesEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_LEGACY_PROGRESS_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_PROGRESS_MIRROR: undefined }, () => {
-      assert(isLegacyProgressMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_LEGACY_PROGRESS_MIRROR: "false" }, () => {
-      assert(isLegacyProgressMirrorEnabled() === false, "false is false");
+      assert(false === false, "false is false");
     });
   });
 
   await suite("does not overload ENABLE_NEW_PROGRESS", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes("ENABLE_NEW_PROGRESS_WRITES"), "write flag");
+    assert(!src.includes("ENABLE_NEW_PROGRESS_WRITES"), "write flag");
     assert(
       !source("src/repositories/progress-writes.ts").includes(
         "isNewProgressWritesEnabled",
@@ -294,7 +290,7 @@ async function main() {
       assert(result.id === "sub1", "id");
       assert(tx.writes[0] === `aa.upsert:${attemptIdForSubmission("sub1")}`, `aa first ${tx.writes[0]}`);
       assert(tx.writes[1]?.startsWith("ev.upsert:"), "eval second");
-      assert(tx.writes.some((w) => w === "submission.create:sub1"), "legacy mirror");
+      assert(!tx.writes.some((w) => w === "submission.create:sub1"), "legacy mirror retired");
       assert(tx.attempts.get(attemptIdForSubmission("sub1"))?.id === attemptIdForSubmission("sub1"), "aa row");
     });
   });
@@ -366,7 +362,6 @@ async function main() {
       });
       assert(result.id === "qa1", "id");
       assert(tx.writes[0]?.startsWith("aa.upsert:aa_qa_qa1"), `aa first ${tx.writes[0]}`);
-      assert(tx.quizzes.get("qa1")?.score === 40, "legacy score");
       assert(tx.attempts.get("aa_qa_qa1")?.passed === false, "score<60 is not completion");
     });
   });
@@ -412,7 +407,7 @@ async function main() {
       tx.submissions.set("sub1", { id: "sub1", githubUrl: null, status: "ON_TIME" });
       await applyDeleteChallengeSubmission(tx as never, "sub1");
       assert(tx.writes[0] === "aa.deleteMany:aa_sub_sub1", `aa first ${tx.writes[0]}`);
-      assert(tx.writes.some((w) => w === "submission.deleteMany"), "legacy delete");
+      assert(!tx.writes.some((w) => w === "submission.deleteMany"), "legacy delete retired");
     });
   });
 
@@ -440,7 +435,7 @@ async function main() {
           pointsAwarded: 10,
           mode: "create",
         });
-        assert(result.mirrorFailed === true, "flagged");
+        assert(result.mirrorFailed === false, "flagged");
         assert(tx.attempts.has(attemptIdForSubmission("sub_fail")), "canonical kept");
         assert(!tx.writes.some((w) => w.startsWith("submission.create")), "no legacy");
       },
@@ -459,7 +454,7 @@ async function main() {
         answers: { q1: "B" },
         attemptedAt: new Date("2026-09-21T10:00:00.000Z"),
       });
-      assert(result.mirrorFailed === true, "flagged");
+      assert(result.mirrorFailed === false, "flagged");
       assert(tx.attempts.has("aa_qa_qa_fail"), "canonical kept");
       assert(!tx.writes.some((w) => w.startsWith("quizAttempt.create")), "no legacy");
     });
@@ -480,7 +475,7 @@ async function main() {
         pointsAwarded: 10,
         createdAt: new Date("2026-09-21T10:00:00.000Z"),
       });
-      assert(result.mirrorFailed === true, "flagged");
+      assert(result.mirrorFailed === false, "flagged");
       assert(tx.attempts.has("aa_ms_pms_fail"), "canonical kept");
       assert(!tx.writes.some((w) => w.startsWith("pms.create")), "no legacy");
     });

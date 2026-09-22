@@ -26,10 +26,6 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import {
-  isLegacyProgramMemberMirrorEnabled,
-  isNewVisibilityWritesEnabled,
-} from "@/lib/feature-flags";
 import { mapMemberStatus } from "@/repositories/dual-write";
 import {
   cohortSlugForProgramCohort,
@@ -179,46 +175,8 @@ async function mirrorProgramMemberLegacyState(
   label: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyProgramMemberMirrorEnabled()) return false;
-  if (injectedMirrorFailure()) {
-    logger.error(
-      "[program-state] injected ProgramMember mirror failure; canonical kept",
-      { label },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[program-state] ProgramMember mirror rollback failed", {
-          label,
-          error: String(rollbackErr),
-        });
-      }
-      logger.error(
-        "[program-state] ProgramMember mirror failed; canonical kept",
-        {
-          label,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    logger.error("[program-state] ProgramMember mirror failed; canonical kept", {
-      label,
-      error: err instanceof Error ? err.stack ?? err.message : String(err),
-    });
-    return true;
-  }
+  void tx; void label; void fn;
+  return false;
 }
 
 async function ensureDiscoverable(
@@ -269,8 +227,7 @@ export async function applyProgramMembershipChange(
   memberId = memberId ?? mintProgressRowId();
   const created = !existing;
 
-  const visibilityFirst = isNewVisibilityWritesEnabled();
-  if (visibilityFirst) {
+  {
     await ensureDiscoverable(
       tx,
       input.userId,
@@ -295,6 +252,7 @@ export async function applyProgramMembershipChange(
       cohortId,
       status: mapMemberStatus(input.status),
       startedAt: enrolledAt ?? now,
+      joinedAt: now,
       enrolledAt,
       completedAt: input.completedAt ?? null,
       droppedAt:
@@ -315,14 +273,6 @@ export async function applyProgramMembershipChange(
           : {}),
     },
   });
-
-  if (!visibilityFirst) {
-    await ensureDiscoverable(
-      tx,
-      input.userId,
-      input.recruiterVisibilityConsentAt,
-    );
-  }
 
   // Structural FK anchor is independent of the mutable-state mirror.
   await ensureProgramMemberAnchor(tx, {

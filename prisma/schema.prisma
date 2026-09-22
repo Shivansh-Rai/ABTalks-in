@@ -353,6 +353,7 @@ model User {
   credentials                Credential[]
   achievements               CandidateAchievement[]
   programEnrollments         ProgramEnrollment[]
+  shortlistedAsCandidate     RecruiterShortlistItem[] @relation("ShortlistCandidate")
   evaluationsGiven           ActivityEvaluation[]   @relation("Evaluator")
   orgMemberships             OrganizationMember[]
   talentListItems            TalentListItem[]
@@ -964,6 +965,8 @@ model ProgramConceptQuestion {
 model ProgramMissionSubmission {
   id            String        @id @default(cuid())
   memberId      String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   dayNumber     Int
   attemptNumber Int
   payload       Json // type-specific: {code} | {repoRef} | {answers} | {prompt} | {checkOutputs}
@@ -973,22 +976,28 @@ model ProgramMissionSubmission {
   aiFeedback    String? // AI Mentor review (029), post-pass
   createdAt     DateTime      @default(now())
   member        ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
 
   @@unique([memberId, dayNumber, attemptNumber])
   @@index([memberId, dayNumber])
+  @@index([programEnrollmentId])
 }
 
 model ProgramConceptAttempt {
   id          String        @id @default(cuid())
   memberId    String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   dayNumber   Int
   questionIds Json // string[] — 3 sampled ids
   answers     Json?
   score       Int           @default(0) // 0..3
   createdAt   DateTime      @default(now())
   member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
 
   @@unique([memberId, dayNumber]) // ONE attempt — it's a warm-up, not a gate
+  @@index([programEnrollmentId])
 }
 
 model ProgramEntryQuestion {
@@ -1053,28 +1062,39 @@ model ProgramExercise {
 model ProgramExerciseCompletion {
   id          String          @id @default(cuid())
   memberId    String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   exerciseId  String
   code        String
   completedAt DateTime        @default(now())
   member      ProgramMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   exercise    ProgramExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, exerciseId])
+  @@index([programEnrollmentId])
 }
 
 model ProgramCommitDay {
   id          String        @id @default(cuid())
   memberId    String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   date        DateTime      @db.Date
   commitCount Int           @default(0)
   member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, date])
+  @@unique([programEnrollmentId, date])
+  @@index([programEnrollmentId])
 }
 
 model ProgramProject {
   id           String               @id @default(cuid())
   memberId     String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   moduleNumber Int
   repoUrl      String
   writeup      String
@@ -1086,13 +1106,18 @@ model ProgramProject {
   submittedAt  DateTime             @default(now())
   gradedAt     DateTime?
   member       ProgramMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, moduleNumber])
+  @@unique([programEnrollmentId, moduleNumber])
+  @@index([programEnrollmentId])
 }
 
 model ProgramInterview {
   id           String                 @id @default(cuid())
   memberId     String                 @unique
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
   status       ProgramInterviewStatus @default(NOT_STARTED)
   startedAt    DateTime?
   endedAt      DateTime?
@@ -1106,6 +1131,10 @@ model ProgramInterview {
   evaluatedAt  DateTime?
   resetCount   Int                    @default(0)
   member       ProgramMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
+
+  @@unique([programEnrollmentId])
+  @@index([programEnrollmentId])
 }
 
 model RecruiterProfile {
@@ -1130,12 +1159,16 @@ model RecruiterShortlistItem {
   id              String        @id @default(cuid())
   recruiterUserId String
   memberId        String
+  /// Wave 2 additive candidate identity. Backfilled from ProgramMember.userId.
+  candidateUserId String?
   note            String?
   createdAt       DateTime      @default(now())
   recruiter       User          @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
   member          ProgramMember @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  candidate       User?         @relation("ShortlistCandidate", fields: [candidateUserId], references: [id], onDelete: SetNull)
 
   @@unique([recruiterUserId, memberId])
+  @@index([candidateUserId])
 }
 
 // ─── Hire / Scout (evidence-based matching) ─────────────────────────────────
@@ -1556,6 +1589,8 @@ model WorkshopRegistration {
 model GeneralInterview {
   id       String @id @default(cuid())
   memberId String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
 
   /// Which standardized question bank this interview ran. A member may hold at
   /// most ONE completed interview per blueprint — enforced by a partial unique
@@ -1601,11 +1636,13 @@ model GeneralInterview {
   updatedAt   DateTime  @updatedAt
 
   member ProgramMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
   turns  InterviewTurn[]
   report InterviewReport?
 
   @@index([memberId, status])
   @@index([memberId, blueprint])
+  @@index([programEnrollmentId])
 }
 
 /// One candidate answer and what the system made of it.
@@ -3108,6 +3145,8 @@ model ProgramEnrollment {
   status         EnrollmentStatusV2 @default(ACTIVE)
   /// The rolling anchor. For FIXED cohorts, day math ignores this.
   startedAt      DateTime           @default(now())
+  /// Actual join/order timestamp. Distinct from startedAt (cohort calendar on some pe_pm_/legacy rows).
+  joinedAt       DateTime           @default(now())
   enrolledAt     DateTime?
   completedAt    DateTime?
   droppedAt      DateTime?
@@ -3138,6 +3177,13 @@ model ProgramEnrollment {
   progress    EnrollmentProgress?
   attempts    ActivityAttempt[]
   dayActivity EnrollmentDayActivity[]
+  commitDays           ProgramCommitDay[]
+  interviews           ProgramInterview[]
+  generalInterviews    GeneralInterview[]
+  conceptAttempts      ProgramConceptAttempt[]
+  exerciseCompletions  ProgramExerciseCompletion[]
+  projects             ProgramProject[]
+  missionSubmissions   ProgramMissionSubmission[]
 
   @@unique([userId, cohortId])
   @@index([userId, status])

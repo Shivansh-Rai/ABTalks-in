@@ -45,6 +45,11 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-22 [schema] 078 final Wave 3: ProgramEnrollment.joinedAt backfilled from Enrollment.createdAt / ProgramMember.createdAt; first-track order no longer uses live Enrollment.createdAt
+- 2026-09-22 [schema] 078 final Wave 2c: dropped ProgramMember inbound FKs; memberId retained as scalar; ProgramMember table kept for remaining runtime identity reads
+- 2026-09-22 [schema] 078 final Wave 2b: ProgramMember child tables now FK to ProgramEnrollment.programEnrollmentId (pe_pm_*); RecruiterShortlistItem.candidateUserId FK to User; memberId columns retained
+- 2026-09-22 [schema] 078 final Wave 2 additive: ProgramMember child rows gained programEnrollmentId (pe_pm_*) and RecruiterShortlistItem.candidateUserId; production backfill missing=0; memberId FKs retained until drop gate
+- 2026-09-22 [convention|env] 078 final Wave 1: removed runtime migration flags (ENABLE_DUAL_WRITE, ENABLE_NEW_*, ENABLE_LEGACY_*_MIRROR); canonical family paths are unconditional; mirrors are no-ops; no tables dropped
 - 2026-09-22 [convention] Phase 8-D COMPLETE: retired global dual-write runtime gating and unsafe legacy-authority rollback writers; canonical family writers are unconditional; ENABLE_DUAL_WRITE remains false; historical/structural/compliance legacy support retained; no tables dropped; Phase 8-E not started
 - 2026-09-22 [env] Phase 8-C COMPLETE: production ENABLE_DUAL_WRITE=false PHASE8C_DUAL_WRITE_OFF_TIME=2026-09-22T16:35:04.000Z; global dual-write runtime shut down; dedicated family flags unchanged; runDualWrite remains; no tables dropped; Phase 8-D not started
 - 2026-09-22 [convention] Phase 8-B: writeClient always uses the Neon direct session (independent of ENABLE_DUAL_WRITE); challenge pe_enr_* writes via applyChallengeProgramEnrollment outside runDualWrite; production ENABLE_DUAL_WRITE stays true; Phase 8-C not started

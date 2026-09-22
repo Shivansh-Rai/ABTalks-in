@@ -23,6 +23,7 @@ import {
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { applyProgramScoreChange, overlayProgramMemberState, listCanonicalProgramMemberIds } from "@/repositories/program-state";
+import { peIdForMember } from "@/repositories/ids";
 import { programMember } from "@/repositories/legacy/program-member";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
@@ -203,6 +204,7 @@ export async function creditCommitDayInTx(
     where: { memberId_date: { memberId, date: commitDate } },
     create: {
       memberId,
+      programEnrollmentId: peIdForMember(memberId),
       date: commitDate,
       commitCount: nextCount,
     },
@@ -334,6 +336,7 @@ export async function processMemberCommitDay(
       },
       create: {
         memberId: member.id,
+        programEnrollmentId: peIdForMember(member.id),
         date: commitDate,
         commitCount: nextCount,
       },

@@ -2,7 +2,6 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { Domain, ProgramCohortStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewProgramStateEnabled, isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { overlayProgramMemberState, canonicalProgramMemberWhere } from "@/repositories/program-state";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
 import { issuedChallengeEnrollmentIds } from "@/repositories/credentials";
@@ -34,9 +33,6 @@ import {
  * implementations must satisfy (078 §8.2).
  */
 
-function newModelActive(): boolean {
-  return isNewTalentRepoEnabled();
-}
 
 /**
  * Identity for a candidate with no `CandidateProfile` row, or on the legacy
@@ -168,60 +164,43 @@ export async function listProgramCandidates(
   where: Prisma.ProgramMemberWhereInput,
 ): Promise<ProgramCandidateRow[]> {
   where = await canonicalProgramMemberWhere(where);
-  if (newModelActive()) {
-    const rows = await overlayProgramMemberState(
-      await prisma.programMember.findMany({
-        where: { AND: [where, { user: searchableUserWhere() }] },
-        select: PROGRAM_EVIDENCE_SELECT,
-      }),
-    );
-    const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
-    return rows.map((r) => {
-      const idn = identities.get(r.userId);
-      const interview = RECRUITER_FIELD_POLICY.interviewResults
-        ? r.interview
-        : null;
-      return {
-        id: r.id,
-        userId: r.userId,
-        cohortId: r.cohortId,
-        status: r.status,
-        fullName: idn?.fullName || "",
-        jobRole: idn?.role ?? r.jobRole,
-        company: RECRUITER_FIELD_POLICY.currentEmployer ? r.company : null,
-        missionPoints: r.missionPoints,
-        totalScore: r.totalScore,
-        yearsExperience: idn?.yearsExperience ?? r.yearsExperience,
-        education: idn?.education ?? r.education,
-        university: idn?.university ?? r.university,
-        graduationYear: idn?.graduationYear ?? r.graduationYear,
-        skills: idn?.skills.length ? idn.skills : r.skills,
-        updatedAt: r.updatedAt,
-        cohort: r.cohort,
-        commitDays: r.commitDays,
-        projects: r.projects,
-        interview,
-        hasLinkedin: idn?.hasLinkedin ?? false,
-        hasGithub: idn?.hasGithub ?? false,
-        hasResume: idn?.hasResume ?? false,
-      };
-    });
-  }
-
-  const rows = await overlayProgramMemberState(
-    await prisma.programMember.findMany({
-      where: { AND: [where, { user: searchableUserWhere() }] },
-      select: {
-        ...PROGRAM_CANDIDATE_SELECT,
-        linkedinUrl: true,
-        githubUsername: true,
-        resumeUrl: true,
-      },
-    }),
-  );
-  return rows.map(({ linkedinUrl, githubUsername, resumeUrl, ...row }) =>
-    withLegacyLinkFlags(row, { linkedinUrl, githubUsername, resumeUrl }),
-  );
+const rows = await overlayProgramMemberState(
+  await prisma.programMember.findMany({
+    where: { AND: [where, { user: searchableUserWhere() }] },
+    select: PROGRAM_EVIDENCE_SELECT,
+  }),
+);
+const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
+return rows.map((r) => {
+  const idn = identities.get(r.userId);
+  const interview = RECRUITER_FIELD_POLICY.interviewResults
+    ? r.interview
+    : null;
+  return {
+    id: r.id,
+    userId: r.userId,
+    cohortId: r.cohortId,
+    status: r.status,
+    fullName: idn?.fullName || "",
+    jobRole: idn?.role ?? r.jobRole,
+    company: RECRUITER_FIELD_POLICY.currentEmployer ? r.company : null,
+    missionPoints: r.missionPoints,
+    totalScore: r.totalScore,
+    yearsExperience: idn?.yearsExperience ?? r.yearsExperience,
+    education: idn?.education ?? r.education,
+    university: idn?.university ?? r.university,
+    graduationYear: idn?.graduationYear ?? r.graduationYear,
+    skills: idn?.skills.length ? idn.skills : r.skills,
+    updatedAt: r.updatedAt,
+    cohort: r.cohort,
+    commitDays: r.commitDays,
+    projects: r.projects,
+    interview,
+    hasLinkedin: idn?.hasLinkedin ?? false,
+    hasGithub: idn?.hasGithub ?? false,
+    hasResume: idn?.hasResume ?? false,
+  };
+});
 }
 
 export type MissionAttemptRow = {
@@ -237,57 +216,43 @@ export async function listMissionAttempts(
   memberIds: string[],
 ): Promise<MissionAttemptRow[]> {
   if (memberIds.length === 0) return [];
-  if (newModelActive()) {
-    const rows = await prisma.activityAttempt.findMany({
-      where: {
-        enrollmentId: { in: memberIds.map(peIdForMember) },
-        id: { startsWith: "aa_ms_" },
-        activityId: { startsWith: "act_pd_" },
-      },
-      select: {
-        enrollmentId: true,
-        attemptNumber: true,
-        passed: true,
-        payload: true,
-        submittedAt: true,
-        createdAt: true,
-        activity: { select: { dayNumber: true } },
-        evaluations: {
-          where: { isAuthoritative: true },
-          select: { passed: true },
-          take: 1,
-        },
-      },
-      orderBy: [{ createdAt: "asc" }],
-    });
-    return rows.flatMap((row) => {
-      const memberId = memberIdFromPe(row.enrollmentId);
-      const dayNumber = row.activity.dayNumber;
-      if (!memberId || dayNumber == null) return [];
-      return [
-        {
-          memberId,
-          dayNumber,
-          attemptNumber: row.attemptNumber,
-          passed: row.evaluations[0]?.passed ?? row.passed,
-          payload: row.payload ?? null,
-          createdAt: row.submittedAt ?? row.createdAt,
-        },
-      ];
-    });
-  }
-  return prisma.programMissionSubmission.findMany({
-    where: { memberId: { in: memberIds } },
-    select: {
-      memberId: true,
-      dayNumber: true,
-      attemptNumber: true,
-      passed: true,
-      payload: true,
-      createdAt: true,
+const rows = await prisma.activityAttempt.findMany({
+  where: {
+    enrollmentId: { in: memberIds.map(peIdForMember) },
+    id: { startsWith: "aa_ms_" },
+    activityId: { startsWith: "act_pd_" },
+  },
+  select: {
+    enrollmentId: true,
+    attemptNumber: true,
+    passed: true,
+    payload: true,
+    submittedAt: true,
+    createdAt: true,
+    activity: { select: { dayNumber: true } },
+    evaluations: {
+      where: { isAuthoritative: true },
+      select: { passed: true },
+      take: 1,
     },
-    orderBy: [{ dayNumber: "asc" }, { attemptNumber: "asc" }],
-  });
+  },
+  orderBy: [{ createdAt: "asc" }],
+});
+return rows.flatMap((row) => {
+  const memberId = memberIdFromPe(row.enrollmentId);
+  const dayNumber = row.activity.dayNumber;
+  if (!memberId || dayNumber == null) return [];
+  return [
+    {
+      memberId,
+      dayNumber,
+      attemptNumber: row.attemptNumber,
+      passed: row.evaluations[0]?.passed ?? row.passed,
+      payload: row.payload ?? null,
+      createdAt: row.submittedAt ?? row.createdAt,
+    },
+  ];
+});
 }
 
 export type CurriculumDayRow = {
@@ -372,70 +337,23 @@ export type ChallengeCandidateRow = {
 export async function listChallengeCandidates(
   domains: Domain[],
 ): Promise<ChallengeCandidateRow[]> {
-  if (newModelActive()) {
-    const rows = await prisma.enrollment.findMany({
-      where: {
-        challenge: { domain: { in: domains } },
-        submissions: { some: {} },
-        user: searchableUserWhere(),
-      },
-      select: CHALLENGE_EVIDENCE_SELECT,
-    });
-    const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
-    const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
-    const overlaid = await overlayChallengeProgressFields(rows);
-    return overlaid.map((r) => ({
-      ...r,
-      certificateIssued: issued.has(r.id),
-      recruiterIdentity:
-        identities.get(r.userId) ?? identityFromLegacyProfile(null),
-    }));
-  }
-
-  const rows = await prisma.enrollment.findMany({
-    where: {
-      challenge: { domain: { in: domains } },
-      submissions: { some: {} },
-      user: searchableUserWhere(),
-    },
-    select: {
-      ...CHALLENGE_EVIDENCE_SELECT,
-      user: {
-        select: {
-          name: true,
-          studentProfile: {
-            select: {
-              skills: true,
-              role: true,
-              yearsExperience: true,
-              graduationYear: true,
-              linkedinUrl: true,
-              githubUsername: true,
-              college: true,
-              fullName: true,
-              resumeUrl: true,
-            },
-          },
-        },
-      },
-    },
-  });
-  const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
-  const overlaid = await overlayChallengeProgressFields(rows);
-  return overlaid.map((r) => ({
-    id: r.id,
-    userId: r.userId,
-    domain: r.domain,
-    status: r.status,
-    startedAt: r.startedAt,
-    completedAt: r.completedAt,
-    longestStreak: r.longestStreak,
-    currentStreak: r.currentStreak,
-    certificateIssued: issued.has(r.id),
-    _count: r._count,
-    user: { name: r.user.name },
-    recruiterIdentity: identityFromLegacyProfile(r.user.studentProfile),
-  }));
+const rows = await prisma.enrollment.findMany({
+  where: {
+    challenge: { domain: { in: domains } },
+    submissions: { some: {} },
+    user: searchableUserWhere(),
+  },
+  select: CHALLENGE_EVIDENCE_SELECT,
+});
+const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
+const issued = await issuedChallengeEnrollmentIds(rows.map((r) => r.id));
+const overlaid = await overlayChallengeProgressFields(rows);
+return overlaid.map((r) => ({
+  ...r,
+  certificateIssued: issued.has(r.id),
+  recruiterIdentity:
+    identities.get(r.userId) ?? identityFromLegacyProfile(null),
+}));
 }
 
 /** First / last submission per candidate — the consistency evidence dimension. */
@@ -446,93 +364,79 @@ export async function listSubmissionActivity(userIds: string[]) {
       _max: { submittedAt: Date | null; dayNumber: number | null };
       _min: { submittedAt: Date | null };
     }[];
-  if (newModelActive()) {
-    const attempts = await prisma.activityAttempt.findMany({
-      where: {
-        id: { startsWith: "aa_sub_" },
-        submittedAt: { not: null },
-        enrollment: { userId: { in: userIds } },
-      },
-      select: {
-        submittedAt: true,
-        enrollment: { select: { userId: true } },
-        activity: { select: { dayNumber: true } },
-      },
-    });
-    const byUser = new Map<
-      string,
-      { maxAt: Date | null; minAt: Date | null; maxDay: number | null }
-    >();
-    for (const a of attempts) {
-      const uid = a.enrollment.userId;
-      const cur = byUser.get(uid) ?? {
-        maxAt: null,
-        minAt: null,
-        maxDay: null,
-      };
-      const at = a.submittedAt;
-      if (at && (!cur.maxAt || at > cur.maxAt)) cur.maxAt = at;
-      if (at && (!cur.minAt || at < cur.minAt)) cur.minAt = at;
-      const day = a.activity.dayNumber;
-      if (day != null && (cur.maxDay == null || day > cur.maxDay)) {
-        cur.maxDay = day;
-      }
-      byUser.set(uid, cur);
-    }
-    return [...byUser.entries()].map(([userId, v]) => ({
-      userId,
-      _max: { submittedAt: v.maxAt, dayNumber: v.maxDay },
-      _min: { submittedAt: v.minAt },
-    }));
-  }
-  return prisma.submission.groupBy({
-    by: ["userId"],
-    where: { userId: { in: userIds } },
-    _max: { submittedAt: true, dayNumber: true },
-    _min: { submittedAt: true },
+  const attempts = await prisma.activityAttempt.findMany({
+    where: {
+      id: { startsWith: "aa_sub_" },
+      submittedAt: { not: null },
+      enrollment: { userId: { in: userIds } },
+    },
+    select: {
+      submittedAt: true,
+      enrollment: { select: { userId: true } },
+      activity: { select: { dayNumber: true } },
+    },
   });
+  const byUser = new Map<
+    string,
+    { maxAt: Date | null; minAt: Date | null; maxDay: number | null }
+  >();
+  for (const a of attempts) {
+    const uid = a.enrollment.userId;
+    const cur = byUser.get(uid) ?? {
+      maxAt: null,
+      minAt: null,
+      maxDay: null,
+    };
+    const at = a.submittedAt;
+    if (at && (!cur.maxAt || at > cur.maxAt)) cur.maxAt = at;
+    if (at && (!cur.minAt || at < cur.minAt)) cur.minAt = at;
+    const day = a.activity.dayNumber;
+    if (day != null && (cur.maxDay == null || day > cur.maxDay)) {
+      cur.maxDay = day;
+    }
+    byUser.set(uid, cur);
+  }
+  return [...byUser.entries()].map(([userId, v]) => ({
+    userId,
+    _max: { submittedAt: v.maxAt, dayNumber: v.maxDay },
+    _min: { submittedAt: v.minAt },
+  }));
+  
 }
 
 export async function listQuizAggregates(userIds: string[]) {
   if (userIds.length === 0)
     return [] as { userId: string; _avg: { score: number | null }; _count: number }[];
-  if (newModelActive()) {
-    const attempts = await prisma.activityAttempt.findMany({
-      where: {
-        id: { startsWith: "aa_qa_" },
-        enrollment: { userId: { in: userIds } },
+  const attempts = await prisma.activityAttempt.findMany({
+    where: {
+      id: { startsWith: "aa_qa_" },
+      enrollment: { userId: { in: userIds } },
+    },
+    select: {
+      score: true,
+      enrollment: { select: { userId: true } },
+      evaluations: {
+        where: { isAuthoritative: true },
+        select: { score: true },
+        take: 1,
       },
-      select: {
-        score: true,
-        enrollment: { select: { userId: true } },
-        evaluations: {
-          where: { isAuthoritative: true },
-          select: { score: true },
-          take: 1,
-        },
-      },
-    });
-    const byUser = new Map<string, { sum: number; count: number }>();
-    for (const a of attempts) {
-      const score = a.evaluations[0]?.score ?? a.score;
-      if (score == null) continue;
-      const cur = byUser.get(a.enrollment.userId) ?? { sum: 0, count: 0 };
-      cur.sum += score;
-      cur.count += 1;
-      byUser.set(a.enrollment.userId, cur);
-    }
-    return [...byUser.entries()].map(([userId, v]) => ({
-      userId,
-      _avg: { score: v.count > 0 ? v.sum / v.count : null },
-      _count: v.count,
-    }));
-  }
-  return prisma.quizAttempt.groupBy({
-    by: ["userId"],
-    where: { userId: { in: userIds } },
-    _avg: { score: true },
-    _count: true,
+    },
   });
+  const byUser = new Map<string, { sum: number; count: number }>();
+  for (const a of attempts) {
+    const score = a.evaluations[0]?.score ?? a.score;
+    if (score == null) continue;
+    const cur = byUser.get(a.enrollment.userId) ?? { sum: 0, count: 0 };
+    cur.sum += score;
+    cur.count += 1;
+    byUser.set(a.enrollment.userId, cur);
+  }
+  return [...byUser.entries()].map(([userId, v]) => ({
+    userId,
+    _avg: { score: v.count > 0 ? v.sum / v.count : null },
+    _count: v.count,
+  }));
+  
 }
 
 /* ── hackathon ────────────────────────────────────────────────────────────── */
@@ -605,55 +509,21 @@ export const HACKATHON_POOL_TAKE = 200;
 export async function listHackathonCandidates(
   take = HACKATHON_POOL_TAKE,
 ): Promise<HackathonCandidateRow[]> {
-  if (newModelActive()) {
-    const rows = await prisma.hackathonParticipant.findMany({
-      where: {
-        team: { submission: { isNot: null } },
-        user: searchableUserWhere(),
-      },
-      select: HACKATHON_EVIDENCE_SELECT,
-      take,
-    });
-    const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
-    return rows.map((r) => ({
-      userId: r.userId,
-      user: r.user,
-      recruiterIdentity:
-        identities.get(r.userId) ?? identityFromLegacyProfile(null),
-    }));
-  }
-
-  const rows = await prisma.hackathonParticipant.findMany({
-    where: {
-      team: { submission: { isNot: null } },
-      user: searchableUserWhere(),
-    },
-    select: {
-      userId: true,
-      user: {
-        select: {
-          name: true,
-          studentProfile: {
-            select: {
-              skills: true,
-              role: true,
-              yearsExperience: true,
-              graduationYear: true,
-              linkedinUrl: true,
-              githubUsername: true,
-              resumeUrl: true,
-            },
-          },
-        },
-      },
-    },
-    take,
-  });
-  return rows.map((r) => ({
-    userId: r.userId,
-    user: { name: r.user.name },
-    recruiterIdentity: identityFromLegacyProfile(r.user.studentProfile),
-  }));
+const rows = await prisma.hackathonParticipant.findMany({
+  where: {
+    team: { submission: { isNot: null } },
+    user: searchableUserWhere(),
+  },
+  select: HACKATHON_EVIDENCE_SELECT,
+  take,
+});
+const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
+return rows.map((r) => ({
+  userId: r.userId,
+  user: r.user,
+  recruiterIdentity:
+    identities.get(r.userId) ?? identityFromLegacyProfile(null),
+}));
 }
 
 /* ── provenance and display ───────────────────────────────────────────────── */
@@ -692,14 +562,7 @@ export async function listProgramMemberLabels(
         : { where: { id: "" }, select: { id: true }, take: 0 },
     },
   });
-  if (!newModelActive()) {
-    return rows.map((r) => ({
-      id: r.id,
-      fullName: r.fullName,
-      jobRole: r.jobRole,
-      shortlistedBy: r.shortlistedBy,
-    }));
-  }
+
   const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
   return rows.map((r) => {
     const idn = identities.get(r.userId);
@@ -717,26 +580,15 @@ export async function listUserDisplayNames(
 ): Promise<Map<string, string>> {
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return new Map();
-  if (newModelActive()) {
-    const rows = await prisma.candidateProfile.findMany({
-      where: { userId: { in: ids } },
-      select: { userId: true, fullName: true },
-    });
-    return new Map(
-      rows
-        .filter((u) => u.fullName.trim())
-        .map((u) => [u.userId, u.fullName.trim()]),
-    );
-  }
-  const rows = await prisma.user.findMany({
-    where: { id: { in: ids } },
-    select: { id: true, name: true },
-  });
-  return new Map(
-    rows
-      .filter((u) => u.name && u.name.trim())
-      .map((u) => [u.id, u.name!.trim()]),
-  );
+const rows = await prisma.candidateProfile.findMany({
+  where: { userId: { in: ids } },
+  select: { userId: true, fullName: true },
+});
+return new Map(
+  rows
+    .filter((u) => u.fullName.trim())
+    .map((u) => [u.userId, u.fullName.trim()]),
+);
 }
 
 /* ── candidate-ref resolution ─────────────────────────────────────────────── */
@@ -751,28 +603,18 @@ export async function resolveProgramRefs(
   memberIds: string[],
 ): Promise<{ id: string; userId: string }[]> {
   if (memberIds.length === 0) return [];
-  if (isNewProgramStateEnabled()) {
-    const pes = await prisma.programEnrollment.findMany({
-      where: {
-        id: { in: memberIds.map(peIdForMember) },
-        status: { in: ["ACTIVE", "COMPLETED"] },
-        user: searchableUserWhere(),
-      },
-      select: { id: true, userId: true },
-    });
-    return pes.flatMap((pe) => {
-      const id = memberIdFromPe(pe.id);
-      return id ? [{ id, userId: pe.userId }] : [];
-    });
-  }
-  return prisma.programMember.findMany({
-    where: {
-      id: { in: memberIds },
-      status: { in: ["ENROLLED", "COMPLETED"] },
-      user: searchableUserWhere(),
-    },
-    select: { id: true, userId: true },
-  });
+const pes = await prisma.programEnrollment.findMany({
+  where: {
+    id: { in: memberIds.map(peIdForMember) },
+    status: { in: ["ACTIVE", "COMPLETED"] },
+    user: searchableUserWhere(),
+  },
+  select: { id: true, userId: true },
+});
+return pes.flatMap((pe) => {
+  const id = memberIdFromPe(pe.id);
+  return id ? [{ id, userId: pe.userId }] : [];
+});
 }
 
 export async function resolveChallengeRefs(

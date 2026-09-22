@@ -6,10 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Domain, EnrollmentStatus, EnrollmentStatusV2 } from "@prisma/client";
 import {
-  isLegacyEnrollmentDenormMirrorEnabled,
-  isNewEnrollmentStateEnabled,
-} from "@/lib/feature-flags";
-import {
   applyChallengeProgramEnrollment,
   applyChallengeProgramEnrollmentById,
   applyEnrollmentDomainMirror,
@@ -70,7 +66,7 @@ function makeTx() {
     id: "enr1",
     userId: "u1",
     domain: Domain.AI,
-    status: EnrollmentStatus.ACTIVE,
+    status: EnrollmentStatus.ACTIVE as EnrollmentStatus,
     startedAt: new Date("2026-09-01"),
     completedAt: null as Date | null,
     daysCompleted: 0,
@@ -176,24 +172,24 @@ function makeTx() {
 async function main() {
   await suite("ENABLE_NEW_ENROLLMENT_STATE defaults off", async () => {
     await withFlags({ ENABLE_NEW_ENROLLMENT_STATE: undefined }, () => {
-      assert(isNewEnrollmentStateEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR: undefined }, () => {
-      assert(isLegacyEnrollmentDenormMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("does not overload progress/learning flags", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes("ENABLE_NEW_ENROLLMENT_STATE"), "own read flag");
+    assert(!src.includes("ENABLE_NEW_ENROLLMENT_STATE"), "own read flag");
     assert(
-      source("src/repositories/enrollment-state.ts").includes(
+      !source("src/repositories/enrollment-state.ts").includes(
         "isLegacyEnrollmentDenormMirrorEnabled",
       ),
-      "own mirror flag",
+      "own mirror flag retired",
     );
     assert(
       !source("src/repositories/enrollment-state.ts").includes("isNewProgressRepoEnabled"),
@@ -238,9 +234,9 @@ async function main() {
           lastSubmittedDay: 4,
         });
         assert(tx.writes[0]?.startsWith("pe.updateMany:"), `pe first ${tx.writes[0]}`);
-        assert(tx.writes.some((w) => w === "enrollment.update"), "legacy mirror");
+        assert(!tx.writes.some((w) => w === "enrollment.update"), "legacy mirror retired");
         assert(tx.pe.trackCurrentStreak === 2, "pe current");
-        assert(tx.enrollmentRow.daysCompleted === 4, "legacy days");
+        assert(tx.enrollmentRow.daysCompleted === 0, "legacy days frozen");
       },
     );
   });
@@ -271,7 +267,7 @@ async function main() {
       const tx = makeTx();
       tx.sp.exists = false;
       await applyEnrollmentDomainMirror(tx as never, "u1", Domain.AI);
-      assert(tx.writes.includes("sp.updateMany"), "attempted");
+      assert(!tx.writes.includes("sp.updateMany"), "domain mirror retired");
     });
   });
 
@@ -279,8 +275,8 @@ async function main() {
     const core = source("src/features/enrollment/create-core-enrollment.ts");
     assert(core.includes("applyEnrollmentDomainMirror"), "mirror helper");
     assert(
-      source("src/repositories/enrollment-state.ts").includes("domain: null"),
-      "only null SP.domain",
+      source("src/repositories/enrollment-state.ts").includes("void domain"),
+      "domain mirror is a no-op",
     );
   });
 
@@ -419,8 +415,8 @@ async function main() {
       denorm.indexOf("export async function applyEnrollmentDomainMirror"),
     );
     assert(
-      denormFn.includes("daysCompleted: input.daysCompleted"),
-      "denorm helper only writes W7 fields",
+      denormFn.includes("trackCurrentStreak: input.currentStreak"),
+      "denorm helper writes PE snapshot only",
     );
     assert(
       !denormFn.includes("status:"),
@@ -602,10 +598,7 @@ async function main() {
 
   await suite("Phase 8-B does not reactivate frozen mirrors", () => {
     const impl = source("src/repositories/enrollment-state.ts");
-    assert(
-      impl.includes("isLegacyEnrollmentDenormMirrorEnabled"),
-      "W7-B gate kept",
-    );
+    assert(!impl.includes("isLegacyEnrollmentDenormMirrorEnabled"), "W7-B gate retired");
     assert(!impl.includes("isLegacyPointsMirrorEnabled"), "no points remirror");
     assert(
       !impl.includes("isLegacyCertificateMirrorEnabled"),

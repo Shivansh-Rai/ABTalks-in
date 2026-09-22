@@ -12,7 +12,6 @@ import {
   scrubProgramMemberLegacyPii,
 } from "@/repositories/program-state";
 import { memberIdFromPe } from "@/repositories/ids";
-import { isNewProgramStateEnabled } from "@/lib/feature-flags";
 
 type Tx = Prisma.TransactionClient;
 
@@ -162,39 +161,25 @@ export async function anonymizeUser(
     await applyChallengeProgramEnrollmentById(tx, enrollment.id);
   }
 
-  const openMembers = isNewProgramStateEnabled()
-    ? (
-        await tx.programEnrollment.findMany({
-          where: {
-            userId,
-            id: { startsWith: "pe_pm_" },
-            status: {
-              in: [
-                EnrollmentStatusV2.APPLIED,
-                EnrollmentStatusV2.WAITLISTED,
-                EnrollmentStatusV2.ACTIVE,
-              ],
-            },
-          },
-          select: { id: true },
-        })
-      ).flatMap((pe) => {
-        const id = memberIdFromPe(pe.id);
-        return id ? [{ id }] : [];
-      })
-    : await tx.programMember.findMany({
-        where: {
-          userId,
-          status: {
-            in: [
-              ProgramMemberStatus.APPLIED,
-              ProgramMemberStatus.WAITLISTED,
-              ProgramMemberStatus.ENROLLED,
-            ],
-          },
+  const openMembers = (
+    await tx.programEnrollment.findMany({
+      where: {
+        userId,
+        id: { startsWith: "pe_pm_" },
+        status: {
+          in: [
+            EnrollmentStatusV2.APPLIED,
+            EnrollmentStatusV2.WAITLISTED,
+            EnrollmentStatusV2.ACTIVE,
+          ],
         },
-        select: { id: true },
-      });
+      },
+      select: { id: true },
+    })
+  ).flatMap((pe) => {
+    const id = memberIdFromPe(pe.id);
+    return id ? [{ id }] : [];
+  });
 
   const anchors = await tx.programMember.findMany({
     where: {

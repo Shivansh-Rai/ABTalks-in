@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { peIdForMember } from "@/repositories/ids";
 import type { InterviewBlueprintKey } from "@/features/interview/cohort/blueprint";
 import { scopeDaysFor } from "@/features/interview/cohort/planner";
 import type {
@@ -125,6 +126,7 @@ export async function createAttempt(
   return prisma.generalInterview.create({
     data: {
       memberId,
+      programEnrollmentId: peIdForMember(memberId),
       blueprint,
       status: "IN_PROGRESS",
       plan: plan as unknown as Prisma.InputJsonValue,

@@ -1,5 +1,4 @@
 import { unstable_cache } from "next/cache";
-import { isNewLearningRepoEnabled } from "@/lib/feature-flags";
 import {
   listCachedDailyTasks,
   listDailyTasks,
@@ -25,12 +24,11 @@ export type CachedDailyTask = {
 export function getDailyTasksCached(
   challengeId: string,
 ): Promise<CachedDailyTask[]> {
-  const learningOn = isNewLearningRepoEnabled();
   return unstable_cache(
     async (): Promise<CachedDailyTask[]> => {
       return listCachedDailyTasks(challengeId);
     },
-    ["daily-tasks", challengeId, learningOn ? "new" : "legacy"],
+    ["daily-tasks", challengeId, "canonical"],
     { tags: [`daily-tasks:${challengeId}`], revalidate: false },
   )();
 }

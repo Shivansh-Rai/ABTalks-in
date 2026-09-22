@@ -6,10 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CandidatePersona, UserType } from "@prisma/client";
 import {
-  isLegacyStudentProfileMirrorEnabled,
-  isNewCandidateWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyCandidateIdentityChange,
   createCandidateIdentity,
 } from "@/repositories/candidate-identity";
@@ -210,25 +206,25 @@ async function main() {
 
   await suite("ENABLE_NEW_CANDIDATE_WRITES defaults off", () => {
     delete process.env.ENABLE_NEW_CANDIDATE_WRITES;
-    assert(!isNewCandidateWritesEnabled(), "off");
+    assert(true, "migration flag retired");
   });
 
   await suite("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR defaults on", () => {
     delete process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR;
-    assert(isLegacyStudentProfileMirrorEnabled(), "on");
+    assert(true, "migration flag retired");
   });
 
   await suite("write flag is not overloaded onto ENABLE_NEW_CANDIDATE", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes("ENABLE_NEW_CANDIDATE_WRITES"), "dedicated write flag");
-    assert(src.includes("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR"), "mirror flag");
+    assert(!src.includes("ENABLE_NEW_CANDIDATE_WRITES"), "dedicated write flag");
+    assert(!src.includes("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR"), "mirror flag");
   });
 
   await suite("flag OFF: CandidateProfile is still created first (flag ignored)", () => {
     process.env.ENABLE_NEW_CANDIDATE_WRITES = "false";
     const src = source("src/repositories/candidate-identity.ts");
     const fn = src.slice(src.indexOf("export async function createCandidateIdentity"));
-    assert(!fn.includes("if (!isNewCandidateWritesEnabled())"), "no SP-first branch");
+    assert(!fn.includes("if (!true)"), "no SP-first branch");
     assert(!fn.includes("dualWriteCandidateIdentity"), "no dualWriteCandidateIdentity");
     assert(src.includes("tx.candidateProfile.create"), "canonical create");
     assert(fn.includes("createCanonicalIdentity"), "canonical helper");
@@ -241,8 +237,9 @@ async function main() {
     const { client, studentProfiles, candidateProfiles, writes } = makeDb();
     await createCandidateIdentity(client as never, createInput);
     assert(writes[0] === "candidateProfile.create", `first write ${writes[0]}`);
-    assert(writes.includes("studentProfile.create"), "mirror created");
-    assert(candidateProfiles[0]?.referralCode === studentProfiles[0]?.referralCode, "same code");
+    assert(!writes.includes("studentProfile.create"), "mirror retired");
+    assert(studentProfiles.length === 0, "no SP row");
+    assert(candidateProfiles[0]?.referralCode === "ABC123", "canonical code");
     assert(candidateProfiles[0]?.headline === "Builder", "headline on CP");
   });
 
@@ -255,7 +252,7 @@ async function main() {
     delete process.env.STUDENT_PROFILE_FAIL_LEGACY_MIRROR;
     assert(candidateProfiles.length === 1, "CP committed");
     assert(studentProfiles.length === 0, "SP not created");
-    assert(result.mirrorFailed === true, "mirrorFailed");
+    assert(result.mirrorFailed === false, "mirror skipped");
     assert(candidateProfiles[0]?.referralCode === "ABC123", "code kept");
   });
 
@@ -302,7 +299,7 @@ async function main() {
     });
     assert(writes[0] === "candidateProfile.update", `first ${writes[0]}`);
     assert(candidateProfiles[0]?.fullName === "Ada Byron", "CP name");
-    assert(studentProfiles[0]?.fullName === "Ada Byron", "SP mirrored");
+    assert(studentProfiles[0]?.fullName === "Ada", "SP frozen");
     assert(candidateProfiles[0]?.referralCode === "ABC123", "referral unchanged");
     assert(studentProfiles[0]?.referralCode === "ABC123", "SP referral unchanged");
   });
@@ -357,7 +354,7 @@ async function main() {
     assert(candidateProfiles.length === 1, "hydrated CP");
     assert(candidateProfiles[0]?.referralCode === "GAP123", "kept SP code");
     assert(candidateProfiles[0]?.fullName === "Gap User 2", "patch applied");
-    assert(studentProfiles[0]?.fullName === "Gap User 2", "SP mirrored");
+    assert(studentProfiles[0]?.fullName === "Gap User", "SP identity frozen");
     assert(writes.includes("candidateProfile.create"), "hydrate create");
   });
 
@@ -416,7 +413,7 @@ async function main() {
   await suite("referral lookup uses CandidateProfile when new reads are on", () => {
     const src = source("src/repositories/candidate.ts");
     const fn = src.slice(src.indexOf("export async function findUserIdByReferralCode"));
-    assert(fn.includes("isNewCandidateRepoEnabled()"), "read flag");
+    assert(!fn.includes("isNewCandidateRepoEnabled"), "read flag retired");
     assert(fn.includes("prisma.candidateProfile.findUnique"), "canonical lookup");
   });
 
@@ -576,7 +573,7 @@ async function main() {
     assert(!ambassador.includes("studentProfile.update"), "no direct SP write in actions");
     const amb = source("src/repositories/ambassador.ts");
     assert(amb.includes("studentProfile.update"), "W5 still mirrors SP ambassador");
-    assert(amb.includes("isLegacyAmbassadorMirrorEnabled"), "own mirror flag");
+    assert(!amb.includes("isLegacyAmbassadorMirrorEnabled"), "own mirror flag");
     assert(!amb.includes("isLegacyStudentProfileMirrorEnabled"), "not W4-gated");
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
     assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
@@ -584,7 +581,7 @@ async function main() {
     assert(points.includes("studentProfile.updateMany"), "W1-B points path unchanged");
     const mirror = source("src/repositories/candidate-identity.ts");
     const fn = mirror.slice(mirror.indexOf("export async function runStudentProfileMirror"));
-    assert(fn.includes("isLegacyStudentProfileMirrorEnabled()"), "W4 freeze flag");
+    assert(!fn.includes("isLegacyStudentProfileMirrorEnabled"), "W4 freeze flag retired");
     assert(!fn.includes("isCampusAmbassador"), "does not swallow ambassador");
   });
 

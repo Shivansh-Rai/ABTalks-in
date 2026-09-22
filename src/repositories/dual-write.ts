@@ -18,10 +18,6 @@ import {
   UserType,
 } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import {
-  isNewProgramStateWritesEnabled,
-  isNewVisibilityWritesEnabled,
-} from "@/lib/feature-flags";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import {
   activityIdForDailyTask,
@@ -137,10 +133,7 @@ export async function dualWriteChallengeEnrollment(
     completedAt: Date | null;
   },
 ): Promise<void> {
-  const visibilityFirst = isNewVisibilityWritesEnabled();
-  if (visibilityFirst) {
-    await ensureCandidateVisibility(tx, enrollment.userId);
-  }
+  await ensureCandidateVisibility(tx, enrollment.userId);
   await runDualWrite(tx, "enrollment", async () => {
     const cohort = await tx.cohort.findUnique({
       where: { slug: cohortSlugForDomain(enrollment.domain) },
@@ -163,9 +156,6 @@ export async function dualWriteChallengeEnrollment(
         completedAt: enrollment.completedAt,
       },
     });
-    if (!visibilityFirst) {
-      await ensureCandidateVisibility(tx, enrollment.userId);
-    }
   });
 }
 
@@ -192,102 +182,8 @@ export async function dualWriteProgramMember(
   tx: Tx,
   memberId: string,
 ): Promise<void> {
-  if (isNewProgramStateWritesEnabled()) {
-    return;
-  }
-  const visibilityFirst = isNewVisibilityWritesEnabled();
-  if (visibilityFirst) {
-    const member = await tx.programMember.findUnique({
-      where: { id: memberId },
-      select: { userId: true, recruiterVisibilityConsentAt: true },
-    });
-    if (!member) throw new Error(`Missing ProgramMember ${memberId}`);
-    await ensureProgramMemberDiscoverable(
-      tx,
-      member.userId,
-      member.recruiterVisibilityConsentAt,
-    );
-  }
-  await runDualWrite(tx, "programMember", async () => {
-    const member = await tx.programMember.findUnique({
-      where: { id: memberId },
-      select: {
-        id: true,
-        userId: true,
-        cohortId: true,
-        status: true,
-        enrolledAt: true,
-        completedAt: true,
-        createdAt: true,
-        githubRepoUrl: true,
-        highestUnlockedDay: true,
-        skipTokensUsed: true,
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-        aiRecommendation: true,
-        aiRecommendationAt: true,
-        recruiterVisibilityConsentAt: true,
-      },
-    });
-    if (!member) throw new Error(`Missing ProgramMember ${memberId}`);
-    const cohort = await tx.cohort.findUnique({
-      where: { slug: cohortSlugForProgramCohort(member.cohortId) },
-      select: { id: true },
-    });
-    if (!cohort) {
-      throw new Error(`Missing cohort ${cohortSlugForProgramCohort(member.cohortId)}`);
-    }
-    await tx.programEnrollment.upsert({
-      where: { id: peIdForMember(member.id) },
-      create: {
-        id: peIdForMember(member.id),
-        userId: member.userId,
-        cohortId: cohort.id,
-        status: mapMemberStatus(member.status),
-        startedAt: member.enrolledAt ?? member.createdAt,
-        enrolledAt: member.enrolledAt,
-        completedAt: member.completedAt,
-        githubRepoUrl: member.githubRepoUrl,
-        unlockFloorDay: member.highestUnlockedDay,
-        skipTokensUsed: member.skipTokensUsed,
-        missionPoints: member.missionPoints,
-        conceptPoints: member.conceptPoints,
-        commitPoints: member.commitPoints,
-        projectPoints: member.projectPoints,
-        totalScore: member.totalScore,
-        cleanPassCount: member.cleanPassCount,
-        aiRecommendation: member.aiRecommendation,
-        aiRecommendationAt: member.aiRecommendationAt,
-      },
-      update: {
-        status: mapMemberStatus(member.status),
-        enrolledAt: member.enrolledAt,
-        completedAt: member.completedAt,
-        githubRepoUrl: member.githubRepoUrl,
-        unlockFloorDay: member.highestUnlockedDay,
-        skipTokensUsed: member.skipTokensUsed,
-        missionPoints: member.missionPoints,
-        conceptPoints: member.conceptPoints,
-        commitPoints: member.commitPoints,
-        projectPoints: member.projectPoints,
-        totalScore: member.totalScore,
-        cleanPassCount: member.cleanPassCount,
-        aiRecommendation: member.aiRecommendation,
-        aiRecommendationAt: member.aiRecommendationAt,
-      },
-    });
-    if (!visibilityFirst) {
-      await ensureProgramMemberDiscoverable(
-        tx,
-        member.userId,
-        member.recruiterVisibilityConsentAt,
-      );
-    }
-  });
+  void tx;
+  void memberId;
 }
 
 export async function dualWriteProgramDayMissionType(

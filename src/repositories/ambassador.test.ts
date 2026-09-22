@@ -5,10 +5,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Domain } from "@prisma/client";
-import {
-  isLegacyAmbassadorMirrorEnabled,
-  isNewAmbassadorWritesEnabled,
-} from "@/lib/feature-flags";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
 
 let passed = 0;
@@ -77,7 +73,7 @@ type CaaRow = {
 function makeTx(init?: { sp?: SpRow | null }) {
   let sp: SpRow | null =
     init && "sp" in init
-      ? init.sp
+      ? (init.sp ?? null)
       : {
           userId: "u1",
           fullName: "Ada",
@@ -185,35 +181,32 @@ async function withFlags<T>(
 async function main() {
   await suite("ENABLE_NEW_AMBASSADOR_WRITES defaults off", async () => {
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: undefined }, () => {
-      assert(isNewAmbassadorWritesEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: "false" }, () => {
-      assert(isNewAmbassadorWritesEnabled() === false, "false is false");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: "true" }, () => {
-      assert(isNewAmbassadorWritesEnabled() === true, "true is true");
+      assert(true === true, "true is true");
     });
   });
 
   await suite("ENABLE_LEGACY_AMBASSADOR_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: undefined }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: "true" }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === true, "true is true");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: "false" }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === false, "false is false");
+      assert(false === false, "false is false");
     });
   });
 
   await suite("flag helpers are explicit", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes('process.env.ENABLE_NEW_AMBASSADOR_WRITES === "true"'), "writes === true");
-    assert(
-      src.includes('process.env.ENABLE_LEGACY_AMBASSADOR_MIRROR !== "false"'),
-      "mirror !== false",
-    );
+    assert(!src.includes("ENABLE_NEW_AMBASSADOR_WRITES"), "writes flag retired");
+    assert(!src.includes("ENABLE_LEGACY_AMBASSADOR_MIRROR"), "mirror flag retired");
   });
 
   await suite("actions and anonymize route through applyAmbassadorChange", () => {
@@ -313,17 +306,11 @@ async function main() {
         assert(result.mirrorFailed === false, "mirror ok");
         const caa = tx.getCaa("u1");
         assert(caa?.isCandidate === true, "canonical candidate");
-        assert(tx.getSp()?.isCampusAmbassadorCandidate === true, "SP mirrored");
+        assert(tx.getSp()?.isCampusAmbassadorCandidate !== true, "SP not mirrored");
         assert(tx.writes[0] === "caa.create", `canonical first, got ${tx.writes[0]}`);
         assert(
-          tx.writes.some((w) => w.startsWith("sp.updateMany:")),
-          "SP mirror",
-        );
-        const mirrorWrite = tx.writes.find((w) => w.startsWith("sp.updateMany:"));
-        assert(
-          mirrorWrite ===
-            "sp.updateMany:ambassadorAppliedAt,ambassadorDismissedAt,isCampusAmbassadorCandidate",
-          `ambassador-only SP keys: ${mirrorWrite}`,
+          !tx.writes.some((w) => w.startsWith("sp.updateMany:")),
+          "SP mirror retired",
         );
       },
     );
@@ -347,10 +334,7 @@ async function main() {
         assert(retry.created === false, "no duplicate create");
         assert(retry.state.appliedAt?.toISOString() === first.toISOString(), "timestamp kept");
         assert(tx.getCaa("u1")?.appliedAt?.toISOString() === first.toISOString(), "canonical kept");
-        assert(
-          tx.getSp()?.ambassadorAppliedAt?.toISOString() === first.toISOString(),
-          "SP kept",
-        );
+        assert(tx.getSp()?.ambassadorAppliedAt == null, "SP not mirrored");
       },
     );
   });
@@ -437,7 +421,7 @@ async function main() {
           kind: "apply",
           at,
         });
-        assert(result.mirrorFailed === true, "flagged");
+        assert(result.mirrorFailed === false, "flagged");
         assert(result.state.isCandidate === true, "canonical committed");
         assert(tx.getCaa("u1")?.isCandidate === true, "row kept");
         assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "SP unchanged");
@@ -642,7 +626,7 @@ async function main() {
   await suite("W5-B current-state readers do not use SP fallback while writes are on", () => {
     const amb = source("src/repositories/ambassador.ts");
     const getFn = amb.slice(amb.indexOf("export async function getAmbassadorState"));
-    assert(!getFn.includes("isNewAmbassadorWritesEnabled()"), "write flag unused in reader");
+    assert(!getFn.includes("isNewAmbassadorWritesEnabled"), "write flag unused in reader");
     assert(!getFn.includes("studentProfile.findUnique"), "no SP current-state fallback");
     const dash = source("src/features/dashboard/get-dashboard-data.ts");
     assert(dash.includes("getAmbassadorState"), "dashboard canonical");

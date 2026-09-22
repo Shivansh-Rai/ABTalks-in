@@ -14,9 +14,6 @@ import "server-only";
 import type { Domain, Prisma, PrismaClient } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
-import {
-  isLegacyAmbassadorMirrorEnabled,
-} from "@/lib/feature-flags";
 import { pickPrimaryEducation } from "@/repositories/candidate-primary";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
@@ -152,52 +149,8 @@ async function runStudentProfileAmbassadorMirror(
   userId: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyAmbassadorMirrorEnabled()) return false;
-  if (shouldInjectLegacyMirrorFailure()) {
-    logger.error(
-      "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-      { label, userId, error: "AMBASSADOR_FAIL_LEGACY_MIRROR" },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[ambassador] student profile ambassador mirror rollback failed", {
-          label,
-          userId,
-          error: String(rollbackErr),
-        });
-      }
-      logger.error(
-        "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-        {
-          label,
-          userId,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    logger.error(
-      "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-      {
-        label,
-        userId,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return true;
-  }
+  void tx; void label; void userId; void fn;
+  return false;
 }
 
 /**
@@ -226,7 +179,7 @@ export async function applyAmbassadorChange(
       });
     },
   );
-  if (input.kind === "wipe" && !isLegacyAmbassadorMirrorEnabled()) {
+  if (input.kind === "wipe") {
     await tx.studentProfile.updateMany({
       where: { userId },
       data: ambassadorStudentProfileData(state),

@@ -1,7 +1,6 @@
 import "server-only";
 import { Domain, EnrollmentStatusV2 } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
 import { peIdForEnrollment } from "@/repositories/ids";
 import { getChallengeProgressStats } from "@/repositories/progress";
 
@@ -118,38 +117,30 @@ function collect(
  */
 async function challengeQualifiedAt(enrollmentId: string): Promise<Date | null> {
   const days: { dayNumber: number; at: Date }[] = [];
-  if (isNewProgressRepoEnabled()) {
-    const attempts = await prisma.activityAttempt.findMany({
-      where: {
-        enrollmentId: peIdForEnrollment(enrollmentId),
-        id: { startsWith: "aa_sub_" },
-        activityId: { startsWith: "act_dt_" },
-      },
-      select: {
-        passed: true,
-        submittedAt: true,
-        createdAt: true,
-        activity: { select: { dayNumber: true } },
-        evaluations: {
-          where: { isAuthoritative: true },
-          select: { passed: true },
-          take: 1,
-        },
-      },
-    });
-    for (const row of attempts) {
-      const dayNumber = row.activity.dayNumber;
-      if (dayNumber == null) continue;
-      if (!(row.evaluations[0]?.passed ?? row.passed)) continue;
-      days.push({ dayNumber, at: row.submittedAt ?? row.createdAt });
-    }
-  } else {
-    const submissions = await prisma.submission.findMany({
-      where: { enrollmentId },
-      select: { dayNumber: true, submittedAt: true },
-    });
-    for (const row of submissions) days.push({ dayNumber: row.dayNumber, at: row.submittedAt });
-  }
+const attempts = await prisma.activityAttempt.findMany({
+  where: {
+    enrollmentId: peIdForEnrollment(enrollmentId),
+    id: { startsWith: "aa_sub_" },
+    activityId: { startsWith: "act_dt_" },
+  },
+  select: {
+    passed: true,
+    submittedAt: true,
+    createdAt: true,
+    activity: { select: { dayNumber: true } },
+    evaluations: {
+      where: { isAuthoritative: true },
+      select: { passed: true },
+      take: 1,
+    },
+  },
+});
+for (const row of attempts) {
+  const dayNumber = row.activity.dayNumber;
+  if (dayNumber == null) continue;
+  if (!(row.evaluations[0]?.passed ?? row.passed)) continue;
+  days.push({ dayNumber, at: row.submittedAt ?? row.createdAt });
+}
 
   days.sort((a, b) => a.at.getTime() - b.at.getTime());
   const seen = new Set<number>();

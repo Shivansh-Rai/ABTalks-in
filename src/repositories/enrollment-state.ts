@@ -25,9 +25,9 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { isLegacyEnrollmentDenormMirrorEnabled } from "@/lib/feature-flags";
 import {
   cohortSlugForDomain,
+  domainFromChallengeCohortSlug,
   enrollmentIdFromPe,
   peIdForEnrollment,
 } from "@/repositories/ids";
@@ -77,6 +77,7 @@ export async function applyChallengeProgramEnrollment(
       status,
       startedAt: enrollment.startedAt,
       enrolledAt: enrollment.startedAt,
+      joinedAt: enrollment.startedAt,
       completedAt: enrollment.completedAt,
     },
     update: {
@@ -133,31 +134,7 @@ export async function applyEnrollmentProgressDenorm(
     );
   }
 
-  if (!isLegacyEnrollmentDenormMirrorEnabled()) {
-    return { mirrorFailed: false };
-  }
-
-  try {
-    await tx.enrollment.update({
-      where: { id: input.enrollmentId },
-      data: {
-        daysCompleted: input.daysCompleted,
-        currentStreak: input.currentStreak,
-        longestStreak: input.longestStreak,
-        lastSubmittedDay: input.lastSubmittedDay,
-      },
-    });
-    return { mirrorFailed: false };
-  } catch (err) {
-    logger.error(
-      "[enrollment-state] Enrollment denorm mirror failed; canonical snapshot kept",
-      {
-        enrollmentId: input.enrollmentId,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return { mirrorFailed: true };
-  }
+  return { mirrorFailed: false };
 }
 
 /**
@@ -169,22 +146,7 @@ export async function applyEnrollmentDomainMirror(
   userId: string,
   domain: Domain,
 ): Promise<void> {
-  if (!isLegacyEnrollmentDenormMirrorEnabled()) return;
-  try {
-    await tx.studentProfile.updateMany({
-      where: { userId, domain: null },
-      data: { domain },
-    });
-  } catch (err) {
-    logger.error(
-      "[enrollment-state] StudentProfile.domain mirror failed; canonical enrollment kept",
-      {
-        userId,
-        domain,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-  }
+  void tx; void userId; void domain;
 }
 
 export async function listTrackStreakSnapshots(
@@ -217,17 +179,18 @@ export async function listPrimaryChallengeDomains(
   const out = new Map<string, Domain | null>();
   if (userIds.length === 0) return out;
   const unique = [...new Set(userIds)];
-  // First-joined track uses Enrollment.createdAt, not PE.startedAt.
-  // Phase 2 backfill copied cohort calendar starts onto PE.startedAt
-  // (and some Enrollment.startedAt), which is not join order.
-  const enrollments = await prisma.enrollment.findMany({
-    where: { userId: { in: unique } },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    select: { userId: true, domain: true },
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      userId: { in: unique },
+      id: { startsWith: "pe_enr_" },
+    },
+    orderBy: [{ joinedAt: "asc" }, { id: "asc" }],
+    select: { userId: true, cohort: { select: { slug: true } } },
   });
-  for (const row of enrollments) {
-    if (out.has(row.userId)) continue;
-    out.set(row.userId, row.domain);
+  for (const pe of pes) {
+    if (out.has(pe.userId)) continue;
+    const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+    if (domain) out.set(pe.userId, domain);
   }
   for (const id of unique) {
     if (!out.has(id)) out.set(id, null);

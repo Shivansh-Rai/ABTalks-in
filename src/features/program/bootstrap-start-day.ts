@@ -4,7 +4,6 @@ import {
   applyProgramScoreChange,
   applyProgramUnlockChange,
 } from "@/repositories/program-state";
-import { isNewProgramStateEnabled, isNewProgramStateWritesEnabled } from "@/lib/feature-flags";
 import {
   missionSubmissionIdFromAttemptId,
   peIdForMember,
@@ -74,6 +73,7 @@ async function seedEarlyCommitDays(
         where: { memberId_date: { memberId, date: commitDate } },
         create: {
           memberId,
+          programEnrollmentId: peIdForMember(memberId),
           date: commitDate,
           commitCount: nextCount,
         },
@@ -132,21 +132,19 @@ export async function bootstrapMemberStartDay(
   });
   if (!member) return;
 
-  if (isNewProgramStateWritesEnabled() || isNewProgramStateEnabled()) {
-    const pe = await tx.programEnrollment.findUnique({
-      where: { id: peIdForMember(memberId) },
-      select: {
-        unlockFloorDay: true,
-        missionPoints: true,
-        cleanPassCount: true,
-      },
-    });
-    if (pe) {
-      member.highestUnlockedDay = pe.unlockFloorDay ?? member.highestUnlockedDay;
-      member.missionPoints = pe.missionPoints;
-      member.cleanPassCount = pe.cleanPassCount;
-    }
-  }
+const pe = await tx.programEnrollment.findUnique({
+  where: { id: peIdForMember(memberId) },
+  select: {
+    unlockFloorDay: true,
+    missionPoints: true,
+    cleanPassCount: true,
+  },
+});
+if (pe) {
+  member.highestUnlockedDay = pe.unlockFloorDay ?? member.highestUnlockedDay;
+  member.missionPoints = pe.missionPoints;
+  member.cleanPassCount = pe.cleanPassCount;
+}
 
   const existingPassed =
     WAIVED_DAYS.length === 0

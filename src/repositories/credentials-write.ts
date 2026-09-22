@@ -11,7 +11,6 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import { isLegacyCertificateMirrorEnabled } from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import {
   CERT_ID_ALPHABET,
@@ -261,51 +260,7 @@ async function mirrorLegacyCertificate(
   ident: ReturnType<typeof identityOf>,
   publicId: string,
 ): Promise<void> {
-  if (!isLegacyCertificateMirrorEnabled()) return;
-  if (shouldInjectLegacyMirrorFailure()) {
-    throw new Error("CERTIFICATE_FAIL_LEGACY_MIRROR");
-  }
-
-  const byPublic = await db.certificate.findUnique({
-    where: { certificateId: publicId },
-    select: { certificateId: true },
-  });
-  if (byPublic) return;
-
-  if (ident.enrollmentId) {
-    const byEnrollment = await db.certificate.findUnique({
-      where: { enrollmentId: ident.enrollmentId },
-      select: { certificateId: true },
-    });
-    if (byEnrollment) {
-      if (byEnrollment.certificateId !== publicId) {
-        logger.error(
-          "[credential] legacy certificate public id differs; new credential kept",
-          {
-            userId: input.userId,
-            credentialId: publicId,
-            certificateId: byEnrollment.certificateId,
-          },
-        );
-      }
-      return;
-    }
-  }
-
-  await db.certificate.create({
-    data: {
-      certificateId: publicId,
-      userId: input.userId,
-      type: ident.certificateType,
-      status: CertificateStatus.ISSUED,
-      recipientName: input.recipientName,
-      domain: ident.domain,
-      enrollmentId: ident.enrollmentId,
-      issuedAt: input.issuedAt,
-      metadata: input.metadata,
-    },
-    select: { certificateId: true },
-  });
+  void db; void input; void ident; void publicId;
 }
 
 async function flushCertificateMirror(

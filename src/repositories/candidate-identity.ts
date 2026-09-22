@@ -20,9 +20,6 @@ import {
 } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import {
-  isLegacyStudentProfileMirrorEnabled,
-} from "@/lib/feature-flags";
-import {
   educationIdForStudentProfile,
   experienceIdForStudentProfile,
   personaFromUserType,
@@ -128,49 +125,8 @@ export async function runStudentProfileMirror(
   label: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyStudentProfileMirrorEnabled()) return false;
-  if (shouldInjectStudentProfileMirrorFailure()) {
-    logger.error("[candidate] legacy StudentProfile mirror failed; new candidate kept", {
-      label,
-      error: "STUDENT_PROFILE_FAIL_LEGACY_MIRROR",
-    });
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[candidate] student profile mirror rollback failed", {
-          label,
-          error: String(rollbackErr),
-        });
-      }
-      logger.error(
-        "[candidate] legacy StudentProfile mirror failed; new candidate kept",
-        {
-          label,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    logger.error(
-      "[candidate] legacy StudentProfile mirror failed; new candidate kept",
-      {
-        label,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return true;
-  }
+  void tx; void label; void fn;
+  return false;
 }
 
 /**

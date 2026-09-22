@@ -210,8 +210,7 @@ suite("download lookup stays on getPublicCertificate", () => {
 suite("listForUser orders issuedAt desc then public id", () => {
   const src = source("src/repositories/credentials.ts");
   assert(src.includes('{ issuedAt: "desc" }'), "issuedAt desc");
-  assert(src.includes('{ credentialId: "asc" }'), "new-side stable key");
-  assert(src.includes('{ certificateId: "asc" }'), "legacy stable key");
+  assert(src.includes('{ credentialId: "asc" }'), "canonical stable key");
 });
 
 suite("admin student detail reads synergy through getBalance", () => {
@@ -321,7 +320,7 @@ suite("candidate flag ON reads only new candidate tables", () => {
     src.includes("claimedByCandidate: true"),
     "withdrawn claims do not read back as declared skills",
   );
-  assert(src.includes("isNewCandidateRepoEnabled"), "flag");
+  assert(!src.includes("isNewCandidateRepoEnabled"), "flag");
   assert(src.includes("return viewFromNew(row)"), "genuine new view");
   assert(!src.includes("function liveView"), "no SP overlay");
   assert(src.includes("findUserIdByReferralCode"), "referral lookup helper");
@@ -519,7 +518,7 @@ suite("program member APPLIED/WAITLISTED/ENROLLED/DROPPED dual-write", () => {
 
 suite("learning repo is the flag-gated compatibility boundary", () => {
   const src = source("src/repositories/learning.ts");
-  assert(src.includes("isNewLearningRepoEnabled"), "flag");
+  assert(!src.includes("isNewLearningRepoEnabled"), "flag");
   assert(src.includes("getQuizDefinition"), "quiz definition");
   assert(src.includes("findAppliedMembership"), "APPLIED");
   assert(src.includes("findWaitlistedMembership"), "WAITLISTED");
@@ -543,7 +542,7 @@ suite("ON membership path does not select only by newest enrolledAt", () => {
 
 suite("ENABLE_NEW_LEARNING is not flipped in app code", () => {
   const flags = source("src/lib/feature-flags.ts");
-  assert(flags.includes('process.env.ENABLE_NEW_LEARNING === "true"'), "still env-gated");
+  assert(!flags.includes("ENABLE_NEW_LEARNING"), "learning flag retired");
 });
 
 suite("ProgramDay missionType is stored exactly on ContentActivityConfig", () => {

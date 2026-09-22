@@ -1,10 +1,6 @@
 import "server-only";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import {
-  isLegacyVisibilityMirrorEnabled,
-  isNewVisibilityWritesEnabled,
-} from "@/lib/feature-flags";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
 
@@ -55,10 +51,7 @@ async function mirrorLegacyConsent(
   _tx: Tx,
   input: { userId: string; kind: VisibilityKind },
 ): Promise<void> {
-  if (!isLegacyVisibilityMirrorEnabled()) return;
-  if (shouldInjectLegacyMirrorFailure()) {
-    throw new Error("VISIBILITY_FAIL_LEGACY_MIRROR");
-  }
+  void _tx;
   void input;
 }
 
@@ -70,7 +63,6 @@ async function flushMirror(
     await mirrorLegacyConsent(tx, input);
     return false;
   } catch (err) {
-    if (!isNewVisibilityWritesEnabled()) throw err;
     logger.error("[visibility] legacy consent mirror failed; CandidateVisibility kept", {
       userId: input.userId,
       kind: input.kind,
@@ -228,8 +220,7 @@ export async function applyVisibilityChange(
   }
 
   // program_member
-  const useLegacyLabel =
-    isLegacyVisibilityMirrorEnabled() && Boolean(input.consentedAt);
+  const useLegacyLabel = Boolean(input.consentedAt);
   const source = useLegacyLabel
     ? PROGRAM_APPLY_CONSENT_SOURCE
     : ENROLLMENT_DEFAULT_CONSENT_SOURCE;

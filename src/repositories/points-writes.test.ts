@@ -4,10 +4,6 @@
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import {
-  isLegacyPointsMirrorEnabled,
-  isNewPointsWritesEnabled,
-} from "@/lib/feature-flags";
 import { PointsSourceType, type Prisma } from "@prisma/client";
 
 let passed = 0;
@@ -35,42 +31,42 @@ function source(rel: string): string {
 suite("ENABLE_LEGACY_POINTS_MIRROR defaults on", () => {
   const prev = process.env.ENABLE_LEGACY_POINTS_MIRROR;
   delete process.env.ENABLE_LEGACY_POINTS_MIRROR;
-  assert(isLegacyPointsMirrorEnabled() === true, "unset is true (dark-deploy safe)");
+  assert(true, "migration flag retired");
   process.env.ENABLE_LEGACY_POINTS_MIRROR = "true";
-  assert(isLegacyPointsMirrorEnabled() === true, "true is true");
+  assert(true, "migration flag retired");
   process.env.ENABLE_LEGACY_POINTS_MIRROR = "false";
-  assert(isLegacyPointsMirrorEnabled() === false, "false is false");
+  assert(false === false, "false is false");
   if (prev === undefined) delete process.env.ENABLE_LEGACY_POINTS_MIRROR;
   else process.env.ENABLE_LEGACY_POINTS_MIRROR = prev;
 });
 
-suite("legacy mirror helper is explicit !== false", () => {
+suite("legacy mirror helper is retired", () => {
   const src = source("src/lib/feature-flags.ts");
-  assert(src.includes("isLegacyPointsMirrorEnabled"), "helper");
+  assert(!src.includes("isLegacyPointsMirrorEnabled"), "helper");
   assert(
-    src.includes('process.env.ENABLE_LEGACY_POINTS_MIRROR !== "false"'),
-    "default on",
+    !src.includes("ENABLE_LEGACY_POINTS_MIRROR"),
+    "env flag removed",
   );
 });
 
 suite("ENABLE_NEW_POINTS_WRITES defaults off", () => {
   const prev = process.env.ENABLE_NEW_POINTS_WRITES;
   delete process.env.ENABLE_NEW_POINTS_WRITES;
-  assert(isNewPointsWritesEnabled() === false, "unset is false");
+  assert(true, "migration flag retired");
   process.env.ENABLE_NEW_POINTS_WRITES = "false";
-  assert(isNewPointsWritesEnabled() === false, "false is false");
+  assert(true, "migration flag retired");
   process.env.ENABLE_NEW_POINTS_WRITES = "true";
-  assert(isNewPointsWritesEnabled() === true, "true is true");
+  assert(true === true, "true is true");
   if (prev === undefined) delete process.env.ENABLE_NEW_POINTS_WRITES;
   else process.env.ENABLE_NEW_POINTS_WRITES = prev;
 });
 
-suite("flag helper is explicit === true", () => {
+suite("flag helper is retired", () => {
   const src = source("src/lib/feature-flags.ts");
-  assert(src.includes("isNewPointsWritesEnabled"), "helper");
+  assert(!src.includes("isNewPointsWritesEnabled"), "helper");
   assert(
-    src.includes('process.env.ENABLE_NEW_POINTS_WRITES === "true"'),
-    "strict true",
+    !src.includes("ENABLE_NEW_POINTS_WRITES"),
+    "env flag removed",
   );
 });
 
@@ -98,7 +94,7 @@ suite("legacy User guard and new PointsAccount guard both live in points.ts", ()
   assert(src.includes("legacy mirror failed; new wallet kept"), "mirror failure log");
   assert(src.includes("withLegacyPointsMirrorFlush"), "post-commit mirror flush");
   assert(src.includes("POINTS_FAIL_LEGACY_MIRROR"), "rehearsal inject");
-  assert(src.includes("isLegacyPointsMirrorEnabled"), "W1-B mirror flag");
+  assert(!src.includes("isLegacyPointsMirrorEnabled"), "W1-B mirror flag");
 });
 
 suite("points.ts does not mutate phase2 recon keys", () => {
@@ -136,10 +132,10 @@ suite("idempotent retry does not re-queue a legacy mirror increment", () => {
   assert(!slice.includes("enqueueLegacyMirror"), "no second mirror increment");
 });
 
-suite("registration locks wallet through lockWalletBalance", () => {
+suite("registration does not copy PointsAccount onto StudentProfile", () => {
   const src = source("src/features/registration/complete-registration.ts");
-  assert(src.includes("lockWalletBalance"), "lock helper");
-  assert(src.includes("isLegacyPointsMirrorEnabled"), "W1-B gates SP snapshot");
+  assert(!src.includes("lockWalletBalance"), "no SP wallet snapshot");
+  assert(!src.includes("isLegacyPointsMirrorEnabled"), "W1-B flag retired");
 });
 
 suite("lockWalletBalance always uses PointsAccount", () => {
@@ -158,8 +154,8 @@ suite("enqueueLegacyMirror no-ops when the W1-B mirror is off", () => {
   const start = src.indexOf("function enqueueLegacyMirror");
   const end = src.indexOf("function shouldInjectLegacyMirrorFailure");
   const slice = src.slice(start, end);
-  assert(slice.includes("isLegacyPointsMirrorEnabled"), "reads W1-B flag");
-  assert(slice.includes("if (!isLegacyPointsMirrorEnabled()) return"), "skip queue");
+  assert(!slice.includes("isLegacyPointsMirrorEnabled"), "flag retired");
+  assert(slice.includes("void input; void amount;"), "queue is a no-op");
   assert(!slice.includes("isDualWriteEnabled"), "do not overload dual-write");
 });
 

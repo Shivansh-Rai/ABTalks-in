@@ -5,7 +5,6 @@ import { getMissionHeatmap, type MissionHeatmapCell } from "@/features/program/p
 import {
   getInterviewSignal,
 } from "@/features/interview/read-model";
-import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
@@ -334,10 +333,7 @@ export async function getTalentProfile(
     getInterviewSignal(memberId),
   ]);
 
-  const useNew = isNewTalentRepoEnabled();
-  const idn = useNew
-    ? (await loadRecruiterIdentities([member.userId])).get(member.userId)
-    : undefined;
+  const idn = (await loadRecruiterIdentities([member.userId])).get(member.userId);
 
   // Only the boolean is read out of this row. The same table carries the
   // candidate's expected salary, which is admin-only and must not reach a
@@ -351,22 +347,15 @@ export async function getTalentProfile(
     data: {
       memberId: member.id,
       openToWork,
-      fullName: useNew ? (idn?.fullName || member.fullName) : member.fullName,
-      jobRole: useNew ? (idn?.role ?? member.jobRole) : member.jobRole,
+      fullName: idn?.fullName || member.fullName,
+      jobRole: idn?.role ?? member.jobRole,
       // Field exposure is the platform policy on both read paths (plan 133).
       company: RECRUITER_FIELD_POLICY.currentEmployer ? member.company : null,
-      yearsExperience: useNew
-        ? (idn?.yearsExperience ?? member.yearsExperience)
-        : member.yearsExperience,
-      education: useNew ? (idn?.education ?? member.education) : member.education,
-      university: useNew
-        ? (idn?.university ?? member.university)
-        : member.university,
-      graduationYear: useNew
-        ? (idn?.graduationYear ?? member.graduationYear)
-        : member.graduationYear,
-      skills:
-        useNew && idn?.skills.length ? idn.skills : member.skills,
+      yearsExperience: idn?.yearsExperience ?? member.yearsExperience,
+      education: idn?.education ?? member.education,
+      university: idn?.university ?? member.university,
+      graduationYear: idn?.graduationYear ?? member.graduationYear,
+      skills: idn?.skills.length ? idn.skills : member.skills,
       contactReleased: false as const,
       rank,
       scoreBreakdown: {
@@ -433,7 +422,7 @@ export async function toggleShortlist(
       cohortId: access.cohort.id,
       user: searchableUserWhere(),
     },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
   if (!member) return { ok: false, message: "Member not found." };
 
@@ -450,7 +439,7 @@ export async function toggleShortlist(
   }
 
   await prisma.recruiterShortlistItem.create({
-    data: { recruiterUserId, memberId },
+    data: { recruiterUserId, memberId, candidateUserId: member.userId },
   });
   return { ok: true, shortlisted: true };
 }
@@ -474,7 +463,7 @@ export async function ensureShortlisted(
       cohortId: access.cohort.id,
       user: searchableUserWhere(),
     },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
   if (!member) return { ok: false, message: "Member not found." };
 
@@ -485,7 +474,7 @@ export async function ensureShortlisted(
   if (existing) return { ok: true, added: false };
 
   await prisma.recruiterShortlistItem.create({
-    data: { recruiterUserId, memberId },
+    data: { recruiterUserId, memberId, candidateUserId: member.userId },
   });
   return { ok: true, added: true };
 }
@@ -560,9 +549,9 @@ export async function getShortlist(
   );
   const shown = visible.filter((i) => searchable.has(i.member.userId));
 
-  const identities = isNewTalentRepoEnabled()
-    ? await loadRecruiterIdentities(shown.map((i) => i.member.userId))
-    : new Map();
+  const identities = await loadRecruiterIdentities(
+    shown.map((i) => i.member.userId),
+  );
 
   // Read for the "Open to work" badge only. The salary columns on the same row
   // stay admin-only and must not be mapped onto ShortlistRow.

@@ -1,9 +1,6 @@
 import { UserType } from "@prisma/client";
 import { clearRefCookie } from "@/lib/cookies";
-import {
-  isLegacyPointsMirrorEnabled,
-  isOtpVerificationRequired,
-} from "@/lib/feature-flags";
+import { isOtpVerificationRequired } from "@/lib/feature-flags";
 import type { RegisterPayloadInput } from "@/lib/validations/register";
 import { INDIA_DIALING_CODE, toE164 } from "@/lib/validations/phone";
 import { prisma, writeClient } from "@/lib/db";
@@ -14,7 +11,7 @@ import { generateUniqueReferralCode } from "./generate-referral-code";
 import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findUserIdByReferralCode } from "@/repositories/candidate";
 import { createCandidateIdentity } from "@/repositories/candidate-identity";
-import { lockWalletBalance, withLegacyPointsMirrorFlush } from "@/repositories/points";
+import { withLegacyPointsMirrorFlush } from "@/repositories/points";
 
 export type CompleteRegistrationResult =
   | { ok: true; profileId: string }
@@ -117,13 +114,8 @@ export async function completeRegistration(
 
   try {
     const profileId = await writeClient().$transaction(async (tx) => {
-      // Lock the authoritative wallet before copying it onto the SP mirror
-      // so a simultaneous grant cannot leave the two balances out of sync.
-      // W1-B: when the legacy mirror is frozen, new profiles keep the column
-      // default (0) instead of copying the live PointsAccount balance.
-      const synergyPoints = isLegacyPointsMirrorEnabled()
-        ? await lockWalletBalance(tx, userId)
-        : 0;
+      // Frozen StudentProfile.synergyPoints stays at the column default.
+      const synergyPoints = 0;
 
       // `graduationYear`, `skills`, `linkedinUrl` and `githubUsername` are left
       // empty on purpose: the form no longer asks for them and the résumé merge

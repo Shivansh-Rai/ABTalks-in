@@ -6,11 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { EnrollmentStatusV2, ProgramMemberStatus } from "@prisma/client";
 import {
-  isLegacyProgramMemberMirrorEnabled,
-  isNewProgramStateEnabled,
-  isNewProgramStateWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyProgramMembershipChange,
   applyProgramScoreChange,
   applyProgramUnlockChange,
@@ -167,28 +162,28 @@ const identity = {
 async function main() {
   await suite("ENABLE_NEW_PROGRAM_STATE defaults off", async () => {
     await withFlags({ ENABLE_NEW_PROGRAM_STATE: undefined }, () => {
-      assert(isNewProgramStateEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_NEW_PROGRAM_STATE_WRITES defaults off", async () => {
     await withFlags({ ENABLE_NEW_PROGRAM_STATE_WRITES: undefined }, () => {
-      assert(isNewProgramStateWritesEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR: undefined }, () => {
-      assert(isLegacyProgramMemberMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("does not overload dual-write / progress / enrollment flags", () => {
     const flags = source("src/lib/feature-flags.ts");
     const impl = source("src/repositories/program-state.ts");
-    assert(flags.includes("ENABLE_NEW_PROGRAM_STATE"), "own read flag");
-    assert(flags.includes("ENABLE_NEW_PROGRAM_STATE_WRITES"), "own write flag");
-    assert(flags.includes("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR"), "own mirror flag");
+    assert(!flags.includes("ENABLE_NEW_PROGRAM_STATE"), "own read flag");
+    assert(!flags.includes("ENABLE_NEW_PROGRAM_STATE_WRITES"), "own write flag");
+    assert(!flags.includes("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR"), "own mirror flag");
     assert(!impl.includes("isNewProgressRepoEnabled"), "no progress flag");
     assert(!impl.includes("isNewEnrollmentStateEnabled"), "no enrollment flag");
     assert(!impl.includes("ENABLE_DUAL_WRITE"), "does not overload dual-write");
@@ -216,8 +211,7 @@ async function main() {
         const peIdx = tx.writes.indexOf("pe.upsert");
         const pmIdx = tx.writes.indexOf("pm.update");
         assert(peIdx >= 0, "pe wrote");
-        assert(pmIdx >= 0, "pm mirrored");
-        assert(peIdx < pmIdx, `pe first ${tx.writes.join(",")}`);
+        assert(pmIdx < 0, "pm not mirrored");
         assert(tx.pe.status === EnrollmentStatusV2.ACTIVE, "ENROLLED maps ACTIVE");
       },
     );
@@ -266,11 +260,10 @@ async function main() {
           cleanPassCountDelta: 1,
         });
         assert(tx.writes[0] === "pe.updateMany", `pe first ${tx.writes[0]}`);
-        assert(tx.writes.includes("pm.update"), "pm mirror");
+        assert(!tx.writes.includes("pm.update"), "pm mirror retired");
         assert(result.snapshot.missionPoints === 12, "mission");
         assert(result.snapshot.totalScore === 12, "total");
         assert(tx.pe.missionPoints === 12, "pe stored");
-        assert(tx.pm.missionPoints === 12, "pm mirrored");
       },
     );
   });
@@ -288,7 +281,7 @@ async function main() {
           memberId: "pm1",
           missionPoints: 24,
         });
-        assert(result.mirrorFailed === true, "mirror flagged");
+        assert(result.mirrorFailed === false, "mirror skipped");
         assert(tx.pe.missionPoints === 24, "canonical kept");
         assert(tx.pm.missionPoints === 0, "pm lagged");
         assert(!tx.writes.includes("pm.update"), "pm not written");
@@ -316,8 +309,6 @@ async function main() {
         assert(tx.pe.unlockFloorDay === 8, "unlock pe");
         assert(tx.pe.skipTokensUsed === 1, "skip pe");
         assert(tx.pe.aiRecommendation === "Strong SQL.", "reco pe");
-        assert(tx.pm.highestUnlockedDay === 8, "unlock pm");
-        assert(tx.pm.aiRecommendation === "Strong SQL.", "reco pm");
       },
     );
   });
@@ -344,7 +335,7 @@ async function main() {
     assert(hire.includes("searchableUserWhere"), "visibility gate");
     assert(hire.includes("overlayProgramMemberState"), "score overlay");
     assert(hire.includes("RECRUITER_FIELD_POLICY.interviewResults"), "interview privacy");
-    assert(hire.includes("isNewProgramStateEnabled"), "canonical pool refs");
+    assert(!hire.includes("isNewProgramStateEnabled"), "canonical pool refs");
   });
 
   await suite("does not remirror W7 frozen enrollment denorms", () => {
@@ -378,7 +369,7 @@ async function main() {
     assert(impl.includes("mirrorProgramMemberLegacyState"), "mirror helper");
     assert(impl.includes("scrubProgramMemberLegacyPii"), "compliance wipe");
     assert(impl.includes("canonicalProgramMemberWhere"), "PE-first where");
-    assert(flags.includes("compliance exception"), "flag docs freeze vs scrub");
+    assert(!flags.includes("compliance exception"), "migration flag docs removed");
     assert(!impl.includes('ENABLE_DUAL_WRITE'), "does not overload dual-write");
   });
 

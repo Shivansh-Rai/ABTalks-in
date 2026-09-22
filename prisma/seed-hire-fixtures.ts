@@ -156,6 +156,7 @@ async function main() {
       d.setUTCDate(d.getUTCDate() + i);
       days.push({
         memberId: member.id,
+        programEnrollmentId: `pe_pm_${member.id}`,
         date: d,
         commitCount: 1 + (i % 3),
       });
@@ -169,6 +170,7 @@ async function main() {
       await prisma.programProject.create({
         data: {
           memberId: member.id,
+          programEnrollmentId: `pe_pm_${member.id}`,
           moduleNumber: i + 1,
           repoUrl: `https://github.com/example/proj-${i + 1}`,
           writeup: `Fixture project using ${f.skills.join(", ")}`,
@@ -185,6 +187,7 @@ async function main() {
         where: { memberId: member.id },
         create: {
           memberId: member.id,
+          programEnrollmentId: `pe_pm_${member.id}`,
           status: "COMPLETED",
           overallScore: f.interview.overall,
           commScore: f.interview.comm,

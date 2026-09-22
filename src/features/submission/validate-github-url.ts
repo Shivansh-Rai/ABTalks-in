@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { isNewProgressRepoEnabled } from "@/lib/feature-flags";
 import { enrollmentIdFromPe } from "@/repositories/ids";
 
 const GITHUB_REPO =
@@ -28,13 +27,7 @@ export type GithubUrlOwner = {
 export async function listGithubUrlOwners(
   normalized: string,
 ): Promise<GithubUrlOwner[]> {
-  if (!isNewProgressRepoEnabled()) {
-    const rows = await prisma.submission.findMany({
-      where: { githubUrl: normalized },
-      select: { enrollmentId: true, dayNumber: true },
-    });
-    return rows;
-  }
+
   const rows = await prisma.$queryRaw<
     Array<{ enrollmentId: string; dayNumber: number | null }>
   >`

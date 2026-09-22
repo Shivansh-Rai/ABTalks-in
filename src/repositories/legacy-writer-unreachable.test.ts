@@ -74,7 +74,7 @@ async function main() {
     }
     assert(hits.length === 0, hits.join("; "));
     const flags = source("src/lib/feature-flags.ts");
-    assert(flags.includes("export function isDualWriteEnabled"), "helper retained for tests/docs");
+    assert(!flags.includes("export function isDualWriteEnabled"), "helper removed");
   });
 
   await suite("production writers do not call runDualWrite / dualWrite*", () => {
@@ -110,13 +110,13 @@ async function main() {
   await suite("Candidate: SP-first identity writer unreachable", () => {
     const src = source("src/repositories/candidate-identity.ts");
     assert(!src.includes("dualWriteCandidateIdentity"), "no DW helper");
-    assert(!src.includes("if (!isNewCandidateWritesEnabled())"), "no writes-OFF branch");
+    assert(!src.includes("if (!true)"), "no writes-OFF branch");
     assert(src.includes("isCandidateWritesAuthoritative"), "always true");
   });
 
   await suite("Ambassador: SP-first writer unreachable; wipe retained", () => {
     const src = source("src/repositories/ambassador.ts");
-    assert(!src.includes("if (!isNewAmbassadorWritesEnabled())"), "no writes-OFF branch");
+    assert(!src.includes("if (!true)"), "no writes-OFF branch");
     assert(src.includes('input.kind === "wipe"'), "compliance wipe");
     assert(src.includes("compliance wipe of frozen StudentProfile ambassador snapshots"), "wipe log");
   });

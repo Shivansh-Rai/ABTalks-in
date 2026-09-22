@@ -6,7 +6,6 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -233,21 +232,12 @@ function unspecifiedToNull(value: string | undefined): string | null {
 export async function getCandidateProfile(
   userId: string,
 ): Promise<CandidateProfileView | null> {
-  if (isNewCandidateRepoEnabled()) {
-    const row = await prisma.candidateProfile.findUnique({
-      where: { userId },
-      select: newIdentitySelect,
-    });
-    if (!row) return null;
-    return viewFromNew(row);
-  }
-
-  const row = await studentProfile.findUnique({
-    where: { userId },
-    select: legacyIdentitySelect,
-  });
-  if (!row) return null;
-  return viewFromLegacy(row);
+const row = await prisma.candidateProfile.findUnique({
+  where: { userId },
+  select: newIdentitySelect,
+});
+if (!row) return null;
+return viewFromNew(row);
 }
 
 export async function listCandidateProfiles(
@@ -256,19 +246,11 @@ export async function listCandidateProfiles(
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return new Map();
 
-  if (isNewCandidateRepoEnabled()) {
-    const rows = await prisma.candidateProfile.findMany({
-      where: { userId: { in: ids } },
-      select: newIdentitySelect,
-    });
-    return new Map(rows.map((row) => [row.userId, viewFromNew(row)]));
-  }
-
-  const rows = await studentProfile.findMany({
-    where: { userId: { in: ids } },
-    select: legacyIdentitySelect,
-  });
-  return new Map(rows.map((row) => [row.userId, viewFromLegacy(row)]));
+const rows = await prisma.candidateProfile.findMany({
+  where: { userId: { in: ids } },
+  select: newIdentitySelect,
+});
+return new Map(rows.map((row) => [row.userId, viewFromNew(row)]));
 }
 
 /** Current-state display names for admin/CSV. Never reads frozen SP identity. */
@@ -299,18 +281,11 @@ export async function getProfileSummary(userId: string): Promise<{
 export async function findUserIdByReferralCode(
   code: string,
 ): Promise<string | null> {
-  if (isNewCandidateRepoEnabled()) {
-    const row = await prisma.candidateProfile.findUnique({
-      where: { referralCode: code },
-      select: { userId: true },
-    });
-    return row?.userId ?? null;
-  }
-  const row = await studentProfile.findUnique({
-    where: { referralCode: code },
-    select: { userId: true },
-  });
-  return row?.userId ?? null;
+const row = await prisma.candidateProfile.findUnique({
+  where: { referralCode: code },
+  select: { userId: true },
+});
+return row?.userId ?? null;
 }
 
 export async function updateStudentFields(

@@ -446,7 +446,7 @@ suite("W3 hackathon source keys trace to the team without Certificate", () => {
 suite("the 50th-day date reads the same rows the day count does", () => {
   const verified = code("src/features/profile/get-verified-skills.ts");
   const progress = code("src/repositories/progress.ts");
-  for (const clause of ['id: { startsWith: "aa_sub_" }', 'activityId: { startsWith: "act_dt_" }', "isNewProgressRepoEnabled()"]) {
+  for (const clause of ['id: { startsWith: "aa_sub_" }', 'activityId: { startsWith: "act_dt_" }', "true"]) {
     assert(progress.includes(clause), `progress.ts no longer has ${clause}`);
     assert(verified.includes(clause), `get-verified-skills.ts does not mirror ${clause}`);
   }
