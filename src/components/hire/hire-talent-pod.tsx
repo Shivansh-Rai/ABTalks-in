@@ -230,7 +230,14 @@ export function HireTalentPod({
                 Create assessment for Shortlisted
               </button>
             ) : (
-              <Link href="/hire/create-test" className="hire-pod__assess">
+              <Link
+                href={
+                  projectId
+                    ? `/hire/create-test?projectId=${encodeURIComponent(projectId)}`
+                    : "/hire/create-test"
+                }
+                className="hire-pod__assess"
+              >
                 <ClipboardList className="size-4" aria-hidden="true" />
                 Create assessment for Shortlisted
               </Link>
