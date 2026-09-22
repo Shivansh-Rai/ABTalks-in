@@ -28,8 +28,10 @@ import {
   applyProgramRecommendationChange,
   applyProgramUnlockChange,
   compareProgramScoreRows,
+  countCanonicalMembersByStatus,
   countEnrolledProgramMembers,
   overlayProgramMemberState,
+  listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
@@ -370,15 +372,15 @@ export async function getCohortOverview(
 
   const [statusCounts, members, modules, commitRows, atRisk] =
     await Promise.all([
-      programMember.groupBy({
-        by: ["status"],
-        where: { cohortId },
-        _count: { id: true },
-      }),
+      countCanonicalMembersByStatus(cohortId),
       programMember.findMany({
         where: {
           cohortId,
-          status: { in: ["ENROLLED", "COMPLETED"] },
+          id: {
+            in: await listCanonicalProgramMemberIds({
+              programCohortId: cohortId,
+            }),
+          },
         },
         select: {
           id: true,
@@ -575,7 +577,6 @@ export async function getCohortMembers(
     await programMember.findMany({
       where: {
         cohortId,
-        ...(filters.status ? { status: filters.status } : {}),
         ...(q
           ? {
               OR: [
@@ -598,10 +599,13 @@ export async function getCohortMembers(
       },
     }),
   );
-  members.sort(compareProgramScoreRows);
+  const scoped = filters.status
+    ? members.filter((m) => m.status === filters.status)
+    : members;
+  scoped.sort(compareProgramScoreRows);
 
-  const userIds = members.map((m) => m.userId);
-  const memberIds = members.map((m) => m.id);
+  const userIds = scoped.map((m) => m.userId);
+  const memberIds = scoped.map((m) => m.id);
   // Resolved via the interview read model (DAY_31 → DAY_15 → legacy).
   const interviewSignals = await getInterviewSignals(memberIds);
   const [entryAttempts, missionSubs] = await Promise.all([
@@ -633,7 +637,7 @@ export async function getCohortMembers(
     }
   }
 
-  return members.map((m) => {
+  return scoped.map((m) => {
     const subs = subsByMember.get(m.id) ?? [];
     const { passedDays, skippedDays } = collectPassSkipSets(subs);
     const progressDay = getMemberProgressDay(passedDays);
@@ -668,7 +672,8 @@ export async function promoteWaitlisted(
     },
   });
   if (!member) return { ok: false, message: "Member not found." };
-  if (member.status !== "WAITLISTED") {
+  const [canonical] = await overlayProgramMemberState([member]);
+  if (canonical.status !== "WAITLISTED") {
     return { ok: false, message: "Member is not waitlisted." };
   }
 

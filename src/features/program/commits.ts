@@ -23,7 +23,7 @@ import {
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { dualWriteCommitDay } from "@/repositories/dual-write";
-import { applyProgramScoreChange } from "@/repositories/program-state";
+import { applyProgramScoreChange, overlayProgramMemberState, listCanonicalProgramMemberIds } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
@@ -382,19 +382,25 @@ export async function runProgramCommitsCron(): Promise<{
     const graceKey = addCalendarDaysToKey(endKey, 1);
     if (todayKey > graceKey) continue;
 
-    const members = await programMember.findMany({
-      where: {
-        cohortId: cohort.id,
-        status: { in: ["ENROLLED", "COMPLETED"] },
-      },
-      take: 100,
-      select: {
-        id: true,
-        githubUsername: true,
-        githubRepoUrl: true,
-        highestUnlockedDay: true,
-      },
-    });
+    const members = await overlayProgramMemberState(
+      await programMember.findMany({
+        where: {
+          cohortId: cohort.id,
+          id: {
+            in: await listCanonicalProgramMemberIds({
+              programCohortId: cohort.id,
+            }),
+          },
+        },
+        take: 100,
+        select: {
+          id: true,
+          githubUsername: true,
+          githubRepoUrl: true,
+          highestUnlockedDay: true,
+        },
+      }),
+    );
 
     for (let i = 0; i < members.length; i += CHUNK_SIZE) {
       const chunk = members.slice(i, i + CHUNK_SIZE);
@@ -515,17 +521,19 @@ export async function getAtRiskMembers(
   });
   if (!cohort) return [];
 
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    select: {
-      id: true,
-      fullName: true,
-      highestUnlockedDay: true,
-    },
-  });
+  const members = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId,
+        id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        highestUnlockedDay: true,
+      },
+    }),
+  );
 
   const atRisk: AtRiskMember[] = [];
   for (const member of members) {
@@ -541,7 +549,7 @@ export async function getMemberAtRiskStatus(
   memberId: string,
   cohortId: string,
 ): Promise<MemberAtRiskStatus> {
-  const [member, cohort] = await Promise.all([
+  const [rawMember, cohort] = await Promise.all([
     programMember.findUnique({
       where: { id: memberId },
       select: { id: true, highestUnlockedDay: true },
@@ -551,6 +559,9 @@ export async function getMemberAtRiskStatus(
       select: { startsAt: true, endsAt: true },
     }),
   ]);
+  const [member] = rawMember
+    ? await overlayProgramMemberState([rawMember])
+    : [];
 
   if (!member || !cohort) {
     return { atRisk: false, reasons: [], behindBy: 0 };

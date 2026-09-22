@@ -9,7 +9,12 @@ import {
 } from "@/repositories/dual-write";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
-import { applyProgramMembershipChange } from "@/repositories/program-state";
+import {
+  applyProgramMembershipChange,
+  scrubProgramMemberLegacyPii,
+} from "@/repositories/program-state";
+import { memberIdFromPe } from "@/repositories/ids";
+import { isNewProgramStateEnabled } from "@/lib/feature-flags";
 
 type Tx = Prisma.TransactionClient;
 
@@ -159,27 +164,61 @@ export async function anonymizeUser(
     await dualWriteChallengeEnrollmentById(tx, enrollment.id);
   }
 
-  const openMembers = await tx.programMember.findMany({
+  const openMembers = isNewProgramStateEnabled()
+    ? (
+        await tx.programEnrollment.findMany({
+          where: {
+            userId,
+            id: { startsWith: "pe_pm_" },
+            status: {
+              in: [
+                EnrollmentStatusV2.APPLIED,
+                EnrollmentStatusV2.WAITLISTED,
+                EnrollmentStatusV2.ACTIVE,
+              ],
+            },
+          },
+          select: { id: true },
+        })
+      ).flatMap((pe) => {
+        const id = memberIdFromPe(pe.id);
+        return id ? [{ id }] : [];
+      })
+    : await tx.programMember.findMany({
+        where: {
+          userId,
+          status: {
+            in: [
+              ProgramMemberStatus.APPLIED,
+              ProgramMemberStatus.WAITLISTED,
+              ProgramMemberStatus.ENROLLED,
+            ],
+          },
+        },
+        select: { id: true },
+      });
+
+  const anchors = await tx.programMember.findMany({
     where: {
-      userId,
-      status: {
-        in: [
-          ProgramMemberStatus.APPLIED,
-          ProgramMemberStatus.WAITLISTED,
-          ProgramMemberStatus.ENROLLED,
-        ],
-      },
+      id: { in: openMembers.map((m) => m.id) },
     },
     select: { id: true, cohortId: true },
   });
+  const cohortByMember = new Map(anchors.map((m) => [m.id, m.cohortId]));
   for (const member of openMembers) {
+    const cohortId = cohortByMember.get(member.id);
+    if (!cohortId) continue;
     await applyProgramMembershipChange(tx, {
       memberId: member.id,
       userId,
-      programCohortId: member.cohortId,
+      programCohortId: cohortId,
       status: ProgramMemberStatus.DROPPED,
     });
   }
+
+  // W8-B compliance exception: freeze does not skip PII wipe on frozen PM
+  // identity snapshots. This is not an authority / remirror write.
+  await scrubProgramMemberLegacyPii(tx, userId);
 
   await tx.programEnrollment.updateMany({
     where: {

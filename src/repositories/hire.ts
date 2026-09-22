@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { Domain, ProgramCohortStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isNewProgramStateEnabled, isNewTalentRepoEnabled } from "@/lib/feature-flags";
-import { overlayProgramMemberState } from "@/repositories/program-state";
+import { overlayProgramMemberState, canonicalProgramMemberWhere } from "@/repositories/program-state";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
 import { issuedChallengeEnrollmentIds } from "@/repositories/credentials";
 import { overlayChallengeProgressFields } from "@/repositories/progress";
@@ -167,6 +167,7 @@ function withLegacyLinkFlags(
 export async function listProgramCandidates(
   where: Prisma.ProgramMemberWhereInput,
 ): Promise<ProgramCandidateRow[]> {
+  where = await canonicalProgramMemberWhere(where);
   if (newModelActive()) {
     const rows = await overlayProgramMemberState(
       await prisma.programMember.findMany({

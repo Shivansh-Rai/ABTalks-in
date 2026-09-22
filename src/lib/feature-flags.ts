@@ -249,11 +249,14 @@ export function isNewProgramStateWritesEnabled(): boolean {
 }
 
 /**
- * W8-A ProgramMember compatibility mirror. Independent of ENABLE_DUAL_WRITE.
+ * W8 ProgramMember compatibility mirror. Independent of ENABLE_DUAL_WRITE.
  *
  * Default ON so a dark deploy (flag unset) keeps current mirroring.
  * Off only when explicitly `"false"` (W8-B): canonical PE still writes;
- * ProgramMember current-state fields freeze.
+ * ProgramMember mutable current-state fields freeze.
+ * A minimal ProgramMember structural anchor may still be created for FKs
+ * (ProgramProject, ProgramInterview, RecruiterShortlistItem, …).
+ * Anonymize still scrubs PM PII as a documented compliance exception.
  */
 export function isLegacyProgramMemberMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR !== "false";

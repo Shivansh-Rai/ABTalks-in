@@ -1,8 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
 import { resolveProfileRefs } from "@/repositories/hire";
 import { searchableUserWhere } from "@/repositories/talent";
+import { listCanonicalProgramMemberIds } from "@/repositories/program-state";
 import { hireChallengePool } from "@/lib/feature-flags";
 import { CHALLENGE_POOL_CAP } from "@/features/hire/search-candidates";
 import { resolvePoolCohorts } from "@/features/hire/pool-policy";
@@ -114,15 +114,14 @@ export async function getCandidateDiscoverability(
       where: { userId },
       select: { _count: { select: { submissions: true } } },
     }),
-    resolvePoolCohorts().then((gate) =>
+    resolvePoolCohorts().then(async (gate) =>
       gate.ok
-        ? programMember.count({
-            where: {
+        ? (
+            await listCanonicalProgramMemberIds({
               userId,
-              status: { in: ["ENROLLED", "COMPLETED"] },
-              cohortId: { in: gate.cohorts.map((c) => c.id) },
-            },
-          })
+              programCohortIds: gate.cohorts.map((c) => c.id),
+            })
+          ).length
         : 0,
     ),
     prisma.hackathonParticipant.count({

@@ -12,6 +12,7 @@ import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
   overlayProgramMemberState,
+  listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
 
 async function requireAdminProgramExport() {
@@ -34,7 +35,11 @@ export async function exportProgramMembersAction(input: unknown) {
     await programMember.findMany({
       where: {
         cohortId: parsed.data.cohortId,
-        status: { in: ["ENROLLED", "COMPLETED"] },
+        id: {
+          in: await listCanonicalProgramMemberIds({
+            programCohortId: parsed.data.cohortId,
+          }),
+        },
       },
       select: {
         id: true,
@@ -158,7 +163,10 @@ export async function exportProgramInterviewsAction(input: unknown) {
   const cohortId = parsed.data.cohortId;
 
   const members = await programMember.findMany({
-    where: { cohortId, status: { in: ["ENROLLED", "COMPLETED"] } },
+    where: {
+      cohortId,
+      id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
+    },
     select: {
       id: true,
       fullName: true,

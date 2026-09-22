@@ -16,6 +16,7 @@ import { getCandidateProfile } from "@/repositories/candidate";
 import {
   applyProgramMembershipChange,
   countEnrolledProgramMembers,
+  overlayProgramMemberState,
 } from "@/repositories/program-state";
 import {
   findAppliedMembership,
@@ -255,13 +256,16 @@ export async function createApplication(
 
   const existing = await programMember.findUnique({
     where: { userId_cohortId: { userId, cohortId: cohort.id } },
-    select: { status: true },
+    select: { id: true, status: true },
   });
+  const [canonicalExisting] = existing
+    ? await overlayProgramMemberState([existing])
+    : [];
   if (
-    existing &&
-    (existing.status === "ENROLLED" ||
-      existing.status === "WAITLISTED" ||
-      existing.status === "COMPLETED")
+    canonicalExisting &&
+    (canonicalExisting.status === "ENROLLED" ||
+      canonicalExisting.status === "WAITLISTED" ||
+      canonicalExisting.status === "COMPLETED")
   ) {
     return { ok: false, message: "You have already applied to this cohort." };
   }

@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
-import { applyProgramScoreChange } from "@/repositories/program-state";
+import { applyProgramScoreChange, listCanonicalProgramMemberIds } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import {
   encodeRepoContentsPath,
@@ -337,7 +337,7 @@ export async function listProjectsForAdmin(cohortId: string) {
   const members = await programMember.findMany({
     where: {
       cohortId,
-      status: { in: ["ENROLLED", "COMPLETED"] },
+      id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
     },
     select: {
       id: true,

@@ -4,16 +4,17 @@
  * Membership, unlock, skip tokens, score snapshots, and AI recommendations:
  * ProgramEnrollment pe_pm_<memberId> is canonical when
  * ENABLE_NEW_PROGRAM_STATE / ENABLE_NEW_PROGRAM_STATE_WRITES are on.
- * ProgramMember remains a compatibility mirror while
+ * ProgramMember mutable current-state is a compatibility mirror while
  * ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is not `"false"`.
  *
- * Identity (name/phone/linkedin/github/skills[]) stays CandidateProfile (W4).
- * Recruiter permission stays CandidateVisibility (W2).
- * Projects stay ProgramProject; interviews stay ProgramInterview /
- * GeneralInterview. Those FKs keep memberId.
+ * W8-B Outcome A: ProgramMember.id remains the structural FK anchor for
+ * ProgramProject, ProgramInterview, GeneralInterview, RecruiterShortlistItem,
+ * ProgramCommitDay, and frozen W6 ProgramMissionSubmission. Anchor creation
+ * (`ensureProgramMemberAnchor`) is independent of the mutable-state mirror.
  *
- * Does not take Enrollment denorms, StudentProfile.domain, frozen W1–W7
- * families, or EnrollmentProgress.
+ * Identity stays CandidateProfile (W4). Recruiter permission stays
+ * CandidateVisibility (W2). Does not take Enrollment denorms,
+ * StudentProfile.domain, frozen W1–W7 families, or EnrollmentProgress.
  */
 import "server-only";
 import {
@@ -140,7 +141,44 @@ async function resolveCohortId(
   return cohort.id;
 }
 
-async function runProgramMemberMirror(
+/**
+ * W8-B Outcome A: ProgramMember.id is still required by FKs
+ * (ProgramProject, ProgramInterview, GeneralInterview, RecruiterShortlistItem,
+ * ProgramCommitDay, frozen ProgramMissionSubmission). Create a row with
+ * Prisma-required columns only. Do not copy scores, unlock, recommendation,
+ * identity, or recruiter-consent snapshots. Mutable state is mirrored
+ * separately, and only while ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is on.
+ */
+async function ensureProgramMemberAnchor(
+  tx: Tx,
+  input: {
+    memberId: string;
+    userId: string;
+    programCohortId: string;
+    existingId: string | null;
+  },
+): Promise<{ created: boolean }> {
+  if (input.existingId) return { created: false };
+  const already = await tx.programMember.findUnique({
+    where: { id: input.memberId },
+    select: { id: true },
+  });
+  if (already) return { created: false };
+  await tx.programMember.create({
+    data: {
+      id: input.memberId,
+      userId: input.userId,
+      cohortId: input.programCohortId,
+      status: ProgramMemberStatus.APPLIED,
+      fullName: "",
+      githubUsername: "",
+      githubRepoUrl: "",
+    },
+  });
+  return { created: true };
+}
+
+async function mirrorProgramMemberLegacyState(
   tx: Tx,
   label: string,
   fn: () => Promise<void>,
@@ -326,9 +364,19 @@ export async function applyProgramMembershipChange(
     );
   }
 
-  const mirrorFailed = await runProgramMemberMirror(tx, "membership", async () => {
-    const identity = input.identity;
-    if (existing) {
+  // Structural FK anchor is independent of the mutable-state mirror.
+  await ensureProgramMemberAnchor(tx, {
+    memberId,
+    userId: input.userId,
+    programCohortId: input.programCohortId,
+    existingId: existing?.id ?? null,
+  });
+
+  const mirrorFailed = await mirrorProgramMemberLegacyState(
+    tx,
+    "membership",
+    async () => {
+      const identity = input.identity;
       await tx.programMember.update({
         where: { id: memberId },
         data: {
@@ -342,23 +390,8 @@ export async function applyProgramMembershipChange(
           ...(identity ?? {}),
         },
       });
-      return;
-    }
-    if (!identity) {
-      throw new Error("ProgramMember create requires identity snapshot");
-    }
-    await tx.programMember.create({
-      data: {
-        id: memberId,
-        userId: input.userId,
-        cohortId: input.programCohortId,
-        status: input.status,
-        enrolledAt,
-        completedAt: input.completedAt ?? null,
-        ...identity,
-      },
-    });
-  });
+    },
+  );
 
   return { memberId, created, mirrorFailed };
 }
@@ -410,7 +443,7 @@ export async function applyProgramUnlockChange(
     );
   }
 
-  const mirrorFailed = await runProgramMemberMirror(tx, "unlock", async () => {
+  const mirrorFailed = await mirrorProgramMemberLegacyState(tx, "unlock", async () => {
     await tx.programMember.update({
       where: { id: input.memberId },
       data: {
@@ -484,7 +517,7 @@ export async function applyProgramScoreChange(
     );
   }
 
-  const mirrorFailed = await runProgramMemberMirror(tx, "score", async () => {
+  const mirrorFailed = await mirrorProgramMemberLegacyState(tx, "score", async () => {
     await tx.programMember.update({
       where: { id: input.memberId },
       data: next,
@@ -530,7 +563,7 @@ export async function applyProgramRecommendationChange(
     );
   }
 
-  const mirrorFailed = await runProgramMemberMirror(
+  const mirrorFailed = await mirrorProgramMemberLegacyState(
     tx,
     "recommendation",
     async () => {
@@ -602,6 +635,181 @@ export async function countEnrolledProgramMembers(
   return tx.programMember.count({
     where: { cohortId: programCohortId, status: "ENROLLED" },
   });
+}
+
+const DEFAULT_LIVE_STATUSES: ProgramMemberStatus[] = [
+  ProgramMemberStatus.ENROLLED,
+  ProgramMemberStatus.COMPLETED,
+];
+
+function asStatusList(
+  status: Prisma.ProgramMemberWhereInput["status"],
+): ProgramMemberStatus[] | null {
+  if (!status) return null;
+  if (typeof status === "string") return [status as ProgramMemberStatus];
+  if (
+    typeof status === "object" &&
+    status !== null &&
+    "in" in status &&
+    Array.isArray(status.in)
+  ) {
+    return status.in.filter(
+      (s): s is ProgramMemberStatus => typeof s === "string",
+    );
+  }
+  if (
+    typeof status === "object" &&
+    status !== null &&
+    "equals" in status &&
+    typeof status.equals === "string"
+  ) {
+    return [status.equals as ProgramMemberStatus];
+  }
+  return null;
+}
+
+function asIdList(value: unknown): string[] | undefined {
+  if (typeof value === "string") return [value];
+  if (
+    value &&
+    typeof value === "object" &&
+    "in" in value &&
+    Array.isArray((value as { in: unknown }).in)
+  ) {
+    return (value as { in: unknown[] }).in.filter(
+      (s): s is string => typeof s === "string",
+    );
+  }
+  return undefined;
+}
+
+/**
+ * Live membership ids from ProgramEnrollment when ENABLE_NEW_PROGRAM_STATE.
+ * Frozen ProgramMember.status is not used.
+ */
+export async function listCanonicalProgramMemberIds(
+  input: {
+    programCohortId?: string;
+    programCohortIds?: string[];
+    userId?: string;
+    statuses?: ProgramMemberStatus[];
+  } = {},
+): Promise<string[]> {
+  const statuses = input.statuses ?? DEFAULT_LIVE_STATUSES;
+  const programCohortIds = [
+    ...(input.programCohortId ? [input.programCohortId] : []),
+    ...(input.programCohortIds ?? []),
+  ];
+  if (!isNewProgramStateEnabled()) {
+    const rows = await prisma.programMember.findMany({
+      where: {
+        status: { in: statuses },
+        ...(programCohortIds.length
+          ? { cohortId: { in: programCohortIds } }
+          : {}),
+        ...(input.userId ? { userId: input.userId } : {}),
+      },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  }
+  const slugs = programCohortIds.map(cohortSlugForProgramCohort);
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      id: { startsWith: "pe_pm_" },
+      status: { in: statuses.map(mapMemberStatus) },
+      ...(input.userId ? { userId: input.userId } : {}),
+      ...(slugs.length ? { cohort: { slug: { in: slugs } } } : {}),
+    },
+    select: { id: true },
+  });
+  return pes.flatMap((pe) => {
+    const id = memberIdFromPe(pe.id);
+    return id ? [id] : [];
+  });
+}
+
+/**
+ * Rewrite a ProgramMember where-clause so `status` is evaluated against
+ * ProgramEnrollment, not frozen ProgramMember.status.
+ */
+export async function canonicalProgramMemberWhere(
+  where: Prisma.ProgramMemberWhereInput,
+): Promise<Prisma.ProgramMemberWhereInput> {
+  if (!isNewProgramStateEnabled()) return where;
+  const statuses = asStatusList(where.status);
+  if (!statuses) return where;
+  const ids = await listCanonicalProgramMemberIds({
+    programCohortIds: asIdList(where.cohortId),
+    userId: typeof where.userId === "string" ? where.userId : undefined,
+    statuses,
+  });
+  const rest: Prisma.ProgramMemberWhereInput = { ...where };
+  delete rest.status;
+  return { AND: [rest, { id: { in: ids } }] };
+}
+
+export async function countCanonicalMembersByStatus(
+  programCohortId: string,
+): Promise<Array<{ status: ProgramMemberStatus; _count: { id: number } }>> {
+  if (!isNewProgramStateEnabled()) {
+    const groups = await prisma.programMember.groupBy({
+      by: ["status"],
+      where: { cohortId: programCohortId },
+      _count: { id: true },
+    });
+    return groups.map((g) => ({
+      status: g.status,
+      _count: { id: g._count.id },
+    }));
+  }
+  const slug = cohortSlugForProgramCohort(programCohortId);
+  const groups = await prisma.programEnrollment.groupBy({
+    by: ["status"],
+    where: { id: { startsWith: "pe_pm_" }, cohort: { slug } },
+    _count: { id: true },
+  });
+  const merged = new Map<ProgramMemberStatus, number>();
+  for (const g of groups) {
+    const status = mapPeStatusToMember(g.status);
+    merged.set(status, (merged.get(status) ?? 0) + g._count.id);
+  }
+  return [...merged.entries()].map(([status, id]) => ({
+    status,
+    _count: { id },
+  }));
+}
+
+/**
+ * W8-B compliance exception: wipe ProgramMember PII snapshots even when
+ * the mutable-state mirror is frozen. This is not an authority write.
+ */
+export async function scrubProgramMemberLegacyPii(
+  tx: Tx,
+  userId: string,
+): Promise<void> {
+  await tx.programMember.updateMany({
+    where: { userId },
+    data: {
+      fullName: "Deleted User",
+      phone: null,
+      linkedinUrl: null,
+      githubUsername: "deleted",
+      githubRepoUrl: "",
+      resumeUrl: null,
+      jobRole: null,
+      company: null,
+      university: null,
+      education: null,
+      graduationYear: null,
+      yearsExperience: null,
+      skills: [],
+    },
+  });
+  logger.info(
+    "[program-state] compliance wipe of frozen ProgramMember identity snapshots",
+    { userId },
+  );
 }
 
 export async function listProgramMemberSnapshots(

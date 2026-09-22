@@ -371,6 +371,113 @@ async function main() {
     assert(!impl.includes("SkillEvidence"), "no evidence side effect");
   });
 
+  await suite("W8-B splits anchor creation from mutable-state mirror", () => {
+    const impl = source("src/repositories/program-state.ts");
+    const flags = source("src/lib/feature-flags.ts");
+    assert(impl.includes("ensureProgramMemberAnchor"), "anchor helper");
+    assert(impl.includes("mirrorProgramMemberLegacyState"), "mirror helper");
+    assert(impl.includes("scrubProgramMemberLegacyPii"), "compliance wipe");
+    assert(impl.includes("canonicalProgramMemberWhere"), "PE-first where");
+    assert(flags.includes("compliance exception"), "flag docs freeze vs scrub");
+    assert(!impl.includes('ENABLE_DUAL_WRITE'), "does not overload dual-write");
+  });
+
+  await suite("mirror off creates minimal PM anchor and freezes mutable state", async () => {
+    await withFlags(
+      {
+        ENABLE_NEW_PROGRAM_STATE: "true",
+        ENABLE_NEW_PROGRAM_STATE_WRITES: "true",
+        ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR: "false",
+        ENABLE_NEW_VISIBILITY_WRITES: "true",
+      },
+      async () => {
+        const tx = makeTx();
+        tx.pm.exists = false;
+        const first = await applyProgramMembershipChange(tx as never, {
+          memberId: "pm1",
+          userId: "u1",
+          programCohortId: "pc1",
+          status: ProgramMemberStatus.ENROLLED,
+          identity,
+        });
+        assert(first.memberId === "pm1", "stable pe_pm identity");
+        assert(tx.writes.includes("pm.create"), "anchor created");
+        assert(!tx.writes.includes("pm.update"), "no mutable remirror on create");
+        assert(tx.pe.status === EnrollmentStatusV2.ACTIVE, "PE ACTIVE");
+        assert(tx.pm.status === ProgramMemberStatus.APPLIED, "PM stays structural APPLIED");
+        assert(tx.pm.missionPoints === 0, "no score snapshot on anchor");
+
+        const retry = await applyProgramMembershipChange(tx as never, {
+          memberId: "pm1",
+          userId: "u1",
+          programCohortId: "pc1",
+          status: ProgramMemberStatus.ENROLLED,
+          identity,
+        });
+        assert(retry.memberId === "pm1", "retry same id");
+        assert(
+          tx.writes.filter((w) => w === "pm.create").length === 1,
+          "no duplicate anchor",
+        );
+
+        await applyProgramMembershipChange(tx as never, {
+          memberId: "pm1",
+          userId: "u1",
+          programCohortId: "pc1",
+          status: ProgramMemberStatus.COMPLETED,
+        });
+        assert(tx.pe.status === EnrollmentStatusV2.COMPLETED, "PE status mutates");
+        assert(tx.pm.status === ProgramMemberStatus.APPLIED, "PM status frozen");
+
+        await applyProgramScoreChange(tx as never, {
+          memberId: "pm1",
+          missionPoints: 12,
+        });
+        await applyProgramUnlockChange(tx as never, {
+          memberId: "pm1",
+          highestUnlockedDay: 8,
+          skipTokensUsed: 1,
+        });
+        await applyProgramRecommendationChange(tx as never, {
+          memberId: "pm1",
+          aiRecommendation: "Strong SQL.",
+        });
+        assert(tx.pe.missionPoints === 12, "PE score");
+        assert(tx.pm.missionPoints === 0, "PM score frozen");
+        assert(tx.pe.unlockFloorDay === 8, "PE unlock");
+        assert(tx.pm.highestUnlockedDay === 1, "PM unlock frozen");
+        assert(tx.pe.aiRecommendation === "Strong SQL.", "PE reco");
+        assert(tx.pm.aiRecommendation === null, "PM reco frozen");
+      },
+    );
+  });
+
+  await suite("live membership/pool readers use ProgramEnrollment not frozen PM status", () => {
+    const hire = source("src/repositories/hire.ts");
+    const pool = source("src/features/talent-pool/pool.ts");
+    const leaderboard = source("src/features/program/leaderboard.ts");
+    const admin = source("src/features/program/admin.ts");
+    const entry = source("src/features/program/entry.ts");
+    const interview = source("src/features/interview/provider.ts");
+    const anon = source("src/features/admin/anonymize-user.ts");
+    assert(hire.includes("canonicalProgramMemberWhere"), "hire PE-first where");
+    assert(pool.includes("listCanonicalProgramMemberIds"), "talent pool PE ids");
+    assert(leaderboard.includes("listCanonicalProgramMemberIds"), "leaderboard PE ids");
+    assert(admin.includes("countCanonicalMembersByStatus"), "admin PE counts");
+    assert(entry.includes("overlayProgramMemberState"), "entry PE status");
+    assert(interview.includes("findActiveMembership"), "interview PE membership");
+    assert(anon.includes("scrubProgramMemberLegacyPii"), "anonymize PII exception");
+    assert(anon.includes("programEnrollment.findMany"), "anonymize drops via PE");
+  });
+
+  await suite("does not freeze earlier families or disable dual-write", () => {
+    const impl = source("src/repositories/program-state.ts");
+    assert(!impl.includes("synergyPoints"), "no points");
+    assert(!impl.includes("daysCompleted"), "no W7 denorm");
+    assert(!impl.includes("isCampusAmbassadorCandidate"), "no W5");
+    assert(!source("src/lib/feature-flags.ts").includes("ENABLE_DUAL_WRITE=false"), "dual-write stays");
+  });
+
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
 }

@@ -5,6 +5,7 @@ import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
   overlayProgramMemberState,
+  listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
 
 export type ProgramLeaderboardRow = {
@@ -25,11 +26,12 @@ export type ProgramLeaderboardRow = {
 };
 
 async function fetchLeaderboard(cohortId: string): Promise<ProgramLeaderboardRow[]> {
+  const liveIds = await listCanonicalProgramMemberIds({ programCohortId: cohortId });
   const members = await overlayProgramMemberState(
     await programMember.findMany({
       where: {
         cohortId,
-        status: { in: ["ENROLLED", "COMPLETED"] },
+        id: { in: liveIds },
       },
       select: {
         id: true,

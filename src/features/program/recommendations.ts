@@ -8,6 +8,7 @@ import { programMember } from "@/repositories/legacy/program-member";
 import {
   applyProgramRecommendationChange,
   overlayProgramMemberState,
+  listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
 
 const RECOMMENDATION_TTL_DAYS = 7;
@@ -24,36 +25,42 @@ export async function generateRecommendations(cohortId: string): Promise<{
   skipped: number;
   failed: number;
 }> {
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    select: {
-      id: true,
-      fullName: true,
-      jobRole: true,
-      company: true,
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-      totalScore: true,
-      cleanPassCount: true,
-      skipTokensUsed: true,
-      highestUnlockedDay: true,
-      aiRecommendationAt: true,
-      cohort: { select: { startsAt: true, endsAt: true } },
-      projects: {
-        where: { status: "GRADED" },
-        select: { moduleNumber: true, adminScore: true, aiScore: true },
+  const members = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId,
+        id: {
+          in: await listCanonicalProgramMemberIds({
+            programCohortId: cohortId,
+          }),
+        },
       },
-      commitDays: {
-        where: { commitCount: { gt: 0 } },
-        select: { date: true },
+      select: {
+        id: true,
+        fullName: true,
+        jobRole: true,
+        company: true,
+        missionPoints: true,
+        conceptPoints: true,
+        commitPoints: true,
+        projectPoints: true,
+        totalScore: true,
+        cleanPassCount: true,
+        skipTokensUsed: true,
+        highestUnlockedDay: true,
+        aiRecommendationAt: true,
+        cohort: { select: { startsAt: true, endsAt: true } },
+        projects: {
+          where: { status: "GRADED" },
+          select: { moduleNumber: true, adminScore: true, aiScore: true },
+        },
+        commitDays: {
+          where: { commitCount: { gt: 0 } },
+          select: { date: true },
+        },
       },
-    },
-  });
+    }),
+  );
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - RECOMMENDATION_TTL_DAYS);

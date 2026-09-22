@@ -8,6 +8,7 @@ import {
   parseCalendarKeyToUtcDate,
 } from "@/lib/date-utils";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
+import { listCanonicalProgramMemberIds } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import {
   listProgramModules,
@@ -157,10 +158,12 @@ export async function isCohortFrozen(cohort: {
     cohort.name === PROGRAM_HOLD_OPEN_COHORT_NAME &&
     (cohort.status === "ENROLLING" || cohort.status === "ACTIVE")
   ) {
+    const liveIds = await listCanonicalProgramMemberIds({
+      programCohortId: cohort.id,
+    });
     const incomplete = await prisma.programMember.count({
       where: {
-        cohortId: cohort.id,
-        status: { in: ["ENROLLED", "COMPLETED"] },
+        id: { in: liveIds },
         missionSubmissions: {
           none: { dayNumber: PROGRAM_TOTAL_DAYS, passed: true },
         },

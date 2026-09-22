@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
+import { canonicalProgramMemberWhere } from "@/repositories/program-state";
 import type {
   CandidateSearchFilters,
   RecruiterContext,
@@ -384,7 +385,7 @@ export async function searchCandidates(
     };
   }
 
-  const where: Prisma.ProgramMemberWhereInput = {
+  const where = await canonicalProgramMemberWhere({
     user: searchableUserWhere(),
     status: { in: ["ENROLLED", "COMPLETED"] },
     ...(f.q && {
@@ -395,7 +396,7 @@ export async function searchCandidates(
       ],
     }),
     ...(f.skillIds?.length && { skills: { hasSome: f.skillIds } }),
-  };
+  });
 
   const [total, rows] = await prisma.$transaction([
     programMember.count({ where }),

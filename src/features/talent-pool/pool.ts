@@ -10,6 +10,7 @@ import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
   overlayProgramMemberState,
+  listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
 import { listCandidateAvailability } from "@/repositories/candidate";
 import {
@@ -20,6 +21,14 @@ import {
 } from "@/repositories/talent";
 import { contactAccessFor } from "@/features/hire/contact-access";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
+import { ProgramMemberStatus } from "@prisma/client";
+
+async function livePoolMemberIds(cohortId: string): Promise<string[]> {
+  return listCanonicalProgramMemberIds({
+    programCohortId: cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
+  });
+}
 
 export type MissionPortfolioDay = {
   dayNumber: number;
@@ -241,11 +250,15 @@ export async function getTalentProfile(
   const access = await assertPoolAccess(recruiterUserId);
   if (!access.ok) return access;
 
+  const liveIds = await livePoolMemberIds(access.cohort.id);
+  if (!liveIds.includes(memberId)) {
+    return { ok: false, message: "Member not found." };
+  }
+
   const member = await programMember.findFirst({
     where: {
       id: memberId,
       cohortId: access.cohort.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
       user: searchableUserWhere(),
     },
     select: {
@@ -296,7 +309,7 @@ export async function getTalentProfile(
     await programMember.findMany({
       where: {
         cohortId: access.cohort.id,
-        status: { in: ["ENROLLED", "COMPLETED"] },
+        id: { in: liveIds },
         user: searchableUserWhere(),
       },
       select: { id: true, totalScore: true, projectPoints: true, missionPoints: true, enrolledAt: true },
@@ -409,11 +422,15 @@ export async function toggleShortlist(
   const access = await assertPoolAccess(recruiterUserId);
   if (!access.ok) return access;
 
+  const liveIds = await livePoolMemberIds(access.cohort.id);
+  if (!liveIds.includes(memberId)) {
+    return { ok: false, message: "Member not found." };
+  }
+
   const member = await programMember.findFirst({
     where: {
       id: memberId,
       cohortId: access.cohort.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
       user: searchableUserWhere(),
     },
     select: { id: true },
@@ -446,11 +463,15 @@ export async function ensureShortlisted(
   const access = await assertPoolAccess(recruiterUserId);
   if (!access.ok) return access;
 
+  const liveIds = await livePoolMemberIds(access.cohort.id);
+  if (!liveIds.includes(memberId)) {
+    return { ok: false, message: "Member not found." };
+  }
+
   const member = await prisma.programMember.findFirst({
     where: {
       id: memberId,
       cohortId: access.cohort.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
       user: searchableUserWhere(),
     },
     select: { id: true },

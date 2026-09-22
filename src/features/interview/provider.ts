@@ -1,6 +1,6 @@
 import "server-only";
 import { auth } from "@/auth";
-import { programMember } from "@/repositories/legacy/program-member";
+import { findActiveMembership } from "@/repositories/learning";
 import type { InterviewBlueprintKey } from "@/features/interview/cohort/blueprint";
 
 /**
@@ -41,16 +41,8 @@ export async function resolveInterviewMemberId(): Promise<string | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const member = await programMember.findFirst({
-    where: {
-      userId: session.user.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    select: { id: true },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return member?.id ?? null;
+  const membership = await findActiveMembership(session.user.id);
+  return membership ? toProgramMemberId(membership.member.id) : null;
 }
 
 /**
