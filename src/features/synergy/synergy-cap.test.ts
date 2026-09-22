@@ -82,11 +82,10 @@ suite("submit-day passes the IST day key, not proof flags", () => {
 suite("daily reader is flag-aware across the 078 cutover", () => {
   const src = source("src/repositories/points.ts");
   const fn = src.slice(src.indexOf("export async function hasEarnedSubmissionPointsOnIstDate"));
-  assert(fn.includes("isNewPointsWritesEnabled()"), "branches on the flag");
-  assert(fn.includes("pointsTransaction.findFirst"), "new-path read");
-  assert(fn.includes("synergyEvent.findFirst"), "legacy-path read");
-  assert(fn.includes("amount: { gt: 0 }"), "new path ignores debits");
-  assert(fn.includes("points: { gt: 0 }"), "legacy path ignores debits");
+  assert(!fn.includes("isNewPointsWritesEnabled()"), "write flag ignored");
+  assert(fn.includes("pointsTransaction.findFirst"), "canonical PT read");
+  assert(!fn.includes("synergyEvent.findFirst"), "frozen SynergyEvent is not current-state");
+  assert(fn.includes("amount: { gt: 0 }"), "ignores debits");
 });
 
 suite("marketplace no longer advertises the proof bonuses", () => {
