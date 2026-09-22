@@ -3120,6 +3120,16 @@ model ProgramEnrollment {
   /// Historical current/longest streak is not fully re-derivable from AA.
   trackCurrentStreak Int            @default(0)
   trackLongestStreak Int            @default(0)
+  /// W8-A AI-cohort ProgramMember score/recommendation snapshot.
+  /// Historical conceptPoints is not re-derivable; do not recompute rankings from AA.
+  missionPoints        Int          @default(0)
+  conceptPoints        Int          @default(0)
+  commitPoints         Int          @default(0)
+  projectPoints        Int          @default(0)
+  totalScore           Int          @default(0)
+  cleanPassCount       Int          @default(0)
+  aiRecommendation     String?
+  aiRecommendationAt   DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

@@ -17,6 +17,7 @@ import { getMemberRank } from "@/features/program/leaderboard";
 import type { VerdictLine } from "@/features/program/verify-mission";
 import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { programMember } from "@/repositories/legacy/program-member";
+import { overlayProgramMemberState } from "@/repositories/program-state";
 import { getProgramDayShell } from "@/repositories/learning";
 import {
   getProgramUnlockFloor,
@@ -95,6 +96,7 @@ export async function getMemberDashboard(
       programMember.findUnique({
         where: { id: memberId },
         select: {
+          id: true,
           totalScore: true,
           missionPoints: true,
           conceptPoints: true,
@@ -117,6 +119,8 @@ export async function getMemberDashboard(
     ]);
 
   if (!member || !cohort) return null;
+  const [overlaid] = await overlayProgramMemberState([member]);
+  if (!overlaid) return null;
 
   const cohortDay = getCohortCalendarDay(cohort);
   const passedDays = new Set(
@@ -144,7 +148,7 @@ export async function getMemberDashboard(
   const earnedCount = clearedCount - waivedCount;
   const unlockFloor = await getProgramUnlockFloor(
     memberId,
-    member.highestUnlockedDay,
+    overlaid.highestUnlockedDay,
   );
   const maxContentDay = getMaxContentDay(cohort, unlockFloor);
   const nextUnlockDateLabel =
@@ -201,17 +205,17 @@ export async function getMemberDashboard(
     }));
 
   return {
-    totalScore: member.totalScore,
+    totalScore: overlaid.totalScore,
     rank,
     memberDay,
     cohortDay,
     behindBy,
-    cleanPassCount: member.cleanPassCount,
+    cleanPassCount: overlaid.cleanPassCount,
     scoreBreakdown: {
-      missionPoints: member.missionPoints,
-      conceptPoints: member.conceptPoints,
-      commitPoints: member.commitPoints,
-      projectPoints: member.projectPoints,
+      missionPoints: overlaid.missionPoints,
+      conceptPoints: overlaid.conceptPoints,
+      commitPoints: overlaid.commitPoints,
+      projectPoints: overlaid.projectPoints,
     },
     currentDay,
     moduleProgress,

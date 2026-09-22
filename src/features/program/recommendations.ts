@@ -5,6 +5,10 @@ import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { getMemberAtRiskStatus } from "@/features/program/commits";
 import { programMember } from "@/repositories/legacy/program-member";
+import {
+  applyProgramRecommendationChange,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 
 const RECOMMENDATION_TTL_DAYS = 7;
 const GAP_MS = 500;
@@ -103,12 +107,9 @@ export async function generateRecommendations(cohortId: string): Promise<{
       continue;
     }
 
-    await programMember.update({
-      where: { id: member.id },
-      data: {
-        aiRecommendation: ai.data.recommendation.trim(),
-        aiRecommendationAt: new Date(),
-      },
+    await applyProgramRecommendationChange(prisma, {
+      memberId: member.id,
+      aiRecommendation: ai.data.recommendation.trim(),
     });
 
     generated += 1;
@@ -123,10 +124,14 @@ export async function getMemberRecommendation(
 ): Promise<{ recommendation: string | null; generatedAt: string | null }> {
   const member = await programMember.findUnique({
     where: { id: memberId },
-    select: { aiRecommendation: true, aiRecommendationAt: true },
+    select: { id: true, aiRecommendation: true, aiRecommendationAt: true },
   });
+  if (!member) {
+    return { recommendation: null, generatedAt: null };
+  }
+  const [overlaid] = await overlayProgramMemberState([member]);
   return {
-    recommendation: member?.aiRecommendation ?? null,
-    generatedAt: member?.aiRecommendationAt?.toISOString() ?? null,
+    recommendation: overlaid?.aiRecommendation ?? null,
+    generatedAt: overlaid?.aiRecommendationAt?.toISOString() ?? null,
   };
 }

@@ -2,6 +2,10 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { programMember } from "@/repositories/legacy/program-member";
+import {
+  compareProgramScoreRows,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 
 export type ProgramLeaderboardRow = {
   rank: number;
@@ -21,31 +25,29 @@ export type ProgramLeaderboardRow = {
 };
 
 async function fetchLeaderboard(cohortId: string): Promise<ProgramLeaderboardRow[]> {
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    orderBy: [
-      { totalScore: "desc" },
-      { projectPoints: "desc" },
-      { missionPoints: "desc" },
-      { enrolledAt: "asc" },
-    ],
-    select: {
-      id: true,
-      fullName: true,
-      company: true,
-      jobRole: true,
-      yearsExperience: true,
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-      totalScore: true,
-      cleanPassCount: true,
-    },
-  });
+  const members = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId,
+        status: { in: ["ENROLLED", "COMPLETED"] },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        company: true,
+        jobRole: true,
+        yearsExperience: true,
+        missionPoints: true,
+        conceptPoints: true,
+        commitPoints: true,
+        projectPoints: true,
+        totalScore: true,
+        cleanPassCount: true,
+        enrolledAt: true,
+      },
+    }),
+  );
+  members.sort(compareProgramScoreRows);
 
   return members.map((m, index) => {
     const missionsPassed = Math.floor(m.missionPoints / 12);

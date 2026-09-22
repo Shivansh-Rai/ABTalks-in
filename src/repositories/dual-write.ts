@@ -18,7 +18,11 @@ import {
   UserType,
 } from "@prisma/client";
 import { logger } from "@/lib/logger";
-import { isDualWriteEnabled, isNewVisibilityWritesEnabled } from "@/lib/feature-flags";
+import {
+  isDualWriteEnabled,
+  isNewProgramStateWritesEnabled,
+  isNewVisibilityWritesEnabled,
+} from "@/lib/feature-flags";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import {
   activityIdForDailyTask,
@@ -187,6 +191,9 @@ export async function dualWriteProgramMember(
   tx: Tx,
   memberId: string,
 ): Promise<void> {
+  if (isNewProgramStateWritesEnabled()) {
+    return;
+  }
   const visibilityFirst = isNewVisibilityWritesEnabled();
   if (visibilityFirst) {
     const member = await tx.programMember.findUnique({
@@ -214,6 +221,14 @@ export async function dualWriteProgramMember(
         githubRepoUrl: true,
         highestUnlockedDay: true,
         skipTokensUsed: true,
+        missionPoints: true,
+        conceptPoints: true,
+        commitPoints: true,
+        projectPoints: true,
+        totalScore: true,
+        cleanPassCount: true,
+        aiRecommendation: true,
+        aiRecommendationAt: true,
         recruiterVisibilityConsentAt: true,
       },
     });
@@ -238,6 +253,14 @@ export async function dualWriteProgramMember(
         githubRepoUrl: member.githubRepoUrl,
         unlockFloorDay: member.highestUnlockedDay,
         skipTokensUsed: member.skipTokensUsed,
+        missionPoints: member.missionPoints,
+        conceptPoints: member.conceptPoints,
+        commitPoints: member.commitPoints,
+        projectPoints: member.projectPoints,
+        totalScore: member.totalScore,
+        cleanPassCount: member.cleanPassCount,
+        aiRecommendation: member.aiRecommendation,
+        aiRecommendationAt: member.aiRecommendationAt,
       },
       update: {
         status: mapMemberStatus(member.status),
@@ -246,6 +269,14 @@ export async function dualWriteProgramMember(
         githubRepoUrl: member.githubRepoUrl,
         unlockFloorDay: member.highestUnlockedDay,
         skipTokensUsed: member.skipTokensUsed,
+        missionPoints: member.missionPoints,
+        conceptPoints: member.conceptPoints,
+        commitPoints: member.commitPoints,
+        projectPoints: member.projectPoints,
+        totalScore: member.totalScore,
+        cleanPassCount: member.cleanPassCount,
+        aiRecommendation: member.aiRecommendation,
+        aiRecommendationAt: member.aiRecommendationAt,
       },
     });
     if (!visibilityFirst) {

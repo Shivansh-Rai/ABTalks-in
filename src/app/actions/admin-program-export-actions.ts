@@ -9,6 +9,10 @@ import { getCohortCalendarDay } from "@/features/program/progression";
 import { getAdminProgramCohort } from "@/features/program/admin";
 import { cohortIdSchema } from "@/lib/validations/program";
 import { programMember } from "@/repositories/legacy/program-member";
+import {
+  compareProgramScoreRows,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 
 async function requireAdminProgramExport() {
   const admin = await requireAdmin();
@@ -26,28 +30,31 @@ export async function exportProgramMembersAction(input: unknown) {
   const parsed = cohortIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid cohort." };
 
-  const members = await programMember.findMany({
-    where: {
-      cohortId: parsed.data.cohortId,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-    },
-    orderBy: [{ totalScore: "desc" }, { fullName: "asc" }],
-    select: {
-      fullName: true,
-      jobRole: true,
-      company: true,
-      yearsExperience: true,
-      status: true,
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-      totalScore: true,
-      cleanPassCount: true,
-      highestUnlockedDay: true,
-      user: { select: { email: true } },
-    },
-  });
+  const members = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId: parsed.data.cohortId,
+        status: { in: ["ENROLLED", "COMPLETED"] },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        jobRole: true,
+        company: true,
+        yearsExperience: true,
+        status: true,
+        missionPoints: true,
+        conceptPoints: true,
+        commitPoints: true,
+        projectPoints: true,
+        totalScore: true,
+        cleanPassCount: true,
+        highestUnlockedDay: true,
+        user: { select: { email: true } },
+      },
+    }),
+  );
+  members.sort(compareProgramScoreRows);
 
   return {
     ok: true as const,

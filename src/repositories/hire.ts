@@ -2,7 +2,8 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { Domain, ProgramCohortStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
+import { isNewProgramStateEnabled, isNewTalentRepoEnabled } from "@/lib/feature-flags";
+import { overlayProgramMemberState } from "@/repositories/program-state";
 import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
 import { issuedChallengeEnrollmentIds } from "@/repositories/credentials";
 import { overlayChallengeProgressFields } from "@/repositories/progress";
@@ -167,10 +168,12 @@ export async function listProgramCandidates(
   where: Prisma.ProgramMemberWhereInput,
 ): Promise<ProgramCandidateRow[]> {
   if (newModelActive()) {
-    const rows = await prisma.programMember.findMany({
-      where: { AND: [where, { user: searchableUserWhere() }] },
-      select: PROGRAM_EVIDENCE_SELECT,
-    });
+    const rows = await overlayProgramMemberState(
+      await prisma.programMember.findMany({
+        where: { AND: [where, { user: searchableUserWhere() }] },
+        select: PROGRAM_EVIDENCE_SELECT,
+      }),
+    );
     const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
     return rows.map((r) => {
       const idn = identities.get(r.userId);
@@ -204,15 +207,17 @@ export async function listProgramCandidates(
     });
   }
 
-  const rows = await prisma.programMember.findMany({
-    where: { AND: [where, { user: searchableUserWhere() }] },
-    select: {
-      ...PROGRAM_CANDIDATE_SELECT,
-      linkedinUrl: true,
-      githubUsername: true,
-      resumeUrl: true,
-    },
-  });
+  const rows = await overlayProgramMemberState(
+    await prisma.programMember.findMany({
+      where: { AND: [where, { user: searchableUserWhere() }] },
+      select: {
+        ...PROGRAM_CANDIDATE_SELECT,
+        linkedinUrl: true,
+        githubUsername: true,
+        resumeUrl: true,
+      },
+    }),
+  );
   return rows.map(({ linkedinUrl, githubUsername, resumeUrl, ...row }) =>
     withLegacyLinkFlags(row, { linkedinUrl, githubUsername, resumeUrl }),
   );
@@ -745,6 +750,20 @@ export async function resolveProgramRefs(
   memberIds: string[],
 ): Promise<{ id: string; userId: string }[]> {
   if (memberIds.length === 0) return [];
+  if (isNewProgramStateEnabled()) {
+    const pes = await prisma.programEnrollment.findMany({
+      where: {
+        id: { in: memberIds.map(peIdForMember) },
+        status: { in: ["ACTIVE", "COMPLETED"] },
+        user: searchableUserWhere(),
+      },
+      select: { id: true, userId: true },
+    });
+    return pes.flatMap((pe) => {
+      const id = memberIdFromPe(pe.id);
+      return id ? [{ id, userId: pe.userId }] : [];
+    });
+  }
   return prisma.programMember.findMany({
     where: {
       id: { in: memberIds },

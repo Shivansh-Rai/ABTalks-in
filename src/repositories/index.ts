@@ -65,3 +65,11 @@ export {
   reconcileCreditAccount,
   sumLedgerBalance,
 } from "./credits";
+export {
+  applyProgramMembershipChange,
+  applyProgramUnlockChange,
+  applyProgramScoreChange,
+  applyProgramRecommendationChange,
+  overlayProgramMemberState,
+  countEnrolledProgramMembers,
+} from "./program-state";

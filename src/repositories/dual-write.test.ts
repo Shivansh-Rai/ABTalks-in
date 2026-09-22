@@ -501,13 +501,15 @@ suite("admin enrollment status writers dual-write", () => {
 suite("program member APPLIED/WAITLISTED/ENROLLED/DROPPED dual-write", () => {
   const entry = source("src/features/program/entry.ts");
   const admin = source("src/features/program/admin.ts");
+  const programState = source("src/repositories/program-state.ts");
   assert(entry.includes('status: "APPLIED"'), "APPLIED write");
-  assert(entry.includes("dualWriteProgramMember"), "apply dual-write");
-  assert(entry.includes('status: "WAITLISTED"'), "WAITLISTED write");
-  assert(entry.includes('status: "ENROLLED"'), "ENROLLED write");
-  assert(admin.includes("dualWriteProgramMember"), "admin dual-write");
+  assert(entry.includes("applyProgramMembershipChange"), "apply membership");
+  assert(entry.includes('"WAITLISTED"'), "WAITLISTED write");
+  assert(entry.includes('"ENROLLED"'), "ENROLLED write");
+  assert(admin.includes("applyProgramMembershipChange"), "admin membership");
   assert(admin.includes('status: "ENROLLED"'), "promote ENROLLED");
   assert(admin.includes('status: "DROPPED"'), "drop DROPPED");
+  assert(programState.includes("dualWriteProgramMember"), "dark-path dual-write");
 });
 
 suite("learning repo is the flag-gated compatibility boundary", () => {
@@ -591,12 +593,12 @@ suite("adminUnlockDay and grantSkipToken dual-write ProgramEnrollment", () => {
   const skipIdx = src.indexOf("export async function grantSkipToken");
   assert(unlockIdx >= 0 && skipIdx >= 0, "both functions exist");
   assert(
-    src.slice(unlockIdx, skipIdx).includes("dualWriteProgramMember"),
-    "unlock dual-writes PE",
+    src.slice(unlockIdx, skipIdx).includes("applyProgramUnlockChange"),
+    "unlock writes via program-state",
   );
   assert(
-    src.slice(skipIdx).includes("dualWriteProgramMember"),
-    "skip dual-writes PE",
+    src.slice(skipIdx).includes("applyProgramUnlockChange"),
+    "skip writes via program-state",
   );
 });
 

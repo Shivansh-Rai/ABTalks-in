@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
-import { recomputeMemberScore } from "@/features/program/missions";
+import { applyProgramScoreChange } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import {
   encodeRepoContentsPath,
@@ -206,11 +206,7 @@ export async function recomputeProjectPointsForMember(
   }, 0);
 
   await prisma.$transaction(async (tx) => {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: { projectPoints },
-    });
-    await recomputeMemberScore(tx, memberId);
+    await applyProgramScoreChange(tx, { memberId, projectPoints });
   });
 }
 

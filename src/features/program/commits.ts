@@ -12,7 +12,6 @@ import {
   getMemberProgressDay,
   isSkippedPayload,
 } from "@/features/program/progression";
-import { recomputeMemberScore } from "@/features/program/missions";
 import { parseRepo } from "@/features/program/verify-mission";
 import {
   COMMIT_POINTS_PER_DAY,
@@ -24,6 +23,7 @@ import {
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { dualWriteCommitDay } from "@/repositories/dual-write";
+import { applyProgramScoreChange } from "@/repositories/program-state";
 import { programMember } from "@/repositories/legacy/program-member";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
@@ -164,11 +164,10 @@ async function recomputeCommitPointsInTx(
     qualifyingDays * COMMIT_POINTS_PER_DAY,
   );
 
-  await tx.programMember.update({
-    where: { id: memberId },
-    data: { commitPoints },
+  await applyProgramScoreChange(tx, {
+    memberId,
+    commitPoints,
   });
-  await recomputeMemberScore(tx, memberId);
 }
 
 async function recomputeCommitPointsForMember(

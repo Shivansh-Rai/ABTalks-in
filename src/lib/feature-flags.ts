@@ -222,6 +222,42 @@ export function isNewEnrollmentStateEnabled(): boolean {
 export function isLegacyEnrollmentDenormMirrorEnabled(): boolean {
   return process.env.ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR !== "false";
 }
+
+/**
+ * W8-A canonical ProgramMember-domain current-state reads.
+ * Off unless explicitly `"true"`. Dark deploy keeps ProgramMember as the live
+ * read source. Dual-write stays on. W8-B freezes ProgramMember after this is on.
+ * Do not overload ENABLE_NEW_LEARNING / ENABLE_NEW_PROGRESS / ENABLE_DUAL_WRITE.
+ */
+export function isNewProgramStateEnabled(): boolean {
+  return process.env.ENABLE_NEW_PROGRAM_STATE === "true";
+}
+
+/**
+ * W8-A write authority for AI-cohort membership, unlock, skip tokens,
+ * score snapshots, and AI recommendations.
+ * Off unless explicitly `"true"`.
+ *
+ * When off (dark deploy): ProgramMember still writes first, then
+ * ProgramEnrollment is dual-written.
+ * When on: ProgramEnrollment commits first; ProgramMember is a compatibility
+ * mirror while ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is not `"false"`.
+ * Dual-write stays on either way. Do not freeze ProgramMember in W8-A.
+ */
+export function isNewProgramStateWritesEnabled(): boolean {
+  return process.env.ENABLE_NEW_PROGRAM_STATE_WRITES === "true";
+}
+
+/**
+ * W8-A ProgramMember compatibility mirror. Independent of ENABLE_DUAL_WRITE.
+ *
+ * Default ON so a dark deploy (flag unset) keeps current mirroring.
+ * Off only when explicitly `"false"` (W8-B): canonical PE still writes;
+ * ProgramMember current-state fields freeze.
+ */
+export function isLegacyProgramMemberMirrorEnabled(): boolean {
+  return process.env.ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR !== "false";
+}
 export function isNewTalentRepoEnabled(): boolean {
   return process.env.ENABLE_NEW_TALENT === "true";
 }

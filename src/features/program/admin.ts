@@ -23,7 +23,14 @@ import {
 } from "@/features/interview/read-model";
 import { generateProgramJoinCode } from "@/lib/program-auth";
 import { programMember } from "@/repositories/legacy/program-member";
-import { dualWriteProgramMember } from "@/repositories/dual-write";
+import {
+  applyProgramMembershipChange,
+  applyProgramRecommendationChange,
+  applyProgramUnlockChange,
+  compareProgramScoreRows,
+  countEnrolledProgramMembers,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
 export type CohortOverview = {
@@ -379,7 +386,7 @@ export async function getCohortOverview(
           yearsExperience: true,
           highestUnlockedDay: true,
         },
-      }),
+      }).then((rows) => overlayProgramMemberState(rows)),
       prisma.programModule.findMany({
         orderBy: { number: "asc" },
         select: {
@@ -564,32 +571,34 @@ export async function getCohortMembers(
 
   const q = filters.q?.trim();
 
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      ...(filters.status ? { status: filters.status } : {}),
-      ...(q
-        ? {
-            OR: [
-              { fullName: { contains: q, mode: "insensitive" } },
-              { company: { contains: q, mode: "insensitive" } },
-              { jobRole: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: [{ totalScore: "desc" }, { fullName: "asc" }],
-    select: {
-      id: true,
-      fullName: true,
-      company: true,
-      jobRole: true,
-      status: true,
-      totalScore: true,
-      highestUnlockedDay: true,
-      userId: true,
-    },
-  });
+  const members = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId,
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(q
+          ? {
+              OR: [
+                { fullName: { contains: q, mode: "insensitive" } },
+                { company: { contains: q, mode: "insensitive" } },
+                { jobRole: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        fullName: true,
+        company: true,
+        jobRole: true,
+        status: true,
+        totalScore: true,
+        highestUnlockedDay: true,
+        userId: true,
+      },
+    }),
+  );
+  members.sort(compareProgramScoreRows);
 
   const userIds = members.map((m) => m.userId);
   const memberIds = members.map((m) => m.id);
@@ -665,18 +674,18 @@ export async function promoteWaitlisted(
 
   try {
     await writeClient().$transaction(async (tx) => {
-      const enrolled = await tx.programMember.count({
-        where: { cohortId: member.cohortId, status: "ENROLLED" },
-      });
+      const enrolled = await countEnrolledProgramMembers(tx, member.cohortId);
       if (enrolled >= member.cohort.capacity) {
         throw new Error("Cohort is at capacity.");
       }
-      await tx.programMember.update({
-        where: { id: memberId },
-        data: { status: "ENROLLED", enrolledAt: new Date() },
+      await applyProgramMembershipChange(tx, {
+        memberId,
+        userId: member.userId,
+        programCohortId: member.cohortId,
+        status: "ENROLLED",
+        enrolledAt: new Date(),
       });
       await bootstrapMemberStartDay(tx, memberId);
-      await dualWriteProgramMember(tx, memberId);
       await tx.adminAction.create({
         data: {
           adminUserId: adminId,
@@ -703,7 +712,7 @@ export async function dropMember(
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const member = await programMember.findUnique({
     where: { id: memberId },
-    select: { id: true, userId: true, status: true },
+    select: { id: true, userId: true, status: true, cohortId: true },
   });
   if (!member) return { ok: false, message: "Member not found." };
   if (member.status === "DROPPED") {
@@ -711,11 +720,12 @@ export async function dropMember(
   }
 
   await writeClient().$transaction(async (tx) => {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: { status: "DROPPED" },
+    await applyProgramMembershipChange(tx, {
+      memberId,
+      userId: member.userId,
+      programCohortId: member.cohortId,
+      status: "DROPPED",
     });
-    await dualWriteProgramMember(tx, memberId);
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
@@ -740,10 +750,12 @@ export async function adminUnlockDay(
     return { ok: false, message: `Day must be 1–${PROGRAM_TOTAL_DAYS}.` };
   }
 
-  const member = await programMember.findUnique({
+  const rawMember = await programMember.findUnique({
     where: { id: memberId },
     select: { id: true, userId: true, highestUnlockedDay: true },
   });
+  if (!rawMember) return { ok: false, message: "Member not found." };
+  const [member] = await overlayProgramMemberState([rawMember]);
   if (!member) return { ok: false, message: "Member not found." };
 
   const next = Math.min(
@@ -755,11 +767,10 @@ export async function adminUnlockDay(
   }
 
   await writeClient().$transaction(async (tx) => {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: { highestUnlockedDay: next },
+    await applyProgramUnlockChange(tx, {
+      memberId,
+      highestUnlockedDay: next,
     });
-    await dualWriteProgramMember(tx, memberId);
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
@@ -784,21 +795,22 @@ export async function grantSkipToken(
   memberId: string,
   reason: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const member = await programMember.findUnique({
+  const rawMember = await programMember.findUnique({
     where: { id: memberId },
     select: { id: true, userId: true, skipTokensUsed: true },
   });
+  if (!rawMember) return { ok: false, message: "Member not found." };
+  const [member] = await overlayProgramMemberState([rawMember]);
   if (!member) return { ok: false, message: "Member not found." };
   if (member.skipTokensUsed <= 0) {
     return { ok: false, message: "No skip tokens used to restore." };
   }
 
   await writeClient().$transaction(async (tx) => {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: { skipTokensUsed: { decrement: 1 } },
+    await applyProgramUnlockChange(tx, {
+      memberId,
+      skipTokensUsed: member.skipTokensUsed - 1,
     });
-    await dualWriteProgramMember(tx, memberId);
     await tx.adminAction.create({
       data: {
         adminUserId: adminId,
@@ -841,13 +853,15 @@ export async function regenerateMemberRecommendation(
     },
   });
   if (!member) return { ok: false, message: "Member not found." };
+  const [overlaid] = await overlayProgramMemberState([member]);
+  if (!overlaid) return { ok: false, message: "Member not found." };
 
-  const atRisk = await getMemberAtRiskStatus(memberId, member.cohort.id);
+  const atRisk = await getMemberAtRiskStatus(memberId, overlaid.cohort.id);
   const behindBy = atRisk.behindBy;
-  const missionsPassed = Math.floor(member.missionPoints / 12);
+  const missionsPassed = Math.floor(overlaid.missionPoints / 12);
   const cleanPassPct =
     missionsPassed > 0
-      ? Math.round((member.cleanPassCount / missionsPassed) * 100)
+      ? Math.round((overlaid.cleanPassCount / missionsPassed) * 100)
       : 0;
 
   const ai = await askClaudeJson<{ recommendation: string }>({
@@ -855,8 +869,8 @@ export async function regenerateMemberRecommendation(
       'Write recruiter-readable recommendations. Reply JSON only: {"recommendation":"..."}. 2-3 sentences, concrete.',
     user: [
       `Candidate: ${member.fullName}, ${member.jobRole ?? "—"} at ${member.company ?? "—"}`,
-      `Scores: total ${member.totalScore}, missions ${member.missionPoints}, concepts ${member.conceptPoints}, commits ${member.commitPoints}, projects ${member.projectPoints}`,
-      `Clean pass rate: ${cleanPassPct}%, behind cohort by ${behindBy} days, skip tokens used ${member.skipTokensUsed}`,
+      `Scores: total ${overlaid.totalScore}, missions ${overlaid.missionPoints}, concepts ${overlaid.conceptPoints}, commits ${overlaid.commitPoints}, projects ${overlaid.projectPoints}`,
+      `Clean pass rate: ${cleanPassPct}%, behind cohort by ${behindBy} days, skip tokens used ${overlaid.skipTokensUsed}`,
       `Projects: ${member.projects.map((p) => `M${p.moduleNumber}=${p.adminScore ?? p.aiScore}`).join(", ") || "none"}`,
       atRisk.atRisk ? `At-risk: ${atRisk.reasons.join(", ")}` : "Not at-risk",
     ].join("\n"),
@@ -866,12 +880,9 @@ export async function regenerateMemberRecommendation(
   if (!ai.ok) return { ok: false, message: ai.message };
 
   await prisma.$transaction(async (tx) => {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: {
-        aiRecommendation: ai.data.recommendation.trim(),
-        aiRecommendationAt: new Date(),
-      },
+    await applyProgramRecommendationChange(tx, {
+      memberId,
+      aiRecommendation: ai.data.recommendation.trim(),
     });
     await tx.adminAction.create({
       data: {
@@ -962,10 +973,12 @@ export async function getMemberAdminDetail(memberId: string) {
     },
   });
   if (!member) return null;
+  const [overlaid] = await overlayProgramMemberState([member]);
+  if (!overlaid) return null;
 
   const [entryAttempts, atRisk] = await Promise.all([
     prisma.programEntryAttempt.findMany({
-      where: { userId: member.userId, cohortId: member.cohortId },
+      where: { userId: overlaid.userId, cohortId: overlaid.cohortId },
       orderBy: { attemptNumber: "asc" },
       select: {
         attemptNumber: true,
@@ -975,12 +988,12 @@ export async function getMemberAdminDetail(memberId: string) {
         submittedAt: true,
       },
     }),
-    getMemberAtRiskStatus(member.id, member.cohortId),
+    getMemberAtRiskStatus(overlaid.id, overlaid.cohortId),
   ]);
 
   // Resolved via the interview read model (DAY_31 -> DAY_15 -> legacy) rather
   // than the raw ProgramInterview relation.
-  const signal = await getInterviewSignal(member.id);
+  const signal = await getInterviewSignal(overlaid.id);
   const interview = signal
     ? {
         status: signal.status,
@@ -994,11 +1007,11 @@ export async function getMemberAdminDetail(memberId: string) {
     : null;
 
   const { passedDays, skippedDays } = collectPassSkipSets(
-    member.missionSubmissions,
+    overlaid.missionSubmissions,
   );
   const progressDay = getMemberProgressDay(passedDays);
-  const calendarDay = getCohortCalendarDay(member.cohort);
-  const behindBy = getBehindByDays(member.cohort, progressDay);
+  const calendarDay = getCohortCalendarDay(overlaid.cohort);
+  const behindBy = getBehindByDays(overlaid.cohort, progressDay);
 
   const dayStates = Array.from({ length: PROGRAM_TOTAL_DAYS }, (_, i) => {
     const dayNumber = i + 1;
@@ -1010,14 +1023,14 @@ export async function getMemberAdminDetail(memberId: string) {
         ? ("PASSED" as const)
         : daySkipped
           ? ("SKIPPED" as const)
-          : dayNumber <= member.highestUnlockedDay
+          : dayNumber <= overlaid.highestUnlockedDay
             ? ("AVAILABLE" as const)
             : ("LOCKED" as const),
     };
   });
 
   return {
-    ...member,
+    ...overlaid,
     interview,
     entryAttempts,
     atRiskReasons: atRisk.reasons,

@@ -17,6 +17,10 @@ import {
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
 import { applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
+import {
+  applyProgramScoreChange,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 import { peIdForMember } from "@/repositories/ids";
 import {
   getProgramUnlockFloor,
@@ -84,26 +88,7 @@ export async function recomputeMemberScore(
   tx: Prisma.TransactionClient,
   memberId: string,
 ): Promise<void> {
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-    },
-  });
-  if (!member) return;
-  await tx.programMember.update({
-    where: { id: memberId },
-    data: {
-      totalScore:
-        member.missionPoints +
-        member.conceptPoints +
-        member.commitPoints +
-        member.projectPoints,
-    },
-  });
+  await applyProgramScoreChange(tx, { memberId });
 }
 
 async function getDayAvailability(
@@ -113,7 +98,7 @@ async function getDayAvailability(
   | { ok: true; state: "AVAILABLE"; member: { id: string; cohortId: string; highestUnlockedDay: number; skipTokensUsed: number; githubRepoUrl: string; missionPoints: number; cleanPassCount: number } }
   | { ok: false; message: string }
 > {
-  const member = await programMember.findUnique({
+  const rawMember = await programMember.findUnique({
     where: { id: memberId },
     select: {
       id: true,
@@ -128,6 +113,8 @@ async function getDayAvailability(
       },
     },
   });
+  if (!rawMember) return { ok: false, message: "Member not found." };
+  const [member] = await overlayProgramMemberState([rawMember]);
   if (!member) return { ok: false, message: "Member not found." };
 
   if (await isCohortFrozen(member.cohort)) {
@@ -186,14 +173,17 @@ export async function getMissionState(
   memberId: string,
   dayNumber: number,
 ): Promise<MissionState | null> {
-  const member = await programMember.findUnique({
+  const rawMember = await programMember.findUnique({
     where: { id: memberId },
     select: {
+      id: true,
       highestUnlockedDay: true,
       skipTokensUsed: true,
       cohort: { select: { startsAt: true } },
     },
   });
+  if (!rawMember) return null;
+  const [member] = await overlayProgramMemberState([rawMember]);
   if (!member) return null;
 
   const [daySubmissions, allSubmissions, day, unlockFloor] = await Promise.all([
@@ -323,14 +313,11 @@ export async function submitMissionRun(
     });
 
     if (verifyResult.passed && isFirstPass) {
-      await tx.programMember.update({
-        where: { id: memberId },
-        data: {
-          missionPoints: { increment: pointsAwarded },
-          ...(cleanPass ? { cleanPassCount: { increment: 1 } } : {}),
-        },
+      await applyProgramScoreChange(tx, {
+        memberId,
+        missionPointsDelta: pointsAwarded,
+        cleanPassCountDelta: cleanPass ? 1 : 0,
       });
-      await recomputeMemberScore(tx, memberId);
 
       // Only surface "continue" when the next day is already within calendar unlock.
       const memberAfter = await tx.programMember.findUnique({

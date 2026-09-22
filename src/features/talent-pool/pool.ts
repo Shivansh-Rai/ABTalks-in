@@ -7,6 +7,10 @@ import {
 } from "@/features/interview/read-model";
 import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
 import { programMember } from "@/repositories/legacy/program-member";
+import {
+  compareProgramScoreRows,
+  overlayProgramMemberState,
+} from "@/repositories/program-state";
 import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   filterSearchableUserIds,
@@ -247,6 +251,7 @@ export async function getTalentProfile(
     select: {
       id: true,
       userId: true,
+      status: true,
       fullName: true,
       jobRole: true,
       company: true,
@@ -281,27 +286,29 @@ export async function getTalentProfile(
   });
 
   if (!member) return { ok: false, message: "Member not found." };
+  const [overlaid] = await overlayProgramMemberState([member]);
+  if (!overlaid) return { ok: false, message: "Member not found." };
+  if (overlaid.status !== "ENROLLED" && overlaid.status !== "COMPLETED") {
+    return { ok: false, message: "Member not found." };
+  }
 
-  const ranked = await programMember.findMany({
-    where: {
-      cohortId: access.cohort.id,
-      status: { in: ["ENROLLED", "COMPLETED"] },
-      user: searchableUserWhere(),
-    },
-    orderBy: [
-      { totalScore: "desc" },
-      { projectPoints: "desc" },
-      { missionPoints: "desc" },
-      { enrolledAt: "asc" },
-    ],
-    select: { id: true },
-  });
+  const ranked = await overlayProgramMemberState(
+    await programMember.findMany({
+      where: {
+        cohortId: access.cohort.id,
+        status: { in: ["ENROLLED", "COMPLETED"] },
+        user: searchableUserWhere(),
+      },
+      select: { id: true, totalScore: true, projectPoints: true, missionPoints: true, enrolledAt: true },
+    }),
+  );
+  ranked.sort(compareProgramScoreRows);
   const rank = ranked.findIndex((m) => m.id === memberId) + 1;
 
   const [missionHeatmap, missionPortfolio, shortlistItem, interviewSignal] =
     await Promise.all([
     getMissionHeatmap(memberId),
-    buildMissionPortfolio(memberId, member.highestUnlockedDay),
+    buildMissionPortfolio(memberId, overlaid.highestUnlockedDay),
     prisma.recruiterShortlistItem.findUnique({
       where: {
         recruiterUserId_memberId: {
@@ -350,15 +357,15 @@ export async function getTalentProfile(
       contactReleased: false as const,
       rank,
       scoreBreakdown: {
-        missionPoints: member.missionPoints,
-        conceptPoints: member.conceptPoints,
-        commitPoints: member.commitPoints,
-        projectPoints: member.projectPoints,
-        totalScore: member.totalScore,
+        missionPoints: overlaid.missionPoints,
+        conceptPoints: overlaid.conceptPoints,
+        commitPoints: overlaid.commitPoints,
+        projectPoints: overlaid.projectPoints,
+        totalScore: overlaid.totalScore,
       },
       cleanPassPct: computeCleanPassPct(
-        member.missionPoints,
-        member.cleanPassCount,
+        overlaid.missionPoints,
+        overlaid.cleanPassCount,
       ),
       missionHeatmap,
       missionPortfolio,
@@ -386,7 +393,7 @@ export async function getTalentProfile(
                 transcript: [] as { role: string; text: string }[],
               }
             : null,
-      aiRecommendation: member.aiRecommendation,
+      aiRecommendation: overlaid.aiRecommendation,
       shortlisted: !!shortlistItem,
       shortlistNote: shortlistItem?.note ?? null,
     },
@@ -518,11 +525,15 @@ export async function getShortlist(
     },
   });
 
-  const visible = items.filter(
-    (i) =>
-      i.member.cohortId === access.cohort.id &&
-      (i.member.status === "ENROLLED" || i.member.status === "COMPLETED"),
+  const overlaidMembers = await overlayProgramMemberState(
+    items.map((i) => i.member),
   );
+  const overlaidById = new Map(overlaidMembers.map((m) => [m.id, m]));
+  const visible = items.filter((i) => {
+    if (i.member.cohortId !== access.cohort.id) return false;
+    const snap = overlaidById.get(i.member.id) ?? i.member;
+    return snap.status === "ENROLLED" || snap.status === "COMPLETED";
+  });
   const searchable = await filterSearchableUserIds(
     visible.map((i) => i.member.userId),
   );
@@ -553,7 +564,7 @@ export async function getShortlist(
         userId: i.member.userId,
         openToWork: availability.get(i.member.userId)?.openToWork === true,
         jobRole: idn?.role ?? i.member.jobRole,
-        totalScore: i.member.totalScore,
+        totalScore: overlaidById.get(i.member.id)?.totalScore ?? i.member.totalScore,
         note: i.note,
         displayName: name.trim() ? name.trim() : null,
         skills: idn?.skills.length ? idn.skills : i.member.skills,

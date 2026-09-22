@@ -6,10 +6,10 @@ import {
 } from "@prisma/client";
 import {
   dualWriteChallengeEnrollmentById,
-  dualWriteProgramMember,
 } from "@/repositories/dual-write";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
+import { applyProgramMembershipChange } from "@/repositories/program-state";
 
 type Tx = Prisma.TransactionClient;
 
@@ -170,14 +170,15 @@ export async function anonymizeUser(
         ],
       },
     },
-    select: { id: true },
+    select: { id: true, cohortId: true },
   });
   for (const member of openMembers) {
-    await tx.programMember.update({
-      where: { id: member.id },
-      data: { status: ProgramMemberStatus.DROPPED },
+    await applyProgramMembershipChange(tx, {
+      memberId: member.id,
+      userId,
+      programCohortId: member.cohortId,
+      status: ProgramMemberStatus.DROPPED,
     });
-    await dualWriteProgramMember(tx, member.id);
   }
 
   await tx.programEnrollment.updateMany({

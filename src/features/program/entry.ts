@@ -13,7 +13,10 @@ import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
 import { programMember } from "@/repositories/legacy/program-member";
 import { getCandidateProfile } from "@/repositories/candidate";
-import { dualWriteProgramMember } from "@/repositories/dual-write";
+import {
+  applyProgramMembershipChange,
+  countEnrolledProgramMembers,
+} from "@/repositories/program-state";
 import {
   findAppliedMembership,
   findWaitlistedMembership,
@@ -127,22 +130,17 @@ async function enrollOrWaitlist(
     where: { id: cohortId },
     select: { capacity: true },
   });
-  const enrolledCount = await tx.programMember.count({
-    where: { cohortId, status: "ENROLLED" },
-  });
+  const enrolledCount = await countEnrolledProgramMembers(tx, cohortId);
   const hasRoom = !!cohort && enrolledCount < cohort.capacity;
 
-  const memberAfter = await tx.programMember.update({
-    where: { userId_cohortId: { userId, cohortId } },
-    data: hasRoom
-      ? { status: "ENROLLED", enrolledAt: new Date() }
-      : { status: "WAITLISTED" },
-    select: { id: true },
+  const memberAfter = await applyProgramMembershipChange(tx, {
+    userId,
+    programCohortId: cohortId,
+    status: hasRoom ? "ENROLLED" : "WAITLISTED",
+    enrolledAt: hasRoom ? new Date() : undefined,
   });
-  await dualWriteProgramMember(tx, memberAfter.id);
   if (hasRoom) {
-    await bootstrapMemberStartDay(tx, memberAfter.id);
-    await dualWriteProgramMember(tx, memberAfter.id);
+    await bootstrapMemberStartDay(tx, memberAfter.memberId);
   }
   return hasRoom ? "ENROLLED" : "WAITLISTED";
 }
@@ -286,22 +284,16 @@ export async function createApplication(
 
   await writeClient().$transaction(
     async (tx) => {
-      const member = await tx.programMember.upsert({
-        where: { userId_cohortId: { userId, cohortId: cohort.id } },
-        create: {
-          userId,
-          cohortId: cohort.id,
-          status: "APPLIED",
-          ...data,
-          // No `recruiterVisibilityConsentAt` (plan 133). Nobody is asked, so
-          // stamping a consent time would record a consent that never happened.
-          // Discoverability comes from `CandidateVisibility` via dual-write,
-          // which treats a null here as the platform default.
-        },
-        update: { status: "APPLIED", ...data },
-        select: { id: true },
+      await applyProgramMembershipChange(tx, {
+        userId,
+        programCohortId: cohort.id,
+        status: "APPLIED",
+        identity: data,
+        // No `recruiterVisibilityConsentAt` (plan 133). Nobody is asked, so
+        // stamping a consent time would record a consent that never happened.
+        // Discoverability comes from `CandidateVisibility`, which treats a
+        // null here as the platform default.
       });
-      await dualWriteProgramMember(tx, member.id);
       if (isProgramEntryBypassEnabled()) {
         await enrollOrWaitlist(tx, userId, cohort.id);
       }

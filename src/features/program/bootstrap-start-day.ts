@@ -2,6 +2,11 @@ import type { Prisma } from "@prisma/client";
 import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { applyDeleteProgramMissionAttempt, applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
 import {
+  applyProgramScoreChange,
+  applyProgramUnlockChange,
+} from "@/repositories/program-state";
+import { isNewProgramStateEnabled, isNewProgramStateWritesEnabled } from "@/lib/feature-flags";
+import {
   missionSubmissionIdFromAttemptId,
   peIdForMember,
 } from "@/repositories/ids";
@@ -28,26 +33,7 @@ async function recomputeTotalScore(
   tx: Prisma.TransactionClient,
   memberId: string,
 ): Promise<void> {
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-    },
-  });
-  if (!member) return;
-  await tx.programMember.update({
-    where: { id: memberId },
-    data: {
-      totalScore:
-        member.missionPoints +
-        member.conceptPoints +
-        member.commitPoints +
-        member.projectPoints,
-    },
-  });
+  await applyProgramScoreChange(tx, { memberId });
 }
 
 async function seedEarlyCommitDays(
@@ -119,10 +105,7 @@ async function seedEarlyCommitDays(
     qualifyingDays * COMMIT_POINTS_PER_DAY,
   );
 
-  await tx.programMember.update({
-    where: { id: memberId },
-    data: { commitPoints },
-  });
+  await applyProgramScoreChange(tx, { memberId, commitPoints });
 }
 
 function isStartDayWaiver(payload: unknown): boolean {
@@ -158,6 +141,22 @@ export async function bootstrapMemberStartDay(
     },
   });
   if (!member) return;
+
+  if (isNewProgramStateWritesEnabled() || isNewProgramStateEnabled()) {
+    const pe = await tx.programEnrollment.findUnique({
+      where: { id: peIdForMember(memberId) },
+      select: {
+        unlockFloorDay: true,
+        missionPoints: true,
+        cleanPassCount: true,
+      },
+    });
+    if (pe) {
+      member.highestUnlockedDay = pe.unlockFloorDay ?? member.highestUnlockedDay;
+      member.missionPoints = pe.missionPoints;
+      member.cleanPassCount = pe.cleanPassCount;
+    }
+  }
 
   const existingPassed =
     WAIVED_DAYS.length === 0
@@ -308,18 +307,17 @@ export async function bootstrapMemberStartDay(
     nextMissionPoints !== member.missionPoints ||
     nextCleanPassCount !== member.cleanPassCount;
 
-  if (needsUnlockUpdate || needsScoreUpdate) {
-    await tx.programMember.update({
-      where: { id: memberId },
-      data: {
-        highestUnlockedDay: nextUnlocked,
-        ...(needsScoreUpdate
-          ? {
-              missionPoints: nextMissionPoints,
-              cleanPassCount: nextCleanPassCount,
-            }
-          : {}),
-      },
+  if (needsUnlockUpdate) {
+    await applyProgramUnlockChange(tx, {
+      memberId,
+      highestUnlockedDay: nextUnlocked,
+    });
+  }
+  if (needsScoreUpdate) {
+    await applyProgramScoreChange(tx, {
+      memberId,
+      missionPoints: nextMissionPoints,
+      cleanPassCount: nextCleanPassCount,
     });
   }
 
