@@ -18,7 +18,11 @@ export type IdentityErrors = { fullName?: string; email?: string };
  */
 export function validateIdentity(draft: OnboardingDraft): IdentityErrors {
   const errors: IdentityErrors = {};
-  if (draft.fullName.trim().length < 2) errors.fullName = "Enter your full name.";
+  const name = draft.fullName.trim();
+  if (name.length < 2) errors.fullName = "Enter your full name.";
+  // Mirrors `registerRecruiterSchema`, so the wizard says so at the field
+  // instead of letting the step pass and failing at submit.
+  else if (/\p{Nd}/u.test(name)) errors.fullName = "Full name cannot contain numbers.";
   const email = draft.email.trim();
   if (!EMAIL_RE.test(email)) errors.email = "Enter a valid work email address.";
   else if (isPersonalEmailDomain(email)) errors.email = WORK_EMAIL_REQUIRED_MESSAGE;

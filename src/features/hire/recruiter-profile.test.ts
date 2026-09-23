@@ -12,6 +12,7 @@ import { join } from "node:path";
 import {
   updateRecruiterProfileSchema,
 } from "@/lib/validations/recruiter-profile";
+import { registerRecruiterSchema } from "@/lib/validations/recruiter-auth";
 
 let passed = 0;
 let failed = 0;
@@ -290,6 +291,79 @@ suite("sidebar includes Settings navigation link for recruiters", () => {
   assert(
     src.includes("Settings"),
     "sidebar must display Settings label/icon",
+  );
+});
+
+// =========================================================================
+// Full name rejects digits (issue #522)
+// =========================================================================
+
+const BASE_PROFILE = {
+  phone: null,
+  companyName: "Acme Technologies",
+  website: null,
+  industry: null,
+  companySize: null,
+  location: null,
+};
+
+suite("profile full name rejects digits", () => {
+  for (const name of ["Sarthak123", "123", "Jane 2 Doe", "A1"]) {
+    const parsed = updateRecruiterProfileSchema.safeParse({
+      ...BASE_PROFILE,
+      fullName: name,
+    });
+    assert(!parsed.success, `"${name}" must be rejected`);
+  }
+});
+
+suite("profile full name still accepts real names", () => {
+  // Hyphens, apostrophes, periods, particles and non-Latin scripts are all
+  // things a real name carries. None of them may be collateral damage.
+  for (const name of [
+    "Jane Recruiter",
+    "Mary-Jane O'Connor",
+    "Dr. A. P. J. Abdul Kalam",
+    "Jean-Luc de la Fontaine",
+    "Ravi Shankar",
+    "Zoë Ångström",
+  ]) {
+    const parsed = updateRecruiterProfileSchema.safeParse({
+      ...BASE_PROFILE,
+      fullName: name,
+    });
+    assert(parsed.success, `"${name}" must still be accepted`);
+  }
+});
+
+suite("registration full name rejects digits", () => {
+  const base = {
+    company: "Acme Technologies",
+    email: "jane@acme.com",
+    code: "123456",
+    acceptedTerms: true as const,
+    newsletterOptIn: false,
+  };
+  const bad = registerRecruiterSchema.safeParse({ ...base, fullName: "Sarthak123" });
+  assert(!bad.success, "a digit in the name must fail registration too");
+  const good = registerRecruiterSchema.safeParse({ ...base, fullName: "Jane Recruiter" });
+  assert(good.success, "a clean name must still register");
+});
+
+suite("the onboarding wizard mirrors the server rule", () => {
+  // Otherwise the step passes and the failure only surfaces at submit, on a
+  // screen that no longer shows the name field.
+  const src = readFileSync(
+    join(process.cwd(), "src/components/recruiter-onboarding/steps/identity-step.tsx"),
+    "utf8",
+  );
+  assert(
+    src.includes("\\p{Nd}"),
+    "validateIdentity must reject digits in the name",
+  );
+  assert(
+    src.includes("Full name cannot contain numbers."),
+    "the wizard must use the same message as the schema",
   );
 });
 

@@ -7,8 +7,23 @@ export const requestRecruiterOtpSchema = z.object({
   intent: z.enum(["register", "signin"]),
 });
 
+/**
+ * A person's name carries no digits. Written as a REJECTION of digits rather
+ * than a whitelist of allowed characters: a whitelist would have to enumerate
+ * every script, accent, apostrophe, hyphen and particle a real name can hold,
+ * and every such list eventually rejects somebody's actual name. `\p{Nd}`
+ * covers every Unicode decimal digit, not just 0-9, so a name padded with
+ * Devanagari or Arabic-Indic numerals is caught the same way "Sarthak123" is.
+ */
+const NAME_HAS_DIGIT = /\p{Nd}/u;
+
 export const registerRecruiterSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter your full name.").max(120),
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Enter your full name.")
+    .max(120)
+    .refine((v) => !NAME_HAS_DIGIT.test(v), "Full name cannot contain numbers."),
   company: z.string().trim().min(2, "Enter your company.").max(200),
   /** Work domains only — a free consumer mailbox never becomes a recruiter. */
   email: workEmailSchema,
