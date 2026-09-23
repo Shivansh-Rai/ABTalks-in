@@ -73,7 +73,7 @@ export async function ensureHackathonCertificate(
   const fullName = participant.fullName.trim();
   if (!fullName) {
     const [existingCert, existingCred] = await Promise.all([
-      prisma.certificate.findFirst({
+      prisma.historicalCertificate.findFirst({
         where: { userId, type: CertificateType.HACKATHON },
         select: { certificateId: true },
       }),

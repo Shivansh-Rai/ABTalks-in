@@ -3,13 +3,32 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import { addDays, subDays } from "date-fns";
 import {
+  AttemptLateness,
+  AttemptStatus,
+  CandidatePersona,
   Domain,
   EnrollmentStatus,
+  EnrollmentStatusV2,
+  EvaluatorType,
   Prisma,
   Role,
-  SubmissionStatus,
 } from "@prisma/client";
 import { prisma } from "../src/lib/db";
+import {
+  activityIdForDailyTask,
+  activityIdForQuiz,
+  attemptIdForQuizAttempt,
+  attemptIdForSubmission,
+  cohortSlugForDomain,
+  mintProgressRowId,
+  peIdForEnrollment,
+} from "../src/repositories/ids";
+
+function mapChallengeStatus(status: EnrollmentStatus): EnrollmentStatusV2 {
+  if (status === EnrollmentStatus.COMPLETED) return EnrollmentStatusV2.COMPLETED;
+  if (status === EnrollmentStatus.ABANDONED) return EnrollmentStatusV2.DROPPED;
+  return EnrollmentStatusV2.ACTIVE;
+}
 
 const TEST_EMAIL_SUFFIX = "@abtalks.dev";
 
@@ -25,8 +44,9 @@ function randomReferralCode(): string {
 async function uniqueReferralCode(): Promise<string> {
   for (let i = 0; i < 50; i++) {
     const code = randomReferralCode();
-    const exists = await prisma.studentProfile.findUnique({
+    const exists = await prisma.candidateProfile.findUnique({
       where: { referralCode: code },
+      select: { userId: true },
     });
     if (!exists) return code;
   }
@@ -692,6 +712,7 @@ export async function seedTestUsers() {
   ];
 
   const emailToId = new Map<string, string>();
+  const emailToPeId = new Map<string, string>();
 
   for (const u of users) {
     const referralCode = await uniqueReferralCode();
@@ -703,69 +724,102 @@ export async function seedTestUsers() {
         password: u.password,
         name: u.name,
         role: u.role,
-        studentProfile: {
+        candidateProfile: {
           create: {
+            id: `cp_${u.email}`,
             fullName: u.name,
-            college: "Test College",
-            graduationYear: 2026,
-            domain: u.domain,
-            skills: ["JavaScript", "Python"],
+            primaryPersona: CandidatePersona.STUDENT,
             referralCode,
             isReadyForInterview: u.isReadyForInterview ?? false,
           },
         },
-        ...(u.enrollment
-          ? {
-              enrollments: {
-                create: {
-                  challengeId: challengeByDomain.get(u.domain)!.id,
-                  domain: u.domain,
-                  status: u.enrollment.status,
-                  startedAt,
-                  completedAt: u.enrollment.completedAt ?? null,
-                  daysCompleted: u.enrollment.daysCompleted,
-                  currentStreak: u.enrollment.currentStreak,
-                  longestStreak: u.enrollment.longestStreak,
-                  lastSubmittedDay: u.enrollment.lastSubmittedDay,
-                },
-              },
-            }
-          : {}),
       },
-      include: {
-        enrollments: true,
-      },
+      select: { id: true },
     });
 
     emailToId.set(u.email, created.id);
 
-    const enrollment = created.enrollments[0];
-    if (enrollment && u.enrollment && u.enrollment.daysCompleted > 0) {
-      const challengeId = challengeByDomain.get(u.domain)!.id;
-      for (let day = 1; day <= u.enrollment.daysCompleted; day++) {
-        const dailyTask = await prisma.dailyTask.findUnique({
-          where: {
-            challengeId_dayNumber: { challengeId, dayNumber: day },
-          },
-        });
-        if (!dailyTask) {
-          throw new Error(`Missing DailyTask domain=${u.domain} day=${day}`);
-        }
-        const submittedAt = addDays(startedAt, day - 1);
-        submittedAt.setUTCHours(14, 0, 0, 0);
+    if (u.enrollment) {
+      const slug = cohortSlugForDomain(u.domain);
+      const cohort = await prisma.cohort.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+      if (!cohort) {
+        throw new Error(`Missing cohort ${slug} — run 078 learning content first`);
+      }
+      const handle = mintProgressRowId();
+      const peId = peIdForEnrollment(handle);
+      await prisma.programEnrollment.create({
+        data: {
+          id: peId,
+          userId: created.id,
+          cohortId: cohort.id,
+          status: mapChallengeStatus(u.enrollment.status),
+          startedAt,
+          enrolledAt: startedAt,
+          joinedAt: startedAt,
+          completedAt: u.enrollment.completedAt ?? null,
+          trackCurrentStreak: u.enrollment.currentStreak,
+          trackLongestStreak: u.enrollment.longestStreak,
+        },
+      });
 
-        await prisma.submission.create({
-          data: {
-            userId: created.id,
-            enrollmentId: enrollment.id,
-            dailyTaskId: dailyTask.id,
-            dayNumber: day,
-            githubUrl: `https://github.com/test-user-${u.num}/abtalks-day-${day}`,
-            linkedinUrl: `https://www.linkedin.com/posts/test-user-${u.num}-day-${day}`,
-            status: SubmissionStatus.ON_TIME,
-            submittedAt,
-          },
-        });
+      emailToPeId.set(u.email, peId);
+
+      if (u.enrollment.daysCompleted > 0) {
+        const challengeId = challengeByDomain.get(u.domain)!.id;
+        for (let day = 1; day <= u.enrollment.daysCompleted; day++) {
+          const dailyTask = await prisma.dailyTask.findUnique({
+            where: {
+              challengeId_dayNumber: { challengeId, dayNumber: day },
+            },
+          });
+          if (!dailyTask) {
+            throw new Error(`Missing DailyTask domain=${u.domain} day=${day}`);
+          }
+          const submittedAt = addDays(startedAt, day - 1);
+          submittedAt.setUTCHours(14, 0, 0, 0);
+          const activityId = activityIdForDailyTask(dailyTask.id);
+          const activity = await prisma.activity.findUnique({
+            where: { id: activityId },
+            select: { id: true },
+          });
+          if (!activity) continue;
+          const subId = mintProgressRowId();
+          const attemptId = attemptIdForSubmission(subId);
+          await prisma.activityAttempt.create({
+            data: {
+              id: attemptId,
+              enrollmentId: peId,
+              activityId,
+              attemptNumber: 1,
+              status: AttemptStatus.EVALUATED,
+              lateness: AttemptLateness.ON_TIME,
+              payload: {
+                githubUrl: `https://github.com/test-user-${u.num}/abtalks-day-${day}`,
+                linkedinUrl: `https://www.linkedin.com/posts/test-user-${u.num}-day-${day}`,
+                legacySubmissionId: subId,
+              },
+              passed: true,
+              pointsAwarded: 10,
+              startedAt: submittedAt,
+              submittedAt,
+            },
+          });
+          await prisma.activityEvaluation.create({
+            data: {
+              id: `ev_sub_${subId}`,
+              attemptId,
+              evaluatorType: EvaluatorType.AUTO,
+              passed: true,
+              score: 100,
+              maxScore: 100,
+              isAuthoritative: true,
+              createdAt: submittedAt,
+            },
+          });
+        }
       }
     }
   }
@@ -795,21 +849,56 @@ export async function seedTestUsers() {
     const wrong = correct === "A" ? "B" : "A";
     snehaAnswers[q.id] = idx < 8 ? correct : wrong;
   });
-  await prisma.quizAttempt.create({
-    data: {
-      userId: snehaId,
-      quizId: seWeek1QuizId,
-      score: 8,
-      answers: snehaAnswers,
-    },
-  });
+  const snehaPeId = emailToPeId.get("sneha@abtalks.dev");
+  const quizActivityId = activityIdForQuiz(seWeek1QuizId);
+  const quizActivity = snehaPeId
+    ? await prisma.activity.findUnique({
+        where: { id: quizActivityId },
+        select: { id: true },
+      })
+    : null;
+  if (snehaPeId && quizActivity) {
+    const qaId = mintProgressRowId();
+    const attemptId = attemptIdForQuizAttempt(qaId);
+    await prisma.activityAttempt.create({
+      data: {
+        id: attemptId,
+        enrollmentId: snehaPeId,
+        activityId: quizActivityId,
+        attemptNumber: 1,
+        status: AttemptStatus.EVALUATED,
+        lateness: AttemptLateness.ON_TIME,
+        payload: { answers: snehaAnswers, legacyQuizAttemptId: qaId },
+        passed: true,
+        score: 8,
+        pointsAwarded: 0,
+      },
+    });
+    await prisma.activityEvaluation.create({
+      data: {
+        id: `ev_qa_${qaId}`,
+        attemptId,
+        evaluatorType: EvaluatorType.AUTO,
+        passed: true,
+        score: 8,
+        maxScore: seWeek1Questions.length,
+        isAuthoritative: true,
+      },
+    });
+  }
 
-  const meeraSubs = await prisma.submission.count({
-    where: { user: { email: "meera@abtalks.dev" } },
-  });
-  const anikaSubs = await prisma.submission.count({
-    where: { user: { email: "anika@abtalks.dev" } },
-  });
+  const meeraPeId = emailToPeId.get("meera@abtalks.dev");
+  const anikaPeId = emailToPeId.get("anika@abtalks.dev");
+  const meeraSubs = meeraPeId
+    ? await prisma.activityAttempt.count({
+        where: { enrollmentId: meeraPeId, id: { startsWith: "aa_sub_" } },
+      })
+    : 0;
+  const anikaSubs = anikaPeId
+    ? await prisma.activityAttempt.count({
+        where: { enrollmentId: anikaPeId, id: { startsWith: "aa_sub_" } },
+      })
+    : 0;
   const dhruvRefs = await prisma.referral.count({
     where: { referrerId: dhruvId },
   });

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { IST, parseCalendarKeyToUtcDate } from "@/lib/date-utils";
 import { getRegistrationDatesSince } from "@/features/admin/get-registration-dates";
 import { listCandidateProfiles } from "@/repositories/candidate";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 export type TimeRange = "daily" | "weekly" | "monthly";
 
@@ -91,9 +91,8 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   const [
     registrationDates,
     rangedSubmissions,
-    enrollmentByDomain,
-    hackathonRegistered,
     allEnrollments,
+    hackathonRegistered,
     allSubmissions,
   ] = await Promise.all([
     getRegistrationDatesSince(start),
@@ -104,32 +103,9 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
       },
       select: { submittedAt: true },
     }),
-    prisma.enrollment.groupBy({
-      by: ["domain"],
-      _count: { _all: true },
-    }),
+    listChallengePeRows({}),
     prisma.hackathonParticipant.count({
       where: { eventId: HACKATHON.eventId },
-    }),
-    prisma.enrollment.findMany({
-      select: {
-        id: true,
-        userId: true,
-        domain: true,
-        daysCompleted: true,
-        currentStreak: true,
-        longestStreak: true,
-        lastSubmittedDay: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            studentProfile: {
-              select: { fullName: true, domain: true },
-            },
-          },
-        },
-      },
     }),
     prisma.activityAttempt.findMany({
       where: { id: { startsWith: "aa_sub_" }, submittedAt: { not: null } },
@@ -162,18 +138,20 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
     count: submissionsCountByKey.get(bucket.key) ?? 0,
   }));
 
+  const domainCounts = new Map<string, number>();
+  for (const row of allEnrollments) {
+    domainCounts.set(row.domain, (domainCounts.get(row.domain) ?? 0) + 1);
+  }
   const domainOrder = ["SE", "DS", "AI", "CLAUDE"] as const;
   const domainDistribution = [
     ...domainOrder.map((domain) => ({
       name: domain,
-      value:
-        enrollmentByDomain.find((row) => row.domain === domain)?._count._all ??
-        0,
+      value: domainCounts.get(domain) ?? 0,
     })),
     { name: "Hackathon", value: hackathonRegistered },
   ];
 
-  const overlaidEnrollments = await overlayChallengeProgressFields(allEnrollments);
+  const overlaidEnrollments = allEnrollments;
   const milestones = [1, 7, 14, 30, 45, 60];
   const dropOff = milestones.map((milestone) => ({
     milestone: `Day ${milestone}`,
@@ -191,20 +169,16 @@ export async function getAnalyticsData(range: TimeRange = "daily") {
   }
 
   const identities = await listCandidateProfiles(
-    overlaidEnrollments.map((row) => row.user.id),
+    overlaidEnrollments.map((row) => row.userId),
   );
   const topOverlaid = [...overlaidEnrollments].sort((a, b) => {
     if (b.daysCompleted !== a.daysCompleted) return b.daysCompleted - a.daysCompleted;
     return b.currentStreak - a.currentStreak;
   }).slice(0, 10);
   const topPerformers = topOverlaid.map((row) => {
-    const identity = identities.get(row.user.id);
+    const identity = identities.get(row.userId);
     return {
-      name:
-        identity?.fullName?.trim() ||
-        row.user.studentProfile?.fullName?.trim() ||
-        row.user.email ||
-        "Unknown",
+      name: identity?.fullName?.trim() || "Unknown",
       domain: row.domain,
       daysCompleted: row.daysCompleted,
       currentStreak: row.currentStreak,

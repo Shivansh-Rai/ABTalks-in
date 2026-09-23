@@ -27,10 +27,10 @@ function cohortWhere(
   cohort: HackathonMasterCohort,
 ): Prisma.HackathonParticipantWhereInput {
   if (cohort === "old") {
-    return { user: { enrollments: { some: {} } } };
+    return { user: { programEnrollments: { some: { id: { startsWith: "pe_enr_" } } } } };
   }
   if (cohort === "new") {
-    return { user: { enrollments: { none: {} } } };
+    return { user: { programEnrollments: { none: { id: { startsWith: "pe_enr_" } } } } };
   }
   return {};
 }

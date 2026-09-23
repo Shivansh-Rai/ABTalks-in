@@ -40,95 +40,41 @@ model Account {
 }
 
 model Challenge {
-  id          String       @id @default(cuid())
-  domain      Domain       @unique
+  id          String      @id @default(cuid())
+  domain      Domain      @unique
   title       String
   description String
-  totalDays   Int          @default(60)
-  isActive    Boolean      @default(true)
+  totalDays   Int         @default(60)
+  isActive    Boolean     @default(true)
   /**
    * When set, challenge days are synchronized from this IST calendar anchor (e.g. Claude cohort). Null = rolling start from enrollment.startedAt.
    */
   startsAt    DateTime?
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime    @default(now())
   dailyTasks  DailyTask[]
-  enrollments Enrollment[]
   quizzes     Quiz[]
 }
 
 model DailyTask {
-  id                 String       @id @default(cuid())
+  id                 String    @id @default(cuid())
   challengeId        String
   dayNumber          Int
   domain             Domain
   title              String
   problemStatement   String
-  learningObjectives String[]     @default([])
-  resources          String[]     @default([])
+  learningObjectives String[]  @default([])
+  resources          String[]  @default([])
   difficulty         String
   estimatedMinutes   Int
   linkedinTemplate   String
   solutionApproach   String?
-  tags               String[]     @default([])
+  tags               String[]  @default([])
   dayContent         Json?
-  createdAt          DateTime     @default(now())
-  challenge          Challenge    @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  submissions        Submission[]
+  createdAt          DateTime  @default(now())
+  challenge          Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@unique([challengeId, dayNumber])
   @@index([domain, dayNumber])
-}
-
-model Enrollment {
-  id               String           @id @default(cuid())
-  userId           String
-  challengeId      String
-  domain           Domain
-  status           EnrollmentStatus @default(ACTIVE)
-  startedAt        DateTime         @default(now())
-  completedAt      DateTime?
-  daysCompleted    Int              @default(0)
-  currentStreak    Int              @default(0)
-  longestStreak    Int              @default(0)
-  lastSubmittedDay Int?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  challenge        Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  submissions      Submission[]
-  certificate      Certificate?
-
-  @@unique([userId, challengeId])
-  @@index([domain, daysCompleted, currentStreak])
-  @@index([userId, status])
-}
-
-model Certificate {
-  id            String            @id @default(cuid())
-  /// Public, human-readable credential ID. Format: ABT-XX-XXXXX (e.g. ABT-CC-7K2M9).
-  certificateId String            @unique
-  userId        String
-  type          CertificateType
-  status        CertificateStatus @default(ISSUED)
-  /// Snapshot of the recipient's name at issue time — never re-read from the profile.
-  recipientName String
-  /// Snapshot of the track. Null for non-challenge certificate types.
-  domain        Domain?
-  /// Set for challenge certificates; one certificate per completed enrollment.
-  enrollmentId  String?           @unique
-  issuedAt      DateTime          @default(now())
-  /// Snapshot: { daysCompleted, longestStreak, completedAt, college? , organization? }
-  metadata      Json?
-  revokedAt     DateTime?
-  revokedReason String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
-
-  @@index([userId, status])
-  @@index([type, issuedAt])
 }
 
 model Quiz {
@@ -139,24 +85,9 @@ model Quiz {
   title         String
   createdAt     DateTime       @default(now())
   challenge     Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  quizAttempts  QuizAttempt[]
   quizQuestions QuizQuestion[]
 
   @@unique([challengeId, weekNumber])
-}
-
-model QuizAttempt {
-  id          String   @id @default(cuid())
-  userId      String
-  quizId      String
-  score       Int
-  answers     Json
-  attemptedAt DateTime @default(now())
-  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, quizId])
-  @@index([userId])
 }
 
 model QuizQuestion {
@@ -215,65 +146,6 @@ model College {
   createdAt  DateTime @default(now())
 }
 
-model StudentProfile {
-  id                          String    @id @default(cuid())
-  userId                      String    @unique
-  fullName                    String
-  userType                    UserType  @default(STUDENT)
-  college                     String?
-  /// Set when the student picked a listed college. Null = free-text ("Other").
-  /// Deliberately a plain column, not a relation — `college` stays the display
-  /// value everywhere, so no read path has to join.
-  collegeId                   String?
-  graduationYear              Int?
-  organization                String?
-  role                        String?
-  yearsExperience             Int?
-  domain                      Domain? // null until the user joins their first track
-  skills                      String[]  @default([])
-  resumeUrl                   String?
-  phone                       String?
-  phoneVerified               Boolean   @default(false)
-  phoneVerifiedAt             DateTime?
-  linkedinUrl                 String?
-  githubUsername              String?
-  referralCode                String    @unique
-  isReadyForInterview         Boolean   @default(false)
-  isCampusAmbassadorCandidate Boolean   @default(false)
-  ambassadorAppliedAt         DateTime?
-  ambassadorDismissedAt       DateTime?
-  /// Temporary rollback mirror. User.synergyPoints is the account-level balance.
-  synergyPoints               Int       @default(0)
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
-  user                        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([isCampusAmbassadorCandidate])
-  @@index([domain, createdAt(sort: Desc)])
-  @@index([synergyPoints(sort: Desc)])
-}
-
-model Submission {
-  id           String           @id @default(cuid())
-  userId       String
-  enrollmentId String
-  dailyTaskId  String
-  dayNumber    Int
-  githubUrl    String?          @unique
-  linkedinUrl  String?
-  status       SubmissionStatus
-  submittedAt  DateTime         @default(now())
-  dailyTask    DailyTask        @relation(fields: [dailyTaskId], references: [id], onDelete: Cascade)
-  enrollment   Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  synergyEvent SynergyEvent?
-
-  @@unique([enrollmentId, dayNumber])
-  @@index([dayNumber])
-  @@index([userId])
-  @@index([submittedAt(sort: Desc)])
-}
-
 model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
@@ -282,7 +154,6 @@ model User {
   image                   String?
   password                String?
   role                    Role                     @default(STUDENT)
-  synergyPoints           Int                      @default(0)
   /// Soft delete. Set instead of DELETE; PII is scrubbed by the anonymizer.
   deletedAt               DateTime?
   anonymizedAt            DateTime?
@@ -306,30 +177,23 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   accounts                Account[]
-  enrollments             Enrollment[]
-  quizAttempts            QuizAttempt[]
   adminActionsPerformed   AdminAction[]            @relation("AdminActor")
   adminActionsReceived    AdminAction[]            @relation("AdminTarget")
   referredBy              Referral?                @relation("Referral_referredIdToUser")
   referralsMade           Referral[]               @relation("Referral_referrerIdToUser")
   sessions                Session[]
-  studentProfile          StudentProfile?
   phoneVerification       PhoneVerification?
   recruiterReview         RecruiterReview?
-  submissions             Submission[]
-  synergyEvents           SynergyEvent[]
   jobApplications         JobApplication[]
   redemptions             Redemption[]
   remarksReceived         AdminRemark[]            @relation("RemarkStudent")
   remarksAuthored         AdminRemark[]            @relation("RemarkAdmin")
-  programMembers          ProgramMember[]
   programEntryAttempts    ProgramEntryAttempt[]
   recruiterProfile        RecruiterProfile?
   shortlistItems          RecruiterShortlistItem[]
   hackathonParticipants   HackathonParticipant[]
   hackathonRemovals       HackathonRemoval[]       @relation("HackathonRemoved")
   newsletterSubscriptions NewsletterSubscription[]
-  certificates            Certificate[]
   workshopRegistrations   WorkshopRegistration[]
   legalConsents           LegalConsent[]
   dataRightsRequests      DataRightsRequest[]
@@ -342,28 +206,29 @@ model User {
   mockInterviews          MockInterview[]
 
   // Plan 078 Phase 1 — new identity / learning / talent relations (legacy fields above stay).
-  roleAssignments            UserRoleAssignment[]   @relation("RoleSubject")
-  rolesGranted               UserRoleAssignment[]   @relation("RoleGranter")
-  candidateProfile           CandidateProfile?
+  roleAssignments             UserRoleAssignment[]         @relation("RoleSubject")
+  rolesGranted                UserRoleAssignment[]         @relation("RoleGranter")
+  candidateProfile            CandidateProfile?
   campusAmbassadorApplication CampusAmbassadorApplication?
-  visibility                 CandidateVisibility?
-  resume                     CandidateResume?
-  pointsAccount              PointsAccount?
-  pointsLedger               PointsTransaction[]
-  credentials                Credential[]
-  achievements               CandidateAchievement[]
-  programEnrollments         ProgramEnrollment[]
-  evaluationsGiven           ActivityEvaluation[]   @relation("Evaluator")
-  orgMemberships             OrganizationMember[]
-  talentListItems            TalentListItem[]
-  candidateNotes             CandidateNote[]        @relation("NoteSubject")
-  notesAuthored              CandidateNote[]        @relation("NoteAuthor")
-  assessmentReports          AssessmentReport[]     @relation("AssessedCandidate")
-  jobsCreated                Job[]                  @relation("JobCreator")
-  jobsOwned                  Job[]                  @relation("RecruiterJobs")
-  recruitersApproved         RecruiterProfile[]     @relation("RecruiterApprover")
-  notificationsCreated       Notification[]         @relation("NotificationAuthor")
-  hackathonRemovalsPerformed HackathonRemoval[]     @relation("HackathonRemover")
+  visibility                  CandidateVisibility?
+  resume                      CandidateResume?
+  pointsAccount               PointsAccount?
+  pointsLedger                PointsTransaction[]
+  credentials                 Credential[]
+  achievements                CandidateAchievement[]
+  programEnrollments          ProgramEnrollment[]
+  shortlistedAsCandidate      RecruiterShortlistItem[]     @relation("ShortlistCandidate")
+  evaluationsGiven            ActivityEvaluation[]         @relation("Evaluator")
+  orgMemberships              OrganizationMember[]
+  talentListItems             TalentListItem[]
+  candidateNotes              CandidateNote[]              @relation("NoteSubject")
+  notesAuthored               CandidateNote[]              @relation("NoteAuthor")
+  assessmentReports           AssessmentReport[]           @relation("AssessedCandidate")
+  jobsCreated                 Job[]                        @relation("JobCreator")
+  jobsOwned                   Job[]                        @relation("RecruiterJobs")
+  recruitersApproved          RecruiterProfile[]           @relation("RecruiterApprover")
+  notificationsCreated        Notification[]               @relation("NotificationAuthor")
+  hackathonRemovalsPerformed  HackathonRemoval[]           @relation("HackathonRemover")
 
   // hire — Scout engagements, requests and availability
   virtualCandidateRequests   VirtualCandidateRequest[]       @relation("VirtualCandidateRequester")
@@ -395,7 +260,6 @@ model User {
   @@index([deletedAt, createdAt(sort: Desc)])
   @@index([disabledAt])
   @@index([createdAt(sort: Desc)])
-  @@index([synergyPoints(sort: Desc)])
 }
 
 enum LegalDocument {
@@ -698,25 +562,6 @@ model JobApplication {
   @@index([jobId])
 }
 
-model SynergyEvent {
-  id               String      @id @default(cuid())
-  userId           String
-  points           Int
-  type             String
-  submissionId     String?     @unique
-  enrollmentId     String?
-  dayNumber        Int?
-  rankAtAward      Int?
-  reason           String?
-  createdByAdminId String?
-  createdAt        DateTime    @default(now())
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  submission       Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
 model AdminAction {
   id             String   @id @default(cuid())
   /// Snapshot of who acted. No FK — must survive actor deletion (self-delete).
@@ -857,63 +702,7 @@ model ProgramCohort {
   requiresJoinCode   Boolean               @default(true) // false = open enrollment, no code
   resultsPublishedAt DateTime?
   createdAt          DateTime              @default(now())
-  members            ProgramMember[]
   entryAttempts      ProgramEntryAttempt[]
-}
-
-model ProgramMember {
-  id                           String                      @id @default(cuid())
-  userId                       String
-  cohortId                     String
-  status                       ProgramMemberStatus         @default(APPLIED)
-  // professional profile (deliberately NOT StudentProfile)
-  fullName                     String
-  jobRole                      String?
-  company                      String?
-  yearsExperience              Int?
-  education                    String?
-  university                   String?
-  graduationYear               Int?
-  skills                       String[]                    @default([])
-  linkedinUrl                  String?
-  resumeUrl                    String?
-  phone                        String? // admin-only, NEVER shown to recruiters
-  githubUsername               String
-  githubRepoUrl                String // dedicated public repo for the program
-  /// Legacy talent-gate timestamp. New applications stamp this automatically
-  /// (platform default). Existing rows are not rewritten. Not a user toggle.
-  recruiterVisibilityConsentAt DateTime?
-  // progression + denormalized scores
-  highestUnlockedDay           Int                         @default(1)
-  skipTokensUsed               Int                         @default(0) // max 2 per member
-  missionPoints                Int                         @default(0)
-  conceptPoints                Int                         @default(0)
-  commitPoints                 Int                         @default(0)
-  projectPoints                Int                         @default(0)
-  totalScore                   Int                         @default(0)
-  cleanPassCount               Int                         @default(0) // missions passed on 1st verification run
-  aiRecommendation             String?
-  aiRecommendationAt           DateTime?
-  enrolledAt                   DateTime?
-  completedAt                  DateTime?
-  createdAt                    DateTime                    @default(now())
-  updatedAt                    DateTime                    @updatedAt
-  user                         User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort                       ProgramCohort               @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  missionSubmissions           ProgramMissionSubmission[]
-  conceptAttempts              ProgramConceptAttempt[]
-  commitDays                   ProgramCommitDay[]
-  exerciseCompletions          ProgramExerciseCompletion[]
-  projects                     ProgramProject[]
-  /// Legacy end-of-cohort voice interview. Retained during the migration to
-  /// GeneralInterview — do not delete until the DAY_31 replacement is verified.
-  interview                    ProgramInterview?
-  generalInterviews            GeneralInterview[]
-  shortlistedBy                RecruiterShortlistItem[]
-
-  @@unique([userId, cohortId])
-  @@index([cohortId, totalScore(sort: Desc)])
-  @@index([cohortId, status])
 }
 
 model ProgramModule {
@@ -961,34 +750,20 @@ model ProgramConceptQuestion {
   @@unique([dayId, order])
 }
 
-model ProgramMissionSubmission {
-  id            String        @id @default(cuid())
-  memberId      String
-  dayNumber     Int
-  attemptNumber Int
-  payload       Json // type-specific: {code} | {repoRef} | {answers} | {prompt} | {checkOutputs}
-  verdict       Json // per-check results: [{check, passed, detail}]
-  passed        Boolean       @default(false)
-  pointsAwarded Int           @default(0)
-  aiFeedback    String? // AI Mentor review (029), post-pass
-  createdAt     DateTime      @default(now())
-  member        ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([memberId, dayNumber, attemptNumber])
-  @@index([memberId, dayNumber])
-}
-
 model ProgramConceptAttempt {
-  id          String        @id @default(cuid())
-  memberId    String
-  dayNumber   Int
-  questionIds Json // string[] — 3 sampled ids
-  answers     Json?
-  score       Int           @default(0) // 0..3
-  createdAt   DateTime      @default(now())
-  member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id                  String            @id @default(cuid())
+  memberId            String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
+  dayNumber           Int
+  questionIds         Json // string[] — 3 sampled ids
+  answers             Json?
+  score               Int               @default(0) // 0..3
+  createdAt           DateTime          @default(now())
+  programEnrollment   ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
 
   @@unique([memberId, dayNumber]) // ONE attempt — it's a warm-up, not a gate
+  @@index([programEnrollmentId])
 }
 
 model ProgramEntryQuestion {
@@ -1051,61 +826,77 @@ model ProgramExercise {
 }
 
 model ProgramExerciseCompletion {
-  id          String          @id @default(cuid())
-  memberId    String
-  exerciseId  String
-  code        String
-  completedAt DateTime        @default(now())
-  member      ProgramMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  exercise    ProgramExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  id                  String            @id @default(cuid())
+  memberId            String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
+  exerciseId          String
+  code                String
+  completedAt         DateTime          @default(now())
+  exercise            ProgramExercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  programEnrollment   ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, exerciseId])
+  @@index([programEnrollmentId])
 }
 
 model ProgramCommitDay {
-  id          String        @id @default(cuid())
-  memberId    String
-  date        DateTime      @db.Date
-  commitCount Int           @default(0)
-  member      ProgramMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id                  String            @id @default(cuid())
+  memberId            String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
+  date                DateTime          @db.Date
+  commitCount         Int               @default(0)
+  programEnrollment   ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, date])
+  @@unique([programEnrollmentId, date])
+  @@index([programEnrollmentId])
 }
 
 model ProgramProject {
-  id           String               @id @default(cuid())
-  memberId     String
-  moduleNumber Int
-  repoUrl      String
-  writeup      String
-  status       ProgramProjectStatus @default(SUBMITTED)
-  aiScore      Int?
-  aiFeedback   String?
-  aiRubricJson Json?
-  adminScore   Int?
-  submittedAt  DateTime             @default(now())
-  gradedAt     DateTime?
-  member       ProgramMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id                  String               @id @default(cuid())
+  memberId            String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
+  moduleNumber        Int
+  repoUrl             String
+  writeup             String
+  status              ProgramProjectStatus @default(SUBMITTED)
+  aiScore             Int?
+  aiFeedback          String?
+  aiRubricJson        Json?
+  adminScore          Int?
+  submittedAt         DateTime             @default(now())
+  gradedAt            DateTime?
+  programEnrollment   ProgramEnrollment    @relation(fields: [programEnrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, moduleNumber])
+  @@unique([programEnrollmentId, moduleNumber])
+  @@index([programEnrollmentId])
 }
 
 model ProgramInterview {
-  id           String                 @id @default(cuid())
-  memberId     String                 @unique
-  status       ProgramInterviewStatus @default(NOT_STARTED)
-  startedAt    DateTime?
-  endedAt      DateTime?
-  durationSec  Int?
-  transcript   Json?
-  commScore    Int?
-  techScore    Int?
-  problemScore Int?
-  overallScore Int? // NOT part of totalScore
-  summary      String?
-  evaluatedAt  DateTime?
-  resetCount   Int                    @default(0)
-  member       ProgramMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id                  String                 @id @default(cuid())
+  memberId            String                 @unique
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
+  status              ProgramInterviewStatus @default(NOT_STARTED)
+  startedAt           DateTime?
+  endedAt             DateTime?
+  durationSec         Int?
+  transcript          Json?
+  commScore           Int?
+  techScore           Int?
+  problemScore        Int?
+  overallScore        Int? // NOT part of totalScore
+  summary             String?
+  evaluatedAt         DateTime?
+  resetCount          Int                    @default(0)
+  programEnrollment   ProgramEnrollment      @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
+
+  @@unique([programEnrollmentId])
+  @@index([programEnrollmentId])
 }
 
 model RecruiterProfile {
@@ -1127,15 +918,18 @@ model RecruiterProfile {
 }
 
 model RecruiterShortlistItem {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   recruiterUserId String
   memberId        String
+  /// Wave 2 additive candidate identity. Backfilled from ProgramMember.userId.
+  candidateUserId String?
   note            String?
-  createdAt       DateTime      @default(now())
-  recruiter       User          @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
-  member          ProgramMember @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  createdAt       DateTime @default(now())
+  recruiter       User     @relation(fields: [recruiterUserId], references: [id], onDelete: Cascade)
+  candidate       User?    @relation("ShortlistCandidate", fields: [candidateUserId], references: [id], onDelete: SetNull)
 
   @@unique([recruiterUserId, memberId])
+  @@index([candidateUserId])
 }
 
 // ─── Hire / Scout (evidence-based matching) ─────────────────────────────────
@@ -1554,8 +1348,10 @@ model WorkshopRegistration {
 /// `ProgramInterview` (the 31-day AI Cohort exit interview), which is unrelated
 /// and must keep working independently.
 model GeneralInterview {
-  id       String @id @default(cuid())
-  memberId String
+  id                  String @id @default(cuid())
+  memberId            String
+  /// Wave 2 additive. Backfilled `pe_pm_<memberId>`. FK added after parity.
+  programEnrollmentId String
 
   /// Which standardized question bank this interview ran. A member may hold at
   /// most ONE completed interview per blueprint — enforced by a partial unique
@@ -1600,12 +1396,13 @@ model GeneralInterview {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  member ProgramMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  turns  InterviewTurn[]
-  report InterviewReport?
+  programEnrollment ProgramEnrollment @relation(fields: [programEnrollmentId], references: [id], onDelete: Restrict)
+  turns             InterviewTurn[]
+  report            InterviewReport?
 
   @@index([memberId, status])
   @@index([memberId, blueprint])
+  @@index([programEnrollmentId])
 }
 
 /// One candidate answer and what the system made of it.
@@ -3102,42 +2899,50 @@ model ProgramSkill {
 /// User × Cohort. Program-specific facts ONLY — no name, phone, college or skills.
 /// Replaces legacy `Enrollment` and the membership half of `ProgramMember`.
 model ProgramEnrollment {
-  id             String             @id @default(cuid())
-  userId         String
-  cohortId       String
-  status         EnrollmentStatusV2 @default(ACTIVE)
+  id                 String             @id @default(cuid())
+  userId             String
+  cohortId           String
+  status             EnrollmentStatusV2 @default(ACTIVE)
   /// The rolling anchor. For FIXED cohorts, day math ignores this.
-  startedAt      DateTime           @default(now())
-  enrolledAt     DateTime?
-  completedAt    DateTime?
-  droppedAt      DateTime?
+  startedAt          DateTime           @default(now())
+  /// Actual join/order timestamp. Distinct from startedAt (cohort calendar on some pe_pm_/legacy rows).
+  joinedAt           DateTime           @default(now())
+  enrolledAt         DateTime?
+  completedAt        DateTime?
+  droppedAt          DateTime?
   /// Program-specific: the dedicated repo for this run. Legitimately per-enrollment.
-  githubRepoUrl  String?
+  githubRepoUrl      String?
   /// Admin floor override on the unlock ceiling.
-  unlockFloorDay Int?
-  skipTokensUsed Int                @default(0)
+  unlockFloorDay     Int?
+  skipTokensUsed     Int                @default(0)
   /// W7-A challenge-track streak snapshot. Not EnrollmentProgress (stale cache).
   /// Historical current/longest streak is not fully re-derivable from AA.
-  trackCurrentStreak Int            @default(0)
-  trackLongestStreak Int            @default(0)
+  trackCurrentStreak Int                @default(0)
+  trackLongestStreak Int                @default(0)
   /// W8-A AI-cohort ProgramMember score/recommendation snapshot.
   /// Historical conceptPoints is not re-derivable; do not recompute rankings from AA.
-  missionPoints        Int          @default(0)
-  conceptPoints        Int          @default(0)
-  commitPoints         Int          @default(0)
-  projectPoints        Int          @default(0)
-  totalScore           Int          @default(0)
-  cleanPassCount       Int          @default(0)
-  aiRecommendation     String?
-  aiRecommendationAt   DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  missionPoints      Int                @default(0)
+  conceptPoints      Int                @default(0)
+  commitPoints       Int                @default(0)
+  projectPoints      Int                @default(0)
+  totalScore         Int                @default(0)
+  cleanPassCount     Int                @default(0)
+  aiRecommendation   String?
+  aiRecommendationAt DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  user        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort      Cohort                  @relation(fields: [cohortId], references: [id], onDelete: Restrict)
-  progress    EnrollmentProgress?
-  attempts    ActivityAttempt[]
-  dayActivity EnrollmentDayActivity[]
+  user                User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort              Cohort                      @relation(fields: [cohortId], references: [id], onDelete: Restrict)
+  progress            EnrollmentProgress?
+  attempts            ActivityAttempt[]
+  dayActivity         EnrollmentDayActivity[]
+  commitDays          ProgramCommitDay[]
+  interviews          ProgramInterview[]
+  generalInterviews   GeneralInterview[]
+  conceptAttempts     ProgramConceptAttempt[]
+  exerciseCompletions ProgramExerciseCompletion[]
+  projects            ProgramProject[]
 
   @@unique([userId, cohortId])
   @@index([userId, status])
@@ -4315,4 +4120,113 @@ model OutboundDelivery {
   @@index([status, createdAt(sort: Desc)])
   @@index([kind, createdAt(sort: Desc)])
   @@index([recipientHash])
+}
+
+/// Immutable 078 historical archive. Not current-state authority. No product writer.
+model HistoricalQuizAttempt {
+  id                String   @id @default(cuid())
+  legacyId          String   @unique
+  userId            String
+  quizId            String
+  score             Int
+  /// Raw QuizAttempt.answers JSON. Dead question ids are preserved as-is.
+  answers           Json
+  attemptedAt       DateTime
+  activityAttemptId String?
+  archivedAt        DateTime @default(now())
+
+  @@index([userId, quizId])
+}
+
+/// Immutable 078 historical archive. Not current-state authority. No product writer.
+model HistoricalProgramMission {
+  id                  String   @id @default(cuid())
+  legacyId            String   @unique
+  memberId            String
+  programEnrollmentId String?
+  dayNumber           Int
+  attemptNumber       Int
+  payload             Json
+  verdict             Json
+  passed              Boolean
+  pointsAwarded       Int
+  aiFeedback          String?
+  createdAt           DateTime
+  activityAttemptId   String?
+  archivedAt          DateTime @default(now())
+
+  @@index([programEnrollmentId, dayNumber])
+  @@index([memberId, dayNumber])
+}
+
+/// Immutable 078 historical archive. Public verify uses Credential.
+model HistoricalCertificate {
+  id            String    @id @default(cuid())
+  legacyId      String    @unique
+  certificateId String    @unique
+  userId        String
+  type          String
+  status        String
+  recipientName String
+  domain        String?
+  enrollmentId  String?
+  issuedAt      DateTime
+  metadata      Json?
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime
+  archivedAt    DateTime  @default(now())
+
+  @@index([userId, type])
+  @@index([enrollmentId])
+}
+
+/// Immutable 078 historical archive. Current progress is ActivityAttempt.
+model HistoricalSubmission {
+  id                String   @id @default(cuid())
+  legacyId          String   @unique
+  userId            String
+  enrollmentId      String
+  dailyTaskId       String
+  dayNumber         Int
+  githubUrl         String?
+  linkedinUrl       String?
+  status            String
+  submittedAt       DateTime
+  activityAttemptId String?
+  archivedAt        DateTime @default(now())
+
+  @@index([userId, dayNumber])
+  @@index([enrollmentId])
+}
+
+/// Immutable 078 historical archive. Ledger is PointsTransaction.
+model HistoricalSynergyEvent {
+  id               String   @id @default(cuid())
+  legacyId         String   @unique
+  userId           String
+  points           Int
+  type             String
+  submissionId     String?
+  enrollmentId     String?
+  dayNumber        Int?
+  rankAtAward      Int?
+  reason           String?
+  createdByAdminId String?
+  createdAt        DateTime
+  archivedAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Immutable 078 historical snapshot. Current identity is CandidateProfile.
+model HistoricalStudentProfile {
+  id         String   @id @default(cuid())
+  legacyId   String   @unique
+  userId     String
+  snapshot   Json
+  createdAt  DateTime
+  archivedAt DateTime @default(now())
+
+  @@index([userId])
 }

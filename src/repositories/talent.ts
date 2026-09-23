@@ -1,9 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
-import { programMember } from "@/repositories/legacy/program-member";
-import { canonicalProgramMemberWhere } from "@/repositories/program-state";
 import type {
   CandidateSearchFilters,
   RecruiterContext,
@@ -263,172 +260,123 @@ export async function searchCandidates(
   const pageSize = Math.min(f.pageSize ?? 25, 50);
   const skip = ((f.page ?? 1) - 1) * pageSize;
 
-  if (isNewTalentRepoEnabled()) {
-    const clauses: Prisma.CandidateProfileWhereInput[] = [
-      { user: buildUserGate(f) },
-    ];
-    if (f.q) {
-      clauses.push({
-        OR: [
-          { fullName: { contains: f.q, mode: "insensitive" } },
-          { headline: { contains: f.q, mode: "insensitive" } },
-        ],
-      });
-    }
-    if (f.skillIds?.length) {
-      clauses.push({
-        skills: {
-          some: {
-            skillId: { in: f.skillIds },
-            evidenceScore: { gte: f.minEvidenceScore ?? 0 },
-          },
-        },
-      });
-    }
-    if (f.graduationYearFrom || f.graduationYearTo) {
-      clauses.push({
-        education: {
-          some: {
-            graduationYear: {
-              ...(f.graduationYearFrom && { gte: f.graduationYearFrom }),
-              ...(f.graduationYearTo && { lte: f.graduationYearTo }),
-            },
-          },
-        },
-      });
-    }
-    if (f.minExperienceMonths) {
-      clauses.push({
-        experience: { some: { totalMonths: { gte: f.minExperienceMonths } } },
-      });
-    }
-    const pref = preferenceFilter(f);
-    if (pref) clauses.push({ preference: { is: pref } });
-    if (f.locationCity) {
-      clauses.push({
-        OR: [
-          { locationCity: { equals: f.locationCity, mode: "insensitive" } },
-          {
-            preference: {
-              is: { preferredLocations: { has: f.locationCity } },
-            },
-          },
-        ],
-      });
-    }
-    if (f.countryCode) clauses.push({ countryCode: f.countryCode });
-
-    const where: Prisma.CandidateProfileWhereInput = { AND: clauses };
-
-    const [total, rows] = await prisma.$transaction([
-      prisma.candidateProfile.count({ where }),
-      prisma.candidateProfile.findMany({
-        where,
-        orderBy: [{ updatedAt: "desc" }],
-        skip,
-        take: pageSize,
-        select: {
-          userId: true,
-          fullName: true,
-          headline: true,
-          locationCity: true,
-          countryCode: true,
-          skills: {
-            orderBy: { evidenceScore: "desc" },
-            take: 8,
-            select: {
-              evidenceScore: true,
-              skill: { select: { slug: true, name: true } },
-            },
-          },
-          education: {
-            orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
-            take: 1,
-            select: {
-              institutionName: true,
-              degree: true,
-              graduationYear: true,
-            },
-          },
-          experience: {
-            where: { isCurrent: true },
-            take: 1,
-            select: { title: true, companyName: true, totalMonths: true },
-          },
-        },
-      }),
-    ]);
-
-    return {
-      total,
-      page: f.page ?? 1,
-      pageSize,
-      rows: rows.map((row) => ({
-        userId: row.userId,
-        fullName: row.fullName,
-        headline: row.headline,
-        locationCity: row.locationCity,
-        countryCode: row.countryCode,
-        hasLinkedin: RECRUITER_FIELD_POLICY.linkedin,
-        hasGithub: RECRUITER_FIELD_POLICY.github,
-        hasResume: RECRUITER_FIELD_POLICY.resume,
-        skills: row.skills,
-        education: row.education,
-        experience: row.experience.map((e) => ({
-          title: e.title,
-          companyName: RECRUITER_FIELD_POLICY.currentEmployer
-            ? e.companyName
-            : null,
-          totalMonths: e.totalMonths,
-        })),
-      })),
-    };
-  }
-
-  const where = await canonicalProgramMemberWhere({
-    user: searchableUserWhere(),
-    status: { in: ["ENROLLED", "COMPLETED"] },
-    ...(f.q && {
-      OR: [
-        { fullName: { contains: f.q, mode: "insensitive" } },
-        { company: { contains: f.q, mode: "insensitive" } },
-        { jobRole: { contains: f.q, mode: "insensitive" } },
-      ],
-    }),
-    ...(f.skillIds?.length && { skills: { hasSome: f.skillIds } }),
+const clauses: Prisma.CandidateProfileWhereInput[] = [
+  { user: buildUserGate(f) },
+];
+if (f.q) {
+  clauses.push({
+    OR: [
+      { fullName: { contains: f.q, mode: "insensitive" } },
+      { headline: { contains: f.q, mode: "insensitive" } },
+    ],
   });
-
-  const [total, rows] = await prisma.$transaction([
-    programMember.count({ where }),
-    programMember.findMany({
-      where,
-      orderBy: [{ totalScore: "desc" }, { enrolledAt: "asc" }],
-      skip,
-      take: pageSize,
-      select: {
-        userId: true,
-        fullName: true,
-        jobRole: true,
-        company: true,
-        skills: true,
+}
+if (f.skillIds?.length) {
+  clauses.push({
+    skills: {
+      some: {
+        skillId: { in: f.skillIds },
+        evidenceScore: { gte: f.minEvidenceScore ?? 0 },
       },
-    }),
-  ]);
+    },
+  });
+}
+if (f.graduationYearFrom || f.graduationYearTo) {
+  clauses.push({
+    education: {
+      some: {
+        graduationYear: {
+          ...(f.graduationYearFrom && { gte: f.graduationYearFrom }),
+          ...(f.graduationYearTo && { lte: f.graduationYearTo }),
+        },
+      },
+    },
+  });
+}
+if (f.minExperienceMonths) {
+  clauses.push({
+    experience: { some: { totalMonths: { gte: f.minExperienceMonths } } },
+  });
+}
+const pref = preferenceFilter(f);
+if (pref) clauses.push({ preference: { is: pref } });
+if (f.locationCity) {
+  clauses.push({
+    OR: [
+      { locationCity: { equals: f.locationCity, mode: "insensitive" } },
+      {
+        preference: {
+          is: { preferredLocations: { has: f.locationCity } },
+        },
+      },
+    ],
+  });
+}
+if (f.countryCode) clauses.push({ countryCode: f.countryCode });
 
-  return {
-    total,
-    page: f.page ?? 1,
-    pageSize,
-    rows: rows.map((r) => ({
-      userId: r.userId,
-      fullName: r.fullName,
-      headline: r.jobRole,
-      locationCity: null as string | null,
-      countryCode: null as string | null,
-      skills: r.skills.map((name) => ({
-        evidenceScore: 0,
-        skill: { slug: name, name },
-      })),
+const where: Prisma.CandidateProfileWhereInput = { AND: clauses };
+
+const [total, rows] = await prisma.$transaction([
+  prisma.candidateProfile.count({ where }),
+  prisma.candidateProfile.findMany({
+    where,
+    orderBy: [{ updatedAt: "desc" }],
+    skip,
+    take: pageSize,
+    select: {
+      userId: true,
+      fullName: true,
+      headline: true,
+      locationCity: true,
+      countryCode: true,
+      skills: {
+        orderBy: { evidenceScore: "desc" },
+        take: 8,
+        select: {
+          evidenceScore: true,
+          skill: { select: { slug: true, name: true } },
+        },
+      },
+      education: {
+        orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
+        take: 1,
+        select: {
+          institutionName: true,
+          degree: true,
+          graduationYear: true,
+        },
+      },
+      experience: {
+        where: { isCurrent: true },
+        take: 1,
+        select: { title: true, companyName: true, totalMonths: true },
+      },
+    },
+  }),
+]);
+
+return {
+  total,
+  page: f.page ?? 1,
+  pageSize,
+  rows: rows.map((row) => ({
+    userId: row.userId,
+    fullName: row.fullName,
+    headline: row.headline,
+    locationCity: row.locationCity,
+    countryCode: row.countryCode,
+    hasLinkedin: RECRUITER_FIELD_POLICY.linkedin,
+    hasGithub: RECRUITER_FIELD_POLICY.github,
+    hasResume: RECRUITER_FIELD_POLICY.resume,
+    skills: row.skills,
+    education: row.education,
+    experience: row.experience.map((e) => ({
+      title: e.title,
+      companyName: RECRUITER_FIELD_POLICY.currentEmployer
+        ? e.companyName
+        : null,
+      totalMonths: e.totalMonths,
     })),
-  };
+  })),
+};
 }

@@ -22,9 +22,8 @@ import {
 } from "@/features/program/constants";
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
-import { dualWriteCommitDay } from "@/repositories/dual-write";
-import { applyProgramScoreChange, overlayProgramMemberState, listCanonicalProgramMemberIds } from "@/repositories/program-state";
-import { programMember } from "@/repositories/legacy/program-member";
+import { applyProgramScoreChange, findAiCohortMembershipByMemberId, listAiCohortMemberships } from "@/repositories/program-state";
+import { peIdForMember } from "@/repositories/ids";
 import { listCanonicalMissionAttempts } from "@/repositories/progress";
 
 const MAX_COMMIT_POINTS = PROGRAM_MAX_COMMIT_POINTS;
@@ -204,16 +203,11 @@ export async function creditCommitDayInTx(
     where: { memberId_date: { memberId, date: commitDate } },
     create: {
       memberId,
+      programEnrollmentId: peIdForMember(memberId),
       date: commitDate,
       commitCount: nextCount,
     },
     update: { commitCount: nextCount },
-  });
-  await dualWriteCommitDay(tx, {
-    id: row.id,
-    memberId,
-    date: row.date,
-    commitCount: row.commitCount,
   });
   return true;
 }
@@ -226,13 +220,7 @@ export async function creditCommitDayForMember(
   memberId: string,
   programDateKey: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      id: true,
-      cohort: { select: { startsAt: true, endsAt: true } },
-    },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) {
     return { ok: false, message: "Member not found." };
   }
@@ -335,22 +323,17 @@ export async function processMemberCommitDay(
   const nextCount = Math.max(existing?.commitCount ?? 0, count);
 
   await writeClient().$transaction(async (tx) => {
-    const row = await tx.programCommitDay.upsert({
+    await tx.programCommitDay.upsert({
       where: {
         memberId_date: { memberId: member.id, date: commitDate },
       },
       create: {
         memberId: member.id,
+        programEnrollmentId: peIdForMember(member.id),
         date: commitDate,
         commitCount: nextCount,
       },
       update: { commitCount: nextCount },
-    });
-    await dualWriteCommitDay(tx, {
-      id: row.id,
-      memberId: member.id,
-      date: row.date,
-      commitCount: row.commitCount,
     });
   });
 
@@ -382,25 +365,9 @@ export async function runProgramCommitsCron(): Promise<{
     const graceKey = addCalendarDaysToKey(endKey, 1);
     if (todayKey > graceKey) continue;
 
-    const members = await overlayProgramMemberState(
-      await programMember.findMany({
-        where: {
-          cohortId: cohort.id,
-          id: {
-            in: await listCanonicalProgramMemberIds({
-              programCohortId: cohort.id,
-            }),
-          },
-        },
-        take: 100,
-        select: {
-          id: true,
-          githubUsername: true,
-          githubRepoUrl: true,
-          highestUnlockedDay: true,
-        },
-      }),
-    );
+    const members = await listAiCohortMemberships({
+      programCohortId: cohort.id,
+    });
 
     for (let i = 0; i < members.length; i += CHUNK_SIZE) {
       const chunk = members.slice(i, i + CHUNK_SIZE);
@@ -521,19 +488,7 @@ export async function getAtRiskMembers(
   });
   if (!cohort) return [];
 
-  const members = await overlayProgramMemberState(
-    await programMember.findMany({
-      where: {
-        cohortId,
-        id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
-      },
-      select: {
-        id: true,
-        fullName: true,
-        highestUnlockedDay: true,
-      },
-    }),
-  );
+  const members = await listAiCohortMemberships({ programCohortId: cohortId });
 
   const atRisk: AtRiskMember[] = [];
   for (const member of members) {
@@ -549,19 +504,13 @@ export async function getMemberAtRiskStatus(
   memberId: string,
   cohortId: string,
 ): Promise<MemberAtRiskStatus> {
-  const [rawMember, cohort] = await Promise.all([
-    programMember.findUnique({
-      where: { id: memberId },
-      select: { id: true, highestUnlockedDay: true },
-    }),
+  const [member, cohort] = await Promise.all([
+    findAiCohortMembershipByMemberId(memberId),
     prisma.programCohort.findUnique({
       where: { id: cohortId },
       select: { startsAt: true, endsAt: true },
     }),
   ]);
-  const [member] = rawMember
-    ? await overlayProgramMemberState([rawMember])
-    : [];
 
   if (!member || !cohort) {
     return { atRisk: false, reasons: [], behindBy: 0 };

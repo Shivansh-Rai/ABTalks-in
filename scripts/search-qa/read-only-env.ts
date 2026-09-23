@@ -51,7 +51,5 @@ const url = new URL(source);
 url.searchParams.set("options", "-c default_transaction_read_only=on");
 process.env.DATABASE_URL = url.toString();
 process.env.DIRECT_URL = url.toString();
-// Dual-write must never try to open a write path from an audit.
-process.env.ENABLE_DUAL_WRITE = "false";
 
 export const databaseHost = url.hostname.replace(/^([^.]{4})[^.]*/, "$1…");

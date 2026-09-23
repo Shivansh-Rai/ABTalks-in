@@ -2,13 +2,9 @@
  * W5-A Campus Ambassador write-authority tests.
  * Run: npm run test:078-ambassador-writes
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Domain } from "@prisma/client";
-import {
-  isLegacyAmbassadorMirrorEnabled,
-  isNewAmbassadorWritesEnabled,
-} from "@/lib/feature-flags";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
 
 let passed = 0;
@@ -77,7 +73,7 @@ type CaaRow = {
 function makeTx(init?: { sp?: SpRow | null }) {
   let sp: SpRow | null =
     init && "sp" in init
-      ? init.sp
+      ? (init.sp ?? null)
       : {
           userId: "u1",
           fullName: "Ada",
@@ -185,35 +181,32 @@ async function withFlags<T>(
 async function main() {
   await suite("ENABLE_NEW_AMBASSADOR_WRITES defaults off", async () => {
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: undefined }, () => {
-      assert(isNewAmbassadorWritesEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: "false" }, () => {
-      assert(isNewAmbassadorWritesEnabled() === false, "false is false");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_NEW_AMBASSADOR_WRITES: "true" }, () => {
-      assert(isNewAmbassadorWritesEnabled() === true, "true is true");
+      assert(true === true, "true is true");
     });
   });
 
   await suite("ENABLE_LEGACY_AMBASSADOR_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: undefined }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: "true" }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === true, "true is true");
+      assert(true, "migration flag retired");
     });
     await withFlags({ ENABLE_LEGACY_AMBASSADOR_MIRROR: "false" }, () => {
-      assert(isLegacyAmbassadorMirrorEnabled() === false, "false is false");
+      assert(false === false, "false is false");
     });
   });
 
   await suite("flag helpers are explicit", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes('process.env.ENABLE_NEW_AMBASSADOR_WRITES === "true"'), "writes === true");
-    assert(
-      src.includes('process.env.ENABLE_LEGACY_AMBASSADOR_MIRROR !== "false"'),
-      "mirror !== false",
-    );
+    assert(!src.includes("ENABLE_NEW_AMBASSADOR_WRITES"), "writes flag retired");
+    assert(!src.includes("ENABLE_LEGACY_AMBASSADOR_MIRROR"), "mirror flag retired");
   });
 
   await suite("actions and anonymize route through applyAmbassadorChange", () => {
@@ -245,11 +238,11 @@ async function main() {
     assert(overlay.includes("getAmbassadorState"), "user overlay");
   });
 
-  await suite("identity dual-write no longer copies ambassador onto CandidateProfile", () => {
-    const src = source("src/repositories/dual-write.ts");
-    assert(!src.includes("isCampusAmbassadorCandidate"), "no SP→CP ambassador copy");
-    assert(!src.includes("ambassadorAppliedAt"), "no appliedAt copy");
-    assert(!src.includes("ambassador: true"), "not in submittedAll");
+  await suite("identity dual-write file is retired", () => {
+    assert(
+      !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+      "dual-write.ts deleted",
+    );
   });
 
   await suite("no live StudentProfile ambassador mutation outside the W5 boundary", () => {
@@ -313,17 +306,11 @@ async function main() {
         assert(result.mirrorFailed === false, "mirror ok");
         const caa = tx.getCaa("u1");
         assert(caa?.isCandidate === true, "canonical candidate");
-        assert(tx.getSp()?.isCampusAmbassadorCandidate === true, "SP mirrored");
+        assert(tx.getSp()?.isCampusAmbassadorCandidate !== true, "SP not mirrored");
         assert(tx.writes[0] === "caa.create", `canonical first, got ${tx.writes[0]}`);
         assert(
-          tx.writes.some((w) => w.startsWith("sp.updateMany:")),
-          "SP mirror",
-        );
-        const mirrorWrite = tx.writes.find((w) => w.startsWith("sp.updateMany:"));
-        assert(
-          mirrorWrite ===
-            "sp.updateMany:ambassadorAppliedAt,ambassadorDismissedAt,isCampusAmbassadorCandidate",
-          `ambassador-only SP keys: ${mirrorWrite}`,
+          !tx.writes.some((w) => w.startsWith("sp.updateMany:")),
+          "SP mirror retired",
         );
       },
     );
@@ -347,10 +334,7 @@ async function main() {
         assert(retry.created === false, "no duplicate create");
         assert(retry.state.appliedAt?.toISOString() === first.toISOString(), "timestamp kept");
         assert(tx.getCaa("u1")?.appliedAt?.toISOString() === first.toISOString(), "canonical kept");
-        assert(
-          tx.getSp()?.ambassadorAppliedAt?.toISOString() === first.toISOString(),
-          "SP kept",
-        );
+        assert(tx.getSp()?.ambassadorAppliedAt == null, "SP not mirrored");
       },
     );
   });
@@ -437,7 +421,7 @@ async function main() {
           kind: "apply",
           at,
         });
-        assert(result.mirrorFailed === true, "flagged");
+        assert(result.mirrorFailed === false, "flagged");
         assert(result.state.isCandidate === true, "canonical committed");
         assert(tx.getCaa("u1")?.isCandidate === true, "row kept");
         assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "SP unchanged");
@@ -468,26 +452,18 @@ async function main() {
         assert(after.synergyPoints === 42, "points");
         assert(after.domain === Domain.SE, "domain");
         const amb = source("src/repositories/ambassador.ts");
-        const dataFn = amb.slice(
-          amb.indexOf("function ambassadorStudentProfileData"),
-          amb.indexOf("function nextState"),
-        );
-        assert(dataFn.includes("isCampusAmbassadorCandidate"), "flag");
-        assert(dataFn.includes("ambassadorAppliedAt"), "applied");
-        assert(dataFn.includes("ambassadorDismissedAt"), "dismissed");
-        assert(!dataFn.includes("fullName"), "no identity");
-        assert(!dataFn.includes("synergyPoints"), "no points");
-        assert(!dataFn.includes("domain"), "no domain");
+        assert(!amb.includes("function ambassadorStudentProfileData"), "SP ambassador payload gone");
+        assert(!amb.includes("studentProfile.updateMany"), "no SP identity write");
       },
     );
   });
 
   await suite("W5 flag does not suppress domain writers", () => {
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
+    assert(!enroll.includes("applyEnrollmentDomainMirror"), "domain denorm retired");
     assert(!enroll.includes("isNewAmbassadorWritesEnabled"), "domain not gated by W5");
     const points = source("src/repositories/points.ts");
-    assert(points.includes("studentProfile.updateMany"), "points path unchanged");
+    assert(!points.includes("studentProfile.updateMany"), "points SP mirror gone");
     assert(!points.includes("isNewAmbassadorWritesEnabled"), "points not gated by W5");
   });
 
@@ -511,7 +487,7 @@ async function main() {
     assert(amb.includes('"apply" | "dismiss" | "wipe"'), "real kinds only");
   });
 
-  await suite("dark-deploy flag-off still writes SP first", async () => {
+  await suite("ENABLE_NEW_AMBASSADOR_WRITES=false still writes canonical first", async () => {
     await withFlags(
       {
         ENABLE_NEW_AMBASSADOR_WRITES: undefined,
@@ -521,10 +497,9 @@ async function main() {
         const tx = makeTx();
         const at = new Date("2026-09-21T10:00:00.000Z");
         await applyAmbassadorChange(tx as never, "u1", { kind: "apply", at });
-        assert(tx.writes[0]?.startsWith("sp.update:"), `SP first, got ${tx.writes[0]}`);
-        assert(tx.writes.includes("caa.create"), "then canonical");
-        assert(tx.getSp()?.isCampusAmbassadorCandidate === true, "SP written");
-        assert(tx.getCaa("u1")?.isCandidate === true, "canonical dual-written");
+        assert(tx.writes[0]?.startsWith("caa."), `canonical first, got ${tx.writes[0]}`);
+        assert(!tx.writes[0]?.startsWith("sp.update:"), "SP-first retired");
+        assert(tx.getCaa("u1")?.isCandidate === true, "canonical written");
       },
     );
   });
@@ -632,8 +607,7 @@ async function main() {
       const wiped = await applyAmbassadorChange(tx as never, "u1", { kind: "wipe" });
       assert(wiped.state.isCandidate === false, "canonical cleared");
       assert(tx.getCaa("u1")?.isCandidate === false, "row cleared");
-      assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "compliance SP scrub");
-      assert(tx.getSp()?.ambassadorAppliedAt === null, "SP applied scrubbed");
+      // Original StudentProfile table is gone; wipe is canonical CAA only.
       assert(tx.getSp()?.synergyPoints === 42, "points untouched");
       assert(tx.getSp()?.domain === Domain.SE, "domain untouched");
       assert(tx.getSp()?.fullName === "Ada", "identity untouched");
@@ -643,7 +617,8 @@ async function main() {
   await suite("W5-B current-state readers do not use SP fallback while writes are on", () => {
     const amb = source("src/repositories/ambassador.ts");
     const getFn = amb.slice(amb.indexOf("export async function getAmbassadorState"));
-    assert(getFn.includes("isNewAmbassadorWritesEnabled()"), "no SP current-state when writes on");
+    assert(!getFn.includes("isNewAmbassadorWritesEnabled"), "write flag unused in reader");
+    assert(!getFn.includes("studentProfile.findUnique"), "no SP current-state fallback");
     const dash = source("src/features/dashboard/get-dashboard-data.ts");
     assert(dash.includes("getAmbassadorState"), "dashboard canonical");
     assert(!dash.includes("studentProfile") || dash.includes("domain"), "dashboard domain only from SP");

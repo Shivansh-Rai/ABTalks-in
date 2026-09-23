@@ -6,7 +6,7 @@ import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 
 /**
  * User plus current identity. Candidate identity/referral come from
- * CandidateProfile; StudentProfile remains for later-family columns (domain).
+ * CandidateProfile. Challenge domain comes from ProgramEnrollment.
  * Ambassador candidacy comes from CampusAmbassadorApplication.
  * Wrapped in React `cache()` so repeat calls within a single render collapse.
  */
@@ -19,21 +19,13 @@ export const getUserWithProfile = cache(async (userId: string) => {
         name: true,
         email: true,
         role: true,
-        studentProfile: {
-          select: {
-            domain: true,
-          },
-        },
       },
     }),
     getCandidateProfile(userId),
     getAmbassadorState(userId),
   ]);
   if (!user) return null;
-  const sp = user.studentProfile;
-  const domain = identity
-    ? await displayedChallengeDomain(userId, sp?.domain ?? null)
-    : null;
+  const domain = identity ? await displayedChallengeDomain(userId, null) : null;
   return {
     ...user,
     studentProfile: identity

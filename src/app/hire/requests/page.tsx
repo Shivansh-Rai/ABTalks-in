@@ -9,6 +9,7 @@ import { OutreachComposeDialog } from "@/components/hire/outreach-compose-dialog
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { listAiCohortMemberships } from "@/repositories/program-state";
 
 export const metadata: Metadata = {
   title: "Your requests | ABTalks Hire",
@@ -87,10 +88,7 @@ export default async function HireRequestsPage() {
   ];
   const memberById = new Map(
     (memberIds.length > 0
-      ? await prisma.programMember.findMany({
-          where: { id: { in: memberIds } },
-          select: { id: true, jobRole: true },
-        })
+      ? await listAiCohortMemberships({ memberIds })
       : []
     ).map((m) => [m.id, m]),
   );

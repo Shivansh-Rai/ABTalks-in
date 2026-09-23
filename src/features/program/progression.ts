@@ -8,8 +8,8 @@ import {
   parseCalendarKeyToUtcDate,
 } from "@/lib/date-utils";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
-import { listCanonicalProgramMemberIds } from "@/repositories/program-state";
-import { programMember } from "@/repositories/legacy/program-member";
+import { listCanonicalProgramMemberIds, findAiCohortMembershipByMemberId } from "@/repositories/program-state";
+import { peIdForMember } from "@/repositories/ids";
 import {
   listProgramModules,
   listProgramDayCatalog,
@@ -161,15 +161,18 @@ export async function isCohortFrozen(cohort: {
     const liveIds = await listCanonicalProgramMemberIds({
       programCohortId: cohort.id,
     });
-    const incomplete = await prisma.programMember.count({
+    if (liveIds.length === 0) return true;
+    const passed = await prisma.activityAttempt.findMany({
       where: {
-        id: { in: liveIds },
-        missionSubmissions: {
-          none: { dayNumber: PROGRAM_TOTAL_DAYS, passed: true },
-        },
+        enrollmentId: { in: liveIds.map(peIdForMember) },
+        id: { startsWith: "aa_ms_" },
+        passed: true,
+        activity: { dayNumber: PROGRAM_TOTAL_DAYS },
       },
+      select: { enrollmentId: true },
+      distinct: ["enrollmentId"],
     });
-    return incomplete === 0;
+    return passed.length === liveIds.length;
   }
   return isCohortPastEndsAt(cohort);
 }
@@ -229,13 +232,7 @@ export function collectPassSkipSets(
 export async function getMemberDayStates(
   memberId: string,
 ): Promise<{ modules: CurriculumModule[]; days: CurriculumDay[] }> {
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      highestUnlockedDay: true,
-      cohort: { select: { startsAt: true } },
-    },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) {
     return { modules: [], days: [] };
   }
@@ -273,13 +270,7 @@ export async function getMemberDayStates(
 export async function getMemberCurrentModuleNumber(
   memberId: string,
 ): Promise<number> {
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      highestUnlockedDay: true,
-      cohort: { select: { startsAt: true } },
-    },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) return 1;
   const unlockFloor = await getProgramUnlockFloor(
     memberId,

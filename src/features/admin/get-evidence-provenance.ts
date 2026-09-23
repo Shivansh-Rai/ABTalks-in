@@ -181,13 +181,28 @@ export async function getEvidenceProvenance(userId: string): Promise<EvidencePro
         })
       : [],
     ids.certificate.size
-      ? prisma.certificate.findMany({
+      ? prisma.historicalCertificate.findMany({
           // Historical SkillEvidence / COHORT / WORKSHOP / Phase 2g hackathon
-          // keys point at frozen Certificate.id. New W3 issues do not mint
-          // Certificate rows and do not need this lookup.
-          where: inIds(ids.certificate),
-          select: { id: true, userId: true, type: true, status: true, issuedAt: true, metadata: true },
-        })
+          // keys point at frozen Certificate.id, archived as legacyId.
+          where: { legacyId: { in: [...ids.certificate] } },
+          select: {
+            legacyId: true,
+            userId: true,
+            type: true,
+            status: true,
+            issuedAt: true,
+            metadata: true,
+          },
+        }).then((rows) =>
+          rows.map((row) => ({
+            id: row.legacyId,
+            userId: row.userId,
+            type: row.type,
+            status: row.status,
+            issuedAt: row.issuedAt,
+            metadata: row.metadata,
+          })),
+        )
       : [],
     ids.report.size
       ? prisma.assessmentReport.findMany({

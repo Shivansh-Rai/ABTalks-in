@@ -1,24 +1,12 @@
 /**
- * W5 Campus Ambassador write/read boundary.
+ * Campus Ambassador write/read boundary.
  *
- * ENABLE_NEW_AMBASSADOR_WRITES off (dark deploy): StudentProfile ambassador
- * columns stay the write that dual-writes onto CampusAmbassadorApplication.
- * ENABLE_NEW_AMBASSADOR_WRITES on: CampusAmbassadorApplication commits first;
- * StudentProfile ambassador columns are a compatibility mirror only while
- * ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
- *
- * W5-B: ENABLE_LEGACY_AMBASSADOR_MIRROR=false freezes those three SP columns.
- * Apply/dismiss do not write them. Anonymize wipe still scrubs them as a
- * documented compliance exception. Identity, points, and domain are untouched.
+ * Canonical writer is always CampusAmbassadorApplication.
  */
 import "server-only";
 import type { Domain, Prisma, PrismaClient } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
-import {
-  isLegacyAmbassadorMirrorEnabled,
-  isNewAmbassadorWritesEnabled,
-} from "@/lib/feature-flags";
 import { pickPrimaryEducation } from "@/repositories/candidate-primary";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
@@ -56,25 +44,6 @@ const EMPTY_STATE: AmbassadorState = {
   appliedAt: null,
   dismissedAt: null,
 };
-
-function savepointName(label: string): string {
-  const cleaned = label.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
-  return `ambmir_${cleaned || "x"}`;
-}
-
-function shouldInjectLegacyMirrorFailure(): boolean {
-  return process.env.AMBASSADOR_FAIL_LEGACY_MIRROR === "1";
-}
-
-function ambassadorStudentProfileData(
-  state: AmbassadorState,
-): Prisma.StudentProfileUpdateInput {
-  return {
-    isCampusAmbassadorCandidate: state.isCandidate,
-    ambassadorAppliedAt: state.appliedAt,
-    ambassadorDismissedAt: state.dismissedAt,
-  };
-}
 
 function nextState(
   kind: AmbassadorChangeKind,
@@ -118,21 +87,7 @@ async function loadCurrent(tx: Tx, userId: string): Promise<AmbassadorState> {
       dismissedAt: canonical.dismissedAt,
     };
   }
-  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
-  const sp = await tx.studentProfile.findUnique({
-    where: { userId },
-    select: {
-      isCampusAmbassadorCandidate: true,
-      ambassadorAppliedAt: true,
-      ambassadorDismissedAt: true,
-    },
-  });
-  if (!sp) return EMPTY_STATE;
-  return {
-    isCandidate: sp.isCampusAmbassadorCandidate,
-    appliedAt: sp.ambassadorAppliedAt,
-    dismissedAt: sp.ambassadorDismissedAt,
-  };
+  return EMPTY_STATE;
 }
 
 async function upsertCanonical(
@@ -168,52 +123,8 @@ async function runStudentProfileAmbassadorMirror(
   userId: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyAmbassadorMirrorEnabled()) return false;
-  if (shouldInjectLegacyMirrorFailure()) {
-    logger.error(
-      "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-      { label, userId, error: "AMBASSADOR_FAIL_LEGACY_MIRROR" },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[ambassador] student profile ambassador mirror rollback failed", {
-          label,
-          userId,
-          error: String(rollbackErr),
-        });
-      }
-      logger.error(
-        "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-        {
-          label,
-          userId,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    logger.error(
-      "[ambassador] legacy StudentProfile mirror failed; canonical state kept",
-      {
-        label,
-        userId,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return true;
-  }
+  void tx; void label; void userId; void fn;
+  return false;
 }
 
 /**
@@ -230,49 +141,17 @@ export async function applyAmbassadorChange(
   const current = await loadCurrent(tx, userId);
   const state = nextState(input.kind, current, at);
 
-  if (!isNewAmbassadorWritesEnabled()) {
-    if (input.kind === "wipe") {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    } else {
-      await tx.studentProfile.update({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    }
-    const { created } = await upsertCanonical(tx, userId, state);
-    return {
-      state,
-      created,
-      updated: !created,
-      skipped: sameState(current, state),
-      mirrorFailed: false,
-    };
-  }
-
   const { created } = await upsertCanonical(tx, userId, state);
   const mirrorFailed = await runStudentProfileAmbassadorMirror(
     tx,
     input.kind,
     userId,
-    async () => {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    },
+    async () => undefined,
   );
-  if (input.kind === "wipe" && !isLegacyAmbassadorMirrorEnabled()) {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: ambassadorStudentProfileData(state),
+  if (input.kind === "wipe") {
+    logger.info("[ambassador] canonical CampusAmbassadorApplication wiped", {
+      userId,
     });
-    logger.info(
-      "[ambassador] compliance wipe of frozen StudentProfile ambassador snapshots",
-      { userId },
-    );
   }
   return {
     state,
@@ -289,9 +168,9 @@ function unspecifiedToNull(value: string | null | undefined): string | null {
 }
 
 /**
- * Current-state ambassador candidacy. Canonical is the live source while
- * ENABLE_NEW_AMBASSADOR_WRITES is on. StudentProfile is a flag-off fallback
- * only (dormant W5-A rollback), never a current-state product read after W5-B.
+ * Current-state ambassador candidacy. Canonical CampusAmbassadorApplication
+ * is the sole live source. Frozen StudentProfile ambassador columns are never
+ * current-state product reads.
  */
 export async function getAmbassadorState(
   userId: string,
@@ -307,21 +186,7 @@ export async function getAmbassadorState(
       dismissedAt: canonical.dismissedAt,
     };
   }
-  if (isNewAmbassadorWritesEnabled()) return EMPTY_STATE;
-  const sp = await prisma.studentProfile.findUnique({
-    where: { userId },
-    select: {
-      isCampusAmbassadorCandidate: true,
-      ambassadorAppliedAt: true,
-      ambassadorDismissedAt: true,
-    },
-  });
-  if (!sp) return EMPTY_STATE;
-  return {
-    isCandidate: sp.isCampusAmbassadorCandidate,
-    appliedAt: sp.ambassadorAppliedAt,
-    dismissedAt: sp.ambassadorDismissedAt,
-  };
+  return EMPTY_STATE;
 }
 
 /**
@@ -357,20 +222,6 @@ export async function listAmbassadorCandidates(
                   },
                 },
               },
-              {
-                user: {
-                  studentProfile: {
-                    fullName: { contains: trimmed, mode: "insensitive" },
-                  },
-                },
-              },
-              {
-                user: {
-                  studentProfile: {
-                    college: { contains: trimmed, mode: "insensitive" },
-                  },
-                },
-              },
             ],
           }
         : {}),
@@ -401,16 +252,6 @@ export async function listAmbassadorCandidates(
               },
             },
           },
-          studentProfile: {
-            select: {
-              fullName: true,
-              phone: true,
-              college: true,
-              graduationYear: true,
-              linkedinUrl: true,
-              domain: true,
-            },
-          },
         },
       },
     },
@@ -418,17 +259,15 @@ export async function listAmbassadorCandidates(
 
   return rows.map((row) => {
     const cp = row.user.candidateProfile;
-    const sp = row.user.studentProfile;
     const education = cp ? pickPrimaryEducation(cp.education) : null;
     return {
       userId: row.userId,
-      fullName: cp?.fullName || sp?.fullName || "Unnamed",
-      phone: cp?.phone ?? sp?.phone ?? null,
-      college:
-        unspecifiedToNull(education?.institutionName) ?? sp?.college ?? null,
-      graduationYear: education?.graduationYear ?? sp?.graduationYear ?? null,
-      linkedinUrl: cp?.linkedinUrl ?? sp?.linkedinUrl ?? null,
-      domain: sp?.domain ?? null,
+      fullName: cp?.fullName || "Unnamed",
+      phone: cp?.phone ?? null,
+      college: unspecifiedToNull(education?.institutionName),
+      graduationYear: education?.graduationYear ?? null,
+      linkedinUrl: cp?.linkedinUrl ?? null,
+      domain: null,
       ambassadorAppliedAt: row.appliedAt,
       email: row.user.email,
     };

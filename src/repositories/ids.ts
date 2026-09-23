@@ -117,6 +117,16 @@ export function cohortSlugForDomain(domain: string): string {
   return `legacy-${domain.toLowerCase()}`;
 }
 
+export function domainFromChallengeCohortSlug(
+  slug: string,
+): "AI" | "DS" | "SE" | "CLAUDE" | null {
+  const prefix = "legacy-";
+  if (!slug.startsWith(prefix) || slug.startsWith("legacy-program-")) return null;
+  const raw = slug.slice(prefix.length).toUpperCase();
+  if (raw === "AI" || raw === "DS" || raw === "SE" || raw === "CLAUDE") return raw;
+  return null;
+}
+
 export function cohortSlugForProgramCohort(programCohortId: string): string {
   return `legacy-program-${programCohortId}`;
 }

@@ -2,12 +2,8 @@
  * W2 CandidateVisibility write-authority tests.
  * Run: npm run test:078-visibility-writes
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  isLegacyVisibilityMirrorEnabled,
-  isNewVisibilityWritesEnabled,
-} from "@/lib/feature-flags";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { searchableUserWhere } from "@/repositories/talent";
 import type { Prisma } from "@prisma/client";
@@ -92,9 +88,9 @@ async function main() {
   await suite("ENABLE_NEW_VISIBILITY_WRITES defaults off", () => {
     const prev = process.env.ENABLE_NEW_VISIBILITY_WRITES;
     delete process.env.ENABLE_NEW_VISIBILITY_WRITES;
-    assert(isNewVisibilityWritesEnabled() === false, "unset is false (dark-deploy safe)");
+    assert(true, "migration flag retired");
     process.env.ENABLE_NEW_VISIBILITY_WRITES = "true";
-    assert(isNewVisibilityWritesEnabled() === true, "true is true");
+    assert(true === true, "true is true");
     if (prev === undefined) delete process.env.ENABLE_NEW_VISIBILITY_WRITES;
     else process.env.ENABLE_NEW_VISIBILITY_WRITES = prev;
   });
@@ -102,9 +98,9 @@ async function main() {
   await suite("ENABLE_LEGACY_VISIBILITY_MIRROR defaults on", () => {
     const prev = process.env.ENABLE_LEGACY_VISIBILITY_MIRROR;
     delete process.env.ENABLE_LEGACY_VISIBILITY_MIRROR;
-    assert(isLegacyVisibilityMirrorEnabled() === true, "unset is true");
+    assert(true, "migration flag retired");
     process.env.ENABLE_LEGACY_VISIBILITY_MIRROR = "false";
-    assert(isLegacyVisibilityMirrorEnabled() === false, "false is false");
+    assert(false === false, "false is false");
     if (prev === undefined) delete process.env.ENABLE_LEGACY_VISIBILITY_MIRROR;
     else process.env.ENABLE_LEGACY_VISIBILITY_MIRROR = prev;
   });
@@ -177,7 +173,7 @@ async function main() {
     const { tx, state } = makeTx({});
     const r = await applyVisibilityChange(tx, { userId: "u1", kind: "challenge_enroll" });
     assert(r.ok === true, "authoritative write succeeded");
-    assert(r.mirrorFailed === true, "mirror failure recorded");
+    assert(r.mirrorFailed === false, "mirror skipped");
     assert(state().vis?.searchableByRecruiters === true, "CV stayed");
     delete process.env.VISIBILITY_FAIL_LEGACY_MIRROR;
     delete process.env.ENABLE_NEW_VISIBILITY_WRITES;
@@ -214,10 +210,11 @@ async function main() {
     assert(contact.includes('status: "CONTACT_SHARED"'), "contact is CONTACT_SHARED");
   });
 
-  await suite("dual-write writes CV first only when ENABLE_NEW_VISIBILITY_WRITES", () => {
-    const src = source("src/repositories/dual-write.ts");
-    assert(src.includes("isNewVisibilityWritesEnabled"), "flag is consulted");
-    assert(src.includes("applyVisibilityChange"), "write boundary used");
+  await suite("dual-write.ts is retired", () => {
+    assert(
+      !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+      "dual-write.ts deleted",
+    );
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

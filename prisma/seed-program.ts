@@ -9,7 +9,7 @@ import {
   ProgramMissionType,
 } from "@prisma/client";
 import { prisma, writeClient } from "../src/lib/db";
-import { dualWriteProgramDayMissionType } from "../src/repositories/dual-write";
+import { activityIdForProgramDay } from "../src/repositories/ids";
 
 const CONTENT_DIR = path.join(process.cwd(), "prisma", "content", "program");
 
@@ -166,7 +166,21 @@ async function seedDays() {
   await writeClient().$transaction(
     async (tx) => {
       for (const day of seededDays) {
-        await dualWriteProgramDayMissionType(tx, day);
+        const activityId = activityIdForProgramDay(day.id);
+        const activity = await tx.activity.findUnique({
+          where: { id: activityId },
+          select: { id: true },
+        });
+        if (!activity) {
+          throw new Error(
+            `Missing Activity ${activityId} for ProgramDay ${day.id}`,
+          );
+        }
+        await tx.contentActivityConfig.upsert({
+          where: { activityId },
+          create: { activityId, missionType: day.missionType },
+          update: { missionType: day.missionType },
+        });
       }
     },
     { maxWait: 10_000, timeout: 20_000 },

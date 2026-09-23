@@ -1,8 +1,8 @@
-import { Domain, EnrollmentStatus, Prisma } from "@prisma/client";
+import { Domain, EnrollmentStatus } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { listCandidateProfiles } from "@/repositories/candidate";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 export type StudentTrack = "ALL" | "CHALLENGE" | "HACKATHON";
 
@@ -70,70 +70,14 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     status: input.status,
   });
 
-  const challengeOrderBy =
-    sortBy === "days"
-      ? [{ lastSubmittedDay: "desc" as const }, { createdAt: "desc" as const }]
-      : sortBy === "streak"
-        ? [{ currentStreak: "desc" as const }, { createdAt: "desc" as const }]
-        : [{ createdAt: "desc" as const }];
-
   const [enrollmentRows, hackathonRows] = await Promise.all([
     wantChallenge
-      ? prisma.enrollment.findMany({
-          where: {
-            ...(domainFilter ? { domain: domainFilter } : {}),
-            ...(statusFilter ? { status: statusFilter } : {}),
-            user: {
-              deletedAt: null,
-              ...(q
-                ? {
-                    OR: [
-                      { name: { contains: q, mode: "insensitive" as const } },
-                      { email: { contains: q, mode: "insensitive" as const } },
-                      {
-                        studentProfile: {
-                          fullName: {
-                            contains: q,
-                            mode: "insensitive" as const,
-                          },
-                        },
-                      },
-                      {
-                        candidateProfile: {
-                          fullName: {
-                            contains: q,
-                            mode: "insensitive" as const,
-                          },
-                        },
-                      },
-                    ],
-                  }
-                : {}),
-            },
-          },
-          orderBy: challengeOrderBy,
-          // Days/streak ranking must overlay all matching rows after freeze.
-          ...(sortBy === "days" || sortBy === "streak" ? {} : { take: 100 }),
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                createdAt: true,
-                studentProfile: {
-                  select: {
-                    fullName: true,
-                    domain: true,
-                    isReadyForInterview: true,
-                    userType: true,
-                    college: true,
-                    organization: true,
-                  },
-                },
-              },
-            },
-          },
-        })
+      ? listChallengePeRows({
+          domains: domainFilter ? [domainFilter] : undefined,
+          searchName: q || undefined,
+        }).then((rows) =>
+          rows.filter((r) => !statusFilter || r.status === statusFilter),
+        )
       : Promise.resolve([]),
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
@@ -179,7 +123,7 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
 
   const userIds = [
     ...new Set([
-      ...enrollmentRows.map((row) => row.user.id),
+      ...enrollmentRows.map((row) => row.userId),
       ...hackathonRows.map((row) => row.userId),
     ]),
   ];
@@ -197,32 +141,42 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     referralCounts.map((r) => [r.referrerId, r._count._all]),
   );
 
-  const overlaidEnrollments = await overlayChallengeProgressFields(enrollmentRows);
+  const overlaidEnrollments = enrollmentRows;
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, email: true, createdAt: true, deletedAt: true },
+  });
+  const userById = new Map(users.map((u) => [u.id, u]));
+  const identities = await listCandidateProfiles(userIds);
 
   const students: AdminStudentRow[] = [
-    ...overlaidEnrollments.map((row) => ({
-      track: "CHALLENGE" as const,
-      rowId: row.id,
-      enrollmentId: row.id,
-      userId: row.user.id,
-      fullName:
-        row.user.studentProfile?.fullName?.trim() ||
-        row.user.email ||
-        "Unknown",
-      email: row.user.email,
-      domain: row.domain,
-      daysCompleted: row.daysCompleted,
-      currentStreak: row.currentStreak,
-      status: row.status,
-      joinedAt: row.user.createdAt,
-      isReadyForInterview: row.user.studentProfile?.isReadyForInterview ?? false,
-      userType: row.user.studentProfile?.userType ?? "STUDENT",
-      affiliation:
-        row.user.studentProfile?.userType === "PROFESSIONAL"
-          ? (row.user.studentProfile?.organization ?? "-")
-          : (row.user.studentProfile?.college ?? "-"),
-      referralCount: countMap.get(row.user.id) ?? 0,
-    })),
+    ...overlaidEnrollments.flatMap((row) => {
+      const user = userById.get(row.userId);
+      if (!user || user.deletedAt) return [];
+      const identity = identities.get(row.userId);
+      return [
+        {
+          track: "CHALLENGE" as const,
+          rowId: row.id,
+          enrollmentId: row.id,
+          userId: row.userId,
+          fullName: identity?.fullName?.trim() || user.email || "Unknown",
+          email: user.email,
+          domain: row.domain,
+          daysCompleted: row.daysCompleted,
+          currentStreak: row.currentStreak,
+          status: row.status,
+          joinedAt: user.createdAt,
+          isReadyForInterview: identity?.isReadyForInterview ?? false,
+          userType: identity?.userType ?? "STUDENT",
+          affiliation:
+            identity?.userType === "PROFESSIONAL"
+              ? (identity.organization ?? "-")
+              : (identity?.college ?? "-"),
+          referralCount: countMap.get(row.userId) ?? 0,
+        },
+      ];
+    }),
     ...hackathonRows.map((row) => {
       const entryType = row.team.entryType === "SOLO" ? "SOLO" : "TEAM";
       return {
@@ -245,9 +199,9 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     }),
   ];
 
-  const identities = await listCandidateProfiles(students.map((s) => s.userId));
+  const overlayIdentities = await listCandidateProfiles(students.map((s) => s.userId));
   for (const row of students) {
-    const identity = identities.get(row.userId);
+    const identity = overlayIdentities.get(row.userId);
     if (!identity) continue;
     row.fullName = identity.fullName.trim() || row.fullName;
     row.isReadyForInterview = identity.isReadyForInterview;
@@ -292,15 +246,9 @@ export async function getStudentDomainCounts(
   const statusFilter =
     status && status !== "ALL" ? (status as EnrollmentStatus) : undefined;
 
-  const grouped = await prisma.enrollment.groupBy({
-    by: ["domain"],
-    where: {
-      user: { deletedAt: null },
-      ...(statusFilter ? { status: statusFilter } : {}),
-    },
-    _count: { _all: true },
+  const rows = await listChallengePeRows({
+    domains: undefined,
   });
-
   const counts: StudentDomainCounts = {
     ALL: 0,
     SE: 0,
@@ -308,13 +256,11 @@ export async function getStudentDomainCounts(
     AI: 0,
     CLAUDE: 0,
   };
-
-  for (const row of grouped) {
-    const n = row._count._all;
-    counts[row.domain] = n;
-    counts.ALL += n;
+  for (const row of rows) {
+    if (statusFilter && row.status !== statusFilter) continue;
+    counts[row.domain] += 1;
+    counts.ALL += 1;
   }
-
   return counts;
 }
 
@@ -333,37 +279,13 @@ export async function getStudentTrackCounts(input?: {
       ? (input.status as EnrollmentStatus)
       : undefined;
 
-  const challengeWhere: Prisma.EnrollmentWhereInput = {
-    ...(domainFilter ? { domain: domainFilter } : {}),
-    ...(statusFilter ? { status: statusFilter } : {}),
-    user: {
-      deletedAt: null,
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" as const } },
-              { email: { contains: q, mode: "insensitive" as const } },
-              {
-                studentProfile: {
-                  fullName: { contains: q, mode: "insensitive" as const },
-                },
-              },
-              {
-                candidateProfile: {
-                  fullName: { contains: q, mode: "insensitive" as const },
-                },
-              },
-            ],
-          }
-        : {}),
-    },
-  };
+  const hackathonAllowed = !domainFilter && !statusFilter;
 
-  const hackathonAllowed =
-    !domainFilter && !statusFilter;
-
-  const [challengeCount, hackathonCount] = await Promise.all([
-    prisma.enrollment.count({ where: challengeWhere }),
+  const [challengeRows, hackathonCount] = await Promise.all([
+    listChallengePeRows({
+      domains: domainFilter ? [domainFilter] : undefined,
+      searchName: q || undefined,
+    }),
     hackathonAllowed
       ? prisma.hackathonParticipant.count({
           where: {
@@ -389,6 +311,10 @@ export async function getStudentTrackCounts(input?: {
         })
       : Promise.resolve(0),
   ]);
+
+  const challengeCount = challengeRows.filter(
+    (r) => !statusFilter || r.status === statusFilter,
+  ).length;
 
   return {
     ALL: challengeCount + hackathonCount,

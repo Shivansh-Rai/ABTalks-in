@@ -7,8 +7,8 @@ import {
   type DayState,
 } from "@/features/program/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
-import { programMember } from "@/repositories/legacy/program-member";
 import { getProgramDayShell } from "@/repositories/learning";
+import { findAiCohortMembershipByMemberId } from "@/repositories/program-state";
 import {
   getProgramUnlockFloor,
   listProgramMissionProgress,
@@ -53,13 +53,7 @@ export async function getDayShell(
   const day = await getProgramDayShell(dayNumber);
   if (!day) return null;
 
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      highestUnlockedDay: true,
-      cohort: { select: { startsAt: true } },
-    },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) return null;
 
   const [submissions, unlockFloor] = await Promise.all([

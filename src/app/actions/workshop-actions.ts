@@ -97,15 +97,11 @@ export async function submitWorkshopRegistrationAction(
       // Write-through: keep the member's profile current with what they just
       // told us. Only when a StudentProfile already exists — a workshop-only
       // attendee has no domain or referralCode, so one cannot be created here.
-      const profile = await tx.studentProfile.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
       const candidate = await tx.candidateProfile.findUnique({
         where: { userId },
         select: { userId: true },
       });
-      if (!profile && !candidate) return;
+      if (!candidate) return;
 
       await applyCandidateIdentityChange(tx, userId, {
         fullName: name,

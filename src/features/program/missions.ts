@@ -15,11 +15,10 @@ import {
   isSkippedPayload,
 } from "@/features/program/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
-import { programMember } from "@/repositories/legacy/program-member";
 import { applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
 import {
   applyProgramScoreChange,
-  overlayProgramMemberState,
+  findAiCohortMembershipByMemberId,
 } from "@/repositories/program-state";
 import { peIdForMember } from "@/repositories/ids";
 import {
@@ -98,23 +97,7 @@ async function getDayAvailability(
   | { ok: true; state: "AVAILABLE"; member: { id: string; cohortId: string; highestUnlockedDay: number; skipTokensUsed: number; githubRepoUrl: string; missionPoints: number; cleanPassCount: number } }
   | { ok: false; message: string }
 > {
-  const rawMember = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      id: true,
-      cohortId: true,
-      highestUnlockedDay: true,
-      skipTokensUsed: true,
-      githubRepoUrl: true,
-      missionPoints: true,
-      cleanPassCount: true,
-      cohort: {
-        select: { id: true, name: true, status: true, endsAt: true, startsAt: true },
-      },
-    },
-  });
-  if (!rawMember) return { ok: false, message: "Member not found." };
-  const [member] = await overlayProgramMemberState([rawMember]);
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) return { ok: false, message: "Member not found." };
 
   if (await isCohortFrozen(member.cohort)) {
@@ -173,17 +156,7 @@ export async function getMissionState(
   memberId: string,
   dayNumber: number,
 ): Promise<MissionState | null> {
-  const rawMember = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      id: true,
-      highestUnlockedDay: true,
-      skipTokensUsed: true,
-      cohort: { select: { startsAt: true } },
-    },
-  });
-  if (!rawMember) return null;
-  const [member] = await overlayProgramMemberState([rawMember]);
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) return null;
 
   const [daySubmissions, allSubmissions, day, unlockFloor] = await Promise.all([
@@ -320,13 +293,7 @@ export async function submitMissionRun(
       });
 
       // Only surface "continue" when the next day is already within calendar unlock.
-      const memberAfter = await tx.programMember.findUnique({
-        where: { id: memberId },
-        select: {
-          highestUnlockedDay: true,
-          cohort: { select: { startsAt: true } },
-        },
-      });
+      const memberAfter = await findAiCohortMembershipByMemberId(memberId);
       if (memberAfter) {
         const nextDay = Math.min(PROGRAM_TOTAL_DAYS, dayNumber + 1);
         const maxContentDay = getMaxContentDay(
@@ -379,6 +346,7 @@ export async function submitMissionRun(
         },
         create: {
           memberId,
+          programEnrollmentId: peIdForMember(memberId),
           moduleNumber,
           repoUrl: bossPayload.repoUrl,
           writeup: bossPayload.writeup,

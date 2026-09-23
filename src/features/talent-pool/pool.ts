@@ -5,13 +5,13 @@ import { getMissionHeatmap, type MissionHeatmapCell } from "@/features/program/p
 import {
   getInterviewSignal,
 } from "@/features/interview/read-model";
-import { isNewTalentRepoEnabled } from "@/lib/feature-flags";
-import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
-  overlayProgramMemberState,
+  findAiCohortMembershipByMemberId,
+  listAiCohortMemberships,
   listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
+import { peIdForMember } from "@/repositories/ids";
 import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   filterSearchableUserIds,
@@ -255,73 +255,43 @@ export async function getTalentProfile(
     return { ok: false, message: "Member not found." };
   }
 
-  const member = await programMember.findFirst({
-    where: {
-      id: memberId,
-      cohortId: access.cohort.id,
-      user: searchableUserWhere(),
-    },
-    select: {
-      id: true,
-      userId: true,
-      status: true,
-      fullName: true,
-      jobRole: true,
-      company: true,
-      yearsExperience: true,
-      education: true,
-      university: true,
-      graduationYear: true,
-      skills: true,
-
-      missionPoints: true,
-      conceptPoints: true,
-      commitPoints: true,
-      projectPoints: true,
-      totalScore: true,
-      cleanPassCount: true,
-      highestUnlockedDay: true,
-      aiRecommendation: true,
-      enrolledAt: true,
-
-      projects: {
-        select: {
-          moduleNumber: true,
-          repoUrl: true,
-          aiScore: true,
-          adminScore: true,
-          aiFeedback: true,
-          status: true,
-        },
-        orderBy: { moduleNumber: "asc" },
-      },
-    },
+  const member = await findAiCohortMembershipByMemberId(memberId);
+  if (!member || member.cohortId !== access.cohort.id) {
+    return { ok: false, message: "Member not found." };
+  }
+  const searchable = await prisma.user.findFirst({
+    where: { AND: [searchableUserWhere(), { id: member.userId }] },
+    select: { id: true },
   });
-
-  if (!member) return { ok: false, message: "Member not found." };
-  const [overlaid] = await overlayProgramMemberState([member]);
-  if (!overlaid) return { ok: false, message: "Member not found." };
-  if (overlaid.status !== "ENROLLED" && overlaid.status !== "COMPLETED") {
+  if (!searchable) return { ok: false, message: "Member not found." };
+  if (member.status !== "ENROLLED" && member.status !== "COMPLETED") {
     return { ok: false, message: "Member not found." };
   }
 
-  const ranked = await overlayProgramMemberState(
-    await programMember.findMany({
-      where: {
-        cohortId: access.cohort.id,
-        id: { in: liveIds },
-        user: searchableUserWhere(),
-      },
-      select: { id: true, totalScore: true, projectPoints: true, missionPoints: true, enrolledAt: true },
-    }),
-  );
+  const ranked = await listAiCohortMemberships({
+    programCohortId: access.cohort.id,
+    memberIds: liveIds,
+  });
   ranked.sort(compareProgramScoreRows);
   const rank = ranked.findIndex((m) => m.id === memberId) + 1;
+
+  const projects = await prisma.programProject.findMany({
+    where: { programEnrollmentId: peIdForMember(memberId) },
+    select: {
+      moduleNumber: true,
+      repoUrl: true,
+      aiScore: true,
+      adminScore: true,
+      aiFeedback: true,
+      status: true,
+    },
+    orderBy: { moduleNumber: "asc" },
+  });
 
   const [missionHeatmap, missionPortfolio, shortlistItem, interviewSignal] =
     await Promise.all([
     getMissionHeatmap(memberId),
-    buildMissionPortfolio(memberId, overlaid.highestUnlockedDay),
+    buildMissionPortfolio(memberId, member.highestUnlockedDay),
     prisma.recruiterShortlistItem.findUnique({
       where: {
         recruiterUserId_memberId: {
@@ -334,10 +304,7 @@ export async function getTalentProfile(
     getInterviewSignal(memberId),
   ]);
 
-  const useNew = isNewTalentRepoEnabled();
-  const idn = useNew
-    ? (await loadRecruiterIdentities([member.userId])).get(member.userId)
-    : undefined;
+  const idn = (await loadRecruiterIdentities([member.userId])).get(member.userId);
 
   // Only the boolean is read out of this row. The same table carries the
   // candidate's expected salary, which is admin-only and must not reach a
@@ -351,38 +318,31 @@ export async function getTalentProfile(
     data: {
       memberId: member.id,
       openToWork,
-      fullName: useNew ? (idn?.fullName || member.fullName) : member.fullName,
-      jobRole: useNew ? (idn?.role ?? member.jobRole) : member.jobRole,
+      fullName: idn?.fullName || member.fullName,
+      jobRole: idn?.role ?? member.jobRole,
       // Field exposure is the platform policy on both read paths (plan 133).
       company: RECRUITER_FIELD_POLICY.currentEmployer ? member.company : null,
-      yearsExperience: useNew
-        ? (idn?.yearsExperience ?? member.yearsExperience)
-        : member.yearsExperience,
-      education: useNew ? (idn?.education ?? member.education) : member.education,
-      university: useNew
-        ? (idn?.university ?? member.university)
-        : member.university,
-      graduationYear: useNew
-        ? (idn?.graduationYear ?? member.graduationYear)
-        : member.graduationYear,
-      skills:
-        useNew && idn?.skills.length ? idn.skills : member.skills,
+      yearsExperience: idn?.yearsExperience ?? member.yearsExperience,
+      education: idn?.education ?? member.education,
+      university: idn?.university ?? member.university,
+      graduationYear: idn?.graduationYear ?? member.graduationYear,
+      skills: idn?.skills.length ? idn.skills : member.skills,
       contactReleased: false as const,
       rank,
       scoreBreakdown: {
-        missionPoints: overlaid.missionPoints,
-        conceptPoints: overlaid.conceptPoints,
-        commitPoints: overlaid.commitPoints,
-        projectPoints: overlaid.projectPoints,
-        totalScore: overlaid.totalScore,
+        missionPoints: member.missionPoints,
+        conceptPoints: member.conceptPoints,
+        commitPoints: member.commitPoints,
+        projectPoints: member.projectPoints,
+        totalScore: member.totalScore,
       },
       cleanPassPct: computeCleanPassPct(
-        overlaid.missionPoints,
-        overlaid.cleanPassCount,
+        member.missionPoints,
+        member.cleanPassCount,
       ),
       missionHeatmap,
       missionPortfolio,
-      projects: member.projects.map((p) => ({
+      projects: projects.map((p) => ({
         moduleNumber: p.moduleNumber,
         repoUrl: p.repoUrl,
         score:
@@ -406,7 +366,7 @@ export async function getTalentProfile(
                 transcript: [] as { role: string; text: string }[],
               }
             : null,
-      aiRecommendation: overlaid.aiRecommendation,
+      aiRecommendation: member.aiRecommendation,
       shortlisted: !!shortlistItem,
       shortlistNote: shortlistItem?.note ?? null,
     },
@@ -427,15 +387,15 @@ export async function toggleShortlist(
     return { ok: false, message: "Member not found." };
   }
 
-  const member = await programMember.findFirst({
-    where: {
-      id: memberId,
-      cohortId: access.cohort.id,
-      user: searchableUserWhere(),
-    },
+  const member = await findAiCohortMembershipByMemberId(memberId);
+  if (!member || member.cohortId !== access.cohort.id) {
+    return { ok: false, message: "Member not found." };
+  }
+  const visible = await prisma.user.findFirst({
+    where: { AND: [searchableUserWhere(), { id: member.userId }] },
     select: { id: true },
   });
-  if (!member) return { ok: false, message: "Member not found." };
+  if (!visible) return { ok: false, message: "Member not found." };
 
   const existing = await prisma.recruiterShortlistItem.findUnique({
     where: {
@@ -450,7 +410,7 @@ export async function toggleShortlist(
   }
 
   await prisma.recruiterShortlistItem.create({
-    data: { recruiterUserId, memberId },
+    data: { recruiterUserId, memberId, candidateUserId: member.userId },
   });
   return { ok: true, shortlisted: true };
 }
@@ -468,15 +428,15 @@ export async function ensureShortlisted(
     return { ok: false, message: "Member not found." };
   }
 
-  const member = await prisma.programMember.findFirst({
-    where: {
-      id: memberId,
-      cohortId: access.cohort.id,
-      user: searchableUserWhere(),
-    },
+  const member = await findAiCohortMembershipByMemberId(memberId);
+  if (!member || member.cohortId !== access.cohort.id) {
+    return { ok: false, message: "Member not found." };
+  }
+  const visible = await prisma.user.findFirst({
+    where: { AND: [searchableUserWhere(), { id: member.userId }] },
     select: { id: true },
   });
-  if (!member) return { ok: false, message: "Member not found." };
+  if (!visible) return { ok: false, message: "Member not found." };
 
   const existing = await prisma.recruiterShortlistItem.findUnique({
     where: { recruiterUserId_memberId: { recruiterUserId, memberId } },
@@ -485,7 +445,7 @@ export async function ensureShortlisted(
   if (existing) return { ok: true, added: false };
 
   await prisma.recruiterShortlistItem.create({
-    data: { recruiterUserId, memberId },
+    data: { recruiterUserId, memberId, candidateUserId: member.userId },
   });
   return { ok: true, added: true };
 }
@@ -530,68 +490,55 @@ export async function getShortlist(
     select: {
       note: true,
       createdAt: true,
-      member: {
-        select: {
-          id: true,
-          userId: true,
-          fullName: true,
-          jobRole: true,
-          totalScore: true,
-          skills: true,
-          yearsExperience: true,
-          cohortId: true,
-          status: true,
-        },
-      },
+      memberId: true,
+      candidateUserId: true,
     },
   });
-
-  const overlaidMembers = await overlayProgramMemberState(
-    items.map((i) => i.member),
-  );
-  const overlaidById = new Map(overlaidMembers.map((m) => [m.id, m]));
-  const visible = items.filter((i) => {
-    if (i.member.cohortId !== access.cohort.id) return false;
-    const snap = overlaidById.get(i.member.id) ?? i.member;
-    return snap.status === "ENROLLED" || snap.status === "COMPLETED";
+  const members = await listAiCohortMemberships({
+    memberIds: items.map((i) => i.memberId),
+  });
+  const memberById = new Map(members.map((m) => [m.id, m]));
+  const visible = items.flatMap((i) => {
+    const member = memberById.get(i.memberId);
+    if (!member || member.cohortId !== access.cohort.id) return [];
+    if (member.status !== "ENROLLED" && member.status !== "COMPLETED") return [];
+    return [{ item: i, member }];
   });
   const searchable = await filterSearchableUserIds(
-    visible.map((i) => i.member.userId),
+    visible.map((v) => v.member.userId),
   );
-  const shown = visible.filter((i) => searchable.has(i.member.userId));
+  const shown = visible.filter((v) => searchable.has(v.member.userId));
 
-  const identities = isNewTalentRepoEnabled()
-    ? await loadRecruiterIdentities(shown.map((i) => i.member.userId))
-    : new Map();
+  const identities = await loadRecruiterIdentities(
+    shown.map((v) => v.member.userId),
+  );
 
-  // Read for the "Open to work" badge only. The salary columns on the same row
-  // stay admin-only and must not be mapped onto ShortlistRow.
   const availability = await listCandidateAvailability(
-    shown.map((i) => i.member.userId),
+    shown.map((v) => v.member.userId),
   );
 
   const released = await contactAccessFor(
     recruiterUserId,
-    shown.map((i) => i.member.userId),
+    shown.map((v) => v.member.userId),
   );
 
   return {
     ok: true,
-    data: shown.map((i) => {
-      const idn = identities.get(i.member.userId);
-      const name = idn?.fullName || i.member.fullName;
+    data: shown.map((v) => {
+      const idn = identities.get(v.member.userId);
+      const name = idn?.fullName || v.member.fullName;
       return {
-        memberId: i.member.id,
-        userId: i.member.userId,
-        openToWork: availability.get(i.member.userId)?.openToWork === true,
-        jobRole: idn?.role ?? i.member.jobRole,
-        totalScore: overlaidById.get(i.member.id)?.totalScore ?? i.member.totalScore,
-        note: i.note,
+        memberId: v.member.id,
+        userId: v.member.userId,
+        openToWork: availability.get(v.member.userId)?.openToWork === true,
+        jobRole: idn?.role ?? v.member.jobRole,
+        totalScore: v.member.totalScore,
+        note: v.item.note,
         displayName: name.trim() ? name.trim() : null,
-        skills: idn?.skills.length ? idn.skills : i.member.skills,
-        yearsExperience: idn?.yearsExperience ?? i.member.yearsExperience,
-        revealedName: released.has(i.member.userId) ? name : null,
-        shortlistedAt: i.createdAt.toISOString(),
+        skills: idn?.skills.length ? idn.skills : v.member.skills,
+        yearsExperience: idn?.yearsExperience ?? v.member.yearsExperience,
+        revealedName: released.has(v.member.userId) ? name : null,
+        shortlistedAt: v.item.createdAt.toISOString(),
       };
     }),
   };

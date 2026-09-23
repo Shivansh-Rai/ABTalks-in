@@ -11,10 +11,6 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
-import {
-  isLegacyCertificateMirrorEnabled,
-  isNewCredentialWritesEnabled,
-} from "@/lib/feature-flags";
 import { logger } from "@/lib/logger";
 import {
   CERT_ID_ALPHABET,
@@ -22,11 +18,99 @@ import {
   CERTIFICATE_TYPES,
   type HackathonCertificateVariant,
 } from "@/features/certificate/constants";
-import { dualWriteCredential } from "@/repositories/dual-write";
 import { peIdForEnrollment } from "@/repositories/ids";
 
 type Tx = Prisma.TransactionClient;
 type Db = PrismaClient;
+
+function hackathonVariant(
+  metadata: Prisma.JsonValue | null,
+): string | undefined {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  const v = (metadata as { hackathonVariant?: unknown }).hackathonVariant;
+  return typeof v === "string" ? v : undefined;
+}
+
+export function mapCertificateToCredential(cert: {
+  id: string;
+  certificateId: string;
+  userId: string;
+  type: CertificateType;
+  status: CertificateStatus;
+  recipientName: string;
+  enrollmentId: string | null;
+  issuedAt: Date;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+  metadata: Prisma.JsonValue | null;
+}): {
+  id: string;
+  credentialId: string;
+  userId: string;
+  type: CredentialType;
+  sourceType: CredentialSourceType;
+  sourceKey: string;
+  status: CredentialStatus;
+  title: string;
+  recipientName: string;
+  metadata: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput;
+  issuedAt: Date;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+} {
+  let type: CredentialType = CredentialType.COMPLETION;
+  if (cert.type === CertificateType.HACKATHON) {
+    type = hackathonVariant(cert.metadata)
+      ? CredentialType.PLACEMENT
+      : CredentialType.PARTICIPATION;
+  } else if (cert.type === CertificateType.WORKSHOP) {
+    type = CredentialType.PARTICIPATION;
+  }
+
+  let sourceType: CredentialSourceType = CredentialSourceType.PROGRAM_ENROLLMENT;
+  let sourceKey = cert.enrollmentId
+    ? peIdForEnrollment(cert.enrollmentId)
+    : cert.id;
+  if (cert.type === CertificateType.HACKATHON) {
+    const meta = cert.metadata;
+    const teamId =
+      meta && typeof meta === "object" && !Array.isArray(meta)
+        ? (meta as { teamId?: unknown }).teamId
+        : null;
+    sourceType = CredentialSourceType.HACKATHON_TEAM;
+    sourceKey = typeof teamId === "string" ? `${teamId}:${cert.id}` : cert.id;
+  } else if (cert.type === CertificateType.WORKSHOP) {
+    sourceType = CredentialSourceType.WORKSHOP_REGISTRATION;
+    sourceKey = cert.id;
+  } else if (cert.type === CertificateType.COHORT) {
+    sourceType = CredentialSourceType.COHORT;
+    sourceKey = cert.id;
+  }
+
+  return {
+    id: `cred_${cert.id}`,
+    credentialId: cert.certificateId,
+    userId: cert.userId,
+    type,
+    sourceType,
+    sourceKey,
+    status:
+      cert.status === CertificateStatus.REVOKED
+        ? CredentialStatus.REVOKED
+        : CredentialStatus.ISSUED,
+    title: cert.type,
+    recipientName: cert.recipientName,
+    metadata:
+      cert.metadata === null
+        ? Prisma.JsonNull
+        : (cert.metadata as Prisma.InputJsonValue),
+    issuedAt: cert.issuedAt,
+    revokedAt: cert.revokedAt,
+    revokedReason: cert.revokedReason,
+  };
+}
 
 const TX_OPTS = { maxWait: 10000, timeout: 20000 } as const;
 
@@ -192,8 +276,8 @@ export async function generatePublicCredentialId(
 ): Promise<string> {
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const publicId = `ABT-${CERTIFICATE_TYPES[type].code}-${randomSuffix()}`;
-    const [cert, cred] = await Promise.all([
-      db.certificate.findUnique({
+    const [hist, cred] = await Promise.all([
+      db.historicalCertificate.findUnique({
         where: { certificateId: publicId },
         select: { id: true },
       }),
@@ -202,7 +286,7 @@ export async function generatePublicCredentialId(
         select: { id: true },
       }),
     ]);
-    if (!cert && !cred) return publicId;
+    if (!hist && !cred) return publicId;
   }
 
   logger.error("Could not allocate a unique credential ID after 6 attempts", {
@@ -232,20 +316,13 @@ async function findLegacyCertificate(
   input: ApplyCredentialIssueInput,
 ): Promise<{ certificateId: string } | null> {
   if (input.kind === "claude") {
-    return db.certificate.findUnique({
+    return db.historicalCertificate.findFirst({
       where: { enrollmentId: input.enrollmentId },
       select: { certificateId: true },
     });
   }
 
-  if (input.kind === "hackathon_participation" && !isNewCredentialWritesEnabled()) {
-    return db.certificate.findFirst({
-      where: { userId: input.userId, type: CertificateType.HACKATHON },
-      select: { certificateId: true },
-    });
-  }
-
-  const rows = await db.certificate.findMany({
+  const rows = await db.historicalCertificate.findMany({
     where: { userId: input.userId, type: CertificateType.HACKATHON },
     select: { certificateId: true, metadata: true },
   });
@@ -271,51 +348,7 @@ async function mirrorLegacyCertificate(
   ident: ReturnType<typeof identityOf>,
   publicId: string,
 ): Promise<void> {
-  if (!isLegacyCertificateMirrorEnabled()) return;
-  if (shouldInjectLegacyMirrorFailure()) {
-    throw new Error("CERTIFICATE_FAIL_LEGACY_MIRROR");
-  }
-
-  const byPublic = await db.certificate.findUnique({
-    where: { certificateId: publicId },
-    select: { certificateId: true },
-  });
-  if (byPublic) return;
-
-  if (ident.enrollmentId) {
-    const byEnrollment = await db.certificate.findUnique({
-      where: { enrollmentId: ident.enrollmentId },
-      select: { certificateId: true },
-    });
-    if (byEnrollment) {
-      if (byEnrollment.certificateId !== publicId) {
-        logger.error(
-          "[credential] legacy certificate public id differs; new credential kept",
-          {
-            userId: input.userId,
-            credentialId: publicId,
-            certificateId: byEnrollment.certificateId,
-          },
-        );
-      }
-      return;
-    }
-  }
-
-  await db.certificate.create({
-    data: {
-      certificateId: publicId,
-      userId: input.userId,
-      type: ident.certificateType,
-      status: CertificateStatus.ISSUED,
-      recipientName: input.recipientName,
-      domain: ident.domain,
-      enrollmentId: ident.enrollmentId,
-      issuedAt: input.issuedAt,
-      metadata: input.metadata,
-    },
-    select: { certificateId: true },
-  });
+  void db; void input; void ident; void publicId;
 }
 
 async function flushCertificateMirror(
@@ -333,7 +366,6 @@ async function flushCertificateMirror(
     );
     return false;
   } catch (err) {
-    if (!isNewCredentialWritesEnabled()) throw err;
     logger.error(
       "[credential] legacy certificate mirror failed; new credential kept",
       {
@@ -353,73 +385,52 @@ async function catchUpCredentialFromCertificate(
 ): Promise<void> {
   await db.$transaction(
     async (tx) => {
-      await dualWriteCredential(tx, certificateId);
+      const cert = await tx.historicalCertificate.findUnique({
+        where: { certificateId },
+        select: {
+          legacyId: true,
+          certificateId: true,
+          userId: true,
+          type: true,
+          status: true,
+          recipientName: true,
+          enrollmentId: true,
+          issuedAt: true,
+          revokedAt: true,
+          revokedReason: true,
+          metadata: true,
+        },
+      });
+      if (!cert) {
+        throw new Error(`Missing HistoricalCertificate ${certificateId}`);
+      }
+      const row = mapCertificateToCredential({
+        id: cert.legacyId,
+        certificateId: cert.certificateId,
+        userId: cert.userId,
+        type: cert.type as CertificateType,
+        status: cert.status as CertificateStatus,
+        recipientName: cert.recipientName,
+        enrollmentId: cert.enrollmentId,
+        issuedAt: cert.issuedAt,
+        revokedAt: cert.revokedAt,
+        revokedReason: cert.revokedReason,
+        metadata: cert.metadata,
+      });
+      await tx.credential.upsert({
+        where: { credentialId: row.credentialId },
+        create: row,
+        update: {
+          status: row.status,
+          recipientName: row.recipientName,
+          metadata: row.metadata,
+          revokedAt: row.revokedAt,
+          revokedReason: row.revokedReason,
+        },
+      });
     },
     TX_OPTS,
   );
-}
-
-async function issueLegacyAuthoritative(
-  db: Db,
-  input: ApplyCredentialIssueInput,
-  ident: ReturnType<typeof identityOf>,
-): Promise<IssueCredentialResult> {
-  const existing = await findLegacyCertificate(db, input);
-  if (existing) {
-    await catchUpCredentialFromCertificate(db, existing.certificateId);
-    return {
-      ok: true,
-      data: { certificateId: existing.certificateId, alreadyIssued: true },
-      mirrorFailed: false,
-    };
-  }
-
-  try {
-    const certificateId = await generatePublicCredentialId(
-      ident.certificateType,
-      db,
-    );
-    const created = await db.$transaction(async (tx) => {
-      const row = await tx.certificate.create({
-        data: {
-          certificateId,
-          userId: input.userId,
-          type: ident.certificateType,
-          recipientName: input.recipientName,
-          domain: ident.domain,
-          enrollmentId: ident.enrollmentId,
-          issuedAt: input.issuedAt,
-          metadata: input.metadata,
-        },
-        select: { certificateId: true },
-      });
-      await dualWriteCredential(tx, row.certificateId);
-      return row;
-    }, TX_OPTS);
-    return {
-      ok: true,
-      data: { certificateId: created.certificateId, alreadyIssued: false },
-      mirrorFailed: false,
-    };
-  } catch (error) {
-    if (isUniqueConflict(error)) {
-      const raced = await findLegacyCertificate(db, input);
-      if (raced) {
-        await catchUpCredentialFromCertificate(db, raced.certificateId);
-        return {
-          ok: true,
-          data: { certificateId: raced.certificateId, alreadyIssued: true },
-          mirrorFailed: false,
-        };
-      }
-    }
-    logger.error("Could not issue certificate", {
-      userId: input.userId,
-      kind: input.kind,
-      error: String(error),
-    });
-    return { ok: false, message: "Could not issue certificate" };
-  }
 }
 
 async function issueNewAuthoritative(
@@ -533,19 +544,14 @@ async function issueNewAuthoritative(
 /**
  * Sole certificate/credential issuance writer.
  *
- * Flag off: Certificate first, then dualWriteCredential.
- * Flag on: Credential first; Certificate is a compatibility mirror whose
- * failure does not roll back the Credential.
+ * Credential is always canonical. Historical certificate provenance is
+ * HistoricalCertificate.
  */
 export async function applyCredentialIssue(
   db: Db,
   input: ApplyCredentialIssueInput,
 ): Promise<IssueCredentialResult> {
-  const ident = identityOf(input);
-  if (isNewCredentialWritesEnabled()) {
-    return issueNewAuthoritative(db, input, ident);
-  }
-  return issueLegacyAuthoritative(db, input, ident);
+  return issueNewAuthoritative(db, input, identityOf(input));
 }
 
 export async function issueClaudeCredential(

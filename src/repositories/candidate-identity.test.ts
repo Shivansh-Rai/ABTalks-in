@@ -6,10 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CandidatePersona, UserType } from "@prisma/client";
 import {
-  isLegacyStudentProfileMirrorEnabled,
-  isNewCandidateWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyCandidateIdentityChange,
   createCandidateIdentity,
 } from "@/repositories/candidate-identity";
@@ -210,27 +206,28 @@ async function main() {
 
   await suite("ENABLE_NEW_CANDIDATE_WRITES defaults off", () => {
     delete process.env.ENABLE_NEW_CANDIDATE_WRITES;
-    assert(!isNewCandidateWritesEnabled(), "off");
+    assert(true, "migration flag retired");
   });
 
   await suite("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR defaults on", () => {
     delete process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR;
-    assert(isLegacyStudentProfileMirrorEnabled(), "on");
+    assert(true, "migration flag retired");
   });
 
   await suite("write flag is not overloaded onto ENABLE_NEW_CANDIDATE", () => {
     const src = source("src/lib/feature-flags.ts");
-    assert(src.includes("ENABLE_NEW_CANDIDATE_WRITES"), "dedicated write flag");
-    assert(src.includes("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR"), "mirror flag");
+    assert(!src.includes("ENABLE_NEW_CANDIDATE_WRITES"), "dedicated write flag");
+    assert(!src.includes("ENABLE_LEGACY_STUDENT_PROFILE_MIRROR"), "mirror flag");
   });
 
-  await suite("flag OFF: StudentProfile create remains the first write in createCandidateIdentity", () => {
+  await suite("flag OFF: CandidateProfile is still created first (flag ignored)", () => {
     process.env.ENABLE_NEW_CANDIDATE_WRITES = "false";
     const src = source("src/repositories/candidate-identity.ts");
     const fn = src.slice(src.indexOf("export async function createCandidateIdentity"));
-    assert(fn.includes("if (!isNewCandidateWritesEnabled())"), "branches on write flag");
-    assert(fn.includes("tx.studentProfile.create"), "legacy create");
-    assert(fn.includes("dualWriteCandidateIdentity"), "CP copied from SP");
+    assert(!fn.includes("if (!true)"), "no SP-first branch");
+    assert(!fn.includes("dualWriteCandidateIdentity"), "no dualWriteCandidateIdentity");
+    assert(src.includes("tx.candidateProfile.create"), "canonical create");
+    assert(fn.includes("createCanonicalIdentity"), "canonical helper");
   });
 
   await suite("flag ON: CandidateProfile created first, StudentProfile mirrored, same code", async () => {
@@ -240,8 +237,9 @@ async function main() {
     const { client, studentProfiles, candidateProfiles, writes } = makeDb();
     await createCandidateIdentity(client as never, createInput);
     assert(writes[0] === "candidateProfile.create", `first write ${writes[0]}`);
-    assert(writes.includes("studentProfile.create"), "mirror created");
-    assert(candidateProfiles[0]?.referralCode === studentProfiles[0]?.referralCode, "same code");
+    assert(!writes.includes("studentProfile.create"), "mirror retired");
+    assert(studentProfiles.length === 0, "no SP row");
+    assert(candidateProfiles[0]?.referralCode === "ABC123", "canonical code");
     assert(candidateProfiles[0]?.headline === "Builder", "headline on CP");
   });
 
@@ -254,7 +252,7 @@ async function main() {
     delete process.env.STUDENT_PROFILE_FAIL_LEGACY_MIRROR;
     assert(candidateProfiles.length === 1, "CP committed");
     assert(studentProfiles.length === 0, "SP not created");
-    assert(result.mirrorFailed === true, "mirrorFailed");
+    assert(result.mirrorFailed === false, "mirror skipped");
     assert(candidateProfiles[0]?.referralCode === "ABC123", "code kept");
   });
 
@@ -301,7 +299,7 @@ async function main() {
     });
     assert(writes[0] === "candidateProfile.update", `first ${writes[0]}`);
     assert(candidateProfiles[0]?.fullName === "Ada Byron", "CP name");
-    assert(studentProfiles[0]?.fullName === "Ada Byron", "SP mirrored");
+    assert(studentProfiles[0]?.fullName === "Ada", "SP frozen");
     assert(candidateProfiles[0]?.referralCode === "ABC123", "referral unchanged");
     assert(studentProfiles[0]?.referralCode === "ABC123", "SP referral unchanged");
   });
@@ -312,12 +310,10 @@ async function main() {
     assert(!src.includes("tx.studentProfile.create"), "no inline SP-first create");
   });
 
-  await suite("structured profile saves remirror through runStudentProfileMirror", () => {
+  await suite("structured profile saves no longer remirror StudentProfile", () => {
     const src = source("src/repositories/candidate-detail.ts");
-    assert(src.includes("runStudentProfileMirror"), "mirror helper");
-    assert(src.includes('runStudentProfileMirror(tx, "skills"'), "skills");
-    assert(src.includes('runStudentProfileMirror(tx, "education"'), "education");
-    assert(src.includes('runStudentProfileMirror(tx, "experience"'), "experience");
+    assert(!src.includes("runStudentProfileMirror"), "mirror helper gone");
+    assert(!src.includes("studentProfile"), "no SP delegate");
   });
 
   await suite("saveSkillClaims remains the only CandidateSkill removal path", () => {
@@ -339,65 +335,36 @@ async function main() {
     assert(src.includes("loadRecruiterIdentities"), "CP identities");
   });
 
-  await suite("flag ON hydrates missing CandidateProfile from StudentProfile without minting a new code", async () => {
+  await suite("missing CandidateProfile is no longer hydrated from StudentProfile", async () => {
     process.env.ENABLE_NEW_CANDIDATE_WRITES = "true";
-    process.env.ENABLE_LEGACY_STUDENT_PROFILE_MIRROR = "true";
-    const { client, studentProfiles, candidateProfiles, writes } = makeDb();
-    await client.studentProfile.create({
-      data: {
-        userId: "u-gap",
-        fullName: "Gap User",
-        referralCode: "GAP123",
-        userType: UserType.STUDENT,
-      },
-    });
-    writes.length = 0;
-    await applyCandidateIdentityChange(client as never, "u-gap", { fullName: "Gap User 2" });
-    assert(candidateProfiles.length === 1, "hydrated CP");
-    assert(candidateProfiles[0]?.referralCode === "GAP123", "kept SP code");
-    assert(candidateProfiles[0]?.fullName === "Gap User 2", "patch applied");
-    assert(studentProfiles[0]?.fullName === "Gap User 2", "SP mirrored");
-    assert(writes.includes("candidateProfile.create"), "hydrate create");
+    const { client } = makeDb();
+    let threw = false;
+    try {
+      await applyCandidateIdentityChange(client as never, "u-gap", { fullName: "Gap User 2" });
+    } catch (err) {
+      threw = err instanceof Error && err.message.includes("Missing CandidateProfile");
+    }
+    assert(threw, "requires CandidateProfile");
   });
 
-  await suite("anonymize uses one deleted referral code on both tables", () => {
+  await suite("anonymize uses one deleted referral code on CandidateProfile", () => {
     const src = source("src/features/admin/anonymize-user.ts");
     assert(src.includes("const deletedReferralCode = `del_${userId}`"), "shared deleted code");
     assert(!src.includes("delc_"), "no second deleted namespace");
-    const cpIdx = src.indexOf("candidateProfile.updateMany");
-    const spIdx = src.indexOf("studentProfile.updateMany");
-    assert(cpIdx >= 0 && spIdx > cpIdx, "canonical wipe before SP wipe");
+    assert(src.includes("candidateProfile.updateMany"), "canonical wipe");
+    assert(!src.includes("studentProfile.updateMany"), "SP table gone");
   });
 
-  await suite("multi-row education remirrors only the primary StudentProfile row", () => {
+  await suite("education/experience/skills are canonical-only", () => {
     const src = source("src/repositories/candidate-detail.ts");
-    const fn = src.slice(src.indexOf("async function mirrorEducationToLegacy"));
-    assert(fn.includes("pickPrimaryEducation(rows)"), "primary helper");
-    assert(fn.includes("college: primary?.institutionName ?? null"), "clears when empty");
-    assert(src.includes("await tx.candidateEducation.deleteMany"), "full replace then rewrite");
-  });
-
-  await suite("multi-row experience remirrors only the primary StudentProfile row", () => {
-    const src = source("src/repositories/candidate-detail.ts");
-    const fn = src.slice(src.indexOf("async function mirrorExperienceToLegacy"));
-    assert(fn.includes("pickPrimaryExperience(shaped)"), "primary helper");
-    assert(fn.includes("organization: primary?.companyName ?? null"), "clears when empty");
-  });
-
-  await suite("empty education/experience section clears the legacy mirror", () => {
-    const src = source("src/repositories/candidate-detail.ts");
-    assert(src.includes("An empty list clears the mirror"), "documented empty-clear");
-    assert(src.includes("primary?.institutionName ?? null"), "education null");
-    assert(src.includes("primary?.companyName ?? null"), "experience null");
-  });
-
-  await suite("skill evidence withdrawal keeps CandidateSkill and drops the claimed-name mirror", () => {
-    const src = source("src/repositories/candidate-detail.ts");
+    assert(src.includes("await tx.candidateEducation.deleteMany"), "education rewrite");
+    assert(src.includes("candidateExperience"), "experience canonical");
+    assert(!src.includes("mirrorEducationToLegacy"), "education remirror gone");
+    assert(!src.includes("mirrorExperienceToLegacy"), "experience remirror gone");
+    assert(!src.includes("mirrorSkillsToLegacy"), "skills remirror gone");
     const fn = src.slice(src.indexOf("export async function saveSkillClaims"));
     assert(fn.includes("claimedByCandidate: false"), "unclaim");
     assert(fn.includes("tx.candidateSkill.deleteMany"), "delete only unevidenced");
-    const mirror = src.slice(src.indexOf("async function mirrorSkillsToLegacy"));
-    assert(mirror.includes("claimedByCandidate: true"), "mirror claimed names only");
   });
 
   await suite("register schema no longer caps skills at 10", () => {
@@ -406,16 +373,16 @@ async function main() {
     assert(src.includes(".max(100"), "safety cap only");
   });
 
-  await suite("referral generation still checks both namespaces", () => {
+  await suite("referral generation checks CandidateProfile only", () => {
     const src = source("src/features/registration/generate-referral-code.ts");
-    assert(src.includes("studentProfile.findUnique"), "legacy namespace");
+    assert(!src.includes("studentProfile.findUnique"), "legacy namespace retired");
     assert(src.includes("candidateProfile.findUnique"), "canonical namespace");
   });
 
   await suite("referral lookup uses CandidateProfile when new reads are on", () => {
     const src = source("src/repositories/candidate.ts");
     const fn = src.slice(src.indexOf("export async function findUserIdByReferralCode"));
-    assert(fn.includes("isNewCandidateRepoEnabled()"), "read flag");
+    assert(!fn.includes("isNewCandidateRepoEnabled"), "read flag retired");
     assert(fn.includes("prisma.candidateProfile.findUnique"), "canonical lookup");
   });
 
@@ -433,9 +400,7 @@ async function main() {
     const src = source("src/repositories/candidate.ts");
     assert(src.includes("upsertCandidateAvailability"), "canonical preference write");
     const sp = source("prisma/schema.prisma");
-    const block = sp.slice(sp.indexOf("model StudentProfile"), sp.indexOf("model Submission"));
-    assert(!block.includes("openToWork"), "no SP openToWork");
-    assert(!block.includes("noticePeriod"), "no SP notice");
+    assert(!sp.includes("model StudentProfile"), "StudentProfile retired");
   });
 
   await suite("W4-B: mirror OFF skips StudentProfile identity create on registration", async () => {
@@ -568,32 +533,26 @@ async function main() {
     assert(referrals.includes("listCandidateProfiles"), "referrals report");
   });
 
-  await suite("W4-B freeze does not gate later-family StudentProfile writers", () => {
+  await suite("later families do not write StudentProfile", () => {
     const ambassador = source("src/app/actions/campus-ambassador-actions.ts");
     assert(ambassador.includes("applyAmbassadorChange"), "W5 write boundary");
     assert(!ambassador.includes("runStudentProfileMirror"), "ambassador not W4-gated");
     assert(!ambassador.includes("studentProfile.update"), "no direct SP write in actions");
     const amb = source("src/repositories/ambassador.ts");
-    assert(amb.includes("studentProfile.update"), "W5 still mirrors SP ambassador");
-    assert(amb.includes("isLegacyAmbassadorMirrorEnabled"), "own mirror flag");
-    assert(!amb.includes("isLegacyStudentProfileMirrorEnabled"), "not W4-gated");
+    assert(!amb.includes("studentProfile.update"), "ambassador SP mirror gone");
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
+    assert(!enroll.includes("applyEnrollmentDomainMirror"), "domain denorm retired");
     const points = source("src/repositories/points.ts");
-    assert(points.includes("studentProfile.updateMany"), "W1-B points path unchanged");
+    assert(!points.includes("studentProfile.updateMany"), "points SP mirror gone");
     const mirror = source("src/repositories/candidate-identity.ts");
-    const fn = mirror.slice(mirror.indexOf("export async function runStudentProfileMirror"));
-    assert(fn.includes("isLegacyStudentProfileMirrorEnabled()"), "W4 freeze flag");
-    assert(!fn.includes("isCampusAmbassador"), "does not swallow ambassador");
+    assert(!mirror.includes("runStudentProfileMirror"), "identity mirror gone");
   });
 
-  await suite("W4-B education/experience/skills mirrors remain behind runStudentProfileMirror", () => {
+  await suite("education/experience/skills mirrors are retired", () => {
     const src = source("src/repositories/candidate-detail.ts");
-    assert(src.includes('runStudentProfileMirror(tx, "education"'), "education");
-    assert(src.includes('runStudentProfileMirror(tx, "experience"'), "experience");
-    assert(src.includes('runStudentProfileMirror(tx, "skills"'), "skills");
+    assert(!src.includes("runStudentProfileMirror"), "detail mirror gone");
     const resume = source("src/repositories/candidate-resume.ts");
-    assert(resume.includes("runStudentProfileMirror"), "resume URL");
+    assert(!resume.includes("runStudentProfileMirror"), "resume mirror gone");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

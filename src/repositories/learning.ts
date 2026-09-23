@@ -10,8 +10,6 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { isNewLearningRepoEnabled } from "@/lib/feature-flags";
-import { programMember } from "@/repositories/legacy/program-member";
 import {
   getProgramUnlockFloor,
   overlayChallengeProgressFields,
@@ -21,6 +19,7 @@ import {
   dailyTaskIdFromActivity,
   enrollmentIdFromPe,
   memberIdFromPe,
+  peIdForEnrollment,
   programCohortIdFromSlug,
   programDayIdFromActivity,
   quizIdFromActivity,
@@ -387,21 +386,35 @@ async function overlayEnrollment(
   challengeId: string;
   startedAt: Date;
 } | null> {
-  const row = await prisma.enrollment.findUnique({
-    where: { id },
+  const pe = await prisma.programEnrollment.findUnique({
+    where: { id: peIdForEnrollment(id) },
     select: {
-      id: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-      challengeId: true,
       startedAt: true,
+      cohort: {
+        select: {
+          programVersion: {
+            select: { program: { select: { slug: true } } },
+          },
+        },
+      },
     },
   });
-  if (!row) return null;
-  const [overlaid] = await overlayChallengeProgressFields([row]);
-  return overlaid ?? row;
+  if (!pe) return null;
+  const domain = DOMAIN_BY_SLUG[pe.cohort.programVersion.program.slug];
+  if (!domain) return null;
+  const challengeId = await challengeIdForDomain(domain);
+  if (!challengeId) return null;
+  const base = {
+    id,
+    daysCompleted: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastSubmittedDay: null as number | null,
+    challengeId,
+    startedAt: pe.startedAt,
+  };
+  const [overlaid] = await overlayChallengeProgressFields([base]);
+  return overlaid ?? base;
 }
 
 async function challengeIdForDomain(domain: Domain): Promise<string | null> {
@@ -423,12 +436,7 @@ async function domainForChallengeId(challengeId: string): Promise<Domain | null>
 export async function getChallengeByDomain(
   domain: Domain,
 ): Promise<ChallengeCatalog | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.challenge.findUnique({
-      where: { domain },
-      select: CHALLENGE_CATALOG_SELECT,
-    });
-  }
+
 
   const [legacy, program, cohort] = await Promise.all([
     prisma.challenge.findUnique({
@@ -468,35 +476,7 @@ export async function getChallengeByDomain(
 export async function listChallengeEnrollments(
   userId: string,
 ): Promise<ChallengeEnrollmentRow[]> {
-  if (!isNewLearningRepoEnabled()) {
-    const rows = await prisma.enrollment.findMany({
-      where: { userId },
-      orderBy: { startedAt: "asc" },
-      select: {
-        id: true,
-        domain: true,
-        status: true,
-        daysCompleted: true,
-        currentStreak: true,
-        longestStreak: true,
-        lastSubmittedDay: true,
-        startedAt: true,
-        challenge: { select: { title: true, totalDays: true } },
-      },
-    });
-    const overlaid = await overlayChallengeProgressFields(rows);
-    return overlaid.map((r) => ({
-      id: r.id,
-      domain: r.domain,
-      status: r.status,
-      daysCompleted: r.daysCompleted,
-      currentStreak: r.currentStreak,
-      longestStreak: r.longestStreak,
-      challengeTitle: r.challenge.title,
-      totalDays: r.challenge.totalDays,
-      startedAt: r.startedAt,
-    }));
-  }
+
 
   const pes = await prisma.programEnrollment.findMany({
     where: { userId, id: { startsWith: "pe_enr_" } },
@@ -551,23 +531,7 @@ export async function findChallengeEnrollment(
     excludeAbandoned?: boolean;
   } = {},
 ): Promise<SessionEnrollment | null> {
-  if (!isNewLearningRepoEnabled()) {
-    const row = await prisma.enrollment.findFirst({
-      where: {
-        userId,
-        ...(opts.id ? { id: opts.id } : {}),
-        ...(opts.domain ? { domain: opts.domain } : {}),
-        ...(opts.excludeAbandoned
-          ? { status: { not: EnrollmentStatus.ABANDONED } }
-          : {}),
-      },
-      orderBy: { startedAt: "desc" },
-      select: SESSION_ENROLLMENT_SELECT,
-    });
-    if (!row) return null;
-    const [overlaid] = await overlayChallengeProgressFields([row]);
-    return overlaid ?? row;
-  }
+
 
   const pes = await prisma.programEnrollment.findMany({
     where: {
@@ -691,7 +655,10 @@ export async function resolveChallengeSessionEnrollment(
 async function membershipFromPe(
   pe: {
     id: string;
+    userId: string;
     status: EnrollmentStatusV2;
+    unlockFloorDay: number | null;
+    githubRepoUrl: string | null;
     cohort: {
       id: string;
       slug: string;
@@ -708,19 +675,18 @@ async function membershipFromPe(
   const memberId = memberIdFromPe(pe.id);
   const cohortId = programCohortIdFromSlug(pe.cohort.slug);
   if (!memberId || !cohortId) return null;
-  const overlay = await programMember.findUnique({
-    where: { id: memberId },
-    select: { fullName: true, highestUnlockedDay: true },
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId: pe.userId },
+    select: { fullName: true },
   });
-  if (!overlay) return null;
   return {
     member: {
       id: memberId,
       status: mapPeToMemberStatus(pe.status),
-      fullName: overlay.fullName,
+      fullName: profile?.fullName ?? "",
       highestUnlockedDay: await getProgramUnlockFloor(
         memberId,
-        overlay.highestUnlockedDay,
+        pe.unlockFloorDay ?? 1,
       ),
       cohortId,
     },
@@ -752,105 +718,31 @@ const PE_COHORT_SELECT = {
 export async function findActiveMembership(
   userId: string,
 ): Promise<ProgramMembership | null> {
-  if (isNewLearningRepoEnabled()) {
-    const pes = await prisma.programEnrollment.findMany({
-      where: {
-        userId,
-        id: { startsWith: "pe_pm_" },
-        status: { in: ["ACTIVE", "COMPLETED"] },
-        cohort: { programVersion: { program: { slug: AI_COHORT_SLUG } } },
-      },
-      select: {
-        id: true,
-        status: true,
-        enrolledAt: true,
-        cohort: { select: PE_COHORT_SELECT },
-      },
-    });
-    if (pes.length === 0) return null;
-    pes.sort(compareMembershipRows);
-    return membershipFromPe(pes[0]!);
-  }
-
-  const memberships = await programMember.findMany({
-    where: { userId, status: { in: ["ENROLLED", "COMPLETED"] } },
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      userId,
+      id: { startsWith: "pe_pm_" },
+      status: { in: ["ACTIVE", "COMPLETED"] },
+      cohort: { programVersion: { program: { slug: AI_COHORT_SLUG } } },
+    },
     select: {
       id: true,
+      userId: true,
       status: true,
-      fullName: true,
-      highestUnlockedDay: true,
-      cohortId: true,
+      unlockFloorDay: true,
+      githubRepoUrl: true,
       enrolledAt: true,
-      cohort: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          startsAt: true,
-          endsAt: true,
-          capacity: true,
-          resultsPublishedAt: true,
-          joinCode: true,
-        },
-      },
+      cohort: { select: PE_COHORT_SELECT },
     },
   });
-
-  if (memberships.length === 0) return null;
-  memberships.sort(compareMembershipRows);
-  const member = memberships[0]!;
-  return {
-    member: {
-      id: member.id,
-      status: member.status,
-      fullName: member.fullName,
-      highestUnlockedDay: await getProgramUnlockFloor(
-        member.id,
-        member.highestUnlockedDay,
-      ),
-      cohortId: member.cohortId,
-    },
-    cohort: member.cohort,
-  };
+  if (pes.length === 0) return null;
+  pes.sort(compareMembershipRows);
+  return membershipFromPe(pes[0]!);
 }
 
 export async function findAppliedMembership(
   userId: string,
 ): Promise<AppliedMembership | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return programMember.findFirst({
-      where: { userId, status: "APPLIED" },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        status: true,
-        cohortId: true,
-        fullName: true,
-        jobRole: true,
-        company: true,
-        yearsExperience: true,
-        education: true,
-        university: true,
-        graduationYear: true,
-        skills: true,
-        linkedinUrl: true,
-        resumeUrl: true,
-        phone: true,
-        githubUsername: true,
-        githubRepoUrl: true,
-        cohort: {
-          select: {
-            id: true,
-            name: true,
-            status: true,
-            capacity: true,
-            joinCode: true,
-          },
-        },
-      },
-    });
-  }
-
   const pes = await prisma.programEnrollment.findMany({
     where: {
       userId,
@@ -860,7 +752,8 @@ export async function findAppliedMembership(
     orderBy: [{ enrolledAt: "desc" }, { id: "asc" }],
     select: {
       id: true,
-      status: true,
+      userId: true,
+      githubRepoUrl: true,
       enrolledAt: true,
       createdAt: true,
       cohort: { select: PE_COHORT_SELECT },
@@ -877,30 +770,51 @@ export async function findAppliedMembership(
   const memberId = memberIdFromPe(pe.id);
   const cohortId = programCohortIdFromSlug(pe.cohort.slug);
   if (!memberId || !cohortId) return null;
-  const overlay = await programMember.findUnique({
-    where: { id: memberId },
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId: pe.userId },
     select: {
       fullName: true,
-      jobRole: true,
-      company: true,
-      yearsExperience: true,
-      education: true,
-      university: true,
-      graduationYear: true,
-      skills: true,
-      linkedinUrl: true,
-      resumeUrl: true,
+      headline: true,
       phone: true,
+      linkedinUrl: true,
       githubUsername: true,
-      githubRepoUrl: true,
+      resumeUrl: true,
+      education: {
+        orderBy: { sortOrder: "asc" },
+        take: 1,
+        select: {
+          degree: true,
+          institutionName: true,
+          graduationYear: true,
+        },
+      },
+      experience: {
+        orderBy: { startedOn: "desc" },
+        take: 1,
+        select: { title: true, companyName: true },
+      },
+      skills: { select: { skill: { select: { name: true } } } },
     },
   });
-  if (!overlay) return null;
+  const edu = profile?.education[0];
+  const exp = profile?.experience[0];
   return {
     id: memberId,
     status: ProgramMemberStatus.APPLIED,
     cohortId,
-    ...overlay,
+    fullName: profile?.fullName ?? "",
+    jobRole: exp?.title ?? profile?.headline ?? null,
+    company: exp?.companyName ?? null,
+    yearsExperience: null,
+    education: edu?.degree ?? null,
+    university: edu?.institutionName ?? null,
+    graduationYear: edu?.graduationYear ?? null,
+    skills: profile?.skills.map((s) => s.skill.name) ?? [],
+    linkedinUrl: profile?.linkedinUrl ?? null,
+    resumeUrl: profile?.resumeUrl ?? null,
+    phone: profile?.phone ?? null,
+    githubUsername: profile?.githubUsername ?? "",
+    githubRepoUrl: pe.githubRepoUrl ?? "",
     cohort: {
       id: cohortId,
       name: pe.cohort.name,
@@ -914,13 +828,7 @@ export async function findAppliedMembership(
 export async function findWaitlistedMembership(
   userId: string,
 ): Promise<{ id: string } | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return programMember.findFirst({
-      where: { userId, status: "WAITLISTED" },
-      orderBy: { createdAt: "desc" },
-      select: { id: true },
-    });
-  }
+
   const pes = await prisma.programEnrollment.findMany({
     where: {
       userId,
@@ -942,22 +850,7 @@ export async function findWaitlistedMembership(
 export async function getCohortByJoinCode(
   joinCode: string,
 ): Promise<ProgramCohortCatalog | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.programCohort.findUnique({
-      where: { joinCode },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        startsAt: true,
-        endsAt: true,
-        capacity: true,
-        resultsPublishedAt: true,
-        joinCode: true,
-        requiresJoinCode: true,
-      },
-    });
-  }
+
   const cohort = await prisma.cohort.findFirst({
     where: {
       joinCode,
@@ -991,13 +884,7 @@ export async function getCohortByJoinCode(
 }
 
 export async function getOpenEnrollmentCohort(): Promise<OpenEnrollmentCohort | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.programCohort.findFirst({
-      where: { status: "ENROLLING", requiresJoinCode: false },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, status: true, joinCode: true },
-    });
-  }
+
   const cohort = await prisma.cohort.findFirst({
     where: {
       status: "ENROLLING",
@@ -1078,13 +965,7 @@ async function dailyTasksFromActivities(
 export async function listDailyTasks(
   challengeId: string,
 ): Promise<DailyTaskRow[]> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.dailyTask.findMany({
-      where: { challengeId, dayNumber: { gte: 1, lte: 60 } },
-      orderBy: { dayNumber: "asc" },
-      select: DAILY_TASK_SELECT,
-    });
-  }
+
   const domain = await domainForChallengeId(challengeId);
   if (!domain) return [];
   return (await dailyTasksFromActivities(domain, challengeId)).filter(
@@ -1112,30 +993,13 @@ export async function getDailyTaskByChallengeDay(
   challengeId: string,
   dayNumber: number,
 ): Promise<DailyTaskRow | null> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.dailyTask.findUnique({
-      where: { challengeId_dayNumber: { challengeId, dayNumber } },
-      select: DAILY_TASK_SELECT,
-    });
-  }
+
   const rows = await listDailyTasks(challengeId);
   return rows.find((t) => t.dayNumber === dayNumber) ?? null;
 }
 
 export async function listProgramModules(): Promise<ProgramModuleRow[]> {
-  if (!isNewLearningRepoEnabled()) {
-    return prisma.programModule.findMany({
-      orderBy: { number: "asc" },
-      select: {
-        number: true,
-        title: true,
-        subtitle: true,
-        color: true,
-        startDay: true,
-        endDay: true,
-      },
-    });
-  }
+
   const modules = await prisma.module.findMany({
     where: {
       programVersion: { program: { slug: AI_COHORT_SLUG } },
@@ -1410,25 +1274,7 @@ async function programDayActivities() {
 }
 
 export async function listProgramDayCatalog(): Promise<ProgramDayCatalog[]> {
-  if (!isNewLearningRepoEnabled()) {
-    const days = await prisma.programDay.findMany({
-      orderBy: { dayNumber: "asc" },
-      select: {
-        dayNumber: true,
-        title: true,
-        missionType: true,
-        isProjectDay: true,
-        module: { select: { number: true } },
-      },
-    });
-    return days.map((d) => ({
-      dayNumber: d.dayNumber,
-      title: d.title,
-      missionType: d.missionType,
-      isProjectDay: d.isProjectDay,
-      moduleNumber: d.module.number,
-    }));
-  }
+
   const activities = await programDayActivities();
   return activities.flatMap((a) => {
     if (a.dayNumber == null) return [];
@@ -1484,38 +1330,7 @@ async function videosForDay(dayNumber: number): Promise<DayVideoRow[]> {
 export async function getProgramDayShell(
   dayNumber: number,
 ): Promise<ProgramDayShellRow | null> {
-  if (!isNewLearningRepoEnabled()) {
-    const day = await prisma.programDay.findUnique({
-      where: { dayNumber },
-      select: {
-        id: true,
-        dayNumber: true,
-        title: true,
-        missionType: true,
-        briefMd: true,
-        assetsJson: true,
-        starterCode: true,
-        language: true,
-        objectives: true,
-        tools: true,
-        estimatedMin: true,
-        missionPoints: true,
-        isProjectDay: true,
-        module: { select: { number: true, title: true, color: true } },
-        videos: {
-          select: {
-            id: true,
-            order: true,
-            title: true,
-            youtubeId: true,
-            durationMin: true,
-          },
-          orderBy: { order: "asc" },
-        },
-      },
-    });
-    return day;
-  }
+
 
   const activity = await prisma.activity.findFirst({
     where: {
@@ -1585,35 +1400,7 @@ export async function listProgramVideos(): Promise<
     durationMin: number | null;
   }>
 > {
-  if (!isNewLearningRepoEnabled()) {
-    const days = await prisma.programDay.findMany({
-      orderBy: { dayNumber: "asc" },
-      select: {
-        dayNumber: true,
-        module: { select: { number: true } },
-        videos: {
-          select: {
-            id: true,
-            title: true,
-            youtubeId: true,
-            durationMin: true,
-            order: true,
-          },
-          orderBy: { order: "asc" },
-        },
-      },
-    });
-    return days.flatMap((d) =>
-      d.videos.map((v) => ({
-        id: v.id,
-        dayNumber: d.dayNumber,
-        moduleNumber: d.module.number,
-        title: v.title,
-        youtubeId: v.youtubeId,
-        durationMin: v.durationMin,
-      })),
-    );
-  }
+
 
   const videos = await prisma.activity.findMany({
     where: {
@@ -1650,27 +1437,7 @@ export async function listProgramVideos(): Promise<
 
 export async function listQuizCatalog(domain: Domain): Promise<QuizCatalogRow[]> {
   const challengeId = await challengeIdForDomain(domain);
-  if (!isNewLearningRepoEnabled()) {
-    if (!challengeId) return [];
-    const quizzes = await prisma.quiz.findMany({
-      where: { challengeId, domain },
-      orderBy: { weekNumber: "asc" },
-      select: {
-        id: true,
-        weekNumber: true,
-        title: true,
-        domain: true,
-        _count: { select: { quizQuestions: true } },
-      },
-    });
-    return quizzes.map((q) => ({
-      id: q.id,
-      weekNumber: q.weekNumber,
-      title: q.title,
-      domain: q.domain,
-      questionCount: q._count.quizQuestions,
-    }));
-  }
+
 
   const activities = await prisma.activity.findMany({
     where: {
@@ -1711,37 +1478,7 @@ export async function listQuizCatalog(domain: Domain): Promise<QuizCatalogRow[]>
 export async function getQuizDefinition(
   quizId: string,
 ): Promise<QuizDefinition | null> {
-  if (!isNewLearningRepoEnabled()) {
-    const quiz = await prisma.quiz.findFirst({
-      where: { id: quizId },
-      select: {
-        id: true,
-        weekNumber: true,
-        title: true,
-        domain: true,
-        challengeId: true,
-      },
-    });
-    if (!quiz) return null;
-    const rows = await prisma.quizQuestion.findMany({
-      where: { quizId },
-      orderBy: { questionOrder: "asc" },
-    });
-    return {
-      ...quiz,
-      questions: rows.map((q) => ({
-        id: q.id,
-        questionOrder: q.questionOrder,
-        questionText: q.questionText,
-        optionA: q.optionA,
-        optionB: q.optionB,
-        optionC: q.optionC,
-        optionD: q.optionD,
-        correctAnswer: q.correctAnswer,
-        explanation: q.explanation,
-      })),
-    };
-  }
+
 
   const activity = await prisma.activity.findUnique({
     where: { id: `act_quiz_${quizId}` },

@@ -43,7 +43,7 @@ export async function getSubmissionsFeed(input: {
     select: {
       id: true,
       email: true,
-      studentProfile: { select: { fullName: true } },
+      candidateProfile: { select: { fullName: true } },
     },
   });
   const userById = new Map(users.map((u) => [u.id, u]));
@@ -54,7 +54,7 @@ export async function getSubmissionsFeed(input: {
       userId: row.userId,
       studentName:
         names.get(row.userId)?.trim() ||
-        user?.studentProfile?.fullName?.trim() ||
+        user?.candidateProfile?.fullName?.trim() ||
         user?.email ||
         "Unknown",
       domain: row.domain,

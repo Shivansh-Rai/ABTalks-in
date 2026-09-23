@@ -16,8 +16,7 @@ import {
 import { getMemberRank } from "@/features/program/leaderboard";
 import type { VerdictLine } from "@/features/program/verify-mission";
 import { parseCalendarKeyToUtcDate } from "@/lib/date-utils";
-import { programMember } from "@/repositories/legacy/program-member";
-import { overlayProgramMemberState } from "@/repositories/program-state";
+import { overlayProgramMemberState, findAiCohortMembershipByMemberId } from "@/repositories/program-state";
 import { getProgramDayShell } from "@/repositories/learning";
 import {
   getProgramUnlockFloor,
@@ -93,19 +92,7 @@ export async function getMemberDashboard(
 ): Promise<MemberDashboard | null> {
   const [member, cohort, { modules, days }, rank, recentRuns, passedRows] =
     await Promise.all([
-      programMember.findUnique({
-        where: { id: memberId },
-        select: {
-          id: true,
-          totalScore: true,
-          missionPoints: true,
-          conceptPoints: true,
-          commitPoints: true,
-          projectPoints: true,
-          cleanPassCount: true,
-          highestUnlockedDay: true,
-        },
-      }),
+      findAiCohortMembershipByMemberId(memberId),
       prisma.programCohort.findUnique({
         where: { id: cohortId },
         select: { startsAt: true },

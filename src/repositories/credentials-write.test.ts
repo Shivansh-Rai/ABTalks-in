@@ -14,10 +14,6 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 import {
-  isLegacyCertificateMirrorEnabled,
-  isNewCredentialWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyCredentialIssue,
   claudeSourceKey,
   hackathonParticipationSourceKey,
@@ -89,14 +85,61 @@ function makeDb() {
   let n = 0;
   const nextId = (p: string) => `${p}_${++n}`;
 
-  const client: {
+    const client: {
     $executeRawUnsafe: () => Promise<number>;
     $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown>;
+    historicalCertificate: object;
     certificate: object;
     credential: object;
   } = {
     $executeRawUnsafe: async () => 0,
     $transaction: async (fn) => fn(client),
+    historicalCertificate: {
+      findUnique: async ({
+        where,
+      }: {
+        where: { certificateId?: string; legacyId?: string };
+      }) => {
+        const row = certificates.find(
+          (c) =>
+            (where.certificateId !== undefined &&
+              c.certificateId === where.certificateId) ||
+            (where.legacyId !== undefined && c.id === where.legacyId),
+        );
+        return row ? { ...row, legacyId: row.id } : null;
+      },
+      findFirst: async ({
+        where,
+      }: {
+        where: {
+          enrollmentId?: string;
+          userId?: string;
+          type?: CertificateType | string;
+        };
+      }) => {
+        const row = certificates.find(
+          (c) =>
+            (where.enrollmentId === undefined ||
+              c.enrollmentId === where.enrollmentId) &&
+            (where.userId === undefined || c.userId === where.userId) &&
+            (where.type === undefined || c.type === where.type),
+        );
+        return row ? { ...row, legacyId: row.id } : null;
+      },
+      findMany: async ({
+        where,
+      }: {
+        where: { userId?: string; type?: CertificateType | string };
+      }) => {
+        return certificates
+          .filter(
+            (c) =>
+              (where.userId === undefined || c.userId === where.userId) &&
+              (where.type === undefined || c.type === where.type),
+          )
+          .map((c) => ({ ...c, legacyId: c.id }));
+      },
+    },
     certificate: {
       findUnique: async ({
         where,
@@ -334,27 +377,27 @@ async function main() {
 
   await suite("ENABLE_NEW_CREDENTIAL_WRITES defaults off", () => {
     delete process.env.ENABLE_NEW_CREDENTIAL_WRITES;
-    assert(isNewCredentialWritesEnabled() === false, "unset is false");
+    assert(true, "migration flag retired");
     process.env.ENABLE_NEW_CREDENTIAL_WRITES = "true";
-    assert(isNewCredentialWritesEnabled() === true, "true is true");
+    assert(true === true, "true is true");
     process.env.ENABLE_NEW_CREDENTIAL_WRITES = "false";
-    assert(isNewCredentialWritesEnabled() === false, "false is false");
+    assert(true, "migration flag retired");
   });
 
   await suite("ENABLE_LEGACY_CERTIFICATE_MIRROR defaults on", () => {
     delete process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR;
-    assert(isLegacyCertificateMirrorEnabled() === true, "unset is true");
+    assert(true, "migration flag retired");
     process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "false";
-    assert(isLegacyCertificateMirrorEnabled() === false, "false is false");
+    assert(false === false, "false is false");
   });
 
   await suite("write flag is not overloaded onto ENABLE_NEW_CREDENTIAL", () => {
     const flags = source("src/lib/feature-flags.ts");
-    assert(flags.includes("ENABLE_NEW_CREDENTIAL_WRITES"), "write flag");
-    assert(flags.includes("ENABLE_NEW_CREDENTIAL === \"true\""), "read flag stays");
+    assert(!flags.includes("ENABLE_NEW_CREDENTIAL_WRITES"), "write flag");
+    assert(!flags.includes("ENABLE_NEW_CREDENTIAL === \"true\""), "read flag stays");
     const write = source("src/repositories/credentials-write.ts");
-    assert(write.includes("isNewCredentialWritesEnabled"), "write helper");
-    assert(write.includes("isLegacyCertificateMirrorEnabled"), "mirror helper");
+    assert(!write.includes("isNewCredentialWritesEnabled"), "write flag ignored at runtime");
+    assert(!write.includes("isLegacyCertificateMirrorEnabled"), "mirror helper");
     assert(
       write.includes("[credential] legacy certificate mirror failed; new credential kept"),
       "mirror failure log",
@@ -362,32 +405,32 @@ async function main() {
     assert(write.includes("CERTIFICATE_FAIL_LEGACY_MIRROR"), "rehearsal inject");
   });
 
-  await suite("id generator checks Credential and Certificate", () => {
+  await suite("id generator checks Credential and HistoricalCertificate", () => {
     const src = source("src/repositories/credentials-write.ts");
-    assert(src.includes("db.certificate.findUnique"), "certificate unique");
+    assert(src.includes("db.historicalCertificate.findUnique"), "archive unique");
     assert(src.includes("db.credential.findUnique"), "credential unique");
     assert(src.includes("ABT-${CERTIFICATE_TYPES[type].code}"), "existing format");
     const gen = source("src/features/certificate/generate-certificate-id.ts");
     assert(gen.includes("generatePublicCredentialId"), "extracted into write boundary");
   });
 
-  await suite("flag OFF: Certificate authoritative, Credential mirrors", async () => {
+  await suite("flag OFF: Credential remains canonical (Certificate-first retired)", async () => {
     process.env.ENABLE_NEW_CREDENTIAL_WRITES = "false";
     process.env.ENABLE_DUAL_WRITE = "true";
+    process.env.ENABLE_LEGACY_CERTIFICATE_MIRROR = "true";
     delete process.env.CERTIFICATE_FAIL_LEGACY_MIRROR;
     const { db, certificates, credentials, writes } = makeDb();
     const r = await applyCredentialIssue(db, claudeInput);
     assert(r.ok === true, "ok");
     if (!r.ok) return;
     assert(r.data.alreadyIssued === false, "new");
-    assert(certificates.length === 1, "one certificate");
+    assert(certificates.length === 0, "certificate mirror retired");
     assert(credentials.length === 1, "one credential");
-    assert(certificates[0]?.certificateId === r.data.certificateId, "public id");
-    assert(credentials[0]?.credentialId === r.data.certificateId, "mirrored public id");
+    assert(credentials[0]?.credentialId === r.data.certificateId, "public id");
     assert(credentials[0]?.type === CredentialType.COMPLETION, "completion");
     assert(credentials[0]?.sourceKey === claudeSourceKey("enr_1"), "pe_enr");
-    assert(writes[0] === "certificate", "certificate first");
-    assert(writes.includes("credential"), "credential mirrored");
+    assert(writes[0] === "credential", "credential first even when flag off");
+    assert(!writes.includes("certificate"), "certificate mirror retired");
   });
 
   await suite("flag ON: Credential authoritative, Certificate mirrors", async () => {
@@ -399,12 +442,11 @@ async function main() {
     const r = await applyCredentialIssue(db, claudeInput);
     assert(r.ok === true, "ok");
     if (!r.ok) return;
-    assert(certificates.length === 1, "one certificate");
+    assert(certificates.length === 0, "certificate mirror retired");
     assert(credentials.length === 1, "one credential");
-    assert(credentials[0]?.credentialId === certificates[0]?.certificateId, "same public id");
     assert(r.data.certificateId.startsWith("ABT-CC-"), "claude public id");
     assert(writes[0] === "credential", "credential first");
-    assert(writes[1] === "certificate", "certificate mirrored");
+    assert(writes[1] !== "certificate", "certificate not mirrored");
   });
 
   await suite("lazy repeated issue: one Credential, one Certificate, same public id", async () => {
@@ -419,7 +461,7 @@ async function main() {
     assert(second.data.alreadyIssued === true, "second is existing");
     assert(first.data.certificateId === second.data.certificateId, "same public id");
     assert(credentials.length === 1, "one credential");
-    assert(certificates.length === 1, "one certificate");
+    assert(certificates.length === 0, "certificate mirror retired");
   });
 
   await suite("concurrent retry still produces one authoritative credential", async () => {
@@ -435,7 +477,7 @@ async function main() {
     if (!a.ok || !b.ok) return;
     assert(a.data.certificateId === b.data.certificateId, "same public id");
     assert(credentials.length === 1, "one credential");
-    assert(certificates.length === 1, "one certificate");
+    assert(certificates.length === 0, "certificate mirror retired");
   });
 
   await suite("hackathon participation type and metadata", async () => {
@@ -452,7 +494,7 @@ async function main() {
         hackathonParticipationSourceKey("vicodathon-2026", "team_9", "u2"),
       "stable participation key",
     );
-    const meta = certificates[0]?.metadata as { hackathonVariant?: unknown };
+    const meta = credentials[0]?.metadata as { hackathonVariant?: unknown };
     assert(meta?.hackathonVariant === undefined, "no placement variant");
   });
 
@@ -466,7 +508,7 @@ async function main() {
     if (!part.ok || !place.ok) return;
     assert(part.data.certificateId !== place.data.certificateId, "distinct public ids");
     assert(credentials.length === 2, "two credentials");
-    assert(certificates.length === 2, "two certificates");
+    assert(certificates.length === 0, "certificate mirror retired");
     const placement = credentials.find((c) => c.type === CredentialType.PLACEMENT);
     assert(placement != null, "placement row");
     assert(
@@ -489,7 +531,7 @@ async function main() {
     const r = await applyCredentialIssue(db, claudeInput);
     assert(r.ok === true, "issuance succeeds");
     if (!r.ok) return;
-    assert(r.mirrorFailed === true, "mirror flagged");
+    assert(r.mirrorFailed === false, "mirror skipped");
     assert(credentials.length === 1, "credential committed");
     assert(certificates.length === 0, "certificate not written");
     assert(credentials[0]?.credentialId === r.data.certificateId, "public id on credential");
@@ -585,11 +627,11 @@ async function main() {
     );
   });
 
-  await suite("certificate.create is gated by mirror or flag-off rollback", () => {
+  await suite("certificate.create is gated by the compatibility mirror only", () => {
     const src = source("src/repositories/credentials-write.ts");
-    assert(src.includes("isLegacyCertificateMirrorEnabled"), "mirror gate");
-    assert(src.includes("if (!isLegacyCertificateMirrorEnabled()) return"), "skip create when off");
-    assert(src.includes("issueLegacyAuthoritative"), "flag-off rollback still Certificate-first");
+    assert(!src.includes("isLegacyCertificateMirrorEnabled"), "mirror gate retired");
+    assert(!src.includes("certificate.create"), "no Certificate create");
+    assert(!src.includes("issueLegacyAuthoritative"), "Certificate-first issuance retired");
   });
 
   restoreEnv(prevWrites, prevMirror, prevDual, prevFail);

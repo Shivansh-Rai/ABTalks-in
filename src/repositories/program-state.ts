@@ -1,24 +1,15 @@
 /**
- * W8-A ProgramMember current-state / write-authority boundary.
+ * W8 ProgramMember current-state / write-authority boundary.
  *
- * Membership, unlock, skip tokens, score snapshots, and AI recommendations:
- * ProgramEnrollment pe_pm_<memberId> is canonical when
- * ENABLE_NEW_PROGRAM_STATE / ENABLE_NEW_PROGRAM_STATE_WRITES are on.
- * ProgramMember mutable current-state is a compatibility mirror while
- * ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is not `"false"`.
- *
- * W8-B Outcome A: ProgramMember.id remains the structural FK anchor for
- * ProgramProject, ProgramInterview, GeneralInterview, RecruiterShortlistItem,
- * ProgramCommitDay, and frozen W6 ProgramMissionSubmission. Anchor creation
- * (`ensureProgramMemberAnchor`) is independent of the mutable-state mirror.
- *
- * Identity stays CandidateProfile (W4). Recruiter permission stays
- * CandidateVisibility (W2). Does not take Enrollment denorms,
- * StudentProfile.domain, frozen W1–W7 families, or EnrollmentProgress.
+ * Membership, unlock, skip tokens, score snapshots, and AI recommendations
+ * always write ProgramEnrollment pe_pm_<memberId>. New membership does not
+ * mint ProgramMember. Child rows use programEnrollmentId. Identity stays
+ * CandidateProfile. Recruiter permission stays CandidateVisibility.
  */
 import "server-only";
 import {
   EnrollmentStatusV2,
+  ProgramCohortStatus,
   ProgramMemberStatus,
   type Prisma,
   type PrismaClient,
@@ -26,24 +17,32 @@ import {
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import {
-  isLegacyProgramMemberMirrorEnabled,
-  isNewProgramStateEnabled,
-  isNewProgramStateWritesEnabled,
-  isNewVisibilityWritesEnabled,
-} from "@/lib/feature-flags";
-import {
-  dualWriteProgramMember,
-  mapMemberStatus,
-} from "@/repositories/dual-write";
-import {
   cohortSlugForProgramCohort,
   memberIdFromPe,
   mintProgressRowId,
   peIdForMember,
+  programCohortIdFromSlug,
 } from "@/repositories/ids";
 import { applyVisibilityChange } from "@/repositories/visibility";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
+
+export function mapMemberStatus(status: ProgramMemberStatus): EnrollmentStatusV2 {
+  switch (status) {
+    case ProgramMemberStatus.APPLIED:
+      return EnrollmentStatusV2.APPLIED;
+    case ProgramMemberStatus.WAITLISTED:
+      return EnrollmentStatusV2.WAITLISTED;
+    case ProgramMemberStatus.ENROLLED:
+      return EnrollmentStatusV2.ACTIVE;
+    case ProgramMemberStatus.COMPLETED:
+      return EnrollmentStatusV2.COMPLETED;
+    case ProgramMemberStatus.DROPPED:
+      return EnrollmentStatusV2.DROPPED;
+    default:
+      return EnrollmentStatusV2.ACTIVE;
+  }
+}
 
 export type ProgramMemberIdentitySnapshot = {
   fullName: string;
@@ -141,88 +140,13 @@ async function resolveCohortId(
   return cohort.id;
 }
 
-/**
- * W8-B Outcome A: ProgramMember.id is still required by FKs
- * (ProgramProject, ProgramInterview, GeneralInterview, RecruiterShortlistItem,
- * ProgramCommitDay, frozen ProgramMissionSubmission). Create a row with
- * Prisma-required columns only. Do not copy scores, unlock, recommendation,
- * identity, or recruiter-consent snapshots. Mutable state is mirrored
- * separately, and only while ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR is on.
- */
-async function ensureProgramMemberAnchor(
-  tx: Tx,
-  input: {
-    memberId: string;
-    userId: string;
-    programCohortId: string;
-    existingId: string | null;
-  },
-): Promise<{ created: boolean }> {
-  if (input.existingId) return { created: false };
-  const already = await tx.programMember.findUnique({
-    where: { id: input.memberId },
-    select: { id: true },
-  });
-  if (already) return { created: false };
-  await tx.programMember.create({
-    data: {
-      id: input.memberId,
-      userId: input.userId,
-      cohortId: input.programCohortId,
-      status: ProgramMemberStatus.APPLIED,
-      fullName: "",
-      githubUsername: "",
-      githubRepoUrl: "",
-    },
-  });
-  return { created: true };
-}
-
 async function mirrorProgramMemberLegacyState(
   tx: Tx,
   label: string,
   fn: () => Promise<void>,
 ): Promise<boolean> {
-  if (!isLegacyProgramMemberMirrorEnabled()) return false;
-  if (injectedMirrorFailure()) {
-    logger.error(
-      "[program-state] injected ProgramMember mirror failure; canonical kept",
-      { label },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[program-state] ProgramMember mirror rollback failed", {
-          label,
-          error: String(rollbackErr),
-        });
-      }
-      logger.error(
-        "[program-state] ProgramMember mirror failed; canonical kept",
-        {
-          label,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    logger.error("[program-state] ProgramMember mirror failed; canonical kept", {
-      label,
-      error: err instanceof Error ? err.stack ?? err.message : String(err),
-    });
-    return true;
-  }
+  void tx; void label; void fn;
+  return false;
 }
 
 async function ensureDiscoverable(
@@ -251,66 +175,20 @@ export async function applyProgramMembershipChange(
     recruiterVisibilityConsentAt?: Date | null;
   },
 ): Promise<{ memberId: string; created: boolean; mirrorFailed: boolean }> {
-  const existing = await tx.programMember.findUnique({
+  const cohortId = await resolveCohortId(tx, input.programCohortId);
+  const existingPe = await tx.programEnrollment.findUnique({
     where: {
-      userId_cohortId: {
-        userId: input.userId,
-        cohortId: input.programCohortId,
-      },
+      userId_cohortId: { userId: input.userId, cohortId },
     },
     select: { id: true },
   });
-  let memberId = input.memberId ?? existing?.id;
-  if (!memberId && isNewProgramStateWritesEnabled()) {
-    const cohortId = await resolveCohortId(tx, input.programCohortId);
-    const existingPe = await tx.programEnrollment.findUnique({
-      where: { userId_cohortId: { userId: input.userId, cohortId } },
-      select: { id: true },
-    });
-    const fromPe = existingPe ? memberIdFromPe(existingPe.id) : null;
-    memberId = fromPe ?? mintProgressRowId();
-  }
-  memberId = memberId ?? mintProgressRowId();
-  const created = !existing;
+  let memberId =
+    input.memberId ??
+    (existingPe ? memberIdFromPe(existingPe.id) : null) ??
+    mintProgressRowId();
+  const created = !existingPe;
 
-  if (!isNewProgramStateWritesEnabled()) {
-    const identity = input.identity;
-    if (!identity && created) {
-      throw new Error("ProgramMember create requires identity snapshot");
-    }
-    const row = existing
-      ? await tx.programMember.update({
-          where: { id: memberId },
-          data: {
-            status: input.status,
-            ...(input.enrolledAt !== undefined
-              ? { enrolledAt: input.enrolledAt }
-              : {}),
-            ...(input.completedAt !== undefined
-              ? { completedAt: input.completedAt }
-              : {}),
-            ...(identity ?? {}),
-          },
-          select: { id: true },
-        })
-      : await tx.programMember.create({
-          data: {
-            id: memberId,
-            userId: input.userId,
-            cohortId: input.programCohortId,
-            status: input.status,
-            enrolledAt: input.enrolledAt ?? null,
-            completedAt: input.completedAt ?? null,
-            ...identity!,
-          },
-          select: { id: true },
-        });
-    await dualWriteProgramMember(tx as Prisma.TransactionClient, row.id);
-    return { memberId: row.id, created, mirrorFailed: false };
-  }
-
-  const visibilityFirst = isNewVisibilityWritesEnabled();
-  if (visibilityFirst) {
+  {
     await ensureDiscoverable(
       tx,
       input.userId,
@@ -318,8 +196,7 @@ export async function applyProgramMembershipChange(
     );
   }
 
-  const cohortId = await resolveCohortId(tx, input.programCohortId);
-  const peId = peIdForMember(memberId);
+  const peId = existingPe?.id ?? peIdForMember(memberId);
   const now = new Date();
   const enrolledAt =
     input.enrolledAt !== undefined
@@ -335,6 +212,7 @@ export async function applyProgramMembershipChange(
       cohortId,
       status: mapMemberStatus(input.status),
       startedAt: enrolledAt ?? now,
+      joinedAt: now,
       enrolledAt,
       completedAt: input.completedAt ?? null,
       droppedAt:
@@ -356,41 +234,10 @@ export async function applyProgramMembershipChange(
     },
   });
 
-  if (!visibilityFirst) {
-    await ensureDiscoverable(
-      tx,
-      input.userId,
-      input.recruiterVisibilityConsentAt,
-    );
-  }
-
-  // Structural FK anchor is independent of the mutable-state mirror.
-  await ensureProgramMemberAnchor(tx, {
-    memberId,
-    userId: input.userId,
-    programCohortId: input.programCohortId,
-    existingId: existing?.id ?? null,
-  });
-
   const mirrorFailed = await mirrorProgramMemberLegacyState(
     tx,
     "membership",
-    async () => {
-      const identity = input.identity;
-      await tx.programMember.update({
-        where: { id: memberId },
-        data: {
-          status: input.status,
-          ...(input.enrolledAt !== undefined
-            ? { enrolledAt: input.enrolledAt }
-            : {}),
-          ...(input.completedAt !== undefined
-            ? { completedAt: input.completedAt }
-            : {}),
-          ...(identity ?? {}),
-        },
-      });
-    },
+    async () => undefined,
   );
 
   return { memberId, created, mirrorFailed };
@@ -405,23 +252,6 @@ export async function applyProgramUnlockChange(
     githubRepoUrl?: string | null;
   },
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: {
-        ...(input.highestUnlockedDay !== undefined
-          ? { highestUnlockedDay: input.highestUnlockedDay }
-          : {}),
-        ...(input.skipTokensUsed !== undefined
-          ? { skipTokensUsed: input.skipTokensUsed }
-          : {}),
-        ...pmGithubData(input.githubRepoUrl),
-      },
-    });
-    await dualWriteProgramMember(tx as Prisma.TransactionClient, input.memberId);
-    return { mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data: {
@@ -443,20 +273,11 @@ export async function applyProgramUnlockChange(
     );
   }
 
-  const mirrorFailed = await mirrorProgramMemberLegacyState(tx, "unlock", async () => {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: {
-        ...(input.highestUnlockedDay !== undefined
-          ? { highestUnlockedDay: input.highestUnlockedDay }
-          : {}),
-        ...(input.skipTokensUsed !== undefined
-          ? { skipTokensUsed: input.skipTokensUsed }
-          : {}),
-        ...pmGithubData(input.githubRepoUrl),
-      },
-    });
-  });
+  const mirrorFailed = await mirrorProgramMemberLegacyState(
+    tx,
+    "unlock",
+    async () => undefined,
+  );
   return { mirrorFailed };
 }
 
@@ -488,24 +309,6 @@ export async function applyProgramScoreChange(
   };
   next.totalScore = totalFrom(next);
 
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: next,
-    });
-    const peUpdated = await tx.programEnrollment.updateMany({
-      where: { id: peIdForMember(input.memberId) },
-      data: next,
-    });
-    if (peUpdated.count === 0) {
-      logger.error(
-        "[program-state] ProgramEnrollment missing for score dual-write",
-        { memberId: input.memberId },
-      );
-    }
-    return { snapshot: next, mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data: next,
@@ -517,12 +320,11 @@ export async function applyProgramScoreChange(
     );
   }
 
-  const mirrorFailed = await mirrorProgramMemberLegacyState(tx, "score", async () => {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data: next,
-    });
-  });
+  const mirrorFailed = await mirrorProgramMemberLegacyState(
+    tx,
+    "score",
+    async () => undefined,
+  );
   return { snapshot: next, mirrorFailed };
 }
 
@@ -540,18 +342,6 @@ export async function applyProgramRecommendationChange(
     aiRecommendationAt: at,
   };
 
-  if (!isNewProgramStateWritesEnabled()) {
-    await tx.programMember.update({
-      where: { id: input.memberId },
-      data,
-    });
-    await tx.programEnrollment.updateMany({
-      where: { id: peIdForMember(input.memberId) },
-      data,
-    });
-    return { mirrorFailed: false };
-  }
-
   const peUpdated = await tx.programEnrollment.updateMany({
     where: { id: peIdForMember(input.memberId) },
     data,
@@ -566,12 +356,7 @@ export async function applyProgramRecommendationChange(
   const mirrorFailed = await mirrorProgramMemberLegacyState(
     tx,
     "recommendation",
-    async () => {
-      await tx.programMember.update({
-        where: { id: input.memberId },
-        data,
-      });
-    },
+    async () => undefined,
   );
   return { mirrorFailed };
 }
@@ -580,22 +365,8 @@ async function readScoreAuthority(
   tx: Tx,
   memberId: string,
 ): Promise<ProgramScoreSnapshot> {
-  if (isNewProgramStateWritesEnabled() || isNewProgramStateEnabled()) {
-    const pe = await tx.programEnrollment.findUnique({
-      where: { id: peIdForMember(memberId) },
-      select: {
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-      },
-    });
-    if (pe) return pe;
-  }
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
+  const pe = await tx.programEnrollment.findUnique({
+    where: { id: peIdForMember(memberId) },
     select: {
       missionPoints: true,
       conceptPoints: true,
@@ -605,35 +376,28 @@ async function readScoreAuthority(
       cleanPassCount: true,
     },
   });
-  if (!member) {
-    return {
-      missionPoints: 0,
-      conceptPoints: 0,
-      commitPoints: 0,
-      projectPoints: 0,
-      totalScore: 0,
-      cleanPassCount: 0,
-    };
-  }
-  return member;
+  if (pe) return pe;
+  return {
+    missionPoints: 0,
+    conceptPoints: 0,
+    commitPoints: 0,
+    projectPoints: 0,
+    totalScore: 0,
+    cleanPassCount: 0,
+  };
 }
 
 export async function countEnrolledProgramMembers(
   tx: Tx,
   programCohortId: string,
 ): Promise<number> {
-  if (isNewProgramStateEnabled() || isNewProgramStateWritesEnabled()) {
-    const slug = cohortSlugForProgramCohort(programCohortId);
-    return tx.programEnrollment.count({
-      where: {
-        id: { startsWith: "pe_pm_" },
-        status: EnrollmentStatusV2.ACTIVE,
-        cohort: { slug },
-      },
-    });
-  }
-  return tx.programMember.count({
-    where: { cohortId: programCohortId, status: "ENROLLED" },
+  const slug = cohortSlugForProgramCohort(programCohortId);
+  return tx.programEnrollment.count({
+    where: {
+      id: { startsWith: "pe_pm_" },
+      status: EnrollmentStatusV2.ACTIVE,
+      cohort: { slug },
+    },
   });
 }
 
@@ -642,8 +406,17 @@ const DEFAULT_LIVE_STATUSES: ProgramMemberStatus[] = [
   ProgramMemberStatus.COMPLETED,
 ];
 
+export type ProgramMemberPoolWhere = {
+  cohortId?: string | { in: string[] };
+  userId?: string;
+  status?:
+    | ProgramMemberStatus
+    | { in: ProgramMemberStatus[] }
+    | { equals: ProgramMemberStatus };
+};
+
 function asStatusList(
-  status: Prisma.ProgramMemberWhereInput["status"],
+  status: ProgramMemberPoolWhere["status"],
 ): ProgramMemberStatus[] | null {
   if (!status) return null;
   if (typeof status === "string") return [status as ProgramMemberStatus];
@@ -684,7 +457,7 @@ function asIdList(value: unknown): string[] | undefined {
 }
 
 /**
- * Live membership ids from ProgramEnrollment when ENABLE_NEW_PROGRAM_STATE.
+ * Live membership ids from ProgramEnrollment.
  * Frozen ProgramMember.status is not used.
  */
 export async function listCanonicalProgramMemberIds(
@@ -700,19 +473,6 @@ export async function listCanonicalProgramMemberIds(
     ...(input.programCohortId ? [input.programCohortId] : []),
     ...(input.programCohortIds ?? []),
   ];
-  if (!isNewProgramStateEnabled()) {
-    const rows = await prisma.programMember.findMany({
-      where: {
-        status: { in: statuses },
-        ...(programCohortIds.length
-          ? { cohortId: { in: programCohortIds } }
-          : {}),
-        ...(input.userId ? { userId: input.userId } : {}),
-      },
-      select: { id: true },
-    });
-    return rows.map((r) => r.id);
-  }
   const slugs = programCohortIds.map(cohortSlugForProgramCohort);
   const pes = await prisma.programEnrollment.findMany({
     where: {
@@ -734,35 +494,21 @@ export async function listCanonicalProgramMemberIds(
  * ProgramEnrollment, not frozen ProgramMember.status.
  */
 export async function canonicalProgramMemberWhere(
-  where: Prisma.ProgramMemberWhereInput,
-): Promise<Prisma.ProgramMemberWhereInput> {
-  if (!isNewProgramStateEnabled()) return where;
+  where: ProgramMemberPoolWhere,
+): Promise<ProgramMemberPoolWhere> {
   const statuses = asStatusList(where.status);
   if (!statuses) return where;
-  const ids = await listCanonicalProgramMemberIds({
+  await listCanonicalProgramMemberIds({
     programCohortIds: asIdList(where.cohortId),
     userId: typeof where.userId === "string" ? where.userId : undefined,
     statuses,
   });
-  const rest: Prisma.ProgramMemberWhereInput = { ...where };
-  delete rest.status;
-  return { AND: [rest, { id: { in: ids } }] };
+  return { ...where, status: { in: statuses } };
 }
 
 export async function countCanonicalMembersByStatus(
   programCohortId: string,
 ): Promise<Array<{ status: ProgramMemberStatus; _count: { id: number } }>> {
-  if (!isNewProgramStateEnabled()) {
-    const groups = await prisma.programMember.groupBy({
-      by: ["status"],
-      where: { cohortId: programCohortId },
-      _count: { id: true },
-    });
-    return groups.map((g) => ({
-      status: g.status,
-      _count: { id: g._count.id },
-    }));
-  }
   const slug = cohortSlugForProgramCohort(programCohortId);
   const groups = await prisma.programEnrollment.groupBy({
     by: ["status"],
@@ -788,26 +534,9 @@ export async function scrubProgramMemberLegacyPii(
   tx: Tx,
   userId: string,
 ): Promise<void> {
-  await tx.programMember.updateMany({
-    where: { userId },
-    data: {
-      fullName: "Deleted User",
-      phone: null,
-      linkedinUrl: null,
-      githubUsername: "deleted",
-      githubRepoUrl: "",
-      resumeUrl: null,
-      jobRole: null,
-      company: null,
-      university: null,
-      education: null,
-      graduationYear: null,
-      yearsExperience: null,
-      skills: [],
-    },
-  });
+  void tx;
   logger.info(
-    "[program-state] compliance wipe of frozen ProgramMember identity snapshots",
+    "[program-state] ProgramMember PII wipe retired; CandidateProfile/archives are the scrub targets",
     { userId },
   );
 }
@@ -880,7 +609,7 @@ const OVERLAY_KEYS = [
 export async function overlayProgramMemberState<T extends { id: string }>(
   rows: T[],
 ): Promise<T[]> {
-  if (!isNewProgramStateEnabled() || rows.length === 0) return rows;
+  if (rows.length === 0) return rows;
   const snaps = await listProgramMemberSnapshots(rows.map((r) => r.id));
   return rows.map((row) => {
     const snap = snaps.get(row.id);
@@ -893,6 +622,247 @@ export async function overlayProgramMemberState<T extends { id: string }>(
     }
     return next as T;
   });
+}
+
+const PE_MEMBERSHIP_SELECT = {
+  id: true,
+  userId: true,
+  status: true,
+  unlockFloorDay: true,
+  skipTokensUsed: true,
+  githubRepoUrl: true,
+  missionPoints: true,
+  conceptPoints: true,
+  commitPoints: true,
+  projectPoints: true,
+  totalScore: true,
+  cleanPassCount: true,
+  aiRecommendation: true,
+  aiRecommendationAt: true,
+  enrolledAt: true,
+  completedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  cohort: {
+    select: {
+      slug: true,
+      name: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      capacity: true,
+      joinCode: true,
+      resultsPublishedAt: true,
+    },
+  },
+} as const;
+
+export type AiCohortMembershipRow = ProgramMemberStateSnapshot & {
+  id: string;
+  userId: string;
+  cohortId: string;
+  githubRepoUrl: string;
+  githubUsername: string;
+  fullName: string;
+  jobRole: string | null;
+  company: string | null;
+  yearsExperience: number | null;
+  education: string | null;
+  university: string | null;
+  graduationYear: number | null;
+  skills: string[];
+  linkedinUrl: string | null;
+  resumeUrl: string | null;
+  phone: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  cohort: {
+    id: string;
+    name: string;
+    status: ProgramCohortStatus;
+    startsAt: Date;
+    endsAt: Date;
+    capacity: number;
+    joinCode: string;
+    resultsPublishedAt: Date | null;
+  };
+};
+
+async function hydrateAiCohortMembership(
+  pe: {
+    id: string;
+    userId: string;
+    status: EnrollmentStatusV2;
+    unlockFloorDay: number | null;
+    skipTokensUsed: number;
+    githubRepoUrl: string | null;
+    missionPoints: number;
+    conceptPoints: number;
+    commitPoints: number;
+    projectPoints: number;
+    totalScore: number;
+    cleanPassCount: number;
+    aiRecommendation: string | null;
+    aiRecommendationAt: Date | null;
+    enrolledAt: Date | null;
+    completedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    cohort: {
+      slug: string;
+      name: string;
+      status: string;
+      startsAt: Date | null;
+      endsAt: Date | null;
+      capacity: number | null;
+      joinCode: string | null;
+      resultsPublishedAt: Date | null;
+    };
+  },
+): Promise<AiCohortMembershipRow | null> {
+  const memberId = memberIdFromPe(pe.id);
+  const cohortId = programCohortIdFromSlug(pe.cohort.slug);
+  if (!memberId || !cohortId) return null;
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId: pe.userId },
+    select: {
+      fullName: true,
+      headline: true,
+      githubUsername: true,
+      linkedinUrl: true,
+      resumeUrl: true,
+      phone: true,
+      education: {
+        orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
+        take: 1,
+        select: {
+          degree: true,
+          institutionName: true,
+          graduationYear: true,
+        },
+      },
+      experience: {
+        select: { totalMonths: true, title: true, companyName: true, startedOn: true },
+        orderBy: { startedOn: "desc" },
+      },
+      skills: {
+        orderBy: { evidenceScore: "desc" },
+        select: { skill: { select: { name: true } } },
+      },
+    },
+  });
+  const months = (profile?.experience ?? []).reduce(
+    (sum, e) => sum + (e.totalMonths ?? 0),
+    0,
+  );
+  const latestExp = profile?.experience[0];
+  const edu = profile?.education[0];
+  return {
+    id: memberId,
+    userId: pe.userId,
+    cohortId,
+    status: mapPeStatusToMember(pe.status),
+    highestUnlockedDay: pe.unlockFloorDay ?? 1,
+    skipTokensUsed: pe.skipTokensUsed,
+    githubRepoUrl: pe.githubRepoUrl ?? "",
+    githubUsername: profile?.githubUsername ?? "",
+    missionPoints: pe.missionPoints,
+    conceptPoints: pe.conceptPoints,
+    commitPoints: pe.commitPoints,
+    projectPoints: pe.projectPoints,
+    totalScore: pe.totalScore,
+    cleanPassCount: pe.cleanPassCount,
+    aiRecommendation: pe.aiRecommendation,
+    aiRecommendationAt: pe.aiRecommendationAt,
+    enrolledAt: pe.enrolledAt,
+    completedAt: pe.completedAt,
+    createdAt: pe.createdAt,
+    updatedAt: pe.updatedAt,
+    fullName: profile?.fullName ?? "",
+    jobRole: profile?.headline ?? latestExp?.title ?? null,
+    company: latestExp?.companyName ?? null,
+    yearsExperience: months > 0 ? Math.round(months / 12) : null,
+    education: edu?.degree ?? null,
+    university: edu?.institutionName ?? null,
+    graduationYear: edu?.graduationYear ?? null,
+    skills: (profile?.skills ?? []).map((s) => s.skill.name).filter(Boolean),
+    linkedinUrl: profile?.linkedinUrl ?? null,
+    resumeUrl: profile?.resumeUrl ?? null,
+    phone: profile?.phone ?? null,
+    cohort: {
+      id: cohortId,
+      name: pe.cohort.name,
+      status: pe.cohort.status as ProgramCohortStatus,
+      startsAt: pe.cohort.startsAt ?? new Date(0),
+      endsAt: pe.cohort.endsAt ?? new Date(0),
+      capacity: pe.cohort.capacity ?? 0,
+      joinCode: pe.cohort.joinCode ?? "",
+      resultsPublishedAt: pe.cohort.resultsPublishedAt,
+    },
+  };
+}
+
+export async function findAiCohortMembershipByMemberId(
+  memberId: string,
+): Promise<AiCohortMembershipRow | null> {
+  const pe = await prisma.programEnrollment.findUnique({
+    where: { id: peIdForMember(memberId) },
+    select: PE_MEMBERSHIP_SELECT,
+  });
+  if (!pe) return null;
+  return hydrateAiCohortMembership(pe);
+}
+
+export async function findAiCohortMembershipByUserCohort(
+  userId: string,
+  programCohortId: string,
+): Promise<AiCohortMembershipRow | null> {
+  const slug = cohortSlugForProgramCohort(programCohortId);
+  const pe = await prisma.programEnrollment.findFirst({
+    where: {
+      userId,
+      id: { startsWith: "pe_pm_" },
+      cohort: { slug },
+    },
+    select: PE_MEMBERSHIP_SELECT,
+  });
+  if (!pe) return null;
+  return hydrateAiCohortMembership(pe);
+}
+
+export async function listAiCohortMemberships(input: {
+  userId?: string;
+  programCohortId?: string;
+  programCohortIds?: string[];
+  memberIds?: string[];
+  statuses?: ProgramMemberStatus[];
+  take?: number;
+}): Promise<AiCohortMembershipRow[]> {
+  const programCohortIds = [
+    ...(input.programCohortId ? [input.programCohortId] : []),
+    ...(input.programCohortIds ?? []),
+  ];
+  const slugs = programCohortIds.map(cohortSlugForProgramCohort);
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      ...(input.memberIds
+        ? { id: { in: input.memberIds.map(peIdForMember) } }
+        : { id: { startsWith: "pe_pm_" } }),
+      ...(input.userId ? { userId: input.userId } : {}),
+      ...(input.statuses
+        ? { status: { in: input.statuses.map(mapMemberStatus) } }
+        : {}),
+      ...(slugs.length ? { cohort: { slug: { in: slugs } } } : {}),
+    },
+    select: PE_MEMBERSHIP_SELECT,
+    ...(input.take != null ? { take: input.take } : {}),
+  });
+  const out: AiCohortMembershipRow[] = [];
+  for (const pe of pes) {
+    const row = await hydrateAiCohortMembership(pe);
+    if (row) out.push(row);
+  }
+  return out;
 }
 
 export function compareProgramScoreRows<

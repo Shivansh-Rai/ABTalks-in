@@ -4,17 +4,19 @@ import {
   EnrollmentStatusV2,
   ProgramMemberStatus,
 } from "@prisma/client";
-import {
-  dualWriteChallengeEnrollmentById,
-} from "@/repositories/dual-write";
+import { applyChallengeProgramEnrollment } from "@/repositories/enrollment-state";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
 import {
   applyProgramMembershipChange,
   scrubProgramMemberLegacyPii,
 } from "@/repositories/program-state";
-import { memberIdFromPe } from "@/repositories/ids";
-import { isNewProgramStateEnabled } from "@/lib/feature-flags";
+import {
+  domainFromChallengeCohortSlug,
+  enrollmentIdFromPe,
+  memberIdFromPe,
+  programCohortIdFromSlug,
+} from "@/repositories/ids";
 
 type Tx = Prisma.TransactionClient;
 
@@ -105,39 +107,35 @@ export async function anonymizeUser(
     ambassadorAppliedAt: null,
     ambassadorDismissedAt: null,
   };
-  const studentWipe = {
-    fullName: "Deleted User",
-    phone: null,
-    phoneVerified: false,
-    phoneVerifiedAt: null,
-    college: null,
-    collegeId: null,
-    graduationYear: null,
-    organization: null,
-    role: null,
-    yearsExperience: null,
-    linkedinUrl: null,
-    githubUsername: null,
-    resumeUrl: null,
-    skills: [] as string[],
-    referralCode: deletedReferralCode,
-    isReadyForInterview: false,
-  };
 
-  // Canonical wipe always. W5-B still scrubs frozen SP ambassador snapshots
-  // here (workflow data on a deleted account), even when the apply/dismiss
-  // mirror is off. CandidateProfile leftover ambassador columns stay in
-  // candidateWipe below.
+  // Canonical wipe always. Archive StudentProfile PII is scrubbed below.
   await applyAmbassadorChange(tx, userId, { kind: "wipe", at: now });
 
   await tx.candidateProfile.updateMany({
     where: { userId },
     data: candidateWipe,
   });
-  await tx.studentProfile.updateMany({
+  const archives = await tx.historicalStudentProfile.findMany({
     where: { userId },
-    data: studentWipe,
+    select: { id: true, snapshot: true },
   });
+  for (const archive of archives) {
+    const snap =
+      archive.snapshot &&
+      typeof archive.snapshot === "object" &&
+      !Array.isArray(archive.snapshot)
+        ? { ...(archive.snapshot as Record<string, unknown>) }
+        : {};
+    snap.fullName = "Deleted User";
+    snap.college = null;
+    snap.organization = null;
+    snap.role = null;
+    snap.referralCode = deletedReferralCode;
+    await tx.historicalStudentProfile.update({
+      where: { id: archive.id },
+      data: { snapshot: snap as Prisma.InputJsonValue },
+    });
+  }
 
   await tx.phoneVerification.deleteMany({ where: { userId } });
 
@@ -152,64 +150,53 @@ export async function anonymizeUser(
     at: now,
   });
 
-  const activeEnrollments = await tx.enrollment.findMany({
-    where: { userId, status: EnrollmentStatus.ACTIVE },
-    select: { id: true },
+  const challengePes = await tx.programEnrollment.findMany({
+    where: {
+      userId,
+      id: { startsWith: "pe_enr_" },
+      status: EnrollmentStatusV2.ACTIVE,
+    },
+    select: {
+      id: true,
+      startedAt: true,
+      completedAt: true,
+      cohort: { select: { slug: true } },
+    },
   });
-  for (const enrollment of activeEnrollments) {
-    await tx.enrollment.update({
-      where: { id: enrollment.id },
-      data: { status: EnrollmentStatus.ABANDONED },
+  for (const pe of challengePes) {
+    const enrollmentId = enrollmentIdFromPe(pe.id);
+    const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+    if (!enrollmentId || !domain) continue;
+    await applyChallengeProgramEnrollment(tx, {
+      id: enrollmentId,
+      userId,
+      domain,
+      status: EnrollmentStatus.ABANDONED,
+      startedAt: pe.startedAt,
+      completedAt: pe.completedAt,
     });
-    await dualWriteChallengeEnrollmentById(tx, enrollment.id);
   }
 
-  const openMembers = isNewProgramStateEnabled()
-    ? (
-        await tx.programEnrollment.findMany({
-          where: {
-            userId,
-            id: { startsWith: "pe_pm_" },
-            status: {
-              in: [
-                EnrollmentStatusV2.APPLIED,
-                EnrollmentStatusV2.WAITLISTED,
-                EnrollmentStatusV2.ACTIVE,
-              ],
-            },
-          },
-          select: { id: true },
-        })
-      ).flatMap((pe) => {
-        const id = memberIdFromPe(pe.id);
-        return id ? [{ id }] : [];
-      })
-    : await tx.programMember.findMany({
-        where: {
-          userId,
-          status: {
-            in: [
-              ProgramMemberStatus.APPLIED,
-              ProgramMemberStatus.WAITLISTED,
-              ProgramMemberStatus.ENROLLED,
-            ],
-          },
-        },
-        select: { id: true },
-      });
-
-  const anchors = await tx.programMember.findMany({
+  const openMembers = await tx.programEnrollment.findMany({
     where: {
-      id: { in: openMembers.map((m) => m.id) },
+      userId,
+      id: { startsWith: "pe_pm_" },
+      status: {
+        in: [
+          EnrollmentStatusV2.APPLIED,
+          EnrollmentStatusV2.WAITLISTED,
+          EnrollmentStatusV2.ACTIVE,
+        ],
+      },
     },
-    select: { id: true, cohortId: true },
+    select: { id: true, cohort: { select: { slug: true } } },
   });
-  const cohortByMember = new Map(anchors.map((m) => [m.id, m.cohortId]));
-  for (const member of openMembers) {
-    const cohortId = cohortByMember.get(member.id);
-    if (!cohortId) continue;
+  for (const pe of openMembers) {
+    const memberId = memberIdFromPe(pe.id);
+    const cohortId = programCohortIdFromSlug(pe.cohort.slug);
+    if (!memberId || !cohortId) continue;
     await applyProgramMembershipChange(tx, {
-      memberId: member.id,
+      memberId,
       userId,
       programCohortId: cohortId,
       status: ProgramMemberStatus.DROPPED,

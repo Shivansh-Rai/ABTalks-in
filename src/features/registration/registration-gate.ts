@@ -1,7 +1,5 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { isNewCandidateRepoEnabled } from "@/lib/feature-flags";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 
 /**
  * The post-auth registration gate.
@@ -94,18 +92,11 @@ export function postRegisterDestination(intended: string): string {
 }
 
 export async function isCandidateRegistered(userId: string): Promise<boolean> {
-  if (isNewCandidateRepoEnabled()) {
-    const profile = await prisma.candidateProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-    return profile !== null;
-  }
-  const profile = await studentProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-  return profile !== null;
+const profile = await prisma.candidateProfile.findUnique({
+  where: { userId },
+  select: { id: true },
+});
+return profile !== null;
 }
 
 /**

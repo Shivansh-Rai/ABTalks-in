@@ -110,13 +110,10 @@ async function main(): Promise<void> {
     console.log(`SkillCategory upserted: ${SKILL_CATEGORIES.length}`);
 
     const rawSkills = await prisma.$queryRaw<Array<{ skill: string }>>`
-      SELECT DISTINCT trim(s) AS skill
-      FROM (
-        SELECT unnest(skills) AS s FROM "StudentProfile"
-        UNION ALL
-        SELECT unnest(skills) AS s FROM "ProgramMember"
-      ) x
-      WHERE trim(s) <> ''
+      SELECT DISTINCT trim(s.name) AS skill
+      FROM "Skill" s
+      INNER JOIN "CandidateSkill" cs ON cs."skillId" = s.id
+      WHERE trim(s.name) <> ''
     `;
 
     const bySlug = new Map<string, { name: string; aliases: Set<string> }>();

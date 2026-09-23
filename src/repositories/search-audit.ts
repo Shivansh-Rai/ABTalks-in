@@ -1,8 +1,13 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
 import { gmailLocalKey } from "@/features/search-qa/data-quality";
+import { mapPeToMemberStatus } from "@/repositories/learning";
+import {
+  domainFromChallengeCohortSlug,
+  memberIdFromPe,
+  programCohortIdFromSlug,
+} from "@/repositories/ids";
 import type {
   CanonicalCandidate,
   PoolCohort,
@@ -89,11 +94,15 @@ const CANONICAL_SELECT = {
       },
     },
   },
-  programMembers: { select: { id: true, cohortId: true, status: true, skills: true } },
-  enrollments: {
+  programEnrollments: {
     select: {
-      challenge: { select: { domain: true } },
-      _count: { select: { submissions: true } },
+      id: true,
+      status: true,
+      cohort: { select: { slug: true } },
+      attempts: {
+        where: { id: { startsWith: "aa_sub_" } },
+        select: { id: true },
+      },
     },
   },
   hackathonParticipants: {
@@ -101,7 +110,6 @@ const CANONICAL_SELECT = {
     select: { id: true },
     take: 1,
   },
-  studentProfile: { select: { skills: true, graduationYear: true } },
 } satisfies Prisma.UserSelect;
 
 type CanonicalRow = Prisma.UserGetPayload<{ select: typeof CANONICAL_SELECT }>;
@@ -158,21 +166,29 @@ function toCanonical(row: CanonicalRow): CanonicalCandidate {
         }
       : null,
     memberships: {
-      program: row.programMembers.map((m) => ({
-        memberId: m.id,
-        cohortId: m.cohortId,
-        status: m.status,
-      })),
-      challenge: row.enrollments.map((e) => ({
-        domain: e.challenge.domain,
-        submissions: e._count.submissions,
-      })),
+      program: row.programEnrollments.flatMap((pe) => {
+        const memberId = memberIdFromPe(pe.id);
+        const cohortId = programCohortIdFromSlug(pe.cohort.slug);
+        if (!memberId || !cohortId) return [];
+        return [
+          {
+            memberId,
+            cohortId,
+            status: mapPeToMemberStatus(pe.status),
+          },
+        ];
+      }),
+      challenge: row.programEnrollments.flatMap((pe) => {
+        const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+        if (!domain) return [];
+        return [{ domain, submissions: pe.attempts.length }];
+      }),
       hackathonWithSubmission: row.hackathonParticipants.length > 0,
     },
     legacy: {
-      studentProfileSkills: row.studentProfile?.skills ?? null,
-      studentProfileGradYear: row.studentProfile?.graduationYear ?? null,
-      programMemberSkills: row.programMembers[0]?.skills ?? null,
+      studentProfileSkills: null,
+      studentProfileGradYear: null,
+      programMemberSkills: null,
     },
   };
 }
@@ -467,8 +483,8 @@ export async function sampleNeverAppearUsers(take = 40): Promise<
 > {
   const hasMembership: Prisma.UserWhereInput = {
     OR: [
-      { programMembers: { some: {} } },
-      { enrollments: { some: { submissions: { some: {} } } } },
+      { programEnrollments: { some: { id: { startsWith: "pe_pm_" } } } },
+      { programEnrollments: { some: { id: { startsWith: "pe_enr_" } } } },
       { hackathonParticipants: { some: {} } },
       { candidateProfile: { is: { skills: { some: { claimedByCandidate: true } } } } },
     ],
@@ -485,12 +501,25 @@ export async function sampleNeverAppearUsers(take = 40): Promise<
   for (const [reason, where] of groups) {
     const rows = await prisma.user.findMany({
       where: { AND: [where, hasMembership] },
-      select: { id: true, programMembers: { select: { id: true } } },
+      select: {
+        id: true,
+        programEnrollments: {
+          where: { id: { startsWith: "pe_pm_" } },
+          select: { id: true },
+        },
+      },
       orderBy: { id: "asc" },
       take: per,
     });
     for (const r of rows) {
-      out.push({ userId: r.id, programMemberIds: r.programMembers.map((m) => m.id), reason });
+      out.push({
+        userId: r.id,
+        programMemberIds: r.programEnrollments.flatMap((pe) => {
+          const id = memberIdFromPe(pe.id);
+          return id ? [id] : [];
+        }),
+        reason,
+      });
     }
   }
   return out;
@@ -498,7 +527,11 @@ export async function sampleNeverAppearUsers(take = 40): Promise<
 
 /** Cohort-track members whose legacy ProgramMember row exists without a canonical profile. */
 export async function programMembersWithoutProfile(): Promise<number> {
-  return programMember.count({
-    where: { status: { in: ["ENROLLED", "COMPLETED"] }, user: { candidateProfile: { is: null } } },
+  return prisma.programEnrollment.count({
+    where: {
+      id: { startsWith: "pe_pm_" },
+      status: { in: ["ACTIVE", "COMPLETED"] },
+      user: { candidateProfile: { is: null } },
+    },
   });
 }

@@ -8,6 +8,7 @@ import {
 import { prisma } from "@/lib/db";
 import { getChallengeProgressStats } from "@/repositories/progress";
 import { listForUser } from "@/repositories/credentials";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 import {
   certificateDomainLabel,
   certificateTypeFromCredentialTitle,
@@ -107,15 +108,14 @@ export async function getVerifiedAccomplishments(
       // Repository boundary: this is flag-aware (Credential vs legacy
       // Certificate). Never read either table directly from here.
       listForUser(userId),
-      prisma.enrollment.findMany({
-        where: { userId, domain: { in: challengeDomains } },
-        select: {
-          id: true,
-          domain: true,
-          completedAt: true,
-          startedAt: true,
-        },
-      }),
+      listChallengePeRows({ userId, domains: challengeDomains }).then((rows) =>
+        rows.map((r) => ({
+          id: r.id,
+          domain: r.domain,
+          completedAt: r.completedAt,
+          startedAt: r.startedAt,
+        })),
+      ),
       prisma.programEnrollment.findMany({
         where: {
           userId,

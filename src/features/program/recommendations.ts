@@ -4,12 +4,13 @@ import { askClaudeJson } from "@/lib/anthropic";
 import { PROGRAM_TOTAL_DAYS } from "@/features/program/constants";
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { getMemberAtRiskStatus } from "@/features/program/commits";
-import { programMember } from "@/repositories/legacy/program-member";
 import {
   applyProgramRecommendationChange,
-  overlayProgramMemberState,
-  listCanonicalProgramMemberIds,
+  findAiCohortMembershipByMemberId,
+  listAiCohortMemberships,
 } from "@/repositories/program-state";
+import { peIdForMember } from "@/repositories/ids";
+import { ProgramMemberStatus } from "@prisma/client";
 
 const RECOMMENDATION_TTL_DAYS = 7;
 const GAP_MS = 500;
@@ -25,42 +26,50 @@ export async function generateRecommendations(cohortId: string): Promise<{
   skipped: number;
   failed: number;
 }> {
-  const members = await overlayProgramMemberState(
-    await programMember.findMany({
-      where: {
-        cohortId,
-        id: {
-          in: await listCanonicalProgramMemberIds({
-            programCohortId: cohortId,
-          }),
-        },
-      },
-      select: {
-        id: true,
-        fullName: true,
-        jobRole: true,
-        company: true,
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-        skipTokensUsed: true,
-        highestUnlockedDay: true,
-        aiRecommendationAt: true,
-        cohort: { select: { startsAt: true, endsAt: true } },
-        projects: {
-          where: { status: "GRADED" },
-          select: { moduleNumber: true, adminScore: true, aiScore: true },
-        },
-        commitDays: {
-          where: { commitCount: { gt: 0 } },
-          select: { date: true },
-        },
-      },
-    }),
-  );
+  const members = await listAiCohortMemberships({
+    programCohortId: cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
+  });
+  const peIds = members.map((m) => peIdForMember(m.id));
+  const [projects, commitDays] = peIds.length
+    ? await Promise.all([
+        prisma.programProject.findMany({
+          where: {
+            programEnrollmentId: { in: peIds },
+            status: "GRADED",
+          },
+          select: {
+            programEnrollmentId: true,
+            moduleNumber: true,
+            adminScore: true,
+            aiScore: true,
+          },
+        }),
+        prisma.programCommitDay.findMany({
+          where: {
+            programEnrollmentId: { in: peIds },
+            commitCount: { gt: 0 },
+          },
+          select: { programEnrollmentId: true, date: true },
+        }),
+      ])
+    : [[], []];
+  const projectsByMember = new Map<string, typeof projects>();
+  for (const p of projects) {
+    const memberId = p.programEnrollmentId.startsWith("pe_pm_")
+      ? p.programEnrollmentId.slice("pe_pm_".length)
+      : p.programEnrollmentId;
+    const list = projectsByMember.get(memberId) ?? [];
+    list.push(p);
+    projectsByMember.set(memberId, list);
+  }
+  const commitsByMember = new Map<string, number>();
+  for (const c of commitDays) {
+    const memberId = c.programEnrollmentId.startsWith("pe_pm_")
+      ? c.programEnrollmentId.slice("pe_pm_".length)
+      : c.programEnrollmentId;
+    commitsByMember.set(memberId, (commitsByMember.get(memberId) ?? 0) + 1);
+  }
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - RECOMMENDATION_TTL_DAYS);
@@ -85,7 +94,7 @@ export async function generateRecommendations(cohortId: string): Promise<{
         ? Math.round((member.cleanPassCount / missionsPassed) * 100)
         : 0;
 
-    const projectSummary = member.projects
+    const projectSummary = (projectsByMember.get(member.id) ?? [])
       .map(
         (p) =>
           `M${p.moduleNumber}:${p.adminScore ?? p.aiScore ?? 0}/100`,
@@ -103,7 +112,7 @@ export async function generateRecommendations(cohortId: string): Promise<{
         `Clean pass rate: ${cleanPassPct}%, skip tokens used: ${member.skipTokensUsed}`,
         `Project grades: ${projectSummary || "none yet"}`,
         `At-risk flags: ${atRisk.reasons.join(", ") || "none"}`,
-        `Commit days logged: ${member.commitDays.length}`,
+        `Commit days logged: ${commitsByMember.get(member.id) ?? 0}`,
       ].join("\n"),
       maxTokens: 512,
     });
@@ -129,16 +138,12 @@ export async function generateRecommendations(cohortId: string): Promise<{
 export async function getMemberRecommendation(
   memberId: string,
 ): Promise<{ recommendation: string | null; generatedAt: string | null }> {
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: { id: true, aiRecommendation: true, aiRecommendationAt: true },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) {
     return { recommendation: null, generatedAt: null };
   }
-  const [overlaid] = await overlayProgramMemberState([member]);
   return {
-    recommendation: overlaid?.aiRecommendation ?? null,
-    generatedAt: overlaid?.aiRecommendationAt?.toISOString() ?? null,
+    recommendation: member.aiRecommendation ?? null,
+    generatedAt: member.aiRecommendationAt?.toISOString() ?? null,
   };
 }

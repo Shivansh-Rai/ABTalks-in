@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { getCandidateDetail } from "@/repositories/candidate-detail";
 import { listChallengeEnrollments } from "@/repositories/learning";
-import { programMember } from "@/repositories/legacy/program-member";
+import { listAiCohortMemberships } from "@/repositories/program-state";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import { getResumeView } from "@/features/resume/service";
 import { getHistory } from "@/features/interview/platform/service";
@@ -178,10 +178,7 @@ export async function getAdminCandidateDetail(
         },
       },
     }),
-    programMember.findMany({
-      where: { userId },
-      select: { id: true, cohortId: true },
-    }),
+    listAiCohortMemberships({ userId }),
     searchDeliveries({ recipient: userId, limit: 50 }),
     getCandidateDiscoverability(userId),
     getEvidenceProvenance(userId),

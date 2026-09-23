@@ -110,9 +110,13 @@ export async function getCandidateDiscoverability(
     // admins a candidate reached recruiters through a pool the search never
     // loads — below the HIRE_CHALLENGE_POOL floor, or in a cohort that is not
     // open, or DROPPED (search-qa QA-KI-011: 1 wrong verdict, 19 wrong routes).
-    prisma.enrollment.findMany({
-      where: { userId },
-      select: { _count: { select: { submissions: true } } },
+    prisma.activityAttempt.groupBy({
+      by: ["enrollmentId"],
+      where: {
+        enrollment: { userId, id: { startsWith: "pe_enr_" } },
+        id: { startsWith: "aa_sub_" },
+      },
+      _count: { id: true },
     }),
     resolvePoolCohorts().then(async (gate) =>
       gate.ok
@@ -158,7 +162,7 @@ export async function getCandidateDiscoverability(
     tracks: {
       challengeWithSubmissions: challengePool.enabled
         ? challengeEnrollments.filter(
-            (e) => e._count.submissions >= challengePool.minDays,
+            (e) => e._count.id >= challengePool.minDays,
           ).length
         : 0,
       programMemberships,

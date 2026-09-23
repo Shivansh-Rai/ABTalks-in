@@ -1,11 +1,9 @@
 import type { Prisma } from "@prisma/client";
-import { dualWriteCommitDay } from "@/repositories/dual-write";
 import { applyDeleteProgramMissionAttempt, applyProgramMissionAttemptChange } from "@/repositories/progress-writes";
 import {
   applyProgramScoreChange,
   applyProgramUnlockChange,
 } from "@/repositories/program-state";
-import { isNewProgramStateEnabled, isNewProgramStateWritesEnabled } from "@/lib/feature-flags";
 import {
   missionSubmissionIdFromAttemptId,
   peIdForMember,
@@ -71,24 +69,16 @@ async function seedEarlyCommitDays(
       const commitDate = parseCalendarKeyToUtcDate(dateKey);
       const existing = existingByIso.get(commitDate.toISOString()) ?? 0;
       const nextCount = Math.max(existing, 1);
-      return tx.programCommitDay
-        .upsert({
-          where: { memberId_date: { memberId, date: commitDate } },
-          create: {
-            memberId,
-            date: commitDate,
-            commitCount: nextCount,
-          },
-          update: { commitCount: nextCount },
-        })
-        .then((row) =>
-          dualWriteCommitDay(tx, {
-            id: row.id,
-            memberId,
-            date: row.date,
-            commitCount: row.commitCount,
-          }),
-        );
+      return tx.programCommitDay.upsert({
+        where: { memberId_date: { memberId, date: commitDate } },
+        create: {
+          memberId,
+          programEnrollmentId: peIdForMember(memberId),
+          date: commitDate,
+          commitCount: nextCount,
+        },
+        update: { commitCount: nextCount },
+      });
     }),
   );
 
@@ -130,33 +120,26 @@ export async function bootstrapMemberStartDay(
   tx: Prisma.TransactionClient,
   memberId: string,
 ): Promise<void> {
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
+  const pe = await tx.programEnrollment.findUnique({
+    where: { id: peIdForMember(memberId) },
     select: {
-      id: true,
-      highestUnlockedDay: true,
+      unlockFloorDay: true,
       missionPoints: true,
       cleanPassCount: true,
       cohort: { select: { startsAt: true, endsAt: true } },
     },
   });
-  if (!member) return;
-
-  if (isNewProgramStateWritesEnabled() || isNewProgramStateEnabled()) {
-    const pe = await tx.programEnrollment.findUnique({
-      where: { id: peIdForMember(memberId) },
-      select: {
-        unlockFloorDay: true,
-        missionPoints: true,
-        cleanPassCount: true,
-      },
-    });
-    if (pe) {
-      member.highestUnlockedDay = pe.unlockFloorDay ?? member.highestUnlockedDay;
-      member.missionPoints = pe.missionPoints;
-      member.cleanPassCount = pe.cleanPassCount;
-    }
-  }
+  if (!pe) return;
+  const member = {
+    id: memberId,
+    highestUnlockedDay: pe.unlockFloorDay ?? 1,
+    missionPoints: pe.missionPoints,
+    cleanPassCount: pe.cleanPassCount,
+    cohort: {
+      startsAt: pe.cohort.startsAt ?? new Date(0),
+      endsAt: pe.cohort.endsAt ?? new Date(0),
+    },
+  };
 
   const existingPassed =
     WAIVED_DAYS.length === 0

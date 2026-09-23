@@ -1,44 +1,220 @@
 /**
- * W6-A progress write boundary.
+ * Progress write boundary.
  *
- * ENABLE_NEW_PROGRESS_WRITES off (dark deploy): Submission / QuizAttempt /
- * ProgramMissionSubmission stay the write that dual-writes onto
- * ActivityAttempt + ActivityEvaluation.
- * ENABLE_NEW_PROGRESS_WRITES on: attempt + evaluation commit first; legacy
- * rows are a compatibility mirror while ENABLE_LEGACY_PROGRESS_MIRROR is not
- * `"false"`.
- *
- * Typed per family. Does not take Enrollment / ProgramEnrollment /
- * StudentProfile.domain / Points authority. Dual-write stays on.
+ * Canonical writers are always ActivityAttempt + ActivityEvaluation.
  */
 import "server-only";
-import type { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
-import { logger } from "@/lib/logger";
 import {
-  isLegacyProgressMirrorEnabled,
-  isNewProgressWritesEnabled,
-} from "@/lib/feature-flags";
+  AttemptLateness,
+  AttemptStatus,
+  EvaluatorType,
+  type Prisma,
+  type PrismaClient,
+  type SubmissionStatus,
+} from "@prisma/client";
 import {
   activityIdForDailyTask,
+  activityIdForProgramDay,
   activityIdForQuiz,
+  attemptIdForMission,
+  attemptIdForQuizAttempt,
+  attemptIdForSubmission,
   mintProgressRowId,
   peIdForEnrollment,
+  peIdForMember,
   quizAttemptIdFromAttemptId,
   submissionIdFromAttemptId,
 } from "@/repositories/ids";
-import {
-  dualWriteDeleteEnrollmentSubmissions,
-  dualWriteDeleteMissionAttempt,
-  dualWriteDeleteSubmissionAttempt,
-  dualWriteMissionAttempt,
-  dualWriteQuizAttempt,
-  dualWriteSubmissionAttempt,
-  upsertMissionAttemptRows,
-  upsertQuizAttemptRows,
-  upsertSubmissionAttemptRows,
-} from "@/repositories/dual-write";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
+
+async function upsertSubmissionAttemptRows(
+  tx: Tx,
+  submission: {
+    id: string;
+    enrollmentId: string;
+    dailyTaskId: string;
+    githubUrl: string | null;
+    linkedinUrl: string | null;
+    status: string;
+    submittedAt: Date;
+    pointsAwarded: number;
+  },
+): Promise<void> {
+  const attemptId = attemptIdForSubmission(submission.id);
+  await tx.activityAttempt.upsert({
+    where: { id: attemptId },
+    create: {
+      id: attemptId,
+      enrollmentId: peIdForEnrollment(submission.enrollmentId),
+      activityId: activityIdForDailyTask(submission.dailyTaskId),
+      attemptNumber: 1,
+      status: AttemptStatus.EVALUATED,
+      lateness:
+        submission.status === "LATE"
+          ? AttemptLateness.LATE
+          : AttemptLateness.ON_TIME,
+      payload: {
+        githubUrl: submission.githubUrl,
+        linkedinUrl: submission.linkedinUrl,
+        legacySubmissionId: submission.id,
+      },
+      passed: true,
+      pointsAwarded: submission.pointsAwarded,
+      startedAt: submission.submittedAt,
+      submittedAt: submission.submittedAt,
+    },
+    update: {
+      payload: {
+        githubUrl: submission.githubUrl,
+        linkedinUrl: submission.linkedinUrl,
+        legacySubmissionId: submission.id,
+      },
+      submittedAt: submission.submittedAt,
+      passed: true,
+      status: AttemptStatus.EVALUATED,
+      lateness:
+        submission.status === "LATE"
+          ? AttemptLateness.LATE
+          : AttemptLateness.ON_TIME,
+      ...(submission.pointsAwarded > 0
+        ? { pointsAwarded: submission.pointsAwarded }
+        : {}),
+    },
+  });
+  await tx.activityEvaluation.upsert({
+    where: { id: `ev_sub_${submission.id}` },
+    create: {
+      id: `ev_sub_${submission.id}`,
+      attemptId,
+      evaluatorType: EvaluatorType.AUTO,
+      passed: true,
+      score: 100,
+      maxScore: 100,
+      isAuthoritative: true,
+      createdAt: submission.submittedAt,
+    },
+    update: { passed: true },
+  });
+}
+
+async function upsertQuizAttemptRows(
+  tx: Tx,
+  row: {
+    id: string;
+    enrollmentId: string;
+    quizId: string;
+    score: number;
+    answers: Prisma.InputJsonValue;
+    attemptedAt: Date;
+  },
+): Promise<void> {
+  const attemptId = attemptIdForQuizAttempt(row.id);
+  const passed = row.score >= 60;
+  await tx.activityAttempt.upsert({
+    where: { id: attemptId },
+    create: {
+      id: attemptId,
+      enrollmentId: peIdForEnrollment(row.enrollmentId),
+      activityId: activityIdForQuiz(row.quizId),
+      attemptNumber: 1,
+      status: AttemptStatus.EVALUATED,
+      lateness: AttemptLateness.NOT_APPLICABLE,
+      payload: {
+        answers: row.answers,
+        legacyQuizAttemptId: row.id,
+      },
+      passed,
+      score: row.score,
+      pointsAwarded: row.score,
+      startedAt: row.attemptedAt,
+      submittedAt: row.attemptedAt,
+    },
+    update: {
+      payload: {
+        answers: row.answers,
+        legacyQuizAttemptId: row.id,
+      },
+      passed,
+      score: row.score,
+      pointsAwarded: row.score,
+      submittedAt: row.attemptedAt,
+      status: AttemptStatus.EVALUATED,
+    },
+  });
+  await tx.activityEvaluation.upsert({
+    where: { id: `ev_qa_${row.id}` },
+    create: {
+      id: `ev_qa_${row.id}`,
+      attemptId,
+      evaluatorType: EvaluatorType.AUTO,
+      passed,
+      score: row.score,
+      maxScore: 100,
+      isAuthoritative: true,
+      createdAt: row.attemptedAt,
+    },
+    update: { passed, score: row.score },
+  });
+}
+
+async function upsertMissionAttemptRows(
+  tx: Tx,
+  row: {
+    id: string;
+    memberId: string;
+    programDayId: string;
+    attemptNumber: number;
+    payload: Prisma.InputJsonValue;
+    verdict: Prisma.InputJsonValue;
+    passed: boolean;
+    pointsAwarded: number;
+    createdAt: Date;
+  },
+): Promise<void> {
+  const attemptId = attemptIdForMission(row.id);
+  await tx.activityAttempt.upsert({
+    where: { id: attemptId },
+    create: {
+      id: attemptId,
+      enrollmentId: peIdForMember(row.memberId),
+      activityId: activityIdForProgramDay(row.programDayId),
+      attemptNumber: row.attemptNumber,
+      status: AttemptStatus.EVALUATED,
+      lateness: AttemptLateness.NOT_APPLICABLE,
+      payload: {
+        ...(typeof row.payload === "object" && row.payload && !Array.isArray(row.payload)
+          ? (row.payload as Record<string, unknown>)
+          : {}),
+        legacyMissionSubmissionId: row.id,
+      } as Prisma.InputJsonValue,
+      passed: row.passed,
+      pointsAwarded: row.pointsAwarded,
+      startedAt: row.createdAt,
+      submittedAt: row.createdAt,
+    },
+    update: {
+      passed: row.passed,
+      pointsAwarded: row.pointsAwarded,
+      submittedAt: row.createdAt,
+    },
+  });
+  await tx.activityEvaluation.upsert({
+    where: { id: `ev_ms_${row.id}` },
+    create: {
+      id: `ev_ms_${row.id}`,
+      attemptId,
+      evaluatorType: EvaluatorType.AUTO,
+      passed: row.passed,
+      score: row.passed ? 100 : 0,
+      maxScore: 100,
+      detailJson: row.verdict,
+      isAuthoritative: true,
+      createdAt: row.createdAt,
+    },
+    update: { passed: row.passed, detailJson: row.verdict },
+  });
+}
 
 export type ProgressMirrorFamily = "submission" | "quiz" | "mission";
 
@@ -49,11 +225,6 @@ export type ApplyProgressResult = {
   mirrorFailed: boolean;
 };
 
-function savepointName(label: string): string {
-  const cleaned = label.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
-  return `prmir_${cleaned || "x"}`;
-}
-
 function isPrismaUniqueConflict(err: unknown): boolean {
   return (
     typeof err === "object" &&
@@ -61,68 +232,6 @@ function isPrismaUniqueConflict(err: unknown): boolean {
     "code" in err &&
     (err as { code: string }).code === "P2002"
   );
-}
-
-function injectedMirrorFamily(): ProgressMirrorFamily | null {
-  const raw = process.env.PROGRESS_FAIL_LEGACY_MIRROR?.trim();
-  if (raw !== "submission" && raw !== "quiz" && raw !== "mission") return null;
-  return raw;
-}
-
-async function runLegacyProgressMirror(
-  tx: Tx,
-  family: ProgressMirrorFamily,
-  label: string,
-  fn: () => Promise<void>,
-): Promise<boolean> {
-  if (!isLegacyProgressMirrorEnabled()) return false;
-  if (injectedMirrorFamily() === family) {
-    logger.error(
-      "[progress] legacy progress mirror failed; canonical attempt kept",
-      { label, family, error: "PROGRESS_FAIL_LEGACY_MIRROR" },
-    );
-    return true;
-  }
-  const sp = savepointName(label);
-  try {
-    await tx.$executeRawUnsafe(`SAVEPOINT ${sp}`);
-    try {
-      await fn();
-      await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${sp}`);
-      return false;
-    } catch (err) {
-      try {
-        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${sp}`);
-      } catch (rollbackErr) {
-        logger.error("[progress] legacy progress mirror rollback failed", {
-          label,
-          family,
-          error: String(rollbackErr),
-        });
-      }
-      if (isPrismaUniqueConflict(err)) throw err;
-      logger.error(
-        "[progress] legacy progress mirror failed; canonical attempt kept",
-        {
-          label,
-          family,
-          error: err instanceof Error ? err.stack ?? err.message : String(err),
-        },
-      );
-      return true;
-    }
-  } catch (err) {
-    if (isPrismaUniqueConflict(err)) throw err;
-    logger.error(
-      "[progress] legacy progress mirror failed; canonical attempt kept",
-      {
-        label,
-        family,
-        error: err instanceof Error ? err.stack ?? err.message : String(err),
-      },
-    );
-    return true;
-  }
 }
 
 export type ChallengeSubmissionWrite = {
@@ -143,29 +252,18 @@ export async function findChallengeSubmissionId(
   tx: Tx,
   input: { enrollmentId: string; dailyTaskId: string; dayNumber: number },
 ): Promise<string | null> {
-  if (isNewProgressWritesEnabled()) {
-    const attempt = await tx.activityAttempt.findUnique({
-      where: {
-        enrollmentId_activityId_attemptNumber: {
-          enrollmentId: peIdForEnrollment(input.enrollmentId),
-          activityId: activityIdForDailyTask(input.dailyTaskId),
-          attemptNumber: 1,
-        },
-      },
-      select: { id: true },
-    });
-    return attempt ? submissionIdFromAttemptId(attempt.id) : null;
-  }
-  const existing = await tx.submission.findUnique({
+  void input.dayNumber;
+  const attempt = await tx.activityAttempt.findUnique({
     where: {
-      enrollmentId_dayNumber: {
-        enrollmentId: input.enrollmentId,
-        dayNumber: input.dayNumber,
+      enrollmentId_activityId_attemptNumber: {
+        enrollmentId: peIdForEnrollment(input.enrollmentId),
+        activityId: activityIdForDailyTask(input.dailyTaskId),
+        attemptNumber: 1,
       },
     },
     select: { id: true },
   });
-  return existing?.id ?? null;
+  return attempt ? submissionIdFromAttemptId(attempt.id) : null;
 }
 
 export async function applyChallengeSubmissionChange(
@@ -187,84 +285,12 @@ export async function applyChallengeSubmissionChange(
     pointsAwarded: input.pointsAwarded,
   };
 
-  if (!isNewProgressWritesEnabled()) {
-    if (input.mode === "create") {
-      const created = await tx.submission.create({
-        data: {
-          ...(input.id ? { id: input.id } : {}),
-          userId: input.userId,
-          enrollmentId: input.enrollmentId,
-          dailyTaskId: input.dailyTaskId,
-          dayNumber: input.dayNumber,
-          githubUrl: input.githubUrl,
-          linkedinUrl: input.linkedinUrl,
-          status: input.status,
-          submittedAt: input.submittedAt,
-        },
-        select: { id: true },
-      });
-      await dualWriteSubmissionAttempt(tx, {
-        ...payload,
-        id: created.id,
-      });
-      return {
-        id: created.id,
-        created: true,
-        updated: false,
-        mirrorFailed: false,
-      };
-    }
-    await tx.submission.update({
-      where: { id },
-      data: {
-        githubUrl: input.githubUrl,
-        linkedinUrl: input.linkedinUrl,
-        status: input.status,
-        submittedAt: input.submittedAt,
-      },
-    });
-    await dualWriteSubmissionAttempt(tx, payload);
-    return { id, created: false, updated: true, mirrorFailed: false };
-  }
-
   await upsertSubmissionAttemptRows(tx, payload);
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "submission",
-    input.mode === "create" ? "submitDayCreate" : "submitDayUpdate",
-    async () => {
-      if (input.mode === "create") {
-        await tx.submission.create({
-          data: {
-            id,
-            userId: input.userId,
-            enrollmentId: input.enrollmentId,
-            dailyTaskId: input.dailyTaskId,
-            dayNumber: input.dayNumber,
-            githubUrl: input.githubUrl,
-            linkedinUrl: input.linkedinUrl,
-            status: input.status,
-            submittedAt: input.submittedAt,
-          },
-        });
-      } else {
-        await tx.submission.update({
-          where: { id },
-          data: {
-            githubUrl: input.githubUrl,
-            linkedinUrl: input.linkedinUrl,
-            status: input.status,
-            submittedAt: input.submittedAt,
-          },
-        });
-      }
-    },
-  );
   return {
     id,
     created: input.mode === "create",
     updated: input.mode === "update",
-    mirrorFailed,
+    mirrorFailed: false,
   };
 }
 
@@ -282,58 +308,24 @@ export async function findQuizAttemptId(
   tx: Tx,
   input: { userId: string; quizId: string; enrollmentId: string },
 ): Promise<string | null> {
-  if (isNewProgressWritesEnabled()) {
-    const attempt = await tx.activityAttempt.findUnique({
-      where: {
-        enrollmentId_activityId_attemptNumber: {
-          enrollmentId: peIdForEnrollment(input.enrollmentId),
-          activityId: activityIdForQuiz(input.quizId),
-          attemptNumber: 1,
-        },
+  void input.userId;
+  const attempt = await tx.activityAttempt.findUnique({
+    where: {
+      enrollmentId_activityId_attemptNumber: {
+        enrollmentId: peIdForEnrollment(input.enrollmentId),
+        activityId: activityIdForQuiz(input.quizId),
+        attemptNumber: 1,
       },
-      select: { id: true },
-    });
-    return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
-  }
-  const existing = await tx.quizAttempt.findUnique({
-    where: { userId_quizId: { userId: input.userId, quizId: input.quizId } },
+    },
     select: { id: true },
   });
-  return existing?.id ?? null;
+  return attempt ? quizAttemptIdFromAttemptId(attempt.id) : null;
 }
 
 export async function applyQuizAttemptChange(
   tx: Tx,
   input: QuizAttemptWrite,
 ): Promise<ApplyProgressResult> {
-  if (!isNewProgressWritesEnabled()) {
-    const created = await tx.quizAttempt.create({
-      data: {
-        ...(input.id ? { id: input.id } : {}),
-        userId: input.userId,
-        quizId: input.quizId,
-        score: input.score,
-        answers: input.answers,
-        attemptedAt: input.attemptedAt,
-      },
-      select: { id: true, attemptedAt: true },
-    });
-    await dualWriteQuizAttempt(tx, {
-      id: created.id,
-      enrollmentId: input.enrollmentId,
-      quizId: input.quizId,
-      score: input.score,
-      answers: input.answers,
-      attemptedAt: created.attemptedAt,
-    });
-    return {
-      id: created.id,
-      created: true,
-      updated: false,
-      mirrorFailed: false,
-    };
-  }
-
   const id = input.id ?? mintProgressRowId();
   const attemptedAt = input.attemptedAt;
   await upsertQuizAttemptRows(tx, {
@@ -344,24 +336,7 @@ export async function applyQuizAttemptChange(
     answers: input.answers,
     attemptedAt,
   });
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "quiz",
-    "submitQuiz",
-    async () => {
-      await tx.quizAttempt.create({
-        data: {
-          id,
-          userId: input.userId,
-          quizId: input.quizId,
-          score: input.score,
-          answers: input.answers,
-          attemptedAt,
-        },
-      });
-    },
-  );
-  return { id, created: true, updated: false, mirrorFailed };
+  return { id, created: true, updated: false, mirrorFailed: false };
 }
 
 export type ProgramMissionAttemptWrite = {
@@ -381,40 +356,6 @@ export async function applyProgramMissionAttemptChange(
   tx: Tx,
   input: ProgramMissionAttemptWrite,
 ): Promise<ApplyProgressResult> {
-  if (!isNewProgressWritesEnabled()) {
-    const created = await tx.programMissionSubmission.create({
-      data: {
-        ...(input.id ? { id: input.id } : {}),
-        memberId: input.memberId,
-        dayNumber: input.dayNumber,
-        attemptNumber: input.attemptNumber,
-        payload: input.payload,
-        verdict: input.verdict,
-        passed: input.passed,
-        pointsAwarded: input.pointsAwarded,
-        createdAt: input.createdAt,
-      },
-      select: { id: true, createdAt: true },
-    });
-    await dualWriteMissionAttempt(tx, {
-      id: created.id,
-      memberId: input.memberId,
-      programDayId: input.programDayId,
-      attemptNumber: input.attemptNumber,
-      payload: input.payload,
-      verdict: input.verdict,
-      passed: input.passed,
-      pointsAwarded: input.pointsAwarded,
-      createdAt: created.createdAt,
-    });
-    return {
-      id: created.id,
-      created: true,
-      updated: false,
-      mirrorFailed: false,
-    };
-  }
-
   const id = input.id ?? mintProgressRowId();
   await upsertMissionAttemptRows(tx, {
     id,
@@ -427,101 +368,38 @@ export async function applyProgramMissionAttemptChange(
     pointsAwarded: input.pointsAwarded,
     createdAt: input.createdAt,
   });
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "mission",
-    "verifyMission",
-    async () => {
-      await tx.programMissionSubmission.create({
-        data: {
-          id,
-          memberId: input.memberId,
-          dayNumber: input.dayNumber,
-          attemptNumber: input.attemptNumber,
-          payload: input.payload,
-          verdict: input.verdict,
-          passed: input.passed,
-          pointsAwarded: input.pointsAwarded,
-          createdAt: input.createdAt,
-        },
-      });
-    },
-  );
-  return { id, created: true, updated: false, mirrorFailed };
+  return { id, created: true, updated: false, mirrorFailed: false };
 }
 
 export async function applyDeleteChallengeSubmission(
   tx: Tx,
   submissionId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await tx.submission.delete({ where: { id: submissionId } });
-    await dualWriteDeleteSubmissionAttempt(tx, submissionId);
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: { id: `aa_sub_${submissionId}` },
   });
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "submission",
-    "deleteSubmission",
-    async () => {
-      await tx.submission.deleteMany({ where: { id: submissionId } });
-    },
-  );
-  return { mirrorFailed };
+  return { mirrorFailed: false };
 }
 
 export async function applyDeleteEnrollmentChallengeAttempts(
   tx: Tx,
   enrollmentId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await tx.submission.deleteMany({ where: { enrollmentId } });
-    await dualWriteDeleteEnrollmentSubmissions(tx, enrollmentId);
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: {
       enrollmentId: peIdForEnrollment(enrollmentId),
       id: { startsWith: "aa_sub_" },
     },
   });
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "submission",
-    "resetSubmissions",
-    async () => {
-      await tx.submission.deleteMany({ where: { enrollmentId } });
-    },
-  );
-  return { mirrorFailed };
+  return { mirrorFailed: false };
 }
 
 export async function applyDeleteProgramMissionAttempt(
   tx: Tx,
   missionSubmissionId: string,
 ): Promise<{ mirrorFailed: boolean }> {
-  if (!isNewProgressWritesEnabled()) {
-    await dualWriteDeleteMissionAttempt(tx, missionSubmissionId);
-    await tx.programMissionSubmission.deleteMany({
-      where: { id: missionSubmissionId },
-    });
-    return { mirrorFailed: false };
-  }
   await tx.activityAttempt.deleteMany({
     where: { id: `aa_ms_${missionSubmissionId}` },
   });
-  const mirrorFailed = await runLegacyProgressMirror(
-    tx,
-    "mission",
-    "deleteMission",
-    async () => {
-      await tx.programMissionSubmission.deleteMany({
-        where: { id: missionSubmissionId },
-      });
-    },
-  );
-  return { mirrorFailed };
+  return { mirrorFailed: false };
 }

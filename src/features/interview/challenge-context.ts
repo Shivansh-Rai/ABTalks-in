@@ -5,10 +5,8 @@ import type {
   ChallengeContext,
   CompletedChallengeTask,
 } from "@/features/interview/types";
-import {
-  listChallengeSubmissions,
-  overlayChallengeProgressFields,
-} from "@/repositories/progress";
+import { listChallengeSubmissions } from "@/repositories/progress";
+import { listChallengeEnrollments } from "@/repositories/learning";
 
 /**
  * Ranks a completed task by how much interview signal it carries. Proof-of-work
@@ -79,22 +77,29 @@ function selectTasksForContext(
 export async function buildChallengeContext(
   userId: string,
 ): Promise<ChallengeContext> {
-  const enrollmentSelect = {
-        id: true,
-        challengeId: true,
-        domain: true,
-        status: true,
-        daysCompleted: true,
-        currentStreak: true,
-        longestStreak: true,
-        lastSubmittedDay: true,
-        challenge: { select: { title: true, totalDays: true } },
-      } as const;
-  const enrollmentsRaw = await prisma.enrollment.findMany({
-    where: { userId },
-    select: enrollmentSelect,
+  const listed = await listChallengeEnrollments(userId);
+  const challenges = await prisma.challenge.findMany({
+    where: { domain: { in: listed.map((e) => e.domain) } },
+    select: { id: true, domain: true, title: true, totalDays: true },
   });
-  const enrollments = await overlayChallengeProgressFields(enrollmentsRaw);
+  const challengeByDomain = new Map(challenges.map((c) => [c.domain, c]));
+  const enrollments = listed.flatMap((e) => {
+    const challenge = challengeByDomain.get(e.domain);
+    if (!challenge) return [];
+    return [
+      {
+        id: e.id,
+        challengeId: challenge.id,
+        domain: e.domain,
+        status: e.status,
+        daysCompleted: e.daysCompleted,
+        currentStreak: e.currentStreak,
+        longestStreak: e.longestStreak,
+        lastSubmittedDay: null as number | null,
+        challenge: { title: challenge.title, totalDays: challenge.totalDays },
+      },
+    ];
+  });
   const submissionLists = await Promise.all(
     enrollments.map(async (enrollment) => ({
       enrollmentId: enrollment.id,

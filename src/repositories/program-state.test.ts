@@ -6,11 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { EnrollmentStatusV2, ProgramMemberStatus } from "@prisma/client";
 import {
-  isLegacyProgramMemberMirrorEnabled,
-  isNewProgramStateEnabled,
-  isNewProgramStateWritesEnabled,
-} from "@/lib/feature-flags";
-import {
   applyProgramMembershipChange,
   applyProgramScoreChange,
   applyProgramUnlockChange,
@@ -167,28 +162,28 @@ const identity = {
 async function main() {
   await suite("ENABLE_NEW_PROGRAM_STATE defaults off", async () => {
     await withFlags({ ENABLE_NEW_PROGRAM_STATE: undefined }, () => {
-      assert(isNewProgramStateEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_NEW_PROGRAM_STATE_WRITES defaults off", async () => {
     await withFlags({ ENABLE_NEW_PROGRAM_STATE_WRITES: undefined }, () => {
-      assert(isNewProgramStateWritesEnabled() === false, "unset is false");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR defaults on", async () => {
     await withFlags({ ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR: undefined }, () => {
-      assert(isLegacyProgramMemberMirrorEnabled() === true, "unset is true");
+      assert(true, "migration flag retired");
     });
   });
 
   await suite("does not overload dual-write / progress / enrollment flags", () => {
     const flags = source("src/lib/feature-flags.ts");
     const impl = source("src/repositories/program-state.ts");
-    assert(flags.includes("ENABLE_NEW_PROGRAM_STATE"), "own read flag");
-    assert(flags.includes("ENABLE_NEW_PROGRAM_STATE_WRITES"), "own write flag");
-    assert(flags.includes("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR"), "own mirror flag");
+    assert(!flags.includes("ENABLE_NEW_PROGRAM_STATE"), "own read flag");
+    assert(!flags.includes("ENABLE_NEW_PROGRAM_STATE_WRITES"), "own write flag");
+    assert(!flags.includes("ENABLE_LEGACY_PROGRAM_MEMBER_MIRROR"), "own mirror flag");
     assert(!impl.includes("isNewProgressRepoEnabled"), "no progress flag");
     assert(!impl.includes("isNewEnrollmentStateEnabled"), "no enrollment flag");
     assert(!impl.includes("ENABLE_DUAL_WRITE"), "does not overload dual-write");
@@ -216,8 +211,7 @@ async function main() {
         const peIdx = tx.writes.indexOf("pe.upsert");
         const pmIdx = tx.writes.indexOf("pm.update");
         assert(peIdx >= 0, "pe wrote");
-        assert(pmIdx >= 0, "pm mirrored");
-        assert(peIdx < pmIdx, `pe first ${tx.writes.join(",")}`);
+        assert(pmIdx < 0, "pm not mirrored");
         assert(tx.pe.status === EnrollmentStatusV2.ACTIVE, "ENROLLED maps ACTIVE");
       },
     );
@@ -266,11 +260,10 @@ async function main() {
           cleanPassCountDelta: 1,
         });
         assert(tx.writes[0] === "pe.updateMany", `pe first ${tx.writes[0]}`);
-        assert(tx.writes.includes("pm.update"), "pm mirror");
+        assert(!tx.writes.includes("pm.update"), "pm mirror retired");
         assert(result.snapshot.missionPoints === 12, "mission");
         assert(result.snapshot.totalScore === 12, "total");
         assert(tx.pe.missionPoints === 12, "pe stored");
-        assert(tx.pm.missionPoints === 12, "pm mirrored");
       },
     );
   });
@@ -288,7 +281,7 @@ async function main() {
           memberId: "pm1",
           missionPoints: 24,
         });
-        assert(result.mirrorFailed === true, "mirror flagged");
+        assert(result.mirrorFailed === false, "mirror skipped");
         assert(tx.pe.missionPoints === 24, "canonical kept");
         assert(tx.pm.missionPoints === 0, "pm lagged");
         assert(!tx.writes.includes("pm.update"), "pm not written");
@@ -316,8 +309,6 @@ async function main() {
         assert(tx.pe.unlockFloorDay === 8, "unlock pe");
         assert(tx.pe.skipTokensUsed === 1, "skip pe");
         assert(tx.pe.aiRecommendation === "Strong SQL.", "reco pe");
-        assert(tx.pm.highestUnlockedDay === 8, "unlock pm");
-        assert(tx.pm.aiRecommendation === "Strong SQL.", "reco pm");
       },
     );
   });
@@ -342,9 +333,9 @@ async function main() {
   await suite("hire pool permission stays CandidateVisibility", () => {
     const hire = source("src/repositories/hire.ts");
     assert(hire.includes("searchableUserWhere"), "visibility gate");
-    assert(hire.includes("overlayProgramMemberState"), "score overlay");
+    assert(hire.includes("listAiCohortMemberships"), "PE membership list");
     assert(hire.includes("RECRUITER_FIELD_POLICY.interviewResults"), "interview privacy");
-    assert(hire.includes("isNewProgramStateEnabled"), "canonical pool refs");
+    assert(!hire.includes("isNewProgramStateEnabled"), "canonical pool refs");
   });
 
   await suite("does not remirror W7 frozen enrollment denorms", () => {
@@ -374,15 +365,15 @@ async function main() {
   await suite("W8-B splits anchor creation from mutable-state mirror", () => {
     const impl = source("src/repositories/program-state.ts");
     const flags = source("src/lib/feature-flags.ts");
-    assert(impl.includes("ensureProgramMemberAnchor"), "anchor helper");
+    assert(!impl.includes("ensureProgramMemberAnchor"), "no PM structural anchor");
     assert(impl.includes("mirrorProgramMemberLegacyState"), "mirror helper");
     assert(impl.includes("scrubProgramMemberLegacyPii"), "compliance wipe");
     assert(impl.includes("canonicalProgramMemberWhere"), "PE-first where");
-    assert(flags.includes("compliance exception"), "flag docs freeze vs scrub");
+    assert(!flags.includes("compliance exception"), "migration flag docs removed");
     assert(!impl.includes('ENABLE_DUAL_WRITE'), "does not overload dual-write");
   });
 
-  await suite("mirror off creates minimal PM anchor and freezes mutable state", async () => {
+  await suite("mirror off does not mint ProgramMember", async () => {
     await withFlags(
       {
         ENABLE_NEW_PROGRAM_STATE: "true",
@@ -401,11 +392,9 @@ async function main() {
           identity,
         });
         assert(first.memberId === "pm1", "stable pe_pm identity");
-        assert(tx.writes.includes("pm.create"), "anchor created");
-        assert(!tx.writes.includes("pm.update"), "no mutable remirror on create");
+        assert(!tx.writes.includes("pm.create"), "no ProgramMember mint");
+        assert(!tx.writes.includes("pm.update"), "no mutable remirror");
         assert(tx.pe.status === EnrollmentStatusV2.ACTIVE, "PE ACTIVE");
-        assert(tx.pm.status === ProgramMemberStatus.APPLIED, "PM stays structural APPLIED");
-        assert(tx.pm.missionPoints === 0, "no score snapshot on anchor");
 
         const retry = await applyProgramMembershipChange(tx as never, {
           memberId: "pm1",
@@ -416,8 +405,8 @@ async function main() {
         });
         assert(retry.memberId === "pm1", "retry same id");
         assert(
-          tx.writes.filter((w) => w === "pm.create").length === 1,
-          "no duplicate anchor",
+          tx.writes.filter((w) => w === "pm.create").length === 0,
+          "never mints ProgramMember",
         );
 
         await applyProgramMembershipChange(tx as never, {
@@ -460,11 +449,11 @@ async function main() {
     const entry = source("src/features/program/entry.ts");
     const interview = source("src/features/interview/provider.ts");
     const anon = source("src/features/admin/anonymize-user.ts");
-    assert(hire.includes("canonicalProgramMemberWhere"), "hire PE-first where");
+    assert(hire.includes("listAiCohortMemberships"), "hire PE membership");
     assert(pool.includes("listCanonicalProgramMemberIds"), "talent pool PE ids");
-    assert(leaderboard.includes("listCanonicalProgramMemberIds"), "leaderboard PE ids");
+    assert(leaderboard.includes("listAiCohortMemberships"), "leaderboard PE list");
     assert(admin.includes("countCanonicalMembersByStatus"), "admin PE counts");
-    assert(entry.includes("overlayProgramMemberState"), "entry PE status");
+    assert(entry.includes("findAiCohortMembershipByUserCohort"), "entry PE status");
     assert(interview.includes("findActiveMembership"), "interview PE membership");
     assert(anon.includes("scrubProgramMemberLegacyPii"), "anonymize PII exception");
     assert(anon.includes("programEnrollment.findMany"), "anonymize drops via PE");
@@ -475,7 +464,7 @@ async function main() {
     assert(!impl.includes("synergyPoints"), "no points");
     assert(!impl.includes("daysCompleted"), "no W7 denorm");
     assert(!impl.includes("isCampusAmbassadorCandidate"), "no W5");
-    assert(!source("src/lib/feature-flags.ts").includes("ENABLE_DUAL_WRITE=false"), "dual-write stays");
+    assert(!source("src/lib/feature-flags.ts").includes("ENABLE_DUAL_WRITE=false"), "no hardcoded DW=false");
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

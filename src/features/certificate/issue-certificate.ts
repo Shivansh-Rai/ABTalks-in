@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { issueClaudeCredential } from "@/repositories/credentials-write";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 import { peIdForEnrollment } from "@/repositories/ids";
 import {
   getChallengeDaySubmission,
@@ -21,14 +22,9 @@ export type IssueResult =
   | { ok: false; message: string };
 
 export async function ensureClaudeCertificate(userId: string): Promise<IssueResult> {
-  const enrollment = await prisma.enrollment.findFirst({
-    where: { userId, domain: Domain.CLAUDE },
-    select: {
-      id: true,
-      daysCompleted: true,
-      longestStreak: true,
-      completedAt: true,
-    },
+  const [enrollment] = await listChallengePeRows({
+    userId,
+    domains: [Domain.CLAUDE],
   });
 
   if (!enrollment) {
@@ -52,7 +48,7 @@ export async function ensureClaudeCertificate(userId: string): Promise<IssueResu
   const fullName = candidate?.fullName?.trim() ?? "";
   if (!fullName) {
     const [existingCert, existingCred] = await Promise.all([
-      prisma.certificate.findUnique({
+      prisma.historicalCertificate.findFirst({
         where: { enrollmentId: enrollment.id },
         select: { certificateId: true },
       }),

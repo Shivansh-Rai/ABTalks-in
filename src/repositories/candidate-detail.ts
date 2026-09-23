@@ -6,16 +6,12 @@ import {
   GradeType,
   OpportunityType,
   Prisma,
-  UserType,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { ensureCandidateProfile } from "@/repositories/candidate";
-import { runStudentProfileMirror } from "@/repositories/candidate-identity";
 import { ensureDiscoveryRecordAfterProfileSave } from "@/repositories/discovery-record";
 import {
-  pickPrimaryEducation,
-  pickPrimaryExperience,
   splitMonthDate,
   toMonthDate,
   totalExperienceMonths,
@@ -542,112 +538,6 @@ export async function listSelfReportedExternalLinks(
   });
 }
 
-/* ─── Legacy compatibility mirrors ───────────────────────────────────────── */
-
-/**
- * Mirror the primary education row into the legacy snapshot columns.
- *
- * One direction only: canonical → legacy. `StudentProfile` is still read by
- * flows that have not moved, so it must stay current, but nothing here treats
- * it as a source. A user with no `StudentProfile` (hire-only) is skipped.
- */
-async function mirrorEducationToLegacy(tx: Tx, userId: string): Promise<void> {
-  const rows = await tx.candidateEducation.findMany({
-    where: { userId },
-    select: {
-      institutionName: true,
-      collegeId: true,
-      startYear: true,
-      startMonth: true,
-      graduationYear: true,
-      endMonth: true,
-      isCurrent: true,
-      sortOrder: true,
-    },
-  });
-  // An empty list clears the mirror rather than leaving it stale. A candidate
-  // who deleted their education should not still have a college showing on
-  // admin and recruiter surfaces that read the legacy row.
-  const primary = pickPrimaryEducation(rows);
-
-  await runStudentProfileMirror(tx, "education", async () => {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: {
-        college: primary?.institutionName ?? null,
-        collegeId: primary?.collegeId ?? null,
-        graduationYear: primary?.graduationYear ?? null,
-      },
-    });
-  });
-}
-
-/** Company/role come from the primary row; years come from the merged span. */
-async function mirrorExperienceToLegacy(tx: Tx, userId: string): Promise<void> {
-  const rows = await tx.candidateExperience.findMany({
-    where: { userId },
-    select: {
-      companyName: true,
-      title: true,
-      startedOn: true,
-      endedOn: true,
-      isCurrent: true,
-    },
-  });
-
-  const shaped = rows.map((r) => {
-    const start = splitMonthDate(r.startedOn);
-    const end = splitMonthDate(r.endedOn);
-    return {
-      companyName: r.companyName,
-      title: r.title,
-      startMonth: start.month ?? 1,
-      startYear: start.year ?? 0,
-      endMonth: end.month,
-      endYear: end.year,
-      isCurrent: r.isCurrent,
-    };
-  });
-
-  // Cleared on an empty list, for the same reason as education.
-  const primary = pickPrimaryExperience(shaped);
-
-  await runStudentProfileMirror(tx, "experience", async () => {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: {
-        organization: primary?.companyName ?? null,
-        role: primary?.title ?? null,
-        yearsExperience:
-          shaped.length > 0
-            ? Math.floor(totalExperienceMonths(shaped) / 12)
-            : null,
-      },
-    });
-  });
-}
-
-/**
- * Mirror the candidate's live skill claims into the legacy string array.
- *
- * The array is a compatibility subset, never an authority: it is overwritten
- * from `CandidateSkill` and is not read back. Withdrawn claims drop out of it
- * while their rows and evidence stay put.
- */
-async function mirrorSkillsToLegacy(tx: Tx, userId: string): Promise<void> {
-  const claimed = await tx.candidateSkill.findMany({
-    where: { userId, claimedByCandidate: true },
-    orderBy: { createdAt: "asc" },
-    select: { skill: { select: { name: true } } },
-  });
-  await runStudentProfileMirror(tx, "skills", async () => {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: { skills: claimed.map((c) => c.skill.name) },
-    });
-  });
-}
-
 /* ─── Writes ─────────────────────────────────────────────────────────────── */
 
 function runInTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
@@ -694,21 +584,6 @@ export async function saveBasicInfo(
         gender: input.gender,
         primaryPersona: input.primaryPersona,
       },
-    });
-
-    // Legacy mirror: only the columns StudentProfile actually has.
-    await runStudentProfileMirror(tx, "basic", async () => {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: {
-          fullName: input.fullName,
-          phone: input.phone,
-          userType:
-            input.primaryPersona === CandidatePersona.PROFESSIONAL
-              ? UserType.PROFESSIONAL
-              : UserType.STUDENT,
-        },
-      });
     });
   });
   // A name is half of a usable profile. After commit, and never able to fail
@@ -764,7 +639,6 @@ export async function saveEducation(
         })),
       });
     }
-    await mirrorEducationToLegacy(tx, userId);
   });
 }
 
@@ -830,7 +704,6 @@ export async function saveExperience(
       },
       select: { userId: true },
     });
-    await mirrorExperienceToLegacy(tx, userId);
   });
 }
 
@@ -968,18 +841,6 @@ export async function saveLinks(
         })),
       });
     }
-
-    // StudentProfile has no portfolio column — only the three it knows about.
-    await runStudentProfileMirror(tx, "links", async () => {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: {
-          linkedinUrl: input.linkedinUrl,
-          githubUsername: input.githubUsername,
-          ...(input.resumeUrl === undefined ? {} : { resumeUrl: input.resumeUrl }),
-        },
-      });
-    });
   });
 }
 
@@ -1111,7 +972,6 @@ export async function saveSkillClaims(
       await tx.candidateSkill.deleteMany({ where: { id: { in: dropIds } } });
     }
 
-    await mirrorSkillsToLegacy(tx, userId);
   });
   // A claimed skill is the other half of a usable profile.
   await ensureDiscoveryRecordAfterProfileSave(userId);
