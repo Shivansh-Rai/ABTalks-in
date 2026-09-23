@@ -70,6 +70,34 @@ function strList(raw: Raw, ...keys: string[]): string[] {
   return [];
 }
 
+/**
+ * A list of sentences — bullets, responsibilities, achievements. Unlike
+ * `strList`, a single string is NOT split on commas: "Built X, improved Y by
+ * 20%" is one bullet, and cutting it at the comma produced half-sentences. It
+ * splits on line breaks and bullet markers instead, which is how the model
+ * writes several points into one string.
+ */
+function proseList(raw: Raw, ...keys: string[]): string[] {
+  for (const key of keys) {
+    const v = raw[key];
+    if (Array.isArray(v)) {
+      const out = v
+        .filter((x) => x !== null && x !== undefined)
+        .map((x) => String(x).trim())
+        .filter((x) => x.length > 0);
+      if (out.length > 0) return dedupe(out);
+    } else if (typeof v === "string" && v.trim().length > 0) {
+      return dedupe(
+        v
+          .split(/\r?\n+|\s+[•▪●]\s+/)
+          .map((x) => x.replace(/^\s*(?:[•▪●\-*–—]|\d+[.)])\s*/, "").trim())
+          .filter((x) => x.length > 0),
+      );
+    }
+  }
+  return [];
+}
+
 function dedupe(values: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -201,8 +229,19 @@ export function normalizeUrl(raw: unknown): string | null {
     }
   }
 
+  // Common non-web language/code extensions that should not be treated as bare domains
+  const NON_WEB_EXTENSIONS = new Set([
+    "js", "ts", "jsx", "tsx", "py", "java", "cpp", "c", "cs", "rb", "go",
+    "php", "html", "css", "scss", "json", "xml", "yaml", "yml", "sql", "sh",
+    "md", "txt", "pdf", "png", "jpg", "jpeg", "gif", "svg", "webp",
+  ]);
+
   // Check if it looks like a domain / web address (e.g. "linkedin.com/in/...", "github.com/...", "sub.vercel.app")
   if (/^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/.*)?$/i.test(s)) {
+    const bareHost = s.split("/")[0]?.toLowerCase() ?? "";
+    const tld = bareHost.split(".").pop() ?? "";
+    if (NON_WEB_EXTENSIONS.has(tld)) return null;
+
     const url = `https://${s}`;
     try {
       new URL(url);
@@ -308,14 +347,47 @@ function extractUrlsFromText(text: string): {
     githubUrl = normalizeGithubUrl(githubMatch[0]);
   }
 
-  // Match other live demo / deployment URLs
-  const urlMatches = text.match(
-    /(?:https?:\/\/[^\s)>\]'",]+|(?:www\.)[^\s)>\]'",]+|(?:[a-zA-Z0-9-]+\.)+(?:vercel\.app|netlify\.app|onrender\.com|herokuapp\.com|pages\.dev|github\.io|[a-z]{2,})(?:\/[^\s)>\]'",]*)?)/gi,
-  );
-  if (urlMatches) {
-    for (const match of urlMatches) {
+  // Priority 1: Explicit http/https/www URLs (excluding github.com which belongs to repo)
+  const explicitMatches = text.match(/(?:https?:\/\/|www\.)[^\s)>\]'",]+/gi);
+  if (explicitMatches) {
+    for (const match of explicitMatches) {
       if (/github\.com/i.test(match)) continue;
       const norm = normalizeUrl(match);
+      if (norm) {
+        liveUrl = norm;
+        break;
+      }
+    }
+  }
+
+  // Priority 2: Known deployment platform domains (e.g. project.vercel.app, project.netlify.app, etc.)
+  if (!liveUrl) {
+    const deployMatches = text.match(
+      /\b[a-zA-Z0-9-]+\.(?:vercel\.app|netlify\.app|pages\.dev|onrender\.com|herokuapp\.com|github\.io)(?:\/[^\s)>\]'",]*)?/gi,
+    );
+    if (deployMatches) {
+      for (const match of deployMatches) {
+        const norm = normalizeUrl(match);
+        if (norm) {
+          liveUrl = norm;
+          break;
+        }
+      }
+    }
+  }
+
+  // Priority 3: Custom domain explicitly labeled as a live/demo link. The label
+  // must be followed by a separator ("Live: x.dev"), and generic words like
+  // "app" or "site" are not labels — "The app: socket.io based" named a
+  // library, and reading it as a demo put https://socket.io on the project.
+  if (!liveUrl) {
+    const labeledMatches = text.matchAll(
+      /\b(?:live(?:\s+(?:demo|link|site|url))?|demo(?:\s+link)?|preview|deployment|website|hosted\s+(?:at|on)|deployed\s+(?:at|on))(?:\s*[:–—=]|\s+-)\s*(?:https?:\/\/)?((?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s)>\]'",]*)?)/gi,
+    );
+    for (const match of labeledMatches) {
+      const candidate = match[1];
+      if (!candidate) continue;
+      const norm = normalizeUrl(candidate);
       if (norm) {
         liveUrl = norm;
         break;
@@ -329,7 +401,7 @@ function extractUrlsFromText(text: string): {
 function project(raw: Raw): ParsedProject {
   const title = str(raw, "title", "name", "project_name", "projectName");
   const description = str(raw, "description", "summary");
-  const contributions = strList(
+  const contributions = proseList(
     raw,
     "contributions",
     "highlights",
@@ -393,14 +465,14 @@ function experience(raw: Raw): ParsedExperience {
     company: str(raw, "company", "organisation", "organization", "employer"),
     employmentType: str(raw, "employment_type", "employmentType"),
     duration: str(raw, "duration", "dates", "period"),
-    responsibilities: strList(
+    responsibilities: proseList(
       raw,
       "responsibilities",
       "description",
       "bullets",
       "highlights",
     ),
-    achievements: strList(raw, "achievements", "impact"),
+    achievements: proseList(raw, "achievements", "impact"),
     technologies: strList(raw, "technologies", "tools", "tech"),
   };
 }
@@ -467,7 +539,7 @@ export function normalizeParsedResume(input: unknown): ParsedResume {
     cloudPlatforms: strList(raw, "cloud_platforms", "cloudPlatforms"),
     tools: strList(raw, "tools", "platforms"),
     certifications: strList(raw, "certifications", "certificates"),
-    achievements: strList(raw, "achievements", "awards"),
+    achievements: proseList(raw, "achievements", "awards"),
     languages: strList(raw, "languages"),
     projects: objList(raw, "projects").map(project),
     experience: objList(raw, "experience", "work_experience").map(experience),

@@ -96,6 +96,12 @@ function Block({ block }: { block: ReviewBlock }) {
       return <div className="pw-rv-sub">{block.text}</div>;
     case "text":
       return <p className="pw-rv-item-body pw-rv-tight">{block.text}</p>;
+    case "note":
+      return (
+        <p className="pw-rv-note" role="note">
+          {block.text}
+        </p>
+      );
     case "chips":
       return <Chips items={block.items} />;
     case "file":
@@ -132,27 +138,34 @@ function Block({ block }: { block: ReviewBlock }) {
         <>
           {block.items.map((item, i) => (
             <div className="pw-rv-item" key={`${item.title}-${i}`}>
-              <div className="pw-rv-item-title">{item.title}</div>
+              {/* Links sit beside the title: a project's demo and repo are the
+                  first thing a recruiter wants to open, not a footnote. */}
+              <div className="pw-rv-item-head">
+                <div className="pw-rv-item-title">{item.title}</div>
+                {item.links.length > 0 ? (
+                  <div className="pw-rv-links">
+                    {item.links.map((link) => (
+                      <a
+                        key={link.url}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {link.label}
+                        <svg viewBox="0 0 24 24" aria-hidden>
+                          <path d="M7 17 17 7M9 7h8v8" />
+                        </svg>
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               {item.sub ? <div className="pw-rv-item-sub">{item.sub}</div> : null}
               {item.meta ? (
                 <div className="pw-rv-item-meta">{item.meta}</div>
               ) : null}
               {item.body ? <p className="pw-rv-item-body">{item.body}</p> : null}
               {item.chips.length > 0 ? <Chips items={item.chips} /> : null}
-              {item.links.length > 0 ? (
-                <div className="pw-rv-links">
-                  {item.links.map((link) => (
-                    <a
-                      key={link.url}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
             </div>
           ))}
         </>

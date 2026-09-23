@@ -3,7 +3,10 @@ import { allSkills } from "@/features/resume/normalize";
 import { newTerms, mergeTermLists } from "@/features/resume/merge/terms";
 import {
   joinBullets,
+  joinBulletsWithin,
   mergeBullets,
+  proseToBullets,
+  sameBullet,
   sameName,
   splitBullets,
   tokenOverlap,
@@ -48,6 +51,7 @@ export type MergeSection =
   | "experience"
   | "projects"
   | "certifications"
+  | "awards"
   | "skills";
 
 export type EducationCreate = {
@@ -104,6 +108,13 @@ export type ProjectUpdate = {
 export type CertificationCreate = { name: string; issuer: string };
 
 /**
+ * The awards prose after the merge. `previous` is the text the plan was built
+ * against; the applier writes only while the stored value still equals it, so
+ * an edit made in another tab is never overwritten.
+ */
+export type AwardsWrite = { value: string; previous: string | null };
+
+/**
  * One decision, for debugging a merge that went wrong. Never rendered.
  * `field` is a name; no candidate content is copied into the log.
  */
@@ -123,6 +134,8 @@ export type MergePlan = {
   experience: { create: ExperienceCreate[]; update: ExperienceUpdate[] };
   projects: { create: ProjectCreate[]; update: ProjectUpdate[] };
   certifications: { create: CertificationCreate[] };
+  /** Résumé achievements, appended to the awards prose. Null when nothing is new. */
+  awards: AwardsWrite | null;
   /** Free-text names, already de-duplicated against existing claims. */
   skillNames: string[];
   sections: MergeSection[];
@@ -197,6 +210,28 @@ function yearOf(value: string | null): number | null {
   const inRange = matches.filter((y) => y >= 1950 && y <= 2040);
   if (inRange.length === 0) return null;
   return inRange[inRange.length - 1]!;
+}
+
+/**
+ * Splits a résumé certification line into its parts.
+ *
+ * The model returns certifications as plain strings, usually written the way
+ * the résumé lays them out: "Google Data Analytics Certificate · Google · 2025".
+ * Stored whole, the issuer and year were welded onto the name. The name and
+ * issuer are separated here; a bare year is dropped rather than turned into an
+ * `issuedOn` date, because a year alone has no month and inventing one puts a
+ * false date on the profile.
+ */
+export function splitCertification(line: string): CertificationCreate {
+  const parts = line
+    .split(/\s+[·|•–—-]\s+/)
+    .map((p) => p.trim().replace(/[.;]+$/, ""))
+    .filter((p) => p.length > 0);
+  const named = parts.filter((p) => !/^(?:19|20)\d{2}$/.test(p));
+  if (named.length >= 2) {
+    return { name: named[0]!, issuer: named[1]!.slice(0, 200) };
+  }
+  return { name: named[0] ?? line.trim(), issuer: "" };
 }
 
 /* ─── Entity matching ────────────────────────────────────────────────────── */
@@ -434,7 +469,7 @@ export function planResumeMerge(
       title: i.role,
       employmentType: "Internship" as string | null,
       duration: i.duration,
-      bullets: i.summary ? [i.summary] : [],
+      bullets: [i.summary ?? ""],
     })),
   ];
 
@@ -443,7 +478,10 @@ export function planResumeMerge(
     const title = clean(role.title, 200);
     if (!companyName || !title) continue;
     const dates = readDuration(role.duration);
-    const bullets = role.bullets.map((b) => b.trim()).filter(Boolean);
+    // Every role is stored as points. An internship arrives as one summary
+    // paragraph, and a responsibility sometimes packs two sentences — both are
+    // split so the profile reads as bullets, not a wall of text.
+    const bullets = role.bullets.flatMap((b) => proseToBullets(b));
 
     const match = matchExperience(expSeen, {
       company: companyName,
@@ -532,8 +570,17 @@ export function planResumeMerge(
     const title = clean(p.title, 200);
     if (!title) continue;
     const tech = p.technologies.map((t) => t.trim()).filter(Boolean).slice(0, 20);
-    const description =
-      clean(p.description, 2000) ?? joinBullets(p.contributions.slice(0, 6));
+    // Points, not a paragraph: the description's sentences first, then any
+    // contribution bullets that say something new. The contributions used to
+    // be dropped whenever a description existed.
+    const description = joinBulletsWithin(
+      mergeBullets(
+        proseToBullets(p.description),
+        p.contributions.flatMap((c) => proseToBullets(c)),
+        8,
+      ).merged,
+      2000,
+    );
     const repoUrl = clean(p.github, 500);
     const liveUrl = clean(p.demo, 500);
 
@@ -584,15 +631,19 @@ export function planResumeMerge(
   }
   if (projCreate.length > 0 || projUpdate.length > 0) sections.add("projects");
 
-  /* ── Certifications & achievements: append what is new ──────────────── */
+  /* ── Certifications: append what is new ────────────────────────────── */
+  // Achievements are NOT certifications — "Finalist, Smart India Hackathon"
+  // listed under Certifications was a wrong fact. They go to Awards below.
   const existingCerts = detail.certifications.map((c) => c.name);
-  const incomingCerts = [...parsed.certifications, ...parsed.achievements]
-    .map((c) => clean(c, 200))
-    .filter((c): c is string => c !== null);
+  const incomingCerts = parsed.certifications
+    .map((c) => clean(c, 400))
+    .filter((c): c is string => c !== null)
+    .map(splitCertification);
 
   const certCreate: CertificationCreate[] = [];
   const certSeen = [...existingCerts];
-  for (const name of incomingCerts) {
+  for (const cert of incomingCerts) {
+    const name = cert.name.slice(0, 200);
     if (certSeen.some((e) => sameName(e, name, 0.85))) {
       decisions.push({
         section: "certifications",
@@ -603,10 +654,10 @@ export function planResumeMerge(
       continue;
     }
     certSeen.push(name);
-    // `issuer` is NOT NULL and a résumé line rarely separates it out. An empty
-    // string is honest and the field stays editable; "Unknown" would be a
-    // fabrication shown to recruiters.
-    certCreate.push({ name, issuer: "" });
+    // `issuer` is NOT NULL. When the line did not name one, an empty string is
+    // honest and the field stays editable; "Unknown" would be a fabrication
+    // shown to recruiters.
+    certCreate.push({ name, issuer: cert.issuer });
     decisions.push({
       section: "certifications",
       action: "created",
@@ -616,6 +667,43 @@ export function planResumeMerge(
     if (certCreate.length >= 20) break;
   }
   if (certCreate.length > 0) sections.add("certifications");
+
+  /* ── Awards: résumé achievements, appended as points ─────────────────── */
+  // The candidate's own text is kept byte-for-byte; new points go after it.
+  const previousAwards = empty(detail.awards) ? null : detail.awards;
+  const existingAwardLines = splitBullets(previousAwards);
+  const newAwards: string[] = [];
+  for (const line of parsed.achievements.flatMap((a) => proseToBullets(a))) {
+    const text = line.slice(0, 300);
+    if ([...existingAwardLines, ...newAwards].some((e) => sameBullet(e, text))) {
+      decisions.push({
+        section: "awards",
+        action: "skipped-duplicate",
+        subject: text,
+        reason: "already listed",
+      });
+      continue;
+    }
+    if (newAwards.length >= 20) break;
+    newAwards.push(text);
+    decisions.push({
+      section: "awards",
+      action: "created",
+      subject: text,
+      reason: "not already listed",
+    });
+  }
+  let awards: AwardsWrite | null = null;
+  if (newAwards.length > 0) {
+    const added = joinBullets(newAwards)!;
+    const value = previousAwards ? `${previousAwards.trimEnd()}\n${added}` : added;
+    // The column holds 4000 characters; a merge that would overflow it is
+    // skipped whole rather than cutting the candidate's text.
+    if (value.length <= 4000) {
+      awards = { value, previous: previousAwards };
+      sections.add("awards");
+    }
+  }
 
   /* ── Skills: canonical de-duplication against existing claims ───────── */
   const claimedNames = detail.skills.flatMap((s) => [s.name, s.slug]);
@@ -631,6 +719,7 @@ export function planResumeMerge(
     experience: { create: expCreate, update: expUpdate },
     projects: { create: projCreate, update: projUpdate },
     certifications: { create: certCreate },
+    awards,
     skillNames,
     sections: [...sections],
     decisions,
@@ -645,5 +734,6 @@ export const SECTION_LABELS: Record<MergeSection, string> = {
   experience: "Experience",
   projects: "Projects",
   certifications: "Certifications",
+  awards: "Awards",
   skills: "Skills",
 };
