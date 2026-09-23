@@ -235,6 +235,23 @@ export async function applyResumeMerge(
         applied.add("certifications");
       }
 
+      /* ── Awards ────────────────────────────────────────────────────────── */
+      if (plan.awards) {
+        // Guarded on the exact text the plan was built against: the new value
+        // is that text plus appended points, so it can only be written while
+        // the stored prose is still what the planner saw.
+        const result = await tx.candidateProfile.updateMany({
+          where: {
+            userId,
+            ...(plan.awards.previous === null
+              ? emptyWhere("awards")
+              : { awards: plan.awards.previous }),
+          },
+          data: { awards: plan.awards.value },
+        });
+        if (result.count > 0) applied.add("awards");
+      }
+
       /* ── Skills ────────────────────────────────────────────────────────── */
       if (plan.skillNames.length > 0) {
         const skillIds = await resolveSkillIds(tx, plan.skillNames);

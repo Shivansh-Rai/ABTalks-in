@@ -88,6 +88,42 @@ export function joinBullets(bullets: readonly string[]): string | null {
 }
 
 /**
+ * Turns a prose block into bullet lines: line breaks and bullet markers first,
+ * then sentence boundaries. A boundary needs a space and a capital after the
+ * stop, so "Node.js", "v2.1" and "99.9%" stay whole; "e.g." and "i.e." are
+ * never treated as the end of a sentence.
+ */
+export function proseToBullets(text: string | null): string[] {
+  if (!text) return [];
+  return splitBullets(text)
+    .flatMap((line) => line.split(/\s+[•▪●]\s+/))
+    .flatMap((line) =>
+      line.split(/(?<!\b(?:e\.g|i\.e|etc|vs|approx|incl|Mr|Ms|Dr|St)\.)(?<=[.!?])\s+(?=[A-Z])/),
+    )
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+/**
+ * `joinBullets`, dropping trailing bullets until the block fits `maxChars` —
+ * whole points are dropped rather than one being cut mid-sentence.
+ */
+export function joinBulletsWithin(
+  bullets: readonly string[],
+  maxChars: number,
+): string | null {
+  const kept = [...bullets];
+  let joined = joinBullets(kept);
+  while (joined !== null && joined.length > maxChars && kept.length > 1) {
+    kept.pop();
+    joined = joinBullets(kept);
+  }
+  return joined !== null && joined.length > maxChars
+    ? joined.slice(0, maxChars)
+    : joined;
+}
+
+/**
  * Two bullets say the same thing.
  *
  * The bar is high (0.85 of the shorter bullet's meaningful words) because the

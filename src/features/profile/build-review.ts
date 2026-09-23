@@ -5,6 +5,7 @@ import {
 } from "@/lib/candidate-vocab";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
 import type { ResumeView } from "@/features/resume/types";
+import { sameName, tokens } from "@/features/resume/merge/text";
 
 /**
  * The report card: the profile as a recruiter sees it.
@@ -52,6 +53,8 @@ export type ReviewPair = {
 export type ReviewBlock =
   | { kind: "sub"; text: string }
   | { kind: "text"; text: string }
+  /** A heads-up about the data itself, e.g. two entries that disagree. */
+  | { kind: "note"; text: string }
   | { kind: "chips"; items: string[] }
   | { kind: "items"; items: ReviewItem[] }
   | { kind: "pairs"; pairs: ReviewPair[] }
@@ -128,6 +131,56 @@ function span(
 
 function join(parts: (string | null | undefined)[], sep = " · "): string {
   return parts.filter((p): p is string => Boolean(p && p.trim())).join(sep);
+}
+
+/**
+ * "IIT" against "Indian Institute of Technology Delhi": a short token that is
+ * the run of initials of the longer name. Token matching alone reads these as
+ * two different colleges.
+ */
+function isAbbreviationOf(short: string, long: string): boolean {
+  const initials = tokens(long)
+    .filter((t) => !["of", "the", "and", "for", "&"].includes(t))
+    .map((t) => t[0])
+    .join("");
+  return tokens(short).some((t) => t.length >= 2 && initials.includes(t));
+}
+
+/**
+ * An education row that is only a college name — what registration's college
+ * field creates — while every detailed row (from the résumé or typed in) names
+ * a different institution. Both cannot be where the candidate studies, and a
+ * recruiter reading the card sees a contradiction, so it is flagged. Nothing is
+ * removed: which one is right is the candidate's call.
+ */
+function conflictingBareEducation(
+  education: CandidateDetail["education"],
+): string | null {
+  const detailed = education.filter(
+    (e) => nonEmpty(e.degree) || nonEmpty(e.fieldOfStudy) || e.graduationYear !== null,
+  );
+  if (detailed.length === 0) return null;
+  for (const e of education) {
+    if (detailed.includes(e)) continue;
+    const name = nonEmpty(e.institutionName);
+    if (!name) continue;
+    const matches = detailed.some(
+      (d) =>
+        sameName(d.institutionName, name, 0.7) ||
+        isAbbreviationOf(name, d.institutionName) ||
+        isAbbreviationOf(d.institutionName, name),
+    );
+    if (!matches) return name;
+  }
+  return null;
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
 }
 
 function nonEmpty(value: string | null | undefined): string | null {
@@ -319,11 +372,18 @@ export function buildProfileReview({
     };
   });
 
+  const educationConflict = conflictingBareEducation(detail.education);
+
   /* ---- projects ---- */
   const projectItems: ReviewItem[] = detail.projects.map((p) => {
     const links: ReviewLink[] = [];
-    if (p.liveUrl) links.push({ label: "Live", url: p.liveUrl });
-    if (p.repoUrl) links.push({ label: "Code", url: p.repoUrl });
+    if (p.liveUrl) links.push({ label: "Live demo", url: p.liveUrl });
+    if (p.repoUrl) {
+      links.push({
+        label: /(^|\.)github\.com$/i.test(hostOf(p.repoUrl)) ? "GitHub" : "Code",
+        url: p.repoUrl,
+      });
+    }
     return {
       title: p.title || "Project",
       sub: null,
@@ -514,7 +574,17 @@ export function buildProfileReview({
       "education",
       "Add your degree, college and years so recruiters can place you.",
       educationItems.length > 0
-        ? [{ kind: "items", items: educationItems }]
+        ? [
+            ...(educationConflict
+              ? [
+                  {
+                    kind: "note" as const,
+                    text: `“${educationConflict}” (from your registration) does not match the education on your résumé. Edit or remove whichever is wrong.`,
+                  },
+                ]
+              : []),
+            { kind: "items", items: educationItems },
+          ]
         : [],
       { count: educationItems.length },
     ),

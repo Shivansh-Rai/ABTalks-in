@@ -962,25 +962,71 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   padding: 4px 12px;
   line-height: 16px;
 }
+/* Title with its links on the same line; links wrap under it on phones. */
+.pw-rv-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.pw-rv-item-head .pw-rv-item-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .pw-rv-links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 9px;
 }
 .pw-rv-links a {
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--pw-primary);
+  background: var(--pw-primary-tint);
   text-decoration: none;
-  border: 1px solid #d4ebec;
+  border: 1px solid var(--pw-primary-light);
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 5px 12px;
   line-height: 16px;
-  transition: background-color 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.pw-rv-links a:first-child {
+  color: var(--pw-white);
+  background: var(--pw-primary);
+  border-color: var(--pw-primary);
 }
 .pw-rv-links a:hover {
-  background: #eef6f6;
+  background: var(--pw-primary-light);
+}
+.pw-rv-links a:first-child:hover {
+  background: var(--pw-primary-hover);
+}
+.pw-rv-links a:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+.pw-rv-links svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pw-rv-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--pw-warning-soft);
+  color: #5c4508;
+  font-size: 13px;
+  line-height: 19px;
 }
 
 .pw-rv-file {

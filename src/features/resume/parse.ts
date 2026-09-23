@@ -42,6 +42,7 @@ Rules:
 - Extract ONLY what the document actually contains. Never invent, infer or embellish a fact that is not there.
 - If a field is absent, return null for it, or an empty array for a list. Do not guess.
 - Links & URLs: Extract full web URLs for linkedin, github, portfolio, and website from headers, contact blocks, icons, or hyperlinks. For projects, extract repository URLs (into "github") and live demo/deployment URLs (into "demo") whether they appear as dedicated fields, inline in text (e.g. inside parentheses, after "Repo:", "Live:", "Link:"), or as hyperlinks. Expand shorthand links (e.g. 'github.com/user' -> 'https://github.com/user', 'linkedin.com/in/user' -> 'https://linkedin.com/in/user'). Never return generic label text (like 'GitHub', 'LinkedIn', 'Link', 'Demo') as the URL value.
+- Write descriptive content as points. "responsibilities", "achievements" and project "contributions" are arrays with ONE point per item — never several points joined into one string. A project "description" is a single short sentence saying what the project is; its details go in "contributions". An internship "summary" puts each point on its own line.
 - Copy achievement and responsibility bullets close to the candidate's own wording. Do not rewrite them to sound better, and do not add numbers that are not in the document.
 - "estimated_experience_years" is total professional working years, excluding time spent studying. Return 0 when the candidate has no professional experience.
 - Return a single JSON object and nothing else.`;

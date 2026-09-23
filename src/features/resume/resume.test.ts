@@ -53,10 +53,17 @@ import {
   matchProject,
   planResumeMerge,
   readDuration,
+  splitCertification,
   type MergeSection,
 } from "@/features/resume/merge/plan";
+import { buildProfileReview } from "@/features/profile/build-review";
 import { mergeTermLists, sameTerm } from "@/features/resume/merge/terms";
-import { mergeBullets, splitBullets } from "@/features/resume/merge/text";
+import {
+  joinBulletsWithin,
+  mergeBullets,
+  proseToBullets,
+  splitBullets,
+} from "@/features/resume/merge/text";
 import type {
   CandidateDetail,
   EducationView,
@@ -460,6 +467,298 @@ async function run() {
       parsed.projects[0]?.demo === "https://ai-bot.vercel.app",
       `demo url not recovered: ${parsed.projects[0]?.demo}`,
     );
+  });
+
+  await suite("project live links support deployment domains and reject tech extensions", () => {
+    const cases = [
+      {
+        raw: {
+          title: "Microservices Platform (github.com/user/project)",
+          description: "Built with Node.js, Express.js and Redis. Live demo: (https://project.vercel.app).",
+        },
+        expectedGithub: "https://github.com/user/project",
+        expectedDemo: "https://project.vercel.app",
+      },
+      {
+        raw: {
+          title: "Portfolio",
+          description: "Repo at github.com/user/portfolio and deployed on my-app.netlify.app",
+        },
+        expectedGithub: "https://github.com/user/portfolio",
+        expectedDemo: "https://my-app.netlify.app",
+      },
+      {
+        raw: {
+          title: "Docs App",
+          description: "Check https://docs.pages.dev/preview built using Vue.js",
+        },
+        expectedGithub: null,
+        expectedDemo: "https://docs.pages.dev/preview",
+      },
+      {
+        raw: {
+          title: "API Service",
+          description: "Code: https://github.com/user/api. Deployed at https://service.onrender.com",
+        },
+        expectedGithub: "https://github.com/user/api",
+        expectedDemo: "https://service.onrender.com",
+      },
+      {
+        raw: {
+          title: "Startup landing",
+          description: "Live demo: mycustomdomain.com/app (built with Vue.js)",
+        },
+        expectedGithub: null,
+        expectedDemo: "https://mycustomdomain.com/app",
+      },
+      {
+        raw: {
+          title: "Multi-level Domain SaaS",
+          description: "Live demo: showcase.mycompany.io [Vue.js 3, Tailwind]",
+        },
+        expectedGithub: null,
+        expectedDemo: "https://showcase.mycompany.io",
+      },
+      {
+        raw: {
+          title: "Graphics Engine",
+          description: "Engine built using Node.js and Three.js with WebGL.",
+        },
+        expectedGithub: null,
+        expectedDemo: null,
+      },
+    ];
+
+    for (const c of cases) {
+      const parsed = normalizeParsedResume({ projects: [c.raw] });
+      assert(
+        parsed.projects[0]?.github === c.expectedGithub,
+        `expected github ${c.expectedGithub}, got ${parsed.projects[0]?.github} for ${c.raw.title}`,
+      );
+      assert(
+        parsed.projects[0]?.demo === c.expectedDemo,
+        `expected demo ${c.expectedDemo}, got ${parsed.projects[0]?.demo} for ${c.raw.title}`,
+      );
+    }
+  });
+
+  await suite("project links merge end-to-end into CandidateProjectEntry plan", () => {
+    const raw = {
+      projects: [
+        {
+          title: "Fullstack Platform",
+          description: "Built with Node.js and Next.js. GitHub: https://github.com/user/project Live: https://project.vercel.app",
+        },
+      ],
+    };
+    const parsed = normalizeParsedResume(raw);
+    const plan = planResumeMerge(parsed, emptyDetail);
+    assert(plan.projects.create.length === 1, "expected 1 created project");
+    const proj = plan.projects.create[0]!;
+    assert(proj.repoUrl === "https://github.com/user/project", `repoUrl was ${proj.repoUrl}`);
+    assert(proj.liveUrl === "https://project.vercel.app", `liveUrl was ${proj.liveUrl}`);
+  });
+
+  await suite("a library named after 'app:' is not read as a live demo", () => {
+    const parsed = normalizeParsedResume({
+      projects: [{ title: "Chat", description: "The app: socket.io based realtime chat" }],
+    });
+    assert(parsed.projects[0]!.demo === null, `demo was ${parsed.projects[0]!.demo}`);
+
+    const labeled = normalizeParsedResume({
+      projects: [
+        { title: "A", description: "Live: myportfolio.dev" },
+        { title: "B", description: "Live demo - shop.example.in" },
+        { title: "C", description: "Deployed at: tracker.io" },
+      ],
+    });
+    assert(labeled.projects[0]!.demo === "https://myportfolio.dev", "Live: label");
+    assert(labeled.projects[1]!.demo === "https://shop.example.in", "Live demo - label");
+    assert(labeled.projects[2]!.demo === "https://tracker.io", "Deployed at: label");
+  });
+
+  await suite("a prose responsibility string is not cut at its commas", () => {
+    const parsed = normalizeParsedResume({
+      experience: [
+        {
+          title: "Intern",
+          company: "Acme",
+          responsibilities: "Built APIs in Node.js, Express and MongoDB\n• Cut p95 latency by 30%, from 400ms to 280ms",
+        },
+      ],
+    });
+    const r = parsed.experience[0]!.responsibilities;
+    assert(r.length === 2, `expected 2 points, got ${JSON.stringify(r)}`);
+    assert(r[0] === "Built APIs in Node.js, Express and MongoDB", `first was ${r[0]}`);
+    assert(r[1] === "Cut p95 latency by 30%, from 400ms to 280ms", `second was ${r[1]}`);
+  });
+
+  await suite("prose splits into points without breaking Node.js or e.g.", () => {
+    const out = proseToBullets(
+      "Built a dashboard in Next.js and Node.js. Used e.g. Redis for caching. Served 99.9% uptime!",
+    );
+    assert(out.length === 3, `got ${JSON.stringify(out)}`);
+    assert(out[1] === "Used e.g. Redis for caching.", `second was ${out[1]}`);
+  });
+
+  await suite("project descriptions and contributions are stored as points", () => {
+    const parsed = normalizeParsedResume({
+      projects: [
+        {
+          title: "Expense Tracker",
+          description: "A budgeting app for students. Syncs across devices.",
+          contributions: ["Designed the Postgres schema", "A budgeting app for students"],
+        },
+      ],
+    });
+    const plan = planResumeMerge(parsed, emptyDetail);
+    const d = plan.projects.create[0]!.description!;
+    assert(
+      d === "• A budgeting app for students.\n• Syncs across devices.\n• Designed the Postgres schema",
+      `description was ${JSON.stringify(d)}`,
+    );
+  });
+
+  await suite("an internship summary is stored as points", () => {
+    const parsed = normalizeParsedResume({
+      internships: [
+        {
+          company: "Acme",
+          role: "SDE Intern",
+          duration: "Jun 2024 - Aug 2024",
+          summary: "Built the onboarding flow. Wrote integration tests for payments.",
+        },
+      ],
+    });
+    const plan = planResumeMerge(parsed, emptyDetail);
+    const d = plan.experience.create[0]!.description;
+    assert(
+      d === "• Built the onboarding flow.\n• Wrote integration tests for payments.",
+      `description was ${JSON.stringify(d)}`,
+    );
+  });
+
+  await suite("résumé achievements go to Awards, not Certifications", () => {
+    const parsed = normalizeParsedResume({
+      certifications: ["Google Data Analytics Professional Certificate · Google · 2025"],
+      achievements: ["Finalist, Smart India Hackathon 2025.", "Published 100+ editions of a newsletter."],
+    });
+    const plan = planResumeMerge(parsed, emptyDetail);
+    assert(plan.certifications.create.length === 1, `certs: ${JSON.stringify(plan.certifications.create)}`);
+    const cert = plan.certifications.create[0]!;
+    assert(cert.name === "Google Data Analytics Professional Certificate", `name was ${cert.name}`);
+    assert(cert.issuer === "Google", `issuer was ${cert.issuer}`);
+    assert(
+      plan.awards?.value ===
+        "• Finalist, Smart India Hackathon 2025.\n• Published 100+ editions of a newsletter.",
+      `awards were ${JSON.stringify(plan.awards)}`,
+    );
+    assert(plan.awards?.previous === null, "planned against empty awards");
+    assert(plan.sections.includes("awards"), "awards section reported");
+  });
+
+  await suite("awards the candidate wrote are kept verbatim; only new points are appended", () => {
+    const written = "Dean's list 2024\nFinalist, Smart India Hackathon 2025";
+    const parsed = normalizeParsedResume({
+      achievements: ["Finalist, Smart India Hackathon 2025.", "Won the inter-college hackathon."],
+    });
+    const plan = planResumeMerge(parsed, { ...emptyDetail, awards: written } as CandidateDetail);
+    assert(
+      plan.awards?.value === `${written}\n• Won the inter-college hackathon.`,
+      `awards were ${JSON.stringify(plan.awards?.value)}`,
+    );
+    assert(plan.awards?.previous === written, "guarded on the text it was built from");
+
+    const again = planResumeMerge(parsed, { ...emptyDetail, awards: plan.awards!.value } as CandidateDetail);
+    assert(again.awards === null, "a re-upload adds nothing");
+  });
+
+  await suite("a certification line with no separators stays whole", () => {
+    assert(splitCertification("AWS Certified Cloud Practitioner").issuer === "", "no issuer invented");
+    const dashed = splitCertification("Machine Learning Specialization - DeepLearning.AI");
+    assert(dashed.name === "Machine Learning Specialization" && dashed.issuer === "DeepLearning.AI", JSON.stringify(dashed));
+  });
+
+  await suite("the profile card flags a registration college the résumé contradicts", () => {
+    const edu = (over: Record<string, unknown>) => ({
+      id: String(Math.random()),
+      institutionName: "",
+      collegeId: null,
+      degree: null,
+      fieldOfStudy: null,
+      startMonth: null,
+      startYear: null,
+      endMonth: null,
+      graduationYear: null,
+      isCurrent: false,
+      gradeType: null,
+      grade: null,
+      description: null,
+      ...over,
+    });
+    const review = (education: unknown[]) =>
+      buildProfileReview({
+        detail: { ...emptyDetail, updatedAt: new Date(), education } as unknown as CandidateDetail,
+        personaLabel: "Student",
+        score: 0,
+        resume: null,
+        mockInterviewCount: 0,
+        verifiedAccomplishments: [],
+        verifiedSkills: [],
+        stepIndexByKey: {},
+      }).cards.find((c) => c.title === "Education")!;
+    const notes = (card: { blocks: { kind: string }[] }) =>
+      card.blocks.filter((b) => b.kind === "note").length;
+
+    const clash = review([
+      edu({ institutionName: "iit delhi" }),
+      edu({ institutionName: "AB Institute of Technology, Ghaziabad", degree: "B.Tech", graduationYear: 2027 }),
+    ]);
+    assert(notes(clash) === 1, "a contradicting bare college is flagged");
+
+    const same = review([
+      edu({ institutionName: "IIT Delhi" }),
+      edu({ institutionName: "Indian Institute of Technology Delhi", degree: "B.Tech" }),
+    ]);
+    assert(notes(same) === 0, "an abbreviation of the same college is not flagged");
+
+    const alone = review([edu({ institutionName: "iit delhi" })]);
+    assert(notes(alone) === 0, "nothing to contradict it");
+  });
+
+  await suite("project links sit beside the title with clear labels", () => {
+    const card = buildProfileReview({
+      detail: {
+        ...emptyDetail,
+        updatedAt: new Date(),
+        projects: [
+          { id: "p", title: "CareerPilot", description: null, techStack: [], repoUrl: "https://github.com/z/cp", liveUrl: "https://cp.vercel.app" },
+        ],
+      } as unknown as CandidateDetail,
+      personaLabel: "Student",
+      score: 0,
+      resume: null,
+      mockInterviewCount: 0,
+      verifiedAccomplishments: [],
+      verifiedSkills: [],
+      stepIndexByKey: {},
+    }).cards.find((c) => c.title === "Projects")!;
+    const block = card.blocks[0] as { kind: string; items: { links: { label: string }[] }[] };
+    const labels = block.items[0]!.links.map((l) => l.label);
+    assert(JSON.stringify(labels) === '["Live demo","GitHub"]', `labels were ${labels}`);
+    const view = code("src/components/profile/profile-review.tsx");
+    assert(
+      view.indexOf("pw-rv-links") > view.indexOf("pw-rv-item-head") &&
+        view.indexOf("pw-rv-links") < view.indexOf("pw-rv-item-sub"),
+      "links render in the title row, before the subtitle",
+    );
+  });
+
+  await suite("an over-long project description drops whole points, never mid-sentence", () => {
+    const long = "x".repeat(900);
+    const out = joinBulletsWithin([long, long, long], 2000)!;
+    assert(out.length <= 2000, `length ${out.length}`);
+    assert(out.split("\n").length === 2, "kept two whole points");
   });
 
   /* ─── Scoring ──────────────────────────────────────────────────────────── */
@@ -1455,23 +1754,86 @@ async function run() {
       "extraction",
       "pipeline",
     ];
+
+    function extractUserVisibleText(src: string): string {
+      // Strip comments
+      const noComments = src
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/(^|[^:])\/\/.*$/gm, "$1");
+
+      // Strip JSX attribute expressions (e.g. onDragEnter={(e) => { ... }})
+      // so code inside event handlers or props is never mistaken for user copy.
+      let cleaned = "";
+      let inString = false;
+      let quoteChar = "";
+      for (let i = 0; i < noComments.length; i++) {
+        const ch = noComments[i]!;
+        const prev = noComments[i - 1];
+
+        if (inString) {
+          cleaned += ch;
+          if (ch === quoteChar && prev !== "\\") inString = false;
+          continue;
+        }
+
+        if (ch === '"' || ch === "'" || ch === "`") {
+          inString = true;
+          quoteChar = ch;
+          cleaned += ch;
+          continue;
+        }
+
+        if (ch === "{" && noComments.slice(Math.max(0, i - 2), i).includes("=")) {
+          let depth = 1;
+          i++;
+          let exprString = false;
+          let exprQuote = "";
+          while (i < noComments.length && depth > 0) {
+            const c = noComments[i]!;
+            const p = noComments[i - 1];
+            if (exprString) {
+              if (c === exprQuote && p !== "\\") exprString = false;
+            } else {
+              if (c === '"' || c === "'" || c === "`") {
+                exprString = true;
+                exprQuote = c;
+              } else if (c === "{") {
+                depth++;
+              } else if (c === "}") {
+                depth--;
+              }
+            }
+            i++;
+          }
+          i--;
+          cleaned += "{}";
+          continue;
+        }
+
+        cleaned += ch;
+      }
+
+      const copyParts: string[] = [];
+
+      // Single-line string literals (multi-line "..." runs into code when unclosed)
+      for (const m of cleaned.matchAll(/"([^"\r\n]{2,})"/g)) copyParts.push(m[1]!);
+      for (const m of cleaned.matchAll(/'([^'\r\n]{2,})'/g)) copyParts.push(m[1]!);
+      for (const m of cleaned.matchAll(/`([^`$]{2,})`/g)) copyParts.push(m[1]!);
+
+      // JSX text nodes between tags
+      for (const m of cleaned.matchAll(/>([^<>{}\r\n]+)</g)) {
+        const trimmed = m[1]!.trim();
+        if (trimmed.length > 0 && /[a-zA-Z]/.test(trimmed)) copyParts.push(trimmed);
+      }
+
+      return copyParts.map((s) => s.toLowerCase()).join(" | ");
+    }
+
     for (const file of [
       "src/components/profile/resume-section.tsx",
       "src/components/profile/resume-strength.tsx",
     ]) {
-      const src = source(file);
-      // Rendered strings only: JSX text nodes and quoted copy. Comments and
-      // identifiers are implementation and may say whatever is clearest.
-      const stripped = src
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/(^|[^:])\/\/.*$/gm, "$1");
-      const copy = [
-        ...stripped.matchAll(/>([^<>{}]*[a-zA-Z]{3}[^<>{}]*)</g),
-        ...stripped.matchAll(/"([^"]*\s[^"]*)"/g),
-        ...stripped.matchAll(/`([^`$]*\s[^`$]*)`/g),
-      ]
-        .map((m) => (m[1] ?? "").toLowerCase())
-        .join(" | ");
+      const copy = extractUserVisibleText(source(file));
       for (const word of banned) {
         assert(!copy.includes(word), `${file} shows the user the word "${word}"`);
       }
