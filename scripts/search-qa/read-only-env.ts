@@ -11,11 +11,12 @@
  *     audit — or the real search code it exercises — sends is then refused by the
  *     database if it tries to write. Neon's transaction pooler does not accept
  *     startup options, hence the direct host.
- *  3. Applies `--profile=production`: the recruiter pool depends on feature flags
- *     (ENABLE_NEW_TALENT, HIRE_CHALLENGE_POOL, HIRE_OPEN_COHORT_IDS), and a
- *     developer's `.env.local` usually has none of them. Values already set in
- *     the environment always win; the profile only fills gaps, and the report
- *     prints which values were assumed.
+ *  3. Applies `--profile=production`: the recruiter pool depends on hire flags
+ *     (`HIRE_CHALLENGE_POOL`, `HIRE_OPEN_COHORT_IDS`). `ENABLE_NEW_TALENT` is
+ *     kept only as a search-QA *report label* (`newTalentRead: true`); it is
+ *     not a runtime switch. A developer's `.env.local` usually has none of the
+ *     hire flags. Values already set in the environment always win; the profile
+ *     only fills gaps, and the report prints which values were assumed.
  */
 import { config } from "dotenv";
 
@@ -26,9 +27,10 @@ export const assumedFlags: string[] = [];
 
 const profile = process.argv.find((a) => a.startsWith("--profile="))?.split("=")[1];
 if (profile === "production") {
-  // Documented production state (CHANGELOG 2026-08-27, plan 119). The open
-  // cohort list in production is not recorded anywhere in the repo; "all" is
-  // the widest reading and is reported as an assumption.
+  // Hire-pool production defaults. ENABLE_NEW_TALENT is a report label only
+  // (canonical CandidateProfile reads are unconditional). The open cohort list
+  // in production is not recorded anywhere in the repo; "all" is the widest
+  // reading and is reported as an assumption.
   const defaults: Record<string, string> = {
     ENABLE_NEW_TALENT: "true",
     HIRE_CHALLENGE_POOL: "10",

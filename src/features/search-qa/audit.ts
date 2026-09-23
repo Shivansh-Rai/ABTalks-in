@@ -289,9 +289,7 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
       report.environment.notes.push("HIRE_OPEN_COHORT_IDS is unset: only cohorts with published results are searchable.");
     }
     report.environment.notes.push(
-      env.newTalentRead
-        ? "ENABLE_NEW_TALENT is on: search documents read the 078 CandidateProfile tables."
-        : "ENABLE_NEW_TALENT is off: search documents read legacy StudentProfile / ProgramMember mirrors.",
+      "Search documents read CandidateProfile / CandidateVisibility / ProgramEnrollment. ENABLE_NEW_TALENT is a report label only.",
     );
   }
 
@@ -609,9 +607,6 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         s.count = persisted.enrollmentDomainMismatch;
         findings.push(finding({ category: "DATA_QUALITY_ERROR", severity: "WARNING", searchVerdict: "PASS", check: "index:enrollment-domain", sample: s, message: "Enrollment.domain differs from its Challenge.domain — the challenge loader filters on one and labels by the other" }));
       }
-    }
-    if (!env.newTalentRead) {
-      report.environment.notes.push("Drift causes LEGACY_MIRROR_* are live read errors in this environment because ENABLE_NEW_TALENT is off.");
     }
   }
 

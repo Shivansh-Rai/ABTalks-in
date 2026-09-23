@@ -16,13 +16,10 @@ import type {
  * `ProgramMember.recruiterVisibilityConsentAt` and gated the other three tracks
  * on nothing at all, which is not a gate, it is a gap.
  *
- * Deliberately NOT behind `ENABLE_NEW_TALENT`. That flag decides where
- * candidate *data* is read from; this decides who may be shown at all, and the
- * answer to that must not depend on a rollout switch. `CandidateVisibility` is
- * a production table today, populated by 078 Phase 2b.
- *
- * `openToWork` (`CandidatePreference`) is a DIFFERENT question — whether the
- * candidate is actively looking. Never substitute one for the other.
+ * Visibility is always `CandidateVisibility` on `User`. There is no
+ * `ENABLE_NEW_TALENT` runtime switch. `openToWork` (`CandidatePreference`) is a
+ * different question — whether the candidate is actively looking. Never
+ * substitute one for the other.
  */
 export function searchableUserWhere(): Prisma.UserWhereInput {
   return {

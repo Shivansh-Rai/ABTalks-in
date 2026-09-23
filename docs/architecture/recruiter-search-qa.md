@@ -28,17 +28,18 @@ Scout chat · filter dialog · guest desk
 
 **There is no search index.** No Elasticsearch/Meilisearch/FTS/vector store.
 The "search document" is a `CandidateDossier` built per request from live
-tables; `ENABLE_NEW_TALENT` decides whether it reads the 078 `CandidateProfile`
-tables (production: ON) or the legacy `StudentProfile` / `ProgramMember`
-mirrors. Persisted copies that can go stale: `TalentRequestMatch` rows and
-`TalentSearchSession` snapshots.
+canonical tables (`CandidateProfile`, `CandidateVisibility`,
+`ProgramEnrollment`, `ActivityAttempt`). There is no `ENABLE_NEW_TALENT`
+runtime switch. Persisted copies that can go stale: `TalentRequestMatch` rows
+and `TalentSearchSession` snapshots.
 
 ### Source of truth
 
 `User` + `CandidateVisibility` + `CandidateProfile` and children
 (`CandidateSkill`→`Skill`, `CandidateEducation`, `CandidateExperience`,
-`CandidatePreference`). Track membership: `ProgramMember`+`ProgramCohort`,
-`Enrollment`+`Submission`, `HackathonParticipant`+`HackathonSubmission`.
+`CandidatePreference`). Track membership: AI-cohort `ProgramEnrollment`
+(`pe_pm_*`) + `ProgramCohort`, challenge `ProgramEnrollment` (`pe_enr_*`) +
+`ActivityAttempt`, `HackathonParticipant`+`HackathonSubmission`.
 
 ---
 
@@ -52,7 +53,7 @@ A candidate may appear only if **all** of:
 
 | Track | Rule |
 |---|---|
-| PROGRAM | `ProgramMember` ENROLLED/COMPLETED in a cohort that is published, or listed in `HIRE_OPEN_COHORT_IDS` (`all` = ENROLLING/ACTIVE) |
+| PROGRAM | AI-cohort `ProgramEnrollment` (`pe_pm_*`) mapped ENROLLED/COMPLETED in a cohort that is published, or listed in `HIRE_OPEN_COHORT_IDS` (`all` = ENROLLING/ACTIVE) |
 | CLAUDE | `HIRE_CHALLENGE_POOL` on; CLAUDE enrolment with submissions ≥ max(floor, stated days) |
 | CHALLENGE_60 | same, SE / DS / AI enrolments |
 | HACKATHON | participant whose team has a submission |
@@ -233,7 +234,7 @@ OVERALL STATUS       READY | READY WITH WARNINGS | NOT READY + reasons
 1. `npm run audit:search-explain -- --user=<id> --skills=... [--city=...]`.
 2. Read `summary` and `gate`. A failing gate with the candidate loaded is a **VISIBILITY_ERROR** — stop and fix the loader query.
 3. Read the filter table: `DISAGREE` rows carry the classification.
-   - `SEARCH_INDEX_STALE` → compare `drift` (document vs canonical). Legacy mirror? `ENABLE_NEW_TALENT`. Split skill? QA-KI-004. `roleTitles` drift: `ROLE_TITLES_NOT_ATTACHED` (ERROR — a path scored without `attachRoleTitles`) or `ROLE_TITLE_MISSING` (a headline, target role or job title the document lacks).
+   - `SEARCH_INDEX_STALE` → compare `drift` (document vs canonical). Split skill? QA-KI-004. `roleTitles` drift: `ROLE_TITLES_NOT_ATTACHED` (ERROR — a path scored without `attachRoleTitles`) or `ROLE_TITLE_MISSING` (a headline, target role or job title the document lacks).
    - `DATA_QUALITY_ERROR` → the candidate's data explains it (pasted skill list, cohort skills never synced). Search is correct.
    - `SEARCH_FILTER_ERROR` → the matcher is looser than documented; write a golden test first.
 

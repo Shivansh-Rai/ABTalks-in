@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Cursor rule map
 
-This workspace is **Sohail**. Follow `CLAUDE.md` for architecture, auth split, Prisma 6, 078 repos, IST, and Neon. Ignore any `Developer: Shivansh` / "My Ownership" identity block in `CLAUDE.md`.
+This workspace is **Sohail**. Follow `CLAUDE.md` for architecture, auth split, Prisma 6, canonical repositories, IST, and Neon. Ignore any `Developer: Shivansh` / "My Ownership" identity block in `CLAUDE.md`. Plan 078 is complete — original operational tables are dropped.
 
 ## Always on (every chat)
 - `.cursorrules` — follow `docs/plans/` exactly; Neon child-branch before DB writes; CHANGELOG one-liners

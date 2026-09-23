@@ -2,26 +2,15 @@
 
 > **Purpose of this file:** Single-source-of-truth context to start fresh chats. Paste this at the beginning of any new conversation so the AI has full project context.
 
-> **Last updated:** 2026-08-24, reconciled against commit `3b040d8` (master — "Merge branch 'feature/student-dashboard' into master"). The student-dashboard hub itself landed one merge earlier, at `d404d04` (PR #199); `3b040d8` is the verified current `master` HEAD. Covers everything logged under `## Pending reconcile` in `docs/CHANGELOG.md` through 2026-08-24.
+> **Last updated:** 2026-09-23, reconciled against commit `f261b33d` (master — 078 closure). Canonical architecture is live; original legacy operational tables are dropped in production. Pending CHANGELOG lines through the 078 closure were folded here; the CHANGELOG list itself was not cleared.
 
-> **`/hire` is live on `master` and was not described here.** Scout, the
-> recruiter desk and the engagement flow shipped with `feat/hire-scout-078`
-> and supersede the `/talent` pool browser, which is removed. This document
-> had not caught up: it still described the pool browser and listed building
-> the recruiter experience as a future priority. The sections below now
-> describe what is actually deployed.
->
-> The feature is behind no flag of its own, but the pool it can reach is
-> bounded by `HIRE_OPEN_COHORT_IDS` and `HIRE_CHALLENGE_POOL`, both unset by
-> default — so a fresh environment reaches published cohorts only.
+> **`/hire` is live.** Scout, the recruiter desk and the engagement flow
+> shipped with `feat/hire-scout-078` and supersede the `/talent` pool browser,
+> which is removed. The pool `/hire` can reach is bounded by
+> `HIRE_OPEN_COHORT_IDS` and `HIRE_CHALLENGE_POOL`, both unset by default — so
+> a fresh environment reaches published cohorts only.
 
-> **Read this before changing anything data-related.** The platform is **mid-migration**. Plan 078 added a new data model **alongside** the existing one. Three states must be kept apart:
->
-> - **A. LEGACY DATA MODEL** — still live, still populated, and **authoritative for every read** in production.
-> - **B. NEW 078 DATA MODEL** — the additive tables already exist in production and are receiving **dual-writes** on supported paths (`ENABLE_DUAL_WRITE` is on).
-> - **C. TARGET STATE** — the new model becomes authoritative only after backfill, verification, **Phase 6** read switching, **Phase 7** write cutover, and eventually **Phase 8** cleanup. None of those have started.
->
-> Nothing legacy has been retired or dropped. See §4 (078 subsection) for the model and §18 for phase status.
+> **Read this before changing anything data-related.** Plan 078 is **complete**. Production current-state is the canonical model (`CandidateProfile`, `ProgramEnrollment`, `ActivityAttempt` / `ActivityEvaluation`, `PointsAccount` / `PointsTransaction`, `Credential`, `CampusAmbassadorApplication`, `CandidateVisibility`). Original operational tables (`StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`, `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`) and `User.synergyPoints` are **dropped**. Unique history lives only in explicit `Historical*` archives. There is no dual-write and no 078 migration control plane. See §4 and §18.
 
 ---
 
@@ -41,11 +30,11 @@ User
                       → recruiter shortlists / evaluates / hires
 ```
 
-A candidate is expected to participate in **several learning programs at once** (e.g. the SE challenge, the Claude track, and the AI Cohort). Multi-enrollment is a first-class requirement, not an edge case — see §5 and the 078 learning spine in §4.
+A candidate is expected to participate in **several learning programs at once** (e.g. the SE challenge, the Claude track, and the AI Cohort). Multi-enrollment is a first-class requirement, not an edge case — see §5 and the canonical learning spine in §4.
 
 ### The learning surfaces that feed it
 
-These are the products that exist today. They share one auth + admin spine, and under 078 they become implementations of the same learning spine rather than four separate systems:
+These are the products that exist today. They share one auth + admin spine and the same canonical learning spine (`ProgramEnrollment` / `ActivityAttempt` / `ActivityEvaluation`):
 
 1. **60-Day Challenge** — daily tasks across SE / DS / AI / CLAUDE, GitHub + LinkedIn proof of work, streaks, leaderboard, certificates.
 2. **AI Cohort Program** (`/program`, formerly "B2B AI Mastery") — a 31-day cohort for working professionals with server-verified Daily Missions, GitHub commit tracking, AI-graded projects, an exit voice interview, and a recruiter talent portal (`/talent`).
@@ -54,7 +43,7 @@ These are the products that exist today. They share one auth + admin spine, and 
 
 ### What the candidate profile is meant to contain
 
-The unified profile is the durable asset. Its intended contents (the 078 schema already models all of these — see §4):
+The unified profile is the durable asset. Its intended contents (the canonical schema already models all of these — see §4):
 
 education · professional experience · projects · skills · external certifications · LinkedIn · GitHub · résumé · achievements · platform-issued credentials · assessments · interview results · hackathon achievements · evidence-derived skill strength.
 
@@ -63,7 +52,7 @@ education · professional experience · projects · skills · external certifica
 - external coding profiles — LeetCode, CodeChef, Codeforces, Kaggle and similar
 - opportunity-type preferences — internship / full-time / freelance / contract / part-time
 
-Both are expected to land as **additive** schema later. Neither blocked the 078 migration, and neither has been built. `CandidatePreference` today covers `openToWork`, `availableFrom`, preferred roles/locations and remote preference only.
+Both are expected to land as **additive** schema later. Neither blocked 078, and neither has been built. `CandidatePreference` today covers `openToWork`, `availableFrom`, preferred roles/locations and remote preference only.
 
 **Vision:** Public, verifiable proof of work produces real skill and real visibility — and that proof, not a claim, is what recruiters search.
 
@@ -76,12 +65,10 @@ Both are expected to land as **additive** schema later. Neither blocked the 078 
 - Solo developer, building with Cursor + Claude (Claude plans, Cursor executes)
 - Free or near-free hosting (Vercel free tier, Neon free tier)
 - IST (Asia/Kolkata) for all day boundaries. The Program track previously ran on America/Chicago; `PROGRAM_TZ` in `features/program/constants.ts` is now **`Asia/Kolkata`** (changed 2026-08-12). Keep using `PROGRAM_TZ` rather than hard-coding — cohort `startsAt`/`endsAt` round-trip through `fromZonedTime(PROGRAM_TZ)`.
-- **Scale (observed in production during the 078 migration, 2026-08):** ~12,803 `User` rows, ~3,183 legacy challenge `Enrollment` rows, ~15k historical submissions/attempt-scale rows, ~15k `SynergyEvent`/points-scale rows. The old "~1,500 students" ceiling in this document was obsolete and has been removed; no new hard maximum is being asserted — size work against these observed volumes.
+- **Scale (observed in production at 078 closure, 2026-09-23):** ~10,989 `CandidateProfile` rows, ~3,469 `ProgramEnrollment` rows, ~19,558 `ActivityAttempt` / `ActivityEvaluation` rows, ~12,825 `PointsAccount` rows. Historical archives: QuizAttempt 1,213 · ProgramMission 899 · Certificate 3,423 · Submission 17,376 · SynergyEvent 16,460 · StudentProfile 3,049. No hard maximum is asserted — size work against these volumes.
 - **One Neon project, several branches** — no longer "one database for dev and prod":
-  - `production` branch (`br-soft-bread-amu5tms1`) — the live database
-  - `plan-078-phase1` — sample-only 078 migration test bed (never full-backfilled)
-  - `plan-078-rehearsal` — full unscoped Phase 1–5 rehearsal child, created from latest production
-  - `plan-078-prod-snapshot-20260824` (`br-silent-art-amv1yn8s`) — snapshot taken before the Phase 1 production rollout
+  - `production` branch (`br-soft-bread-amu5tms1`, host `ep-nameless-term-ams9a5e3`) — the live database
+  - 078 rollback children exist as snapshots (for example `plan-078-final-destructive-snapshot-20260922T183523Z`, `plan-078-final-drop-rehearsal-20260922T193545Z`). They are not live migration beds.
   - project id `little-fog-11679677`
 - **All Neon mutations must target a production child branch** unless that exact production write is explicitly authorized.
 
@@ -116,49 +103,54 @@ Both are expected to land as **additive** schema later. Neither blocked the 078 
 
 | Operation | Endpoint |
 |---|---|
-| Ordinary app reads / writes | Pooled `DATABASE_URL` (`-pooler.` host is fine) |
+| Ordinary app reads | Pooled `DATABASE_URL` (`-pooler.` host is fine) |
 | Prisma migrations | `DIRECT_URL` (non-pooler) |
-| Migration scripts / Phase 2 backfill / drift checks | Direct host — **never** `-pooler` |
-| 078 dual-write interactive transactions | `DIRECT_URL`. `writeClient()` in `lib/db.ts` returns the direct client whenever dual-write is on, stripping `-pooler.` from `DATABASE_URL` as a fallback |
+| Interactive transactions / writes via `writeClient()` | `DIRECT_URL` (non-pooler). `writeClient()` in `lib/db.ts` **always** uses the direct session, stripping `-pooler.` from `DATABASE_URL` as a fallback |
 
-**Observed failure (do not re-litigate):** Neon's transaction-mode pooler drops Prisma **interactive transactions that use `SAVEPOINT`**. The 078 dual-write wraps every new-side write in a savepoint so a new-table failure cannot fail the legacy request — through the pooled endpoint that behavior failed; through the direct Neon endpoint it succeeded. Any interactive-transaction / migration work that depends on savepoints must use the **non-pooler** host. `PRODUCTION_NEON_HOST_ID` guards scripts against pointing at the wrong host.
+**Observed failure (do not re-litigate):** Neon's transaction-mode pooler drops Prisma **interactive transactions that use `SAVEPOINT`**. Dual-write (retired 2026-09-23) needed that behaviour; any remaining interactive-transaction / migration work that depends on savepoints must still use the **non-pooler** host. `PRODUCTION_NEON_HOST_ID` guards scripts against pointing at the wrong host.
 
 ---
 
 ## 4. Domain model (Prisma schema)
 
-> **Two data models coexist right now.** Everything from *Auth tables* through *Program tables* below is the **LEGACY model (A)**: still live, still populated, still **authoritative for every production read**, and still what you debug against. The final subsection — *078 platform architecture* — is the **NEW additive model (B)**: those tables exist in production and receive dual-writes on supported paths, but no UI reads them. Nothing legacy has been retired, renamed or dropped.
+> **One canonical model.** The 078 redesign is complete and the original operational tables are dropped. Debug against `CandidateProfile`, `ProgramEnrollment`, `ActivityAttempt` / `ActivityEvaluation`, `PointsAccount` / `PointsTransaction`, and `Credential`. Unique history that cannot be reconstructed from live rows lives only in `Historical*` archives. See `docs/ARCHITECTURE.md`.
 
 ### Auth tables (Auth.js standard)
-- `User` — `email`, `password` (dev only, plaintext), `role` (STUDENT | ADMIN | RECRUITER), **`synergyPoints`** (the single user-level SP wallet since 2026-08-18), `deletedAt` / `anonymizedAt` (soft delete + PII scrub, added by 078 Phase 1)
+- `User` — `email`, `password` (dev only, plaintext), `role` (STUDENT | ADMIN | RECRUITER), `deletedAt` / `anonymizedAt` (soft delete + PII scrub), `disabledAt` / `sessionInvalidatedAt` (operator freeze), first-touch UTM fields. **No `synergyPoints` column** — the wallet is `PointsAccount`.
 - `Account`, `Session`, `VerificationToken`
 
 ### Core enums
 - `Role`: STUDENT, ADMIN, **RECRUITER**
-- `UserType`: STUDENT, PROFESSIONAL — a `StudentProfile` row can represent either. Distinct from `Role`.
+- `UserType` / `CandidatePersona`: STUDENT, PROFESSIONAL — display persona on `CandidateProfile.primaryPersona`. Distinct from `Role`.
 - `Domain`: SE, DS, AI, CLAUDE (Claude AI Mastery track — synchronized cohort, see `Challenge.startsAt`). Was ML originally, renamed to DS.
-- `EnrollmentStatus`: ACTIVE, COMPLETED, ABANDONED
-- `SubmissionStatus`: ON_TIME, LATE
+- `EnrollmentStatus`: ACTIVE, COMPLETED, ABANDONED — challenge-facing mapping from `ProgramEnrollment` (`pe_enr_*`)
+- `EnrollmentStatusV2`: APPLIED, WAITLISTED, ACTIVE, COMPLETED, DROPPED, REMOVED — stored on `ProgramEnrollment`
+- `ProgramMemberStatus`: APPLIED, WAITLISTED, ENROLLED, COMPLETED, DROPPED — compatibility enum mapped to/from `EnrollmentStatusV2` in `repositories/program-state.ts`. There is **no** `ProgramMember` table.
+- `SubmissionStatus` / `AttemptLateness`: ON_TIME, LATE (attempts also have `NOT_APPLICABLE`)
 
-### Challenge tables
-- `StudentProfile` (1:1 with User) — `userType`, `fullName`, **`domain` (nullable — null until the user joins their first track; registration is profile-only)**, `collegeId` (nullable, plain column with no FK; `college` stays the display string), `skills[]`, `phone` + `phoneVerified` / `phoneVerifiedAt` (admin-only visibility), `resumeUrl`, `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`, **`synergyPoints`** (denormalized SP balance). Student-only: `college`, `graduationYear`. Professional-only: `organization`, `role`, `yearsExperience`. Campus-ambassador: `isCampusAmbassadorCandidate`, `ambassadorAppliedAt`, `ambassadorDismissedAt`.
+### Identity / candidate
+- `CandidateProfile` (1:1 with User) — `fullName`, `headline`, `summary`, `primaryPersona`, `phone` + `phoneVerified` / `phoneVerifiedAt` (admin-only visibility), `resumeUrl`, `linkedinUrl`, `githubUsername`, `referralCode` (unique), `isReadyForInterview`. Structured children: `CandidateEducation` (includes `collegeId`), `CandidateExperience`, `CandidateProjectEntry`, `CandidateCertification`, `CandidateSkill`, `CandidateLink`, `CandidatePreference`.
+- `CandidateVisibility` — recruiter-discovery enforcement (`searchableByRecruiters` defaults true). Not a candidate preference screen.
+- `CampusAmbassadorApplication` — dashboard opt-in / dismiss. Not a platform role.
+- `CandidateResume` — uploaded résumé + parse merge.
+- `PhoneVerification` (unique userId) — E.164 phone, verified flag; bridges OTP done before `CandidateProfile` exists.
+- `Referral` (unique referredId) — referrerId, referredId, rewardGiven.
+
+### Challenge catalog (content; membership is `ProgramEnrollment`)
 - `Challenge` — one per Domain, `totalDays = 60`. Optional `startsAt: DateTime?` — when set (CLAUDE), the reference start is `max(startsAt, enrollment.startedAt)`; null = rolling start (SE/DS/AI).
 - `DailyTask` — 1–60 per Challenge: `problemStatement`, `learningObjectives`, `resources`, `difficulty`, `estimatedMinutes`, `linkedinTemplate` (`{{github_link}}` placeholder), `solutionApproach` (admin-only), `tags`, `dayContent` (Json?) for rich CLAUDE day pages.
-- `Enrollment` (unique userId+challengeId) — daysCompleted, currentStreak, longestStreak, lastSubmittedDay, status, startedAt, completedAt; 0–1 `Certificate`.
-- `Submission` (unique enrollmentId+dayNumber) — `githubUrl` and `linkedinUrl` are both **nullable** (proof URLs became optional when Synergy landed); `githubUrl` still globally unique when present. Has 0–1 `SynergyEvent`.
-- `Quiz` (unique challengeId+weekNumber), `QuizQuestion` (10 per quiz), `QuizAttempt` (unique userId+quizId)
-- `Referral` (unique referredId) — referrerId, referredId, rewardGiven
-- `PhoneVerification` (unique userId) — E.164 phone, verified flag; bridges OTP done before `StudentProfile` exists
+- Challenge membership is `ProgramEnrollment` with id `pe_enr_<legacyEnrollmentId>` (or a plain cuid for post-cutover joins). Days/streaks live as snapshots (`trackCurrentStreak` / `trackLongestStreak`) plus `ActivityAttempt` rows.
+- Day submissions are `ActivityAttempt` (`aa_sub_*`); quiz answers are `ActivityAttempt` (`aa_qa_*`). GitHub URL uniqueness is an `ActivityAttempt` payload unique index.
+- `Quiz` (unique challengeId+weekNumber), `QuizQuestion` (10 per quiz). Historical quiz JSON lives in `HistoricalQuizAttempt`.
 
-### Synergy / rewards (LEGACY — still authoritative)
-- **One wallet:** `User.synergyPoints` is the SP balance for challenge *and* hackathon students (since 2026-08-18). `StudentProfile.synergyPoints` is kept as a temporary rollback mirror.
-- `SynergyEvent` — append-only SP ledger: userId, points (+/-), type, optional submissionId (unique) / enrollmentId / dayNumber / rankAtAward / reason / createdByAdminId. **Every SP movement gets a row** — redemptions and refunds included. Includes `BALANCE_RECONCILIATION` rows written when an admin reset/reject would otherwise push a balance negative.
-- The new 078 equivalents (`PointsAccount` / `PointsTransaction`) are written **in addition** while dual-write is on. They are not authoritative — see §4's 078 subsection.
+### Synergy / rewards
+- **One wallet:** `PointsAccount.balance` (optimistic `version` lock). `PointsTransaction` is the append-only ledger (`idempotencyKey @unique`).
+- Every SP movement writes a `PointsTransaction` — awards, redemptions, refunds, and `BALANCE_RECONCILIATION` rows when an admin reset/reject would otherwise push a balance negative.
 - `MarketplaceItem` — slug, title, description, `costSP`, imagePath, active, sortOrder
 - `Redemption` — userId, itemId, costSP + itemTitle snapshots, `status` (PENDING | SHIPPED | FULFILLED | …), shippingAddress, recipientPhone, trackingNote
 
-### Certificates
-- `Certificate` — `certificateId` (public, `ABT-XX-XXXXX`, Crockford alphabet, unique), userId, `type` (CLAUDE_CHALLENGE | HACKATHON | COHORT | WORKSHOP), `status` (ISSUED | REVOKED), `recipientName` + `domain` + `metadata` **snapshots at issue time** (never re-read from the profile), `enrollmentId` (unique, one cert per completed enrollment), revokedAt / revokedReason. Hackathon placement certs (winner / 2nd / 3rd / top5) are extra `HACKATHON` rows distinguished by `metadata.hackathonVariant`, sharing the same overlay layout.
+### Credentials
+- `Credential` — `credentialId` (public, `ABT-XX-XXXXX`, Crockford alphabet, unique), userId, `type` / `sourceType` / `sourceKey` (`@@unique` so double-issue is structurally impossible), `status` (ISSUED | REVOKED), `recipientName` + `metadata` **snapshots at issue time**. Hackathon placement certs are extra `HACKATHON` rows distinguished by `metadata.hackathonVariant`. Historical certificate provenance is `HistoricalCertificate`.
 
 ### Recruiter-facing (challenge side)
 - `RecruiterReview` (unique userId) — admin-curated anonymized assessment report: `/100` scores (communication / programming / behavior) + feedback, resume sections (`skillGroups`, `education`, `certifications`, `experience`, `projects`, `achievements[]`, `languagesSpoken[]`), `codingChallenges`, strengths / areasForGrowth, `recommendation` (`RecommendationLevel`), admin-only `logistics` + `compensation`, `isPublished` + `shareToken` (unique) for the public `/r/[token]` page.
@@ -173,7 +165,7 @@ Both are expected to land as **additive** schema later. Neither blocked the 078 
 - `RecruiterEmailOtp` — email OTP baseline for recruiter sign-in (recruiters have their own door at `/talent/login`, not the candidate Google button).
 
 ### Reference data
-- `College` — canonical institution catalog (54,651 institutions), queried with a pg_trgm index. `StudentProfile.collegeId` stores the picked id; `StudentProfile.college` remains the display string so no read path has to join.
+- `College` — canonical institution catalog (54,651 institutions), queried with a pg_trgm index. `CandidateEducation.collegeId` stores the picked id.
 
 ### Notifications
 - `Notification` + `NotificationRead` — admin-composed notices (`/admin/notifications`). Read state is keyed by an **opaque string, deliberately not an FK**. Automated workshop / hackathon / cohort notices are **derived at read time** from `EVENTS`, hackathon config and `ENROLLING` `ProgramCohort` rows — no rows, no cron, and the read path stays write-free. The bell shows only the newest 5 items (`FEED_LIMIT`), so there is deliberately no dismiss control and no dismissed state.
@@ -192,49 +184,39 @@ Both are expected to land as **additive** schema later. Neither blocked the 078 
 - `HackathonParticipant` — `userId` **globally unique** (one hackathon registration per person), teamId + `slotIndex` (unique together), isLeader, contact/college fields, `sourceSlug` (share-link attribution)
 - `HackathonRemoval` — append-only removal log. The participant row is **hard-deleted** on removal (frees `userId` and the slot); this table preserves who/by whom/original `sourceSlug` so a rejoin keeps attribution. `removedByRole`: LEADER | ADMIN.
 - `HackathonEvent` — singleton (id = 1), `problemStatement` for the live kickoff brief
-- `HackathonProblem`, `HackathonSubmission` — the submission flow at `/hackathon/submission`. `HackathonSubmission.teamId` is unique: **one submission per team**, which is exactly why hackathons stay a separate bounded subsystem under 078 (see below).
+- `HackathonProblem`, `HackathonSubmission` — the submission flow at `/hackathon/submission`. `HackathonSubmission.teamId` is unique: **one submission per team**, which is exactly why hackathons stay a separate bounded subsystem (see below).
 - `HackathonLink` — named share links (`?s=<slug>`), inserted by hand / seeded
 
 ### Workshop table
-- `WorkshopRegistration` — every workshop/webinar signup, **all events in one table** keyed by `eventId` (matches `WorkshopEvent.id` in `components/workshop/events-data.ts`; events stay code-defined because they carry marketing copy + Lucide icons). `userId` is **REQUIRED** — Google sign-in is mandatory, so every row belongs to a real User. Only constraint is `@@unique([eventId, userId])`: the same person is expected to register for each weekly workshop, but not twice for the same one. Row snapshots name/email/phone/role/organization/graduationYear because a workshop-only attendee has a `User` but no `StudentProfile`.
+- `WorkshopRegistration` — every workshop/webinar signup, **all events in one table** keyed by `eventId` (matches `WorkshopEvent.id` in `components/workshop/events-data.ts`; events stay code-defined because they carry marketing copy + Lucide icons). `userId` is **REQUIRED** — Google sign-in is mandatory, so every row belongs to a real User. Only constraint is `@@unique([eventId, userId])`: the same person is expected to register for each weekly workshop, but not twice for the same one. Row snapshots name/email/phone/role/organization/graduationYear because a workshop-only attendee has a `User` but may have no `CandidateProfile`.
 
-### Program tables (`/program` track, ~20 models)
-Enums: `ProgramCohortStatus` (DRAFT | ENROLLING | ACTIVE | COMPLETED | ARCHIVED), `ProgramMemberStatus` (APPLIED | WAITLISTED | ENROLLED | COMPLETED | DROPPED), `ProgramLanguage` (PYTHON | SQL | JAVASCRIPT | YAML), `ProgramEntrySection`, `ProgramInterviewStatus`, `ProgramProjectStatus`, `ProgramMissionType` (CODE_SPRINT | SHIP_IT | DATA_ROOM | PROMPT_FORGE | BOSS_BUILD), `ProgramDayState` (LOCKED | AVAILABLE | PASSED | SKIPPED).
+### Program tables (`/program` track)
+Enums: `ProgramCohortStatus` (DRAFT | ENROLLING | ACTIVE | COMPLETED | ARCHIVED), `ProgramMemberStatus` (compatibility mapping only), `ProgramLanguage` (PYTHON | SQL | JAVASCRIPT | YAML), `ProgramEntrySection`, `ProgramInterviewStatus`, `ProgramProjectStatus`, `ProgramMissionType` (CODE_SPRINT | SHIP_IT | DATA_ROOM | PROMPT_FORGE | BOSS_BUILD), `ProgramDayState` (LOCKED | AVAILABLE | PASSED | SKIPPED).
 
-- `ProgramCohort` — name, `joinCode` (unique), startsAt / endsAt, capacity (100), status, `requiresJoinCode` (default true; false = open enrollment), `resultsPublishedAt`
-- `ProgramMember` — professional profile kept **deliberately separate from `StudentProfile`** (fullName, education, university, …), status, scores, skip tokens, highest unlocked day. **`jobRole`, `company` and `yearsExperience` are nullable** (registration became profile-only on 2026-08-20). Also carries `recruiterVisibilityConsentAt` — a legacy talent gate, **not** a user toggle; new applications stamp it automatically.
-- `ProgramModule`, `ProgramDay`, `ProgramConceptQuestion`, `ProgramMissionSubmission`, `ProgramConceptAttempt`
+- `ProgramCohort` — name, `joinCode` (unique), startsAt / endsAt, capacity (100), status, `requiresJoinCode` (default true; false = open enrollment), `resultsPublishedAt`. This is the **calendar / product** cohort table; the 078 learning catalog has a separate `Cohort` model.
+- AI-cohort membership is `ProgramEnrollment` with id `pe_pm_<legacyProgramMemberId>` (or a plain cuid for post-cutover joins). Status, skip tokens, unlock floor, and score/recommendation snapshots live on that row. Identity (name, job, company) is `CandidateProfile` / children. Recruiter permission is `CandidateVisibility`, not a membership stamp.
+- `ProgramModule`, `ProgramDay`, `ProgramConceptQuestion`, `ProgramConceptAttempt` — day/mission catalog and concept checks
+- Mission submissions are `ActivityAttempt` (`aa_ms_*`); unique history is `HistoricalProgramMission`
 - `ProgramEntryQuestion`, `ProgramEntryAttempt` (entry assessment — retained in schema, bypassed in product)
 - `ProgramVideo`, `ProgramExercise`, `ProgramExerciseCompletion`
-- `ProgramCommitDay` — one row per member per qualifying GitHub commit day
-- `ProgramProject` (AI-graded module projects), `ProgramInterview` (exit voice interview + Claude evaluation)
-- `RecruiterProfile`, `RecruiterShortlistItem` — the `/talent` portal
+- `ProgramCommitDay`, `ProgramProject`, `ProgramInterview`, `GeneralInterview` — live children keyed by `programEnrollmentId`
+- `RecruiterProfile`, `RecruiterShortlistItem` — shortlist candidate identity is `candidateUserId` (FK to `User`); `memberId` is retained as a scalar id string (`pe_pm_*`)
 
 ---
 
-### 078 platform architecture — additive production schema, migration in progress
+### Canonical platform architecture (078 complete)
 
-Source plans: `docs/plans/078-platform-data-architecture-redesign.md` (the design),
-`078-production-conservative-rollout.md` (the production gate checklist),
-`078-sample-validation-and-rollout.md` (the rehearsal runbook).
+Source plans: `docs/plans/078-platform-data-architecture-redesign.md` (the design).
+Live summary: `docs/ARCHITECTURE.md`.
 
-**State as of 2026-08-24:** additive schema **applied to production**; dual-write
-**live**; historical backfill **in progress and incomplete**; **no read switched
-over**. Every `ENABLE_NEW_*` flag is off. Legacy remains authoritative. See §18
-for the phase-by-phase status.
+**State as of 2026-09-23:** every 078 wave through the final drop is **done**. The
+canonical tables serve reads and writes. Original operational tables and
+`User.synergyPoints` are dropped in production. Dual-write, migration flags, and
+the 078 script/cron control plane are retired. See §18.
 
-**What is in production:** 47 new tables from
-`20260820120000_platform_data_architecture_phase1`, plus 3 audit tables from
-`20260820130000_phase2_migration_audit` (`MigrationRun`, `MigrationConflict`,
-`MigrationQuarantine`). Both migrations are recorded as applied. Phase 1 also
-added `User.deletedAt` / `User.anonymizedAt`, made `Certificate` / `SynergyEvent` /
-`RecruiterShortlistItem` FKs `ON DELETE RESTRICT` (so a hard user delete can no
-longer destroy recruiting evidence), and made actor FKs `SET NULL`. No
-`DROP TABLE`, `DROP COLUMN` or `RENAME` was part of it.
-
-A later additive migration `20260824153000_candidate_visibility_searchable_default`
-changed **only the column default**: `CandidateVisibility.searchableByRecruiters`
-`DEFAULT false` → `DEFAULT true`. It did **not** bulk-update existing rows.
+Public/historical identifier strings stay stable (`pe_enr_*`, `pe_pm_*`,
+`aa_sub_*`, `aa_qa_*`, `aa_ms_*`, `ABT-*` credential ids). New rows may use
+plain cuids.
 
 #### Three bounded contexts + one shared identity
 
@@ -254,8 +236,6 @@ changed **only the column default**: `CandidateVisibility.searchableByRecruiters
 **RECRUITING** — `Organization`, `OrganizationMember`, `RecruiterProfile`,
 `TalentList`, `TalentListItem`, `CandidateNote`, `Job`, `JobApplication`,
 `JobSkill`, `AssessmentReport`, `AssessmentScore`, `AssessmentReportShare`
-(`Job` / `JobApplication` / `RecruiterProfile` are pre-existing tables the
-recruiting context adopts; `JobSkill` and the rest are new)
 
 **CROSS-CUTTING** (written by many, read by the profile) — `Credential`,
 `CandidateAchievement`, `PointsAccount`, `PointsTransaction`, `SkillEvidence`
@@ -294,15 +274,12 @@ and fixed-date (the Program cohort).
 
 - **`ActivityAttempt`** — what the candidate submitted or did (payload, attempt
   number, timestamps, lateness). Candidate/enrollment-owned: every attempt belongs
-  to exactly one enrolled user.
+  to exactly one enrolled user. **This is the live serving representation** for
+  challenge days, quizzes, and program missions.
 - **`ActivityEvaluation`** — what was *decided* about that attempt.
   `EvaluatorType`: `AUTO | AI | HUMAN | EXTERNAL | SELF`. Multiple evaluations per
   attempt, so re-grading and admin override keep full history instead of
   destructively overwriting a score.
-
-**This is the target representation, not the serving one.** No live UI reads
-`Activity` / `ActivityAttempt` / `ActivityEvaluation`. The challenge still reads
-`Submission`; the program still reads `ProgramMissionSubmission`.
 
 #### Hackathon: deliberately a separate bounded subsystem
 
@@ -329,8 +306,7 @@ that subsystem's internals.
 **Target vs today:** the target architecture supports **multiple hackathons per
 person** (participation is per event). The live schema still has
 `HackathonParticipant.userId` **globally unique** — one hackathon registration per
-person, forever. That constraint has **not** been changed and is not part of this
-rollout.
+person, forever. That constraint has **not** been changed.
 
 #### Credentials, certifications and evidence — three different things
 
@@ -342,44 +318,45 @@ rollout.
 | `CandidateSkill.evidenceScore` / `.verified` | **derived / cached** from `SkillEvidence`, recomputed on evidence insert |
 | `CandidateAchievement` | the generic bridge for accomplishments from any subsystem into the unified profile |
 
-#### Points — both representations coexist
+**`SkillEvidence` has no live writer** (verified 2026-09-04, still true at 078
+closure). Only the historical `migrate-2i-achievements` backfill wrote it, so
+`CandidateSkill.evidenceScore` / `.verified` are frozen at backfill time. Fixing
+that is P0-0 in plan 112.
 
-- **Legacy (authoritative today):** `User.synergyPoints` balance + append-only
-  `SynergyEvent` ledger. Live UI and business logic still read and write these.
-- **New (target):** `PointsTransaction` is the append-only source of truth, with
-  `idempotencyKey @unique` making duplicate awards structurally impossible.
-  `PointsAccount.balance` is a cached balance written in the same transaction,
-  with a `version` optimistic lock and a nightly reconcile.
+#### Points
 
-While dual-write is on, a points movement writes **both**. The legacy balance has
-**not** been retired.
+`PointsTransaction` is the append-only source of truth, with `idempotencyKey
+@unique` making duplicate awards structurally impossible. `PointsAccount.balance`
+is a cached balance written in the same transaction, with a `version` optimistic
+lock. `User.synergyPoints` and `SynergyEvent` are gone; unique old ledger rows
+are `HistoricalSynergyEvent`.
 
-#### Interviews — target mapping only
+#### Interviews
 
 ```
 Activity(type = INTERVIEW) → ActivityAttempt → ActivityEvaluation
                            → AssessmentReport → AssessmentScore
 ```
 
-`ProgramInterview` (the exit voice interview) is still the **legacy, live** model
-and has **not** been migrated. Future interview-agent work should go through the
-repository layer (§9) and the new models rather than binding tightly to
+`ProgramInterview` (the exit voice interview) is still the **live** model for the
+AI Cohort, now keyed by `programEnrollmentId`. Future interview-agent work should
+go through the repository layer (§9) rather than binding tightly to
 `ProgramInterview`.
 
-#### Source of truth vs cache (new model)
+#### Source of truth vs cache
 
 | Fact | Source of truth | Cache |
 |---|---|---|
 | Points balance | `PointsTransaction` (SUM) | `PointsAccount.balance` |
 | Activity completion | `ActivityEvaluation.passed` | `ActivityAttempt.passed`, `EnrollmentProgress.completedActivities` |
-| Progress % / score / streak | attempts + evaluations | `EnrollmentProgress.*` (same-transaction write + nightly recompute) |
+| Progress % / score / streak | attempts + evaluations | `EnrollmentProgress.*` (same-transaction write); challenge streaks also snapshot on `ProgramEnrollment.trackCurrentStreak` / `trackLongestStreak` |
 | Skill strength | `SkillEvidence` | `CandidateSkill.evidenceScore` / `.verified` |
 | Credential contents | — | **N/A — deliberate immutable snapshot** |
 
 `EnrollmentProgress` is never the input to an authorization or unlock decision;
 those recompute from attempts.
 
-#### Learning catalog seeded in production (Phase 2d)
+#### Learning catalog (seeded; still live)
 
 **5 programs · 9 cohorts · 342 activities**, seeded idempotently:
 
@@ -388,13 +365,23 @@ those recompute from attempts.
 - cohort slugs `legacy-se`, `legacy-ds`, `legacy-ai`, `legacy-claude`
   (`cohortSlugForDomain`) and `legacy-program-<programCohortId>` per existing
   `ProgramCohort` (`cohortSlugForProgramCohort`)
-- activities carry deterministic ids derived from their legacy rows —
-  `act_dt_<dailyTaskId>`, `act_pd_<programDayId>` (see `src/repositories/ids.ts`,
-  mirrored in `prisma/scripts/migrate-078-shared.ts`)
+- activities carry deterministic ids derived from their original rows —
+  `act_dt_<dailyTaskId>`, `act_pd_<programDayId>` (see `src/repositories/ids.ts`)
 
-These mappings are what give every legacy challenge/program enrollment and
-submission a **deterministic destination** in the new architecture, which is also
-what makes the backfill idempotent and re-runnable.
+#### Historical archives (immutable except compliance PII scrub)
+
+| Object | Status |
+|---|---|
+| `HistoricalQuizAttempt` | ARCHIVE — raw quiz `answers` JSON |
+| `HistoricalProgramMission` | ARCHIVE — mission payload/verdict |
+| `HistoricalCertificate` | ARCHIVE — certificate provenance |
+| `HistoricalSubmission` | ARCHIVE — submission metadata |
+| `HistoricalSynergyEvent` | ARCHIVE — legacy points events |
+| `HistoricalStudentProfile` | ARCHIVE — identity snapshot |
+
+Original tables `StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`,
+`Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent` are
+**dropped**. There is no dual-write path.
 
 ---
 
@@ -416,10 +403,9 @@ what makes the backfill idempotent and re-runnable.
 ### Synergy points (SP)
 - Per submission: `10` base `+ 5` if GitHub proof `+ 8` if LinkedIn proof (`features/synergy/scoring.ts`)
 - Referral: `3` SP
-- `User.synergyPoints` is the denormalized balance (one wallet for challenge **and** hackathon students); `StudentProfile.synergyPoints` is a temporary rollback mirror. `SynergyEvent` is the source of truth — never move SP without writing an event row.
+- `PointsAccount.balance` is the denormalized wallet (one wallet for challenge **and** hackathon students). `PointsTransaction` is the source of truth — never move SP without writing a ledger row.
 - Admin community synergy grant cap: **3000** (raised from 2000 on 2026-08-18)
-- Admin reset / reject clamps both `User` and `StudentProfile` synergy at 0 and writes a `BALANCE_RECONCILIATION` event for already-spent submission points, so the ledger can never go negative
-- While `ENABLE_DUAL_WRITE` is on, every SP movement on a wired path also writes `PointsTransaction` + `PointsAccount`. Legacy stays authoritative.
+- Admin reset / reject clamps `PointsAccount.balance` at 0 and writes a `BALANCE_RECONCILIATION` transaction for already-spent submission points, so the ledger can never go negative
 
 ### Streaks
 - `currentStreak` = consecutive ON_TIME submissions ending today/yesterday; `longestStreak` = max ever reached
@@ -438,7 +424,7 @@ what makes the backfill idempotent and re-runnable.
 - Hackathon: ViCoDathon 2026 participation certificates (`ABT-HK-XXXXX`), with per-type templates via `HACKATHON_CERTIFICATE_TEMPLATE_URL` / `_PATH`. Placement certs (winner / 2nd / 3rd / top5) are extra `HACKATHON` rows keyed by `metadata.hackathonVariant`, issuable on production via `--all --allow-production` on `issue-hackathon-award-certificates.ts`
 
 ### Marketplace
-- Redeem spends SP inside a transaction: balance check → `Redemption` row → negative `SynergyEvent`. Refund is the mirror image (also a `SynergyEvent`).
+- Redeem spends SP inside a transaction: balance check → `Redemption` row → negative `PointsTransaction`. Refund is the mirror image.
 - Catalog `costSP` currently 1800 SP across `marketplace.json`
 
 ### Quiz availability
@@ -446,7 +432,7 @@ what makes the backfill idempotent and re-runnable.
 - Already-attempted → show score; not seeded → show nothing; past attempts in "Quiz History"
 
 ### Referrals
-- 6-char uppercase alphanumeric code per StudentProfile; reward at referred user's Day 7
+- 6-char uppercase alphanumeric code per `CandidateProfile`; reward at referred user's Day 7
 - Persisted via `abtalks_ref` httpOnly cookie (7 days, set in middleware)
 - Badges: bronze (1), silver (5), gold (10), platinum (25)
 
@@ -455,7 +441,7 @@ what makes the backfill idempotent and re-runnable.
 - Registration requires a Google session; one participant row per user globally
 - Share-link attribution: `?s=<slug>` → `abtalks_src` httpOnly cookie, **first touch wins**, 30 days, copied to `HackathonParticipant.sourceSlug`
 - Removal hard-deletes the participant and writes a `HackathonRemoval` row (leader or admin); rejoin re-uses the preserved `sourceSlug`
-- A logged-in user with a hackathon registration but no `StudentProfile` is diverted to `/hackathon/dashboard` (not `/register`) from `/`, `/dashboard` and `/login`
+- A logged-in user with a hackathon registration but no `CandidateProfile` is diverted to `/hackathon/dashboard` (not `/register`) from `/`, `/dashboard` and `/login`
 
 ### Workshop
 - Page public, **form session-gated**: the event is resolved server-side from the IST day key, never from the client; email comes from the session
@@ -476,13 +462,11 @@ what makes the backfill idempotent and re-runnable.
 - Recruiter portal `/talent`: Google sign-in + company profile, admin approval, pool gated on `cohort.resultsPublishedAt`; ranked profiles with mission portfolio, projects, interview summary, private shortlists. **Member phone / entry details are never exposed.**
 - `missionSpec` is server-only; `assetsJson` is the only client-safe day asset
 
-### Recruiter discoverability and candidate visibility (078 — current product decision)
+### Recruiter discoverability and candidate visibility (current product decision)
 
 **Recruiter discoverability is a platform default, not a user-facing profile
-toggle.** For new post-078 candidates, being searchable is the default state:
-`CandidateVisibility.searchableByRecruiters` now defaults to `true`, and new
-`/program` applications stamp `ProgramMember.recruiterVisibilityConsentAt`
-automatically.
+toggle.** Being searchable is the default state:
+`CandidateVisibility.searchableByRecruiters` defaults to `true`.
 
 `CandidateVisibility` is an **internal enforcement / privacy / moderation
 structure** (it carries `withdrawnAt`, `consentSource`), not a preference screen.
@@ -499,34 +483,13 @@ Three concepts that must not be collapsed into one:
 state: *"recruiters may discover this candidate, but they are not currently
 looking."*
 
-**Intended initial recruiter-searchable population:**
-
-1. existing **AI Cohort members** (~50), plus
-2. eligible candidates created/registered **after** the 078 platform-default launch.
-
-**Explicitly NOT** all ~12,800 historical platform users. Historical users outside
-the intended AI-cohort population are not opened just because the column default
-changed — the default applies to *new rows*, and the Phase 1 migration did not
-rewrite existing ones.
-
-**Open migration caveat (not resolved):** the latest production Phase 2b run
-processed ~12,803 users but found only **19** historical opted-in/searchable
-sources (explicit `recruiterVisibilityConsentAt` timestamps, out of ~64
-`ProgramMember` rows). `prisma/scripts/migrate-2b-visibility.ts` has since been
-amended to treat **every `ProgramMember` as searchable by platform default** — but
-that change is currently **uncommitted in the working tree** and the repository
-carries no evidence it has been re-run against production. Recruiter-visibility
-data must be reconciled against the *AI Cohort + post-launch candidates* rule and
-verified before `ENABLE_NEW_TALENT` is ever turned on.
+**Live visibility fragment:** `searchableUserWhere()` in `src/repositories/talent.ts`
+requires `CandidateVisibility.searchableByRecruiters = true` and `withdrawnAt` null.
 
 **Legal copy is out of step and this is a known, deferred task.** The published
 Privacy/Terms copy still describes recruiter discoverability as **opt-in**.
 Reconciling that copy (or the product decision) is a pending business/legal item —
 it is *not* solved.
-
-**Legacy live read path (today):** `visibleProgramMemberWhere()` in
-`src/repositories/talent.ts` is the single visibility fragment, and on the legacy
-path it still requires `ProgramMember.recruiterVisibilityConsentAt` to be set.
 
 ### Campus Ambassador
 - Onboarding is **off-site** (abtalksca.netlify.app); the in-dashboard apply flow is stopped
@@ -589,16 +552,16 @@ path it still requires `ProgramMember.recruiterVisibilityConsentAt` to be set.
 - `/ai-cohort-register` + `/apply` — AI Cohort (US) onboarding + 5-step application → Supabase `cohort_applications`
 - `/ai-cohort-india` + `/apply` — India clone → Supabase `cohort_applications_india`
 - `/hackathon` — hackathon landing (`/hackathon/register`, `/hackathon/dashboard`, `/hackathon/submission` are protected)
-- `/program` — program landing (gated by `ENABLE_PROGRAM`; `notFound()` when unset)
+- `/program` — program landing (`isProgramEnabled()` currently always returns true)
 - `/terms`, `/privacy`, `/privacy/requests`, `/cookies`, `/contact` — legal surface (entity + Grievance Officer blocks, DPDP rights, DSAR intake)
 
 ### Protected (student)
-- `/register` — **profile-only** since 2026-08-20: no domain pick, no enrollment. "Registered" = has a `StudentProfile`; the first track joined backfills `StudentProfile.domain`. Supports STUDENT and PROFESSIONAL `userType`, plus CLAUDE-forced mode via `?domain=CLAUDE`; auto-cleans orphaned profiles
+- `/register` — **profile-only** since 2026-08-20: no domain pick, no enrollment. "Registered" = has a `CandidateProfile`; the first track joined is ordered by `ProgramEnrollment.joinedAt`. Supports STUDENT and PROFESSIONAL persona, plus CLAUDE-forced mode via `?domain=CLAUDE`
 - `/dashboard` — the **student hub** (plan 066): `DashboardShell` + `getHubData`, hero greeting, activity heatmap, streak card, Continue Journey, Other Challenges, Roadmaps, Events, FAQ. Master-only production pieces that survive on top of the hub: the **campus ambassador banner**, the **hackathon promo modal**, and the hackathon/program redirect behavior for users without a profile.
-  - **Migration detail:** the hub still reads **legacy** `Enrollment` / progress (via `getHubData` → `repositories/learning`, and `repositories/legacy/student-profile`). It has **not** switched to `ProgramEnrollment` / `EnrollmentProgress`.
+  - Hub reads `ProgramEnrollment` / `ActivityAttempt` via `getHubData` → `repositories/learning` and `repositories/progress`.
 - `/ai`, `/ds`, `/se`, `/claude` — per-track dashboards (`TRACK_PATH` in the hub)
 - `/explore` — track list / cross-track discovery
-- `/challenge/today` → `/challenge/[day]` — uses `dailyTask.dayContent` when present, else legacy text fields
+- `/challenge/today` → `/challenge/[day]` — uses `dailyTask.dayContent` when present, else catalog text fields
 - `/profile`, `/quiz/[quizId]`
 - `/achievements` — earned certificates
 - `/mission` — community / mission page (Discord link)
@@ -608,7 +571,7 @@ path it still requires `ProgramMember.recruiterVisibilityConsentAt` to be set.
 ### Protected (hackathon)
 - `/hackathon/register`, `/hackathon/dashboard`
 
-### Protected (program — all behind `ENABLE_PROGRAM`)
+### Protected (program)
 - `/program/apply`, `/program/assessment`
 - `/program/dashboard` (Mission Control), `/program/day/[day]`, `/program/curriculum`, `/program/videos`, `/program/leaderboard`, `/program/interview`
 
@@ -639,7 +602,6 @@ path it still requires `ProgramMember.recruiterVisibilityConsentAt` to be set.
 - `/api/program/interview/session` — mints an OpenAI Realtime ephemeral secret
 - `/api/chat` — site help chatbot (behind `ENABLE_CHATBOT`)
 - `/api/cron/hire-alerts` — Vercel cron; notifies recruiters whose `alertWhenAvailable` brief now has matches
-- `/api/cron/078-drift` — 078 legacy-vs-new drift probe (also runnable as `npm run db:check:078:drift`)
 
 ---
 
@@ -676,41 +638,37 @@ Notes:
 - `recruiter/` holds the `@react-pdf/renderer` document (`recruiter-pdf.tsx`) — keep it out of client/edge bundles
 - `hire/` is the Scout agent and the matching pipeline: `scout-graph` / `scout-tools` / `scout-agent` (LangGraph), `track-registry` + `track-loaders` (which pools exist and how to read them), `dossier` / `challenge-dossier` / `hackathon-dossier`, `score-candidate`, `pool-brief`, `sample-card`. It is **server-only** — a test asserts no client module imports the agent, its tools or the graph.
 
-### Repository layer (`src/repositories/`) — the 078 migration boundary
+### Repository layer (`src/repositories/`) — canonical read/write boundary
 
-This is a **major architectural boundary**, added in 078 Phase 3. It is what makes
-Phase 6 possible: the read implementation can be swapped without rewriting UI.
+UI / Server Actions reach candidate, learning, progress, talent, points, and
+credential data **only** through this layer.
 
 ```
-UI / Server Actions  →  repositories  →  legacy tables   (today)
-                                      →  new 078 tables  (Phase 6, flag-gated)
+UI / Server Actions  →  repositories  →  canonical tables
 ```
 
 | File | Concern |
 |---|---|
-| `candidate.ts` | `getCandidateProfile`, `getProfileSummary` |
+| `candidate.ts` / `candidate-identity.ts` / `candidate-detail.ts` | profile, identity, referral |
 | `learning.ts` | `listChallengeEnrollments`, `findActiveMembership`, slug helpers |
-| `progress.ts` | `getDashboardPrograms` — the enrolled-program cards |
-| `talent.ts` | `searchCandidates`, `visibleProgramMemberWhere` (the **only** visibility fragment) |
-| `points.ts` | `getBalance` |
-| `credentials.ts` | `getByPublicId`, `listForUser` |
-| `types.ts` | the return-type contract both implementations must satisfy |
-| `ids.ts` | deterministic legacy→new id derivation, mirrored in the migration scripts |
-| `dual-write.ts` | Phase 4 new-side writes, each wrapped in a `SAVEPOINT` |
-| `drift.ts` | legacy-vs-new drift counters |
-| `legacy/student-profile.ts`, `legacy/program-member.ts` | legacy adapters — features never call `prisma.studentProfile` / `prisma.programMember` directly |
+| `progress.ts` / `progress-writes.ts` | dashboard progress, submissions, quizzes, mission progress |
+| `enrollment-state.ts` | challenge `ProgramEnrollment` (`pe_enr_*`) current-state |
+| `program-state.ts` | AI-cohort `ProgramEnrollment` (`pe_pm_*`) membership / score / unlock |
+| `talent.ts` | `searchableUserWhere` (the **only** visibility fragment) |
+| `hire.ts` | recruiter desk loaders over `ProgramEnrollment` + `CandidateProfile` |
+| `points.ts` | `getBalance`, `applyPointsChange` |
+| `credentials.ts` / `credentials-write.ts` | public verify + issue |
+| `ambassador.ts` | `CampusAmbassadorApplication` |
+| `ids.ts` | stable `pe_enr_*` / `pe_pm_*` / `aa_*` id derivation |
+| `types.ts` | return-type contract |
 
 Rules:
 
-- Each repository function branches on its `ENABLE_NEW_*` flag. **All flags are
-  off**, so every branch currently resolves to the legacy read.
-- **Return types are the contract.** Both implementations must return the same
-  shape, or Phase 6 becomes a UI rewrite.
-- **New application code must not add direct dependencies on retiring models** —
-  `StudentProfile`, `ProgramMember`, or legacy recruiter-specific candidate
-  identity structures — wherever a repository function can be used instead.
-- Legacy reads stay behind the repository / `legacy/` adapters for the duration of
-  the migration. Do not "clean them up".
+- **Return types are the contract.** Callers must not depend on dropped models.
+- **New application code must not add Prisma delegates for dropped tables.**
+  There is no `prisma.studentProfile` / `prisma.programMember` / `prisma.enrollment`.
+- `dual-write.ts` and `legacy/` adapters are **deleted**. `drift.ts` compares
+  canonical live rows against `Historical*` archives only.
 
 ---
 
@@ -746,49 +704,17 @@ Base test users (password `test`): Arjun (SE D1), Priya (DS D1), Rohan (AI D1), 
 
 ---
 
-## 12. Cleanup & migration scripts
+## 12. Cleanup & remaining scripts
 
 - `npm run db:cleanup:test | :real | :all` — delete test users / real Google users / everything (5s pause; cascades handle related rows)
 - `npm run hackathon:preflight | hackathon:migrate | hackathon:verify` — the Supabase → Neon hackathon cutover (`scripts/migrate-hackathon-to-neon.ts`). Already executed; kept for reference.
 - `scripts/merge-problems.mjs`, `scripts/seed-swarit-recruiter-profile.ts`
+- `npx tsx prisma/scripts/probe-canonical-post-drop.ts` — post-drop production probe
+- `npx tsx prisma/scripts/verify-canonical-dropped-schema.ts` — confirms original tables are absent
 
-### Plan 078 migration scripts (`prisma/scripts/`)
-
-```
-npm run db:seed:platform-taxonomy         # ProgramCategory / Skill taxonomy
-npm run db:migrate:078:phase2             # full Phase 2 backfill (2a..2i), idempotent
-npm run db:migrate:078:phase2:sample      # PHASE2_SAMPLE=1 — representative user slice
-npm run db:migrate:078:phase2:production  # PHASE2_ALLOW_PRODUCTION=1
-npm run db:check:078:drift[:sample|:production]
-npm run db:check:078:dual-write[:rehearsal]
-npm run db:check:078:phase5               # points, visibility count+leak, statuses, shadow
-npm run db:078:preflight:production       # orphan preflight + Phase 1 DDL applier
-npx tsx prisma/scripts/migrate-078-verify.ts   # V1..V10 verification pack
-```
-
-Step scripts: `migrate-2a-identity` · `2b-visibility` · `2c-roles` ·
-`2d-learning-content` · `2e-enrollments-attempts` · `2f-points` ·
-`2g-credentials` · `2h-recruiting` · `2i-achievements`, over the shared
-helpers in `migrate-078-shared.ts` / `migrate-078-bulk.ts`.
-
-Every step is **idempotent and restartable** — it writes `MigrationRun` /
-`MigrationConflict` / `MigrationQuarantine` rows and checkpoints its cursor, so a
-crashed run resumes rather than re-doing work.
-
-**Migration performance rule (learned the hard way).** The first full rehearsal on
-`plan-078-rehearsal` ran **~4.5 hours** and died in 2f, because the high-volume
-steps did one Prisma upsert — one network round-trip — per row. Observed volumes:
-~10.9k users, ~10.9k education rows, ~15.4k attempts, ~14.8k points transactions,
-~12.8k `PointsAccount` rows. The scripts were redesigned to use:
-
-- `createMany` where the write is insert-only
-- batched `INSERT … ON CONFLICT` / bulk upsert where the step must be re-runnable
-- configurable bounded batches (`PHASE2_BATCH_SIZE`, default and current
-  production value **100**)
-- progress logging, retry (P1001), resume/checkpoint behavior
-
-The production historical backfill is deliberately **batch-oriented and online** —
-the site stays up while it runs.
+Plan 078 migration npm scripts (`db:migrate:078:*`, `db:check:078:*`, drift cron)
+and the matching `prisma/scripts/*078*` files are **deleted**. Do not reintroduce
+them.
 
 ---
 
@@ -806,7 +732,7 @@ the site stays up while it runs.
 ### Feature flags
 - `ENABLE_DEV_AUTH` — Credentials provider, localhost only
 - `ENABLE_CLAUDE_CHALLENGE` — Claude track visibility
-- `ENABLE_PROGRAM` — gates all `/program` and `/talent` routes (`notFound()` when unset)
+- `ENABLE_DATABRICKS` / `ENABLE_DS_ARCHITECT` / similar product flags — cohort surfaces (`notFound()` when unset)
 - `HIRE_OPEN_COHORT_IDS` — cohorts `/hire` may match before results are published; comma-separated ids or `all`. Unset = published cohorts only.
 - `HIRE_CHALLENGE_POOL` — whether `/hire` also searches the 60-day challenge track, and from how many verified days (`=10`, or `=true` for the default floor of 10). Unset = off.
 - `GROQ_API_KEY`, `GROQ_API_KEY_2`, `GROQ_API_KEY_3` — Scout's model calls; `askGroqJson` falls through to the next key on 429/401. `HIRE_GROQ_MODEL` overrides the model.
@@ -815,35 +741,25 @@ the site stays up while it runs.
 - `OTP_DEV_BYPASS`, `OTP_DEV_CODE` — skip MSG91, accept a fixed code (default `1234`)
 - `SEED_ALLOW_PRODUCTION` — required to run seeds against prod
 
-### Plan 078 migration flags (`lib/feature-flags.ts`)
+`isProgramEnabled()` in `lib/feature-flags.ts` currently **always returns true**.
+`ENABLE_PROGRAM` is no longer a runtime gate.
 
-**Current production state as of this reconcile:**
+### Plan 078 migration flags — retired
 
-| Flag | Production | Effect |
-|---|---|---|
-| `ENABLE_DUAL_WRITE` | **ON** | supported writes go to legacy **and** new 078 tables |
-| `ENABLE_NEW_CANDIDATE` | **off / unset** | candidate reads stay legacy |
-| `ENABLE_NEW_LEARNING` | **off / unset** | learning reads stay legacy |
-| `ENABLE_NEW_PROGRESS` | **off / unset** | progress reads stay legacy |
-| `ENABLE_NEW_TALENT` | **off / unset** | recruiter/talent reads stay legacy |
-| `ENABLE_NEW_POINTS` | **off / unset** | balance reads stay `User.synergyPoints` |
-| `ENABLE_NEW_CREDENTIAL` | **off / unset** | credential reads stay legacy |
+`ENABLE_DUAL_WRITE`, `ENABLE_NEW_*`, and `ENABLE_LEGACY_*_MIRROR` are **gone**
+from runtime (`lib/feature-flags.ts` and Vercel). Canonical family paths are
+unconditional. Search-QA scripts may still *label* a report field
+`newTalentRead: true`; that is not a runtime switch.
 
-Therefore, today: **READ → legacy. SUPPORTED WRITES → legacy + new 078. Legacy
-remains authoritative.** Phase 6 has **not** started. Do not flip an
-`ENABLE_NEW_*` flag on row counts alone — the Phase 5 verification gate comes first.
-
-`DIRECT_URL` must be set to the same Neon database on a **non-pooler** host
-whenever `ENABLE_DUAL_WRITE=true`.
+`DIRECT_URL` must still be set to the same Neon database on a **non-pooler** host
+because `writeClient()` always uses the direct session.
 
 ### Operator-shell variables (never set these in Vercel)
 
-- `PHASE2_ALLOW_PRODUCTION=1` — allow a Phase 2 step to touch production
-- `PHASE2_BATCH_SIZE` — backfill batch size (default and current production value `100`)
-- `PHASE2_SAMPLE=1` — run against a representative user slice instead of everything
-- `PHASE2_RESET_CHECKPOINT=1` — ignore crash cursors and restart a step
-- `CONFIRM_PRODUCTION_DDL=078-phase1` — required to apply Phase 1 DDL
 - `PRODUCTION_NEON_HOST_ID` — host guard so a script cannot run against the wrong branch
+
+Phase 2 operator vars (`PHASE2_ALLOW_PRODUCTION`, `PHASE2_BATCH_SIZE`,
+`CONFIRM_PRODUCTION_DDL=078-phase1`, …) are **retired** with the 078 scripts.
 
 ### Integrations
 - `ANTHROPIC_API_KEY` (+ optional `PROGRAM_ANTHROPIC_MODEL`, default `claude-sonnet-5`) — server-only Claude JSON grading via `lib/anthropic.ts`
@@ -929,18 +845,18 @@ tokens.
 - Day 60 not submittable → use uncapped `getElapsedDayNumber` for backfill/relaxation
 - Chicago reformat dropping commit day 0 → UTC calendar-key math
 - Dead login form over LAN IP → `allowedDevOrigins` includes LAN IPv4s
-- Neon pooled endpoint dropping Prisma interactive transactions with `SAVEPOINT` → dual-write and migrations use the **direct** (non-pooler) host via `writeClient()`
+- Neon pooled endpoint dropping Prisma interactive transactions with `SAVEPOINT` → writes and migrations use the **direct** (non-pooler) host via `writeClient()`
 - 078 Phase 2 migrations timing out at ~4.5h → batched `INSERT … ON CONFLICT` + `createMany` + bounded batches, not per-row upserts
+- 078 dual-write / flag control plane / original operational tables — **closed 2026-09-23**
 
-### Open issues blocking the 078 migration
-- **Phase 2e is stopped on a `P2032`.** Prisma reports `ProgramMember.jobRole` expected a non-null `String` but the database contains `null`; one of 64 `ProgramMember` rows has `jobRole IS NULL`. `prisma/schema.prisma` **already declares `jobRole String?`**, so the diagnosis is a **stale / mismatched generated Prisma client**, not bad data. The production row is legitimate — do **not** "fix" it by writing an empty string. The fix is to regenerate/use the correct client (`npx prisma generate`) and resume the idempotent migration.
-- **Recruiter-visible population is not yet correct.** See §5 — the 2b fix exists in the working tree but is uncommitted and unverified against production.
+### Open issues after 078 closure
+- **`SkillEvidence` has no live writer.** `CandidateSkill.evidenceScore` / `.verified` are frozen at backfill time. P0-0 in plan 112.
 - **Legal copy still says recruiter discoverability is opt-in**, while the product decision made it a platform default. Deferred business/legal task.
-- Production still carries a leftover migration folder `20260813000000_general_interview` (from the reverted PR #168 AI-cohort interview foundation). Because of it, `prisma migrate deploy` cannot be used on production — 078 migrations are applied with `prisma db execute` + `prisma migrate resolve --applied`. Do not apply or drop that schema.
+- The repo still carries a leftover migration folder `20260813000000_general_interview` (from the reverted PR #168 AI-cohort interview foundation). Do not apply or drop that schema. Production `_prisma_migrations` already records later 078 migrations including `20260923120000_final_drop_legacy_originals`.
 
 ### Cleanup candidates spotted during this reconcile
 - `src/lib/hackathon-supabase.ts` has **no importers** — dead since the Neon cutover; the same is true of `SUPABASE_SERVICE_ROLE_KEY`'s only documented purpose
-- `StudentProfile.phoneVerified*` + `PhoneVerification` were noted as "unused" when MSG91 was removed on 2026-07-21, then OTP was restored on 2026-07-27 — they are live again, but the OTP surface is skipped in dev
+- `PhoneVerification` OTP fields are live; the OTP surface is skipped in dev
 - `ProgramEntryQuestion` / `ProgramEntryAttempt` and the skip-token machinery remain in the schema while bypassed in product
 
 ### Deferred / not built
@@ -972,8 +888,8 @@ tokens.
 3. Note the commit hash
 
 **All Neon mutations must target a production child branch** unless that exact
-production write is explicitly authorized. During 078, migration and dual-write
-work must use the **direct (non-pooler)** endpoint — see §3.
+production write is explicitly authorized. Interactive transactions must use the
+**direct (non-pooler)** endpoint via `writeClient()` — see §3.
 
 ### Cursor failure modes observed
 - Adds `requireRole` to public routes (logout, login) — mark exceptions explicitly
@@ -994,103 +910,41 @@ Small scoped prompts → explicit "do NOT" lists → Cursor reports back → you
 - Auth (Google OAuth + dev credentials), registration (profile-only; STUDENT / PROFESSIONAL / CLAUDE-forced)
 - 60-Day Challenge: day pages, submissions with optional proofs, streaks, leaderboard, heatmap, quizzes, profile, referrals, Synergy points
 - **Student dashboard hub** at `/dashboard` (`DashboardShell` + `getHubData`) with campus-ambassador banner, hackathon promo modal and hackathon/program redirects
-- Certificates: issue, achievements page, public verification + PDF download; hackathon participation and placement certificates
+- Certificates: issue, achievements page, public verification + PDF download; hackathon participation and placement certificates (`Credential`)
 - Marketplace (SP redemption) and Jobs board
 - Hackathon: landing, solo/team registration, dashboard, submissions, share-link attribution, member removal
 - Workshops: microsite, session-gated registration on Neon, admin rosters + analytics
 - AI Cohort applications (US + India) on Supabase, admin viewer
 - Program (`/program`): apply, Mission Control, day pages, missions, commits cron, AI grading/mentor/recommendations, exit voice interview, leaderboard
-- Recruiter surfaces: `/talent` portal (program) and `/r/[token]` assessment reports + PDF (challenge)
+- Recruiter surfaces: `/hire` Scout desk, `/talent/*` retained routes, `/r/[token]` assessment reports + PDF
 - Legal surface: `/terms`, `/privacy`, `/privacy/requests`, `/cookies`, `/contact`, consent logging, cookie chooser, DSAR queue
 - Notification bell + `/admin/notifications`
 - Admin: 20+ pages spanning students, submissions, content, analytics, actions feed, referrals, redemptions, jobs, workshop, hackathon, ai-cohort, program, notifications, data-requests
-- **078 additive schema in production** (47 tables + 3 audit tables) and **live dual-write** on supported paths
-- Production deployment on Vercel
+- **Canonical data model in production.** Original operational tables dropped 2026-09-23 (`20260923120000_final_drop_legacy_originals`).
+- Production deployment on Vercel (`www.abtalks.in`)
 
-### Migration in progress — Plan 078 (NOT complete)
-- Historical **Phase 2 backfill is incomplete**; it is currently **stopped in 2e** on a Prisma generated-client mismatch (`P2032`, see §16)
-- **Phase 6 reads are not enabled** — every `ENABLE_NEW_*` flag is off
-- Legacy tables remain populated and **authoritative for every read**
-
-### Plan 078 phase status
+### Plan 078 — COMPLETE (2026-09-23)
 
 | Phase | Status |
 |---|---|
-| **Phase 1** — additive schema | **PRODUCTION APPLIED.** All 47 expected 078 tables present (`CandidateProfile`, `CandidateVisibility`, `ProgramEnrollment`, `ActivityAttempt`, `PointsAccount`, `PointsTransaction`, …) plus `MigrationRun` / `MigrationConflict` / `MigrationQuarantine`. Both Prisma migrations recorded as applied, along with the additive `searchableByRecruiters` default change. |
-| **Phase 2** — historical backfill | **IN PROGRESS on production. Incomplete.** See the step table below. |
-| **Phase 3** — repository layer | **Implemented** (`src/repositories/`, §9). |
-| **Phase 4** — dual-write | **Implemented, tested and live** on supported production write paths. |
-| **Phase 5** — verification | **NOT COMPLETE.** Backfill reconciliation and the zero-drift gate are still pending. |
-| **Phase 6** — switch reads | **NOT STARTED.** All `ENABLE_NEW_*` remain off. |
-| **Phase 7** — stop writing legacy | **NOT STARTED.** |
-| **Phase 8** — drop legacy schema | **NOT STARTED.** |
+| **Phase 1** — additive schema | Done |
+| **Phase 2** — historical backfill | Done (later waves completed what 2e originally left open) |
+| **Phase 3** — repository layer | Done (`src/repositories/`, §9) |
+| **Phase 4** — dual-write | Done, then **retired** |
+| **Phase 5** — verification | Done |
+| **Phase 6** — switch reads | Done (flags then retired; paths are unconditional) |
+| **Phase 7** — stop writing legacy | Done (family write-authority waves W1–W8) |
+| **Phase 8** — drop legacy schema | Done. Production dropped `StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`, `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`, and `User.synergyPoints`. Archives retained. |
 
-### Phase 2 production backfill — step status
-
-Batch size **100**, online (no downtime), idempotent and restartable.
-
-| Step | Result |
-|---|---|
-| **2a** identity | 10,913 `CandidateProfile` records processed · 10,983 education · 617 experience · **376 identity conflicts** · 0 quarantine · 0 batch errors |
-| **2b** visibility | ~12,803 users processed; the run reported only **19** historical opted-in/searchable sources. **Needs reconciliation** against the *AI Cohort + post-launch candidates* rule before `ENABLE_NEW_TALENT` (§5). |
-| **2c** roles | 10,913 candidate role sources · 1 admin |
-| **2d** learning catalog | 5 programs · 9 cohorts · 342 activities (idempotent) |
-| **2e** enrollments & attempts | Challenge `ProgramEnrollment` migration **completed 3,183 / 3,183** — then **STOPPED**. `ProgramMember` → `ProgramEnrollment`, `Submission` → `ActivityAttempt`/`ActivityEvaluation`, and `ProgramMissionSubmission` → `ActivityAttempt`/`ActivityEvaluation` are all **incomplete**. |
-| **2f–2i** points, credentials, recruiting, achievements | **Not reached.** |
-
-The blocker is the `P2032` described in §16 — a stale generated Prisma client, not
-a corrupt production row. The migration resumes from its checkpoint once the
-client is regenerated.
-
-### Dual-write — validated and live
-
-`ENABLE_DUAL_WRITE=true` in production. Legacy write is authoritative; the new-side
-write runs inside a `SAVEPOINT` so a new-table failure logs and is rolled back
-without failing the user's request.
-
-Wired dual-write paths:
-
-- challenge enrollment (`create-core-enrollment`, `create-claude-enrollment`)
-- program membership (`features/program/entry.ts` — apply / enroll)
-- challenge submission (`submit-day`)
-- Program mission verification (`features/program/missions.ts`)
-- points award / spend / refund (submission award, referral award, marketplace
-  redeem, admin redemption refund, admin points actions)
-
-**Live organic production probes succeeded.** A real user enrolling in Claude, SE
-and AI produced the corresponding new `ProgramEnrollment` rows; an SE Day 1
-submission produced the legacy `Submission` + progress **and** a new
-`ActivityAttempt` + `ActivityEvaluation`; points produced the legacy
-`User.synergyPoints` / `SynergyEvent` behavior **and** new `PointsAccount` +
-`PointsTransaction`. The dashboard continued showing **legacy** progress and did
-not jump to the new data — which is the intended behavior while `ENABLE_NEW_*` is off.
-
-### Agreed rollout strategy (conservative)
-
-```
-additive schema
-  → dual-write, legacy authoritative
-  → online restartable historical backfill (site stays up)
-  → final catch-up / delta reconciliation
-  → zero-drift verification (V1–V10, points, visibility count + leak, shadow reads)
-  → gradually enable ENABLE_NEW_* reads
-        (credentials → points → progress + learning → candidate → talent LAST)
-  → after stable new reads: Phase 7, stop writing legacy
-  → observation period
-  → Phase 8, remove legacy schema (one table at a time)
-```
-
-The historical bulk backfill must **not** require the site to be offline. A short
-write freeze / maintenance window may be used only for the final delta and
-reconciliation.
+Closure commit `f261b33d` (tooling retirement) on top of `26e9b1f7` (model-free app). Production host `ep-nameless-term-ams9a5e3` / branch `br-soft-bread-amu5tms1`. Rollback snapshots exist; they are not live migration beds.
 
 ### Recruiter product direction
 
-There is **no meaningful recruiter user population** that needs legacy
+There is **no meaningful recruiter user population** that needed the old
 recruiter-account compatibility, which is what made it safe to replace the
 recruiter surface outright rather than migrate it.
 
-**The recruiter experience is now built, as `/hire`.** What it is:
+**The recruiter experience is `/hire`.** What it is:
 
 - **Scout** — a LangGraph agent (`StateGraph` + `ToolNode` + `ChatGroq`,
   `openai/gpt-oss-120b`, `reasoning_effort: medium`) over a track registry. The
@@ -1110,34 +964,21 @@ recruiter surface outright rather than migrate it.
   `SAMPLE:` refs stay off the track whitelist, so a sample can never be
   shortlisted or introduced.
 
-**Honest architectural note.** `/hire` does **not** query the normalized 078
-tables. It reads `ProgramMember` (and the challenge / hackathon equivalents)
-through per-track dossier loaders in `features/hire/track-loaders.ts`, because
-`ENABLE_NEW_TALENT` is still off and the 078 candidate/evidence data is not the
-live source. The track registry is the seam: when the 078 reads switch on, the
-loaders change and the agent, tools and UI do not. Treat this as deliberate
-sequencing, not as the end state — candidate discovery should still end up on
-normalized evidence data.
-
-**`ENABLE_NEW_TALENT` remains OFF.** The candidate pool, once the
-`CandidateVisibility` backfill is corrected and verified, is the AI Cohort
-candidates plus eligible post-launch new candidates — widened per track by
-`HIRE_OPEN_COHORT_IDS` and `HIRE_CHALLENGE_POOL`.
+`/hire` loads dossiers through `features/hire/track-loaders.ts` →
+`repositories/hire.ts` over `CandidateProfile` + `CandidateVisibility` +
+`ProgramEnrollment` (`pe_pm_*` / `pe_enr_*`) + hackathon tables. Pool width is
+still bounded by `HIRE_OPEN_COHORT_IDS` and `HIRE_CHALLENGE_POOL`.
+`ENABLE_NEW_TALENT` is **not** a runtime flag.
 
 ### Not yet built
 - Full real Day 1–60 content for SE / DS / AI (placeholders remain where JSON is missing)
-- Resume upload (binary)
+- Live `SkillEvidence` writer (P0-0, plan 112)
 - External coding-profile models (LeetCode / CodeChef / Codeforces / Kaggle) and opportunity-type preferences — both additive, later
 
 ### Next priorities
-1. Fix the Prisma generated-client mismatch causing the Phase 2e `P2032`.
-2. Resume and complete Phase 2e — historical `ProgramMember`, `Submission` and `ProgramMissionSubmission` migration.
-3. Continue the optimized 2f points backfill and the remaining Phase 2 steps.
-4. Correct and verify the recruiter-visible population: **AI Cohort + post-launch candidates only** — not all ~12,800 historical users. Commit and re-run the amended 2b.
-5. Run the full Phase 5 reconciliation: drift, points, visibility count + leak, shadow reads.
-6. Begin controlled Phase 6 repository read switches **only after** that verification passes.
-7. Move `/hire`'s track loaders onto the 078 candidate/evidence reads once Phase 6 is verified.
-8. Resume Databricks / interview-agent product work once the migration foundation is stable.
+1. Live `SkillEvidence` writer so `CandidateSkill.evidenceScore` / `.verified` are not frozen at backfill.
+2. Reconcile Privacy/Terms copy with platform-default recruiter discoverability.
+3. Continue product work on canonical tables (Databricks / interview-agent / hire). Do not reintroduce dual-write or original operational tables.
 
 ---
 
@@ -1166,4 +1007,4 @@ Two things to check each pass:
 - **Entries can end up outside the heading.** Merges have pushed Cursor's lines above `## Pending reconcile`. Read the whole file, not just the section.
 - **Verify claims against the code.** The changelog is a claim, not proof — the 2026-08-24 pass found `PROGRAM_TZ` had moved to `Asia/Kolkata` while both this document and `CLAUDE.md` still asserted America/Chicago.
 
-**While Plan 078 is in flight:** never describe the new model as serving reads, never describe legacy tables as retired, and always state which phase each claim belongs to (see §18).
+**After Plan 078 closed:** describe the canonical model as serving reads and writes. Original operational tables are dropped. Unique history is `Historical*` only. Do not reintroduce dual-write, `ENABLE_NEW_*`, or `prisma.studentProfile` / `prisma.programMember` (see §4 and §18).

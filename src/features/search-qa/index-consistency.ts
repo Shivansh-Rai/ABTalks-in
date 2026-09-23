@@ -73,8 +73,9 @@ function canonicalTokenKeys(c: CanonicalCandidate): Set<string> {
 }
 
 /**
- * Is the document's skill list the legacy `StudentProfile.skills` mirror rather
- * than the canonical claims? True on the ENABLE_NEW_TALENT=false read path.
+ * Is the document's skill list the historical StudentProfile skills snapshot
+ * rather than the canonical claims? Original tables are dropped; this is a
+ * data-quality check, not a runtime read-path switch.
  */
 export function documentReadsLegacyMirror(c: CanonicalCandidate, m: ScoreableMember): boolean {
   const legacy = c.legacy?.studentProfileSkills;

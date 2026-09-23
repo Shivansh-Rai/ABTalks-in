@@ -205,7 +205,7 @@ model User {
   /// interview needs registration only, never cohort enrollment.
   mockInterviews          MockInterview[]
 
-  // Plan 078 Phase 1 — new identity / learning / talent relations (legacy fields above stay).
+  // Canonical identity / learning / talent relations (078 complete).
   roleAssignments             UserRoleAssignment[]         @relation("RoleSubject")
   rolesGranted                UserRoleAssignment[]         @relation("RoleGranter")
   candidateProfile            CandidateProfile?
@@ -2223,17 +2223,15 @@ model CandidateProfile {
   @@index([updatedAt(sort: Desc)])
 }
 
-/// W5-A canonical Campus Ambassador candidacy. Not a platform role and not
-/// candidate identity. Dashboard opt-in (`isCandidate` + `appliedAt`) and
-/// banner-dismiss (`dismissedAt`) only — approval/active ambassador state is
-/// not in this product. StudentProfile ambassador columns remain a W5-A
-/// compatibility mirror. CandidateProfile ambassador columns are leftover
-/// identity dual-write copies, not this domain.
+/// Campus Ambassador candidacy. Not a platform role and not candidate identity.
+/// Dashboard opt-in (`isCandidate` + `appliedAt`) and banner-dismiss
+/// (`dismissedAt`) only — approval/active ambassador state is not in this
+/// product. CandidateProfile ambassador columns are leftover copies, not this
+/// domain.
 model CampusAmbassadorApplication {
   id          String    @id @default(cuid())
   userId      String    @unique
-  /// Maps StudentProfile.isCampusAmbassadorCandidate. True = opted in as a
-  /// candidate. Does not mean approved or active ambassador.
+  /// Maps opted-in ambassador candidacy. True = opted in as a candidate.
   isCandidate Boolean   @default(false)
   appliedAt   DateTime?
   dismissedAt DateTime?
@@ -3085,8 +3083,7 @@ model Credential {
   @@index([issuedAt(sort: Desc)])
 }
 
-/// CACHED balance. One per user, replacing the two copies on User and
-/// StudentProfile. `version` gives optimistic locking.
+/// CACHED balance. One per user. `version` gives optimistic locking.
 model PointsAccount {
   id             String    @id @default(cuid())
   userId         String    @unique

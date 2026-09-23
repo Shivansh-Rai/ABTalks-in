@@ -24,22 +24,20 @@ here, to keep this file lean.)
 - Split auth config: `auth.config.ts` is edge-safe (no Prisma); `auth.ts` has
   PrismaAdapter + Credentials. Keep them split.
 - Prisma pinned to 6.x (NOT 7).
-- **Plan 078 migration is PAUSED AFTER PHASE 6 + W1-A** (corrected 2026-09-04 —
-  this block previously said all `ENABLE_NEW_*` were off, which stopped being
-  true on 2026-08-26). Production today: **every Phase 6 read flag is ON**
-  (`ENABLE_NEW_CREDENTIAL`, `_POINTS`, `_CANDIDATE`, `_LEARNING`, `_PROGRESS`,
-  `_TALENT`), `ENABLE_NEW_POINTS_WRITES` is ON so `PointsAccount` +
-  `PointsTransaction` are **write-authoritative**, and `ENABLE_DUAL_WRITE` is
-  still on. Legacy tables are **mirrors, not read sources** — `User.synergyPoints`
-  and `SynergyEvent` included. Phase 7 W1-B onward has **not** started and is
-  **frozen for September 2026** (see `docs/plans/112-september-execution-plan.md`
-  §13 D-1); nothing legacy has been dropped.
-  New code reaches candidate/learning/progress/talent/points/credential data
-  through `src/repositories/`, never through fresh `prisma.studentProfile` /
-  `prisma.programMember` calls. **New features are built 078-native** — a new
-  cohort or surface writes `ProgramEnrollment` / `ActivityAttempt` /
-  `ActivityEvaluation` with plain cuids and no legacy row, the way
-  `/program/databricks` and `/program/ds-architect` already do.
+- **Plan 078 is COMPLETE (2026-09-23).** Production current-state is the
+  canonical model: `CandidateProfile` + children, `ProgramEnrollment`
+  (`pe_enr_*` challenge / `pe_pm_*` AI-cohort), `ActivityAttempt` /
+  `ActivityEvaluation`, `PointsAccount` / `PointsTransaction`, `Credential`,
+  `CampusAmbassadorApplication`, `CandidateVisibility`. Original operational
+  tables (`StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`,
+  `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`) and
+  `User.synergyPoints` are **dropped**. Unique history lives only in explicit
+  `Historical*` archives. There is no dual-write and no 078 migration control
+  plane (`ENABLE_DUAL_WRITE`, `ENABLE_NEW_*`, `ENABLE_LEGACY_*_MIRROR` are
+  retired). Reach candidate/learning/progress/talent/points/credential data
+  through `src/repositories/`. New surfaces write `ProgramEnrollment` /
+  `ActivityAttempt` / `ActivityEvaluation` with plain cuids. See
+  `docs/ARCHITECTURE.md` and `docs/project-context.md` §4 / §18.
 - **`SkillEvidence` has no live writer** (verified 2026-09-04). Only
   `prisma/scripts/migrate-2i-achievements.ts` writes it, so
   `CandidateSkill.evidenceScore` / `.verified` are frozen at backfill time.
@@ -68,8 +66,8 @@ here, to keep this file lean.)
   marketplace, jobs, recruiter, hackathon, workshop, program, talent-pool, email,
   admin. (No `auth/` module — auth lives in `src/auth.ts` + `src/lib/*-auth.ts`.)
 - `src/app/actions/` — Server Actions (34 files, grouped by track)
-- `src/repositories/` — the 078 read/write boundary (candidate, learning,
-  progress, talent, points, credentials, dual-write, drift, `legacy/` adapters)
+- `src/repositories/` — canonical read/write boundary (candidate, learning,
+  progress, talent, points, credentials, program-state, hire, ambassador)
 - `src/lib/` — db, auth (admin-auth, program-auth), logger, validations,
   date-utils, feature-flags, anthropic, email, csv
 - `src/components/ui/` — shadcn primitives (do not modify)
@@ -135,19 +133,42 @@ Your first responsibility is to respect module ownership.
 
 ## My Ownership
 
-Manuvrtti:
-- Jobs
-- Applications
-- Job alerts
-- Notifications
-- Notification delivery
-- Analytics events
-- UTM tracking
+I am Sohail.
+
+My primary ABTalks ownership is:
+- Candidate search
+- Search ranking
+- Authentication architecture
+- Authorization
+- Recruiter isolation
+- Platform Admin
+- Security
+- Rate limiting
+- Audit
+- System configuration
+- Shared architecture
+- Infrastructure
+- Database conventions
+
+Follow the module ownership and cross-module rules defined in the repository CLAUDE.md.
+
+I am also responsible for reviewing architecture-sensitive cross-module changes.
+
 ## Modules I Do NOT Own
 
 Do not modify functionality owned by other developers unless explicitly approved.
 
 Other ownership:
+
+Shivansh:
+- Candidate profile
+- Candidate skills
+- Education / experience / projects
+- Opportunity preferences
+- Candidate-side assessments
+- Evidence
+- Assessment Builder
+- Career guidance
 
 Zainab:
 - Recruiter registration
@@ -166,19 +187,17 @@ Shashank:
 - Candidate review panel
 - Shortlist / reject
 - Hiring pipeline
-
+- Recruiter-side assessment builder
 - Recruiter analytics
 
-
-Shivansh:
-- Candidate profile
-- Candidate skills
-- Education / experience / projects
-- Opportunity preferences
-- Candidate-side assessments
-- Evidence
-- Assessment Builder
-- Career guidance
+Manuvrtti:
+- Jobs
+- Applications
+- Job alerts
+- Notifications
+- Notification delivery
+- Analytics events
+- UTM tracking
 
 Sohail:
 - Authentication architecture
@@ -192,7 +211,7 @@ Sohail:
 - Shared architecture
 - Infrastructure
 - Database conventions
-     •  Candidate search
+- Candidate search
 * Search ranking
 
 Shallika:
