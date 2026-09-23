@@ -8291,17 +8291,40 @@ a.hire-assess-action {
   white-space: nowrap;
   transition:
     background-color 120ms ease,
-    color 120ms ease;
+    color 120ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
 }
 
 .hire-app a.hire-side__item:hover {
   background: #f4f5f5;
 }
 
+/* The current page, as the DS v2 §7 clay tile — the same flat Primary Teal
+   face and lower inner shade `.abt-nav-active` gives the candidate sidebar
+   (issue #549). It was a pale `--side-accent-soft` chip, which put the two
+   sidebars on different systems for the same job; `--side-accent` was already
+   #03535f, so this is the token doing what it was named for. */
 .hire-app .hire-side__item.is-current {
-  background: var(--side-accent-soft);
-  color: var(--side-accent);
+  background: var(--side-accent);
+  color: #ffffff;
   font-weight: 600;
+  box-shadow: inset 0 -5px 14px rgba(0, 0, 0, 0.34);
+}
+
+/* Specificity, not decoration: `.hire-app a.hire-side__item:hover` carries an
+   extra element selector, so without a matching `a…is-current:hover` rule the
+   grey hover wins and the current tile drops its teal the moment the pointer
+   crosses it. */
+.hire-app a.hire-side__item.is-current:hover {
+  background: #076573;
+  color: #ffffff;
+  box-shadow: inset 0 -5px 14px rgba(0, 0, 0, 0.3);
+}
+
+.hire-app a.hire-side__item.is-current:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 -3px 10px rgba(0, 0, 0, 0.42);
 }
 
 .hire-side__item.is-disabled {
@@ -8328,6 +8351,13 @@ a.hire-assess-action {
 }
 
 .hire-side__item.is-current .hire-side__icon {
+  color: #ffffff;
+}
+
+/* Inverted on the tile: the badge's teal face would otherwise sit teal-on-teal
+   and the count would disappear. */
+.hire-side__item.is-current .hire-side__badge {
+  background: #ffffff;
   color: var(--side-accent);
 }
 
