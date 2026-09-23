@@ -41,7 +41,6 @@ export async function getProfile(userId: string): Promise<{
         email: true,
         image: true,
         createdAt: true,
-        studentProfile: { select: { domain: true } },
       },
     }),
     getCandidateProfile(userId),
@@ -51,13 +50,9 @@ export async function getProfile(userId: string): Promise<{
     throw new Error("User not found");
   }
 
-  const { studentProfile, ...userFields } = user;
-
-  // Challenge domain stays on StudentProfile (later family). Identity requires
-  // CandidateProfile. A W4-B registration may have no StudentProfile row.
   if (!candidate) {
     return {
-      user: userFields,
+      user,
       profile: null,
     };
   }
@@ -67,7 +62,7 @@ export async function getProfile(userId: string): Promise<{
   });
 
   return {
-    user: userFields,
+    user,
     profile: {
       fullName: candidate.fullName,
       userType: candidate.userType as UserType,
@@ -79,7 +74,7 @@ export async function getProfile(userId: string): Promise<{
       yearsExperience: candidate.yearsExperience,
       domain: await displayedChallengeDomain(
         userId,
-        studentProfile?.domain ?? null,
+        null,
       ),
       skills: candidate.skills,
       resumeUrl: candidate.resumeUrl,

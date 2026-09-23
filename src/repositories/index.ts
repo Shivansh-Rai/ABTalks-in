@@ -71,5 +71,8 @@ export {
   applyProgramScoreChange,
   applyProgramRecommendationChange,
   overlayProgramMemberState,
+  findAiCohortMembershipByMemberId,
+  findAiCohortMembershipByUserCohort,
+  listAiCohortMemberships,
   countEnrolledProgramMembers,
 } from "./program-state";

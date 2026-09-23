@@ -65,9 +65,6 @@ export async function getReferralStats(
         select: {
           id: true,
           email: true,
-          studentProfile: {
-            select: { domain: true },
-          },
         },
       },
     },
@@ -77,7 +74,7 @@ export async function getReferralStats(
   const domains = await displayedChallengeDomains(
     rows.map((r) => ({
       userId: r.referred.id,
-      legacy: r.referred.studentProfile?.domain ?? null,
+      legacy: null,
     })),
   );
 

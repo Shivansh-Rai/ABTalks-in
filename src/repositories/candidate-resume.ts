@@ -2,7 +2,6 @@ import "server-only";
 import { Prisma, type ResumeSourceType } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { runStudentProfileMirror } from "@/repositories/candidate-identity";
 import {
   RESUME_DOCUMENT_VERSION,
   readResumeAnalysis,
@@ -195,8 +194,5 @@ export async function syncResumeUrl(
   const db = writeClient();
   await db.$transaction(async (tx) => {
     await tx.candidateProfile.updateMany({ where: { userId }, data: { resumeUrl } });
-    await runStudentProfileMirror(tx, "resumeUrl", async () => {
-      await tx.studentProfile.updateMany({ where: { userId }, data: { resumeUrl } });
-    });
   });
 }

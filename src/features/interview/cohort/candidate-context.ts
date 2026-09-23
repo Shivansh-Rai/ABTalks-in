@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
+import { findAiCohortMembershipByMemberId } from "@/repositories/program-state";
 import {
   collectPassSkipSets,
   getMemberDayStates,
@@ -125,18 +125,7 @@ export async function buildCohortCandidateContext(
     // Plan 078 seam: ProgramMember reads go through repositories/legacy, never
     // prisma directly. ProgramMissionSubmission and ProgramProject below have
     // no shim in 078 Phase 3, so they stay on prisma until one exists.
-    programMember.findUnique({
-      where: { id: memberId },
-      select: {
-        fullName: true,
-        jobRole: true,
-        company: true,
-        yearsExperience: true,
-        githubRepoUrl: true,
-        highestUnlockedDay: true,
-        cohort: { select: { name: true } },
-      },
-    }),
+    findAiCohortMembershipByMemberId(memberId),
     listCanonicalMissionAttempts({ memberIds: [memberId] }),
     prisma.programProject.findMany({
       where: { memberId },

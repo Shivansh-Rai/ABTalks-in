@@ -8,7 +8,6 @@ import { awardReferralSynergy } from "@/features/synergy/award-referral-synergy"
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { generateUniqueReferralCode } from "./generate-referral-code";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import { findUserIdByReferralCode } from "@/repositories/candidate";
 import { createCandidateIdentity } from "@/repositories/candidate-identity";
 import { withLegacyPointsMirrorFlush } from "@/repositories/points";
@@ -36,18 +35,14 @@ export async function completeRegistration(
     };
   }
 
-  const [existingStudent, existingCandidate] = await Promise.all([
-    studentProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    }),
+  const [existingCandidate] = await Promise.all([
     prisma.candidateProfile.findUnique({
       where: { userId },
       select: { id: true },
     }),
   ]);
 
-  if (existingStudent || existingCandidate) {
+  if (existingCandidate) {
     return {
       ok: false,
       reason: "already_registered",

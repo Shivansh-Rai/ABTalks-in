@@ -2,8 +2,8 @@ import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 import { enrollmentIdFromPe, peIdForEnrollment } from "@/repositories/ids";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 const DROPOFF_GAP_DAYS = 3;
 
@@ -35,44 +35,24 @@ export async function getDropoffStudents(
   const domain =
     filters.domain && filters.domain !== "ALL" ? filters.domain : undefined;
 
-  const enrollments = await prisma.enrollment.findMany({
-    where: {
-      status: { in: [EnrollmentStatus.ACTIVE, EnrollmentStatus.ABANDONED] },
-      ...(domain ? { domain } : {}),
-    },
-    select: {
-      id: true,
-      domain: true,
-      status: true,
-      startedAt: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-      challenge: { select: { startsAt: true } },
-      user: {
-        select: {
-          id: true,
-          email: true,
-          studentProfile: {
-            select: {
-              fullName: true,
-              phone: true,
-              userType: true,
-              college: true,
-              organization: true,
-            },
-          },
-        },
-      },
-    },
+  const overlaid = (await listChallengePeRows({
+    domains: domain ? [domain] : undefined,
+  })).filter(
+    (e) =>
+      e.status === EnrollmentStatus.ACTIVE ||
+      e.status === EnrollmentStatus.ABANDONED,
+  );
+  const challenges = await prisma.challenge.findMany({
+    where: { domain: { in: [...new Set(overlaid.map((e) => e.domain))] } },
+    select: { domain: true, startsAt: true },
   });
-
-  const overlaid = await overlayChallengeProgressFields(enrollments);
+  const challengeByDomain = new Map(challenges.map((c) => [c.domain, c]));
   const candidates = overlaid.filter((e) => {
+    const challenge = challengeByDomain.get(e.domain);
+    if (!challenge) return false;
     const currentDay = getCurrentDayNumber(
       { startedAt: e.startedAt },
-      e.challenge,
+      challenge,
     );
     const effectiveLast = e.lastSubmittedDay ?? 0;
     const gap = currentDay - effectiveLast;
@@ -105,22 +85,24 @@ export async function getDropoffStudents(
   const rows: DropoffStudentRow[] = [];
 
   for (const e of candidates) {
+    const challenge = challengeByDomain.get(e.domain);
+    if (!challenge) continue;
     const currentDay = getCurrentDayNumber(
       { startedAt: e.startedAt },
-      e.challenge,
+      challenge,
     );
     const effectiveLast = e.lastSubmittedDay ?? 0;
     const gap = currentDay - effectiveLast;
     const lastSubmittedAt = latestByEnrollment.get(e.id);
     rows.push({
       enrollmentId: e.id,
-      userId: e.user.id,
-      fullName: e.user.studentProfile?.fullName?.trim() || e.user.email,
-      email: e.user.email,
-      phone: e.user.studentProfile?.phone ?? "",
-      userType: e.user.studentProfile?.userType ?? "",
-      college: e.user.studentProfile?.college ?? "",
-      organization: e.user.studentProfile?.organization ?? "",
+      userId: e.userId,
+      fullName: "",
+      email: "",
+      phone: "",
+      userType: "",
+      college: "",
+      organization: "",
       domain: e.domain,
       status: e.status,
       startedAtIso: e.startedAt.toISOString(),
@@ -132,14 +114,23 @@ export async function getDropoffStudents(
   }
 
   const identities = await listCandidateProfiles(rows.map((r) => r.userId));
+  const users = await prisma.user.findMany({
+    where: { id: { in: rows.map((r) => r.userId) } },
+    select: { id: true, email: true },
+  });
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
   for (const row of rows) {
     const identity = identities.get(row.userId);
-    if (!identity) continue;
-    row.fullName = identity.fullName.trim() || row.fullName;
-    row.phone = identity.phone ?? row.phone;
+    row.email = emailByUser.get(row.userId) ?? "";
+    if (!identity) {
+      row.fullName = row.email;
+      continue;
+    }
+    row.fullName = identity.fullName.trim() || row.email;
+    row.phone = identity.phone ?? "";
     row.userType = identity.userType;
-    row.college = identity.college ?? row.college;
-    row.organization = identity.organization ?? row.organization;
+    row.college = identity.college ?? "";
+    row.organization = identity.organization ?? "";
   }
 
   rows.sort((a, b) => {

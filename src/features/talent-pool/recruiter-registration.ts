@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import {
   WORK_EMAIL_REQUIRED_MESSAGE,
   isPersonalEmailDomain,
@@ -108,14 +107,14 @@ export async function registerRecruiter(
   userId: string,
   input: { fullName: string; company: string; phone?: string },
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const [user, existingStudent, existing] = await Promise.all([
+  const [user, existingCandidate, existing] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, email: true },
     }),
-    studentProfile.findUnique({
+    prisma.candidateProfile.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { userId: true },
     }),
     prisma.recruiterProfile.findUnique({
       where: { userId },
@@ -124,7 +123,7 @@ export async function registerRecruiter(
   ]);
 
   if (!user) return { ok: false, message: "Account not found." };
-  if (existingStudent) {
+  if (existingCandidate) {
     return {
       ok: false,
       message:

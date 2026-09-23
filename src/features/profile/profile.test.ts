@@ -8,7 +8,7 @@
  *
  * Run: npm run test:profile
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   CandidateGender,
@@ -255,31 +255,20 @@ suite("month packing lands on the first of the month, UTC", () => {
 
 /* ─── Skill ownership: the deletion bug must stay fixed ──────────────────── */
 
-suite("legacy skill sync is additive — it can no longer delete claims", () => {
-  const src = source("src/repositories/dual-write.ts");
-  const fn = src.slice(
-    src.indexOf("export async function syncCandidateSkillsFromLegacy"),
-    src.indexOf("export async function syncProfileOwnedEducation"),
-  );
-  assert(fn.length > 0, "function located");
-  assert(!fn.includes("candidateSkill.delete"), "no delete of skill rows");
-  assert(!fn.includes("deleteMany"), "no bulk delete");
-  assert(fn.includes("upsert"), "still mirrors declared skills");
-  // Scenario from the brief: 15 canonical skills, 10 in the legacy array. The
-  // legacy write must not touch the other 5.
+suite("legacy skill sync lives on CandidateSkill, not dual-write.ts", () => {
   assert(
-    !fn.includes("declaredIds"),
-    "no set-difference pass that could prune canonical rows",
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "dual-write.ts deleted",
   );
+  const src = source("src/repositories/candidate.ts");
+  assert(src.includes("candidateSkill"), "canonical skill table");
 });
 
 suite("legacy skill sync does not overwrite the candidate's own rating", () => {
-  const src = source("src/repositories/dual-write.ts");
-  const fn = src.slice(
-    src.indexOf("export async function syncCandidateSkillsFromLegacy"),
-    src.indexOf("export async function syncProfileOwnedEducation"),
+  assert(
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "dual-write.ts deleted",
   );
-  assert(fn.includes("update: {}"), "existing rows are left alone");
 });
 
 suite("removing a skill withdraws the claim but keeps the evidence", () => {
@@ -315,12 +304,11 @@ suite("a deactivated catalog skill is left alone, not silently withdrawn", () =>
 
 suite("only the detailed profile may remove skill claims", () => {
   const detail = source("src/repositories/candidate-detail.ts");
-  const dualWrite = source("src/repositories/dual-write.ts");
   const deletesInDetail = detail.split("candidateSkill.deleteMany").length - 1;
   assert(deletesInDetail === 1, "exactly one deletion site");
   assert(
-    !dualWrite.includes("candidateSkill.delete"),
-    "the legacy path has none",
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "legacy dual-write path is gone",
   );
 });
 
@@ -342,10 +330,9 @@ suite("the identity view no longer filters to the migration singletons", () => {
 
 suite("the detailed read returns whole arrays, not one row", () => {
   const src = source("src/repositories/candidate-detail.ts");
-  const fn = src.slice(
-    src.indexOf("export async function getCandidateDetail"),
-    src.indexOf("/* ─── Legacy compatibility mirrors"),
-  );
+  const start = src.indexOf("export async function getCandidateDetail");
+  const end = src.indexOf("export async function listSelfReportedExternalLinks");
+  const fn = src.slice(start, end === -1 ? undefined : end);
   for (const rel of ["education", "experience", "projects", "certifications", "links"]) {
     assert(fn.includes(`${rel}: {`), `${rel} selected`);
   }
@@ -370,55 +357,28 @@ suite("saving a section replaces the list, clearing the migration rows", () => {
 });
 
 suite("a legacy form cannot overwrite candidate-authored history", () => {
-  const src = source("src/repositories/dual-write.ts");
   assert(
-    src.includes("if (await hasCandidateAuthoredEducation(tx, userId)) return;"),
-    "education guard",
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "dual-write.ts deleted",
   );
-  assert(
-    src.includes("if (await hasCandidateAuthoredExperience(tx, userId)) return;"),
-    "experience guard",
-  );
+  const src = source("src/repositories/candidate-detail.ts");
+  assert(src.includes("candidateEducation"), "education is canonical");
+  assert(src.includes("candidateExperience"), "experience is canonical");
 });
 
 /* ─── Legacy mirroring direction ─────────────────────────────────────────── */
 
-suite("mirrors run canonical → legacy and use the primary row", () => {
+suite("legacy StudentProfile mirrors are retired", () => {
   const src = source("src/repositories/candidate-detail.ts");
-  assert(
-    src.includes("pickPrimaryEducation(rows)"),
-    "education mirror picks the primary row",
-  );
-  assert(
-    src.includes("pickPrimaryExperience(shaped)"),
-    "experience mirror picks the primary row",
-  );
-  // The mirror writes college/collegeId/graduationYear and never reads them back.
-  const mirror = src.slice(
-    src.indexOf("async function mirrorEducationToLegacy"),
-    src.indexOf("async function mirrorExperienceToLegacy"),
-  );
-  assert(mirror.includes("studentProfile.updateMany"), "writes the legacy row");
-  assert(
-    !mirror.includes("studentProfile.findUnique"),
-    "never reads legacy as a source",
-  );
+  assert(!src.includes("mirrorEducationToLegacy"), "education mirror gone");
+  assert(!src.includes("mirrorExperienceToLegacy"), "experience mirror gone");
+  assert(!src.includes("mirrorSkillsToLegacy"), "skills mirror gone");
+  assert(!src.includes("studentProfile"), "no StudentProfile delegate");
 });
 
-suite("emptying a section clears the legacy mirror rather than leaving it stale", () => {
-  const src = code("src/repositories/candidate-detail.ts");
-  const edu = src.slice(
-    src.indexOf("async function mirrorEducationToLegacy"),
-    src.indexOf("async function mirrorExperienceToLegacy"),
-  );
-  assert(edu.includes("primary?.institutionName ?? null"), "college cleared");
-  assert(edu.includes("primary?.graduationYear ?? null"), "grad year cleared");
-  assert(!edu.includes("if (!primary) return;"), "no early return on empty");
-
-  const exp = src.slice(src.indexOf("async function mirrorExperienceToLegacy"));
-  const body = exp.slice(0, exp.indexOf("async function mirrorSkillsToLegacy"));
-  assert(body.includes("primary?.companyName ?? null"), "organization cleared");
-  assert(!body.includes("if (rows.length === 0) return;"), "no early return");
+suite("emptying a section no longer remirrors StudentProfile", () => {
+  const src = source("src/repositories/candidate-detail.ts");
+  assert(!src.includes("studentProfile.updateMany"), "no SP remirror");
 });
 
 suite("basic info writes only its own fields and never domain", () => {
@@ -505,7 +465,7 @@ suite("verified accomplishments are derived, never stored", () => {
   );
   // Each rule reads the source of truth the rest of the platform already writes.
   assert(src.includes("CHALLENGE_ELIGIBLE_DAYS = 50"), "50-day gate is explicit");
-  assert(src.includes("prisma.enrollment.findMany"), "challenge days from Enrollment");
+  assert(src.includes("listChallengePeRows") || src.includes("programEnrollment"), "challenge days from ProgramEnrollment");
   assert(
     src.includes("prisma.programEnrollment.findMany"),
     "cohort completion from ProgramEnrollment",
@@ -1413,14 +1373,16 @@ suite("flags and dual-write are untouched by this slice", () => {
     !flags.includes("ENABLE_NEW_CANDIDATE"),
     "candidate migration flag retired",
   );
-  const runDualWrite = source("src/repositories/dual-write.ts");
-  assert(runDualWrite.includes("export async function runDualWrite"), "still there");
+  assert(
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "dual-write.ts deleted",
+  );
 });
 
-suite("StudentProfile is still written, and still not the read source", () => {
+suite("StudentProfile is not written; CandidateProfile is the identity source", () => {
   const src = source("src/repositories/candidate-detail.ts");
   const writes = src.split("studentProfile.updateMany").length - 1;
-  assert(writes >= 4, `legacy mirrors still run, found ${writes}`);
+  assert(writes === 0, `legacy mirrors must be gone, found ${writes}`);
   assert(
     !src.includes("studentProfile.findUnique"),
     "never read as a source of truth",

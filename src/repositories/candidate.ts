@@ -2,8 +2,8 @@ import "server-only";
 import {
   CandidatePersona,
   OpportunityType,
+  Prisma,
   UserType,
-  type Prisma,
 } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import {
@@ -12,12 +12,9 @@ import {
   splitMonthDate,
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import {
   applyCandidateIdentityChange,
-  runStudentProfileMirror,
 } from "@/repositories/candidate-identity";
-import { syncCandidateSkillsFromLegacy } from "@/repositories/dual-write";
 import type { CandidateProfileView } from "@/repositories/types";
 
 const legacyIdentitySelect = {
@@ -288,11 +285,78 @@ const row = await prisma.candidateProfile.findUnique({
 return row?.userId ?? null;
 }
 
-export async function updateStudentFields(
+function skillSlug(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+async function resolveOrCreateSkillId(
+  tx: Prisma.TransactionClient,
+  raw: string,
+): Promise<string | null> {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const slug = skillSlug(trimmed);
+  if (!slug) return null;
+  const key = trimmed.toLowerCase();
+
+  const bySlug = await tx.skill.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (bySlug) return bySlug.id;
+
+  const byNameOrAlias = await tx.skill.findFirst({
+    where: {
+      OR: [
+        { name: { equals: trimmed, mode: "insensitive" } },
+        { aliases: { has: key } },
+        { aliases: { has: trimmed } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (byNameOrAlias) return byNameOrAlias.id;
+
+  try {
+    const created = await tx.skill.create({
+      data: { slug, name: trimmed },
+      select: { id: true },
+    });
+    return created.id;
+  } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      const again = await tx.skill.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+      if (again) return again.id;
+    }
+    throw e;
+  }
+}
+
+export async function syncCandidateSkillsFromLegacy(
+  tx: Prisma.TransactionClient,
   userId: string,
-  data: Prisma.StudentProfileUpdateInput,
-) {
-  return studentProfile.update({ where: { userId }, data });
+  declared: string[],
+): Promise<void> {
+  for (const raw of declared) {
+    const skillId = await resolveOrCreateSkillId(tx, raw);
+    if (!skillId) continue;
+    await tx.candidateSkill.upsert({
+      where: { userId_skillId: { userId, skillId } },
+      create: { userId, skillId, claimedByCandidate: true },
+      update: {},
+    });
+  }
 }
 
 export async function updateCandidateLinks(
@@ -306,17 +370,6 @@ export async function updateCandidateLinks(
       githubUsername: data.githubUsername,
     });
     await syncCandidateSkillsFromLegacy(tx, userId, data.skills);
-    const claimed = await tx.candidateSkill.findMany({
-      where: { userId, claimedByCandidate: true },
-      orderBy: { createdAt: "asc" },
-      select: { skill: { select: { name: true } } },
-    });
-    await runStudentProfileMirror(tx, "enrollSkills", async () => {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: { skills: claimed.map((c) => c.skill.name) },
-      });
-    });
   });
 }
 
@@ -426,17 +479,11 @@ function randomReferralCode(): string {
 async function mintHireOnlyReferralCode(tx: Prisma.TransactionClient): Promise<string> {
   for (let i = 0; i < 10; i++) {
     const code = randomReferralCode();
-    const [onCandidate, onStudent] = await Promise.all([
-      tx.candidateProfile.findUnique({
-        where: { referralCode: code },
-        select: { userId: true },
-      }),
-      tx.studentProfile.findUnique({
-        where: { referralCode: code },
-        select: { userId: true },
-      }),
-    ]);
-    if (!onCandidate && !onStudent) return code;
+    const onCandidate = await tx.candidateProfile.findUnique({
+      where: { referralCode: code },
+      select: { userId: true },
+    });
+    if (!onCandidate) return code;
   }
   throw new Error("Could not mint unique hire-only referral code");
 }
@@ -456,54 +503,31 @@ export async function ensureCandidateProfile(
   });
   if (existing) return;
 
-  const [user, sp] = await Promise.all([
-    tx.user.findUnique({
-      where: { id: userId },
-      select: { name: true, email: true },
-    }),
-    tx.studentProfile.findUnique({
-      where: { userId },
-      select: {
-        fullName: true,
-        referralCode: true,
-        userType: true,
-        phone: true,
-        phoneVerified: true,
-        phoneVerifiedAt: true,
-        linkedinUrl: true,
-        githubUsername: true,
-        resumeUrl: true,
-        isReadyForInterview: true,
-      },
-    }),
-  ]);
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
 
   const fullName =
-    sp?.fullName?.trim() ||
     user?.name?.trim() ||
     user?.email?.split("@")[0] ||
     "Unknown";
 
-  let referralCode: string;
-  if (sp?.referralCode) {
-    referralCode = sp.referralCode;
-  } else {
-    referralCode = await mintHireOnlyReferralCode(tx);
-  }
+  const referralCode = await mintHireOnlyReferralCode(tx);
 
   await tx.candidateProfile.create({
     data: {
       userId,
       fullName,
-      primaryPersona: sp?.userType === "PROFESSIONAL" ? "PROFESSIONAL" : "STUDENT",
-      phone: sp?.phone ?? null,
-      phoneVerified: sp?.phoneVerified ?? false,
-      phoneVerifiedAt: sp?.phoneVerifiedAt ?? null,
-      linkedinUrl: sp?.linkedinUrl ?? null,
-      githubUsername: sp?.githubUsername ?? null,
-      resumeUrl: sp?.resumeUrl ?? null,
+      primaryPersona: "STUDENT",
+      phone: null,
+      phoneVerified: false,
+      phoneVerifiedAt: null,
+      linkedinUrl: null,
+      githubUsername: null,
+      resumeUrl: null,
       referralCode,
-      isReadyForInterview: sp?.isReadyForInterview ?? false,
+      isReadyForInterview: false,
     },
   });
 }

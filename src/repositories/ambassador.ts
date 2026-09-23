@@ -52,25 +52,6 @@ const EMPTY_STATE: AmbassadorState = {
   dismissedAt: null,
 };
 
-function savepointName(label: string): string {
-  const cleaned = label.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
-  return `ambmir_${cleaned || "x"}`;
-}
-
-function shouldInjectLegacyMirrorFailure(): boolean {
-  return process.env.AMBASSADOR_FAIL_LEGACY_MIRROR === "1";
-}
-
-function ambassadorStudentProfileData(
-  state: AmbassadorState,
-): Prisma.StudentProfileUpdateInput {
-  return {
-    isCampusAmbassadorCandidate: state.isCandidate,
-    ambassadorAppliedAt: state.appliedAt,
-    ambassadorDismissedAt: state.dismissedAt,
-  };
-}
-
 function nextState(
   kind: AmbassadorChangeKind,
   current: AmbassadorState,
@@ -172,22 +153,12 @@ export async function applyAmbassadorChange(
     tx,
     input.kind,
     userId,
-    async () => {
-      await tx.studentProfile.updateMany({
-        where: { userId },
-        data: ambassadorStudentProfileData(state),
-      });
-    },
+    async () => undefined,
   );
   if (input.kind === "wipe") {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: ambassadorStudentProfileData(state),
+    logger.info("[ambassador] canonical CampusAmbassadorApplication wiped", {
+      userId,
     });
-    logger.info(
-      "[ambassador] compliance wipe of frozen StudentProfile ambassador snapshots",
-      { userId },
-    );
   }
   return {
     state,
@@ -258,20 +229,6 @@ export async function listAmbassadorCandidates(
                   },
                 },
               },
-              {
-                user: {
-                  studentProfile: {
-                    fullName: { contains: trimmed, mode: "insensitive" },
-                  },
-                },
-              },
-              {
-                user: {
-                  studentProfile: {
-                    college: { contains: trimmed, mode: "insensitive" },
-                  },
-                },
-              },
             ],
           }
         : {}),
@@ -302,16 +259,6 @@ export async function listAmbassadorCandidates(
               },
             },
           },
-          studentProfile: {
-            select: {
-              fullName: true,
-              phone: true,
-              college: true,
-              graduationYear: true,
-              linkedinUrl: true,
-              domain: true,
-            },
-          },
         },
       },
     },
@@ -319,17 +266,15 @@ export async function listAmbassadorCandidates(
 
   return rows.map((row) => {
     const cp = row.user.candidateProfile;
-    const sp = row.user.studentProfile;
     const education = cp ? pickPrimaryEducation(cp.education) : null;
     return {
       userId: row.userId,
-      fullName: cp?.fullName || sp?.fullName || "Unnamed",
-      phone: cp?.phone ?? sp?.phone ?? null,
-      college:
-        unspecifiedToNull(education?.institutionName) ?? sp?.college ?? null,
-      graduationYear: education?.graduationYear ?? sp?.graduationYear ?? null,
-      linkedinUrl: cp?.linkedinUrl ?? sp?.linkedinUrl ?? null,
-      domain: sp?.domain ?? null,
+      fullName: cp?.fullName || "Unnamed",
+      phone: cp?.phone ?? null,
+      college: unspecifiedToNull(education?.institutionName),
+      graduationYear: education?.graduationYear ?? null,
+      linkedinUrl: cp?.linkedinUrl ?? null,
+      domain: null,
       ambassadorAppliedAt: row.appliedAt,
       email: row.user.email,
     };

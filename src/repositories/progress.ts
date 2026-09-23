@@ -13,6 +13,7 @@ import {
   peIdForMember,
   quizIdFromActivity,
   missionSubmissionIdFromAttemptId,
+  domainFromChallengeCohortSlug,
 } from "@/repositories/ids";
 import { listTrackStreakSnapshots } from "@/repositories/enrollment-state";
 
@@ -653,18 +654,16 @@ export async function listCanonicalChallengeFeed(input: {
     },
   });
 
-  const enrollmentIds = [
-    ...new Set(
-      rows
-        .map((row) => enrollmentIdFromPe(row.enrollmentId))
-        .filter((id): id is string => Boolean(id)),
-    ),
-  ];
-  const enrollments = await prisma.enrollment.findMany({
-    where: { id: { in: enrollmentIds } },
-    select: { id: true, domain: true },
+  const pes = await prisma.programEnrollment.findMany({
+    where: { id: { in: rows.map((row) => row.enrollmentId) } },
+    select: { id: true, cohort: { select: { slug: true } } },
   });
-  const domainByEnrollment = new Map(enrollments.map((e) => [e.id, e.domain]));
+  const domainByEnrollment = new Map<string, NonNullable<ReturnType<typeof domainFromChallengeCohortSlug>>>();
+  for (const pe of pes) {
+    const enrollmentId = enrollmentIdFromPe(pe.id);
+    const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+    if (enrollmentId && domain) domainByEnrollment.set(enrollmentId, domain);
+  }
 
   const out: CanonicalChallengeFeedRow[] = [];
   for (const row of rows) {
@@ -825,8 +824,8 @@ export async function getQuizAttemptForUser(
   if (Object.keys(fromCanonical).length > 0) {
     return { ...match, answers: fromCanonical };
   }
-  const historical = await prisma.quizAttempt.findUnique({
-    where: { id: match.id },
+  const historical = await prisma.historicalQuizAttempt.findUnique({
+    where: { legacyId: match.id },
     select: { answers: true },
   });
   return {

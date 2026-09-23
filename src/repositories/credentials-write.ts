@@ -18,11 +18,99 @@ import {
   CERTIFICATE_TYPES,
   type HackathonCertificateVariant,
 } from "@/features/certificate/constants";
-import { mapCertificateToCredential } from "@/repositories/dual-write";
 import { peIdForEnrollment } from "@/repositories/ids";
 
 type Tx = Prisma.TransactionClient;
 type Db = PrismaClient;
+
+function hackathonVariant(
+  metadata: Prisma.JsonValue | null,
+): string | undefined {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  const v = (metadata as { hackathonVariant?: unknown }).hackathonVariant;
+  return typeof v === "string" ? v : undefined;
+}
+
+export function mapCertificateToCredential(cert: {
+  id: string;
+  certificateId: string;
+  userId: string;
+  type: CertificateType;
+  status: CertificateStatus;
+  recipientName: string;
+  enrollmentId: string | null;
+  issuedAt: Date;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+  metadata: Prisma.JsonValue | null;
+}): {
+  id: string;
+  credentialId: string;
+  userId: string;
+  type: CredentialType;
+  sourceType: CredentialSourceType;
+  sourceKey: string;
+  status: CredentialStatus;
+  title: string;
+  recipientName: string;
+  metadata: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput;
+  issuedAt: Date;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+} {
+  let type: CredentialType = CredentialType.COMPLETION;
+  if (cert.type === CertificateType.HACKATHON) {
+    type = hackathonVariant(cert.metadata)
+      ? CredentialType.PLACEMENT
+      : CredentialType.PARTICIPATION;
+  } else if (cert.type === CertificateType.WORKSHOP) {
+    type = CredentialType.PARTICIPATION;
+  }
+
+  let sourceType: CredentialSourceType = CredentialSourceType.PROGRAM_ENROLLMENT;
+  let sourceKey = cert.enrollmentId
+    ? peIdForEnrollment(cert.enrollmentId)
+    : cert.id;
+  if (cert.type === CertificateType.HACKATHON) {
+    const meta = cert.metadata;
+    const teamId =
+      meta && typeof meta === "object" && !Array.isArray(meta)
+        ? (meta as { teamId?: unknown }).teamId
+        : null;
+    sourceType = CredentialSourceType.HACKATHON_TEAM;
+    sourceKey = typeof teamId === "string" ? `${teamId}:${cert.id}` : cert.id;
+  } else if (cert.type === CertificateType.WORKSHOP) {
+    sourceType = CredentialSourceType.WORKSHOP_REGISTRATION;
+    sourceKey = cert.id;
+  } else if (cert.type === CertificateType.COHORT) {
+    sourceType = CredentialSourceType.COHORT;
+    sourceKey = cert.id;
+  }
+
+  return {
+    id: `cred_${cert.id}`,
+    credentialId: cert.certificateId,
+    userId: cert.userId,
+    type,
+    sourceType,
+    sourceKey,
+    status:
+      cert.status === CertificateStatus.REVOKED
+        ? CredentialStatus.REVOKED
+        : CredentialStatus.ISSUED,
+    title: cert.type,
+    recipientName: cert.recipientName,
+    metadata:
+      cert.metadata === null
+        ? Prisma.JsonNull
+        : (cert.metadata as Prisma.InputJsonValue),
+    issuedAt: cert.issuedAt,
+    revokedAt: cert.revokedAt,
+    revokedReason: cert.revokedReason,
+  };
+}
 
 const TX_OPTS = { maxWait: 10000, timeout: 20000 } as const;
 
@@ -188,8 +276,8 @@ export async function generatePublicCredentialId(
 ): Promise<string> {
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const publicId = `ABT-${CERTIFICATE_TYPES[type].code}-${randomSuffix()}`;
-    const [cert, cred] = await Promise.all([
-      db.certificate.findUnique({
+    const [hist, cred] = await Promise.all([
+      db.historicalCertificate.findUnique({
         where: { certificateId: publicId },
         select: { id: true },
       }),
@@ -198,7 +286,7 @@ export async function generatePublicCredentialId(
         select: { id: true },
       }),
     ]);
-    if (!cert && !cred) return publicId;
+    if (!hist && !cred) return publicId;
   }
 
   logger.error("Could not allocate a unique credential ID after 6 attempts", {
@@ -228,13 +316,13 @@ async function findLegacyCertificate(
   input: ApplyCredentialIssueInput,
 ): Promise<{ certificateId: string } | null> {
   if (input.kind === "claude") {
-    return db.certificate.findUnique({
+    return db.historicalCertificate.findFirst({
       where: { enrollmentId: input.enrollmentId },
       select: { certificateId: true },
     });
   }
 
-  const rows = await db.certificate.findMany({
+  const rows = await db.historicalCertificate.findMany({
     where: { userId: input.userId, type: CertificateType.HACKATHON },
     select: { certificateId: true, metadata: true },
   });
@@ -297,10 +385,10 @@ async function catchUpCredentialFromCertificate(
 ): Promise<void> {
   await db.$transaction(
     async (tx) => {
-      const cert = await tx.certificate.findUnique({
+      const cert = await tx.historicalCertificate.findUnique({
         where: { certificateId },
         select: {
-          id: true,
+          legacyId: true,
           certificateId: true,
           userId: true,
           type: true,
@@ -314,9 +402,21 @@ async function catchUpCredentialFromCertificate(
         },
       });
       if (!cert) {
-        throw new Error(`Missing Certificate ${certificateId}`);
+        throw new Error(`Missing HistoricalCertificate ${certificateId}`);
       }
-      const row = mapCertificateToCredential(cert);
+      const row = mapCertificateToCredential({
+        id: cert.legacyId,
+        certificateId: cert.certificateId,
+        userId: cert.userId,
+        type: cert.type as CertificateType,
+        status: cert.status as CertificateStatus,
+        recipientName: cert.recipientName,
+        enrollmentId: cert.enrollmentId,
+        issuedAt: cert.issuedAt,
+        revokedAt: cert.revokedAt,
+        revokedReason: cert.revokedReason,
+        metadata: cert.metadata,
+      });
       await tx.credential.upsert({
         where: { credentialId: row.credentialId },
         create: row,

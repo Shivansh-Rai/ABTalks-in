@@ -10,6 +10,7 @@ import { isVirtualCandidatesEnabled } from "@/lib/feature-flags";
 import { VirtualCandidateQueue } from "@/components/admin/virtual-candidate-queue";
 import { cn } from "@/lib/utils";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { listAiCohortMemberships } from "@/repositories/program-state";
 
 export const metadata: Metadata = {
   title: "Hire | Admin",
@@ -72,8 +73,8 @@ export default async function AdminHirePage() {
           id: true,
           email: true,
           name: true,
-          studentProfile: {
-            select: { fullName: true, role: true, phone: true, college: true },
+          candidateProfile: {
+            select: { fullName: true, phone: true },
           },
         },
       },
@@ -93,10 +94,7 @@ export default async function AdminHirePage() {
   ];
   const members =
     memberIds.length > 0
-      ? await prisma.programMember.findMany({
-          where: { id: { in: memberIds } },
-          select: { id: true, fullName: true, jobRole: true },
-        })
+      ? await listAiCohortMemberships({ memberIds })
       : [];
   const memberById = new Map(members.map((m) => [m.id, m]));
   const identities = await listCandidateProfiles(
@@ -224,14 +222,13 @@ export default async function AdminHirePage() {
               const name =
                 member?.fullName ??
                 identity?.fullName ??
-                e.candidate?.studentProfile?.fullName ??
+                e.candidate?.candidateProfile?.fullName ??
                 e.candidate?.name ??
                 null;
               const email = e.candidate?.email ?? null;
               const role =
                 member?.jobRole ??
                 identity?.role ??
-                e.candidate?.studentProfile?.role ??
                 null;
               const profileHref = member
                 ? `/admin/program/members/${member.id}`
@@ -266,8 +263,8 @@ export default async function AdminHirePage() {
                         >
                           {email}
                         </a>
-                        {e.candidate?.studentProfile?.phone
-                          ? ` · ${e.candidate.studentProfile.phone}`
+                        {e.candidate?.candidateProfile?.phone
+                          ? ` · ${e.candidate.candidateProfile.phone}`
                           : ""}
                       </p>
                     )}

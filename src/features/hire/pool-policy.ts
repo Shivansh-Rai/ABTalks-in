@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Domain, type Prisma } from "@prisma/client";
+import { Domain, ProgramMemberStatus } from "@prisma/client";
 import { hireChallengePool, hireOpenCohortIds } from "@/lib/feature-flags";
 import {
   decodeCandidateRef,
@@ -15,6 +15,7 @@ import {
   resolveHackathonRefs,
   resolveProfileRefs,
   resolveProgramRefs,
+  type ProgramPoolWhere,
 } from "@/repositories/hire";
 
 /**
@@ -96,7 +97,7 @@ export async function resolvePoolCohorts(): Promise<PoolGateResult> {
  */
 export function memberEligibilityWhere(
   cohortIds: string[],
-): Prisma.ProgramMemberWhereInput {
+): ProgramPoolWhere {
   return {
     cohortId: { in: cohortIds },
     status: { in: ["ENROLLED", "COMPLETED"] },

@@ -1,11 +1,9 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
+import { ProgramMemberStatus } from "@prisma/client";
 import {
   compareProgramScoreRows,
-  overlayProgramMemberState,
-  listCanonicalProgramMemberIds,
+  listAiCohortMemberships,
 } from "@/repositories/program-state";
 
 export type ProgramLeaderboardRow = {
@@ -26,29 +24,10 @@ export type ProgramLeaderboardRow = {
 };
 
 async function fetchLeaderboard(cohortId: string): Promise<ProgramLeaderboardRow[]> {
-  const liveIds = await listCanonicalProgramMemberIds({ programCohortId: cohortId });
-  const members = await overlayProgramMemberState(
-    await programMember.findMany({
-      where: {
-        cohortId,
-        id: { in: liveIds },
-      },
-      select: {
-        id: true,
-        fullName: true,
-        company: true,
-        jobRole: true,
-        yearsExperience: true,
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-        enrolledAt: true,
-      },
-    }),
-  );
+  const members = await listAiCohortMemberships({
+    programCohortId: cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
+  });
   members.sort(compareProgramScoreRows);
 
   return members.map((m, index) => {

@@ -130,6 +130,24 @@ function makeTx() {
         pe.exists = true;
         return pe;
       },
+      findUnique: async ({ where }: { where: { id: string } }) => {
+        writes.push(`pe.find:${where.id}`);
+        if (!pe.exists) return null;
+        const status =
+          enrollmentRow.status === EnrollmentStatus.COMPLETED
+            ? EnrollmentStatusV2.COMPLETED
+            : enrollmentRow.status === EnrollmentStatus.ABANDONED
+              ? EnrollmentStatusV2.DROPPED
+              : EnrollmentStatusV2.ACTIVE;
+        return {
+          id: where.id,
+          userId: enrollmentRow.userId,
+          status,
+          startedAt: enrollmentRow.startedAt,
+          completedAt: enrollmentRow.completedAt,
+          cohort: { slug: `legacy-${enrollmentRow.domain.toLowerCase()}` },
+        };
+      },
     },
     enrollment: {
       findUnique: async ({ where }: { where: { id: string } }) => {
@@ -273,7 +291,10 @@ async function main() {
 
   await suite("second enrollment does not overwrite first-track domain", () => {
     const core = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(core.includes("applyEnrollmentDomainMirror"), "mirror helper");
+    assert(
+      !core.includes("tx.enrollment.create"),
+      "new enroll does not mint Enrollment",
+    );
     assert(
       source("src/repositories/enrollment-state.ts").includes("void domain"),
       "domain mirror is a no-op",
@@ -292,7 +313,7 @@ async function main() {
   await suite("live readers go through overlay or displayedChallengeDomain", () => {
     assert(
       source("src/features/dashboard/get-leaderboard.ts").includes(
-        "overlayChallengeProgressFields",
+        "listChallengePeRows",
       ),
       "leaderboard",
     );
@@ -343,19 +364,19 @@ async function main() {
     );
     assert(
       source("src/features/admin/get-analytics-data.ts").includes(
-        "overlayChallengeProgressFields",
+        "listChallengePeRows",
       ),
       "analytics dropoff/top",
     );
     assert(
       source("src/features/admin/get-dropoff-by-day.ts").includes(
-        "overlayChallengeProgressFields",
+        "listChallengePeRows",
       ),
       "dropoff lastSubmittedDay",
     );
     assert(
       source("src/features/admin/get-referrals-report.ts").includes(
-        "overlayChallengeProgressFields",
+        "listChallengePeRows",
       ),
       "referrals days",
     );
@@ -367,7 +388,7 @@ async function main() {
     );
     assert(
       source("src/app/actions/admin-export-actions.ts").includes(
-        "overlayChallengeProgressFields",
+        "listChallengePeRows",
       ),
       "CSV overlay",
     );
@@ -409,7 +430,7 @@ async function main() {
     const admin = source("src/app/actions/admin-actions.ts");
     const denorm = source("src/repositories/enrollment-state.ts");
     assert(submit.includes("status: EnrollmentStatus.COMPLETED"), "status stays live");
-    assert(admin.includes('status: "ACTIVE"'), "reset status stays live");
+    assert(admin.includes("EnrollmentStatus.ACTIVE"), "reset status stays live");
     const denormFn = denorm.slice(
       denorm.indexOf("export async function applyEnrollmentProgressDenorm"),
       denorm.indexOf("export async function applyEnrollmentDomainMirror"),
@@ -434,10 +455,10 @@ async function main() {
       },
     );
     assert(
-      source("src/features/enrollment/create-core-enrollment.ts").includes(
+      !source("src/features/enrollment/create-core-enrollment.ts").includes(
         "applyEnrollmentDomainMirror",
       ),
-      "create still calls helper",
+      "create no longer calls retired domain mirror",
     );
     assert(
       !source("src/features/enrollment/create-core-enrollment.ts").includes(
@@ -452,7 +473,7 @@ async function main() {
     assert(lb.includes("overlaid.slice(0, limit)"), "leaderboard ranks overlay");
     const students = source("src/features/admin/get-students.ts");
     assert(
-      students.includes('sortBy === "days" || sortBy === "streak"'),
+      students.includes("listChallengePeRows"),
       "admin days/streak fetch all then overlay",
     );
   });
@@ -542,7 +563,7 @@ async function main() {
 
   await suite("admin reset/status uses canonical PE writer", () => {
     const admin = source("src/app/actions/admin-actions.ts");
-    const count = admin.split("applyChallengeProgramEnrollmentById").length - 1;
+    const count = admin.split("applyChallengeProgramEnrollment").length - 1;
     assert(count >= 3, `reset/remove/reject expected ≥3, got ${count}`);
     assert(!admin.includes("dualWriteChallengeEnrollment"), "no DW helper");
   });
@@ -556,7 +577,7 @@ async function main() {
 
   await suite("anonymize uses canonical PE writer", () => {
     const src = source("src/features/admin/anonymize-user.ts");
-    assert(src.includes("applyChallengeProgramEnrollmentById"), "canonical");
+    assert(src.includes("applyChallengeProgramEnrollment"), "canonical");
     assert(!src.includes("dualWriteChallengeEnrollment"), "no DW helper");
     assert(src.includes("applyVisibilityChange"), "withdraw unchanged");
     assert(src.includes("scrubProgramMemberLegacyPii"), "PM PII scrub stays");

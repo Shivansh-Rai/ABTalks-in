@@ -1,42 +1,21 @@
-import { prisma } from "@/lib/db";
+import { Domain } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { listCandidateProfiles } from "@/repositories/candidate";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const recent = await prisma.enrollment.findMany({
-      where: { domain: "CLAUDE" },
-      orderBy: { startedAt: "desc" },
-      take: 20,
-      select: {
-        startedAt: true,
-        user: {
-          select: {
-            id: true,
-            studentProfile: {
-              select: {
-                fullName: true,
-                userType: true,
-                college: true,
-                organization: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const rows = await listChallengePeRows({ domains: [Domain.CLAUDE] });
+    rows.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+    const totalCount = rows.length;
+    const recent = rows.slice(0, 20);
 
-    const totalCount = await prisma.enrollment.count({
-      where: { domain: "CLAUDE" },
-    });
-
-    const identities = await listCandidateProfiles(recent.map((e) => e.user.id));
+    const identities = await listCandidateProfiles(recent.map((e) => e.userId));
     const signups = recent
       .map((e) => {
-        const identity = identities.get(e.user.id);
-        const profile = identity ?? e.user.studentProfile;
+        const profile = identities.get(e.userId);
         if (!profile?.fullName) return null;
 
         const firstName = profile.fullName.split(" ")[0];

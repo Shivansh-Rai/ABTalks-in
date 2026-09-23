@@ -2,7 +2,6 @@ import "server-only";
 
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 
 /**
  * Earliest registration date per user across StudentProfile, HackathonParticipant
@@ -15,16 +14,12 @@ import { studentProfile } from "@/repositories/legacy/student-profile";
  * predates `since` is correctly excluded by the caller's window filter.
  */
 export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
-  const [profileHits, candidateHits, participantHits, workshopHits] =
+  const [candidateHits, participantHits, workshopHits] =
     await Promise.all([
-    studentProfile.findMany({
-      where: { createdAt: { gte: since } },
-      select: { userId: true },
-    }),
-    prisma.candidateProfile.findMany({
-      where: { createdAt: { gte: since } },
-      select: { userId: true },
-    }),
+      prisma.candidateProfile.findMany({
+        where: { createdAt: { gte: since } },
+        select: { userId: true },
+      }),
     prisma.hackathonParticipant.findMany({
       where: { eventId: HACKATHON.eventId, createdAt: { gte: since } },
       select: { userId: true },
@@ -38,7 +33,6 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
 
   const candidates = new Set<string>();
   for (const r of [
-    ...profileHits,
     ...candidateHits,
     ...participantHits,
     ...workshopHits,
@@ -49,11 +43,7 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
 
   const userIds = [...candidates];
 
-  const [profiles, candidateProfiles, participants, workshops] = await Promise.all([
-    studentProfile.findMany({
-      where: { userId: { in: userIds } },
-      select: { userId: true, createdAt: true },
-    }),
+  const [candidateProfiles, participants, workshops] = await Promise.all([
     prisma.candidateProfile.findMany({
       where: { userId: { in: userIds } },
       select: { userId: true, createdAt: true },
@@ -80,7 +70,6 @@ export async function getRegistrationDatesSince(since: Date): Promise<Date[]> {
     }
   };
 
-  for (const row of profiles) note(row.userId, row.createdAt);
   for (const row of candidateProfiles) note(row.userId, row.createdAt);
   for (const row of participants) note(row.userId, row.createdAt);
   for (const row of workshops) note(row.userId, row._min.createdAt);
@@ -97,7 +86,6 @@ export async function countRegisteredUsers(): Promise<number> {
   return prisma.user.count({
     where: {
       OR: [
-        { studentProfile: { isNot: null } },
         { candidateProfile: { isNot: null } },
         { hackathonParticipants: { some: { eventId: HACKATHON.eventId } } },
         { workshopRegistrations: { some: {} } },

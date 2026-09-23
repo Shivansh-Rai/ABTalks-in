@@ -3,6 +3,7 @@ import { Domain, EnrollmentStatusV2 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { peIdForEnrollment } from "@/repositories/ids";
 import { getChallengeProgressStats } from "@/repositories/progress";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 /**
  * ABTalks Verified Skills — derived from curriculum + completion.
@@ -156,10 +157,9 @@ async function loadVerifiedSkills(
   withDates: boolean,
 ): Promise<VerifiedSkillWithOrigins[]> {
   const [enrollments, completedCohorts] = await Promise.all([
-    prisma.enrollment.findMany({
-      where: { userId },
-      select: { id: true, domain: true },
-    }),
+    listChallengePeRows({ userId }).then((rows) =>
+      rows.map((r) => ({ id: r.id, domain: r.domain })),
+    ),
     prisma.programEnrollment.findMany({
       where: {
         userId,

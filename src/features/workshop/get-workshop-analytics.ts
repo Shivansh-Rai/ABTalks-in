@@ -82,9 +82,12 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
     select: {
       email: true,
       createdAt: true,
-      studentProfile: { select: { id: true } },
       candidateProfile: { select: { id: true } },
-      _count: { select: { enrollments: true } },
+      programEnrollments: {
+        where: { id: { startsWith: "pe_enr_" } },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
   const accountByEmail = new Map(
@@ -107,7 +110,7 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
       account.createdAt.getTime() < firstSeen.getTime() - NEW_ACCOUNT_TOLERANCE_MS;
     if (preExisting) existingMembers += 1;
     else newToABTalks += 1;
-    if (account._count.enrollments > 0) convertedToChallenge += 1;
+    if (account.programEnrollments.length > 0) convertedToChallenge += 1;
   }
 
   const byEvent = new Map<string, WorkshopEventStats>();
@@ -146,7 +149,7 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
     repeatPeople,
     memberRegistrations: rows.filter((r) => {
       const a = accountByEmail.get(r.email);
-      return a?.candidateProfile != null || a?.studentProfile != null;
+      return a?.candidateProfile != null;
     }).length,
     newToABTalks,
     existingMembers,

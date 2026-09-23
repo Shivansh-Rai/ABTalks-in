@@ -11,12 +11,11 @@ import {
 } from "@/lib/program-auth";
 import type { ApplyProfileInput } from "@/lib/validations/program";
 import { bootstrapMemberStartDay } from "@/features/program/bootstrap-start-day";
-import { programMember } from "@/repositories/legacy/program-member";
 import { getCandidateProfile } from "@/repositories/candidate";
 import {
   applyProgramMembershipChange,
   countEnrolledProgramMembers,
-  overlayProgramMemberState,
+  findAiCohortMembershipByUserCohort,
 } from "@/repositories/program-state";
 import {
   findAppliedMembership,
@@ -254,18 +253,12 @@ export async function createApplication(
     return { ok: false, message: "Complete your registration before applying." };
   }
 
-  const existing = await programMember.findUnique({
-    where: { userId_cohortId: { userId, cohortId: cohort.id } },
-    select: { id: true, status: true },
-  });
-  const [canonicalExisting] = existing
-    ? await overlayProgramMemberState([existing])
-    : [];
+  const existing = await findAiCohortMembershipByUserCohort(userId, cohort.id);
   if (
-    canonicalExisting &&
-    (canonicalExisting.status === "ENROLLED" ||
-      canonicalExisting.status === "WAITLISTED" ||
-      canonicalExisting.status === "COMPLETED")
+    existing &&
+    (existing.status === "ENROLLED" ||
+      existing.status === "WAITLISTED" ||
+      existing.status === "COMPLETED")
   ) {
     return { ok: false, message: "You have already applied to this cohort." };
   }

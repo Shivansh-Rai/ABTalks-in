@@ -1,5 +1,4 @@
 import "server-only";
-import { AsyncLocalStorage } from "node:async_hooks";
 import { PointsSourceType, type Prisma } from "@prisma/client";
 import { istDateRangeToUtc } from "@/lib/date-utils";
 import { prisma, writeClient } from "@/lib/db";
@@ -10,61 +9,14 @@ import { logMoney } from "@/lib/observability/domain-log";
 type PointsReadClient = Pick<typeof prisma, "pointsAccount" | "user">;
 type Tx = Prisma.TransactionClient;
 
-const PRODUCTION_NEON_HOST_ID = "ep-nameless-term-ams9a5e3";
-
-type LegacyMirrorJob = {
-  input: ApplyPointsInput;
-  amount: number;
-};
-
-const pendingLegacyMirrors = new AsyncLocalStorage<LegacyMirrorJob[]>();
-
 /**
- * Run `fn` (the authoritative wallet transaction) then flush User/SynergyEvent
- * mirrors in a separate transaction after `fn` commits.
+ * Compatibility wrapper retained for existing call sites. Points writes now
+ * commit PointsAccount / PointsTransaction only.
  */
 export async function withLegacyPointsMirrorFlush<T>(
   fn: () => Promise<T>,
 ): Promise<T> {
-  const bag: LegacyMirrorJob[] = [];
-  const result = await pendingLegacyMirrors.run(bag, fn);
-  for (const job of bag) {
-    await flushLegacyMirror(job);
-  }
-  return result;
-}
-
-function enqueueLegacyMirror(input: ApplyPointsInput, amount: number): void {
-  void input; void amount;
-}
-
-function shouldInjectLegacyMirrorFailure(): boolean {
-  if (process.env.POINTS_FAIL_LEGACY_MIRROR !== "true") return false;
-  if ((process.env.DATABASE_URL ?? "").includes(PRODUCTION_NEON_HOST_ID)) {
-    logger.error("[points] POINTS_FAIL_LEGACY_MIRROR ignored on production");
-    return false;
-  }
-  return true;
-}
-
-async function flushLegacyMirror(job: LegacyMirrorJob): Promise<void> {
-  try {
-    if (shouldInjectLegacyMirrorFailure()) {
-      throw new Error("POINTS_FAIL_LEGACY_MIRROR");
-    }
-    await writeClient().$transaction(
-      async (tx) => {
-        await writeLegacyWalletAndEvent(tx, job.input, job.amount);
-      },
-      { maxWait: 20000, timeout: 20000 },
-    );
-  } catch (err) {
-    logger.error("[points] legacy mirror failed; new wallet kept", {
-      userId: job.input.userId,
-      idempotencyKey: job.input.idempotencyKey,
-      error: err instanceof Error ? err.stack ?? err.message : String(err),
-    });
-  }
+  return fn();
 }
 
 export type LegacySynergyMirror = {
@@ -316,7 +268,6 @@ async function applyNewAuthoritative(
       },
     });
     await insertLedger(tx, input, input.amount);
-    enqueueLegacyMirror(input, input.amount);
     return {
       ok: true,
       newBalance: await accountBalance(tx, input.userId),
@@ -342,7 +293,6 @@ async function applyNewAuthoritative(
     });
     if (debit.count === 0) return { ok: false, reason: "insufficient" };
     await insertLedger(tx, input, input.amount);
-    enqueueLegacyMirror(input, input.amount);
     return {
       ok: true,
       newBalance: await accountBalance(tx, input.userId),
@@ -386,7 +336,6 @@ async function applyNewAuthoritative(
       applied: actualDebit,
       shortfall,
     });
-    enqueueLegacyMirror(input, -actualDebit);
   }
   return {
     ok: true,
@@ -448,60 +397,4 @@ async function accountBalance(tx: Tx, userId: string): Promise<number> {
     select: { balance: true },
   });
   return row?.balance ?? 0;
-}
-
-async function writeLegacyWalletOnly(
-  tx: Tx,
-  userId: string,
-  signedAmount: number,
-): Promise<void> {
-  if (signedAmount > 0) {
-    await tx.user.update({
-      where: { id: userId },
-      data: { synergyPoints: { increment: signedAmount } },
-    });
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: { synergyPoints: { increment: signedAmount } },
-    });
-  } else if (signedAmount < 0) {
-    const debit = -signedAmount;
-    await tx.user.update({
-      where: { id: userId },
-      data: { synergyPoints: { decrement: debit } },
-    });
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: { synergyPoints: { decrement: debit } },
-    });
-  }
-}
-
-async function writeLegacyWalletAndEvent(
-  tx: Tx,
-  input: ApplyPointsInput,
-  signedAmount: number,
-): Promise<void> {
-  await writeLegacyWalletOnly(tx, input.userId, signedAmount);
-  await writeLegacyEventOnly(tx, input, signedAmount);
-}
-
-async function writeLegacyEventOnly(
-  tx: Tx,
-  input: ApplyPointsInput,
-  signedAmount: number,
-): Promise<void> {
-  if (!input.legacyEvent || signedAmount === 0) return;
-  await tx.synergyEvent.create({
-    data: {
-      userId: input.userId,
-      points: signedAmount,
-      type: input.legacyEvent.type,
-      submissionId: input.legacyEvent.submissionId ?? undefined,
-      enrollmentId: input.legacyEvent.enrollmentId ?? undefined,
-      dayNumber: input.legacyEvent.dayNumber ?? undefined,
-      reason: input.reason,
-      createdByAdminId: input.legacyEvent.createdByAdminId ?? undefined,
-    },
-  });
 }

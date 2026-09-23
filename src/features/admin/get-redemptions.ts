@@ -42,7 +42,7 @@ export async function getRedemptions(filter: {
         select: {
           id: true,
           email: true,
-          studentProfile: { select: { fullName: true } },
+          candidateProfile: { select: { fullName: true } },
         },
       },
     },
@@ -56,7 +56,7 @@ export async function getRedemptions(filter: {
     updatedAtIso: r.updatedAt.toISOString(),
     studentName:
       names.get(r.user.id)?.trim() ||
-      r.user.studentProfile?.fullName?.trim() ||
+      r.user.candidateProfile?.fullName?.trim() ||
       r.user.email,
     email: r.user.email,
     itemTitle: r.itemTitle,

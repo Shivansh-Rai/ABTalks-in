@@ -92,19 +92,34 @@ export async function applyChallengeProgramEnrollmentById(
   tx: Tx,
   enrollmentId: string,
 ): Promise<{ id: string } | null> {
-  const enrollment = await tx.enrollment.findUnique({
-    where: { id: enrollmentId },
+  const peId = peIdForEnrollment(enrollmentId);
+  const pe = await tx.programEnrollment.findUnique({
+    where: { id: peId },
     select: {
       id: true,
       userId: true,
-      domain: true,
       status: true,
       startedAt: true,
       completedAt: true,
+      cohort: { select: { slug: true } },
     },
   });
-  if (!enrollment) return null;
-  return applyChallengeProgramEnrollment(tx, enrollment);
+  if (!pe) return null;
+  const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+  if (!domain) return null;
+  return applyChallengeProgramEnrollment(tx, {
+    id: enrollmentIdFromPe(pe.id) ?? enrollmentId,
+    userId: pe.userId,
+    domain,
+    status:
+      pe.status === EnrollmentStatusV2.COMPLETED
+        ? EnrollmentStatus.COMPLETED
+        : pe.status === EnrollmentStatusV2.DROPPED
+          ? EnrollmentStatus.ABANDONED
+          : EnrollmentStatus.ACTIVE,
+    startedAt: pe.startedAt,
+    completedAt: pe.completedAt,
+  });
 }
 
 export type EnrollmentProgressDenorm = {
@@ -216,7 +231,89 @@ export async function displayedChallengeDomain(
 export async function displayedChallengeDomains(
   entries: Array<{ userId: string; legacy: Domain | null | undefined }>,
 ): Promise<Map<string, Domain | null>> {
-  const out = new Map<string, Domain | null>();
-  if (entries.length === 0) return out;
+  if (entries.length === 0) return new Map();
   return listPrimaryChallengeDomains(entries.map((entry) => entry.userId));
+}
+
+export async function listChallengePeRows(input: {
+  userId?: string;
+  userIds?: string[];
+  domains?: Domain[];
+  excludeAbandoned?: boolean;
+  searchName?: string;
+}): Promise<
+  Array<{
+    id: string;
+    userId: string;
+    domain: Domain;
+    status: EnrollmentStatus;
+    startedAt: Date;
+    completedAt: Date | null;
+    daysCompleted: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastSubmittedDay: number | null;
+  }>
+> {
+  const slugs = (input.domains ?? []).map((d) => cohortSlugForDomain(d));
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      id: { startsWith: "pe_enr_" },
+      ...(input.userId ? { userId: input.userId } : {}),
+      ...(input.userIds ? { userId: { in: input.userIds } } : {}),
+      ...(input.excludeAbandoned
+        ? { status: { not: EnrollmentStatusV2.DROPPED } }
+        : {}),
+      ...(slugs.length ? { cohort: { slug: { in: slugs } } } : {}),
+      ...(input.searchName
+        ? {
+            user: {
+              candidateProfile: {
+                fullName: { contains: input.searchName, mode: "insensitive" },
+              },
+            },
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      joinedAt: true,
+      startedAt: true,
+      completedAt: true,
+      trackCurrentStreak: true,
+      trackLongestStreak: true,
+      cohort: { select: { slug: true } },
+    },
+  });
+  const rows = pes.flatMap((pe) => {
+    const enrollmentId = enrollmentIdFromPe(pe.id);
+    const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+    if (!enrollmentId || !domain) return [];
+    if (input.domains && !input.domains.includes(domain)) return [];
+    return [
+      {
+        id: enrollmentId,
+        userId: pe.userId,
+        domain,
+        status:
+          pe.status === EnrollmentStatusV2.COMPLETED
+            ? EnrollmentStatus.COMPLETED
+            : pe.status === EnrollmentStatusV2.DROPPED
+              ? EnrollmentStatus.ABANDONED
+              : EnrollmentStatus.ACTIVE,
+        startedAt: pe.joinedAt ?? pe.startedAt,
+        completedAt: pe.completedAt,
+        daysCompleted: 0,
+        currentStreak: pe.trackCurrentStreak,
+        longestStreak: pe.trackLongestStreak,
+        lastSubmittedDay: null as number | null,
+      },
+    ];
+  });
+  const { overlayChallengeProgressFields } = await import(
+    "@/repositories/progress"
+  );
+  return overlayChallengeProgressFields(rows);
 }

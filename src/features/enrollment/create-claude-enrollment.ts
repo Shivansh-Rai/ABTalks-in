@@ -1,11 +1,9 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma, writeClient } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import {
-  applyChallengeProgramEnrollment,
-  applyEnrollmentDomainMirror,
-} from "@/repositories/enrollment-state";
+import { applyChallengeProgramEnrollment } from "@/repositories/enrollment-state";
 import { applyVisibilityChange } from "@/repositories/visibility";
+import { mintProgressRowId } from "@/repositories/ids";
 import { findChallengeEnrollment, getChallengeByDomain } from "@/repositories/learning";
 
 export type CreateClaudeEnrollmentResult =
@@ -68,31 +66,19 @@ export async function createClaudeEnrollment(
 
   try {
     await writeClient().$transaction(async (tx) => {
-      const enrollment = await tx.enrollment.create({
-        data: {
-          userId,
-          challengeId: challenge.id,
-          domain: Domain.CLAUDE,
-          status: EnrollmentStatus.ACTIVE,
-          daysCompleted: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-        },
-        select: {
-          id: true,
-          userId: true,
-          domain: true,
-          status: true,
-          startedAt: true,
-          completedAt: true,
-        },
-      });
+      const handle = mintProgressRowId();
       await applyVisibilityChange(tx, {
         userId,
         kind: "challenge_enroll",
       });
-      await applyChallengeProgramEnrollment(tx, enrollment);
-      await applyEnrollmentDomainMirror(tx, userId, Domain.CLAUDE);
+      await applyChallengeProgramEnrollment(tx, {
+        id: handle,
+        userId,
+        domain: Domain.CLAUDE,
+        status: EnrollmentStatus.ACTIVE,
+        startedAt: new Date(),
+        completedAt: null,
+      });
     });
     return { ok: true };
   } catch (e) {

@@ -97,7 +97,7 @@ async function main() {
     const src = source("src/repositories/points.ts");
     assert(!src.includes("applyLegacyAuthoritative"), "deleted");
     assert(src.includes("applyNewAuthoritative"), "canonical writer");
-    assert(src.includes("writeLegacyWalletAndEvent"), "mirror helper retained");
+    assert(!src.includes("writeLegacyWalletAndEvent"), "legacy wallet writer removed");
   });
 
   await suite("Credential: issueLegacyAuthoritative unreachable", () => {
@@ -118,7 +118,7 @@ async function main() {
     const src = source("src/repositories/ambassador.ts");
     assert(!src.includes("if (!true)"), "no writes-OFF branch");
     assert(src.includes('input.kind === "wipe"'), "compliance wipe");
-    assert(src.includes("compliance wipe of frozen StudentProfile ambassador snapshots"), "wipe log");
+    assert(src.includes("canonical CampusAmbassadorApplication wiped"), "wipe log");
   });
 
   await suite("Progress: legacy-first writers unreachable; QuizAttempt answers read retained", () => {
@@ -128,7 +128,7 @@ async function main() {
     assert(!writes.includes("dualWriteMissionAttempt"), "no DW mission");
     assert(!writes.includes("isNewProgressWritesEnabled"), "write flag unused");
     const reads = source("src/repositories/progress.ts");
-    assert(reads.includes("quizAttempt.findUnique"), "historical answers fallback");
+    assert(reads.includes("historicalQuizAttempt.findUnique"), "historical answers archive");
     assert(reads.includes("answersFromPayload"), "canonical answers first");
     assert(!reads.includes("isNewProgressRepoEnabled"), "no frozen-progress current-state flag");
   });
@@ -144,7 +144,7 @@ async function main() {
     const src = source("src/repositories/program-state.ts");
     assert(!src.includes("dualWriteProgramMember"), "no DW helper");
     assert(!src.includes("isNewProgramStateWritesEnabled"), "write flag unused");
-    assert(src.includes("ensureProgramMemberAnchor"), "structural anchor");
+    assert(!src.includes("ensureProgramMemberAnchor"), "no PM structural anchor");
     assert(src.includes("scrubProgramMemberLegacyPii"), "compliance PII");
   });
 
@@ -224,7 +224,7 @@ async function main() {
     assert(anon.includes("applyAmbassadorChange"), "ambassador wipe");
     assert(anon.includes('{ kind: "wipe"'), "wipe kind");
     assert(anon.includes("scrubProgramMemberLegacyPii"), "PM PII");
-    assert(anon.includes("studentProfile.updateMany"), "SP wipe");
+    assert(anon.includes("historicalStudentProfile"), "historical SP snapshot scrub");
     assert(anon.includes("candidateProfile.updateMany"), "CP wipe");
     assert(anon.includes("applyVisibilityChange"), "CV wipe");
   });

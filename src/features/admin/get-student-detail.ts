@@ -1,4 +1,4 @@
-import type { StudentProfile, UserType } from "@prisma/client";
+import type { UserType } from "@prisma/client";
 import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { getBalance } from "@/repositories/points";
@@ -7,9 +7,12 @@ import { getAmbassadorState } from "@/repositories/ambassador";
 import {
   listChallengeSubmissions,
   listQuizAttemptsForUser,
-  overlayChallengeProgressFields,
 } from "@/repositories/progress";
-import { displayedChallengeDomain } from "@/repositories/enrollment-state";
+import {
+  displayedChallengeDomain,
+  listChallengePeRows,
+} from "@/repositories/enrollment-state";
+import { enrollmentIdFromPe } from "@/repositories/ids";
 
 export type ChallengeStudentDetail = {
   kind: "challenge";
@@ -26,7 +29,34 @@ export type ChallengeStudentDetail = {
     sessionInvalidatedAt: Date | null;
     anonymizedAt: Date | null;
   };
-  profile: StudentProfile;
+  profile: {
+    id: string;
+    userId: string;
+    fullName: string;
+    userType: UserType;
+    college: string | null;
+    collegeId: string | null;
+    graduationYear: number | null;
+    organization: string | null;
+    role: string | null;
+    yearsExperience: number | null;
+    domain: string | null;
+    skills: string[];
+    resumeUrl: string | null;
+    phone: string | null;
+    phoneVerified: boolean;
+    phoneVerifiedAt: Date | null;
+    linkedinUrl: string | null;
+    githubUsername: string | null;
+    referralCode: string;
+    isReadyForInterview: boolean;
+    isCampusAmbassadorCandidate: boolean;
+    ambassadorAppliedAt: Date | null;
+    ambassadorDismissedAt: Date | null;
+    synergyPoints: number;
+    createdAt: Date;
+    updatedAt: Date;
+  };
   enrollment: {
     domain: string;
     status: string;
@@ -129,21 +159,6 @@ export async function getStudentDetail(
       disabledReason: true,
       sessionInvalidatedAt: true,
       anonymizedAt: true,
-      studentProfile: true,
-      enrollments: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: {
-          id: true,
-          domain: true,
-          status: true,
-          daysCompleted: true,
-          currentStreak: true,
-          longestStreak: true,
-          lastSubmittedDay: true,
-          challenge: { select: { totalDays: true } },
-        },
-      },
       hackathonParticipants: {
         where: { eventId: HACKATHON.eventId },
         take: 1,
@@ -176,7 +191,7 @@ export async function getStudentDetail(
     getAmbassadorState(user.id),
   ]);
 
-  if (!user.studentProfile && !candidate) {
+  if (!candidate) {
     const participant = user.hackathonParticipants[0];
     if (!participant) {
       return null;
@@ -217,7 +232,11 @@ export async function getStudentDetail(
     select: { id: true, weekNumber: true, title: true },
   });
   const quizById = new Map(quizzes.map((q) => [q.id, q]));
-  const enrollmentId = user.enrollments[0]?.id;
+  const peRows = await listChallengePeRows({ userId });
+  const enrollmentRaw = peRows[0] ?? null;
+  const enrollmentId = enrollmentRaw
+    ? enrollmentIdFromPe(enrollmentRaw.id) ?? enrollmentRaw.id
+    : null;
   const [submissions, quizAttemptRows, adminActions, remarks] = await Promise.all([
     enrollmentId ? listChallengeSubmissions(enrollmentId) : Promise.resolve([]),
     listQuizAttemptsForUser(
@@ -232,7 +251,7 @@ export async function getStudentDetail(
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
@@ -249,17 +268,24 @@ export async function getStudentDetail(
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
     }),
   ]);
 
-  const enrollmentRaw = user.enrollments[0] ?? null;
-  const [enrollment] = enrollmentRaw
-    ? await overlayChallengeProgressFields([enrollmentRaw])
-    : [null];
+  const enrollment = enrollmentRaw
+    ? {
+        domain: enrollmentRaw.domain,
+        status: enrollmentRaw.status,
+        daysCompleted: enrollmentRaw.daysCompleted,
+        currentStreak: enrollmentRaw.currentStreak,
+        longestStreak: enrollmentRaw.longestStreak,
+        lastSubmittedDay: enrollmentRaw.lastSubmittedDay,
+        challenge: { totalDays: 60 },
+      }
+    : null;
   const onTimeCount = submissions.filter(
     (s) => s.status === "ON_TIME" || s.status === "LATE",
   ).length;
@@ -271,10 +297,9 @@ export async function getStudentDetail(
   ].filter((id): id is string => Boolean(id));
   const adminNames = await canonicalFullNameByUserId(adminNameIds);
 
-  const sp = user.studentProfile;
   const profile = candidate
     ? {
-        id: sp?.id ?? `sp_missing_${user.id}`,
+        id: `cp_${user.id}`,
         userId: user.id,
         fullName: candidate.fullName,
         userType: candidate.userType as UserType,
@@ -284,12 +309,12 @@ export async function getStudentDetail(
         organization: candidate.organization,
         role: candidate.role,
         yearsExperience: candidate.yearsExperience,
-        domain: await displayedChallengeDomain(userId, sp?.domain ?? null),
+        domain: await displayedChallengeDomain(userId, null),
         skills: candidate.skills,
         resumeUrl: candidate.resumeUrl,
         phone: candidate.phone,
         phoneVerified: candidate.phoneVerified,
-        phoneVerifiedAt: candidate.phoneVerifiedAt ?? sp?.phoneVerifiedAt ?? null,
+        phoneVerifiedAt: candidate.phoneVerifiedAt ?? null,
         linkedinUrl: candidate.linkedinUrl,
         githubUsername: candidate.githubUsername,
         referralCode: candidate.referralCode,
@@ -297,16 +322,15 @@ export async function getStudentDetail(
         isCampusAmbassadorCandidate: ambassador.isCandidate,
         ambassadorAppliedAt: ambassador.appliedAt,
         ambassadorDismissedAt: ambassador.dismissedAt,
-        synergyPoints: sp?.synergyPoints ?? 0,
-        createdAt: sp?.createdAt ?? user.createdAt,
-        updatedAt: sp?.updatedAt ?? user.createdAt,
+        synergyPoints,
+        createdAt: user.createdAt,
+        updatedAt: user.createdAt,
       }
-    : {
-        ...sp!,
-        isCampusAmbassadorCandidate: ambassador.isCandidate,
-        ambassadorAppliedAt: ambassador.appliedAt,
-        ambassadorDismissedAt: ambassador.dismissedAt,
-      };
+    : null;
+
+  if (!profile) {
+    return null;
+  }
 
   return {
     kind: "challenge",
@@ -359,7 +383,7 @@ export async function getStudentDetail(
       createdAt: action.createdAt,
       adminName:
         (action.admin?.id ? adminNames.get(action.admin.id)?.trim() : undefined) ||
-        action.admin?.studentProfile?.fullName?.trim() ||
+        action.admin?.candidateProfile?.fullName?.trim() ||
         action.admin?.email ||
         "Admin",
     })),
@@ -370,7 +394,7 @@ export async function getStudentDetail(
       updatedAt: r.updatedAt,
       adminName:
         adminNames.get(r.admin.id)?.trim() ||
-        r.admin.studentProfile?.fullName?.trim() ||
+        r.admin.candidateProfile?.fullName?.trim() ||
         r.admin.email ||
         "Admin",
     })),

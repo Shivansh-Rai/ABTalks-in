@@ -2,7 +2,7 @@
  * W2 CandidateVisibility write-authority tests.
  * Run: npm run test:078-visibility-writes
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { applyVisibilityChange } from "@/repositories/visibility";
 import { searchableUserWhere } from "@/repositories/talent";
@@ -210,10 +210,11 @@ async function main() {
     assert(contact.includes('status: "CONTACT_SHARED"'), "contact is CONTACT_SHARED");
   });
 
-  await suite("dual-write writes CV first only when ENABLE_NEW_VISIBILITY_WRITES", () => {
-    const src = source("src/repositories/dual-write.ts");
-    assert(!src.includes("isNewVisibilityWritesEnabled"), "flag is consulted");
-    assert(src.includes("applyVisibilityChange"), "write boundary used");
+  await suite("dual-write.ts is retired", () => {
+    assert(
+      !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+      "dual-write.ts deleted",
+    );
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

@@ -109,7 +109,6 @@ export async function getDashboardData(
         name: true,
         email: true,
         role: true,
-        studentProfile: { select: { domain: true } },
       },
     }),
     getCandidateProfile(userId),
@@ -126,7 +125,7 @@ export async function getDashboardData(
 
   const profileDomain = await displayedChallengeDomain(
     userId,
-    user.studentProfile?.domain ?? null,
+    null,
   );
 
   const profileSnapshot: DashboardDataWithEnrollment["profile"] = {

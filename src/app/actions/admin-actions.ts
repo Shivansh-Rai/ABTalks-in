@@ -2,18 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { Role, PointsSourceType } from "@prisma/client";
+import { Role, PointsSourceType, EnrollmentStatus, EnrollmentStatusV2 } from "@prisma/client";
 import { z } from "zod";
 import { prisma, writeClient } from "@/lib/db";
 import { hasPlatformAdmin, requireAdmin } from "@/lib/admin-auth";
 import { getCurrentDayNumber } from "@/lib/date-utils";
 import { computeStreakStats, daysCompletedFromCanonical, listCanonicalChallengeDays } from "@/features/submission/streak-utils";
 import { sendChallengeResetEmail } from "@/features/email/challenge-reset-email";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
 import { getCandidateProfile } from "@/repositories/candidate";
 import {
-  applyChallengeProgramEnrollmentById,
+  applyChallengeProgramEnrollment,
   applyEnrollmentProgressDenorm,
 } from "@/repositories/enrollment-state";
 import {
@@ -22,8 +21,8 @@ import {
 } from "@/repositories/progress-writes";
 import {
   attemptIdForSubmission,
+  domainFromChallengeCohortSlug,
   enrollmentIdFromPe,
-  peIdForEnrollment,
   submissionIdFromAttemptId,
 } from "@/repositories/ids";
 import {
@@ -73,18 +72,26 @@ export async function resetProgressAction(input: {
   try {
     await withLegacyPointsMirrorFlush(() =>
       writeClient().$transaction(async (tx) => {
-      const enrollment = await tx.enrollment.findFirst({
-        where: { userId: targetUserId },
+      const pe = await tx.programEnrollment.findFirst({
+        where: { userId: targetUserId, id: { startsWith: "pe_enr_" } },
+        select: {
+          id: true,
+          startedAt: true,
+          completedAt: true,
+          cohort: { select: { slug: true } },
+        },
       });
-      if (!enrollment) throw new Error("No enrollment");
-      resetDomain = enrollment.domain;
+      const enrollmentId = pe ? enrollmentIdFromPe(pe.id) : null;
+      const domain = pe ? domainFromChallengeCohortSlug(pe.cohort.slug) : null;
+      if (!pe || !enrollmentId || !domain) throw new Error("No enrollment");
+      resetDomain = domain;
 
       // Serialize reset against every balance writer before reading the ledger.
       await lockWalletBalance(tx, targetUserId);
 
       const attempts = await tx.activityAttempt.findMany({
         where: {
-          enrollmentId: peIdForEnrollment(enrollment.id),
+          enrollmentId: pe.id,
           id: { startsWith: "aa_sub_" },
         },
         select: { id: true },
@@ -93,7 +100,7 @@ export async function resetProgressAction(input: {
         submissionIds: attempts
           .map((row) => submissionIdFromAttemptId(row.id))
           .filter((id): id is string => Boolean(id)),
-        enrollmentId: enrollment.id,
+        enrollmentId,
       });
       if (pointsToRemove > 0) {
         const applied = await applyPointsChange(tx, {
@@ -101,8 +108,8 @@ export async function resetProgressAction(input: {
           amount: -pointsToRemove,
           mode: "debit_clamp",
           sourceType: PointsSourceType.RECONCILIATION,
-          sourceId: enrollment.id,
-          idempotencyKey: `reset-progress:${enrollment.id}:${randomUUID()}`,
+          sourceId: enrollmentId,
+          idempotencyKey: `reset-progress:${enrollmentId}:${randomUUID()}`,
           reason:
             "Clamped synergy to 0 after reset removed submission points that were already spent.",
           createdByUserId: admin.userId,
@@ -112,24 +119,23 @@ export async function resetProgressAction(input: {
         }
       }
 
-      await applyDeleteEnrollmentChallengeAttempts(tx, enrollment.id);
+      await applyDeleteEnrollmentChallengeAttempts(tx, enrollmentId);
 
       await applyEnrollmentProgressDenorm(tx, {
-        enrollmentId: enrollment.id,
+        enrollmentId,
         daysCompleted: 0,
         currentStreak: 0,
         longestStreak: 0,
         lastSubmittedDay: null,
       });
-      await tx.enrollment.update({
-        where: { id: enrollment.id },
-        data: {
-          status: "ACTIVE",
-          completedAt: null,
-          startedAt: new Date(),
-        },
+      await applyChallengeProgramEnrollment(tx, {
+        id: enrollmentId,
+        userId: targetUserId,
+        domain,
+        status: EnrollmentStatus.ACTIVE,
+        startedAt: new Date(),
+        completedAt: null,
       });
-      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       await applyCandidateIdentityChange(tx, targetUserId, {
         isReadyForInterview: false,
@@ -247,17 +253,31 @@ export async function removeFromChallengeAction(input: {
 
   try {
     await writeClient().$transaction(async (tx) => {
-      const enrollment = await tx.enrollment.findFirst({
-        where: { userId: targetUserId, status: "ACTIVE" },
-        select: { id: true },
+      const pe = await tx.programEnrollment.findFirst({
+        where: {
+          userId: targetUserId,
+          id: { startsWith: "pe_enr_" },
+          status: EnrollmentStatusV2.ACTIVE,
+        },
+        select: {
+          id: true,
+          startedAt: true,
+          completedAt: true,
+          cohort: { select: { slug: true } },
+        },
       });
-      if (!enrollment) throw new Error("No active enrollment");
+      const enrollmentId = pe ? enrollmentIdFromPe(pe.id) : null;
+      const domain = pe ? domainFromChallengeCohortSlug(pe.cohort.slug) : null;
+      if (!pe || !enrollmentId || !domain) throw new Error("No active enrollment");
 
-      await tx.enrollment.update({
-        where: { id: enrollment.id },
-        data: { status: "ABANDONED" },
+      await applyChallengeProgramEnrollment(tx, {
+        id: enrollmentId,
+        userId: targetUserId,
+        domain,
+        status: EnrollmentStatus.ABANDONED,
+        startedAt: pe.startedAt,
+        completedAt: pe.completedAt,
       });
-      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       await tx.adminAction.create({
         data: {
@@ -369,22 +389,30 @@ export async function rejectSubmissionAction(input: {
         where: { id: attemptIdForSubmission(submissionId) },
         select: {
           payload: true,
-          enrollment: { select: { id: true, userId: true } },
+          enrollment: {
+            select: {
+              id: true,
+              userId: true,
+              startedAt: true,
+              completedAt: true,
+              status: true,
+              cohort: { select: { slug: true, startsAt: true } },
+            },
+          },
           activity: { select: { dayNumber: true } },
         },
       });
       if (!attempt) throw new Error("Submission not found");
       const enrollmentId = enrollmentIdFromPe(attempt.enrollment.id);
-      if (!enrollmentId) throw new Error("Submission not found");
-      const enrollmentRow = await tx.enrollment.findUnique({
-        where: { id: enrollmentId },
-        select: {
-          id: true,
-          startedAt: true,
-          challenge: { select: { startsAt: true } },
-        },
-      });
-      if (!enrollmentRow) throw new Error("Submission not found");
+      const domain = domainFromChallengeCohortSlug(
+        attempt.enrollment.cohort.slug,
+      );
+      if (!enrollmentId || !domain) throw new Error("Submission not found");
+      const enrollmentRow = {
+        id: enrollmentId,
+        startedAt: attempt.enrollment.startedAt,
+        challenge: { startsAt: attempt.enrollment.cohort.startsAt },
+      };
 
       targetUserId = attempt.enrollment.userId;
       const payload =
@@ -434,14 +462,17 @@ export async function rejectSubmissionAction(input: {
         longestStreak,
         lastSubmittedDay,
       });
-      await tx.enrollment.update({
-        where: { id: enrollmentId },
-        data: {
-          status: daysCompleted >= 60 ? "COMPLETED" : "ACTIVE",
-          completedAt: daysCompleted >= 60 ? new Date() : null,
-        },
+      await applyChallengeProgramEnrollment(tx, {
+        id: enrollmentId,
+        userId: attempt.enrollment.userId,
+        domain,
+        status:
+          daysCompleted >= 60
+            ? EnrollmentStatus.COMPLETED
+            : EnrollmentStatus.ACTIVE,
+        startedAt: attempt.enrollment.startedAt,
+        completedAt: daysCompleted >= 60 ? new Date() : null,
       });
-      await applyChallengeProgramEnrollmentById(tx, enrollmentId);
 
       await tx.adminAction.create({
         data: {
@@ -499,7 +530,7 @@ export async function grantSynergyAction(input: {
         select: {
           email: true,
           role: true,
-          studentProfile: { select: { id: true } },
+          candidateProfile: { select: { id: true } },
           hackathonParticipants: { take: 1, select: { id: true } },
         },
       });
@@ -508,7 +539,7 @@ export async function grantSynergyAction(input: {
         !target ||
         target.role !== Role.STUDENT ||
         targetIsAdmin ||
-        (!target.studentProfile && target.hackathonParticipants.length === 0)
+        (!target.candidateProfile && target.hackathonParticipants.length === 0)
       ) {
         throw new Error("Registered student not found");
       }

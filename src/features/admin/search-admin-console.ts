@@ -16,11 +16,6 @@ export async function searchAdminConsole(q: string) {
           { email: { contains: term, mode: "insensitive" } },
           { name: { contains: term, mode: "insensitive" } },
           {
-            studentProfile: {
-              fullName: { contains: term, mode: "insensitive" },
-            },
-          },
-          {
             candidateProfile: {
               fullName: { contains: term, mode: "insensitive" },
             },
@@ -33,7 +28,7 @@ export async function searchAdminConsole(q: string) {
         email: true,
         name: true,
         disabledAt: true,
-        studentProfile: { select: { fullName: true } },
+        candidateProfile: { select: { fullName: true } },
       },
     }),
     prisma.recruiterProfile.findMany({
@@ -85,7 +80,7 @@ export async function searchAdminConsole(q: string) {
     ...c,
     studentProfile: {
       fullName:
-        names.get(c.id)?.fullName ?? c.studentProfile?.fullName ?? c.name ?? c.email,
+        names.get(c.id)?.fullName ?? c.candidateProfile?.fullName ?? c.name ?? c.email,
     },
   }));
 

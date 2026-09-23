@@ -132,14 +132,14 @@ export async function getOverviewStats() {
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
         target: {
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
@@ -207,7 +207,7 @@ export async function getOverviewStats() {
         disabledAt: true,
         disabledReason: true,
         name: true,
-        studentProfile: { select: { fullName: true } },
+        candidateProfile: { select: { fullName: true } },
         recruiterProfile: { select: { fullName: true } },
       },
     }),
@@ -367,7 +367,7 @@ export async function getOverviewStats() {
         title:
           row.recruiterProfile?.fullName?.trim() ||
           names.get(row.id)?.trim() ||
-          row.studentProfile?.fullName?.trim() ||
+          row.candidateProfile?.fullName?.trim() ||
           row.name?.trim() ||
           row.email,
         detail: row.disabledReason?.trim() || "Account disabled",
@@ -397,7 +397,7 @@ export async function getOverviewStats() {
       id: row.id,
       adminName:
         (row.admin?.id ? names.get(row.admin.id)?.trim() : undefined) ||
-        row.admin?.studentProfile?.fullName?.trim() ||
+        row.admin?.candidateProfile?.fullName?.trim() ||
         row.admin?.email ||
         row.actorUserId ||
         "Admin",
@@ -406,7 +406,7 @@ export async function getOverviewStats() {
       targetUserId: row.target?.id ?? null,
       targetName: row.target
         ? names.get(row.target.id)?.trim() ||
-          row.target.studentProfile?.fullName?.trim() ||
+          row.target.candidateProfile?.fullName?.trim() ||
           row.target.email ||
           "Unknown"
         : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—",

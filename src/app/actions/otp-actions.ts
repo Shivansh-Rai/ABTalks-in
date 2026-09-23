@@ -8,7 +8,6 @@ import { isOtpDevBypassEnabled, otpDevCode } from "@/lib/feature-flags";
 import { otpVerifySchema } from "@/lib/validations/otp";
 import { toE164, toWidgetMobile } from "@/lib/validations/phone";
 import { applyCandidateIdentityChange } from "@/repositories/candidate-identity";
-import { ensureCandidateProfile } from "@/repositories/candidate";
 
 type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -83,18 +82,11 @@ export async function verifyOtpAction(input: {
         },
       });
 
-      const existingProfile = await tx.studentProfile.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
       const existingCandidate = await tx.candidateProfile.findUnique({
         where: { userId },
         select: { userId: true },
       });
-      if (existingCandidate || existingProfile) {
-        if (!existingCandidate) {
-          await ensureCandidateProfile(tx, userId);
-        }
+      if (existingCandidate) {
         await applyCandidateIdentityChange(tx, userId, {
           phone: e164,
           phoneVerified: true,

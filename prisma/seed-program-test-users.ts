@@ -18,11 +18,18 @@
  */
 import { config } from "dotenv";
 import {
+  EnrollmentStatusV2,
   ProgramMemberStatus,
   Role,
+  CandidatePersona,
   type PrismaClient,
 } from "@prisma/client";
 import { prisma } from "../src/lib/db";
+import {
+  cohortSlugForProgramCohort,
+  mintProgressRowId,
+  peIdForMember,
+} from "../src/repositories/ids";
 
 config({ path: ".env.local" });
 config();
@@ -248,35 +255,109 @@ async function ensureCohort(db: PrismaClient): Promise<{
   return { id: created.id, name: created.name, created: true };
 }
 
+function mapMemberStatus(status: ProgramMemberStatus): EnrollmentStatusV2 {
+  switch (status) {
+    case ProgramMemberStatus.APPLIED:
+      return EnrollmentStatusV2.APPLIED;
+    case ProgramMemberStatus.WAITLISTED:
+      return EnrollmentStatusV2.WAITLISTED;
+    case ProgramMemberStatus.ENROLLED:
+      return EnrollmentStatusV2.ACTIVE;
+    case ProgramMemberStatus.COMPLETED:
+      return EnrollmentStatusV2.COMPLETED;
+    case ProgramMemberStatus.DROPPED:
+      return EnrollmentStatusV2.DROPPED;
+    default:
+      return EnrollmentStatusV2.ACTIVE;
+  }
+}
+
+async function ensureLearningCohort(
+  db: PrismaClient,
+  programCohortId: string,
+  name: string,
+): Promise<string> {
+  const slug = cohortSlugForProgramCohort(programCohortId);
+  const existing = await db.cohort.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+  const version = await db.programVersion.findFirst({
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  if (!version) {
+    throw new Error("Missing ProgramVersion — run db:seed:program first");
+  }
+  const created = await db.cohort.create({
+    data: {
+      programVersionId: version.id,
+      slug,
+      name,
+      startMode: "FIXED",
+      timezone: "Asia/Kolkata",
+      status: "ENROLLING",
+    },
+    select: { id: true },
+  });
+  return created.id;
+}
+
 async function upsertMember(
   db: PrismaClient,
   cohortId: string,
   userId: string,
   seed: MemberSeed,
 ) {
-  const profile = {
-    fullName: seed.name,
-    jobRole: "Student",
-    company: "ABTalks Test College",
-    yearsExperience: 0,
-    education: "B.Tech CSE",
-    university: "Test University",
-    graduationYear: 2026,
-    skills: ["Python", "Git", "AI"],
-    linkedinUrl: `https://linkedin.com/in/${seed.githubUsername}`,
-    resumeUrl: null as string | null,
-    phone: null as string | null,
-    githubUsername: seed.githubUsername,
-    githubRepoUrl: `https://github.com/${seed.githubUsername}/ai-cohort`,
-    status: seed.status,
-    highestUnlockedDay: seed.highestUnlockedDay,
-    enrolledAt: seed.enrolled ? new Date() : null,
-  };
+  const learningCohortId = await ensureLearningCohort(db, cohortId, COHORT_NAME);
+  const existingPe = await db.programEnrollment.findUnique({
+    where: { userId_cohortId: { userId, cohortId: learningCohortId } },
+    select: { id: true },
+  });
+  const memberId = existingPe
+    ? existingPe.id.replace(/^pe_pm_/, "")
+    : mintProgressRowId();
+  const peId = existingPe?.id ?? peIdForMember(memberId);
+  const enrolledAt = seed.enrolled ? new Date() : null;
+  await db.programEnrollment.upsert({
+    where: { id: peId },
+    create: {
+      id: peId,
+      userId,
+      cohortId: learningCohortId,
+      status: mapMemberStatus(seed.status),
+      startedAt: enrolledAt ?? new Date(),
+      joinedAt: new Date(),
+      enrolledAt,
+      githubRepoUrl: `https://github.com/${seed.githubUsername}/ai-cohort`,
+      unlockFloorDay: seed.highestUnlockedDay,
+    },
+    update: {
+      status: mapMemberStatus(seed.status),
+      enrolledAt,
+      githubRepoUrl: `https://github.com/${seed.githubUsername}/ai-cohort`,
+      unlockFloorDay: seed.highestUnlockedDay,
+    },
+  });
 
-  await db.programMember.upsert({
-    where: { userId_cohortId: { userId, cohortId } },
-    create: { userId, cohortId, ...profile },
-    update: profile,
+  const referralCode = `PROG${userId.slice(-6).toUpperCase()}`;
+  await db.candidateProfile.upsert({
+    where: { userId },
+    create: {
+      id: `cp_${userId}`,
+      userId,
+      fullName: seed.name,
+      primaryPersona: CandidatePersona.STUDENT,
+      githubUsername: seed.githubUsername,
+      linkedinUrl: `https://linkedin.com/in/${seed.githubUsername}`,
+      referralCode,
+    },
+    update: {
+      fullName: seed.name,
+      githubUsername: seed.githubUsername,
+      linkedinUrl: `https://linkedin.com/in/${seed.githubUsername}`,
+    },
   });
 }
 
@@ -301,10 +382,10 @@ async function seedProgramTestUsers() {
 
   await ensureUser(prisma, APPLY_USER.email, APPLY_USER.name);
   // Fresh apply funnel: remove any prior membership so /program/apply shows the form
-  await prisma.programMember.deleteMany({
+  await prisma.programEnrollment.deleteMany({
     where: {
-      cohortId: cohort.id,
       user: { email: APPLY_USER.email },
+      cohort: { slug: cohortSlugForProgramCohort(cohort.id) },
     },
   });
   console.log(

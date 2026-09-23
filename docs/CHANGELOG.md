@@ -45,6 +45,11 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-23 [schema] 078 final cutover: removed StudentProfile/Enrollment/ProgramMember/Certificate/Submission/QuizAttempt/ProgramMissionSubmission/SynergyEvent Prisma models and User.synergyPoints; deleted dual-write.ts; archives retained; production tables not dropped until matching app deploys
+- 2026-09-23 [schema] 078 final drop rehearsal on child plan-078-final-drop-rehearsal-20260922T193545Z (br-blue-bread-amu86oi1 / ep-dark-bar-amxz0fjv): original ProgramMember/Enrollment/Submission/QuizAttempt/PMS/Certificate/SynergyEvent/StudentProfile tables and User.synergyPoints dropped; archives unchanged; production not dropped
+- 2026-09-23 [schema] 078 final: ProgramMember inbound Prisma relations removed to match DB (children use programEnrollmentId); remaining current-state Enrollment/StudentProfile readers switched to ProgramEnrollment/CandidateProfile
+- 2026-09-22 [schema] 078 final Gate 2/3 writers: new challenge enroll and AI-cohort membership mint ProgramEnrollment only; ProgramMember anchors stopped; historical readers use archive models
+- 2026-09-22 [schema] 078 final Gate 1: immutable HistoricalQuizAttempt / HistoricalProgramMission / HistoricalCertificate / HistoricalSubmission / HistoricalSynergyEvent / HistoricalStudentProfile archives; unique history copied raw; source tables retained
 - 2026-09-22 [schema] 078 final Wave 3: ProgramEnrollment.joinedAt backfilled from Enrollment.createdAt / ProgramMember.createdAt; first-track order no longer uses live Enrollment.createdAt
 - 2026-09-22 [schema] 078 final Wave 2c: dropped ProgramMember inbound FKs; memberId retained as scalar; ProgramMember table kept for remaining runtime identity reads
 - 2026-09-22 [schema] 078 final Wave 2b: ProgramMember child tables now FK to ProgramEnrollment.programEnrollmentId (pe_pm_*); RecruiterShortlistItem.candidateUserId FK to User; memberId columns retained

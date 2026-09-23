@@ -8,8 +8,13 @@
  * Does NOT run if DATABASE_URL looks like known production hosts.
  */
 import { config } from "dotenv";
-import { Role, ProgramMemberStatus } from "@prisma/client";
+import { Role, CandidatePersona, EnrollmentStatusV2 } from "@prisma/client";
 import { prisma } from "../src/lib/db";
+import {
+  cohortSlugForProgramCohort,
+  mintProgressRowId,
+  peIdForMember,
+} from "../src/repositories/ids";
 
 config({ path: ".env.local" });
 config();
@@ -113,39 +118,89 @@ async function main() {
 
   for (const f of fixtures) {
     const user = await upsertUser(f.email, f.name);
-    const member = await prisma.programMember.upsert({
+    const slug = cohortSlugForProgramCohort(cohort.id);
+    let learningCohort = await prisma.cohort.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (!learningCohort) {
+      const version = await prisma.programVersion.findFirst({
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      if (!version) {
+        throw new Error("Missing ProgramVersion — run db:seed:program first");
+      }
+      learningCohort = await prisma.cohort.create({
+        data: {
+          programVersionId: version.id,
+          slug,
+          name: COHORT_NAME,
+          startMode: "FIXED",
+          startsAt: new Date("2026-06-01"),
+          endsAt: new Date("2026-07-01"),
+          timezone: "Asia/Kolkata",
+          status: "COMPLETED",
+          capacity: 50,
+          joinCode: "HIRESCOUT",
+          requiresJoinCode: true,
+          resultsPublishedAt: new Date(),
+        },
+        select: { id: true },
+      });
+    }
+
+    const existingPe = await prisma.programEnrollment.findUnique({
       where: {
-        userId_cohortId: { userId: user.id, cohortId: cohort.id },
+        userId_cohortId: { userId: user.id, cohortId: learningCohort.id },
       },
+      select: { id: true },
+    });
+    const memberId = existingPe
+      ? existingPe.id.replace(/^pe_pm_/, "")
+      : mintProgressRowId();
+    const peId = existingPe?.id ?? peIdForMember(memberId);
+    const member = { id: memberId };
+
+    await prisma.programEnrollment.upsert({
+      where: { id: peId },
       create: {
+        id: peId,
         userId: user.id,
-        cohortId: cohort.id,
-        status: ProgramMemberStatus.COMPLETED,
-        fullName: f.name,
-        jobRole: "Software Engineer",
-        company: "Fixture Co",
-        yearsExperience: f.years,
-        skills: f.skills,
-        githubUsername: f.email.split("@")[0]!,
+        cohortId: learningCohort.id,
+        status: EnrollmentStatusV2.COMPLETED,
+        startedAt: new Date("2026-06-01"),
+        joinedAt: new Date("2026-06-01"),
+        enrolledAt: new Date("2026-06-01"),
+        completedAt: new Date("2026-07-01"),
         githubRepoUrl: `https://github.com/example/${f.email.split("@")[0]}`,
         missionPoints: f.missionPoints,
         cleanPassCount: f.cleanPassCount,
         totalScore: f.totalScore,
         projectPoints: f.projects.reduce((a, b) => a + b, 0),
         commitPoints: f.commits * 2,
-        recruiterVisibilityConsentAt: new Date(),
-        enrolledAt: new Date("2026-06-01"),
-        completedAt: new Date("2026-07-01"),
       },
       update: {
-        status: ProgramMemberStatus.COMPLETED,
-        skills: f.skills,
+        status: EnrollmentStatusV2.COMPLETED,
         missionPoints: f.missionPoints,
         cleanPassCount: f.cleanPassCount,
         totalScore: f.totalScore,
-        recruiterVisibilityConsentAt: new Date(),
+        projectPoints: f.projects.reduce((a, b) => a + b, 0),
+        commitPoints: f.commits * 2,
       },
-      select: { id: true },
+    });
+
+    await prisma.candidateProfile.upsert({
+      where: { userId: user.id },
+      create: {
+        id: `cp_${user.id}`,
+        userId: user.id,
+        fullName: f.name,
+        primaryPersona: CandidatePersona.PROFESSIONAL,
+        githubUsername: f.email.split("@")[0]!,
+        referralCode: `HIRE${user.id.slice(-6).toUpperCase()}`,
+      },
+      update: { fullName: f.name },
     });
 
     // Commit days (idempotent-ish: delete + recreate for fixture member)

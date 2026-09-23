@@ -120,31 +120,26 @@ export async function bootstrapMemberStartDay(
   tx: Prisma.TransactionClient,
   memberId: string,
 ): Promise<void> {
-  const member = await tx.programMember.findUnique({
-    where: { id: memberId },
+  const pe = await tx.programEnrollment.findUnique({
+    where: { id: peIdForMember(memberId) },
     select: {
-      id: true,
-      highestUnlockedDay: true,
+      unlockFloorDay: true,
       missionPoints: true,
       cleanPassCount: true,
       cohort: { select: { startsAt: true, endsAt: true } },
     },
   });
-  if (!member) return;
-
-const pe = await tx.programEnrollment.findUnique({
-  where: { id: peIdForMember(memberId) },
-  select: {
-    unlockFloorDay: true,
-    missionPoints: true,
-    cleanPassCount: true,
-  },
-});
-if (pe) {
-  member.highestUnlockedDay = pe.unlockFloorDay ?? member.highestUnlockedDay;
-  member.missionPoints = pe.missionPoints;
-  member.cleanPassCount = pe.cleanPassCount;
-}
+  if (!pe) return;
+  const member = {
+    id: memberId,
+    highestUnlockedDay: pe.unlockFloorDay ?? 1,
+    missionPoints: pe.missionPoints,
+    cleanPassCount: pe.cleanPassCount,
+    cohort: {
+      startsAt: pe.cohort.startsAt ?? new Date(0),
+      endsAt: pe.cohort.endsAt ?? new Date(0),
+    },
+  };
 
   const existingPassed =
     WAIVED_DAYS.length === 0

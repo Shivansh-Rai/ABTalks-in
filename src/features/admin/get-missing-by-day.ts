@@ -1,8 +1,8 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 import { enrollmentIdFromPe, peIdForEnrollment } from "@/repositories/ids";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
 
 type Filters = {
   domain?: Domain | "ALL";
@@ -33,15 +33,13 @@ export async function getMissingByDayCounts(
   const domain =
     filters.domain && filters.domain !== "ALL" ? filters.domain : undefined;
 
-  const enrollmentWhere = {
-    status: { in: ["ACTIVE", "COMPLETED"] as EnrollmentStatus[] },
-    ...(domain ? { domain } : {}),
-  };
-
-  const enrollments = await prisma.enrollment.findMany({
-    where: enrollmentWhere,
-    select: { id: true },
-  });
+  const enrollments = (await listChallengePeRows({
+    domains: domain ? [domain] : undefined,
+  })).filter(
+    (e) =>
+      e.status === EnrollmentStatus.ACTIVE ||
+      e.status === EnrollmentStatus.COMPLETED,
+  );
   const totalEnrollments = enrollments.length;
   const peIds = enrollments.map((row) => peIdForEnrollment(row.id));
   const attempts =
@@ -102,48 +100,28 @@ export async function getMissingStudentsForDay(
     .map((row) => enrollmentIdFromPe(row.enrollmentId))
     .filter((id): id is string => Boolean(id));
 
-  const rows = await prisma.enrollment.findMany({
-    where: {
-      status: { in: ["ACTIVE", "COMPLETED"] },
-      ...(domain ? { domain } : {}),
-      ...(submittedEnrollmentIds.length > 0
-        ? { id: { notIn: submittedEnrollmentIds } }
-        : {}),
-    },
-    select: {
-      id: true,
-      domain: true,
-      status: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-      user: {
-        select: {
-          id: true,
-          email: true,
-          studentProfile: { select: { fullName: true } },
-        },
-      },
-    },
-    orderBy: [{ daysCompleted: "desc" }, { startedAt: "asc" }],
-  });
+  const submittedSet = new Set(submittedEnrollmentIds);
+  const rows = (await listChallengePeRows({
+    domains: domain ? [domain] : undefined,
+  })).filter(
+    (e) =>
+      (e.status === EnrollmentStatus.ACTIVE ||
+        e.status === EnrollmentStatus.COMPLETED) &&
+      !submittedSet.has(e.id),
+  );
 
-  const names = await canonicalFullNameByUserId(rows.map((r) => r.user.id));
-  const overlaid = await overlayChallengeProgressFields(rows);
-  overlaid.sort((a, b) => {
-    if (b.daysCompleted !== a.daysCompleted) return b.daysCompleted - a.daysCompleted;
-    return 0;
+  const names = await canonicalFullNameByUserId(rows.map((r) => r.userId));
+  const users = await prisma.user.findMany({
+    where: { id: { in: rows.map((r) => r.userId) } },
+    select: { id: true, email: true },
   });
-  return overlaid.map((r) => ({
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
+  rows.sort((a, b) => b.daysCompleted - a.daysCompleted);
+  return rows.map((r) => ({
     enrollmentId: r.id,
-    userId: r.user.id,
-    studentName:
-      names.get(r.user.id)?.trim() ||
-      r.user.studentProfile?.fullName?.trim() ||
-      r.user.email ||
-      "Unknown",
-    email: r.user.email,
+    userId: r.userId,
+    studentName: names.get(r.userId)?.trim() || emailByUser.get(r.userId) || "Unknown",
+    email: emailByUser.get(r.userId) ?? "",
     domain: r.domain,
     status: r.status,
     daysCompleted: r.daysCompleted,

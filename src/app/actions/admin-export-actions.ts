@@ -14,7 +14,7 @@ import { getReferrersInRange } from "@/features/admin/get-referrals-report";
 import { getSubmissionsFeed } from "@/features/admin/get-submissions-feed";
 import { getHackathonSubmissionsFeed } from "@/features/admin/get-hackathon-submissions-feed";
 import { listCandidateProfiles } from "@/repositories/candidate";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
+import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 const SUBMISSIONS_EXPORT_CAP = 10_000;
 
@@ -47,66 +47,12 @@ export async function getStudentsForExport(filters: {
 
   const [enrollments, hackathonRows] = await Promise.all([
     wantChallenge
-      ? prisma.enrollment.findMany({
-          where: {
-            ...(filters.domain && filters.domain !== "ALL"
-              ? { domain: filters.domain }
-              : {}),
-            ...(q
-              ? {
-                  user: {
-                    OR: [
-                      { name: { contains: q, mode: "insensitive" } },
-                      { email: { contains: q, mode: "insensitive" } },
-                      {
-                        studentProfile: {
-                          fullName: { contains: q, mode: "insensitive" },
-                        },
-                      },
-                      {
-                        candidateProfile: {
-                          fullName: { contains: q, mode: "insensitive" },
-                        },
-                      },
-                    ],
-                  },
-                }
-              : {}),
-          },
-          select: {
-            id: true,
-            domain: true,
-            status: true,
-            startedAt: true,
-            daysCompleted: true,
-            currentStreak: true,
-            longestStreak: true,
-            lastSubmittedDay: true,
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-                studentProfile: {
-                  select: {
-                    fullName: true,
-                    phone: true,
-                    userType: true,
-                    college: true,
-                    graduationYear: true,
-                    organization: true,
-                    role: true,
-                    yearsExperience: true,
-                    linkedinUrl: true,
-                    githubUsername: true,
-                    isReadyForInterview: true,
-                    referralCode: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: [{ createdAt: "desc" }],
+      ? listChallengePeRows({
+          domains:
+            filters.domain && filters.domain !== "ALL"
+              ? [filters.domain]
+              : undefined,
+          searchName: q || undefined,
         })
       : Promise.resolve([]),
     wantHackathon
@@ -151,7 +97,7 @@ export async function getStudentsForExport(filters: {
 
   const userIds = [
     ...new Set([
-      ...enrollments.map((e) => e.user.id),
+      ...enrollments.map((e) => e.userId),
       ...hackathonRows.map((row) => row.userId),
     ]),
   ];
@@ -169,7 +115,12 @@ export async function getStudentsForExport(filters: {
   );
 
   const identities = await listCandidateProfiles(userIds);
-  const overlaidEnrollments = await overlayChallengeProgressFields(enrollments);
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, email: true },
+  });
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
+  const overlaidEnrollments = enrollments;
   overlaidEnrollments.sort((a, b) => {
     const aLast = a.lastSubmittedDay ?? -1;
     const bLast = b.lastSubmittedDay ?? -1;
@@ -178,30 +129,29 @@ export async function getStudentsForExport(filters: {
   });
 
   const challengeExport = overlaidEnrollments.map((e) => {
-    const identity = identities.get(e.user.id);
-    const sp = e.user.studentProfile;
+    const identity = identities.get(e.userId);
     return {
     Track: "CHALLENGE",
-    "Full Name": identity?.fullName ?? sp?.fullName ?? e.user.name ?? "",
-    Email: e.user.email,
-    Phone: identity?.phone ?? sp?.phone ?? "",
-    "User Type": identity?.userType ?? sp?.userType ?? "",
+    "Full Name": identity?.fullName ?? "",
+    Email: emailByUser.get(e.userId) ?? "",
+    Phone: identity?.phone ?? "",
+    "User Type": identity?.userType ?? "",
     Domain: e.domain,
     Status: e.status,
     "Started At": e.startedAt.toISOString().split("T")[0],
     "Days Completed": e.daysCompleted,
     "Current Streak": e.currentStreak,
     "Longest Streak": e.longestStreak,
-    College: identity?.college ?? sp?.college ?? "",
-    "Graduation Year": identity?.graduationYear ?? sp?.graduationYear ?? "",
-    Organization: identity?.organization ?? sp?.organization ?? "",
-    Role: identity?.role ?? sp?.role ?? "",
-    "Years Experience": identity?.yearsExperience ?? sp?.yearsExperience ?? "",
-    LinkedIn: identity?.linkedinUrl ?? sp?.linkedinUrl ?? "",
-    GitHub: identity?.githubUsername ?? sp?.githubUsername ?? "",
-    "Ready For Interview": identity?.isReadyForInterview ?? sp?.isReadyForInterview ?? false,
-    "Referral Code": identity?.referralCode ?? sp?.referralCode ?? "",
-    "Referral Count": referralCountMap.get(e.user.id) ?? 0,
+    College: identity?.college ?? "",
+    "Graduation Year": identity?.graduationYear ?? "",
+    Organization: identity?.organization ?? "",
+    Role: identity?.role ?? "",
+    "Years Experience": identity?.yearsExperience ?? "",
+    LinkedIn: identity?.linkedinUrl ?? "",
+    GitHub: identity?.githubUsername ?? "",
+    "Ready For Interview": identity?.isReadyForInterview ?? false,
+    "Referral Code": identity?.referralCode ?? "",
+    "Referral Count": referralCountMap.get(e.userId) ?? 0,
   };
   });
 
@@ -291,17 +241,20 @@ export async function getAnalyticsForExport(range: TimeRange = "daily") {
     });
   }
 
-  const byDomainStatus = await prisma.enrollment.groupBy({
-    by: ["domain", "status"],
-    _count: true,
-  });
-
+  const byDomainStatus = await listChallengePeRows({});
+  const grouped = new Map<string, number>();
   for (const row of byDomainStatus) {
+    const key = `${row.domain}|${row.status}`;
+    grouped.set(key, (grouped.get(key) ?? 0) + 1);
+  }
+
+  for (const [key, count] of grouped) {
+    const [domain, status] = key.split("|");
     rows.push({
       Section: "Enrollments by Domain and Status",
-      Domain: row.domain,
-      Status: row.status,
-      Count: row._count,
+      Domain: domain,
+      Status: status,
+      Count: count,
     });
   }
 

@@ -1,12 +1,12 @@
 import "server-only";
 
-import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   listCurriculumDays,
   listMissionAttempts,
   listProgramCandidates,
+  type ProgramPoolWhere,
 } from "@/repositories/hire";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 import { candidatePublicId } from "@/features/hire/public-id";
@@ -145,7 +145,7 @@ export async function loadAvailabilityByUserId(
  * mission submissions, the curriculum day map, and nothing else.
  */
 export async function buildDossierSet(
-  where: Prisma.ProgramMemberWhereInput,
+  where: ProgramPoolWhere,
 ): Promise<DossierSet> {
   const members = await listProgramCandidates(where);
 

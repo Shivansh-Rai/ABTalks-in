@@ -14,18 +14,6 @@ export async function getJobApplicants(jobId: string) {
         select: {
           id: true,
           email: true,
-          studentProfile: {
-            select: {
-              fullName: true,
-              phone: true,
-              domain: true,
-              linkedinUrl: true,
-              githubUsername: true,
-              college: true,
-              graduationYear: true,
-              isReadyForInterview: true,
-            },
-          },
         },
       },
     },
@@ -35,23 +23,21 @@ export async function getJobApplicants(jobId: string) {
   const domains = await displayedChallengeDomains(
     rows.map((row) => ({
       userId: row.user.id,
-      legacy: row.user.studentProfile?.domain ?? null,
+      legacy: null,
     })),
   );
 
   return rows.map((row) => {
     const identity = identities.get(row.user.id);
-    const sp = row.user.studentProfile;
     const merged = {
-      fullName: identity?.fullName ?? sp?.fullName ?? null,
-      phone: identity?.phone ?? sp?.phone ?? null,
+      fullName: identity?.fullName ?? null,
+      phone: identity?.phone ?? null,
       domain: domains.get(row.user.id) ?? null,
-      linkedinUrl: identity?.linkedinUrl ?? sp?.linkedinUrl ?? null,
-      githubUsername: identity?.githubUsername ?? sp?.githubUsername ?? null,
-      college: identity?.college ?? sp?.college ?? null,
-      graduationYear: identity?.graduationYear ?? sp?.graduationYear ?? null,
-      isReadyForInterview:
-        identity?.isReadyForInterview ?? sp?.isReadyForInterview ?? false,
+      linkedinUrl: identity?.linkedinUrl ?? null,
+      githubUsername: identity?.githubUsername ?? null,
+      college: identity?.college ?? null,
+      graduationYear: identity?.graduationYear ?? null,
+      isReadyForInterview: identity?.isReadyForInterview ?? false,
     };
     return {
       ...row,

@@ -37,9 +37,9 @@ export async function createAdminRemarkAction(input: {
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
-    select: { studentProfile: { select: { id: true } } },
+    select: { candidateProfile: { select: { id: true } } },
   });
-  if (!student?.studentProfile) {
+  if (!student?.candidateProfile) {
     return { ok: false as const, message: "Student not found" };
   }
 

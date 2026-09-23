@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { isProgramEnabled } from "@/lib/feature-flags";
 import { deriveEventNotifications } from "./derive-event-notifications";
 import { filterFeedForView } from "./recruiter-feed-filter";
-import { programMember } from "@/repositories/legacy/program-member";
+import { listAiCohortMemberships } from "@/repositories/program-state";
 import type {
   AppNotification,
   NotificationCategoryKey,
@@ -90,13 +90,11 @@ export async function getNotificationsForUser(
       where: { userId },
       select: { notificationKey: true },
     }),
-    prisma.enrollment.findFirst({ where: { userId }, select: { id: true } }),
-    // Doubles as the PROGRAM audience check and the "already joined this cohort"
-    // suppression list, so it stays one query.
-    programMember.findMany({
-      where: { userId },
-      select: { cohortId: true },
+    prisma.programEnrollment.findFirst({
+      where: { userId, id: { startsWith: "pe_enr_" } },
+      select: { id: true },
     }),
+    listAiCohortMemberships({ userId }),
     prisma.hackathonParticipant.findFirst({
       where: { eventId: HACKATHON.eventId, userId },
       select: { id: true },

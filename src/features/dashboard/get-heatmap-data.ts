@@ -13,6 +13,7 @@ import {
   getDailyTasksCached,
 } from "@/features/challenge/get-daily-tasks-cached";
 import { canonicalFullNameByUserId } from "@/repositories/candidate";
+import { peIdForEnrollment, domainFromChallengeCohortSlug } from "@/repositories/ids";
 
 /** Pre-resolved enrollment the dashboard can thread in to avoid a re-query. */
 type ResolvedHeatmapEnrollment = {
@@ -78,25 +79,32 @@ export async function getHeatmapData(
 
   const enrollment =
     options?.enrollment ??
-    (viewerUserId
-      ? await prisma.enrollment.findFirst({
-          where: { id: enrollmentId, userId: viewerUserId },
-          select: {
-            startedAt: true,
-            challengeId: true,
-            userId: true,
-            challenge: { select: { startsAt: true } },
-          },
-        })
-      : await prisma.enrollment.findUnique({
-          where: { id: enrollmentId },
-          select: {
-            startedAt: true,
-            challengeId: true,
-            userId: true,
-            challenge: { select: { startsAt: true } },
-          },
-        }));
+    (await (async () => {
+      const pe = await prisma.programEnrollment.findUnique({
+        where: { id: peIdForEnrollment(enrollmentId) },
+        select: {
+          userId: true,
+          joinedAt: true,
+          startedAt: true,
+          cohort: { select: { slug: true } },
+        },
+      });
+      if (!pe) return null;
+      if (viewerUserId && pe.userId !== viewerUserId) return null;
+      const domain = domainFromChallengeCohortSlug(pe.cohort.slug);
+      if (!domain) return null;
+      const challenge = await prisma.challenge.findUnique({
+        where: { domain },
+        select: { id: true, startsAt: true },
+      });
+      if (!challenge) return null;
+      return {
+        startedAt: pe.joinedAt ?? pe.startedAt,
+        challengeId: challenge.id,
+        userId: pe.userId,
+        challenge: { startsAt: challenge.startsAt },
+      };
+    })());
 
   if (!enrollment) {
     return [];
@@ -134,7 +142,7 @@ export async function getHeatmapData(
             id: true,
             name: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
@@ -197,7 +205,7 @@ export async function getHeatmapData(
     if (!dayNumber || dayNumber < 1 || dayNumber > 60) continue;
     const adminName =
       (action.admin?.id ? adminNames.get(action.admin.id)?.trim() : undefined) ||
-      action.admin?.studentProfile?.fullName?.trim() ||
+      action.admin?.candidateProfile?.fullName?.trim() ||
       action.admin?.name?.trim() ||
       action.admin?.email ||
       "Admin";

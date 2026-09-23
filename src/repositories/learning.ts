@@ -10,7 +10,6 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
 import {
   getProgramUnlockFloor,
   overlayChallengeProgressFields,
@@ -20,6 +19,7 @@ import {
   dailyTaskIdFromActivity,
   enrollmentIdFromPe,
   memberIdFromPe,
+  peIdForEnrollment,
   programCohortIdFromSlug,
   programDayIdFromActivity,
   quizIdFromActivity,
@@ -386,21 +386,35 @@ async function overlayEnrollment(
   challengeId: string;
   startedAt: Date;
 } | null> {
-  const row = await prisma.enrollment.findUnique({
-    where: { id },
+  const pe = await prisma.programEnrollment.findUnique({
+    where: { id: peIdForEnrollment(id) },
     select: {
-      id: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-      challengeId: true,
       startedAt: true,
+      cohort: {
+        select: {
+          programVersion: {
+            select: { program: { select: { slug: true } } },
+          },
+        },
+      },
     },
   });
-  if (!row) return null;
-  const [overlaid] = await overlayChallengeProgressFields([row]);
-  return overlaid ?? row;
+  if (!pe) return null;
+  const domain = DOMAIN_BY_SLUG[pe.cohort.programVersion.program.slug];
+  if (!domain) return null;
+  const challengeId = await challengeIdForDomain(domain);
+  if (!challengeId) return null;
+  const base = {
+    id,
+    daysCompleted: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastSubmittedDay: null as number | null,
+    challengeId,
+    startedAt: pe.startedAt,
+  };
+  const [overlaid] = await overlayChallengeProgressFields([base]);
+  return overlaid ?? base;
 }
 
 async function challengeIdForDomain(domain: Domain): Promise<string | null> {
@@ -641,7 +655,10 @@ export async function resolveChallengeSessionEnrollment(
 async function membershipFromPe(
   pe: {
     id: string;
+    userId: string;
     status: EnrollmentStatusV2;
+    unlockFloorDay: number | null;
+    githubRepoUrl: string | null;
     cohort: {
       id: string;
       slug: string;
@@ -658,19 +675,18 @@ async function membershipFromPe(
   const memberId = memberIdFromPe(pe.id);
   const cohortId = programCohortIdFromSlug(pe.cohort.slug);
   if (!memberId || !cohortId) return null;
-  const overlay = await programMember.findUnique({
-    where: { id: memberId },
-    select: { fullName: true, highestUnlockedDay: true },
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId: pe.userId },
+    select: { fullName: true },
   });
-  if (!overlay) return null;
   return {
     member: {
       id: memberId,
       status: mapPeToMemberStatus(pe.status),
-      fullName: overlay.fullName,
+      fullName: profile?.fullName ?? "",
       highestUnlockedDay: await getProgramUnlockFloor(
         memberId,
-        overlay.highestUnlockedDay,
+        pe.unlockFloorDay ?? 1,
       ),
       cohortId,
     },
@@ -702,71 +718,31 @@ const PE_COHORT_SELECT = {
 export async function findActiveMembership(
   userId: string,
 ): Promise<ProgramMembership | null> {
-const pes = await prisma.programEnrollment.findMany({
-  where: {
-    userId,
-    id: { startsWith: "pe_pm_" },
-    status: { in: ["ACTIVE", "COMPLETED"] },
-    cohort: { programVersion: { program: { slug: AI_COHORT_SLUG } } },
-  },
-  select: {
-    id: true,
-    status: true,
-    enrolledAt: true,
-    cohort: { select: PE_COHORT_SELECT },
-  },
-});
-if (pes.length === 0) return null;
-pes.sort(compareMembershipRows);
-return membershipFromPe(pes[0]!);
-
-  const memberships = await programMember.findMany({
-    where: { userId, status: { in: ["ENROLLED", "COMPLETED"] } },
+  const pes = await prisma.programEnrollment.findMany({
+    where: {
+      userId,
+      id: { startsWith: "pe_pm_" },
+      status: { in: ["ACTIVE", "COMPLETED"] },
+      cohort: { programVersion: { program: { slug: AI_COHORT_SLUG } } },
+    },
     select: {
       id: true,
+      userId: true,
       status: true,
-      fullName: true,
-      highestUnlockedDay: true,
-      cohortId: true,
+      unlockFloorDay: true,
+      githubRepoUrl: true,
       enrolledAt: true,
-      cohort: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          startsAt: true,
-          endsAt: true,
-          capacity: true,
-          resultsPublishedAt: true,
-          joinCode: true,
-        },
-      },
+      cohort: { select: PE_COHORT_SELECT },
     },
   });
-
-  if (memberships.length === 0) return null;
-  memberships.sort(compareMembershipRows);
-  const member = memberships[0]!;
-  return {
-    member: {
-      id: member.id,
-      status: member.status,
-      fullName: member.fullName,
-      highestUnlockedDay: await getProgramUnlockFloor(
-        member.id,
-        member.highestUnlockedDay,
-      ),
-      cohortId: member.cohortId,
-    },
-    cohort: member.cohort,
-  };
+  if (pes.length === 0) return null;
+  pes.sort(compareMembershipRows);
+  return membershipFromPe(pes[0]!);
 }
 
 export async function findAppliedMembership(
   userId: string,
 ): Promise<AppliedMembership | null> {
-
-
   const pes = await prisma.programEnrollment.findMany({
     where: {
       userId,
@@ -776,7 +752,8 @@ export async function findAppliedMembership(
     orderBy: [{ enrolledAt: "desc" }, { id: "asc" }],
     select: {
       id: true,
-      status: true,
+      userId: true,
+      githubRepoUrl: true,
       enrolledAt: true,
       createdAt: true,
       cohort: { select: PE_COHORT_SELECT },
@@ -793,30 +770,51 @@ export async function findAppliedMembership(
   const memberId = memberIdFromPe(pe.id);
   const cohortId = programCohortIdFromSlug(pe.cohort.slug);
   if (!memberId || !cohortId) return null;
-  const overlay = await programMember.findUnique({
-    where: { id: memberId },
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId: pe.userId },
     select: {
       fullName: true,
-      jobRole: true,
-      company: true,
-      yearsExperience: true,
-      education: true,
-      university: true,
-      graduationYear: true,
-      skills: true,
-      linkedinUrl: true,
-      resumeUrl: true,
+      headline: true,
       phone: true,
+      linkedinUrl: true,
       githubUsername: true,
-      githubRepoUrl: true,
+      resumeUrl: true,
+      education: {
+        orderBy: { sortOrder: "asc" },
+        take: 1,
+        select: {
+          degree: true,
+          institutionName: true,
+          graduationYear: true,
+        },
+      },
+      experience: {
+        orderBy: { startedOn: "desc" },
+        take: 1,
+        select: { title: true, companyName: true },
+      },
+      skills: { select: { skill: { select: { name: true } } } },
     },
   });
-  if (!overlay) return null;
+  const edu = profile?.education[0];
+  const exp = profile?.experience[0];
   return {
     id: memberId,
     status: ProgramMemberStatus.APPLIED,
     cohortId,
-    ...overlay,
+    fullName: profile?.fullName ?? "",
+    jobRole: exp?.title ?? profile?.headline ?? null,
+    company: exp?.companyName ?? null,
+    yearsExperience: null,
+    education: edu?.degree ?? null,
+    university: edu?.institutionName ?? null,
+    graduationYear: edu?.graduationYear ?? null,
+    skills: profile?.skills.map((s) => s.skill.name) ?? [],
+    linkedinUrl: profile?.linkedinUrl ?? null,
+    resumeUrl: profile?.resumeUrl ?? null,
+    phone: profile?.phone ?? null,
+    githubUsername: profile?.githubUsername ?? "",
+    githubRepoUrl: pe.githubRepoUrl ?? "",
     cohort: {
       id: cohortId,
       name: pe.cohort.name,

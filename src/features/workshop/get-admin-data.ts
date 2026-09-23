@@ -52,7 +52,6 @@ export async function getWorkshopRegistrations(
       user: {
         select: {
           candidateProfile: { select: { id: true } },
-          studentProfile: { select: { id: true } },
         },
       },
     },
@@ -60,7 +59,7 @@ export async function getWorkshopRegistrations(
 
   return rows.map(({ user, ...r }) => ({
     ...r,
-    isMember: user.candidateProfile !== null || user.studentProfile !== null,
+    isMember: user.candidateProfile !== null,
   }));
 }
 

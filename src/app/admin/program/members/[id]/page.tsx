@@ -65,7 +65,7 @@ export default async function AdminProgramMemberDetailPage({
       <div className="flex flex-col justify-between gap-4 rounded-xl border p-4 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
           <Avatar className="size-14">
-            {member.user.image ? (
+            {member.user?.image ? (
               <AvatarImage src={member.user.image} alt="" />
             ) : null}
             <AvatarFallback>{initials(member.fullName)}</AvatarFallback>
@@ -73,7 +73,7 @@ export default async function AdminProgramMemberDetailPage({
           <div>
             <h1 className="font-display text-2xl font-bold">{member.fullName}</h1>
             <p className="text-sm text-muted-foreground">
-              {member.user.email}
+              {member.user?.email ?? ""}
               {member.enrolledAt
                 ? ` · Enrolled ${formatDateIST(member.enrolledAt)}`
                 : ""}
@@ -311,11 +311,6 @@ export default async function AdminProgramMemberDetailPage({
                       <TableCell>{s.attemptNumber}</TableCell>
                       <TableCell>
                         {s.passed ? "Passed" : "Failed"}
-                        {s.verdict ? (
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            ({String(s.verdict)})
-                          </span>
-                        ) : null}
                       </TableCell>
                       <TableCell>+{s.pointsAwarded}</TableCell>
                       <TableCell>{formatDateTimeIST(s.createdAt)}</TableCell>

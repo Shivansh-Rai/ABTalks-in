@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { isCohortFrozen } from "@/features/program/progression";
-import { programMember } from "@/repositories/legacy/program-member";
+import { findAiCohortMembershipByMemberId } from "@/repositories/program-state";
 import { peIdForMember } from "@/repositories/ids";
 import type { Prisma } from "@prisma/client";
 
@@ -68,12 +68,7 @@ export async function reviewMission(
   | { ok: true; feedback: string }
   | { ok: false; message: string }
 > {
-  const member = await programMember.findUnique({
-    where: { id: memberId },
-    select: {
-      cohort: { select: { id: true, name: true, status: true, endsAt: true } },
-    },
-  });
+  const member = await findAiCohortMembershipByMemberId(memberId);
   if (!member) return { ok: false, message: "Member not found." };
   if (await isCohortFrozen(member.cohort)) {
     return { ok: false, message: "This cohort has ended." };

@@ -18,15 +18,23 @@ import {
   UserType,
   type PrismaClient,
 } from "@prisma/client";
-import { logger } from "@/lib/logger";
-import {
-  educationIdForStudentProfile,
-  experienceIdForStudentProfile,
-  personaFromUserType,
-} from "@/repositories/dual-write";
 
 type Tx = Prisma.TransactionClient;
 type Db = PrismaClient | Tx;
+
+export function personaFromUserType(userType: UserType): CandidatePersona {
+  return userType === UserType.PROFESSIONAL
+    ? CandidatePersona.PROFESSIONAL
+    : CandidatePersona.STUDENT;
+}
+
+export function educationIdForStudentProfile(userId: string): string {
+  return `edu_sp_${userId}`;
+}
+
+export function experienceIdForStudentProfile(userId: string): string {
+  return `exp_sp_${userId}`;
+}
 
 export type CandidateIdentityPatch = {
   fullName?: string;
@@ -59,37 +67,6 @@ export type CreateCandidateIdentityInput = {
   synergyPoints: number;
 };
 
-function savepointName(label: string): string {
-  const cleaned = label.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
-  return `spmir_${cleaned || "x"}`;
-}
-
-function shouldInjectStudentProfileMirrorFailure(): boolean {
-  return process.env.STUDENT_PROFILE_FAIL_LEGACY_MIRROR === "1";
-}
-
-function studentProfileData(
-  patch: CandidateIdentityPatch,
-): Prisma.StudentProfileUpdateInput {
-  const data: Prisma.StudentProfileUpdateInput = {};
-  if (patch.fullName !== undefined) data.fullName = patch.fullName;
-  if (patch.phone !== undefined) data.phone = patch.phone;
-  if (patch.phoneVerified !== undefined) data.phoneVerified = patch.phoneVerified;
-  if (patch.phoneVerifiedAt !== undefined) {
-    data.phoneVerifiedAt = patch.phoneVerifiedAt;
-  }
-  if (patch.linkedinUrl !== undefined) data.linkedinUrl = patch.linkedinUrl;
-  if (patch.githubUsername !== undefined) {
-    data.githubUsername = patch.githubUsername;
-  }
-  if (patch.resumeUrl !== undefined) data.resumeUrl = patch.resumeUrl;
-  if (patch.userType !== undefined) data.userType = patch.userType;
-  if (patch.isReadyForInterview !== undefined) {
-    data.isReadyForInterview = patch.isReadyForInterview;
-  }
-  return data;
-}
-
 function candidateProfileData(
   patch: CandidateIdentityPatch,
 ): Prisma.CandidateProfileUpdateInput {
@@ -115,21 +92,6 @@ function candidateProfileData(
 }
 
 /**
- * StudentProfile compatibility write for W4 identity/referral/profile fields.
- * When ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is `"false"`, this is a no-op so
- * those columns stay frozen. Later-family writers (ambassador, domain) must
- * not go through this helper.
- */
-export async function runStudentProfileMirror(
-  tx: Tx,
-  label: string,
-  fn: () => Promise<void>,
-): Promise<boolean> {
-  void tx; void label; void fn;
-  return false;
-}
-
-/**
  * Live identity writes require a CandidateProfile. If only StudentProfile
  * exists (historical dual-write gap), copy identity/referral onto a new
  * CandidateProfile without minting a second referral code. Does not invent
@@ -145,45 +107,7 @@ async function ensureCanonicalProfileForIdentityWrite(
   });
   if (existing) return;
 
-  const sp = await tx.studentProfile.findUnique({
-    where: { userId },
-    select: {
-      fullName: true,
-      userType: true,
-      referralCode: true,
-      phone: true,
-      phoneVerified: true,
-      phoneVerifiedAt: true,
-      linkedinUrl: true,
-      githubUsername: true,
-      resumeUrl: true,
-      isReadyForInterview: true,
-    },
-  });
-  if (!sp) {
-    throw new Error(`Missing CandidateProfile for ${userId}`);
-  }
-
-  await tx.candidateProfile.create({
-    data: {
-      id: `cp_${userId}`,
-      userId,
-      fullName: sp.fullName,
-      primaryPersona: personaFromUserType(sp.userType),
-      phone: sp.phone,
-      phoneVerified: sp.phoneVerified,
-      phoneVerifiedAt: sp.phoneVerifiedAt,
-      linkedinUrl: sp.linkedinUrl,
-      githubUsername: sp.githubUsername,
-      resumeUrl: sp.resumeUrl,
-      referralCode: sp.referralCode,
-      isReadyForInterview: sp.isReadyForInterview,
-    },
-  });
-  logger.warn(
-    "[candidate] hydrated CandidateProfile from StudentProfile on live identity write",
-    { userId },
-  );
+  throw new Error(`Missing CandidateProfile for ${userId}`);
 }
 
 /**
@@ -199,13 +123,7 @@ export async function applyCandidateIdentityChange(
     where: { userId },
     data: candidateProfileData(patch),
   });
-  const mirrorFailed = await runStudentProfileMirror(tx, "identity", async () => {
-    await tx.studentProfile.updateMany({
-      where: { userId },
-      data: studentProfileData(patch),
-    });
-  });
-  return { mirrorFailed };
+  return { mirrorFailed: false };
 }
 
 async function createCanonicalIdentity(
@@ -270,44 +188,6 @@ async function createCanonicalIdentity(
   return created.id;
 }
 
-function studentProfileCreateData(
-  input: CreateCandidateIdentityInput,
-): Prisma.StudentProfileUncheckedCreateInput {
-  const base = {
-    userId: input.userId,
-    fullName: input.fullName,
-    userType: input.userType,
-    domain: null as null,
-    skills: [] as string[],
-    linkedinUrl: null as null,
-    githubUsername: null as null,
-    phone: input.phone,
-    phoneVerified: input.phoneVerified,
-    referralCode: input.referralCode,
-    synergyPoints: input.synergyPoints,
-  };
-  if (input.userType === UserType.STUDENT) {
-    return {
-      ...base,
-      college: input.college,
-      collegeId: input.collegeId,
-      graduationYear: null,
-      organization: null,
-      role: null,
-      yearsExperience: null,
-    };
-  }
-  return {
-    ...base,
-    college: null,
-    collegeId: null,
-    graduationYear: null,
-    organization: input.organization,
-    role: input.role,
-    yearsExperience: input.yearsExperience,
-  };
-}
-
 /**
  * Registration identity create. Flag off keeps StudentProfile authoritative.
  * Flag on commits CandidateProfile first. When the W4 mirror is on,
@@ -321,16 +201,7 @@ export async function createCandidateIdentity(
   input: CreateCandidateIdentityInput,
 ): Promise<{ profileId: string; mirrorFailed: boolean }> {
   const profileId = await createCanonicalIdentity(tx, input);
-  const mirrorFailed = await runStudentProfileMirror(
-    tx,
-    "registration",
-    async () => {
-      await tx.studentProfile.create({
-        data: studentProfileCreateData(input),
-      });
-    },
-  );
-  return { profileId, mirrorFailed };
+  return { profileId, mirrorFailed: false };
 }
 
 export function isCandidateWritesAuthoritative(): boolean {

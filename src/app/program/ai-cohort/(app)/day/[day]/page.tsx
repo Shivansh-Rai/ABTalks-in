@@ -19,7 +19,7 @@ import {
 } from "@/components/program/day-section-card";
 import { programMdComponents } from "@/components/program/markdown-code";
 import { cn } from "@/lib/utils";
-import { programMember } from "@/repositories/legacy/program-member";
+import { findAiCohortMembershipByMemberId } from "@/repositories/program-state";
 
 type Props = { params: Promise<{ day: string }> };
 
@@ -44,10 +44,7 @@ export default async function ProgramDayPage({ params }: Props) {
 
   const [missionState, memberProfile, curriculum] = await Promise.all([
     getMissionState(member.id, dayNumber),
-    programMember.findUnique({
-      where: { id: member.id },
-      select: { githubRepoUrl: true },
-    }),
+    findAiCohortMembershipByMemberId(member.id),
     getMemberDayStates(member.id),
   ]);
 

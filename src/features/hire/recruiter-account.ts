@@ -34,7 +34,6 @@ export async function getRecruiterAccountSnapshot(
       take: 5,
       select: {
         memberId: true,
-        member: { select: { jobRole: true } },
       },
     }),
     prisma.recruiterShortlistItem.count({
@@ -61,9 +60,12 @@ export async function getRecruiterAccountSnapshot(
   // person. The role label is a display detail read from the provenance id.
   const roleMemberIds = [
     ...new Set(
-      requestItems
-        .map((r) => r.programMemberId)
-        .filter((id): id is string => Boolean(id)),
+      [
+        ...cartItems.map((r) => r.memberId),
+        ...requestItems
+          .map((r) => r.programMemberId)
+          .filter((id): id is string => Boolean(id)),
+      ],
     ),
   ];
   const roleByMember = new Map(
@@ -79,7 +81,7 @@ export async function getRecruiterAccountSnapshot(
     cart: cartItems.map((item) => ({
       memberId: item.memberId,
       publicId: candidatePublicId(item.memberId),
-      jobRole: item.member.jobRole,
+      jobRole: roleByMember.get(item.memberId) ?? null,
     })),
     requests: requestItems.map((item) => ({
       id: item.id,

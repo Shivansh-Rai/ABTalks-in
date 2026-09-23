@@ -1,4 +1,4 @@
-import { AttemptLateness, SubmissionStatus, type Prisma } from "@prisma/client";
+import { AttemptLateness, type Prisma } from "@prisma/client";
 import { peIdForEnrollment } from "@/repositories/ids";
 
 type Tx = Prisma.TransactionClient;
@@ -93,26 +93,4 @@ export async function computeStreakStats(
     if (row.lateness === AttemptLateness.ON_TIME) onTimeDays.add(row.dayNumber);
   }
   return computeTrackStreakFromOnTimeDays(onTimeDays, input.endDay);
-}
-
-/** Legacy Submission ON_TIME day set — tests/recon only. */
-export async function computeStreakStatsFromSubmissions(
-  tx: Tx,
-  input: {
-    enrollmentId: string;
-    endDay: number;
-  },
-): Promise<{ currentStreak: number; longestStreak: number }> {
-  const submissions = await tx.submission.findMany({
-    where: {
-      enrollmentId: input.enrollmentId,
-      dayNumber: { gte: 1, lte: Math.max(1, Math.min(input.endDay, 60)) },
-      status: SubmissionStatus.ON_TIME,
-    },
-    select: { dayNumber: true },
-  });
-  return computeTrackStreakFromOnTimeDays(
-    new Set<number>(submissions.map((s) => s.dayNumber)),
-    input.endDay,
-  );
 }

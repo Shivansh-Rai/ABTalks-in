@@ -1,5 +1,4 @@
 import "server-only";
-import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { displayedChallengeDomain } from "@/repositories/enrollment-state";
 import { buildChallengeContext } from "@/features/interview/challenge-context";
@@ -9,19 +8,15 @@ import type { CandidateContext } from "@/features/interview/types";
 /**
  * Single deterministic entry point for everything the interviewer agent knows
  * about a candidate. Identity/college/role come from CandidateProfile and
- * structured history. Domain stays on StudentProfile (later family) when present.
+ * structured history. Challenge domain comes from ProgramEnrollment.joinedAt.
  */
 export async function buildCandidateContext(
   userId: string,
 ): Promise<CandidateContext | null> {
-  const [profile, challenge, resume, domainRow] = await Promise.all([
+  const [profile, challenge, resume] = await Promise.all([
     getCandidateProfile(userId),
     buildChallengeContext(userId),
     buildResumeContext(userId),
-    prisma.studentProfile.findUnique({
-      where: { userId },
-      select: { domain: true },
-    }),
   ]);
 
   if (!profile) return null;
@@ -29,7 +24,7 @@ export async function buildCandidateContext(
   return {
     userId,
     fullName: profile.fullName,
-    domain: await displayedChallengeDomain(userId, domainRow?.domain ?? null) ?? "",
+    domain: (await displayedChallengeDomain(userId, null)) ?? "",
     role: profile.role,
     organization: profile.organization,
     yearsExperience: profile.yearsExperience,

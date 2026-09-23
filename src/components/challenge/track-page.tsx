@@ -132,7 +132,7 @@ export async function TrackPage({ domain }: TrackPageProps) {
             id: true,
             name: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
@@ -142,7 +142,7 @@ export async function TrackPage({ domain }: TrackPageProps) {
       : null;
     const adminName =
       adminIdentity?.fullName?.trim() ||
-      endedAction?.admin?.studentProfile?.fullName?.trim() ||
+      endedAction?.admin?.candidateProfile?.fullName?.trim() ||
       endedAction?.admin?.name?.trim() ||
       endedAction?.admin?.email ||
       "An admin";

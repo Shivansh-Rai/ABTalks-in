@@ -8,12 +8,12 @@ import { getAtRiskMembers } from "@/features/program/commits";
 import { getCohortCalendarDay } from "@/features/program/progression";
 import { getAdminProgramCohort } from "@/features/program/admin";
 import { cohortIdSchema } from "@/lib/validations/program";
-import { programMember } from "@/repositories/legacy/program-member";
 import {
   compareProgramScoreRows,
-  overlayProgramMemberState,
+  listAiCohortMemberships,
   listCanonicalProgramMemberIds,
 } from "@/repositories/program-state";
+import { ProgramMemberStatus } from "@prisma/client";
 
 async function requireAdminProgramExport() {
   const admin = await requireAdmin();
@@ -31,41 +31,22 @@ export async function exportProgramMembersAction(input: unknown) {
   const parsed = cohortIdSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Invalid cohort." };
 
-  const members = await overlayProgramMemberState(
-    await programMember.findMany({
-      where: {
-        cohortId: parsed.data.cohortId,
-        id: {
-          in: await listCanonicalProgramMemberIds({
-            programCohortId: parsed.data.cohortId,
-          }),
-        },
-      },
-      select: {
-        id: true,
-        fullName: true,
-        jobRole: true,
-        company: true,
-        yearsExperience: true,
-        status: true,
-        missionPoints: true,
-        conceptPoints: true,
-        commitPoints: true,
-        projectPoints: true,
-        totalScore: true,
-        cleanPassCount: true,
-        highestUnlockedDay: true,
-        user: { select: { email: true } },
-      },
-    }),
-  );
+  const members = await listAiCohortMemberships({
+    programCohortId: parsed.data.cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
+  });
   members.sort(compareProgramScoreRows);
+  const users = await prisma.user.findMany({
+    where: { id: { in: members.map((m) => m.userId) } },
+    select: { id: true, email: true },
+  });
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
 
   return {
     ok: true as const,
     data: members.map((m) => ({
       name: m.fullName,
-      email: m.user.email,
+      email: emailByUser.get(m.userId) ?? "",
       role: m.jobRole,
       company: m.company,
       yearsExperience: m.yearsExperience,
@@ -95,17 +76,15 @@ export async function exportProgramAtRiskAction(input: unknown) {
 
   const cohortDay = getCohortCalendarDay(cohort);
   const atRisk = await getAtRiskMembers(parsed.data.cohortId);
-  const members = await programMember.findMany({
-    where: { id: { in: atRisk.map((a) => a.memberId) } },
-    select: {
-      id: true,
-      fullName: true,
-      company: true,
-      highestUnlockedDay: true,
-      user: { select: { email: true } },
-    },
+  const members = await listAiCohortMemberships({
+    memberIds: atRisk.map((a) => a.memberId),
+  });
+  const users = await prisma.user.findMany({
+    where: { id: { in: members.map((m) => m.userId) } },
+    select: { id: true, email: true },
   });
   const byId = new Map(members.map((m) => [m.id, m]));
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
 
   return {
     ok: true as const,
@@ -113,7 +92,7 @@ export async function exportProgramAtRiskAction(input: unknown) {
       const m = byId.get(a.memberId);
       return {
         name: a.fullName,
-        email: m?.user.email ?? "",
+        email: m ? (emailByUser.get(m.userId) ?? "") : "",
         company: m?.company ?? "",
         reasons: a.reasons.join("; "),
         behindBy: m ? Math.max(0, cohortDay - m.highestUnlockedDay) : 0,
@@ -162,19 +141,16 @@ export async function exportProgramInterviewsAction(input: unknown) {
   const cohort = await getAdminProgramCohort();
   const cohortId = parsed.data.cohortId;
 
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
-    },
-    select: {
-      id: true,
-      fullName: true,
-      company: true,
-      user: { select: { email: true } },
-    },
-    orderBy: { fullName: "asc" },
+  const members = await listAiCohortMemberships({
+    programCohortId: cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
   });
+  members.sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const users = await prisma.user.findMany({
+    where: { id: { in: members.map((m) => m.userId) } },
+    select: { id: true, email: true },
+  });
+  const emailByUser = new Map(users.map((u) => [u.id, u.email]));
 
   // Resolved via the interview read model (DAY_31 -> DAY_15 -> legacy).
   // Column names are deliberately unchanged so anything parsing this export
@@ -189,7 +165,7 @@ export async function exportProgramInterviewsAction(input: unknown) {
         const s = signals.get(m.id)!;
         return {
           name: m.fullName,
-          email: m.user.email,
+          email: emailByUser.get(m.userId) ?? "",
           company: m.company,
           status: s.status,
           durationSec: s.durationSec ?? "",

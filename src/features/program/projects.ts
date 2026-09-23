@@ -5,8 +5,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { askClaudeJson } from "@/lib/anthropic";
 import { logger } from "@/lib/logger";
-import { applyProgramScoreChange, listCanonicalProgramMemberIds } from "@/repositories/program-state";
-import { programMember } from "@/repositories/legacy/program-member";
+import { applyProgramScoreChange, listAiCohortMemberships } from "@/repositories/program-state";
+import { peIdForMember, memberIdFromPe } from "@/repositories/ids";
+import { ProgramMemberStatus } from "@prisma/client";
 import {
   encodeRepoContentsPath,
   parseRepo,
@@ -296,7 +297,7 @@ export async function overrideProjectScore(
       memberId: true,
       adminScore: true,
       aiScore: true,
-      member: { select: { userId: true } },
+      programEnrollment: { select: { userId: true } },
     },
   });
 
@@ -316,7 +317,7 @@ export async function overrideProjectScore(
       data: {
         adminUserId: adminId,
         actorUserId: adminId,
-        targetUserId: project.member.userId,
+        targetUserId: project.programEnrollment.userId,
         actionType: "PROGRAM_OVERRIDE_PROJECT_SCORE",
         reason,
         metadata: {
@@ -334,18 +335,18 @@ export async function overrideProjectScore(
 }
 
 export async function listProjectsForAdmin(cohortId: string) {
-  const members = await programMember.findMany({
-    where: {
-      cohortId,
-      id: { in: await listCanonicalProgramMemberIds({ programCohortId: cohortId }) },
-    },
-    select: {
-      id: true,
-      fullName: true,
-      company: true,
-      projects: {
+  const members = await listAiCohortMemberships({
+    programCohortId: cohortId,
+    statuses: [ProgramMemberStatus.ENROLLED, ProgramMemberStatus.COMPLETED],
+  });
+  members.sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const peIds = members.map((m) => peIdForMember(m.id));
+  const projects = peIds.length
+    ? await prisma.programProject.findMany({
+        where: { programEnrollmentId: { in: peIds } },
         select: {
           id: true,
+          programEnrollmentId: true,
           moduleNumber: true,
           repoUrl: true,
           writeup: true,
@@ -358,13 +359,20 @@ export async function listProjectsForAdmin(cohortId: string) {
           gradedAt: true,
         },
         orderBy: { moduleNumber: "asc" },
-      },
-    },
-    orderBy: { fullName: "asc" },
-  });
+      })
+    : [];
+  const byMember = new Map(members.map((m) => [m.id, m]));
+  const grouped = new Map<string, typeof projects>();
+  for (const p of projects) {
+    const memberId = memberIdFromPe(p.programEnrollmentId);
+    if (!memberId) continue;
+    const list = grouped.get(memberId) ?? [];
+    list.push(p);
+    grouped.set(memberId, list);
+  }
 
   const ungraded = members.flatMap((m) =>
-    m.projects
+    (grouped.get(m.id) ?? [])
       .filter((p) => p.status === "SUBMITTED")
       .map((p) => ({
         projectId: p.id,
@@ -377,7 +385,7 @@ export async function listProjectsForAdmin(cohortId: string) {
   );
 
   const graded = members.flatMap((m) =>
-    m.projects
+    (grouped.get(m.id) ?? [])
       .filter((p) => p.status === "GRADED")
       .map((p) => ({
         projectId: p.id,
@@ -399,7 +407,7 @@ export async function listProjectsForAdmin(cohortId: string) {
 
 export async function getMemberProjectsSummary(memberId: string) {
   return prisma.programProject.findMany({
-    where: { memberId },
+    where: { programEnrollmentId: peIdForMember(memberId) },
     select: {
       moduleNumber: true,
       status: true,

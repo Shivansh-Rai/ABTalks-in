@@ -2,7 +2,7 @@
  * W5-A Campus Ambassador write-authority tests.
  * Run: npm run test:078-ambassador-writes
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Domain } from "@prisma/client";
 import { applyAmbassadorChange } from "@/repositories/ambassador";
@@ -238,11 +238,11 @@ async function main() {
     assert(overlay.includes("getAmbassadorState"), "user overlay");
   });
 
-  await suite("identity dual-write no longer copies ambassador onto CandidateProfile", () => {
-    const src = source("src/repositories/dual-write.ts");
-    assert(!src.includes("isCampusAmbassadorCandidate"), "no SP→CP ambassador copy");
-    assert(!src.includes("ambassadorAppliedAt"), "no appliedAt copy");
-    assert(!src.includes("ambassador: true"), "not in submittedAll");
+  await suite("identity dual-write file is retired", () => {
+    assert(
+      !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+      "dual-write.ts deleted",
+    );
   });
 
   await suite("no live StudentProfile ambassador mutation outside the W5 boundary", () => {
@@ -452,26 +452,18 @@ async function main() {
         assert(after.synergyPoints === 42, "points");
         assert(after.domain === Domain.SE, "domain");
         const amb = source("src/repositories/ambassador.ts");
-        const dataFn = amb.slice(
-          amb.indexOf("function ambassadorStudentProfileData"),
-          amb.indexOf("function nextState"),
-        );
-        assert(dataFn.includes("isCampusAmbassadorCandidate"), "flag");
-        assert(dataFn.includes("ambassadorAppliedAt"), "applied");
-        assert(dataFn.includes("ambassadorDismissedAt"), "dismissed");
-        assert(!dataFn.includes("fullName"), "no identity");
-        assert(!dataFn.includes("synergyPoints"), "no points");
-        assert(!dataFn.includes("domain"), "no domain");
+        assert(!amb.includes("function ambassadorStudentProfileData"), "SP ambassador payload gone");
+        assert(!amb.includes("studentProfile.updateMany"), "no SP identity write");
       },
     );
   });
 
   await suite("W5 flag does not suppress domain writers", () => {
     const enroll = source("src/features/enrollment/create-core-enrollment.ts");
-    assert(enroll.includes("applyEnrollmentDomainMirror"), "domain denorm still writes SP");
+    assert(!enroll.includes("applyEnrollmentDomainMirror"), "domain denorm retired");
     assert(!enroll.includes("isNewAmbassadorWritesEnabled"), "domain not gated by W5");
     const points = source("src/repositories/points.ts");
-    assert(points.includes("studentProfile.updateMany"), "points path unchanged");
+    assert(!points.includes("studentProfile.updateMany"), "points SP mirror gone");
     assert(!points.includes("isNewAmbassadorWritesEnabled"), "points not gated by W5");
   });
 
@@ -615,8 +607,7 @@ async function main() {
       const wiped = await applyAmbassadorChange(tx as never, "u1", { kind: "wipe" });
       assert(wiped.state.isCandidate === false, "canonical cleared");
       assert(tx.getCaa("u1")?.isCandidate === false, "row cleared");
-      assert(tx.getSp()?.isCampusAmbassadorCandidate === false, "compliance SP scrub");
-      assert(tx.getSp()?.ambassadorAppliedAt === null, "SP applied scrubbed");
+      // Original StudentProfile table is gone; wipe is canonical CAA only.
       assert(tx.getSp()?.synergyPoints === 42, "points untouched");
       assert(tx.getSp()?.domain === Domain.SE, "domain untouched");
       assert(tx.getSp()?.fullName === "Ada", "identity untouched");

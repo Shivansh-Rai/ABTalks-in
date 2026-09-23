@@ -333,7 +333,7 @@ async function main() {
   await suite("hire pool permission stays CandidateVisibility", () => {
     const hire = source("src/repositories/hire.ts");
     assert(hire.includes("searchableUserWhere"), "visibility gate");
-    assert(hire.includes("overlayProgramMemberState"), "score overlay");
+    assert(hire.includes("listAiCohortMemberships"), "PE membership list");
     assert(hire.includes("RECRUITER_FIELD_POLICY.interviewResults"), "interview privacy");
     assert(!hire.includes("isNewProgramStateEnabled"), "canonical pool refs");
   });
@@ -365,7 +365,7 @@ async function main() {
   await suite("W8-B splits anchor creation from mutable-state mirror", () => {
     const impl = source("src/repositories/program-state.ts");
     const flags = source("src/lib/feature-flags.ts");
-    assert(impl.includes("ensureProgramMemberAnchor"), "anchor helper");
+    assert(!impl.includes("ensureProgramMemberAnchor"), "no PM structural anchor");
     assert(impl.includes("mirrorProgramMemberLegacyState"), "mirror helper");
     assert(impl.includes("scrubProgramMemberLegacyPii"), "compliance wipe");
     assert(impl.includes("canonicalProgramMemberWhere"), "PE-first where");
@@ -373,7 +373,7 @@ async function main() {
     assert(!impl.includes('ENABLE_DUAL_WRITE'), "does not overload dual-write");
   });
 
-  await suite("mirror off creates minimal PM anchor and freezes mutable state", async () => {
+  await suite("mirror off does not mint ProgramMember", async () => {
     await withFlags(
       {
         ENABLE_NEW_PROGRAM_STATE: "true",
@@ -392,11 +392,9 @@ async function main() {
           identity,
         });
         assert(first.memberId === "pm1", "stable pe_pm identity");
-        assert(tx.writes.includes("pm.create"), "anchor created");
-        assert(!tx.writes.includes("pm.update"), "no mutable remirror on create");
+        assert(!tx.writes.includes("pm.create"), "no ProgramMember mint");
+        assert(!tx.writes.includes("pm.update"), "no mutable remirror");
         assert(tx.pe.status === EnrollmentStatusV2.ACTIVE, "PE ACTIVE");
-        assert(tx.pm.status === ProgramMemberStatus.APPLIED, "PM stays structural APPLIED");
-        assert(tx.pm.missionPoints === 0, "no score snapshot on anchor");
 
         const retry = await applyProgramMembershipChange(tx as never, {
           memberId: "pm1",
@@ -407,8 +405,8 @@ async function main() {
         });
         assert(retry.memberId === "pm1", "retry same id");
         assert(
-          tx.writes.filter((w) => w === "pm.create").length === 1,
-          "no duplicate anchor",
+          tx.writes.filter((w) => w === "pm.create").length === 0,
+          "never mints ProgramMember",
         );
 
         await applyProgramMembershipChange(tx as never, {
@@ -451,11 +449,11 @@ async function main() {
     const entry = source("src/features/program/entry.ts");
     const interview = source("src/features/interview/provider.ts");
     const anon = source("src/features/admin/anonymize-user.ts");
-    assert(hire.includes("canonicalProgramMemberWhere"), "hire PE-first where");
+    assert(hire.includes("listAiCohortMemberships"), "hire PE membership");
     assert(pool.includes("listCanonicalProgramMemberIds"), "talent pool PE ids");
-    assert(leaderboard.includes("listCanonicalProgramMemberIds"), "leaderboard PE ids");
+    assert(leaderboard.includes("listAiCohortMemberships"), "leaderboard PE list");
     assert(admin.includes("countCanonicalMembersByStatus"), "admin PE counts");
-    assert(entry.includes("overlayProgramMemberState"), "entry PE status");
+    assert(entry.includes("findAiCohortMembershipByUserCohort"), "entry PE status");
     assert(interview.includes("findActiveMembership"), "interview PE membership");
     assert(anon.includes("scrubProgramMemberLegacyPii"), "anonymize PII exception");
     assert(anon.includes("programEnrollment.findMany"), "anonymize drops via PE");

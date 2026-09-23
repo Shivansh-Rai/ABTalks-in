@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { studentProfile } from "@/repositories/legacy/student-profile";
 
 /**
  * The post-auth registration gate.

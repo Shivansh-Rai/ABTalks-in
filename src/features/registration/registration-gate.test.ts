@@ -12,7 +12,7 @@
  *
  * Run: npm run test:registration-gate
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   REGISTRATION_DEFAULT_NEXT,
@@ -285,10 +285,10 @@ suite("registration writes the CandidateProfile-only basic-info fields", () => {
   assert(src.includes("createCandidateIdentity"), "W4-A identity create");
   assert(src.includes("headline: input.headline"), "headline passed through");
 
-  const dw = source("src/repositories/dual-write.ts");
-  const fn = dw.slice(dw.indexOf("export async function dualWriteCandidateBasicInfo"));
-  assert(fn.includes("updateMany"), "tolerates a missing row");
-  assert(fn.includes("runDualWrite"), "goes through the dual-write guard");
+  assert(
+    !existsSync(join(process.cwd(), "src/repositories/dual-write.ts")),
+    "dual-write.ts deleted",
+  );
 });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);

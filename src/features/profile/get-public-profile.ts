@@ -1,9 +1,7 @@
 import { EnrollmentStatus, type UserType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCandidateProfile } from "@/repositories/candidate";
-import { studentProfile } from "@/repositories/legacy/student-profile";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
-import { displayedChallengeDomain } from "@/repositories/enrollment-state";
+import { displayedChallengeDomain, listChallengePeRows } from "@/repositories/enrollment-state";
 
 export type PublicProfile = {
   fullName: string;
@@ -36,38 +34,22 @@ type ProfileDomainEnrollment = {
 async function resolvePublicProfileEnrollment(
   userId: string,
 ): Promise<ProfileDomainEnrollment | null> {
-  const profile = await studentProfile.findUnique({
-    where: { userId },
-    select: { domain: true },
-  });
-  const domain = await displayedChallengeDomain(userId, profile?.domain ?? null);
+  const domain = await displayedChallengeDomain(userId, null);
 
   if (!domain) {
     return null;
   }
 
-  const enrollments = await prisma.enrollment.findMany({
-    where: {
-      userId,
-      domain,
-      status: { not: EnrollmentStatus.ABANDONED },
-    },
-    orderBy: { startedAt: "asc" },
-    select: {
-      id: true,
-      status: true,
-      daysCompleted: true,
-      currentStreak: true,
-      longestStreak: true,
-      lastSubmittedDay: true,
-    },
+  const overlaid = await listChallengePeRows({
+    userId,
+    domains: [domain],
+    excludeAbandoned: true,
   });
-
-  if (enrollments.length === 0) {
+  overlaid.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+  if (overlaid.length === 0) {
     return null;
   }
 
-  const overlaid = await overlayChallengeProgressFields(enrollments);
   const active = overlaid.find((e) => e.status === EnrollmentStatus.ACTIVE);
   return active ?? overlaid[0]!;
 }
@@ -78,10 +60,7 @@ export async function getPublicProfile(
   const [user, candidate, domainEnrollment] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        createdAt: true,
-        studentProfile: { select: { domain: true } },
-      },
+      select: { createdAt: true },
     }),
     getCandidateProfile(userId),
     resolvePublicProfileEnrollment(userId),
@@ -94,10 +73,7 @@ export async function getPublicProfile(
   return {
     fullName: candidate.fullName,
     userType: candidate.userType as UserType,
-    domain: await displayedChallengeDomain(
-      userId,
-      user.studentProfile?.domain ?? null,
-    ),
+    domain: await displayedChallengeDomain(userId, null),
     college: candidate.college,
     graduationYear: candidate.graduationYear,
     organization: candidate.organization,

@@ -54,7 +54,7 @@ Credential
 CandidateAchievement
 ```
 
-Public verification and PDF use `Credential`. Historical `Certificate` rows remain for provenance only.
+Public verification and PDF use `Credential`. Historical certificate provenance is `HistoricalCertificate`.
 
 ## Ambassador
 
@@ -88,19 +88,18 @@ ABT-* Credential ids
 
 ## Historical archive
 
-These tables are not current-state authority. They still exist in production Postgres because unique historical payloads and remaining readers have not finished moving. They are frozen or structural leftovers, not a dual-write control plane.
+Original operational tables (`StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`, `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`) and `User.synergyPoints` are retired from the Prisma schema. Unique history lives only in explicit archive models. Those archives are immutable except compliance PII scrub.
 
-| Object | Status | Why retained |
-| --- | --- | --- |
-| `Enrollment` | RETAINED HISTORICAL + remaining operational readers/writers | Challenge create/status still mints/updates Enrollment; Submission/Certificate FKs; many admin readers |
-| `ProgramMember` | RETAINED HISTORICAL + remaining identity readers | Inbound FKs dropped; `memberId` scalars remain; dashboard/talent still load the row |
-| `StudentProfile` | RETAINED HISTORICAL | Identity frozen; compliance still scrubs; unique snapshot not archived |
-| `Submission` | RETAINED HISTORICAL | Frozen W6; FK to Enrollment; some metadata not proven copied |
-| `QuizAttempt` | RETAINED HISTORICAL | Raw `answers` JSON; `progress.ts` historical fallback |
-| `ProgramMissionSubmission` | RETAINED HISTORICAL | Frozen W6; `programEnrollmentId` FK added; raw payload/feedback |
-| `Certificate` | RETAINED HISTORICAL | Provenance for Credential/admin; public verify is Credential |
-| `SynergyEvent` | RETAINED HISTORICAL | Frozen W1-B ledger leftover; unique context not archived |
-| `User.synergyPoints` / `StudentProfile.synergyPoints` | RETAINED HISTORICAL columns | Frozen numeric snapshots |
+| Object | Status |
+| --- | --- |
+| `HistoricalQuizAttempt` | ARCHIVE — raw quiz `answers` JSON |
+| `HistoricalProgramMission` | ARCHIVE — mission payload/verdict |
+| `HistoricalCertificate` | ARCHIVE — certificate provenance |
+| `HistoricalSubmission` | ARCHIVE — submission metadata |
+| `HistoricalSynergyEvent` | ARCHIVE — legacy points events |
+| `HistoricalStudentProfile` | ARCHIVE — identity snapshot |
+
+`dual-write.ts` is deleted. There is no Enrollment/ProgramMember current-state path.
 
 ## Runtime flags
 

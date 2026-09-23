@@ -80,7 +80,7 @@ export async function getAdminActionActors(): Promise<
     select: {
       id: true,
       email: true,
-      studentProfile: { select: { fullName: true } },
+      candidateProfile: { select: { fullName: true } },
     },
   });
 
@@ -88,7 +88,7 @@ export async function getAdminActionActors(): Promise<
   return users
     .map((user) => ({
       id: user.id,
-      name: displayName(names.get(user.id) ?? user.studentProfile?.fullName, user.email),
+      name: displayName(names.get(user.id) ?? user.candidateProfile?.fullName, user.email),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -132,14 +132,14 @@ export async function getAdminActionsFeed(input: {
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
         target: {
           select: {
             id: true,
             email: true,
-            studentProfile: { select: { fullName: true } },
+            candidateProfile: { select: { fullName: true } },
           },
         },
       },
@@ -160,7 +160,7 @@ export async function getAdminActionsFeed(input: {
       const targetUserId = row.target?.id ?? null;
       const targetName = row.target
         ? displayName(
-            names.get(row.target.id) ?? row.target.studentProfile?.fullName,
+            names.get(row.target.id) ?? row.target.candidateProfile?.fullName,
             row.target.email,
           )
         : [row.entityType, row.entityId].filter(Boolean).join(" ") || "—";
@@ -173,7 +173,7 @@ export async function getAdminActionsFeed(input: {
         createdAt: row.createdAt,
         adminName: row.admin
           ? displayName(
-              names.get(row.admin.id) ?? row.admin.studentProfile?.fullName,
+              names.get(row.admin.id) ?? row.admin.candidateProfile?.fullName,
               row.admin.email,
             )
           : row.actorUserId,

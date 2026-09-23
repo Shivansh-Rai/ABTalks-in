@@ -1,8 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { programMember } from "@/repositories/legacy/program-member";
-import { canonicalProgramMemberWhere } from "@/repositories/program-state";
 import type {
   CandidateSearchFilters,
   RecruiterContext,

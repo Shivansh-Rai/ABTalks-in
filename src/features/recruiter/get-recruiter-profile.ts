@@ -1,4 +1,4 @@
-import { EnrollmentStatus, type RecommendationLevel } from "@prisma/client";
+import type { RecommendationLevel } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
   parseCertifications,
@@ -18,8 +18,8 @@ import {
   type Project,
   type SkillGroup,
 } from "@/lib/validations/recruiter";
-import { overlayChallengeProgressFields } from "@/repositories/progress";
-import { displayedChallengeDomain } from "@/repositories/enrollment-state";
+import { displayedChallengeDomain, listChallengePeRows } from "@/repositories/enrollment-state";
+import { getCandidateProfile } from "@/repositories/candidate";
 
 export type RecruiterProfileView = {
   fullName: string;
@@ -134,54 +134,25 @@ export async function getRecruiterProfileByToken(
           id: true,
           image: true,
           email: true,
-          studentProfile: {
-            select: {
-              fullName: true,
-              userType: true,
-              domain: true,
-              college: true,
-              graduationYear: true,
-              organization: true,
-              role: true,
-              yearsExperience: true,
-              skills: true,
-              phone: true,
-              linkedinUrl: true,
-              githubUsername: true,
-              isReadyForInterview: true,
-            },
-          },
-          enrollments: {
-            where: { status: { not: EnrollmentStatus.ABANDONED } },
-            orderBy: { startedAt: "asc" },
-            select: {
-              id: true,
-              domain: true,
-              status: true,
-              daysCompleted: true,
-              currentStreak: true,
-              longestStreak: true,
-              lastSubmittedDay: true,
-              challenge: { select: { totalDays: true } },
-            },
-          },
         },
       },
     },
   });
 
-  if (!review || !review.isPublished || !review.user.studentProfile) return null;
-  const p = review.user.studentProfile;
-  const domain = await displayedChallengeDomain(review.user.id, p.domain);
-  const overlaidEnrollments = await overlayChallengeProgressFields(
-    review.user.enrollments,
-  );
+  if (!review || !review.isPublished) return null;
+  const p = await getCandidateProfile(review.user.id);
+  if (!p) return null;
+  const domain = await displayedChallengeDomain(review.user.id, null);
+  const peRows = await listChallengePeRows({
+    userId: review.user.id,
+    excludeAbandoned: true,
+  });
   const enr =
-    overlaidEnrollments.find(
+    peRows.find(
       (e) => e.domain === domain && e.status === "ACTIVE",
     ) ??
-    overlaidEnrollments.find((e) => e.domain === domain) ??
-    overlaidEnrollments[0] ??
+    peRows.find((e) => e.domain === domain) ??
+    peRows[0] ??
     null;
 
   return {
@@ -201,7 +172,7 @@ export async function getRecruiterProfileByToken(
     yearsExperience: p.yearsExperience,
     skills: p.skills,
     daysCompleted: enr?.daysCompleted ?? 0,
-    totalDays: enr?.challenge.totalDays ?? 60,
+    totalDays: 60,
     currentStreak: enr?.currentStreak ?? 0,
     longestStreak: enr?.longestStreak ?? 0,
     isReadyForInterview: p.isReadyForInterview,

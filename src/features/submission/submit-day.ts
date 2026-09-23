@@ -19,6 +19,7 @@ import {
   applyCandidateIdentityChange,
 } from "@/repositories/candidate-identity";
 import {
+  applyChallengeProgramEnrollment,
   applyChallengeProgramEnrollmentById,
   applyEnrollmentProgressDenorm,
 } from "@/repositories/enrollment-state";
@@ -266,15 +267,17 @@ export async function submitDay(input: {
         lastSubmittedDay: nextLastSubmittedDay,
       });
       if (completed) {
-        await tx.enrollment.update({
-          where: { id: enrollment.id },
-          data: {
-            status: EnrollmentStatus.COMPLETED,
-            completedAt: new Date(),
-          },
+        await applyChallengeProgramEnrollment(tx, {
+          id: enrollment.id,
+          userId,
+          domain: enrollment.domain,
+          status: EnrollmentStatus.COMPLETED,
+          startedAt: enrollment.startedAt,
+          completedAt: new Date(),
         });
+      } else {
+        await applyChallengeProgramEnrollmentById(tx, enrollment.id);
       }
-      await applyChallengeProgramEnrollmentById(tx, enrollment.id);
 
       if (completed) {
         await applyCandidateIdentityChange(tx, userId, {

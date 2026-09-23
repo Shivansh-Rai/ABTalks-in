@@ -4,15 +4,110 @@ import {
   EnrollmentStatus,
   PrismaClient,
   SubmissionStatus,
-  UserType,
+  CandidatePersona,
+  EnrollmentStatusV2,
+  AttemptStatus,
+  AttemptLateness,
+  EvaluatorType,
 } from "@prisma/client";
 import { computeStreakStats } from "../src/features/submission/streak-utils";
 import { getCurrentDayNumber } from "../src/lib/date-utils";
+import {
+  activityIdForDailyTask,
+  attemptIdForSubmission,
+  cohortSlugForDomain,
+  mintProgressRowId,
+  peIdForEnrollment,
+} from "../src/repositories/ids";
 
 config({ path: ".env.local" });
 config();
 
 const prisma = new PrismaClient();
+
+async function seedChallengeProgress(input: {
+  userId: string;
+  startedAt: Date;
+  status: EnrollmentStatus;
+  completedAt?: Date | null;
+  submissions: { dayNumber: number; status: SubmissionStatus; submittedAt: Date }[];
+  taskIdByDay: Map<number, string>;
+}): Promise<string> {
+  const slug = cohortSlugForDomain("CLAUDE");
+  const cohort = await prisma.cohort.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (!cohort) fail(`Missing cohort ${slug}`);
+  const handle = mintProgressRowId();
+  const peId = peIdForEnrollment(handle);
+  await prisma.programEnrollment.create({
+    data: {
+      id: peId,
+      userId: input.userId,
+      cohortId: cohort.id,
+      status:
+        input.status === EnrollmentStatus.COMPLETED
+          ? EnrollmentStatusV2.COMPLETED
+          : EnrollmentStatusV2.ACTIVE,
+      startedAt: input.startedAt,
+      enrolledAt: input.startedAt,
+      joinedAt: input.startedAt,
+      completedAt: input.completedAt ?? null,
+    },
+  });
+  for (const sub of input.submissions) {
+    const dailyTaskId = input.taskIdByDay.get(sub.dayNumber);
+    if (!dailyTaskId) {
+      fail(
+        `❌ Missing DailyTask for CLAUDE day ${sub.dayNumber}. Run db:seed:content first.`,
+      );
+    }
+    const activityId = activityIdForDailyTask(dailyTaskId);
+    const activity = await prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { id: true },
+    });
+    if (!activity) continue;
+    const subId = mintProgressRowId();
+    const attemptId = attemptIdForSubmission(subId);
+    await prisma.activityAttempt.create({
+      data: {
+        id: attemptId,
+        enrollmentId: peId,
+        activityId,
+        attemptNumber: 1,
+        status: AttemptStatus.EVALUATED,
+        lateness:
+          sub.status === SubmissionStatus.LATE
+            ? AttemptLateness.LATE
+            : AttemptLateness.ON_TIME,
+        payload: {
+          githubUrl: `https://github.com/abtalks-claude-seed/${input.userId}-day-${sub.dayNumber}`,
+          linkedinUrl: `https://www.linkedin.com/posts/abtalks-claude-seed-${input.userId}-day-${sub.dayNumber}`,
+          legacySubmissionId: subId,
+        },
+        passed: true,
+        pointsAwarded: 10,
+        startedAt: sub.submittedAt,
+        submittedAt: sub.submittedAt,
+      },
+    });
+    await prisma.activityEvaluation.create({
+      data: {
+        id: `ev_sub_${subId}`,
+        attemptId,
+        evaluatorType: EvaluatorType.AUTO,
+        passed: true,
+        score: 100,
+        maxScore: 100,
+        isAuthoritative: true,
+        createdAt: sub.submittedAt,
+      },
+    });
+  }
+  return handle;
+}
 
 const MAX_USERS_FOR_DEV_SEED = 50;
 const TEST_EMAIL_SUFFIX = "@abtalks.dev";
@@ -324,15 +419,11 @@ async function seedClaudeTestUsers() {
         email,
         name: `${student.firstName} ${student.lastName}`,
         emailVerified: new Date(),
-        studentProfile: {
+        candidateProfile: {
           create: {
             fullName: `${student.firstName} ${student.lastName}`,
             phone: `+91${9000000000 + i}`,
-            userType: UserType.STUDENT,
-            domain: Domain.CLAUDE,
-            college: student.college,
-            graduationYear: student.graduationYear,
-            skills: ["Python", "Problem Solving", "AI"],
+            primaryPersona: CandidatePersona.STUDENT,
             linkedinUrl: `https://linkedin.com/in/${student.firstName.toLowerCase()}-${student.lastName.toLowerCase()}-test`,
             githubUsername: `${student.firstName.toLowerCase()}${student.lastName.toLowerCase()}`,
             referralCode: `TEST${i.toString().padStart(3, "0")}`,
@@ -359,16 +450,11 @@ async function seedClaudeTestUsers() {
         email,
         name: `${pro.firstName} ${pro.lastName}`,
         emailVerified: new Date(),
-        studentProfile: {
+        candidateProfile: {
           create: {
             fullName: `${pro.firstName} ${pro.lastName}`,
             phone: `+91${9100000000 + i}`,
-            userType: UserType.PROFESSIONAL,
-            domain: Domain.CLAUDE,
-            organization: pro.organization,
-            role: pro.role,
-            yearsExperience: pro.yearsExperience,
-            skills: ["Python", "AI", "Communication"],
+            primaryPersona: CandidatePersona.PROFESSIONAL,
             linkedinUrl: `https://linkedin.com/in/${pro.firstName.toLowerCase()}-${pro.lastName.toLowerCase()}-test`,
             githubUsername: `${pro.firstName.toLowerCase()}${pro.lastName.toLowerCase()}`,
             referralCode: `PRO${i.toString().padStart(3, "0")}`,
@@ -397,15 +483,11 @@ async function seedClaudeTestUsers() {
         password: DEV_TEST_PASSWORD,
         name: displayName,
         emailVerified: new Date(),
-        studentProfile: {
+        candidateProfile: {
           create: {
             fullName: displayName,
             phone: `+91${9200000000 + i}`,
-            userType: UserType.STUDENT,
-            domain: Domain.CLAUDE,
-            college: "ABTalks Team",
-            graduationYear: 2026,
-            skills: ["Python", "AI", "Claude"],
+            primaryPersona: CandidatePersona.STUDENT,
             linkedinUrl: `https://linkedin.com/in/${slug}-abtalks`,
             githubUsername: slug,
             referralCode: `TEAM${i.toString().padStart(3, "0")}`,
@@ -431,42 +513,14 @@ async function seedClaudeTestUsers() {
     const user = allUsers[i]!;
     const pattern = patterns[i % patterns.length]!;
 
-    const enrollment = await prisma.enrollment.create({
-      data: {
-        userId: user.id,
-        challengeId: claudeChallenge.id,
-        domain: Domain.CLAUDE,
-        status: EnrollmentStatus.ACTIVE,
-        startedAt: tenDaysAgo,
-        daysCompleted: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-      },
-    });
-
     const submissions = generateSubmissions(pattern.name, tenDaysAgo);
-
-    for (const sub of submissions) {
-      const dailyTaskId = taskIdByDay.get(sub.dayNumber);
-      if (!dailyTaskId) {
-        fail(
-          `❌ Missing DailyTask for CLAUDE day ${sub.dayNumber}. Run db:seed:content first.`,
-        );
-      }
-
-      await prisma.submission.create({
-        data: {
-          userId: user.id,
-          enrollmentId: enrollment.id,
-          dailyTaskId,
-          dayNumber: sub.dayNumber,
-          githubUrl: `https://github.com/abtalks-claude-seed/${user.id}-day-${sub.dayNumber}`,
-          linkedinUrl: `https://www.linkedin.com/posts/abtalks-claude-seed-${user.id}-day-${sub.dayNumber}`,
-          status: sub.status,
-          submittedAt: sub.submittedAt,
-        },
-      });
-    }
+    const handle = await seedChallengeProgress({
+      userId: user.id,
+      startedAt: tenDaysAgo,
+      status: EnrollmentStatus.ACTIVE,
+      submissions,
+      taskIdByDay,
+    });
 
     const daysCompleted = submissions.length;
     const lastSubmittedDay =
@@ -478,17 +532,15 @@ async function seedClaudeTestUsers() {
       lastSubmittedDay ??
       getCurrentDayNumber({ startedAt: tenDaysAgo }, challengeAnchor);
     const { currentStreak, longestStreak } = await computeStreakStats(prisma, {
-      enrollmentId: enrollment.id,
+      enrollmentId: handle,
       endDay: statsEndDay,
     });
 
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
+    await prisma.programEnrollment.update({
+      where: { id: peIdForEnrollment(handle) },
       data: {
-        daysCompleted,
-        currentStreak,
-        longestStreak,
-        lastSubmittedDay,
+        trackCurrentStreak: currentStreak,
+        trackLongestStreak: longestStreak,
       },
     });
 
@@ -506,15 +558,11 @@ async function seedClaudeTestUsers() {
       password: DEV_TEST_PASSWORD,
       name: "Claude Completed 60",
       emailVerified: new Date(),
-      studentProfile: {
+      candidateProfile: {
         create: {
           fullName: "Claude Completed 60",
           phone: "+919299999999",
-          userType: UserType.STUDENT,
-          domain: Domain.CLAUDE,
-          college: "ABTalks Test College",
-          graduationYear: 2026,
-          skills: ["Python", "AI", "Claude"],
+          primaryPersona: CandidatePersona.STUDENT,
           linkedinUrl: "https://linkedin.com/in/claude-completed-60",
           githubUsername: "claudecompleted60",
           referralCode: "TEAM060",
@@ -524,43 +572,22 @@ async function seedClaudeTestUsers() {
     },
   });
 
-  const completedEnrollment = await prisma.enrollment.create({
+  const completedSubs = generateCompletedSixtyDaySubmissions(completedStartDate);
+  const completedHandle = await seedChallengeProgress({
+    userId: completedUser.id,
+    startedAt: completedStartDate,
+    status: EnrollmentStatus.COMPLETED,
+    completedAt: dayDate(completedStartDate, 60, 20),
+    submissions: completedSubs,
+    taskIdByDay,
+  });
+  await prisma.programEnrollment.update({
+    where: { id: peIdForEnrollment(completedHandle) },
     data: {
-      userId: completedUser.id,
-      challengeId: claudeChallenge.id,
-      domain: Domain.CLAUDE,
-      status: EnrollmentStatus.COMPLETED,
-      startedAt: completedStartDate,
-      completedAt: dayDate(completedStartDate, 60, 20),
-      daysCompleted: 60,
-      currentStreak: 60,
-      longestStreak: 60,
-      lastSubmittedDay: 60,
+      trackCurrentStreak: 60,
+      trackLongestStreak: 60,
     },
   });
-
-  const completedSubs = generateCompletedSixtyDaySubmissions(completedStartDate);
-  for (const sub of completedSubs) {
-    const dailyTaskId = taskIdByDay.get(sub.dayNumber);
-    if (!dailyTaskId) {
-      fail(
-        `❌ Missing DailyTask for CLAUDE day ${sub.dayNumber}. Run db:seed:content first.`,
-      );
-    }
-
-    await prisma.submission.create({
-      data: {
-        userId: completedUser.id,
-        enrollmentId: completedEnrollment.id,
-        dailyTaskId,
-        dayNumber: sub.dayNumber,
-        githubUrl: `https://github.com/abtalks-claude-seed/${completedUser.id}-day-${sub.dayNumber}`,
-        linkedinUrl: `https://www.linkedin.com/posts/abtalks-claude-seed-${completedUser.id}-day-${sub.dayNumber}`,
-        status: sub.status,
-        submittedAt: sub.submittedAt,
-      },
-    });
-  }
 
   console.log(`   ${COMPLETED_TEST_EMAIL} / ${DEV_TEST_PASSWORD} (60/60 completed)`);
 
