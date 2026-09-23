@@ -1,19 +1,9 @@
 /**
- * W7-A/B enrollment denorm current-state boundary + Phase 8-B challenge PE writer.
+ * Challenge ProgramEnrollment current-state writer (`pe_enr_*`).
  *
- * Days/lastSubmittedDay: derived from challenge ActivityAttempt (already W6-B).
- * Track streaks: ProgramEnrollment.trackCurrentStreak / trackLongestStreak
- * (historical snapshots are not fully re-derivable from AA).
- * StudentProfile.domain: first-joined challenge track; SP write is a
- * best-effort mirror gated by ENABLE_LEGACY_ENROLLMENT_DENORM_MIRROR and
- * must not fail canonical enrollment. W7-B freezes those compatibility
- * fields only; Enrollment.status / startedAt / completedAt stay live.
- *
- * Challenge ProgramEnrollment `pe_enr_<Enrollment.id>` is written here and
- * does not go through runDualWrite / ENABLE_DUAL_WRITE. CandidateVisibility
- * stays on the W2 applyVisibilityChange boundary. Does not take
- * EnrollmentProgress, ProgramMember, points, certificate, candidate identity,
- * or W6 frozen progress tables.
+ * Days/lastSubmittedDay are derived from challenge ActivityAttempt.
+ * Track streaks live on ProgramEnrollment. Recruiter permission stays
+ * CandidateVisibility. Does not write EnrollmentProgress.
  */
 import "server-only";
 import {
@@ -52,9 +42,8 @@ export function mapChallengeEnrollmentStatus(
 }
 
 /**
- * Canonical challenge ProgramEnrollment writer (`pe_enr_<Enrollment.id>`).
- * Independent of ENABLE_DUAL_WRITE. Does not stamp CandidateVisibility.
- * Does not remirror frozen Enrollment denorms or StudentProfile.domain.
+ * Canonical challenge ProgramEnrollment writer (`pe_enr_*`).
+ * Does not stamp CandidateVisibility.
  */
 export async function applyChallengeProgramEnrollment(
   tx: Tx,

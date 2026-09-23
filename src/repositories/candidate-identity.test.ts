@@ -400,9 +400,7 @@ async function main() {
     const src = source("src/repositories/candidate.ts");
     assert(src.includes("upsertCandidateAvailability"), "canonical preference write");
     const sp = source("prisma/schema.prisma");
-    const block = sp.slice(sp.indexOf("model StudentProfile"), sp.indexOf("model Submission"));
-    assert(!block.includes("openToWork"), "no SP openToWork");
-    assert(!block.includes("noticePeriod"), "no SP notice");
+    assert(!sp.includes("model StudentProfile"), "StudentProfile retired");
   });
 
   await suite("W4-B: mirror OFF skips StudentProfile identity create on registration", async () => {

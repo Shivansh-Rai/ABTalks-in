@@ -2,7 +2,7 @@
  * Final 078 source guard: production runtime must not use retired Prisma
  * delegates. Historical* archive models remain allowed.
  *
- * Run: npm run test:078-dual-write
+ * Run: npm run test:legacy-source-guard
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

@@ -1,14 +1,7 @@
 /**
- * W6 progress write boundary.
+ * Progress write boundary.
  *
  * Canonical writers are always ActivityAttempt + ActivityEvaluation.
- * ENABLE_NEW_PROGRESS_WRITES is ignored (Phase 8-D): frozen Submission /
- * QuizAttempt / ProgramMissionSubmission must not become write authority.
- * Legacy rows are a compatibility mirror only while
- * ENABLE_LEGACY_PROGRESS_MIRROR is not `"false"`.
- *
- * Typed per family. Does not take Enrollment / ProgramEnrollment /
- * StudentProfile.domain / Points authority.
  */
 import "server-only";
 import {

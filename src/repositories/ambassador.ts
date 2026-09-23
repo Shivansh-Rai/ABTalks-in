@@ -1,14 +1,7 @@
 /**
- * W5 Campus Ambassador write/read boundary.
+ * Campus Ambassador write/read boundary.
  *
- * Canonical writer is always CampusAmbassadorApplication. ENABLE_NEW_AMBASSADOR_WRITES
- * is ignored (Phase 8-D): frozen StudentProfile ambassador columns must not
- * become write authority. StudentProfile ambassador columns are a compatibility
- * mirror only while ENABLE_LEGACY_AMBASSADOR_MIRROR is not `"false"`.
- *
- * W5-B: ENABLE_LEGACY_AMBASSADOR_MIRROR=false freezes those three SP columns.
- * Apply/dismiss do not write them. Anonymize wipe still scrubs them as a
- * documented compliance exception. Identity, points, and domain are untouched.
+ * Canonical writer is always CampusAmbassadorApplication.
  */
 import "server-only";
 import type { Domain, Prisma, PrismaClient } from "@prisma/client";

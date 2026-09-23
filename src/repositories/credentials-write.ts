@@ -544,10 +544,8 @@ async function issueNewAuthoritative(
 /**
  * Sole certificate/credential issuance writer.
  *
- * Credential is always canonical (Phase 8-D). ENABLE_NEW_CREDENTIAL_WRITES is
- * ignored: frozen Certificate must not become issuance authority.
- * Certificate remains a compatibility mirror while ENABLE_LEGACY_CERTIFICATE_MIRROR
- * is not `"false"`, plus historical provenance for existing rows.
+ * Credential is always canonical. Historical certificate provenance is
+ * HistoricalCertificate.
  */
 export async function applyCredentialIssue(
   db: Db,

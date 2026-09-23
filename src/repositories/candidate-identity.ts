@@ -1,15 +1,7 @@
 /**
- * W4 candidate identity write boundary.
+ * Candidate identity write boundary.
  *
  * Canonical writers are always CandidateProfile + structured candidate tables.
- * ENABLE_NEW_CANDIDATE_WRITES is ignored (Phase 8-D): frozen StudentProfile
- * identity rows must not become write authority.
- * StudentProfile identity/referral/profile fields are a compatibility mirror
- * only while ENABLE_LEGACY_STUDENT_PROFILE_MIRROR is not `"false"`.
- *
- * W4-B: setting the mirror flag to `"false"` freezes those W4-owned fields
- * on StudentProfile. Ambassador, domain, and other later-family columns
- * are not gated here. Does not touch Points, Visibility, or Credentials.
  */
 import "server-only";
 import {

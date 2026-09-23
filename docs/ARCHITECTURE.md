@@ -1,6 +1,6 @@
 # ABTalks architecture
 
-Canonical production architecture after 078 migration Waves 1–3 (structural). Historical tables that still exist are listed under Historical archive — they are not current-state authority.
+Canonical production architecture. Unique history lives only in explicit `Historical*` archives. There is no dual-write, no legacy operational table, and no 078 migration control plane.
 
 ## Identity
 
@@ -34,9 +34,9 @@ SkillEvidence
 
 `EnrollmentProgress` is a cache, not globally authoritative.
 
-Challenge membership current-state is `ProgramEnrollment` (`pe_enr_<legacyEnrollmentId>` for historical rows). First-track order uses `ProgramEnrollment.joinedAt`, not `startedAt` (some `startedAt` values are cohort-calendar dates).
+Challenge membership current-state is `ProgramEnrollment` (`pe_enr_*`). First-track order uses `ProgramEnrollment.joinedAt`.
 
-AI-cohort membership current-state is `ProgramEnrollment` (`pe_pm_<legacyProgramMemberId>`). Score/unlock/recommendation snapshots live on that row.
+AI-cohort membership current-state is `ProgramEnrollment` (`pe_pm_*`). Score/unlock/recommendation snapshots live on that row.
 
 ## Points
 
@@ -88,7 +88,7 @@ ABT-* Credential ids
 
 ## Historical archive
 
-Original operational tables (`StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`, `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`) and `User.synergyPoints` are retired from the Prisma schema. Unique history lives only in explicit archive models. Those archives are immutable except compliance PII scrub.
+Original operational tables (`StudentProfile`, `Enrollment`, `ProgramMember`, `Certificate`, `Submission`, `QuizAttempt`, `ProgramMissionSubmission`, `SynergyEvent`) and `User.synergyPoints` are dropped in production. Unique history lives only in explicit archive models. Those archives are immutable except compliance PII scrub.
 
 | Object | Status |
 | --- | --- |

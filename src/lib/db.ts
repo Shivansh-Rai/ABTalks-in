@@ -38,8 +38,7 @@ function directClient(): PrismaClient {
 
 /**
  * Transaction-safe writer. Always the Neon direct (non-pooler) session when a
- * write URL can be resolved. Independent of ENABLE_DUAL_WRITE — that flag is
- * retired from production routing (Phase 8-D).
+ * write URL can be resolved.
  */
 export function writeClient(): PrismaClient {
   return directClient();
