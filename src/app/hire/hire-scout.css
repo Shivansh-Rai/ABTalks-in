@@ -11962,7 +11962,12 @@ a.hire-profile__ext-link:focus-visible {
   color: #6b7477;
 }
 
-.hire-history__emptycta {
+/* `.hire-app` scoped, for specificity. `.hire-app a { color: inherit }` above
+   is (0,1,1) and beat this rule's (0,1,0), so the CTA came out with a teal
+   face and dark text (issue #523). The exceptions next to that rule only match
+   Tailwind utility class names, which this plain class is not — so it needs to
+   out-specify it itself. */
+.hire-app .hire-history__emptycta {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -11977,7 +11982,7 @@ a.hire-profile__ext-link:focus-visible {
   text-decoration: none;
 }
 
-.hire-history__emptycta:hover {
+.hire-app .hire-history__emptycta:hover {
   background: #076573;
 }
 
