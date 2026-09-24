@@ -7681,7 +7681,13 @@ a.hire-assess-action {
   color: #ffffff;
   font-family: var(--font-outfit), sans-serif;
   font-size: 64px;
-  font-weight: 700;
+  /* 500, not 700 (issue #528). White Outfit on the dark green gradient already
+     gains apparent weight from the contrast, and at this display size 700 read
+     as heavier than anything else on the screen. 600 was still too close to it,
+     so this goes a step further: 500 is Medium, which at 40px and up still
+     carries a heading without shouting. Both are loaded weights — the face
+     ships 300/400/500/600/700 — so this is a real cut, not a synthesised one. */
+  font-weight: 500;
   line-height: 70px;
   letter-spacing: 0;
   text-align: center;
@@ -8016,7 +8022,9 @@ a.hire-assess-action {
     max-width: 12ch;
     font-size: 40px;
     line-height: 44px;
-    font-weight: 700;
+    /* Restated here only because this block restates the whole ramp; it must
+       track the base rule above. */
+    font-weight: 500;
     letter-spacing: 0;
   }
 
