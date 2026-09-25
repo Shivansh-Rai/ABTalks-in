@@ -46,7 +46,6 @@ export function ReelTimeline({ kickoffUtc, deadlineUtc, marks }: Props) {
   return (
     <div className="vt-timeline">
       <div className="vt-timeline__track" aria-hidden>
-        <div className="vt-timeline__strip" />
         <div className="vt-timeline__scrubber" style={{ left: scrubberLeft }} />
       </div>
       <ol className="vt-timeline__marks">

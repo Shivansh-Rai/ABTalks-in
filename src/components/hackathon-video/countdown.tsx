@@ -64,27 +64,27 @@ export function VideothonCountdown({ kickoffUtc, deadlineUtc }: Props) {
         : "Wrapped";
 
   return (
-    <div className="vt-countdown" aria-live="polite">
-      <span className="vt-countdown__phase" data-phase={state.phase}>
+    <div className="vt-count" aria-live="polite">
+      <span className="vt-count__phase" data-phase={state.phase}>
         {phaseLabel}
       </span>
       {state.phase === "ENDED" ? null : (
         <>
-          <div className="vt-countdown__tile">
-            <span className="vt-countdown__num">{pad(d)}</span>
-            <span className="vt-countdown__label">Days</span>
+          <div className="vt-count__tile">
+            <span className="vt-count__num">{pad(d)}</span>
+            <span className="vt-count__label">Days</span>
           </div>
-          <div className="vt-countdown__tile">
-            <span className="vt-countdown__num">{pad(h)}</span>
-            <span className="vt-countdown__label">Hrs</span>
+          <div className="vt-count__tile">
+            <span className="vt-count__num">{pad(h)}</span>
+            <span className="vt-count__label">Hrs</span>
           </div>
-          <div className="vt-countdown__tile">
-            <span className="vt-countdown__num">{pad(m)}</span>
-            <span className="vt-countdown__label">Min</span>
+          <div className="vt-count__tile">
+            <span className="vt-count__num">{pad(m)}</span>
+            <span className="vt-count__label">Min</span>
           </div>
-          <div className="vt-countdown__tile">
-            <span className="vt-countdown__num">{pad(s)}</span>
-            <span className="vt-countdown__label">Sec</span>
+          <div className="vt-count__tile">
+            <span className="vt-count__num">{pad(s)}</span>
+            <span className="vt-count__label">Sec</span>
           </div>
         </>
       )}

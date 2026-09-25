@@ -133,11 +133,8 @@ export default async function HackathonPage() {
       </a>
 
       <div className="vt">
-        <span className="vt-sprocket" aria-hidden />
-        <span className="vt-sprocket vt-sprocket--right" aria-hidden />
-
         <div className="vt-inner">
-          {/* ============ HERO ============ */}
+          {/* ============ HERO — the one dark card ============ */}
           <section className="vt-hero" aria-labelledby="vt-hero-title">
             <p className="vt-hero__eyebrow">
               <span className="vt-dot" aria-hidden />
@@ -150,7 +147,7 @@ export default async function HackathonPage() {
             </h1>
             <p className="vt-hero__tagline">{VIDEOTHON.tagline}</p>
 
-            <div className="vt-hero__stack">
+            <div className="vt-hero__row">
               <VideothonCountdown
                 kickoffUtc={VIDEOTHON.kickoffUtc}
                 deadlineUtc={VIDEOTHON.deadlineUtc}
@@ -164,7 +161,7 @@ export default async function HackathonPage() {
               </div>
             </div>
 
-            <div className="vt-hero__stack">
+            <div className="vt-hero__row">
               <VideothonRegisterCTA
                 isAuthed={isAuthed}
                 registered={registered}
@@ -187,10 +184,12 @@ export default async function HackathonPage() {
 
           {/* ============ TIMELINE ============ */}
           <section className="vt-section" aria-labelledby="vt-timeline-title">
-            <p className="vt-section__eyebrow">Timeline</p>
-            <h2 className="vt-section__title" id="vt-timeline-title">
-              A single <em>continuous cut.</em>
-            </h2>
+            <header className="vt-section__head">
+              <p className="vt-section__eyebrow">Timeline</p>
+              <h2 className="vt-section__title" id="vt-timeline-title">
+                A single <em>continuous cut.</em>
+              </h2>
+            </header>
             <ReelTimeline
               kickoffUtc={VIDEOTHON.kickoffUtc}
               deadlineUtc={VIDEOTHON.deadlineUtc}
@@ -200,10 +199,12 @@ export default async function HackathonPage() {
 
           {/* ============ RULES ============ */}
           <section className="vt-section" aria-labelledby="vt-rules-title">
-            <p className="vt-section__eyebrow">Rules · Scene 01 · Take 1</p>
-            <h2 className="vt-section__title" id="vt-rules-title">
-              Four <em>slates,</em> non-negotiable.
-            </h2>
+            <header className="vt-section__head">
+              <p className="vt-section__eyebrow">Rules · Scene 01 · Take 1</p>
+              <h2 className="vt-section__title" id="vt-rules-title">
+                Four <em>slates,</em> non-negotiable.
+              </h2>
+            </header>
             <ol className="vt-rules">
               {RULES.map((r) => (
                 <li key={r.title} className="vt-slate">
@@ -220,10 +221,12 @@ export default async function HackathonPage() {
 
           {/* ============ PRIZES ============ */}
           <section className="vt-section" aria-labelledby="vt-prizes-title">
-            <p className="vt-section__eyebrow">Prizes</p>
-            <h2 className="vt-section__title" id="vt-prizes-title">
-              What you <em>walk with.</em>
-            </h2>
+            <header className="vt-section__head">
+              <p className="vt-section__eyebrow">Prizes</p>
+              <h2 className="vt-section__title" id="vt-prizes-title">
+                What you <em>walk with.</em>
+              </h2>
+            </header>
             {VIDEOTHON.prizes.length === 0 ? (
               <div className="vt-marquee__soon">
                 Prize tiers revealed at kickoff — every finalist gets a public
@@ -244,10 +247,12 @@ export default async function HackathonPage() {
 
           {/* ============ FAQ ============ */}
           <section className="vt-section" aria-labelledby="vt-faq-title">
-            <p className="vt-section__eyebrow">FAQ</p>
-            <h2 className="vt-section__title" id="vt-faq-title">
-              Questions we <em>keep hearing.</em>
-            </h2>
+            <header className="vt-section__head">
+              <p className="vt-section__eyebrow">FAQ</p>
+              <h2 className="vt-section__title" id="vt-faq-title">
+                Questions we <em>keep hearing.</em>
+              </h2>
+            </header>
             <FaqTape items={FAQ_ITEMS} />
           </section>
 
@@ -271,7 +276,7 @@ export default async function HackathonPage() {
                 href={VIDEOTHON.whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="vt-btn vt-btn--tape vt-btn--lg"
+                className="vt-btn vt-btn--dark vt-btn--lg"
               >
                 Join the group →
               </Link>

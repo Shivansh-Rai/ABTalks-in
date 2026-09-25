@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import {
   Dialog,
@@ -58,15 +58,6 @@ export function VideothonRegisterCTA({
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
   const [signingIn, startSignIn] = useTransition();
-
-  // Auto-open the dialog for a freshly-authenticated visitor with no row yet.
-  // Guard on `prefill` — if the session is somehow half-loaded we skip rather
-  // than open with empty identity fields.
-  useEffect(() => {
-    if (registrationOpen && isAuthed && !registered && prefill) {
-      setOpen(true);
-    }
-  }, [registrationOpen, isAuthed, registered, prefill]);
 
   const label = registered
     ? "Go to dashboard"
