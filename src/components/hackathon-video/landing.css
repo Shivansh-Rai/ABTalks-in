@@ -165,40 +165,40 @@
     center;
 }
 
-/* CRT scanlines — dense horizontal RGB-style bars, plus a single bright
-   rolling bar that slowly sweeps down the tube. Combined they read as an
-   old analog TV screen. */
+/* CRT scanlines — dense horizontal bars (raster), plus a bright rolling
+   scan bar that sweeps down the tube. Both bumped hard so the vintage-TV
+   effect is unmistakable. */
 .vt-hero__scan {
   position: absolute;
   inset: 0;
-  /* Dense fine horizontal scanlines (the "raster") */
+  /* Denser + darker scanlines (was 1.5px/2.5px at 0.28 alpha → 2px/3px at 0.5) */
   background: repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent 1.5px,
-    rgba(0, 0, 0, 0.28) 1.5px,
-    rgba(0, 0, 0, 0.28) 2.5px
+    transparent 2px,
+    rgba(0, 0, 0, 0.50) 2px,
+    rgba(0, 0, 0, 0.50) 3px
   );
   pointer-events: none;
   z-index: 1;
 }
 .vt-hero__scan::before {
-  /* Rolling bright scan bar — the "vertical sync" glitch that sweeps
-     down old CRTs when they're slightly out of tune. */
+  /* Rolling bright scan bar — the "vertical sync" glitch. Brighter and
+     slightly faster than before, so you clearly see it sweep. */
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  height: 22%;
+  height: 24%;
   background: linear-gradient(
     to bottom,
     transparent 0,
-    rgba(255, 255, 255, 0.06) 40%,
-    rgba(255, 255, 255, 0.09) 50%,
-    rgba(255, 255, 255, 0.06) 60%,
+    rgba(255, 255, 255, 0.10) 25%,
+    rgba(255, 255, 255, 0.20) 50%,
+    rgba(255, 255, 255, 0.10) 75%,
     transparent 100%
   );
-  animation: vt-crt-roll 7s linear infinite;
+  animation: vt-crt-roll 5s linear infinite;
   mix-blend-mode: screen;
 }
 @keyframes vt-crt-roll {
@@ -209,15 +209,27 @@
   .vt-hero__scan::before { animation: none; opacity: 0; }
 }
 
-/* Very faint TV-static noise. Static PNG-in-CSS via a tiny SVG data URI so
-   we ship zero binary assets. */
+/* TV-static noise — inline SVG data URI so we ship zero binary assets.
+   Opacity bumped and animated so the static appears to shimmer (like a
+   channel with a weak signal). */
 .vt-hero__noise {
   position: absolute;
   inset: 0;
-  opacity: 0.06;
+  opacity: 0.16;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>");
-  background-size: 240px 240px;
+  background-size: 220px 220px;
+  animation: vt-noise 0.6s steps(4) infinite;
+}
+@keyframes vt-noise {
+  0%   { background-position: 0 0; }
+  25%  { background-position: -20px 15px; }
+  50%  { background-position: 10px -25px; }
+  75%  { background-position: -30px -10px; }
+  100% { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-hero__noise { animation: none; }
 }
 
 /* Two VERTICAL film strips — one on the left edge of the hero, one on the
@@ -314,47 +326,49 @@
   }
 }
 
-/* CRT vignette + inset screen glow + occasional flicker. Together with the
-   scanlines and the rolling bar these are what makes the hero read as an
-   old TV rather than a flat dark rectangle. */
+/* CRT vignette + inset screen glow + pronounced flicker. Vignette is now
+   much darker at the corners so the phosphor-tube edges are unmistakable. */
 .vt-mono .vt-hero.hk-hero::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  /* Rounded corner "tube" vignette + a soft inner glow near the edges. */
   background:
-    radial-gradient(140% 100% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%),
-    radial-gradient(60% 40% at 50% 8%,  rgba(255, 255, 255, 0.05), transparent 60%);
+    /* Corner vignette — darker and pulled inward for a rounder-tube feel. */
+    radial-gradient(120% 90% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.95) 100%),
+    /* Top phosphor glow */
+    radial-gradient(60% 40% at 50% 8%,  rgba(255, 255, 255, 0.08), transparent 60%);
   box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.85),
-    inset 0 0 140px rgba(0, 0, 0, 0.55);
-  /* Very slight sepia / green tint like an old phosphor tube. */
-  mix-blend-mode: normal;
-  animation: vt-crt-flicker 4.7s ease-in-out infinite;
+    inset 0 0 80px rgba(0, 0, 0, 0.95),
+    inset 0 0 180px rgba(0, 0, 0, 0.7);
+  animation: vt-crt-flicker 3.3s ease-in-out infinite;
 }
 @keyframes vt-crt-flicker {
   0%, 100%      { opacity: 1; }
-  4%, 6%        { opacity: 0.92; }
-  8%            { opacity: 1; }
-  46%, 47.5%    { opacity: 0.90; }
-  49%           { opacity: 1; }
-  82%, 83.5%    { opacity: 0.94; }
-  85%           { opacity: 1; }
+  3%, 5%        { opacity: 0.82; }
+  6%            { opacity: 1; }
+  24%, 25%      { opacity: 0.78; }
+  27%           { opacity: 1; }
+  48%, 49.5%    { opacity: 0.84; }
+  51%           { opacity: 1; }
+  71%, 72%      { opacity: 0.80; }
+  74%           { opacity: 1; }
+  92%, 93%      { opacity: 0.88; }
+  95%           { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vt-mono .vt-hero.hk-hero::after { animation: none; }
 }
 
-/* CRT curvature suggestion — the hero sits on rounded corners already, but
-   we also add a very subtle top-of-screen brightness gradient to imply the
-   phosphor tube's glow at the top edge. */
+/* CRT curvature — deeper inner shadow so the "tube" edges recede, plus a
+   stronger drop-shadow under the whole card. */
 .vt-mono .vt-hero.hk-hero {
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.04),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
-    0 24px 60px -20px rgba(0, 0, 0, 0.75);
+    inset 0 3px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.75),
+    inset 0 0 40px rgba(0, 0, 0, 0.6),
+    0 30px 70px -20px rgba(0, 0, 0, 0.85);
 }
 
 .vt-hero__inner {
@@ -422,11 +436,12 @@
   font-style: normal;
   color: #FFFFFF;
   /* At rest: pure white, no chromatic split. The keyframes below reveal
-     three ghost layers (yellow / pink / blue) for a fraction of a second
-     every ~6.4s — the rest of the time the text reads clean. */
+     three ghost layers (yellow / pink / blue) roughly twice as often as
+     before (~3.6s cycle) with bigger offsets so the glitch reads clearly
+     across the room. */
   animation:
-    vt-glitch-shake 6.4s steps(1) infinite,
-    vt-glitch-blue  6.4s steps(1) infinite;
+    vt-glitch-shake 3.6s steps(1) infinite,
+    vt-glitch-blue  3.6s steps(1) infinite;
 }
 
 /* Two ghost copies of the title (yellow + pink). Both are `opacity: 0` at
@@ -444,71 +459,97 @@
   clip-path: inset(0 0 0 0);
 }
 .vt-hero__title em::before {
-  text-shadow: 2px 0 var(--vt-yellow, #FFE45C);
-  animation: vt-glitch-yellow 6.4s steps(1) infinite;
+  text-shadow: 4px 0 var(--vt-yellow, #FFE45C);
+  animation: vt-glitch-yellow 3.6s steps(1) infinite;
 }
 .vt-hero__title em::after {
-  text-shadow: -2px 0 var(--vt-pink, #FF3CAC);
-  animation: vt-glitch-pink 6.4s steps(1) infinite;
+  text-shadow: -4px 0 var(--vt-pink, #FF3CAC);
+  animation: vt-glitch-pink 3.6s steps(1) infinite;
 }
 @keyframes vt-glitch-shake {
-  0%, 89%, 100%    { transform: translate3d(0, 0, 0); }
-  90%              { transform: translate3d(1px, 0, 0); }
-  91%              { transform: translate3d(-1px, 0, 0); }
-  92%              { transform: translate3d(0, 0, 0); }
-  95%              { transform: translate3d(-1px, 1px, 0); }
-  96%              { transform: translate3d(0, 0, 0); }
+  0%, 78%, 100%    { transform: translate3d(0, 0, 0); }
+  80%              { transform: translate3d(3px, 0, 0); }
+  82%              { transform: translate3d(-3px, 0, 0); }
+  84%              { transform: translate3d(2px, 1px, 0); }
+  86%              { transform: translate3d(-2px, -1px, 0); }
+  88%              { transform: translate3d(0, 0, 0); }
+  93%              { transform: translate3d(-2px, 1px, 0); }
+  94%              { transform: translate3d(0, 0, 0); }
 }
 @keyframes vt-glitch-yellow {
-  0%, 89%, 92%, 94%, 100% {
+  0%, 78%, 89%, 100% {
     opacity: 0;
     clip-path: inset(0 0 0 0);
   }
-  90% {
-    opacity: 0.9;
-    clip-path: inset(0 0 62% 0);
-    transform: translate3d(-2px, 0, 0);
+  80% {
+    opacity: 1;
+    clip-path: inset(0 0 65% 0);
+    transform: translate3d(-5px, 0, 0);
   }
-  91% {
-    opacity: 0.78;
-    clip-path: inset(38% 0 26% 0);
-    transform: translate3d(3px, 0, 0);
+  82% {
+    opacity: 0.9;
+    clip-path: inset(30% 0 32% 0);
+    transform: translate3d(5px, 0, 0);
+  }
+  84% {
+    opacity: 1;
+    clip-path: inset(8% 0 52% 0);
+    transform: translate3d(-4px, 1px, 0);
+  }
+  86% {
+    opacity: 0.85;
+    clip-path: inset(48% 0 12% 0);
+    transform: translate3d(3px, -1px, 0);
   }
   93% {
-    opacity: 0.95;
-    clip-path: inset(10% 0 55% 0);
-    transform: translate3d(-3px, 1px, 0);
+    opacity: 0.9;
+    clip-path: inset(20% 0 40% 0);
+    transform: translate3d(-4px, 0, 0);
   }
 }
 @keyframes vt-glitch-pink {
-  0%, 88%, 93%, 95%, 100% {
+  0%, 78%, 89%, 100% {
     opacity: 0;
     clip-path: inset(0 0 0 0);
   }
-  89% {
+  80% {
+    opacity: 1;
+    clip-path: inset(60% 0 0 0);
+    transform: translate3d(5px, 0, 0);
+  }
+  82% {
     opacity: 0.9;
-    clip-path: inset(58% 0 0 0);
+    clip-path: inset(20% 0 38% 0);
+    transform: translate3d(-5px, -1px, 0);
+  }
+  84% {
+    opacity: 1;
+    clip-path: inset(52% 0 4% 0);
+    transform: translate3d(4px, 1px, 0);
+  }
+  86% {
+    opacity: 0.9;
+    clip-path: inset(12% 0 48% 0);
+    transform: translate3d(-3px, 1px, 0);
+  }
+  93% {
+    opacity: 0.95;
+    clip-path: inset(45% 0 15% 0);
     transform: translate3d(3px, 0, 0);
   }
-  90% {
-    opacity: 0.75;
-    clip-path: inset(28% 0 34% 0);
-    transform: translate3d(-2px, -1px, 0);
-  }
-  94% {
-    opacity: 0.95;
-    clip-path: inset(48% 0 8% 0);
-    transform: translate3d(2px, 1px, 0);
-  }
 }
-/* Blue chromatic burst on the em itself — only briefly, at the peak of
-   the glitch cycle. Uses text-shadow so it composites over the base white. */
+/* Blue chromatic burst on the em itself — fires alongside yellow + pink
+   during the glitch window so all three colors overlap on the peak
+   frames. */
 @keyframes vt-glitch-blue {
-  0%, 89%, 100% { text-shadow: none; }
-  90%           { text-shadow: -3px 0 0 var(--vt-blue, #3CD1FF); }
-  92%           { text-shadow:  3px 0 0 var(--vt-blue, #3CD1FF); }
-  94%           { text-shadow: -2px 1px 0 var(--vt-blue, #3CD1FF); }
-  96%           { text-shadow: none; }
+  0%, 78%, 100% { text-shadow: none; }
+  80%           { text-shadow: -5px 0 0 var(--vt-blue, #3CD1FF); }
+  82%           { text-shadow:  5px 0 0 var(--vt-blue, #3CD1FF); }
+  84%           { text-shadow: -4px 1px 0 var(--vt-blue, #3CD1FF); }
+  86%           { text-shadow:  3px -1px 0 var(--vt-blue, #3CD1FF); }
+  88%           { text-shadow: none; }
+  93%           { text-shadow: -4px 0 0 var(--vt-blue, #3CD1FF); }
+  94%           { text-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vt-hero__title em,
