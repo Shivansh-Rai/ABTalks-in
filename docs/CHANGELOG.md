@@ -45,6 +45,8 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-25 [convention] Google Ads AW-18456978326 config on the existing gtag when ad consent is granted; conversion fires only after Snowflake or Databricks AI enrolment success
+- 2026-09-25 [rule] Cohort landings /program/databricks, /program/snowflake, and /program/databricks-ai are public exact matches for marketing; day routes stay session-gated
 - 2026-09-23 [convention] project-context, CLAUDE.md, ARCHITECTURE (already current), and recruiter-search-qa reconciled to 078 complete; original operational tables described as dropped; dual-write / ENABLE_NEW_* retired; CHANGELOG pending list not cleared
 - 2026-09-23 [schema] 078 closed: production dropped eight original legacy tables plus User.synergyPoints after model-free app deploy; archives retained; migration flags/scripts retired
 - 2026-09-23 [schema] 078 final cutover: removed StudentProfile/Enrollment/ProgramMember/Certificate/Submission/QuizAttempt/ProgramMissionSubmission/SynergyEvent Prisma models and User.synergyPoints; deleted dual-write.ts; archives retained; production tables not dropped until matching app deploys
