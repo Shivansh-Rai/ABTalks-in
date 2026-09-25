@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { detectSpokenBrief } from "@/features/hire/spoken-brief";
+import { NO_FLAGS, type SpokenBriefFlags } from "@/features/hire/hire-brief";
 import { toast } from "sonner";
 import {
   applyHireFiltersAction,
@@ -204,9 +205,18 @@ function displaySalaryChips(): Option[] {
 
 /*
  * Juicebox-style: ticks go green as the recruiter types, not only after Scout
- * stores the spec. The detector lives in `features/hire/spoken-brief.ts` so it
- * shares role / stack vocabulary with Search and is unit-tested.
+ * stores the spec. Primary: Gemini on the server (`/api/hire/brief`), debounced,
+ * the same parse `runScoutTurn` merges into the spec Search ranks on. Fallback:
+ * the local detector in `features/hire/spoken-brief.ts`, whenever the live
+ * parse is unavailable (no key, timeout, rate limit, bad reply).
  */
+const LIVE_BRIEF_DEBOUNCE_MS = 400;
+const LIVE_BRIEF_MIN_CHARS = 3;
+const CHIP_PROTOCOL = /^(skip|salary|action|edit):/i;
+
+type LiveBriefResponse =
+  | { ok: true; data: { flags: SpokenBriefFlags } }
+  | { ok: false; message: string; disabled?: boolean };
 
 function toLpa(rupees: number): string {
   const lakhs = rupees / 100_000;
@@ -311,6 +321,14 @@ export function ScoutChat({
   const [summary, setSummary] = useState(initialSummary);
   const [readyToSearch, setReadyToSearch] = useState(false);
   const [text, setText] = useState("");
+  /** Gemini's reading of the composer text; null until one arrives for it. */
+  const [liveBrief, setLiveBrief] = useState<SpokenBriefFlags | null>(null);
+  /** "ok" once a live parse has worked; "fallback" after one failed. */
+  const [liveState, setLiveState] = useState<"unknown" | "ok" | "fallback">(
+    "unknown",
+  );
+  /** The server has no key: stop asking for this page view. */
+  const liveDisabled = useRef(false);
   const [pending, startTransition] = useTransition();
   const [searched, setSearched] = useState(
     initialSearched || (results?.length ?? 0) > 0,
@@ -742,6 +760,8 @@ export function ScoutChat({
       setMessages((m) => [...m, { role: "user", content: shown }]);
     }
     setText("");
+    // The sent brief now lives in `spec`; the next one starts unread.
+    setLiveBrief(null);
     startTransition(async () => {
       if (persist) {
         const res = await sendScoutMessageAction({
@@ -1041,13 +1061,66 @@ export function ScoutChat({
     }
     return ladder;
   })();
+  /**
+   * Debounced live parse of the composer. Each keystroke cancels the pending
+   * timer and aborts the request in flight, so only the newest text can land.
+   * A Route Handler, not a Server Action: actions are serialized, and a slow
+   * parse must never queue in front of the recruiter's Search.
+   */
+  useEffect(() => {
+    const q = text.trim();
+    if (
+      liveDisabled.current ||
+      q.length < LIVE_BRIEF_MIN_CHARS ||
+      CHIP_PROTOCOL.test(q)
+    ) {
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch("/api/hire/brief", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: q }),
+          signal: controller.signal,
+        });
+        const body = (await res.json()) as LiveBriefResponse;
+        if (controller.signal.aborted) return;
+        if (body.ok) {
+          setLiveBrief(body.data.flags);
+          setLiveState("ok");
+        } else {
+          if (body.disabled) liveDisabled.current = true;
+          setLiveState("fallback");
+        }
+      } catch {
+        if (!controller.signal.aborted) setLiveState("fallback");
+      }
+    }, LIVE_BRIEF_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [text]);
+
   const talked = messages.some((m) => m.role === "user") || searched;
-  const spoken = detectSpokenBrief(
-    [
-      ...messages.filter((m) => m.role === "user").map((m) => m.content),
-      text,
-    ].join(" "),
-  );
+  // Live parse working: it reads the composer, and earlier messages are already
+  // in `spec` (the turn merged the same parse). Not working: the local detector
+  // over everything the recruiter said, as before. Between a keystroke and the
+  // debounced reply, the last reading stays up so ticks do not flicker.
+  const typed = text.trim();
+  const spoken: SpokenBriefFlags =
+    liveState !== "ok"
+      ? detectSpokenBrief(
+          [
+            ...messages.filter((m) => m.role === "user").map((m) => m.content),
+            text,
+          ].join(" "),
+        )
+      : !typed
+        ? NO_FLAGS
+        : (liveBrief ?? detectSpokenBrief(text));
   const criteria = [
     { key: "Role", on: Boolean(spec.title?.trim()) || spoken.role },
     {
@@ -1150,6 +1223,7 @@ export function ScoutChat({
     setMatchCount(null);
     setActiveSearchId("");
     setText("");
+    setLiveBrief(null);
     setDetailsOpen(false);
     setFiltersOpen(false);
     setOpenMatch(null);
@@ -1863,7 +1937,11 @@ export function ScoutChat({
                 ref={promptRef}
                 rows={1}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  // Cleared box: the old reading must not tick the next brief.
+                  if (!e.target.value.trim()) setLiveBrief(null);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
