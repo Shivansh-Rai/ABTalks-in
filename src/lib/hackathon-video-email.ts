@@ -56,13 +56,17 @@ export async function sendVideoWelcomeEmail(
         </tr>
         <tr>
           <td style="padding:32px;color:${C.text};font-size:15px;line-height:1.7;">
-            <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:${C.accent};">Hi ${firstName},</p>
-            <p style="margin:0 0 12px;">You're in for ${VIDEOTHON.name}. ${VIDEOTHON.tagline}</p>
-            <p style="margin:12px 0 0;">
-              Kickoff: <strong>${VIDEOTHON.kickoffLabel}</strong><br>
-              Deadline: <strong>${VIDEOTHON.deadlineLabel}</strong><br>
-              Results: <strong>${VIDEOTHON.resultsLabel}</strong>
-            </p>
+            <div style="display:inline-block;padding:5px 12px;background:#F0FBEE;color:#1F7A3A;border:1px solid #C7E7CB;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 14px;">✓ Registration confirmed</div>
+            <p style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.accent};line-height:1.2;">Hi ${firstName}, you're in.</p>
+            <p style="margin:0 0 16px;color:${C.text};">${VIDEOTHON.tagline}</p>
+            <div style="margin:18px 0 0;padding:16px 18px;background:${C.panel};border-radius:10px;border:1px solid ${C.border};">
+              <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${C.soft};">Event window</p>
+              <p style="margin:8px 0 0;color:${C.text};line-height:1.7;">
+                <strong>Kickoff</strong> · ${VIDEOTHON.kickoffLabel}<br>
+                <strong>Deadline</strong> · ${VIDEOTHON.deadlineLabel}<br>
+                <strong>Results</strong> · ${VIDEOTHON.resultsLabel}
+              </p>
+            </div>
             ${whatsappBlock}
             <p style="margin:26px 0 0;font-size:15px;color:${C.text};">See you there,<br><strong>Team ABTalks</strong></p>
           </td>
@@ -81,18 +85,21 @@ export async function sendVideoWelcomeEmail(
 </html>`;
 
   const text = [
-    `Hi ${firstName},`,
+    `REGISTRATION CONFIRMED · ${VIDEOTHON.name}`,
     "",
-    `You're in for ${VIDEOTHON.name}. ${VIDEOTHON.tagline}`,
+    `Hi ${firstName}, you're in.`,
+    VIDEOTHON.tagline,
     "",
-    `Kickoff: ${VIDEOTHON.kickoffLabel}`,
-    `Deadline: ${VIDEOTHON.deadlineLabel}`,
-    `Results: ${VIDEOTHON.resultsLabel}`,
+    "EVENT WINDOW",
+    `Kickoff · ${VIDEOTHON.kickoffLabel}`,
+    `Deadline · ${VIDEOTHON.deadlineLabel}`,
+    `Results · ${VIDEOTHON.resultsLabel}`,
     VIDEOTHON.whatsappLink
-      ? `\nJoin the WhatsApp group: ${VIDEOTHON.whatsappLink}`
+      ? `\nJoin the WhatsApp group so you don't miss the brief:\n${VIDEOTHON.whatsappLink}`
       : "",
     "",
-    "— Team ABTalks",
+    "See you there,",
+    "Team ABTalks",
   ]
     .filter(Boolean)
     .join("\n");
@@ -101,7 +108,7 @@ export async function sendVideoWelcomeEmail(
     await sendEmail({
       to: email,
       toName: fullName,
-      subject: `You're in — ${VIDEOTHON.name}`,
+      subject: `Registration confirmed · ${VIDEOTHON.name} on ${VIDEOTHON.kickoffLabel.split(" · ")[0] || "kickoff day"}`,
       html,
       text,
     });
