@@ -56,6 +56,7 @@
   --vt-tint-2:   #FAFAFA;
   --vt-yellow:   #FFE45C;
   --vt-pink:     #FF3CAC;
+  --vt-blue:     #3CD1FF;
 
   /* Redefine the shell's brand variables so `.hk-*` sections adopt B&W. */
   --ab-primary:       #0A0A0A;
@@ -219,91 +220,99 @@
   background-size: 240px 240px;
 }
 
-/* Two horizontal film strips — one along the top, one along the bottom of the
-   hero — scrolling continuously in opposite directions. Each strip has:
-     - a black bar
-     - pairs of sprocket holes (top and bottom rows of white rounded squares)
-     - individual "frame" cells (thin vertical dividers)
-   The whole thing is CSS gradients on a repeating tile, so the illusion of a
-   moving reel is created by translating the layer horizontally. */
+/* Two VERTICAL film strips — one on the left edge of the hero, one on the
+   right — scrolling continuously in opposite directions. Each strip is a
+   dark bar with two columns of bright sprocket holes and a per-frame
+   divider running down the middle. Visible and prominent (56px wide,
+   bright silver sprockets, black frame gutters). */
 .vt-hero__reel {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 48px;
-  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  z-index: 2;
   pointer-events: none;
   overflow: hidden;
   background: #050505;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
 }
-.vt-hero__reel--top    { top: 0; }
-.vt-hero__reel--bottom { bottom: 0; }
+.vt-hero__reel--left  { left: 0; }
+.vt-hero__reel--right { right: 0; }
 
 .vt-hero__reel::before {
   content: "";
   position: absolute;
-  inset: 0;
-  /* Layer 1: top row of sprocket holes.
-     Layer 2: bottom row of sprocket holes.
-     Layer 3: frame divider tick.
-     Layer 4: subtle light glint on each frame. */
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(100% + 240px);
+  /* One "frame" = 72px tall. Sprocket holes in a single column near each
+     vertical edge (left column + right column). Between frames a thin
+     light divider ticks across horizontally. */
   background:
-    /* top sprockets */
-    radial-gradient(6px 5px at 30px 10px, #E0E0E0, #E0E0E0 60%, transparent 62%),
-    /* bottom sprockets */
-    radial-gradient(6px 5px at 30px 38px, #E0E0E0, #E0E0E0 60%, transparent 62%),
-    /* frame divider — subtle white line every 60px */
-    linear-gradient(90deg, transparent 0, transparent 59.5px, rgba(255, 255, 255, 0.10) 59.5px, rgba(255, 255, 255, 0.10) 60.5px, transparent 60.5px),
-    /* film cell soft fill */
-    linear-gradient(180deg, transparent 0, transparent 16px, rgba(255, 255, 255, 0.02) 16px, rgba(255, 255, 255, 0.02) 32px, transparent 32px);
+    /* left column of sprockets — bright silver rounded squares */
+    radial-gradient(6px 8px at 14px 36px, #F0F0F0, #F0F0F0 55%, transparent 60%),
+    /* right column of sprockets */
+    radial-gradient(6px 8px at 42px 36px, #F0F0F0, #F0F0F0 55%, transparent 60%),
+    /* frame divider — subtle white line every 72px */
+    linear-gradient(0deg, transparent 0, transparent 71.5px, rgba(255, 255, 255, 0.18) 71.5px, rgba(255, 255, 255, 0.18) 72.5px, transparent 72.5px),
+    /* central film cell soft fill */
+    linear-gradient(90deg, transparent 0, transparent 22px, rgba(255, 255, 255, 0.04) 22px, rgba(255, 255, 255, 0.04) 34px, transparent 34px);
   background-size:
-    60px 48px,
-    60px 48px,
-    60px 48px,
-    60px 48px;
-  background-repeat: repeat-x, repeat-x, repeat-x, repeat-x;
-  width: calc(100% + 240px);
-  animation: vt-reel-l 18s linear infinite;
+    56px 72px,
+    56px 72px,
+    56px 72px,
+    56px 72px;
+  background-repeat: repeat-y, repeat-y, repeat-y, repeat-y;
+  animation: vt-reel-down 14s linear infinite;
 }
-.vt-hero__reel--bottom::before { animation: vt-reel-r 22s linear infinite; }
+.vt-hero__reel--right::before {
+  animation: vt-reel-up 18s linear infinite;
+}
 
-@keyframes vt-reel-l {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-120px, 0, 0); }
-}
-@keyframes vt-reel-r {
-  0%   { transform: translate3d(-120px, 0, 0); }
+@keyframes vt-reel-down {
+  0%   { transform: translate3d(0, -72px, 0); }
   100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes vt-reel-up {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -72px, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .vt-hero__reel::before { animation: none; }
 }
 @media (max-width: 640px) {
-  .vt-hero__reel { height: 36px; }
+  .vt-hero__reel { width: 40px; }
   .vt-hero__reel::before {
-    background-size:
-      44px 36px,
-      44px 36px,
-      44px 36px,
-      44px 36px;
     background:
-      radial-gradient(4px 3.5px at 22px 8px, #E0E0E0, #E0E0E0 60%, transparent 62%),
-      radial-gradient(4px 3.5px at 22px 28px, #E0E0E0, #E0E0E0 60%, transparent 62%),
-      linear-gradient(90deg, transparent 0, transparent 43.5px, rgba(255, 255, 255, 0.10) 43.5px, rgba(255, 255, 255, 0.10) 44.5px, transparent 44.5px),
-      linear-gradient(180deg, transparent 0, transparent 12px, rgba(255, 255, 255, 0.02) 12px, rgba(255, 255, 255, 0.02) 24px, transparent 24px);
+      radial-gradient(4px 6px at 10px 28px, #F0F0F0, #F0F0F0 55%, transparent 60%),
+      radial-gradient(4px 6px at 30px 28px, #F0F0F0, #F0F0F0 55%, transparent 60%),
+      linear-gradient(0deg, transparent 0, transparent 55.5px, rgba(255, 255, 255, 0.18) 55.5px, rgba(255, 255, 255, 0.18) 56.5px, transparent 56.5px),
+      linear-gradient(90deg, transparent 0, transparent 16px, rgba(255, 255, 255, 0.04) 16px, rgba(255, 255, 255, 0.04) 24px, transparent 24px);
     background-size:
-      44px 36px,
-      44px 36px,
-      44px 36px,
-      44px 36px;
-    background-repeat: repeat-x, repeat-x, repeat-x, repeat-x;
+      40px 56px,
+      40px 56px,
+      40px 56px,
+      40px 56px;
+    background-repeat: repeat-y, repeat-y, repeat-y, repeat-y;
   }
 }
 
-/* Give the hero content some breathing room from the reels. */
-.vt-mono .vt-hero.hk-hero { padding-top: clamp(84px, 10vw, 156px); padding-bottom: clamp(84px, 10vw, 156px); }
+/* Give the hero content clearance from the vertical reels. */
+.vt-mono .vt-hero.hk-hero {
+  padding-left: clamp(80px, 8vw, 120px);
+  padding-right: clamp(80px, 8vw, 120px);
+  padding-top: clamp(48px, 6vw, 96px);
+  padding-bottom: clamp(48px, 6vw, 96px);
+}
+@media (max-width: 640px) {
+  .vt-mono .vt-hero.hk-hero {
+    padding-left: 60px;
+    padding-right: 60px;
+  }
+}
 
 /* CRT vignette + inset screen glow + occasional flicker. Together with the
    scanlines and the rolling bar these are what makes the hero read as an
@@ -412,16 +421,18 @@
   position: relative;
   font-style: normal;
   color: #FFFFFF;
-  /* At rest: pure white, no chromatic split. The glitch keyframes below
-     briefly reveal the yellow/pink ghost copies for a fraction of a second
-     every ~6 seconds — the rest of the time the text reads clean. */
-  animation: vt-glitch-shake 6.4s steps(1) infinite;
+  /* At rest: pure white, no chromatic split. The keyframes below reveal
+     three ghost layers (yellow / pink / blue) for a fraction of a second
+     every ~6.4s — the rest of the time the text reads clean. */
+  animation:
+    vt-glitch-shake 6.4s steps(1) infinite,
+    vt-glitch-blue  6.4s steps(1) infinite;
 }
 
-/* Two ghost copies of the title. Both are `opacity: 0` at rest; the
-   keyframes flick them to full opacity only during the glitch beats,
-   producing a signal-loss chromatic burst then snapping back to clean
-   white. */
+/* Two ghost copies of the title (yellow + pink). Both are `opacity: 0` at
+   rest; the animation flicks them to full opacity only during the glitch
+   beats. Blue is applied via the em's own animated text-shadow so we can
+   have three chromatic layers without a third pseudo-element. */
 .vt-hero__title em::before,
 .vt-hero__title em::after {
   content: attr(data-glitch);
@@ -454,17 +465,17 @@
     clip-path: inset(0 0 0 0);
   }
   90% {
-    opacity: 0.85;
+    opacity: 0.9;
     clip-path: inset(0 0 62% 0);
     transform: translate3d(-2px, 0, 0);
   }
   91% {
-    opacity: 0.75;
+    opacity: 0.78;
     clip-path: inset(38% 0 26% 0);
     transform: translate3d(3px, 0, 0);
   }
   93% {
-    opacity: 0.9;
+    opacity: 0.95;
     clip-path: inset(10% 0 55% 0);
     transform: translate3d(-3px, 1px, 0);
   }
@@ -475,20 +486,29 @@
     clip-path: inset(0 0 0 0);
   }
   89% {
-    opacity: 0.85;
+    opacity: 0.9;
     clip-path: inset(58% 0 0 0);
     transform: translate3d(3px, 0, 0);
   }
   90% {
-    opacity: 0.7;
+    opacity: 0.75;
     clip-path: inset(28% 0 34% 0);
     transform: translate3d(-2px, -1px, 0);
   }
   94% {
-    opacity: 0.9;
+    opacity: 0.95;
     clip-path: inset(48% 0 8% 0);
     transform: translate3d(2px, 1px, 0);
   }
+}
+/* Blue chromatic burst on the em itself — only briefly, at the peak of
+   the glitch cycle. Uses text-shadow so it composites over the base white. */
+@keyframes vt-glitch-blue {
+  0%, 89%, 100% { text-shadow: none; }
+  90%           { text-shadow: -3px 0 0 var(--vt-blue, #3CD1FF); }
+  92%           { text-shadow:  3px 0 0 var(--vt-blue, #3CD1FF); }
+  94%           { text-shadow: -2px 1px 0 var(--vt-blue, #3CD1FF); }
+  96%           { text-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vt-hero__title em,
