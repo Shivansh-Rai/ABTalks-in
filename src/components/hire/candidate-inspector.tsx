@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Award,
   CircleMinus,
   Gauge,
@@ -649,10 +650,16 @@ export function CandidateInspector({
                 className="hire-profile__more"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Open the full evidence profile"
-                title="Full evidence profile"
+                aria-label="View the full candidate report in a new tab"
+                title="View the full candidate report"
               >
-                •••
+                View as Report
+                <ArrowUpRight
+                  size={14}
+                  strokeWidth={1.8}
+                  absoluteStrokeWidth
+                  aria-hidden="true"
+                />
               </Link>
             )}
             <button

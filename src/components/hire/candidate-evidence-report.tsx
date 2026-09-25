@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   Briefcase,
   ChevronLeft,
+  Download,
   FileCheck2,
   FolderGit2,
   Link2 as LinkIcon,
@@ -222,6 +223,54 @@ function BackToScout() {
     >
       <ChevronLeft aria-hidden="true" />
       Back to Scout
+    </button>
+  );
+}
+
+/**
+ * Saves the report as a PDF through the browser's own print pipeline.
+ *
+ * Deliberately not html2canvas or a second @react-pdf document. Rasterising
+ * the page would hand a recruiter a picture of a report: no selectable text,
+ * no searchable name, no working links, and a fresh set of bugs every time the
+ * CSS moves. Re-authoring the layout in @react-pdf would be a second copy of
+ * this page that drifts from the first. Printing uses the `@media print` rules
+ * this stylesheet already carries, so the PDF is the report, with live text.
+ *
+ * The document title is what every browser offers as the default filename, so
+ * it is swapped for the candidate's own before the dialog opens and put back
+ * afterwards. The dialog captures the name as it opens, so the timeout is a
+ * safety net for browsers that never fire `afterprint`.
+ */
+function DownloadReportButton({ label }: { label: string }) {
+  function save() {
+    const original = document.title;
+    const safe = `ABTalks report ${label}`
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      document.title = original;
+      window.removeEventListener("afterprint", restore);
+    };
+    document.title = safe;
+    window.addEventListener("afterprint", restore);
+    window.setTimeout(restore, 1000);
+    window.print();
+  }
+
+  return (
+    <button
+      type="button"
+      className="hire-report__pdf"
+      onClick={save}
+      title="Opens your browser's print dialog. Choose Save as PDF."
+    >
+      <Download size={15} strokeWidth={1.6} absoluteStrokeWidth aria-hidden="true" />
+      Download PDF
     </button>
   );
 }
@@ -493,7 +542,22 @@ function ReportBody({
 
   return (
     <main className="hire-report">
-      <BackToScout />
+      <div className="hire-report__bar">
+        <BackToScout />
+        {/* Named after the candidate, so the saved file is not the same
+            "evidence.pdf" for every one of them. The surname goes in only once
+            it is unlocked: the page blurs it, and a filename is the one place
+            a blur cannot follow. */}
+        <DownloadReportButton
+          label={
+            match.displayName
+              ? revealed
+                ? match.displayName
+                : (match.displayName.trim().split(/\s+/)[0] ?? roleLabel)
+              : roleLabel
+          }
+        />
+      </div>
 
       {/* One document. The band, the figures and every section share a single
           white sheet with hairline rules between them, instead of six cards

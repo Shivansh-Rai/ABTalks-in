@@ -9523,11 +9523,38 @@ button.hire-side__me {
   cursor: default;
 }
 
+/* Was a bare "•••", which named nothing and read as an overflow menu rather
+   than a link to a second page. Now a labelled control, sized and coloured
+   like the other chrome in this row. */
 .hire-app a.hire-profile__more {
-  font-size: 24px;
-  line-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--h-border-strong);
+  border-radius: 8px;
+  background: var(--h-surface);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
   color: #18181b;
   text-decoration: none;
+  transition:
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.hire-app a.hire-profile__more:hover {
+  background: var(--h-card);
+  border-color: var(--h-primary);
+  color: var(--h-primary);
+}
+
+.hire-app a.hire-profile__more:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
 }
 
 .hire-profile__identity {
@@ -9576,6 +9603,16 @@ button.hire-side__me {
   color: #ffffff;
   text-decoration: none;
   cursor: pointer;
+}
+
+/* The "in" glyph stays white once contact is unlocked.
+ *
+ * Same trap as the button-shaped links at the top of this file: `.hire-app a`
+ * is (0,1,1) and `.hire-profile__in` is (0,1,0), so `color: inherit` won the
+ * moment the mark stopped being a <button> and became a real <a>. The locked
+ * state looked right and the unlocked one came out black on LinkedIn blue. */
+.hire-app a.hire-profile__in {
+  color: #ffffff;
 }
 
 a.hire-profile__in:hover,
@@ -14761,6 +14798,51 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   margin-bottom: 14px;
 }
 
+/* Back on the left, save on the right, above the sheet. Both are chrome for
+   reading the report, not part of it, so neither prints. */
+.hire-report__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hire-report__bar .hire-report__back {
+  margin-bottom: 0;
+}
+
+.hire-report__pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--h-primary);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 4px 12px rgba(3, 83, 95, 0.16);
+  transition: background-color 160ms var(--ease);
+}
+
+.hire-report__pdf:hover {
+  background: var(--h-primary-hover);
+}
+
+.hire-report__pdf:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 3px;
+}
+
 /* The sheet. `overflow: hidden` lets the band bleed to the corners without
    restating the radius on it. */
 .hire-report__doc {
@@ -15599,9 +15681,45 @@ a.hire-credits:hover { border-color: var(--h-primary); }
 
 /* ── Print ──────────────────────────────────────────────────────────────── */
 
+/* ── Print, and therefore Save as PDF ───────────────────────────────────────
+
+   The download button is `window.print()`, so this block IS the PDF. The page
+   box itself (A4, 12mm) is set once globally in globals.css.
+
+   `:has(.hire-report)` scopes the chrome rules to this page. Printing from
+   Messages or Settings is untouched; those pages have no print design and
+   should keep the browser default. */
 @media print {
-  .hire-report__back {
-    display: none;
+  .hire-app:has(.hire-report) .hire-app__header,
+  .hire-app:has(.hire-report) .hire-shell__rail,
+  .hire-app:has(.hire-report) .hire-nav-scrim,
+  .hire-app:has(.hire-report) .hire-journey,
+  .hire-report__bar {
+    display: none !important;
+  }
+
+  /* The shell is a two-column layout around a sidebar that is no longer
+     there. Flattened, the report gets the whole page box.
+
+     `overflow` and the fixed height matter more than the columns: on screen
+     the shell clips and `.hire-shell__content` scrolls inside it, and a
+     printed ancestor that clips to one viewport height prints ONE page and
+     drops the rest of the report. Both are released here. */
+  .hire-app:has(.hire-report),
+  .hire-app:has(.hire-report) .hire-shell,
+  .hire-app:has(.hire-report) .hire-shell__content {
+    display: block;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+  }
+
+  .hire-app:has(.hire-report) .hire-shell__content > * {
+    max-width: none;
+    margin-inline: 0;
   }
 
   .hire-report {
@@ -15609,20 +15727,45 @@ a.hire-credits:hover { border-color: var(--h-primary); }
     padding: 0;
   }
 
+  /* The sheet's frame is the paper now. */
   .hire-report__doc {
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .hire-report__band {
-    /* Keep the green on paper: a report whose header prints white loses the
-       one element that says which document this is. */
+  .hire-report__band,
+  .hire-report__strip,
+  .hire-report__prooflet,
+  .hire-report__chip--proven,
+  .hire-report__tag,
+  .hire-report__fill,
+  .hire-report__foot {
+    /* Keep the greens on paper. A report whose header prints white loses the
+       one element that says which document this is, and a parameter bar with
+       no fill is not a chart. */
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  .hire-report__section {
+  /* Break between sections, never through a job, a row or a bar. */
+  .hire-report__section,
+  .hire-report__block,
+  .hire-report__tlrow,
+  .hire-report__row,
+  .hire-report__param,
+  .hire-report__params {
     break-inside: avoid;
+  }
+
+  .hire-report__sectitle,
+  .hire-report__blockh {
+    break-after: avoid;
+  }
+
+  /* Underlining every URL is a screen affordance; on paper the address is
+     already the whole value. */
+  .hire-report__rowv a {
+    text-decoration: none;
   }
 }
