@@ -76,7 +76,7 @@ export function VideothonRegisterCTA({
   //   - variant="cta" lives inside the hero (INSIDE `.vt`), so `.vt-btn` works.
   const className = cn(
     variant === "pill"
-      ? "ab-btn ab-btn--primary ab-header__cta"
+      ? "ab-btn ab-btn--primary ab-header__cta vt-mono-cta"
       : "vt-btn",
     variant === "cta" && "vt-btn--primary vt-btn--lg",
     fullWidth && "vt-btn--full",

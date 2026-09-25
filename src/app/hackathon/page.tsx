@@ -147,18 +147,30 @@ export default async function HackathonPage() {
         Skip to main content
       </a>
 
+      <div className="vt-mono">
+
       {/* 1 · HERO — reuses .hk-hero as the wrapper (background grid, ambient
           fill from hackathon-v2.css) but overrides its layout via `.vt-hero`
           so the head sits centered without expecting a right-side stage. */}
       <section className="hk-hero vt-hero" aria-labelledby="vt-hero-title">
+        <div className="vt-hero__bg" aria-hidden>
+          <span className="vt-hero__scan" />
+          <span className="vt-hero__noise" />
+        </div>
+        <div className="vt-hero__reel vt-hero__reel--top" aria-hidden />
+        <div className="vt-hero__reel vt-hero__reel--bottom" aria-hidden />
         <div className="vt-hero__inner">
           <p className="vt-hero__eyebrow" aria-hidden>
             <span className="vt-hero__dot" />
             REC · 48 HOURS · ONE BRIEF
           </p>
 
-          <h1 className="vt-hero__title" id="vt-hero-title">
-            <em>{VIDEOTHON.name}</em>
+          <h1
+            className="vt-hero__title"
+            id="vt-hero-title"
+            data-glitch={VIDEOTHON.name}
+          >
+            <em data-glitch={VIDEOTHON.name}>{VIDEOTHON.name}</em>
             <span className="vt-hero__title-sub">for video editors</span>
           </h1>
 
@@ -334,6 +346,7 @@ export default async function HackathonPage() {
           ))}
         </div>
       </section>
+      </div>
     </HackathonShell>
   );
 }
