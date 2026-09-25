@@ -156,6 +156,7 @@ export default async function HackathonPage() {
         <div className="vt-hero__bg" aria-hidden>
           <span className="vt-hero__scan" />
           <span className="vt-hero__noise" />
+          <span className="vt-hero__dust" />
         </div>
         <div className="vt-hero__reel vt-hero__reel--left" aria-hidden />
         <div className="vt-hero__reel vt-hero__reel--right" aria-hidden />
