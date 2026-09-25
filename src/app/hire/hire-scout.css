@@ -14838,6 +14838,13 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   color: #ffffff;
 }
 
+/* Default badge uses dark green (#197E23) for light cards — unreadable on
+   the report's forest band. Force light type + a stronger accent wash. */
+.hire-report__band .hire-open-to-work {
+  background: rgba(24, 211, 155, 0.28);
+  color: #ffffff;
+}
+
 .hire-report__loading {
   position: relative;
   margin: 0;
