@@ -23,8 +23,13 @@ const ROUND = 7;
  *
  * Colour is not the only cue: the exact value out of 100 is printed next to
  * every row, so a reader who cannot separate two hues loses nothing.
+ *
+ * Exported because the standalone report draws the same seven parameters as
+ * bars rather than slices. Two encodings, one palette: a reader who sees the
+ * donut in the panel and the bars on the report must not have to learn the
+ * colours twice.
  */
-const PARAMS: {
+export const SCORE_PARAMS: {
   key: keyof PublicScoreSlice;
   label: string;
   color: { base: string; lift: string; edge: string };
@@ -93,7 +98,7 @@ export function HireScoreChart({
     return () => io.disconnect();
   }, []);
 
-  const rows = PARAMS.map((p) => ({ ...p, value: scores[p.key] }));
+  const rows = SCORE_PARAMS.map((p) => ({ ...p, value: scores[p.key] }));
   const known = rows.filter((r) => r.value !== null);
   if (known.length === 0) {
     return (
