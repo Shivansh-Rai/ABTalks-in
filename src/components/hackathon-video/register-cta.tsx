@@ -64,7 +64,7 @@ export function VideothonRegisterCTA({
     : registrationOpen
       ? isAuthed
         ? "Complete registration"
-        : "Register with Google"
+        : "Register now"
       : "Registration closed";
 
   // Two different button systems on purpose:

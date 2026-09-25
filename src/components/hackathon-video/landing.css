@@ -39,20 +39,195 @@
 }
 
 /* ============================================================
- * Countdown (used in the hero and dashboard)
+ * HERO override — the shell's `.hk-hero` was designed for a
+ * two-column layout (headline left, big illustration right). We
+ * only have the headline column, so we reset the height and
+ * center everything, then dress it up with a subtle film-strip
+ * motif and a red REC dot to signal "video editors" without
+ * pulling in a heavy image.
  * ============================================================ */
-.vt-hero__timer {
-  margin: 22px 0 4px;
-  display: flex;
-  justify-content: center;
+.vt-hero.hk-hero {
+  min-height: 0;
+  padding: clamp(28px, 4vw, 56px) clamp(16px, 3vw, 40px) clamp(40px, 5vw, 72px);
+  display: grid;
+  place-items: center;
+  position: relative;
 }
-.vt-hero__meta {
-  margin: 22px 0 0;
-  font-size: 13px;
+.vt-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+  width: 100%;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+}
+
+/* Film-strip motifs on the outer edges of the hero — decorative only. */
+.vt-hero.hk-hero::before,
+.vt-hero.hk-hero::after {
+  content: "";
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  width: 22px;
+  background:
+    linear-gradient(to bottom,
+      transparent 0, transparent 32%,
+      var(--ab-peach-line, #D4EBEC) 32%, var(--ab-peach-line, #D4EBEC) 68%,
+      transparent 68%, transparent 100%) 50% 0 / 22px 36px repeat-y,
+    var(--ab-primary-soft, #EEF6F6);
+  border-radius: 6px;
+  opacity: 0.9;
+  z-index: 0;
+}
+.vt-hero.hk-hero::before { left: clamp(8px, 2vw, 32px); }
+.vt-hero.hk-hero::after  { right: clamp(8px, 2vw, 32px); }
+@media (max-width: 720px) {
+  .vt-hero.hk-hero::before,
+  .vt-hero.hk-hero::after { display: none; }
+}
+
+/* Eyebrow — small caps with a pulsing red REC dot. */
+.vt-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 6px 14px;
+  border: 1px solid var(--ab-peach-line, #D4EBEC);
+  border-radius: 999px;
+  background: #FFFFFF;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ab-primary, #03535F);
+}
+.vt-hero__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #E53935;
+  box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5);
+  animation: vt-rec 1.8s ease-in-out infinite;
+}
+@keyframes vt-rec {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5); }
+  50%      { box-shadow: 0 0 0 10px rgba(229, 57, 53, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-hero__dot { animation: none; }
+}
+
+/* Title — bold display sans, brand-teal accent for the event name. */
+.vt-hero__title {
+  margin: 0;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  color: var(--ab-ink, #353535);
+  display: grid;
+  gap: 6px;
+}
+.vt-hero__title em {
+  font-style: normal;
+  color: var(--ab-primary, #03535F);
+}
+.vt-hero__title-sub {
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--ab-muted, #787878);
-  line-height: 1.6;
 }
-.vt-hero__meta strong { color: var(--ab-ink, #353535); font-weight: 600; }
+
+/* Lede — allow wrapping (unlike the shell's white-space: nowrap sub) */
+.vt-hero__lede {
+  margin: 0;
+  max-width: 520px;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  color: var(--ab-ink-2, #4B4B4B);
+}
+
+.vt-hero__timer { margin: 4px 0 0; }
+
+/* CTAs */
+.vt-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.vt-hero__learn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.vt-hero__learn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Event date panel — three columns with subtle dividers */
+.vt-hero__meta {
+  margin: 8px 0 0;
+  padding: 18px 24px;
+  border: 1px solid var(--ab-border, #E9E9E9);
+  border-radius: 14px;
+  background: #FFFFFF;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 20px;
+  min-width: min(100%, 620px);
+}
+.vt-hero__meta > div {
+  display: grid;
+  gap: 4px;
+  padding: 0 12px;
+  border-left: 1px solid var(--ab-border, #E9E9E9);
+  text-align: left;
+}
+.vt-hero__meta > div:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+.vt-hero__meta dt {
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ab-muted, #787878);
+  margin: 0;
+}
+.vt-hero__meta dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ab-ink, #353535);
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .vt-hero__meta { grid-template-columns: 1fr; }
+  .vt-hero__meta > div {
+    border-left: none;
+    border-top: 1px solid var(--ab-border, #E9E9E9);
+    padding: 10px 0 0;
+  }
+  .vt-hero__meta > div:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+}
 
 .vt-count {
   display: inline-flex;

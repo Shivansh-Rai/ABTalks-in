@@ -147,15 +147,22 @@ export default async function HackathonPage() {
         Skip to main content
       </a>
 
-      {/* 1 · HERO — uses the existing `.hk-hero__head` chrome from
-          hackathon-v2.css so it inherits every responsive break the code
-          hackathon already fixed. */}
-      <section className="hk-hero" aria-labelledby="vt-hero-title">
-        <div className="hk-hero__head">
-          <h1 className="hk-hero__title" id="vt-hero-title">
-            <em>{VIDEOTHON.name}</em> — a 48-hour hackathon for editors
+      {/* 1 · HERO — reuses .hk-hero as the wrapper (background grid, ambient
+          fill from hackathon-v2.css) but overrides its layout via `.vt-hero`
+          so the head sits centered without expecting a right-side stage. */}
+      <section className="hk-hero vt-hero" aria-labelledby="vt-hero-title">
+        <div className="vt-hero__inner">
+          <p className="vt-hero__eyebrow" aria-hidden>
+            <span className="vt-hero__dot" />
+            REC · 48 HOURS · ONE BRIEF
+          </p>
+
+          <h1 className="vt-hero__title" id="vt-hero-title">
+            <em>{VIDEOTHON.name}</em>
+            <span className="vt-hero__title-sub">for video editors</span>
           </h1>
-          <p className="hk-hero__sub">{VIDEOTHON.tagline}</p>
+
+          <p className="vt-hero__lede">{VIDEOTHON.tagline}</p>
 
           <div className="vt-hero__timer">
             <VideothonCountdown
@@ -164,7 +171,7 @@ export default async function HackathonPage() {
             />
           </div>
 
-          <div className="hk-cta">
+          <div className="vt-hero__ctas">
             <VideothonRegisterCTA
               isAuthed={isAuthed}
               registered={registered}
@@ -172,7 +179,7 @@ export default async function HackathonPage() {
               prefill={prefill}
               variant="cta"
             />
-            <Link className="ab-btn ab-btn--ghost hk-cta__secondary" href="#hk-how">
+            <Link className="ab-btn ab-btn--ghost vt-hero__learn" href="#hk-how">
               Learn more
               <svg viewBox="0 0 24 24" aria-hidden focusable="false">
                 <path d="M4 12h15M13 6l6 6-6 6" />
@@ -180,11 +187,20 @@ export default async function HackathonPage() {
             </Link>
           </div>
 
-          <p className="vt-hero__meta">
-            <strong>{VIDEOTHON.kickoffLabel}</strong> → {VIDEOTHON.deadlineLabel}
-            <br />
-            {VIDEOTHON.resultsLabel}
-          </p>
+          <dl className="vt-hero__meta" aria-label="Event window">
+            <div>
+              <dt>Kickoff</dt>
+              <dd>{VIDEOTHON.kickoffLabel}</dd>
+            </div>
+            <div>
+              <dt>Deadline</dt>
+              <dd>{VIDEOTHON.deadlineLabel}</dd>
+            </div>
+            <div>
+              <dt>Results</dt>
+              <dd>{VIDEOTHON.resultsLabel.replace(/^Winners announced: /, "")}</dd>
+            </div>
+          </dl>
         </div>
       </section>
 
