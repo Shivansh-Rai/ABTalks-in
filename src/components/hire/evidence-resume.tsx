@@ -4,63 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
-import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref";
+import {
+  missionsLine,
+  summaryInputFromMatch,
+  trackLongLabel,
+  verifiedEvidenceSentence,
+} from "@/features/hire/candidate-summary";
 import {
   recallEvidence,
 } from "@/components/hire/evidence-cache";
 import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import type { MatchCardData } from "@/components/hire/match-card";
 
-function trackLabel(source?: CandidateSource): string | null {
-  switch (source) {
-    case "CLAUDE":
-      return "Claude challenge";
-    case "CHALLENGE_60":
-      return "60-day challenge";
-    case "HACKATHON":
-      return "Hackathon";
-    case "PROGRAM":
-      return "US cohort";
-    default:
-      return null;
-  }
-}
-
 function firstAttempt(e: MatchCardData["evidence"]): string | null {
   if (typeof e.cleanPassCount !== "number") return null;
   if (e.cleanPassCount <= 0) return "None recorded";
   return String(e.cleanPassCount);
-}
-
-function evidenceBlurb(match: MatchCardData): string {
-  if (match.rationale?.trim()) return match.rationale.trim();
-  const e = match.evidence ?? {};
-  const bits: string[] = [];
-  if (typeof e.missionsPassed === "number") {
-    const total = e.totalTrackDays;
-    bits.push(
-      total
-        ? `${e.missionsPassed} of ${total} missions passed`
-        : `${e.missionsPassed} missions passed`,
-    );
-  }
-  if (typeof e.cleanPassCount === "number" && e.cleanPassCount > 0) {
-    bits.push(`${e.cleanPassCount} first-attempt passes`);
-  }
-  if (typeof e.commitDayCount === "number" && e.commitDayCount > 0) {
-    bits.push(`${e.commitDayCount} verified commit days`);
-  }
-  if (e.projectScores?.length) {
-    bits.push(`${e.projectScores.length} graded project${e.projectScores.length === 1 ? "" : "s"}`);
-  }
-  if (e.certificateIssued) bits.push("certificate issued");
-  if (bits.length === 0) {
-    return (
-      match.coverageNote ??
-      "Identity stays hidden until you place a request and the candidate agrees. Figures below are platform-verified where labelled."
-    );
-  }
-  return `Verified: ${bits.join(", ")}.`;
 }
 
 function Cell({ k, v }: { k: string; v: string | null }) {
@@ -159,19 +118,21 @@ export function EvidenceResumeBody({
 }) {
   const e = match.evidence ?? {};
   const sample = match.candidateRef.startsWith("SAMPLE:");
-  const publicId = refPublicId(match.candidateRef);
-  const track = trackLabel(match.source);
-  const isChallenge =
-    match.source === "CLAUDE" || match.source === "CHALLENGE_60";
-  const missionsLabel = isChallenge ? "Days shipped" : "Missions passed";
-  const missionsValue =
-    typeof e.missionsPassed === "number"
-      ? e.totalTrackDays
-        ? `${e.missionsPassed} of ${e.totalTrackDays}`
-        : String(e.missionsPassed)
-      : match.source === "HACKATHON"
-        ? "Shipped project"
-        : null;
+  const track = trackLongLabel(match.source);
+  /**
+   * The inspector's copy of this record is the slim one.
+   *
+   * The panel above it already carries the score, the tier, the experience and
+   * the whole ABTalks Evidence story, so repeating them here made Resume a
+   * second scoreboard a few inches under the first. `showIdentity` is already
+   * the embed flag, so it decides this too rather than adding a second one.
+   */
+  const embed = !showIdentity;
+  const missions = missionsLine({
+    source: match.source,
+    missionsPassed: e.missionsPassed ?? null,
+    totalTrackDays: e.totalTrackDays ?? null,
+  });
 
   return (
     <>
@@ -183,10 +144,8 @@ export function EvidenceResumeBody({
             </h1>
             <p className="hire-sheet__sub">
               {sample
-                ? "Sample profile — not a person in the pool"
-                : [match.locationLabel, publicId, track]
-                    .filter(Boolean)
-                    .join(" · ")}
+                ? "Sample profile, not a person in the pool"
+                : [match.locationLabel, track].filter(Boolean).join(" · ")}
             </p>
           </div>
           {!sample && (
@@ -200,18 +159,18 @@ export function EvidenceResumeBody({
 
       <div className="hire-sheet__tags">
         {track && <span className="desk-pill">{track}</span>}
-        {missionsValue && (
-          <span className="desk-pill desk-pill--good">
-            {missionsValue} {isChallenge ? "days shipped" : "missions passed"}
-          </span>
+        {!embed && missions && (
+          <span className="desk-pill desk-pill--good">{missions}</span>
         )}
-        {e.certificateIssued && (
+        {!embed && e.certificateIssued && (
           <span className="desk-pill desk-pill--good">Certified</span>
         )}
-        {typeof e.yearsExperience === "number" && e.yearsExperience > 0 && (
-          <span className="desk-pill">{e.yearsExperience} yrs</span>
-        )}
-        {match.tier && match.tier !== "NONE" && !sample && (
+        {!embed &&
+          typeof e.yearsExperience === "number" &&
+          e.yearsExperience > 0 && (
+            <span className="desk-pill">{e.yearsExperience} yrs</span>
+          )}
+        {!embed && match.tier && match.tier !== "NONE" && !sample && (
           <span className="desk-pill">{match.tier}</span>
         )}
         {match.availabilityUnknown && (
@@ -224,43 +183,49 @@ export function EvidenceResumeBody({
       <div className="hire-sheet__rule" />
 
       <div className="hire-sheet__grid">
-        <Cell k="AB score" v={sample ? null : `${match.score}/100`} />
-        <Cell k="Tier" v={sample ? null : match.tier || null} />
-        <Cell
-          k="Experience"
-          v={
-            typeof e.yearsExperience === "number"
-              ? `${e.yearsExperience} yrs`
-              : null
-          }
-        />
-        <Cell k={missionsLabel} v={missionsValue} />
-        <Cell k="First-attempt" v={firstAttempt(e)} />
-        <Cell
-          k="Verified commits"
-          v={
-            typeof e.commitDayCount === "number"
-              ? String(e.commitDayCount)
-              : null
-          }
-        />
-        <Cell
-          k="Projects"
-          v={
-            e.projectScores?.length
-              ? e.projectScores.join(" / ")
-              : null
-          }
-        />
-        <Cell
-          k="Quiz average"
-          v={typeof e.quizAverage === "number" ? String(e.quizAverage) : null}
-        />
-        <Cell k="Certificate" v={e.certificateIssued ? "Issued" : null} />
-        <Cell
-          k="Cohort day"
-          v={typeof e.cohortDay === "number" ? `Day ${e.cohortDay}` : null}
-        />
+        {/* The scoreboard half of this grid is the embed's duplicate of
+            ABTalks Evidence, so it only renders on the standalone page. */}
+        {!embed && (
+          <>
+            <Cell k="AB score" v={sample ? null : `${match.score}/100`} />
+            <Cell k="Tier" v={sample ? null : match.tier || null} />
+            <Cell
+              k="Experience"
+              v={
+                typeof e.yearsExperience === "number"
+                  ? `${e.yearsExperience} yrs`
+                  : null
+              }
+            />
+            <Cell k="Missions" v={missions} />
+            <Cell k="First-attempt" v={firstAttempt(e)} />
+            <Cell
+              k="Verified commits"
+              v={
+                typeof e.commitDayCount === "number"
+                  ? String(e.commitDayCount)
+                  : null
+              }
+            />
+            <Cell
+              k="Projects"
+              v={
+                e.projectScores?.length
+                  ? e.projectScores.join(" / ")
+                  : null
+              }
+            />
+            <Cell
+              k="Quiz average"
+              v={typeof e.quizAverage === "number" ? String(e.quizAverage) : null}
+            />
+            <Cell k="Certificate" v={e.certificateIssued ? "Issued" : null} />
+            <Cell
+              k="Cohort day"
+              v={typeof e.cohortDay === "number" ? `Day ${e.cohortDay}` : null}
+            />
+          </>
+        )}
         <Cell k="Track" v={track} />
         <Cell k="Location" v={match.locationLabel ?? null} />
         <Cell
@@ -268,17 +233,20 @@ export function EvidenceResumeBody({
           v={(e.workingLanguages ?? []).join(" · ") || null}
         />
         <Cell k="Est. compensation" v={match.compensationBand ?? null} />
-        <Cell k="Reference" v={sample ? null : publicId} />
       </div>
 
-      <section className="hire-sheet__section">
-        <h2 className="hire-sheet__h">Verified evidence</h2>
-        <p className="hire-sheet__p">{evidenceBlurb(match)}</p>
-      </section>
-
-      {(e.skills?.length ?? 0) > 0 && (
+      {!embed && (
         <section className="hire-sheet__section">
-          <h2 className="hire-sheet__h">Skills — declared by the candidate</h2>
+          <h2 className="hire-sheet__h">Verified evidence</h2>
+          <p className="hire-sheet__p">
+            {verifiedEvidenceSentence(summaryInputFromMatch(match))}
+          </p>
+        </section>
+      )}
+
+      {!embed && (e.skills?.length ?? 0) > 0 && (
+        <section className="hire-sheet__section">
+          <h2 className="hire-sheet__h">Skills declared by the candidate</h2>
           <div className="hire-sheet__tags" style={{ marginTop: 0 }}>
             {e.skills!.map((s) => (
               <span key={s} className="desk-pill">
@@ -289,16 +257,8 @@ export function EvidenceResumeBody({
         </section>
       )}
 
-      {match.gaps.length > 0 && (
-        <section className="hire-sheet__section">
-          <h2 className="hire-sheet__h">Gaps</h2>
-          {match.gaps.map((g) => (
-            <p key={g} className="hire-sheet__li">
-              {g}
-            </p>
-          ))}
-        </section>
-      )}
+      {/* No Gaps section. Scoring still computes them; they are not something a
+          recruiter reads about a named person on a search surface. */}
 
       <p className="hire-sheet__note">
         This is an ABTalks evidence record, not a self-written resume. Mission,

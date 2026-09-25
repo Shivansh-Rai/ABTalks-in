@@ -7,16 +7,22 @@ import {
   ArrowRight,
   Award,
   CircleMinus,
-  Eye,
   Gauge,
   Mail,
   Phone,
   Send,
   Tag,
+  Wallet,
   X,
   type LucideIcon,
 } from "lucide-react";
-import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref";
+import {
+  NO_VERIFIED_EVIDENCE,
+  recruiterSummary,
+  summaryInputFromMatch,
+  trackLongLabel,
+  verifiedEvidenceSentence,
+} from "@/features/hire/candidate-summary";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
   LockedField,
@@ -57,21 +63,6 @@ import {
 import type { SelfReportedExternalLink } from "@/features/hire/self-reported-links";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
 
-function trackLongLabel(source?: CandidateSource): string | null {
-  switch (source) {
-    case "CLAUDE":
-      return "Claude challenge";
-    case "CHALLENGE_60":
-      return "60-day challenge";
-    case "HACKATHON":
-      return "Hackathon";
-    case "PROGRAM":
-      return "US cohort";
-    default:
-      return null;
-  }
-}
-
 const WORK_MODE: Record<string, string> = {
   ONSITE: "Onsite",
   HYBRID: "Hybrid",
@@ -79,15 +70,21 @@ const WORK_MODE: Record<string, string> = {
   FLEXIBLE: "Flexible",
 };
 
-/** The panel's tabs jump to sections of one scroll, as in the design. */
+/**
+ * The panel's tabs jump to sections of one scroll, as in the design.
+ *
+ * ABTalks Evidence leads. It is the only thing on this panel a CV cannot claim,
+ * and it used to open below a Status / AB score / Email / Phone / Tags block
+ * that told a recruiter nothing they had not already read on the card. Contact
+ * and status are still here, at the end, next to the controls that unlock them.
+ */
 const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "experience", label: "Experience" },
   { id: "evidence", label: "ABTalks Evidence" },
+  { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "resume", label: "Resume" },
-  { id: "more", label: "More" },
+  { id: "contact", label: "Contact" },
 ] as const;
 
 const MONTH_SHORT = [
@@ -186,13 +183,13 @@ function LinkedInMark({
   href,
   locked,
   candidateRef,
-  publicId,
+  candidateLabel,
   onUnlocked,
 }: {
   href: string | null;
   locked: boolean;
   candidateRef: string;
-  publicId: string;
+  candidateLabel: string;
   onUnlocked: () => void;
 }) {
   if (href) {
@@ -215,7 +212,7 @@ function LinkedInMark({
     return (
       <UnlockContactDialog
         candidateRef={candidateRef}
-        publicId={publicId}
+        candidateLabel={candidateLabel}
         onUnlocked={onUnlocked}
         className="hire-profile__in"
         triggerLabel="in"
@@ -279,7 +276,10 @@ export function CandidateInspector({
   decision?: MatchDecision | null;
 }) {
   const e = match.evidence ?? {};
-  const publicId = refPublicId(match.candidateRef);
+  // What a dialog may print when it has to name this candidate. Never the
+  // `AB-####` reference: it is a hash of an internal id, it is not something a
+  // recruiter can act on, and it is no longer shown anywhere on search.
+  const contactLabel = match.displayName?.trim() || match.jobRole;
   const sample = match.candidateRef.startsWith("SAMPLE:");
   const preview = isLockedPreview(match) ? match.preview : null;
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
@@ -302,7 +302,7 @@ export function CandidateInspector({
   );
   const status = decision ? DECISION_LABEL[decision] : null;
   const resumeHref = evidenceResumeHref(match.candidateRef);
-  const [tab, setTab] = useState<TabId>("overview");
+  const [tab, setTab] = useState<TabId>("evidence");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [contact, setContact] = useState<RevealedContact | null>(null);
@@ -542,6 +542,9 @@ export function CandidateInspector({
   const orgs = [match.jobRole, track].filter((v): v is string => Boolean(v));
 
   const evidenceItems = trackEvidence?.items ?? [];
+  // Completed tracks and hackathon placements. Compensation is deliberately not
+  // in this list any more: an ABTalks estimate is not verified evidence, and it
+  // now sits with the other availability facts under Contact.
   const evidenceRoles: Role[] = evidenceItems.map((item) => ({
     key: item.key,
     title: item.title,
@@ -549,24 +552,17 @@ export function CandidateInspector({
     badge: item.outcomeLabel,
     note: item.occurredAt ? monthYearFromIso(item.occurredAt) : undefined,
   }));
-  if (preview) {
-    evidenceRoles.push({
-      title: "Expected compensation",
-      value: (
-        <LockedField
-          value={preview.compensationBand}
-          label="Expected compensation"
-          onReveal={openUpgrade}
-        />
-      ),
-    });
-  } else if (match.compensationBand) {
-    evidenceRoles.push({
-      title: match.compensationDeclared ? "Expected CTC" : "Est. compensation",
-      value: match.compensationBand,
-      note: match.compensationDeclared ? undefined : COMPENSATION_DISCLAIMER,
-    });
-  }
+
+  const summaryInput = summaryInputFromMatch({
+    ...match,
+    locked: Boolean(preview),
+  });
+  const detailedSummary = sample
+    ? "Figures are taken from your requirement, not from a candidate."
+    : recruiterSummary(match.rationale, summaryInput);
+  const verifiedLine = verifiedEvidenceSentence(summaryInput);
+  const hasVerified =
+    !sample && (verifiedLine !== NO_VERIFIED_EVIDENCE || evidenceRoles.length > 0);
 
   const platforms: { title: string; sub: string; date: string }[] = sample
     ? []
@@ -643,7 +639,7 @@ export function CandidateInspector({
               aria-label="Back to results"
               onClick={onClose}
             >
-              <ArrowLeft size={17} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" />
+              {/* <ArrowLeft size={17} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" /> */}
             </button>
             {!sample && (
               <Link
@@ -679,7 +675,7 @@ export function CandidateInspector({
                 href={safeLinkedinHref(contact?.linkedinUrl)}
                 locked={!sample && !preview && !contact}
                 candidateRef={match.candidateRef}
-                publicId={publicId}
+                candidateLabel={contactLabel}
                 onUnlocked={() => {
                   void loadContact();
                 }}
@@ -694,9 +690,12 @@ export function CandidateInspector({
                 onReveal={openUpgrade}
               />
             ) : sample ? (
-              "Sample profile — not a person in the pool"
+              "Sample profile, not a person in the pool"
             ) : (
-              [match.locationLabel, workMode, publicId].filter(Boolean).join(" · ")
+              // No `AB-####` here. It is a hash of an internal id, it addresses
+              // nothing a recruiter can act on, and it was the first thing they
+              // read under the name.
+              [match.locationLabel, workMode].filter(Boolean).join(" · ")
             )}
           </p>
           {orgs.length > 0 && (
@@ -739,20 +738,11 @@ export function CandidateInspector({
               candidateRef={match.candidateRef}
               fallbackLabel={match.displayName ?? match.jobRole}
             />
-            {/* For a locked preview this still opens the plan dialog. For a
-                readable candidate the resume is now a section of this panel,
-                so the button scrolls to it instead of gating it. "•••" remains
-                the way to the full page. */}
-            <button
-              type="button"
-              className="hire-profile__view"
-              aria-label={preview ? "View resume" : "Go to resume"}
-              title="Resume"
-              aria-haspopup={preview ? "dialog" : undefined}
-              onClick={() => (preview ? openUpgrade() : jump("resume"))}
-            >
-              <Eye size={16} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" />
-            </button>
+            {/* The eye that jumped to Resume is gone: the Resume tab above does
+                the same thing with a label on it, and an unlabelled icon beside
+                three labelled buttons was read as a fourth action. A locked
+                preview still reaches the plan dialog through its blurred
+                fields; "•••" remains the way to the full page. */}
           </div>
         )}
 
@@ -787,156 +777,94 @@ export function CandidateInspector({
         </nav>
         </div>
 
+        {/* The panel opens on what ABTalks can prove. Its three subheads are
+            the summary, the parameter breakdown and the verified counts — the
+            first two used to sit at the bottom under "More", where a recruiter
+            who scrolled that far had already decided. */}
         <section
-          data-section="overview"
-          className="hire-profile__overview"
-          aria-label="Overview"
+          data-section="evidence"
+          className="hire-profile__section"
+          aria-label="ABTalks Evidence"
         >
-          <Row icon={CircleMinus} label="Status" muted={!status}>
-            {status ?? "No status"}
-          </Row>
-          {!sample && (
-            <Row icon={Gauge} label="AB score">
-              {match.score}/100{tierLabel ? ` · ${tierLabel}` : ""}
-            </Row>
-          )}
-          {preview ? (
-            <>
-              <Row icon={Mail} label="Email">
-                <LockedField
-                  value={preview.email}
-                  label="Email address"
-                  onReveal={openUpgrade}
-                />
-              </Row>
-              <Row icon={Phone} label="Phone">
-                <LockedField
-                  value={preview.phone}
-                  label="Phone number"
-                  onReveal={openUpgrade}
-                />
-              </Row>
-            </>
-          ) : contact ? (
-            // What the unlock bought, next to the control that bought it.
-            <>
-              <Row icon={Mail} label="Email" muted={!contact.email}>
-                {contact.email ? (
-                  <a href={`mailto:${contact.email}`}>{contact.email}</a>
-                ) : (
-                  "Not provided"
-                )}
-              </Row>
-              <Row icon={Phone} label="Phone" muted={!contact.phone}>
-                {contact.phone ? (
-                  <a href={`tel:${contact.phone}`}>{contact.phone}</a>
-                ) : (
-                  "Not provided"
-                )}
-              </Row>
-              {/* T-232: message them from here, where the unlocked email is. */}
-              <Row icon={Send} label="Message">
-                <OutreachComposeDialog
-                  candidateRef={match.candidateRef}
-                  candidateLabel={match.displayName ?? publicId}
-                />
-              </Row>
-            </>
-          ) : !sample ? (
-            // T-229: revealing contact is the paid unlock — the dialog shows the
-            // configured cost, the balance and what is left before anything is
-            // charged. It is not the plan gate; the plan is a different thing.
-            <>
-              <Row icon={Mail} label="Email">
-                <UnlockContactDialog
-                  candidateRef={match.candidateRef}
-                  publicId={publicId}
-                  onUnlocked={loadContact}
-                  triggerLabel={"Reveal email  +"}
-                  className="hire-profile__reveal"
-                />
-              </Row>
-              <Row icon={Phone} label="Phone">
-                <UnlockContactDialog
-                  candidateRef={match.candidateRef}
-                  publicId={publicId}
-                  onUnlocked={loadContact}
-                  triggerLabel={"Reveal number  +"}
-                  className="hire-profile__reveal"
-                />
-              </Row>
-            </>
-          ) : null}
-          <Row icon={Tag} label="Tags" muted={tags.length === 0}>
-            {tags.length > 0 ? (
-              <span className="hire-profile__tags">
-                {tags.map((pill) => (
-                  <span key={pill.key} className={pill.className}>
-                    {pill.label}
-                  </span>
-                ))}
-              </span>
-            ) : (
-              "No tags"
-            )}
-          </Row>
-          {upgradeOpen && <UpgradeNotice onDismiss={dismissUpgrade} />}
-          {preview && (
+          <h4 className="hire-profile__h">ABTalks Evidence</h4>
+
+          <div className="hire-profile__group">
+            <p className="hire-profile__group-h">Candidate summary</p>
+            <p className="hire-profile__text">{detailedSummary}</p>
             <p className="hire-profile__note">
-              This is an example of the full profile format — the details
-              behind the blur are generated, not a candidate.
+              {sample
+                ? "This is an illustration of the requirement. Nobody in the pool matches it yet, and the figures are taken from what you asked for rather than from a candidate."
+                : coverageLede(match)}
             </p>
+          </div>
+
+          {!sample && match.scores && (
+            <div className="hire-profile__group">
+              <p className="hire-profile__group-h">Candidate parameters</p>
+              <HireScoreChart scores={match.scores} total={match.score} />
+              {/* <p className="hire-profile__note">
+                Slice size is each parameter&apos;s share of this candidate&apos;s
+                combined score; the exact value out of 100 is listed beside it.
+                Scores are derived from the evidence on record, so they are
+                indicative rather than a validated psychometric measure.
+              </p> */}
+            </div>
           )}
 
-          {!sample && externalLinks === null ? (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">External profiles</p>
-              <p className="hire-profile__meta hire-profile__ext-empty">
-                Loading profiles…
+          <div className="hire-profile__group">
+            <p className="hire-profile__group-h">Verified evidence</p>
+            {sample ? (
+              <p className="hire-profile__meta">
+                Figures are taken from your requirement, not from a candidate.
               </p>
-            </div>
-          ) : declaredLinks.length > 0 ? (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">
-                External profiles <small>· {declaredLinks.length}</small>
-              </p>
-              {declaredLinks.map((link) => (
-                <div
-                  key={`${link.provider}:${link.href}`}
-                  className="hire-profile__cert"
-                >
-                  <Award
-                    size={14}
-                    strokeWidth={1.2}
-                    absoluteStrokeWidth
-                    color="#03535F"
-                    aria-hidden="true"
-                  />
-                  <span className="hire-profile__cert-body">
-                    <span className="hire-profile__cert-title">{link.label}</span>
-                    <a
-                      className="hire-profile__cert-sub hire-profile__ext-link"
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {link.href}
-                    </a>
-                  </span>
-                  <span className="hire-profile__self-reported">SELF-REPORTED</span>
+            ) : !hasVerified ? (
+              // Nothing passed, nothing committed, no completion on record. One
+              // plain sentence, and deliberately not a list of declared skills
+              // dressed up as "Verified: ..." — the Skills section already says
+              // what the candidate claims, and says whose claim it is.
+              <p className="hire-profile__meta">{NO_VERIFIED_EVIDENCE}</p>
+            ) : (
+              <div className="hire-profile__org-block">
+                <span className="hire-profile__tile" aria-hidden="true">
+                  {monogram("ABTalks")}
+                </span>
+                <div className="hire-profile__org-main">
+                  <div>
+                    <p className="hire-profile__org-name">
+                      Verified work on ABTalks
+                    </p>
+                    <p className="hire-profile__org-sub">{verifiedLine}</p>
+                  </div>
+                  {evidenceRoles.length > 0 && (
+                    <ul className="hire-profile__roles">
+                      {evidenceRoles.map((r) => (
+                        <li key={r.key ?? r.title} className="hire-profile__role">
+                          <span
+                            className="hire-profile__timeline"
+                            aria-hidden="true"
+                          />
+                          <div className="hire-profile__role-body">
+                            <div className="hire-profile__role-head">
+                              <p className="hire-profile__role-title">{r.title}</p>
+                              {r.badge && (
+                                <span className="hire-profile__promo">
+                                  {r.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="hire-profile__meta">{r.value}</p>
+                            {r.note && (
+                              <p className="hire-profile__text">{r.note}</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">External profiles</p>
-              <p className="hire-profile__meta hire-profile__ext-empty">
-                No external profiles declared
-              </p>
-            </div>
-          )}
-
-          <div className="hire-profile__rule" />
+              </div>
+            )}
+          </div>
         </section>
 
         <section
@@ -997,55 +925,6 @@ export function CandidateInspector({
           ) : (
             <p className="hire-profile__meta">No work experience recorded</p>
           )}
-        </section>
-
-        <section
-          data-section="evidence"
-          className="hire-profile__section hire-profile__section--ruled"
-          aria-label="ABTalks Evidence"
-        >
-          <h4 className="hire-profile__h">ABTalks Evidence</h4>
-          <div className="hire-profile__org-block">
-            <span className="hire-profile__tile" aria-hidden="true">
-              {monogram("ABTalks")}
-            </span>
-            <div className="hire-profile__org-main">
-              <div>
-                <p className="hire-profile__org-name">Verified work on ABTalks</p>
-                <p className="hire-profile__org-sub">
-                  Completions and placements only
-                </p>
-              </div>
-              {evidenceRoles.length > 0 ? (
-                <ul className="hire-profile__roles">
-                  {evidenceRoles.map((r) => (
-                    <li key={r.key ?? r.title} className="hire-profile__role">
-                      <span
-                        className="hire-profile__timeline"
-                        aria-hidden="true"
-                      />
-                      <div className="hire-profile__role-body">
-                        <div className="hire-profile__role-head">
-                          <p className="hire-profile__role-title">{r.title}</p>
-                          {r.badge && (
-                            <span className="hire-profile__promo">{r.badge}</span>
-                          )}
-                        </div>
-                        <p className="hire-profile__meta">{r.value}</p>
-                        {r.note && <p className="hire-profile__text">{r.note}</p>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="hire-profile__meta">
-                  {sample
-                    ? "Figures are taken from your requirement, not from a candidate."
-                    : "No completed tracks or placements recorded."}
-                </p>
-              )}
-            </div>
-          </div>
         </section>
 
         <section className="hire-profile__section hire-profile__section--ruled hire-profile__section--wide">
@@ -1168,31 +1047,177 @@ export function CandidateInspector({
           </section>
         )}
 
+        {/* Contact, status and the unlock controls. Still here, still one
+            click away, but no longer the first thing above the evidence. */}
         <section
-          data-section="more"
-          className="hire-profile__section hire-profile__section--ruled hire-profile__section--cred"
-          aria-label="More"
+          data-section="contact"
+          className="hire-profile__overview hire-profile__section--ruled"
+          aria-label="Contact and status"
         >
-          <h4 className="hire-profile__h">AI candidate summary</h4>
-          <p className="hire-profile__text">
-            {match.rationale?.trim() ||
-              "Resume analysis has not been recorded for this candidate yet."}
-          </p>
-          <p className="hire-profile__note">
-            {sample
-              ? "This is an illustration of the requirement — nobody in the pool matches it yet. Figures above are taken from what you asked for, not from a candidate."
-              : coverageLede(match)}
-          </p>
+          <h4 className="hire-profile__h">Contact and status</h4>
+          <Row icon={CircleMinus} label="Status" muted={!status}>
+            {status ?? "No status"}
+          </Row>
+          {!sample && (
+            <Row icon={Gauge} label="AB score">
+              {match.score}/100{tierLabel ? ` · ${tierLabel}` : ""}
+            </Row>
+          )}
+          {preview ? (
+            <>
+              <Row icon={Mail} label="Email">
+                <LockedField
+                  value={preview.email}
+                  label="Email address"
+                  onReveal={openUpgrade}
+                />
+              </Row>
+              <Row icon={Phone} label="Phone">
+                <LockedField
+                  value={preview.phone}
+                  label="Phone number"
+                  onReveal={openUpgrade}
+                />
+              </Row>
+            </>
+          ) : contact ? (
+            // What the unlock bought, next to the control that bought it.
+            <>
+              <Row icon={Mail} label="Email" muted={!contact.email}>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </Row>
+              <Row icon={Phone} label="Phone" muted={!contact.phone}>
+                {contact.phone ? (
+                  <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+                ) : (
+                  "Not provided"
+                )}
+              </Row>
+              {/* T-232: message them from here, where the unlocked email is. */}
+              <Row icon={Send} label="Message">
+                <OutreachComposeDialog
+                  candidateRef={match.candidateRef}
+                  candidateLabel={contactLabel}
+                />
+              </Row>
+            </>
+          ) : !sample ? (
+            // T-229: revealing contact is the paid unlock — the dialog shows the
+            // configured cost, the balance and what is left before anything is
+            // charged. It is not the plan gate; the plan is a different thing.
+            <>
+              <Row icon={Mail} label="Email">
+                <UnlockContactDialog
+                  candidateRef={match.candidateRef}
+                  candidateLabel={contactLabel}
+                  onUnlocked={loadContact}
+                  triggerLabel={"Reveal email  +"}
+                  className="hire-profile__reveal"
+                />
+              </Row>
+              <Row icon={Phone} label="Phone">
+                <UnlockContactDialog
+                  candidateRef={match.candidateRef}
+                  candidateLabel={contactLabel}
+                  onUnlocked={loadContact}
+                  triggerLabel={"Reveal number  +"}
+                  className="hire-profile__reveal"
+                />
+              </Row>
+            </>
+          ) : null}
+          {preview ? (
+            <Row icon={Wallet} label="Expected compensation">
+              <LockedField
+                value={preview.compensationBand}
+                label="Expected compensation"
+                onReveal={openUpgrade}
+              />
+            </Row>
+          ) : match.compensationBand ? (
+            <Row
+              icon={Wallet}
+              label={
+                match.compensationDeclared ? "Expected CTC" : "Est. compensation"
+              }
+            >
+              {match.compensationBand}
+              {!match.compensationDeclared && (
+                <span className="hire-profile__note">
+                  {COMPENSATION_DISCLAIMER}
+                </span>
+              )}
+            </Row>
+          ) : null}
+          <Row icon={Tag} label="Tags" muted={tags.length === 0}>
+            {tags.length > 0 ? (
+              <span className="hire-profile__tags">
+                {tags.map((pill) => (
+                  <span key={pill.key} className={pill.className}>
+                    {pill.label}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              "No tags"
+            )}
+          </Row>
+          {upgradeOpen && <UpgradeNotice onDismiss={dismissUpgrade} />}
+          {preview && (
+            <p className="hire-profile__note">
+              This is an example of the full profile format. The details behind
+              the blur are generated, not a candidate.
+            </p>
+          )}
 
-          {!sample && match.scores && (
-            <div className="hire-profile__group">
-              <h4 className="hire-profile__h">Candidate parameters</h4>
-              <HireScoreChart scores={match.scores} total={match.score} />
-              <p className="hire-profile__note">
-                Slice size is each parameter&apos;s share of this candidate&apos;s
-                combined score; the exact value out of 100 is listed beside it.
-                Scores are derived from the evidence on record — indicative, not
-                a validated psychometric measure.
+          {!sample && externalLinks === null ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                Loading profiles…
+              </p>
+            </div>
+          ) : declaredLinks.length > 0 ? (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">
+                External profiles <small>· {declaredLinks.length}</small>
+              </p>
+              {declaredLinks.map((link) => (
+                <div
+                  key={`${link.provider}:${link.href}`}
+                  className="hire-profile__cert"
+                >
+                  <Award
+                    size={14}
+                    strokeWidth={1.2}
+                    absoluteStrokeWidth
+                    color="#03535F"
+                    aria-hidden="true"
+                  />
+                  <span className="hire-profile__cert-body">
+                    <span className="hire-profile__cert-title">{link.label}</span>
+                    <a
+                      className="hire-profile__cert-sub hire-profile__ext-link"
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.href}
+                    </a>
+                  </span>
+                  <span className="hire-profile__self-reported">SELF-REPORTED</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="hire-profile__card hire-profile__card--ext">
+              <p className="hire-profile__card-head">External profiles</p>
+              <p className="hire-profile__meta hire-profile__ext-empty">
+                No external profiles declared
               </p>
             </div>
           )}
@@ -1223,12 +1248,12 @@ export function CandidateInspector({
             </div>
           )}
 
-          <p className="hire-profile__note">
+          {/* <p className="hire-profile__note">
             Mission, first-attempt, commit and project figures are verified by
             ABTalks. Experience, skills, role and external profile links are
             self-declared. Compensation and availability are shown only when the
             candidate shared them.
-          </p>
+          </p> */}
         </section>
       </div>
     </aside>

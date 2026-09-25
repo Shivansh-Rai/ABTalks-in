@@ -11,18 +11,31 @@ const R_INNER = 44;
 const EXPLODE = 5;
 const ROUND = 7;
 
+/**
+ * Seven parameters, seven hues.
+ *
+ * Five of these were the same forest green at slightly different lightness, so
+ * the donut read as one teal blob and the legend swatch beside "Projects" was
+ * indistinguishable from the one beside "Experience" — which is the whole job
+ * of a legend. The brand teal keeps the lead slice; the rest step round the
+ * wheel far enough to be told apart at swatch size, and each keeps the same
+ * light/base/edge construction so the clay shading is unchanged.
+ *
+ * Colour is not the only cue: the exact value out of 100 is printed next to
+ * every row, so a reader who cannot separate two hues loses nothing.
+ */
 const PARAMS: {
   key: keyof PublicScoreSlice;
   label: string;
   color: { base: string; lift: string; edge: string };
 }[] = [
-  { key: "stack", label: "Stack match", color: { base: "#03535F", lift: "#A6D2D5", edge: "#076573" } },
-  { key: "missions", label: "Missions", color: { base: "#AA821D", lift: "#FFEDB0", edge: "#AA821D" } },
-  { key: "cleanPass", label: "First-attempt", color: { base: "#076573", lift: "#D4EBEC", edge: "#03535F" } },
-  { key: "projects", label: "Projects", color: { base: "#03535F", lift: "#A6D2D5", edge: "#03535F" } },
-  { key: "consistency", label: "Commit consistency", color: { base: "#076573", lift: "#D4EBEC", edge: "#03535F" } },
-  { key: "interview", label: "Interview", color: { base: "#D92D20", lift: "#D92D2024", edge: "#D92D20" } },
-  { key: "experience", label: "Experience", color: { base: "#03535F", lift: "#D4EBEC", edge: "#03535F" } },
+  { key: "stack", label: "Stack match", color: { base: "#03535F", lift: "#A6D2D5", edge: "#02434D" } },
+  { key: "missions", label: "Missions", color: { base: "#AA821D", lift: "#FFEDB0", edge: "#8A6A17" } },
+  { key: "cleanPass", label: "First-attempt", color: { base: "#18A97C", lift: "#C7F4E4", edge: "#0F7D5B" } },
+  { key: "projects", label: "Projects", color: { base: "#4C5FD5", lift: "#D3D8F8", edge: "#3A49AC" } },
+  { key: "consistency", label: "Commit consistency", color: { base: "#8B5CF6", lift: "#E2D9FD", edge: "#6D40D8" } },
+  { key: "interview", label: "Interview", color: { base: "#B4457A", lift: "#F6D6E5", edge: "#8F3561" } },
+  { key: "experience", label: "Experience", color: { base: "#4F7A21", lift: "#DCEDC2", edge: "#3D5F19" } },
 ];
 
 function polar(r: number, deg: number) {
