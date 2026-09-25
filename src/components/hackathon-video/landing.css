@@ -622,8 +622,9 @@
   letter-spacing: 0.22em;
 }
 
-/* CTAs on the dark canvas. Primary is a solid white paddle with a subtle
-   travelling shimmer, ghost is an outlined white pill that fills on hover. */
+/* CTAs on the dark canvas. Both buttons share IDENTICAL padding, height,
+   font-size and border-radius so they render at pixel-parity — only colors
+   and shadows differ. */
 .vt-hero__ctas {
   display: flex;
   flex-wrap: wrap;
@@ -631,21 +632,41 @@
   justify-content: center;
   margin-top: 4px;
 }
+.vt-mono .vt-hero__ctas .vt-btn--primary,
+.vt-mono .vt-hero__ctas .ab-btn--ghost {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 28px;
+  min-width: 200px;
+  height: 52px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+/* Primary — solid white paddle with a subtle travelling shimmer. */
 .vt-mono .vt-hero__ctas .vt-btn--primary {
   position: relative;
   overflow: hidden;
-  padding: 14px 30px;
   background: #FFFFFF;
   color: #0A0A0A;
-  border: 1px solid #FFFFFF;
-  border-radius: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  border-color: #FFFFFF;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 1),
     0 12px 28px -8px rgba(255, 255, 255, 0.35);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .vt-mono .vt-hero__ctas .vt-btn--primary::before {
   content: "";
@@ -682,21 +703,27 @@
     inset 0 1px 0 rgba(255, 255, 255, 1),
     0 18px 40px -10px rgba(255, 255, 255, 0.5);
 }
+
+/* Ghost — outlined white on transparent, matching size exactly. */
 .vt-mono .vt-hero__ctas .ab-btn--ghost {
-  padding: 13px 24px;
   background: transparent;
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 .vt-mono .vt-hero__ctas .ab-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.10);
   color: #FFFFFF;
   border-color: rgba(255, 255, 255, 0.65);
   transform: translateY(-2px);
+}
+.vt-mono .vt-hero__ctas .ab-btn--ghost svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .vt-hero__learn {
   display: inline-flex;
