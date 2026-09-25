@@ -24,6 +24,8 @@ export const REQUIRED_RATE_LIMIT_SITES: {
     files: [
       "src/app/actions/hire-actions.ts",
       "src/app/actions/hire-guest-actions.ts",
+      // Live brief parsing (Gemini) — own `brief:` subject, same bucket.
+      "src/app/api/hire/brief/route.ts",
     ],
   },
   {

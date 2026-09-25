@@ -130,7 +130,7 @@ const PLACES = [
 
   // work-mode intent that answers "where"
   "remote", "hybrid", "on[-\\s]?site", "wfh", "wfo", "work from home", "home", "office", 
-  "work from office", "anywhere", "relocat(?:e|ion|able)",
+  "work from office", "anywhere", "relocat(?:e|ion|able)", "remotely"
 ];
 const LOCATION_RE = new RegExp(`\\b(?:${PLACES.join("|")})\\b`);
 
@@ -157,8 +157,9 @@ const EXTRA_SKILLS = [
   "genai", "gen ai", "generative ai", "nlp", "computer vision", "opencv",
   "rag", "machine learning", "deep learning", "tableau", "power bi",
   "ms excel", "advanced excel", "figma", "selenium", "cypress",
+  "openai", "open ai", "open router", "open api",
   "playwright", "jest", "mern", "mean stack", "system design", "dsa", "data structures", "solidity", "web3",
-  "unity", "matlab", "bash", "salesforce", "typescript", "javascript", 
+  "unity", "matlab", "bash", "salesforce", "typescript", "javascript", "claude", "springboot","kimi","prompting", "prompt engineering", "prompt engg"
 ];
 
 function escapeToken(t: string): string {
@@ -185,7 +186,7 @@ const GO_VERB_RE =
 // ─── Availability / compensation / ABtalks (unchanged from the composer) ─────
 
 const AVAILABILITY_RE =
-  /\b(remote|hybrid|onsite|on-site|wfh|immediate|notice|available|full[-\s]?time|contract|intern(ship)?|part[-\s]?time)\b/;
+  /\b(remote|remotely|hybrid|onsite|on-site|wfh|immediate|notice|available|full[-\s]?time|contract|intern(ship)?|part[-\s]?time)\b/;
 const COMPENSATION_RE =
   /\b(\d+(\.\d+)?\s*(-\s*\d+(\.\d+)?)?\s*(lpa|lakh|ctc)|salary|budget|₹|inr|compensation|stipend)\b/;
 const ABTALKS_RE =
