@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 const HIW_STEPS = [
   {
     title: "Register",
-    body: "Sign in with Google, fill a short form. Solo entry — no team code, no group chase.",
+    body: "Sign in with Google, fill a short form. Solo entry, no team code, no group chase.",
   },
   {
     title: "Join the WhatsApp group",
@@ -34,7 +34,7 @@ const HIW_STEPS = [
   },
   {
     title: "Submit before the deadline",
-    body: "One public link — Drive, Behance, YouTube, Vimeo, anything a judge can open. Late is not counted.",
+    body: "One public link. Drive, Behance, YouTube, Vimeo, anything a judge can open. Late is not counted.",
   },
 ];
 
@@ -60,7 +60,7 @@ const TIMELINE = [
 const FAQ_ITEMS = [
   {
     q: "Who's it for?",
-    a: "Anyone who edits video — students, self-taught cutters, in-house editors, freelancers. All skill levels, worldwide.",
+    a: "Anyone who edits video: students, self-taught cutters, in-house editors, freelancers. All skill levels, worldwide.",
   },
   {
     q: "Do I need to be in India?",
@@ -68,11 +68,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "What software can I use?",
-    a: "Anything. Premiere, DaVinci, Final Cut, CapCut, After Effects — whatever ships your best cut. Your call.",
+    a: "Anything. Premiere, DaVinci, Final Cut, CapCut, After Effects. Whatever ships your best cut. Your call.",
   },
   {
     q: "What's the brief?",
-    a: "It lands in the WhatsApp group at kickoff. One prompt everyone edits to — the constraint is what makes it interesting.",
+    a: "It lands in the WhatsApp group at kickoff. One prompt everyone edits to, and the constraint is what makes it interesting.",
   },
   {
     q: "Do I get feedback if I don't win?",
@@ -88,7 +88,7 @@ const RULES = [
   {
     n: "01.",
     title: "Solo entries only",
-    body: "Individual competition. No credited collaborators — one editor, one cut.",
+    body: "Individual competition. No credited collaborators. One editor, one cut.",
     variant: "rule--1",
   },
   {
@@ -100,13 +100,13 @@ const RULES = [
   {
     n: "03.",
     title: "Everything inside 48 hours",
-    body: "The cut, the grade, the sound, the export — all after kickoff. Pre-built templates disclosed in submission notes.",
+    body: "The cut, the grade, the sound, the export. All after kickoff. Pre-built templates disclosed in submission notes.",
     variant: "rule--3",
   },
   {
     n: "04.",
     title: "One link, before the timer",
-    body: "Drive, Behance, YouTube, Vimeo — any public link a judge can open. Late is not counted.",
+    body: "Drive, Behance, YouTube, Vimeo. Any public link a judge can open. Late is not counted.",
     variant: "rule--4",
   },
 ];

@@ -212,7 +212,13 @@ export function VideoRegistrationForm({
               <FormControl>
                 <RadioGroup
                   value={field.value}
-                  onValueChange={(v) => field.onChange(v)}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    // Clear leftover CTC when they switch back to Learner —
+                    // the field is hidden, so any old value would silently
+                    // ride along into the DB row otherwise.
+                    if (v === "LEARNER") form.setValue("currentCtc", "");
+                  }}
                   className="vt-form__choices"
                 >
                   <label
@@ -252,26 +258,26 @@ export function VideoRegistrationForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="currentCtc"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Current CTC{" "}
-                <span className="vt-form__hint">
-                  {employment === "WORKING"
-                    ? "(required — type NA if you'd rather not share)"
-                    : "(optional)"}
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. 800000 or NA" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {employment === "WORKING" ? (
+          <FormField
+            control={form.control}
+            name="currentCtc"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Current CTC{" "}
+                  <span className="vt-form__hint">
+                    (required, type NA if you&apos;d rather not share)
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. 800000 or NA" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
 
         <FormField
           control={form.control}
@@ -289,7 +295,7 @@ export function VideoRegistrationForm({
                 />
               </FormControl>
               <p className="vt-form__hint">
-                Any public link — Drive, Behance, YouTube, Vimeo, personal site.
+                Any public link. Drive, Behance, YouTube, Vimeo, personal site.
               </p>
               <FormMessage />
             </FormItem>
