@@ -232,97 +232,95 @@
   .vt-hero__noise { animation: none; }
 }
 
-/* Two VERTICAL film strips — one on the left edge of the hero, one on the
-   right — scrolling continuously in opposite directions. Each strip is a
-   dark bar with two columns of bright sprocket holes and a per-frame
-   divider running down the middle. Visible and prominent (56px wide,
-   bright silver sprockets, black frame gutters). */
+/* Two VERTICAL film strips — one on the left, one on the right of the hero
+   — scrolling continuously in opposite directions. Each strip is drawn as
+   an inline-SVG pattern that repeats vertically: proper rounded rectangular
+   sprocket holes on both edges (4 per frame), and a raised central "frame
+   cell" with a thin border. The whole strip is 64px wide with 90px frame
+   cycles. Silver sprockets (#EAEAEA) sit on very dark charcoal (#050505)
+   for maximum contrast. */
 .vt-hero__reel {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 56px;
+  width: 64px;
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
   background: #050505;
   box-shadow:
-    inset 0 0 24px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+    inset 0 0 30px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(0, 0, 0, 0.6);
 }
-.vt-hero__reel--left  { left: 0; }
-.vt-hero__reel--right { right: 0; }
+.vt-hero__reel--left  { left: 0; border-right: 1px solid rgba(255, 255, 255, 0.06); }
+.vt-hero__reel--right { right: 0; border-left:  1px solid rgba(255, 255, 255, 0.06); }
 
+/* The film strip itself. Drawn once as a 90px-tall repeating SVG tile.
+   Frame anatomy (per 90px cycle):
+     - 4 rectangular sprocket holes on the LEFT column at y = 5, 28, 51, 74
+     - 4 rectangular sprocket holes on the RIGHT column at the same y values
+     - Central frame cell (the "picture") at x=22..42, from y=3 to y=87
+     - A thin white divider line between frames at y=88..89 */
 .vt-hero__reel::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: calc(100% + 240px);
-  /* One "frame" = 72px tall. Sprocket holes in a single column near each
-     vertical edge (left column + right column). Between frames a thin
-     light divider ticks across horizontally. */
-  background:
-    /* left column of sprockets — bright silver rounded squares */
-    radial-gradient(6px 8px at 14px 36px, #F0F0F0, #F0F0F0 55%, transparent 60%),
-    /* right column of sprockets */
-    radial-gradient(6px 8px at 42px 36px, #F0F0F0, #F0F0F0 55%, transparent 60%),
-    /* frame divider — subtle white line every 72px */
-    linear-gradient(0deg, transparent 0, transparent 71.5px, rgba(255, 255, 255, 0.18) 71.5px, rgba(255, 255, 255, 0.18) 72.5px, transparent 72.5px),
-    /* central film cell soft fill */
-    linear-gradient(90deg, transparent 0, transparent 22px, rgba(255, 255, 255, 0.04) 22px, rgba(255, 255, 255, 0.04) 34px, transparent 34px);
-  background-size:
-    56px 72px,
-    56px 72px,
-    56px 72px,
-    56px 72px;
-  background-repeat: repeat-y, repeat-y, repeat-y, repeat-y;
-  animation: vt-reel-down 14s linear infinite;
+  height: calc(100% + 90px);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='90' viewBox='0 0 64 90'><rect width='64' height='90' fill='%23050505'/><rect x='22' y='3' width='20' height='84' fill='%23101010' stroke='rgba(255,255,255,0.10)' stroke-width='0.8'/><g fill='%23EAEAEA'><rect x='6' y='5'  width='11' height='14' rx='2.5'/><rect x='6' y='28' width='11' height='14' rx='2.5'/><rect x='6' y='51' width='11' height='14' rx='2.5'/><rect x='6' y='74' width='11' height='14' rx='2.5'/><rect x='47' y='5'  width='11' height='14' rx='2.5'/><rect x='47' y='28' width='11' height='14' rx='2.5'/><rect x='47' y='51' width='11' height='14' rx='2.5'/><rect x='47' y='74' width='11' height='14' rx='2.5'/></g><rect x='0' y='88' width='64' height='1.2' fill='rgba(255,255,255,0.16)'/></svg>");
+  background-size: 64px 90px;
+  background-repeat: repeat-y;
+  animation: vt-reel-down 5s linear infinite;
 }
 .vt-hero__reel--right::before {
-  animation: vt-reel-up 18s linear infinite;
+  animation: vt-reel-up 5s linear infinite;
 }
 
+/* Move exactly one frame per cycle so the loop is seamless — the second
+   sprocket lands where the first was, and so on. */
 @keyframes vt-reel-down {
-  0%   { transform: translate3d(0, -72px, 0); }
+  0%   { transform: translate3d(0, -90px, 0); }
   100% { transform: translate3d(0, 0, 0); }
 }
 @keyframes vt-reel-up {
   0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(0, -72px, 0); }
+  100% { transform: translate3d(0, -90px, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .vt-hero__reel::before { animation: none; }
 }
+
+/* Mobile: narrower reel, slightly smaller tile so the sprockets still
+   read at phone width without eating hero content. */
 @media (max-width: 640px) {
-  .vt-hero__reel { width: 40px; }
+  .vt-hero__reel { width: 44px; }
   .vt-hero__reel::before {
-    background:
-      radial-gradient(4px 6px at 10px 28px, #F0F0F0, #F0F0F0 55%, transparent 60%),
-      radial-gradient(4px 6px at 30px 28px, #F0F0F0, #F0F0F0 55%, transparent 60%),
-      linear-gradient(0deg, transparent 0, transparent 55.5px, rgba(255, 255, 255, 0.18) 55.5px, rgba(255, 255, 255, 0.18) 56.5px, transparent 56.5px),
-      linear-gradient(90deg, transparent 0, transparent 16px, rgba(255, 255, 255, 0.04) 16px, rgba(255, 255, 255, 0.04) 24px, transparent 24px);
-    background-size:
-      40px 56px,
-      40px 56px,
-      40px 56px,
-      40px 56px;
-    background-repeat: repeat-y, repeat-y, repeat-y, repeat-y;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='70' viewBox='0 0 44 70'><rect width='44' height='70' fill='%23050505'/><rect x='15' y='3' width='14' height='64' fill='%23101010' stroke='rgba(255,255,255,0.10)' stroke-width='0.8'/><g fill='%23EAEAEA'><rect x='4' y='4'  width='7' height='10' rx='2'/><rect x='4' y='21' width='7' height='10' rx='2'/><rect x='4' y='38' width='7' height='10' rx='2'/><rect x='4' y='55' width='7' height='10' rx='2'/><rect x='33' y='4'  width='7' height='10' rx='2'/><rect x='33' y='21' width='7' height='10' rx='2'/><rect x='33' y='38' width='7' height='10' rx='2'/><rect x='33' y='55' width='7' height='10' rx='2'/></g><rect x='0' y='68' width='44' height='1' fill='rgba(255,255,255,0.16)'/></svg>");
+    background-size: 44px 70px;
+    height: calc(100% + 70px);
+  }
+  @keyframes vt-reel-down {
+    0%   { transform: translate3d(0, -70px, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+  @keyframes vt-reel-up {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, -70px, 0); }
   }
 }
 
-/* Give the hero content clearance from the vertical reels. */
+/* Hero content clearance from the vertical reels. */
 .vt-mono .vt-hero.hk-hero {
-  padding-left: clamp(80px, 8vw, 120px);
-  padding-right: clamp(80px, 8vw, 120px);
+  padding-left: clamp(88px, 9vw, 128px);
+  padding-right: clamp(88px, 9vw, 128px);
   padding-top: clamp(48px, 6vw, 96px);
   padding-bottom: clamp(48px, 6vw, 96px);
 }
 @media (max-width: 640px) {
   .vt-mono .vt-hero.hk-hero {
-    padding-left: 60px;
-    padding-right: 60px;
+    padding-left: 64px;
+    padding-right: 64px;
   }
 }
 
