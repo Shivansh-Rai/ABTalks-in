@@ -36,7 +36,7 @@ export async function saveVideoSubmissionAction(input: VideoSubmissionInput) {
   if (!window.unlocked) {
     return {
       ok: false as const,
-      message: `Submissions open at kickoff — ${VIDEOTHON.kickoffLabel}.`,
+      message: `Submissions open at kickoff. ${VIDEOTHON.kickoffLabel}.`,
     };
   }
   if (window.closed) {
