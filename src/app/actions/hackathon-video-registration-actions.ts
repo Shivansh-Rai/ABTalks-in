@@ -95,8 +95,12 @@ export async function submitVideoRegistrationAction(input: VideoRegistrationInpu
     };
   }
 
-  // Fire-and-forget side effects. Failures never invalidate the registration.
-  void sendVideoWelcomeEmail(fullName, email);
+  // Send the confirmation email BEFORE the action returns — fire-and-forget
+  // on Vercel serverless can be killed mid-flight when the function replies.
+  // `sendVideoWelcomeEmail` catches its own transport errors and logs; it
+  // never throws, so awaiting it can't break registration.
+  await sendVideoWelcomeEmail(fullName, email);
+
   try {
     await recordLegalConsents({ userId, email, source: "hackathon" });
     await recordNewsletterOptIn({

@@ -35,10 +35,10 @@ export const VIDEOTHON = {
   resultsLabel: "Winners announced: Friday, 16 Oct",
   registrationClosesLabel: "Registration closes Friday, 9 Oct · 6:00 PM IST",
 
-  // TODO(organizer): paste the real WhatsApp group link before shipping.
-  // The Coming Soon that this replaces did not have a Discord — leaving that
-  // slot empty by design. Add one if it comes back.
-  whatsappLink: "https://chat.whatsapp.com/PLACEHOLDER",
+  // Live WhatsApp group link (locked in 2026-09-25). The Coming Soon that
+  // this replaces did not have a Discord — leaving that slot empty by
+  // design. Add one if it comes back.
+  whatsappLink: "https://chat.whatsapp.com/D4TiA9y16nl3JGjo7drtCo",
   discordLink: "" as string,
 
   // TODO(organizer): decide whether VideoThon is themeless or brief-picked.

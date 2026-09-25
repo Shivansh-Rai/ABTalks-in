@@ -861,94 +861,97 @@
   stroke-linejoin: round;
 }
 
-/* Event-window panel on the dark hero. Each column carries a small colored
-   pip next to its label (red pulse for kickoff = "recording", amber for
-   deadline = "warning", cyan for results = "complete"). The panel itself
-   is a raised bezel with a subtle inner top highlight. */
+/* Event-window panel on the dark hero. Three symmetric columns, each with
+   a colored pip + mono label + bold value. Higher contrast, bigger text,
+   center-aligned so the three columns read as identical containers. */
 .vt-mono .vt-hero__meta {
-  margin: 12px 0 0;
-  padding: 18px 26px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
+  margin: 16px 0 0;
+  padding: 22px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.025) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 16px 40px -12px rgba(0, 0, 0, 0.6);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 20px 48px -12px rgba(0, 0, 0, 0.7);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px 20px;
-  min-width: min(100%, 640px);
+  gap: 0;
+  width: min(100%, 720px);
 }
 .vt-mono .vt-hero__meta > div {
   display: grid;
-  gap: 6px;
-  padding: 0 14px;
-  border-left: 1px solid rgba(255, 255, 255, 0.14);
-  text-align: left;
+  gap: 10px;
+  padding: 4px 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: center;
+  justify-items: center;
   position: relative;
 }
 .vt-mono .vt-hero__meta > div:first-child {
   border-left: none;
-  padding-left: 0;
 }
 .vt-mono .vt-hero__meta dt {
   font-family: ui-monospace, "SF Mono", "Consolas", monospace;
-  font-size: 10px;
-  letter-spacing: 0.20em;
+  font-size: 11px;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, 0.68);
   margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  line-height: 1;
 }
 /* Colored status pip next to each dt — different color per event. */
 .vt-mono .vt-hero__meta dt::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
   background: #FFFFFF;
   flex: 0 0 auto;
 }
 .vt-mono .vt-hero__meta > div:nth-child(1) dt::before {
   background: #FF3B30;
-  box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.55);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.6), 0 0 0 0 rgba(255, 59, 48, 0.55);
   animation: vt-rec 1.6s ease-in-out infinite;
 }
 .vt-mono .vt-hero__meta > div:nth-child(2) dt::before {
   background: var(--vt-yellow, #FFE45C);
-  box-shadow: 0 0 8px rgba(255, 228, 92, 0.4);
+  box-shadow: 0 0 10px rgba(255, 228, 92, 0.55);
 }
 .vt-mono .vt-hero__meta > div:nth-child(3) dt::before {
   background: var(--vt-blue, #3CD1FF);
-  box-shadow: 0 0 8px rgba(60, 209, 255, 0.4);
+  box-shadow: 0 0 10px rgba(60, 209, 255, 0.55);
 }
 .vt-mono .vt-hero__meta dd {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #FFFFFF;
   line-height: 1.35;
   letter-spacing: 0.005em;
+  white-space: nowrap;
 }
 @media (max-width: 640px) {
   .vt-mono .vt-hero__meta {
     grid-template-columns: 1fr;
-    padding: 14px 18px;
+    padding: 16px 20px;
+    gap: 0;
   }
   .vt-mono .vt-hero__meta > div {
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    padding: 10px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 14px 0;
   }
   .vt-mono .vt-hero__meta > div:first-child {
     border-top: none;
-    padding-top: 0;
+    padding-top: 4px;
   }
+  .vt-mono .vt-hero__meta dd { white-space: normal; }
 }
 
 /* ============================================================
