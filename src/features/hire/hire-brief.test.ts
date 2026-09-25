@@ -284,31 +284,25 @@ async function main() {
     assert(calls.length === 0, "no call");
   });
 
-  await test("env: only GEMINI_RECRUITER_SEARCH configures it, never GEMINI_API_KEY", async () => {
-    const saved = {
-      shared: process.env.GEMINI_API_KEY,
-      own: process.env.GEMINI_RECRUITER_SEARCH,
-    };
+  await test("env: GEMINI_API_KEY configures hire brief parsing", async () => {
+    const saved = process.env.GEMINI_API_KEY;
     try {
-      process.env.GEMINI_API_KEY = "shared-key";
-      delete process.env.GEMINI_RECRUITER_SEARCH;
-      assert(!isHireBriefConfigured(), "shared key alone must not configure it");
+      delete process.env.GEMINI_API_KEY;
+      assert(!isHireBriefConfigured(), "no key → unconfigured");
       const { impl, calls } = fakeGemini(JSON.stringify(RICH_MODEL));
       const r = await extractHireBrief(RICH, { fetchImpl: impl, useCache: false });
       assert(!r.ok && r.reason === "unconfigured", JSON.stringify(r));
-      assert(calls.length === 0, "no call on the shared key");
+      assert(calls.length === 0, "no call without key");
 
-      process.env.GEMINI_RECRUITER_SEARCH = "own-key";
-      assert(isHireBriefConfigured(), "own key configures it");
+      process.env.GEMINI_API_KEY = "shared-key";
+      assert(isHireBriefConfigured(), "GEMINI_API_KEY configures it");
       const ok = await extractHireBrief(RICH, { fetchImpl: impl, useCache: false });
-      assert(ok.ok, "ok with own key");
+      assert(ok.ok, "ok with GEMINI_API_KEY");
       const headers = calls[0]!.init.headers as Record<string, string>;
-      assert(headers["x-goog-api-key"] === "own-key", "sends the recruiter key");
+      assert(headers["x-goog-api-key"] === "shared-key", "sends GEMINI_API_KEY");
     } finally {
-      if (saved.shared === undefined) delete process.env.GEMINI_API_KEY;
-      else process.env.GEMINI_API_KEY = saved.shared;
-      if (saved.own === undefined) delete process.env.GEMINI_RECRUITER_SEARCH;
-      else process.env.GEMINI_RECRUITER_SEARCH = saved.own;
+      if (saved === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = saved;
     }
   });
 

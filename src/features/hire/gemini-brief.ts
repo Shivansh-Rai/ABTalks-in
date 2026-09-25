@@ -69,12 +69,11 @@ type GeminiResponse = {
 };
 
 /**
- * Its own key, deliberately not `GEMINI_API_KEY`: that one already serves the
- * résumé parser, the interview agent and the site chatbot. A separate key keeps
- * recruiter-search quota, billing and rotation independent of them.
+ * Shared platform Gemini key (`GEMINI_API_KEY`) — same as résumé, interview and
+ * chatbot. Unset and the regex detector is used for /hire ticks and search.
  */
 function apiKeyFromEnv(): string | null {
-  return process.env.GEMINI_RECRUITER_SEARCH?.trim() || null;
+  return process.env.GEMINI_API_KEY?.trim() || null;
 }
 
 export function isHireBriefConfigured(): boolean {
