@@ -24,17 +24,16 @@ export const VIDEOTHON = {
   // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
   registrationOpen: true,
 
-  // TODO(organizer): replace all three UTC instants with the real event window.
-  // The placeholders below put kickoff a week from the plan's authoring date so
-  // the countdown does not render "started already" during development.
-  kickoffUtc: "2026-10-03T14:30:00Z", // Placeholder: Fri 3 Oct · 8:00 PM IST
-  deadlineUtc: "2026-10-05T15:15:00Z", // Placeholder: Sun 5 Oct · 8:45 PM IST
-  registrationClosesUtc: "2026-10-03T12:30:00Z", // Placeholder: Fri 3 Oct · 6:00 PM IST
+  // Event window (confirmed 2026-09-25): kickoff Fri 9 Oct 8:00 PM IST,
+  // deadline Sun 11 Oct 8:45 PM IST. UTC = IST − 5:30.
+  kickoffUtc: "2026-10-09T14:30:00Z", // Fri 9 Oct · 8:00 PM IST
+  deadlineUtc: "2026-10-11T15:15:00Z", // Sun 11 Oct · 8:45 PM IST
+  registrationClosesUtc: "2026-10-09T12:30:00Z", // Fri 9 Oct · 6:00 PM IST
 
-  kickoffLabel: "Friday, 3 Oct · 8:00 PM IST",
-  deadlineLabel: "Sunday, 5 Oct · 8:45 PM IST",
-  resultsLabel: "Winners announced: Friday, 10 Oct",
-  registrationClosesLabel: "Registration closes Friday, 3 Oct · 6:00 PM IST",
+  kickoffLabel: "Friday, 9 Oct · 8:00 PM IST",
+  deadlineLabel: "Sunday, 11 Oct · 8:45 PM IST",
+  resultsLabel: "Winners announced: Friday, 16 Oct",
+  registrationClosesLabel: "Registration closes Friday, 9 Oct · 6:00 PM IST",
 
   // TODO(organizer): paste the real WhatsApp group link before shipping.
   // The Coming Soon that this replaces did not have a Discord — leaving that

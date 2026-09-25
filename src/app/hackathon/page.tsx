@@ -7,10 +7,10 @@ import {
 } from "@/features/hackathon-video/config";
 import { getMyVideoRegistration } from "@/features/hackathon-video/get-my-registration";
 import { HackathonShell } from "@/components/hackathon-v2/hackathon-shell";
+import { FaqAccordion } from "@/components/hackathon-v2/faq-accordion";
 import { VideothonCountdown } from "@/components/hackathon-video/countdown";
 import { VideothonRegisterCTA } from "@/components/hackathon-video/register-cta";
-import { ReelTimeline } from "@/components/hackathon-video/reel-timeline";
-import { FaqTape } from "@/components/hackathon-video/faq-tape";
+import "@/app/hackathon/_styles/hackathon-v2.css";
 import "@/components/hackathon-video/landing.css";
 
 export const metadata: Metadata = {
@@ -19,57 +19,41 @@ export const metadata: Metadata = {
     "A 48-hour hackathon for video editors. Solo. One brief. Ship one cut.",
 };
 
-const TIMELINE = [
+const HIW_STEPS = [
   {
-    label: "01",
-    title: "Kickoff",
-    body: "The brief drops in the WhatsApp group. The clock starts. Open your project.",
-    atPct: 0,
+    title: "Register",
+    body: "Sign in with Google, fill a short form. Solo entry — no team code, no group chase.",
   },
   {
-    label: "02",
-    title: "Halfway",
-    body: "Optional pulse check. Share rough cuts, get notes, keep cutting.",
-    atPct: 0.5,
+    title: "Join the WhatsApp group",
+    body: "Every participant joins the group. Kickoff, the brief, judge Q&A and last-minute updates land there first.",
   },
   {
-    label: "03",
-    title: "Deadline",
-    body: "Submit your Drive / Behance / YouTube link before the timer hits zero.",
-    atPct: 1,
+    title: "Cut for 48 hours",
+    body: "From Friday kickoff to Sunday deadline. Any software, any sources you have rights to. Ship one cut.",
   },
   {
-    label: "04",
-    title: "Results",
-    body: "Winners announced with a public reel. Feedback for every entry.",
-    atPct: 1,
+    title: "Submit before the deadline",
+    body: "One public link — Drive, Behance, YouTube, Vimeo, anything a judge can open. Late is not counted.",
   },
 ];
 
-const RULES = [
+const TIMELINE = [
   {
-    scene: "01",
-    take: "SOLO",
-    title: "You cut it alone",
-    body: "Individual entries only. No credited collaborators — one editor, one cut.",
+    title: "Kickoff",
+    body: "The brief lands in the WhatsApp group. The clock starts. Open your project.",
   },
   {
-    scene: "02",
-    take: "FOOTAGE",
-    title: "Sources allowed, credited",
-    body: "Stock is fine. Client work is not. If a shot isn't yours, name where it came from.",
+    title: "Halfway",
+    body: "Optional pulse check. Share rough cuts, get notes, keep cutting.",
   },
   {
-    scene: "03",
-    take: "WINDOW",
-    title: "Everything inside 48 hours",
-    body: "The cut, the grade, the sound, the export — all after kickoff. Pre-built templates disclosed in notes.",
+    title: "Deadline",
+    body: "Submit the public link before the timer hits zero. Anything late is not counted.",
   },
   {
-    scene: "04",
-    take: "SUBMIT",
-    title: "One link, before the timer",
-    body: "Drive, Behance, YouTube, Vimeo — any public link a judge can open. Late is not counted.",
+    title: "Results",
+    body: "Winners announced with a public reel. Every entry gets a written judge note.",
   },
 ];
 
@@ -84,7 +68,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What software can I use?",
-    a: "Anything. Premiere, DaVinci, Final Cut, CapCut, After Effects, whatever ships your best cut. Your call.",
+    a: "Anything. Premiere, DaVinci, Final Cut, CapCut, After Effects — whatever ships your best cut. Your call.",
   },
   {
     q: "What's the brief?",
@@ -93,6 +77,37 @@ const FAQ_ITEMS = [
   {
     q: "Do I get feedback if I don't win?",
     a: "Yes. Every entry gets a short note from the judges. That's the point.",
+  },
+  {
+    q: "Is it free?",
+    a: "Yes. Registration and entry are completely free.",
+  },
+];
+
+const RULES = [
+  {
+    n: "01.",
+    title: "Solo entries only",
+    body: "Individual competition. No credited collaborators — one editor, one cut.",
+    variant: "rule--1",
+  },
+  {
+    n: "02.",
+    title: "Sources allowed, credited",
+    body: "Stock is fine. Client work is not. If a shot isn't yours, name where it came from in your notes.",
+    variant: "rule--2",
+  },
+  {
+    n: "03.",
+    title: "Everything inside 48 hours",
+    body: "The cut, the grade, the sound, the export — all after kickoff. Pre-built templates disclosed in submission notes.",
+    variant: "rule--3",
+  },
+  {
+    n: "04.",
+    title: "One link, before the timer",
+    body: "Drive, Behance, YouTube, Vimeo — any public link a judge can open. Late is not counted.",
+    variant: "rule--4",
   },
 ];
 
@@ -128,162 +143,181 @@ export default async function HackathonPage() {
         image: session?.user?.image ?? null,
       }}
     >
-      <a className="ab-skip" href="#vt-hero-title">
+      <a className="ab-skip ab-sr" href="#vt-hero-title">
         Skip to main content
       </a>
 
-      <div className="vt">
-        <div className="vt-inner">
-          {/* ============ HERO — the one dark card ============ */}
-          <section className="vt-hero" aria-labelledby="vt-hero-title">
-            <p className="vt-hero__eyebrow">
-              <span className="vt-dot" aria-hidden />
-              REC · 48 HOURS · ONE BRIEF
-            </p>
-            <h1 className="vt-hero__title" id="vt-hero-title">
-              {VIDEOTHON.name}
-              <br />
-              <em>for editors.</em>
-            </h1>
-            <p className="vt-hero__tagline">{VIDEOTHON.tagline}</p>
+      {/* 1 · HERO — uses the existing `.hk-hero__head` chrome from
+          hackathon-v2.css so it inherits every responsive break the code
+          hackathon already fixed. */}
+      <section className="hk-hero" aria-labelledby="vt-hero-title">
+        <div className="hk-hero__head">
+          <h1 className="hk-hero__title" id="vt-hero-title">
+            <em>{VIDEOTHON.name}</em> — a 48-hour hackathon for editors
+          </h1>
+          <p className="hk-hero__sub">{VIDEOTHON.tagline}</p>
 
-            <div className="vt-hero__row">
-              <VideothonCountdown
-                kickoffUtc={VIDEOTHON.kickoffUtc}
-                deadlineUtc={VIDEOTHON.deadlineUtc}
-              />
-              <div className="vt-hero__meta">
-                <span>
-                  <strong>{VIDEOTHON.kickoffLabel}</strong>
-                </span>
-                <span>→ {VIDEOTHON.deadlineLabel}</span>
-                <span>{VIDEOTHON.resultsLabel}</span>
-              </div>
-            </div>
-
-            <div className="vt-hero__row">
-              <VideothonRegisterCTA
-                isAuthed={isAuthed}
-                registered={registered}
-                registrationOpen={registrationOpen}
-                prefill={prefill}
-                variant="cta"
-              />
-              {VIDEOTHON.whatsappLink ? (
-                <Link
-                  href={VIDEOTHON.whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="vt-btn vt-btn--ghost vt-btn--lg"
-                >
-                  WhatsApp group →
-                </Link>
-              ) : null}
-            </div>
-          </section>
-
-          {/* ============ TIMELINE ============ */}
-          <section className="vt-section" aria-labelledby="vt-timeline-title">
-            <header className="vt-section__head">
-              <p className="vt-section__eyebrow">Timeline</p>
-              <h2 className="vt-section__title" id="vt-timeline-title">
-                A single <em>continuous cut.</em>
-              </h2>
-            </header>
-            <ReelTimeline
+          <div className="vt-hero__timer">
+            <VideothonCountdown
               kickoffUtc={VIDEOTHON.kickoffUtc}
               deadlineUtc={VIDEOTHON.deadlineUtc}
-              marks={TIMELINE}
             />
-          </section>
+          </div>
 
-          {/* ============ RULES ============ */}
-          <section className="vt-section" aria-labelledby="vt-rules-title">
-            <header className="vt-section__head">
-              <p className="vt-section__eyebrow">Rules · Scene 01 · Take 1</p>
-              <h2 className="vt-section__title" id="vt-rules-title">
-                Four <em>slates,</em> non-negotiable.
-              </h2>
-            </header>
-            <ol className="vt-rules">
-              {RULES.map((r) => (
-                <li key={r.title} className="vt-slate">
-                  <p className="vt-slate__meta">
-                    <span>Scene {r.scene}</span>
-                    <span>{r.take}</span>
-                  </p>
-                  <h3 className="vt-slate__title">{r.title}</h3>
-                  <p className="vt-slate__body">{r.body}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
+          <div className="hk-cta">
+            <VideothonRegisterCTA
+              isAuthed={isAuthed}
+              registered={registered}
+              registrationOpen={registrationOpen}
+              prefill={prefill}
+              variant="cta"
+            />
+            <Link className="ab-btn ab-btn--ghost hk-cta__secondary" href="#hk-how">
+              Learn more
+              <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+                <path d="M4 12h15M13 6l6 6-6 6" />
+              </svg>
+            </Link>
+          </div>
 
-          {/* ============ PRIZES ============ */}
-          <section className="vt-section" aria-labelledby="vt-prizes-title">
-            <header className="vt-section__head">
-              <p className="vt-section__eyebrow">Prizes</p>
-              <h2 className="vt-section__title" id="vt-prizes-title">
-                What you <em>walk with.</em>
-              </h2>
-            </header>
-            {VIDEOTHON.prizes.length === 0 ? (
-              <div className="vt-marquee__soon">
-                Prize tiers revealed at kickoff — every finalist gets a public
-                spotlight and a written judge note.
+          <p className="vt-hero__meta">
+            <strong>{VIDEOTHON.kickoffLabel}</strong> → {VIDEOTHON.deadlineLabel}
+            <br />
+            {VIDEOTHON.resultsLabel}
+          </p>
+        </div>
+      </section>
+
+      {/* 2 · HOW IT WORKS */}
+      <section className="hk-how" id="hk-how" aria-labelledby="hk-how-title">
+        <h2 className="hk-h2" id="hk-how-title">
+          How it works
+        </h2>
+        <ol className="hk-how__grid">
+          {HIW_STEPS.map((step, i) => (
+            <li key={step.title} className="hiw">
+              <span className="hiw__tab" aria-hidden>
+                {i + 1}
+              </span>
+              <div className="hiw__body">
+                <h3 className="hiw__title">{step.title}</h3>
+                <p className="hiw__text">{step.body}</p>
               </div>
-            ) : (
-              <div className="vt-marquee" aria-label="Prize tiers">
-                <div className="vt-marquee__track">
-                  {[...VIDEOTHON.prizes, ...VIDEOTHON.prizes].map((p, i) => (
-                    <span key={`${p.place}-${i}`} className="vt-marquee__item">
-                      {p.place} — {p.reward}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-          {/* ============ FAQ ============ */}
-          <section className="vt-section" aria-labelledby="vt-faq-title">
-            <header className="vt-section__head">
-              <p className="vt-section__eyebrow">FAQ</p>
-              <h2 className="vt-section__title" id="vt-faq-title">
-                Questions we <em>keep hearing.</em>
+      {/* 3 · WhatsApp callout — the brief lands there first */}
+      {VIDEOTHON.whatsappLink ? (
+        <section
+          className="hk-discord"
+          id="hk-whatsapp"
+          aria-labelledby="hk-whatsapp-title"
+        >
+          <div className="hk-discord__card">
+            <div className="hk-discord__body">
+              <span className="hk-discord__eyebrow">Community · Required</span>
+              <h2 className="hk-discord__title" id="hk-whatsapp-title">
+                Every participant joins the WhatsApp group
               </h2>
-            </header>
-            <FaqTape items={FAQ_ITEMS} />
-          </section>
-
-          {/* ============ WHATSAPP CALLOUT ============ */}
-          {VIDEOTHON.whatsappLink ? (
-            <section
-              className="vt-callout"
-              aria-labelledby="vt-whatsapp-title"
-            >
-              <div>
-                <h2 className="vt-callout__title" id="vt-whatsapp-title">
-                  The brief lands on WhatsApp.
-                </h2>
-                <p className="vt-callout__body">
-                  Kickoff announcements, the brief, judge Q&amp;A and
-                  last-minute updates all happen there first. Being registered
-                  isn&apos;t enough — join the group.
-                </p>
-              </div>
+              <p className="hk-discord__text">
+                Kickoff announcements, the brief, judge Q&amp;A and last-minute
+                updates all happen there first. If you&rsquo;re not in the group,
+                you will miss it.
+              </p>
+            </div>
+            <div className="hk-discord__cta">
               <Link
                 href={VIDEOTHON.whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="vt-btn vt-btn--dark vt-btn--lg"
+                className="ab-btn ab-btn--primary hk-discord__btn"
               >
-                Join the group →
+                Join the WhatsApp group →
               </Link>
-            </section>
-          ) : null}
+              <p className="hk-discord__note">Opens WhatsApp in a new tab.</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 4 · TIMELINE */}
+      <section
+        className="hk-timeline"
+        data-timeline
+        aria-labelledby="hk-timeline-title"
+      >
+        <div className="tl">
+          <h2 className="hk-h2 tl__title" id="hk-timeline-title">
+            Timeline
+          </h2>
+          <ol className="tl__cards">
+            {TIMELINE.map((t, i) => (
+              <li
+                key={t.title}
+                className="tl-card"
+                style={{ ["--i" as string]: String(i) } as React.CSSProperties}
+              >
+                <h3 className="tl-card__title">{t.title}</h3>
+                <p className="tl-card__text">{t.body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="tl__rail" aria-hidden>
+            <span className="tl__line" />
+            {["14.77%", "38.26%", "61.74%", "85.23%"].map((x, i) => (
+              <span
+                key={x}
+                className="tl-tab"
+                style={
+                  {
+                    ["--x" as string]: x,
+                    ["--i" as string]: String(i),
+                  } as React.CSSProperties
+                }
+              >
+                {i + 1}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* 5 · FAQ */}
+      <section className="hk-faq" aria-labelledby="hk-faq-title">
+        <div className="hk-faq__intro">
+          <h2 className="hk-h2 hk-faq__title" id="hk-faq-title">
+            Frequently asked
+            <br />
+            <em>questions</em>
+          </h2>
+          <p className="hk-faq__sub">Common questions before you register.</p>
+        </div>
+        <FaqAccordion items={FAQ_ITEMS} />
+      </section>
+
+      {/* 6 · RULES */}
+      <section className="hk-rules" aria-labelledby="hk-rules-title">
+        <h2 className="ab-sr" id="hk-rules-title">
+          Rules
+        </h2>
+        <div className="rules">
+          <span className="rules__word" aria-hidden>
+            RULES
+          </span>
+          {RULES.map((r) => (
+            <article key={r.n} className={`rule ${r.variant}`} tabIndex={0}>
+              <div className="rule__note">
+                <h3 className="rule__title">
+                  <b>{r.n}</b> {r.title}
+                </h3>
+                <p className="rule__text">{r.body}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </HackathonShell>
   );
 }
