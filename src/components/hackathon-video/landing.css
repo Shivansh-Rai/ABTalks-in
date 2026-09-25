@@ -260,6 +260,99 @@
   .vt-hero__dust { animation: none; opacity: 0.75; }
 }
 
+/* Weak-signal overlay — the "old TV losing its channel" effect. Two
+   horizontal glitch bands jump across the picture at unpredictable y
+   positions, occasional whole-hero brightness dips + contrast punch to
+   feel like a fading channel. Sits above the static + scanlines so the
+   bands read as physical distortions of the video signal. */
+.vt-hero__signal {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  animation: vt-signal-drop 9s ease-out infinite;
+}
+/* Glitch band 1 — thin bright/dark horizontal streak, jumps to a new y
+   and briefly shifts sideways as if the sync is broken. */
+.vt-hero__signal::before {
+  content: "";
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    transparent 0,
+    rgba(255, 255, 255, 0.55) 12%,
+    rgba(255, 255, 255, 0.90) 26%,
+    rgba(0, 0, 0, 0.85) 40%,
+    rgba(255, 255, 255, 0.65) 54%,
+    rgba(255, 255, 255, 0.85) 70%,
+    rgba(0, 0, 0, 0.70) 82%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.7px);
+  opacity: 0;
+  animation: vt-glitch-band-a 4.4s steps(1) infinite;
+}
+/* Glitch band 2 — thicker chunk with black+white gradient, comes and goes
+   on a different beat so the two never sync. */
+.vt-hero__signal::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 32px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgba(0, 0, 0, 0.55) 20%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(0, 0, 0, 0.55) 80%,
+    transparent 100%
+  );
+  opacity: 0;
+  animation: vt-glitch-band-b 7.1s steps(1) infinite;
+}
+@keyframes vt-signal-drop {
+  0%, 100%     { filter: none; }
+  22%, 24%     { filter: brightness(0.7) contrast(1.4); }
+  25%          { filter: none; }
+  61%, 62.5%   { filter: brightness(0.55) contrast(1.6); }
+  64%          { filter: none; }
+  88%, 89%     { filter: brightness(0.75) contrast(1.3); }
+  90%          { filter: none; }
+}
+@keyframes vt-glitch-band-a {
+  0%, 100% { opacity: 0; top: 14%; transform: translateX(0); }
+  32%      { opacity: 0; top: 14%; transform: translateX(0); }
+  33%      { opacity: 1;    top: 22%; transform: translateX(-14px); }
+  34%      { opacity: 0.85; top: 22%; transform: translateX(18px); }
+  35%      { opacity: 0;    top: 22%; transform: translateX(0); }
+  72%      { opacity: 0;    top: 65%; transform: translateX(0); }
+  73%      { opacity: 1;    top: 65%; transform: translateX(20px); }
+  74%      { opacity: 0.7;  top: 65%; transform: translateX(-16px); }
+  75%      { opacity: 0;    top: 65%; transform: translateX(0); }
+}
+@keyframes vt-glitch-band-b {
+  0%, 100% { opacity: 0; top: 40%; }
+  46%      { opacity: 0;    top: 40%; }
+  47%      { opacity: 0.85; top: 28%; }
+  48%      { opacity: 0.6;  top: 52%; }
+  49%      { opacity: 0;    top: 60%; }
+  86%      { opacity: 0;    top: 30%; }
+  87%      { opacity: 0.85; top: 30%; }
+  88%      { opacity: 0.5;  top: 46%; }
+  89%      { opacity: 0;    top: 60%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-hero__signal,
+  .vt-hero__signal::before,
+  .vt-hero__signal::after { animation: none; opacity: 0; }
+}
+
 /* Two VERTICAL film strips — one on the left, one on the right of the hero
    — scrolling continuously in opposite directions. Each strip is drawn as
    an inline-SVG pattern that repeats vertically: proper rounded rectangular
