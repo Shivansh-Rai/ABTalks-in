@@ -39,7 +39,6 @@ import {
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { AddToPipelineButton } from "@/components/hire/pipeline/add-to-pipeline-button";
 import { PanelResizer } from "@/components/hire/panel-resizer";
-import { EvidenceResumeBody } from "@/components/hire/evidence-resume";
 import { HireScoreChart } from "@/components/hire/hire-score-chart";
 import {
   buildCardPills,
@@ -84,7 +83,6 @@ const TABS = [
   { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
-  { id: "resume", label: "Resume" },
 ] as const;
 
 const MONTH_SHORT = [
@@ -765,9 +763,7 @@ export function CandidateInspector({
           className="hire-profile__tabs"
           aria-label="Profile sections"
         >
-          {/* A sample card has no evidence record, so it has no resume section
-              to jump to — drop the tab rather than leave it inert. */}
-          {TABS.filter((t) => t.id !== "resume" || !sample).map((t) => (
+          {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -1255,23 +1251,6 @@ export function CandidateInspector({
             )}
           </div>
         </section>
-
-        {!sample && (
-          <section
-            data-section="resume"
-            className="hire-profile__section hire-profile__section--ruled"
-            aria-label="Resume"
-          >
-            <h4 className="hire-profile__h">Resume</h4>
-            {/* The same record as /hire/evidence, rendered here so the
-                recruiter never leaves the results to read it. The identity
-                header is suppressed: the panel already shows the name and
-                score above. */}
-            <div className="hire-sheet hire-sheet--embed">
-              <EvidenceResumeBody match={match} showIdentity={false} />
-            </div>
-          </section>
-        )}
       </div>
     </aside>
   );
