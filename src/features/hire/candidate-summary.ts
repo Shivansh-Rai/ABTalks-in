@@ -120,8 +120,31 @@ export type SummaryInput = EvidenceFacts & {
    */
   givenName?: string | null;
   jobRole?: string | null;
+  /** Drives Student vs Working Professional when jobRole is blank or "Candidate". */
+  yearsExperience?: number | null;
   availabilityUnknown?: boolean;
 };
+
+/**
+ * Recruiter-facing role chip / "is a …" label.
+ *
+ * The pool often stores the literal "Candidate", which reads as noise next to a
+ * name. Empty or "Candidate" becomes Working Professional when they have any
+ * years of experience, otherwise Student. Real titles (Data Analyst, etc.) pass
+ * through unchanged.
+ */
+export function recruiterRoleLabel(input: {
+  jobRole?: string | null;
+  yearsExperience?: number | null;
+}): string {
+  const role = input.jobRole?.trim() ?? "";
+  if (role && role.toLowerCase() !== "candidate") return role;
+  const years = input.yearsExperience;
+  if (typeof years === "number" && Number.isFinite(years) && years > 0) {
+    return "Working Professional";
+  }
+  return "Student";
+}
 
 /** "Priya", or a subject that names nobody. */
 function subjectOf(s: SummaryInput): string {
@@ -140,18 +163,20 @@ function skillList(s: SummaryInput, max: number): string[] {
  * Third person plural throughout. A given name says nothing about how somebody
  * wants to be referred to, and guessing it wrong on a recruiter's screen is a
  * worse error than the slight stiffness of "they".
+ *
+ * Absences are omitted: "no verified evidence" belongs under Verified evidence,
+ * not in the summary.
  */
 export function candidateSummaryLine(s: SummaryInput): string {
   const who = subjectOf(s);
   const skills = skillList(s, 3);
+  const role = recruiterRoleLabel(s);
   const parts: string[] = [];
 
   if (skills.length > 0) {
     parts.push(`${who} lists ${joinList(skills)}.`);
-  } else if (s.jobRole?.trim()) {
-    parts.push(`${who} is a ${s.jobRole.trim()}.`);
   } else {
-    parts.push(`${who} has not declared any skills yet.`);
+    parts.push(`${who} is a ${role}.`);
   }
 
   const missions = missionsLine(s);
@@ -164,8 +189,6 @@ export function candidateSummaryLine(s: SummaryInput): string {
     parts.push(`They have completed ${missions}.`);
   } else if (verifiedEvidenceFacts(s).length > 0) {
     parts.push(`Verified on ABTalks: ${joinList(verifiedEvidenceFacts(s))}.`);
-  } else {
-    parts.push("No verified ABTalks evidence has been recorded yet.");
   }
 
   return parts.join(" ");
@@ -175,26 +198,20 @@ export function candidateSummaryLine(s: SummaryInput): string {
 export function candidateSummaryDetail(s: SummaryInput): string {
   const who = subjectOf(s);
   const skills = skillList(s, 8);
+  const role = recruiterRoleLabel(s);
   const parts: string[] = [];
 
-  const role = s.jobRole?.trim();
-  if (skills.length > 0 && role) {
+  if (skills.length > 0) {
     parts.push(
       `${who} is a ${role} and lists ${joinList(skills)} as self-declared skills.`,
     );
-  } else if (skills.length > 0) {
-    parts.push(`${who} lists ${joinList(skills)} as self-declared skills.`);
-  } else if (role) {
-    parts.push(`${who} is a ${role} and has not declared any skills yet.`);
   } else {
-    parts.push(`${who} has not declared a role or any skills yet.`);
+    parts.push(`${who} is a ${role}.`);
   }
 
   const facts = verifiedEvidenceFacts(s);
   if (facts.length > 0) {
     parts.push(`On ABTalks they have ${joinList(facts)}.`);
-  } else {
-    parts.push("No verified ABTalks evidence has been recorded for them yet.");
   }
 
   const languages = (s.workingLanguages ?? [])
@@ -203,12 +220,6 @@ export function candidateSummaryDetail(s: SummaryInput): string {
   if (languages.length > 0) {
     parts.push(
       `They worked in ${joinList(languages)} on the missions they passed.`,
-    );
-  }
-
-  if (s.availabilityUnknown) {
-    parts.push(
-      "Salary, notice period and location are unconfirmed, so check them at outreach.",
     );
   }
 
@@ -230,6 +241,12 @@ export function cleanRecruiterCopy(raw: string | null | undefined): string {
   return sentences
     .filter((s) => !/^gaps\s*:/i.test(s))
     .filter((s) => !/^AB-[\w?]+\s+scores\b/i.test(s))
+    .filter((s) => !/^Ranked on\b/i.test(s))
+    .filter(
+      (s) =>
+        !/^No verified ABTalks evidence\b/i.test(s) &&
+        !/\bhas not declared\b/i.test(s),
+    )
     .join(" ")
     .replace(/\bAB-[0-9?]{3,}\b/g, "This candidate")
     .replace(/\s*—\s*/g, ", ")
@@ -259,7 +276,10 @@ export function recruiterSummary(
   s: SummaryInput,
 ): string {
   const cleaned = cleanRecruiterCopy(rationale);
-  if (cleaned.length > 0 && !isLegacyTemplate(cleaned)) return cleaned;
+  if (cleaned.length > 0 && !isLegacyTemplate(cleaned)) {
+    const role = recruiterRoleLabel(s);
+    return cleaned.replace(/\bis a Candidate\b/gi, `is a ${role}`);
+  }
   return candidateSummaryDetail(s);
 }
 
@@ -271,6 +291,7 @@ export function summaryInputFromMatch(match: {
   availabilityUnknown?: boolean;
   evidence?: {
     skills?: string[];
+    yearsExperience?: number;
     missionsPassed?: number;
     totalTrackDays?: number | null;
     cleanPassCount?: number;
@@ -287,6 +308,7 @@ export function summaryInputFromMatch(match: {
   return {
     source: match.source,
     jobRole: match.jobRole ?? null,
+    yearsExperience: e.yearsExperience ?? null,
     givenName: match.locked ? null : (match.displayName ?? null),
     availabilityUnknown: match.availabilityUnknown ?? false,
     missionsPassed: e.missionsPassed ?? null,
@@ -302,4 +324,4 @@ export function summaryInputFromMatch(match: {
 }
 
 /** Exported for the evals — the wording rules a recruiter actually reads. */
-export const __test = { isLegacyTemplate, joinList };
+export const __test = { isLegacyTemplate, joinList, recruiterRoleLabel };

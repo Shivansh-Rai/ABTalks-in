@@ -282,6 +282,7 @@ function summaryInput(m: ScoredCandidate): SummaryInput {
     source: m.source,
     givenName: null,
     jobRole: m.jobRole,
+    yearsExperience: m.evidence.yearsExperience,
     availabilityUnknown: m.availabilityUnknown,
     // Earned passes, not mission points. Points include the three days waived
     // at enrolment, so quoting them credits a member with work they never did.

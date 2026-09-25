@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   NO_VERIFIED_EVIDENCE,
+  recruiterRoleLabel,
   recruiterSummary,
   summaryInputFromMatch,
   trackLongLabel,
@@ -42,7 +43,6 @@ import { EvidenceResumeBody } from "@/components/hire/evidence-resume";
 import { HireScoreChart } from "@/components/hire/hire-score-chart";
 import {
   buildCardPills,
-  coverageLede,
   OpenToWorkBadge,
 } from "@/components/hire/hire-card-facts";
 import type { MatchCardData, MatchDecision } from "@/components/hire/match-card";
@@ -80,11 +80,11 @@ const WORK_MODE: Record<string, string> = {
  */
 const TABS = [
   { id: "evidence", label: "ABTalks Evidence" },
+  { id: "contact", label: "Contact" },
   { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "resume", label: "Resume" },
-  { id: "contact", label: "Contact" },
 ] as const;
 
 const MONTH_SHORT = [
@@ -276,20 +276,24 @@ export function CandidateInspector({
   decision?: MatchDecision | null;
 }) {
   const e = match.evidence ?? {};
+  const years =
+    typeof e.yearsExperience === "number" && e.yearsExperience > 0
+      ? e.yearsExperience
+      : null;
+  const roleLabel = recruiterRoleLabel({
+    jobRole: match.jobRole,
+    yearsExperience: years,
+  });
   // What a dialog may print when it has to name this candidate. Never the
   // `AB-####` reference: it is a hash of an internal id, it is not something a
   // recruiter can act on, and it is no longer shown anywhere on search.
-  const contactLabel = match.displayName?.trim() || match.jobRole;
+  const contactLabel = match.displayName?.trim() || roleLabel;
   const sample = match.candidateRef.startsWith("SAMPLE:");
   const preview = isLockedPreview(match) ? match.preview : null;
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const track = trackLongLabel(match.source);
   const skills = e.skills ?? [];
   const languages = e.workingLanguages ?? [];
-  const years =
-    typeof e.yearsExperience === "number" && e.yearsExperience > 0
-      ? e.yearsExperience
-      : null;
   const workMode = e.workMode ? (WORK_MODE[e.workMode] ?? e.workMode) : null;
   const tierLabel =
     match.tier === "STRONG"
@@ -536,10 +540,10 @@ export function CandidateInspector({
       }
     />
   ) : (
-    match.jobRole
+    roleLabel
   );
 
-  const orgs = [match.jobRole, track].filter((v): v is string => Boolean(v));
+  const orgs = [roleLabel, track].filter((v): v is string => Boolean(v));
 
   const evidenceItems = trackEvidence?.items ?? [];
   // Completed tracks and hackathon placements. Compensation is deliberately not
@@ -791,11 +795,13 @@ export function CandidateInspector({
           <div className="hire-profile__group">
             <p className="hire-profile__group-h">Candidate summary</p>
             <p className="hire-profile__text">{detailedSummary}</p>
-            <p className="hire-profile__note">
-              {sample
-                ? "This is an illustration of the requirement. Nobody in the pool matches it yet, and the figures are taken from what you asked for rather than from a candidate."
-                : coverageLede(match)}
-            </p>
+            {sample ? (
+              <p className="hire-profile__note">
+                This is an illustration of the requirement. Nobody in the pool
+                matches it yet, and the figures are taken from what you asked for
+                rather than from a candidate.
+              </p>
+            ) : null}
           </div>
 
           {!sample && match.scores && (
@@ -867,188 +873,8 @@ export function CandidateInspector({
           </div>
         </section>
 
-        <section
-          data-section="experience"
-          className="hire-profile__section hire-profile__section--ruled"
-          aria-label="Experience"
-        >
-          <h4 className="hire-profile__h">
-            Experience
-            {experienceSummary.length > 0 && (
-              <small>· {experienceSummary.join(" · ")}</small>
-            )}
-          </h4>
-          {sample ? (
-            <p className="hire-profile__meta">
-              Figures are taken from your requirement, not from a candidate.
-            </p>
-          ) : workHistory === null ? (
-            <p className="hire-profile__meta">Loading experience…</p>
-          ) : jobs.length > 0 ? (
-            jobs.map((job) => (
-              <div key={job.id} className="hire-profile__org-block">
-                <span className="hire-profile__tile" aria-hidden="true">
-                  {monogram(job.companyName || job.title)}
-                </span>
-                <div className="hire-profile__org-main">
-                  <div>
-                    <p className="hire-profile__org-name">{job.companyName}</p>
-                    <p className="hire-profile__org-sub">
-                      {[job.title, job.employmentType, job.locationCity]
-                        .map((part) => part?.trim())
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                  <ul className="hire-profile__roles">
-                    <li className="hire-profile__role">
-                      <span
-                        className="hire-profile__timeline"
-                        aria-hidden="true"
-                      />
-                      <div className="hire-profile__role-body">
-                        <div className="hire-profile__role-head">
-                          <p className="hire-profile__role-title">{job.title}</p>
-                        </div>
-                        <p className="hire-profile__meta">{jobSpan(job)}</p>
-                        {job.description?.trim() ? (
-                          <p className="hire-profile__text">
-                            {job.description.trim()}
-                          </p>
-                        ) : null}
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="hire-profile__meta">No work experience recorded</p>
-          )}
-        </section>
-
-        <section className="hire-profile__section hire-profile__section--ruled hire-profile__section--wide">
-          <div data-section="education" className="hire-profile__block">
-            <h4 className="hire-profile__h">Education</h4>
-            <div className="hire-profile__org-block">
-              <span
-                className="hire-profile__tile hire-profile__tile--school"
-                aria-hidden="true"
-              >
-                {(e.educationLevel ?? "?").trim().charAt(0).toUpperCase()}
-              </span>
-              <div className="hire-profile__org-main">
-                <div>
-                  <p className="hire-profile__org-name hire-profile__org-name--lg">
-                    {preview ? (
-                      <LockedField
-                        value={preview.educationLine}
-                        label="Education"
-                        onReveal={openUpgrade}
-                      />
-                    ) : (
-                      (e.educationLevel ?? "Not disclosed")
-                    )}
-                  </p>
-                  <p className="hire-profile__org-sub">
-                    Highest education · declared by the candidate
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-section="skills" className="hire-profile__block">
-            <h4 className="hire-profile__h">Skill Map</h4>
-            {(() => {
-              const verifiedMap = new Map<string, string[]>();
-              for (const vs of verifiedSkills ?? []) {
-                verifiedMap.set(vs.name.trim().toLowerCase(), vs.sources);
-              }
-              const hasSkills = skills.length > 0;
-              const hasVerified = (verifiedSkills ?? []).length > 0;
-
-              if (!hasSkills && !hasVerified) {
-                return <p className="hire-profile__meta">No skills declared.</p>;
-              }
-
-              return (
-                <div className="space-y-4">
-                  <div className="hire-profile__group">
-                    <p className="hire-profile__group-h">
-                      Candidate Skills · <small className="text-xs text-muted-foreground">Proven & Declared</small>
-                    </p>
-                    <ul className="hire-profile__chips">
-                      {skills.map((s) => {
-                        const sources = verifiedMap.get(s.trim().toLowerCase());
-                        const isVerified = Boolean(sources && sources.length > 0);
-                        return (
-                          <li
-                            key={s}
-                            className={cn(
-                              "hire-profile__chip flex flex-col items-start gap-1 py-2 px-3",
-                              isVerified ? "border-[#03535f]/40 bg-[#03535f]/5" : "border-zinc-200"
-                            )}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-zinc-900">{s}</span>
-                              {isVerified ? (
-                                <span className="inline-flex items-center rounded-full bg-[#03535f] px-2 py-0.5 text-[10px] font-semibold text-white tracking-wide uppercase">
-                                  Evidence-backed
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 tracking-wide uppercase">
-                                  Self-declared
-                                </span>
-                              )}
-                            </div>
-                            {isVerified && sources && sources.length > 0 && (
-                              <p className="text-[11px] text-[#03535f] font-normal leading-tight">
-                                Source: {sources.join(", ")}
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
-              );
-            })()}
-            {languages.length > 0 && (
-              <div className="hire-profile__group mt-4">
-                <p className="hire-profile__group-h">Verified working languages</p>
-                <ul className="hire-profile__chips">
-                  {languages.map((l) => (
-                    <li key={l} className="hire-profile__chip">
-                      {l}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {!sample && (
-          <section
-            data-section="resume"
-            className="hire-profile__section hire-profile__section--ruled"
-            aria-label="Resume"
-          >
-            <h4 className="hire-profile__h">Resume</h4>
-            {/* The same record as /hire/evidence, rendered here so the
-                recruiter never leaves the results to read it. The identity
-                header is suppressed: the panel already shows the name and
-                score above. */}
-            <div className="hire-sheet hire-sheet--embed">
-              <EvidenceResumeBody match={match} showIdentity={false} />
-            </div>
-          </section>
-        )}
-
-        {/* Contact, status and the unlock controls. Still here, still one
-            click away, but no longer the first thing above the evidence. */}
+        {/* Directly under ABTalks Evidence, above Experience — status, unlock,
+            tags and external profiles stay one scroll away from the proof. */}
         <section
           data-section="contact"
           className="hire-profile__overview hire-profile__section--ruled"
@@ -1175,15 +1001,15 @@ export function CandidateInspector({
           )}
 
           {!sample && externalLinks === null ? (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">External profiles</p>
+            <div className="hire-profile__group">
+              <p className="hire-profile__group-h">External profiles</p>
               <p className="hire-profile__meta hire-profile__ext-empty">
                 Loading profiles…
               </p>
             </div>
           ) : declaredLinks.length > 0 ? (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">
+            <div className="hire-profile__group">
+              <p className="hire-profile__group-h">
                 External profiles <small>· {declaredLinks.length}</small>
               </p>
               {declaredLinks.map((link) => (
@@ -1214,8 +1040,8 @@ export function CandidateInspector({
               ))}
             </div>
           ) : (
-            <div className="hire-profile__card hire-profile__card--ext">
-              <p className="hire-profile__card-head">External profiles</p>
+            <div className="hire-profile__group">
+              <p className="hire-profile__group-h">External profiles</p>
               <p className="hire-profile__meta hire-profile__ext-empty">
                 No external profiles declared
               </p>
@@ -1223,8 +1049,8 @@ export function CandidateInspector({
           )}
 
           {platforms.length > 0 && (
-            <div className="hire-profile__card">
-              <p className="hire-profile__card-head">
+            <div className="hire-profile__group">
+              <p className="hire-profile__group-h">
                 Credentials <small>· {platforms.length}</small>
               </p>
               {platforms.map((p) => (
@@ -1247,14 +1073,205 @@ export function CandidateInspector({
               ))}
             </div>
           )}
-
-          {/* <p className="hire-profile__note">
-            Mission, first-attempt, commit and project figures are verified by
-            ABTalks. Experience, skills, role and external profile links are
-            self-declared. Compensation and availability are shown only when the
-            candidate shared them.
-          </p> */}
         </section>
+
+        <section
+          data-section="experience"
+          className="hire-profile__section hire-profile__section--ruled"
+          aria-label="Experience"
+        >
+          <h4 className="hire-profile__h">
+            Experience
+            {experienceSummary.length > 0 && (
+              <small>· {experienceSummary.join(" · ")}</small>
+            )}
+          </h4>
+          {sample ? (
+            <p className="hire-profile__meta">
+              Figures are taken from your requirement, not from a candidate.
+            </p>
+          ) : workHistory === null ? (
+            <p className="hire-profile__meta">Loading experience…</p>
+          ) : jobs.length > 0 ? (
+            jobs.map((job) => (
+              <div key={job.id} className="hire-profile__org-block">
+                <span className="hire-profile__tile" aria-hidden="true">
+                  {monogram(job.companyName || job.title)}
+                </span>
+                <div className="hire-profile__org-main">
+                  <div>
+                    <p className="hire-profile__org-name">{job.companyName}</p>
+                    <p className="hire-profile__org-sub">
+                      {[job.title, job.employmentType, job.locationCity]
+                        .map((part) => part?.trim())
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <ul className="hire-profile__roles">
+                    <li className="hire-profile__role">
+                      <span
+                        className="hire-profile__timeline"
+                        aria-hidden="true"
+                      />
+                      <div className="hire-profile__role-body">
+                        <div className="hire-profile__role-head">
+                          <p className="hire-profile__role-title">{job.title}</p>
+                        </div>
+                        <p className="hire-profile__meta">{jobSpan(job)}</p>
+                        {job.description?.trim() ? (
+                          <p className="hire-profile__text">
+                            {job.description.trim()}
+                          </p>
+                        ) : null}
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="hire-profile__meta">No work experience recorded</p>
+          )}
+        </section>
+
+        <section className="hire-profile__section hire-profile__section--ruled hire-profile__section--wide">
+          <div data-section="education" className="hire-profile__block">
+            <h4 className="hire-profile__h">Education</h4>
+            <div className="hire-profile__org-block">
+              <span
+                className="hire-profile__tile hire-profile__tile--school"
+                aria-hidden="true"
+              >
+                {(e.educationLevel ?? "?").trim().charAt(0).toUpperCase()}
+              </span>
+              <div className="hire-profile__org-main">
+                <div>
+                  <p className="hire-profile__org-name hire-profile__org-name--lg">
+                    {preview ? (
+                      <LockedField
+                        value={preview.educationLine}
+                        label="Education"
+                        onReveal={openUpgrade}
+                      />
+                    ) : (
+                      (e.educationLevel ?? "Not disclosed")
+                    )}
+                  </p>
+                  <p className="hire-profile__org-sub">
+                    Highest education · declared by the candidate
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div data-section="skills" className="hire-profile__block">
+            <h4 className="hire-profile__h">Skill Map</h4>
+            {(() => {
+              const verifiedMap = new Map<string, string[]>();
+              for (const vs of verifiedSkills ?? []) {
+                verifiedMap.set(vs.name.trim().toLowerCase(), vs.sources);
+              }
+              // One section per provenance — not a badge on every chip. A skill
+              // with evidence goes under Evidence-backed; everything else under
+              // Self-declared. Verified skills that never appear on the
+              // declared list still show in Evidence-backed.
+              const evidenceBacked: { name: string; sources: string[] }[] = [];
+              const seenVerified = new Set<string>();
+              for (const s of skills) {
+                const key = s.trim().toLowerCase();
+                const sources = verifiedMap.get(key);
+                if (sources && sources.length > 0) {
+                  evidenceBacked.push({ name: s, sources });
+                  seenVerified.add(key);
+                }
+              }
+              for (const vs of verifiedSkills ?? []) {
+                const key = vs.name.trim().toLowerCase();
+                if (seenVerified.has(key)) continue;
+                evidenceBacked.push({ name: vs.name, sources: vs.sources });
+                seenVerified.add(key);
+              }
+              const selfDeclared = skills.filter(
+                (s) => !verifiedMap.has(s.trim().toLowerCase()),
+              );
+
+              if (
+                evidenceBacked.length === 0 &&
+                selfDeclared.length === 0
+              ) {
+                return <p className="hire-profile__meta">No skills declared.</p>;
+              }
+
+              return (
+                <div className="space-y-4">
+                  {evidenceBacked.length > 0 && (
+                    <div className="hire-profile__group">
+                      <p className="hire-profile__group-h">Evidence-backed</p>
+                      <ul className="hire-profile__chips">
+                        {evidenceBacked.map((s) => (
+                          <li
+                            key={`verified:${s.name}`}
+                            className="hire-profile__chip border-[#03535f]/40 bg-[#03535f]/5"
+                            title={
+                              s.sources.length > 0
+                                ? `Source: ${s.sources.join(", ")}`
+                                : undefined
+                            }
+                          >
+                            {s.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {selfDeclared.length > 0 && (
+                    <div className="hire-profile__group">
+                      <p className="hire-profile__group-h">Self-declared</p>
+                      <ul className="hire-profile__chips">
+                        {selfDeclared.map((s) => (
+                          <li key={`declared:${s}`} className="hire-profile__chip">
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            {languages.length > 0 && (
+              <div className="hire-profile__group mt-4">
+                <p className="hire-profile__group-h">Verified working languages</p>
+                <ul className="hire-profile__chips">
+                  {languages.map((l) => (
+                    <li key={l} className="hire-profile__chip">
+                      {l}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {!sample && (
+          <section
+            data-section="resume"
+            className="hire-profile__section hire-profile__section--ruled"
+            aria-label="Resume"
+          >
+            <h4 className="hire-profile__h">Resume</h4>
+            {/* The same record as /hire/evidence, rendered here so the
+                recruiter never leaves the results to read it. The identity
+                header is suppressed: the panel already shows the name and
+                score above. */}
+            <div className="hire-sheet hire-sheet--embed">
+              <EvidenceResumeBody match={match} showIdentity={false} />
+            </div>
+          </section>
+        )}
       </div>
     </aside>
   );

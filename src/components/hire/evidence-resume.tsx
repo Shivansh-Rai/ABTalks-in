@@ -260,13 +260,13 @@ export function EvidenceResumeBody({
       {/* No Gaps section. Scoring still computes them; they are not something a
           recruiter reads about a named person on a search surface. */}
 
-      <p className="hire-sheet__note">
+      {/* <p className="hire-sheet__note">
         This is an ABTalks evidence record, not a self-written resume. Mission,
         first-attempt, commit and project figures are verified by the platform.
         Experience, skills and role are declared by the candidate.
         {match.compensationBand ? ` ${COMPENSATION_DISCLAIMER}` : ""}{" "}
         Compensation and availability are confirmed at outreach.
-      </p>
+      </p> */}
     </>
   );
 }
