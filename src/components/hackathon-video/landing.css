@@ -164,26 +164,48 @@
     center;
 }
 
-/* Slow diagonal scan lines drifting across the hero. */
+/* CRT scanlines — dense horizontal RGB-style bars, plus a single bright
+   rolling bar that slowly sweeps down the tube. Combined they read as an
+   old analog TV screen. */
 .vt-hero__scan {
   position: absolute;
   inset: 0;
+  /* Dense fine horizontal scanlines (the "raster") */
   background: repeating-linear-gradient(
-    115deg,
+    to bottom,
     transparent 0,
-    transparent 3px,
-    rgba(255, 255, 255, 0.025) 3px,
-    rgba(255, 255, 255, 0.025) 4px
+    transparent 1.5px,
+    rgba(0, 0, 0, 0.28) 1.5px,
+    rgba(0, 0, 0, 0.28) 2.5px
   );
-  mix-blend-mode: overlay;
-  animation: vt-scan 12s linear infinite;
+  pointer-events: none;
+  z-index: 1;
 }
-@keyframes vt-scan {
-  0%   { transform: translate3d(-40px, 0, 0); }
-  100% { transform: translate3d(40px, 0, 0); }
+.vt-hero__scan::before {
+  /* Rolling bright scan bar — the "vertical sync" glitch that sweeps
+     down old CRTs when they're slightly out of tune. */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 100%
+  );
+  animation: vt-crt-roll 7s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes vt-crt-roll {
+  0%   { top: -25%; }
+  100% { top: 105%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .vt-hero__scan { animation: none; }
+  .vt-hero__scan::before { animation: none; opacity: 0; }
 }
 
 /* Very faint TV-static noise. Static PNG-in-CSS via a tiny SVG data URI so
@@ -283,14 +305,47 @@
 /* Give the hero content some breathing room from the reels. */
 .vt-mono .vt-hero.hk-hero { padding-top: clamp(84px, 10vw, 156px); padding-bottom: clamp(84px, 10vw, 156px); }
 
-/* Vignette on the four corners so content pops. */
+/* CRT vignette + inset screen glow + occasional flicker. Together with the
+   scanlines and the rolling bar these are what makes the hero read as an
+   old TV rather than a flat dark rectangle. */
 .vt-mono .vt-hero.hk-hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+  /* Rounded corner "tube" vignette + a soft inner glow near the edges. */
+  background:
+    radial-gradient(140% 100% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%),
+    radial-gradient(60% 40% at 50% 8%,  rgba(255, 255, 255, 0.05), transparent 60%);
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.85),
+    inset 0 0 140px rgba(0, 0, 0, 0.55);
+  /* Very slight sepia / green tint like an old phosphor tube. */
+  mix-blend-mode: normal;
+  animation: vt-crt-flicker 4.7s ease-in-out infinite;
+}
+@keyframes vt-crt-flicker {
+  0%, 100%      { opacity: 1; }
+  4%, 6%        { opacity: 0.92; }
+  8%            { opacity: 1; }
+  46%, 47.5%    { opacity: 0.90; }
+  49%           { opacity: 1; }
+  82%, 83.5%    { opacity: 0.94; }
+  85%           { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-mono .vt-hero.hk-hero::after { animation: none; }
+}
+
+/* CRT curvature suggestion — the hero sits on rounded corners already, but
+   we also add a very subtle top-of-screen brightness gradient to imply the
+   phosphor tube's glow at the top edge. */
+.vt-mono .vt-hero.hk-hero {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 24px 60px -20px rgba(0, 0, 0, 0.75);
 }
 
 .vt-hero__inner {
@@ -357,47 +412,86 @@
   position: relative;
   font-style: normal;
   color: #FFFFFF;
-  /* Base subtle chromatic split so the glitch reads even at rest. */
-  text-shadow:
-    -2px 0 rgba(255, 228, 92, 0.55),
-     2px 0 rgba(255, 60, 172, 0.55);
+  /* At rest: pure white, no chromatic split. The glitch keyframes below
+     briefly reveal the yellow/pink ghost copies for a fraction of a second
+     every ~6 seconds — the rest of the time the text reads clean. */
+  animation: vt-glitch-shake 6.4s steps(1) infinite;
 }
 
-/* Two ghost copies of the title, offset in yellow and pink; a keyframe
-   flickers them briefly to simulate a "signal glitch" every few seconds. */
+/* Two ghost copies of the title. Both are `opacity: 0` at rest; the
+   keyframes flick them to full opacity only during the glitch beats,
+   producing a signal-loss chromatic burst then snapping back to clean
+   white. */
 .vt-hero__title em::before,
 .vt-hero__title em::after {
   content: attr(data-glitch);
   position: absolute;
   inset: 0;
   pointer-events: none;
-  color: transparent;
+  color: #FFFFFF;
+  opacity: 0;
+  clip-path: inset(0 0 0 0);
 }
 .vt-hero__title em::before {
   text-shadow: 2px 0 var(--vt-yellow, #FFE45C);
-  clip-path: inset(0 0 60% 0);
-  animation: vt-glitch-1 5.4s steps(1) infinite;
+  animation: vt-glitch-yellow 6.4s steps(1) infinite;
 }
 .vt-hero__title em::after {
   text-shadow: -2px 0 var(--vt-pink, #FF3CAC);
-  clip-path: inset(60% 0 0 0);
-  animation: vt-glitch-2 6.1s steps(1) infinite;
+  animation: vt-glitch-pink 6.4s steps(1) infinite;
 }
-@keyframes vt-glitch-1 {
-  0%, 92%, 100% { transform: translate3d(0, 0, 0); }
-  93%           { transform: translate3d(-2px, 1px, 0); }
-  94%           { transform: translate3d( 2px, -1px, 0); }
-  95%           { transform: translate3d(-1px, 0, 0); }
-  96%           { transform: translate3d( 1px, 1px, 0); }
+@keyframes vt-glitch-shake {
+  0%, 89%, 100%    { transform: translate3d(0, 0, 0); }
+  90%              { transform: translate3d(1px, 0, 0); }
+  91%              { transform: translate3d(-1px, 0, 0); }
+  92%              { transform: translate3d(0, 0, 0); }
+  95%              { transform: translate3d(-1px, 1px, 0); }
+  96%              { transform: translate3d(0, 0, 0); }
 }
-@keyframes vt-glitch-2 {
-  0%, 88%, 100% { transform: translate3d(0, 0, 0); }
-  89%           { transform: translate3d( 2px, -1px, 0); }
-  90%           { transform: translate3d(-2px, 0, 0); }
-  91%           { transform: translate3d( 1px, 1px, 0); }
-  92%           { transform: translate3d(-1px, 0, 0); }
+@keyframes vt-glitch-yellow {
+  0%, 89%, 92%, 94%, 100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+  }
+  90% {
+    opacity: 0.85;
+    clip-path: inset(0 0 62% 0);
+    transform: translate3d(-2px, 0, 0);
+  }
+  91% {
+    opacity: 0.75;
+    clip-path: inset(38% 0 26% 0);
+    transform: translate3d(3px, 0, 0);
+  }
+  93% {
+    opacity: 0.9;
+    clip-path: inset(10% 0 55% 0);
+    transform: translate3d(-3px, 1px, 0);
+  }
+}
+@keyframes vt-glitch-pink {
+  0%, 88%, 93%, 95%, 100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+  }
+  89% {
+    opacity: 0.85;
+    clip-path: inset(58% 0 0 0);
+    transform: translate3d(3px, 0, 0);
+  }
+  90% {
+    opacity: 0.7;
+    clip-path: inset(28% 0 34% 0);
+    transform: translate3d(-2px, -1px, 0);
+  }
+  94% {
+    opacity: 0.9;
+    clip-path: inset(48% 0 8% 0);
+    transform: translate3d(2px, 1px, 0);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
+  .vt-hero__title em,
   .vt-hero__title em::before,
   .vt-hero__title em::after { animation: none; }
 }
