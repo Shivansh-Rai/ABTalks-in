@@ -67,12 +67,19 @@ export function VideothonRegisterCTA({
         : "Register with Google"
       : "Registration closed";
 
+  // Two different button systems on purpose:
+  //   - variant="pill" renders in the shell's `.ab-header` (OUTSIDE `.vt`), so
+  //     it uses the shell's own `ab-btn ab-btn--primary ab-header__cta` classes
+  //     — these are defined in `hackathon-v2.css` and already sized for the
+  //     header rail (36px tall, brand-colored). Using `.vt-btn` here breaks
+  //     because the CSS variables it depends on live under `.vt` only.
+  //   - variant="cta" lives inside the hero (INSIDE `.vt`), so `.vt-btn` works.
   const className = cn(
-    "vt-btn",
+    variant === "pill"
+      ? "ab-btn ab-btn--primary ab-header__cta"
+      : "vt-btn",
     variant === "cta" && "vt-btn--primary vt-btn--lg",
-    variant === "pill" && "vt-btn--primary vt-btn--pill",
     fullWidth && "vt-btn--full",
-    !registrationOpen && "vt-btn--disabled",
   );
 
   if (registered) {

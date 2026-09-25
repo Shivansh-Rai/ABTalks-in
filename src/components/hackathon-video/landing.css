@@ -1,4 +1,4 @@
-/*
+﻿/*
  * VideoThon landing — cinematic accents inside the existing shell.
  *
  * Design intent: the sidebar + header + app chrome stay exactly as they are.
@@ -10,14 +10,19 @@
  * Motion budget: all CSS. Respects `prefers-reduced-motion`.
  */
 
+/* Global scope: the header CTA renders OUTSIDE `.vt`, and the hackathon shell
+   provides its own `.ab-btn` for that. This block is only for VideoThon-local
+   surfaces (`.vt`, `.vt-dash`, and the dialog body via `.vt-dialog`).
+
+   No `container-type: inline-size` — it was creating a nested container-query
+   root inside `.ab-content`'s own container context and producing layout
+   surprises. All sizing is on `clamp(px, vw, px)` instead. */
 .vt {
   --vt-serif: "Georgia", "Times New Roman", serif;
   --vt-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 
-  /* Palette — the dark hero uses these; the rest is normal light. */
   --vt-ink: #0A0B0E;
   --vt-panel: #14161B;
-  --vt-panel-2: #191C22;
   --vt-line: rgba(255, 255, 255, 0.09);
   --vt-line-strong: rgba(255, 255, 255, 0.22);
   --vt-text: #F5F5F5;
@@ -26,7 +31,6 @@
   --vt-accent: #FF4D3E;
   --vt-tape: #C8FF3A;
 
-  /* Light section palette — matches the shell surface (`--ab-surface`). */
   --vt-light-text: #0A0B0E;
   --vt-light-muted: #5F6570;
   --vt-light-line: #E7E9EE;
@@ -34,15 +38,37 @@
   --vt-light-tint: #F4F5F8;
 
   color: var(--vt-light-text);
-  /* Anchor a small container query so section paddings scale off the content
-     column, not the whole viewport. */
-  container-type: inline-size;
+}
+
+/* Screen-reader skip link — the shell renders one via <a class="ab-skip">, but
+   the class isn't styled globally, so it was rendering as visible link text
+   above the hero and pushing content down. Hide it visually, keep it in the
+   accessibility tree, and reveal on keyboard focus. */
+.vt .ab-skip {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.vt .ab-skip:focus {
+  position: fixed;
+  left: 16px;
+  top: 12px;
+  width: auto;
+  height: auto;
+  padding: 8px 12px;
+  background: var(--vt-ink);
+  color: var(--vt-text);
+  border-radius: 8px;
+  z-index: 100;
 }
 
 .vt-inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 24px clamp(16px, 3cqw, 40px) 0;
+  padding: 20px clamp(16px, 2.4vw, 32px) 40px;
 }
 
 /* ============================================================
@@ -52,7 +78,7 @@
   position: relative;
   overflow: hidden;
   margin: 8px 0 32px;
-  padding: clamp(36px, 6cqw, 72px) clamp(28px, 5cqw, 64px);
+  padding: clamp(36px, 5vw, 64px) clamp(24px, 4vw, 48px);
   border-radius: 20px;
   background: var(--vt-ink);
   color: var(--vt-text);
@@ -112,7 +138,7 @@
 .vt-hero__title {
   font-family: var(--vt-serif);
   font-weight: 400;
-  font-size: clamp(40px, 7cqw, 88px);
+  font-size: clamp(40px, 6.4vw, 84px);
   line-height: 0.98;
   letter-spacing: -0.02em;
   margin: 0;
@@ -128,7 +154,7 @@
   max-width: 520px;
   font-family: var(--vt-serif);
   font-style: italic;
-  font-size: clamp(16px, 2cqw, 22px);
+  font-size: clamp(16px, 1.8vw, 22px);
   line-height: 1.4;
   color: var(--vt-muted);
 }
@@ -245,7 +271,7 @@
 }
 .vt-section__title {
   font-family: var(--vt-serif);
-  font-size: clamp(26px, 4cqw, 38px);
+  font-size: clamp(24px, 3.2vw, 36px);
   line-height: 1.08;
   letter-spacing: -0.015em;
   margin: 0;
@@ -584,7 +610,7 @@
 /* ============================================================
  * DASHBOARD (dark cards, on the shell's light bg)
  * ============================================================ */
-.vt-dash { padding: 32px clamp(16px, 3cqw, 40px) 60px; max-width: 820px; margin: 0 auto; }
+.vt-dash { padding: 32px clamp(16px, 2.4vw, 40px) 60px; max-width: 820px; margin: 0 auto; }
 .vt-dash__welcome {
   display: flex;
   flex-wrap: wrap;
