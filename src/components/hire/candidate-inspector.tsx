@@ -7,8 +7,11 @@ import {
   ArrowRight,
   ArrowUpRight,
   Award,
+  Check,
   CircleMinus,
+  Copy,
   Gauge,
+  Lock,
   Mail,
   Phone,
   Send,
@@ -17,6 +20,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   NO_VERIFIED_EVIDENCE,
   recruiterRoleLabel,
@@ -76,7 +80,7 @@ const WORK_MODE: Record<string, string> = {
  * ABTalks Evidence leads. It is the only thing on this panel a CV cannot claim,
  * and it used to open below a Status / AB score / Email / Phone / Tags block
  * that told a recruiter nothing they had not already read on the card. Contact
- * and status are still here, at the end, next to the controls that unlock them.
+ * and status are still here: View expands the rows; Reveal buys the values.
  */
 const TABS = [
   { id: "evidence", label: "ABTalks Evidence" },
@@ -249,10 +253,11 @@ type Role = { key?: string; title: string; value: ReactNode; badge?: string; not
  * Experience is the candidate's own jobs (`CandidateExperience`, typed or
  * resume-merged), loaded on open. ABTalks Evidence is completed tracks and
  * hackathon placements, also loaded on open. Education is
- * the declared level. Contact is behind the paid unlock (T-229): "Reveal
- * email" / "Reveal number" open the unlock dialog, which states the cost
- * before charging. Resume uses the same credit unlock — billing is not
- * enabled, so the plans dialog must not be the gate.
+ * the declared level. Contact values are behind the paid unlock (T-229):
+ * "View Contact Details" only expands the section; "Reveal email" /
+ * "Reveal number" open the unlock dialog, which states the cost before
+ * charging. Resume uses the same credit unlock — billing is not enabled, so
+ * the plans dialog must not be the gate.
  */
 export function CandidateInspector({
   match,
@@ -309,6 +314,8 @@ export function CandidateInspector({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [contact, setContact] = useState<RevealedContact | null>(null);
+  /** Free expand only — does not unlock. Cleared when the candidate changes. */
+  const [contactOpen, setContactOpen] = useState(false);
   const onContactRevealedRef = useRef(onContactRevealed);
   onContactRevealedRef.current = onContactRevealed;
 
@@ -338,6 +345,7 @@ export function CandidateInspector({
   // the one now open.
   useEffect(() => {
     let alive = true;
+    setContactOpen(false);
     void (async () => {
       const found = sample
         ? null
@@ -883,7 +891,26 @@ export function CandidateInspector({
           className="hire-profile__overview hire-profile__section--ruled"
           aria-label="Contact and status"
         >
-          <h4 className="hire-profile__h">Contact and status</h4>
+          {/* View expands the contact rows for free. Reveal email / Reveal
+              number open the paid unlock dialog (one purchase fills both). */}
+          <div className="hire-profile__headrow">
+            <h4 className="hire-profile__h">Contact and status</h4>
+            {!sample && !preview && !contact && !contactOpen && (
+              <button
+                type="button"
+                className="hire-profile__unlockcta"
+                onClick={() => setContactOpen(true)}
+              >
+                {/* <Lock
+                  size={13}
+                  strokeWidth={1.8}
+                  absoluteStrokeWidth
+                  aria-hidden="true"
+                /> */}
+                View Contact Details
+              </button>
+            )}
+          </div>
           <Row icon={CircleMinus} label="Status" muted={!status}>
             {status ?? "No status"}
           </Row>
@@ -910,18 +937,25 @@ export function CandidateInspector({
               </Row>
             </>
           ) : contact ? (
-            // What the unlock bought, next to the control that bought it.
             <>
               <Row icon={Mail} label="Email" muted={!contact.email}>
                 {contact.email ? (
-                  <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                  <CopyableContact
+                    value={contact.email}
+                    href={`mailto:${contact.email}`}
+                    copyLabel="Copy email"
+                  />
                 ) : (
                   "Not provided"
                 )}
               </Row>
               <Row icon={Phone} label="Phone" muted={!contact.phone}>
                 {contact.phone ? (
-                  <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+                  <CopyableContact
+                    value={contact.phone}
+                    href={`tel:${contact.phone}`}
+                    copyLabel="Copy phone"
+                  />
                 ) : (
                   "Not provided"
                 )}
@@ -934,18 +968,15 @@ export function CandidateInspector({
                 />
               </Row>
             </>
-          ) : !sample ? (
-            // T-229: revealing contact is the paid unlock — the dialog shows the
-            // configured cost, the balance and what is left before anything is
-            // charged. It is not the plan gate; the plan is a different thing.
+          ) : contactOpen ? (
             <>
               <Row icon={Mail} label="Email">
                 <UnlockContactDialog
                   candidateRef={match.candidateRef}
                   candidateLabel={contactLabel}
                   onUnlocked={loadContact}
-                  triggerLabel={"Reveal email  +"}
                   className="hire-profile__reveal"
+                  triggerLabel="Reveal email"
                 />
               </Row>
               <Row icon={Phone} label="Phone">
@@ -953,12 +984,15 @@ export function CandidateInspector({
                   candidateRef={match.candidateRef}
                   candidateLabel={contactLabel}
                   onUnlocked={loadContact}
-                  triggerLabel={"Reveal number  +"}
                   className="hire-profile__reveal"
+                  triggerLabel="Reveal number"
                 />
               </Row>
             </>
           ) : null}
+          {/* T-229: Reveal email / Reveal number open the unlock dialog, which
+              states the cost before charging. View Contact Details only expands
+              these rows; it never charges. */}
           {preview ? (
             <Row icon={Wallet} label="Expected compensation">
               <LockedField
@@ -1284,5 +1318,50 @@ function Row({
         {children}
       </div>
     </div>
+  );
+}
+
+/** Mailto/tel plus a one-shot copy control — inspector unlocked contact only. */
+function CopyableContact({
+  value,
+  href,
+  copyLabel,
+}: {
+  value: string;
+  href: string;
+  copyLabel: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success("Copied");
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+
+  return (
+    <span className="hire-profile__contact-val">
+      <a href={href}>{value}</a>
+      <button
+        type="button"
+        className="hire-profile__copy"
+        aria-label={copyLabel}
+        title={copyLabel}
+        onClick={() => {
+          void copy();
+        }}
+      >
+        {copied ? (
+          <Check size={14} strokeWidth={2} absoluteStrokeWidth aria-hidden="true" />
+        ) : (
+          <Copy size={14} strokeWidth={1.75} absoluteStrokeWidth aria-hidden="true" />
+        )}
+      </button>
+    </span>
   );
 }

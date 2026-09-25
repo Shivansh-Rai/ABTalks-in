@@ -9882,6 +9882,124 @@ button.hire-profile__in:focus-visible {
   text-decoration: underline;
 }
 
+/* A section heading that carries its own action. The heading keeps the left,
+   the action sits on the right edge, and on a narrow panel the action wraps
+   under rather than squeezing the title. */
+.hire-profile__headrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.hire-profile__headrow .hire-profile__h {
+  min-width: 0;
+}
+
+/* Clay expand CTA — free "View Contact Details". Paid unlock lives on the
+   Reveal email / Reveal number row controls, not here. */
+.hire-profile__unlockcta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--h-primary);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 4px 12px rgba(3, 83, 95, 0.16);
+  transition: background-color 160ms var(--ease);
+}
+
+.hire-profile__unlockcta:hover {
+  background: var(--h-primary-hover);
+}
+
+.hire-profile__unlockcta:active {
+  background: #02434d;
+}
+
+.hire-profile__unlockcta:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 3px;
+}
+
+/* Text-weight reveal — opens the paid unlock dialog; not a second clay CTA. */
+.hire-profile__reveal {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--h-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hire-profile__reveal:hover {
+  color: var(--h-primary-hover);
+}
+
+.hire-profile__reveal:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.hire-profile__contact-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hire-profile__contact-val a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hire-profile__copy {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--h-muted, #626262);
+  cursor: pointer;
+}
+
+.hire-profile__copy:hover {
+  background: rgba(3, 83, 95, 0.08);
+  color: var(--h-primary);
+}
+
+.hire-profile__copy:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
 .hire-profile__tags {
   display: flex;
   flex-wrap: wrap;
