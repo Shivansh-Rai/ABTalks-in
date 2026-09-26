@@ -75,14 +75,18 @@ console.log("T-253 instrumentation structure: transport, emit sites, exclusions"
 // ── One transport, one initialisation (T-252 preserved) ──────────────────────
 
 {
-  // GA4 events and the Google Ads registration conversion both go through
-  // use-track.ts. A gtag('event') in any other file is a second analytics system.
+  // GA4 events and the enrolment-success Ads conversion go through use-track.ts.
+  // The landing page also carries Munna's page-load conversion snippet, pasted
+  // in the same inline script as the Google tag.
   const senders = APP.filter((f) => /gtag\(\s*["']event["']/.test(f.code));
+  const senderPaths = senders.map((f) => f.path).sort();
   assert(
-    senders.length === 1 && senders[0].path === "src/lib/analytics/use-track.ts",
-    `expected one gtag('event') call site, found: ${senders.map((f) => f.path).join(", ") || "none"}`,
+    senderPaths.length === 2 &&
+      senderPaths[0] === "src/app/page.tsx" &&
+      senderPaths[1] === "src/lib/analytics/use-track.ts",
+    `expected gtag('event') on the landing page and in use-track.ts, found: ${senderPaths.join(", ") || "none"}`,
   );
-  ok("transport: gtag('event') is called from use-track.ts and nowhere else");
+  ok("transport: gtag('event') is the landing conversion snippet and use-track.ts");
 }
 
 {

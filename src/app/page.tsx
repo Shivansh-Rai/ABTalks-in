@@ -30,7 +30,20 @@ export default async function HomePage() {
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GOOGLE_ADS_ID}');`}
+gtag('config', '${GOOGLE_ADS_ID}');
+gtag('event', 'conversion', {'send_to': '${GOOGLE_ADS_ID}/NG4TCOnlroMdEJbH_OBE'});
+function gtag_report_conversion(url) {
+  var callback = function () {
+    if (typeof(url) != 'undefined') {
+      window.location = url;
+    }
+  };
+  gtag('event', 'conversion', {
+      'send_to': '${GOOGLE_ADS_ID}/NG4TCOnlroMdEJbH_OBE',
+      'event_callback': callback
+  });
+  return false;
+}`}
       </Script>
       <LandingPage
         claudeEnabled={isClaudeEnabled()}
