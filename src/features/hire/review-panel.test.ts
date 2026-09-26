@@ -276,13 +276,28 @@ suite("next/previous are still rendered and disabled at the ends", () => {
   );
 });
 
-suite("the full report is a page, not a section of the panel", () => {
+suite("the full report is one component, not a section of the panel", () => {
   // The resume used to be embedded in the panel, under its own tab, which made
-  // the same evidence render twice a few inches apart. It is now one page, and
-  // "•••" is the only way to it.
+  // the same evidence render twice a few inches apart. It is now one report
+  // component: View as Report opens it in a modal over the desk, and
+  // /hire/evidence renders the same component for deep links.
   assert(
-    inspector.includes("evidenceResumeHref"),
-    "the ••• escape hatch to /hire/evidence must remain",
+    inspector.includes("CandidateReportDialog") &&
+      report.includes("export function CandidateReportDialog"),
+    "View as Report must open the shared report in a modal",
+  );
+  assert(
+    !inspector.includes("evidenceResumeHref"),
+    "View as Report must not open /hire/evidence in a new tab",
+  );
+  assert(
+    report.includes('variant="modal"') && report.includes('variant="page"'),
+    "the page and the modal must render the same ReportBody",
+  );
+  assert(
+    css.includes("body:has(.hire-report-modal) >") &&
+      css.includes(".hire-report-modal__dl"),
+    "the modal's PDF must print only the report, with a hover download",
   );
   assert(
     !inspector.includes('data-section="resume"') &&
