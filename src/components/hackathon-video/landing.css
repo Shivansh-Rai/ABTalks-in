@@ -1,4 +1,4 @@
-/*
+﻿/*
  * VideoThon — supplemental styles.
  *
  * The landing itself uses the existing `.hk-*` classes from
@@ -1540,3 +1540,583 @@
   .vt-hero__title { font-size: clamp(32px, 6vw, 52px); }
   .vt-hero__lede { max-width: 100%; }
 }
+
+/* ============================================================
+ * PARTICIPANT DESK  (dashboard)
+ * ------------------------------------------------------------
+ * Full-width workspace at /hackathon/dashboard. Compact top bar
+ * (name + status + inline countdown), then a two-column grid:
+ * primary column for the brief + submission, aside for the
+ * guidelines and the schedule. Full-width registration strip at
+ * the bottom.
+ *
+ * NOT a shrunken clone of the landing hero — the CRT chrome is
+ * limited to the top bar and shared card styles.
+ * ============================================================ */
+
+.vt-mono.vt-desk {
+  --vt-card-bg:       #0E0E0E;
+  --vt-card-bg-2:     #131313;
+  --vt-card-border:   rgba(255, 255, 255, 0.10);
+  --vt-card-border-2: rgba(255, 255, 255, 0.06);
+  --vt-card-hair:     rgba(255, 255, 255, 0.10);
+  --vt-text:          #FFFFFF;
+  --vt-muted:         rgba(255, 255, 255, 0.66);
+  --vt-dim:           rgba(255, 255, 255, 0.45);
+
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(16px, 2.4vw, 32px);
+  display: grid;
+  gap: clamp(14px, 1.8vw, 22px);
+  background: transparent;
+}
+
+/* ============================================================
+ * TOP BAR — welcome + countdown, all in one strip
+ * ============================================================ */
+.vt-desk__bar {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: clamp(20px, 2.8vw, 32px) clamp(22px, 3vw, 36px);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, #131313 0%, #0A0A0A 100%);
+  border: 1px solid var(--vt-card-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 22px 44px -24px rgba(0, 0, 0, 0.55);
+  color: var(--vt-text);
+}
+/* Very light raster to signal the CRT world without dominating. */
+.vt-desk__bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, 0.022) 2px,
+    rgba(255, 255, 255, 0.022) 3px
+  );
+}
+.vt-desk__bar > * { position: relative; z-index: 1; }
+
+.vt-desk__bar-meta { display: grid; gap: 8px; min-width: 0; }
+.vt-desk__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--vt-muted);
+}
+.vt-desk__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--vt-yellow, #FFE45C);
+  box-shadow: 0 0 8px rgba(255, 228, 92, 0.55);
+}
+.vt-desk__dot[data-tone="live"] {
+  background: #FF3B30;
+  box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.55);
+  animation: vt-rec 1.6s ease-in-out infinite;
+}
+.vt-desk__dot[data-tone="ended"] { background: rgba(255, 255, 255, 0.4); box-shadow: none; }
+
+.vt-desk__hi {
+  margin: 0;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--vt-text);
+}
+.vt-desk__hi-name { color: var(--vt-yellow, #FFE45C); }
+
+.vt-desk__status {
+  justify-self: start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 228, 92, 0.35);
+  background: rgba(255, 228, 92, 0.06);
+  color: var(--vt-yellow, #FFE45C);
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.vt-desk__status[data-tone="live"] {
+  color: #FF6B61;
+  border-color: rgba(255, 59, 48, 0.4);
+  background: rgba(255, 59, 48, 0.08);
+}
+.vt-desk__status[data-tone="ended"] {
+  color: var(--vt-dim);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Countdown restyled for the top bar: transparent, no card of its own. */
+.vt-desk__bar-timer { justify-self: end; }
+.vt-mono .vt-desk__bar-timer .vt-count {
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.14);
+  gap: 8px;
+}
+.vt-mono .vt-desk__bar-timer .vt-count__tile {
+  min-width: 44px;
+  padding: 4px 8px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.vt-mono .vt-desk__bar-timer .vt-count__num   { color: #FFFFFF; font-size: 22px; }
+.vt-mono .vt-desk__bar-timer .vt-count__label { color: var(--vt-dim); }
+.vt-mono .vt-desk__bar-timer .vt-count__phase { color: var(--vt-muted); }
+
+/* ============================================================
+ * ROWS — the desk stacks rows, each row is either full-width
+ * or a 2-col split. Heights always match within a row so we
+ * never get the "one column dangling long" white gap.
+ * ============================================================ */
+.vt-desk__row {
+  display: grid;
+  gap: clamp(14px, 1.8vw, 22px);
+  min-width: 0;
+}
+.vt-desk__row--split {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+.vt-desk__row--split > * {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+ * CARDS  (used by every dashboard section)
+ * ============================================================ */
+.vt-mono .vt-card--dark {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--vt-card-border);
+  border-radius: 16px;
+  background: var(--vt-card-bg);
+  color: var(--vt-text);
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.55);
+}
+.vt-mono .vt-card--dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, 0.02) 2px,
+    rgba(255, 255, 255, 0.02) 3px
+  );
+}
+.vt-mono .vt-card--dark > * { position: relative; }
+
+.vt-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.vt-card__eyebrow {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--vt-muted);
+}
+.vt-card__tag {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid var(--vt-card-border);
+  border-radius: 999px;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vt-muted);
+}
+.vt-card__tag[data-tone="locked"] { color: var(--vt-yellow, #FFE45C); border-color: rgba(255, 228, 92, 0.38); }
+.vt-card__tag[data-tone="live"]   { color: #FF6B61;                 border-color: rgba(255, 59, 48, 0.42); }
+.vt-card__tag[data-tone="ended"]  { color: var(--vt-dim);           border-color: rgba(255, 255, 255, 0.14); }
+.vt-card__tag[data-tone="rules"]  { color: var(--vt-blue, #3CD1FF); border-color: rgba(60, 209, 255, 0.4); }
+.vt-card__tag[data-tone="info"]   { color: rgba(255, 255, 255, 0.75); border-color: rgba(255, 255, 255, 0.2); }
+
+.vt-mono .vt-card__title {
+  margin: 0 0 8px;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(20px, 1.9vw, 24px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--vt-text);
+}
+.vt-mono .vt-card__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--vt-muted);
+}
+.vt-mono .vt-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--vt-card-hair);
+  width: 100%;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vt-text);
+  text-decoration: none;
+  transition: gap 0.15s ease, color 0.15s ease;
+}
+.vt-mono .vt-card__link:hover { gap: 12px; color: var(--vt-yellow, #FFE45C); }
+.vt-mono .vt-card__link svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  margin-left: auto;
+}
+
+/* ============================================================
+ * BRIEF  (locked / unlocked)
+ * ============================================================ */
+.vt-brief__redacted {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+.vt-brief__redacted span {
+  display: block;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: vt-redact 2.8s ease-in-out infinite;
+}
+@keyframes vt-redact {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-brief__redacted span { animation: none; }
+}
+.vt-brief__lock {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+.vt-brief__lock-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 228, 92, 0.36);
+  border-radius: 14px;
+  background: rgba(255, 228, 92, 0.06);
+  color: var(--vt-yellow, #FFE45C);
+}
+.vt-brief__lock-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vt-brief__text {
+  margin: 0;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--vt-text);
+}
+
+/* ============================================================
+ * GUIDELINES  (checklist, 2-col grid inside the card)
+ * ============================================================ */
+.vt-guidelines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.vt-guidelines li {
+  position: relative;
+  padding: 14px 16px 14px 46px;
+  border: 1px solid var(--vt-card-border-2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--vt-muted);
+}
+.vt-guidelines li strong {
+  color: var(--vt-text);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.vt-guidelines li::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--vt-blue, #3CD1FF);
+  border-radius: 4px;
+  background:
+    linear-gradient(45deg, transparent 42%, var(--vt-blue, #3CD1FF) 44%, var(--vt-blue, #3CD1FF) 55%, transparent 57%) no-repeat 5px 6px / 10px 8px,
+    rgba(60, 209, 255, 0.08);
+}
+
+/* ============================================================
+ * SCHEDULE  (horizontal rail, 4 stops in a row)
+ * ============================================================ */
+.vt-schedule--horizontal {
+  list-style: none;
+  margin: 0;
+  padding: 12px 8px 4px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  position: relative;
+}
+/* Track line running behind the pips. */
+.vt-schedule--horizontal::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(to right, transparent 0%, var(--vt-card-hair) 6%, var(--vt-card-hair) 94%, transparent 100%);
+}
+.vt-schedule--horizontal li {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px;
+  justify-items: start;
+  position: relative;
+}
+.vt-schedule--horizontal .vt-schedule__pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 5px var(--vt-card-bg);
+  z-index: 1;
+  margin: 6px 0 0;
+}
+.vt-schedule--horizontal li.is-next .vt-schedule__pip {
+  background: var(--vt-yellow, #FFE45C);
+  box-shadow: 0 0 0 5px var(--vt-card-bg), 0 0 14px rgba(255, 228, 92, 0.7);
+}
+.vt-schedule--horizontal li.is-past .vt-schedule__pip { background: rgba(255, 255, 255, 0.55); }
+.vt-schedule__pip[data-tone="kickoff"]  { background: #FF3B30; }
+.vt-schedule__pip[data-tone="deadline"] { background: var(--vt-yellow, #FFE45C); }
+.vt-schedule__pip[data-tone="results"]  { background: var(--vt-blue, #3CD1FF); }
+.vt-schedule__pip[data-tone="mid"]      { background: rgba(255, 255, 255, 0.3); }
+.vt-schedule__label {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vt-dim);
+}
+.vt-schedule__value {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--vt-text);
+  line-height: 1.35;
+}
+.vt-schedule--horizontal li.is-past .vt-schedule__value {
+  color: var(--vt-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================
+ * REGISTRATION FOOTER  (3-column strip, full width)
+ * ============================================================ */
+.vt-registration__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 24px;
+  row-gap: 16px;
+  margin: 0;
+}
+.vt-registration__grid > div {
+  padding: 12px 16px;
+  border-left: 1px solid var(--vt-card-hair);
+  min-width: 0;
+}
+.vt-registration__grid > div:first-child,
+.vt-registration__grid > div:nth-child(4) { border-left: none; padding-left: 0; }
+.vt-registration__grid dt {
+  margin: 0 0 6px;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vt-dim);
+}
+.vt-registration__grid dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vt-text);
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+.vt-registration__link {
+  color: var(--vt-blue, #3CD1FF);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(60, 209, 255, 0.3);
+  transition: border-color 0.15s ease;
+}
+.vt-registration__link:hover { border-color: var(--vt-blue, #3CD1FF); }
+
+/* ============================================================
+ * SUBMISSION FORM inside a dark card (overrides light styles)
+ * ============================================================ */
+.vt-mono .vt-card--dark .vt-field__label { color: var(--vt-muted); }
+.vt-mono .vt-card--dark .vt-field__hint  { color: var(--vt-dim); }
+.vt-mono .vt-card--dark .vt-field__input,
+.vt-mono .vt-card--dark .vt-field__textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--vt-text);
+  font-size: 15px;
+  padding: 12px 14px;
+}
+.vt-mono .vt-card--dark .vt-field__input::placeholder,
+.vt-mono .vt-card--dark .vt-field__textarea::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+}
+.vt-mono .vt-card--dark .vt-field__input:focus,
+.vt-mono .vt-card--dark .vt-field__textarea:focus {
+  border-color: var(--vt-yellow, #FFE45C);
+  box-shadow: 0 0 0 3px rgba(255, 228, 92, 0.12);
+}
+.vt-mono .vt-card--dark .vt-field__error { color: #FF6B61; }
+.vt-mono .vt-card--dark .vt-panel__stack { display: grid; gap: 16px; margin-top: 20px; }
+.vt-mono .vt-card--dark .vt-panel__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vt-card-hair);
+}
+.vt-mono .vt-card--dark .vt-panel__meta { color: var(--vt-dim); margin-top: 12px; }
+.vt-mono .vt-card--dark .vt-btn--primary {
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #0A0A0A;
+  border: 1px solid #FFFFFF;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.vt-mono .vt-card--dark .vt-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -8px rgba(255, 255, 255, 0.4);
+}
+.vt-mono .vt-card--dark .vt-row { border-top-color: var(--vt-card-hair); }
+.vt-mono .vt-card--dark .vt-row__label { color: var(--vt-dim); }
+.vt-mono .vt-card--dark .vt-row__value { color: var(--vt-text); }
+.vt-mono .vt-card--dark .vt-row__link {
+  color: var(--vt-blue, #3CD1FF);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(60, 209, 255, 0.3);
+}
+
+/* ============================================================
+ * RESPONSIVE
+ * ============================================================ */
+@media (max-width: 960px) {
+  .vt-desk__row--split { grid-template-columns: 1fr; }
+  .vt-desk__row--split > * { height: auto; }
+  .vt-guidelines { grid-template-columns: 1fr; }
+  .vt-registration__grid { grid-template-columns: repeat(2, 1fr); }
+  .vt-registration__grid > div:nth-child(4) { border-left: 1px solid var(--vt-card-hair); padding-left: 16px; }
+  .vt-registration__grid > div:nth-child(3),
+  .vt-registration__grid > div:nth-child(5) { border-left: none; padding-left: 0; }
+}
+@media (max-width: 720px) {
+  .vt-desk__bar { grid-template-columns: 1fr; }
+  .vt-desk__bar-timer { justify-self: start; }
+  .vt-schedule--horizontal { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; padding: 8px 0 4px; }
+  .vt-schedule--horizontal::before { display: none; }
+}
+@media (max-width: 640px) {
+  .vt-mono.vt-desk { padding: 14px; }
+  .vt-mono .vt-card--dark { padding: 18px; }
+  .vt-desk__bar { padding: 20px; border-radius: 14px; }
+  .vt-desk__hi { font-size: clamp(24px, 7vw, 30px); }
+  .vt-mono .vt-desk__bar-timer .vt-count { padding: 6px 8px; gap: 5px; }
+  .vt-mono .vt-desk__bar-timer .vt-count__phase { display: none; }
+  .vt-mono .vt-desk__bar-timer .vt-count__tile { min-width: 40px; padding: 3px 5px 5px; }
+  .vt-mono .vt-desk__bar-timer .vt-count__num { font-size: 18px; }
+  .vt-mono .vt-desk__bar-timer .vt-count__label { font-size: 8px; letter-spacing: 0.14em; }
+  .vt-registration__grid { grid-template-columns: 1fr; }
+  .vt-registration__grid > div { border-left: none; border-top: 1px solid var(--vt-card-hair); padding: 12px 0; }
+  .vt-registration__grid > div:first-child { border-top: none; padding-top: 0; }
+  .vt-brief__lock { gap: 14px; }
+  .vt-brief__lock-icon { width: 44px; height: 44px; }
+  .vt-brief__text { font-size: 17px; }
+  .vt-mono .vt-card--dark .vt-panel__actions { flex-direction: column; }
+  .vt-mono .vt-card--dark .vt-btn--primary { width: 100%; }
+}
+@media (max-width: 480px) {
+  .vt-desk__eyebrow { font-size: 10px; letter-spacing: 0.18em; }
+  .vt-desk__status { font-size: 9.5px; letter-spacing: 0.16em; }
+  .vt-mono .vt-card__title { font-size: 18px; }
+  .vt-guidelines li { padding: 12px 12px 12px 40px; font-size: 13px; }
+  .vt-schedule--horizontal { grid-template-columns: 1fr; }
+}
+

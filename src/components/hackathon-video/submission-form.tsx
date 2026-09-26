@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -71,23 +71,53 @@ export function VideoSubmissionForm({ initial, editable, closed }: Props) {
     });
   }
 
+  // Before kickoff: nothing to show yet, so render a locked card instead of
+  // an empty "no submission" message.
+  if (!editable && !closed) {
+    return (
+      <section className="vt-card vt-card--dark is-locked">
+        <header className="vt-card__head">
+          <p className="vt-card__eyebrow">Scene 02 · Your cut</p>
+          <span className="vt-card__tag" data-tone="locked">Locked</span>
+        </header>
+        <div className="vt-brief__lock">
+          <span className="vt-brief__lock-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect x="4" y="10.5" width="16" height="10.5" rx="2.4" />
+              <path d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="vt-card__title">Submissions open at kickoff</h2>
+            <p className="vt-card__body">
+              Once the clock starts you can paste one public link here and
+              re-save it as often as you like until the deadline.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // After the deadline: read-only.
   if (!editable) {
     return (
-      <section className="vt-panel">
-        <h2 className="vt-panel__title">Your submission</h2>
+      <section className="vt-card vt-card--dark">
+        <header className="vt-card__head">
+          <p className="vt-card__eyebrow">Scene 02 · Your cut</p>
+          <span className="vt-card__tag" data-tone="ended">Closed</span>
+        </header>
+        <h2 className="vt-card__title">Your submission</h2>
         {initial ? (
           <div className="vt-panel__stack">
             <StaticRow label="Link" value={initial.url} href={initial.url} />
             <StaticRow label="Notes" value={initial.notes || "None"} />
           </div>
         ) : (
-          <p className="vt-panel__body">
-            No submission recorded before the deadline.
+          <p className="vt-card__body">
+            No submission was recorded before the deadline.
           </p>
         )}
-        <p className="vt-panel__meta">
-          {closed ? "Submissions closed." : "Submissions open at kickoff."}
-        </p>
         {initial && mounted ? (
           <p className="vt-panel__meta">
             Last saved {new Date(initial.updatedAtIso).toLocaleString()}
@@ -98,9 +128,13 @@ export function VideoSubmissionForm({ initial, editable, closed }: Props) {
   }
 
   return (
-    <section className="vt-panel">
-      <h2 className="vt-panel__title">Submit your cut</h2>
-      <p className="vt-panel__body">
+    <section className="vt-card vt-card--dark is-live">
+      <header className="vt-card__head">
+        <p className="vt-card__eyebrow">Scene 02 · Your cut</p>
+        <span className="vt-card__tag" data-tone="live">{initial ? "Saved" : "Open"}</span>
+      </header>
+      <h2 className="vt-card__title">Submit your cut</h2>
+      <p className="vt-card__body">
         Paste one public link. Drive, Behance, YouTube, Vimeo. Set it to
         &quot;anyone with the link can view&quot;. You can re-save any time
         until the deadline; the last save is what the judges see.
