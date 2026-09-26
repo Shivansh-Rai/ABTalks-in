@@ -168,6 +168,12 @@ type Props = {
   disabled?: boolean;
   /** When false (local next dev), OTP controls are hidden and the field is allowed to continue. */
   verificationRequired?: boolean;
+  /** Marks the label as mandatory. For India (+91) it also hides the "Optional" hint. */
+  required?: boolean;
+  /** Overrides the number input's placeholder. */
+  placeholder?: string;
+  /** Extra classes for the country select, number input and Send OTP button (e.g. a shared height). */
+  controlClassName?: string;
 };
 
 export function PhoneVerifyField({
@@ -178,6 +184,9 @@ export function PhoneVerifyField({
   onVerified,
   disabled,
   verificationRequired = true,
+  required = false,
+  placeholder,
+  controlClassName,
 }: Props) {
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
   const [phoneNumber, setPhoneNumber] = useState(defaultPhoneNumber);
@@ -339,14 +348,24 @@ export function PhoneVerifyField({
 
   return (
     <div className="space-y-3">
-      <Label htmlFor="phoneNumber">Phone Number</Label>
+      <Label htmlFor="phoneNumber">
+        Phone Number
+        {required ? (
+          <span className="-ml-1.5 text-destructive" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </Label>
       <div className="flex gap-2">
         <Select
           value={countryCode}
           onValueChange={handleCountryChange}
           disabled={disabled || step === "verified"}
         >
-          <SelectTrigger className="w-[7.5rem] shrink-0" aria-label="Country code">
+          <SelectTrigger
+            className={cn("w-[7.5rem] shrink-0", controlClassName)}
+            aria-label="Country code"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -362,11 +381,12 @@ export function PhoneVerifyField({
           type="tel"
           inputMode="numeric"
           autoComplete="tel-national"
-          placeholder={isIndia ? "9876543210" : "Phone number"}
+          placeholder={placeholder ?? (isIndia ? "9876543210" : "Phone number")}
           value={phoneNumber}
           onChange={(e) => handleNumberChange(e.target.value)}
           disabled={disabled || step === "verified"}
-          className="flex-1"
+          aria-required={required && isIndia}
+          className={cn("flex-1", controlClassName)}
         />
         {verificationRequired && isIndia && step !== "verified" ? (
           <Button
@@ -374,7 +394,7 @@ export function PhoneVerifyField({
             variant="outline"
             onClick={handleSend}
             disabled={disabled || sending || !validMobile}
-            className="shrink-0"
+            className={cn("shrink-0", controlClassName)}
           >
             {sending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -439,7 +459,7 @@ export function PhoneVerifyField({
         </div>
       ) : null}
 
-      {!verificationRequired || !isIndia ? (
+      {(!verificationRequired || !isIndia) && !(required && isIndia) ? (
         <p className="text-xs text-muted-foreground">
           Optional. Visible to admins only.
         </p>
