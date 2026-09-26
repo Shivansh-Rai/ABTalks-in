@@ -77,11 +77,9 @@ export function ResumeUploadField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="resume-upload">Resume (optional)</Label>
+      <Label htmlFor="resume-upload">Resume</Label>
       <p className="text-xs text-muted-foreground">
-        Optional — used to fill in your education, experience, projects, skills
-        and links. PDF only, up to{" "}
-        {MAX_MB} MB.
+         PDF only, max upload size is {MAX_MB} MB.
       </p>
 
       {busy ? (

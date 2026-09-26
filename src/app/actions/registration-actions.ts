@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { UserType } from "@prisma/client";
 import { completeRegistration } from "@/features/registration/complete-registration";
 import { applyStoredResumeToProfile } from "@/features/resume/service";
 import { logger } from "@/lib/logger";
@@ -22,32 +21,14 @@ export async function completeRegistrationAction(formData: FormData) {
 
   const referralCode = text(formData, "referralCode").toUpperCase().slice(0, 6);
 
-  const userTypeRaw = formData.get("userType");
-  const userType =
-    typeof userTypeRaw === "string" &&
-    userTypeRaw.trim().toUpperCase() === UserType.PROFESSIONAL
-      ? UserType.PROFESSIONAL
-      : UserType.STUDENT;
-
-  const yearsExpRaw = text(formData, "yearsExperience");
-  const yearsExperience =
-    yearsExpRaw !== "" ? Number.parseInt(yearsExpRaw, 10) : Number.NaN;
-
   const phoneCountryCodeRaw = text(formData, "phoneCountryCode");
   const phoneCountryCode = phoneCountryCodeRaw !== "" ? phoneCountryCodeRaw : "+91";
 
   const parsed = registerPayloadSchema.safeParse({
     fullName: text(formData, "fullName"),
-    headline: text(formData, "headline"),
-    locationCity: text(formData, "locationCity"),
-    locationRegion: text(formData, "locationRegion"),
-    countryCode: text(formData, "countryCode"),
-    college: text(formData, "college"),
-    collegeId: text(formData, "collegeId"),
-    userType,
-    organization: text(formData, "organization"),
-    role: text(formData, "role"),
-    yearsExperience: Number.isFinite(yearsExperience) ? yearsExperience : undefined,
+    // No default: a missing or unknown value fails validation, so the candidate
+    // has to choose student or working professional.
+    userType: text(formData, "userType").toUpperCase(),
     phoneCountryCode,
     phoneNumber: text(formData, "phoneNumber"),
     referralCode,

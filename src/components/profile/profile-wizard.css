@@ -1142,8 +1142,7 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   pointer-events: none;
 }
 .pw-avatar-edit {
-  /* temporary: photo edit off. AvatarEditor stays in the tree. */
-  display: none;
+  display: grid;
   position: absolute;
   right: -6px;
   top: 50%;
