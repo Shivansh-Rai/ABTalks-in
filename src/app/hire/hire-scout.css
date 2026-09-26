@@ -15700,6 +15700,51 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   background: var(--h-primary-hover);
 }
 
+/* ── Candidate summary placeholder ──────────────────────────────────────────
+
+   View Details and the report wait for the Gemini summary the same way: three
+   soft bars about the size of the paragraph that replaces them, so the
+   sections below do not jump far when it lands. */
+.hire-summary-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 4px 0;
+}
+
+.hire-summary-skel__line {
+  display: block;
+  height: 11px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--h-gray-100) 0%,
+    var(--h-card) 50%,
+    var(--h-gray-100) 100%
+  );
+  background-size: 200% 100%;
+  animation: hire-summary-shimmer 1.4s var(--ease) infinite;
+}
+
+.hire-summary-skel__line--short {
+  width: 62%;
+}
+
+@keyframes hire-summary-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-summary-skel__line {
+    animation: none;
+  }
+}
+
 /* ── In-place modal (View Details → View as Report) ─────────────────────────
 
    The popup is only a frame: transparent, no padding, no ring. The report

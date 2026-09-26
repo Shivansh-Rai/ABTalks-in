@@ -39,7 +39,10 @@ import {
   trackLongLabel,
   verifiedEvidenceFacts,
 } from "@/features/hire/candidate-summary";
-import { recallEvidence } from "@/components/hire/evidence-cache";
+import {
+  recallAiSummary,
+  recallEvidence,
+} from "@/components/hire/evidence-cache";
 import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import { SCORE_PARAMS } from "@/components/hire/hire-score-chart";
 import { MaskedName } from "@/components/hire/desk-match-card";
@@ -105,6 +108,14 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
    * which this hook would read as an endless stream of changes.
    */
   const cached = useMemo(() => recallEvidence(lookup), [lookup]);
+  // The summary View Details already wrote for this candidate, if this tab
+  // opened them. Never generated here: the page only reuses it, and prints the
+  // deterministic summary otherwise. Read in the same pass as `cached`, which
+  // is what the body renders from, so it never lands in the server pass.
+  const storedSummary = useMemo(
+    () => (cached ? recallAiSummary(cached.candidateRef) : null),
+    [cached],
+  );
   const store = useMemo(
     () => ({
       // Nothing writes this cache while the report is open, so there is no
@@ -166,6 +177,7 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
     <ReportBody
       variant="page"
       match={match}
+      summary={storedSummary ?? undefined}
       sample={sample}
       reduce={reduce}
       contact={data.contact}
@@ -191,11 +203,17 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
  */
 export function CandidateReportDialog({
   match,
+  summary,
   open,
   onOpenChange,
   onContactLoaded,
 }: {
   match: MatchCardData;
+  /**
+   * View Details' own summary paragraph, so the report never tells a second
+   * story. Null while it is still being written.
+   */
+  summary: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Lets the panel behind pick up an unlock bought inside the report. */
@@ -211,6 +229,7 @@ export function CandidateReportDialog({
       >
         <ReportModalBody
           match={match}
+          summary={summary}
           scrollRef={scrollRef}
           onContactLoaded={onContactLoaded}
         />
@@ -221,10 +240,12 @@ export function CandidateReportDialog({
 
 function ReportModalBody({
   match,
+  summary,
   scrollRef,
   onContactLoaded,
 }: {
   match: MatchCardData;
+  summary: string | null;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   onContactLoaded?: () => void;
 }) {
@@ -257,6 +278,7 @@ function ReportModalBody({
         <ReportBody
           variant="modal"
           match={match}
+          summary={summary}
           sample={sample}
           reduce={reduce}
           contact={data.contact}
@@ -537,6 +559,7 @@ type Metric = { key: string; label: string; value: string; icon: typeof Award };
 function ReportBody({
   variant,
   match,
+  summary: summaryOverride,
   sample,
   reduce,
   contact,
@@ -549,6 +572,11 @@ function ReportBody({
   /** "page" is /hire/evidence; "modal" is View Details' in-place report. */
   variant: "page" | "modal";
   match: MatchCardData;
+  /**
+   * The Candidate summary paragraph as View Details wrote it. Undefined: build
+   * the deterministic one here. Null: still being written.
+   */
+  summary?: string | null;
   sample: boolean;
   reduce: boolean;
   contact: RevealedContact | null;
@@ -574,7 +602,10 @@ function ReportBody({
     contact !== null || match.engagementStatus === "CONTACT_SHARED";
 
   const summaryInput = summaryInputFromMatch(match);
-  const summary = recruiterSummary(match.rationale, summaryInput);
+  const summary =
+    summaryOverride === undefined
+      ? recruiterSummary(match.rationale, summaryInput)
+      : summaryOverride;
   const proof = verifiedEvidenceFacts(summaryInput);
   const completions = trackEvidence?.items ?? [];
   // The whole block disappears when there is nothing proven. "No verified
@@ -796,7 +827,13 @@ function ReportBody({
 
           <div className="hire-report__block">
             <h3 className="hire-report__blockh">Candidate summary</h3>
-            <p className="hire-report__lede">{summary}</p>
+            {summary === null ? (
+              <SummarySkeleton />
+            ) : (
+              <p className="hire-report__lede" aria-live="polite">
+                {summary}
+              </p>
+            )}
           </div>
 
           {!sample && match.scores && (
@@ -1030,6 +1067,25 @@ function ReportBody({
         </p>
       </motion.article>
     </Frame>
+  );
+}
+
+/**
+ * The summary paragraph's placeholder while Gemini writes it: three soft bars
+ * the width of a short paragraph, and a line for screen readers. Used by View
+ * Details and the report so both wait the same way.
+ */
+export function SummarySkeleton() {
+  return (
+    <div className="hire-summary-skel" role="status">
+      <span className="sr-only">Writing the candidate summary</span>
+      <span className="hire-summary-skel__line" aria-hidden="true" />
+      <span className="hire-summary-skel__line" aria-hidden="true" />
+      <span
+        className="hire-summary-skel__line hire-summary-skel__line--short"
+        aria-hidden="true"
+      />
+    </div>
   );
 }
 

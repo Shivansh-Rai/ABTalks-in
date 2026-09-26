@@ -36,8 +36,22 @@ import {
 } from "@/components/hire/locked-field";
 import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
-import { rememberEvidence } from "@/components/hire/evidence-cache";
-import { CandidateReportDialog } from "@/components/hire/candidate-evidence-report";
+import {
+  recallAiSummary,
+  rememberAiSummary,
+  rememberEvidence,
+} from "@/components/hire/evidence-cache";
+import {
+  summaryCardFromMatch,
+  summaryRequestKey,
+  summarySearchFromSpec,
+  type SummaryRequest,
+} from "@/features/hire/candidate-summary-ai";
+import type { JobSpec } from "@/lib/validations/hire";
+import {
+  CandidateReportDialog,
+  SummarySkeleton,
+} from "@/components/hire/candidate-evidence-report";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { AddToPipelineButton } from "@/components/hire/pipeline/add-to-pipeline-button";
 import { PanelResizer } from "@/components/hire/panel-resizer";
@@ -228,6 +242,29 @@ function LinkedInMark({
   );
 }
 
+/**
+ * The Gemini summary for one View Details open, or null to keep the
+ * deterministic copy. A route, not a Server Action, so a slow model call never
+ * queues in front of the panel's own actions (see the route's header).
+ */
+async function fetchAiSummary(req: SummaryRequest): Promise<string | null> {
+  try {
+    const res = await fetch("/api/hire/candidate-summary", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(req),
+    });
+    const json = (await res.json()) as
+      | { ok: true; data: { summary: string } }
+      | { ok: false; message: string };
+    return json.ok && typeof json.data?.summary === "string"
+      ? json.data.summary
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 const DECISION_LABEL: Record<MatchDecision, string | null> = {
   SHORTLISTED: "Shortlisted",
   REJECTED: "Rejected",
@@ -264,6 +301,7 @@ export function CandidateInspector({
   onNext,
   onContactRevealed,
   decision = null,
+  searchSpec = null,
 }: {
   match: MatchCardData;
   onClose: () => void;
@@ -275,6 +313,11 @@ export function CandidateInspector({
   onContactRevealed?: () => void;
   /** Project triage state, when this candidate sits in a talent project. */
   decision?: MatchDecision | null;
+  /**
+   * The desk's active search, which grounds the Gemini summary. Absent on
+   * surfaces with no search (the summary is then about the profile alone).
+   */
+  searchSpec?: JobSpec | null;
 }) {
   const e = match.evidence ?? {};
   const years =
@@ -402,6 +445,49 @@ export function CandidateInspector({
       alive = false;
     };
   }, [match.candidateRef, sample]);
+
+  // The Gemini summary, asked for once per open (candidate + search). Sample
+  // cards and locked previews never ask: there is no real profile behind the
+  // one and the other must not surface a name or a school. The request travels
+  // as a string so the effect re-runs only when its content changes, not when
+  // the match object is replaced by a cart toggle.
+  const summaryRequest: SummaryRequest | null =
+    sample || preview
+      ? null
+      : {
+          candidateRef: match.candidateRef,
+          card: summaryCardFromMatch(match),
+          search: summarySearchFromSpec(searchSpec),
+        };
+  const summaryPayload = summaryRequest ? JSON.stringify(summaryRequest) : null;
+  const summaryKey = summaryRequest ? summaryRequestKey(summaryRequest) : null;
+  /** `text: null` means the model declined and the deterministic copy stands. */
+  const [aiSummary, setAiSummary] = useState<{
+    key: string;
+    text: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!summaryPayload) return;
+    const req = JSON.parse(summaryPayload) as SummaryRequest;
+    const key = summaryRequestKey(req);
+    let alive = true;
+    void (async () => {
+      // Already written for this candidate and search in this tab.
+      const stored = recallAiSummary(req.candidateRef, key);
+      if (stored) {
+        if (alive) setAiSummary({ key, text: stored });
+        return;
+      }
+      const text = await fetchAiSummary(req);
+      if (!alive) return;
+      if (text) rememberAiSummary(req.candidateRef, key, text);
+      setAiSummary({ key, text });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [summaryPayload]);
 
   async function loadContact() {
     applyContact(
@@ -565,9 +651,14 @@ export function CandidateInspector({
     ...match,
     locked: Boolean(preview),
   });
-  const detailedSummary = sample
+  // Null while the Gemini summary for this open is still being written; the
+  // deterministic copy whenever the model is unavailable or declined.
+  const summaryPending = summaryKey !== null && aiSummary?.key !== summaryKey;
+  const detailedSummary: string | null = sample
     ? "Figures are taken from your requirement, not from a candidate."
-    : recruiterSummary(match.rationale, summaryInput);
+    : summaryPending
+      ? null
+      : (aiSummary?.text ?? recruiterSummary(match.rationale, summaryInput));
   const verifiedLine = verifiedEvidenceSentence(summaryInput);
   const hasVerified =
     !sample && (verifiedLine !== NO_VERIFIED_EVIDENCE || evidenceRoles.length > 0);
@@ -673,6 +764,7 @@ export function CandidateInspector({
             {!sample && (
               <CandidateReportDialog
                 match={match}
+                summary={detailedSummary}
                 open={reportOpen}
                 onOpenChange={setReportOpen}
                 onContactLoaded={() => {
@@ -815,7 +907,13 @@ export function CandidateInspector({
 
           <div className="hire-profile__group">
             <p className="hire-profile__group-h">Candidate summary</p>
-            <p className="hire-profile__text">{detailedSummary}</p>
+            {detailedSummary === null ? (
+              <SummarySkeleton />
+            ) : (
+              <p className="hire-profile__text" aria-live="polite">
+                {detailedSummary}
+              </p>
+            )}
             {sample ? (
               <p className="hire-profile__note">
                 This is an illustration of the requirement. Nobody in the pool

@@ -1887,6 +1887,8 @@ export function ScoutChat({
             key={openMatch.candidateRef}
             match={openMatch}
             decision={openDecision}
+            // Grounds the View Details summary in the search on the desk.
+            searchSpec={spec}
             onClose={closeMatchPanel}
             onPrev={
               openIndex > 0
