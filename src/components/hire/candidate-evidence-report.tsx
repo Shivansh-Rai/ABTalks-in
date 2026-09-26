@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -17,7 +23,14 @@ import {
   Phone,
   Send,
   Wallet,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
 import {
   recruiterRoleLabel,
@@ -110,53 +123,7 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
 
   const candidateRef = match?.candidateRef ?? null;
   const sample = candidateRef?.startsWith("SAMPLE:") ?? false;
-
-  const [contact, setContact] = useState<RevealedContact | null>(null);
-  const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
-    null,
-  );
-  const [externalLinks, setExternalLinks] = useState<
-    SelfReportedExternalLink[] | null
-  >(null);
-  const [trackEvidence, setTrackEvidence] =
-    useState<InspectorTrackEvidence | null>(null);
-  const [verifiedSkills, setVerifiedSkills] = useState<
-    InspectorSkillEvidenceItem[] | null
-  >(null);
-
-  // The same four loaders the panel fires, plus the contact read. A sample ref
-  // has no rows behind it, so it is never sent: the actions would resolve it to
-  // empty anyway and the round trip buys nothing.
-  useEffect(() => {
-    if (!candidateRef || sample) return;
-    let alive = true;
-    void (async () => {
-      const [history, links, evidence, skillEvidence, revealed] =
-        await Promise.all([
-          loadInspectorWorkHistoryAction({ candidateRef }),
-          loadInspectorExternalLinksAction({ candidateRef }),
-          loadInspectorTrackEvidenceAction({ candidateRef }),
-          loadInspectorSkillEvidenceAction({ candidateRef }),
-          revealContactAction({ candidateRef }),
-        ]);
-      if (!alive) return;
-      setWorkHistory(
-        history.ok ? history.data : { hasNoWorkExperience: false, rows: [] },
-      );
-      setExternalLinks(links.ok ? links.data.links : []);
-      setTrackEvidence(evidence.ok ? evidence.data : { items: [] });
-      setVerifiedSkills(skillEvidence.ok ? skillEvidence.data.skills : []);
-      setContact(revealed);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [candidateRef, sample]);
-
-  async function loadContact() {
-    if (!candidateRef) return;
-    setContact(await revealContactAction({ candidateRef }));
-  }
+  const data = useReportData(candidateRef, sample);
 
   if (match === undefined) {
     return (
@@ -197,17 +164,194 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
 
   return (
     <ReportBody
+      variant="page"
       match={match}
       sample={sample}
       reduce={reduce}
-      contact={contact}
-      onContactLoaded={loadContact}
-      workHistory={workHistory}
-      externalLinks={externalLinks}
-      trackEvidence={trackEvidence}
-      verifiedSkills={verifiedSkills}
+      contact={data.contact}
+      onContactLoaded={data.loadContact}
+      workHistory={data.workHistory}
+      externalLinks={data.externalLinks}
+      trackEvidence={data.trackEvidence}
+      verifiedSkills={data.verifiedSkills}
     />
   );
+}
+
+/**
+ * The same report, opened over Scout from View Details instead of in a new
+ * tab. One body, two frames: the page keeps Back and its Download bar; the
+ * modal drops Back (the desk is right behind it) and shows Download as an icon
+ * beside Close when the reader hovers the report, so nothing sits on the sheet
+ * itself. The PDF is the same `window.print()` save as the page, and the print
+ * rules for `.hire-report-modal` hide the desk so only the sheet is printed.
+ *
+ * `Dialog.Popup` unmounts while closed, so the loaders below only run once a
+ * recruiter actually opens the report.
+ */
+export function CandidateReportDialog({
+  match,
+  open,
+  onOpenChange,
+  onContactLoaded,
+}: {
+  match: MatchCardData;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Lets the panel behind pick up an unlock bought inside the report. */
+  onContactLoaded?: () => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="hire-app hire-report-modal"
+        showCloseButton={false}
+        initialFocus={scrollRef}
+      >
+        <ReportModalBody
+          match={match}
+          scrollRef={scrollRef}
+          onContactLoaded={onContactLoaded}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReportModalBody({
+  match,
+  scrollRef,
+  onContactLoaded,
+}: {
+  match: MatchCardData;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  onContactLoaded?: () => void;
+}) {
+  const reduce = useSafeReducedMotion();
+  const sample = match.candidateRef.startsWith("SAMPLE:");
+  const data = useReportData(match.candidateRef, sample);
+  const revealed =
+    data.contact !== null || match.engagementStatus === "CONTACT_SHARED";
+
+  return (
+    <>
+      <DialogTitle className="sr-only">Candidate report</DialogTitle>
+      <div className="hire-report-modal__tools">
+        <DownloadReportButton
+          label={reportFileLabel(match, revealed)}
+          compact
+        />
+        <DialogClose
+          className="hire-report-modal__tool"
+          aria-label="Close report"
+          title="Close"
+        >
+          <X size={17} strokeWidth={1.6} absoluteStrokeWidth aria-hidden="true" />
+        </DialogClose>
+      </div>
+      {/* The sheet scrolls inside the modal; the tools above it stay put. It
+          takes the initial focus so arrow keys and Page Down scroll the
+          report straight away. */}
+      <div ref={scrollRef} className="hire-report-modal__scroll" tabIndex={-1}>
+        <ReportBody
+          variant="modal"
+          match={match}
+          sample={sample}
+          reduce={reduce}
+          contact={data.contact}
+          onContactLoaded={async () => {
+            await data.loadContact();
+            onContactLoaded?.();
+          }}
+          workHistory={data.workHistory}
+          externalLinks={data.externalLinks}
+          trackEvidence={data.trackEvidence}
+          verifiedSkills={data.verifiedSkills}
+        />
+      </div>
+    </>
+  );
+}
+
+/**
+ * The same four loaders the panel fires, plus the contact read. A sample ref
+ * has no rows behind it, so it is never sent: the actions would resolve it to
+ * empty anyway and the round trip buys nothing.
+ */
+function useReportData(candidateRef: string | null, sample: boolean) {
+  const [contact, setContact] = useState<RevealedContact | null>(null);
+  const [workHistory, setWorkHistory] = useState<InspectorWorkHistory | null>(
+    null,
+  );
+  const [externalLinks, setExternalLinks] = useState<
+    SelfReportedExternalLink[] | null
+  >(null);
+  const [trackEvidence, setTrackEvidence] =
+    useState<InspectorTrackEvidence | null>(null);
+  const [verifiedSkills, setVerifiedSkills] = useState<
+    InspectorSkillEvidenceItem[] | null
+  >(null);
+
+  useEffect(() => {
+    if (!candidateRef || sample) return;
+    let alive = true;
+    void (async () => {
+      const [history, links, evidence, skillEvidence, revealed] =
+        await Promise.all([
+          loadInspectorWorkHistoryAction({ candidateRef }),
+          loadInspectorExternalLinksAction({ candidateRef }),
+          loadInspectorTrackEvidenceAction({ candidateRef }),
+          loadInspectorSkillEvidenceAction({ candidateRef }),
+          revealContactAction({ candidateRef }),
+        ]);
+      if (!alive) return;
+      setWorkHistory(
+        history.ok ? history.data : { hasNoWorkExperience: false, rows: [] },
+      );
+      setExternalLinks(links.ok ? links.data.links : []);
+      setTrackEvidence(evidence.ok ? evidence.data : { items: [] });
+      setVerifiedSkills(skillEvidence.ok ? skillEvidence.data.skills : []);
+      setContact(revealed);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [candidateRef, sample]);
+
+  async function loadContact() {
+    if (!candidateRef) return;
+    setContact(await revealContactAction({ candidateRef }));
+  }
+
+  return {
+    contact,
+    loadContact,
+    workHistory,
+    externalLinks,
+    trackEvidence,
+    verifiedSkills,
+  };
+}
+
+/**
+ * Named after the candidate, so the saved file is not the same "evidence.pdf"
+ * for every one of them. The surname goes in only once it is unlocked: the
+ * page blurs it, and a filename is the one place a blur cannot follow.
+ */
+function reportFileLabel(match: MatchCardData, revealed: boolean): string {
+  const years =
+    typeof match.evidence?.yearsExperience === "number" &&
+    match.evidence.yearsExperience > 0
+      ? match.evidence.yearsExperience
+      : null;
+  const roleLabel = recruiterRoleLabel({
+    jobRole: match.jobRole,
+    yearsExperience: years,
+  });
+  if (!match.displayName) return roleLabel;
+  if (revealed) return match.displayName;
+  return match.displayName.trim().split(/\s+/)[0] ?? roleLabel;
 }
 
 function BackToScout() {
@@ -242,7 +386,14 @@ function BackToScout() {
  * afterwards. The dialog captures the name as it opens, so the timeout is a
  * safety net for browsers that never fire `afterprint`.
  */
-function DownloadReportButton({ label }: { label: string }) {
+function DownloadReportButton({
+  label,
+  compact = false,
+}: {
+  label: string;
+  /** Icon only, for the modal's hover tools. Same save, same PDF. */
+  compact?: boolean;
+}) {
   function save() {
     const original = document.title;
     const safe = `ABTalks report ${label}`
@@ -260,6 +411,20 @@ function DownloadReportButton({ label }: { label: string }) {
     window.addEventListener("afterprint", restore);
     window.setTimeout(restore, 1000);
     window.print();
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        className="hire-report-modal__tool hire-report-modal__dl"
+        onClick={save}
+        aria-label="Download PDF"
+        title="Download PDF. Opens your browser's print dialog; choose Save as PDF."
+      >
+        <Download size={16} strokeWidth={1.6} absoluteStrokeWidth aria-hidden="true" />
+      </button>
+    );
   }
 
   return (
@@ -370,6 +535,7 @@ function safeExternalProfileHref(
 type Metric = { key: string; label: string; value: string; icon: typeof Award };
 
 function ReportBody({
+  variant,
   match,
   sample,
   reduce,
@@ -380,6 +546,8 @@ function ReportBody({
   trackEvidence,
   verifiedSkills,
 }: {
+  /** "page" is /hire/evidence; "modal" is View Details' in-place report. */
+  variant: "page" | "modal";
   match: MatchCardData;
   sample: boolean;
   reduce: boolean;
@@ -540,24 +708,22 @@ function ReportBody({
   const numberOf = (id: string) =>
     String(sectionOrder.indexOf(id) + 1).padStart(2, "0");
 
+  // The page is the document's own <main>; inside the modal the desk already
+  // owns <main>, so the same frame is a plain <div>.
+  const Frame = variant === "page" ? "main" : "div";
+
   return (
-    <main className="hire-report">
-      <div className="hire-report__bar">
-        <BackToScout />
-        {/* Named after the candidate, so the saved file is not the same
-            "evidence.pdf" for every one of them. The surname goes in only once
-            it is unlocked: the page blurs it, and a filename is the one place
-            a blur cannot follow. */}
-        <DownloadReportButton
-          label={
-            match.displayName
-              ? revealed
-                ? match.displayName
-                : (match.displayName.trim().split(/\s+/)[0] ?? roleLabel)
-              : roleLabel
-          }
-        />
-      </div>
+    <Frame
+      className={
+        variant === "page" ? "hire-report" : "hire-report hire-report--modal"
+      }
+    >
+      {variant === "page" && (
+        <div className="hire-report__bar">
+          <BackToScout />
+          <DownloadReportButton label={reportFileLabel(match, revealed)} />
+        </div>
+      )}
 
       {/* One document. The band, the figures and every section share a single
           white sheet with hairline rules between them, instead of six cards
@@ -863,7 +1029,7 @@ function ReportBody({
           declared by the candidate.
         </p>
       </motion.article>
-    </main>
+    </Frame>
   );
 }
 

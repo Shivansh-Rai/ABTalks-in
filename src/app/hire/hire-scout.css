@@ -9526,7 +9526,9 @@ button.hire-side__me {
 /* Was a bare "•••", which named nothing and read as an overflow menu rather
    than a link to a second page. Now a labelled control, sized and coloured
    like the other chrome in this row. */
-.hire-app a.hire-profile__more {
+/* A button now (View as Report opens a modal); `a` is kept so any link that
+   still carries the class looks the same. */
+.hire-app :is(a, button).hire-profile__more {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -9535,6 +9537,8 @@ button.hire-side__me {
   border: 1px solid var(--h-border-strong);
   border-radius: 8px;
   background: var(--h-surface);
+  font-family: inherit;
+  cursor: pointer;
   font-size: 13px;
   line-height: 18px;
   font-weight: 600;
@@ -9546,13 +9550,13 @@ button.hire-side__me {
     border-color 160ms var(--ease);
 }
 
-.hire-app a.hire-profile__more:hover {
+.hire-app :is(a, button).hire-profile__more:hover {
   background: var(--h-card);
   border-color: var(--h-primary);
   color: var(--h-primary);
 }
 
-.hire-app a.hire-profile__more:focus-visible {
+.hire-app :is(a, button).hire-profile__more:focus-visible {
   outline: 2px solid var(--h-primary);
   outline-offset: 2px;
 }
@@ -15696,6 +15700,106 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   background: var(--h-primary-hover);
 }
 
+/* ── In-place modal (View Details → View as Report) ─────────────────────────
+
+   The popup is only a frame: transparent, no padding, no ring. The report
+   sheet is the panel, at the report's own 940px, so the modal shows exactly
+   what the page shows. The tools sit on the backdrop above the sheet's
+   top-right corner, so nothing is laid over the band or the score.
+
+   `.hire-app` on the popup carries the --h-* tokens (and dark mode) into the
+   portal, as every other hire dialog does; its min-height is released here. */
+.hire-app.hire-report-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(940px, calc(100% - 2rem));
+  max-width: none;
+  min-height: 0;
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+.hire-report-modal__tools {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hire-report-modal__tool {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--h-border);
+  border-radius: 999px;
+  background: var(--h-surface);
+  color: var(--h-ink);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition:
+    opacity 160ms var(--ease),
+    background-color 160ms var(--ease),
+    color 160ms var(--ease);
+}
+
+.hire-report-modal__tool:hover {
+  background: var(--h-card);
+  color: var(--h-primary);
+}
+
+.hire-report-modal__tool:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+/* Download shows while the pointer is anywhere on the modal, and whenever it
+   has keyboard focus. A touch screen has no hover, so there it just shows. */
+.hire-report-modal__dl {
+  opacity: 0;
+}
+
+.hire-report-modal:hover .hire-report-modal__dl,
+.hire-report-modal__dl:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .hire-report-modal__dl {
+    opacity: 1;
+  }
+}
+
+/* The sheet scrolls; the tools above it do not. The radius matches the
+   sheet's so the scrollport clips it cleanly, and the shadow moves here
+   because the scrollport would clip the sheet's own. */
+.hire-report-modal__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  outline: none;
+}
+
+.hire-report.hire-report--modal {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hire-report--modal .hire-report__doc {
+  box-shadow: none;
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
@@ -15738,8 +15842,14 @@ a.hire-credits:hover { border-color: var(--h-primary); }
     padding: 8px 14px 44px;
   }
 
-  .hire-report__doc {
+  .hire-report__doc,
+  .hire-report-modal__scroll {
     border-radius: 16px;
+  }
+
+  .hire-app.hire-report-modal {
+    width: calc(100% - 1.25rem);
+    max-height: calc(100dvh - 1.25rem);
   }
 
   .hire-report__bandmain {
@@ -15885,5 +15995,47 @@ a.hire-credits:hover { border-color: var(--h-primary); }
      already the whole value. */
   .hire-report__rowv a {
     text-decoration: none;
+  }
+
+  /* Printing from the View Details modal. The modal is portalled to <body>,
+     outside the desk, so the page rules above never see it. Everything in
+     <body> except the portal holding the report is hidden (the Scout desk,
+     toasts, the backdrop), the modal's own tools go, and the popup is
+     released from fixed/centred/clipped so the sheet flows across pages
+     exactly as the /hire/evidence page does. Base UI's scroll lock sets
+     inline overflow on <html>/<body>, hence the !important there. */
+  body:has(.hire-report-modal) > :not(:has(.hire-report-modal)),
+  body:has(.hire-report-modal) [data-slot="dialog-overlay"],
+  .hire-report-modal__tools {
+    display: none !important;
+  }
+
+  html:has(.hire-report-modal),
+  body:has(.hire-report-modal) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .hire-app.hire-report-modal {
+    position: static !important;
+    inset: auto !important;
+    translate: none !important;
+    transform: none !important;
+    animation: none !important;
+    display: block;
+    width: auto;
+    max-width: none;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+  }
+
+  .hire-report-modal__scroll {
+    overflow: visible;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
   }
 }

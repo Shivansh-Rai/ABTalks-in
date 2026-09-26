@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,10 +36,8 @@ import {
 } from "@/components/hire/locked-field";
 import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
-import {
-  evidenceResumeHref,
-  rememberEvidence,
-} from "@/components/hire/evidence-cache";
+import { rememberEvidence } from "@/components/hire/evidence-cache";
+import { CandidateReportDialog } from "@/components/hire/candidate-evidence-report";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
 import { AddToPipelineButton } from "@/components/hire/pipeline/add-to-pipeline-button";
 import { PanelResizer } from "@/components/hire/panel-resizer";
@@ -309,7 +306,7 @@ export function CandidateInspector({
     (pill) => !pill.key.startsWith("skill:"),
   );
   const status = decision ? DECISION_LABEL[decision] : null;
-  const resumeHref = evidenceResumeHref(match.candidateRef);
+  const [reportOpen, setReportOpen] = useState(false);
   const [tab, setTab] = useState<TabId>("evidence");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -653,13 +650,13 @@ export function CandidateInspector({
               {/* <ArrowLeft size={17} strokeWidth={1} absoluteStrokeWidth aria-hidden="true" /> */}
             </button>
             {!sample && (
-              <Link
-                href={resumeHref}
+              <button
+                type="button"
                 className="hire-profile__more"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="View the full candidate report in a new tab"
+                aria-haspopup="dialog"
+                aria-label="View the full candidate report"
                 title="View the full candidate report"
+                onClick={() => setReportOpen(true)}
               >
                 View as Report
                 <ArrowUpRight
@@ -668,7 +665,20 @@ export function CandidateInspector({
                   absoluteStrokeWidth
                   aria-hidden="true"
                 />
-              </Link>
+              </button>
+            )}
+            {/* The report opens over the desk, not in a new tab. The
+                /hire/evidence page still renders the same body for deep
+                links. */}
+            {!sample && (
+              <CandidateReportDialog
+                match={match}
+                open={reportOpen}
+                onOpenChange={setReportOpen}
+                onContactLoaded={() => {
+                  void loadContact();
+                }}
+              />
             )}
             <button
               type="button"
