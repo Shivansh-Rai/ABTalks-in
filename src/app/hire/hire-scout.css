@@ -10208,6 +10208,69 @@ button.hire-profile__in:focus-visible {
   color: #18181b;
 }
 
+/* View Details AI summary — same sparkle tab + cyan plate as
+   `.desk-card__ai` on search results. No line-clamp: the panel shows the
+   full Gemini paragraph. Report keeps the plain "Candidate summary" block. */
+.hire-profile__ai {
+  position: relative;
+  margin-top: 28px;
+}
+
+.hire-profile__ai-tab {
+  position: absolute;
+  left: 3px;
+  top: -28px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 5.5px;
+  width: 155px;
+  height: 30px;
+  margin: 0;
+  padding: 7px 0 0 31px;
+  background: url("/hire/ai-summary-tab.svg") 0 0 / 155px 30px no-repeat;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #03535f;
+}
+
+.hire-profile__ai-tab img {
+  display: block;
+  flex: none;
+  width: 15.34px;
+  height: 15.34px;
+  margin-top: 1px;
+}
+
+.hire-profile__ai-body {
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #f7fcfd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 26px;
+  color: #4b4b4b;
+}
+
+.hire-profile__ai-body .hire-summary-skel {
+  padding: 4px 0;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-profile__ai-tab {
+  color: #d4ebec;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-profile__ai-body {
+  background: rgba(3, 83, 95, 0.22);
+  color: #d4ebec;
+  box-shadow: none;
+}
+
 .hire-profile__group {
   display: flex;
   flex-direction: column;

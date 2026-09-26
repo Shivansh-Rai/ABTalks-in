@@ -906,14 +906,28 @@ export function CandidateInspector({
           <h4 className="hire-profile__h">ABTalks Evidence</h4>
 
           <div className="hire-profile__group">
-            <p className="hire-profile__group-h">Candidate summary</p>
-            {detailedSummary === null ? (
-              <SummarySkeleton />
-            ) : (
-              <p className="hire-profile__text" aria-live="polite">
-                {detailedSummary}
+            {/* Same AI Summary chrome as the search result card: sparkle tab +
+                cyan body. Full text here (no 2-line clamp). */}
+            <div className="hire-profile__ai">
+              <p className="hire-profile__ai-tab">
+                <img
+                  src="/hire/ai-summary-sparkle.svg"
+                  alt=""
+                  width={15}
+                  height={15}
+                />
+                AI Summary
               </p>
-            )}
+              {detailedSummary === null ? (
+                <div className="hire-profile__ai-body" aria-busy="true">
+                  <SummarySkeleton />
+                </div>
+              ) : (
+                <p className="hire-profile__ai-body" aria-live="polite">
+                  {detailedSummary}
+                </p>
+              )}
+            </div>
             {sample ? (
               <p className="hire-profile__note">
                 This is an illustration of the requirement. Nobody in the pool
