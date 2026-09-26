@@ -1329,3 +1329,214 @@
 }
 .vt-row__link { color: var(--ab-primary, #03535F); text-decoration: none; }
 .vt-row__link:hover { text-decoration: underline; }
+
+/* ============================================================
+ * RESPONSIVE — mobile + all-device support
+ * ------------------------------------------------------------
+ * The shell's `.hk-*` sections already carry responsive rules
+ * inside `_styles/hackathon-v2.css`. Everything below is for
+ * the VideoThon-specific overrides (hero card, countdown,
+ * CTAs, event panel, dashboard, registration dialog) that were
+ * built after the shell's breakpoints.
+ *
+ * Breakpoint ladder:
+ *   ≤ 960px  — small tablets
+ *   ≤ 640px  — large phones / small tablets
+ *   ≤ 480px  — regular phones
+ *   ≤ 360px  — ultra-small phones (Galaxy Fold, older SEs)
+ * ============================================================ */
+
+/* --- Small tablets & below ---------------------------------- */
+@media (max-width: 960px) {
+  .vt-mono .vt-hero.hk-hero {
+    border-radius: 20px;
+    margin: clamp(10px, 1.4vw, 20px);
+    padding-top: clamp(56px, 8vw, 96px);
+    padding-bottom: clamp(56px, 8vw, 96px);
+  }
+  .vt-hero__inner { gap: 22px; }
+  .vt-hero__title { font-size: clamp(44px, 8vw, 84px); }
+  .vt-mono .vt-hero .vt-count__num { font-size: 28px; }
+  .vt-mono .vt-hero__meta { padding: 20px 24px; }
+}
+
+/* --- Large phones / small tablets --------------------------- */
+@media (max-width: 640px) {
+  .vt-mono .vt-hero.hk-hero {
+    padding-left: 56px;
+    padding-right: 56px;
+    padding-top: 44px;
+    padding-bottom: 44px;
+    border-radius: 16px;
+    margin: 8px;
+  }
+  /* Reel width was already 44px in the earlier @media block; keep it here
+     so this section wins the cascade for other reel props. */
+  .vt-hero__reel { width: 44px; }
+
+  .vt-hero__inner { gap: 18px; }
+  .vt-hero__title { font-size: clamp(38px, 9vw, 64px); line-height: 1.02; }
+  .vt-hero__title-sub { font-size: 15px; }
+  .vt-hero__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    padding: 5px 12px;
+  }
+  .vt-hero__lede { font-size: 14px; max-width: 92%; }
+
+  /* CTAs stack full-width — cleaner than half-width side-by-side that
+     wraps awkwardly at a random breakpoint. */
+  .vt-hero__ctas { gap: 10px; width: 100%; flex-direction: column; }
+  .vt-mono .vt-hero__ctas .vt-btn--primary,
+  .vt-mono .vt-hero__ctas .ab-btn--ghost {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 20px;
+    font-size: 13px;
+  }
+
+  /* Countdown — tighten padding and shrink digits so all 4 tiles + phase
+     fit inside a phone width without wrapping. */
+  .vt-mono .vt-hero .vt-count {
+    padding: 10px 12px;
+    gap: 6px;
+    max-width: 100%;
+  }
+  .vt-mono .vt-hero .vt-count__phase {
+    padding: 0 8px 0 2px;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+  }
+  .vt-mono .vt-hero .vt-count__tile {
+    min-width: 42px;
+    padding: 5px 6px 6px;
+  }
+  .vt-mono .vt-hero .vt-count__num { font-size: 22px; }
+  .vt-mono .vt-hero .vt-count__label { font-size: 8px; letter-spacing: 0.16em; }
+
+  /* Event panel already stacks one-per-row here — just tighten. */
+  .vt-mono .vt-hero__meta { padding: 16px 20px; }
+  .vt-mono .vt-hero__meta dd { font-size: 13px; white-space: normal; }
+}
+
+/* --- Regular phones ----------------------------------------- */
+@media (max-width: 480px) {
+  .vt-mono .vt-hero.hk-hero {
+    padding-left: 48px;
+    padding-right: 48px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    border-radius: 14px;
+    margin: 6px;
+  }
+  .vt-hero__inner { gap: 16px; }
+  .vt-hero__title { font-size: clamp(34px, 10vw, 54px); }
+  .vt-hero__title-sub { font-size: 14px; }
+  .vt-hero__lede { font-size: 13.5px; line-height: 1.5; }
+
+  /* Countdown — hide phase label; it eats too much horizontal space and
+     "STARTS IN" duplicates the meta panel below. Tiles are still labeled
+     (Days / Hrs / Min / Sec). */
+  .vt-mono .vt-hero .vt-count__phase { display: none; }
+  .vt-mono .vt-hero .vt-count { padding: 9px 10px; gap: 5px; }
+  .vt-mono .vt-hero .vt-count__tile { min-width: 38px; padding: 4px 4px 5px; }
+  .vt-mono .vt-hero .vt-count__num { font-size: 20px; }
+  .vt-mono .vt-hero .vt-count__label { font-size: 7.5px; }
+
+  .vt-mono .vt-hero__meta { padding: 14px 16px; }
+}
+
+/* --- Ultra-small phones ------------------------------------- */
+@media (max-width: 360px) {
+  .vt-mono .vt-hero.hk-hero {
+    /* Hide the film reels entirely on very tight screens so the content
+       column has room to breathe. */
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    border-radius: 12px;
+    margin: 4px;
+  }
+  .vt-hero__reel { display: none; }
+
+  .vt-hero__inner { gap: 14px; }
+  .vt-hero__title { font-size: clamp(28px, 11vw, 40px); letter-spacing: -0.02em; }
+  .vt-hero__eyebrow { font-size: 9px; padding: 4px 10px; letter-spacing: 0.18em; }
+  .vt-hero__lede { font-size: 13px; }
+
+  .vt-mono .vt-hero .vt-count { padding: 8px 8px; gap: 4px; }
+  .vt-mono .vt-hero .vt-count__tile { min-width: 34px; padding: 3px 3px 5px; }
+  .vt-mono .vt-hero .vt-count__num { font-size: 17px; }
+  .vt-mono .vt-hero .vt-count__label { font-size: 7px; }
+
+  .vt-mono .vt-hero__meta { padding: 12px 14px; }
+  .vt-mono .vt-hero__meta dt { font-size: 10px; letter-spacing: 0.18em; }
+  .vt-mono .vt-hero__meta dd { font-size: 12.5px; }
+
+  .vt-mono .vt-hero__ctas .vt-btn--primary,
+  .vt-mono .vt-hero__ctas .ab-btn--ghost {
+    height: 44px;
+    font-size: 12.5px;
+  }
+}
+
+/* --- Dashboard responsive ----------------------------------- */
+@media (max-width: 640px) {
+  .vt-dash { padding: 20px 16px 48px; max-width: 100%; }
+  .vt-dash__hi { font-size: 24px; }
+  .vt-dash__pill { font-size: 9.5px; padding: 3px 10px; letter-spacing: 0.14em; }
+  .vt-panel { padding: 18px; border-radius: 10px; }
+  .vt-panel__title { font-size: 18px; }
+  .vt-panel__body { font-size: 13.5px; }
+  .vt-panel__brief { font-size: 16px; }
+  .vt-panel__actions { flex-direction: column; align-items: stretch; }
+  .vt-panel__actions > .vt-btn,
+  .vt-panel__actions > .ab-btn { width: 100%; }
+  .vt-field__input,
+  .vt-field__textarea { font-size: 16px; /* 16px avoids iOS Safari autozoom on focus */ }
+}
+@media (max-width: 480px) {
+  .vt-dash { padding: 16px 14px 40px; }
+  .vt-dash__hi { font-size: 22px; }
+  .vt-panel { padding: 16px; }
+  .vt-panel__title { font-size: 17px; }
+  .vt-panel__brief { font-size: 15px; }
+  .vt-row__value { font-size: 13.5px; }
+  .vt-row__label { font-size: 9.5px; letter-spacing: 0.14em; }
+}
+
+/* --- Registration dialog form responsive -------------------- */
+@media (max-width: 480px) {
+  /* The dialog itself is sized by Radix; the body just needs to fit. */
+  .vt-dialog__title { font-size: 18px; }
+  .vt-dialog__sub { font-size: 12.5px; }
+  .vt-form { gap: 14px; }
+  .vt-form__identity { padding: 10px 12px; }
+  .vt-form__identity-row { font-size: 12.5px; gap: 10px; }
+  .vt-form__identity-label { min-width: 42px; font-size: 9.5px; }
+  .vt-form__choice { padding: 10px 12px; grid-template-columns: auto 1fr; gap: 10px; }
+  .vt-form__choice-title { font-size: 13px; }
+  .vt-form__choice-body { font-size: 12px; }
+  .vt-form__hint { font-size: 11.5px; }
+  .vt-form__actions { flex-direction: column; align-items: stretch; }
+  .vt-form__actions > .vt-btn,
+  .vt-form__actions > button { width: 100%; }
+  /* iOS Safari triggers a viewport zoom when tapping any input below 16px.
+     Keep inputs at exactly 16px inside the dialog on small screens. */
+  .vt-form input,
+  .vt-form textarea,
+  .vt-form select { font-size: 16px !important; }
+}
+
+/* --- Landscape phones: cap hero height so buttons are visible ------- */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
+  .vt-mono .vt-hero.hk-hero {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+  .vt-hero__inner { gap: 14px; }
+  .vt-hero__title { font-size: clamp(32px, 6vw, 52px); }
+  .vt-hero__lede { max-width: 100%; }
+}

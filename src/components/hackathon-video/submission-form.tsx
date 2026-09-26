@@ -101,7 +101,7 @@ export function VideoSubmissionForm({ initial, editable, closed }: Props) {
     <section className="vt-panel">
       <h2 className="vt-panel__title">Submit your cut</h2>
       <p className="vt-panel__body">
-        Paste one public link — Drive, Behance, YouTube, Vimeo. Set it to
+        Paste one public link. Drive, Behance, YouTube, Vimeo. Set it to
         &quot;anyone with the link can view&quot;. You can re-save any time
         until the deadline; the last save is what the judges see.
       </p>
