@@ -43,7 +43,12 @@ export const maxDuration = 60;
 /** Nulls become "" so every input stays controlled from first render. */
 const s = (v: string | null | undefined) => v ?? "";
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  /** `?step=<wizard key>` opens that section. See `initialIndex` below. */
+  searchParams?: Promise<{ step?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -429,7 +434,20 @@ export default async function ProfilePage() {
   ];
 
   const firstIncomplete = steps.findIndex((step) => !step.complete);
-  const initialIndex = firstIncomplete === -1 ? 0 : firstIncomplete;
+  // `?step=<key>` opens that section directly, which is what the fix buttons on
+  // /profile/recruiter-view link to (plan 155). An absent, empty or unknown key
+  // falls through to the existing first-incomplete default, so nothing about a
+  // plain /profile visit changes.
+  const requestedStep = (await searchParams)?.step;
+  const requestedIndex = requestedStep
+    ? steps.findIndex((step) => step.key === requestedStep)
+    : -1;
+  const initialIndex =
+    requestedIndex >= 0
+      ? requestedIndex
+      : firstIncomplete === -1
+        ? 0
+        : firstIncomplete;
 
   // The report card links back into the wizard by index, so the mapping is
   // derived from `steps` rather than restated — reordering a step here moves

@@ -116,6 +116,7 @@
     "test:admin-project-inspect": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/admin/admin-project-inspect.test.ts",
     "test:admin-candidate-detail": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/admin/admin-candidate-detail.test.ts",
     "test:candidate-discoverability": "tsx src/features/admin/candidate-discoverability.test.ts",
+    "test:recruiter-view": "tsx src/features/profile/recruiter-view-checks.test.ts",
     "test:admin-attempt-detail": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/admin/admin-attempt-detail.test.ts",
     "test:evidence-provenance": "tsx src/features/admin/evidence-provenance.test.ts",
     "test:recruiter-workspace": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-workspace/workspace.test.ts",
