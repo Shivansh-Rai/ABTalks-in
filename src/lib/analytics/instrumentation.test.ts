@@ -75,8 +75,8 @@ console.log("T-253 instrumentation structure: transport, emit sites, exclusions"
 // ── One transport, one initialisation (T-252 preserved) ──────────────────────
 
 {
-  // Every event ABTalks sends goes through the single gtag('event', …) call in
-  // use-track.ts. A second one anywhere is a second analytics system.
+  // GA4 events and the Google Ads registration conversion both go through
+  // use-track.ts. A gtag('event') in any other file is a second analytics system.
   const senders = APP.filter((f) => /gtag\(\s*["']event["']/.test(f.code));
   assert(
     senders.length === 1 && senders[0].path === "src/lib/analytics/use-track.ts",
