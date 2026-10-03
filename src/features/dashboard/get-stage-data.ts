@@ -91,7 +91,7 @@ async function loadQuiz(
 
   // First active track with a quiz ready to take right now.
   let readyHref: string | null = null;
-  for (const e of enrollments.filter((x) => x.status === "ACTIVE")) {
+  for (const e of enrollments.filter((x) => x.lifecycle === "active")) {
     const available = await getAvailableQuiz(userId, {
       challengeId: "",
       domain: e.domain,

@@ -153,7 +153,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     data.profile?.fullName.split(/\s+/)[0] ??
     session.user.name?.split(/\s+/)[0] ??
     null;
-  const firstActive = data.enrollments.find((e) => e.status === "ACTIVE");
+  const firstActive = data.enrollments.find((e) => e.lifecycle === "active");
   const trackHref = firstActive
     ? TRACK_PATH[firstActive.domain]
     : "/challenges";
@@ -191,7 +191,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // Three stages. Each shows a %, and the first unfinished one is "current".
   const primary = firstActive ?? data.enrollments[0] ?? null;
   const buildDays = primary
-    ? primary.status === "COMPLETED" ? 60 : Math.min(60, primary.daysCompleted)
+    ? primary.lifecycle === "completed"
+      ? primary.totalDays
+      : Math.min(primary.totalDays, primary.daysCompleted)
     : 0;
   const milestonesDone = testMilestones(stageData, Boolean(firstActive), trackHref)
     .filter((m) => m.done).length;
@@ -294,6 +296,7 @@ function withPreviewEnrollment(data: HubData): HubData {
         status: "ACTIVE",
         challengeTitle: "Software Engineering",
         daysCompleted: 13,
+        currentDay: 13,
         currentStreak: 0,
         totalDays: 60,
         lifecycle: "active",

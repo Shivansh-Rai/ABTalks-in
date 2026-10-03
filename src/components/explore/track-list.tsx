@@ -64,17 +64,25 @@ export function TrackList({ enrollments, claudeEnabled }: Props) {
             Your tracks
           </h2>
           <ul className="mt-3 space-y-2">
-            {enrollments.map((enrollment) => (
-              <li key={enrollment.id}>
-                <TrackRow
-                  href={`/dashboard?challenge=${enrollment.id}`}
-                  title={enrollment.challengeTitle}
-                  support={`Day ${enrollment.daysCompleted} · ${enrollment.currentStreak}-day streak`}
-                  icon={enrollment.domain === "CLAUDE" ? "sparkles" : "code"}
-                  badge={{ label: "Active", tone: "success" }}
-                />
-              </li>
-            ))}
+            {enrollments.map((enrollment) => {
+              const badge =
+                enrollment.lifecycle === "completed"
+                  ? { label: "Completed" as const, tone: "success" as const }
+                  : enrollment.lifecycle === "ended"
+                    ? { label: "Ended" as const, tone: "neutral" as const }
+                    : { label: "Active" as const, tone: "success" as const };
+              return (
+                <li key={enrollment.id}>
+                  <TrackRow
+                    href={`/dashboard?challenge=${enrollment.id}`}
+                    title={enrollment.challengeTitle}
+                    support={`Day ${enrollment.daysCompleted} · ${enrollment.currentStreak}-day streak`}
+                    icon={enrollment.domain === "CLAUDE" ? "sparkles" : "code"}
+                    badge={badge}
+                  />
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}

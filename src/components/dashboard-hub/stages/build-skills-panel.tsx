@@ -47,7 +47,12 @@ type BuildSkillsPanelProps = {
 
 export function BuildSkillsPanel(props: BuildSkillsPanelProps) {
   const { enrollments, streak } = props;
-  const primary = enrollments.find((e) => e.status === "ACTIVE") ?? enrollments[0] ?? null;
+  // Prefer a track that is still submittable. DB status ACTIVE alone is not
+  // enough — lifecycle "ended" means the window closed with misses left.
+  const primary =
+    enrollments.find((e) => e.lifecycle === "active") ??
+    enrollments[0] ??
+    null;
 
   return (
     <div className="space-y-6">
@@ -119,19 +124,29 @@ function cohortItems(p: BuildSkillsPanelProps): LibraryItem[] {
 
 function challengeItems(p: BuildSkillsPanelProps): LibraryItem[] {
   const joined = new Set(p.joinedDomains);
+  const byDomain = new Map(p.enrollments.map((e) => [e.domain, e]));
   const art: Record<Domain, LibraryArt> = { AI: "ai", SE: "se", DS: "ds", CLAUDE: "claude" };
-  const tracks = TRACKS.filter((t) => t.domain !== "CLAUDE" || isClaudeEnabled()).map((t): LibraryItem => ({
-    key: t.domain,
-    kicker: "Challenge",
-    title: t.name === "AI" ? "Artificial Intelligence" : t.name,
-    blurb: t.blurb,
-    href: joined.has(t.domain) ? t.path : `/register?domain=${t.domain}`,
-    cta: joined.has(t.domain) ? "Continue" : "View details",
-    art: art[t.domain],
-    days: 60,
-    daysLabel: "Challenge",
-    modules: null,
-  }));
+  const tracks = TRACKS.filter((t) => t.domain !== "CLAUDE" || isClaudeEnabled()).map((t): LibraryItem => {
+    const enrollment = byDomain.get(t.domain);
+    const cta =
+      enrollment?.lifecycle === "active"
+        ? "Continue"
+        : joined.has(t.domain)
+          ? "View"
+          : "View details";
+    return {
+      key: t.domain,
+      kicker: "Challenge",
+      title: t.name === "AI" ? "Artificial Intelligence" : t.name,
+      blurb: t.blurb,
+      href: joined.has(t.domain) ? t.path : `/register?domain=${t.domain}`,
+      cta,
+      art: art[t.domain],
+      days: 60,
+      daysLabel: "Challenge",
+      modules: null,
+    };
+  });
   return tracks;
 }
 

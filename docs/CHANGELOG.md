@@ -45,6 +45,10 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-10-03 [convention] Hub Continue Learning / Continue Journey Finished lists only lifecycle `completed` — `ended` (window closed with misses) is omitted from those cards
+- 2026-10-03 [rule] Plan 178: 60-day Continue/Completed CTAs use exported `challengeLifecycle` (active|completed|ended); post-window tracks show Ended not Continue Day 60 / Completed
+- 2026-10-03 [rule] After day 60, heatmap/UI use uncapped elapsed day so Day 60 is missed (not perpetual "today"); Claude canSubmit compares to elapsedDayNumber
+- 2026-10-03 [rule] Plan 177: challenge PE upsert update persists `startedAt` so admin reset restarts the day clock; hub Continue card shows IST `currentDay`, not `daysCompleted + 1`
 - 2026-10-03 [rule] Plan 176: empty Career Preferences (no roles and no locations) awards full 3%; starting either half still requires both
 - 2026-10-03 [rule] Plan 175: portfolio URL is optional in Links — LinkedIn + GitHub award full 4%; portfolio no longer blocks 100%
 - 2026-10-03 [rule] Plan 174: empty Accomplishments (no certification rows) awards full 5% so the profile is not held incomplete; a started certification still requires name, issuer, issue year, and credential link; awards remain optional

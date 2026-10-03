@@ -71,6 +71,7 @@ export async function applyChallengeProgramEnrollment(
     },
     update: {
       status,
+      startedAt: enrollment.startedAt,
       completedAt: enrollment.completedAt,
     },
   });

@@ -144,6 +144,9 @@ export async function ChallengeDayRoute({
 
   // Claude is view-only once a day has been submitted; the other tracks let a
   // student edit an existing submission until the window closes.
+  // "Today" must use elapsed (uncapped). After day 60, currentDay freezes at 60
+  // while elapsed keeps rising — day === currentDay would keep Day 60 submittable
+  // in the UI forever and then fail assertPastDaySubmittable on the server.
   const canSubmit =
     bypassEnabled ||
     (data.isUnlocked &&
@@ -153,7 +156,7 @@ export async function ChallengeDayRoute({
           data.hasRejectResubmit ||
           data.existingSubmission != null
         : !data.existingSubmission &&
-          (day === data.currentDayNumber ||
+          (day === data.elapsedDayNumber ||
             data.isRelaxable ||
             data.hasRejectResubmit)));
 

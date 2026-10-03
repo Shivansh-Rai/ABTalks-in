@@ -24,6 +24,7 @@ import { getQuizAttemptHistory } from "@/features/quiz/get-quiz-attempt-history"
 import { isEnrollmentPreStart, formatDateIST } from "@/lib/date-utils";
 import { prisma } from "@/lib/db";
 import { mapHeatmapCellToUiState } from "@/features/claude/map-day-ui-state";
+import { challengeLifecycle } from "@/features/dashboard/get-hub-data";
 import { findChallengeEnrollment } from "@/repositories/learning";
 import { getCandidateProfile } from "@/repositories/candidate";
 
@@ -32,13 +33,24 @@ function buildContinueInfo(
   cells: Awaited<ReturnType<typeof getHeatmapData>>,
 ): ChallengeContinueInfo {
   const { enrollment, todayTask, isTodayCompleted } = data;
-  const isChallengeComplete =
-    enrollment.status === "COMPLETED" ||
-    enrollment.daysCompleted >= enrollment.totalDays;
+  const lifecycle = challengeLifecycle({
+    daysCompleted: enrollment.daysCompleted,
+    totalDays: enrollment.totalDays,
+    startedAt: enrollment.startedAt,
+    challengeStartsAt: enrollment.challenge.startsAt,
+  });
 
-  if (isChallengeComplete) {
+  if (lifecycle === "completed") {
     return {
       mode: "complete",
+      dayNumber: null,
+      title: null,
+    };
+  }
+
+  if (lifecycle === "ended") {
+    return {
+      mode: "ended",
       dayNumber: null,
       title: null,
     };

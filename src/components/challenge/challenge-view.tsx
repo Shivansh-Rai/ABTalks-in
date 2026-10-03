@@ -14,7 +14,7 @@ import type { QuizHistoryRow } from "@/features/quiz/get-quiz-attempt-history";
 import { cn } from "@/lib/utils";
 
 export type ChallengeContinueInfo = {
-  mode: "start" | "continue" | "caught_up" | "complete";
+  mode: "start" | "continue" | "caught_up" | "complete" | "ended";
   dayNumber: number | null;
   title: string | null;
 };
@@ -61,7 +61,7 @@ export function ChallengeView({
   const [quizOpen, setQuizOpen] = useState(quizReady);
 
   const dayLink =
-    continueInfo.dayNumber != null
+    continueInfo.mode !== "ended" && continueInfo.dayNumber != null
       ? dayHref(track, continueInfo.dayNumber, enrollmentId)
       : null;
 
@@ -100,6 +100,7 @@ export function ChallengeView({
           continueInfo={continueInfo}
           dayLink={dayLink}
           totalDays={totalDays}
+          daysCompleted={daysCompleted}
           isReadyForInterview={isReadyForInterview}
           trackLabel={track.label}
         />
@@ -246,12 +247,14 @@ function ContinueCard({
   continueInfo,
   dayLink,
   totalDays,
+  daysCompleted,
   isReadyForInterview,
   trackLabel,
 }: {
   continueInfo: ChallengeContinueInfo;
   dayLink: string | null;
   totalDays: number;
+  daysCompleted: number;
   isReadyForInterview: boolean;
   trackLabel: string;
 }) {
@@ -266,6 +269,10 @@ function ContinueCard({
     supporting = isReadyForInterview
       ? "Your profile is marked ready for interview opportunities."
       : "Great work — keep building on what you learned.";
+  } else if (continueInfo.mode === "ended") {
+    eyebrow = "CHALLENGE ENDED";
+    title = "This challenge window has closed";
+    supporting = `Ended · ${daysCompleted} of ${totalDays}. Missed days stay view-only.`;
   } else if (continueInfo.mode === "start" && continueInfo.dayNumber != null) {
     eyebrow = "GET STARTED";
     title = `Day ${continueInfo.dayNumber}: ${continueInfo.title ?? "Today's task"}`;
@@ -283,7 +290,7 @@ function ContinueCard({
     supporting =
       continueInfo.dayNumber != null && continueInfo.dayNumber < totalDays
         ? `Next day unlocks on the next calendar day (IST).`
-        : `You've completed all ${totalDays} days.`;
+        : "No days left to submit right now.";
   }
 
   return (

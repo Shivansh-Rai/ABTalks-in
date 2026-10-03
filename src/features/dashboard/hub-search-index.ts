@@ -175,13 +175,27 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
   }
 
   for (const enrollment of input.enrollments) {
+    if (enrollment.lifecycle === "active") {
+      items.push({
+        id: `continue:${enrollment.id}`,
+        group: "Continue",
+        title: DOMAIN_LABEL[enrollment.domain],
+        subtitle: enrollment.challengeTitle,
+        href: TRACK_PATH[enrollment.domain],
+        keywords: `continue streak journey ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
+      });
+      continue;
+    }
     items.push({
-      id: `continue:${enrollment.id}`,
-      group: "Continue",
+      id: `challenge-enrolled:${enrollment.id}`,
+      group: "Challenges",
       title: DOMAIN_LABEL[enrollment.domain],
-      subtitle: enrollment.challengeTitle,
+      subtitle:
+        enrollment.lifecycle === "completed"
+          ? `Completed · ${enrollment.challengeTitle}`
+          : `Ended · ${enrollment.challengeTitle}`,
       href: TRACK_PATH[enrollment.domain],
-      keywords: `continue streak journey ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
+      keywords: `${enrollment.lifecycle} view ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
     });
   }
 
