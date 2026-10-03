@@ -115,6 +115,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       }
     : enrolledStage;
 
+  // Plan 173. The one field worth most of what is left, so the tile's
+  // percentage arrives with the reason for it rather than "finish it now".
+  const profileNext =
+    stageData.profile.sections
+      .filter((s) => s.missing.length > 0)
+      .sort(
+        (a, b) =>
+          b.weight * (1 - b.fraction) - a.weight * (1 - a.fraction),
+      )[0]?.missing[0] ?? null;
+
   // Best skill match first, then newest. Matching is a case-insensitive name
   // compare against the skills on the candidate's profile.
   const mySkills = new Set(stageData.profile.skills.map((x) => x.trim().toLowerCase()));
@@ -222,6 +232,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="mt-12">
             <StageSwitcher
               profileScore={stageData.profile.score}
+              profileNext={profileNext}
               stages={stages}
               current={currentStage}
               panels={{

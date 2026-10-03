@@ -83,6 +83,11 @@ export function ScoreDonut({ score, sections, nextKey }: ScoreDonutProps) {
   const [active, setActive] = useState<SectionKey | null>(null);
   const slices = layout(sections);
   const current = slices.find((s) => s.section.key === active) ?? null;
+  /** What the panel below the legend describes: hovered, else "up next". */
+  const detail =
+    current?.section ??
+    sections.find((s) => s.key === nextKey) ??
+    null;
 
   const ring = (
     <>
@@ -161,7 +166,13 @@ export function ScoreDonut({ score, sections, nextKey }: ScoreDonutProps) {
 
       {/* Legend: right of the ring from tablet up, under it on phones. */}
       <ul className="grid w-full gap-x-6 gap-y-1 sm:grid-cols-2 md:max-w-[380px] md:grid-cols-1 md:justify-self-center">
-        <li className="sr-only">Profile strength {score}%.</li>
+        <li className="sr-only">
+          Profile strength {score}%.
+          {sections
+            .filter((s) => s.missing.length > 0)
+            .map((s) => ` ${s.label}: ${s.missing.join(", ")}.`)
+            .join("")}
+        </li>
         {sections.map((s) => (
           <li key={s.key}>
             <button
@@ -174,7 +185,6 @@ export function ScoreDonut({ score, sections, nextKey }: ScoreDonutProps) {
               onMouseLeave={() => setActive(null)}
               onFocus={() => setActive(s.key)}
               onBlur={() => setActive(null)}
-              title={s.complete ? undefined : (s.hint ?? undefined)}
             >
               <span className="size-3 shrink-0 rounded-full" style={{ background: COLORS[s.key] }} aria-hidden="true" />
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-black">
@@ -186,6 +196,25 @@ export function ScoreDonut({ score, sections, nextKey }: ScoreDonutProps) {
           </li>
         ))}
       </ul>
+
+      {/* The breakdown in words. A `title` tooltip used to carry this, which
+          meant it did not exist on a phone or to a screen reader — and the
+          percentage was unexplainable there. Falls back to the section with
+          the most left to earn when nothing is hovered. */}
+      {detail ? (
+        <div className="md:col-span-2">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-[#E6E9E9] pt-4">
+            <span className="size-3 shrink-0 rounded-full" style={{ background: COLORS[detail.key] }} aria-hidden="true" />
+            <span className="font-heading text-sm font-bold text-black">{detail.label}</span>
+            <span className="text-xs font-semibold text-[#C62D1F]">{sectionValue(detail)}</span>
+          </div>
+          <p className="mt-1 text-sm text-[#4B4B4B]">
+            {detail.missing.length > 0
+              ? `Still to add: ${detail.missing.join(" · ")}`
+              : "Nothing left to add here."}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

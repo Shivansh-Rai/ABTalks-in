@@ -173,6 +173,11 @@ function Block({ block }: { block: ReviewBlock }) {
   }
 }
 
+/** "+12%" / "+0.5%" — the points a card can still add. */
+function points(remaining: number): string {
+  return `+${Number.isInteger(remaining) ? remaining : remaining.toFixed(1)}%`;
+}
+
 function CardHead({
   card,
   onOpen,
@@ -188,6 +193,15 @@ function CardHead({
       <div className="pw-rv-card-copy">
         <h3>{card.title}</h3>
         <p className="pw-rv-preview">{card.preview}</p>
+        {/* Mobile only. The compact row hides the card body, so without this
+            the phone layout would show the points short and never the fields. */}
+        {card.missing.length > 0 ? (
+          <p className="pw-rv-gapline">
+            <span className="pw-rv-gapline-k">{points(card.remaining)}</span>
+            {card.missing.slice(0, 2).join(" · ")}
+            {card.missing.length > 2 ? ` · +${card.missing.length - 2} more` : ""}
+          </p>
+        ) : null}
       </div>
       {card.count > 1 ? <span className="pw-rv-count">{card.count}</span> : null}
       <button
@@ -227,6 +241,16 @@ function Card({
         ) : (
           <p className="pw-rv-empty">{card.emptyHint}</p>
         )}
+        {/* The answer to "why is my strength 80%?" for a card that already has
+            data. Without it a part-filled section looks finished. */}
+        {card.missing.length > 0 ? (
+          <p className="pw-rv-tofinish">
+            <span className="pw-rv-tofinish-k">
+              To finish {points(card.remaining)}
+            </span>
+            <span className="pw-rv-tofinish-v">{card.missing.join(" · ")}</span>
+          </p>
+        ) : null}
       </div>
       {/* Mobile: whole-card hit target without nesting the desktop Add button. */}
       <button
@@ -253,8 +277,11 @@ export function ProfileReviewCard({
 }) {
   const filled = review.cards.filter((c) => c.filled);
   const empty = review.cards.filter((c) => !c.filled);
-  const gapCards = empty.filter((c) => !c.noGap);
-  const gaps = gapCards.map((c) => c.title);
+  // A card is a gap when it still holds the score back — not merely when it is
+  // empty. Selecting on `!filled` dropped every part-filled section (basic info
+  // without a gender, a project with no repo link) from this list while the
+  // percentage stayed under 100, which is what made the number unexplainable.
+  const gapCards = review.cards.filter((c) => !c.noGap && c.remaining > 0);
   const basicStep = review.cards[0]?.stepIndex ?? 0;
 
   return (
@@ -326,10 +353,31 @@ export function ProfileReviewCard({
           </div>
         </section>
 
-        {gaps.length > 0 ? (
+        {gapCards.length > 0 ? (
           <div className="pw-rv-gaps">
             <span className="pw-rv-gaps-k">Still missing</span>
-            <span className="pw-rv-gaps-v">{gaps.join(" · ")}</span>
+            <ul className="pw-rv-gaps-v">
+              {gapCards.map((card) => (
+                <li className="pw-rv-gap-row" key={card.title}>
+                  <button
+                    type="button"
+                    className="pw-rv-gap-link"
+                    onClick={() => onOpen(card.stepIndex)}
+                  >
+                    {card.title}
+                  </button>
+                  <span className="pw-rv-gap-fields">
+                    {/* Capped: the card's own "To finish" line below carries
+                        the full list, so the strip cannot grow unbounded. */}
+                    {card.missing.slice(0, 3).join(" · ")}
+                    {card.missing.length > 3
+                      ? ` · +${card.missing.length - 3} more`
+                      : ""}
+                  </span>
+                  <span className="pw-rv-gap-pts">{points(card.remaining)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
@@ -360,6 +408,9 @@ export function ProfileReviewCard({
                   onClick={() => onOpen(card.stepIndex)}
                 >
                   {card.title}
+                  <span className="pw-rv-complete-chip-pts">
+                    {points(card.remaining)}
+                  </span>
                 </button>
               ))}
             </div>

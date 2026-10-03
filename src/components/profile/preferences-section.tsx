@@ -80,7 +80,7 @@ export function PreferencesSection({
       </PwRow>
 
       <PwRow cols={1}>
-        <PwField label="Preferred roles" required>
+        <PwField label="Preferred roles">
           <Controller
             control={control}
             name="preferredRoles"
@@ -96,7 +96,7 @@ export function PreferencesSection({
       </PwRow>
 
       <PwRow cols={1}>
-        <PwField label="Preferred locations" required>
+        <PwField label="Preferred locations">
           <Controller
             control={control}
             name="preferredLocations"

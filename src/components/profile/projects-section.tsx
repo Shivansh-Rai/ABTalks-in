@@ -142,12 +142,12 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   {...register(`rows.${index}.repoUrl`)}
                 />
               </PwField>
-              <PwField label="Live URL" required htmlFor={`prj-live-${index}`}>
+              <PwField label="Live URL" htmlFor={`prj-live-${index}`}>
                 <PwInput
                   id={`prj-live-${index}`}
                   type="url"
                   inputMode="url"
-                  placeholder="Enter your live URL"
+                  placeholder="Enter your live URL (optional)"
                   {...register(`rows.${index}.liveUrl`)}
                 />
               </PwField>

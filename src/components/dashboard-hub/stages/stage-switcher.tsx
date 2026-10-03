@@ -65,6 +65,12 @@ type StageSwitcherProps = {
   stages: StageSummary[];
   /** Profile strength 0–100 — drives the "Complete your profile" tile. */
   profileScore: number;
+  /**
+   * The single most valuable profile field still missing, named the way the
+   * wizard names it. Shown on the tile so the percentage arrives with the
+   * reason for it. Null when there is nothing left to add.
+   */
+  profileNext?: string | null;
   /** The first unfinished stage — gets "You are here" and opens by default. */
   current: StageKey;
   panels: Record<StageKey, ReactNode>;
@@ -76,7 +82,7 @@ type StageSwitcherProps = {
  * anchor (#test-skills) or any element inside a panel (#events, #domains…),
  * so the header's section links keep working whichever stage is open.
  */
-export function StageSwitcher({ stages, current, panels, profileScore }: StageSwitcherProps) {
+export function StageSwitcher({ stages, current, panels, profileScore, profileNext = null }: StageSwitcherProps) {
   const profileDone = profileScore >= 100;
   const [selected, setSelected] = useState<StageKey>(current);
   /** Bumped on every tile click while the profile is unfinished: the pin
@@ -131,7 +137,7 @@ export function StageSwitcher({ stages, current, panels, profileScore }: StageSw
             className={cn("grid gap-2.5 sm:gap-3", profileDone ? "xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}
           >
             {/* Once the profile is complete the tile steps aside. */}
-            {profileDone ? null : <ProfileTile score={profileScore} />}
+            {profileDone ? null : <ProfileTile score={profileScore} next={profileNext} />}
             {stages.map((s) => {
               const Illustration = ILLUSTRATIONS[s.key];
               const active = s.key === selected;
@@ -353,7 +359,7 @@ function StageRoad({
    Incomplete: a warm red alert tile with a pulsing dot to pull the eye.
    Complete: calm white with a check in the corner and "100% completed". */
 
-function ProfileTile({ score }: { score: number }) {
+function ProfileTile({ score, next }: { score: number; next: string | null }) {
   const done = score >= 100;
   return (
     <Link
@@ -396,8 +402,11 @@ function ProfileTile({ score }: { score: number }) {
           <span className={cn("h-1.5 w-12 shrink-0 overflow-hidden rounded-full", done ? "bg-[#E1E7E7]" : "bg-white/70")} aria-hidden="true">
             <span className={cn("block h-full rounded-full", done ? "bg-[#03535F]" : "bg-[#E5392A]")} style={{ width: `${score}%` }} />
           </span>
-          <span className={cn("truncate text-xs", done ? "text-[#4B4B4B]" : "text-[#8A2A1E]")}>
-            {done ? "completed" : "finish it now"}
+          <span
+            className={cn("truncate text-xs", done ? "text-[#4B4B4B]" : "text-[#8A2A1E]")}
+            title={!done && next ? next : undefined}
+          >
+            {done ? "completed" : (next ?? "finish it now")}
           </span>
         </span>
       </span>
