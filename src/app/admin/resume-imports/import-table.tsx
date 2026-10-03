@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { downloadCSV, toCSV } from "@/lib/csv";
 import {
   deleteImportAction,
+  enrollUnclaimedAction,
+  exportOutreachCsvAction,
   getImportStatusAction,
   queueParseAction,
   registerUploadsAction,
@@ -25,6 +28,17 @@ import type { ImportRowView, ImportStatusView } from "@/features/resume/import/s
  */
 
 type Status = ImportRowView["status"];
+
+/** Plan 171: mirrors `OUTREACH_FILTERS` in the repository (server-only). */
+const OUTREACH_FILTER_LABEL = {
+  CLICKED_NOT_CLAIMED: "Clicked, not claimed (strongest first)",
+  CLAIMED_INCOMPLETE: "Claimed, not complete",
+  COMPLETED: "Completed",
+  NO_RESPONSE: "No response",
+  BOUNCED: "Bounced",
+  REMOVED: "Removed their data",
+} as const;
+type OutreachFilter = keyof typeof OUTREACH_FILTER_LABEL;
 
 const STATUS_LABEL: Record<Status, string> = {
   UPLOADED: "Ready to parse",
@@ -133,6 +147,9 @@ export function ImportTable({
   const [filter, setFilter] = useState<Status | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [date, setDate] = useState("");
+  const [outreachFilter, setOutreachFilter] = useState<OutreachFilter | "">("");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [uploadBatch, setUploadBatch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [autoRegister, setAutoRegister] = useState(false);
   const [consent, setConsent] = useState(false);
@@ -155,8 +172,10 @@ export function ImportTable({
       cursor,
       search: search.trim() || undefined,
       date: date || undefined,
+      outreach: outreachFilter || undefined,
+      batchLabel: batchFilter || undefined,
     }),
-    [search, date],
+    [search, date, outreachFilter, batchFilter],
   );
 
   const load = useCallback(
@@ -190,9 +209,9 @@ export function ImportTable({
       void refresh();
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
-    // `refresh` changes whenever search/date do; keying on those two is enough.
+    // `refresh` changes whenever these filters do; keying on them is enough.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, date]);
+  }, [search, date, outreachFilter, batchFilter]);
 
   async function loadMore() {
     if (!view.nextCursor) return;
@@ -223,7 +242,10 @@ export function ImportTable({
     async function flush(force: boolean) {
       while (staged.length >= REGISTER_BATCH || (force && staged.length > 0)) {
         const batch = staged.splice(0, REGISTER_BATCH);
-        const res = await registerUploadsAction({ files: batch });
+        const res = await registerUploadsAction({
+          files: batch,
+          batchLabel: uploadBatch.trim() || undefined,
+        });
         if (res.ok) {
           setProgress((p) => ({
             ...p,
@@ -352,6 +374,37 @@ export function ImportTable({
     });
   }
 
+  function enrollUnclaimed() {
+    void run(
+      () => enrollUnclaimedAction(),
+      (d) => `Sending invites to ${d.enrolled} student(s) now.`,
+    );
+  }
+
+  async function exportCsv() {
+    setBusy(true);
+    try {
+      const res = await exportOutreachCsvAction({
+        status: filter === "ALL" ? undefined : filter,
+        search: search.trim() || undefined,
+        date: date || undefined,
+        outreach: outreachFilter || undefined,
+        batchLabel: batchFilter || undefined,
+      });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      if (res.data.length === 0) {
+        toast.error("No imports match these filters.");
+        return;
+      }
+      downloadCSV(`resume-imports-${todayIstYmd()}.csv`, toCSV(res.data));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const etaMin =
     view.usage.parsedLastHour > 0 && inFlight > 0
@@ -386,6 +439,16 @@ export function ImportTable({
             // Folder picking is non-standard; set via attribute so React passes it through.
             {...({ webkitdirectory: "" } as Record<string, string>)}
             onChange={(e) => void uploadFiles(e.target.files)}
+          />
+          <input
+            type="text"
+            aria-label="Batch or college name for this upload"
+            placeholder="Batch / college name (optional)"
+            maxLength={80}
+            className="w-64 rounded-md border border-[#E9E9E9] bg-white px-2 py-1.5 text-sm"
+            value={uploadBatch}
+            disabled={progress.running}
+            onChange={(e) => setUploadBatch(e.target.value)}
           />
           <Button disabled={progress.running} onClick={() => fileInput.current?.click()}>
             Choose PDFs
@@ -447,6 +510,40 @@ export function ImportTable({
             {etaMin !== null ? ` · about ${etaMin} min left at the current rate` : ""}
           </p>
         </div>
+      </section>
+
+      {/* Claim emails (plan 171) */}
+      <section className="space-y-3 rounded-xl border border-[#E9E9E9] bg-white p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold text-[#353535]">Claim emails</h2>
+          <p className="text-xs text-[#8F8F8F]">
+            {view.outreach.enabled
+              ? "Invites go out as soon as a student is registered; reminders at 9:00 IST. At most 4 per student."
+              : "Switched off. Set IMPORT_OUTREACH_ENABLED=true to start sending."}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            ["Invited", view.outreach.funnel.invited],
+            ["Clicked", view.outreach.funnel.clicked],
+            ["Claimed", view.outreach.funnel.claimed],
+            ["Completed", view.outreach.funnel.completed],
+            ["Removed", view.outreach.funnel.removed],
+            ["Bounced", view.outreach.funnel.bounced],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-[#E9E9E9] bg-white px-4 py-3">
+              <p className="text-xs text-[#8F8F8F]">{label}</p>
+              <p className="font-display text-2xl font-semibold text-[#353535]">{value}</p>
+            </div>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          disabled={busy || !view.outreach.enabled || view.outreach.unenrolled === 0}
+          onClick={enrollUnclaimed}
+        >
+          Send invites to unclaimed ({view.outreach.unenrolled})
+        </Button>
       </section>
 
       {/* Actions */}
@@ -517,6 +614,15 @@ export function ImportTable({
                 {view.matchedTotal} match{view.matchedTotal === 1 ? "" : "es"}
               </p>
             ) : null}
+            {view.outreach.batch ? (
+              <p className="text-sm text-[#626262]">
+                {view.outreach.batch.label}: {view.outreach.batch.claimed} of{" "}
+                {view.outreach.batch.registered} claimed
+                {view.outreach.batch.registered > 0
+                  ? ` (${Math.round((view.outreach.batch.claimed / view.outreach.batch.registered) * 100)}%)`
+                  : ""}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -570,6 +676,37 @@ export function ImportTable({
                 </option>
               ))}
             </select>
+            <select
+              aria-label="Filter by claim emails"
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+              value={outreachFilter}
+              onChange={(e) => setOutreachFilter(e.target.value as OutreachFilter | "")}
+            >
+              <option value="">All claim-email states</option>
+              {(Object.keys(OUTREACH_FILTER_LABEL) as OutreachFilter[]).map((k) => (
+                <option key={k} value={k}>
+                  {OUTREACH_FILTER_LABEL[k]}
+                </option>
+              ))}
+            </select>
+            {view.outreach.batchLabels.length > 0 && (
+              <select
+                aria-label="Filter by batch"
+                className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+                value={batchFilter}
+                onChange={(e) => setBatchFilter(e.target.value)}
+              >
+                <option value="">All batches</option>
+                {view.outreach.batchLabels.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            )}
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => void exportCsv()}>
+              Download CSV
+            </Button>
           </div>
         </div>
         {rows.length === 0 ? (
@@ -595,6 +732,7 @@ export function ImportTable({
                   <th className="px-2 py-2">Email</th>
                   <th className="whitespace-nowrap px-2 py-2">Imported (IST)</th>
                   <th className="px-2 py-2">Status</th>
+                  <th className="px-2 py-2">Claim emails</th>
                   <th className="px-2 py-2">Score</th>
                   <th className="px-2 py-2">Details</th>
                   <th className="px-2 py-2" />
@@ -696,6 +834,9 @@ function ImportRow({
         ) : (
           row.originalFilename
         )}
+        {row.batchLabel ? (
+          <span className="block truncate text-xs font-normal text-[#8F8F8F]">{row.batchLabel}</span>
+        ) : null}
       </td>
       <td className="px-2 py-2 align-top text-[#353535]">
         {row.status === "NEEDS_REVIEW" ? (
@@ -741,6 +882,9 @@ function ImportRow({
         {row.registerRequested && row.status === "PARSED" && (
           <span className="ml-1 text-xs text-[#8F8F8F]">registering…</span>
         )}
+      </td>
+      <td className="max-w-[220px] px-2 py-2 align-top text-xs text-[#626262]">
+        {row.outreachLabel ?? <span className="text-[#8F8F8F]">—</span>}
       </td>
       <td className="px-2 py-2 align-top text-[#353535]">{row.overallScore ?? "—"}</td>
       <td className="max-w-[280px] px-2 py-2 align-top text-xs text-[#787878]">

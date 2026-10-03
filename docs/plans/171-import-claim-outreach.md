@@ -525,6 +525,44 @@ history.
 
 **Files expected to change:** exactly §4, plus the migration folder.
 
+## 9a. As built (2026-10-01) — where the build differs from this plan
+
+Decided with the product owner while building; these override the sections
+above.
+
+- **No unsubscribe.** No Unsubscribe link in any email, no
+  `/api/import-outreach/unsubscribe` route, no `List-Unsubscribe` header
+  (`listUnsubscribe` is not set). A Brevo spam report still stops a person's
+  emails (`UNSUBSCRIBED`) through the webhook.
+- **The first email is the approved design** (`outreach-templates.ts`), with
+  only four changes: "Hi {firstName}," in the greeting; the real missing
+  items under "Your profile is N% complete." (with "+", no ticks); the
+  button is the personal `/claim/<token>` link, "Claim my profile →"; and a
+  "Sign in with {email} to claim it." line under it. Everything else in its
+  copy is unchanged; the footer keeps "Preferences" and drops "Unsubscribe".
+  The other three emails reuse the same layout. "Remove my data" is on the
+  claim page, not in the emails.
+- **No client sign-in component.** `/login` makes people accept the Terms
+  before Google sign-in; starting `signIn("google")` from `/claim/[token]`
+  would skip that. The claim page's button links to
+  `/login?from=/claim-profile` instead, so `claim-actions.tsx` was not
+  created.
+- **Invite is immediate; no daily limit** (decided 2026-10-03). The invite
+  is sent the moment a student is registered (`enrollOutreach` sends a fresh
+  row straight away). The day-7 reminder, the after-claim welcome and the
+  last reminder still go with the 09:00 IST run. `IMPORT_OUTREACH_DAILY_CAP`
+  is gone; the run is bounded only by a 60 s time budget (it shares a 300 s
+  function with the résumé drain) and leftovers go at the next run. "Send
+  invites to unclaimed" queues everyone and sends them in a background run
+  right after the click.
+- **One extra file:** `src/app/claim/[token]/remove/remove-form.tsx` (client),
+  so the remove action can return the result envelope to the page.
+- **Migration** is `20261001180000_resume_import_outreach`, generated offline
+  with `prisma migrate diff` from master's schema (no database touched).
+- **Tests:** `src/features/resume/import/outreach.test.ts` (24 checks, run
+  with `npx tsx`); `import.test.ts` now expects 9 guarded admin actions
+  instead of 7.
+
 ## 10. Commit message
 
 ```
@@ -532,10 +570,12 @@ feat(resume-import): claim-and-complete emails for imported students
 
 - ResumeImportOutreach: invite (day 0, day 7) and onboarding (claim +0,
   +5 if incomplete); max 4 emails; profiles are never hidden
-- signed /claim/[token] preview, remove-my-data, one-click unsubscribe
-  (public, token-scoped, never signs in); Brevo bounce webhook
+- first email = approved design with name, real missing items + %, the
+  personal claim link and the sign-in email; no unsubscribe link
+- signed /claim/[token] preview and remove-my-data (public, token-scoped,
+  never signs in); Brevo bounce/spam webhook
 - emailed-code sign-in now claims an imported profile, same as Google
-- admin: batch label on upload, funnel tiles, per-row outreach status,
-  filters, CSV export, "send invites to unclaimed"
+- admin: batch label on upload, claim-email funnel, per-row status,
+  outreach and batch filters, CSV export, "send invites to unclaimed"
 - runs from the existing résumé-import cron; off behind IMPORT_OUTREACH_ENABLED
 ```

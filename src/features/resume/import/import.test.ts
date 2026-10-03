@@ -218,7 +218,8 @@ async function main() {
     const s = src("src/app/actions/admin-resume-import-actions.ts");
     assert(s.startsWith('"use server"'), "is a server action file");
     const fns = s.split(/\nexport async function /).slice(1);
-    assert(fns.length === 7, `expected 7 actions, found ${fns.length}`);
+    // 7 from plan 154 + 2 from plan 171 (enrollUnclaimedAction, exportOutreachCsvAction).
+    assert(fns.length === 9, `expected 9 actions, found ${fns.length}`);
     for (const fn of fns) {
       const body = fn.slice(fn.indexOf("{\n") + 2).trim();
       assert(

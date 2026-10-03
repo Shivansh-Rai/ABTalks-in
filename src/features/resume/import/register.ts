@@ -15,6 +15,7 @@ import {
 import { generateUniqueReferralCode } from "@/features/registration/generate-referral-code";
 import { applyParsedResumeToProfile } from "@/features/resume/service";
 import { identityFromParsedResume } from "@/features/resume/import/identity-mapping";
+import { enrollOutreach } from "@/features/resume/import/outreach";
 import type { ParsedResume, ResumeAnalysis } from "@/features/resume/types";
 
 /**
@@ -161,6 +162,8 @@ async function attachToExisting(
 
   await mergeQuietly(user.id, imp.id, parsed);
   logger.info("[resume-import] attached to existing account", { importId: imp.id, userId: user.id, status });
+  // Plan 171: an account that has never signed in gets the claim emails too.
+  if (status === "REGISTERED") await enrollOutreach(imp.id, user.id);
   return status;
 }
 
@@ -252,5 +255,7 @@ export async function registerImportedStudent(importId: string): Promise<Registe
   if (!userId) return "SKIPPED";
   await mergeQuietly(userId, imp.id, parsed);
   logger.info("[resume-import] registered", { importId: imp.id, userId });
+  // Plan 171: start the claim-and-complete emails. Never throws.
+  await enrollOutreach(imp.id, userId);
   return "REGISTERED";
 }
