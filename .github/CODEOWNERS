@@ -19,6 +19,9 @@
 /src/app/api/internal/resume-imports/               @zainabshujat
 /src/app/api/profile/resume/                        @zainabshujat
 /src/app/actions/admin-resume-import-actions.ts     @zainabshujat
+/src/app/actions/import-claim-actions.ts            @zainabshujat
+/src/app/claim/                                     @zainabshujat
+/src/app/api/webhooks/brevo/                        @zainabshujat
 /src/app/actions/resume-actions.ts                  @zainabshujat
 
 # ------------------------------------------------------------------------------

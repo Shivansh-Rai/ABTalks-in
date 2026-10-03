@@ -30,6 +30,7 @@ import { writeAudit } from "@/features/admin/audit";
 import { recordLegalConsents } from "@/features/legal/record-consent";
 import { recordNewsletterOptIn } from "@/features/legal/record-newsletter-optin";
 import { attributeUtmToUser } from "@/features/utm/attribute";
+import { claimImportOnSignIn } from "@/features/resume/import/claim";
 
 /*
  * Password and emailed-code sign-in (plan 154). The two Credentials providers
@@ -251,6 +252,24 @@ export async function authorizeEmailCode(raw: unknown): Promise<SessionUser | nu
       where: { id: user.id },
       data: { emailVerified: new Date() },
       select: { id: true },
+    });
+  }
+
+  // Plan 171: the code just proved the address, so for an admin-imported
+  // student this sign-in IS the claim — the same one a Google link performs.
+  // A no-op for everyone else, and it must never block the sign-in.
+  try {
+    if (await claimImportOnSignIn(user.id, "email_code_claim")) {
+      await recordLegalConsents({
+        userId: user.id,
+        email: user.email,
+        source: "email_code_claim",
+      });
+    }
+  } catch (error) {
+    logger.error("[resume-import] claim on emailed-code sign-in failed", {
+      userId: user.id,
+      error: String(error),
     });
   }
   return toSessionUser(user);

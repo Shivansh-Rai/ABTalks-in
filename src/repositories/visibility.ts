@@ -19,6 +19,8 @@ export const PROGRAM_APPLY_CONSENT_SOURCE = "program_apply_migrated";
 export const ADMIN_IMPORT_CONSENT_SOURCE = "admin_resume_import";
 /** Plan 154: the imported student signed in with Google and took the account over. */
 export const OAUTH_CLAIM_CONSENT_SOURCE = "oauth_claim";
+/** Plan 171: the imported student signed in with an emailed code and took the account over. */
+export const EMAIL_CODE_CLAIM_CONSENT_SOURCE = "email_code_claim";
 
 export const PLATFORM_DEFAULT_CONSENT_SOURCES = [
   ENROLLMENT_DEFAULT_CONSENT_SOURCE,
@@ -103,6 +105,8 @@ export async function applyVisibilityChange(
     kind: VisibilityKind;
     consentedAt?: Date | null;
     at?: Date;
+    /** `claim_consent` only: how they claimed. Defaults to Google (plan 154). */
+    claimSource?: typeof OAUTH_CLAIM_CONSENT_SOURCE | typeof EMAIL_CODE_CLAIM_CONSENT_SOURCE;
   },
 ): Promise<ApplyVisibilityResult> {
   const now = input.at ?? new Date();
@@ -210,7 +214,7 @@ export async function applyVisibilityChange(
     }
     await tx.candidateVisibility.update({
       where: { userId: input.userId },
-      data: { consentSource: OAUTH_CLAIM_CONSENT_SOURCE, consentedAt: now },
+      data: { consentSource: input.claimSource ?? OAUTH_CLAIM_CONSENT_SOURCE, consentedAt: now },
     });
     return {
       ok: true,
