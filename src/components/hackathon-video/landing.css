@@ -503,32 +503,47 @@
 }
 
 /* "In association with" partner mark above the title. */
-.vt-hero__assoc {
-  display: flex;
+.vt-collab {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
-}
-.vt-hero__assoc-label {
+  gap: 12px;
   margin: 0;
+}
+.vt-collab__label {
   font-family: ui-monospace, "SF Mono", "Consolas", monospace;
-  font-size: 14px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
 }
-.vt-hero__assoc-logo {
+.vt-collab__logo {
+  position: relative;
+  display: block;
+  flex: none;
   width: 72px;
   height: 72px;
-  object-fit: cover;
-  object-position: top;
-  border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 8px 24px -10px rgba(0, 0, 0, 0.8);
 }
-@media (max-width: 560px) {
-  .vt-hero__assoc { gap: 10px; }
-  .vt-hero__assoc-label { font-size: 12px; letter-spacing: 0.16em; }
-  .vt-hero__assoc-logo { width: 56px; height: 56px; border-radius: 6px; }
+/* Zoomed so only the circular emblem inside the source image shows
+   (emblem is ~570px across, centred at ~638,546 in the 1270x1254 file). */
+.vt-collab__img {
+  position: absolute;
+  max-width: none;
+  width: 222.8%;
+  height: auto;
+  left: -61.9%;
+  top: -45.8%;
+}
+@media (max-width: 480px) {
+  .vt-collab { flex-direction: column; gap: 8px; }
+  .vt-collab__label { font-size: 9px; }
+  .vt-collab__logo { width: 60px; height: 60px; }
 }
 
 /* Eyebrow pill on the dark canvas — thin white outline. */
