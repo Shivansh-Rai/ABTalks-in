@@ -1750,6 +1750,7 @@ export function ScoutChat({
                     persist ? resultsCartCount : readGuestCart().length
                   }
                   requestId={persist ? requestId : null}
+                  searchSpec={spec}
                   onOpen={openFromList}
                   onDecision={(m, decision) => {
                     const userId =

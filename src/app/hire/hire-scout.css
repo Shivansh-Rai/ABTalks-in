@@ -9285,17 +9285,15 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-chip--hit {
   margin-top: 1px;
 }
 
-/* A preview, not the rationale. `summaryPreview()` in desk-match-card.tsx
-   already trims the string on a sentence boundary; the clamp is the safety net
-   for one very long unbroken sentence. Together they take this block from
-   ~72px minimum and 28px lines to two 22px lines — roughly half the height,
-   which is the point: more candidates per screen. The full text is in the
-   detail panel behind "View More Details". */
+/* A 3-line preview of the sidebar AI summary. `summaryPreview()` in
+   desk-match-card.tsx already trims on a sentence boundary; the clamp is the
+   safety net for one very long unbroken sentence. Full text is in the detail
+   panel behind "View More Details". */
 .desk-card__ai-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
   margin: 0;
   min-height: 0;
