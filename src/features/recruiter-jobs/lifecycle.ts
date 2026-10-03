@@ -71,17 +71,21 @@ export type JobDraftInput = {
   minExperience?: number | null;
 };
 
+/** Per-skill and list caps for job postings (paste-tolerant). */
+export const JOB_SKILL_MAX_LEN = 100;
+export const JOB_SKILL_MAX_COUNT = 40;
+
 export function normalizeSkills(input: readonly string[] | undefined): string[] {
   if (!input) return [];
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of input) {
-    const t = raw.trim();
+    const t = raw.trim().slice(0, JOB_SKILL_MAX_LEN);
     if (!t) continue;
     const key = t.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(t);
   }
-  return out.slice(0, 25);
+  return out.slice(0, JOB_SKILL_MAX_COUNT);
 }

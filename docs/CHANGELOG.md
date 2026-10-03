@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-10-03 [rule] Recruiter job create/update paste-tolerant: skill caps 100/40 with truncate+dedupe, apply URL https:// normalize, minExperience coerce, field-level Zod errors (no generic Invalid input)
 - 2026-10-03 [convention] Plan 179: Scout desk card AI Summary uses sidebar prose (`recruiterSummary` / session-cached Gemini), clamped to 3 lines — no per-card Gemini fetch
 - 2026-10-03 [convention] Hub Continue Learning / Continue Journey Finished lists only lifecycle `completed` — `ended` (window closed with misses) is omitted from those cards
 - 2026-10-03 [rule] Plan 178: 60-day Continue/Completed CTAs use exported `challengeLifecycle` (active|completed|ended); post-window tracks show Ended not Continue Day 60 / Completed
