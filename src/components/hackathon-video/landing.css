@@ -502,6 +502,35 @@
   color: #FFFFFF;
 }
 
+/* "In association with" partner mark above the title. */
+.vt-hero__assoc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.vt-hero__assoc-label {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+.vt-hero__assoc-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+@media (max-width: 560px) {
+  .vt-hero__assoc { gap: 10px; }
+  .vt-hero__assoc-label { font-size: 12px; letter-spacing: 0.16em; }
+  .vt-hero__assoc-logo { width: 56px; height: 56px; border-radius: 6px; }
+}
+
 /* Eyebrow pill on the dark canvas — thin white outline. */
 .vt-hero__eyebrow {
   display: inline-flex;
