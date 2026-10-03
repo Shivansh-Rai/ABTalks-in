@@ -460,7 +460,7 @@ function subjectFor(template: OutreachTemplate, d: OutreachEmailData): string {
   const lead = (withName: string, without: string) => (name ? `${name}, ${withName}` : without);
   switch (template) {
     case "invite":
-      return lead("your ABTalks profile is ready to claim", "Your ABTalks profile is ready to claim");
+      return lead("update your profile on ABTalks", "Update your profile on ABTalks");
     case "invite_reminder":
       return lead(
         "your ABTalks profile is still waiting for you",

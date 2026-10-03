@@ -210,7 +210,7 @@ async function main() {
     const subjects = (["invite", "invite_reminder", "onboard_welcome", "onboard_reminder"] as const).map(
       (t) => templates.renderOutreachEmail(t, data).subject,
     );
-    assert(subjects[0] === "Asha, your ABTalks profile is ready to claim", subjects[0]!);
+    assert(subjects[0] === "Asha, update your profile on ABTalks", subjects[0]!);
     assert(subjects[3] === "Asha, one detail left on your ABTalks profile: phone number", subjects[3]!);
     for (const s of subjects) {
       assert(s.startsWith("Asha, "), `no name: ${s}`);
@@ -218,7 +218,7 @@ async function main() {
       assert(s.length <= 70, `too long: ${s}`);
     }
     const noName = templates.renderOutreachEmail("invite", { ...data, firstName: "" }).subject;
-    assert(noName === "Your ABTalks profile is ready to claim", noName);
+    assert(noName === "Update your profile on ABTalks", noName);
   });
 
   console.log("\nO6 — the other emails");
