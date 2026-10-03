@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSearchBox } from "@/components/admin/admin-search-box";
 import { searchAdminConsole } from "@/features/admin/search-admin-console";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,12 +31,7 @@ export default async function AdminSearchPage({
       />
 
       <form action="/admin/search" className="flex flex-wrap gap-2">
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Name, email, job title, company…"
-          className="h-12 min-w-[16rem] flex-1 rounded-lg border border-[#D2D2D2] bg-white px-4 text-base"
-        />
+        <AdminSearchBox defaultValue={q} />
         <button
           type="submit"
           className={cn(buttonVariants({ variant: "default" }), "h-12 px-6")}

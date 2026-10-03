@@ -46,7 +46,7 @@ export function explainMatchesDeterministic(
 ): ExplainResult {
   const explained: ExplainedMatch[] = matches.map((m) => ({
     ...m,
-    rationale: buildRationale(m),
+    rationale: buildRationale(m, spec.mustHaveStack ?? []),
   }));
 
   const overallGap = buildOverallGap(matches, nearMisses, spec, context);
@@ -276,11 +276,16 @@ Rules:
  * and rendered to recruiters, so it must not carry identity — the card decides
  * for itself whether the viewer may see a name, and builds its own copy.
  */
-function summaryInput(m: ScoredCandidate): SummaryInput {
+function summaryInput(m: ScoredCandidate, stack: string[] = []): SummaryInput {
   const ev = m.dossier?.evidence;
   return {
     source: m.source,
     givenName: null,
+    // The sentence has room for eight skills out of a list that is often three
+    // times that, so the ones the recruiter asked for go first. Identity still
+    // stays out (see above) — this is about which of their own claims the
+    // stored sentence quotes, not about who they are.
+    highlightSkills: stack,
     jobRole: m.jobRole,
     yearsExperience: m.evidence.yearsExperience,
     availabilityUnknown: m.availabilityUnknown,
@@ -307,8 +312,8 @@ function summaryInput(m: ScoredCandidate): SummaryInput {
  * now sentences, and the public id is gone from a string that a recruiter reads
  * on the card, in the panel and out of a stored match row.
  */
-function buildRationale(m: ScoredCandidate): string {
-  const parts = [candidateSummaryDetail(summaryInput(m))];
+function buildRationale(m: ScoredCandidate, stack: string[] = []): string {
+  const parts = [candidateSummaryDetail(summaryInput(m, stack))];
   const interview = m.evidence.interview;
   if (interview?.overall != null) {
     const sub = [

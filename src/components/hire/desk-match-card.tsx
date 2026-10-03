@@ -26,6 +26,10 @@ import type {
 } from "@/components/hire/match-card";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
+  orderedSkills,
+  skillHighlighted,
+} from "@/features/hire/skill-highlight";
+import {
   LockedField,
   UpgradeNotice,
   useUpgradePrompt,
@@ -207,7 +211,13 @@ export function DeskMatchCard({
   }
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const e = match.evidence ?? {};
-  const skills = e.skills ?? [];
+  // The skills the recruiter actually asked for, hoisted to the front. The card
+  // draws eight chips out of a list that is routinely fifteen or twenty long,
+  // and stored order is the order the candidate typed their stack in — so a
+  // search for "snowflake" could return a card whose chips never say Snowflake.
+  // To the reader that is a wrong result, not a truncated one.
+  const needles = match.highlightSkills ?? [];
+  const skills = orderedSkills(e.skills ?? [], needles);
 
   // The card is the click target, not just the "View more details" link.
   // Everything interactive inside it — the two shortlist buttons, the intro
@@ -435,7 +445,13 @@ export function DeskMatchCard({
               <h4 className="desk-card__skills-h">Skills</h4>
               <ul className="desk-card__chips">
                 {shownSkills.map((s) => (
-                  <li key={s} className="desk-chip">
+                  <li
+                    key={s}
+                    className={cn(
+                      "desk-chip",
+                      skillHighlighted(s, needles) && "desk-chip--hit",
+                    )}
+                  >
                     {s}
                   </li>
                 ))}
@@ -552,7 +568,7 @@ export function DeskMatchCard({
             jobRole={match.jobRole}
             totalScore={match.score}
             displayName={match.displayName}
-            skills={skills}
+            skills={e.skills ?? []}
             snapshot={match}
             onToggle={onCartToggle}
             className={cn("desk-pod", match.shortlisted && "desk-pod--on")}

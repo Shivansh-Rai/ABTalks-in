@@ -163,6 +163,7 @@
     "test:observability": "npm run test:observability:redaction && npm run test:observability:contract && npm run test:observability:notification && npm run test:observability:request-id && npm run test:observability:paths && npm run test:observability:sentry && npm run test:observability:gating && npm run test:observability:scan",
     "test:pr-module-labels": "node scripts/pr-module-labels.test.mjs",
     "test:recruiter-search": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/search-qa/search-qa.test.ts",
+    "test:skill-highlight": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/skill-highlight.test.ts",
     "audit:recruiter-search": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/search-qa/audit.ts search",
     "audit:search-index": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/search-qa/audit.ts index",
     "audit:candidate-data": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/search-qa/audit.ts data",

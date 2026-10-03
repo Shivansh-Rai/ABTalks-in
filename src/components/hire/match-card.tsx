@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ChevronDown, ExternalLink, Info } from "lucide-react";
 import { refPublicId, type CandidateSource } from "@/features/hire/candidate-ref";
 import { COMPENSATION_DISCLAIMER } from "@/features/hire/compensation";
+import {
+  orderedSkills,
+  skillHighlighted,
+} from "@/features/hire/skill-highlight";
 import { buttonVariants } from "@/components/ui/button";
 import { RequestIntroButton } from "@/components/hire/request-intro-button";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
@@ -159,31 +163,6 @@ function trackMeta(source?: CandidateSource): {
     default:
       return { label: null, kind: "cohort", totalDays: null };
   }
-}
-
-/** Same word-boundary rule as ranking — "java" must not light up "javascript". */
-function skillHighlighted(skill: string, needles: string[]): boolean {
-  const hay = skill.toLowerCase();
-  return needles.some((n) => {
-    const needle = n.toLowerCase().trim();
-    if (!needle) return false;
-    const i = hay.indexOf(needle);
-    if (i === -1) return false;
-    const before = i === 0 ? "" : hay[i - 1]!;
-    const after = hay[i + needle.length] ?? "";
-    const bound = (c: string) => c === "" || !/[a-z0-9]/.test(c);
-    return bound(before) && bound(after);
-  });
-}
-
-function orderedSkills(skills: string[], needles: string[]): string[] {
-  if (!needles.length) return skills;
-  const hit: string[] = [];
-  const rest: string[] = [];
-  for (const s of skills) {
-    (skillHighlighted(s, needles) ? hit : rest).push(s);
-  }
-  return [...hit, ...rest];
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

@@ -212,41 +212,54 @@ export type ImportListRow = {
   costMicroUsd: number;
   linkedExisting: boolean;
   createdAt: Date;
+  /** True when a private blob pathname is stored. Never expose the pathname. */
+  hasFile: boolean;
 };
+
+type ImportListFilters = {
+  status?: ResumeImportStatus;
+  /** Matches file name or email, case-insensitive. */
+  search?: string;
+  /** `YYYY-MM-DD`: only imports created on that day in IST. */
+  date?: string;
+};
+
+/** Shared where clause for list + matched count (plan 172). */
+function importListWhere(input: ImportListFilters): Prisma.ResumeImportWhereInput {
+  const search = input.search?.trim();
+  const dayStart = input.date ? new Date(`${input.date}T00:00:00+05:30`) : null;
+  return {
+    ...(input.status ? { status: input.status } : {}),
+    ...(search
+      ? {
+          OR: [
+            { originalFilename: { contains: search, mode: "insensitive" as const } },
+            { normalizedEmail: { contains: search, mode: "insensitive" as const } },
+            { sourceEmail: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(dayStart
+      ? {
+          createdAt: {
+            gte: dayStart,
+            lt: new Date(dayStart.getTime() + 24 * 60 * 60 * 1000),
+          },
+        }
+      : {}),
+  };
+}
 
 export async function listImports(input: {
   status?: ResumeImportStatus;
   cursor?: string;
   take?: number;
-  /** Matches file name or email, case-insensitive. */
   search?: string;
-  /** `YYYY-MM-DD`: only imports created on that day in IST. */
   date?: string;
 }): Promise<{ rows: ImportListRow[]; nextCursor: string | null }> {
   const take = Math.min(Math.max(input.take ?? 100, 1), 200);
-  const search = input.search?.trim();
-  const dayStart = input.date ? new Date(`${input.date}T00:00:00+05:30`) : null;
   const rows = await prisma.resumeImport.findMany({
-    where: {
-      ...(input.status ? { status: input.status } : {}),
-      ...(search
-        ? {
-            OR: [
-              { originalFilename: { contains: search, mode: "insensitive" as const } },
-              { normalizedEmail: { contains: search, mode: "insensitive" as const } },
-              { sourceEmail: { contains: search, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
-      ...(dayStart
-        ? {
-            createdAt: {
-              gte: dayStart,
-              lt: new Date(dayStart.getTime() + 24 * 60 * 60 * 1000),
-            },
-          }
-        : {}),
-    },
+    where: importListWhere(input),
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: take + 1,
     ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
@@ -264,11 +277,38 @@ export async function listImports(input: {
       costMicroUsd: true,
       linkedExisting: true,
       createdAt: true,
+      blobPathname: true,
     },
   });
   const hasMore = rows.length > take;
   const page = hasMore ? rows.slice(0, take) : rows;
-  return { rows: page, nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null };
+  return {
+    rows: page.map(({ blobPathname, ...row }) => ({
+      ...row,
+      hasFile: blobPathname != null && blobPathname.length > 0,
+    })),
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+  };
+}
+
+/** How many imports match the same filters as `listImports` (across all pages). */
+export async function countImportsMatched(input: ImportListFilters): Promise<number> {
+  return prisma.resumeImport.count({ where: importListWhere(input) });
+}
+
+/**
+ * Resolve a stored import PDF for an admin download. Pathname stays
+ * server-side — callers never pass or receive a blob path from the client.
+ */
+export async function getImportFilePath(
+  importId: string,
+): Promise<{ pathname: string; fileName: string } | null> {
+  const row = await prisma.resumeImport.findUnique({
+    where: { id: importId },
+    select: { blobPathname: true, originalFilename: true },
+  });
+  if (!row?.blobPathname) return null;
+  return { pathname: row.blobPathname, fileName: row.originalFilename };
 }
 
 export async function countImportsByStatus(): Promise<Record<ResumeImportStatus, number>> {

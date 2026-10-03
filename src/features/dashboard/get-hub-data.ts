@@ -53,6 +53,7 @@ export type HubEnrollment = {
   currentStreak: number;
   totalDays: number;
   lifecycle: HubEnrollmentLifecycle;
+  startedAt: Date;
 };
 
 /**
@@ -119,6 +120,7 @@ export function toHubEnrollment(r: ChallengeEnrollmentRow): HubEnrollment {
     currentStreak: r.currentStreak,
     totalDays: r.totalDays,
     lifecycle: challengeLifecycle(r),
+    startedAt: r.startedAt,
   };
 }
 

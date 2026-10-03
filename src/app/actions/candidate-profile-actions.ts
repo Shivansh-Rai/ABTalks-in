@@ -2,7 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import type { z } from "zod";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
@@ -26,6 +26,7 @@ import {
   saveLinks,
   savePreferences,
   saveProjects,
+  setOpenToWork,
   saveSkillClaims,
 } from "@/repositories/candidate-detail";
 import {
@@ -308,6 +309,17 @@ export async function savePreferencesAction(
   return runSection(preferencesSchema, raw, "preferences", (userId, value) =>
     savePreferences(userId, value),
   );
+}
+
+const openToWorkSchema = z.object({ openToWork: z.boolean() });
+
+/** The dashboard's Open to work switch: writes that one field and nothing else. */
+export async function setOpenToWorkAction(raw: unknown): Promise<ActionResult> {
+  const result = await runSection(openToWorkSchema, raw, "open to work", (userId, value) =>
+    setOpenToWork(userId, value.openToWork),
+  );
+  if (result.ok) revalidatePath("/dashboard");
+  return result;
 }
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;

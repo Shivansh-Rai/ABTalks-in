@@ -893,7 +893,23 @@ export async function savePreferences(
   });
 }
 
-/* ─── Skills ─────────────────────────────────────────────────────────────── */
+/**
+ * Flip only `openToWork` (the dashboard switch). Every other preference is
+ * left exactly as it is; `savePreferences` would overwrite them all.
+ */
+export async function setOpenToWork(userId: string, openToWork: boolean): Promise<void> {
+  await runInTransaction(async (tx) => {
+    await ensureCandidateProfile(tx, userId);
+    await tx.candidatePreference.upsert({
+      where: { userId },
+      create: { userId, openToWork },
+      update: { openToWork },
+      select: { userId: true },
+    });
+  });
+}
+
+/* ─── Skills─────────────────────────────────────────────────────────────── */
 
 export type SkillClaimWrite = {
   skillId: string;

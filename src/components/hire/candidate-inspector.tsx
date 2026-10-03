@@ -31,6 +31,10 @@ import {
 } from "@/features/hire/candidate-summary";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
+  orderedSkills,
+  skillHighlighted,
+} from "@/features/hire/skill-highlight";
+import {
   LockedField,
   UpgradeNotice,
   useUpgradePrompt,
@@ -337,7 +341,11 @@ export function CandidateInspector({
   const preview = isLockedPreview(match) ? match.preview : null;
   const { upgradeOpen, openUpgrade, dismissUpgrade } = useUpgradePrompt();
   const track = trackLongLabel(match.source);
-  const skills = e.skills ?? [];
+  // Searched-for skills lead each Skill Map group. The panel shows the whole
+  // list, so nothing was ever hidden here — but a recruiter who asked for one
+  // skill should not have to scan twenty chips to confirm it is there.
+  const needles = match.highlightSkills ?? [];
+  const skills = orderedSkills(e.skills ?? [], needles);
   const languages = e.workingLanguages ?? [];
   const workMode = e.workMode ? (WORK_MODE[e.workMode] ?? e.workMode) : null;
   const tierLabel =
@@ -1410,7 +1418,16 @@ export function CandidateInspector({
                         {evidenceBacked.map((s) => (
                           <li
                             key={`verified:${s.name}`}
-                            className="hire-profile__chip border-[#03535f]/40 bg-[#03535f]/5"
+                            className={cn(
+                              "hire-profile__chip",
+                              // The hit tint replaces the evidence tint rather
+                              // than layering on it — two backgrounds on one
+                              // chip is a race between a utility class and a
+                              // stylesheet rule, and reads as neither.
+                              skillHighlighted(s.name, needles)
+                                ? "hire-profile__chip--hit"
+                                : "border-[#03535f]/40 bg-[#03535f]/5",
+                            )}
                             title={
                               s.sources.length > 0
                                 ? `Source: ${s.sources.join(", ")}`
@@ -1428,7 +1445,14 @@ export function CandidateInspector({
                       <p className="hire-profile__group-h">Self-declared</p>
                       <ul className="hire-profile__chips">
                         {selfDeclared.map((s) => (
-                          <li key={`declared:${s}`} className="hire-profile__chip">
+                          <li
+                            key={`declared:${s}`}
+                            className={cn(
+                              "hire-profile__chip",
+                              skillHighlighted(s, needles) &&
+                                "hire-profile__chip--hit",
+                            )}
+                          >
                             {s}
                           </li>
                         ))}

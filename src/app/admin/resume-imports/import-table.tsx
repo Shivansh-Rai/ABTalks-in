@@ -101,6 +101,26 @@ function compact(n: number): string {
   return n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : String(n);
 }
 
+/** Today's calendar day in Asia/Kolkata as `YYYY-MM-DD` (not the browser local zone). */
+function todayIstYmd(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year")?.value ?? "1970";
+  const m = parts.find((p) => p.type === "month")?.value ?? "01";
+  const d = parts.find((p) => p.type === "day")?.value ?? "01";
+  return `${y}-${m}-${d}`;
+}
+
+/** Format a `YYYY-MM-DD` IST day for the matched-count label. */
+function formatIstDayLabel(ymd: string): string {
+  // Noon UTC keeps the calendar day stable under IST (+05:30).
+  return IMPORTED_DATE.format(new Date(`${ymd}T12:00:00.000Z`));
+}
+
 export function ImportTable({
   initial,
   attestation,
@@ -486,7 +506,18 @@ export function ImportTable({
       {/* Table */}
       <section className="overflow-hidden rounded-xl border border-[#E9E9E9] bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E9E9E9] px-5 py-3">
-          <h2 className="font-display text-lg font-semibold text-[#353535]">Imports</h2>
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="font-display text-lg font-semibold text-[#353535]">Imports</h2>
+            {date ? (
+              <p className="text-sm text-[#626262]">
+                {view.matchedTotal} imported on {formatIstDayLabel(date)} (IST)
+              </p>
+            ) : search.trim() ? (
+              <p className="text-sm text-[#626262]">
+                {view.matchedTotal} match{view.matchedTotal === 1 ? "" : "es"}
+              </p>
+            ) : null}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <input
               type="search"
@@ -503,6 +534,13 @@ export function ImportTable({
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
+            <button
+              type="button"
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm text-[#353535] hover:bg-[#F7FBFB]"
+              onClick={() => setDate(todayIstYmd())}
+            >
+              Today
+            </button>
             {(search || date) && (
               <button
                 type="button"
@@ -646,7 +684,18 @@ function ImportRow({
         <input type="checkbox" aria-label={`Select ${row.originalFilename}`} checked={selected} onChange={onToggle} />
       </td>
       <td className="max-w-[220px] truncate px-2 py-2 align-top font-medium text-[#353535]" title={row.originalFilename}>
-        {row.originalFilename}
+        {row.downloadHref ? (
+          <a
+            className="text-[#03535F] underline"
+            href={row.downloadHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {row.originalFilename}
+          </a>
+        ) : (
+          row.originalFilename
+        )}
       </td>
       <td className="px-2 py-2 align-top text-[#353535]">
         {row.status === "NEEDS_REVIEW" ? (

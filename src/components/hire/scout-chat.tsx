@@ -1547,126 +1547,128 @@ export function ScoutChat({
           >
             New project
           </button>
-          <div className="hire-req" ref={reqMenuRef}>
-            <button
-              type="button"
-              className="scout-filters"
-              aria-expanded={searched ? filtersOpen : detailsOpen}
-              aria-haspopup={searched ? "dialog" : "menu"}
-              onClick={() => {
-                if (searched) setFiltersOpen(true);
-                else setDetailsOpen((o) => !o);
-              }}
-            >
-              <span className="scout-filters__icon" aria-hidden="true">
-                <img
-                  src="/hire/filters-chevron.png"
-                  alt=""
-                  width={16}
-                  height={15}
-                />
-              </span>
-              Filters
-            </button>
-            {!searched && detailsOpen && (
-              <div className="hire-req__menu" role="menu">
-                <p className="hire-req__label">Requirement</p>
-                {persist && requestId && (
-                  <label className="hire-req__name">
-                    <span className="hire-req__label">Name this project</span>
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={projectLabel}
-                      onChange={(e) => setProjectLabel(e.target.value)}
-                      onBlur={() => {
-                        const name = projectLabel.trim();
-                        if (!name) return;
-                        void renameTalentProjectAction({ requestId, name }).then(
-                          (res) => {
-                            if (!res.ok) toast.error(res.message);
-                          },
-                        );
-                      }}
-                      className="hire-req__name-input"
-                    />
-                  </label>
-                )}
-                {criteria.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    className={cn("hire-req__item", c.on && "is-on")}
-                    role="menuitemcheckbox"
-                    aria-checked={c.on}
-                    onClick={() => pickRequirement(c.key, c.on)}
+          {/* Pre-search only. Once results exist the filter bar's "Edit
+              filters" is the single way in — a second Filters button up
+              here opened the same dialog from two places. */}
+          {!searched && (
+            <div className="hire-req" ref={reqMenuRef}>
+              <button
+                type="button"
+                className="scout-filters"
+                aria-expanded={detailsOpen}
+                aria-haspopup="menu"
+                onClick={() => setDetailsOpen((o) => !o)}
+              >
+                <span className="scout-filters__icon" aria-hidden="true">
+                  <img
+                    src="/hire/filters-chevron.png"
+                    alt=""
+                    width={16}
+                    height={15}
+                  />
+                </span>
+                Filters
+              </button>
+              {detailsOpen && (
+                <div className="hire-req__menu" role="menu">
+                  <p className="hire-req__label">Requirement</p>
+                  {persist && requestId && (
+                    <label className="hire-req__name">
+                      <span className="hire-req__label">Name this project</span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={projectLabel}
+                        onChange={(e) => setProjectLabel(e.target.value)}
+                        onBlur={() => {
+                          const name = projectLabel.trim();
+                          if (!name) return;
+                          void renameTalentProjectAction({ requestId, name }).then(
+                            (res) => {
+                              if (!res.ok) toast.error(res.message);
+                            },
+                          );
+                        }}
+                        className="hire-req__name-input"
+                      />
+                    </label>
+                  )}
+                  {criteria.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      className={cn("hire-req__item", c.on && "is-on")}
+                      role="menuitemcheckbox"
+                      aria-checked={c.on}
+                      onClick={() => pickRequirement(c.key, c.on)}
+                    >
+                      {c.key}
+                      <span className="hire-req__dot" />
+                    </button>
+                  ))}
+                  <p className="hire-req__label hire-req__label--filter">
+                    Employment type
+                  </p>
+                  <div
+                    className="hire-req__filter"
+                    role="radiogroup"
+                    aria-label="Filter by employment type"
                   >
-                    {c.key}
-                    <span className="hire-req__dot" />
-                  </button>
-                ))}
-                <p className="hire-req__label hire-req__label--filter">
-                  Employment type
-                </p>
-                <div
-                  className="hire-req__filter"
-                  role="radiogroup"
-                  aria-label="Filter by employment type"
-                >
-                  {EMP_FILTERS.map((f) => {
-                    const checked =
-                      f.value === "All"
-                        ? spec.employmentType == null
-                        : spec.employmentType === f.value;
-                    return (
-                      <button
-                        key={f.value}
-                        type="button"
-                        className={cn(
-                          "hire-req__item hire-req__item--radio",
-                          checked && "is-on",
-                        )}
-                        role="menuitemradio"
-                        aria-checked={checked}
-                        onClick={() => pickEmployment(f.value)}
-                      >
-                        {f.label}
-                        <span className="hire-req__dot" />
-                      </button>
-                    );
-                  })}
-                </div>
-                {rows.length > 0 && (
-                  <dl className="hire-req__rows">
-                    {rows.map((r) => (
-                      <div key={r.label}>
-                        <dt>{r.label}</dt>
-                        <dd>{r.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-                {recent.length > 0 && (
-                  <div className="hire-req__recent">
-                    <p className="hire-req__label">Pick up where you left off</p>
-                    {recent.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        className="hire-req__item"
-                        onClick={() => router.push(`/hire/${r.id}`)}
-                      >
-                        <span className="truncate">{r.title}</span>
-                        <span className="hire-req__meta">
-                          {r.status} · {r.date}
-                        </span>
-                      </button>
-                    ))}
+                    {EMP_FILTERS.map((f) => {
+                      const checked =
+                        f.value === "All"
+                          ? spec.employmentType == null
+                          : spec.employmentType === f.value;
+                      return (
+                        <button
+                          key={f.value}
+                          type="button"
+                          className={cn(
+                            "hire-req__item hire-req__item--radio",
+                            checked && "is-on",
+                          )}
+                          role="menuitemradio"
+                          aria-checked={checked}
+                          onClick={() => pickEmployment(f.value)}
+                        >
+                          {f.label}
+                          <span className="hire-req__dot" />
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {rows.length > 0 && (
+                    <dl className="hire-req__rows">
+                      {rows.map((r) => (
+                        <div key={r.label}>
+                          <dt>{r.label}</dt>
+                          <dd>{r.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                  {recent.length > 0 && (
+                    <div className="hire-req__recent">
+                      <p className="hire-req__label">Pick up where you left off</p>
+                      {recent.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className="hire-req__item"
+                          onClick={() => router.push(`/hire/${r.id}`)}
+                        >
+                          <span className="truncate">{r.title}</span>
+                          <span className="hire-req__meta">
+                            {r.status} · {r.date}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div ref={scrollRef} className="chat-output" id="hire-results">

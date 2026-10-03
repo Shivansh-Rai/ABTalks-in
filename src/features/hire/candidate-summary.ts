@@ -1,4 +1,5 @@
 import type { CandidateSource } from "@/features/hire/candidate-ref";
+import { orderedSkills } from "@/features/hire/skill-highlight";
 
 /**
  * The recruiter-facing wording for a candidate's evidence.
@@ -123,6 +124,13 @@ export type SummaryInput = EvidenceFacts & {
   /** Drives Student vs Working Professional when jobRole is blank or "Candidate". */
   yearsExperience?: number | null;
   availabilityUnknown?: boolean;
+  /**
+   * What the recruiter searched for, so the three skills this sentence has room
+   * to name are three they asked about. Without it the line reports whatever the
+   * candidate happened to type first — "lists Python, sql and Power BI" on a
+   * search for Snowflake, which reads as a mismatch.
+   */
+  highlightSkills?: string[] | null;
 };
 
 /**
@@ -153,7 +161,8 @@ function subjectOf(s: SummaryInput): string {
 }
 
 function skillList(s: SummaryInput, max: number): string[] {
-  return (s.skills ?? []).map((v) => v.trim()).filter(Boolean).slice(0, max);
+  const all = (s.skills ?? []).map((v) => v.trim()).filter(Boolean);
+  return orderedSkills(all, s.highlightSkills ?? []).slice(0, max);
 }
 
 /**
@@ -301,6 +310,7 @@ export function summaryInputFromMatch(match: {
     quizAverage?: number | null;
     workingLanguages?: string[];
   };
+  highlightSkills?: string[];
   /** Set by a locked preview card, whose name must stay behind the blur. */
   locked?: boolean;
 }): SummaryInput {
@@ -320,6 +330,7 @@ export function summaryInputFromMatch(match: {
     quizAverage: e.quizAverage ?? null,
     workingLanguages: e.workingLanguages ?? null,
     skills: e.skills ?? null,
+    highlightSkills: match.highlightSkills ?? null,
   };
 }
 

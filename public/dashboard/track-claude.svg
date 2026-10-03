@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="glow" cx="72%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#E07A4A" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#1C0F08" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC7A6"/>
+      <stop offset="1" stop-color="#D9652B"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+  <rect width="400" height="300" fill="#170B05"/>
+  <rect width="400" height="300" fill="url(#glow)"/>
+  <circle cx="290" cy="135" r="60" fill="#E07A4A" opacity="0.35" filter="url(#blur)"/>
+  <g transform="translate(290 135)" fill="url(#ray)">
+    <rect x="-7" y="-78" width="14" height="70" rx="7"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(45)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(90)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(135)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(180)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(225)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(270)"/>
+    <rect x="-7" y="-78" width="14" height="70" rx="7" transform="rotate(315)"/>
+    <circle r="16" fill="#FFE3D2"/>
+  </g>
+  <g fill="#E07A4A" opacity="0.55"><circle cx="200" cy="50" r="2"/><circle cx="380" cy="60" r="3"/><circle cx="370" cy="260" r="2"/><circle cx="215" cy="240" r="2.5"/></g>
+</svg>

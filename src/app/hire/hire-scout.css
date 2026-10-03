@@ -9237,6 +9237,21 @@ button.hire-side__me {
   color: #18181b;
 }
 
+/* A chip the recruiter searched for. Same treatment as .desk-pill--hit on the
+   pill rows, so "this is the one you asked for" looks the same everywhere. */
+.desk-chip--hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 700;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-chip--hit {
+  border-color: transparent;
+  background: #A6D2D5;
+  color: #000000;
+}
+
 .desk-card__ai {
   position: relative;
   margin-top: 38px;
@@ -10311,6 +10326,21 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-profile__ai-body {
   font-size: 16px;
   line-height: 24px;
   color: #18181b;
+}
+
+/* A Skill Map chip the recruiter searched for — same peach as .desk-chip--hit
+   and .desk-pill--hit, so one visual language means "you asked for this". */
+.hire-profile__chip--hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 600;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-profile__chip--hit {
+  border-color: transparent;
+  background: #A6D2D5;
+  color: #000000;
 }
 
 .hire-profile__count {
@@ -11750,95 +11780,310 @@ a.hire-profile__ext-link:focus-visible {
 .hire-filter-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 0;
+  margin-top: 4px;
 }
 
-.hire-filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.hire-filter-form > .hire-filter-section {
+  padding: 16px 0;
+  border-top: 1px solid #f0f2f3;
+}
+
+.hire-filter-form > .hire-filter-section:first-child {
+  padding-top: 8px;
+  border-top: 0;
 }
 
 .hire-filter-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  padding: 0;
   border: 0;
   min-width: 0;
 }
 
 .hire-filter-field > span,
-.hire-filter-field > legend {
+.hire-filter-field > legend,
+.hire-filter-field__label {
   font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 500;
   color: #4b4b4b;
 }
 
-.hire-filter-field input,
-.hire-filter-field select {
-  height: 48px;
+/* Direct child only — the tag-box, range and switch inputs size themselves. */
+.hire-filter-field > input {
+  height: 46px;
   padding: 0 12px;
   border: 1px solid #e9e9e9;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 24px;
   color: #353535;
 }
 
-.hire-filter-field input:focus,
-.hire-filter-field select:focus {
+.hire-filter-field > input:focus {
   outline: none;
   border-color: #03535f;
   box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.12);
 }
 
-.hire-filter-skills {
+.hire-filter-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: #f0f6f7;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: #03535f;
+  vertical-align: middle;
+}
+
+/* --- Pills: role / location quick picks, skill suggestions, mode toggles --- */
+
+.hire-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.hire-filter-pill {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid #e3e8ea;
+  border-radius: 100px;
+  background: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  color: #4b4b4b;
+  cursor: pointer;
+}
+
+.hire-filter-pill:hover {
+  border-color: #03535f;
+  background: #f0f6f7;
+  color: #03535f;
+}
+
+.hire-filter-pill[aria-pressed="true"] {
+  border-color: #03535f;
+  background: #03535f;
+  color: #ffffff;
+}
+
+.hire-filter-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(3, 83, 95, 0.22);
+}
+
+/* --- Skills tag box + suggestion row -------------------------------------- */
+
+.hire-filter-tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 1px solid #e9e9e9;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.hire-filter-tagbox:focus-within {
+  border-color: #03535f;
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.12);
+}
+
+.hire-filter-tagbox .hire-filter-chip {
+  padding: 4px 6px 4px 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hire-filter-tagbox__input {
+  flex: 1;
+  min-width: 140px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  color: #353535;
+}
+
+.hire-filter-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.hire-filter-suggestions__label {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: #8a9496;
+}
+
+.hire-filter-suggestions__list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.hire-filter-check {
+/* --- Experience: two handles over one track ------------------------------- */
+
+.hire-filter-legendrow {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  line-height: 20px;
-  color: #353535;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.hire-filter-check input {
+.hire-filter-readout {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: #03535f;
+}
+
+.hire-filter-range {
+  position: relative;
+  height: 36px;
+  margin-top: 2px;
+}
+
+.hire-filter-range__track,
+.hire-filter-range__fill {
+  position: absolute;
+  top: 16px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.hire-filter-range__track {
+  left: 0;
+  right: 0;
+  background: #e6ebec;
+}
+
+.hire-filter-range__fill {
+  background: #03535f;
+}
+
+.hire-filter-range input[type="range"] {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  /* The track is painted above; only the thumbs should catch the pointer, so
+     the lower handle stays grabbable where the two inputs overlap. */
+  pointer-events: none;
+}
+
+.hire-filter-range input[type="range"]::-webkit-slider-runnable-track {
+  height: 18px;
+  border: 0;
+  background: transparent;
+}
+
+.hire-filter-range input[type="range"]::-moz-range-track {
+  height: 18px;
+  border: 0;
+  background: transparent;
+}
+
+.hire-filter-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
   width: 18px;
   height: 18px;
-  accent-color: #03535f;
+  border: 2px solid #03535f;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: grab;
 }
 
+.hire-filter-range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #03535f;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: grab;
+}
+
+.hire-filter-range input[type="range"]:focus-visible {
+  outline: none;
+}
+
+.hire-filter-range input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.22);
+}
+
+.hire-filter-range input[type="range"]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.22);
+}
+
+.hire-filter-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  color: #a3abad;
+}
+
+/* --- Sticky footer -------------------------------------------------------- */
+
 .hire-filter-actions {
+  position: sticky;
+  bottom: -24px;
+  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 8px;
+  margin: 8px -24px -24px;
+  padding: 14px 24px;
+  border-top: 1px solid #eef1f2;
+  background: #ffffff;
 }
 
 .hire-filter-reset {
-  height: 44px;
+  height: 42px;
   padding: 0 16px;
   border: 1px solid #d2d2d2;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #4b4b4b;
   cursor: pointer;
 }
@@ -11849,16 +12094,16 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .hire-filter-apply {
-  height: 44px;
+  height: 42px;
   min-width: 96px;
-  padding: 0 20px;
+  padding: 0 22px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #03535f;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #ffffff;
   cursor: pointer;
   box-shadow:
@@ -11877,10 +12122,6 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .hire-filter-row {
-    grid-template-columns: 1fr;
-  }
-
   .hire-filter-bar {
     padding: 12px 14px;
   }

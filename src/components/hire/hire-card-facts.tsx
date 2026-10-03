@@ -1,5 +1,9 @@
 import type { CandidateSource } from "@/features/hire/candidate-ref";
 import { missionsLine } from "@/features/hire/candidate-summary";
+import {
+  orderedSkills,
+  skillHighlighted,
+} from "@/features/hire/skill-highlight";
 import type { MatchCardData } from "@/components/hire/match-card";
 
 export function trackLabel(source?: CandidateSource): string | null {
@@ -193,10 +197,12 @@ export function buildCardPills(
   const needles = match.highlightSkills ?? [];
   const track = trackLabel(match.source);
 
-  const isHit = (s: string) =>
-    needles.some((n) => s.toLowerCase().includes(n.toLowerCase()));
+  // Word-boundary matching, not a bare substring: this row used to light up
+  // "JavaScript" for a recruiter who asked for "java", which is a wrong answer
+  // dressed as a confident one.
+  const isHit = (s: string) => skillHighlighted(s, needles);
   // Matched skills first, in the recruiter's own order of interest.
-  const ranked = [...skills.filter(isHit), ...skills.filter((s) => !isHit(s))];
+  const ranked = orderedSkills(skills, needles);
 
   const out: CardPill[] = [];
   // Set once the mission pill has already named the track, so the row does not
