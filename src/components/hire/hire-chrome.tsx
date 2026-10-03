@@ -19,6 +19,7 @@ import type { CartRow } from "@/components/hire/shortlist-cart";
 import {
   guestCartNonProgram,
   readGuestCart,
+  type GuestCartItem,
 } from "@/components/hire/guest-cart";
 import {
   DESK_SHORTLIST_EVENT,
@@ -51,14 +52,15 @@ export function HireChrome({
   const { approved, openAuth } = useHireAuth();
   const { view, landing, openPod, closePod, openSaved } = useHireDesk();
   const [guestCount, setGuestCount] = useState(0);
-  const [overlayCount, setOverlayCount] = useState(0);
+  /** Non-program guest items not yet on the server list — same set the pod overlays. */
+  const [guestOverlay, setGuestOverlay] = useState<GuestCartItem[]>([]);
   const [starCount, setStarCount] = useState(0);
   const [podDismissed, setPodDismissed] = useState(false);
 
   useEffect(() => {
     const sync = () => {
       setGuestCount(readGuestCart().length);
-      setOverlayCount(guestCartNonProgram().length);
+      setGuestOverlay(guestCartNonProgram());
       setStarCount(readDeskShortlist().length);
     };
     sync();
@@ -94,7 +96,12 @@ export function HireChrome({
   const openProjectLabel = openProjectId
     ? (projects.find((p) => p.id === openProjectId)?.label ?? "This project")
     : null;
-  const cartCount = approved ? scopedRows.length + overlayCount : guestCount;
+  // Match HireTalentPod: server scoped rows + guest overlay only when not already listed.
+  const scopedRefs = new Set(scopedRows.map((r) => r.candidateRef));
+  const uniqueOverlay = guestOverlay.filter(
+    (i) => !scopedRefs.has(i.candidateRef),
+  ).length;
+  const cartCount = approved ? scopedRows.length + uniqueOverlay : guestCount;
   // The desk is `/hire` itself and a project at `/hire/<id>`. Every other
   // `/hire/<page>` is a plain page and must NOT get the project-desk shell.
   //
