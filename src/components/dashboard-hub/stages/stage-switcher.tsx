@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StageKey = "build" | "test" | "hired";
@@ -63,8 +63,13 @@ const ILLUSTRATIONS: Record<StageKey, () => React.JSX.Element> = {
 
 type StageSwitcherProps = {
   stages: StageSummary[];
-  /** Profile strength 0–100 — drives the "Complete your profile" tile. */
+  /** Profile strength 0–100 — shown on the "Complete your profile" tile. */
   profileScore: number;
+  /**
+   * The road is unlocked (plan 180): 70% strength with the essential details
+   * in. Until then the tile stays and the pin waits at the start.
+   */
+  profileReady: boolean;
   /**
    * The single most valuable profile field still missing, named the way the
    * wizard names it. Shown on the tile so the percentage arrives with the
@@ -82,8 +87,14 @@ type StageSwitcherProps = {
  * anchor (#test-skills) or any element inside a panel (#events, #domains…),
  * so the header's section links keep working whichever stage is open.
  */
-export function StageSwitcher({ stages, current, panels, profileScore, profileNext = null }: StageSwitcherProps) {
-  const profileDone = profileScore >= 100;
+export function StageSwitcher({
+  stages,
+  current,
+  panels,
+  profileScore,
+  profileReady,
+  profileNext = null,
+}: StageSwitcherProps) {
   const [selected, setSelected] = useState<StageKey>(current);
   /** Bumped on every tile click while the profile is unfinished: the pin
       can't leave the start, so it bounces and says so. */
@@ -123,7 +134,7 @@ export function StageSwitcher({ stages, current, panels, profileScore, profileNe
 
   const choose = (s: StageSummary) => {
     setSelected(s.key);
-    if (!profileDone) setNudge((n) => n + 1);
+    if (!profileReady) setNudge((n) => n + 1);
     window.history.replaceState(null, "", `#${s.anchor}`);
   };
 
@@ -134,10 +145,10 @@ export function StageSwitcher({ stages, current, panels, profileScore, profileNe
           <div
             role="tablist"
             aria-label="Your stages"
-            className={cn("grid gap-2.5 sm:gap-3", profileDone ? "xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}
+            className={cn("grid gap-2.5 sm:gap-3", profileReady ? "xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}
           >
-            {/* Once the profile is complete the tile steps aside. */}
-            {profileDone ? null : <ProfileTile score={profileScore} next={profileNext} />}
+            {/* At 70% with the essentials in, the tile steps aside. */}
+            {profileReady ? null : <ProfileTile score={profileScore} next={profileNext} />}
             {stages.map((s) => {
               const Illustration = ILLUSTRATIONS[s.key];
               const active = s.key === selected;
@@ -195,7 +206,7 @@ export function StageSwitcher({ stages, current, panels, profileScore, profileNe
             })}
           </div>
 
-          <StageRoad stages={stages} selected={selected} profileDone={profileDone} nudge={nudge} />
+          <StageRoad stages={stages} selected={selected} profileReady={profileReady} nudge={nudge} />
         </div>
       </div>
 
@@ -222,7 +233,7 @@ export function StageSwitcher({ stages, current, panels, profileScore, profileNe
    stages walks it along the curve in small hops. */
 
 const ROAD_H = 30;
-/** Pin stops with only the three stage tiles (profile complete). */
+/** Pin stops with only the three stage tiles (profile ready). */
 const PIN_STOPS: Record<StageKey, number> = { build: 22, test: 500, hired: 945 };
 /** Start of the road, under the Complete your profile tile. */
 const PROFILE_STOP = 30;
@@ -240,17 +251,17 @@ const ROAD_D = Array.from({ length: 101 }, (_, i) => {
 function StageRoad({
   stages,
   selected,
-  profileDone,
+  profileReady,
   nudge,
 }: {
   stages: StageSummary[];
   selected: StageKey;
-  /** Until the profile is complete the pin waits at the start (under it). */
-  profileDone: boolean;
+  /** Until the profile is ready the pin waits at the start (under it). */
+  profileReady: boolean;
   /** Changes when a tile is clicked with the profile unfinished. */
   nudge: number;
 }) {
-  const target = profileDone ? PIN_STOPS[selected] : PROFILE_STOP;
+  const target = profileReady ? PIN_STOPS[selected] : PROFILE_STOP;
   const [pin, setPin] = useState({ x: target, hop: 0 });
   const xRef = useRef(target);
 
@@ -334,14 +345,14 @@ function StageRoad({
         opens below the road, holds, then closes, so the bubble never sits on
         top of anything. Pure CSS, keyed on nudge to replay; hovering pauses
         it so the link can be clicked. */}
-    {nudge > 0 && !profileDone ? (
+    {nudge > 0 && !profileReady ? (
       <div key={nudge} className="pin-thought-slot relative hidden overflow-hidden xl:block" role="status">
         <div className="absolute top-0" style={{ left: `${pin.x / 10}%` }}>
           <span className="absolute left-[2px] top-[4px] size-2 rounded-full bg-white shadow-[0_1px_4px_rgba(3,40,45,0.25)]" aria-hidden="true" />
           <span className="absolute left-[10px] top-[13px] size-3 rounded-full bg-white shadow-[0_1px_4px_rgba(3,40,45,0.25)]" aria-hidden="true" />
           <p className="absolute left-[16px] top-[26px] whitespace-nowrap rounded-full bg-white px-5 py-2.5 text-sm text-[#1F1F1F] shadow-[0_6px_16px_-6px_rgba(3,40,45,0.4)]">
             <span className="font-heading font-bold text-[#C62D1F]">Oh nooo!!</span>{" "}I can&apos;t move forward till
-            you complete your profile.{" "}
+            your profile is 70% done.{" "}
             <Link
               href="/profile"
               className="font-semibold text-[#03535F] underline decoration-[1.5px] underline-offset-4 hover:decoration-2"
@@ -356,57 +367,39 @@ function StageRoad({
   );
 }
 /* ─── Complete your profile (first tile; links to /profile) ────
-   Incomplete: a warm red alert tile with a pulsing dot to pull the eye.
-   Complete: calm white with a check in the corner and "100% completed". */
+   Only rendered while the road is shut: a warm red alert tile with a pulsing
+   dot to pull the eye. At 70% with the essentials in it is gone entirely. */
 
 function ProfileTile({ score, next }: { score: number; next: string | null }) {
-  const done = score >= 100;
   return (
     <Link
       href="/profile"
-      className={cn(
-        "relative flex items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
-        done
-          ? "border border-white/80 bg-white/[0.78] text-black shadow-[0_14px_30px_-12px_rgba(3,40,45,0.35)] backdrop-blur-md"
-          : "border border-[#FFB3A7] bg-[linear-gradient(150deg,#FFF1EE_0%,#FFD9D2_100%)] text-[#5A1208] shadow-[0_12px_28px_-12px_rgba(224,58,40,0.55)]",
-      )}
+      className="relative flex items-center gap-3 rounded-2xl border border-[#FFB3A7] bg-[linear-gradient(150deg,#FFF1EE_0%,#FFD9D2_100%)] px-3.5 py-3 text-left text-[#5A1208] shadow-[0_12px_28px_-12px_rgba(224,58,40,0.55)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
     >
-      {done ? (
-        <span className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-[#2BD4A0] text-[#053B33]" aria-label="Completed">
-          <Check className="size-3" strokeWidth={3} />
-        </span>
-      ) : (
-        <span className="absolute right-3 top-3 flex size-2.5" aria-hidden="true">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#E5392A] opacity-70" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-[#E5392A]" />
-        </span>
-      )}
+      <span className="absolute right-3 top-3 flex size-2.5" aria-hidden="true">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#E5392A] opacity-70" />
+        <span className="relative inline-flex size-2.5 rounded-full bg-[#E5392A]" />
+      </span>
       <span
-        className={cn(
-          "flex size-16 shrink-0 items-center justify-center rounded-2xl",
-          done ? "bg-[#E8F3F2] text-[#03535F]" : "bg-white text-[#E5392A] shadow-[0_4px_10px_-4px_rgba(224,58,40,0.45)]",
-        )}
+        className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white text-[#E5392A] shadow-[0_4px_10px_-4px_rgba(224,58,40,0.45)]"
         aria-hidden="true"
       >
         <UserRound className="size-10" strokeWidth={2} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cn("block text-xs font-semibold tracking-[0.14em]", done ? "text-[#03535F]" : "text-[#C62D1F]")}>
-          {done ? "DONE" : "START HERE"}
+        <span className="block text-xs font-semibold tracking-[0.14em] text-[#C62D1F]">
+          START HERE
         </span>
         <span className="mt-0.5 block font-heading text-xl font-bold leading-tight">
-          Complete <span className={done ? "text-[#03535F]" : "text-[#C62D1F]"}>profile</span>
+          Complete <span className="text-[#C62D1F]">profile</span>
         </span>
         <span className="mt-1.5 flex items-center gap-2 text-sm">
           <span className="font-bold">{score}%</span>
-          <span className={cn("h-1.5 w-12 shrink-0 overflow-hidden rounded-full", done ? "bg-[#E1E7E7]" : "bg-white/70")} aria-hidden="true">
-            <span className={cn("block h-full rounded-full", done ? "bg-[#03535F]" : "bg-[#E5392A]")} style={{ width: `${score}%` }} />
+          <span className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-white/70" aria-hidden="true">
+            <span className="block h-full rounded-full bg-[#E5392A]" style={{ width: `${score}%` }} />
           </span>
-          <span
-            className={cn("truncate text-xs", done ? "text-[#4B4B4B]" : "text-[#8A2A1E]")}
-            title={!done && next ? next : undefined}
-          >
-            {done ? "completed" : (next ?? "finish it now")}
+          <span className="truncate text-xs text-[#8A2A1E]" title={next ?? undefined}>
+            {next ?? "finish it now"}
           </span>
         </span>
       </span>

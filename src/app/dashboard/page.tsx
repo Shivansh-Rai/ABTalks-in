@@ -110,6 +110,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         profile: {
           ...enrolledStage.profile,
           score: 100,
+          ready: true,
+          blocking: [],
           sections: enrolledStage.profile.sections.map((x) => ({ ...x, complete: true, fraction: 1 })),
         },
       }
@@ -117,7 +119,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   // Plan 173. The one field worth most of what is left, so the tile's
   // percentage arrives with the reason for it rather than "finish it now".
+  // Plan 180: an essential still missing comes first — that is what actually
+  // holds the road shut, whatever the percentage has reached.
   const profileNext =
+    stageData.profile.blocking[0] ??
     stageData.profile.sections
       .filter((s) => s.missing.length > 0)
       .sort(
@@ -234,6 +239,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="mt-12">
             <StageSwitcher
               profileScore={stageData.profile.score}
+              profileReady={stageData.profile.ready}
               profileNext={profileNext}
               stages={stages}
               current={currentStage}

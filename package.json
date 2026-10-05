@@ -93,6 +93,7 @@
     "test:credential-writes": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/credentials-write.test.ts",
     "test:progress": "NODE_OPTIONS=--conditions=react-server tsx src/repositories/progress.test.ts",
     "test:synergy-cap": "NODE_OPTIONS=--conditions=react-server tsx src/features/synergy/synergy-cap.test.ts",
+    "test:profile-readiness": "NODE_OPTIONS=--conditions=react-server tsx src/features/dashboard/profile-readiness.test.ts",
     "test:profile": "NODE_OPTIONS=--conditions=react-server tsx src/features/profile/profile.test.ts",
     "test:career-guidance": "tsx src/features/career-guidance/career-guidance.test.ts",
     "build:resume-fixture": "tsx scripts/build-resume-fixture.ts",
