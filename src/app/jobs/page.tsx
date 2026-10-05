@@ -14,6 +14,8 @@ import {
   browsePublishedJobs,
   listMyApplications,
 } from "@/features/candidate-jobs/service";
+import { listMyJobAlertsAction } from "@/app/actions/job-alert-actions";
+import { MAX_ALERTS_PER_CANDIDATE } from "@/features/job-alerts/service";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
 import { formatDateIST } from "@/lib/date-utils";
 
@@ -37,10 +39,12 @@ export default async function JobsPage({ searchParams }: PageProps) {
     jobs: prismaJobStore(),
     applications: prismaApplicationStore(),
   };
-  const [browsed, mine] = await Promise.all([
+  const [browsed, mine, myAlerts] = await Promise.all([
     browsePublishedJobs(deps),
     listMyApplications(deps, { userId: session.user.id }),
+    listMyJobAlertsAction(),
   ]);
+  const alerts = myAlerts.ok ? myAlerts.data.alerts : [];
 
   const applications = mine.ok ? mine.data : [];
   const appliedJobIds = new Set(applications.map((a) => a.jobId));
@@ -89,8 +93,12 @@ export default async function JobsPage({ searchParams }: PageProps) {
       <JobsBrowser
         jobs={jobs}
         applications={applicationRows}
+        alerts={alerts}
+        maxAlerts={MAX_ALERTS_PER_CANDIDATE}
         initialTab={
-          tab === "applications" || tab === "saved" ? tab : "jobs"
+          tab === "applications" || tab === "saved" || tab === "alerts"
+            ? tab
+            : "jobs"
         }
       />
     </DashboardShell>

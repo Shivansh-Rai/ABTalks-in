@@ -61,7 +61,7 @@ export async function createMyJobAlertAction(
     const res = await createMyAlert(deps(), gate.data.userId, parsed.data);
     if (!res.ok)
       return { ok: false, message: res.message, code: res.code };
-    revalidatePath("/jobs/alerts");
+    revalidatePath("/jobs");
     return { ok: true, data: { alert: res.data } };
   } catch (error) {
     logger.error("[job-alert-actions] create", { error: String(error) });
@@ -81,7 +81,7 @@ export async function updateMyJobAlertAction(
     const res = await updateMyAlert(deps(), gate.data.userId, id, criteria);
     if (!res.ok)
       return { ok: false, message: res.message, code: res.code };
-    revalidatePath("/jobs/alerts");
+    revalidatePath("/jobs");
     return { ok: true, data: { alert: res.data } };
   } catch (error) {
     logger.error("[job-alert-actions] update", { error: String(error) });
@@ -105,7 +105,7 @@ export async function toggleMyJobAlertAction(
     );
     if (!res.ok)
       return { ok: false, message: res.message, code: res.code };
-    revalidatePath("/jobs/alerts");
+    revalidatePath("/jobs");
     return { ok: true, data: { alert: res.data } };
   } catch (error) {
     logger.error("[job-alert-actions] toggle", { error: String(error) });
@@ -123,7 +123,7 @@ export async function deleteMyJobAlertAction(
   try {
     const res = await deleteMyAlert(deps(), gate.data.userId, parsed.data.id);
     if (!res.ok) return { ok: false, message: res.message };
-    revalidatePath("/jobs/alerts");
+    revalidatePath("/jobs");
     return { ok: true, data: res.data };
   } catch (error) {
     logger.error("[job-alert-actions] delete", { error: String(error) });

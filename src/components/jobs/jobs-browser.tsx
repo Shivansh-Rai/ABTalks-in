@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import {
   ArrowRight,
+  Bell,
   Briefcase,
   Check,
   ChevronDown,
@@ -28,6 +29,8 @@ import {
   type ApplicationCardRow,
   type JobCardRow,
 } from "./job-ui";
+import { JobAlertsScreen } from "./job-alerts-screen";
+import type { JobAlertRow } from "@/features/job-alerts/types";
 import { cn } from "@/lib/utils";
 
 /*
@@ -37,7 +40,7 @@ import { cn } from "@/lib/utils";
  * to the job detail page, which is where the real application is submitted.
  */
 
-type Tab = "jobs" | "applications" | "saved";
+type Tab = "jobs" | "applications" | "saved" | "alerts";
 type FilterKey = "location" | "workMode" | "type" | "skill";
 type Filters = Record<FilterKey, string>;
 
@@ -165,12 +168,22 @@ function writeSaved(next: string[]): void {
 type Props = {
   jobs: JobCardRow[];
   applications: ApplicationCardRow[];
+  /** The candidate's job alerts, for the Job alerts tab. */
+  alerts: JobAlertRow[];
+  maxAlerts: number;
   /** `?tab=` on the URL — lets the detail page link straight to the tracker. */
   initialTab?: Tab;
 };
 
-export function JobsBrowser({ jobs, applications, initialTab = "jobs" }: Props) {
+export function JobsBrowser({
+  jobs,
+  applications,
+  alerts,
+  maxAlerts,
+  initialTab = "jobs",
+}: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [alertCount, setAlertCount] = useState(alerts.length);
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -294,34 +307,65 @@ export function JobsBrowser({ jobs, applications, initialTab = "jobs" }: Props) 
         </p>
       </header>
 
+      <div className="mt-7 flex gap-1 overflow-x-auto border-b border-[#E0E0E0]">
+        <div role="tablist" aria-label="Jobs views" className="flex gap-1">
+          <TabButton
+            id="jobs"
+            active={tab}
+            onSelect={setTab}
+            label="All jobs"
+            count={jobs.length}
+          />
+          <TabButton
+            id="applications"
+            active={tab}
+            onSelect={setTab}
+            label="Applications"
+            count={applications.length}
+            icon={<Check aria-hidden className="size-3.5" />}
+          />
+          <TabButton
+            id="saved"
+            active={tab}
+            onSelect={setTab}
+            label="Saved jobs"
+            count={savedJobs.length}
+            icon={<Heart aria-hidden className="size-3.5" />}
+          />
+          <TabButton
+            id="alerts"
+            active={tab}
+            onSelect={setTab}
+            label="Job alerts"
+            count={alertCount}
+            icon={<Bell aria-hidden className="size-3.5" />}
+          />
+        </div>
+      </div>
+
+      {/* Kept mounted once the page loads: the alerts screen holds its own
+          list, and unmounting on a tab switch would drop alerts created or
+          edited since the server render. */}
       <div
-        role="tablist"
-        aria-label="Jobs views"
-        className="mt-7 flex gap-1 overflow-x-auto border-b border-[#E0E0E0]"
+        role="tabpanel"
+        aria-labelledby="alerts-tab"
+        hidden={tab !== "alerts"}
+        className="mt-6 max-w-[820px]"
       >
-        <TabButton
-          id="jobs"
-          active={tab}
-          onSelect={setTab}
-          label="All jobs"
-          count={jobs.length}
+        <p className="mb-5 max-w-2xl text-sm text-[#4B4B4B]">
+          Get notified when a newly published job matches what you are looking
+          for. Add one alert for each kind of role you care about.
+        </p>
+        <JobAlertsScreen
+          initial={alerts}
+          maxAlerts={maxAlerts}
+          onCountChange={setAlertCount}
         />
-        <TabButton
-          id="applications"
-          active={tab}
-          onSelect={setTab}
-          label="Applications"
-          count={applications.length}
-          icon={<Check aria-hidden className="size-3.5" />}
-        />
-        <TabButton
-          id="saved"
-          active={tab}
-          onSelect={setTab}
-          label="Saved jobs"
-          count={savedJobs.length}
-          icon={<Heart aria-hidden className="size-3.5" />}
-        />
+        <p className="mt-8 max-w-2xl text-[13px] text-[#787878]">
+          You will be alerted <strong>once per job</strong>, even if several of
+          your alerts match. Editing or re-publishing the same role never
+          triggers another alert.
+        </p>
       </div>
 
       {tab === "jobs" ? (
