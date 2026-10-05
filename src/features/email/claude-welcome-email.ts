@@ -25,8 +25,7 @@ WhatsApp community (your most important step): ${WHATSAPP_URL}
 We look forward to seeing what you build and to having you with us long after Day 60.
 
 Best regards,
-Anil Bajpai
-Founder, ABTalks`;
+Team ABTalks`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -44,7 +43,7 @@ Founder, ABTalks`;
   <p style="margin:0 0 4px;">Dashboard: <a href="${dashboardUrl}" style="${LINK_STYLE}">${dashboardUrl}</a></p>
   <p style="margin:0 0 16px;">WhatsApp community (your most important step): <a href="${WHATSAPP_URL}" style="${LINK_STYLE}">${WHATSAPP_URL}</a></p>
   <p style="margin:0 0 16px;">We look forward to seeing what you build and to having you with us long after Day 60.</p>
-  <p style="margin:0 0 16px;">Best regards,<br>Anil Bajpai<br>Founder, ABTalks</p>
+  <p style="margin:0 0 16px;">Best regards,<br>Team ABTalks</p>
 </body>
 </html>`;
 
