@@ -12678,9 +12678,13 @@ a.hire-profile__ext-link:focus-visible {
 
 .hire-pipe-step {
   flex: 1 1 0;
-  /* Below this the nine steps stop fitting and the rail scrolls. Scrolling a
-     short rail is cheap; scrolling whole columns of cards was not. */
-  min-width: 96px;
+  /* Content, not a fixed floor. At `min-width: 96px` the longest labels did not
+     fit their own box, and a centred flex line that overflows spills BOTH ways:
+     the first letter landed in the 18px notch and the count in the 18px arrow,
+     where the clip-path erases them (SHORTLISTED read as HORTLISTED). Sized to
+     its label a step can never cut itself; when nine of them stop fitting the
+     rail scrolls, which is cheap next to scrolling columns of cards. */
+  min-width: max-content;
   /* 44, not 56. Without the white card around it the rail is a single band of
      colour against the page, and at 56px that band read as a slab that
      outweighed everything under it. */
@@ -12692,7 +12696,9 @@ a.hire-profile__ext-link:focus-visible {
   position: relative;
   border: 0;
   cursor: pointer;
-  padding: 0 6px 0 20px;
+  /* Both the notch and the arrow are 18px deep at the vertical mid-line, which
+     is exactly where the text sits — 24px clears each with room to spare. */
+  padding: 0 24px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -12713,7 +12719,7 @@ a.hire-profile__ext-link:focus-visible {
 
 /* The first step has nothing flowing into it, so it gets a flat left edge. */
 .hire-pipe-step:first-child {
-  padding-left: 10px;
+  padding-left: 14px;
   clip-path: polygon(
     0 0,
     calc(100% - 18px) 0,
@@ -12742,6 +12748,7 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .hire-pipe-step__n {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
