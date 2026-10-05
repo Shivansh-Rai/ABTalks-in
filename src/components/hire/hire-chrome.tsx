@@ -174,9 +174,9 @@ export function HireChrome({
           simply faded out on the results side. */}
       {desk && (
         <div className="hire-field" aria-hidden="true">
-          {/* Light-green blobs (moving) interleaved with the static dark
-              layers in the ORIGINAL gradient's paint order, so screen 1 is
-              exactly as bright as the design — just no longer still. */}
+          {/* Light-green blobs (moving) interleaved with the static shade
+              layers. Paint order matches the original gradient; the field
+              base is a near-white wash so the mint glows stay the motion. */}
           {(["a", "d", "b"] as const).map((g) => (
             <span key={g} className={`hire-field__glow hire-field__glow--${g}`}>
               <span className="hire-field__glow-y">
@@ -211,16 +211,14 @@ export function HireChrome({
             {/* The same stacked-wordmark swap runs on the desk AND on plain
                 /hire/* pages (requests, jobs, messages, settings, …) so the
                 header brand reads identically once the user is inside Hire.
-                The dark wordmark shows on every non-landing page; the light
-                one is only revealed while `.hire-app--landing` is on (screen
-                1's green field). Swapping the <Image> at the JS boundary
-                instead of crossfading here made the header change a frame
-                ahead of the background. */}
+                The dark wordmark is the visible mark on the light landing
+                field and on every other /hire/* page; the light mark stays
+                in the stack for opacity transitions. */}
             <span className="hire-app__logo-swap">
               <Image
                 src="/hire/abtalks-wordmark.png"
-                alt={isLanding ? "ABTalks" : ""}
-                aria-hidden={!isLanding || undefined}
+                alt=""
+                aria-hidden
                 width={342}
                 height={67}
                 priority
@@ -228,8 +226,7 @@ export function HireChrome({
               />
               <Image
                 src="/hire/abtalks-wordmark-dark.png"
-                alt={isLanding ? "" : "ABTalks"}
-                aria-hidden={isLanding || undefined}
+                alt="ABTalks"
                 width={346}
                 height={81}
                 priority
