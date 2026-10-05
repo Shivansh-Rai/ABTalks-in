@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { LayoutGroup, motion } from "framer-motion";
 import { UserRound } from "lucide-react";
+import { DUR, EASE_SPARK, useSafeReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export type StageKey = "build" | "test" | "hired";
@@ -100,6 +102,7 @@ export function StageSwitcher({
       can't leave the start, so it bounces and says so. */
   const [nudge, setNudge] = useState(0);
   const railRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useSafeReducedMotion();
 
   const openFromHash = useCallback(() => {
     const id = decodeURIComponent(window.location.hash.slice(1));
@@ -138,91 +141,153 @@ export function StageSwitcher({
     window.history.replaceState(null, "", `#${s.anchor}`);
   };
 
+  const panelTransition = {
+    duration: reduceMotion ? 0 : DUR.slow,
+    ease: EASE_SPARK,
+  };
+
   return (
     <>
       <div ref={railRef} id="stages" className="scroll-mt-24">
         <div className="relative rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.46)_0%,rgba(255,255,255,0.28)_100%)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(255,255,255,0.35),0_20px_44px_-20px_rgba(3,83,95,0.4)] backdrop-blur-[10px] backdrop-saturate-[1.3] sm:p-3">
-          <div
-            role="tablist"
-            aria-label="Your stages"
-            className={cn("grid gap-2.5 sm:gap-3", profileReady ? "xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}
-          >
-            {/* At 70% with the essentials in, the tile steps aside. */}
-            {profileReady ? null : <ProfileTile score={profileScore} next={profileNext} />}
-            {stages.map((s) => {
-              const Illustration = ILLUSTRATIONS[s.key];
-              const active = s.key === selected;
-              return (
-                <button
-                  key={s.key}
-                  type="button"
-                  role="tab"
-                  id={`${s.anchor}-tab`}
-                  aria-selected={active}
-                  aria-controls={s.anchor}
-                  onClick={() => choose(s)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-[background-color,box-shadow,transform] duration-200 ease-[var(--ease-spark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
-                    active
-                      ? "border border-white/80 bg-white/[0.78] text-black shadow-[0_14px_30px_-12px_rgba(3,40,45,0.45)] backdrop-blur-md"
-                      : "border border-white/15 bg-[linear-gradient(160deg,var(--tab-idle-from,rgba(63,117,121,0.74))_0%,var(--tab-idle-to,rgba(45,95,99,0.72))_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-md hover:-translate-y-0.5",
-                  )}
-                >
-                  <span
+          <LayoutGroup id="dashboard-stage-rail">
+            <div
+              role="tablist"
+              aria-label="Your stages"
+              className={cn(
+                "grid gap-2.5 sm:gap-3",
+                profileReady ? "xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4",
+              )}
+            >
+              {/* At 70% with the essentials in, the tile steps aside. */}
+              {profileReady ? null : <ProfileTile score={profileScore} next={profileNext} />}
+              {stages.map((s) => {
+                const Illustration = ILLUSTRATIONS[s.key];
+                const active = s.key === selected;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    role="tab"
+                    id={`${s.anchor}-tab`}
+                    aria-selected={active}
+                    aria-controls={s.anchor}
+                    onClick={() => choose(s)}
                     className={cn(
-                      "flex size-16 shrink-0 items-center justify-center rounded-2xl [&_svg]:size-12",
-                      active ? "bg-[#E8F3F2]" : "bg-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.25)]",
+                      "relative flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-[color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-spark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
+                      active
+                        ? "border-transparent text-black"
+                        : "border-white/15 bg-[linear-gradient(160deg,var(--tab-idle-from,rgba(63,117,121,0.74))_0%,var(--tab-idle-to,rgba(45,95,99,0.72))_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-md hover:-translate-y-0.5",
                     )}
-                    aria-hidden="true"
                   >
-                    <Illustration />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em]">
-                      <span className={active ? "text-[#03535F]" : "text-white/85"}>{s.number}</span>
-                    </span>
-                    <span className="mt-0.5 block font-heading text-xl font-bold leading-tight">
-                      {s.first}{" "}
-                      <span className={active ? "text-[#03535F]" : undefined}>{s.accent}</span>
-                    </span>
-                    <span className="mt-1.5 flex items-center gap-2 text-sm">
-                      <span className="font-bold">{s.pct}%</span>
-                      <span
-                        className={cn("h-1.5 w-12 shrink-0 overflow-hidden rounded-full", active ? "bg-[#E1E7E7]" : "bg-white/25")}
+                    {active ? (
+                      <motion.span
+                        layoutId={reduceMotion ? undefined : "stage-active-pill"}
+                        className="absolute inset-0 rounded-2xl border border-white/80 bg-white/[0.78] shadow-[0_14px_30px_-12px_rgba(3,40,45,0.45)] backdrop-blur-md"
+                        transition={{
+                          type: "tween",
+                          duration: reduceMotion ? 0 : DUR.slow,
+                          ease: EASE_SPARK,
+                        }}
                         aria-hidden="true"
-                      >
+                      />
+                    ) : null}
+                    <span
+                      className={cn(
+                        "relative z-10 flex size-16 shrink-0 items-center justify-center rounded-2xl transition-colors duration-200 ease-[var(--ease-spark)] [&_svg]:size-12",
+                        active
+                          ? "bg-[#E8F3F2]"
+                          : "bg-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.25)]",
+                      )}
+                      aria-hidden="true"
+                    >
+                      <Illustration />
+                    </span>
+                    <span className="relative z-10 min-w-0 flex-1">
+                      <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em]">
                         <span
-                          className={cn("block h-full rounded-full", active ? "bg-[#03535F]" : "bg-[#2BD4A0]")}
-                          style={{ width: `${s.pct}%` }}
-                        />
+                          className={cn(
+                            "transition-colors duration-200 ease-[var(--ease-spark)]",
+                            active ? "text-[#03535F]" : "text-white/85",
+                          )}
+                        >
+                          {s.number}
+                        </span>
                       </span>
-                      <span className={cn("truncate text-xs", active ? "text-[#4B4B4B]" : "text-white/80")}>
-                        {s.meta}
+                      <span className="mt-0.5 block font-heading text-xl font-bold leading-tight">
+                        {s.first}{" "}
+                        <span
+                          className={cn(
+                            "transition-colors duration-200 ease-[var(--ease-spark)]",
+                            active ? "text-[#03535F]" : undefined,
+                          )}
+                        >
+                          {s.accent}
+                        </span>
+                      </span>
+                      <span className="mt-1.5 flex items-center gap-2 text-sm">
+                        <span className="font-bold">{s.pct}%</span>
+                        <span
+                          className={cn(
+                            "h-1.5 w-12 shrink-0 overflow-hidden rounded-full transition-colors duration-200 ease-[var(--ease-spark)]",
+                            active ? "bg-[#E1E7E7]" : "bg-white/25",
+                          )}
+                          aria-hidden="true"
+                        >
+                          <span
+                            className={cn(
+                              "block h-full rounded-full transition-colors duration-200 ease-[var(--ease-spark)]",
+                              active ? "bg-[#03535F]" : "bg-[#2BD4A0]",
+                            )}
+                            style={{ width: `${s.pct}%` }}
+                          />
+                        </span>
+                        <span
+                          className={cn(
+                            "truncate text-xs transition-colors duration-200 ease-[var(--ease-spark)]",
+                            active ? "text-[#4B4B4B]" : "text-white/80",
+                          )}
+                        >
+                          {s.meta}
+                        </span>
                       </span>
                     </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
 
           <StageRoad stages={stages} selected={selected} profileReady={profileReady} nudge={nudge} />
         </div>
       </div>
 
-      {stages.map((s) => (
-        <div
-          key={s.key}
-          id={s.anchor}
-          role="tabpanel"
-          aria-labelledby={`${s.anchor}-tab`}
-          data-stage-panel={s.key}
-          hidden={s.key !== selected}
-          className="scroll-mt-24 pt-10"
-        >
-          {panels[s.key]}
-        </div>
-      ))}
+      {/* All panels stay mounted so in-panel hash targets (#events, #domains)
+          remain findable and client state survives switches. The selected
+          panel fades/slides in via motion; inactive stay `hidden`. */}
+      {stages.map((s) => {
+        const isSelected = s.key === selected;
+        return (
+          <motion.div
+            key={s.key}
+            id={s.anchor}
+            role="tabpanel"
+            aria-labelledby={`${s.anchor}-tab`}
+            data-stage-panel={s.key}
+            hidden={!isSelected}
+            className="scroll-mt-24 pt-10"
+            initial={false}
+            animate={
+              isSelected
+                ? { opacity: 1, y: 0 }
+                : { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 8 }
+            }
+            transition={panelTransition}
+          >
+            {panels[s.key]}
+          </motion.div>
+        );
+      })}
     </>
   );
 }
