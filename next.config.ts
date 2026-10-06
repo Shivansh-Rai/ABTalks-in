@@ -101,6 +101,11 @@ const nextConfig: NextConfig = {
         destination: "/workshop/:path*",
         permanent: true,
       },
+      // People type /event looking for the events calendar. Temporary (307),
+      // so a real /event page can still be added later without browsers
+      // having cached a permanent redirect.
+      { source: "/events", destination: "/workshop", permanent: false },
+      { source: "/events/:path*", destination: "/workshop", permanent: false },
     ];
   },
 };

@@ -80,6 +80,9 @@ export function BottomNav() {
     pathname === "/jobs" ||
     pathname.startsWith("/jobs/") ||
     pathname === "/achievements" ||
+    // Assessments render inside DashboardShell, which has its own navigation.
+    pathname === "/assessments" ||
+    pathname.startsWith("/assessments/") ||
     // Every challenge track renders inside DashboardShell, which carries its
     // own sidebar/footer navigation.
     pathname === "/claude" ||
