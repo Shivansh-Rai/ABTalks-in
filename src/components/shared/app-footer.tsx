@@ -117,6 +117,7 @@ const LEGAL_LINKS = [
   { href: "/privacy", label: "Privacy" },
   { href: "/cookies", label: "Cookies" },
   { href: "/contact", label: "Contact" },
+  { href: "/mission", label: "Mission" },
 ] as const;
 
 const socialIconClassName = cn(
