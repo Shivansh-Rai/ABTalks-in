@@ -2,41 +2,10 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHackathon =
-    pathname === "/hackathon" || pathname.startsWith("/hackathon/");
-  const isDashboardShellRoute =
-    pathname === "/dashboard" ||
-    pathname === "/profile" ||
-    pathname === "/marketplace" ||
-    pathname.startsWith("/marketplace/") ||
-    pathname === "/messages" ||
-    pathname.startsWith("/messages/") ||
-    pathname === "/mock-interviews" ||
-    pathname.startsWith("/mock-interviews/") ||
-    pathname === "/claude" ||
-    pathname.startsWith("/claude/day") ||
-    pathname === "/ai" ||
-    pathname === "/ds" ||
-    pathname === "/se" ||
-    pathname.startsWith("/challenge/");
   const isLanding = pathname === "/";
-  /**
-   * `pb-16` below reserves room for the fixed mobile BottomNav. That component
-   * returns null on /workshop (see its own hide list), so on this route the
-   * padding was 64px of blank page under the footer and nothing else.
-   */
-  const isWorkshop =
-    pathname === "/workshop" || pathname.startsWith("/workshop/");
-  const isHire = pathname === "/hire" || pathname.startsWith("/hire/");
-  // Fills exactly one viewport and must not scroll; BottomNav is hidden there too.
-  const isRecruiterOnboarding =
-    pathname === "/recruiter-onboarding" ||
-    pathname.startsWith("/recruiter-onboarding/");
-  const isWelcome = pathname === "/welcome";
 
   useEffect(() => {
     document.body.classList.toggle("landing-page", isLanding);
@@ -46,18 +15,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   // Design System v2 is light-only: every route, Marketplace and Hackathon
   // included, renders on the one forest-green light theme.
   return (
-    <main
-      className={cn(
-        "theme-abtalks-light theme-abtalks-brand flex-1",
-        !isHackathon &&
-          !isDashboardShellRoute &&
-          !isWorkshop &&
-          !isHire &&
-          !isRecruiterOnboarding &&
-          !isWelcome &&
-          "pb-16 md:pb-0",
-      )}
-    >
+    <main className="theme-abtalks-light theme-abtalks-brand flex-1">
       {children}
     </main>
   );

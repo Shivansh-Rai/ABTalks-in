@@ -55,8 +55,7 @@ export function CookieConsentModal() {
         // Mobile: ~19rem; desktop: up to 23rem.
         "fixed z-100 w-[min(calc(100%-1.5rem),19rem)] sm:w-[min(calc(100%-2rem),23rem)]",
         "left-3 right-auto sm:left-4",
-        // Clear mobile bottom nav without floating too high.
-        "bottom-[4.5rem] sm:bottom-5 md:bottom-6",
+        "bottom-3 sm:bottom-5 md:bottom-6",
         "overflow-hidden rounded-lg border border-border/80 bg-background shadow-xl sm:rounded-xl sm:shadow-2xl",
         "theme-abtalks-brand",
       )}

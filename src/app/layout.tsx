@@ -7,7 +7,6 @@ import { SynergyProvider } from "@/components/shared/synergy-provider";
 import { NotificationProvider } from "@/components/shared/notification-provider";
 import { RouteThemeToaster } from "@/components/shared/route-theme-toaster";
 import { AppFooter } from "@/components/shared/app-footer";
-import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { SiteSearchGate } from "@/components/dashboard-hub/site-search-gate";
 import { MainShell } from "@/components/shared/main-shell";
 import { RouteProgress } from "@/components/shared/route-progress";
@@ -85,8 +84,6 @@ export default function RootLayout({
           <CookieConsentProvider>
             <GA4Loader />
             <UtmCapture />
-            {/* Above SynergyProvider on purpose: BottomNavGate renders one of
-                the two bell triggers and sits outside SynergyProvider. */}
             <NotificationProvider>
               <SynergyProvider>
                 <MotionProvider>
@@ -96,7 +93,6 @@ export default function RootLayout({
                 </MotionProvider>
               </SynergyProvider>
               <AppFooter />
-              <BottomNavGate />
               <RouteThemeToaster />
               <CookieConsentModal />
               <CookiePreferencesModal />
