@@ -2,7 +2,6 @@
 
 import {
   Fragment,
-  type CSSProperties,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -454,6 +453,12 @@ export function ScoutChat({
   useLayoutEffect(() => {
     const el = promptRef.current;
     if (!el) return;
+    // Landing hero: fixed single-line bar (CSS). Never write an inline
+    // height or long prompts grow the frosted glass card.
+    if (el.closest(".scout--hero")) {
+      el.style.height = "";
+      return;
+    }
     // Empty field: drop the inline height so CSS min-height owns the box.
     // Measuring scrollHeight on a blank placeholder after the stage flip
     // wrapped the placeholder and grew the bar.
@@ -478,6 +483,10 @@ export function ScoutChat({
     const ro = new ResizeObserver(() => {
       if (el.clientWidth === lastWidth) return;
       lastWidth = el.clientWidth;
+      if (el.closest(".scout--hero")) {
+        el.style.height = "";
+        return;
+      }
       if (!el.value) {
         el.style.height = "";
         return;
@@ -1548,126 +1557,128 @@ export function ScoutChat({
           >
             New project
           </button>
-          <div className="hire-req" ref={reqMenuRef}>
-            <button
-              type="button"
-              className="scout-filters"
-              aria-expanded={searched ? filtersOpen : detailsOpen}
-              aria-haspopup={searched ? "dialog" : "menu"}
-              onClick={() => {
-                if (searched) setFiltersOpen(true);
-                else setDetailsOpen((o) => !o);
-              }}
-            >
-              <span className="scout-filters__icon" aria-hidden="true">
-                <img
-                  src="/hire/filters-chevron.png"
-                  alt=""
-                  width={16}
-                  height={15}
-                />
-              </span>
-              Filters
-            </button>
-            {!searched && detailsOpen && (
-              <div className="hire-req__menu" role="menu">
-                <p className="hire-req__label">Requirement</p>
-                {persist && requestId && (
-                  <label className="hire-req__name">
-                    <span className="hire-req__label">Name this project</span>
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={projectLabel}
-                      onChange={(e) => setProjectLabel(e.target.value)}
-                      onBlur={() => {
-                        const name = projectLabel.trim();
-                        if (!name) return;
-                        void renameTalentProjectAction({ requestId, name }).then(
-                          (res) => {
-                            if (!res.ok) toast.error(res.message);
-                          },
-                        );
-                      }}
-                      className="hire-req__name-input"
-                    />
-                  </label>
-                )}
-                {criteria.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    className={cn("hire-req__item", c.on && "is-on")}
-                    role="menuitemcheckbox"
-                    aria-checked={c.on}
-                    onClick={() => pickRequirement(c.key, c.on)}
+          {/* Pre-search only. Once results exist the filter bar's "Edit
+              filters" is the single way in — a second Filters button up
+              here opened the same dialog from two places. */}
+          {!searched && (
+            <div className="hire-req" ref={reqMenuRef}>
+              <button
+                type="button"
+                className="scout-filters"
+                aria-expanded={detailsOpen}
+                aria-haspopup="menu"
+                onClick={() => setDetailsOpen((o) => !o)}
+              >
+                <span className="scout-filters__icon" aria-hidden="true">
+                  <img
+                    src="/hire/filters-chevron.png"
+                    alt=""
+                    width={16}
+                    height={15}
+                  />
+                </span>
+                Filters
+              </button>
+              {detailsOpen && (
+                <div className="hire-req__menu" role="menu">
+                  <p className="hire-req__label">Requirement</p>
+                  {persist && requestId && (
+                    <label className="hire-req__name">
+                      <span className="hire-req__label">Name this project</span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={projectLabel}
+                        onChange={(e) => setProjectLabel(e.target.value)}
+                        onBlur={() => {
+                          const name = projectLabel.trim();
+                          if (!name) return;
+                          void renameTalentProjectAction({ requestId, name }).then(
+                            (res) => {
+                              if (!res.ok) toast.error(res.message);
+                            },
+                          );
+                        }}
+                        className="hire-req__name-input"
+                      />
+                    </label>
+                  )}
+                  {criteria.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      className={cn("hire-req__item", c.on && "is-on")}
+                      role="menuitemcheckbox"
+                      aria-checked={c.on}
+                      onClick={() => pickRequirement(c.key, c.on)}
+                    >
+                      {c.key}
+                      <span className="hire-req__dot" />
+                    </button>
+                  ))}
+                  <p className="hire-req__label hire-req__label--filter">
+                    Employment type
+                  </p>
+                  <div
+                    className="hire-req__filter"
+                    role="radiogroup"
+                    aria-label="Filter by employment type"
                   >
-                    {c.key}
-                    <span className="hire-req__dot" />
-                  </button>
-                ))}
-                <p className="hire-req__label hire-req__label--filter">
-                  Employment type
-                </p>
-                <div
-                  className="hire-req__filter"
-                  role="radiogroup"
-                  aria-label="Filter by employment type"
-                >
-                  {EMP_FILTERS.map((f) => {
-                    const checked =
-                      f.value === "All"
-                        ? spec.employmentType == null
-                        : spec.employmentType === f.value;
-                    return (
-                      <button
-                        key={f.value}
-                        type="button"
-                        className={cn(
-                          "hire-req__item hire-req__item--radio",
-                          checked && "is-on",
-                        )}
-                        role="menuitemradio"
-                        aria-checked={checked}
-                        onClick={() => pickEmployment(f.value)}
-                      >
-                        {f.label}
-                        <span className="hire-req__dot" />
-                      </button>
-                    );
-                  })}
-                </div>
-                {rows.length > 0 && (
-                  <dl className="hire-req__rows">
-                    {rows.map((r) => (
-                      <div key={r.label}>
-                        <dt>{r.label}</dt>
-                        <dd>{r.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-                {recent.length > 0 && (
-                  <div className="hire-req__recent">
-                    <p className="hire-req__label">Pick up where you left off</p>
-                    {recent.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        className="hire-req__item"
-                        onClick={() => router.push(`/hire/${r.id}`)}
-                      >
-                        <span className="truncate">{r.title}</span>
-                        <span className="hire-req__meta">
-                          {r.status} · {r.date}
-                        </span>
-                      </button>
-                    ))}
+                    {EMP_FILTERS.map((f) => {
+                      const checked =
+                        f.value === "All"
+                          ? spec.employmentType == null
+                          : spec.employmentType === f.value;
+                      return (
+                        <button
+                          key={f.value}
+                          type="button"
+                          className={cn(
+                            "hire-req__item hire-req__item--radio",
+                            checked && "is-on",
+                          )}
+                          role="menuitemradio"
+                          aria-checked={checked}
+                          onClick={() => pickEmployment(f.value)}
+                        >
+                          {f.label}
+                          <span className="hire-req__dot" />
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {rows.length > 0 && (
+                    <dl className="hire-req__rows">
+                      {rows.map((r) => (
+                        <div key={r.label}>
+                          <dt>{r.label}</dt>
+                          <dd>{r.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                  {recent.length > 0 && (
+                    <div className="hire-req__recent">
+                      <p className="hire-req__label">Pick up where you left off</p>
+                      {recent.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className="hire-req__item"
+                          onClick={() => router.push(`/hire/${r.id}`)}
+                        >
+                          <span className="truncate">{r.title}</span>
+                          <span className="hire-req__meta">
+                            {r.status} · {r.date}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div ref={scrollRef} className="chat-output" id="hire-results">
@@ -1749,6 +1760,7 @@ export function ScoutChat({
                     persist ? resultsCartCount : readGuestCart().length
                   }
                   requestId={persist ? requestId : null}
+                  searchSpec={spec}
                   onOpen={openFromList}
                   onDecision={(m, decision) => {
                     const userId =
@@ -1876,11 +1888,39 @@ export function ScoutChat({
                 );
               })}
 
-              {/* The progress is the loading state on its own. Placeholder
-                  cards used to sit under it, and the thread follows its own
-                  bottom while pending — so the pane scrolled to the empty
-                  cards and pushed the progress out of view. */}
-              {pending && <ScoutProgress />}
+              {pending && (
+                <div className="scout-turn">
+                  <ScoutLoader />
+                  <p className="scout-turn__text scout-loader__label">
+                    Looking through verified work…
+                  </p>
+                </div>
+              )}
+              {/* The workspace is on screen before the backend has answered —
+                  the bar has already arrived. Card-shaped placeholders hold
+                  the space the results will take, so they populate into it
+                  rather than pushing the layout around. */}
+              {pending && (
+                <div className="hire-skeletons" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="hire-skel">
+                      <div className="hire-skel__head">
+                        <span className="hire-skel__avatar" />
+                        <span className="hire-skel__lines">
+                          <span className="hire-skel__line hire-skel__line--name" />
+                          <span className="hire-skel__line hire-skel__line--meta" />
+                        </span>
+                      </div>
+                      <div className="hire-skel__chips">
+                        {[0, 1, 2, 3, 4].map((c) => (
+                          <span key={c} className="hire-skel__chip" />
+                        ))}
+                      </div>
+                      <span className="hire-skel__summary" />
+                    </div>
+                  ))}
+                </div>
+              )}
               <div ref={bottomRef} className="scout-thread__end" aria-hidden="true" />
             </div>
             </>
@@ -2050,91 +2090,6 @@ export function ScoutChat({
         onApply={applyFilters}
       />
     </section>
-  );
-}
-
-/** What a search does, and roughly when each part starts (ms after the ask). */
-const SEARCH_STEPS = [
-  {
-    label: "Reading your brief",
-    detail: "Pulling out the role, location and must-have skills",
-    at: 0,
-  },
-  {
-    label: "Matching skills & experience",
-    detail: "Comparing your brief against every opted-in candidate",
-    at: 1400,
-  },
-  {
-    label: "Checking verified projects",
-    detail: "Looking at shipped work, not just what profiles claim",
-    at: 3200,
-  },
-  {
-    label: "Ranking the best fits",
-    detail: "Ordering the strongest matches first",
-    at: 6000,
-  },
-] as const;
-
-/**
- * The loading state for a search, in place of placeholder cards: the thread
- * follows its bottom while pending, so anything under this pushed it out of
- * view. The steps tick off on a timer — the backend reports no progress, so
- * this paces the wait rather than measuring it — and the last one stays
- * active until the results land. Mounted only while pending, so every search
- * starts from the first step.
- */
-function ScoutProgress() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const ids = SEARCH_STEPS.slice(1).map((step, i) =>
-      window.setTimeout(() => setActive(i + 1), step.at),
-    );
-    return () => ids.forEach((id) => window.clearTimeout(id));
-  }, []);
-
-  // Halfway through the active step, so the bar never claims to be finished.
-  const percent = ((active + 0.5) / SEARCH_STEPS.length) * 100;
-
-  return (
-    <div
-      className="scout-progress"
-      style={{ "--scout-progress": `${percent}%` } as CSSProperties}
-    >
-      <span className="scout-progress__glow" aria-hidden="true">
-        <i />
-        <i />
-      </span>
-      <div className="scout-progress__head">
-        <ScoutLoader />
-        <div className="scout-progress__heading">
-          <p className="scout-progress__title">Scout is searching</p>
-          <p key={active} className="scout-progress__detail">
-            {SEARCH_STEPS[active].detail}
-          </p>
-        </div>
-      </div>
-      <div className="scout-progress__bar" aria-hidden="true">
-        <span />
-      </div>
-      <ol className="scout-progress__steps">
-        {SEARCH_STEPS.map((step, i) => (
-          <li
-            key={step.label}
-            className="scout-progress__step"
-            data-state={i < active ? "done" : i === active ? "active" : "todo"}
-          >
-            <span className="scout-progress__dot" aria-hidden="true" />
-            <span className="scout-progress__label">{step.label}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="sr-only" role="status">
-        {SEARCH_STEPS[active].label}
-      </p>
-    </div>
   );
 }
 

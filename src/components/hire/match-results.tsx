@@ -21,6 +21,7 @@ import {
 } from "@/components/hire/match-pagination";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { JobSpec } from "@/lib/validations/hire";
 
 /**
  * Show the best match, then the rest on request.
@@ -42,6 +43,7 @@ export function MatchResults({
   onDecision,
   requestId,
   selectedRef,
+  searchSpec = null,
 }: {
   matches: (MatchCardData & Partial<MatchTriage>)[];
   /**
@@ -69,6 +71,8 @@ export function MatchResults({
   ) => void;
   requestId?: string | null;
   selectedRef?: string;
+  /** Active Scout search — keys the desk card AI summary session cache. */
+  searchSpec?: JobSpec | null;
 }) {
   // Seeded from the server once, then owned here. Reading it from the prop on
   // every render double-counted: the toggle moved it, and the refresh that
@@ -147,6 +151,7 @@ export function MatchResults({
                     selected={selectedRef === m.candidateRef}
                     onOpen={() => onOpen?.(m)}
                     sampleDemand={sampleDemand}
+                    searchSpec={searchSpec}
                   />
                 ) : (
                   <MatchCard
@@ -175,6 +180,7 @@ export function MatchResults({
                     onDecision ? (decision) => onDecision(m, decision) : undefined
                   }
                   requestId={requestId}
+                  searchSpec={searchSpec}
                   onCartToggle={(inCart) =>
                     setCount((c) => Math.max(0, c + (inCart ? 1 : -1)))
                   }

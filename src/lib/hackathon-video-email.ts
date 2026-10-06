@@ -1,118 +1,88 @@
 import "server-only";
 import { VIDEOTHON } from "@/features/hackathon-video/config";
-import { sendEmail } from "@/lib/email";
+import { hashRecipient, sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
-
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
-const logoUrl = `${appUrl}/abtalks-logo.png`;
-
-const C = {
-  text: "#353535",
-  muted: "#626262",
-  soft: "#8F8F8F",
-  accent: "#111111",
-  border: "#E9E9E9",
-  panel: "#F4F4F4",
-};
 
 /**
  * VideoThon welcome email. Simpler than the code hackathon's four-variant
  * pipeline (leader/member/join) because VideoThon is solo-only — one email,
  * one path. Failures are logged and never block registration.
+ *
+ * Plain on purpose: no logo banner, badge or coloured button. A registration
+ * confirmation is one-to-one mail and should land in Primary / Updates, and
+ * Gmail files newsletter-looking layouts under Promotions.
  */
 export async function sendVideoWelcomeEmail(
   fullName: string,
   email: string,
 ): Promise<void> {
   const firstName = (fullName.split(" ")[0] ?? fullName).trim() || "there";
-  const whatsappBlock = VIDEOTHON.whatsappLink
-    ? `
-      <p style="margin:16px 0 0;font-size:15px;color:${C.text};">
-        Next step: join the WhatsApp group so you don't miss the kickoff or the brief drop.
-      </p>
-      <p style="margin:14px 0 0;">
-        <a href="${VIDEOTHON.whatsappLink}" style="display:inline-block;background:#25D366;color:#ffffff;padding:12px 22px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;">
-          Join the WhatsApp group
-        </a>
-      </p>`
+  const whatsappHtml = VIDEOTHON.whatsappLink
+    ? `<p style="margin:0 0 16px;">Kickoff updates and the brief are shared in the WhatsApp group: <a href="${VIDEOTHON.whatsappLink}" style="color:#03535F;">${VIDEOTHON.whatsappLink}</a></p>`
     : "";
 
-  const html = `
-<!DOCTYPE html>
-<html>
+  const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your ${VIDEOTHON.name} registration</title>
 </head>
-<body style="margin:0;padding:0;background-color:${C.panel};font-family:Inter,'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${C.panel};padding:40px 20px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0, 0, 0, 0.06);">
-        <tr>
-          <td style="background:#0A0A0A;padding:30px 32px;text-align:center;">
-            <img src="${logoUrl}" alt="ABTalks" width="140" style="display:block;margin:0 auto;height:auto;max-width:140px;border:0;outline:none;text-decoration:none;" />
-            <p style="color:rgba(255,255,255,0.75);font-size:13px;letter-spacing:2px;margin:14px 0 0;text-transform:uppercase;">${VIDEOTHON.name}</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;color:${C.text};font-size:15px;line-height:1.7;">
-            <div style="display:inline-block;padding:5px 12px;background:#F0FBEE;color:#1F7A3A;border:1px solid #C7E7CB;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 14px;">✓ Registration confirmed</div>
-            <p style="margin:0 0 12px;font-size:22px;font-weight:700;color:${C.accent};line-height:1.2;">Hi ${firstName}, you're in.</p>
-            <p style="margin:0 0 16px;color:${C.text};">${VIDEOTHON.tagline}</p>
-            <div style="margin:18px 0 0;padding:16px 18px;background:${C.panel};border-radius:10px;border:1px solid ${C.border};">
-              <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${C.soft};">Event window</p>
-              <p style="margin:8px 0 0;color:${C.text};line-height:1.7;">
-                <strong>Kickoff</strong> · ${VIDEOTHON.kickoffLabel}<br>
-                <strong>Deadline</strong> · ${VIDEOTHON.deadlineLabel}<br>
-                <strong>Results</strong> · ${VIDEOTHON.resultsLabel}
-              </p>
-            </div>
-            ${whatsappBlock}
-            <p style="margin:26px 0 0;font-size:15px;color:${C.text};">See you there,<br><strong>Team ABTalks</strong></p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:#FFFFFF;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
-            <p style="margin:0;font-size:12px;color:${C.soft};letter-spacing:0.5px;text-transform:uppercase;">
-              You registered as ${email}. Reply to this email if that's a mistake.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
+    <p style="margin:0 0 16px;">Hi ${firstName},</p>
+    <p style="margin:0 0 16px;">Your registration for ${VIDEOTHON.name} is confirmed.</p>
+    <p style="margin:0 0 16px;">${VIDEOTHON.tagline}</p>
+    <p style="margin:0 0 6px;font-weight:700;">Dates</p>
+    <p style="margin:0 0 16px;">
+      Kickoff: ${VIDEOTHON.kickoffLabel}<br>
+      Deadline: ${VIDEOTHON.deadlineLabel}<br>
+      ${VIDEOTHON.resultsLabel}
+    </p>
+    ${whatsappHtml}
+    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
+      You received this email because ${email} was used to register for ${VIDEOTHON.name}. If that was a mistake, reply to this email.
+    </p>
+  </div>
 </body>
 </html>`;
 
   const text = [
-    `REGISTRATION CONFIRMED · ${VIDEOTHON.name}`,
+    `Hi ${firstName},`,
     "",
-    `Hi ${firstName}, you're in.`,
+    `Your registration for ${VIDEOTHON.name} is confirmed.`,
+    "",
     VIDEOTHON.tagline,
     "",
-    "EVENT WINDOW",
-    `Kickoff · ${VIDEOTHON.kickoffLabel}`,
-    `Deadline · ${VIDEOTHON.deadlineLabel}`,
-    `Results · ${VIDEOTHON.resultsLabel}`,
-    VIDEOTHON.whatsappLink
-      ? `\nJoin the WhatsApp group so you don't miss the brief:\n${VIDEOTHON.whatsappLink}`
-      : "",
+    "Dates",
+    `Kickoff: ${VIDEOTHON.kickoffLabel}`,
+    `Deadline: ${VIDEOTHON.deadlineLabel}`,
+    VIDEOTHON.resultsLabel,
     "",
-    "See you there,",
-    "Team ABTalks",
-  ]
-    .filter(Boolean)
-    .join("\n");
+    VIDEOTHON.whatsappLink
+      ? `Kickoff updates and the brief are shared in the WhatsApp group: ${VIDEOTHON.whatsappLink}\n`
+      : "",
+    "Thanks,",
+    "The ABTalks team",
+    "",
+    "---",
+    `You received this email because ${email} was used to register for ${VIDEOTHON.name}. If that was a mistake, reply to this email.`,
+  ].join("\n");
 
   try {
     await sendEmail({
       to: email,
       toName: fullName,
-      subject: `Registration confirmed · ${VIDEOTHON.name} on ${VIDEOTHON.kickoffLabel.split(" · ")[0] || "kickoff day"}`,
+      subject: `Your ${VIDEOTHON.name} registration is confirmed`,
       html,
       text,
+      kind: "videothon.confirmation",
     });
   } catch (error) {
-    logger.error("videothon welcome email failed", { error, email });
+    logger.error("videothon welcome email failed", {
+      error: String(error),
+      recipientHash: hashRecipient(email),
+    });
   }
 }

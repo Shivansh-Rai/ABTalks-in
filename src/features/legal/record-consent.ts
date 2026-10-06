@@ -42,7 +42,13 @@ export type ConsentSource =
   /**
    * Student acknowledged their pre-filled imported profile on /claim-profile.
    */
-  | "claim_profile_ack";
+  | "claim_profile_ack"
+  /**
+   * Plan 171: an admin-imported student signed in with an emailed code and
+   * took over the account created for them — the emailed-code twin of
+   * `oauth_claim`, and their first consent.
+   */
+  | "email_code_claim";
 
 type RecordConsentArgs = {
   userId?: string | null;

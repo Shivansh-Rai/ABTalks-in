@@ -148,6 +148,22 @@ export async function completeImport(
   const analysis = analyseResumeStrength(data);
   const email = resolveImportEmail(data.email, result.emails);
 
+  // Fields the model returned that the PDF's own text does not contain. A
+  // human confirms them before this becomes a student's profile.
+  const unverified = result.verification.unverified;
+  if (email.kind === "single" && unverified.length > 0) {
+    const shown = unverified.slice(0, 8).join(", ");
+    const more = unverified.length > 8 ? ` and ${unverified.length - 8} more` : "";
+    await deps.markNeedsReview(job.id, {
+      reason: `Not found in the résumé text — check before saving: ${shown}${more}.`,
+      parsed: data,
+      analysis,
+      sourceEmail: email.source,
+      emailCandidates: [email.email],
+    });
+    return "NEEDS_REVIEW";
+  }
+
   if (email.kind === "single") {
     return deps.markParsed(job.id, {
       parsed: data,

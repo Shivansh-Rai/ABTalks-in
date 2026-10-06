@@ -29,35 +29,79 @@ function read(rel: string): string {
 
 console.log("\nDemo 1 platform admin");
 
-suite("requireAdmin checks UserRoleAssignment, not only env", () => {
+suite("requireAdmin checks UserRoleAssignment", () => {
   const src = read("src/lib/admin-auth.ts");
+  const role = read("src/lib/platform-role.ts");
   assert(src.includes("hasPlatformAdmin"), "requireAdmin must use hasPlatformAdmin");
-  assert(src.includes("userRoleAssignment"), "must query UserRoleAssignment");
-  assert(src.includes("revokedAt: null"), "only active assignments count");
+  assert(role.includes("userRoleAssignment"), "must query UserRoleAssignment");
+  assert(role.includes("revokedAt: null"), "only active assignments count");
+});
+
+/**
+ * Plan 169. The env bootstrap is gone, and must not come back. It granted
+ * GLOBAL/ADMIN from ADMIN_EMAILS to any account that had never held the grant,
+ * but "never held it" was a count of that userId's rows — and userId cascades
+ * on user delete, so deleting an admin's User row destroyed the only record
+ * that env had already been honoured. The next sign-in re-granted admin.
+ */
+suite("nothing grants admin from ADMIN_EMAILS at runtime", () => {
+  const src = read("src/lib/admin-auth.ts");
+  const role = read("src/lib/platform-role.ts");
   assert(
-    src.includes("bootstrapAdminFromEnv"),
-    "env is bootstrap-only, for an account that has never held the grant",
+    !src.includes("bootstrapAdminFromEnv") && !role.includes("bootstrapAdminFromEnv"),
+    "the env bootstrap must not come back",
+  );
+  assert(
+    !src.includes("everGranted") && !role.includes("everGranted"),
+    "the userId-keyed ever-granted guard went with it",
+  );
+  // The whole point: ADMIN_EMAILS may be parsed (isAdminEmail answers a
+  // configuration question) but must never reach a role-row write. Asserted
+  // against env access rather than the string, which appears in the comment
+  // explaining why the bootstrap was removed.
+  assert(
+    !role.includes("process.env"),
+    "the access lookup must not read env at all",
+  );
+  assert(
+    !src.includes("userRoleAssignment"),
+    "admin-auth must not touch role rows directly; it delegates to platform-role",
   );
 });
 
-suite("the env bootstrap is scoped to one account, not the platform", () => {
-  const src = read("src/lib/admin-auth.ts");
-  const fn = src.slice(src.indexOf("async function bootstrapAdminFromEnv"));
+suite("the admin access lookup is a pure read", () => {
+  const role = read("src/lib/platform-role.ts");
+  for (const write of [".create(", ".update(", ".upsert(", ".delete(", ".createMany("]) {
+    assert(
+      !role.includes(write),
+      `hasPlatformAdmin must not write (${write}) — it runs on every admin page render`,
+    );
+  }
+});
+
+suite("revoking admin also invalidates the target's sessions", () => {
+  const src = read("src/app/actions/admin-platform-actions.ts");
+  const fn = src.slice(src.indexOf("export async function revokePlatformAdminAction"));
   assert(
-    fn.includes("userId,"),
-    "the bootstrap must look at the caller, not at every admin row",
+    fn.includes("sessionInvalidatedAt"),
+    "a revoke that leaves the JWT asserting isAdmin is not a revoke",
   );
+  assert(fn.includes("$transaction"), "revoke must be atomic");
   assert(
-    !/const active[\s\S]{0,200}revokedAt: null,\s*\},\s*\}\);\s*if \(active > 0\) return;/.test(src),
-    "the platform-wide early return is the bug and must not come back",
+    fn.includes("PLATFORM_ADMIN_REVOKED"),
+    "revoke must be audited in AdminAction",
   );
-  // A revoked grant is never re-granted: the count that guards the create
-  // deliberately has no revokedAt filter.
-  const guard = fn.slice(fn.indexOf("everGranted"));
-  assert(guard.length > 0, "the ever-granted guard is present");
+});
+
+suite("revocation is revokedAt, never a change to role", () => {
+  const src = read("src/app/actions/admin-platform-actions.ts");
+  const fn = src.slice(src.indexOf("export async function revokePlatformAdminAction"));
+  const update = fn.slice(fn.indexOf("userRoleAssignment.update"));
+  const body = update.slice(0, update.indexOf("});"));
+  assert(body.includes("revokedAt"), "revoke sets revokedAt");
   assert(
-    !guard.slice(0, guard.indexOf("if (everGranted")).includes("revokedAt"),
-    "revoked assignments must still count against a re-grant",
+    !body.includes("role:"),
+    "editing role is what made a revoked grant look never-granted; it must not be how we revoke",
   );
 });
 

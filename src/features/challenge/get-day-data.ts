@@ -19,6 +19,8 @@ export type DayData = {
     submittedAt: Date;
   } | null;
   currentDayNumber: number;
+  /** Uncapped IST day clock — use for "is today" submit checks (not the day-60 cap). */
+  elapsedDayNumber: number;
   isUnlocked: boolean;
   /** Admin rejected this day’s submission (row deleted); user may still resubmit via /challenge/[day]. */
   hasRejectResubmit: boolean;
@@ -75,6 +77,7 @@ export async function getDayData(
     task,
     existingSubmission: submission,
     currentDayNumber,
+    elapsedDayNumber,
     isUnlocked,
     hasRejectResubmit,
     isRelaxable,

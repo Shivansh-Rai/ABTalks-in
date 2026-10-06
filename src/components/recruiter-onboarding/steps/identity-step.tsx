@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
   WORK_EMAIL_REQUIRED_MESSAGE,
   isPersonalEmailDomain,
@@ -34,6 +35,7 @@ export function IdentityStep({
   focusHeading,
   draft,
   showErrors,
+  lockedEmail = false,
   onChange,
   onBack,
   onNext,
@@ -42,12 +44,19 @@ export function IdentityStep({
   focusHeading: boolean;
   draft: OnboardingDraft;
   showErrors: boolean;
+  /** Plan 167: the session supplied this address, so it is not ours to edit. */
+  lockedEmail?: boolean;
   onChange: (patch: Partial<OnboardingDraft>) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   const errors = validateIdentity(draft);
   const shown = showErrors ? errors : {};
+  // On the signed-in path no code is sent at all, so the hint that promises
+  // one would be a lie.
+  const emailHint = lockedEmail
+    ? "This is the address you signed in with."
+    : "Use your company address. We’ll send a 6-digit code to verify it at the end.";
 
   return (
     <OnboardingStep
@@ -57,8 +66,10 @@ export function IdentityStep({
       title="First, who’s hiring?"
       description={
         <p>
-          Your name appears when you reach out to candidates. Your work email is
-          how you sign in — there’s no password.
+          Your name appears when you reach out to candidates.{" "}
+          {lockedEmail
+            ? "You’re already signed in, so we won’t ask you to verify your email again."
+            : "Your work email is how you sign in — there’s no password."}
         </p>
       }
       onSubmit={onNext}
@@ -87,7 +98,7 @@ export function IdentityStep({
         <Field
           id="ob-email"
           label="Work email"
-          hint="Use your company address. We’ll send a 6-digit code to verify it at the end."
+          hint={emailHint}
           error={shown.email}
           valid={!errors.email}
         >
@@ -99,13 +110,14 @@ export function IdentityStep({
             maxLength={200}
             placeholder="you@company.com"
             value={draft.email}
+            readOnly={lockedEmail}
+            aria-readonly={lockedEmail || undefined}
             onChange={(e) => onChange({ email: e.target.value })}
-            {...fieldA11y(
-              "ob-email",
-              shown.email,
-              "Use your company address. We’ll send a 6-digit code to verify it at the end.",
+            {...fieldA11y("ob-email", shown.email, emailHint)}
+            className={cn(
+              INPUT_CLASS,
+              lockedEmail && "bg-[#F7F7F7] text-[#626262]",
             )}
-            className={INPUT_CLASS}
           />
         </Field>
       </StaggerItem>

@@ -244,8 +244,9 @@ export async function purgeExpiredEmailCodes(): Promise<number> {
 // ---------------------------------------------------------------------------
 
 /**
- * Which email to send. `recruiter-signin` is byte-for-byte the plan 152
- * recruiter template; do not reword it without re-checking deliverability.
+ * Which email to send. All three share one plain layout (`renderCodeHtml`);
+ * do not add images, banners or marketing copy to it without re-checking
+ * where Gmail files the result.
  */
 export type EmailCodeVariant = "recruiter-signin" | "signin" | "password";
 
@@ -347,16 +348,16 @@ export async function deliverEmailCode(
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
-const LOGO_URL = `${APP_URL}/abtalks-logo.png`;
 
 /**
- * Plan 152. Full HTML5 transactional email for a one-time code.
+ * Full HTML5 document for a one-time code, deliberately plain.
  *
- * A 3-line HTML fragment (the previous template) is one of the strongest
- * heuristics Gmail and Outlook use to route mail to spam — legit transactional
- * senders always ship a proper HTML document with a preheader, a body, and a
- * footer. The layout borrows the workshop-email conventions so the two feel
- * like the same product.
+ * Gmail sorts mail into Primary / Updates / Promotions largely on how it
+ * looks. A logo image, a gradient banner, card shadows and coloured panels
+ * read as a newsletter, and that is how sign-in codes ended up under
+ * Promotions. This is one column of text, the code in large type, no images
+ * and a single link — the shape of a message from a service to one person.
+ * The preheader stays: it puts the code in the inbox snippet.
  */
 export function renderCodeHtml(copy: TemplateCopy, code: string): string {
   return `<!DOCTYPE html>
@@ -364,62 +365,22 @@ export function renderCodeHtml(copy: TemplateCopy, code: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>${copy.title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F4F4F4;font-family:Inter,'Segoe UI',Arial,sans-serif;">
-  <!-- Preheader: shown in the inbox snippet next to the subject line. Kept short so it doesn't wrap into the body. -->
-  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#F4F4F4;opacity:0;">
-    ${copy.preheader(code)}
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${copy.preheader(code)}</div>
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
+    <p style="margin:0 0 16px;">${copy.title}</p>
+    <p style="margin:0 0 16px;">${copy.introHtml}</p>
+    <p style="margin:0 0 4px;font-size:13px;color:#6B6B6B;">${copy.codeLabel}</p>
+    <p style="margin:0 0 20px;font-size:30px;font-weight:700;letter-spacing:6px;color:#000000;font-family:Menlo,Consolas,monospace;">${code}</p>
+    <p style="margin:0 0 16px;">Do not share this code with anyone. ABTalks will never ask you for it.</p>
+    <p style="margin:0 0 16px;">${copy.ignoreHtml}</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
+      You received this email because ${copy.footerReason} on <a href="${APP_URL}" style="color:#8A8A8A;">abtalks.in</a>. Questions? Reply to this email.
+    </p>
   </div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.06);">
-          <tr>
-            <td style="background:linear-gradient(135deg,#03535F,#076573);padding:28px;text-align:center;">
-              <img src="${LOGO_URL}" alt="ABTalks" width="140" style="display:block;margin:0 auto;height:auto;max-width:140px;border:0;outline:none;text-decoration:none;" />
-              <p style="color:rgba(255,255,255,0.9);font-size:13px;margin:8px 0 0;letter-spacing:0.3px;">${copy.label}</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px 32px 8px;">
-              <h1 style="color:#0F1720;font-size:20px;line-height:1.35;margin:0 0 8px;font-weight:600;">${copy.title}</h1>
-              <p style="color:#4b4b4b;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                ${copy.introHtml}
-              </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#E7F2F3;border-radius:12px;margin-bottom:24px;">
-                <tr>
-                  <td align="center" style="padding:24px;">
-                    <p style="color:#076573;font-size:12px;margin:0 0 6px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;">${copy.codeLabel}</p>
-                    <p style="color:#03535F;font-size:34px;font-weight:700;letter-spacing:8px;margin:0;font-family:'Menlo','Consolas',ui-monospace,monospace;">${code}</p>
-                  </td>
-                </tr>
-              </table>
-              <p style="color:#4b4b4b;font-size:14px;line-height:1.6;margin:0 0 16px;">
-                ${copy.ignoreHtml}
-              </p>
-              <p style="color:#4b4b4b;font-size:14px;line-height:1.6;margin:0 0 24px;">
-                Need a hand? Write to <a href="mailto:team@abtalks.in" style="color:#03535F;text-decoration:underline;">team@abtalks.in</a> and someone from the team will help.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:20px 32px 32px;border-top:1px solid #EFEFEF;">
-              <p style="color:#8A8A8A;font-size:12px;line-height:1.6;margin:0 0 6px;">
-                This is a transactional message from ABTalks, sent because ${copy.footerReason}. If that wasn&rsquo;t you, no action is needed.
-              </p>
-              <p style="color:#8A8A8A;font-size:12px;line-height:1.6;margin:0;">
-                ABTalks &middot; <a href="${APP_URL}" style="color:#8A8A8A;text-decoration:underline;">abtalks.in</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
 </body>
 </html>`;
 }
@@ -429,16 +390,17 @@ export function renderCodeText(copy: TemplateCopy, code: string): string {
 
 ${copy.introText}
 
-  ${code}
+${code}
 
-The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes.
+The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes. Do not share this code with anyone. ABTalks will never ask you for it.
 
 ${copy.ignoreText}
 
-Need a hand? Write to team@abtalks.in.
+Thanks,
+The ABTalks team
 
-—
-This is a transactional message from ABTalks (${APP_URL}).`;
+---
+You received this email because ${copy.footerReason} on abtalks.in. Questions? Reply to this email.`;
 }
 
 /** Exposed for the template regression test only. */

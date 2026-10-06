@@ -16,6 +16,7 @@ import { createCandidateIdentity } from "@/repositories/candidate-identity";
 import { generateUniqueReferralCode } from "@/features/registration/generate-referral-code";
 import { identityFromParsedResume } from "@/features/resume/import/identity-mapping";
 import { applyParsedResumeToProfile } from "@/features/resume/service";
+import { startOnboardingAfterClaim } from "@/features/resume/import/outreach";
 
 /**
  * How a student's Google sign-in takes over the candidate an admin imported
@@ -96,6 +97,24 @@ export async function onGoogleAccountLinked(
   userId: string,
   db: WriteDb = writeClient(),
 ): Promise<boolean> {
+  return claimImportOnSignIn(userId, "oauth_claim", db);
+}
+
+/**
+ * The claim itself, shared by both sign-in doors (plan 171). REGISTERED →
+ * CLAIMED, trust the email (the sign-in just proved it), and re-stamp the
+ * import-sourced visibility consent as the student's own, labelled with how
+ * they signed in. A no-op for anyone without a REGISTERED import.
+ *
+ * Google calls this from `events.linkAccount` (above); the emailed code calls
+ * it from `authorizeEmailCode`, which until now let an imported student in
+ * without ever claiming.
+ */
+export async function claimImportOnSignIn(
+  userId: string,
+  source: "oauth_claim" | "email_code_claim",
+  db: WriteDb = writeClient(),
+): Promise<boolean> {
   const claimed = await db.$transaction(async (tx) => {
     const moved = await claimRegisteredImportTx(tx, userId);
     if (moved === 0) return false;
@@ -104,10 +123,19 @@ export async function onGoogleAccountLinked(
       data: { emailVerified: new Date() },
       select: { id: true },
     });
-    await applyVisibilityChange(tx, { userId, kind: "claim_consent" });
+    await applyVisibilityChange(tx, { userId, kind: "claim_consent", claimSource: source });
     return true;
   });
-  if (claimed) logger.info("[resume-import] claimed by Google sign-in", { userId });
+  if (claimed) {
+    logger.info(
+      source === "oauth_claim"
+        ? "[resume-import] claimed by Google sign-in"
+        : "[resume-import] claimed by emailed-code sign-in",
+      { userId },
+    );
+    // Plan 171: the claim-and-complete emails move to onboarding. Never throws.
+    await startOnboardingAfterClaim(userId);
+  }
   return claimed;
 }
 

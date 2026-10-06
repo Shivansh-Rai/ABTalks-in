@@ -18,6 +18,25 @@ export const ACCOUNT_NOTICE_HEADERS: Record<string, string> = {
   Priority: "urgent",
 };
 
+const SERVICE_EVENT_TYPES = new Set([
+  "account.admin_update",
+  "auth.password_reset",
+]);
+
+/**
+ * Brand casing in notification mail. Titles and bodies carry recruiter-typed
+ * values (a job's company field) verbatim, which is how candidates got
+ * "abtalks has marked you as hired". Any casing of the brand — abtalks,
+ * Abtalks, AB Talks, ABTALKS — becomes "ABTalks". Addresses, links and
+ * handles (`abtalks.in`, `team@abtalks.in`, `/abtalks-logo.png`,
+ * `@abtalksonai`) are left alone.
+ */
+const BRAND_PATTERN = /(?<![@/.\-\w])ab ?talks\b(?!\.[a-z]|-)/gi;
+
+function normaliseBrand(value: string): string {
+  return value.replace(BRAND_PATTERN, "ABTalks");
+}
+
 const MAX_ATTEMPTS = 5;
 const FAILURE_REASON_MAX_LENGTH = 1000;
 const SENDING_TIMEOUT_MS = 10 * 60 * 1000;
@@ -80,13 +99,17 @@ export async function processEmailDelivery(
   const result = await sendEmail({
     to: notification.recipient.email,
     toName: notification.recipient.name ?? undefined,
-    subject,
-    html,
-    text,
+    subject: normaliseBrand(subject),
+    html: normaliseBrand(html),
+    text: normaliseBrand(text),
     // Every UserNotification is addressed to one person about their own
     // activity — transactional, not a mailing. Dropping `Precedence: bulk`
     // keeps it out of Gmail's Promotions tab.
     bulk: false,
+    // Preference-controlled notices (job alerts, profile views, application
+    // updates) say how to turn them off, so they carry List-Unsubscribe.
+    // Account and security notices cannot be turned off and must not.
+    listUnsubscribe: !SERVICE_EVENT_TYPES.has(notification.eventType),
     kind: notification.eventType,
     // Account service notices get the high-priority headers (only these).
     ...(notification.eventType === "account.admin_update"

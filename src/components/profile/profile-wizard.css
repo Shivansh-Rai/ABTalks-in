@@ -642,10 +642,100 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
 .pw-rv-gaps-v {
   flex: 1;
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 14px;
   line-height: 21px;
   color: #4b4b4b;
   font-weight: 500;
+}
+/* One row per unfinished section: what it is, which fields, what it is worth. */
+.pw-rv-gap-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.pw-rv-gap-link {
+  flex: none;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: #1f1f1f;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: #e3b9b9;
+  text-underline-offset: 3px;
+}
+.pw-rv-gap-link:hover,
+.pw-rv-gap-link:focus-visible {
+  text-decoration-color: currentColor;
+}
+.pw-rv-gap-link:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.pw-rv-gap-fields {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #6b6b6b;
+}
+.pw-rv-gap-pts {
+  flex: none;
+  font-family: var(--pw-font-display);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  color: #ff0f0f;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- per-card "to finish" line ---- */
+.pw-rv-tofinish {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--pw-warning);
+  background: #fff8e6;
+}
+.pw-rv-tofinish-k {
+  flex: none;
+  font-family: var(--pw-font-display);
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a6100;
+  font-variant-numeric: tabular-nums;
+}
+.pw-rv-tofinish-v {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #4b4b4b;
+}
+/* Mobile-only gap line inside the compact card row; see the media query. */
+.pw-rv-gapline {
+  display: none;
 }
 
 /* ---- Complete your profile (mobile CTA; hidden on desktop) ---- */
@@ -722,6 +812,12 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
 .pw-rv-complete-chip:focus-visible {
   outline: 2px solid var(--pw-primary);
   outline-offset: 2px;
+}
+.pw-rv-complete-chip-pts {
+  margin-left: 6px;
+  font-weight: 600;
+  color: #c62d1f;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- the rule between what is filled in and what is not ---- */
@@ -2805,8 +2901,24 @@ body.pw-sheet-open .abt-content-scroll {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 24px;
+  gap: 12px;
+  min-height: 24px;
+  height: auto;
   margin-bottom: 18px;
+}
+.pw-entry-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pw-entry-grip {
+  flex: none;
+  color: #a5a5a5;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  user-select: none;
 }
 .pw-entry-title {
   font-family: var(--pw-font-display);
@@ -2814,6 +2926,40 @@ body.pw-sheet-open .abt-content-scroll {
   line-height: 24px;
   font-weight: 600;
   color: var(--pw-muted);
+}
+.pw-entry-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 12px;
+  flex: none;
+}
+.pw-entry-move {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #8f8f8f;
+  min-height: 44px;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: color 0.18s ease;
+}
+.pw-entry-move:hover:not(:disabled),
+.pw-entry-move:focus-visible:not(:disabled) {
+  background: none;
+  color: #03535f;
+  outline: none;
+}
+.pw-entry-move:disabled {
+  color: #d2d2d2;
+  cursor: default;
 }
 /* Delete an entry: a plain text-and-icon control, never a filled button —
    removing a role is destructive, so it stays quiet until you reach for it. */
@@ -2823,7 +2969,8 @@ body.pw-sheet-open .abt-content-scroll {
   padding: 0;
   cursor: pointer;
   color: #8f8f8f;
-  height: 24px;
+  min-height: 44px;
+  height: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3270,6 +3417,23 @@ body.pw-sheet-open .abt-content-scroll {
   }
   .pw-rv-preview {
     display: block;
+  }
+  .pw-rv-gapline {
+    display: block;
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 17px;
+    color: #8a6100;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pw-rv-gapline-k {
+    margin-right: 6px;
+    font-family: var(--pw-font-display);
+    font-weight: 600;
+    color: #c62d1f;
+    font-variant-numeric: tabular-nums;
   }
   .pw-rv-chev {
     display: grid;

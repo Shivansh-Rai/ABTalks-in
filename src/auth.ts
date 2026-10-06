@@ -17,6 +17,7 @@ import {
 } from "@/features/resume/import/claim";
 import { authorizeEmailCode, authorizePassword } from "@/lib/email-auth";
 import { isEmailLoginEnabled } from "@/lib/feature-flags";
+import { hasPlatformAdmin } from "@/lib/platform-role";
 //auth is the full config with PrismaAdapter and real Credentials authorize. Used everywhere else.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -122,6 +123,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
+    /**
+     * Plan 169. `auth.config.ts` owns `id` / `email` / `authTime`; it runs
+     * first and this adds the one thing it cannot work out, because it is in
+     * the Edge bundle and `hasPlatformAdmin` reaches Prisma.
+     *
+     * The query runs only on a real sign-in (`user` present), not on every
+     * refresh. A revoke does not wait for the token to age out:
+     * `revokePlatformAdminAction` stamps `sessionInvalidatedAt`, which the
+     * `session` callback below turns into a dead session on the next request,
+     * so the next token is minted with `isAdmin` recomputed.
+     */
+    async jwt(params) {
+      const base = authConfig.callbacks?.jwt;
+      const token = base ? await base(params) : params.token;
+      if (token && params.user?.id) {
+        (token as { isAdmin?: boolean }).isAdmin = await hasPlatformAdmin(
+          params.user.id,
+        );
+      }
+      return token;
+    },
     async signIn({ user, account, profile }) {
       if (user?.id) {
         const row = await prisma.user.findUnique({

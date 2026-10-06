@@ -16,8 +16,10 @@ export function mapHeatmapCellToUiState(
   if (cell.dayNumber > currentDay) {
     return "locked";
   }
-  // Today with no submission is stored as "future" in heatmap data.
-  if (cell.dayNumber === currentDay) {
+  // Today with no submission is heatmap "future". After the 60-day window,
+  // capped currentDay stays 60 but that day is "missed" (not future) — do not
+  // treat bare dayNumber === currentDay as submittable or Day 60 stays open forever.
+  if (cell.status === "future" && cell.dayNumber === currentDay) {
     return "available";
   }
   if (cell.isRelaxable || cell.status === "rejected") {

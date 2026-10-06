@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="glow" cx="72%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#F2A93B" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#1A1206" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD58A"/>
+      <stop offset="1" stop-color="#E08A12"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="400" height="300" fill="#140E05"/>
+  <rect width="400" height="300" fill="url(#glow)"/>
+  <g opacity="0.18" stroke="#F2A93B" stroke-width="0.6">
+    <path d="M200 40 H390 M200 90 H390 M200 140 H390 M200 190 H390 M200 240 H390"/>
+  </g>
+  <g transform="translate(222 70)">
+    <rect x="0" y="120" width="26" height="60" rx="5" fill="url(#bar)" opacity="0.75"/>
+    <rect x="38" y="80" width="26" height="100" rx="5" fill="url(#bar)" opacity="0.85"/>
+    <rect x="76" y="100" width="26" height="80" rx="5" fill="url(#bar)" opacity="0.8"/>
+    <rect x="114" y="40" width="26" height="140" rx="5" fill="url(#bar)"/>
+    <path d="M13 110 L51 70 L89 88 L127 28" fill="none" stroke="#FFF1D6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#FFF1D6"><circle cx="13" cy="110" r="5"/><circle cx="51" cy="70" r="5"/><circle cx="89" cy="88" r="5"/><circle cx="127" cy="28" r="6"/></g>
+    <circle cx="127" cy="28" r="14" fill="#FFD58A" opacity="0.35" filter="url(#blur)"/>
+  </g>
+  <g fill="#F2A93B" opacity="0.5"><circle cx="210" cy="60" r="2"/><circle cx="360" cy="250" r="3"/><circle cx="380" cy="80" r="2"/></g>
+</svg>

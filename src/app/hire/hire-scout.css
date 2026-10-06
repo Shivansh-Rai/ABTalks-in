@@ -1005,382 +1005,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   animation-delay: 90ms;
 }
 
-/* --- Search progress: the loading state while Scout searches ---------------
-   A panel of its own in the thread rather than a line beside the loader: it is
-   the only thing on screen for several seconds, so it takes the room the
-   results will take and keeps visibly moving — a drifting glow behind, a bar
-   that fills and shimmers, the active step highlighted and swept, and a rail
-   that fills as each step completes. */
-.scout-progress {
-  --scout-progress: 12.5%;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: grid;
-  gap: 30px;
-  padding: 40px 44px 42px;
-  border: 1px solid var(--h-card-line);
-  border-radius: 24px;
-  background: var(--h-surface);
-  box-shadow: 0 18px 40px -24px rgba(3, 83, 95, 0.35);
-  animation: scout-progress-in 420ms var(--ease) both;
-}
-
-/* Two soft teal blobs drifting behind the content. */
-.scout-progress__glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.scout-progress__glow i {
-  position: absolute;
-  width: 55%;
-  aspect-ratio: 1;
-  border-radius: 999px;
-  filter: blur(40px);
-  opacity: 0.55;
-}
-
-.scout-progress__glow i:first-child {
-  top: -45%;
-  left: -12%;
-  background: radial-gradient(circle, rgba(166, 210, 213, 0.9), transparent 70%);
-  animation: scout-progress-drift-a 7s ease-in-out infinite alternate;
-}
-
-.scout-progress__glow i:last-child {
-  bottom: -55%;
-  right: -10%;
-  background: radial-gradient(circle, rgba(3, 83, 95, 0.28), transparent 70%);
-  animation: scout-progress-drift-b 9s ease-in-out infinite alternate;
-}
-
-.scout-progress__head {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-/* The sparkle burst, scaled up to lead the panel. */
-.scout-progress .scout-loader {
-  width: 72px;
-  height: 72px;
-}
-
-.scout-progress .scout-loader__core {
-  width: 52px;
-  height: 52px;
-  background: var(--h-primary);
-  color: #ffffff;
-  box-shadow: 0 0 0 6px rgba(3, 83, 95, 0.1);
-}
-
-.scout-progress .scout-loader__core svg {
-  width: 24px;
-  height: 24px;
-}
-
-.scout-progress__heading {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.scout-progress__title {
-  margin: 0;
-  font-family: var(--font-outfit), sans-serif;
-  font-size: 30px;
-  line-height: 38px;
-  font-weight: 600;
-  color: var(--h-ink);
-}
-
-/* Keyed on the step, so each new detail slides in. */
-.scout-progress__detail {
-  margin: 0;
-  font-size: 17px;
-  line-height: 24px;
-  color: var(--h-gray-600);
-  animation: scout-progress-detail 380ms var(--ease) both;
-}
-
-/* Fills to the active step and shimmers while it waits. */
-.scout-progress__bar {
-  position: relative;
-  height: 10px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(3, 83, 95, 0.1);
-}
-
-.scout-progress__bar span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--scout-progress);
-  border-radius: inherit;
-  background: linear-gradient(90deg, #03535f 0%, #2a8c96 50%, #03535f 100%);
-  background-size: 200% 100%;
-  transition: width 1.1s var(--ease);
-  animation: scout-progress-flow 1.6s linear infinite;
-}
-
-.scout-progress__bar span::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-  animation: scout-progress-sweep 1.4s var(--ease) infinite;
-}
-
-.scout-progress__steps {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.scout-progress__step {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  font-size: 18px;
-  line-height: 24px;
-  color: var(--h-gray-400);
-  transition: color 280ms var(--ease), background-color 280ms var(--ease);
-}
-
-/* The rail joining each dot to the next; teal once that step is done. */
-.scout-progress__step:not(:last-child)::before {
-  content: "";
-  position: absolute;
-  /* Centred under the dot, running to the top of the next one. */
-  left: 30px;
-  top: calc(50% + 13px);
-  width: 2px;
-  height: calc(100% - 18px);
-  border-radius: 2px;
-  background: var(--h-border);
-  transition: background-color 400ms var(--ease);
-}
-
-.scout-progress__step[data-state="done"]:not(:last-child)::before {
-  background: var(--h-primary);
-}
-
-.scout-progress__step[data-state="active"] {
-  color: var(--h-ink);
-  font-weight: 600;
-  /* A light band sweeps across the tinted row. A moving background rather
-     than a clipped pseudo-element, so the rail below the dot is not cut off. */
-  background: linear-gradient(
-    90deg,
-    rgba(3, 83, 95, 0.07) 0%,
-    rgba(3, 83, 95, 0.07) 35%,
-    rgba(3, 83, 95, 0.16) 50%,
-    rgba(3, 83, 95, 0.07) 65%,
-    rgba(3, 83, 95, 0.07) 100%
-  );
-  background-size: 300% 100%;
-  animation: scout-progress-row 1.8s linear infinite;
-}
-
-.scout-progress__step[data-state="done"] {
-  color: var(--h-gray-600);
-}
-
-.scout-progress__dot {
-  position: relative;
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border: 2px solid var(--h-border-strong);
-  border-radius: 999px;
-  background: var(--h-surface);
-  transition: background-color 280ms var(--ease), border-color 280ms var(--ease);
-}
-
-/* Active: a spinning teal ring with a pulse around it. */
-.scout-progress__step[data-state="active"] .scout-progress__dot {
-  border-color: rgba(3, 83, 95, 0.18);
-  border-top-color: var(--h-primary);
-  border-right-color: var(--h-primary);
-  animation:
-    scout-progress-spin 800ms linear infinite,
-    scout-progress-pulse 1.6s ease-out infinite;
-}
-
-/* Done: filled teal with a check drawn in CSS. */
-.scout-progress__step[data-state="done"] .scout-progress__dot {
-  border-color: var(--h-primary);
-  background: var(--h-primary);
-  animation: scout-progress-pop 320ms var(--ease);
-}
-
-.scout-progress__step[data-state="done"] .scout-progress__dot::after {
-  content: "";
-  position: absolute;
-  left: 7.5px;
-  top: 3px;
-  width: 6.5px;
-  height: 12px;
-  border: solid #ffffff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-@keyframes scout-progress-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes scout-progress-drift-a {
-  to {
-    transform: translate(30%, 25%) scale(1.15);
-  }
-}
-
-@keyframes scout-progress-drift-b {
-  to {
-    transform: translate(-35%, -20%) scale(1.2);
-  }
-}
-
-@keyframes scout-progress-detail {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes scout-progress-flow {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -100% 0;
-  }
-}
-
-@keyframes scout-progress-sweep {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(260%);
-  }
-}
-
-@keyframes scout-progress-row {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: 0% 0;
-  }
-}
-
-@keyframes scout-progress-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes scout-progress-pulse {
-  from {
-    box-shadow: 0 0 0 0 rgba(3, 83, 95, 0.28);
-  }
-  to {
-    box-shadow: 0 0 0 10px rgba(3, 83, 95, 0);
-  }
-}
-
-@keyframes scout-progress-pop {
-  0% {
-    transform: scale(0.5);
-  }
-  70% {
-    transform: scale(1.15);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Phones: same panel, tighter. */
-@media (max-width: 720px) {
-  .scout-progress {
-    gap: 16px;
-    padding: 20px 18px 22px;
-    border-radius: 16px;
-  }
-
-  .scout-progress__head {
-    gap: 12px;
-  }
-
-  .scout-progress .scout-loader {
-    width: 44px;
-    height: 44px;
-  }
-
-  .scout-progress .scout-loader__core {
-    width: 32px;
-    height: 32px;
-  }
-
-  .scout-progress .scout-loader__core svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .scout-progress__title {
-    font-size: 19px;
-    line-height: 24px;
-  }
-
-  .scout-progress__detail {
-    font-size: 13px;
-    line-height: 19px;
-  }
-
-  .scout-progress__step {
-    padding: 10px 10px;
-    font-size: 14px;
-  }
-
-  .scout-progress__step:not(:last-child)::before {
-    left: 22px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scout-progress,
-  .scout-progress__glow i,
-  .scout-progress__detail,
-  .scout-progress__bar span,
-  .scout-progress__bar span::after,
-  .scout-progress__step[data-state="active"],
-  .scout-progress__step[data-state="active"] .scout-progress__dot,
-  .scout-progress__step[data-state="done"] .scout-progress__dot {
-    animation: none;
-  }
+.scout-loader__label {
+  color: var(--h-gray-500);
+  font-size: 13px;
 }
 
 @keyframes scout-crack {
@@ -7690,15 +7317,18 @@ a.hire-assess-action {
 
    Behind everything (z-index -1 inside the isolated .hire-app), so on
    screen 2, where nothing else is positioned, it is simply the page. */
-@property --hf-base { syntax: "<color>"; inherits: false; initial-value: #0c6f63; }
+/* Screen 1 base is a near-white mint wash. The moving light-green glows
+   (--hf-mint) stay the brand accent; static shade layers are soft pastels so
+   they read as depth on white rather than a dark teal field. */
+@property --hf-base { syntax: "<color>"; inherits: false; initial-value: #f4faf8; }
 @property --hf-mint { syntax: "<color>"; inherits: false; initial-value: #18d39b; }
-@property --hf-115 { syntax: "<color>"; inherits: false; initial-value: #115b5a; }
-@property --hf-0a4 { syntax: "<color>"; inherits: false; initial-value: #0a444c; }
-@property --hf-035 { syntax: "<color>"; inherits: false; initial-value: #03535f; }
-@property --hf-025 { syntax: "<color>"; inherits: false; initial-value: #02525d; }
-@property --hf-055 { syntax: "<color>"; inherits: false; initial-value: #055560; }
-@property --hf-053 { syntax: "<color>"; inherits: false; initial-value: #053d45; }
-@property --hf-287 { syntax: "<color>"; inherits: false; initial-value: #287b62; }
+@property --hf-115 { syntax: "<color>"; inherits: false; initial-value: #cfe6e4; }
+@property --hf-0a4 { syntax: "<color>"; inherits: false; initial-value: #d5e8ea; }
+@property --hf-035 { syntax: "<color>"; inherits: false; initial-value: #c7e0e3; }
+@property --hf-025 { syntax: "<color>"; inherits: false; initial-value: #d2e9eb; }
+@property --hf-055 { syntax: "<color>"; inherits: false; initial-value: #d0e8eb; }
+@property --hf-053 { syntax: "<color>"; inherits: false; initial-value: #c9e2e5; }
+@property --hf-287 { syntax: "<color>"; inherits: false; initial-value: #d6eee6; }
 
 .hire-app--desk {
   isolation: isolate;
@@ -7707,16 +7337,17 @@ a.hire-assess-action {
 .hire-field {
   /* Screen 1's palette, declared here as well as in the @property blocks above
      so the hero still paints where `@property` is unsupported. Keep the two
-     lists equal — they were darkened out of step once and the hero went muddy. */
-  --hf-base: #0c6f63;
+     lists equal. Base + static shades are light; --hf-mint (moving glows)
+     stays the same brand accent. */
+  --hf-base: #f4faf8;
   --hf-mint: #18d39b;
-  --hf-115: #115b5a;
-  --hf-0a4: #0a444c;
-  --hf-035: #03535f;
-  --hf-025: #02525d;
-  --hf-055: #055560;
-  --hf-053: #053d45;
-  --hf-287: #287b62;
+  --hf-115: #cfe6e4;
+  --hf-0a4: #d5e8ea;
+  --hf-035: #c7e0e3;
+  --hf-025: #d2e9eb;
+  --hf-055: #d0e8eb;
+  --hf-053: #c9e2e5;
+  --hf-287: #d6eee6;
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -7831,20 +7462,16 @@ a.hire-assess-action {
 .hire-app--landing {
   --h-primary: #03535f;
   --h-primary-hover: #076573;
-  --h-ink: #ffffff;
+  --h-ink: #03535f;
   --h-surface: transparent;
-  --h-page: #00181d;
-  --h-border: rgba(255, 255, 255, 0.12);
+  --h-page: #f4faf8;
+  --h-border: rgba(3, 83, 95, 0.12);
   --color-primary: #03535f;
   --primary: 187 94% 19%;
-  /* The blob field, as a gradient stack.
-     This replaces `recruiter-search-blobs.svg`, which painted an opaque
-     backdrop that showed as a black strip under the card at desktop sizes and
-     hid two of the three suggestion lines. Same ellipses, in percentages, so
-     the field covers any viewport. Stops run back-to-front: the last
-     ellipse in the SVG is the first layer here. */
-  background: #00181d;
-  color: #ffffff;
+  /* Near-white page under the field. Moving mint glows still paint on top
+     via .hire-field__glow; chrome/type use dark ink for contrast. */
+  background: #f4faf8;
+  color: #03535f;
   position: relative;
   overflow: auto;
 }
@@ -7878,11 +7505,11 @@ a.hire-assess-action {
 .hire-app--landing .hire-app__header {
   height: 55px;
   padding: 0 40px;
-  background: rgba(0, 24, 29, 0.38);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(3, 83, 95, 0.08);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .hire-app--landing .hire-app__logo {
@@ -7895,23 +7522,23 @@ a.hire-assess-action {
 }
 
 .hire-app--landing .abt-header-icon {
-  color: #ffffff;
+  color: #03535f;
   border-radius: 100px;
 }
 
 .hire-app--landing .abt-header-icon:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: rgba(3, 83, 95, 0.08);
+  color: #03535f;
 }
 
 .hire-app--landing .hire-menu-btn {
-  color: #ffffff;
+  color: #03535f;
 }
 
 .hire-app--landing .hire-menu-btn:hover,
 .hire-app--landing .hire-menu-btn[aria-expanded="true"] {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: rgba(3, 83, 95, 0.08);
+  color: #03535f;
 }
 
 .hire-app--landing .hire-signin {
@@ -7953,12 +7580,12 @@ a.hire-assess-action {
 }
 
 .hire-app--landing .hire-account {
-  color: #ffffff;
+  color: #03535f;
 }
 
 .hire-app--landing .hire-account:hover,
 .hire-app--landing .hire-account[aria-expanded="true"] {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(3, 83, 95, 0.06);
 }
 
 .hire-app--landing .hire-account__avatar {
@@ -7968,16 +7595,16 @@ a.hire-assess-action {
 }
 
 .hire-app--landing .hire-account__sub {
-  color: #d2d2d2;
+  color: #626262;
 }
 
 .hire-app--landing .hire-hbtn--landing-projects {
   height: 36px;
   padding: 0 16px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #ffffff;
+  background: rgba(3, 83, 95, 0.06);
+  border: 1px solid rgba(3, 83, 95, 0.16);
+  color: #03535f;
   font-weight: 500;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -7985,21 +7612,21 @@ a.hire-assess-action {
 }
 
 .hire-app--landing .hire-hbtn--landing-projects:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+  background: rgba(3, 83, 95, 0.1);
+  border-color: rgba(3, 83, 95, 0.28);
+  color: #02434d;
 }
 
 .hire-app--landing .hire-hbtn--landing-projects .hire-hbtn__svg {
-  color: #d4ebec;
+  color: #03535f;
 }
 
 .hire-app--landing .hire-app__nav form button {
-  color: #ffffff;
+  color: #03535f;
 }
 
 .hire-app--landing .hire-app__nav form .text-muted-foreground {
-  color: #d2d2d2;
+  color: #626262;
 }
 
 .hire-app--landing .hire-workspace {
@@ -8059,14 +7686,11 @@ a.hire-assess-action {
 .rsearch__title {
   margin: 0;
   max-width: 12ch;
-  color: #ffffff;
+  color: #03535f;
   font-family: var(--font-outfit), sans-serif;
   font-size: 64px;
-  /* 500, not 700 (issue #528). White Outfit on the dark green gradient already
-     gains apparent weight from the contrast, and at this display size 700 read
-     as heavier than anything else on the screen. 600 was still too close to it,
-     so this goes a step further: 500 is Medium, which at 40px and up still
-     carries a heading without shouting. Both are loaded weights — the face
+  /* 500, not 700 (issue #528). On the light field, Medium Outfit still
+     carries the heading without shouting. Both are loaded weights — the face
      ships 300/400/500/600/700 — so this is a real cut, not a synthesised one. */
   font-weight: 500;
   line-height: 70px;
@@ -8082,8 +7706,14 @@ a.hire-assess-action {
   gap: 16px;
   padding: 32px 36px;
   border-radius: 16px;
-  background: rgba(200, 235, 225, 0.2);
-  box-shadow: 0 10px 24px rgba(0, 25, 31, 0.3);
+  /* Frosted glass: translucent fill + strong blur so the mint field shows through. */
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 10px 28px rgba(3, 83, 95, 0.08);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
 }
 
 .rsearch__controls {
@@ -8228,7 +7858,7 @@ a.hire-assess-action {
 
 .rsearch__reply-text {
   margin: 0;
-  color: #ffffff;
+  color: #03535f;
   font-family: var(--font-inter), sans-serif;
   font-size: 17px;
   font-weight: 400;
@@ -8300,9 +7930,8 @@ a.hire-assess-action {
   padding: 0;
   border: 0;
   background: transparent;
-  /* White, like the heading. The design's dark teal (and black for the two
-     fading lines) all but disappeared against the green. */
-  color: #ffffff;
+  /* Dark ink on the light field — same hierarchy as the heading. */
+  color: #03535f;
   font-family: var(--font-inter), sans-serif;
   font-size: 17px;
   font-weight: 500;
@@ -8314,7 +7943,7 @@ a.hire-assess-action {
 .rsearch__suggest-slot.is-1 .rsearch__face,
 .rsearch__suggest-slot.is-2 .rsearch__face {
   padding-left: 34px;
-  color: #ffffff;
+  color: #076573;
   font-weight: 400;
 }
 
@@ -8355,7 +7984,7 @@ a.hire-assess-action {
 
 .rsearch__suggest-arrow {
   flex: none;
-  color: #ffffff;
+  color: #03535f;
 }
 
 .rsearch__suggest-slot .rsearch__face:focus-visible {
@@ -8621,6 +8250,174 @@ a.hire-assess-action {
     0 8px 24px rgba(16, 24, 40, 0.06);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   scrollbar-width: thin;
+}
+
+@media (min-width: 901px) {
+  .hire-side {
+    transition:
+      width 420ms cubic-bezier(0.4, 0, 0.2, 1),
+      padding 420ms cubic-bezier(0.4, 0, 0.2, 1),
+      margin 420ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hire-side.hire-side--collapsed {
+    width: 72px;
+    padding: 14px 8px 14px;
+    margin-right: 16px;
+  }
+}
+
+.hire-side__panes {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hire-side__expanded-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.hire-side__collapsed-pane {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .hire-side__expanded-pane {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    transition: opacity 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hire-side__collapsed-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    transition: opacity 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hire-side.hire-side--collapsed .hire-side__expanded-pane {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hire-side:not(.hire-side--collapsed) .hire-side__collapsed-pane {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hire-side.hire-side--collapsed .hire-side__collapsed-pane {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 140ms;
+  }
+
+  .hire-side:not(.hire-side--collapsed) .hire-side__expanded-pane {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 140ms;
+  }
+}
+
+.hire-side__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--side-line);
+  margin-bottom: 2px;
+}
+
+.hire-side__topbar--collapsed {
+  justify-content: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--side-line);
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.hire-side__compact-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: var(--side-ink);
+  background: transparent;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s var(--ease-spark);
+  flex-shrink: 0;
+}
+
+.hire-side__compact-item:hover {
+  background-color: var(--side-accent-soft);
+  color: var(--side-accent);
+}
+
+.hire-side__compact-item.is-current {
+  background-color: var(--side-accent-soft);
+  color: var(--side-accent);
+  font-weight: 600;
+}
+
+.hire-side__compact-item--quiet {
+  color: var(--side-muted);
+}
+
+.hire-side__compact-divider {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--side-line);
+  margin: 4px 0;
+  flex-shrink: 0;
+}
+
+.hire-side__compact-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #03535f;
+  border: 1.5px solid #ffffff;
+}
+
+.hire-side__compact-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.18s var(--ease-spark);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hire-side__compact-avatar:hover {
+  transform: scale(1.05);
 }
 
 /* --- Primary navigation ------------------------------------------------- */
@@ -9610,6 +9407,21 @@ button.hire-side__me {
   color: #18181b;
 }
 
+/* A chip the recruiter searched for. Same treatment as .desk-pill--hit on the
+   pill rows, so "this is the one you asked for" looks the same everywhere. */
+.desk-chip--hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 700;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-chip--hit {
+  border-color: transparent;
+  background: #A6D2D5;
+  color: #000000;
+}
+
 .desk-card__ai {
   position: relative;
   margin-top: 38px;
@@ -9643,17 +9455,15 @@ button.hire-side__me {
   margin-top: 1px;
 }
 
-/* A preview, not the rationale. `summaryPreview()` in desk-match-card.tsx
-   already trims the string on a sentence boundary; the clamp is the safety net
-   for one very long unbroken sentence. Together they take this block from
-   ~72px minimum and 28px lines to two 22px lines — roughly half the height,
-   which is the point: more candidates per screen. The full text is in the
-   detail panel behind "View More Details". */
+/* A 3-line preview of the sidebar AI summary. `summaryPreview()` in
+   desk-match-card.tsx already trims on a sentence boundary; the clamp is the
+   safety net for one very long unbroken sentence. Full text is in the detail
+   panel behind "View More Details". */
 .desk-card__ai-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
   margin: 0;
   min-height: 0;
@@ -10686,6 +10496,21 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-profile__ai-body {
   color: #18181b;
 }
 
+/* A Skill Map chip the recruiter searched for — same peach as .desk-chip--hit
+   and .desk-pill--hit, so one visual language means "you asked for this". */
+.hire-profile__chip--hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 600;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-profile__chip--hit {
+  border-color: transparent;
+  background: #A6D2D5;
+  color: #000000;
+}
+
 .hire-profile__count {
   font-size: 16px;
   line-height: 24px;
@@ -11080,7 +10905,7 @@ a.hire-profile__ext-link:focus-visible {
   }
 }
 
-/* The bar, as the glass card. */
+/* The bar, as the frosted glass card. */
 .scout--hero .scout-composer {
   width: 100%;
   max-width: clamp(600px, 53.2vw, 1040px);
@@ -11089,28 +10914,35 @@ a.hire-profile__ext-link:focus-visible {
   gap: clamp(10px, 0.82vw, 16px);
   padding: clamp(18px, 1.64vw, 32px) clamp(20px, 1.84vw, 36px);
   border-radius: 16px;
-  background: rgba(200, 235, 225, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 24px rgba(0, 25, 31, 0.25);
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 10px 28px rgba(3, 83, 95, 0.08);
 }
 
 .scout--hero .scout-composer__row {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: clamp(12px, 1.23vw, 24px);
 }
 
 .scout--hero .scout-field {
   flex: 1;
   align-items: center;
+  /* Fixed single-line bar — long prompts scroll inside; the glass card
+     never grows with the text. */
+  height: clamp(48px, 3.89vw, 76px);
   min-height: clamp(48px, 3.89vw, 76px);
+  max-height: clamp(48px, 3.89vw, 76px);
   padding: 0 clamp(14px, 1.23vw, 24px);
   border: 0;
   border-radius: 14px;
   background: #ffffff;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
 .scout--hero .scout-field:focus-within {
@@ -11123,6 +10955,10 @@ a.hire-profile__ext-link:focus-visible {
   font-weight: 400;
   line-height: 24px;
   color: #353535;
+  height: 24px;
+  max-height: 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .scout--hero .scout-field textarea::placeholder {
@@ -11136,8 +10972,9 @@ a.hire-profile__ext-link:focus-visible {
   justify-content: center;
   gap: clamp(8px, 0.61vw, 12px);
   width: clamp(128px, 11.1vw, 217px);
-  height: auto;
+  height: clamp(48px, 3.89vw, 76px);
   min-height: clamp(48px, 3.89vw, 76px);
+  max-height: clamp(48px, 3.89vw, 76px);
   padding: 0;
   border: 0;
   border-radius: 14px;
@@ -11170,7 +11007,7 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .scout--hero .scout-criterion {
-  color: rgba(255, 255, 255, 0.7);
+  color: #626262;
   font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   line-height: 21px;
@@ -11178,12 +11015,12 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .scout--hero .scout-criterion .scout-criterion__box {
-  color: #72debf;
+  color: #18d39b;
   margin-right: 4px;
 }
 
 .scout--hero .scout-criterion.is-on {
-  color: #ffffff;
+  color: #03535f;
   font-weight: 600;
 }
 
@@ -11197,30 +11034,30 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .scout--hero .rsearch__suggest-slot .rsearch__face {
-  color: #ffffff;
+  color: #03535f;
   font-weight: 500;
   transition: color 150ms ease, opacity 150ms ease;
 }
 
 .scout--hero .rsearch__suggest-slot .rsearch__face:hover {
-  color: #ffffff;
+  color: #02434d;
   opacity: 1;
 }
 
 .scout--hero .rsearch__suggest-slot.is-1 .rsearch__face {
-  color: #ffffff;
+  color: #076573;
   opacity: 0.75;
   font-weight: 400;
 }
 
 .scout--hero .rsearch__suggest-slot.is-2 .rsearch__face {
-  color: #ffffff;
+  color: #076573;
   opacity: 0.5;
   font-weight: 400;
 }
 
 .scout--hero .rsearch__suggest-arrow {
-  color: #ffffff;
+  color: #03535f;
 }
 
 /* Mobile frame: the card stacks the field over a full-width Search. */
@@ -11267,6 +11104,106 @@ a.hire-profile__ext-link:focus-visible {
   .rsearch__suggest.is-leaving {
     animation: none;
     opacity: 0;
+  }
+}
+
+/* --- loading state on screen 2 ----------------------------------------------
+   The bar arrives before the backend does. Card-shaped placeholders hold the
+   space the results will take. */
+.hire-skeletons {
+  display: grid;
+  /* minmax(0, 1fr), not the implicit auto track: five fixed-width chips gave
+     the card a ~350px minimum and pushed it past a phone's edge. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.hire-skel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 14px;
+  padding: 20px 24px;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.hire-skel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hire-skel__avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 999px;
+}
+
+.hire-skel__lines {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+
+.hire-skel__line {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.hire-skel__line--name {
+  width: 28%;
+  height: 14px;
+}
+
+.hire-skel__line--meta {
+  width: 52%;
+}
+
+.hire-skel__chips {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.hire-skel__chip {
+  flex: none;
+  width: 64px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.hire-skel__summary {
+  height: 56px;
+  border-radius: 12px;
+}
+
+.hire-skel__avatar,
+.hire-skel__line,
+.hire-skel__chip,
+.hire-skel__summary {
+  background: linear-gradient(90deg, #eeeeef 0%, #f7f7f8 50%, #eeeeef 100%);
+  background-size: 200% 100%;
+  animation: hire-skel-shimmer 1.4s linear infinite;
+}
+
+@keyframes hire-skel-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-skel__avatar,
+  .hire-skel__line,
+  .hire-skel__chip,
+  .hire-skel__summary {
+    animation: none;
   }
 }
 
@@ -11553,14 +11490,15 @@ a.hire-profile__ext-link:focus-visible {
   transition: opacity 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 
-/* Landing shows the light wordmark on the green field; every non-landing
-   /hire/* page (results desk AND the plain pages) shows the dark one. */
-.hire-app--landing .hire-app__logo-img--dark,
+/* Landing is a light field now, so the dark wordmark reads; every other
+   /hire/* page keeps the same dark mark. Light wordmark stays in the tree
+   for the results crossfade but stays hidden on landing. */
+.hire-app--landing .hire-app__logo-img--light,
 .hire-app:not(.hire-app--landing) .hire-app__logo-img--light {
   opacity: 0;
 }
 
-.hire-app--landing .hire-app__logo-img--light,
+.hire-app--landing .hire-app__logo-img--dark,
 .hire-app:not(.hire-app--landing) .hire-app__logo-img--dark {
   opacity: 1;
 }
@@ -12023,95 +11961,310 @@ a.hire-profile__ext-link:focus-visible {
 .hire-filter-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 0;
+  margin-top: 4px;
 }
 
-.hire-filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.hire-filter-form > .hire-filter-section {
+  padding: 16px 0;
+  border-top: 1px solid #f0f2f3;
+}
+
+.hire-filter-form > .hire-filter-section:first-child {
+  padding-top: 8px;
+  border-top: 0;
 }
 
 .hire-filter-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  padding: 0;
   border: 0;
   min-width: 0;
 }
 
 .hire-filter-field > span,
-.hire-filter-field > legend {
+.hire-filter-field > legend,
+.hire-filter-field__label {
   font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 500;
   color: #4b4b4b;
 }
 
-.hire-filter-field input,
-.hire-filter-field select {
-  height: 48px;
+/* Direct child only — the tag-box, range and switch inputs size themselves. */
+.hire-filter-field > input {
+  height: 46px;
   padding: 0 12px;
   border: 1px solid #e9e9e9;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 24px;
   color: #353535;
 }
 
-.hire-filter-field input:focus,
-.hire-filter-field select:focus {
+.hire-filter-field > input:focus {
   outline: none;
   border-color: #03535f;
   box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.12);
 }
 
-.hire-filter-skills {
+.hire-filter-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: #f0f6f7;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: #03535f;
+  vertical-align: middle;
+}
+
+/* --- Pills: role / location quick picks, skill suggestions, mode toggles --- */
+
+.hire-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.hire-filter-pill {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid #e3e8ea;
+  border-radius: 100px;
+  background: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  color: #4b4b4b;
+  cursor: pointer;
+}
+
+.hire-filter-pill:hover {
+  border-color: #03535f;
+  background: #f0f6f7;
+  color: #03535f;
+}
+
+.hire-filter-pill[aria-pressed="true"] {
+  border-color: #03535f;
+  background: #03535f;
+  color: #ffffff;
+}
+
+.hire-filter-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(3, 83, 95, 0.22);
+}
+
+/* --- Skills tag box + suggestion row -------------------------------------- */
+
+.hire-filter-tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 1px solid #e9e9e9;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.hire-filter-tagbox:focus-within {
+  border-color: #03535f;
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.12);
+}
+
+.hire-filter-tagbox .hire-filter-chip {
+  padding: 4px 6px 4px 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.hire-filter-tagbox__input {
+  flex: 1;
+  min-width: 140px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  color: #353535;
+}
+
+.hire-filter-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.hire-filter-suggestions__label {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: #8a9496;
+}
+
+.hire-filter-suggestions__list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.hire-filter-check {
+/* --- Experience: two handles over one track ------------------------------- */
+
+.hire-filter-legendrow {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  line-height: 20px;
-  color: #353535;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.hire-filter-check input {
+.hire-filter-readout {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: #03535f;
+}
+
+.hire-filter-range {
+  position: relative;
+  height: 36px;
+  margin-top: 2px;
+}
+
+.hire-filter-range__track,
+.hire-filter-range__fill {
+  position: absolute;
+  top: 16px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.hire-filter-range__track {
+  left: 0;
+  right: 0;
+  background: #e6ebec;
+}
+
+.hire-filter-range__fill {
+  background: #03535f;
+}
+
+.hire-filter-range input[type="range"] {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  /* The track is painted above; only the thumbs should catch the pointer, so
+     the lower handle stays grabbable where the two inputs overlap. */
+  pointer-events: none;
+}
+
+.hire-filter-range input[type="range"]::-webkit-slider-runnable-track {
+  height: 18px;
+  border: 0;
+  background: transparent;
+}
+
+.hire-filter-range input[type="range"]::-moz-range-track {
+  height: 18px;
+  border: 0;
+  background: transparent;
+}
+
+.hire-filter-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
   width: 18px;
   height: 18px;
-  accent-color: #03535f;
+  border: 2px solid #03535f;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: grab;
 }
 
+.hire-filter-range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #03535f;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: grab;
+}
+
+.hire-filter-range input[type="range"]:focus-visible {
+  outline: none;
+}
+
+.hire-filter-range input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.22);
+}
+
+.hire-filter-range input[type="range"]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(3, 83, 95, 0.22);
+}
+
+.hire-filter-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  color: #a3abad;
+}
+
+/* --- Sticky footer -------------------------------------------------------- */
+
 .hire-filter-actions {
+  position: sticky;
+  bottom: -24px;
+  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 8px;
+  margin: 8px -24px -24px;
+  padding: 14px 24px;
+  border-top: 1px solid #eef1f2;
+  background: #ffffff;
 }
 
 .hire-filter-reset {
-  height: 44px;
+  height: 42px;
   padding: 0 16px;
   border: 1px solid #d2d2d2;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #4b4b4b;
   cursor: pointer;
 }
@@ -12122,16 +12275,16 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .hire-filter-apply {
-  height: 44px;
+  height: 42px;
   min-width: 96px;
-  padding: 0 20px;
+  padding: 0 22px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #03535f;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #ffffff;
   cursor: pointer;
   box-shadow:
@@ -12150,10 +12303,6 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .hire-filter-row {
-    grid-template-columns: 1fr;
-  }
-
   .hire-filter-bar {
     padding: 12px 14px;
   }
@@ -12712,9 +12861,13 @@ a.hire-profile__ext-link:focus-visible {
 
 .hire-pipe-step {
   flex: 1 1 0;
-  /* Below this the nine steps stop fitting and the rail scrolls. Scrolling a
-     short rail is cheap; scrolling whole columns of cards was not. */
-  min-width: 96px;
+  /* Content, not a fixed floor. At `min-width: 96px` the longest labels did not
+     fit their own box, and a centred flex line that overflows spills BOTH ways:
+     the first letter landed in the 18px notch and the count in the 18px arrow,
+     where the clip-path erases them (SHORTLISTED read as HORTLISTED). Sized to
+     its label a step can never cut itself; when nine of them stop fitting the
+     rail scrolls, which is cheap next to scrolling columns of cards. */
+  min-width: max-content;
   /* 44, not 56. Without the white card around it the rail is a single band of
      colour against the page, and at 56px that band read as a slab that
      outweighed everything under it. */
@@ -12726,7 +12879,9 @@ a.hire-profile__ext-link:focus-visible {
   position: relative;
   border: 0;
   cursor: pointer;
-  padding: 0 6px 0 20px;
+  /* Both the notch and the arrow are 18px deep at the vertical mid-line, which
+     is exactly where the text sits — 24px clears each with room to spare. */
+  padding: 0 24px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -12747,7 +12902,7 @@ a.hire-profile__ext-link:focus-visible {
 
 /* The first step has nothing flowing into it, so it gets a flat left edge. */
 .hire-pipe-step:first-child {
-  padding-left: 10px;
+  padding-left: 14px;
   clip-path: polygon(
     0 0,
     calc(100% - 18px) 0,
@@ -12776,6 +12931,7 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .hire-pipe-step__n {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -16654,5 +16810,47 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   .hire-profile__job-head,
   .hire-profile__job-chevron {
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Pending navigation row (plan 168)
+ *
+ * <NavLink> renders a `.nav-pending` marker while its own navigation is in
+ * flight, so `:has()` lets the row style itself without the sidebar tracking
+ * any state. The top progress bar says "something is loading"; this says which
+ * row you clicked, which is what you are actually looking at.
+ * ------------------------------------------------------------------------- */
+.hire-app .hire-side__item:has(.nav-pending),
+.hire-app .hire-side__row:has(.nav-pending) {
+  opacity: 0.72;
+}
+
+.hire-app .hire-side__item:has(.nav-pending)::after,
+.hire-app .hire-side__row:has(.nav-pending)::after {
+  content: "";
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-inline-start: auto;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: hire-side-spin 620ms linear infinite;
+}
+
+@keyframes hire-side-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-app .hire-side__item:has(.nav-pending)::after,
+  .hire-app .hire-side__row:has(.nav-pending)::after {
+    animation: none;
+    border-top-color: currentColor;
+    opacity: 0.45;
   }
 }

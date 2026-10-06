@@ -151,8 +151,9 @@ export function RecruiterSearchSuggestions({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaving]);
 
-  const textAt = (base: number, offset: number) =>
-    SEARCH_SUGGESTIONS[(base + offset) % SEARCH_SUGGESTIONS.length]!;
+  const textAt = (base: number) =>
+    SEARCH_SUGGESTIONS[base % SEARCH_SUGGESTIONS.length]!;
+  const suggestion = textAt(active);
 
   return (
     <ul
@@ -165,52 +166,43 @@ export function RecruiterSearchSuggestions({
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      {[0, 1, 2].map((offset) => {
-        const suggestion = textAt(active, offset);
-        const arrow =
-          offset === 0 ? (
+      {/* One sharp line only — the faded peek lines below are gone. */}
+      <li className="rsearch__suggest-slot is-0">
+        <span className="rsearch__cube">
+          {roll && (
+            <span
+              key={`out-${roll.id}`}
+              className={cn(
+                "rsearch__face is-out",
+                roll.dir < 0 && "is-back",
+              )}
+              aria-hidden="true"
+            >
+              <span className="rsearch__suggest-arrow" aria-hidden="true">
+                →
+              </span>
+              {textAt(roll.from)}
+            </span>
+          )}
+          <button
+            key={`in-${roll?.id ?? 0}`}
+            type="button"
+            className={cn(
+              "rsearch__face",
+              roll && "is-in",
+              roll && roll.dir < 0 && "is-back",
+            )}
+            disabled={pending || leaving}
+            tabIndex={leaving ? -1 : undefined}
+            onClick={() => onPick(suggestion)}
+          >
             <span className="rsearch__suggest-arrow" aria-hidden="true">
               →
             </span>
-          ) : null;
-        return (
-          <li
-            key={offset}
-            className={cn("rsearch__suggest-slot", `is-${offset}`)}
-          >
-            <span className="rsearch__cube">
-              {roll && (
-                <span
-                  key={`out-${roll.id}`}
-                  className={cn(
-                    "rsearch__face is-out",
-                    roll.dir < 0 && "is-back",
-                  )}
-                  aria-hidden="true"
-                >
-                  {arrow}
-                  {textAt(roll.from, offset)}
-                </span>
-              )}
-              <button
-                key={`in-${roll?.id ?? 0}`}
-                type="button"
-                className={cn(
-                  "rsearch__face",
-                  roll && "is-in",
-                  roll && roll.dir < 0 && "is-back",
-                )}
-                disabled={pending || leaving}
-                tabIndex={leaving ? -1 : undefined}
-                onClick={() => onPick(suggestion)}
-              >
-                {arrow}
-                {suggestion}
-              </button>
-            </span>
-          </li>
-        );
-      })}
+            {suggestion}
+          </button>
+        </span>
+      </li>
     </ul>
   );
 }

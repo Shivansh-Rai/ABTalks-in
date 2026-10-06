@@ -91,6 +91,7 @@ async function main() {
         ok: true as const,
         data,
         emails,
+        verification: { corrections: [], unverified: [], hadText: true },
         model: "fixture",
         usage: { prompt: 1376, completion: 947 },
         costMicroUsd: 0,

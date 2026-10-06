@@ -31,5 +31,19 @@ export default async function RecruiterOnboardingPage() {
     return <RecruiterAuthClosed />;
   }
 
-  return <RecruiterOnboardingWizard passwordEnabled={isEmailLoginEnabled()} />;
+  // Plan 167. Signed in, but no RecruiterProfile yet — plan 160's deletions and
+  // plan 159's admin-created accounts both leave people here. The session
+  // already proves the address, so the wizard must not email them a code to
+  // prove it again; it finishes through registerRecruiterAction instead.
+  const sessionIdentity =
+    session?.user?.id && session.user.email
+      ? { email: session.user.email, name: session.user.name ?? "" }
+      : null;
+
+  return (
+    <RecruiterOnboardingWizard
+      passwordEnabled={isEmailLoginEnabled()}
+      session={sessionIdentity}
+    />
+  );
 }

@@ -118,7 +118,6 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
       <PwRow cols={1}>
         <PwField
           label="Portfolio"
-          required
           htmlFor="ln-portfolio"
           icon={<GlobeIcon />}
         >

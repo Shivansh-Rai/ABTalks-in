@@ -25,6 +25,7 @@ import {
   totalExperienceMonths,
 } from "@/repositories/candidate-primary";
 import { computeCompleteness } from "@/features/profile/completeness";
+import { buildProfileReview } from "@/features/profile/build-review";
 import {
   CITY_NAMES,
   STATE_NAMES,
@@ -868,7 +869,12 @@ function fullProfile(
 
 suite("completeness is deterministic and bounded", () => {
   const blank = completeness({ fullName: "" });
-  assert(blank.score === 2, `empty name still has persona 2%, got ${blank.score}`);
+  // Plans 174 + 176: empty accomplishments (5%) and empty preferences (3%) on
+  // top of default persona (2%).
+  assert(
+    blank.score === 10,
+    `empty name has persona 2% + optional accomp 5% + optional prefs 3%, got ${blank.score}`,
+  );
 
   const again = completeness({ fullName: "" });
   assert(again.score === blank.score, "same input, same score");
@@ -877,39 +883,50 @@ suite("completeness is deterministic and bounded", () => {
 });
 
 suite("every basic field has its own weight", () => {
+  // Empty certs + empty preferences contribute optional 5% + 3% on every fixture.
+  const optionalExtras = 8;
   const personaOnly = completeness({ fullName: "" });
-  assert(personaOnly.score === 2, `persona 2%, got ${personaOnly.score}`);
+  assert(
+    personaOnly.score === 2 + optionalExtras,
+    `persona 2% (+ optional accomp/prefs), got ${personaOnly.score}`,
+  );
 
   const nameAndPersona = completeness();
-  assert(nameAndPersona.score === 6, `name 4 + persona 2, got ${nameAndPersona.score}`);
+  assert(
+    nameAndPersona.score === 6 + optionalExtras,
+    `name 4 + persona 2 (+ optional accomp/prefs), got ${nameAndPersona.score}`,
+  );
 
   const withHeadline = completeness({ headline: "Final-year CSE student" });
-  assert(withHeadline.score === 11, `+headline 5, got ${withHeadline.score}`);
+  assert(
+    withHeadline.score === 11 + optionalExtras,
+    `+headline 5, got ${withHeadline.score}`,
+  );
 
   const withAbout = completeness({
     headline: "Final-year CSE student",
     summary: "About me",
   });
-  assert(withAbout.score === 14, `+about 3, got ${withAbout.score}`);
+  assert(withAbout.score === 14 + optionalExtras, `+about 3, got ${withAbout.score}`);
 
   const withPhone = completeness({ phone: "+919876543210" });
-  assert(withPhone.score === 9, `+phone 3, got ${withPhone.score}`);
+  assert(withPhone.score === 9 + optionalExtras, `+phone 3, got ${withPhone.score}`);
 
   const badPhone = completeness({ phone: "   " });
-  assert(badPhone.score === 6, "whitespace phone does not count");
+  assert(badPhone.score === 6 + optionalExtras, "whitespace phone does not count");
   const invalidPhone = completeness({ phone: "abc" });
-  assert(invalidPhone.score === 6, "invalid phone does not count");
+  assert(invalidPhone.score === 6 + optionalExtras, "invalid phone does not count");
 
   const withCity = completeness({ locationCity: "Pune" });
-  assert(withCity.score === 8, `+city 2, got ${withCity.score}`);
+  assert(withCity.score === 8 + optionalExtras, `+city 2, got ${withCity.score}`);
   const withRegion = completeness({ locationRegion: "Maharashtra" });
-  assert(withRegion.score === 8, `+state 2, got ${withRegion.score}`);
+  assert(withRegion.score === 8 + optionalExtras, `+state 2, got ${withRegion.score}`);
   const withCountry = completeness({ countryCode: "IN" });
-  assert(withCountry.score === 8, `+country 2, got ${withCountry.score}`);
+  assert(withCountry.score === 8 + optionalExtras, `+country 2, got ${withCountry.score}`);
   const withGender = completeness({ gender: CandidateGender.FEMALE });
-  assert(withGender.score === 8, `+gender 2, got ${withGender.score}`);
+  assert(withGender.score === 8 + optionalExtras, `+gender 2, got ${withGender.score}`);
   const noGender = completeness({ gender: null });
-  assert(noGender.score === 6, "null gender does not count");
+  assert(noGender.score === 6 + optionalExtras, "null gender does not count");
 
   const basic = withHeadline.sections.find((x) => x.key === "basic");
   assert(basic !== undefined && !basic.complete, "partial basic not complete");
@@ -1163,12 +1180,12 @@ suite("accomplishments score the first cert and the awards field", () => {
   );
 
   const awardsOnly = completeness({ awards: "Dean list" });
-  assert(sectionEarned(awardsOnly, "accomplishments") === 1, "awards alone is 1");
-  // Plan 136: the hint offers a certification OR an award, so an award has to
-  // finish the section. It still earns only its own tenth of the weight.
+  // Plan 174: no certification rows awards the full 5%. Awards text is optional
+  // garnish and does not change the empty-certs path.
+  assert(sectionEarned(awardsOnly, "accomplishments") === 5, "no certs is full credit");
   assert(
     awardsOnly.sections.find((x) => x.key === "accomplishments")?.complete === true,
-    "an award alone completes the section",
+    "no certs completes the section",
   );
 
   const halfCert = completeness({
@@ -1205,6 +1222,20 @@ suite("links count only the three first-class columns", () => {
   assert(sectionEarned(github, "links") === 1.5, "github 1.5");
   const portfolio = completeness({ portfolioUrl: "https://tester.dev" });
   assert(sectionEarned(portfolio, "links") === 1, "portfolio 1");
+
+  // Plan 175: LinkedIn + GitHub award full 4%; portfolio is optional.
+  const noPortfolio = completeness({
+    linkedinUrl: "https://linkedin.com/in/x",
+    githubUsername: "tester",
+    portfolioUrl: null,
+  });
+  assert(sectionEarned(noPortfolio, "links") === 4, "linkedin+github = full 4");
+  const noPortfolioLinks = noPortfolio.sections.find((x) => x.key === "links");
+  assert(noPortfolioLinks?.complete === true, "linkedin+github completes links");
+  assert(
+    noPortfolioLinks?.missing.length === 0,
+    "portfolio absence is not listed as missing",
+  );
 
   const extra = completeness({
     links: [
@@ -1244,6 +1275,18 @@ suite("links count only the three first-class columns", () => {
 });
 
 suite("career preferences count only roles and locations", () => {
+  // Plan 176: empty roles + empty locations = full optional credit.
+  const empty = completeness({ preference: emptyPref });
+  assert(sectionEarned(empty, "preferences") === 3, "empty prefs award full 3");
+  assert(
+    empty.sections.find((x) => x.key === "preferences")?.complete === true,
+    "empty prefs complete the section",
+  );
+  assert(
+    empty.sections.find((x) => x.key === "preferences")?.missing.length === 0,
+    "empty prefs name nothing missing",
+  );
+
   const roles = completeness({
     preference: { ...emptyPref, preferredRoles: ["Engineer"] },
   });
@@ -1279,8 +1322,8 @@ suite("career preferences count only roles and locations", () => {
     },
   });
   assert(
-    sectionEarned(nonCounting, "preferences") === 0,
-    "openToWork / type / mode / notice / date add 0",
+    sectionEarned(nonCounting, "preferences") === 3,
+    "openToWork / type / mode / notice / date add nothing beyond optional empty credit",
   );
 });
 
@@ -1327,9 +1370,255 @@ suite("completeness reaches 100 along both honest paths", () => {
     { hasResume: true },
   );
   assert(
-    noAccomplishment.score === 95,
-    `missing accomplishments caps at 95, got ${noAccomplishment.score}`,
+    noAccomplishment.score === 100,
+    `empty accomplishments still reaches 100, got ${noAccomplishment.score}`,
   );
+
+  const noPortfolio = completeness(
+    fullProfile({ portfolioUrl: null }),
+    { hasResume: true },
+  );
+  assert(
+    noPortfolio.score === 100,
+    `empty portfolio still reaches 100, got ${noPortfolio.score}`,
+  );
+
+  const noPreferences = completeness(
+    fullProfile({ preference: emptyPref }),
+    { hasResume: true },
+  );
+  assert(
+    noPreferences.score === 100,
+    `empty career preferences still reaches 100, got ${noPreferences.score}`,
+  );
+});
+
+suite("every unearned field is named in missing — plan 173", () => {
+  const all = (r: ReturnType<typeof computeCompleteness>) => r.sections;
+  const miss = (r: ReturnType<typeof computeCompleteness>, key: string) => {
+    const s = r.sections.find((x) => x.key === key);
+    assert(s !== undefined, `missing section ${key}`);
+    return s!.missing;
+  };
+
+  // The invariant the whole feature rests on: the union of every section's
+  // `missing` accounts for the entire shortfall below 100, so a candidate
+  // looking at 80% can always read the remaining 20%.
+  const fixtures = [
+    completeness({ fullName: "" }),
+    completeness(),
+    completeness({ headline: "CSE student", phone: "+919876543210" }),
+    completeness({ experience: [completeExperience()] }),
+    completeness({ education: [completeEducation()] }),
+    completeness(fullProfile(), { hasResume: true }),
+    completeness(fullProfile(), { hasResume: false }),
+  ];
+  for (const f of fixtures) {
+    for (const s of all(f)) {
+      assert(
+        (s.fraction === 1) === (s.missing.length === 0),
+        `${s.key}: fraction ${s.fraction} must agree with ${s.missing.length} missing`,
+      );
+    }
+  }
+
+  const blank = completeness({ fullName: "" });
+  for (const s of all(blank)) {
+    // Plans 174 + 176: empty Accomplishments / Career Preferences are optional.
+    if (s.key === "accomplishments" || s.key === "preferences") continue;
+    assert(s.missing.length > 0, `${s.key} names what is missing on a blank profile`);
+  }
+  const blankAccomp = blank.sections.find((s) => s.key === "accomplishments");
+  assert(miss(blank, "accomplishments").length === 0, "empty accomplishments names nothing");
+  assert(blankAccomp?.fraction === 1, "empty accomplishments is fully earned");
+  assert(miss(blank, "preferences").length === 0, "empty preferences names nothing");
+  assert(
+    blank.sections.find((s) => s.key === "preferences")?.fraction === 1,
+    "empty preferences is fully earned",
+  );
+  assert(miss(blank, "basic").includes("Headline"), "headline is named");
+  assert(miss(blank, "basic").includes("Phone number"), "phone is named");
+  assert(miss(blank, "basic").includes("Full name"), "name is named");
+  assert(miss(blank, "basic")[0] === "Headline", "the most valuable field comes first");
+  assert(miss(blank, "links").includes("LinkedIn profile"), "links are named one by one");
+  assert(miss(blank, "links").includes("GitHub username"), "github is named on blank links");
+  assert(
+    !miss(blank, "links").includes("Portfolio or website"),
+    "portfolio is optional and never named as missing",
+  );
+  assert(
+    miss(
+      completeness({
+        preference: { ...emptyPref, preferredRoles: ["Engineer"] },
+      }),
+      "preferences",
+    ).join(",") === "Preferred locations",
+    "started preferences name the unfinished half",
+  );
+  assert(miss(blank, "skills")[0] === "At least three skills", "skills ask for three");
+  assert(
+    miss(completeness({ skills: [skill("a"), skill("b")] }), "skills")[0] ===
+      "1 more skill",
+    "two skills need one more, singular",
+  );
+
+  // A 100% profile has nothing left to name anywhere.
+  const full = completeness(fullProfile(), { hasResume: true });
+  assert(full.score === 100, "fixture is at 100");
+  for (const s of all(full)) {
+    assert(s.missing.length === 0, `${s.key} has nothing missing at 100%`);
+  }
+
+  // The gap that used to be invisible: required fields are in, the section
+  // ticks complete, and the unearned extra is still named.
+  const noDescription = completeness({
+    experience: [completeExperience({ description: null })],
+  });
+  const exp = noDescription.sections.find((x) => x.key === "experience");
+  assert(exp?.complete === true, "a required-complete role still ticks");
+  assert(
+    exp?.missing.join(",") === "Role description",
+    `and names only the unearned extra, got ${exp?.missing.join(",")}`,
+  );
+
+  // A gated section names its unmet required fields, not a generic hint.
+  const gated = completeness({
+    experience: [completeExperience({ title: "", employmentType: null })],
+  });
+  assert(miss(gated, "experience").includes("Role title"), "the blank role title is named");
+  assert(
+    miss(gated, "experience").includes("Employment type"),
+    "and so is the blank employment type",
+  );
+
+  const halfEducation = completeness({
+    education: [completeEducation({ fieldOfStudy: "" })],
+  });
+  assert(
+    miss(halfEducation, "education").includes("Field of study"),
+    "education names its own unmet field",
+  );
+
+  const halfProject = completeness({
+    projects: [
+      {
+        id: "p1",
+        title: "CareerPilot",
+        description: "Built it",
+        techStack: ["Next.js"],
+        repoUrl: "https://github.com/x/y",
+        liveUrl: null,
+      },
+    ],
+  });
+  const proj = halfProject.sections.find((s) => s.key === "projects");
+  assert(
+    miss(halfProject, "projects").join(",") === "Live demo link",
+    "a project missing only its demo link says exactly that",
+  );
+  assert(
+    proj?.complete === true,
+    "the live demo is optional — the section still ticks without it",
+  );
+});
+
+suite("the profile report card lists gaps by score, not by emptiness", () => {
+  const review = code("src/components/profile/profile-review.tsx");
+  assert(
+    review.includes("!c.noGap && c.remaining > 0"),
+    "gap cards are selected on remaining score",
+  );
+  assert(
+    !review.includes("empty.filter((c) => !c.noGap)"),
+    "and no longer on whether the card is empty",
+  );
+  assert(review.includes("pw-rv-tofinish"), "each card can name what is left");
+  assert(review.includes("card.missing"), "from the completeness section");
+
+  const builder = code("src/features/profile/build-review.ts");
+  assert(builder.includes("sections?: readonly SectionStatus[]"), "sections are optional");
+
+  // Every scored section reaches its card, and the one earned card stays out of
+  // the gap maths — otherwise the report card would invite a candidate to
+  // "finish" a mock interview that cannot move the score either way.
+  const built = (over: Partial<CandidateDetail> = {}) => {
+    const detail = detailFixture(over);
+    const c = computeCompleteness(detail, { hasResume: false });
+    return buildProfileReview({
+      detail,
+      personaLabel: "Student",
+      score: c.score,
+      resume: null,
+      mockInterviewCount: 0,
+      verifiedAccomplishments: [],
+      verifiedSkills: [],
+      stepIndexByKey: {},
+      sections: c.sections,
+    }).cards;
+  };
+
+  const blankCards = built({ fullName: "" });
+  const mock = blankCards.find((x) => x.title === "Mock Interview");
+  assert(mock?.sectionKey === null, "the mock card sits outside the score");
+  assert(mock?.remaining === 0, "and can never be a gap");
+  const blankAccompCard = blankCards.find((x) => x.title === "Accomplishments");
+  assert(blankAccompCard?.missing.length === 0, "empty Accomplishments is not a gap");
+  assert(blankAccompCard?.remaining === 0, "empty Accomplishments reports nothing left");
+  const blankPrefsCard = blankCards.find((x) => x.title === "Career Preferences");
+  assert(blankPrefsCard?.missing.length === 0, "empty Career Preferences is not a gap");
+  assert(blankPrefsCard?.remaining === 0, "empty Career Preferences reports nothing left");
+  for (const c of blankCards.filter(
+    (x) =>
+      x.sectionKey !== null &&
+      x.title !== "Accomplishments" &&
+      x.title !== "Career Preferences",
+  )) {
+    assert(c.missing.length > 0, `${c.title} names its gap on a blank profile`);
+    assert(c.remaining > 0, `${c.title} reports what it is worth`);
+  }
+
+  // The regression itself: a card with data that is still short of full weight.
+  const partial = built({ fullName: "Test User", summary: "About me" });
+  const basicCard = partial.find((x) => x.title === "Basic Information");
+  assert(basicCard?.filled === true, "the basic card has data");
+  assert(
+    (basicCard?.missing.length ?? 0) > 0,
+    "and still names what is missing — the case the old gap list dropped",
+  );
+
+  const done = built(fullProfile());
+  for (const c of done.filter((x) => x.title !== "Resume")) {
+    assert(c.missing.length === 0, `${c.title} is silent once it is at full weight`);
+  }
+
+  // Without the sections the report card behaves exactly as it did before.
+  const legacy = buildProfileReview({
+    detail: detailFixture({ fullName: "" }),
+    personaLabel: "Student",
+    score: 0,
+    resume: null,
+    mockInterviewCount: 0,
+    verifiedAccomplishments: [],
+    verifiedSkills: [],
+    stepIndexByKey: {},
+  }).cards;
+  assert(
+    legacy.every((c) => c.missing.length === 0 && c.remaining === 0),
+    "sections are genuinely optional",
+  );
+
+  const page = code("src/app/profile/page.tsx");
+  assert(
+    page.includes("sections: completeness.sections"),
+    "the profile page hands the sections in",
+  );
+
+  const donut = code("src/components/dashboard-hub/stages/score-donut.tsx");
+  assert(
+    !donut.includes("title={s.complete"),
+    "the dashboard no longer hides the breakdown in a title attribute",
+  );
+  assert(donut.includes("Still to add:"), "it is visible instead");
 });
 
 suite("completeness does not take visibility or evidence inputs", () => {
@@ -1634,11 +1923,7 @@ suite("required fields are marked, announced, and explained", () => {
     ],
     [
       "src/components/profile/links-section.tsx",
-      ["LinkedIn", "GitHub", "Portfolio"],
-    ],
-    [
-      "src/components/profile/preferences-section.tsx",
-      ["Preferred roles", "Preferred locations"],
+      ["LinkedIn", "GitHub"],
     ],
   ];
   for (const [rel, labels] of marked) {
@@ -1650,6 +1935,15 @@ suite("required fields are marked, announced, and explained", () => {
       assert(field.includes("required"), rel + ": " + label + " is marked required");
     }
   }
+
+  const projects = code("src/components/profile/projects-section.tsx");
+  const liveAt = projects.indexOf('label="Live URL"');
+  assert(liveAt !== -1, "projects: Live URL exists");
+  const liveField = projects.slice(liveAt, projects.indexOf(">", liveAt));
+  assert(
+    !liveField.includes("required"),
+    "projects: Live URL stays optional",
+  );
 });
 
 suite("nothing on the profile blocks a save", () => {

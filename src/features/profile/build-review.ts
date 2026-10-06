@@ -4,6 +4,7 @@ import {
   OPPORTUNITY_TYPE_LABELS,
 } from "@/lib/candidate-vocab";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
+import type { SectionKey, SectionStatus } from "@/features/profile/completeness";
 import type { ResumeView } from "@/features/resume/types";
 import { sameName, tokens } from "@/features/resume/merge/text";
 
@@ -63,6 +64,22 @@ export type ReviewBlock =
 export type ReviewCard = {
   /** Index into the wizard steps — what Add / Edit opens. */
   stepIndex: number;
+  /**
+   * The completeness section this card maps to, or null for a card that is
+   * earned rather than entered (Mock Interview) and so sits outside the score.
+   */
+  sectionKey: SectionKey | null;
+  /**
+   * Field labels in this section whose weight is still unearned, straight from
+   * `computeCompleteness`. This is what makes the strength percentage
+   * explainable on the page: `filled` only says whether the card has any data
+   * at all, so a part-filled section reads as done while holding the score
+   * down. Empty when the section is at full weight, or when no sections were
+   * handed in.
+   */
+  missing: string[];
+  /** Percent of the overall score this card can still add. 0 when at full weight. */
+  remaining: number;
   title: string;
   icon: ReviewIconKey;
   emptyHint: string;
@@ -276,11 +293,21 @@ function card(
     count?: number;
     noGap?: boolean;
     preview?: string;
+    sectionKey?: SectionKey | null;
+    section?: SectionStatus;
   } = {},
 ): ReviewCard {
   const filled = blocks.length > 0;
+  const section = options.section;
   return {
     stepIndex,
+    sectionKey: options.sectionKey ?? null,
+    missing: section?.missing ?? [],
+    // One decimal, because a few fields are worth half a percent and rounding
+    // them to zero would print a gap the candidate cannot close.
+    remaining: section
+      ? Math.round(section.weight * (1 - section.fraction) * 10) / 10
+      : 0,
     title,
     icon,
     emptyHint,
@@ -301,6 +328,7 @@ export function buildProfileReview({
   verifiedAccomplishments,
   verifiedSkills,
   stepIndexByKey,
+  sections,
 }: {
   detail: CandidateDetail;
   personaLabel: string;
@@ -318,8 +346,19 @@ export function buildProfileReview({
   verifiedSkills: readonly { skillId: string; name: string }[];
   /** The wizard's own ordering, so Add / Edit always opens the right step. */
   stepIndexByKey: Record<string, number>;
+  /**
+   * `computeCompleteness(...).sections`. Optional: without it every card
+   * reports no gap and the report card renders exactly as it did before, which
+   * keeps callers that only want the card bodies working unchanged.
+   */
+  sections?: readonly SectionStatus[];
 }): ProfileReview {
   const at = (key: string) => stepIndexByKey[key] ?? 0;
+  const sectionOf = new Map((sections ?? []).map((s) => [s.key, s]));
+  const gap = (key: SectionKey) => ({
+    sectionKey: key,
+    section: sectionOf.get(key),
+  });
 
   /* ---- basic ---- */
   const basicBlocks: ReviewBlock[] = [];
@@ -557,6 +596,7 @@ export function buildProfileReview({
       "basic",
       "Add a summary so recruiters can read you in one paragraph.",
       basicBlocks,
+      gap("basic"),
     ),
     card(
       at("experience"),
@@ -566,7 +606,7 @@ export function buildProfileReview({
       experienceItems.length > 0
         ? [{ kind: "items", items: experienceItems }]
         : [],
-      { count: experienceItems.length },
+      { count: experienceItems.length, ...gap("experience") },
     ),
     card(
       at("education"),
@@ -586,7 +626,7 @@ export function buildProfileReview({
             { kind: "items", items: educationItems },
           ]
         : [],
-      { count: educationItems.length },
+      { count: educationItems.length, ...gap("education") },
     ),
     card(
       at("projects"),
@@ -594,7 +634,7 @@ export function buildProfileReview({
       "projects",
       "Show what you have built.",
       projectItems.length > 0 ? [{ kind: "items", items: projectItems }] : [],
-      { count: projectItems.length },
+      { count: projectItems.length, ...gap("projects") },
     ),
     card(
       at("mock"),
@@ -611,6 +651,7 @@ export function buildProfileReview({
       "Add the skills you want to be found for.",
       skillBlocks,
       {
+        ...gap("skills"),
         count: claimed.length + verifiedSkills.length,
         preview: previewFromBlocks(
           "Add the skills you want to be found for.",
@@ -626,9 +667,12 @@ export function buildProfileReview({
       at("accomplishments"),
       "Accomplishments",
       "certifications",
-      "Add the certifications you hold and the awards you have won.",
+      "Add certifications or awards if you have them — this section is optional.",
       accomplishmentBlocks,
-      { count: verifiedAccomplishments.length + certificationItems.length },
+      {
+        count: verifiedAccomplishments.length + certificationItems.length,
+        ...gap("accomplishments"),
+      },
     ),
     card(
       at("resume"),
@@ -636,6 +680,7 @@ export function buildProfileReview({
       "resume",
       "Upload your resume to see how strong it is and what to improve.",
       resumeBlocks,
+      gap("resume"),
     ),
     card(
       at("links"),
@@ -643,13 +688,15 @@ export function buildProfileReview({
       "links",
       "Add where your work lives.",
       linkBlocks,
+      gap("links"),
     ),
     card(
       at("preferences"),
       "Career Preferences",
       "career",
-      "Tell recruiters what you are looking for — roles, locations and availability.",
+      "Add preferred roles and locations if you have them — this section is optional.",
       prefBlocks,
+      gap("preferences"),
     ),
   ];
 

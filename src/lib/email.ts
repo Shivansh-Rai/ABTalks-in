@@ -72,20 +72,27 @@ export async function sendEmail(opts: {
   subjectId?: string;
   /**
    * Plan 152: extra custom headers merged over the defaults. Every mail gets
-   * a `List-Unsubscribe` + `List-Unsubscribe-Post` (Gmail 2024 bulk-sender
-   * rules score this even for transactional), a `X-Entity-Ref-ID` = the
-   * `deliveryId` (dedupes duplicates in the recipient MUA), and a
-   * `Precedence: bulk` fallback. Callers can add e.g. `In-Reply-To`.
+   * a `X-Entity-Ref-ID` = the `deliveryId` (dedupes duplicates in the
+   * recipient MUA). Callers can add e.g. `In-Reply-To`.
    */
   headers?: Record<string, string>;
   /**
-   * Defaults to true (unchanged behaviour). Pass `false` for one-to-one
-   * transactional mail — application updates, account events — to omit the
-   * `Precedence: bulk` header. That header tells Gmail the message is a mass
-   * mailing and pushes it toward the Promotions tab; personal updates belong
-   * in Primary / Updates.
+   * Defaults to false. Everything this platform sends is one-to-one mail
+   * triggered by the recipient's own action or account — sign-in codes,
+   * registrations, application updates — and must land in Primary / Updates.
+   * `Precedence: bulk` tells Gmail the message is a mass mailing and pushes it
+   * toward Promotions, so it is only sent when a caller really is mailing a
+   * list. A bulk mail also gets the `List-Unsubscribe` headers.
    */
   bulk?: boolean;
+  /**
+   * Adds `List-Unsubscribe` + `List-Unsubscribe-Post` without marking the
+   * mail bulk. For opt-in notifications the recipient can turn off (job
+   * alerts, profile views). Never set on sign-in codes or account notices:
+   * an unsubscribe header on those reads as list mail and is meaningless —
+   * nobody can unsubscribe from their own OTP.
+   */
+  listUnsubscribe?: boolean;
   /**
    * Secret values in this message's body (e.g. a one-time password). On a
    * send failure they are stripped from the error before it is logged or
@@ -142,16 +149,20 @@ export async function sendEmail(opts: {
 
   try {
     const brevo = new BrevoClient({ apiKey });
-    // Deliverability headers, plan 152. All three are what modern mailbox
-    // providers look for on transactional mail — omitting them is the biggest
-    // single reason mail lands in spam even with SPF/DKIM/DMARC passing.
+    // Deliverability headers. Transactional by default: no `Precedence: bulk`
+    // and no `List-Unsubscribe` — both are what Gmail uses to file a message
+    // under Promotions, which is where OTPs were going.
+    const bulk = opts.bulk === true;
     const unsubMailto = `mailto:${REPLY_TO}?subject=Unsubscribe`;
     const defaultHeaders: Record<string, string> = {
-      "List-Unsubscribe": `<${unsubMailto}>`,
-      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       "X-Entity-Ref-ID": deliveryId,
-      "X-Mailer": "ABTalks",
-      ...(opts.bulk === false ? {} : { Precedence: "bulk" }),
+      ...(bulk || opts.listUnsubscribe
+        ? {
+            "List-Unsubscribe": `<${unsubMailto}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          }
+        : {}),
+      ...(bulk ? { Precedence: "bulk" } : {}),
     };
     const mergedHeaders = { ...defaultHeaders, ...(opts.headers ?? {}) };
     const tags = opts.tags ?? [kind];

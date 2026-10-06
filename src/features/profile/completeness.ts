@@ -44,6 +44,19 @@ export type SectionStatus = {
   fraction: number;
   /** Shown when incomplete. Null when there is nothing to ask for. */
   hint: string | null;
+  /**
+   * The fields whose weight has not been earned, named the way the candidate
+   * sees them in the wizard, most valuable first. Empty exactly when this
+   * section has earned all of its weight — which is the invariant that makes
+   * the overall percentage explainable: the union of every section's `missing`
+   * accounts for the entire shortfall below 100.
+   *
+   * Note this is a stricter test than `complete`. A section can be `complete`
+   * (its required fields are in) and still name unearned extras here, e.g. a
+   * saved role with no description. Those extras are precisely the gap that
+   * used to be invisible on /profile.
+   */
+  missing: string[];
 };
 
 export type ProfileCompleteness = {
@@ -69,6 +82,7 @@ type SectionScore = {
   earnedTenths: number;
   complete: boolean;
   hint: string | null;
+  missing: string[];
 };
 
 function filled(value: unknown): boolean {
@@ -96,6 +110,7 @@ function section(
     weight: weightTenths / 10,
     fraction: weightTenths === 0 ? 0 : scored.earnedTenths / weightTenths,
     hint: scored.complete ? null : scored.hint,
+    missing: scored.missing,
   };
 }
 
@@ -124,10 +139,23 @@ function basicScore(detail: CandidateDetail): SectionScore {
 
   const complete =
     name && phone && persona && city && region && country && gender && headline && about;
+  // Ordered by what it is worth, so the first thing a candidate reads is the
+  // field that moves the number most.
+  const missing = [
+    !headline && "Headline",
+    !name && "Full name",
+    !phone && "Phone number",
+    !about && "About you",
+    !city && "Current city",
+    !region && "State",
+    !country && "Country",
+    !gender && "Gender",
+  ].filter((x): x is string => typeof x === "string");
   return {
     earnedTenths,
     complete,
     hint: "Add a headline, location, and contact details",
+    missing,
   };
 }
 
@@ -145,22 +173,38 @@ function experienceRequired(row: ExperienceView): boolean {
 function experienceScore(detail: CandidateDetail): SectionScore {
   const rows = detail.experience;
   if (detail.hasNoWorkExperience && rows.length === 0) {
-    return { earnedTenths: 200, complete: true, hint: null };
+    return { earnedTenths: 200, complete: true, hint: null, missing: [] };
   }
   if (rows.length === 0) {
     return {
       earnedTenths: 0,
       complete: false,
       hint: "Add a role, internship, or freelance work — or mark that you have no work experience yet.",
+      missing: [
+        "A role, internship or freelance entry — or tick “I have no work experience yet”",
+      ],
     };
   }
 
   const row = rows[0]!;
   if (!experienceRequired(row)) {
+    // The gate zeroes the whole section, so the description is unearned too and
+    // is named alongside the required fields rather than left for a second pass.
     return {
       earnedTenths: 0,
       complete: false,
       hint: "Finish the required fields on your most recent role",
+      missing: [
+        !filled(row.companyName) && "Company name",
+        !filled(row.title) && "Role title",
+        !filled(row.employmentType) && "Employment type",
+        !filled(row.locationCity) && "Job location",
+        row.startYear == null && "Start date",
+        !row.isCurrent && row.endYear == null
+          ? "End date (or mark it your current role)"
+          : false,
+        !filled(row.description) && "Role description",
+      ].filter((x): x is string => typeof x === "string"),
     };
   }
 
@@ -170,6 +214,7 @@ function experienceScore(detail: CandidateDetail): SectionScore {
     earnedTenths,
     complete: true,
     hint: earnedTenths < 200 ? "Add a description of the role" : null,
+    missing: filled(row.description) ? [] : ["Role description"],
   };
 }
 
@@ -189,15 +234,32 @@ function educationScore(rows: EducationView[]): SectionScore {
       earnedTenths: 0,
       complete: false,
       hint: "Add your college or school",
+      missing: ["Your college or school"],
     };
   }
 
   const row = rows[0]!;
+  const extras = (r: EducationView): string[] =>
+    [
+      r.gradeType === null && "Score type (CGPA or percentage)",
+      !filled(r.grade) && "Score",
+      !filled(r.description) && "Course description",
+    ].filter((x): x is string => typeof x === "string");
+
   if (!educationRequired(row)) {
     return {
       earnedTenths: 0,
       complete: false,
       hint: "Finish the required fields on your first education entry",
+      missing: [
+        !filled(row.institutionName) && "Institution name",
+        !filled(row.degree) && "Degree",
+        !filled(row.fieldOfStudy) && "Field of study",
+        row.startYear == null && "Start year",
+        !row.isCurrent && row.graduationYear == null
+          ? "Graduation year (or mark it ongoing)"
+          : false,
+      ].filter((x): x is string => typeof x === "string").concat(extras(row)),
     };
   }
 
@@ -209,6 +271,7 @@ function educationScore(rows: EducationView[]): SectionScore {
     earnedTenths,
     complete: true,
     hint: earnedTenths < 150 ? "Add your score and a short description" : null,
+    missing: extras(row),
   };
 }
 
@@ -218,6 +281,7 @@ function projectScore(rows: ProjectView[]): SectionScore {
       earnedTenths: 0,
       complete: false,
       hint: "Add something you have built",
+      missing: ["A project — name, description, tech stack and links"],
     };
   }
 
@@ -229,10 +293,30 @@ function projectScore(rows: ProjectView[]): SectionScore {
   if (filled(row.repoUrl)) earnedTenths += 30;
   if (filled(row.liveUrl)) earnedTenths += 20;
 
+  // GitHub (repo) is required for the section tick; the live demo is an optional
+  // extra that still earns weight and appears in `missing` when blank — same
+  // shape as experience description / education grade.
+  const gateMet =
+    filled(row.title) &&
+    filled(row.description) &&
+    filled(row.techStack) &&
+    filled(row.repoUrl);
+
   return {
     earnedTenths,
-    complete: earnedTenths === 150,
-    hint: "Add a name, description, tech stack, and links",
+    complete: gateMet,
+    hint: !gateMet
+      ? "Add a name, description, tech stack, and GitHub link"
+      : earnedTenths < 150
+        ? "Add a live demo link if you have one"
+        : null,
+    missing: [
+      !filled(row.description) && "Project description",
+      !filled(row.title) && "Project name",
+      !filled(row.techStack) && "Tech stack",
+      !filled(row.repoUrl) && "Repository link",
+      !filled(row.liveUrl) && "Live demo link",
+    ].filter((x): x is string => typeof x === "string"),
   };
 }
 
@@ -240,47 +324,71 @@ function skillsScore(detail: CandidateDetail): SectionScore {
   const claimed = detail.skills.filter((s) => s.claimedByCandidate);
   const unique = new Set(claimed.map((s) => s.skillId)).size;
   const earnedTenths = unique === 0 ? 0 : unique >= 3 ? 100 : 50;
+  const short = 3 - unique;
   return {
     earnedTenths,
     complete: unique >= 3,
     hint: "Add at least three skills",
+    missing:
+      unique >= 3
+        ? []
+        : unique === 0
+          ? ["At least three skills"]
+          : [`${short} more skill${short === 1 ? "" : "s"}`],
   };
 }
 
+/**
+ * Empty certifications = full credit (optional section). A started
+ * certification must be finished (name, issuer, issue year, credential link).
+ * Awards are optional garnish and never hold the score when there are no certs.
+ */
 function accomplishmentsScore(
   certs: CertificationView[],
   awards: string | null,
 ): SectionScore {
-  const cert = certs[0];
-  let earnedTenths = 0;
-  if (cert) {
-    if (filled(cert.name)) earnedTenths += 10;
-    if (filled(cert.issuer)) earnedTenths += 10;
-    if (cert.issuedYear != null) earnedTenths += 10;
-    if (filled(cert.credentialUrl)) earnedTenths += 10;
+  if (certs.length === 0) {
+    return {
+      earnedTenths: 50,
+      complete: true,
+      hint: null,
+      missing: [],
+    };
   }
+
+  const cert = certs[0]!;
+  let earnedTenths = 0;
+  if (filled(cert.name)) earnedTenths += 10;
+  if (filled(cert.issuer)) earnedTenths += 10;
+  if (cert.issuedYear != null) earnedTenths += 10;
+  if (filled(cert.credentialUrl)) earnedTenths += 10;
   if (filled(awards)) earnedTenths += 10;
 
   const certRequired =
-    cert != null &&
     filled(cert.name) &&
     filled(cert.issuer) &&
     cert.issuedYear != null &&
     filled(cert.credentialUrl);
   const awarded = filled(awards);
 
-  // Either one finishes the section, which is what the hint has always
-  // promised. It used to require a certification, so a candidate who wrote up
-  // their awards watched the step stay grey with nothing telling them why.
-  // A started-but-unfinished certification is called out on its own, because
-  // that is a gap the candidate can see and did not intend.
+  const certMissing = [
+    !filled(cert.name) && "Certification name",
+    !filled(cert.issuer) && "Certification issuer",
+    cert.issuedYear == null && "Issue year",
+    !filled(cert.credentialUrl) && "Credential link",
+  ].filter((x): x is string => typeof x === "string");
+
   return {
     earnedTenths,
-    complete: certRequired || awarded,
-    hint:
-      cert != null && !certRequired
-        ? "Finish the certification — it needs a name, issuer, issue year, and credential link"
-        : "Add a certification or an award you have received",
+    complete: certRequired,
+    hint: !certRequired
+      ? "Finish the certification — it needs a name, issuer, issue year, and credential link"
+      : awarded
+        ? null
+        : "Add an award you have received if you have one",
+    // Awards remain an optional extra once the cert gate is met — same shape as
+    // project live URL / role description.
+    missing: [...certMissing, ...(awarded ? [] : ["Awards or honours"])],
   };
 }
 
@@ -289,25 +397,65 @@ function resumeScore(hasResume: boolean): SectionScore {
     earnedTenths: hasResume ? 30 : 0,
     complete: hasResume,
     hint: "Upload a resume or add a resume link",
+    missing: hasResume ? [] : ["A resume upload or resume link"],
   };
 }
 
+/**
+ * LinkedIn + GitHub = full credit (optional portfolio). Portfolio alone still
+ * earns its 1% when present without the other two, but never completes the
+ * section or appears in `missing`.
+ */
 function linksScore(detail: CandidateDetail): SectionScore {
+  const hasLinkedin = filled(detail.linkedinUrl);
+  const hasGithub = filled(detail.githubUsername);
+  const hasPortfolio = filled(detail.portfolioUrl);
+
   let earnedTenths = 0;
-  if (filled(detail.linkedinUrl)) earnedTenths += 15;
-  if (filled(detail.githubUsername)) earnedTenths += 15;
-  if (filled(detail.portfolioUrl)) earnedTenths += 10;
+  if (hasLinkedin) earnedTenths += 15;
+  if (hasGithub) earnedTenths += 15;
+  if (hasPortfolio) earnedTenths += 10;
+
+  // LinkedIn + GitHub = full credit; portfolio is optional garnish.
+  if (hasLinkedin && hasGithub) {
+    return {
+      earnedTenths: 40,
+      complete: true,
+      hint: null,
+      missing: [],
+    };
+  }
+
   return {
     earnedTenths,
-    complete: earnedTenths === 40,
-    hint: "Add LinkedIn, GitHub, and a portfolio",
+    complete: false,
+    hint: "Add LinkedIn and GitHub",
+    missing: [
+      !hasLinkedin && "LinkedIn profile",
+      !hasGithub && "GitHub username",
+    ].filter((x): x is string => typeof x === "string"),
   };
 }
 
+/**
+ * Empty roles + empty locations = full credit (optional section). Starting
+ * either half still requires both. Open to work and the other preference
+ * fields never score.
+ */
 function preferencesScore(detail: CandidateDetail): SectionScore {
   const pref = detail.preference;
   const roles = filled(pref?.preferredRoles);
   const locations = filled(pref?.preferredLocations);
+
+  if (!roles && !locations) {
+    return {
+      earnedTenths: 30,
+      complete: true,
+      hint: null,
+      missing: [],
+    };
+  }
+
   let earnedTenths = 0;
   if (roles) earnedTenths += 15;
   if (locations) earnedTenths += 15;
@@ -315,6 +463,10 @@ function preferencesScore(detail: CandidateDetail): SectionScore {
     earnedTenths,
     complete: roles && locations,
     hint: "Tell us the roles and locations you want",
+    missing: [
+      !roles && "Preferred roles",
+      !locations && "Preferred locations",
+    ].filter((x): x is string => typeof x === "string"),
   };
 }
 

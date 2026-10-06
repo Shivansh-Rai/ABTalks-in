@@ -20,6 +20,7 @@ import type {
   CandidateQuestion,
 } from "./assessment-types";
 import { cn } from "@/lib/utils";
+import { FormattedText } from "@/components/assessments/formatted-text";
 import "./candidate-assessment-screen.css";
 
 /**
@@ -162,7 +163,9 @@ export function CandidateAssessmentScreen({
         {draft.instructions?.trim() ? (
           <div className="hire-cand-assess__instructions">
             <h2>Instructions</h2>
-            <p>{draft.instructions}</p>
+            <p>
+              <FormattedText text={draft.instructions.trim()} />
+            </p>
           </div>
         ) : null}
       </header>
@@ -207,11 +210,17 @@ export function CandidateAssessmentScreen({
                     <span className="hire-cand-assess__num">Q{qi + 1}</span>
                     <div className="hire-cand-assess__qtext">
                       <p id={titleId} className="hire-cand-assess__title">
-                        {q.title.trim() || "Untitled question"}
+                        {q.title.trim() ? (
+                          <FormattedText text={q.title.trim()} />
+                        ) : (
+                          "Untitled question"
+                        )}
                         {q.isRequired ? <abbr title="Required"> *</abbr> : null}
                       </p>
                       {q.helpText?.trim() ? (
-                        <p className="hire-cand-assess__help">{q.helpText}</p>
+                        <p className="hire-cand-assess__help">
+                          <FormattedText text={q.helpText.trim()} />
+                        </p>
                       ) : null}
                       <p className="hire-cand-assess__points">
                         {plural(q.points, "pt")} · {typeHint(q)}
@@ -388,7 +397,9 @@ function QuestionInput({
                       })
                     }
                   />
-                  <span>{opt.body || `Option ${oi + 1}`}</span>
+                  <span>
+                    {opt.body ? <FormattedText text={opt.body} /> : `Option ${oi + 1}`}
+                  </span>
                 </label>
               </li>
             );
@@ -419,7 +430,9 @@ function QuestionInput({
                     onChange({ kind: "choice", selectedOptionIds: [optKey] })
                   }
                 />
-                <span>{opt.body || `Option ${oi + 1}`}</span>
+                <span>
+                    {opt.body ? <FormattedText text={opt.body} /> : `Option ${oi + 1}`}
+                  </span>
               </label>
             </li>
           );

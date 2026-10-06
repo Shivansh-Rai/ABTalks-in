@@ -9,6 +9,13 @@ type Props = {
   index: number;
   total: number;
   locked?: boolean;
+  /**
+   * Plan 166: a sent platform assessment someone has started. Text (question,
+   * help, options, upload link) stays editable; everything that could change a
+   * score or the shape of an answer — type, points, required, correct options,
+   * option count, word cap, order — is fixed.
+   */
+  wordingOnly?: boolean;
   onChange: (next: DraftQuestion) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -22,6 +29,7 @@ export function QuestionEditor({
   index,
   total,
   locked = false,
+  wordingOnly = false,
   onChange,
   onMoveUp,
   onMoveDown,
@@ -29,8 +37,11 @@ export function QuestionEditor({
   onDelete,
   onAnnounce,
 }: Props) {
+  // Structure is fixed for template questions and for wording-only edits.
+  const fixed = locked || wordingOnly;
+
   function switchType(nextType: DraftQuestion["type"]) {
-    if (locked) return;
+    if (fixed) return;
     if (nextType === question.type) return;
     const shared = {
       key: question.key,
@@ -68,7 +79,7 @@ export function QuestionEditor({
   }
 
   function setAllowMultiple(allow: boolean) {
-    if (locked) return;
+    if (fixed) return;
     if (question.type !== "MULTIPLE_CHOICE") return;
     if (!allow) {
       const firstCorrect = question.options.findIndex((o) => o.isCorrect);
@@ -87,7 +98,7 @@ export function QuestionEditor({
   }
 
   function markCorrect(optionIndex: number, checked: boolean) {
-    if (locked) return;
+    if (fixed) return;
     if (question.type !== "MULTIPLE_CHOICE") return;
     if (question.allowMultipleCorrect) {
       onChange({
@@ -125,7 +136,7 @@ export function QuestionEditor({
           <span>Type</span>
           <select
             value={question.type}
-            disabled={locked}
+            disabled={fixed}
             onChange={(e) =>
               switchType(e.target.value as DraftQuestion["type"])
             }
@@ -142,7 +153,7 @@ export function QuestionEditor({
             min={0}
             max={100}
             value={question.points}
-            disabled={locked}
+            disabled={fixed}
             onChange={(e) =>
               onChange({
                 ...question,
@@ -155,7 +166,7 @@ export function QuestionEditor({
           <input
             type="checkbox"
             checked={question.isRequired}
-            disabled={locked}
+            disabled={fixed}
             onChange={(e) =>
               onChange({ ...question, isRequired: e.target.checked })
             }
@@ -199,7 +210,7 @@ export function QuestionEditor({
               <input
                 type="checkbox"
                 checked={question.allowMultipleCorrect}
-                disabled={locked}
+                disabled={fixed}
                 onChange={(e) => setAllowMultiple(e.target.checked)}
               />
               <span>Multiple correct</span>
@@ -212,7 +223,7 @@ export function QuestionEditor({
                   <input
                     type="checkbox"
                     checked={opt.isCorrect}
-                    disabled={locked}
+                    disabled={fixed}
                     onChange={(e) => markCorrect(oi, e.target.checked)}
                     aria-label={`Mark option ${oi + 1} correct`}
                   />
@@ -221,7 +232,7 @@ export function QuestionEditor({
                     type="radio"
                     name={`correct-${question.key}`}
                     checked={opt.isCorrect}
-                    disabled={locked}
+                    disabled={fixed}
                     onChange={() => markCorrect(oi, true)}
                     aria-label={`Mark option ${oi + 1} correct`}
                   />
@@ -237,8 +248,11 @@ export function QuestionEditor({
                     onChange({ ...question, options });
                   }}
                   placeholder={`Option ${oi + 1}`}
+                  // Options sit outside .hire-assess-field (13px), so they fell
+                  // back to the browser's 16px; match the other inputs.
+                  style={{ fontSize: 13 }}
                 />
-                {locked ? null : (
+                {fixed ? null : (
                   <button
                     type="button"
                     className="hire-assess-linkbtn"
@@ -256,7 +270,7 @@ export function QuestionEditor({
               </li>
             ))}
           </ul>
-          {locked ? null : (
+          {fixed ? null : (
             <button
               type="button"
               className="hire-assess-linkbtn"
@@ -283,7 +297,7 @@ export function QuestionEditor({
             min={10}
             max={1000}
             value={question.maxWords}
-            disabled={locked}
+            disabled={fixed}
             onChange={(e) =>
               onChange({
                 ...question,
@@ -316,40 +330,42 @@ export function QuestionEditor({
         </label>
       )}
 
-      <div className="hire-assess-q__actions">
-        <button
-          type="button"
-          className={cn("hire-assess-linkbtn", index === 0 && "is-disabled")}
-          disabled={index === 0}
-          onClick={onMoveUp}
-        >
-          Move Up
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "hire-assess-linkbtn",
-            index === total - 1 && "is-disabled",
-          )}
-          disabled={index === total - 1}
-          onClick={onMoveDown}
-        >
-          Move Down
-        </button>
-        {locked ? null : (
-          <button type="button" className="hire-assess-linkbtn" onClick={onDuplicate}>
-            Duplicate
+      {wordingOnly ? null : (
+        <div className="hire-assess-q__actions">
+          <button
+            type="button"
+            className={cn("hire-assess-linkbtn", index === 0 && "is-disabled")}
+            disabled={index === 0}
+            onClick={onMoveUp}
+          >
+            Move Up
           </button>
-        )}
-        <button
-          type="button"
-          className="hire-assess-linkbtn hire-assess-linkbtn--danger"
-          disabled={total <= 1}
-          onClick={onDelete}
-        >
-          Delete
-        </button>
-      </div>
+          <button
+            type="button"
+            className={cn(
+              "hire-assess-linkbtn",
+              index === total - 1 && "is-disabled",
+            )}
+            disabled={index === total - 1}
+            onClick={onMoveDown}
+          >
+            Move Down
+          </button>
+          {locked ? null : (
+            <button type="button" className="hire-assess-linkbtn" onClick={onDuplicate}>
+              Duplicate
+            </button>
+          )}
+          <button
+            type="button"
+            className="hire-assess-linkbtn hire-assess-linkbtn--danger"
+            disabled={total <= 1}
+            onClick={onDelete}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </article>
   );
 }

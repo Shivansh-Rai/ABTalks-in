@@ -10,6 +10,7 @@ import { AppFooter } from "@/components/shared/app-footer";
 import { BottomNavGate } from "@/components/shared/bottom-nav-gate";
 import { SiteSearchGate } from "@/components/dashboard-hub/site-search-gate";
 import { MainShell } from "@/components/shared/main-shell";
+import { RouteProgress } from "@/components/shared/route-progress";
 import { CookieConsentProvider } from "@/components/legal/cookie-consent-provider";
 import { CookieConsentModal } from "@/components/legal/cookie-consent-modal";
 import { CookiePreferencesModal } from "@/components/legal/cookie-preferences-modal";
@@ -71,6 +72,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontVars} h-full antialiased`} suppressHydrationWarning>
       <body className={`${fontVars} min-h-full flex flex-col font-sans`}>
+        {/* Outside every provider and outside MainShell on purpose: no
+            provider re-render reaches it and no `main` overflow rule can clip
+            it. Plan 168. */}
+        <RouteProgress />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

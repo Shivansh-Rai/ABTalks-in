@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { BadgeCheck, Clock, KeyRound, type LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { StepMotion } from "../motion";
 import {
   OnboardingNavigation,
@@ -26,14 +28,28 @@ const POINTS: { Icon: LucideIcon; title: string; body: string }[] = [
   },
 ];
 
+/** White outline secondary — matches DS surface buttons (border + soft elevation). */
+const SIGN_IN_BUTTON = cn(
+  "inline-flex h-12 min-w-[132px] items-center justify-center rounded-[14px] px-6",
+  "border border-[#E0E0E0] bg-white text-base font-semibold leading-5 text-[#161616]",
+  "shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.06)]",
+  "transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-spark)]",
+  "hover:border-[#D2D2D2] hover:bg-[#FBFBFB] hover:shadow-[0_2px_4px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.08)]",
+  "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#03535F]",
+  "sm:min-w-[160px]",
+);
+
 export function WelcomeStep({
   motion,
   focusHeading,
   onStart,
+  offerSignIn = false,
 }: {
   motion: StepMotion;
   focusHeading: boolean;
   onStart: () => void;
+  /** When true, Sign in button sits beside Set up workspace. */
+  offerSignIn?: boolean;
 }) {
   return (
     <OnboardingStep
@@ -48,7 +64,18 @@ export function WelcomeStep({
         </p>
       }
       onSubmit={onStart}
-      actions={<OnboardingNavigation primaryLabel="Set up workspace" />}
+      actions={
+        <OnboardingNavigation
+          primaryLabel="Set up workspace"
+          secondary={
+            offerSignIn ? (
+              <Link href="/recruiter-onboarding/signin" className={SIGN_IN_BUTTON}>
+                Sign in
+              </Link>
+            ) : undefined
+          }
+        />
+      }
     >
       <StaggerItem>
         <ul className="space-y-4">

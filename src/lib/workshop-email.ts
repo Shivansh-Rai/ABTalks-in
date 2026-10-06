@@ -1,110 +1,110 @@
-import { BrevoClient } from "@getbrevo/brevo";
+import "server-only";
+import { sendEmail } from "@/lib/email";
 
-const brevoApiKey = process.env.BREVO_API_KEY!;
-const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
-const fromName = process.env.FROM_NAME || "ABTalks";
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
-const logoUrl = `${appUrl}/abtalks-logo.png`;
-
-const brevoClient = new BrevoClient({ apiKey: brevoApiKey });
-
+/**
+ * Workshop registration confirmation.
+ *
+ * Goes through the shared transport (`sendEmail`) so it gets a plain-text
+ * part, a Reply-To and a delivery record like every other mail. The layout is
+ * deliberately plain — no logo image, gradient banner or button — and the
+ * subject states a fact instead of selling ("FREE" in capitals is a classic
+ * Promotions-tab signal). A registration confirmation belongs in Primary /
+ * Updates.
+ *
+ * Throws when the send fails so the caller's existing error log still fires.
+ */
 export async function sendWorkshopConfirmationEmail(
   name: string,
   email: string,
   config: { zoomLink: string; whatsappLink: string; webinarDate: string; webinarTime: string }
 ): Promise<void> {
   const { zoomLink, whatsappLink, webinarDate, webinarTime } = config;
+  const firstName = name.trim().split(/\s+/)[0] || "there";
 
-  // The seeded fallback config uses "#" as a placeholder. Rendering that as a
-  // button gives registrants a dead link, so show a note instead.
+  // The seeded fallback config uses "#" as a placeholder. A dead link is worse
+  // than a note that the link will follow.
   const hasZoomLink = Boolean(zoomLink) && zoomLink !== "#";
+  const hasWhatsappLink = Boolean(whatsappLink) && whatsappLink !== "#";
 
-  const joinBlock = hasZoomLink
-    ? `
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding:8px 0 24px;">
-                    <a href="${zoomLink}" style="display:inline-block;background:linear-gradient(135deg,#03535F,#076573);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:50px;font-size:15px;font-weight:600;">
-                      Join the YouTube Live stream
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="color:#4b4b4b;font-size:14px;line-height:1.6;margin:0 0 16px;">
-                Save this email. The same link gets you in on the day, and we'd suggest joining 5 to 10 minutes early so you don't miss the start.
-              </p>`
-    : `
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#E7F2F3;border-radius:12px;margin-bottom:24px;">
-                <tr><td style="padding:20px;">
-                  <p style="color:#076573;font-size:14px;line-height:1.6;margin:0;">
-                    <strong>Your YouTube Live link is on its way.</strong><br>
-                    We'll email it to this address before the session. Keep an eye on your inbox and join 5 to 10 minutes early.
-                  </p>
-                </td></tr>
-              </table>`;
+  const joinHtml = hasZoomLink
+    ? `<p style="margin:0 0 16px;">Join link (YouTube Live): <a href="${esc(zoomLink)}" style="color:#03535F;">${esc(zoomLink)}</a><br>Keep this email &mdash; the same link works on the day. Please join 5 to 10 minutes early.</p>`
+    : `<p style="margin:0 0 16px;">We will email the YouTube Live link to this address before the session. Please join 5 to 10 minutes early.</p>`;
+  const joinText = hasZoomLink
+    ? `Join link (YouTube Live): ${zoomLink}\nKeep this email - the same link works on the day. Please join 5 to 10 minutes early.`
+    : "We will email the YouTube Live link to this address before the session. Please join 5 to 10 minutes early.";
 
-  const html = `
-<!DOCTYPE html>
-<html>
+  const whatsappHtml = hasWhatsappLink
+    ? `<p style="margin:0 0 16px;">Reminders and session resources are shared in the workshop WhatsApp group: <a href="${esc(whatsappLink)}" style="color:#03535F;">${esc(whatsappLink)}</a></p>`
+    : "";
+  const whatsappText = hasWhatsappLink
+    ? `\nReminders and session resources are shared in the workshop WhatsApp group: ${whatsappLink}\n`
+    : "";
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your ABTalks workshop registration</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F4F4F4;font-family:Inter,'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0, 0, 0, 0.06);">
-          <tr>
-            <td style="background:linear-gradient(135deg,#03535F,#076573);padding:32px;text-align:center;">
-              <img src="${logoUrl}" alt="ABTalks" width="150" style="display:block;margin:0 auto;height:auto;max-width:150px;border:0;outline:none;text-decoration:none;" />
-              <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:10px 0 0;">Workshop</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px;">
-              <h2 style="color:#000000;font-size:22px;margin:0 0 8px;">You're registered</h2>
-              <p style="color:#4b4b4b;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                Hi <strong>${name}</strong>,<br><br>
-                Your seat at the <strong>ABTalks Workshop</strong> is confirmed. Here's everything you need for the day.
-              </p>
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#E7F2F3;border-radius:12px;margin-bottom:24px;">
-                <tr><td style="padding:24px;">
-                  <h3 style="color:#03535F;font-size:16px;margin:0 0 16px;">Session details</h3>
-                  <p style="color:#4b4b4b;font-size:14px;line-height:2;margin:0;">
-                    <strong>Date:</strong> ${webinarDate}<br>
-                    <strong>Time:</strong> ${webinarTime}<br>
-                    <strong>Platform:</strong> YouTube Live<br>
-                    <strong>Cost:</strong> Free
-                  </p>
-                </td></tr>
-              </table>
-${joinBlock}
-              <p style="color:#4b4b4b;font-size:14px;line-height:1.6;margin:0 0 8px;">
-                <strong>Come prepared.</strong> It's a hands-on session, so join from a laptop if you can and have the tools we'll be using open and ready.
-              </p>
-              <p style="color:#4b4b4b;font-size:14px;line-height:1.6;margin:0 0 24px;">
-                Join our <a href="${whatsappLink}" style="color:#03535F;font-weight:600;">WhatsApp community</a> for the reminder, session resources, and news of future workshops.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color:#EEF6F6;padding:24px;text-align:center;border-top:1px solid #e0e0e0;">
-              <p style="color:#8f8f8f;font-size:13px;margin:0;">Can't make it? Just reply to this email and let us know.</p>
-              <p style="color:#4b4b4b;font-size:14px;font-weight:600;margin:8px 0 0;">Team ABTalks</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
+    <p style="margin:0 0 16px;">Hi ${esc(firstName)},</p>
+    <p style="margin:0 0 16px;">Your registration for the ABTalks workshop is confirmed. Here are the details:</p>
+    <p style="margin:0 0 16px;">
+      Date: ${esc(webinarDate)}<br>
+      Time: ${esc(webinarTime)}<br>
+      Where: YouTube Live
+    </p>
+    ${joinHtml}
+    <p style="margin:0 0 16px;">It is a hands-on session, so join from a laptop if you can.</p>
+    ${whatsappHtml}
+    <p style="margin:0 0 24px;">If you can no longer attend, just reply to this email.</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
+      You received this email because you registered for an ABTalks workshop with this address.
+    </p>
+  </div>
 </body>
 </html>`;
 
-  await brevoClient.transactionalEmails.sendTransacEmail({
-    sender: { name: fromName, email: fromEmail },
-    to: [{ email, name }],
-    subject: "You're registered for the FREE ABTalks Workshop",
-    htmlContent: html,
+  const text = `Hi ${firstName},
+
+Your registration for the ABTalks workshop is confirmed. Here are the details:
+
+Date: ${webinarDate}
+Time: ${webinarTime}
+Where: YouTube Live
+
+${joinText}
+
+It is a hands-on session, so join from a laptop if you can.
+${whatsappText}
+If you can no longer attend, just reply to this email.
+
+Thanks,
+The ABTalks team
+
+---
+You received this email because you registered for an ABTalks workshop with this address.`;
+
+  const result = await sendEmail({
+    to: email,
+    toName: name,
+    subject: `Your ABTalks workshop registration is confirmed for ${webinarDate}`,
+    html,
+    text,
+    kind: "workshop.confirmation",
   });
+  if (!result.ok && !result.skipped) {
+    throw new Error(result.reason ?? "workshop confirmation send failed");
+  }
+}
+
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

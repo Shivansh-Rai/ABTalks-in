@@ -466,6 +466,9 @@ export default async function ProfilePage({
     verifiedAccomplishments,
     verifiedSkills,
     stepIndexByKey,
+    // Plan 173. The report card needs the per-section gaps, not just the
+    // total, so it can name the fields behind the percentage.
+    sections: completeness.sections,
   });
 
   return (

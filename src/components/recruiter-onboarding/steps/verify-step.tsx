@@ -36,6 +36,7 @@ export function VerifyReviewStep({
   pending,
   serverError,
   alreadyRegistered,
+  signedIn = false,
   onTermsChange,
   onChange,
   onEdit,
@@ -50,6 +51,11 @@ export function VerifyReviewStep({
   pending: boolean;
   serverError: string | null;
   alreadyRegistered: boolean;
+  /**
+   * Plan 167: the session already proves the address, so this card completes
+   * the workspace instead of sending a code.
+   */
+  signedIn?: boolean;
   onTermsChange: (accepted: boolean) => void;
   onChange: (patch: Partial<OnboardingDraft>) => void;
   onEdit: (step: StepId) => void;
@@ -67,20 +73,29 @@ export function VerifyReviewStep({
     <OnboardingStep
       motion={motion}
       focusHeading={focusHeading}
-      eyebrow="Step 3 of 3 · Verify"
+      eyebrow={signedIn ? "Step 3 of 3 · Confirm" : "Step 3 of 3 · Verify"}
       title="Check your details"
       description={
-        <p>
-          Next we’ll email a 6-digit code to{" "}
-          <span className="font-semibold text-[#161616]">{draft.email.trim()}</span>{" "}
-          to verify it’s yours.
-        </p>
+        signedIn ? (
+          <p>
+            You’re signed in as{" "}
+            <span className="font-semibold text-[#161616]">{draft.email.trim()}</span>
+            , so there’s no code to send. Confirm your details to open your
+            workspace.
+          </p>
+        ) : (
+          <p>
+            Next we’ll email a 6-digit code to{" "}
+            <span className="font-semibold text-[#161616]">{draft.email.trim()}</span>{" "}
+            to verify it’s yours.
+          </p>
+        )
       }
       onSubmit={onSend}
       actions={
         <OnboardingNavigation
           onBack={onBack}
-          primaryLabel="Send code"
+          primaryLabel={signedIn ? "Create workspace" : "Send code"}
           pending={pending}
         />
       }

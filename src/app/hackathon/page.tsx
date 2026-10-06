@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
 import {
@@ -174,6 +175,20 @@ export default async function HackathonPage() {
         <div className="vt-hero__reel vt-hero__reel--left" aria-hidden />
         <div className="vt-hero__reel vt-hero__reel--right" aria-hidden />
         <div className="vt-hero__inner">
+          <div className="vt-collab">
+            <p className="vt-collab__label">In association with</p>
+            <span className="vt-collab__logo">
+              <Image
+                className="vt-collab__img"
+                src="/hackathon-v2/abes applied ai.jpeg"
+                alt="ABES Applied AI"
+                width={1270}
+                height={1254}
+                priority
+              />
+            </span>
+          </div>
+
           <p className="vt-hero__eyebrow" aria-hidden>
             <span className="vt-hero__dot" />
             REC · 24 HOURS · ONE BRIEF

@@ -15,6 +15,7 @@ import {
   type AttemptQuestionDetail,
 } from "@/features/admin/attempt-outcome";
 import { formatDateTimeIST } from "@/lib/date-utils";
+import { FormattedText } from "@/components/assessments/formatted-text";
 
 /**
  * T-265 — one candidate's assessment attempt, for Platform Admin.
@@ -117,7 +118,7 @@ function QuestionCard({ q }: { q: AttemptQuestionDetail }) {
     <li className="border-b border-[#E9E9E9] py-4 last:border-0">
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-sm font-medium text-[#353535]">
-          Q{q.number}. {q.title}
+          Q{q.number}. <FormattedText text={q.title} />
         </p>
         {outcomeChip(q)}
         {!q.answered ? (
@@ -134,7 +135,9 @@ function QuestionCard({ q }: { q: AttemptQuestionDetail }) {
         {q.savedAt ? ` · last saved ${formatDateTimeIST(q.savedAt)}` : ""}
       </p>
       {q.helpText ? (
-        <p className="mt-1 text-xs text-[#787878]">{q.helpText}</p>
+        <p className="mt-1 text-xs text-[#787878]">
+          <FormattedText text={q.helpText} />
+        </p>
       ) : null}
 
       {q.type === "MULTIPLE_CHOICE" ? (
@@ -146,7 +149,7 @@ function QuestionCard({ q }: { q: AttemptQuestionDetail }) {
                   o.selected ? "font-medium text-[#353535]" : "text-[#5C5C5C]"
                 }
               >
-                {o.body}
+                <FormattedText text={o.body} />
               </span>
               {o.selected ? <Chip tone="muted">Candidate chose this</Chip> : null}
               {o.isCorrect ? <Chip tone="good">Correct answer</Chip> : null}

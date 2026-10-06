@@ -218,7 +218,8 @@ async function main() {
     const s = src("src/app/actions/admin-resume-import-actions.ts");
     assert(s.startsWith('"use server"'), "is a server action file");
     const fns = s.split(/\nexport async function /).slice(1);
-    assert(fns.length === 7, `expected 7 actions, found ${fns.length}`);
+    // 7 from plan 154 + 2 from plan 171 (enrollUnclaimedAction, exportOutreachCsvAction).
+    assert(fns.length === 9, `expected 9 actions, found ${fns.length}`);
     for (const fn of fns) {
       const body = fn.slice(fn.indexOf("{\n") + 2).trim();
       assert(
@@ -291,6 +292,90 @@ async function main() {
     assert(two.kind === "conflict" && two.candidates.length === 2, "conflict");
   });
 
+  /* ─── Field verification against the PDF (#695) ────────────────────────── */
+  const verify = await import("@/features/resume/verify");
+  const evidence = {
+    text: [
+      "Suyash Gupta",
+      "+91 7081441088 # contactsuyashgupta@gmail.com LinkedIn GitHub",
+      "Education ABES Engineering College B.Tech (Information Technology ) Nov 2022 – Present",
+      "Monocept Ltd - SWE Intern Feb 2026 - June 2026",
+      "◦ Built REST APIs, integrated databases, and collaborated in Agile sprints to deliver",
+      "scalable business solutions",
+      "Languages: Python, Java, JavaScript Technologies: Spring Boot, Next.js, PostgreSQL",
+      "Maturity Level Assess-",
+      "ments, reading code",
+    ].join("\n"),
+    links: [
+      "mailto:contactsuyashgupta@gmail.com",
+      "https://www.linkedin.com/in/isuyashgupta/",
+      "https://github.com/manuVrtti",
+    ],
+  };
+  const withFields = (over: Partial<typeof fixture>) => ({
+    ...fixture,
+    candidateName: null, email: null, phone: null, location: null, linkedin: null, github: null,
+    portfolio: null, website: null, skills: [], technicalSkills: [], softSkills: [],
+    programmingLanguages: [], frameworks: [], databases: [], cloudPlatforms: [], tools: [],
+    certifications: [], achievements: [], languages: [], projects: [], experience: [],
+    education: [], internships: [],
+    ...over,
+  });
+
+  await suite("verify: a misread email is corrected from the PDF (#695)", () => {
+    const { data, report } = verify.verifyParsedResume(withFields({ email: "contactsuysahgupta@gmail.com" }), evidence);
+    assert(data.email === "contactsuyashgupta@gmail.com", `email: ${data.email}`);
+    assert(report.unverified.length === 0, report.unverified.join());
+    const all = verify.reconcileEmails(["contactsuysahgupta@gmail.com"], evidence);
+    assert(resolveImportEmail(data.email, all).kind === "single", `no false conflict: ${all.join()}`);
+  });
+
+  await suite("verify: exact fields pass, typos snap to the document's spelling", () => {
+    const { data, report } = verify.verifyParsedResume(
+      withFields({
+        candidateName: "Suyash Gutpa",
+        phone: "+91 7081441088",
+        linkedin: "https://linkedin.com/in/isuyashgupta",
+        github: "https://github.com/manuVrtt",
+        programmingLanguages: ["Pyhton", "JavaScript"],
+        frameworks: ["Spring Boot", "NextJS"],
+        education: [{ degree: "B.Tech", branch: "Information Technology", institution: "ABES Engineering Colege", year: "Nov 2022 – Present", cgpa: null }],
+        experience: [{
+          title: "SWE Intern", company: "Monocept Ltd", employmentType: null, duration: "Feb 2026 - June 2026",
+          responsibilities: ["Built REST APIs, integrated databses, and collaborated in Agile sprints to deliver scalable business solutions"],
+          achievements: [], technologies: [],
+        }],
+        skills: ["Maturity Level Assessments"],
+      }),
+      evidence,
+    );
+    assert(report.unverified.length === 0, `unverified: ${report.unverified.join()}`);
+    assert(data.candidateName === "Suyash Gupta", `name: ${data.candidateName}`);
+    assert(data.programmingLanguages[0] === "Python", `lang: ${data.programmingLanguages[0]}`);
+    assert(data.education[0]!.institution === "ABES Engineering College", "institution snapped");
+    assert(data.github === "https://github.com/manuVrtti", `github: ${data.github}`);
+    assert(data.experience[0]!.responsibilities[0]!.includes("databases"), "bullet snapped");
+    assert(data.frameworks[1] === "NextJS", "a spacing/punctuation variant is not rewritten");
+  });
+
+  await suite("verify: invented fields are flagged, not silently kept", () => {
+    const { report } = verify.verifyParsedResume(
+      withFields({ phone: "+91 9999999999", softSkills: ["Leadership"], github: "https://github.com/someone-else" }),
+      evidence,
+    );
+    for (const f of ["phone", "softSkills[0]", "github"]) assert(report.unverified.includes(f), `${f} flagged`);
+  });
+
+  await suite("verify: a scan with no text layer is flagged as a whole", () => {
+    const { report } = verify.verifyParsedResume(withFields({ candidateName: "Asha" }), { text: "", links: [] });
+    assert(!report.hadText && report.unverified.length === 1, report.unverified.join());
+  });
+
+  await suite("reconcileEmails: a genuinely different second address still conflicts", () => {
+    const all = verify.reconcileEmails(["work@corp.com"], evidence);
+    assert(resolveImportEmail("contactsuyashgupta@gmail.com", all).kind === "conflict", all.join());
+  });
+
   /* ─── T6 ───────────────────────────────────────────────────────────────── */
   console.log("\nT6 — outcomes of a parse");
 
@@ -312,10 +397,11 @@ async function main() {
       },
     };
   }
-  const okResult = (data = fixture, emails: string[] = []) => ({
+  const okResult = (data = fixture, emails: string[] = [], unverified: string[] = []) => ({
     ok: true as const,
     data,
     emails,
+    verification: { corrections: [], unverified, hadText: true },
     model: "gpt-4.1-mini",
     usage: { prompt: 1, completion: 1 },
     costMicroUsd: 1,
@@ -326,6 +412,12 @@ async function main() {
     const { log, deps } = outcomeDeps();
     await worker.completeImport({ id: "i" }, okResult(fixture, [fixture.email ?? ""]), deps as never);
     assert(log[0] === `parsed:${fixture.email}`, log.join());
+  });
+
+  await suite("unverified fields → NEEDS_REVIEW, email kept as the only candidate", async () => {
+    const r = outcomeDeps();
+    await worker.completeImport({ id: "i" }, okResult(fixture, [fixture.email ?? ""], ["phone"]), r.deps as never);
+    assert(r.log[0] === "review:1", r.log.join());
   });
 
   await suite("no email → NEEDS_REVIEW; two emails → NEEDS_REVIEW with both candidates", async () => {
@@ -890,6 +982,87 @@ async function main() {
     assert(c.includes("Boolean(row?.reviewPendingSince) && row?.phoneVerified !== true"), "banner condition");
     assert(src("src/app/dashboard/page.tsx").includes("{reviewPending ? <ProfileReviewBanner /> : null}"), "rendered");
     assert(src("src/components/dashboard-hub/profile-review-banner.tsx").includes('href="/profile"'), "links to profile");
+  });
+
+  /* ─── Plan 171 — clickable import filenames ────────────────────────────── */
+  console.log("\nPlan 171 — admin import file open");
+
+  const importFileRoute = "src/app/api/admin/resume-imports/[id]/file/route.ts";
+  const importFileRouteSrc = src(importFileRoute)
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+
+  await suite("import file route is gated by getAdminContext, never requireAdmin", () => {
+    assert(importFileRouteSrc.includes("getAdminContext()"), "does not call getAdminContext");
+    assert(!importFileRouteSrc.includes("requireAdmin"), "uses requireAdmin");
+    assert(importFileRouteSrc.includes("{ status: 403 }"), "no 403 for a non-admin");
+  });
+
+  await suite("import file route resolves pathname server-side from import id only", () => {
+    assert(importFileRouteSrc.includes("paramsSchema"), "param not validated");
+    assert(importFileRouteSrc.includes("safeParse"), "no Zod parse");
+    assert(!importFileRouteSrc.includes("searchParams"), "reads a query parameter");
+    assert(
+      !/pathname:\s*(raw|parsed|params|input)/.test(importFileRouteSrc),
+      "caller-supplied blob pathname reaches storage",
+    );
+    assert(
+      importFileRouteSrc.includes("getImportFilePath(id)"),
+      "pathname not resolved from import row",
+    );
+  });
+
+  await suite("import file route serves inline, private, audited", () => {
+    assert(
+      importFileRouteSrc.includes('"content-disposition": `inline; filename='),
+      "not served inline for new-tab open",
+    );
+    assert(
+      importFileRouteSrc.includes('"cache-control": "private, no-store"'),
+      "not private no-store",
+    );
+    assert(
+      importFileRouteSrc.includes('actionType: "DOWNLOAD_RESUME_IMPORT"'),
+      "no stable audit action type",
+    );
+    assert(importFileRouteSrc.includes('entityType: "ResumeImport"'), "wrong entity type");
+  });
+
+  await suite("list DTO exposes downloadHref only, never blobPathname", () => {
+    const status = src("src/features/resume/import/status.ts");
+    assert(status.includes("downloadHref:"), "no downloadHref on ImportRowView");
+    assert(
+      status.includes("`/api/admin/resume-imports/${r.id}/file`"),
+      "downloadHref does not point at the import file route",
+    );
+    assert(!status.includes("blobPathname"), "status DTO leaks blobPathname");
+    const table = src("src/app/admin/resume-imports/import-table.tsx");
+    assert(table.includes("row.downloadHref"), "table does not use downloadHref");
+    assert(table.includes('target="_blank"'), "link does not open in a new tab");
+    assert(!table.includes("blobPathname"), "table leaks blobPathname");
+  });
+
+  /* ─── Plan 172 — date matched count ───────────────────────────────────── */
+  console.log("\nPlan 172 — resume-import date count");
+
+  await suite("matchedTotal uses countImportsMatched; status cards stay unscoped", () => {
+    const status = src("src/features/resume/import/status.ts");
+    assert(status.includes("matchedTotal"), "no matchedTotal on ImportStatusView");
+    assert(status.includes("countImportsMatched("), "loadImportStatus does not call countImportsMatched");
+    assert(status.includes("countImportsByStatus()"), "global counts must stay unscoped");
+    const repo = src("src/repositories/resume-import.ts");
+    assert(repo.includes("function importListWhere"), "shared where helper missing");
+    assert(repo.includes("export async function countImportsMatched"), "countImportsMatched missing");
+  });
+
+  await suite("Today button uses Asia/Kolkata and shows matched count for a date", () => {
+    const table = src("src/app/admin/resume-imports/import-table.tsx");
+    assert(table.includes("function todayIstYmd"), "Today helper missing");
+    assert(table.includes('timeZone: "Asia/Kolkata"'), "Today is not IST");
+    assert(table.includes("setDate(todayIstYmd())"), "Today button does not set IST date");
+    assert(table.includes("view.matchedTotal"), "matchedTotal not shown in UI");
+    assert(table.includes("imported on"), "date count label missing");
+    assert(!table.includes("countImportsByStatus"), "table must not re-scope global counts");
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

@@ -4,89 +4,66 @@ import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
-const logoUrl = `${appUrl}/abtalks-logo.png`;
 
 const WHATSAPP_LINK = HACKATHON.whatsappLink;
-const SOCIALS = {
-  linkedin: "https://www.linkedin.com/company/abtalks-on-ai",
-  youtube: "https://youtube.com/@abtalksonai",
-  discord: "https://discord.gg/946Ucj6dd",
-};
 
 const C = {
   text: "#353535",
-  muted: "#626262",
-  soft: "#8F8F8F",
-  accent: "#076573",
+  muted: "#6B6B6B",
+  accent: "#03535F",
   border: "#E9E9E9",
-  panel: "#EEF6F6",
 };
 
 function eventDetailsBlock(): string {
   return `
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:20px 0;">
-    <tr><td style="padding:20px 22px;">
-      <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Event Details</p>
-      <p style="margin:0;font-size:14px;line-height:2;color:${C.text};">
-        Kick-off: August 7, 8:00 PM IST<br>
-        Hackathon Ends: August 9, 8:00 PM IST<br>
-        Theme: Artificial Intelligence (all problem statements will be revealed live during the kick-off session)
-      </p>
-    </td></tr>
-  </table>`;
+    <p style="margin:0 0 6px;font-weight:700;">Event details</p>
+    <p style="margin:0 0 16px;">
+      Kick-off: August 7, 8:00 PM IST<br>
+      Hackathon ends: August 9, 8:00 PM IST<br>
+      Theme: Artificial Intelligence (problem statements are revealed live at the kick-off)
+    </p>`;
 }
 
-function shell(bodyHtml: string): string {
-  return `
-<!DOCTYPE html>
-<html>
+/**
+ * One plain column of text. These are registration and team updates sent to
+ * one person, and Gmail files them by how they look: the old logo banner,
+ * shadowed card and "Follow us" social footer read as a newsletter and pushed
+ * them to Promotions.
+ */
+function shell(title: string, bodyHtml: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F4F4F4;font-family:Inter,'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(53, 53, 53, 0.06);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#076573,#076573);padding:30px 32px;text-align:center;">
-            <img src="${logoUrl}" alt="ABTalks" width="140" style="display:block;margin:0 auto;height:auto;max-width:140px;border:0;outline:none;text-decoration:none;" />
-            <p style="color:rgba(255,255,255,0.92);font-size:13px;letter-spacing:0.5px;margin:10px 0 0;">48-Hour AI Hackathon</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;color:${C.text};font-size:15px;line-height:1.7;">
-            ${bodyHtml}
-            <p style="margin:26px 0 0;font-size:15px;color:${C.text};">Best regards,<br><strong>Team ABTalks</strong></p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:#FFFFFF;padding:22px 32px;text-align:center;border-top:1px solid ${C.border};">
-            <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${C.soft};">Follow ABTalks on AI</p>
-            <p style="margin:0;font-size:13px;line-height:1.9;color:${C.muted};">
-              LinkedIn: <a href="${SOCIALS.linkedin}" style="color:${C.accent};text-decoration:none;">${SOCIALS.linkedin}</a><br>
-              YouTube: <a href="${SOCIALS.youtube}" style="color:${C.accent};text-decoration:none;">${SOCIALS.youtube}</a><br>
-              Discord: <a href="${SOCIALS.discord}" style="color:${C.accent};text-decoration:none;">${SOCIALS.discord}</a>
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:${C.text};font-size:15px;line-height:1.6;">
+    ${bodyHtml}
+    <p style="margin:24px 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0;font-size:12px;color:${C.muted};border-top:1px solid ${C.border};padding-top:16px;">
+      You received this email because you registered for the ABTalks 48-Hour AI Hackathon with this address. Questions? Reply to this email.
+    </p>
+  </div>
 </body>
 </html>`;
 }
 
-function heading(text: string): string {
-  return `<h2 style="margin:0 0 14px;font-size:21px;font-weight:700;color:${C.text};">${text}</h2>`;
+function greeting(name: string): string {
+  return `<p style="margin:0 0 16px;">Hi ${name},</p>`;
 }
 
 function sectionTitle(text: string): string {
-  return `<p style="margin:22px 0 8px;font-size:15px;font-weight:700;color:${C.text};">${text}</p>`;
+  return `<p style="margin:20px 0 6px;font-weight:700;">${text}</p>`;
+}
+
+function link(href: string, label = href): string {
+  return `<a href="${href}" style="color:${C.accent};">${label}</a>`;
 }
 
 function whatsappLine(): string {
-  return `Join our official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a>`;
+  return `Join the ABTalks hackathon WhatsApp group: ${link(WHATSAPP_LINK)}`;
 }
 
 /**
@@ -98,6 +75,9 @@ function toPlainText(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/gi, (_m, href: string, label: string) =>
+      label === href ? href : `${label} (${href})`,
+    )
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
     .replace(/<li[^>]*>/gi, "- ")
@@ -106,6 +86,8 @@ function toPlainText(html: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&#39;|&rsquo;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/&mdash;/g, "-")
+    .replace(/^[ \t]+/gm, "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -120,13 +102,14 @@ function toPlainText(html: string): string {
  */
 async function send(
   toEmail: string,
-  /** Kept in the signature for call-site readability; not logged (T-259). */
-  _toName: string,
+  toName: string,
   subject: string,
-  html: string,
+  bodyHtml: string,
 ): Promise<void> {
+  const html = shell(subject, bodyHtml);
   const result = await sendEmail({
     to: toEmail,
+    toName,
     subject,
     html,
     text: toPlainText(html),
@@ -154,26 +137,22 @@ export async function sendSoloWelcomeEmail(
   email: string,
 ): Promise<void> {
   const body = `
-    ${heading(`Hi ${name},`)}
-    <p style="margin:0 0 12px;">You're officially registered for the 48-Hour AI Hackathon!</p>
-    <p style="margin:0 0 12px;">Get ready for 48 hours of building, learning, and pushing your creativity with AI.</p>
+    ${greeting(name)}
+    <p style="margin:0 0 16px;">Your registration for the ABTalks 48-Hour AI Hackathon is confirmed. You are taking part as a solo participant.</p>
     ${eventDetailsBlock()}
-    ${sectionTitle("You're Participating Solo!")}
-    <p style="margin:0 0 12px;">You've registered as a solo participant, so you'll begin the hackathon independently. But don't worry, you'll still have access to mentors, technical support, resources, and a community of builders throughout the event.</p>
-    ${sectionTitle("Before the Hackathon")}
-    <p style="margin:0 0 6px;">Please complete these quick steps:</p>
-    <ul style="margin:0 0 12px;padding-left:20px;">
-      <li style="margin-bottom:6px;">Set up your development environment and ensure everything is working.</li>
+    <p style="margin:0 0 16px;">As a solo participant you still have access to mentors, technical support and resources throughout the event.</p>
+    ${sectionTitle("Before the hackathon")}
+    <ul style="margin:0 0 16px;padding-left:20px;">
+      <li style="margin-bottom:6px;">Set up your development environment and check that everything works.</li>
       <li style="margin-bottom:6px;">${whatsappLine()}</li>
-      <li style="margin-bottom:6px;">Keep an eye on your inbox. We'll be sharing important updates, resources, and reminders before the event.</li>
+      <li style="margin-bottom:6px;">Watch this inbox for updates and reminders before the event.</li>
     </ul>
-    <p style="margin:0 0 12px;">We're excited to see your ideas come to life. Whether you're building solo or with a team, this is your chance to experiment, learn, and create something incredible!</p>
-    <p style="margin:0;">See you at the kick-off!</p>`;
+    <p style="margin:0;">See you at the kick-off.</p>`;
   await send(
     email,
     name,
-    "You're registered for the 48-Hour AI Hackathon",
-    shell(body),
+    "Your ABTalks hackathon registration is confirmed",
+    body,
   );
 }
 
@@ -185,37 +164,28 @@ export async function sendLeaderWelcomeEmail(
   teamCode: string,
 ): Promise<void> {
   const body = `
-    ${heading(`Hi ${name},`)}
-    <p style="margin:0 0 12px;">Your team is officially registered for the 48-Hour AI Hackathon!</p>
-    <p style="margin:0 0 12px;">You're all set to lead your team through 48 hours of innovation, collaboration, and AI-powered problem-solving.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:18px 0;">
-      <tr><td style="padding:20px 22px;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Your Team Details</p>
-        <p style="margin:0;font-size:15px;line-height:1.9;color:${C.text};">
-          Team Name: <strong>${teamName}</strong><br>
-          Team Code: <strong style="letter-spacing:3px;font-family:monospace;">${teamCode}</strong>
-        </p>
-      </td></tr>
-    </table>
-    <p style="margin:0 0 12px;">Share this Team Code with your teammates. Once they register and enter the code from their dashboard, they'll automatically be added to your team.</p>
+    ${greeting(name)}
+    <p style="margin:0 0 16px;">Your team is registered for the ABTalks 48-Hour AI Hackathon, with you as team leader.</p>
+    <p style="margin:0 0 6px;font-weight:700;">Your team</p>
+    <p style="margin:0 0 16px;">
+      Team name: <strong>${teamName}</strong><br>
+      Team code: <strong style="letter-spacing:2px;font-family:Menlo,Consolas,monospace;">${teamCode}</strong>
+    </p>
+    <p style="margin:0 0 16px;">Share the team code with your teammates. When they register and enter it on their dashboard, they are added to your team, and we will email you each time someone joins.</p>
     ${eventDetailsBlock()}
-    ${sectionTitle("As the Team Leader")}
-    <p style="margin:0 0 6px;">Here's what you should do before the hackathon begins:</p>
-    <ul style="margin:0 0 12px;padding-left:20px;">
-      <li style="margin-bottom:6px;">Share your Team Code with all your teammates so they can join your team.</li>
-      <li style="margin-bottom:6px;">Ensure everyone joins the official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a></li>
-      <li style="margin-bottom:6px;">You'll receive a notification whenever a new member joins your team.</li>
-      <li style="margin-bottom:6px;">Ask your team to set up their development environment, tools, APIs, and required software before the event.</li>
-      <li style="margin-bottom:6px;">Keep an eye on your inbox. We'll be sending important updates and reminders leading up to the hackathon.</li>
+    ${sectionTitle("Before the hackathon")}
+    <ul style="margin:0 0 16px;padding-left:20px;">
+      <li style="margin-bottom:6px;">Send the team code to everyone on your team.</li>
+      <li style="margin-bottom:6px;">Make sure everyone joins the hackathon WhatsApp group: ${link(WHATSAPP_LINK)}</li>
+      <li style="margin-bottom:6px;">Ask your team to set up their development environment, tools and APIs before the event.</li>
+      <li style="margin-bottom:6px;">Watch this inbox for updates and reminders before the event.</li>
     </ul>
-    ${sectionTitle("Ready to Build?")}
-    <p style="margin:0 0 12px;">You're leading the team but every great project starts with great collaboration. Plan ahead, assign responsibilities, and arrive at the kick-off ready to build something amazing.</p>
-    <p style="margin:0;">We can't wait to see what your team creates.</p>`;
+    <p style="margin:0;">See you at the kick-off.</p>`;
   await send(
     email,
     name,
-    "Your team is registered for the 48-Hour AI Hackathon",
-    shell(body),
+    `Your team ${teamName} is registered for the ABTalks hackathon`,
+    body,
   );
 }
 
@@ -227,35 +197,28 @@ export async function sendMemberWelcomeEmail(
   leaderName: string,
 ): Promise<void> {
   const body = `
-    ${heading(`Hi ${name},`)}
-    <p style="margin:0 0 12px;">You're officially registered and have successfully joined a team using the Team Code for the 48-Hour AI Hackathon!</p>
-    <p style="margin:0 0 12px;">Your squad is coming together, and you're all set for 48 hours of building, learning, and creating with AI.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:18px 0;">
-      <tr><td style="padding:20px 22px;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Your Team Details</p>
-        <p style="margin:0;font-size:15px;line-height:1.9;color:${C.text};">
-          Team Name: <strong>${teamName}</strong><br>
-          Team Lead: <strong>${leaderName}</strong>
-        </p>
-      </td></tr>
-    </table>
-    <p style="margin:0 0 12px;">Your Team Lead will coordinate with the team before and throughout the hackathon, so be sure to stay connected and communicate regularly.</p>
+    ${greeting(name)}
+    <p style="margin:0 0 16px;">Your registration for the ABTalks 48-Hour AI Hackathon is confirmed, and you have joined a team using its team code.</p>
+    <p style="margin:0 0 6px;font-weight:700;">Your team</p>
+    <p style="margin:0 0 16px;">
+      Team name: <strong>${teamName}</strong><br>
+      Team leader: <strong>${leaderName}</strong>
+    </p>
+    <p style="margin:0 0 16px;">Your team leader coordinates the team before and during the hackathon, so stay in touch with them.</p>
     ${eventDetailsBlock()}
-    ${sectionTitle("Before the Hackathon")}
-    <p style="margin:0 0 6px;">Please complete these quick steps:</p>
-    <ul style="margin:0 0 12px;padding-left:20px;">
-      <li style="margin-bottom:6px;">Connect with your Team Lead and fellow teammates.</li>
+    ${sectionTitle("Before the hackathon")}
+    <ul style="margin:0 0 16px;padding-left:20px;">
+      <li style="margin-bottom:6px;">Connect with your team leader and teammates.</li>
       <li style="margin-bottom:6px;">${whatsappLine()}</li>
-      <li style="margin-bottom:6px;">Set up your development environment, tools, and required software so you're ready to start building from the moment the hackathon begins.</li>
-      <li style="margin-bottom:6px;">Keep an eye on your inbox. We'll be sharing important updates, resources, and reminders before the event.</li>
+      <li style="margin-bottom:6px;">Set up your development environment and tools so you can start building at the kick-off.</li>
+      <li style="margin-bottom:6px;">Watch this inbox for updates and reminders before the event.</li>
     </ul>
-    <p style="margin:0 0 12px;">Everything's set! You've got a team, an idea waiting to happen, and 48 hours to bring it to life.</p>
-    <p style="margin:0;">We can't wait to see what you build together.</p>`;
+    <p style="margin:0;">See you at the kick-off.</p>`;
   await send(
     email,
     name,
-    "You've joined a team for the 48-Hour AI Hackathon",
-    shell(body),
+    `You have joined team ${teamName} for the ABTalks hackathon`,
+    body,
   );
 }
 
@@ -268,34 +231,26 @@ export async function sendLeaderNewMemberEmail(
   teamCode: string,
 ): Promise<void> {
   const body = `
-    ${heading(`Hi ${leaderName},`)}
-    <p style="margin:0 0 12px;">Your team just got bigger!</p>
-    <p style="margin:0 0 12px;"><strong>${memberName}</strong> has successfully joined your team using your Team Code.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:18px 0;">
-      <tr><td style="padding:20px 22px;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Updated Team Details</p>
-        <p style="margin:0;font-size:15px;line-height:1.9;color:${C.text};">
-          Team Name: <strong>${teamName}</strong><br>
-          Team Code: <strong style="letter-spacing:3px;font-family:monospace;">${teamCode}</strong><br>
-          New Member: <strong>${memberName}</strong>
-        </p>
-      </td></tr>
-    </table>
-    <p style="margin:0 0 12px;">Take a moment to welcome your new teammate and get them up to speed on any discussions or planning you've already started.</p>
-    ${sectionTitle("Before the Hackathon")}
-    <p style="margin:0 0 6px;">To help your team get off to a strong start:</p>
-    <ul style="margin:0 0 12px;padding-left:20px;">
-      <li style="margin-bottom:6px;">Introduce your new teammate to the rest of the team.</li>
-      <li style="margin-bottom:6px;">Make sure everyone has joined the official ABTalks community: <a href="${WHATSAPP_LINK}" style="color:${C.accent};text-decoration:none;">${WHATSAPP_LINK}</a></li>
-      <li style="margin-bottom:6px;">Discuss ideas, assign initial roles if you'd like, and ensure everyone has their development environment ready.</li>
-      <li style="margin-bottom:6px;">Be ready for the Kick-off on August 7 at 8:00 PM IST, when the problem statements will be revealed.</li>
+    ${greeting(leaderName)}
+    <p style="margin:0 0 16px;"><strong>${memberName}</strong> has joined your team using your team code.</p>
+    <p style="margin:0 0 6px;font-weight:700;">Your team</p>
+    <p style="margin:0 0 16px;">
+      Team name: <strong>${teamName}</strong><br>
+      Team code: <strong style="letter-spacing:2px;font-family:Menlo,Consolas,monospace;">${teamCode}</strong><br>
+      New member: <strong>${memberName}</strong>
+    </p>
+    ${sectionTitle("Next steps")}
+    <ul style="margin:0 0 16px;padding-left:20px;">
+      <li style="margin-bottom:6px;">Introduce ${memberName} to the rest of the team and share any plans you have already made.</li>
+      <li style="margin-bottom:6px;">Make sure everyone has joined the hackathon WhatsApp group: ${link(WHATSAPP_LINK)}</li>
+      <li style="margin-bottom:6px;">Be ready for the kick-off on August 7 at 8:00 PM IST, when the problem statements are revealed.</li>
     </ul>
-    <p style="margin:0;">Still have room on your team? Share your Team Code with others before registrations close and complete your squad!</p>`;
+    <p style="margin:0;">If your team still has open spots, you can share the team code with others until registration closes.</p>`;
   await send(
     leaderEmail,
     leaderName,
-    "A new member joined your hackathon team",
-    shell(body),
+    `${memberName} joined your hackathon team ${teamName}`,
+    body,
   );
 }
 
@@ -307,15 +262,15 @@ export async function sendMemberRemovedEmail(
 ): Promise<void> {
   const teamLabel = teamName ?? "your previous team";
   const body = `
-    ${heading(`Hi ${name},`)}
-    <p style="margin:0 0 12px;">You've been removed from <strong>${teamLabel}</strong> on the 48-Hour AI Hackathon roster.</p>
-    <p style="margin:0 0 12px;">You can register again at any time — solo, as your own team, or by rejoining with a team code (including the same one if your leader invites you back).</p>
-    <p style="margin:0;"><a href="${appUrl}/hackathon" style="color:${C.accent};text-decoration:none;">Register again →</a></p>`;
+    ${greeting(name)}
+    <p style="margin:0 0 16px;">You have been removed from <strong>${teamLabel}</strong> in the ABTalks 48-Hour AI Hackathon.</p>
+    <p style="margin:0 0 16px;">You can register again at any time: on your own, as a new team, or by joining a team with its team code (including the same code, if your leader invites you back).</p>
+    <p style="margin:0;">Register again: ${link(`${appUrl}/hackathon`)}</p>`;
   await send(
     email,
     name,
-    "You've been removed from a hackathon team",
-    shell(body),
+    "You were removed from your ABTalks hackathon team",
+    body,
   );
 }
 
@@ -332,23 +287,19 @@ export async function sendLeaderMemberRemovedEmail(
   const spotLabel =
     spotsLeft === 1 ? "1 spot left" : `${spotsLeft} spots left`;
   const body = `
-    ${heading(`Hi ${leaderName},`)}
-    <p style="margin:0 0 12px;"><strong>${memberName}</strong> has been removed from <strong>${teamLabel}</strong>.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.panel};border-radius:12px;margin:18px 0;">
-      <tr><td style="padding:20px 22px;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:${C.accent};">Updated Team Details</p>
-        <p style="margin:0;font-size:15px;line-height:1.9;color:${C.text};">
-          Team Name: <strong>${teamLabel}</strong><br>
-          Team Code: <strong style="letter-spacing:3px;font-family:monospace;">${teamCode}</strong><br>
-          Open spots: <strong>${spotLabel}</strong>
-        </p>
-      </td></tr>
-    </table>
-    <p style="margin:0;">Share your Team Code with someone else to fill the open spot, or invite ${memberName} back with the same code if you change your mind.</p>`;
+    ${greeting(leaderName)}
+    <p style="margin:0 0 16px;"><strong>${memberName}</strong> has been removed from <strong>${teamLabel}</strong>.</p>
+    <p style="margin:0 0 6px;font-weight:700;">Your team</p>
+    <p style="margin:0 0 16px;">
+      Team name: <strong>${teamLabel}</strong><br>
+      Team code: <strong style="letter-spacing:2px;font-family:Menlo,Consolas,monospace;">${teamCode}</strong><br>
+      Open spots: <strong>${spotLabel}</strong>
+    </p>
+    <p style="margin:0;">To fill the spot, share your team code with someone else, or with ${memberName} again if you change your mind.</p>`;
   await send(
     leaderEmail,
     leaderName,
-    "A member was removed from your hackathon team",
-    shell(body),
+    `${memberName} was removed from your hackathon team`,
+    body,
   );
 }

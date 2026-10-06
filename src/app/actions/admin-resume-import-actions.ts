@@ -21,9 +21,15 @@ import { drainAndContinue, drainResumeImports } from "@/features/resume/import/w
 import {
   CONSENT_ATTESTATION,
   loadImportStatus,
+  outreachLabelFor,
+  rowsWithOutreach,
   type ImportStatusView,
 } from "@/features/resume/import/status";
+import { enrollOutreach, isOutreachEnabled, runImportOutreach } from "@/features/resume/import/outreach";
+import { profileCompleteness } from "@/features/resume/import/outreach-steps";
+import { assertRateLimit } from "@/lib/rate-limit";
 import {
+  OUTREACH_FILTERS,
   createOrGetImport,
   deleteImports,
   findImportByHash,
@@ -33,6 +39,10 @@ import {
   resolveImportEmail,
   retryFailedImports,
   type Selection,
+  importIdsForOutreachFilter,
+  listImports,
+  listUnenrolledRegisteredImports,
+  type ImportListRow,
 } from "@/repositories/resume-import";
 
 /**
@@ -100,6 +110,8 @@ const stagedSchema = z.object({
     )
     .min(1)
     .max(50),
+  /** Plan 171: the batch / college this upload belongs to. */
+  batchLabel: z.string().trim().max(80).optional(),
 });
 
 export type RegisterUploadsResult = {
@@ -147,6 +159,7 @@ export async function registerUploadsAction(raw: unknown): Promise<Result<Regist
         fileSizeBytes: bytes.length,
         blobPathname,
         uploadedByUserId: admin.userId,
+        batchLabel: parsed.data.batchLabel || null,
       });
       if (created.duplicate) out.duplicates++;
       else out.created++;
@@ -300,6 +313,14 @@ export async function requestRegistrationAction(raw: unknown): Promise<Result<{ 
 const statusSchema = z.object({
   status: z.nativeEnum(ResumeImportStatus).optional(),
   cursor: z.string().max(40).optional(),
+  search: z.string().trim().max(100).optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  /** Plan 171. */
+  outreach: z.enum(OUTREACH_FILTERS).optional(),
+  batchLabel: z.string().trim().max(80).optional(),
 });
 
 export async function getImportStatusAction(raw: unknown): Promise<Result<ImportStatusView>> {
@@ -316,4 +337,103 @@ export async function getImportStatusAction(raw: unknown): Promise<Result<Import
   // Belt and braces: work waiting and nobody working on it → start a drain.
   if (!view.workerRunning && (await hasPendingImportWork())) startDrain();
   return { ok: true, data: view };
+}
+
+/* ─── 7. Claim-and-complete emails (plan 171) ────────────────────────────── */
+
+/** Start the email sequence for every REGISTERED import that never entered it. */
+export async function enrollUnclaimedAction(): Promise<Result<{ enrolled: number }>> {
+  const admin = await getAdminContext();
+  if (!admin) return NOT_AUTHORISED;
+  if (!isOutreachEnabled()) {
+    return { ok: false, message: "Import emails are switched off (IMPORT_OUTREACH_ENABLED)." };
+  }
+  const pending = await listUnenrolledRegisteredImports(5000);
+  for (const p of pending) await enrollOutreach(p.id, p.userId, { sendNow: false });
+  await audit(admin.userId, "RESUME_IMPORT_OUTREACH_ENROLL", { enrolled: pending.length });
+  // Send their invites now, after the response, instead of waiting for 09:00.
+  // Whatever the run's time budget doesn't reach goes at the next 09:00 run.
+  if (pending.length > 0) {
+    after(async () => {
+      try {
+        await runImportOutreach();
+      } catch (error) {
+        logger.error("[resume-import] background outreach run failed", { error: String(error) });
+      }
+    });
+  }
+  revalidatePath(PAGE);
+  return { ok: true, data: { enrolled: pending.length } };
+}
+
+export type OutreachCsvRow = {
+  name: string;
+  email: string;
+  phone: string;
+  batch: string;
+  importStatus: string;
+  outreach: string;
+  completePercent: string;
+  missing: string;
+  lastEmailSent: string;
+  /** Empty once the sequence has stopped. */
+  nextEmail: string;
+  clickedAt: string;
+};
+
+const EXPORT_MAX_ROWS = 5000;
+
+/**
+ * Rows for "Download CSV" under the current filters. The client turns them
+ * into a file with `toCSV` / `downloadCSV`. Admin-only, rate-limited, audited:
+ * it carries names, emails and phone numbers.
+ */
+export async function exportOutreachCsvAction(raw: unknown): Promise<Result<OutreachCsvRow[]>> {
+  const admin = await getAdminContext();
+  if (!admin) return NOT_AUTHORISED;
+  const parsed = statusSchema.omit({ cursor: true }).safeParse(raw ?? {});
+  if (!parsed.success) return { ok: false, message: "Invalid input" };
+  const limited = await assertRateLimit({ bucket: "EXPORT", subjectId: `admin:${admin.userId}` });
+  if (!limited.ok) return { ok: false, message: "Too many exports. Try again in a few minutes." };
+
+  const q = parsed.data;
+  const importIds = q.outreach ? await importIdsForOutreachFilter(q.outreach) : undefined;
+  const rows: ImportListRow[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await listImports({
+      status: q.status,
+      search: q.search,
+      date: q.date,
+      batchLabel: q.batchLabel,
+      importIds,
+      byScore: q.outreach === "CLICKED_NOT_CLAIMED",
+      cursor,
+      take: 200,
+    });
+    rows.push(...page.rows);
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor && rows.length < EXPORT_MAX_ROWS);
+
+  const { outreach, completeness } = await rowsWithOutreach(rows.slice(0, EXPORT_MAX_ROWS));
+  const out: OutreachCsvRow[] = rows.slice(0, EXPORT_MAX_ROWS).map((r) => {
+    const o = outreach.get(r.id);
+    const c = r.registeredUserId ? completeness.get(r.registeredUserId) : undefined;
+    const score = c ? profileCompleteness(c) : null;
+    return {
+      name: c?.fullName ?? "",
+      email: r.normalizedEmail ?? r.sourceEmail ?? "",
+      phone: c?.phone ?? "",
+      batch: r.batchLabel ?? "",
+      importStatus: r.status,
+      outreach: outreachLabelFor(r.status, o, c) ?? "",
+      completePercent: score ? String(score.percent) : "",
+      missing: score ? score.missing.join(" ") : "",
+      lastEmailSent: o?.lastSentAt ? o.lastSentAt.toISOString() : "",
+      nextEmail: o && o.stage !== "STOPPED" && o.nextSendAt ? o.nextSendAt.toISOString() : "",
+      clickedAt: o?.firstClickAt ? o.firstClickAt.toISOString() : "",
+    };
+  });
+  await audit(admin.userId, "RESUME_IMPORT_OUTREACH_EXPORT", { rows: out.length, filters: q });
+  return { ok: true, data: out };
 }

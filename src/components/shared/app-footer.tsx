@@ -186,6 +186,8 @@ export function AppFooter() {
     return null;
   }
   if (pathname.startsWith("/challenge/")) return null;
+  // Courses render inside DashboardShell, which ships DashboardFooter.
+  if (pathname === "/learn" || pathname.startsWith("/learn/")) return null;
   if (pathname === "/") return null;
 
   // The cohort interview and its report share the cream program surface, so

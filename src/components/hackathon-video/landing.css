@@ -502,6 +502,50 @@
   color: #FFFFFF;
 }
 
+/* "In association with" partner mark above the title. */
+.vt-collab {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.vt-collab__label {
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+.vt-collab__logo {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #FFFFFF;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 8px 24px -10px rgba(0, 0, 0, 0.8);
+}
+/* Zoomed so only the circular emblem inside the source image shows
+   (emblem is ~570px across, centred at ~638,546 in the 1270x1254 file). */
+.vt-collab__img {
+  position: absolute;
+  max-width: none;
+  width: 222.8%;
+  height: auto;
+  left: -61.9%;
+  top: -45.8%;
+}
+@media (max-width: 480px) {
+  .vt-collab { flex-direction: column; gap: 8px; }
+  .vt-collab__label { font-size: 9px; }
+  .vt-collab__logo { width: 60px; height: 60px; }
+}
+
 /* Eyebrow pill on the dark canvas — thin white outline. */
 .vt-hero__eyebrow {
   display: inline-flex;

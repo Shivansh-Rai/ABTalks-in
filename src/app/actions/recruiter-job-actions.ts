@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { JobType, JobWorkMode } from "@prisma/client";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import { logger } from "@/lib/logger";
 import {
@@ -25,6 +24,11 @@ import {
 } from "@/features/recruiter-jobs/prisma-store";
 import type { MatchCardData } from "@/components/hire/match-card";
 import type { LifecycleAction } from "@/features/recruiter-jobs/lifecycle";
+import {
+  createJobInputSchema,
+  jobInputErrorMessage,
+  updateJobInputSchema,
+} from "@/features/recruiter-jobs/job-input";
 import { prismaJobAlertStore } from "@/features/job-alerts/prisma-store";
 import { fanoutOnJobPublished } from "@/features/job-alerts/service";
 import { dispatch as dispatchNotification } from "@/features/notification/notification-service";
@@ -36,32 +40,6 @@ type ActionOk<T = undefined> = T extends undefined
   ? { ok: true }
   : { ok: true; data: T };
 type ActionErr = { ok: false; message: string; status?: number };
-
-const workModeSchema = z.nativeEnum(JobWorkMode);
-const opportunityTypeSchema = z.nativeEnum(JobType);
-
-const createSchema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().min(1).max(20000),
-  location: z.string().max(200).optional().default(""),
-  workMode: workModeSchema,
-  opportunityType: opportunityTypeSchema,
-  skills: z.array(z.string().max(60)).max(25).optional().default([]),
-  // Same bounds as `jobSpecSchema.minExperience`, which the scout search
-  // already uses, so the two sides of the product agree on what a plausible
-  // number of years is. Nullable rather than defaulted: "not stated" and
-  // "none needed" are different answers and the card renders them the same
-  // way only by coincidence.
-  minExperience: z.number().int().min(0).max(50).nullable().optional(),
-  applyExternalUrl: z
-    .union([z.literal(""), z.string().url()])
-    .optional()
-    .default(""),
-});
-
-const updateSchema = createSchema
-  .partial()
-  .extend({ jobId: z.string().min(1) });
 
 const transitionSchema = z.object({
   jobId: z.string().min(1),
@@ -82,9 +60,9 @@ export async function createRecruiterJobAction(
   const workspace = await requireRecruiterWorkspace();
   if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
 
-  const parsed = createSchema.safeParse(input);
+  const parsed = createJobInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Invalid input" };
+    return { ok: false, message: jobInputErrorMessage(parsed.error) };
   }
 
   try {
@@ -122,9 +100,9 @@ export async function updateRecruiterJobAction(
   const workspace = await requireRecruiterWorkspace();
   if (!workspace.ok) return { ok: false, message: workspace.message, status: 403 };
 
-  const parsed = updateSchema.safeParse(input);
+  const parsed = updateJobInputSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Invalid input" };
+    return { ok: false, message: jobInputErrorMessage(parsed.error) };
   }
   const { jobId, ...rest } = parsed.data;
 

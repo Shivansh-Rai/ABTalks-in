@@ -53,11 +53,17 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     redirect("/api/auth/signout?callbackUrl=/login");
   }
 
-  if (session.user.isAdmin || userExists.role === "ADMIN") {
+  const registered = await isCandidateRegistered(session.user.id);
+
+  // Plan 169: admins go to /admin, but only once they have somewhere else to
+  // be. This used to run before the gate, which made registration unreachable
+  // for an admin with no CandidateProfile — /dashboard sent them here, here
+  // sent them to /admin, and /profile showed "Complete your registration
+  // first" with no way to act on it. Deleting and re-creating an admin account
+  // landed exactly there.
+  if (registered && (session.user.isAdmin || userExists.role === "ADMIN")) {
     redirect("/admin");
   }
-
-  const registered = await isCandidateRegistered(session.user.id);
 
   // Registered = CandidateProfile (W4-B). Registration no longer requires a
   // StudentProfile identity row.

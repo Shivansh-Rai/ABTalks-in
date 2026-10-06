@@ -149,13 +149,17 @@ export default {
         token.authTime = typeof token.iat === "number" ? token.iat : nowSeconds();
         token.authTimeEstimated = true;
       }
-      if (token.email) {
-        const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-          .split(",")
-          .map((e) => e.trim().toLowerCase())
-          .filter(Boolean);
-        token.isAdmin = adminEmails.includes(String(token.email).toLowerCase());
-      }
+      // Plan 169: `isAdmin` is NOT derived here. It used to be read straight
+      // out of `ADMIN_EMAILS`, which made env a second authority on admin
+      // access — an env-listed address kept `isAdmin: true` for the life of the
+      // token even after its database grant was revoked, while an admin granted
+      // only in the database got `false` and never saw the entry point.
+      //
+      // The live grant is stamped onto the token by `auth.ts`'s jwt callback at
+      // sign-in; this file is in the Edge bundle and cannot reach Prisma. All
+      // that happens here is carrying the value across refreshes, defaulting to
+      // false so a malformed token is never admin.
+      token.isAdmin = token.isAdmin === true;
       return token;
     },
     async session({ session, token }) {

@@ -1,67 +1,38 @@
 import "server-only";
-import { BrevoClient } from "@getbrevo/brevo";
+import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
-const DASHBOARD_LABEL = "Login to Dashboard";
-
-const SOCIALS: { href: string; src: string; alt: string }[] = [
-  {
-    href: "https://www.linkedin.com/company/abtalks-on-ai",
-    src: "https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/linkedin_32px.png",
-    alt: "LinkedIn",
-  },
-  {
-    href: "https://youtube.com/@abtalksonai",
-    src: "https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/youtube_32px.png",
-    alt: "YouTube",
-  },
-  {
-    href: "https://discord.gg/946Ucj6dd",
-    src: "https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/discord_32px.png",
-    alt: "Discord",
-  },
-  {
-    href: "https://chat.whatsapp.com/Fqx07wwZhiq0lA6Z7d5uad",
-    src: "https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/whatsapp_32px.png",
-    alt: "WhatsApp",
-  },
-  {
-    href: "https://www.instagram.com/abtalks_official",
-    src: "https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/instagram_32px.png",
-    alt: "Instagram",
-  },
-];
-
+/**
+ * Sent when an admin approves a 60-Day Claude AI Challenge reset.
+ *
+ * Plain on purpose. The previous version had a gradient banner, a big black
+ * button and a row of social-media icons hot-linked from Brevo's marketing
+ * editor (creative-assets.mailinblue.com) — that last one in particular marks
+ * a message as a campaign, and it landed in Promotions. This is an update
+ * about the recipient's own account, so it is written and laid out like one.
+ */
 export function challengeResetEmail(input: {
   firstName: string;
   dashboardUrl: string;
 }): { subject: string; html: string; text: string } {
   const { firstName, dashboardUrl } = input;
-  const subject = "Update: Your Challenge Reset Request Has Been Approved";
+  const subject = "Your 60-Day Claude AI Challenge progress has been reset";
 
-  const text = `Hello ${firstName},
+  const text = `Hi ${firstName},
 
-Thank you for submitting your Challenge Reset Request.
+Your request to reset your challenge has been approved. Your progress in the ABTalks 60-Day Claude AI Challenge has been reset, and you now start again from Day 1.
 
-We have reviewed your request and are pleased to inform you that your challenge progress has been successfully reset. You may now restart the ABTalks 60-Day Claude AI Challenge from Day 1.
+Important: to stay in the challenge, submit your Day 1 task before 12:00 AM (midnight) IST today.
 
-A fresh start is a valuable opportunity to rebuild momentum, strengthen your consistency, and get the most out of the challenge experience.
+Open your dashboard: ${dashboardUrl}
 
-Please note: To continue your participation, you must complete and submit the Day 1 task before 12:00 AM (midnight) today.
+If you did not ask for this reset, reply to this email and we will look into it.
 
-We encourage you to stay committed, maintain your daily streak, and keep moving forward one day at a time.
+Thanks,
+The ABTalks team
 
-We look forward to supporting your journey and seeing your progress throughout the challenge.
-
-Best regards,
-Team ABTalks
-
-Login to your dashboard: ${dashboardUrl}`;
-
-  const socialCells = SOCIALS.map(
-    (s) =>
-      `<td style="padding:0 6px;"><a href="${s.href}" target="_blank"><img src="${s.src}" alt="${s.alt}" width="32" height="32" style="display:block;border:0;outline:none;text-decoration:none;"></a></td>`,
-  ).join("");
+---
+You received this email because a challenge reset was requested for your ABTalks account.`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -70,48 +41,18 @@ Login to your dashboard: ${dashboardUrl}`;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F4F4F4;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:24px 12px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-          <tr>
-            <td style="background:linear-gradient(135deg,#076573,#D92D20);padding:24px 32px;text-align:center;">
-              <span style="color:#ffffff;font-family:Inter,Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;">AB TALKS</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px 32px 8px;font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#353535;">
-              <h3 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#02434D;">Hello <strong>${firstName}</strong>,</h3>
-              <p style="margin:0 0 16px;">Thank you for submitting your Challenge Reset Request.</p>
-              <p style="margin:0 0 16px;">We have reviewed your request and are pleased to inform you that your challenge progress has been successfully reset. You may now restart the <strong>ABTalks 60-Day Claude AI Challenge</strong> from <strong>Day 1</strong>.</p>
-              <p style="margin:0 0 16px;">A fresh start is a valuable opportunity to rebuild momentum, strengthen your consistency, and get the most out of the challenge experience.</p>
-              <p style="margin:0 0 16px;"><strong>Please note:</strong> To continue your participation, you must complete and submit the <strong>Day 1 task before 12:00 AM (midnight) today.</strong></p>
-              <p style="margin:0 0 16px;">We encourage you to stay committed, maintain your daily streak, and keep moving forward one day at a time.</p>
-              <p style="margin:0 0 24px;">We look forward to supporting your journey and seeing your progress throughout the challenge.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px;">
-                <tr>
-                  <td style="background-color:#000000;border-radius:11px;">
-                    <a href="${dashboardUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">${DASHBOARD_LABEL}</a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 4px;">Best regards,</p>
-              <p style="margin:0 0 24px;">Team ABTalks</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 32px 28px;">
-              <hr style="border:none;border-top:1px solid #E9E9E9;margin:0 0 20px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
-                <tr>${socialCells}</tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
+    <p style="margin:0 0 16px;">Hi ${escapeHtml(firstName)},</p>
+    <p style="margin:0 0 16px;">Your request to reset your challenge has been approved. Your progress in the <strong>ABTalks 60-Day Claude AI Challenge</strong> has been reset, and you now start again from <strong>Day 1</strong>.</p>
+    <p style="margin:0 0 16px;"><strong>Important:</strong> to stay in the challenge, submit your Day 1 task before 12:00 AM (midnight) IST today.</p>
+    <p style="margin:0 0 16px;">Open your dashboard: <a href="${dashboardUrl}" style="color:#03535F;">${dashboardUrl}</a></p>
+    <p style="margin:0 0 16px;">If you did not ask for this reset, reply to this email and we will look into it.</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
+      You received this email because a challenge reset was requested for your ABTalks account.
+    </p>
+  </div>
 </body>
 </html>`;
 
@@ -119,43 +60,45 @@ Login to your dashboard: ${dashboardUrl}`;
 }
 
 /**
- * Sends the challenge-reset confirmation via Brevo (the same provider used by
- * the workshop flow). Best-effort: never throws — logs and returns on failure
- * so it can't break the admin reset it's called from.
+ * Sends the challenge-reset confirmation through the shared transport.
+ * Best-effort: never throws — logs and returns on failure so it can't break
+ * the admin reset it's called from. `sendEmail` already skips a missing key
+ * and seed addresses and records the delivery.
  */
 export async function sendChallengeResetEmail(input: {
   to: string;
   firstName: string;
   dashboardUrl: string;
 }): Promise<void> {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    logger.warn("[challenge-reset-email] BREVO_API_KEY missing — skipping send");
-    return;
-  }
-  // Never email seed/test accounts (avoid bounces hurting domain reputation).
-  if (input.to.toLowerCase().endsWith("@abtalks.dev")) {
-    logger.info("[challenge-reset-email] skipping test address");
-    return;
-  }
-
-  const fromEmail = process.env.FROM_EMAIL || "team@abtalks.in";
-  const fromName = process.env.FROM_NAME || "ABTalks";
   const { subject, html, text } = challengeResetEmail({
     firstName: input.firstName,
     dashboardUrl: input.dashboardUrl,
   });
 
   try {
-    const brevoClient = new BrevoClient({ apiKey });
-    await brevoClient.transactionalEmails.sendTransacEmail({
-      sender: { name: fromName, email: fromEmail },
-      to: [{ email: input.to, name: input.firstName }],
+    const result = await sendEmail({
+      to: input.to,
+      toName: input.firstName,
       subject,
-      htmlContent: html,
-      textContent: text,
+      html,
+      text,
+      kind: "challenge.reset",
     });
+    if (!result.ok && !result.skipped) {
+      logger.error("[challenge-reset-email] send failed", {
+        deliveryId: result.deliveryId,
+        reason: result.reason,
+      });
+    }
   } catch (e) {
     logger.error("[challenge-reset-email] send failed", { error: String(e) });
   }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

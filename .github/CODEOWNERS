@@ -19,6 +19,9 @@
 /src/app/api/internal/resume-imports/               @zainabshujat
 /src/app/api/profile/resume/                        @zainabshujat
 /src/app/actions/admin-resume-import-actions.ts     @zainabshujat
+/src/app/actions/import-claim-actions.ts            @zainabshujat
+/src/app/claim/                                     @zainabshujat
+/src/app/api/webhooks/brevo/                        @zainabshujat
 /src/app/actions/resume-actions.ts                  @zainabshujat
 
 # ------------------------------------------------------------------------------
@@ -87,3 +90,39 @@
 /src/app/admin/search/                              @byteninjaa0
 /src/features/admin/search-admin-console.ts         @byteninjaa0
 /src/features/admin/admin-resume-download.test.ts   @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 5. Workshop Domain (plan 163)
+#
+# The schedule is database-backed: WorkshopEvent + src/repositories/workshop.ts.
+# The public pages are visual surfaces — loop in UI/UX for design changes.
+# ------------------------------------------------------------------------------
+/src/app/workshop/                                  @byteninjaa0
+/src/app/admin/workshop/                            @byteninjaa0
+/src/components/workshop/                           @byteninjaa0
+/src/features/workshop/                             @byteninjaa0
+/src/repositories/workshop.ts                       @byteninjaa0
+/src/app/actions/workshop-actions.ts                @byteninjaa0
+/prisma/content/workshop-events.json                @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 6. Learn / Courses (plan 167)
+#
+# Text-first course reader and course content. Visual components under
+# src/components/course/visuals/ are shared across courses.
+# ------------------------------------------------------------------------------
+/src/app/learn/                                     @zainabshujat
+/src/features/courses/                              @zainabshujat
+/src/components/course/                             @zainabshujat
+/src/components/dashboard-hub/learn-courses.tsx     @zainabshujat
+
+# ------------------------------------------------------------------------------
+# 7. Shared App Shell (plan 168)
+#
+# Navigation-feedback primitives mounted in the root layout and reused by every
+# track's nav. Changes here affect all 160 routes at once, so they route to the
+# shared-architecture owner regardless of which track prompted them.
+# ------------------------------------------------------------------------------
+/src/components/shared/route-progress.tsx           @byteninjaa0
+/src/components/shared/nav-link.tsx                 @byteninjaa0
+/src/components/shared/page-skeleton.tsx            @byteninjaa0

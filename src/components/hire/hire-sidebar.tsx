@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { NavLink } from "@/components/shared/nav-link";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { useHireAuth } from "@/components/hire/hire-auth-provider";
 import { useHireDesk } from "@/components/hire/hire-desk-context";
@@ -42,6 +44,21 @@ import {
   Settings,
   Trash2,
 } from "lucide-react";
+
+const SIDEBAR_TOGGLE_SRC = "/sidebar-toggle.webp";
+
+export function SidebarToggleIcon({ className }: { className?: string }) {
+  return (
+    <Image
+      src={SIDEBAR_TOGGLE_SRC}
+      alt=""
+      width={20}
+      height={20}
+      className={cn("size-4", className)}
+      aria-hidden
+    />
+  );
+}
 
 /** Projects shown before "Show more" takes over. */
 const PROJECTS_COLLAPSED = 6;
@@ -105,6 +122,9 @@ export function HireSidebar({
   unreadMessages = 0,
   projects = [],
   openProjectId = null,
+  collapsible = true,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   account: RecruiterAccountSnapshot | null;
   /** T-232: outreach threads where the candidate replied since this recruiter last looked. */
@@ -113,6 +133,12 @@ export function HireSidebar({
   projects?: { id: string; label: string; updatedAt: string; isPinned?: boolean }[];
   /** Plan 133: the project in the URL, if any. */
   openProjectId?: string | null;
+  /** When true, desktop sidebar can collapse to icon-only. Default true. */
+  collapsible?: boolean;
+  /** Whether the sidebar is currently collapsed. Default false. */
+  collapsed?: boolean;
+  /** Callback to toggle collapse state. */
+  onToggleCollapse?: () => void;
 }) {
   const pathname = usePathname();
   const { openAuth } = useHireAuth();
@@ -126,6 +152,8 @@ export function HireSidebar({
     null,
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
+
+  const isCollapsed = collapsible && Boolean(collapsed);
 
   const serverPinnedIds = useMemo(
     () => projects.filter((p) => p.isPinned).map((p) => p.id),
@@ -192,17 +220,35 @@ export function HireSidebar({
     </>
   );
 
-  return (
-    <aside className="hire-side" aria-label="Hire navigation">
+  const expandedContent = (
+    <>
+      <div className="hire-side__topbar">
+        {collapsible && onToggleCollapse ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-expanded={!isCollapsed}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+            className="abt-sidebar-toggle hidden size-8 shrink-0 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F] md:inline-flex"
+          >
+            <SidebarToggleIcon className="size-5" />
+          </button>
+        ) : null}
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#6B7477]">
+          Navigation
+        </span>
+      </div>
+
       <nav className="hire-side__nav" aria-label="Sections">
-        <Link
+        <NavLink
           href="/hire"
           className={cn("hire-side__item", pathname === "/hire" && "is-current")}
           aria-current={pathname === "/hire" ? "page" : undefined}
         >
           <House className="hire-side__icon" aria-hidden="true" />
           Home
-        </Link>
+        </NavLink>
 
         {/* DISCOVER — finding candidates. */}
         <p className="hire-side__group" id="hire-side-discover">
@@ -210,7 +256,7 @@ export function HireSidebar({
         </p>
         {/* The Projects/History page, not the contact-request tracker — the
             label and the destination now describe the same thing. */}
-        <Link
+        <NavLink
           href="/hire/projects"
           className={cn(
             "hire-side__item",
@@ -222,7 +268,7 @@ export function HireSidebar({
         >
           <FolderKanban className="hire-side__icon" aria-hidden="true" />
           Search history
-        </Link>
+        </NavLink>
 
         {/* WORK — what the recruiter is running. Every destination here was
             previously a header pill; the header no longer navigates, so these
@@ -230,7 +276,7 @@ export function HireSidebar({
         {account && (
           <>
             <p className="hire-side__group">Work</p>
-            <Link
+            <NavLink
               href="/hire/jobs"
               className={cn(
                 "hire-side__item",
@@ -242,8 +288,8 @@ export function HireSidebar({
             >
               <Briefcase className="hire-side__icon" aria-hidden="true" />
               Jobs
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/hire/assessments"
               className={cn(
                 "hire-side__item",
@@ -255,8 +301,8 @@ export function HireSidebar({
             >
               <ClipboardCheck className="hire-side__icon" aria-hidden="true" />
               Assessments
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/hire/pipeline"
               className={cn(
                 "hire-side__item",
@@ -268,8 +314,8 @@ export function HireSidebar({
             >
               <KanbanSquare className="hire-side__icon" aria-hidden="true" />
               Pipeline
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/hire/analytics"
               className={cn(
                 "hire-side__item",
@@ -281,11 +327,11 @@ export function HireSidebar({
             >
               <ChartColumn className="hire-side__icon" aria-hidden="true" />
               Analytics
-            </Link>
+            </NavLink>
 
             {/* COMMUNICATION */}
             <p className="hire-side__group">Communication</p>
-            <Link
+            <NavLink
               href="/hire/messages"
               className={cn(
                 "hire-side__item",
@@ -303,7 +349,7 @@ export function HireSidebar({
                   <span className="sr-only"> unread</span>
                 </span>
               )}
-            </Link>
+            </NavLink>
           </>
         )}
       </nav>
@@ -415,9 +461,9 @@ export function HireSidebar({
         <section className="hire-side__section" aria-label="Recent searches">
           <div className="hire-side__head">
             <h2 className="hire-side__kicker">Recent searches</h2>
-            <Link href={`/hire/${liveProject.id}`} className="hire-side__headlink">
+            <NavLink href={`/hire/${liveProject.id}`} className="hire-side__headlink">
               View all
-            </Link>
+            </NavLink>
           </div>
 
           {liveProject.sessions.length === 0 ? (
@@ -436,7 +482,7 @@ export function HireSidebar({
                 const active = s.id === liveProject.activeSessionId;
                 return (
                   <li key={s.id}>
-                    <Link
+                    <NavLink
                       href={`/hire/${liveProject.id}?session=${s.id}`}
                       className={cn("hire-side__row", active && "is-current")}
                       aria-current={active ? "page" : undefined}
@@ -454,7 +500,7 @@ export function HireSidebar({
                           </span>
                         )}
                       </span>
-                    </Link>
+                    </NavLink>
                   </li>
                 );
               })}
@@ -499,7 +545,7 @@ export function HireSidebar({
               const active = p.id === openProjectId;
               return (
                 <li key={p.id} className="hire-side__projectli">
-                  <Link
+                  <NavLink
                     href={`/hire/${p.id}`}
                     className={cn("hire-side__row", active && "is-current")}
                     aria-current={active ? "page" : undefined}
@@ -513,7 +559,7 @@ export function HireSidebar({
                       className="size-3 text-primary fill-primary/30 shrink-0 ml-auto"
                       aria-label="Pinned project"
                     />
-                  </Link>
+                  </NavLink>
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
@@ -586,7 +632,7 @@ export function HireSidebar({
               const active = p.id === openProjectId;
               return (
                 <li key={p.id} className="hire-side__projectli">
-                  <Link
+                  <NavLink
                     href={`/hire/${p.id}`}
                     className={cn("hire-side__row", active && "is-current")}
                     aria-current={active ? "page" : undefined}
@@ -596,7 +642,7 @@ export function HireSidebar({
                     <span className="hire-side__rowtext">
                       <span className="hire-side__rowname">{p.label}</span>
                     </span>
-                  </Link>
+                  </NavLink>
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
@@ -704,7 +750,7 @@ export function HireSidebar({
             row here as well as in the account menu below: the menu is where you
             look for "my account", this is where you look for "the product". */}
         {account && (
-          <Link
+          <NavLink
             href="/hire/settings"
             className={cn(
               "hire-side__item",
@@ -716,12 +762,12 @@ export function HireSidebar({
           >
             <Settings className="hire-side__icon" aria-hidden="true" />
             Settings
-          </Link>
+          </NavLink>
         )}
-        <Link href="/contact" className="hire-side__item hire-side__item--quiet">
+        <NavLink href="/contact" className="hire-side__item hire-side__item--quiet">
           <LifeBuoy className="hire-side__icon" aria-hidden="true" />
           Support
-        </Link>
+        </NavLink>
 
         {/* Recruiter ------------------------------------------------------ */}
         {account ? (
@@ -770,7 +816,264 @@ export function HireSidebar({
           </button>
         )}
       </div>
+    </>
+  );
 
+  const collapsedContent = (
+    <>
+      <div className="hire-side__topbar hire-side__topbar--collapsed">
+        {collapsible && onToggleCollapse ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-expanded={false}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+            className="abt-sidebar-toggle flex size-9 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03535F]"
+          >
+            <SidebarToggleIcon className="size-5" />
+          </button>
+        ) : null}
+      </div>
+
+      <nav className="hire-side__compact-nav flex flex-col items-center gap-1.5 w-full" aria-label="Quick navigation">
+        <Link
+          href="/hire"
+          title="Home"
+          aria-label="Home"
+          aria-current={pathname === "/hire" ? "page" : undefined}
+          className={cn(
+            "hire-side__compact-item",
+            pathname === "/hire" && "is-current",
+          )}
+        >
+          <House className="size-5 shrink-0" aria-hidden="true" />
+        </Link>
+        <Link
+          href="/hire/projects"
+          title="Search history"
+          aria-label="Search history"
+          aria-current={pathname.startsWith("/hire/projects") ? "page" : undefined}
+          className={cn(
+            "hire-side__compact-item",
+            pathname.startsWith("/hire/projects") && "is-current",
+          )}
+        >
+          <FolderKanban className="size-5 shrink-0" aria-hidden="true" />
+        </Link>
+
+        {account && (
+          <>
+            <span className="hire-side__compact-divider" aria-hidden="true" />
+            <Link
+              href="/hire/jobs"
+              title="Jobs"
+              aria-label="Jobs"
+              aria-current={pathname.startsWith("/hire/jobs") ? "page" : undefined}
+              className={cn(
+                "hire-side__compact-item",
+                pathname.startsWith("/hire/jobs") && "is-current",
+              )}
+            >
+              <Briefcase className="size-5 shrink-0" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/hire/assessments"
+              title="Assessments"
+              aria-label="Assessments"
+              aria-current={pathname.startsWith("/hire/assessments") ? "page" : undefined}
+              className={cn(
+                "hire-side__compact-item",
+                pathname.startsWith("/hire/assessments") && "is-current",
+              )}
+            >
+              <ClipboardCheck className="size-5 shrink-0" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/hire/pipeline"
+              title="Pipeline"
+              aria-label="Pipeline"
+              aria-current={pathname.startsWith("/hire/pipeline") ? "page" : undefined}
+              className={cn(
+                "hire-side__compact-item",
+                pathname.startsWith("/hire/pipeline") && "is-current",
+              )}
+            >
+              <KanbanSquare className="size-5 shrink-0" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/hire/analytics"
+              title="Analytics"
+              aria-label="Analytics"
+              aria-current={pathname.startsWith("/hire/analytics") ? "page" : undefined}
+              className={cn(
+                "hire-side__compact-item",
+                pathname.startsWith("/hire/analytics") && "is-current",
+              )}
+            >
+              <ChartColumn className="size-5 shrink-0" aria-hidden="true" />
+            </Link>
+
+            <span className="hire-side__compact-divider" aria-hidden="true" />
+            <Link
+              href="/hire/messages"
+              title={unreadMessages > 0 ? `Messages (${unreadMessages} unread)` : "Messages"}
+              aria-label={unreadMessages > 0 ? `Messages (${unreadMessages} unread)` : "Messages"}
+              aria-current={pathname.startsWith("/hire/messages") ? "page" : undefined}
+              className={cn(
+                "hire-side__compact-item relative",
+                pathname.startsWith("/hire/messages") && "is-current",
+              )}
+            >
+              <MessageSquare className="size-5 shrink-0" aria-hidden="true" />
+              {unreadMessages > 0 && (
+                <span className="hire-side__compact-dot" aria-hidden="true" />
+              )}
+            </Link>
+          </>
+        )}
+
+        <span className="hire-side__compact-divider" aria-hidden="true" />
+        {openProjectId ? (
+          <Link
+            href={`/hire/${openProjectId}`}
+            title={`Current project: ${currentLabel}`}
+            aria-label={`Current project: ${currentLabel}`}
+            className="hire-side__compact-item is-current"
+          >
+            <FolderOpen className="size-5 shrink-0" aria-hidden="true" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => (account ? setNewProjectOpen(true) : requestNewProject())}
+            title="New project"
+            aria-label="New project"
+            className="hire-side__compact-item"
+          >
+            <Plus className="size-5 shrink-0" aria-hidden="true" />
+          </button>
+        )}
+      </nav>
+
+      <div className="hire-side__compact-foot mt-auto flex flex-col items-center gap-1.5 w-full pt-2 border-t border-[#EBEDED]">
+        {account && (
+          <Link
+            href="/hire/settings"
+            title="Settings"
+            aria-label="Settings"
+            aria-current={pathname.startsWith("/hire/settings") ? "page" : undefined}
+            className={cn(
+              "hire-side__compact-item",
+              pathname.startsWith("/hire/settings") && "is-current",
+            )}
+          >
+            <Settings className="size-5 shrink-0" aria-hidden="true" />
+          </Link>
+        )}
+        <Link
+          href="/contact"
+          title="Support"
+          aria-label="Support"
+          className="hire-side__compact-item hire-side__compact-item--quiet"
+        >
+          <LifeBuoy className="size-5 shrink-0" aria-hidden="true" />
+        </Link>
+
+        {account ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  title={`${name} (${sub})`}
+                  aria-label="Account actions"
+                  className="hire-side__compact-avatar mt-1"
+                />
+              }
+            >
+              <span className="hire-side__avatar" aria-hidden="true">
+                {initials(name)}
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right" className="w-48 ml-2">
+              <div className="px-2 py-1.5 border-b border-[#EBEDED]">
+                <p className="text-xs font-semibold text-black truncate">{name}</p>
+                <p className="text-[11px] text-[#6B7477] truncate">{account.company}</p>
+              </div>
+              <DropdownMenuItem
+                render={<Link href="/hire/settings" />}
+                className="cursor-pointer"
+              >
+                <Settings className="size-3.5" aria-hidden="true" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="size-3.5" aria-hidden="true" />
+                  Sign out
+                </button>
+              </form>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openAuth("nav")}
+            title="Sign in"
+            aria-label="Sign in"
+            className="hire-side__compact-avatar mt-1"
+          >
+            <span className="hire-side__avatar" aria-hidden="true">
+              {initials(name)}
+            </span>
+          </button>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <aside
+      className={cn("hire-side", isCollapsed && "hire-side--collapsed")}
+      aria-label="Hire navigation"
+    >
+      <div className="hire-side__panes">
+        <div
+          aria-hidden={isCollapsed}
+          className="hire-side__expanded-pane"
+        >
+          {expandedContent}
+        </div>
+        <div
+          aria-hidden={!isCollapsed}
+          className="hire-side__collapsed-pane"
+        >
+          {collapsedContent}
+        </div>
+      </div>
+
+      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} />
+      {/* Keyed on the project so switching which one is being renamed remounts
+          the dialog and re-seeds its field, instead of offering the previous
+          project's name. */}
+      <RenameProjectDialog
+        key={renaming?.id ?? "none"}
+        open={renaming !== null}
+        onOpenChange={(next) => !next && setRenaming(null)}
+        requestId={renaming?.id ?? null}
+        currentName={renaming?.name ?? ""}
+      />
+      <DeleteProjectDialog
+        key={`delete-${deleting?.id ?? "none"}`}
+        open={deleting !== null}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        project={deleting}
+      />
     </aside>
   );
 }

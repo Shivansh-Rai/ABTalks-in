@@ -6,7 +6,7 @@ import type {
 } from "@/components/dashboard-hub/mock-interviews";
 import { NAV_ITEMS } from "@/components/dashboard-hub/nav-items";
 import { DASHBOARD_FAQ } from "@/components/dashboard-hub/faq-content";
-import { EVENTS } from "@/components/workshop/events-data";
+import type { WorkshopEvent } from "@/components/workshop/events-data";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 
 export const HUB_SEARCH_GROUPS = [
@@ -75,6 +75,8 @@ export type HubSearchIndexInput = {
   programEnabled: boolean;
   mock: AvailableMockInterview[];
   cohort: AvailableCohortInterview[];
+  /** The workshop catalogue; the schedule is database-backed since plan 163. */
+  workshopEvents: readonly WorkshopEvent[];
 };
 
 function trackHref(
@@ -173,13 +175,27 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
   }
 
   for (const enrollment of input.enrollments) {
+    if (enrollment.lifecycle === "active") {
+      items.push({
+        id: `continue:${enrollment.id}`,
+        group: "Continue",
+        title: DOMAIN_LABEL[enrollment.domain],
+        subtitle: enrollment.challengeTitle,
+        href: TRACK_PATH[enrollment.domain],
+        keywords: `continue streak journey ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
+      });
+      continue;
+    }
     items.push({
-      id: `continue:${enrollment.id}`,
-      group: "Continue",
+      id: `challenge-enrolled:${enrollment.id}`,
+      group: "Challenges",
       title: DOMAIN_LABEL[enrollment.domain],
-      subtitle: enrollment.challengeTitle,
+      subtitle:
+        enrollment.lifecycle === "completed"
+          ? `Completed · ${enrollment.challengeTitle}`
+          : `Ended · ${enrollment.challengeTitle}`,
       href: TRACK_PATH[enrollment.domain],
-      keywords: `continue streak journey ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
+      keywords: `${enrollment.lifecycle} view ${enrollment.domain} ${DOMAIN_LABEL[enrollment.domain]} ${enrollment.challengeTitle}`,
     });
   }
 
@@ -314,7 +330,7 @@ export function buildHubSearchIndex(input: HubSearchIndexInput): HubSearchItem[]
     });
   }
 
-  for (const event of EVENTS) {
+  for (const event of input.workshopEvents) {
     items.push({
       id: `event:${event.id}`,
       group: "Events",

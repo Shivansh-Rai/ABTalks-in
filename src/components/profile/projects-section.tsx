@@ -49,7 +49,7 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
   });
   const { control, register, handleSubmit, formState } = form;
   const placeIssues = useServerFieldErrors(form);
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove, replace, move } = useFieldArray({
     control,
     name: "rows",
   });
@@ -79,6 +79,13 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
             key={field.id}
             index={index}
             title="Project"
+            entryCount={fields.length}
+            onMoveUp={() => {
+              if (index > 0) move(index, index - 1);
+            }}
+            onMoveDown={() => {
+              if (index < fields.length - 1) move(index, index + 1);
+            }}
             onRemove={() => removeOrClear(index)}
           >
             <PwRow cols={1}>
@@ -142,12 +149,12 @@ export function ProjectsSection({ initial }: { initial: ProjectFormRow[] }) {
                   {...register(`rows.${index}.repoUrl`)}
                 />
               </PwField>
-              <PwField label="Live URL" required htmlFor={`prj-live-${index}`}>
+              <PwField label="Live URL" htmlFor={`prj-live-${index}`}>
                 <PwInput
                   id={`prj-live-${index}`}
                   type="url"
                   inputMode="url"
-                  placeholder="Enter your live URL"
+                  placeholder="Enter your live URL (optional)"
                   {...register(`rows.${index}.liveUrl`)}
                 />
               </PwField>

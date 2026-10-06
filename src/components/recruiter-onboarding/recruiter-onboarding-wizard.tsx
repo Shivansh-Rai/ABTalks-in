@@ -11,6 +11,7 @@ import {
   getRecruiterProfileAction,
   updateRecruiterProfileAction,
 } from "@/app/actions/recruiter-profile-actions";
+import { registerRecruiterAction } from "@/app/actions/talent-actions";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { useTrack } from "@/lib/analytics/use-track";
 import { useMotionMode, type Direction, type StepMotion } from "./motion";
@@ -127,11 +128,18 @@ async function saveCompanyExtras(draft: OnboardingDraft): Promise<boolean> {
 export function RecruiterOnboardingWizard({
   initialScreen = "welcome",
   passwordEnabled = false,
+  session = null,
 }: {
   /** /recruiter-onboarding/signup starts at the first question. */
   initialScreen?: "welcome" | "identity";
   /** Plan 154: offer an optional password on the code card. */
   passwordEnabled?: boolean;
+  /**
+   * Plan 167. Set when the visitor already holds a session but has no
+   * RecruiterProfile yet. Their address is already proved, so this path skips
+   * both code cards and finishes through `registerRecruiterAction`.
+   */
+  session?: { email: string; name: string } | null;
 }) {
   const track = useTrack();
   const motionMode = useMotionMode();
@@ -140,6 +148,7 @@ export function RecruiterOnboardingWizard({
   const [draft, setDraft] = useState<OnboardingDraft>(() => ({
     ...EMPTY_DRAFT,
     step: initialScreen,
+    ...(session ? { fullName: session.name, email: session.email } : {}),
   }));
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [dir, setDir] = useState<Direction>(1);
@@ -173,16 +182,32 @@ export function RecruiterOnboardingWizard({
     const saved = readDraft();
     persisting.current = true;
     if (!saved) return;
-    const target = resumeScreen(saved);
-    // sessionStorage only exists in the browser, so the saved step can only
+    // A session's own address and name always win over the draft's: the draft
+    // may predate the sign-in, and `signin-code` is meaningless when there is
+    // already a session to sign in with.
+    const target = session
+      ? isScreen(saved.step)
+        ? saved.step
+        : "verify"
+      : resumeScreen(saved);
+    // localStorage only exists in the browser, so the saved step can only
     // be applied after hydration — and it must not animate in.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft({ ...saved, step: STEP_OF[target] });
+    setDraft({
+      ...saved,
+      step: STEP_OF[target],
+      ...(session
+        ? {
+            email: session.email,
+            fullName: saved.fullName.trim() || session.name,
+          }
+        : {}),
+    });
     if (target !== initialScreen) {
       setInstant(true);
       setScreen(target);
     }
-    if (target === "signin-code" && saved.email.trim()) {
+    if (!session && target === "signin-code" && saved.email.trim()) {
       void requestRecruiterOtpAction({
         email: saved.email.trim(),
         intent: "signin",
@@ -195,6 +220,9 @@ export function RecruiterOnboardingWizard({
         startCooldown();
       });
     }
+    // Mount only. `session` comes from the server render and cannot change
+    // without a navigation, which remounts this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialScreen]);
 
   useEffect(() => {
@@ -293,6 +321,59 @@ export function RecruiterOnboardingWizard({
       setCodeError(null);
       startCooldown();
       go("verify-code", 1);
+    });
+  }
+
+  /**
+   * Plan 167. The signed-in path's last step. The session already proves the
+   * address, so there is no code to send and no second sign-in to make —
+   * `registerRecruiterAction` creates the profile and the workspace from the
+   * session it resolves itself.
+   *
+   * No analytics event: `SIGNUP_METHODS` in lib/analytics/events.ts allows
+   * only "otp", and adding a "session" value is the analytics owner's call.
+   * Labelling this path "otp" would be worse than not counting it.
+   */
+  function createFromSession() {
+    // Same pre-checks sendRegisterCode runs: a restored draft or an Edit jump
+    // can reach this card with an earlier step no longer valid.
+    if (Object.keys(validateIdentity(draft)).length > 0) {
+      go("identity", -1);
+      setShowErrors(true);
+      return;
+    }
+    if (Object.keys(validateCompany(draft)).length > 0) {
+      go("company", -1);
+      setShowErrors(true);
+      return;
+    }
+    if (!acceptedTerms) {
+      setShowErrors(true);
+      return;
+    }
+    setServerError(null);
+    setAlreadyRegistered(false);
+    startTransition(async () => {
+      const res = await registerRecruiterAction({
+        fullName: draft.fullName.trim(),
+        company: draft.company.trim(),
+        acceptLegal: true,
+        newsletterOptIn: draft.newsletterOptIn,
+      });
+      if (!res.ok) {
+        // Another tab already finished: they have the workspace, so send them
+        // to it rather than refusing them for work that is already done.
+        if (/already have recruiter access/i.test(res.message)) {
+          persisting.current = false;
+          clearDraft();
+          window.location.href = "/hire";
+          return;
+        }
+        setServerError(res.message);
+        return;
+      }
+      update({ registered: true });
+      go("ready", 1);
     });
   }
 
@@ -429,6 +510,7 @@ export function RecruiterOnboardingWizard({
             key="welcome"
             motion={stepMotion}
             focusHeading={focusHeading}
+            offerSignIn={offerSignIn}
             onStart={() => go("identity", 1)}
           />
         );
@@ -440,6 +522,7 @@ export function RecruiterOnboardingWizard({
             focusHeading={focusHeading}
             draft={draft}
             showErrors={showErrors}
+            lockedEmail={Boolean(session)}
             onChange={update}
             onBack={() => go("welcome", -1)}
             onNext={submitIdentity}
@@ -470,11 +553,12 @@ export function RecruiterOnboardingWizard({
             pending={pending}
             serverError={serverError}
             alreadyRegistered={alreadyRegistered}
+            signedIn={Boolean(session)}
             onTermsChange={setAcceptedTerms}
             onChange={update}
             onEdit={(step) => isScreen(step) && go(step, -1)}
             onBack={() => go("company", -1)}
-            onSend={sendRegisterCode}
+            onSend={session ? createFromSession : sendRegisterCode}
           />
         );
       case "verify-code":
@@ -563,11 +647,18 @@ export function RecruiterOnboardingWizard({
   }
 
   const accountExists = draft.registered || screen === "signin-code" || screen === "ready";
+  // Two different questions, deliberately not one flag. The aside offers a
+  // sign-in, which is pointless once an account exists OR once a session does.
+  // The rail's jump-back is only unsafe once the ACCOUNT exists — a signed-in
+  // recruiter still filling in their company may freely step back.
+  const offerSignIn = !accountExists && !session;
+  // On welcome, Sign in sits beside "Set up workspace" — skip the header duplicate.
+  const showHeaderSignIn = offerSignIn && screen !== "welcome";
 
   return (
     <OnboardingShell
       aside={
-        accountExists ? null : (
+        !showHeaderSignIn ? null : (
           <p className="text-sm text-[#626262]">
             <span className="hidden sm:inline">Already have an account? </span>
             <Link href="/recruiter-onboarding/signin" className={TEXT_LINK}>

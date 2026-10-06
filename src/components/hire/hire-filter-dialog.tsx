@@ -15,7 +15,7 @@ import {
 } from "@/lib/validations/hire";
 
 const WORK_MODE_OPTIONS = [
-  { value: "", label: "Not set" },
+  { value: "", label: "Any" },
   { value: "ONSITE", label: "Onsite" },
   { value: "HYBRID", label: "Hybrid" },
   { value: "REMOTE", label: "Remote" },
@@ -23,7 +23,7 @@ const WORK_MODE_OPTIONS = [
 ] as const;
 
 const EMPLOYMENT_OPTIONS = [
-  { value: "", label: "Not set" },
+  { value: "", label: "Any" },
   { value: "FULL_TIME", label: "Full-time" },
   { value: "CONTRACT", label: "Contract" },
   { value: "INTERNSHIP", label: "Internship" },
@@ -35,9 +35,9 @@ const POPULAR_ROLES = [
   "Frontend Engineer",
   "Backend Engineer",
   "Full Stack Developer",
+  "Data Scientist / AI Engineer",
   "Mobile Developer (React Native / iOS / Android)",
   "DevOps / Cloud Engineer",
-  "Data Scientist / AI Engineer",
   "UI/UX Designer",
   "Product Manager",
   "QA / Automation Engineer",
@@ -58,26 +58,21 @@ const POPULAR_LOCATIONS = [
   "Remote - Global",
 ] as const;
 
-const EXPERIENCE_OPTIONS = [
-  { label: "Any experience", min: "", max: "" },
-  { label: "Fresher / Entry (0-1 yrs)", min: "0", max: "1" },
-  { label: "Junior (1-3 yrs)", min: "1", max: "3" },
-  { label: "Mid-level (3-5 yrs)", min: "3", max: "5" },
-  { label: "Senior (5-8 yrs)", min: "5", max: "8" },
-  { label: "Lead / Principal (8+ yrs)", min: "8", max: "50" },
+/**
+ * Quick bands under the experience slider. The slider itself covers any other
+ * span, so there is no "Any experience" preset — that is the full 0–15 range.
+ * `max: "50"` is the schema's open-ended sentinel (see `isSentinelYears`).
+ */
+const EXPERIENCE_PRESETS = [
+  { label: "Fresher", min: "0", max: "1" },
+  { label: "Junior", min: "1", max: "3" },
+  { label: "Mid", min: "3", max: "5" },
+  { label: "Senior", min: "5", max: "8" },
+  { label: "Lead", min: "8", max: "50" },
 ] as const;
 
-const BUDGET_OPTIONS = [
-  { value: "", label: "No budget limit" },
-  { value: "6", label: "Up to ₹6 LPA" },
-  { value: "10", label: "Up to ₹10 LPA" },
-  { value: "15", label: "Up to ₹15 LPA" },
-  { value: "20", label: "Up to ₹20 LPA" },
-  { value: "30", label: "Up to ₹30 LPA" },
-  { value: "50", label: "Up to ₹50 LPA" },
-  { value: "75", label: "Up to ₹75 LPA" },
-  { value: "100", label: "₹1 Cr+ (₹100 LPA)" },
-] as const;
+/** Top of the slider track. Dragging here means "no upper bound". */
+const EXPERIENCE_CEILING = 15;
 
 const SUGGESTED_SKILLS = [
   "React",
@@ -104,8 +99,6 @@ export type HireFilterDraft = {
   maxExperience: string;
   workMode: string;
   employmentType: string;
-  salaryMaxLpa: string;
-  openToWork: boolean;
 };
 
 const EMPTY_DRAFT: HireFilterDraft = {
@@ -116,14 +109,7 @@ const EMPTY_DRAFT: HireFilterDraft = {
   maxExperience: "",
   workMode: "",
   employmentType: "",
-  salaryMaxLpa: "",
-  openToWork: false,
 };
-
-function rupeesToLpa(rupees: number): number {
-  const lakhs = rupees / 100_000;
-  return Number.isInteger(lakhs) ? lakhs : Math.round(lakhs * 10) / 10;
-}
 
 function parseOptionalInt(raw: string, min: number, max: number): number | null {
   const t = raw.trim();
@@ -146,7 +132,10 @@ function isSentinelYears(spec: JobSpec): boolean {
   return spec.minExperience === 0 && (spec.maxExperience ?? 0) >= 50;
 }
 
-/** 0–0 budget is "not specified". */
+/**
+ * 0–0 budget is "not specified". Budget has no control in this dialog — Scout
+ * sets it from the brief — but the summary still counts it.
+ */
 function isUnsetSalary(spec: JobSpec): boolean {
   return (
     spec.salaryMax == null ||
@@ -155,7 +144,6 @@ function isUnsetSalary(spec: JobSpec): boolean {
 }
 
 export function specToFilterDraft(spec: JobSpec): HireFilterDraft {
-  const extra = extraRecord(spec);
   const city = spec.locationCity?.trim() ?? "";
   return {
     title: spec.title?.trim() ?? "",
@@ -171,26 +159,17 @@ export function specToFilterDraft(spec: JobSpec): HireFilterDraft {
         : String(spec.maxExperience),
     workMode: spec.workMode ?? "",
     employmentType: spec.employmentType ?? "",
-    salaryMaxLpa: isUnsetSalary(spec) ? "" : String(rupeesToLpa(spec.salaryMax!)),
-    openToWork: extra.openToWork === true,
   };
 }
 
 export function mergeFilterDraft(current: JobSpec, draft: HireFilterDraft): JobSpec {
-  const extra = { ...extraRecord(current) };
-  if (draft.openToWork) extra.openToWork = true;
-  else delete extra.openToWork;
-
   const skills = draft.skills.map((s) => s.trim()).filter(Boolean).slice(0, 20);
-  const lpaRaw = draft.salaryMaxLpa.trim();
-  const lpa = lpaRaw === "" ? null : Number(lpaRaw);
-  const salaryMax =
-    lpa == null || !Number.isFinite(lpa) || lpa <= 0
-      ? null
-      : Math.round(lpa * 100_000);
   const workMode = talentWorkModeSchema.safeParse(draft.workMode);
   const employmentType = talentEmploymentTypeSchema.safeParse(draft.employmentType);
 
+  // `salaryMin` / `salaryMax` and `extra.openToWork` are deliberately absent:
+  // this dialog has no budget or availability control, so whatever Scout parsed
+  // from the brief passes through `...current` untouched.
   return {
     ...current,
     title: draft.title.trim() || undefined,
@@ -200,8 +179,6 @@ export function mergeFilterDraft(current: JobSpec, draft: HireFilterDraft): JobS
     maxExperience: parseOptionalInt(draft.maxExperience, 0, 50),
     workMode: workMode.success ? workMode.data : null,
     employmentType: employmentType.success ? employmentType.data : null,
-    salaryMax,
-    extra,
   };
 }
 
@@ -223,6 +200,39 @@ export function filterSummary(spec: JobSpec): { chips: string[]; more: number } 
   if (!isUnsetSalary(spec)) more += 1;
   if (extraRecord(spec).openToWork === true) more += 1;
   return { chips, more };
+}
+
+/** Draft years → slider handle positions. Blank means the open end. */
+function draftToYears(draft: HireFilterDraft): { lo: number; hi: number } {
+  const rawLo = parseOptionalInt(draft.minExperience, 0, 50);
+  const rawHi = parseOptionalInt(draft.maxExperience, 0, 50);
+  const lo = rawLo == null ? 0 : Math.min(rawLo, EXPERIENCE_CEILING);
+  const hi = rawHi == null ? EXPERIENCE_CEILING : Math.min(rawHi, EXPERIENCE_CEILING);
+  return lo <= hi ? { lo, hi } : { lo: hi, hi: lo };
+}
+
+/** Handle positions → draft years. Full span is "any"; the top is open-ended. */
+function yearsToDraft(lo: number, hi: number): { min: string; max: string } {
+  if (lo <= 0 && hi >= EXPERIENCE_CEILING) return { min: "", max: "" };
+  return { min: String(lo), max: hi >= EXPERIENCE_CEILING ? "50" : String(hi) };
+}
+
+function experienceLabel(lo: number, hi: number): string {
+  if (lo <= 0 && hi >= EXPERIENCE_CEILING) return "Any experience";
+  if (hi >= EXPERIENCE_CEILING) return `${lo}+ yrs`;
+  if (lo === hi) return `${lo} yrs`;
+  return `${lo} – ${hi} yrs`;
+}
+
+function countActive(draft: HireFilterDraft): number {
+  let n = 0;
+  if (draft.title.trim()) n += 1;
+  if (draft.skills.length) n += 1;
+  if (draft.locationCity.trim()) n += 1;
+  if (draft.minExperience || draft.maxExperience) n += 1;
+  if (draft.workMode) n += 1;
+  if (draft.employmentType) n += 1;
+  return n;
 }
 
 type Props = {
@@ -270,10 +280,18 @@ export function HireFilterDialog({
     setSkillText("");
   }
 
-  // Check which experience preset matches
-  const currentExpPreset = EXPERIENCE_OPTIONS.find(
-    (e) => e.min === draft.minExperience && e.max === draft.maxExperience
-  ) ? `${draft.minExperience}-${draft.maxExperience}` : "custom";
+  const years = draftToYears(draft);
+
+  function setYears(lo: number, hi: number) {
+    const a = Math.min(lo, hi);
+    const b = Math.max(lo, hi);
+    const next = yearsToDraft(a, b);
+    setDraft((d) => ({ ...d, minExperience: next.min, maxExperience: next.max }));
+  }
+
+  const activeCount = countActive(draft);
+  const trackLeft = (years.lo / EXPERIENCE_CEILING) * 100;
+  const trackWidth = ((years.hi - years.lo) / EXPERIENCE_CEILING) * 100;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -282,9 +300,14 @@ export function HireFilterDialog({
         showCloseButton
       >
         <DialogHeader>
-          <DialogTitle>Edit filters</DialogTitle>
+          <DialogTitle>
+            Edit filters
+            {activeCount > 0 && (
+              <span className="hire-filter-count">{activeCount} active</span>
+            )}
+          </DialogTitle>
           <DialogDescription>
-            Choose from popular options or customize fields. Empty means any.
+            Empty means any. Drag the handles to set a range.
           </DialogDescription>
         </DialogHeader>
 
@@ -298,208 +321,251 @@ export function HireFilterDialog({
             onApply(mergeFilterDraft(spec, next));
           }}
         >
-          {/* Role / Designation with dropdown suggestions */}
-          <div className="hire-filter-field">
-            <span>Target Role</span>
-            <div className="hire-filter-input-group">
-              <input
-                type="text"
-                list="hire-popular-roles"
-                value={draft.title}
-                maxLength={200}
-                placeholder="Select or type role (e.g. Frontend Engineer)"
-                onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-              />
-              <datalist id="hire-popular-roles">
-                {POPULAR_ROLES.map((r) => (
-                  <option key={r} value={r} />
-                ))}
-              </datalist>
+          {/* Role — free text with a datalist, plus one-tap popular roles */}
+          <div className="hire-filter-section hire-filter-field">
+            <span>Target role</span>
+            <input
+              type="text"
+              list="hire-popular-roles"
+              value={draft.title}
+              maxLength={200}
+              placeholder="Select or type role (e.g. Frontend Engineer)"
+              onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+            />
+            <datalist id="hire-popular-roles">
+              {POPULAR_ROLES.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
+            <div className="hire-filter-pills">
+              {POPULAR_ROLES.slice(0, 4).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className="hire-filter-pill"
+                  aria-pressed={draft.title === r}
+                  onClick={() =>
+                    setDraft((d) => ({ ...d, title: d.title === r ? "" : r }))
+                  }
+                >
+                  {r}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Skills with tags and quick suggestions */}
-          <fieldset className="hire-filter-field">
-            <legend>Must-Have Skills</legend>
-            {draft.skills.length > 0 && (
-              <div className="hire-filter-skills">
-                {draft.skills.map((s) => (
-                  <span key={s} className="hire-filter-chip">
-                    {s}
-                    <button
-                      type="button"
-                      className="hire-filter-chip__x"
-                      aria-label={`Remove ${s}`}
-                      onClick={() =>
-                        setDraft((d) => ({
-                          ...d,
-                          skills: d.skills.filter((x) => x !== s),
-                        }))
-                      }
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <input
-              type="text"
-              value={skillText}
-              maxLength={60}
-              placeholder="Type skill & press Enter, or click suggestions below"
-              onChange={(e) => setSkillText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === ",") {
-                  e.preventDefault();
-                  addSkill(skillText);
+          {/* Skills — tag field with removable chips */}
+          <fieldset className="hire-filter-section hire-filter-field">
+            <legend>Must-have skills</legend>
+            <div className="hire-filter-tagbox">
+              {draft.skills.map((s) => (
+                <span key={s} className="hire-filter-chip">
+                  {s}
+                  <button
+                    type="button"
+                    className="hire-filter-chip__x"
+                    aria-label={`Remove ${s}`}
+                    onClick={() =>
+                      setDraft((d) => ({
+                        ...d,
+                        skills: d.skills.filter((x) => x !== s),
+                      }))
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                className="hire-filter-tagbox__input"
+                value={skillText}
+                maxLength={60}
+                placeholder={
+                  draft.skills.length ? "Add another" : "Type a skill, press Enter"
                 }
-                if (e.key === "Backspace" && !skillText && draft.skills.length) {
-                  setDraft((d) => ({ ...d, skills: d.skills.slice(0, -1) }));
-                }
-              }}
-              onBlur={() => {
-                if (skillText.trim()) addSkill(skillText);
-              }}
-            />
-            {/* Quick Skill Suggestions */}
+                onChange={(e) => setSkillText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    addSkill(skillText);
+                  }
+                  if (e.key === "Backspace" && !skillText && draft.skills.length) {
+                    setDraft((d) => ({ ...d, skills: d.skills.slice(0, -1) }));
+                  }
+                }}
+                onBlur={() => {
+                  if (skillText.trim()) addSkill(skillText);
+                }}
+              />
+            </div>
             <div className="hire-filter-suggestions">
-              <span className="hire-filter-suggestions__label">Suggested:</span>
+              <span className="hire-filter-suggestions__label">Suggested</span>
               <div className="hire-filter-suggestions__list">
                 {SUGGESTED_SKILLS.filter(
-                  (s) => !draft.skills.some((existing) => existing.toLowerCase() === s.toLowerCase())
-                ).slice(0, 8).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className="hire-filter-sugg-btn"
-                    onClick={() => addSkill(s)}
-                  >
-                    + {s}
-                  </button>
-                ))}
+                  (s) =>
+                    !draft.skills.some(
+                      (existing) => existing.toLowerCase() === s.toLowerCase()
+                    )
+                )
+                  .slice(0, 8)
+                  .map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="hire-filter-pill"
+                      onClick={() => addSkill(s)}
+                    >
+                      + {s}
+                    </button>
+                  ))}
               </div>
             </div>
           </fieldset>
 
-          {/* Location with dropdown suggestions */}
-          <div className="hire-filter-field">
-            <span>Location</span>
-            <div className="hire-filter-input-group">
+          {/* Experience — dual-handle range over 0..15+, with quick bands */}
+          <div className="hire-filter-section hire-filter-field">
+            <div className="hire-filter-legendrow">
+              <span className="hire-filter-field__label">Experience</span>
+              <span className="hire-filter-readout" aria-live="polite">
+                {experienceLabel(years.lo, years.hi)}
+              </span>
+            </div>
+            <div className="hire-filter-range">
+              <span className="hire-filter-range__track" aria-hidden="true" />
+              <span
+                className="hire-filter-range__fill"
+                aria-hidden="true"
+                style={{ left: `${trackLeft}%`, width: `${trackWidth}%` }}
+              />
               <input
-                type="text"
-                list="hire-popular-locations"
-                value={draft.locationCity}
-                maxLength={80}
-                placeholder="Select or type city (e.g. Bengaluru, Remote)"
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, locationCity: e.target.value }))
+                type="range"
+                min={0}
+                max={EXPERIENCE_CEILING}
+                step={1}
+                value={years.lo}
+                aria-label="Minimum years of experience"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setYears(Number(e.target.value), years.hi)
                 }
               />
-              <datalist id="hire-popular-locations">
-                {POPULAR_LOCATIONS.map((loc) => (
-                  <option key={loc} value={loc === "Any / Remote" ? "" : loc}>
-                    {loc}
-                  </option>
-                ))}
-              </datalist>
+              <input
+                type="range"
+                min={0}
+                max={EXPERIENCE_CEILING}
+                step={1}
+                value={years.hi}
+                aria-label="Maximum years of experience"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setYears(years.lo, Number(e.target.value))
+                }
+              />
+            </div>
+            <div className="hire-filter-ticks" aria-hidden="true">
+              <span>0</span>
+              <span>5</span>
+              <span>10</span>
+              <span>15+</span>
+            </div>
+            <div className="hire-filter-pills">
+              {EXPERIENCE_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="hire-filter-pill"
+                  aria-pressed={
+                    draft.minExperience === p.min && draft.maxExperience === p.max
+                  }
+                  onClick={() =>
+                    setDraft((d) =>
+                      d.minExperience === p.min && d.maxExperience === p.max
+                        ? { ...d, minExperience: "", maxExperience: "" }
+                        : { ...d, minExperience: p.min, maxExperience: p.max }
+                    )
+                  }
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Experience Range with preset dropdown */}
-          <div className="hire-filter-field">
-            <span>Experience Level</span>
-            <select
-              value={currentExpPreset}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "custom") return;
-                const found = EXPERIENCE_OPTIONS.find(
-                  (opt) => `${opt.min}-${opt.max}` === val
-                );
-                if (found) {
-                  setDraft((d) => ({
-                    ...d,
-                    minExperience: found.min,
-                    maxExperience: found.max,
-                  }));
-                }
-              }}
-            >
-              {EXPERIENCE_OPTIONS.map((opt) => (
-                <option
-                  key={`${opt.min}-${opt.max}`}
-                  value={`${opt.min}-${opt.max}`}
-                >
-                  {opt.label}
-                </option>
-              ))}
-              {currentExpPreset === "custom" && (
-                <option value="custom">Custom experience ({draft.minExperience || "0"} - {draft.maxExperience || "50+"} yrs)</option>
-              )}
-            </select>
-          </div>
-
-          <div className="hire-filter-row">
-            <label className="hire-filter-field">
-              <span>Work mode</span>
-              <select
-                value={draft.workMode}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, workMode: e.target.value }))
-                }
-              >
-                {WORK_MODE_OPTIONS.map((o) => (
-                  <option key={o.value || "none"} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="hire-filter-field">
-              <span>Employment type</span>
-              <select
-                value={draft.employmentType}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, employmentType: e.target.value }))
-                }
-              >
-                {EMPLOYMENT_OPTIONS.map((o) => (
-                  <option key={o.value || "none"} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {/* Budget Ceiling dropdown */}
-          <label className="hire-filter-field">
-            <span>Budget Ceiling (CTC / Salary)</span>
-            <select
-              value={draft.salaryMaxLpa}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, salaryMaxLpa: e.target.value }))
-              }
-            >
-              {BUDGET_OPTIONS.map((b) => (
-                <option key={b.value || "none"} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="hire-filter-check">
+          {/* Location — free text with a datalist, plus popular cities */}
+          <div className="hire-filter-section hire-filter-field">
+            <span>Location</span>
             <input
-              type="checkbox"
-              checked={draft.openToWork}
+              type="text"
+              list="hire-popular-locations"
+              value={draft.locationCity}
+              maxLength={80}
+              placeholder="Select or type city (e.g. Bengaluru, Remote)"
               onChange={(e) =>
-                setDraft((d) => ({ ...d, openToWork: e.target.checked }))
+                setDraft((d) => ({ ...d, locationCity: e.target.value }))
               }
             />
-            Only candidates immediately open to work
-          </label>
+            <datalist id="hire-popular-locations">
+              {POPULAR_LOCATIONS.map((loc) => (
+                <option key={loc} value={loc === "Any / Remote" ? "" : loc}>
+                  {loc}
+                </option>
+              ))}
+            </datalist>
+            <div className="hire-filter-pills">
+              {POPULAR_LOCATIONS.slice(1, 6).map((loc) => (
+                <button
+                  key={loc}
+                  type="button"
+                  className="hire-filter-pill"
+                  aria-pressed={draft.locationCity === loc}
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      locationCity: d.locationCity === loc ? "" : loc,
+                    }))
+                  }
+                >
+                  {loc}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Work mode + employment type — one tap each, "Any" clears */}
+          <fieldset className="hire-filter-section hire-filter-field">
+            <legend>Work mode</legend>
+            <div className="hire-filter-pills">
+              {WORK_MODE_OPTIONS.map((o) => (
+                <button
+                  key={o.value || "any"}
+                  type="button"
+                  className="hire-filter-pill"
+                  aria-pressed={draft.workMode === o.value}
+                  onClick={() => setDraft((d) => ({ ...d, workMode: o.value }))}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="hire-filter-section hire-filter-field">
+            <legend>Employment type</legend>
+            <div className="hire-filter-pills">
+              {EMPLOYMENT_OPTIONS.map((o) => (
+                <button
+                  key={o.value || "any"}
+                  type="button"
+                  className="hire-filter-pill"
+                  aria-pressed={draft.employmentType === o.value}
+                  onClick={() =>
+                    setDraft((d) => ({ ...d, employmentType: o.value }))
+                  }
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
           <div className="hire-filter-actions">
             <button
@@ -511,10 +577,10 @@ export function HireFilterDialog({
                 setSkillText("");
               }}
             >
-              Reset filters
+              Reset all
             </button>
             <button type="submit" className="hire-filter-apply" disabled={pending}>
-              {pending ? "Applying…" : "Apply Filters"}
+              {pending ? "Applying…" : "Apply filters"}
             </button>
           </div>
         </form>

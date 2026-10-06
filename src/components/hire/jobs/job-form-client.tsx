@@ -35,6 +35,12 @@ import {
   applyListToggle,
   type ListKind,
 } from "@/components/hire/jobs/markdown-list";
+import {
+  JOB_SKILL_MAX_COUNT,
+  JOB_SKILL_MAX_LEN,
+  normalizeSkills,
+} from "@/features/recruiter-jobs/lifecycle";
+import { normalizeApplyUrl } from "@/features/recruiter-jobs/job-input";
 
 type Initial = {
   jobId?: string;
@@ -80,10 +86,7 @@ type Props = {
 };
 
 function parseSkills(raw: string) {
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return normalizeSkills(raw.split(","));
 }
 
 export function JobFormClient({
@@ -170,13 +173,14 @@ export function JobFormClient({
       workMode: values.workMode,
       opportunityType: values.type,
       skills: parseSkills(skillsInput),
-      // "" means the recruiter left it alone, which is a real answer and must
-      // reach the server as null rather than as 0.
+      // "" → null ("not stated"). Non-empty strings are left as-is so the
+      // server can coerce pasted values like "2 years" and reject junk with
+      // a field-level message.
       minExperience:
         values.minExperience.trim() === ""
           ? null
-          : Number(values.minExperience),
-      applyExternalUrl: values.applyExternalUrl,
+          : values.minExperience.trim(),
+      applyExternalUrl: normalizeApplyUrl(values.applyExternalUrl),
     };
   }
 
@@ -374,10 +378,14 @@ export function JobFormClient({
               value={skillsInput}
               onChange={(e) => setSkillsInput(e.target.value)}
               placeholder="e.g. react, node, aws"
-              maxLength={800}
+              maxLength={
+                JOB_SKILL_MAX_COUNT * JOB_SKILL_MAX_LEN + JOB_SKILL_MAX_COUNT
+              }
             />
           </span>
-          <em>Add 3–10 key skills. Separate with commas.</em>
+          <em>
+            Add up to {JOB_SKILL_MAX_COUNT} key skills. Separate with commas.
+          </em>
         </label>
       </section>
 

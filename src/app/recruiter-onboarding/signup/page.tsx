@@ -31,10 +31,18 @@ export default async function RecruiterSignupPage() {
     return <RecruiterAuthClosed />;
   }
 
+  // Plan 167: same as /recruiter-onboarding — a session already proves the
+  // address, so that path skips both code cards.
+  const sessionIdentity =
+    session?.user?.id && session.user.email
+      ? { email: session.user.email, name: session.user.name ?? "" }
+      : null;
+
   return (
     <RecruiterOnboardingWizard
       initialScreen="identity"
       passwordEnabled={isEmailLoginEnabled()}
+      session={sessionIdentity}
     />
   );
 }

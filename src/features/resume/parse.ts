@@ -1,6 +1,12 @@
 import "server-only";
 import { logger } from "@/lib/logger";
 import { normalizeParsedResume } from "@/features/resume/normalize";
+import {
+  reconcileEmails,
+  verifyParsedResume,
+  type DocumentEvidence,
+  type VerificationReport,
+} from "@/features/resume/verify";
 import { nextRetryDelayMs } from "@/features/resume/import/rate-budget";
 import {
   callOpenAiResumeParser,
@@ -197,8 +203,10 @@ export type DetailedParseResult =
   | {
       ok: true;
       data: ParsedResume;
-      /** Every email the model listed (`all_emails`), read before normalising. */
+      /** Every email in the document: `all_emails`, corrected against the PDF. */
       emails: string[];
+      /** What the check against the PDF's own text corrected or could not confirm. */
+      verification: VerificationReport;
       model: string;
       /** Summed over every HTTP attempt of this parse. */
       usage: ProviderUsage;
@@ -228,6 +236,32 @@ function emailsFrom(raw: unknown): string[] {
   if (raw === null || typeof raw !== "object") return [];
   const list = (raw as { all_emails?: unknown }).all_emails;
   return Array.isArray(list) ? list.filter((v): v is string => typeof v === "string") : [];
+}
+
+/**
+ * The PDF's own text layer and link targets — the evidence `verify.ts` checks
+ * the model's fields against. Never throws: a PDF we cannot read yields empty
+ * evidence, which `verifyParsedResume` reports as unverified.
+ */
+async function extractEvidence(bytes: Uint8Array): Promise<DocumentEvidence> {
+  try {
+    const { getDocumentProxy, extractText } = await import("unpdf");
+    // pdf.js detaches the buffer it is given; keep the caller's bytes intact.
+    const pdf = await getDocumentProxy(new Uint8Array(bytes));
+    const { text } = await extractText(pdf, { mergePages: true });
+    const links: string[] = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      for (const a of (await page.getAnnotations()) as { url?: unknown; unsafeUrl?: unknown }[]) {
+        const url = typeof a.url === "string" ? a.url : typeof a.unsafeUrl === "string" ? a.unsafeUrl : null;
+        if (url) links.push(url);
+      }
+    }
+    return { text, links };
+  } catch (error) {
+    logger.warn("[resume] could not read the PDF text layer", { error: String(error) });
+    return { text: "", links: [] };
+  }
 }
 
 /**
@@ -300,10 +334,19 @@ export async function parseResumeDocumentDetailed(
     });
 
     if (call.ok && raw !== null) {
+      const evidence = await extractEvidence(input.bytes);
+      const { data, report } = verifyParsedResume(normalizeParsedResume(raw), evidence);
+      if (report.corrections.length > 0 || report.unverified.length > 0) {
+        logger.warn("[resume] fields corrected or unverified against the PDF", {
+          corrected: report.corrections.map((c) => c.field),
+          unverified: report.unverified,
+        });
+      }
       return {
         ok: true,
-        data: normalizeParsedResume(raw),
-        emails: emailsFrom(raw),
+        data,
+        emails: reconcileEmails(emailsFrom(raw), evidence),
+        verification: report,
         model: call.model,
         usage,
         costMicroUsd: cost,

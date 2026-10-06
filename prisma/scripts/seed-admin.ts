@@ -1,3 +1,18 @@
+/**
+ * Local admin bootstrap.
+ *
+ * Plan 169 made this the ONLY path from configuration to a platform-admin
+ * grant. Nothing at runtime grants admin any more: `ADMIN_EMAILS` is read by
+ * `lib/admin-auth.ts` only to answer "is this address in the seed list?", never
+ * to create a role row. The runtime bootstrap that used to do that re-granted
+ * admin to any account whose `User` row had been deleted, because the evidence
+ * it checked cascaded away with the user.
+ *
+ * In a deployed environment, admins are added and removed at
+ * `/admin/platform-admins`. Changing `ADMIN_EMAILS` there grants nothing.
+ *
+ * `assertNotProductionDb` below is what keeps this script local.
+ */
 import { config } from "dotenv";
 config({ path: ".env.local" });
 config();

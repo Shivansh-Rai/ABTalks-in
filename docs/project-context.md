@@ -530,7 +530,28 @@ it is *not* solved.
 - Cookies: `__Secure-authjs.session-token` (prod) / `authjs.session-token` (local)
 
 ### Authorization layers
-- **Admin:** email-based via `ADMIN_EMAILS`; `requireAdmin()` in `lib/admin-auth.ts`; `session.user.isAdmin` computed in the JWT/session callback. No DB role for admin.
+- **Admin (plan 169):** a **database role and nothing else** — a live
+  `UserRoleAssignment` with `role=ADMIN`, `scopeType=GLOBAL`, `revokedAt IS
+  NULL`. `hasPlatformAdmin()` in `lib/platform-role.ts` is the single lookup (a
+  pure read; it never writes and never reads env); `requireAdmin()` /
+  `getAdminContext()` in `lib/admin-auth.ts` wrap it. Granting and revoking is
+  `/admin/platform-admins`, which takes effect immediately with no deploy.
+  - `ADMIN_EMAILS` is **seed-time only**, consumed by
+    `prisma/scripts/seed-admin.ts`. Changing it in a deployed environment
+    grants nothing. `isAdminEmail()` answers a question about configuration,
+    never about access.
+  - **Revocation is `revokedAt`, never a change to `role`.** A row edited to
+    another role is not a revoked row.
+  - `session.user.isAdmin` is stamped onto the JWT from the live grant at
+    sign-in by `auth.ts`'s `jwt` callback (`auth.config.ts` cannot — it is in
+    the Edge bundle). It drives chrome and redirects only; every authorization
+    decision goes through `requireAdmin` / `getAdminContext`. Revoking sets
+    `sessionInvalidatedAt`, so a stale token cannot outlive the grant.
+  - Before plan 169 this was env-based, and `admin-auth.ts` granted the role at
+    runtime from `ADMIN_EMAILS`. Because that guard was keyed on `userId` and
+    `UserRoleAssignment.userId` cascades on user delete, deleting an admin's
+    `User` row let the next sign-in re-grant admin. Do not reintroduce a
+    runtime env grant.
 - **Program / recruiter:** `lib/program-auth.ts` (node-only) — `requireProgramMember` (resolved by membership, not by role) and `requireRecruiter` (DB-checked, `Role.RECRUITER` + admin approval)
 - **Middleware:** path-prefix list only (`/dashboard`, `/explore`, `/challenge/`, `/profile`, `/achievements`, `/quiz`, `/register`, `/admin`, `/jobs`, `/mission`, `/program/*` app routes, `/talent`, `/hackathon/register`, `/hackathon/dashboard`) — redirects to `/login?from=…`. It also sets the `abtalks_ref` and `abtalks_src` tracking cookies on every request.
 
@@ -728,7 +749,10 @@ them.
 - `AUTH_URL` / `NEXTAUTH_URL` — site URL (optional locally when `trustHost` is on)
 - `NEXT_PUBLIC_APP_URL` — same as AUTH_URL
 - `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
-- `ADMIN_EMAILS` — comma-separated admin emails
+- `ADMIN_EMAILS` — comma-separated admin emails. **Seed-time only** since plan
+  169: read by `prisma/scripts/seed-admin.ts` to create the first grant in a
+  fresh environment. Setting it in a deployed environment grants nobody
+  anything — admins are managed at `/admin/platform-admins`.
 
 ### Feature flags
 - `ENABLE_DEV_AUTH` — Credentials provider, localhost only
@@ -922,6 +946,14 @@ Small scoped prompts → explicit "do NOT" lists → Cursor reports back → you
 - Notification bell + `/admin/notifications`
 - Admin: 20+ pages spanning students, submissions, content, analytics, actions feed, referrals, redemptions, jobs, workshop, hackathon, ai-cohort, program, notifications, data-requests
 - **Canonical data model in production.** Original operational tables dropped 2026-09-23 (`20260923120000_final_drop_legacy_originals`).
+- **Platform admin is a database role only (plan 169, 2026-10-01).** The
+  runtime `ADMIN_EMAILS` bootstrap in `lib/admin-auth.ts` is removed — it
+  re-granted admin to any account whose `User` row had been deleted, from a
+  page render. `hasPlatformAdmin` moved to `lib/platform-role.ts` as a pure
+  read, `session.user.isAdmin` is now derived from the live grant at sign-in,
+  revoking sets `sessionInvalidatedAt` and writes an `AdminAction`, and
+  `role_assignment_active_unique` is a real migration instead of hand-applied
+  SQL. See §6 → Authorization layers.
 - Production deployment on Vercel (`www.abtalks.in`)
 
 ### Plan 078 — COMPLETE (2026-09-23)

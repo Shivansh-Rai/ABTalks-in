@@ -1,8 +1,22 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { PlatformRole, RoleScopeType } from "@prisma/client";
-import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { hasPlatformAdmin } from "@/lib/platform-role";
+
+/**
+ * Platform admin access is a database role: a live, global, unrevoked
+ * `UserRoleAssignment`. There is exactly one authority, and this is it.
+ *
+ * `ADMIN_EMAILS` is **seed-time only** — consumed by
+ * `prisma/scripts/seed-admin.ts` to create the first grant in a fresh
+ * environment. Nothing at runtime grants from it. Adding an admin to a deployed
+ * environment is `/admin/platform-admins`, not an env change; revoking is the
+ * same page, which sets `revokedAt` and invalidates their sessions.
+ *
+ * Plan 169 removed the runtime bootstrap that used to live here. See
+ * `lib/platform-role.ts` for why it was a privilege-escalation path.
+ */
+
+export { hasPlatformAdmin };
 
 function getAdminEmails(): string[] {
   const raw = process.env.ADMIN_EMAILS ?? "";
@@ -12,97 +26,16 @@ function getAdminEmails(): string[] {
     .filter((e) => e.length > 0);
 }
 
-/** Env list is bootstrap-only. Live access is UserRoleAssignment. */
+/**
+ * Is this address in the seed list? Does NOT mean "is an admin" — it answers a
+ * question about configuration, not about access. Authorization is
+ * `hasPlatformAdmin`.
+ */
 export async function isAdminEmail(
   email: string | null | undefined,
 ): Promise<boolean> {
   if (!email) return false;
   return getAdminEmails().includes(email.toLowerCase());
-}
-
-export async function hasPlatformAdmin(userId: string): Promise<boolean> {
-  const row = await prisma.userRoleAssignment.findFirst({
-    where: {
-      userId,
-      role: PlatformRole.ADMIN,
-      scopeType: RoleScopeType.GLOBAL,
-      revokedAt: null,
-    },
-    select: { id: true },
-  });
-  if (row !== null) return true;
-
-  // Only somebody who has NO live grant pays for the bootstrap, so an admin
-  // who already has their row costs one query, not three.
-  return bootstrapAdminFromEnv(userId);
-}
-
-/**
- * Chicken-and-egg bootstrap: copy ADMIN_EMAILS onto the matching User row,
- * **per email**.
- *
- * This used to be a one-shot platform-wide bootstrap — it counted every active
- * GLOBAL ADMIN row and returned early if there were any. That silently ignored
- * every email added to ADMIN_EMAILS after the first admin existed: the account
- * was listed in env, `auth.config.ts` set `token.isAdmin` from that same list
- * so the header rendered the Admin button, and then `requireAdmin` found no
- * assignment and redirected to /dashboard. Two authorities, one of them
- * unreachable. The scope is now the person, not the platform.
- *
- * A revoked admin is still never re-granted from env — that is why the count
- * below includes revoked rows. Once an account has ever held a GLOBAL ADMIN
- * assignment, env has had its say and the decision belongs to
- * `admin-platform-actions.ts`.
- */
-async function bootstrapAdminFromEnv(userId: string): Promise<boolean> {
-  const emails = getAdminEmails();
-  if (emails.length === 0) return false;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-  const email = user?.email?.trim().toLowerCase();
-  if (!email || !emails.includes(email)) return false;
-
-  // Revoked rows count. A grant that was taken away must not come back.
-  const everGranted = await prisma.userRoleAssignment.count({
-    where: {
-      userId,
-      role: PlatformRole.ADMIN,
-      scopeType: RoleScopeType.GLOBAL,
-    },
-  });
-  if (everGranted > 0) return false;
-
-  try {
-    await prisma.userRoleAssignment.create({
-      data: {
-        userId,
-        role: PlatformRole.ADMIN,
-        scopeType: RoleScopeType.GLOBAL,
-      },
-      select: { id: true },
-    });
-    return true;
-  } catch (error) {
-    // A concurrent request that won the race is not a failure: the grant this
-    // call wanted now exists either way.
-    logger.error("[admin-auth] bootstrapAdminFromEnv", {
-      userId,
-      error: String(error),
-    });
-    const row = await prisma.userRoleAssignment.findFirst({
-      where: {
-        userId,
-        role: PlatformRole.ADMIN,
-        scopeType: RoleScopeType.GLOBAL,
-        revokedAt: null,
-      },
-      select: { id: true },
-    });
-    return row !== null;
-  }
 }
 
 export async function requireAdmin() {

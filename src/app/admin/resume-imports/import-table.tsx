@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { downloadCSV, toCSV } from "@/lib/csv";
 import {
   deleteImportAction,
+  enrollUnclaimedAction,
+  exportOutreachCsvAction,
   getImportStatusAction,
   queueParseAction,
   registerUploadsAction,
@@ -25,6 +28,17 @@ import type { ImportRowView, ImportStatusView } from "@/features/resume/import/s
  */
 
 type Status = ImportRowView["status"];
+
+/** Plan 171: mirrors `OUTREACH_FILTERS` in the repository (server-only). */
+const OUTREACH_FILTER_LABEL = {
+  CLICKED_NOT_CLAIMED: "Clicked, not claimed (strongest first)",
+  CLAIMED_INCOMPLETE: "Claimed, not complete",
+  COMPLETED: "Completed",
+  NO_RESPONSE: "No response",
+  BOUNCED: "Bounced",
+  REMOVED: "Removed their data",
+} as const;
+type OutreachFilter = keyof typeof OUTREACH_FILTER_LABEL;
 
 const STATUS_LABEL: Record<Status, string> = {
   UPLOADED: "Ready to parse",
@@ -81,8 +95,44 @@ function usd(micro: number): string {
   return dollars < 0.01 && dollars > 0 ? "< $0.01" : `$${dollars.toFixed(2)}`;
 }
 
+// IST with an explicit zone, so the server render and the browser agree.
+const IMPORTED_DATE = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+const IMPORTED_TIME = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const SEARCH_DEBOUNCE_MS = 300;
+
 function compact(n: number): string {
   return n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : String(n);
+}
+
+/** Today's calendar day in Asia/Kolkata as `YYYY-MM-DD` (not the browser local zone). */
+function todayIstYmd(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year")?.value ?? "1970";
+  const m = parts.find((p) => p.type === "month")?.value ?? "01";
+  const d = parts.find((p) => p.type === "day")?.value ?? "01";
+  return `${y}-${m}-${d}`;
+}
+
+/** Format a `YYYY-MM-DD` IST day for the matched-count label. */
+function formatIstDayLabel(ymd: string): string {
+  // Noon UTC keeps the calendar day stable under IST (+05:30).
+  return IMPORTED_DATE.format(new Date(`${ymd}T12:00:00.000Z`));
 }
 
 export function ImportTable({
@@ -95,6 +145,11 @@ export function ImportTable({
   const [view, setView] = useState<ImportStatusView>(initial);
   const [extraRows, setExtraRows] = useState<ImportRowView[]>([]);
   const [filter, setFilter] = useState<Status | "ALL">("ALL");
+  const [search, setSearch] = useState("");
+  const [date, setDate] = useState("");
+  const [outreachFilter, setOutreachFilter] = useState<OutreachFilter | "">("");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [uploadBatch, setUploadBatch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [autoRegister, setAutoRegister] = useState(false);
   const [consent, setConsent] = useState(false);
@@ -109,13 +164,30 @@ export function ImportTable({
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const active = inFlight > 0 || view.workerRunning || rows.some((r) => r.registerRequested);
 
-  const load = useCallback(async (status: Status | "ALL") => {
-    const res = await getImportStatusAction({ status: status === "ALL" ? undefined : status });
-    if (res.ok) {
-      setView(res.data);
-      setExtraRows([]);
-    }
-  }, []);
+  // Search and date are applied on the server: the table is paged, so
+  // filtering only the loaded rows would miss most imports.
+  const query = useCallback(
+    (status: Status | "ALL", cursor?: string) => ({
+      status: status === "ALL" ? undefined : status,
+      cursor,
+      search: search.trim() || undefined,
+      date: date || undefined,
+      outreach: outreachFilter || undefined,
+      batchLabel: batchFilter || undefined,
+    }),
+    [search, date, outreachFilter, batchFilter],
+  );
+
+  const load = useCallback(
+    async (status: Status | "ALL") => {
+      const res = await getImportStatusAction(query(status));
+      if (res.ok) {
+        setView(res.data);
+        setExtraRows([]);
+      }
+    },
+    [query],
+  );
   const refresh = useCallback(() => load(filter), [load, filter]);
 
   // Poll while anything is moving. (A filter change fetches in its handler.)
@@ -125,12 +197,25 @@ export function ImportTable({
     return () => clearInterval(t);
   }, [active, refresh]);
 
+  // Re-query when the search text (after a pause in typing) or date changes.
+  const firstQuery = useRef(true);
+  useEffect(() => {
+    if (firstQuery.current) {
+      firstQuery.current = false;
+      return;
+    }
+    const t = setTimeout(() => {
+      setSelected(new Set());
+      void refresh();
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+    // `refresh` changes whenever these filters do; keying on them is enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, date, outreachFilter, batchFilter]);
+
   async function loadMore() {
     if (!view.nextCursor) return;
-    const res = await getImportStatusAction({
-      status: filter === "ALL" ? undefined : filter,
-      cursor: view.nextCursor,
-    });
+    const res = await getImportStatusAction(query(filter, view.nextCursor));
     if (res.ok) {
       setExtraRows((prev) => [...prev, ...res.data.rows]);
       setView((v) => ({ ...v, nextCursor: res.data.nextCursor }));
@@ -157,7 +242,10 @@ export function ImportTable({
     async function flush(force: boolean) {
       while (staged.length >= REGISTER_BATCH || (force && staged.length > 0)) {
         const batch = staged.splice(0, REGISTER_BATCH);
-        const res = await registerUploadsAction({ files: batch });
+        const res = await registerUploadsAction({
+          files: batch,
+          batchLabel: uploadBatch.trim() || undefined,
+        });
         if (res.ok) {
           setProgress((p) => ({
             ...p,
@@ -286,6 +374,37 @@ export function ImportTable({
     });
   }
 
+  function enrollUnclaimed() {
+    void run(
+      () => enrollUnclaimedAction(),
+      (d) => `Sending invites to ${d.enrolled} student(s) now.`,
+    );
+  }
+
+  async function exportCsv() {
+    setBusy(true);
+    try {
+      const res = await exportOutreachCsvAction({
+        status: filter === "ALL" ? undefined : filter,
+        search: search.trim() || undefined,
+        date: date || undefined,
+        outreach: outreachFilter || undefined,
+        batchLabel: batchFilter || undefined,
+      });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      if (res.data.length === 0) {
+        toast.error("No imports match these filters.");
+        return;
+      }
+      downloadCSV(`resume-imports-${todayIstYmd()}.csv`, toCSV(res.data));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const etaMin =
     view.usage.parsedLastHour > 0 && inFlight > 0
@@ -320,6 +439,16 @@ export function ImportTable({
             // Folder picking is non-standard; set via attribute so React passes it through.
             {...({ webkitdirectory: "" } as Record<string, string>)}
             onChange={(e) => void uploadFiles(e.target.files)}
+          />
+          <input
+            type="text"
+            aria-label="Batch or college name for this upload"
+            placeholder="Batch / college name (optional)"
+            maxLength={80}
+            className="w-64 rounded-md border border-[#E9E9E9] bg-white px-2 py-1.5 text-sm"
+            value={uploadBatch}
+            disabled={progress.running}
+            onChange={(e) => setUploadBatch(e.target.value)}
           />
           <Button disabled={progress.running} onClick={() => fileInput.current?.click()}>
             Choose PDFs
@@ -383,6 +512,40 @@ export function ImportTable({
         </div>
       </section>
 
+      {/* Claim emails (plan 171) */}
+      <section className="space-y-3 rounded-xl border border-[#E9E9E9] bg-white p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold text-[#353535]">Claim emails</h2>
+          <p className="text-xs text-[#8F8F8F]">
+            {view.outreach.enabled
+              ? "Invites go out as soon as a student is registered; reminders at 9:00 IST. At most 4 per student."
+              : "Switched off. Set IMPORT_OUTREACH_ENABLED=true to start sending."}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            ["Invited", view.outreach.funnel.invited],
+            ["Clicked", view.outreach.funnel.clicked],
+            ["Claimed", view.outreach.funnel.claimed],
+            ["Completed", view.outreach.funnel.completed],
+            ["Removed", view.outreach.funnel.removed],
+            ["Bounced", view.outreach.funnel.bounced],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-[#E9E9E9] bg-white px-4 py-3">
+              <p className="text-xs text-[#8F8F8F]">{label}</p>
+              <p className="font-display text-2xl font-semibold text-[#353535]">{value}</p>
+            </div>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          disabled={busy || !view.outreach.enabled || view.outreach.unenrolled === 0}
+          onClick={enrollUnclaimed}
+        >
+          Send invites to unclaimed ({view.outreach.unenrolled})
+        </Button>
+      </section>
+
       {/* Actions */}
       <section className="space-y-3 rounded-xl border border-[#E9E9E9] bg-white p-5">
         <label className="flex items-start gap-2 text-sm text-[#353535]">
@@ -440,27 +603,116 @@ export function ImportTable({
       {/* Table */}
       <section className="overflow-hidden rounded-xl border border-[#E9E9E9] bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E9E9E9] px-5 py-3">
-          <h2 className="font-display text-lg font-semibold text-[#353535]">Imports</h2>
-          <select
-            className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
-            value={filter}
-            onChange={(e) => {
-              const next = e.target.value as Status | "ALL";
-              setSelected(new Set());
-              setFilter(next);
-              void load(next);
-            }}
-          >
-            <option value="ALL">All statuses</option>
-            {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABEL[s]} ({counts[s]})
-              </option>
-            ))}
-          </select>
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="font-display text-lg font-semibold text-[#353535]">Imports</h2>
+            {date ? (
+              <p className="text-sm text-[#626262]">
+                {view.matchedTotal} imported on {formatIstDayLabel(date)} (IST)
+              </p>
+            ) : search.trim() ? (
+              <p className="text-sm text-[#626262]">
+                {view.matchedTotal} match{view.matchedTotal === 1 ? "" : "es"}
+              </p>
+            ) : null}
+            {view.outreach.batch ? (
+              <p className="text-sm text-[#626262]">
+                {view.outreach.batch.label}: {view.outreach.batch.claimed} of{" "}
+                {view.outreach.batch.registered} claimed
+                {view.outreach.batch.registered > 0
+                  ? ` (${Math.round((view.outreach.batch.claimed / view.outreach.batch.registered) * 100)}%)`
+                  : ""}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              aria-label="Search imports by file name or email"
+              placeholder="Search file name or email"
+              className="w-56 rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <input
+              type="date"
+              aria-label="Imported on (IST)"
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+            <button
+              type="button"
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm text-[#353535] hover:bg-[#F7FBFB]"
+              onClick={() => setDate(todayIstYmd())}
+            >
+              Today
+            </button>
+            {(search || date) && (
+              <button
+                type="button"
+                className="text-xs text-[#787878] underline-offset-2 hover:underline"
+                onClick={() => {
+                  setSearch("");
+                  setDate("");
+                }}
+              >
+                Clear
+              </button>
+            )}
+            <select
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+              value={filter}
+              onChange={(e) => {
+                const next = e.target.value as Status | "ALL";
+                setSelected(new Set());
+                setFilter(next);
+                void load(next);
+              }}
+            >
+              <option value="ALL">All statuses</option>
+              {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABEL[s]} ({counts[s]})
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by claim emails"
+              className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+              value={outreachFilter}
+              onChange={(e) => setOutreachFilter(e.target.value as OutreachFilter | "")}
+            >
+              <option value="">All claim-email states</option>
+              {(Object.keys(OUTREACH_FILTER_LABEL) as OutreachFilter[]).map((k) => (
+                <option key={k} value={k}>
+                  {OUTREACH_FILTER_LABEL[k]}
+                </option>
+              ))}
+            </select>
+            {view.outreach.batchLabels.length > 0 && (
+              <select
+                aria-label="Filter by batch"
+                className="rounded-md border border-[#E9E9E9] bg-white px-2 py-1 text-sm"
+                value={batchFilter}
+                onChange={(e) => setBatchFilter(e.target.value)}
+              >
+                <option value="">All batches</option>
+                {view.outreach.batchLabels.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            )}
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => void exportCsv()}>
+              Download CSV
+            </Button>
+          </div>
         </div>
         {rows.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-[#787878]">No résumés here yet.</p>
+          <p className="px-5 py-8 text-sm text-[#787878]">
+            {search || date ? "No imports match your search." : "No résumés here yet."}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -478,7 +730,9 @@ export function ImportTable({
                   </th>
                   <th className="px-2 py-2">File</th>
                   <th className="px-2 py-2">Email</th>
+                  <th className="whitespace-nowrap px-2 py-2">Imported (IST)</th>
                   <th className="px-2 py-2">Status</th>
+                  <th className="px-2 py-2">Claim emails</th>
                   <th className="px-2 py-2">Score</th>
                   <th className="px-2 py-2">Details</th>
                   <th className="px-2 py-2" />
@@ -568,7 +822,21 @@ function ImportRow({
         <input type="checkbox" aria-label={`Select ${row.originalFilename}`} checked={selected} onChange={onToggle} />
       </td>
       <td className="max-w-[220px] truncate px-2 py-2 align-top font-medium text-[#353535]" title={row.originalFilename}>
-        {row.originalFilename}
+        {row.downloadHref ? (
+          <a
+            className="text-[#03535F] underline"
+            href={row.downloadHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {row.originalFilename}
+          </a>
+        ) : (
+          row.originalFilename
+        )}
+        {row.batchLabel ? (
+          <span className="block truncate text-xs font-normal text-[#8F8F8F]">{row.batchLabel}</span>
+        ) : null}
       </td>
       <td className="px-2 py-2 align-top text-[#353535]">
         {row.status === "NEEDS_REVIEW" ? (
@@ -601,6 +869,12 @@ function ImportRow({
           (row.email ?? <span className="text-[#8F8F8F]">—</span>)
         )}
       </td>
+      <td className="whitespace-nowrap px-2 py-2 align-top text-[#353535]">
+        {IMPORTED_DATE.format(new Date(row.createdAtIso))}
+        <span className="block text-xs text-[#8F8F8F]">
+          {IMPORTED_TIME.format(new Date(row.createdAtIso))}
+        </span>
+      </td>
       <td className="px-2 py-2 align-top">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[row.status]}`}>
           {STATUS_LABEL[row.status]}
@@ -608,6 +882,9 @@ function ImportRow({
         {row.registerRequested && row.status === "PARSED" && (
           <span className="ml-1 text-xs text-[#8F8F8F]">registering…</span>
         )}
+      </td>
+      <td className="max-w-[220px] px-2 py-2 align-top text-xs text-[#626262]">
+        {row.outreachLabel ?? <span className="text-[#8F8F8F]">—</span>}
       </td>
       <td className="px-2 py-2 align-top text-[#353535]">{row.overallScore ?? "—"}</td>
       <td className="max-w-[280px] px-2 py-2 align-top text-xs text-[#787878]">

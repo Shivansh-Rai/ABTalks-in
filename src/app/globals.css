@@ -727,3 +727,45 @@
     margin: 12mm;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Route progress bar (plan 168)
+ *
+ * Rendered by <RouteProgress /> from the root layout while a navigation is in
+ * flight. Deliberately unlayered: this must outrank every component style, and
+ * z-index clears the 300 ceiling the rest of the platform uses.
+ *
+ * The bar never animates to 100%. It eases toward 90% and the component
+ * unmounts the moment the new pathname commits — finishing by disappearing is
+ * what makes an arrival feel instant rather than metered.
+ * ------------------------------------------------------------------------- */
+.route-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 1000;
+  width: 0;
+  height: 3px;
+  background: hsl(var(--primary));
+  border-end-end-radius: 3px;
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.5);
+  pointer-events: none;
+  animation: route-progress-grow 10s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes route-progress-grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 90%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress {
+    width: 100%;
+    opacity: 0.55;
+    animation: none;
+  }
+}
