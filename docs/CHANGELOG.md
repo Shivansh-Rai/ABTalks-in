@@ -45,6 +45,7 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-29 [rule|data] Recruiter credit policy is now $200 starting grant + $0.50 per contact unlock (400 unlocks): `credits.starting_grant_minor` default 2_000_000 → 20_000 and `credits.contact_unlock_cost_minor` default 1_000 → 50; stored unlock cost set to 50 on Proud Sky, Young Shadow and Nameless (prod was 999); live recruiter workspaces below $200 topped up to $200 via one idempotent ADMIN_ADJUSTMENT each (key `grant:topup-to-200usd-20260929:<orgId>`; prod 3, Young Shadow 4, Proud Sky 9), ledger reconciled; 13 prod workspaces left at their existing $20,000 balance; stored `credits.starting_grant_minor` rows not yet changed
 - 2026-10-03 [rule] Recruiter job create/update paste-tolerant: skill caps 100/40 with truncate+dedupe, apply URL https:// normalize, minExperience coerce, field-level Zod errors (no generic Invalid input)
 - 2026-10-03 [convention] Plan 179: Scout desk card AI Summary uses sidebar prose (`recruiterSummary` / session-cached Gemini), clamped to 3 lines — no per-card Gemini fetch
 - 2026-10-03 [convention] Hub Continue Learning / Continue Journey Finished lists only lifecycle `completed` — `ended` (window closed with misses) is omitted from those cards
