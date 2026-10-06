@@ -2996,21 +2996,235 @@ body.pw-sheet-open .abt-content-scroll {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Add an entry: an outlined button in the primary colour — the same weight as
+   the résumé Browse control — so it reads as something to press, not a note. */
 .pw-add-more {
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
   align-self: flex-start;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin-top: 20px;
+  padding: 0 16px 0 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--pw-primary);
+  color: var(--pw-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.pw-add-more:hover {
+  background: var(--pw-primary-tint);
+  box-shadow: 0 2px 6px rgba(var(--pw-primary-rgb), 0.14);
+}
+.pw-add-more:active {
+  background: var(--pw-primary-light);
+  box-shadow: none;
+}
+.pw-add-more svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* -------- Education: Class X / XII or Diploma / College --------
+   A segmented control over three slides. The active tab is a raised white
+   segment on the grey track, the same construction as the date and score
+   pickers' clay; a slot that is filled in swaps its "5%" for a tick. */
+.pw-edu-tabs-wrap {
+  margin-bottom: 22px;
+}
+.pw-edu-tabs-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pw-text-secondary);
+}
+.pw-edu-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #eeeeee;
+  border: 1px solid var(--pw-border-soft);
+}
+.pw-edu-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #4b4b4b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.pw-edu-tab:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--pw-primary);
+}
+.pw-edu-tab.pw-active {
+  background: #ffffff;
+  color: var(--pw-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+.pw-edu-tab:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+.pw-edu-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-edu-tab-done {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--pw-green);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* A tab holding a field that failed validation, so the error is findable
+   from whichever slide is showing. */
+.pw-edu-tab.pw-has-error::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pw-error);
+}
+
+.pw-edu-slides {
+  /* Clips the sideways entrance only; menus are portalled and unaffected. */
+  overflow-x: clip;
+  overflow-clip-margin: 6px;
+}
+.pw-edu-slide[hidden] {
+  display: none !important;
+}
+.pw-edu-slides[data-dir="next"] .pw-edu-slide {
+  animation: pw-eduFromRight 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.pw-edu-slides[data-dir="prev"] .pw-edu-slide {
+  animation: pw-eduFromLeft 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes pw-eduFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pw-eduFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Class XII or Diploma: two outlined options, the chosen one filled. */
+.pw-edu-kind {
+  display: inline-flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.pw-edu-kind-option {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--pw-field-border);
+  background: #ffffff;
   color: #4b4b4b;
   font: inherit;
   font-size: 14px;
   font-weight: 500;
-  transition: color 0.18s ease;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease;
 }
-.pw-add-more:hover {
+.pw-edu-kind-option:hover {
+  border-color: var(--pw-primary);
   color: var(--pw-primary);
+}
+.pw-edu-kind-option.pw-active {
+  background: var(--pw-primary);
+  border-color: var(--pw-primary);
+  color: #ffffff;
+}
+.pw-edu-kind-option:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+
+.pw-edu-other {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  padding-top: 22px;
+  border-top: 1px solid #e9e9e9;
+}
+.pw-edu-other-head {
+  margin-bottom: 4px;
+}
+.pw-edu-other-title {
+  margin: 0;
+  font-family: var(--pw-font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--pw-navy);
+}
+.pw-edu-other-text {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--pw-muted);
+}
+.pw-edu-other .pw-entries {
+  margin-top: 18px;
+}
+
+@media (max-width: 420px) {
+  .pw-edu-tab {
+    flex-direction: column;
+    gap: 2px;
+    height: 48px;
+    font-size: 13px;
+  }
 }
 
 /* ---------- "Save your changes?" — anchored to the buttons it is about ----------

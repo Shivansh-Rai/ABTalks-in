@@ -1383,6 +1383,81 @@ async function run() {
     }
   });
 
+  await suite("school years are stored the way the profile's Education tabs read them", () => {
+    const cases: [string, string][] = [
+      ["SSC", "Secondary (10th)"],
+      ["10th", "Secondary (10th)"],
+      ["Class X (CBSE)", "Secondary (10th)"],
+      ["HSC", "Higher Secondary (12th)"],
+      ["Class XII", "Higher Secondary (12th)"],
+      ["Intermediate (MPC)", "Higher Secondary (12th)"],
+      ["Diploma in Civil Engineering", "Diploma in Civil Engineering"],
+      ["B.Tech", "B.Tech"],
+    ];
+    for (const [input, expected] of cases) {
+      const plan = planResumeMerge(
+        normalizeParsedResume({
+          education: [{ institution: "Kendriya Vidyalaya", degree: input, year: "2019" }],
+        }),
+        emptyDetail,
+      );
+      const got = plan.education.create[0]?.degree ?? null;
+      assert(got === expected, `"${input}" → ${got}, expected ${expected}`);
+    }
+  });
+
+  await suite("a score keeps the scale the résumé wrote, and never a guessed one", () => {
+    const cases: [string, string | null, string | null][] = [
+      ["92%", "92", "PERCENTAGE"],
+      ["8.7/10", "8.7", "CGPA_10"],
+      ["3.6 / 4", "3.6", "GPA_4"],
+      ["8.7", "8.7", null],
+      ["First Class", "First Class", null],
+    ];
+    for (const [input, grade, gradeType] of cases) {
+      const plan = planResumeMerge(
+        normalizeParsedResume({
+          education: [{ institution: "PES University", degree: "B.Tech", year: "2022", cgpa: input }],
+        }),
+        emptyDetail,
+      );
+      const row = plan.education.create[0];
+      assert(row?.grade === grade, `"${input}" grade → ${row?.grade}`);
+      assert(row?.gradeType === gradeType, `"${input}" scale → ${row?.gradeType}`);
+    }
+
+    // An entry the candidate already put on CGPA is not handed a percentage.
+    const onCgpa = {
+      ...emptyDetail,
+      education: [{
+        id: "edu-1", institutionName: "PES University", collegeId: null, degree: "B.Tech",
+        fieldOfStudy: null, startMonth: null, startYear: null, endMonth: null,
+        graduationYear: 2022, isCurrent: false, gradeType: "CGPA_10", grade: null, description: null,
+      }],
+    } as unknown as CandidateDetail;
+    const conflicting = planResumeMerge(
+      normalizeParsedResume({
+        education: [{ institution: "PES University", degree: "B.Tech", year: "2022", cgpa: "92%" }],
+      }),
+      onCgpa,
+    );
+    assert(conflicting.education.update.every((u) => u.grade === undefined), "92% written under CGPA");
+    const agreeing = planResumeMerge(
+      normalizeParsedResume({
+        education: [{ institution: "PES University", degree: "B.Tech", year: "2022", cgpa: "8.7/10" }],
+      }),
+      onCgpa,
+    );
+    assert(agreeing.education.update[0]?.grade === "8.7", "the same scale fills the empty score");
+    assert(agreeing.education.update[0]?.gradeType === undefined, "and leaves the candidate's scale alone");
+  });
+
+  await suite("the prompt asks for school levels copied as written", () => {
+    const prompt = code("src/features/resume/parse.ts");
+    assert(prompt.includes('"SSC", "Class XII", "HSC"'), "school levels named in the prompt");
+    assert(prompt.includes("exactly as the résumé writes it"), "copied, so the verifier can check it");
+  });
+
   await suite("a year range does not disturb role start and end dates", () => {
     // `readDuration` must keep reading the FIRST year as the start; only the
     // education graduation year takes the last.

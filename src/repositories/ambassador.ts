@@ -242,6 +242,8 @@ export async function listAmbassadorCandidates(
                 select: {
                   institutionName: true,
                   collegeId: true,
+                  // Read only so `pickPrimaryEducation` can pass over Class X and XII.
+                  degree: true,
                   startYear: true,
                   startMonth: true,
                   graduationYear: true,

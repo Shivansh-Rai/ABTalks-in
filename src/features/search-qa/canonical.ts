@@ -14,6 +14,7 @@
  *
  * PURE.
  */
+import { isSchoolYearDegree } from "@/lib/candidate-vocab";
 
 export type CanonicalSkill = {
   skillId: string;
@@ -252,9 +253,13 @@ export function declaredExperienceMonths(c: CanonicalCandidate): number {
   return c.experience.reduce((n, e) => n + Math.max(0, e.totalMonths), 0);
 }
 
-/** The most recent graduation year the candidate actually entered. */
+/**
+ * The most recent graduation year the candidate actually entered. Class X and
+ * XII are passing years, not graduation years, and never count.
+ */
 export function latestGraduationYear(c: CanonicalCandidate): number | null {
   const years = c.education
+    .filter((e) => !isSchoolYearDegree(e.degree))
     .map((e) => e.graduationYear)
     .filter((y): y is number => typeof y === "number");
   return years.length ? Math.max(...years) : null;

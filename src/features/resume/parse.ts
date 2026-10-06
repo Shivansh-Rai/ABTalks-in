@@ -65,6 +65,7 @@ Rules:
 - Write descriptive content as points. "responsibilities", "achievements" and project "contributions" are arrays with ONE point per item — never several points joined into one string. A project "description" is a single short sentence saying what the project is; its details go in "contributions". An internship "summary" puts each point on its own line.
 - Copy achievement and responsibility bullets close to the candidate's own wording. Do not rewrite them to sound better, and do not add numbers that are not in the document.
 - "estimated_experience_years" is total professional working years, excluding time spent studying. Return 0 when the candidate has no professional experience.
+- Education: one entry per qualification, including school. Copy the qualification into "degree" exactly as the résumé writes it — a degree ("B.Tech"), a diploma, or a school level such as "10th", "SSC", "Class XII", "HSC" or "Intermediate". Never leave the school level only in "institution" or "branch". Copy "cgpa" as written, keeping its scale or % sign ("8.7/10", "92%").
 - Return a single JSON object and nothing else.`;
 
 export const RESUME_SCHEMA_PROMPT = `Extract this résumé into JSON matching exactly this schema:

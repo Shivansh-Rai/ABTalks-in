@@ -6,7 +6,7 @@ import {
   GradeType,
   OpportunityType,
 } from "@prisma/client";
-import { GRADE_SCORE_MAX } from "@/lib/candidate-vocab";
+import { GRADE_SCORE_MAX, educationLevelOf } from "@/lib/candidate-vocab";
 import { optionalPhoneSchema } from "@/lib/validations/phone";
 
 /* ─── shared helpers ─────────────────────────────────────────────────────── */
@@ -243,22 +243,112 @@ export type ExperienceRowInput = z.infer<typeof experienceRowSchema>;
 /* ─── Education ──────────────────────────────────────────────────────────── */
 
 /**
- * Numeric score scales have a hard ceiling. Letter grades (and legacy OTHER)
- * stay free text. Returns an error message, or null when the value is fine.
+ * A score means nothing without its scale, numeric scales have a floor and a
+ * ceiling, and a letter grade reads like one. Legacy OTHER stays free text.
+ * Returns an error message, or null when the value is fine.
  */
 export function gradeScoreIssue(
   gradeType: string | null | undefined,
   grade: string | null | undefined,
 ): string | null {
   const raw = grade?.trim() ?? "";
-  if (!gradeType || raw === "") return null;
+  if (raw === "") return null;
+  if (!gradeType) return "Choose the score type first";
+  if (gradeType === "GRADE") {
+    return /^[A-Za-z][A-Za-z0-9+\- ]{0,29}$/.test(raw)
+      ? null
+      : "Enter a grade such as A+ or O";
+  }
   const max = GRADE_SCORE_MAX[gradeType];
   if (max === undefined) return null;
+  if (!/^-?\d+(\.\d+)?$/.test(raw)) return "Enter a number";
   const n = Number(raw);
-  if (!Number.isFinite(n)) return "Enter a number";
   if (n < 0) return "Score cannot be negative";
+  if (n === 0) return "Score must be more than 0";
   if (n > max) return `Score cannot be more than ${max}`;
+  if (/\.\d{3,}$/.test(raw)) return "Use at most two decimal places";
   return null;
+}
+
+/** At least two letters: "IIT" is a name, "123" and "--" are not. */
+export const READS_AS_TEXT = /\p{L}.*\p{L}/u;
+
+export type EducationTimelineIssue = {
+  index: number;
+  field: "degree" | "startYear" | "graduationYear";
+  message: string;
+};
+
+/**
+ * Class X, then Class XII or a diploma, then college — in that order, once
+ * each for the school years. Every rule compares rows by their level (read off
+ * the degree), never by their position, so the form and the server reach the
+ * same answer however the rows are ordered. A row missing the year a rule
+ * needs is not judged by it: an unfinished date is not a wrong one.
+ */
+export function educationTimelineIssues(
+  rows: readonly {
+    degree: string | null;
+    startYear: number | null;
+    graduationYear: number | null;
+    isCurrent: boolean;
+  }[],
+): EducationTimelineIssue[] {
+  const issues: EducationTimelineIssue[] = [];
+  const levels = rows.map((r) => educationLevelOf(r.degree));
+  const passedIn = (i: number) =>
+    i < 0 || rows[i]!.isCurrent ? null : rows[i]!.graduationYear;
+
+  const tenthAt = levels.indexOf("TENTH");
+  const twelfthAt = levels.indexOf("TWELFTH");
+  const tenth = passedIn(tenthAt);
+  const twelfth = passedIn(twelfthAt);
+  const inTwelfthNow = twelfthAt >= 0 && rows[twelfthAt]!.isCurrent;
+
+  rows.forEach((row, i) => {
+    const level = levels[i]!;
+    const passed = passedIn(i);
+
+    if (level === "TENTH" && i !== tenthAt) {
+      issues.push({ index: i, field: "degree", message: "Class X is already added — it has its own tab" });
+    }
+    if (level === "TWELFTH" && i !== twelfthAt) {
+      issues.push({ index: i, field: "degree", message: "Class XII is already added — it has its own tab" });
+    }
+
+    if (level === "TWELFTH" && tenth !== null && passed !== null && passed < tenth + 2) {
+      issues.push({
+        index: i,
+        field: "graduationYear",
+        message: `Must be at least 2 years after Class X (${tenth})`,
+      });
+    }
+    if (level === "DIPLOMA" && tenth !== null && passed !== null && passed <= tenth) {
+      issues.push({
+        index: i,
+        field: "graduationYear",
+        message: `Must be after Class X (${tenth})`,
+      });
+    }
+
+    if (level !== "HIGHER") return;
+    if (row.startYear !== null) {
+      if (inTwelfthNow) {
+        issues.push({ index: i, field: "startYear", message: "College cannot start while you are still in Class XII" });
+      } else if (twelfth !== null && row.startYear < twelfth) {
+        issues.push({ index: i, field: "startYear", message: `College cannot start before Class XII (${twelfth})` });
+      } else if (tenth !== null && row.startYear < tenth + 2) {
+        issues.push({ index: i, field: "startYear", message: `College starts at least 2 years after Class X (${tenth})` });
+      }
+    } else if (passed !== null) {
+      if (twelfth !== null && passed <= twelfth) {
+        issues.push({ index: i, field: "graduationYear", message: `College cannot end before Class XII (${twelfth})` });
+      } else if (tenth !== null && passed <= tenth + 2) {
+        issues.push({ index: i, field: "graduationYear", message: `College cannot end within 2 years of Class X (${tenth})` });
+      }
+    }
+  });
+  return issues;
 }
 
 const educationRowSchema = z
@@ -287,6 +377,16 @@ const educationRowSchema = z
       "institutionName",
       "Add the school or college",
     );
+    const notText: [keyof typeof row, string | null, string][] = [
+      ["institutionName", row.institutionName, "Enter a real school or college name"],
+      ["degree", row.degree, "Enter a real degree name"],
+      ["fieldOfStudy", row.fieldOfStudy, "Enter a real field of study"],
+    ];
+    for (const [path, value, message] of notText) {
+      if (value && !READS_AS_TEXT.test(value)) {
+        ctx.addIssue({ code: "custom", path: [path], message });
+      }
+    }
     const gradeErr = gradeScoreIssue(row.gradeType, row.grade);
     if (gradeErr) {
       ctx.addIssue({
@@ -295,7 +395,8 @@ const educationRowSchema = z
         message: gradeErr,
       });
     }
-    const thisYear = new Date().getFullYear();
+    const now = new Date();
+    const thisYear = now.getFullYear();
     if (row.startYear !== null) {
       if (row.startYear < EDUCATION_MIN_YEAR || row.startYear > thisYear) {
         ctx.addIssue({
@@ -305,6 +406,34 @@ const educationRowSchema = z
         });
         return;
       }
+      if (
+        row.startYear === thisYear &&
+        row.startMonth !== null &&
+        row.startMonth > now.getMonth() + 1
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startYear"],
+          message: "Start date cannot be in the future",
+        });
+        return;
+      }
+    }
+    // Class X and XII are years already passed; a course still running is
+    // marked "currently studying" instead of given a future year.
+    const level = educationLevelOf(row.degree);
+    if (
+      (level === "TENTH" || level === "TWELFTH") &&
+      !row.isCurrent &&
+      row.graduationYear !== null &&
+      row.graduationYear > thisYear
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["graduationYear"],
+        message: "Year of passing cannot be in the future",
+      });
+      return;
     }
     // "Currently studying here" and an end year are mutually exclusive, and a
     // course that has not ended cannot have one.
@@ -333,6 +462,15 @@ export const educationSectionSchema = z.object({
   rows: z
     .array(educationRowSchema)
     .max(15, "You can add up to 15 education entries")
+    .superRefine((rows, ctx) => {
+      for (const issue of educationTimelineIssues(rows)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [issue.index, issue.field],
+          message: issue.message,
+        });
+      }
+    })
     .transform((rows) => rows.filter((r) => !isBlankRow(r))),
 });
 

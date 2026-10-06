@@ -24,6 +24,7 @@ import {
   programCohortIdFromSlug,
 } from "@/repositories/ids";
 import { applyVisibilityChange } from "@/repositories/visibility";
+import { recruiterEducationWhere } from "@/repositories/talent";
 
 type Tx = Prisma.TransactionClient | PrismaClient;
 
@@ -739,6 +740,8 @@ async function hydrateAiCohortMembership(
       resumeUrl: true,
       phone: true,
       education: {
+        // Never Class X or XII — see `recruiterEducationWhere`.
+        where: recruiterEducationWhere(),
         orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
         take: 1,
         select: {

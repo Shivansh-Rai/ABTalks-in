@@ -299,7 +299,9 @@ async function run() {
     const edu = plan.education.create[0];
     assert(edu?.institutionName.includes("PES University") === true, "institution");
     assert(edu?.graduationYear === 2022, `graduationYear: ${edu?.graduationYear}`);
-    assert(edu?.grade === "8.7/10", `grade: ${edu?.grade}`);
+    // "8.7/10" on the page: the number, on the scale the résumé wrote.
+    assert(edu?.grade === "8.7", `grade: ${edu?.grade}`);
+    assert(edu?.gradeType === "CGPA_10", `gradeType: ${edu?.gradeType}`);
     assert(edu?.fieldOfStudy === "Computer Science", "field of study");
   });
 

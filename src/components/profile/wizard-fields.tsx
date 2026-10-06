@@ -952,16 +952,18 @@ export function PwEntryCard({
   );
 }
 
+/** An outlined button, not a text link: adding an entry is a real action. */
 export function PwAddMore({
   onClick,
-  children = "+ Add More",
+  children = "Add more",
 }: {
   onClick: () => void;
   children?: ReactNode;
 }) {
   return (
     <button type="button" className="pw-add-more" onClick={onClick}>
-      {children}
+      <PlusIcon />
+      <span>{children}</span>
     </button>
   );
 }

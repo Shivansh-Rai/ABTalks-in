@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { SCHOOL_YEAR_DEGREES } from "@/lib/candidate-vocab";
 import type {
   CandidateSearchFilters,
   RecruiterContext,
@@ -26,6 +27,21 @@ export function searchableUserWhere(): Prisma.UserWhereInput {
     deletedAt: null,
     disabledAt: null,
     visibility: { is: { searchableByRecruiters: true, withdrawnAt: null } },
+  };
+}
+
+/**
+ * The education rows a recruiter surface reads: never Class X or XII. A student
+ * still in college has no graduation year yet, so ordering by it put their
+ * Class XII row forward as their education, and a graduation-year filter
+ * matched the year they left school.
+ *
+ * `degree: null` is spelled out because `notIn` alone also drops NULL in SQL,
+ * and a row with no degree is still a college someone typed.
+ */
+export function recruiterEducationWhere(): Prisma.CandidateEducationWhereInput {
+  return {
+    OR: [{ degree: null }, { degree: { notIn: [...SCHOOL_YEAR_DEGREES] } }],
   };
 }
 
@@ -108,6 +124,7 @@ export async function loadRecruiterIdentities(
           // NULLS LAST, not Postgres' default NULLS FIRST for DESC: a row with
           // no graduation year used to sort first and hide the year the
           // candidate actually entered (audit 2026-09-16, QA-KI-005).
+          where: recruiterEducationWhere(),
           orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
           take: 1,
           select: {
@@ -282,6 +299,7 @@ if (f.graduationYearFrom || f.graduationYearTo) {
   clauses.push({
     education: {
       some: {
+        ...recruiterEducationWhere(),
         graduationYear: {
           ...(f.graduationYearFrom && { gte: f.graduationYearFrom }),
           ...(f.graduationYearTo && { lte: f.graduationYearTo }),
@@ -335,6 +353,7 @@ const [total, rows] = await prisma.$transaction([
         },
       },
       education: {
+        where: recruiterEducationWhere(),
         orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
         take: 1,
         select: {
