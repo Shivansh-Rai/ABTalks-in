@@ -121,6 +121,15 @@ const DEGREE_ALIASES: Record<string, string> = {
   phd: "Ph.D",
   "12th": "Higher Secondary (12th)",
   "10th": "Secondary (10th)",
+  "class xii": "Higher Secondary (12th)",
+  "class 12": "Higher Secondary (12th)",
+  hsc: "Higher Secondary (12th)",
+  intermediate: "Higher Secondary (12th)",
+  "class x": "Secondary (10th)",
+  "class 10": "Secondary (10th)",
+  ssc: "Secondary (10th)",
+  sslc: "Secondary (10th)",
+  matriculation: "Secondary (10th)",
 };
 
 /** Fold a typed degree onto the catalog spelling, or keep it as typed. */
@@ -438,6 +447,191 @@ export function departmentsForDegree(degree: string): readonly string[] {
   return DEPARTMENTS_BY_DEGREE[canonical] ?? FIELDS_OF_STUDY;
 }
 
+/* ─── Education levels ───────────────────────────────────────────────────
+   The Education section has three fixed slots — Class X, Class XII or a
+   Diploma, and College — plus any number of other entries. There is no level
+   column: a row's level is read off its degree, so a row typed in the form, a
+   row the résumé merge wrote ("SSC", "CBSE Class XII", "B.Tech") and a row
+   from before the slots existed all land in the same place.
+   ------------------------------------------------------------------------- */
+
+export type EducationLevel = "TENTH" | "TWELFTH" | "DIPLOMA" | "HIGHER";
+
+/** What the X and XII slots store as `degree`. Both are in DEGREES above. */
+export const TENTH_DEGREE = "Secondary (10th)";
+export const TWELFTH_DEGREE = "Higher Secondary (12th)";
+export const DIPLOMA_DEGREE = "Diploma";
+
+/** Lowercase, punctuation to spaces, padded so every token has a space on each side. */
+function levelText(degree: string): string {
+  return ` ${degree.toLowerCase().replace(/[^a-z0-9+]+/g, " ").trim()} `;
+}
+
+const has = (text: string, ...tokens: string[]) =>
+  tokens.some((t) => text.includes(` ${t} `));
+
+/**
+ * The level a degree string describes. Blank and unrecognised degrees are
+ * HIGHER — that is what every row was before the slots existed.
+ *
+ * Order matters: "Higher Secondary" contains "Secondary", and a PG Diploma is
+ * a postgraduate qualification, not the diploma that stands in for Class XII.
+ */
+export function educationLevelOf(degree: string | null | undefined): EducationLevel {
+  const text = levelText(degree ?? "");
+  if (text.trim() === "") return "HIGHER";
+
+  // Professional exams that share a word with school levels ("CA Intermediate").
+  if (
+    has(text, "ca", "cs", "cma", "icai", "icsi") &&
+    has(text, "intermediate", "inter", "foundation", "executive", "final")
+  ) {
+    return "HIGHER";
+  }
+
+  if (
+    has(text, "pg", "pgd", "pgdca", "pgdm", "postgraduate") ||
+    text.includes(" post graduate ")
+  ) {
+    return "HIGHER";
+  }
+
+  const grade = (n: string) =>
+    has(text, `${n}th`) ||
+    ["class", "std", "standard", "grade"].some((w) => text.includes(` ${w} ${n} `));
+
+  if (
+    grade("12") ||
+    has(text, "xii", "xiith", "hsc", "isc", "puc", "aissce", "10+2", "+2", "intermediate") ||
+    text.includes(" h s c ") ||
+    text.includes(" higher secondary ") ||
+    text.includes(" senior secondary ") ||
+    text.includes(" sr secondary ") ||
+    text.includes(" pre university ") ||
+    text.includes(" plus two ")
+  ) {
+    return "TWELFTH";
+  }
+
+  if (
+    grade("10") ||
+    has(text, "x", "xth", "ssc", "sslc", "icse", "aisse", "hslc", "matric", "matriculation") ||
+    text.includes(" s s c ") ||
+    text.includes(" secondary ") ||
+    text.includes(" high school ")
+  ) {
+    return "TENTH";
+  }
+
+  if (has(text, "diploma", "polytechnic", "iti")) return "DIPLOMA";
+
+  return "HIGHER";
+}
+
+/** Class X or Class XII — one of each per person, never a degree. */
+export function isSchoolLevel(level: EducationLevel): boolean {
+  return level === "TENTH" || level === "TWELFTH";
+}
+
+/**
+ * Class X and XII exactly as the profile and the résumé merge store them — the
+ * spellings a database filter can match. Code that already holds the rows
+ * should use `isSchoolYearDegree`, which also reads older résumé spellings.
+ */
+export const SCHOOL_YEAR_DEGREES: readonly string[] = [TENTH_DEGREE, TWELFTH_DEGREE];
+
+/**
+ * A school year is never a candidate's education to a recruiter: a student in
+ * college has no graduation year yet, and their Class XII year must not stand
+ * in for one.
+ */
+export function isSchoolYearDegree(degree: string | null | undefined): boolean {
+  return isSchoolLevel(educationLevelOf(degree));
+}
+
+/**
+ * A school typed with no degree — what a résumé gives when it lists
+ * "Delhi Public School, 2019" and nothing else. It is not a college, so it is
+ * kept out of the College slot; which school year it was is the candidate's
+ * call.
+ */
+function looksLikeSchool(institutionName: string | null | undefined): boolean {
+  return /\b(school|vidyalaya|vidyalayam|vidya mandir|convent)\b/i.test(
+    institutionName ?? "",
+  );
+}
+
+export type EducationSlots<T> = {
+  tenth: T | null;
+  /** Class XII or a Diploma. */
+  twelfth: T | null;
+  college: T | null;
+  /** Everything else, in the order given. */
+  others: T[];
+};
+
+/**
+ * Splits saved rows into the three slots, first match wins, in the order the
+ * rows are given (sortOrder). The section saves its slots so that this split
+ * reads back exactly what was entered — see `education-section.tsx`.
+ */
+export function assignEducationSlots<
+  T extends { degree: string | null; institutionName: string | null },
+>(rows: readonly T[]): EducationSlots<T> {
+  const slots: EducationSlots<T> = {
+    tenth: null,
+    twelfth: null,
+    college: null,
+    others: [],
+  };
+  for (const row of rows) {
+    const level = educationLevelOf(row.degree);
+    if (level === "TENTH" && !slots.tenth) {
+      slots.tenth = row;
+    } else if ((level === "TWELFTH" || level === "DIPLOMA") && !slots.twelfth) {
+      slots.twelfth = row;
+    } else if (
+      level === "HIGHER" &&
+      !slots.college &&
+      !((row.degree ?? "").trim() === "" && looksLikeSchool(row.institutionName))
+    ) {
+      slots.college = row;
+    } else {
+      slots.others.push(row);
+    }
+  }
+  return slots;
+}
+
+/** What the College slot's degree picker offers: no school years, no diplomas. */
+export const COLLEGE_DEGREES: readonly string[] = DEGREES.filter(
+  (d) => educationLevelOf(d) === "HIGHER",
+);
+
+/** Other education may be a second diploma, but Class X and XII have their own tabs. */
+export const OTHER_EDUCATION_DEGREES: readonly string[] = DEGREES.filter(
+  (d) => !isSchoolLevel(educationLevelOf(d)),
+);
+
+/**
+ * Reads a score typed without its scale — "92%", "8.7/10", "3.6 / 4" — the way
+ * résumés write them, into a scale and a bare number. Null when the text is
+ * not one of those shapes; the candidate then picks the scale themselves.
+ */
+export function inferGradeType(
+  raw: string | null | undefined,
+): { gradeType: "PERCENTAGE" | "CGPA_10" | "GPA_4"; grade: string } | null {
+  const text = (raw ?? "").trim().toLowerCase();
+  if (!text) return null;
+  const pct = /^(\d{1,3}(?:\.\d+)?)\s*(?:%|percent|percentage|\/\s*100)$/.exec(text);
+  if (pct) return { gradeType: "PERCENTAGE", grade: pct[1]! };
+  const cgpa = /^(\d{1,2}(?:\.\d+)?)\s*(?:\/\s*10(?:\.0+)?|cgpa|cpi|sgpa|gpa\s*\/\s*10)$/.exec(text);
+  if (cgpa) return { gradeType: "CGPA_10", grade: cgpa[1]! };
+  const gpa4 = /^(\d(?:\.\d+)?)\s*\/\s*4(?:\.0+)?$/.exec(text);
+  if (gpa4) return { gradeType: "GPA_4", grade: gpa4[1]! };
+  return null;
+}
+
 export const COMMON_ROLES = [
   "Software Engineer",
   "Senior Software Engineer",
@@ -493,6 +687,9 @@ export const SCORE_TYPE_OPTIONS = [
   "GPA_4",
   "GRADE",
 ] as const;
+
+/** Boards in India mark Class X, XII and diplomas in percentage or CGPA. */
+export const SCHOOL_SCORE_TYPE_OPTIONS = ["PERCENTAGE", "CGPA_10"] as const;
 
 /** Numeric ceiling for each scale. Letter grades are free text. */
 export const GRADE_SCORE_MAX: Partial<Record<string, number>> = {

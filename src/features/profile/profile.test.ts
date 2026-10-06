@@ -17,7 +17,12 @@ import {
   GradeType,
   OpportunityType,
 } from "@prisma/client";
-import { normalizeGithubUsername, gradeScoreIssue } from "@/lib/validations/candidate-profile";
+import {
+  educationSectionSchema,
+  educationTimelineIssues,
+  gradeScoreIssue,
+  normalizeGithubUsername,
+} from "@/lib/validations/candidate-profile";
 import {
   pickPrimaryEducation,
   pickPrimaryExperience,
@@ -35,10 +40,15 @@ import {
   stateForCity,
 } from "@/lib/city-catalog";
 import {
+  COLLEGE_DEGREES,
   DEGREES,
   FIELDS_OF_STUDY,
+  OTHER_EDUCATION_DEGREES,
+  assignEducationSlots,
   canonicalDegree,
   departmentsForDegree,
+  educationLevelOf,
+  inferGradeType,
 } from "@/lib/candidate-vocab";
 import {
   endBeforeStart,
@@ -126,6 +136,7 @@ const edu = (
     name: string;
   },
 ) => ({
+  degree: null,
   isCurrent: false,
   startYear: null,
   startMonth: null,
@@ -133,6 +144,42 @@ const edu = (
   endMonth: null,
   sortOrder: 0,
   ...over,
+});
+
+suite("primary education: Class X and XII never stand in for college", () => {
+  const rows = [
+    edu({ name: "xii", degree: "Higher Secondary (12th)", graduationYear: 2023 }),
+    edu({ name: "x", degree: "SSC", graduationYear: 2021 }),
+    edu({ name: "college", degree: "B.Tech", startYear: 2023 }),
+  ];
+  // The college row is undated and not marked current — it used to lose to
+  // the dated Class XII row on "most recent end date".
+  assert(pickPrimaryEducation(rows)?.name === "college", "college over a dated XII");
+  assert(
+    pickPrimaryEducation([edu({ name: "xii", degree: "Higher Secondary (12th)", isCurrent: true })]) === null,
+    "school years alone give no primary education",
+  );
+  assert(
+    pickPrimaryEducation([edu({ name: "dip", degree: "Diploma", graduationYear: 2022 })])?.name === "dip",
+    "a diploma is a real qualification and still counts",
+  );
+});
+
+suite("recruiter surfaces read education through the school-year filter", () => {
+  const talent = code("src/repositories/talent.ts");
+  assert(talent.includes("export function recruiterEducationWhere"), "one filter, defined once");
+  assert(
+    talent.includes("{ degree: null }") && talent.includes("notIn: [...SCHOOL_YEAR_DEGREES]"),
+    "NULL degrees survive the notIn",
+  );
+  assert(
+    (talent.match(/recruiterEducationWhere\(\)/g) ?? []).length >= 3,
+    "identity overlay, search rows and the graduation-year filter all use it",
+  );
+  assert(
+    code("src/repositories/program-state.ts").includes("where: recruiterEducationWhere()"),
+    "AI cohort member rows use it too",
+  );
 });
 
 suite("primary education: currently studying wins", () => {
@@ -798,6 +845,44 @@ const completeEducation = (
   ...over,
 });
 
+const completeTenth = (
+  over: Partial<CandidateDetail["education"][number]> = {},
+): CandidateDetail["education"][number] => ({
+  id: "e10",
+  institutionName: "Kendriya Vidyalaya",
+  collegeId: null,
+  degree: "Secondary (10th)",
+  fieldOfStudy: null,
+  startMonth: null,
+  startYear: null,
+  endMonth: null,
+  graduationYear: 2018,
+  isCurrent: false,
+  gradeType: GradeType.PERCENTAGE,
+  grade: "91",
+  description: null,
+  ...over,
+});
+
+const completeTwelfth = (
+  over: Partial<CandidateDetail["education"][number]> = {},
+): CandidateDetail["education"][number] => ({
+  id: "e12",
+  institutionName: "Kendriya Vidyalaya",
+  collegeId: null,
+  degree: "Higher Secondary (12th)",
+  fieldOfStudy: "Science (PCM)",
+  startMonth: null,
+  startYear: null,
+  endMonth: null,
+  graduationYear: 2020,
+  isCurrent: false,
+  gradeType: GradeType.PERCENTAGE,
+  grade: "88",
+  description: null,
+  ...over,
+});
+
 const completeProject = (
   over: Partial<CandidateDetail["projects"][number]> = {},
 ): CandidateDetail["projects"][number] => ({
@@ -850,7 +935,7 @@ function fullProfile(
     headline: "CSE student",
     summary: "I build things",
     experience: [completeExperience({ description: "Shipped features" })],
-    education: [completeEducation()],
+    education: [completeEducation(), completeTwelfth(), completeTenth()],
     projects: [completeProject()],
     skills: [skill("a"), skill("b"), skill("c")],
     certifications: [completeCert()],
@@ -1022,63 +1107,112 @@ suite("deleting experience #1 rescores the new first row", () => {
   );
 });
 
-suite("education is gated on required fields of entry #1", () => {
-  const missingDegree = completeness({
-    education: [completeEducation({ degree: null })],
-  });
-  assert(sectionEarned(missingDegree, "education") === 0, "missing degree gates to 0");
+suite("education is three slots of 5% each, each gated on its own fields", () => {
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+  const edu = (...rows: CandidateDetail["education"]) =>
+    sectionEarned(completeness({ education: rows }), "education");
 
-  const missingField = completeness({
-    education: [completeEducation({ fieldOfStudy: " " })],
-  });
-  assert(sectionEarned(missingField, "education") === 0, "missing field gates to 0");
-
-  const requiredOnly = completeness({
-    education: [
-      completeEducation({
-        gradeType: null,
-        grade: null,
-        description: null,
-      }),
-    ],
-  });
+  // College.
+  assert(near(edu(completeEducation()), 5), "a full college row is 5");
+  assert(edu(completeEducation({ degree: null })) === 0, "missing degree gates college to 0");
+  assert(edu(completeEducation({ fieldOfStudy: " " })) === 0, "missing field gates college to 0");
   assert(
-    sectionEarned(requiredOnly, "education") === 13,
-    `required education is 13, got ${sectionEarned(requiredOnly, "education")}`,
+    near(edu(completeEducation({ gradeType: null, grade: null, description: null })), 4),
+    "required college fields alone are 4",
   );
   assert(
-    requiredOnly.sections.find((x) => x.key === "education")?.complete === true,
-    "optional score fields do not block the tick",
+    near(
+      edu(
+        completeEducation({
+          isCurrent: true,
+          graduationYear: null,
+          endMonth: null,
+          gradeType: null,
+          grade: null,
+          description: null,
+        }),
+      ),
+      4,
+    ),
+    "currently studying satisfies the college end date",
   );
 
-  const full = completeness({ education: [completeEducation()] });
-  assert(sectionEarned(full, "education") === 15, "optionals bring education to 15");
+  // Class X.
+  assert(near(edu(completeTenth()), 5), "a full Class X row is 5");
+  assert(near(edu(completeTenth({ grade: null })), 4), "Class X without a score is 4");
+  assert(edu(completeTenth({ graduationYear: null })) === 0, "Class X needs its year");
 
-  const current = completeness({
-    education: [
-      completeEducation({
-        isCurrent: true,
-        graduationYear: null,
-        endMonth: null,
-        gradeType: null,
-        grade: null,
-        description: null,
-      }),
-    ],
-  });
+  // Class XII or a Diploma — either fills the same slot.
+  assert(near(edu(completeTwelfth()), 5), "a full Class XII row is 5");
   assert(
-    sectionEarned(current, "education") === 13,
-    "currently studying satisfies the end date",
+    near(edu(completeTwelfth({ degree: "Diploma", fieldOfStudy: "Civil Engineering" })), 5),
+    "a diploma fills the XII slot",
+  );
+  assert(edu(completeTwelfth({ fieldOfStudy: null })) === 0, "Class XII needs its stream");
+  assert(
+    near(edu(completeTwelfth({ isCurrent: true, graduationYear: null })), 5),
+    "still in Class XII satisfies the year",
   );
 
-  const extraIgnored = completeness({
-    education: [
-      completeEducation(),
-      completeEducation({ id: "e2", institutionName: "Other" }),
-    ],
+  // All three, in any order.
+  const all = completeness({
+    education: [completeTenth(), completeTwelfth(), completeEducation()],
   });
-  assert(sectionEarned(extraIgnored, "education") === 15, "second education adds 0");
+  assert(near(sectionEarned(all, "education"), 15), "all three slots are 15");
+  assert(
+    all.sections.find((x) => x.key === "education")?.complete === true,
+    "and tick the section",
+  );
+  const collegeOnly = completeness({ education: [completeEducation()] });
+  assert(
+    collegeOnly.sections.find((x) => x.key === "education")?.complete === false,
+    "college alone does not tick the section",
+  );
+  assert(
+    miss(collegeOnly, "education").join(",") === "Class XII or Diploma details,Class X details",
+    `the empty slots are named, got ${miss(collegeOnly, "education").join(",")}`,
+  );
+
+  // Extra rows never add.
+  assert(
+    near(
+      edu(
+        completeEducation(),
+        completeEducation({ id: "e2", institutionName: "Other", degree: "M.Tech" }),
+        completeTwelfth(),
+        completeTenth(),
+      ),
+      15,
+    ),
+    "other education adds 0",
+  );
+
+  // Résumé spellings land in the right slots.
+  assert(
+    near(
+      edu(
+        completeTenth({ degree: "SSC" }),
+        completeTwelfth({ degree: "CBSE Class XII" }),
+        completeEducation({ degree: "B.Tech" }),
+      ),
+      15,
+    ),
+    "SSC, CBSE Class XII and B.Tech fill X, XII and College",
+  );
+
+  // A school with no degree is not a college.
+  assert(
+    edu(completeEducation({ institutionName: "Delhi Public School", degree: null })) === 0,
+    "a bare school row does not fill the College slot",
+  );
 });
+
+function miss(
+  result: ReturnType<typeof computeCompleteness>,
+  key: string,
+): string[] {
+  return result.sections.find((x) => x.key === key)?.missing ?? [];
+}
 
 suite("projects award fields independently on entry #1 only", () => {
   const empty = completeness();
@@ -1101,15 +1235,21 @@ suite("projects award fields independently on entry #1 only", () => {
       completeProject({ repoUrl: null, liveUrl: null }),
     ],
   });
-  assert(sectionEarned(three, "projects") === 10, "name+desc+stack is 10");
+  assert(sectionEarned(three, "projects") === 11, "name+desc+stack is 11");
 
   const emptyStack = completeness({
     projects: [completeProject({ techStack: [], repoUrl: null, liveUrl: null })],
   });
   assert(
-    sectionEarned(emptyStack, "projects") === 7,
+    sectionEarned(emptyStack, "projects") === 8,
     "empty tech stack does not count",
   );
+
+  // The live demo is optional and weighs nothing either way.
+  const withDemo = completeness({ projects: [completeProject()] });
+  const withoutDemo = completeness({ projects: [completeProject({ liveUrl: null })] });
+  assert(sectionEarned(withoutDemo, "projects") === 15, "no demo link is still 15");
+  assert(withDemo.score === withoutDemo.score, "a demo link adds nothing");
 
   const one = completeness({ projects: [completeProject()] });
   const two = completeness({
@@ -1513,12 +1653,12 @@ suite("every unearned field is named in missing — plan 173", () => {
   });
   const proj = halfProject.sections.find((s) => s.key === "projects");
   assert(
-    miss(halfProject, "projects").join(",") === "Live demo link",
-    "a project missing only its demo link says exactly that",
+    miss(halfProject, "projects").length === 0,
+    "a project without a demo link has nothing missing — the demo is optional",
   );
   assert(
-    proj?.complete === true,
-    "the live demo is optional — the section still ticks without it",
+    proj?.complete === true && proj.fraction === 1,
+    "and the section is complete at full weight without it",
   );
 });
 
@@ -1718,6 +1858,203 @@ suite("education score type drops Other and caps numeric scales", () => {
   assert(gradeScoreIssue("GRADE", "A+") === null, "letter grades stay free text");
 });
 
+suite("a score that makes no sense is refused", () => {
+  assert(gradeScoreIssue(null, "85") !== null, "a score needs its scale");
+  assert(gradeScoreIssue(null, "") === null, "no score, no scale needed");
+  assert(gradeScoreIssue("PERCENTAGE", "0") !== null, "0% is not a result");
+  assert(gradeScoreIssue("PERCENTAGE", "-5") !== null, "negative fails");
+  assert(gradeScoreIssue("PERCENTAGE", "92%") !== null, "units belong in the type");
+  assert(gradeScoreIssue("PERCENTAGE", "abc") !== null, "words are not a percentage");
+  assert(gradeScoreIssue("PERCENTAGE", "82.555") !== null, "three decimals is noise");
+  assert(gradeScoreIssue("PERCENTAGE", "82.55") === null, "two decimals is fine");
+  assert(gradeScoreIssue("CGPA_10", "1e1") !== null, "scientific notation is not a CGPA");
+  assert(gradeScoreIssue("GRADE", "!!") !== null, "a grade starts with a letter");
+  assert(gradeScoreIssue("GRADE", "O") === null, "O is a real grade");
+});
+
+suite("education levels are read off the degree, résumé spellings included", () => {
+  const cases: [string | null, string][] = [
+    ["Secondary (10th)", "TENTH"],
+    ["SSC", "TENTH"],
+    ["S.S.C.", "TENTH"],
+    ["Class X", "TENTH"],
+    ["10th", "TENTH"],
+    ["Matriculation", "TENTH"],
+    ["ICSE", "TENTH"],
+    ["Higher Secondary (12th)", "TWELFTH"],
+    ["HSC", "TWELFTH"],
+    ["Class XII (CBSE)", "TWELFTH"],
+    ["Intermediate (MPC)", "TWELFTH"],
+    ["Senior Secondary", "TWELFTH"],
+    ["10+2", "TWELFTH"],
+    ["PUC", "TWELFTH"],
+    ["Class XII (CS)", "TWELFTH"],
+    ["Diploma", "DIPLOMA"],
+    ["Diploma in Computer Engineering", "DIPLOMA"],
+    ["Polytechnic Diploma (12 months)", "DIPLOMA"],
+    ["ITI", "DIPLOMA"],
+    ["PG Diploma in Data Science", "HIGHER"],
+    ["PGDM", "HIGHER"],
+    ["CA Intermediate", "HIGHER"],
+    ["B.Tech", "HIGHER"],
+    ["B.E / B.Tech", "HIGHER"],
+    ["M.Sc", "HIGHER"],
+    ["Ph.D", "HIGHER"],
+    [null, "HIGHER"],
+    ["", "HIGHER"],
+  ];
+  for (const [degree, level] of cases) {
+    assert(educationLevelOf(degree) === level, `${degree} → ${level}, got ${educationLevelOf(degree)}`);
+  }
+  assert(
+    COLLEGE_DEGREES.every((d) => educationLevelOf(d) === "HIGHER"),
+    "the College picker offers no school year or diploma",
+  );
+  assert(!COLLEGE_DEGREES.includes("Diploma"), "Diploma has its own tab");
+  assert(OTHER_EDUCATION_DEGREES.includes("Diploma"), "a second diploma can be added");
+  assert(
+    !OTHER_EDUCATION_DEGREES.includes("Secondary (10th)") &&
+      !OTHER_EDUCATION_DEGREES.includes("Higher Secondary (12th)"),
+    "Class X and XII are only added in their tabs",
+  );
+  assert(canonicalDegree("ssc") === "Secondary (10th)", "SSC folds onto the catalog");
+  assert(canonicalDegree("HSC") === "Higher Secondary (12th)", "HSC folds onto the catalog");
+});
+
+suite("rows are split into the three slots and read back the way they were saved", () => {
+  const row = (degree: string | null, institutionName = "Somewhere") => ({
+    degree,
+    institutionName,
+  });
+  // The order the section saves in: college, other degrees, XII, X, diplomas.
+  const saved = [
+    row("B.Tech", "IIT"),
+    row("M.Tech", "IISc"),
+    row("Higher Secondary (12th)", "KV"),
+    row("Secondary (10th)", "KV"),
+    row("Diploma", "Govt Polytechnic"),
+  ];
+  const slots = assignEducationSlots(saved);
+  assert(slots.college?.institutionName === "IIT", "college is the first degree");
+  assert(slots.twelfth?.degree === "Higher Secondary (12th)", "XII before the later diploma");
+  assert(slots.tenth?.degree === "Secondary (10th)", "Class X");
+  assert(
+    slots.others.map((r) => r.institutionName).join(",") === "IISc,Govt Polytechnic",
+    "the rest stay in order",
+  );
+  const bare = assignEducationSlots([row(null, "Delhi Public School"), row(null, "NIT Trichy")]);
+  assert(bare.college?.institutionName === "NIT Trichy", "a bare school row is not the college");
+  assert(bare.others[0]?.institutionName === "Delhi Public School", "it stays an other entry");
+});
+
+suite("a score typed with its scale is split for the form", () => {
+  assert(inferGradeType("92%")?.gradeType === "PERCENTAGE", "92%");
+  assert(inferGradeType("92%")?.grade === "92", "the number alone");
+  assert(inferGradeType("8.7/10")?.gradeType === "CGPA_10", "8.7/10");
+  assert(inferGradeType("8.7 CGPA")?.grade === "8.7", "8.7 CGPA");
+  assert(inferGradeType("3.6 / 4")?.gradeType === "GPA_4", "3.6 / 4");
+  assert(inferGradeType("First Class") === null, "words are left to the candidate");
+  assert(inferGradeType("85") === null, "a bare number has no scale to infer");
+});
+
+suite("education years must follow X → XII / Diploma → college", () => {
+  const r = (
+    degree: string,
+    over: Partial<{ startYear: number | null; graduationYear: number | null; isCurrent: boolean }> = {},
+  ) => ({ degree, startYear: null, graduationYear: null, isCurrent: false, ...over });
+  const at = (rows: ReturnType<typeof r>[], index: number, field: string) =>
+    educationTimelineIssues(rows).find((i) => i.index === index && i.field === field);
+
+  const ok = [
+    r("B.Tech", { startYear: 2020, graduationYear: 2024 }),
+    r("Higher Secondary (12th)", { graduationYear: 2020 }),
+    r("Secondary (10th)", { graduationYear: 2018 }),
+  ];
+  assert(educationTimelineIssues(ok).length === 0, "a normal path has no issues");
+
+  assert(
+    at([r("Secondary (10th)", { graduationYear: 2019 }), r("HSC", { graduationYear: 2020 })], 1, "graduationYear") !== undefined,
+    "XII one year after X is refused",
+  );
+  assert(
+    at([r("Secondary (10th)", { graduationYear: 2019 }), r("Diploma", { graduationYear: 2019 })], 1, "graduationYear") !== undefined,
+    "a diploma in the same year as X is refused",
+  );
+  assert(
+    at([r("Higher Secondary (12th)", { graduationYear: 2021 }), r("B.Tech", { startYear: 2019 })], 1, "startYear") !== undefined,
+    "college before XII is refused",
+  );
+  assert(
+    at([r("Secondary (10th)", { graduationYear: 2019 }), r("B.Tech", { startYear: 2020 })], 1, "startYear") !== undefined,
+    "college a year after X is refused",
+  );
+  assert(
+    at([r("Higher Secondary (12th)", { isCurrent: true }), r("B.Tech", { startYear: 2024 })], 1, "startYear") !== undefined,
+    "college while still in XII is refused",
+  );
+  assert(
+    at([r("Secondary (10th)", { graduationYear: 2017 }), r("Diploma", { graduationYear: 2020 }), r("B.Tech", { startYear: 2020 })], 2, "startYear") === undefined,
+    "lateral entry after a diploma is fine",
+  );
+  assert(
+    at([r("Secondary (10th)"), r("SSC")], 1, "degree") !== undefined,
+    "a second Class X is refused",
+  );
+  assert(
+    educationTimelineIssues([r("Secondary (10th)"), r("B.Tech")]).length === 0,
+    "rows without years are not judged",
+  );
+
+  // The server schema applies the same rules, on the row's own path.
+  const blank = {
+    institutionName: "", collegeId: "", degree: "", fieldOfStudy: "",
+    startMonth: null, startYear: null, endMonth: null, graduationYear: null,
+    isCurrent: false, gradeType: "", grade: "", description: "",
+  };
+  const parsed = educationSectionSchema.safeParse({
+    rows: [
+      { ...blank, institutionName: "IIT", degree: "B.Tech", fieldOfStudy: "CSE", startYear: 2019, graduationYear: 2023 },
+      { ...blank, institutionName: "KV", degree: "Higher Secondary (12th)", fieldOfStudy: "Science (PCM)", graduationYear: 2021 },
+    ],
+  });
+  assert(!parsed.success, "college starting before XII is refused by the server");
+  assert(
+    !parsed.success && parsed.error.issues.some((i) => i.path.join(".") === "rows.0.startYear"),
+    "on the college row's start year",
+  );
+  const junkName = educationSectionSchema.safeParse({
+    rows: [{ ...blank, institutionName: "12345", degree: "B.Tech" }],
+  });
+  assert(
+    !junkName.success && junkName.error.issues.some((i) => i.path.join(".") === "rows.0.institutionName"),
+    "a name with no letters is refused",
+  );
+  const futureX = educationSectionSchema.safeParse({
+    rows: [{ ...blank, institutionName: "KV", degree: "Secondary (10th)", graduationYear: new Date().getFullYear() + 1 }],
+  });
+  assert(!futureX.success, "Class X cannot be passed in the future");
+  const fine = educationSectionSchema.safeParse({ rows: [blank, blank, blank] });
+  assert(fine.success && fine.data.rows.length === 0, "empty slots are dropped, not refused");
+});
+
+suite("education is split into tabbed slides with other education below", () => {
+  const src = code("src/components/profile/education-section.tsx");
+  assert(src.includes('role="tablist"'), "the slots are tabs");
+  for (const label of ['"Class X"', '"XII / Diploma"', '"College"']) {
+    assert(src.includes(`label: ${label}`), `a ${label} tab`);
+  }
+  assert(src.includes('role="tabpanel"'), "each tab controls a slide");
+  assert(src.includes("Add other education"), "other education can still be added");
+  assert(src.includes("SCHOOL_SCORE_TYPE_OPTIONS"), "school scores are percentage or CGPA");
+  assert(src.includes("assignEducationSlots"), "saved rows are split the way completeness splits them");
+  assert(src.includes("remapIssues"), "server issues land on the slot they came from");
+  const fields = code("src/components/profile/wizard-fields.tsx");
+  assert(/<PlusIcon \/>\s*<span>\{children\}<\/span>/.test(fields), "the add button carries an icon");
+  const css = source("src/components/profile/profile-wizard.css");
+  const add = css.slice(css.indexOf(".pw-add-more {"), css.indexOf("}", css.indexOf(".pw-add-more {")));
+  assert(add.includes("border: 1px solid var(--pw-primary)"), "the add button is outlined, not a bare link");
+});
+
 /* ─── Plan 136: UI QA findings ───────────────────────────────────────────── */
 
 suite("every dismissal of the sheet asks before dropping edits", () => {
@@ -1915,7 +2252,7 @@ suite("required fields are marked, announced, and explained", () => {
     ],
     [
       "src/components/profile/education-section.tsx",
-      ["School / College", "Degree", "Department / field"],
+      ["College / Institute", "Degree", "Department / field", "School name", "Year of passing"],
     ],
     [
       "src/components/profile/projects-section.tsx",

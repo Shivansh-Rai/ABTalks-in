@@ -2,6 +2,7 @@ import {
   GRADE_TYPE_LABELS,
   LINK_TYPE_LABELS,
   OPPORTUNITY_TYPE_LABELS,
+  educationLevelOf,
 } from "@/lib/candidate-vocab";
 import type { CandidateDetail } from "@/repositories/candidate-detail";
 import type { SectionKey, SectionStatus } from "@/features/profile/completeness";
@@ -173,8 +174,12 @@ function isAbbreviationOf(short: string, long: string): boolean {
 function conflictingBareEducation(
   education: CandidateDetail["education"],
 ): string | null {
+  // Only college-level rows can contradict a registration college. A school or
+  // polytechnic is meant to be somewhere else.
   const detailed = education.filter(
-    (e) => nonEmpty(e.degree) || nonEmpty(e.fieldOfStudy) || e.graduationYear !== null,
+    (e) =>
+      educationLevelOf(e.degree) === "HIGHER" &&
+      (nonEmpty(e.degree) || nonEmpty(e.fieldOfStudy) || e.graduationYear !== null),
   );
   if (detailed.length === 0) return null;
   for (const e of education) {

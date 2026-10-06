@@ -2,11 +2,13 @@
  * Pure helpers shared by the candidate repositories: month/date packing, the
  * primary-row precedence rule, and merged experience duration.
  *
- * Deliberately dependency-free — no Prisma client, no `server-only`. Both
+ * Deliberately free of Prisma and `server-only` — the only import is the pure
+ * education vocabulary. Both
  * `candidate.ts` (which projects the legacy-shaped identity view) and
  * `candidate-detail.ts` (which writes the structured rows) need this rule, and
  * it must exist in exactly one place or the two will drift.
  */
+import { isSchoolYearDegree } from "@/lib/candidate-vocab";
 
 /** Month/year → the first of that month, UTC. `CandidateExperience` uses @db.Date. */
 export function toMonthDate(year: number, month: number): Date {
@@ -28,12 +30,15 @@ export function splitMonthDate(date: Date | null): {
  * can only hold one. Pure and exported so the rule is testable and lives in
  * exactly one place.
  *
+ *   0. never Class X or XII — a school year is not where a candidate studied
+ *      for the job, and with no other row there is no answer
  *   1. currently studying (latest start wins among several)
  *   2. otherwise the most recent end date
  *   3. otherwise the lowest sortOrder, then the newest row
  */
 export function pickPrimaryEducation<
   T extends {
+    degree: string | null;
     isCurrent: boolean;
     startYear: number | null;
     startMonth: number | null;
@@ -41,7 +46,8 @@ export function pickPrimaryEducation<
     endMonth: number | null;
     sortOrder: number;
   },
->(rows: readonly T[]): T | null {
+>(all: readonly T[]): T | null {
+  const rows = all.filter((r) => !isSchoolYearDegree(r.degree));
   if (rows.length === 0) return null;
 
   const startKey = (r: T) => (r.startYear ?? 0) * 12 + (r.startMonth ?? 1);

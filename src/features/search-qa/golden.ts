@@ -39,6 +39,7 @@ import {
   type TrackSlug,
 } from "@/features/search-qa/canonical";
 import type { PoolSnapshot } from "@/features/search-qa/compare";
+import { SCHOOL_YEAR_DEGREES } from "@/lib/candidate-vocab";
 
 export const GOLDEN_NOW = new Date("2026-09-15T06:30:00.000Z");
 
@@ -413,10 +414,17 @@ function availabilityOf(p: CanonicalPreference | null): AvailabilitySnapshot {
   };
 }
 
-/** `loadRecruiterIdentities`: every CandidateSkill row by evidence, education `desc` NULLS LAST. */
+/**
+ * `loadRecruiterIdentities`: every CandidateSkill row by evidence, education
+ * `desc` NULLS LAST over `recruiterEducationWhere` — no Class X or XII row, by
+ * the stored spelling the SQL filter matches.
+ */
 function identityOf(c: CanonicalCandidate) {
   const months = c.experience.reduce((n, e) => n + (e.totalMonths ?? 0), 0);
-  const sortedEdu = [...c.education].sort((a, b) => {
+  const recruiterEdu = c.education.filter(
+    (e) => e.degree === null || !SCHOOL_YEAR_DEGREES.includes(e.degree),
+  );
+  const sortedEdu = [...recruiterEdu].sort((a, b) => {
     if (a.graduationYear == null) return b.graduationYear == null ? 0 : 1;
     if (b.graduationYear == null) return -1;
     return b.graduationYear - a.graduationYear;

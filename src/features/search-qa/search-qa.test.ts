@@ -35,6 +35,7 @@ import {
   expectedTracks,
   gateReasons,
   hasUsableProfile,
+  latestGraduationYear,
   noVisibilityRowIsProductDecision,
   type CanonicalCandidate,
 } from "@/features/search-qa/canonical";
@@ -865,6 +866,22 @@ check("a graduation year hidden by a year-less education row is still detected i
   };
   const drift = documentDrift(goldenFixture("QA056").canonical, stale);
   assert(drift.some((d) => d.cause === "NULLS_FIRST_EDUCATION_PICK"), JSON.stringify(drift));
+});
+
+check("a Class X or XII passing year is never a graduation year", () => {
+  const base = goldenFixture("QA056").canonical;
+  const row = (degree: string, graduationYear: number | null, isCurrent = false) => ({
+    institutionName: "QA", collegeId: null, degree, fieldOfStudy: null,
+    startYear: null, graduationYear, isCurrent,
+  });
+  // A student still in college: no graduation year yet, a dated Class XII.
+  const student = {
+    ...base,
+    education: [row("B.E / B.Tech", null, true), row("Higher Secondary (12th)", 2023), row("SSC", 2021)],
+  };
+  assert(latestGraduationYear(student) === null, `got ${latestGraduationYear(student)}`);
+  const diploma = { ...base, education: [row("Diploma", 2022), row("Secondary (10th)", 2019)] };
+  assert(latestGraduationYear(diploma) === 2022, "a diploma's year is a graduation year");
 });
 
 check("document graduation year equals the candidate's latest entered year (NULLS LAST)", () => {

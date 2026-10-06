@@ -1,4 +1,10 @@
 import { normalizeGithubUsername } from "@/lib/validations/candidate-profile";
+import {
+  TENTH_DEGREE,
+  TWELFTH_DEGREE,
+  educationLevelOf,
+  inferGradeType,
+} from "@/lib/candidate-vocab";
 import { allSkills } from "@/features/resume/normalize";
 import { newTerms, mergeTermLists } from "@/features/resume/merge/terms";
 import {
@@ -54,12 +60,17 @@ export type MergeSection =
   | "awards"
   | "skills";
 
+/** A score scale the résumé itself wrote ("8.7/10", "92%"). */
+export type ResumeGradeType = NonNullable<ReturnType<typeof inferGradeType>>["gradeType"];
+
 export type EducationCreate = {
   institutionName: string;
   degree: string | null;
   fieldOfStudy: string | null;
   graduationYear: number | null;
   grade: string | null;
+  /** Null when the résumé gave a bare number: a scale is never guessed. */
+  gradeType: ResumeGradeType | null;
 };
 
 /** Only the fields that were empty. Never a field the candidate filled. */
@@ -69,6 +80,8 @@ export type EducationUpdate = {
   fieldOfStudy?: string;
   graduationYear?: number;
   grade?: string;
+  /** Only alongside `grade`, and only onto a row with no scale yet. */
+  gradeType?: ResumeGradeType;
 };
 
 export type ExperienceCreate = {
@@ -210,6 +223,28 @@ function yearOf(value: string | null): number | null {
   const inRange = matches.filter((y) => y >= 1950 && y <= 2040);
   if (inRange.length === 0) return null;
   return inRange[inRange.length - 1]!;
+}
+
+/**
+ * Class X and XII stored the way the profile's Education tabs store them, so a
+ * résumé's "SSC" or "CBSE Class XII" opens in the right tab and is a school
+ * year to every recruiter filter. Degrees and diplomas keep the résumé's own
+ * wording — "Diploma in Civil" says more than "Diploma".
+ */
+function profileDegree(raw: string | null): string | null {
+  const level = educationLevelOf(raw);
+  if (level === "TENTH") return TENTH_DEGREE;
+  if (level === "TWELFTH") return TWELFTH_DEGREE;
+  return raw;
+}
+
+/** "8.7/10" → "8.7" on CGPA_10. A bare "8.7" keeps no scale rather than a guessed one. */
+function scoreOf(raw: string | null): {
+  grade: string | null;
+  gradeType: ResumeGradeType | null;
+} {
+  const text = clean(raw, 40);
+  return inferGradeType(text) ?? { grade: text, gradeType: null };
 }
 
 /**
@@ -382,9 +417,10 @@ export function planResumeMerge(
     if (!institution) continue;
     const incoming = {
       institution,
-      degree: clean(e.degree, 200),
+      degree: profileDegree(clean(e.degree, 200)),
       year: yearOf(e.year),
     };
+    const score = scoreOf(e.cgpa);
     const match = matchEducation(eduSeen, incoming);
 
     if (match) {
@@ -396,7 +432,17 @@ export function planResumeMerge(
       if (match.graduationYear === null && incoming.year !== null) {
         update.graduationYear = incoming.year;
       }
-      if (empty(match.grade) && !empty(e.cgpa)) update.grade = clean(e.cgpa, 40)!;
+      // A "92%" is not written under a scale the candidate already set to CGPA.
+      const sameScale =
+        match.gradeType === null ||
+        score.gradeType === null ||
+        score.gradeType === match.gradeType;
+      if (empty(match.grade) && score.grade && sameScale) {
+        update.grade = score.grade;
+        if (match.gradeType === null && score.gradeType) {
+          update.gradeType = score.gradeType;
+        }
+      }
 
       if (Object.keys(update).length > 1) {
         eduUpdate.push(update);
@@ -422,7 +468,8 @@ export function planResumeMerge(
       degree: incoming.degree,
       fieldOfStudy: clean(e.branch, 200),
       graduationYear: incoming.year,
-      grade: clean(e.cgpa, 40),
+      grade: score.grade,
+      gradeType: score.gradeType,
     };
     eduCreate.push(created);
     // Later résumé rows must not re-match a row that exists only in this plan;
@@ -438,7 +485,7 @@ export function planResumeMerge(
       endMonth: null,
       graduationYear: created.graduationYear,
       isCurrent: false,
-      gradeType: null,
+      gradeType: created.gradeType,
       grade: created.grade,
       description: null,
     });

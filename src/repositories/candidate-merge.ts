@@ -103,7 +103,11 @@ export async function applyResumeMerge(
             where:
               field === "graduationYear"
                 ? { id, userId, graduationYear: null }
-                : { id, userId, ...emptyWhere(field) },
+                : field === "gradeType"
+                  ? // An enum cannot be "", and the scale only lands on the
+                    // score this plan wrote — never on one typed since.
+                    { id, userId, gradeType: null, grade: u.grade }
+                  : { id, userId, ...emptyWhere(field) },
             data: { [field]: value },
           });
         }
@@ -119,6 +123,7 @@ export async function applyResumeMerge(
             fieldOfStudy: e.fieldOfStudy,
             graduationYear: e.graduationYear,
             grade: e.grade,
+            gradeType: e.gradeType,
             sortOrder: offset + i,
           })),
         });

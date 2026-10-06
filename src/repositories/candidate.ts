@@ -61,6 +61,8 @@ const newIdentitySelect = {
     select: {
       institutionName: true,
       collegeId: true,
+      // Read only so `pickPrimaryEducation` can pass over Class X and XII.
+      degree: true,
       startYear: true,
       startMonth: true,
       graduationYear: true,
@@ -157,6 +159,7 @@ function viewFromNew(
     education: Array<{
       institutionName: string;
       collegeId: string | null;
+      degree: string | null;
       startYear: number | null;
       startMonth: number | null;
       graduationYear: number | null;

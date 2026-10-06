@@ -1,3 +1,4 @@
+import { assignEducationSlots, educationLevelOf } from "@/lib/candidate-vocab";
 import { phoneSchema } from "@/lib/validations/phone";
 import type {
   CandidateDetail,
@@ -17,8 +18,8 @@ import type {
  * adding.
  *
  * Weights sum to exactly 100, accumulated as tenths of a percent so 0.5 and
- * 1.5 land without float drift. Experience and Education are gated: a
- * started-but-incomplete first entry contributes 0. Additional rows never
+ * 1.5 land without float drift. Experience and each Education slot are gated:
+ * a started-but-incomplete entry contributes 0. Additional rows never
  * increase the score. A candidate with no employment history can still earn
  * the Experience 20% by setting `hasNoWorkExperience`.
  */
@@ -218,60 +219,96 @@ function experienceScore(detail: CandidateDetail): SectionScore {
   };
 }
 
-function educationRequired(row: EducationView): boolean {
-  return (
-    filled(row.institutionName) &&
-    filled(row.degree) &&
-    filled(row.fieldOfStudy) &&
-    row.startYear != null &&
-    (row.isCurrent || row.graduationYear != null)
-  );
+/**
+ * Education is three slots of 5% each — Class X, Class XII or a Diploma, and
+ * College — split by `assignEducationSlots`. Each slot is gated like a section
+ * of its own: its required fields earn 4%, and nothing at all until they are
+ * all in; the score (and for College, the description) earns the last 1%.
+ * Other education entries never add to the score.
+ */
+const EDUCATION_SLOT_TENTHS = 50;
+const EDUCATION_GATE_TENTHS = 40;
+
+const scored = (r: EducationView) => r.gradeType !== null && filled(r.grade);
+
+function slotScore(
+  row: EducationView | null,
+  empty: string,
+  required: (string | false)[],
+  extras: { label: string; tenths: number; earned: boolean }[],
+): { earnedTenths: number; gate: boolean; missing: string[] } {
+  if (!row) return { earnedTenths: 0, gate: false, missing: [empty] };
+  const unmet = required.filter((x): x is string => typeof x === "string");
+  const extraMissing = extras.filter((e) => !e.earned).map((e) => e.label);
+  // The gate zeroes the slot, so its extras are named alongside the required
+  // fields rather than left for a second pass.
+  if (unmet.length > 0) {
+    return { earnedTenths: 0, gate: false, missing: [...unmet, ...extraMissing] };
+  }
+  const earnedTenths =
+    EDUCATION_GATE_TENTHS +
+    extras.reduce((sum, e) => sum + (e.earned ? e.tenths : 0), 0);
+  return { earnedTenths, gate: true, missing: extraMissing };
 }
 
 function educationScore(rows: EducationView[]): SectionScore {
-  if (rows.length === 0) {
-    return {
-      earnedTenths: 0,
-      complete: false,
-      hint: "Add your college or school",
-      missing: ["Your college or school"],
-    };
-  }
+  const { tenth, twelfth, college } = assignEducationSlots(rows);
 
-  const row = rows[0]!;
-  const extras = (r: EducationView): string[] =>
+  const x = slotScore(
+    tenth,
+    "Class X details",
     [
-      r.gradeType === null && "Score type (CGPA or percentage)",
-      !filled(r.grade) && "Score",
-      !filled(r.description) && "Course description",
-    ].filter((x): x is string => typeof x === "string");
+      !filled(tenth?.institutionName) && "Class X school name",
+      tenth?.graduationYear == null && "Class X year of passing",
+    ],
+    [{ label: "Class X score", tenths: 10, earned: Boolean(tenth && scored(tenth)) }],
+  );
 
-  if (!educationRequired(row)) {
-    return {
-      earnedTenths: 0,
-      complete: false,
-      hint: "Finish the required fields on your first education entry",
-      missing: [
-        !filled(row.institutionName) && "Institution name",
-        !filled(row.degree) && "Degree",
-        !filled(row.fieldOfStudy) && "Field of study",
-        row.startYear == null && "Start year",
-        !row.isCurrent && row.graduationYear == null
-          ? "Graduation year (or mark it ongoing)"
-          : false,
-      ].filter((x): x is string => typeof x === "string").concat(extras(row)),
-    };
-  }
+  const diploma = educationLevelOf(twelfth?.degree) === "DIPLOMA";
+  const xii = diploma ? "Diploma" : "Class XII";
+  const twelve = slotScore(
+    twelfth,
+    "Class XII or Diploma details",
+    [
+      !filled(twelfth?.institutionName) &&
+        (diploma ? "Diploma institute name" : "Class XII school name"),
+      !filled(twelfth?.fieldOfStudy) && (diploma ? "Diploma branch" : "Class XII stream"),
+      !twelfth?.isCurrent &&
+        twelfth?.graduationYear == null &&
+        `${xii} year of passing (or mark it ongoing)`,
+    ],
+    [{ label: `${xii} score`, tenths: 10, earned: Boolean(twelfth && scored(twelfth)) }],
+  );
 
-  let earnedTenths = 130;
-  if (row.gradeType !== null) earnedTenths += 10;
-  if (filled(row.grade)) earnedTenths += 5;
-  if (filled(row.description)) earnedTenths += 5;
+  const degree = slotScore(
+    college,
+    "Your college details",
+    [
+      !filled(college?.institutionName) && "College name",
+      !filled(college?.degree) && "Degree",
+      !filled(college?.fieldOfStudy) && "Field of study",
+      college?.startYear == null && "College start year",
+      !college?.isCurrent &&
+        college?.graduationYear == null &&
+        "Graduation year (or mark it ongoing)",
+    ],
+    [
+      { label: "College score (CGPA or percentage)", tenths: 5, earned: Boolean(college && scored(college)) },
+      { label: "Course description", tenths: 5, earned: filled(college?.description) },
+    ],
+  );
+
+  const earnedTenths = x.earnedTenths + twelve.earnedTenths + degree.earnedTenths;
+  const complete = x.gate && twelve.gate && degree.gate;
   return {
     earnedTenths,
-    complete: true,
-    hint: earnedTenths < 150 ? "Add your score and a short description" : null,
-    missing: extras(row),
+    complete,
+    hint: !complete
+      ? "Add your Class X, Class XII or Diploma, and college details"
+      : earnedTenths < 3 * EDUCATION_SLOT_TENTHS
+        ? "Add your scores and a short course description"
+        : null,
+    missing: [...degree.missing, ...twelve.missing, ...x.missing],
   };
 }
 
@@ -288,14 +325,13 @@ function projectScore(rows: ProjectView[]): SectionScore {
   const row = rows[0]!;
   let earnedTenths = 0;
   if (filled(row.title)) earnedTenths += 30;
-  if (filled(row.description)) earnedTenths += 40;
+  if (filled(row.description)) earnedTenths += 50;
   if (filled(row.techStack)) earnedTenths += 30;
-  if (filled(row.repoUrl)) earnedTenths += 30;
-  if (filled(row.liveUrl)) earnedTenths += 20;
+  if (filled(row.repoUrl)) earnedTenths += 40;
 
-  // GitHub (repo) is required for the section tick; the live demo is an optional
-  // extra that still earns weight and appears in `missing` when blank — same
-  // shape as experience description / education grade.
+  // The live demo link is optional and carries no weight: plenty of real
+  // projects (CLIs, libraries, notebooks) have nothing to host, and the
+  // repository is the proof a recruiter opens.
   const gateMet =
     filled(row.title) &&
     filled(row.description) &&
@@ -305,17 +341,12 @@ function projectScore(rows: ProjectView[]): SectionScore {
   return {
     earnedTenths,
     complete: gateMet,
-    hint: !gateMet
-      ? "Add a name, description, tech stack, and GitHub link"
-      : earnedTenths < 150
-        ? "Add a live demo link if you have one"
-        : null,
+    hint: gateMet ? null : "Add a name, description, tech stack, and GitHub link",
     missing: [
       !filled(row.description) && "Project description",
+      !filled(row.repoUrl) && "Repository link",
       !filled(row.title) && "Project name",
       !filled(row.techStack) && "Tech stack",
-      !filled(row.repoUrl) && "Repository link",
-      !filled(row.liveUrl) && "Live demo link",
     ].filter((x): x is string => typeof x === "string"),
   };
 }
