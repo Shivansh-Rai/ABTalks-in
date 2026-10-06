@@ -453,6 +453,12 @@ export function ScoutChat({
   useLayoutEffect(() => {
     const el = promptRef.current;
     if (!el) return;
+    // Landing hero: fixed single-line bar (CSS). Never write an inline
+    // height or long prompts grow the frosted glass card.
+    if (el.closest(".scout--hero")) {
+      el.style.height = "";
+      return;
+    }
     // Empty field: drop the inline height so CSS min-height owns the box.
     // Measuring scrollHeight on a blank placeholder after the stage flip
     // wrapped the placeholder and grew the bar.
@@ -477,6 +483,10 @@ export function ScoutChat({
     const ro = new ResizeObserver(() => {
       if (el.clientWidth === lastWidth) return;
       lastWidth = el.clientWidth;
+      if (el.closest(".scout--hero")) {
+        el.style.height = "";
+        return;
+      }
       if (!el.value) {
         el.style.height = "";
         return;
@@ -1750,6 +1760,7 @@ export function ScoutChat({
                     persist ? resultsCartCount : readGuestCart().length
                   }
                   requestId={persist ? requestId : null}
+                  searchSpec={spec}
                   onOpen={openFromList}
                   onDecision={(m, decision) => {
                     const userId =

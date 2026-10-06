@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { listChallengeSubmissions } from "@/repositories/progress";
 import { readDayNumberFromMetadata } from "@/lib/admin-action-metadata";
 import {
-  getCurrentDayNumber,
   getElapsedDayNumber,
   getIstDateKeyForChallengeDay,
 } from "@/lib/date-utils";
@@ -218,7 +217,6 @@ export async function getHeatmapData(
     }
   }
 
-  const currentDay = getCurrentDayNumber(enrollment, enrollment.challenge);
   const elapsedDay = getElapsedDayNumber(enrollment, enrollment.challenge);
   const out: HeatmapCell[] = [];
 
@@ -242,8 +240,9 @@ export async function getHeatmapData(
           : "late";
     } else if (rejectAction) {
       status = "rejected";
-    } else if (dayNumber >= currentDay) {
-      // Strictly future days, OR today with no submission yet (same gray as future)
+    } else if (dayNumber >= elapsedDay) {
+      // Today (uncapped) with no submission, or a day still ahead of the clock.
+      // After day 60, elapsed > 60 so day 60 is "missed", not perpetual "today".
       status = "future";
     } else {
       status = "missed";

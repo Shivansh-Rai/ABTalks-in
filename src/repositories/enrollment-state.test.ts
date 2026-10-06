@@ -77,6 +77,7 @@ function makeTx() {
   const pe = {
     id: "",
     status: "" as string,
+    startedAt: null as Date | null,
     completedAt: null as Date | null,
     trackCurrentStreak: 0,
     trackLongestStreak: 0,
@@ -118,14 +119,20 @@ function makeTx() {
         create: {
           id: string;
           status: EnrollmentStatusV2;
+          startedAt: Date;
           completedAt: Date | null;
         };
-        update: { status: EnrollmentStatusV2; completedAt: Date | null };
+        update: {
+          status: EnrollmentStatusV2;
+          startedAt: Date;
+          completedAt: Date | null;
+        };
       }) => {
         writes.push(`pe.upsert:${where.id}`);
         pe.upsertCount += 1;
         pe.id = create.id;
         pe.status = update.status ?? create.status;
+        pe.startedAt = update.startedAt ?? create.startedAt;
         pe.completedAt = update.completedAt ?? create.completedAt;
         pe.exists = true;
         return pe;
@@ -551,6 +558,30 @@ async function main() {
     });
     assert(tx.pe.status === EnrollmentStatusV2.COMPLETED, "completed");
     assert(tx.pe.completedAt instanceof Date, "completedAt set");
+  });
+
+  await suite("update persists new startedAt (admin reset clock)", async () => {
+    const tx = makeTx();
+    const dateA = new Date("2026-06-01T00:00:00.000Z");
+    const dateB = new Date("2026-10-03T00:00:00.000Z");
+    await applyChallengeProgramEnrollment(tx as never, {
+      id: "enr1",
+      userId: "u1",
+      domain: Domain.CLAUDE,
+      status: EnrollmentStatus.ACTIVE,
+      startedAt: dateA,
+      completedAt: null,
+    });
+    assert(tx.pe.startedAt?.getTime() === dateA.getTime(), "create startedAt A");
+    await applyChallengeProgramEnrollment(tx as never, {
+      id: "enr1",
+      userId: "u1",
+      domain: Domain.CLAUDE,
+      status: EnrollmentStatus.ACTIVE,
+      startedAt: dateB,
+      completedAt: null,
+    });
+    assert(tx.pe.startedAt?.getTime() === dateB.getTime(), "update startedAt B");
   });
 
   await suite("anonymize maps PE to DROPPED", async () => {

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { TrackList } from "@/components/explore/track-list";
 import { AppHeader } from "@/components/shared/app-header";
-import { getUserActiveEnrollments } from "@/features/enrollment/get-user-enrollments";
+import { getUserChallengeEnrollments } from "@/features/enrollment/get-user-enrollments";
 import { isClaudeEnabled } from "@/lib/feature-flags";
 
 export default async function ExplorePage() {
@@ -11,7 +11,7 @@ export default async function ExplorePage() {
     redirect("/login");
   }
 
-  const enrollments = await getUserActiveEnrollments(session.user.id);
+  const enrollments = await getUserChallengeEnrollments(session.user.id);
   const claudeEnabled = isClaudeEnabled();
   const headerUser = {
     name: session.user.name ?? null,

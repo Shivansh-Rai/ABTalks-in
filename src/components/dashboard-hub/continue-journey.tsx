@@ -32,7 +32,8 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
   // window and grace period have closed cannot be worked on again, so it stops
   // being an active card however many days were missed.
   const active = enrollments.filter((e) => e.lifecycle === "active");
-  const finished = enrollments.filter((e) => e.lifecycle !== "active");
+  // True completes only — ended (missed window) stays off this card to free space.
+  const finished = enrollments.filter((e) => e.lifecycle === "completed");
 
   return (
     <section
@@ -70,7 +71,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
               100,
               Math.round((e.daysCompleted / e.totalDays) * 100),
             );
-            const subtitle = `Day ${e.daysCompleted + 1} of ${e.totalDays} · ${e.currentStreak}-day streak`;
+            const subtitle = `Day ${e.currentDay} of ${e.totalDays} · ${e.currentStreak}-day streak`;
             return (
               <li
                 key={e.id}
@@ -114,21 +115,15 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
         </ul>
       )}
 
-      {/* Finished work, kept visible but out of the way: nothing here is
-            something you can act on, so it gets a quieter card and no solid
-            CTA rather than competing with the challenges still running.
-            Certificates only auto-issue for Claude, so dropping these
-            outright would leave a finished AI, DS or SE challenge with no
-            trace anywhere on the site. */}
+      {/* True completes only (lifecycle completed). Ended/missed windows are
+            omitted — they clutter Continue and are reachable from /claude View. */}
         {finished.length > 0 ? (
           <>
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-[#6B7477]">
               Finished
             </h3>
             <ul className="no-scrollbar mt-3 flex gap-4 overflow-x-auto pb-1 snap-x snap-mandatory 2xl:grid 2xl:grid-cols-3 2xl:overflow-visible 2xl:pb-0 2xl:snap-none">
-              {finished.map((e) => {
-                const completed = e.lifecycle === "completed";
-                return (
+              {finished.map((e) => (
                   <li
                     key={e.id}
                     className={cn(
@@ -140,13 +135,8 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                       <p className="font-inter font-bold text-[#4B4B4B]">
                         {DOMAIN_LABEL[e.domain]}
                       </p>
-                      {/* "Ended", never "Completed", when days were missed:
-                          calling an unfinished run complete would be the
-                          platform misreporting its own user's record. */}
                       <p className="mt-1 text-sm text-[#6B7477]">
-                        {completed
-                          ? `Completed · ${e.totalDays} of ${e.totalDays}`
-                          : `Ended · ${e.daysCompleted} of ${e.totalDays}`}
+                        {`Completed · ${e.totalDays} of ${e.totalDays}`}
                       </p>
                     </div>
                     <Link
@@ -156,8 +146,7 @@ export function ContinueJourney({ enrollments }: ContinueJourneyProps) {
                       View
                     </Link>
                   </li>
-                );
-              })}
+              ))}
             </ul>
         </>
       ) : null}

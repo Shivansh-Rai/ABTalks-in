@@ -471,6 +471,11 @@ export function StreakBox({ streak }: { streak: ActivityStreak }) {
 /* ─── Continue learning ──────────────────────────────────────── */
 
 export function ContinueLearning({ enrollments }: { enrollments: HubEnrollment[] }) {
+  // Active = still submittable. Finished list is true completes only — ended
+  // (window closed with misses) is omitted so it does not occupy Continue Learning.
+  const active = enrollments.filter((e) => e.lifecycle === "active");
+  const finished = enrollments.filter((e) => e.lifecycle === "completed");
+
   return (
     <section
       id="your-challenge"
@@ -479,39 +484,88 @@ export function ContinueLearning({ enrollments }: { enrollments: HubEnrollment[]
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#008C94]">Continue learning</p>
       <h3 className="mt-2 font-heading text-2xl font-bold leading-tight">Pick up your track</h3>
 
-      <ul className="mt-4 space-y-3">
-        {enrollments.map((e) => {
-          const { name, path } = TRACK_META[e.domain];
-          const done = e.status === "COMPLETED";
-          const pct = done ? 100 : Math.min(100, Math.round((e.daysCompleted / 60) * 100));
-          return (
-            <li key={e.id}>
-              <Link
-                href={path}
-                className="group flex items-center gap-3 rounded-2xl bg-[#DCE8E9] p-2.5 text-black transition-colors hover:bg-[#D2E2E3]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- small static thumbnail */}
-                <img src={TRACK_THUMB[e.domain]} alt="" className="size-[60px] shrink-0 rounded-xl bg-white object-cover" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-heading text-[15px] font-bold leading-tight">{name}</span>
-                  <span className="mt-0.5 block text-xs text-[#4B4B4B]">
-                    {done ? "Completed · 60 of 60" : `Day ${Math.min(60, e.daysCompleted + 1)} of 60`}
-                  </span>
-                  <span className="mt-1.5 flex items-center gap-2">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#AFC0C1]" aria-hidden="true">
-                      <span className="block h-full rounded-full bg-[#03535F]" style={{ width: `${pct}%` }} />
+      {active.length === 0 && finished.length === 0 ? (
+        <p className="mt-4 text-sm text-[#4B4B4B]">You haven&apos;t started a challenge yet.</p>
+      ) : null}
+
+      {active.length > 0 ? (
+        <ul className="mt-4 space-y-3">
+          {active.map((e) => {
+            const { name, path } = TRACK_META[e.domain];
+            const pct = Math.min(
+              100,
+              Math.round((e.daysCompleted / e.totalDays) * 100),
+            );
+            return (
+              <li key={e.id}>
+                <Link
+                  href={path}
+                  className="group flex items-center gap-3 rounded-2xl bg-[#DCE8E9] p-2.5 text-black transition-colors hover:bg-[#D2E2E3]"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- small static thumbnail */}
+                  <img src={TRACK_THUMB[e.domain]} alt="" className="size-[60px] shrink-0 rounded-xl bg-white object-cover" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-heading text-[15px] font-bold leading-tight">{name}</span>
+                    <span className="mt-0.5 block text-xs text-[#4B4B4B]">
+                      {`Day ${e.currentDay} of ${e.totalDays}`}
                     </span>
-                    <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#03535F]">
-                      {done ? "View" : "Continue"}
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    <span className="mt-1.5 flex items-center gap-2">
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#AFC0C1]" aria-hidden="true">
+                        <span className="block h-full rounded-full bg-[#03535F]" style={{ width: `${pct}%` }} />
+                      </span>
+                      <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#03535F]">
+                        Continue
+                        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                      </span>
                     </span>
                   </span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      {finished.length > 0 ? (
+        <>
+          <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B7477]">
+            Finished
+          </p>
+          <ul className="mt-2 space-y-3">
+            {finished.map((e) => {
+              const { name, path } = TRACK_META[e.domain];
+              return (
+                <li key={e.id}>
+                  <Link
+                    href={path}
+                    className="group flex items-center gap-3 rounded-2xl bg-[#E9EEEE] p-2.5 text-black transition-colors hover:bg-[#E0E6E6]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- small static thumbnail */}
+                    <img src={TRACK_THUMB[e.domain]} alt="" className="size-[60px] shrink-0 rounded-xl bg-white object-cover" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-heading text-[15px] font-bold leading-tight text-[#4B4B4B]">
+                        {name}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-[#6B7477]">
+                        {`Completed · ${e.totalDays} of ${e.totalDays}`}
+                      </span>
+                      <span className="mt-1.5 flex items-center gap-2">
+                        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#AFC0C1]" aria-hidden="true">
+                          <span className="block h-full rounded-full bg-[#8F8F8F]" style={{ width: "100%" }} />
+                        </span>
+                        <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#4B4B4B]">
+                          View
+                          <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                        </span>
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

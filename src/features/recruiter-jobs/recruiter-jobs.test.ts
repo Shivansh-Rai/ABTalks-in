@@ -28,7 +28,13 @@ import {
   type JobRow,
   type JobStore,
 } from "./service";
-import { lifecyclePatch, nextStatus, normalizeSkills } from "./lifecycle";
+import {
+  JOB_SKILL_MAX_COUNT,
+  JOB_SKILL_MAX_LEN,
+  lifecyclePatch,
+  nextStatus,
+  normalizeSkills,
+} from "./lifecycle";
 import { candidatePublicId } from "@/features/hire/public-id";
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 
@@ -200,6 +206,17 @@ async function run() {
     const out = normalizeSkills(["A", " a ", "b", "", "  ", "C", "c"]);
     assert(out.length === 3, `expected 3, got ${out.length}`);
     assert(out[0] === "A" && out[1] === "b" && out[2] === "C", "kept originals");
+  });
+
+  await suite("normalizeSkills truncates long skills and caps the list", () => {
+    const long = "y".repeat(JOB_SKILL_MAX_LEN + 25);
+    const many = Array.from({ length: JOB_SKILL_MAX_COUNT + 5 }, (_, i) => `k${i}`);
+    const truncated = normalizeSkills([long]);
+    assert(truncated[0]?.length === JOB_SKILL_MAX_LEN, "skill length capped");
+    assert(
+      normalizeSkills(many).length === JOB_SKILL_MAX_COUNT,
+      "skill count capped",
+    );
   });
 
   // Integration through the service ---------------------------------------

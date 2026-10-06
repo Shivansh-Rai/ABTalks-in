@@ -45,6 +45,13 @@
 - 2026-08-10 — `/` now renders the landing hub for signed-in users too (no more redirect to /dashboard); track cards show "Open dashboard" per-track via `features/landing/get-landing-state.ts`; `/login` bounces signed-in users to `/` instead of `/dashboard`.
 
 ## Pending reconcile
+- 2026-09-29 [rule|data] Recruiter credit policy is now $200 starting grant + $0.50 per contact unlock (400 unlocks): `credits.starting_grant_minor` default 2_000_000 → 20_000 and `credits.contact_unlock_cost_minor` default 1_000 → 50; stored unlock cost set to 50 on Proud Sky, Young Shadow and Nameless (prod was 999); live recruiter workspaces below $200 topped up to $200 via one idempotent ADMIN_ADJUSTMENT each (key `grant:topup-to-200usd-20260929:<orgId>`; prod 3, Young Shadow 4, Proud Sky 9), ledger reconciled; 13 prod workspaces left at their existing $20,000 balance; stored `credits.starting_grant_minor` rows not yet changed
+- 2026-10-03 [rule] Recruiter job create/update paste-tolerant: skill caps 100/40 with truncate+dedupe, apply URL https:// normalize, minExperience coerce, field-level Zod errors (no generic Invalid input)
+- 2026-10-03 [convention] Plan 179: Scout desk card AI Summary uses sidebar prose (`recruiterSummary` / session-cached Gemini), clamped to 3 lines — no per-card Gemini fetch
+- 2026-10-03 [convention] Hub Continue Learning / Continue Journey Finished lists only lifecycle `completed` — `ended` (window closed with misses) is omitted from those cards
+- 2026-10-03 [rule] Plan 178: 60-day Continue/Completed CTAs use exported `challengeLifecycle` (active|completed|ended); post-window tracks show Ended not Continue Day 60 / Completed
+- 2026-10-03 [rule] After day 60, heatmap/UI use uncapped elapsed day so Day 60 is missed (not perpetual "today"); Claude canSubmit compares to elapsedDayNumber
+- 2026-10-03 [rule] Plan 177: challenge PE upsert update persists `startedAt` so admin reset restarts the day clock; hub Continue card shows IST `currentDay`, not `daysCompleted + 1`
 - 2026-10-03 [rule] Plan 176: empty Career Preferences (no roles and no locations) awards full 3%; starting either half still requires both
 - 2026-10-03 [rule] Plan 175: portfolio URL is optional in Links — LinkedIn + GitHub award full 4%; portfolio no longer blocks 100%
 - 2026-10-03 [rule] Plan 174: empty Accomplishments (no certification rows) awards full 5% so the profile is not held incomplete; a started certification still requires name, issuer, issue year, and credential link; awards remain optional

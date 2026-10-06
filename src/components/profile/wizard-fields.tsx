@@ -870,35 +870,82 @@ export function PwEntryCard({
   index,
   title,
   onRemove,
+  onMoveUp,
+  onMoveDown,
+  entryCount,
   children,
 }: {
   index: number;
   title: string;
   onRemove: () => void;
+  /** When set with `onMoveDown`, shows grip + Move Up / Move Down controls. */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  /** Required with move handlers so end-of-list buttons can disable. */
+  entryCount?: number;
   children: ReactNode;
 }) {
+  const canReorder = onMoveUp !== undefined && onMoveDown !== undefined;
+  const label = title.toLowerCase();
+  const total = entryCount ?? 0;
+  const moveUpDisabled = index <= 0;
+  const moveDownDisabled = total <= 0 || index >= total - 1;
+
   return (
     <div className="pw-entry">
       <div className="pw-entry-head">
-        <div className="pw-entry-title">
-          {title} {index + 1}
+        <div className="pw-entry-title-row">
+          {canReorder ? (
+            <span className="pw-entry-grip" aria-hidden>
+              ⋮⋮
+            </span>
+          ) : null}
+          <div className="pw-entry-title">
+            {title} {index + 1}
+          </div>
         </div>
-        <button
-          type="button"
-          className="pw-entry-remove"
-          title="Delete this entry"
-          aria-label={`Remove ${title.toLowerCase()} ${index + 1}`}
-          onClick={onRemove}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <path d="M3 6h18" />
-            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-            <path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
-            <path d="M10 11v6" />
-            <path d="M14 11v6" />
-          </svg>
-          <span>Delete</span>
-        </button>
+        <div className="pw-entry-actions">
+          {canReorder ? (
+            <>
+              <button
+                type="button"
+                className="pw-entry-move"
+                disabled={moveUpDisabled}
+                title={`Move ${label} up`}
+                aria-label={`Move ${label} ${index + 1} up`}
+                onClick={onMoveUp}
+              >
+                Move Up
+              </button>
+              <button
+                type="button"
+                className="pw-entry-move"
+                disabled={moveDownDisabled}
+                title={`Move ${label} down`}
+                aria-label={`Move ${label} ${index + 1} down`}
+                onClick={onMoveDown}
+              >
+                Move Down
+              </button>
+            </>
+          ) : null}
+          <button
+            type="button"
+            className="pw-entry-remove"
+            title="Delete this entry"
+            aria-label={`Remove ${label} ${index + 1}`}
+            onClick={onRemove}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M3 6h18" />
+              <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+              <path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+            <span>Delete</span>
+          </button>
+        </div>
       </div>
       {children}
     </div>

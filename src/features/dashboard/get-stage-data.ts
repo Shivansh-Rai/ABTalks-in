@@ -11,6 +11,7 @@ import {
   computeCompleteness,
   type SectionStatus,
 } from "@/features/profile/completeness";
+import { evaluateProfileReadiness } from "@/features/dashboard/profile-readiness";
 import { getHistory } from "@/features/interview/platform/service";
 import { getAvailableQuiz } from "@/features/quiz/get-available-quiz";
 import { listCandidateAttempts } from "@/features/assessment-attempts/service";
@@ -32,6 +33,10 @@ export type StageData = {
   profile: {
     score: number;
     sections: SectionStatus[];
+    /** The road is unlocked: 70% strength with the essentials in (plan 180). */
+    ready: boolean;
+    /** Essential details still missing, most valuable first. */
+    blocking: string[];
     openToWork: boolean;
     /** Skill names on the candidate's profile, for job matching. */
     skills: string[];
@@ -56,13 +61,19 @@ async function loadProfile(userId: string): Promise<StageData["profile"]> {
     getCandidateDetail(userId),
     getResumeView(userId).catch(() => null),
   ]);
-  if (!detail) return { score: 0, sections: [], openToWork: false, skills: [] };
-  const { score, sections } = computeCompleteness(detail, {
+  if (!detail) {
+    return { score: 0, sections: [], ready: false, blocking: [], openToWork: false, skills: [] };
+  }
+  const completeness = computeCompleteness(detail, {
     hasResume: Boolean(detail.resumeUrl?.trim()) || resume?.status === "READY",
   });
+  const { score, sections } = completeness;
+  const { ready, blocking } = evaluateProfileReadiness(detail, completeness);
   return {
     score,
     sections,
+    ready,
+    blocking,
     openToWork: detail.preference?.openToWork ?? false,
     skills: detail.skills.map((s) => s.name),
   };
@@ -91,7 +102,7 @@ async function loadQuiz(
 
   // First active track with a quiz ready to take right now.
   let readyHref: string | null = null;
-  for (const e of enrollments.filter((x) => x.status === "ACTIVE")) {
+  for (const e of enrollments.filter((x) => x.lifecycle === "active")) {
     const available = await getAvailableQuiz(userId, {
       challengeId: "",
       domain: e.domain,
@@ -153,7 +164,14 @@ export async function getStageData(
     await Promise.all([
       getBalance(userId).catch(degrade("synergy points", 0)),
       loadProfile(userId).catch(
-        degrade("profile strength", { score: 0, sections: [], openToWork: false, skills: [] }),
+        degrade("profile strength", {
+          score: 0,
+          sections: [],
+          ready: false,
+          blocking: [],
+          openToWork: false,
+          skills: [],
+        }),
       ),
       loadMock(userId).catch(degrade("mock interviews", { completed: 0 })),
       loadQuiz(userId, enrollments).catch(

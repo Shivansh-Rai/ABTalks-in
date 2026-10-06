@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -19,6 +19,7 @@ import type { CartRow } from "@/components/hire/shortlist-cart";
 import {
   guestCartNonProgram,
   readGuestCart,
+  type GuestCartItem,
 } from "@/components/hire/guest-cart";
 import {
   DESK_SHORTLIST_EVENT,
@@ -51,14 +52,38 @@ export function HireChrome({
   const { approved, openAuth } = useHireAuth();
   const { view, landing, openPod, closePod, openSaved } = useHireDesk();
   const [guestCount, setGuestCount] = useState(0);
-  const [overlayCount, setOverlayCount] = useState(0);
+  /** Non-program guest items not yet on the server list — same set the pod overlays. */
+  const [guestOverlay, setGuestOverlay] = useState<GuestCartItem[]>([]);
   const [starCount, setStarCount] = useState(0);
   const [podDismissed, setPodDismissed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("abtalks.hireSidebarCollapsed");
+      if (stored === "1") setSidebarCollapsed(true);
+      else if (stored === "0") setSidebarCollapsed(false);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("abtalks.hireSidebarCollapsed", next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const sync = () => {
       setGuestCount(readGuestCart().length);
-      setOverlayCount(guestCartNonProgram().length);
+      setGuestOverlay(guestCartNonProgram());
       setStarCount(readDeskShortlist().length);
     };
     sync();
@@ -94,7 +119,12 @@ export function HireChrome({
   const openProjectLabel = openProjectId
     ? (projects.find((p) => p.id === openProjectId)?.label ?? "This project")
     : null;
-  const cartCount = approved ? scopedRows.length + overlayCount : guestCount;
+  // Match HireTalentPod: server scoped rows + guest overlay only when not already listed.
+  const scopedRefs = new Set(scopedRows.map((r) => r.candidateRef));
+  const uniqueOverlay = guestOverlay.filter(
+    (i) => !scopedRefs.has(i.candidateRef),
+  ).length;
+  const cartCount = approved ? scopedRows.length + uniqueOverlay : guestCount;
   // The desk is `/hire` itself and a project at `/hire/<id>`. Every other
   // `/hire/<page>` is a plain page and must NOT get the project-desk shell.
   //
@@ -167,9 +197,9 @@ export function HireChrome({
           simply faded out on the results side. */}
       {desk && (
         <div className="hire-field" aria-hidden="true">
-          {/* Light-green blobs (moving) interleaved with the static dark
-              layers in the ORIGINAL gradient's paint order, so screen 1 is
-              exactly as bright as the design — just no longer still. */}
+          {/* Light-green blobs (moving) interleaved with the static shade
+              layers. Paint order matches the original gradient; the field
+              base is a near-white wash so the mint glows stay the motion. */}
           {(["a", "d", "b"] as const).map((g) => (
             <span key={g} className={`hire-field__glow hire-field__glow--${g}`}>
               <span className="hire-field__glow-y">
@@ -204,16 +234,14 @@ export function HireChrome({
             {/* The same stacked-wordmark swap runs on the desk AND on plain
                 /hire/* pages (requests, jobs, messages, settings, …) so the
                 header brand reads identically once the user is inside Hire.
-                The dark wordmark shows on every non-landing page; the light
-                one is only revealed while `.hire-app--landing` is on (screen
-                1's green field). Swapping the <Image> at the JS boundary
-                instead of crossfading here made the header change a frame
-                ahead of the background. */}
+                The dark wordmark is the visible mark on the light landing
+                field and on every other /hire/* page; the light mark stays
+                in the stack for opacity transitions. */}
             <span className="hire-app__logo-swap">
               <Image
                 src="/hire/abtalks-wordmark.png"
-                alt={isLanding ? "ABTalks" : ""}
-                aria-hidden={!isLanding || undefined}
+                alt=""
+                aria-hidden
                 width={342}
                 height={67}
                 priority
@@ -221,8 +249,7 @@ export function HireChrome({
               />
               <Image
                 src="/hire/abtalks-wordmark-dark.png"
-                alt={isLanding ? "" : "ABTalks"}
-                aria-hidden={isLanding || undefined}
+                alt="ABTalks"
                 width={346}
                 height={81}
                 priority
@@ -344,6 +371,9 @@ export function HireChrome({
               unreadMessages={unreadMessages}
               projects={projects}
               openProjectId={openProjectId}
+              collapsible
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebar}
             />
           )}
           {/* On desktop the results screen hides this rail behind the nav card;
@@ -401,6 +431,9 @@ export function HireChrome({
                 // No project is "open" on a plain page, so the sidebar lists
                 // projects without pretending one of them is current.
                 openProjectId={null}
+                collapsible
+                collapsed={sidebarCollapsed}
+                onToggleCollapse={toggleSidebar}
               />
             </div>
           )}

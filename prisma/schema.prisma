@@ -2580,6 +2580,8 @@ model ResumeImport {
   registeredAt       DateTime?
   claimedAt          DateTime?
   parsedAt           DateTime?
+  /// Plan 171: the batch / college an admin named at upload. Free text, ≤ 80.
+  batchLabel         String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -2589,6 +2591,52 @@ model ResumeImport {
   @@index([normalizedEmail])
   @@index([registeredUserId])
   @@index([createdAt(sort: Desc)])
+  @@index([batchLabel])
+}
+
+/// Plan 171 — where an imported student is in the claim-and-complete emails.
+enum ImportOutreachStage {
+  INVITE
+  ONBOARD
+  STOPPED
+}
+
+/// Plan 171 — why an outreach sequence ended.
+enum ImportOutreachStop {
+  COMPLETE
+  FINISHED_SEQUENCE
+  NO_RESPONSE
+  UNSUBSCRIBED
+  REMOVED
+  BOUNCED
+  ADMIN
+}
+
+/// Plan 171 — one row per imported student: the email sequence's state.
+/// No foreign keys on purpose: deleting a user or an import never erases the
+/// record of what was sent. `importId` / `userId` are plain data.
+model ResumeImportOutreach {
+  id             String              @id @default(cuid())
+  importId       String              @unique
+  userId         String
+  stage          ImportOutreachStage @default(INVITE)
+  /// Last step sent in the current stage; 0 = none yet.
+  step           Int                 @default(0)
+  /// Emails this person has received in total. Never above 4.
+  sentCount      Int                 @default(0)
+  nextSendAt     DateTime?
+  lastSentAt     DateTime?
+  lastDeliveryId String?
+  /// Consecutive failed sends; 3 → STOPPED / BOUNCED.
+  failCount      Int                 @default(0)
+  firstClickAt   DateTime?
+  stoppedAt      DateTime?
+  stopReason     ImportOutreachStop?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([stage, nextSendAt])
+  @@index([userId])
 }
 
 /// Plan 154 — one row per résumé model HTTP call, on every path, including

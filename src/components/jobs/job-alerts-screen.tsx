@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { JobType, JobWorkMode } from "@prisma/client";
 import {
   createMyJobAlertAction,
@@ -13,6 +13,8 @@ import type { JobAlertRow } from "@/features/job-alerts/types";
 type Props = {
   initial: JobAlertRow[];
   maxAlerts: number;
+  /** The Job alerts tab on /jobs shows this count on its badge. */
+  onCountChange?: (count: number) => void;
 };
 
 const WORK_MODES: JobWorkMode[] = ["REMOTE", "HYBRID", "ONSITE"];
@@ -57,8 +59,11 @@ function draftFrom(row: JobAlertRow): Draft {
   };
 }
 
-export function JobAlertsScreen({ initial, maxAlerts }: Props) {
+export function JobAlertsScreen({ initial, maxAlerts, onCountChange }: Props) {
   const [alerts, setAlerts] = useState<JobAlertRow[]>(initial);
+  useEffect(() => {
+    onCountChange?.(alerts.length);
+  }, [alerts.length, onCountChange]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);

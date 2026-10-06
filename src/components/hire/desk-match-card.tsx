@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   Briefcase,
   ChevronDown,
@@ -24,6 +24,7 @@ import type {
   MatchDecision,
   MatchTriage,
 } from "@/components/hire/match-card";
+import { recallAiSummary } from "@/components/hire/evidence-cache";
 import { isLockedPreview } from "@/features/hire/locked-preview";
 import {
   orderedSkills,
@@ -35,26 +36,28 @@ import {
   useUpgradePrompt,
 } from "@/components/hire/locked-field";
 import { cn } from "@/lib/utils";
+import type { JobSpec } from "@/lib/validations/hire";
 import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import {
-  candidateSummaryLine,
+  recruiterSummary,
   summaryInputFromMatch,
 } from "@/features/hire/candidate-summary";
+import {
+  summaryCardFromMatch,
+  summaryRequestKey,
+  summarySearchFromSpec,
+} from "@/features/hire/candidate-summary-ai";
 
 /** Skill chips on a result card before the rest collapse into "+N". */
 const CARD_SKILLS = 8;
 
-/** Roughly two lines on the card, before the sentence-boundary trim below. */
-const SUMMARY_PREVIEW_CHARS = 165;
+/** Roughly three lines on the card, before the sentence-boundary trim below. */
+const SUMMARY_PREVIEW_CHARS = 280;
 
 /**
- * The card's share of the AI summary — a preview, not the rationale.
- *
- * The card exists to be scanned: a recruiter reads down a list deciding who to
- * open, and a full paragraph per candidate turns eight cards into a page of
- * prose and one candidate per screen. The whole rationale is two clicks away
- * in the detail panel, and nothing is dropped from the data — this only
- * changes what the card shows.
+ * The card's share of the AI summary — a 3-line preview of the same prose the
+ * View Details panel shows (session-cached Gemini when present, otherwise
+ * `recruiterSummary`). Full text stays in the sidebar; cards never call Gemini.
  *
  * Cuts on a sentence end where there is one in range, so the preview reads as
  * a finished thought rather than a severed clause; falls back to a word
@@ -189,6 +192,7 @@ export function DeskMatchCard({
   sampleDemand,
   onDecision,
   requestId,
+  searchSpec = null,
 }: {
   match: MatchCardData & Partial<MatchTriage>;
   rank?: number;
@@ -198,6 +202,8 @@ export function DeskMatchCard({
   sampleDemand?: SampleDemand;
   onDecision?: (decision: MatchDecision) => void;
   requestId?: string | null;
+  /** Active desk search — used only to key the session Gemini cache. */
+  searchSpec?: JobSpec | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
   const preview = isLockedPreview(match) ? match.preview : null;
@@ -218,6 +224,35 @@ export function DeskMatchCard({
   // To the reader that is a wrong result, not a truncated one.
   const needles = match.highlightSkills ?? [];
   const skills = orderedSkills(e.skills ?? [], needles);
+
+  const summaryInput = summaryInputFromMatch(match);
+  // Same key the inspector uses so a Gemini summary written in View Details
+  // can reappear on the card without a second model call. Hooks must run
+  // before the locked/sample early returns below.
+  const summaryCacheKey = useMemo(() => {
+    if (sample || preview) return null;
+    return summaryRequestKey({
+      candidateRef: match.candidateRef,
+      card: summaryCardFromMatch(match),
+      search: summarySearchFromSpec(searchSpec),
+    });
+  }, [sample, preview, match, searchSpec]);
+
+  const [cachedAiSummary, setCachedAiSummary] = useState<string | null>(null);
+  useEffect(() => {
+    if (!summaryCacheKey) {
+      setCachedAiSummary(null);
+      return;
+    }
+    setCachedAiSummary(
+      recallAiSummary(match.candidateRef, summaryCacheKey),
+    );
+  }, [summaryCacheKey, match.candidateRef, selected]);
+
+  const summary = summaryPreview(
+    cachedAiSummary ??
+      recruiterSummary(match.rationale, summaryInput),
+  );
 
   // The card is the click target, not just the "View more details" link.
   // Everything interactive inside it — the two shortlist buttons, the intro
@@ -371,11 +406,6 @@ export function DeskMatchCard({
     { key: "education", Icon: GraduationCap, label: e.educationLevel },
   ].filter((m) => Boolean(m.label));
   const shownSkills = skills.slice(0, CARD_SKILLS);
-  // Built here rather than read off `match.rationale`. The stored rationale is
-  // two or three sentences written for the detail panel, and rows written
-  // before this change still open with an `AB-####` label and a score, which
-  // must never reach a card. `summaryPreview` stays as the length clamp.
-  const summary = summaryPreview(candidateSummaryLine(summaryInputFromMatch(match)));
 
   return (
     <article

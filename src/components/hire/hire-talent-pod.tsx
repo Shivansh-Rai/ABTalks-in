@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ClipboardList, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { toggleShortlistAction } from "@/app/actions/talent-actions";
@@ -130,10 +130,9 @@ export function HireTalentPod({
     return [...serverRows, ...extra.filter((r) => !seen.has(r.candidateRef))];
   }, [serverRows, extra]);
 
-  const selectable = useMemo(
-    () => rows.filter((r) => !isAsked(r, requested)),
-    [rows, requested],
-  );
+  // Assessment selection is independent of intro/engagement status (Requested).
+  // Recruiters must be able to tick every shortlisted row for Create assessment.
+  const selectable = rows;
 
   useEffect(() => {
     const allowed = new Set(selectable.map((r) => r.candidateRef));
@@ -266,7 +265,7 @@ export function HireTalentPod({
             >
               {allSelected
                 ? "Clear selection"
-                : `Select all ${selectable.length} remaining`}
+                : `Select all ${selectable.length}`}
             </button>
           )}
 
@@ -306,20 +305,14 @@ export function HireTalentPod({
                     )}
                   >
                     <div className="hire-pod__who">
-                      {!asked ? (
-                        <input
-                          type="checkbox"
-                          className="hire-pod__check"
-                          checked={checked}
-                          disabled={pending}
-                          onChange={() => toggle(row.candidateRef)}
-                          aria-label={`Select ${row.displayName || row.jobRole}`}
-                        />
-                      ) : (
-                        <span className="desk-card__avatar" aria-hidden="true">
-                          <UserRound className="size-6" />
-                        </span>
-                      )}
+                      <input
+                        type="checkbox"
+                        className="hire-pod__check"
+                        checked={checked}
+                        disabled={pending}
+                        onChange={() => toggle(row.candidateRef)}
+                        aria-label={`Select ${row.displayName || row.jobRole}`}
+                      />
                       <div>
                         <p className="hire-pod__name">
                           {row.displayName || row.revealedName || row.jobRole}{" "}

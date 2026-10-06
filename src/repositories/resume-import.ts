@@ -42,6 +42,8 @@ export async function createOrGetImport(input: {
   fileSizeBytes: number;
   blobPathname: string;
   uploadedByUserId: string;
+  /** Plan 171: the batch / college the admin named at upload. */
+  batchLabel?: string | null;
 }): Promise<{ id: string; duplicate: boolean }> {
   const existing = await findImportByHash(input.contentHash);
   if (existing) return { id: existing.id, duplicate: true };
@@ -214,6 +216,9 @@ export type ImportListRow = {
   createdAt: Date;
   /** True when a private blob pathname is stored. Never expose the pathname. */
   hasFile: boolean;
+  /** Plan 171. */
+  batchLabel: string | null;
+  registeredUserId: string | null;
 };
 
 type ImportListFilters = {
@@ -222,6 +227,10 @@ type ImportListFilters = {
   search?: string;
   /** `YYYY-MM-DD`: only imports created on that day in IST. */
   date?: string;
+  /** Plan 171: exact batch label. */
+  batchLabel?: string;
+  /** Plan 171: restrict to these import ids (an outreach filter's result). */
+  importIds?: string[];
 };
 
 /** Shared where clause for list + matched count (plan 172). */
@@ -247,20 +256,25 @@ function importListWhere(input: ImportListFilters): Prisma.ResumeImportWhereInpu
           },
         }
       : {}),
+    ...(input.batchLabel ? { batchLabel: input.batchLabel } : {}),
+    ...(input.importIds ? { id: { in: input.importIds } } : {}),
   };
 }
 
-export async function listImports(input: {
-  status?: ResumeImportStatus;
-  cursor?: string;
-  take?: number;
-  search?: string;
-  date?: string;
-}): Promise<{ rows: ImportListRow[]; nextCursor: string | null }> {
+export async function listImports(
+  input: ImportListFilters & {
+    cursor?: string;
+    take?: number;
+    /** Plan 171: strongest profiles first (the "clicked, not claimed" list). */
+    byScore?: boolean;
+  },
+): Promise<{ rows: ImportListRow[]; nextCursor: string | null }> {
   const take = Math.min(Math.max(input.take ?? 100, 1), 200);
   const rows = await prisma.resumeImport.findMany({
     where: importListWhere(input),
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    orderBy: input.byScore
+      ? [{ overallScore: { sort: "desc", nulls: "last" } }, { id: "desc" }]
+      : [{ createdAt: "desc" }, { id: "desc" }],
     take: take + 1,
     ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
     select: {
@@ -278,6 +292,8 @@ export async function listImports(input: {
       linkedExisting: true,
       createdAt: true,
       blobPathname: true,
+      batchLabel: true,
+      registeredUserId: true,
     },
   });
   const hasMore = rows.length > take;
@@ -760,4 +776,465 @@ export async function listUnclaimedImportUserIds(userIds: string[]): Promise<Set
     select: { registeredUserId: true },
   });
   return new Set(rows.map((r) => r.registeredUserId).filter((id): id is string => id !== null));
+}
+
+/* ─── Outreach (plan 171) ────────────────────────────────────────────────── */
+
+export type OutreachStage = "INVITE" | "ONBOARD" | "STOPPED";
+export type OutreachStopReason =
+  | "COMPLETE"
+  | "FINISHED_SEQUENCE"
+  | "NO_RESPONSE"
+  | "UNSUBSCRIBED"
+  | "REMOVED"
+  | "BOUNCED"
+  | "ADMIN";
+
+/** Enter one import into the email sequence. Idempotent: never resets a row. */
+export async function upsertOutreachEnrollment(importId: string, userId: string, now: Date): Promise<void> {
+  await writeClient().resumeImportOutreach.upsert({
+    where: { importId },
+    create: { importId, userId, stage: "INVITE", step: 0, nextSendAt: now },
+    update: {},
+    select: { id: true },
+  });
+}
+
+export type DueOutreachRow = {
+  id: string;
+  importId: string;
+  userId: string;
+  stage: OutreachStage;
+  step: number;
+  sentCount: number;
+  failCount: number;
+};
+
+/** One import's sequence row, for sending its first email right after registration. */
+export async function getOutreachRowByImportId(importId: string): Promise<DueOutreachRow | null> {
+  return prisma.resumeImportOutreach.findUnique({
+    where: { importId },
+    select: {
+      id: true,
+      importId: true,
+      userId: true,
+      stage: true,
+      step: true,
+      sentCount: true,
+      failCount: true,
+    },
+  });
+}
+
+export async function listDueOutreach(now: Date, limit: number): Promise<DueOutreachRow[]> {
+  return prisma.resumeImportOutreach.findMany({
+    where: { stage: { in: ["INVITE", "ONBOARD"] }, nextSendAt: { lte: now } },
+    orderBy: [{ nextSendAt: "asc" }, { id: "asc" }],
+    take: Math.max(0, Math.min(limit, 1000)),
+    select: {
+      id: true,
+      importId: true,
+      userId: true,
+      stage: true,
+      step: true,
+      sentCount: true,
+      failCount: true,
+    },
+  });
+}
+
+export type OutreachImportFacts = {
+  status: ResumeImportStatus;
+  registeredAt: Date | null;
+  claimedAt: Date | null;
+  linkedExisting: boolean;
+  registeredUserId: string | null;
+  normalizedEmail: string | null;
+};
+
+export async function getOutreachImportFacts(importId: string): Promise<OutreachImportFacts | null> {
+  return prisma.resumeImport.findUnique({
+    where: { id: importId },
+    select: {
+      status: true,
+      registeredAt: true,
+      claimedAt: true,
+      linkedExisting: true,
+      registeredUserId: true,
+      normalizedEmail: true,
+    },
+  });
+}
+
+export type OutreachPerson = {
+  email: string;
+  name: string | null;
+  deletedAt: Date | null;
+  disabledAt: Date | null;
+  profile: {
+    fullName: string;
+    headline: string | null;
+    phoneVerified: boolean;
+    hasNoWorkExperience: boolean;
+    githubUsername: string | null;
+    linkedinUrl: string | null;
+    educationCount: number;
+    experienceCount: number;
+    skillCount: number;
+    topSkills: string[];
+  } | null;
+};
+
+export async function getOutreachPerson(userId: string): Promise<OutreachPerson | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true,
+      name: true,
+      deletedAt: true,
+      disabledAt: true,
+      candidateProfile: {
+        select: {
+          fullName: true,
+          headline: true,
+          phoneVerified: true,
+          hasNoWorkExperience: true,
+          githubUsername: true,
+          linkedinUrl: true,
+          skills: { select: { skill: { select: { name: true } } }, take: 5 },
+          _count: { select: { education: true, experience: true, skills: true } },
+        },
+      },
+    },
+  });
+  if (!user) return null;
+  const p = user.candidateProfile;
+  return {
+    email: user.email,
+    name: user.name,
+    deletedAt: user.deletedAt,
+    disabledAt: user.disabledAt,
+    profile: p
+      ? {
+          fullName: p.fullName,
+          headline: p.headline,
+          phoneVerified: p.phoneVerified,
+          hasNoWorkExperience: p.hasNoWorkExperience,
+          githubUsername: p.githubUsername,
+          linkedinUrl: p.linkedinUrl,
+          educationCount: p._count.education,
+          experienceCount: p._count.experience,
+          skillCount: p._count.skills,
+          topSkills: p.skills.map((s) => s.skill.name),
+        }
+      : null,
+  };
+}
+
+export async function markOutreachSent(
+  id: string,
+  input: {
+    step: number;
+    deliveryId: string;
+    now: Date;
+    nextSendAt: Date | null;
+    stopReason: OutreachStopReason | null;
+  },
+): Promise<void> {
+  await writeClient().resumeImportOutreach.update({
+    where: { id },
+    data: {
+      step: input.step,
+      sentCount: { increment: 1 },
+      failCount: 0,
+      lastSentAt: input.now,
+      lastDeliveryId: input.deliveryId,
+      ...(input.stopReason
+        ? { stage: "STOPPED", stopReason: input.stopReason, stoppedAt: input.now, nextSendAt: null }
+        : { nextSendAt: input.nextSendAt }),
+    },
+    select: { id: true },
+  });
+}
+
+export async function setOutreachNextSendAt(id: string, at: Date): Promise<void> {
+  await writeClient().resumeImportOutreach.update({
+    where: { id },
+    data: { nextSendAt: at },
+    select: { id: true },
+  });
+}
+
+/** A failed send: retry on the next run; stop as BOUNCED after `maxFails`. Returns true when stopped. */
+export async function markOutreachFailed(id: string, now: Date, retryAt: Date, maxFails: number): Promise<boolean> {
+  const row = await writeClient().resumeImportOutreach.update({
+    where: { id },
+    data: { failCount: { increment: 1 }, nextSendAt: retryAt },
+    select: { failCount: true },
+  });
+  if (row.failCount < maxFails) return false;
+  await stopOutreachRow(id, "BOUNCED", now);
+  return true;
+}
+
+/** Stop by row id. Never reopens a stopped row. */
+export async function stopOutreachRow(id: string, reason: OutreachStopReason, now: Date): Promise<void> {
+  await writeClient().resumeImportOutreach.updateMany({
+    where: { id, stage: { not: "STOPPED" } },
+    data: { stage: "STOPPED", stopReason: reason, stoppedAt: now, nextSendAt: null },
+  });
+}
+
+/**
+ * Stop by import id (remove-my-data, webhook). REMOVED, UNSUBSCRIBED and
+ * BOUNCED also override a sequence that already ended for another reason, so
+ * a later claim can never restart mail to that person.
+ */
+export async function stopOutreachForImport(
+  importId: string,
+  reason: OutreachStopReason,
+  now: Date,
+  tx?: Prisma.TransactionClient,
+): Promise<number> {
+  const final = reason === "REMOVED" || reason === "UNSUBSCRIBED" || reason === "BOUNCED";
+  const res = await (tx ?? writeClient()).resumeImportOutreach.updateMany({
+    where: final
+      ? { importId, NOT: { stopReason: { in: ["REMOVED", "UNSUBSCRIBED", "BOUNCED"] } } }
+      : { importId, stage: { not: "STOPPED" } },
+    data: { stage: "STOPPED", stopReason: reason, stoppedAt: now, nextSendAt: null },
+  });
+  return res.count;
+}
+
+/**
+ * The claim happened: start onboarding now — from INVITE, or from a sequence
+ * that ended unanswered (they claimed after the last reminder). Never restarts
+ * someone who removed their data, unsubscribed or bounced.
+ */
+export async function moveOutreachToOnboardForUser(userId: string, now: Date): Promise<number> {
+  const res = await writeClient().resumeImportOutreach.updateMany({
+    where: {
+      userId,
+      OR: [{ stage: "INVITE" }, { stage: "STOPPED", stopReason: "NO_RESPONSE" }],
+    },
+    data: {
+      stage: "ONBOARD",
+      step: 0,
+      stopReason: null,
+      stoppedAt: null,
+      failCount: 0,
+      nextSendAt: now,
+    },
+  });
+  return res.count;
+}
+
+export async function moveOutreachToOnboard(id: string, now: Date): Promise<void> {
+  await writeClient().resumeImportOutreach.updateMany({
+    where: { id, stage: "INVITE" },
+    data: { stage: "ONBOARD", step: 0, failCount: 0, nextSendAt: now },
+  });
+}
+
+/** First open of the claim link. Only the first one is kept. */
+export async function recordOutreachClick(importId: string, now: Date): Promise<void> {
+  await writeClient().resumeImportOutreach.updateMany({
+    where: { importId, firstClickAt: null },
+    data: { firstClickAt: now },
+  });
+}
+
+/** The newest registered/claimed import for a recipient address (bounce webhook). */
+export async function findLatestImportIdByEmail(email: string): Promise<string | null> {
+  const row = await prisma.resumeImport.findFirst({
+    where: { normalizedEmail: email, status: { in: ["REGISTERED", "CLAIMED"] } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+}
+
+async function enrolledImportIds(): Promise<string[]> {
+  const rows = await prisma.resumeImportOutreach.findMany({ select: { importId: true } });
+  return rows.map((r) => r.importId);
+}
+
+/** REGISTERED imports that never entered the sequence (the backfill button). */
+export async function listUnenrolledRegisteredImports(limit: number): Promise<{ id: string; userId: string }[]> {
+  const enrolled = await enrolledImportIds();
+  const rows = await prisma.resumeImport.findMany({
+    where: {
+      status: "REGISTERED",
+      registeredUserId: { not: null },
+      ...(enrolled.length > 0 ? { id: { notIn: enrolled } } : {}),
+    },
+    orderBy: { registeredAt: "asc" },
+    take: Math.max(0, Math.min(limit, 5000)),
+    select: { id: true, registeredUserId: true },
+  });
+  return rows.flatMap((r) => (r.registeredUserId ? [{ id: r.id, userId: r.registeredUserId }] : []));
+}
+
+export async function countUnenrolledRegisteredImports(): Promise<number> {
+  const enrolled = await enrolledImportIds();
+  return prisma.resumeImport.count({
+    where: {
+      status: "REGISTERED",
+      registeredUserId: { not: null },
+      ...(enrolled.length > 0 ? { id: { notIn: enrolled } } : {}),
+    },
+  });
+}
+
+/* ─── Outreach: admin reads ──────────────────────────────────────────────── */
+
+export const OUTREACH_FILTERS = [
+  "CLICKED_NOT_CLAIMED",
+  "CLAIMED_INCOMPLETE",
+  "COMPLETED",
+  "BOUNCED",
+  "NO_RESPONSE",
+  "REMOVED",
+] as const;
+export type OutreachFilter = (typeof OUTREACH_FILTERS)[number];
+
+/** Import ids matching an outreach filter, for `listImports({ importIds })`. */
+export async function importIdsForOutreachFilter(filter: OutreachFilter): Promise<string[]> {
+  const where: Prisma.ResumeImportOutreachWhereInput =
+    filter === "CLICKED_NOT_CLAIMED"
+      ? { firstClickAt: { not: null }, stage: "INVITE" }
+      : filter === "CLAIMED_INCOMPLETE"
+        ? { OR: [{ stage: "ONBOARD" }, { stage: "STOPPED", stopReason: "FINISHED_SEQUENCE" }] }
+        : filter === "COMPLETED"
+          ? { stopReason: "COMPLETE" }
+          : filter === "BOUNCED"
+            ? { stopReason: "BOUNCED" }
+            : filter === "NO_RESPONSE"
+              ? { stopReason: "NO_RESPONSE" }
+              : { stopReason: "REMOVED" };
+  const rows = await prisma.resumeImportOutreach.findMany({ where, select: { importId: true } });
+  return rows.map((r) => r.importId);
+}
+
+export type OutreachRowSummary = {
+  importId: string;
+  stage: OutreachStage;
+  step: number;
+  sentCount: number;
+  firstClickAt: Date | null;
+  stopReason: OutreachStopReason | null;
+  lastSentAt: Date | null;
+  nextSendAt: Date | null;
+};
+
+export async function getOutreachForImports(importIds: string[]): Promise<Map<string, OutreachRowSummary>> {
+  if (importIds.length === 0) return new Map();
+  const rows = await prisma.resumeImportOutreach.findMany({
+    where: { importId: { in: importIds } },
+    select: {
+      importId: true,
+      stage: true,
+      step: true,
+      sentCount: true,
+      firstClickAt: true,
+      stopReason: true,
+      lastSentAt: true,
+      nextSendAt: true,
+    },
+  });
+  return new Map(rows.map((r) => [r.importId, r]));
+}
+
+export type OutreachFunnel = {
+  invited: number;
+  clicked: number;
+  claimed: number;
+  completed: number;
+  removed: number;
+  bounced: number;
+};
+
+export async function outreachFunnel(): Promise<OutreachFunnel> {
+  const [invited, clicked, claimed, completed, removed, bounced] = await Promise.all([
+    prisma.resumeImportOutreach.count({ where: { sentCount: { gt: 0 } } }),
+    prisma.resumeImportOutreach.count({ where: { firstClickAt: { not: null } } }),
+    prisma.resumeImportOutreach.count({
+      where: {
+        OR: [
+          { stage: "ONBOARD" },
+          { stage: "STOPPED", stopReason: { in: ["COMPLETE", "FINISHED_SEQUENCE"] } },
+        ],
+      },
+    }),
+    prisma.resumeImportOutreach.count({ where: { stopReason: "COMPLETE" } }),
+    prisma.resumeImportOutreach.count({ where: { stopReason: "REMOVED" } }),
+    prisma.resumeImportOutreach.count({ where: { stopReason: "BOUNCED" } }),
+  ]);
+  return { invited, clicked, claimed, completed, removed, bounced };
+}
+
+export async function listBatchLabels(): Promise<string[]> {
+  const rows = await prisma.resumeImport.findMany({
+    where: { batchLabel: { not: null } },
+    distinct: ["batchLabel"],
+    orderBy: { batchLabel: "asc" },
+    take: 500,
+    select: { batchLabel: true },
+  });
+  return rows.flatMap((r) => (r.batchLabel ? [r.batchLabel] : []));
+}
+
+/** Claim rate for one batch: registered-or-claimed imports, and how many claimed. */
+export async function batchClaimStats(batchLabel: string): Promise<{ registered: number; claimed: number }> {
+  const [registered, claimed] = await Promise.all([
+    prisma.resumeImport.count({ where: { batchLabel, status: { in: ["REGISTERED", "CLAIMED"] } } }),
+    prisma.resumeImport.count({ where: { batchLabel, status: "CLAIMED" } }),
+  ]);
+  return { registered, claimed };
+}
+
+export type CompletenessRow = {
+  fullName: string;
+  phone: string | null;
+  phoneVerified: boolean;
+  hasNoWorkExperience: boolean;
+  githubUsername: string | null;
+  linkedinUrl: string | null;
+  educationCount: number;
+  experienceCount: number;
+  skillCount: number;
+};
+
+/** Completeness inputs for many users at once (the admin table, the CSV). */
+export async function getCompletenessInputs(userIds: string[]): Promise<Map<string, CompletenessRow>> {
+  if (userIds.length === 0) return new Map();
+  const rows = await prisma.candidateProfile.findMany({
+    where: { userId: { in: userIds } },
+    select: {
+      userId: true,
+      fullName: true,
+      phone: true,
+      phoneVerified: true,
+      hasNoWorkExperience: true,
+      githubUsername: true,
+      linkedinUrl: true,
+      _count: { select: { education: true, experience: true, skills: true } },
+    },
+  });
+  return new Map(
+    rows.map((r) => [
+      r.userId,
+      {
+        fullName: r.fullName,
+        phone: r.phone,
+        phoneVerified: r.phoneVerified,
+        hasNoWorkExperience: r.hasNoWorkExperience,
+        githubUsername: r.githubUsername,
+        linkedinUrl: r.linkedinUrl,
+        educationCount: r._count.education,
+        experienceCount: r._count.experience,
+        skillCount: r._count.skills,
+      },
+    ]),
+  );
 }

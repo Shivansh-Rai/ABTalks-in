@@ -110,6 +110,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         profile: {
           ...enrolledStage.profile,
           score: 100,
+          ready: true,
+          blocking: [],
           sections: enrolledStage.profile.sections.map((x) => ({ ...x, complete: true, fraction: 1 })),
         },
       }
@@ -117,7 +119,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   // Plan 173. The one field worth most of what is left, so the tile's
   // percentage arrives with the reason for it rather than "finish it now".
+  // Plan 180: an essential still missing comes first — that is what actually
+  // holds the road shut, whatever the percentage has reached.
   const profileNext =
+    stageData.profile.blocking[0] ??
     stageData.profile.sections
       .filter((s) => s.missing.length > 0)
       .sort(
@@ -153,7 +158,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     data.profile?.fullName.split(/\s+/)[0] ??
     session.user.name?.split(/\s+/)[0] ??
     null;
-  const firstActive = data.enrollments.find((e) => e.status === "ACTIVE");
+  const firstActive = data.enrollments.find((e) => e.lifecycle === "active");
   const trackHref = firstActive
     ? TRACK_PATH[firstActive.domain]
     : "/challenges";
@@ -191,7 +196,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // Three stages. Each shows a %, and the first unfinished one is "current".
   const primary = firstActive ?? data.enrollments[0] ?? null;
   const buildDays = primary
-    ? primary.status === "COMPLETED" ? 60 : Math.min(60, primary.daysCompleted)
+    ? primary.lifecycle === "completed"
+      ? primary.totalDays
+      : Math.min(primary.totalDays, primary.daysCompleted)
     : 0;
   const milestonesDone = testMilestones(stageData, Boolean(firstActive), trackHref)
     .filter((m) => m.done).length;
@@ -232,6 +239,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="mt-12">
             <StageSwitcher
               profileScore={stageData.profile.score}
+              profileReady={stageData.profile.ready}
               profileNext={profileNext}
               stages={stages}
               current={currentStage}
@@ -294,6 +302,7 @@ function withPreviewEnrollment(data: HubData): HubData {
         status: "ACTIVE",
         challengeTitle: "Software Engineering",
         daysCompleted: 13,
+        currentDay: 13,
         currentStreak: 0,
         totalDays: 60,
         lifecycle: "active",

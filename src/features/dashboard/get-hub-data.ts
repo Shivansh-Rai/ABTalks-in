@@ -16,7 +16,7 @@ import {
   listChallengeEnrollments,
   type ChallengeEnrollmentRow,
 } from "@/repositories/learning";
-import { getElapsedDayNumber } from "@/lib/date-utils";
+import { getCurrentDayNumber, getElapsedDayNumber } from "@/lib/date-utils";
 import { isWithinRelaxationWindow } from "@/features/submission/submit-day";
 import { listHubSubmissionTimes } from "@/repositories/progress";
 import {
@@ -50,6 +50,8 @@ export type HubEnrollment = {
   status: "ACTIVE" | "COMPLETED";
   challengeTitle: string;
   daysCompleted: number;
+  /** IST calendar challenge day (capped at 60), not completions + 1. */
+  currentDay: number;
   currentStreak: number;
   totalDays: number;
   lifecycle: HubEnrollmentLifecycle;
@@ -66,7 +68,7 @@ export type HubEnrollment = {
  * keeps this tied to the one definition of the rule in `submit-day.ts`; if the
  * window ever changes length, this follows it.
  */
-function challengeLifecycle(row: {
+export function challengeLifecycle(row: {
   daysCompleted: number;
   totalDays: number;
   startedAt: Date;
@@ -117,6 +119,10 @@ export function toHubEnrollment(r: ChallengeEnrollmentRow): HubEnrollment {
     status: r.status as "ACTIVE" | "COMPLETED",
     challengeTitle: r.challengeTitle,
     daysCompleted: r.daysCompleted,
+    currentDay: getCurrentDayNumber(
+      { startedAt: r.startedAt },
+      r.challengeStartsAt ? { startsAt: r.challengeStartsAt } : undefined,
+    ),
     currentStreak: r.currentStreak,
     totalDays: r.totalDays,
     lifecycle: challengeLifecycle(r),

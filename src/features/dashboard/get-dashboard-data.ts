@@ -4,7 +4,7 @@ import type {
   Role,
   SubmissionStatus,
 } from "@prisma/client";
-import { getCurrentDayNumber } from "@/lib/date-utils";
+import { getCurrentDayNumber, getElapsedDayNumber } from "@/lib/date-utils";
 import { resolveDashboardEnrollment } from "@/features/enrollment/resolve-dashboard-enrollment";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { getAmbassadorState } from "@/repositories/ambassador";
@@ -159,13 +159,17 @@ export async function getDashboardData(
   }
 
   const currentDay = getCurrentDayNumber(enrollment, enrollment.challenge);
+  const elapsedDay = getElapsedDayNumber(enrollment, enrollment.challenge);
   const totalDays = enrollment.challenge.totalDays;
+  // True "today" only while the uncapped clock is still inside the 60-day window.
+  // After day 60, currentDay freezes at 60 — do not invent a perpetual Day-60 todayTask.
+  const inWindowToday = elapsedDay >= 1 && elapsedDay <= totalDays;
 
   // Single submissions fetch — derives today-completed, recent-7, and the heatmap day map.
   const allSubmissions = await listChallengeSubmissions(enrollment.id);
 
   const isTodayCompleted =
-    currentDay >= 1 && allSubmissions.some((s) => s.dayNumber === currentDay);
+    inWindowToday && allSubmissions.some((s) => s.dayNumber === elapsedDay);
 
   const recentSubmissions = allSubmissions.slice(0, 7).map((s) => ({
     id: s.id,
@@ -178,13 +182,13 @@ export async function getDashboardData(
   const isChallengeComplete =
     enrollment.status === "COMPLETED" || enrollment.daysCompleted >= totalDays;
 
-  if (!isChallengeComplete && !isTodayCompleted) {
+  if (!isChallengeComplete && inWindowToday && !isTodayCompleted) {
     const tasks = await getDailyTasksCached(enrollment.challengeId);
-    const task = tasks.find((t) => t.dayNumber === currentDay);
+    const task = tasks.find((t) => t.dayNumber === elapsedDay);
     if (task) {
       const titleRow = await getDailyTaskByChallengeDay(
         enrollment.challengeId,
-        currentDay,
+        elapsedDay,
       );
       if (titleRow) {
         todayTask = {
