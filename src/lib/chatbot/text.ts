@@ -33,7 +33,7 @@ const STOP_WORDS = new Set([
   "whats", "wat", "wht", "hows", "wheres", "whos", "dont", "doesnt", "cant",
   "wont", "isnt", "arent", "havent", "didnt", "ive", "im", "id", "ill", "youre",
   "theres", "thats", "lets", "guys", "actually", "really", "just", "please",
-  "pls", "plz", "kindly", "sir", "maam", "hey", "hello", "want", "need",
+  "pls", "plz", "kindly", "sir", "maam", "hey", "hello","hi","helo", "want", "need",
   "know", "tell", "give", "take", "make", "some", "someone", "something",
   "anyone", "anything", "everything", "should", "would", "could", "must",
   "still", "also", "even", "much", "many", "more", "most", "very", "such",
@@ -86,12 +86,74 @@ export function stem(token: string): string {
   return token;
 }
 
+/**
+ * Greetings, however they are typed.
+ *
+ * People stretch greetings — "heyyyyy", "hiiii", "hellooo", "heeey" — and a
+ * fixed list ("hi", "hey", "hello") misses every one of them. Rather than
+ * enumerating spellings, each greeting word becomes a pattern in which every
+ * letter may repeat: "hello" is squashed to "helo" and becomes /h+e+l+o+/,
+ * which matches helo, hello, hellooo and heeellllooo alike.
+ *
+ * A message counts as a greeting only when it is NOTHING but greetings plus
+ * an optional addressee ("hey there", "hi team", "hello abtalks"). "hi how do
+ * I register" is a question, and goes to retrieval like any other.
+ */
+const GREETING_WORDS = [
+  "hi", "hii", "hey", "heya", "hello", "hiya", "hola", "howdy", "yo", "sup",
+  "namaste", "namaskar", "greetings",
+];
+const TIME_GREETINGS = ["good morning", "good afternoon", "good evening", "gm"];
+const ADDRESSEES = [
+  "there", "team", "abtalks", "all", "everyone", "guys", "bot", "buddy",
+  "bro", "sir", "maam", "mam", "friend", "friends", "folks",
+];
+
+/** "hello" -> "h+e+l+o+": each letter (repeats collapsed) may repeat. */
+function stretchy(word: string): string {
+  return word
+    .replace(/(.)\1+/g, "$1")
+    .split("")
+    .map((ch) => (ch === " " ? "\\s+" : `${ch}+`))
+    .join("");
+}
+
+const GREETING_ALT = [...GREETING_WORDS, ...TIME_GREETINGS].map(stretchy).join("|");
+const ADDRESSEE_ALT = ADDRESSEES.map(stretchy).join("|");
+const GREETING_MESSAGE = new RegExp(
+  `^(?:${GREETING_ALT})(?:\\s+(?:${GREETING_ALT}))*(?:\\s+(?:${ADDRESSEE_ALT})){0,2}$`,
+);
+const GREETING_WORD = new RegExp(`^(?:${GREETING_WORDS.map(stretchy).join("|")})$`);
+
+/** Lowercase, punctuation and emoji removed ("Heyyy!! 👋" -> "heyyy"). */
+function normaliseForGreeting(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** True when the whole message is a greeting, e.g. "heyyyy", "hiii there!". */
+export function isGreeting(text: string): boolean {
+  if (text.length > 80) return false;
+  const normalised = normaliseForGreeting(text);
+  return normalised.length > 0 && GREETING_MESSAGE.test(normalised);
+}
+
 export function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
-    .filter((t) => t.length > 2 && !STOP_WORDS.has(t))
+    .filter(
+      (t) =>
+        t.length > 2 &&
+        !STOP_WORDS.has(t) &&
+        // A stretched greeting ("heyyy") is noise, like "hey" itself — not an
+        // unknown, maximally rare term for the confidence gate to charge for.
+        !GREETING_WORD.test(t),
+    )
     .map(stem);
 }
 

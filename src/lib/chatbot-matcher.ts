@@ -1,4 +1,5 @@
 import { CHATBOT_CATEGORIES, SUPPORT_EMAIL } from "@/data/chatbot-menu";
+import { isGreeting } from "@/lib/chatbot/text";
 
 /**
  * The deterministic fast path, running BEFORE retrieval.
@@ -69,12 +70,18 @@ export const THIRD_PARTY_DATA_REPLY =
   `I can't look up or share anyone else's account, profile or personal details — that information is private to them. ` +
   `I can help with anything about ABTalks itself, or you can reach the team at ${SUPPORT_EMAIL}.`;
 
-/** Menu / greeting / navigation commands. UI affordances, never facts. */
+/** Menu / navigation commands. UI affordances, never facts. */
 const MENU_COMMANDS =
-  /^(menu|help|options|start|hi|hey|hello|main\s*menu|home|topics|what\s*can\s*you\s*do\??)$/i;
+  /^(menu|help|options|start|main\s*menu|home|topics|what\s*can\s*you\s*do\??)$/i;
 
+/**
+ * Menu commands and greetings both answer with the menu. Greetings go through
+ * `isGreeting`, which also catches stretched and combined forms ("heyyyy",
+ * "hiii there", "hello team!") that a fixed word list misses.
+ */
 export function isMenuCommand(input: string): boolean {
-  return MENU_COMMANDS.test(input.trim());
+  const trimmed = input.trim();
+  return MENU_COMMANDS.test(trimmed) || isGreeting(trimmed);
 }
 
 /**

@@ -9,7 +9,7 @@
 export const SUPPORT_EMAIL = "team@abtalks.in";
 
 export const FALLBACK_MESSAGE =
-  `I couldn't find enough information about that in the ABTalks knowledge base. ` +
+  `I couldn't find enough information about that. ` +
   `You can contact the ABTalks team at ${SUPPORT_EMAIL} and they'll help you directly.`;
 
 /**
@@ -23,7 +23,7 @@ export const FALLBACK_MESSAGE =
  * material and then reported that it had found nothing.
  */
 export const GENERATION_UNAVAILABLE_MESSAGE =
-  `Sorry — I found the answer but couldn't finish writing it just now. ` +
+  `Sorry I found the answer but couldn't finish writing it just now. ` +
   `Please try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
 
 /**
@@ -36,7 +36,7 @@ export const GENERATION_UNAVAILABLE_MESSAGE =
  * Collapsing them is how a real outage gets triaged as a content problem.
  */
 export const RETRIEVAL_ERROR_MESSAGE =
-  `Sorry — something went wrong while I was searching just now. ` +
+  `Sorry something went wrong while I was searching just now. ` +
   `Please try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
 
 export const SYSTEM_PROMPT = `You are the ABTalks Help Assistant, the support assistant on the ABTalks website.
