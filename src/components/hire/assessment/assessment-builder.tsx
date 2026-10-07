@@ -144,6 +144,9 @@ function FormattingHelp() {
   );
 }
 
+/** Mirrors `durationMinutes` max in assessmentDraftSchema. */
+const MAX_DURATION_MINUTES = 480;
+
 const EMPTY_AUDIENCE: PlatformAudienceValue = { all: false, domains: [], workshopEventIds: [] };
 
 export function AssessmentBuilder({
@@ -659,16 +662,28 @@ export function AssessmentBuilder({
                   <input
                     id="assess-duration"
                     type="number"
+                    inputMode="numeric"
                     min={1}
-                    max={480}
+                    max={180}
+                    step={1}
                     disabled={untimed || wordingOnly}
                     value={durationMinutes ?? ""}
                     placeholder={untimed ? "Untimed" : undefined}
-                    onChange={(e) =>
+                    onKeyDown={(e) => {
+                      // Whole positive minutes only: no sign, decimal or exponent.
+                      if (["-", "+", ".", ",", "e", "E"].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      // Also covers paste and spinner/wheel input: strip
+                      // anything but digits, reject 0, cap at the schema max.
+                      const digits = e.target.value.replace(/\D/g, "");
+                      const minutes = digits === "" ? 0 : parseInt(digits, 10);
                       setDurationMinutes(
-                        e.target.value === "" ? null : Number(e.target.value),
-                      )
-                    }
+                        minutes < 1 ? null : Math.min(minutes, MAX_DURATION_MINUTES),
+                      );
+                    }}
                   />
                 </div>
               </div>
