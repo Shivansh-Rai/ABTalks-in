@@ -253,6 +253,8 @@ model User {
   profileEvents              CandidateProfileEvent[]
   /// Plan 121 — recruiter-authored assessments (builder drafts).
   assessmentsAuthored        RecruiterAssessment[]           @relation("RecruiterAssessmentsCreated")
+  /// Plan 185 — this recruiter's own assessment templates.
+  assessmentTemplates        RecruiterAssessmentTemplate[]   @relation("RecruiterAssessmentTemplatesCreated")
   /// Plan 128 (T-244) — recruiter assessments assigned to this candidate.
   assessmentAssignments      RecruiterAssessmentAssignment[] @relation("AssessmentAssignee")
 
@@ -3487,6 +3489,7 @@ model Organization {
   notes                CandidateNote[]
   experience           CandidateExperience[]
   recruiterAssessments RecruiterAssessment[]
+  assessmentTemplates  RecruiterAssessmentTemplate[]
   creditAccount        CreditAccount?
   creditTransactions   CreditTransaction[]
   outreachThreads      OutreachThread[]
@@ -3581,6 +3584,39 @@ model RecruiterAssessment {
 enum AssessmentSource {
   RECRUITER
   PLATFORM
+}
+
+/// Plan 185: a recruiter's own reusable assessment blueprint. Private to the
+/// recruiter who saved it: every read and write is scoped by organizationId +
+/// createdByUserId, both taken from requireRecruiterWorkspace(), exactly as
+/// RecruiterAssessment is. Never shared, never visible to admin, and unrelated
+/// to the static ABTalks presets in recruiter-assessments/presets.ts.
+///
+/// A separate table on purpose. A flag on RecruiterAssessment would have put
+/// templates in front of every existing reader of that table (admin console,
+/// admin search, recruiter detail, project assessments), each of which would
+/// then have to remember to exclude them.
+model RecruiterAssessmentTemplate {
+  id              String   @id @default(cuid())
+  organizationId  String
+  createdByUserId String
+  name            String
+  description     String?
+  /// The assessment content (title, settings, questions), validated by
+  /// `assessmentContentSchema` on every write and again on every read. No
+  /// candidates, no shortlist, no assessment id.
+  content         Json
+  /// Mirrors of `content` for the template card, so the list never loads the
+  /// question bodies. One writer (the template store) sets them with `content`.
+  questionCount   Int
+  durationMinutes Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("RecruiterAssessmentTemplatesCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdByUserId, updatedAt(sort: Desc)])
 }
 
 model AssessmentQuestion {

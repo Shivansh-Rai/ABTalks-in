@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import {
+  useImperativeHandle,
+  useMemo,
+  useState,
+  useTransition,
+  type Ref,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +14,10 @@ import {
   createAndSendRecruiterAssessmentAction,
   saveRecruiterAssessmentAction,
 } from "@/app/actions/recruiter-assessment-actions";
+import {
+  createRecruiterAssessmentTemplateAction,
+  updateRecruiterAssessmentTemplateAction,
+} from "@/app/actions/recruiter-assessment-template-actions";
 import {
   createAndSendPlatformAssessmentAction,
   editSentPlatformAssessmentAction,
@@ -28,15 +38,22 @@ import {
 import {
   MAX_ASSIGN_PER_CALL,
   assessmentDraftSchema,
+  type AssessmentContent,
   type AssessmentDraftInput,
 } from "@/lib/validations/assessment";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AssessmentJsonImport } from "./assessment-json-import";
 import { CandidateAssessmentScreen } from "./candidate-assessment-screen";
 import { FormattedText } from "@/components/assessments/formatted-text";
 import { QuestionEditor } from "./question-editor";
@@ -113,7 +130,38 @@ type Props = {
       startedCount: number;
     };
   };
+  /**
+   * Plan 185: recruiter pages only. Offers "Save as template". Admin pages
+   * never pass it, and the template actions refuse a non-recruiter regardless.
+   */
+  canSaveTemplate?: boolean;
+  /**
+   * Plan 185: the recruiter's own template this builder was opened from
+   * (Customize). Adds "Update template", which saves back to that template.
+   */
+  template?: { id: string; name: string } | null;
+  /** Plan 185: lets the template landing hand an imported file to this builder. */
+  ref?: Ref<AssessmentBuilderHandle>;
 };
+
+/** What the builder lets its parent do to it. */
+export type AssessmentBuilderHandle = {
+  /** Fill the builder from imported content, asking first if it has content. */
+  importContent: (content: AssessmentContent) => void;
+};
+
+/** The reusable part of a validated draft: what a template stores. */
+function toContent(draft: AssessmentDraftInput): AssessmentContent {
+  return {
+    title: draft.title,
+    subheading: draft.subheading ?? null,
+    instructions: draft.instructions ?? null,
+    durationMinutes: draft.durationMinutes,
+    passMarkPercent: draft.passMarkPercent,
+    cameraRequired: draft.cameraRequired,
+    questions: draft.questions,
+  };
+}
 
 /** Plan 166 — the formatting authors can use, shown in the callout. */
 function FormattingHelp() {
@@ -156,10 +204,20 @@ export function AssessmentBuilder({
   projectId = null,
   embedded = false,
   platform,
+  canSaveTemplate = false,
+  template = null,
+  ref,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [pendingAction, setPendingAction] = useState<"save" | "create" | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    "save" | "create" | "template" | null
+  >(null);
+  // Plan 185: an imported file waiting for "Replace what's here?".
+  const [pendingImport, setPendingImport] = useState<AssessmentContent | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [assessmentId, setAssessmentId] = useState(
@@ -359,6 +417,125 @@ export function AssessmentBuilder({
     });
   }
 
+  // ---- Plan 185: import from JSON ------------------------------------------
+  // Never on a locked ABTalks preset (it would swap out the locked questions)
+  // or on a sent platform assessment (its questions may already be answered).
+  const canImport = !presetLocked && !sent;
+  // Embedded, the landing shows the control beside "Start from blank" instead
+  // and reaches this builder through its ref.
+  const showImport = canImport && !embedded;
+
+  /** Nothing typed or set yet: an import can fill the builder without asking. */
+  function isUntouched(): boolean {
+    return (
+      title.trim() === "" &&
+      subheading.trim() === "" &&
+      instructions.trim() === "" &&
+      untimed &&
+      passMarkPercent === 60 &&
+      !cameraRequired &&
+      questions.every(
+        (q) =>
+          q.title.trim() === "" &&
+          (q.type !== "MULTIPLE_CHOICE" ||
+            q.options.every((o) => o.body.trim() === "")),
+      )
+    );
+  }
+
+  /** Replace the builder's content. State only: nothing is saved here. */
+  function applyImport(content: AssessmentContent) {
+    setTitle(content.title);
+    setSubheading(content.subheading ?? "");
+    setInstructions(content.instructions ?? "");
+    setDurationMinutes(content.durationMinutes);
+    setUntimed(content.durationMinutes == null);
+    setPassMarkPercent(content.passMarkPercent);
+    setCameraRequired(content.cameraRequired);
+    // Imported questions are the author's own: editable, never locked.
+    setQuestions(
+      content.questions.map((q) => ({ ...q, key: crypto.randomUUID() })),
+    );
+    setFieldErrors({});
+    setConfirming(false);
+    setPendingImport(null);
+    const n = content.questions.length;
+    toast.success(
+      `Imported ${n} question${n === 1 ? "" : "s"}. Review them, then save.`,
+    );
+  }
+
+  function importContent(content: AssessmentContent) {
+    if (!canImport) return;
+    if (isUntouched()) applyImport(content);
+    else setPendingImport(content);
+  }
+
+  useImperativeHandle(ref, () => ({ importContent }));
+
+  // ---- Plan 185: the recruiter's own templates ------------------------------
+  // Not while customizing an ABTalks preset: a template's questions are
+  // editable, so saving one there would unlock the locked questions.
+  const showTemplateActions = canSaveTemplate && !platform && !presetLocked;
+
+  /** Opens the name dialog once the content is valid: a template always works. */
+  function askSaveTemplate() {
+    if (!validDraft()) return;
+    setTemplateName(title.trim().slice(0, 120));
+    setTemplateDescription("");
+    setTemplateDialogOpen(true);
+  }
+
+  function saveTemplate() {
+    const draft = validDraft();
+    if (!draft) {
+      setTemplateDialogOpen(false);
+      return;
+    }
+    const name = templateName.trim();
+    if (!name) {
+      toast.error("Give the template a name");
+      return;
+    }
+    setPendingAction("template");
+    startTransition(async () => {
+      const res = await createRecruiterAssessmentTemplateAction({
+        name,
+        description: templateDescription.trim() || null,
+        content: toContent(draft),
+      });
+      setPendingAction(null);
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      setTemplateDialogOpen(false);
+      toast.success("Template saved. Find it under My templates.");
+      // The landing lists templates above this builder; the builder keeps its state.
+      router.refresh();
+    });
+  }
+
+  /** Save the builder's content back to the template it was opened from. */
+  function updateTemplate() {
+    if (!template) return;
+    const draft = validDraft();
+    if (!draft) return;
+    setPendingAction("template");
+    startTransition(async () => {
+      const res = await updateRecruiterAssessmentTemplateAction({
+        templateId: template.id,
+        content: toContent(draft),
+      });
+      setPendingAction(null);
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      toast.success("Template updated.");
+    });
+  }
+
   /** First click: check everything, then ask — Create notifies people. */
   function askCreate() {
     if (createBlockedReason) {
@@ -501,9 +678,11 @@ export function AssessmentBuilder({
     ? "Edit sent assessment"
     : presetLocked
     ? "Customize a template"
-    : assessmentId
-      ? "Edit assessment"
-      : "Create an assessment";
+    : template
+      ? "Customize your template"
+      : assessmentId
+        ? "Edit assessment"
+        : "Create an assessment";
 
   return (
     <div
@@ -537,6 +716,9 @@ export function AssessmentBuilder({
           )}
         </div>
         <div className="hire-assess__top-actions">
+          {showImport ? (
+            <AssessmentJsonImport onImport={importContent} disabled={pending} />
+          ) : null}
           {/* Desktop: the preview opens in a modal, never beside the form. */}
           <button
             type="button"
@@ -575,6 +757,13 @@ export function AssessmentBuilder({
           <p>
             Template questions can’t be edited, but you can remove them or add
             your own.
+          </p>
+        ) : null}
+        {template ? (
+          <p>
+            You are working from your template “{template.name}”. Saving a draft
+            or publishing creates a new assessment and leaves the template as it
+            is. Update template saves these changes back to it.
           </p>
         ) : null}
         {sent ? (
@@ -959,6 +1148,28 @@ export function AssessmentBuilder({
                   </div>
                 ) : (
                   <div className="hire-assess__save-actions">
+                    {showTemplateActions && template ? (
+                      <button
+                        type="button"
+                        className="hire-assess-linkbtn"
+                        disabled={pending}
+                        onClick={updateTemplate}
+                      >
+                        {pendingAction === "template" && !templateDialogOpen
+                          ? "Updating…"
+                          : "Update template"}
+                      </button>
+                    ) : null}
+                    {showTemplateActions ? (
+                      <button
+                        type="button"
+                        className="hire-assess-linkbtn"
+                        disabled={pending}
+                        onClick={askSaveTemplate}
+                      >
+                        {template ? "Save as new template" : "Save as template"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="hire-assess__savebtn hire-assess__savebtn--ghost"
@@ -1004,6 +1215,100 @@ export function AssessmentBuilder({
               <CandidateAssessmentScreen draft={previewDraft} readOnly />
             ) : null}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan 185: an import never overwrites typed content without asking. */}
+      <Dialog
+        open={pendingImport !== null}
+        onOpenChange={(open) => !open && setPendingImport(null)}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Replace what is in the builder?</DialogTitle>
+            <DialogDescription>
+              Importing replaces the title, settings and all{" "}
+              {questions.length} question{questions.length === 1 ? "" : "s"}{" "}
+              here with the {pendingImport?.questions.length ?? 0} in the file.
+              Nothing is saved until you save.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "outline" }))}
+              onClick={() => setPendingImport(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "default" }))}
+              onClick={() => pendingImport && applyImport(pendingImport)}
+            >
+              Replace
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan 185: recruiter only. `showTemplateActions` is what opens it. */}
+      <Dialog
+        open={templateDialogOpen}
+        onOpenChange={(open) => !pending && setTemplateDialogOpen(open)}
+      >
+        <DialogContent className="hire-app sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Save as template</DialogTitle>
+            <DialogDescription>
+              Saves the questions and settings in the builder to My templates.
+              Only you can see or use it. Candidates and your Shortlist are not
+              part of a template.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="assess-template-name">Template name</Label>
+              <Input
+                id="assess-template-name"
+                value={templateName}
+                maxLength={120}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g. Backend screen, round 1"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="assess-template-description">
+                Description (optional)
+              </Label>
+              <Textarea
+                id="assess-template-description"
+                rows={2}
+                value={templateDescription}
+                maxLength={300}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                placeholder="What this template is for"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "outline" }))}
+              disabled={pending}
+              onClick={() => setTemplateDialogOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "default" }))}
+              disabled={pending || templateName.trim() === ""}
+              onClick={saveTemplate}
+            >
+              {pendingAction === "template" ? "Saving…" : "Save template"}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

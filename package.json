@@ -159,6 +159,7 @@
     "test:recruiter-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-jobs/recruiter-jobs.test.ts",
     "test:recruiter-assessments": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/recruiter-assessments.test.ts",
     "test:assessment-presets": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/presets.test.ts",
+    "test:assessment-templates": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/recruiter-assessments/templates.test.ts",
     "test:assessment-attempts": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/assessment-attempts/assessment-attempts.test.ts",
     "test:platform-assessments": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/platform-assessments/platform-assessments.test.ts",
     "test:candidate-jobs": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/candidate-jobs/candidate-jobs.test.ts",
