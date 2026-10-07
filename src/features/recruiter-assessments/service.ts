@@ -665,6 +665,10 @@ type CreateAndSendOutcome =
  * Save the draft, publish it, and assign it to the Shortlisted candidates the
  * recruiter ticked — each notified once through the existing notifier.
  *
+ * Plan 184 — publishing never needs a candidate. With nobody ticked this is
+ * save + publish only: no Shortlist read, no assignment, no notification. The
+ * recruiter assigns from the detail page afterwards.
+ *
  * Three steps that are each idempotent on their own, with no transaction
  * across them, so every failure leaves a state the recruiter can finish from:
  * - invalid input or a ref off the Shortlist → nothing is written at all;
@@ -691,23 +695,26 @@ export async function createPublishAndAssign(
   const { draft } = parsed.data;
   const refs = [...new Set(parsed.data.candidateRefs)];
   const projectId = parsed.data.projectId ?? null;
+  const sending = refs.length > 0;
 
   // Checked before anything is saved: a stale pick must not leave a live
   // assessment behind. assignAssessment re-checks against the SAME scope (the
   // Shortlist can change in between; that rare race lands in the assignError
   // branch).
-  const pool = await store.listAssignableCandidates(scope.createdByUserId, {
-    projectId,
-  });
-  const onShortlist = new Set(pool.map((c) => c.candidateRef));
-  if (refs.some((ref) => !onShortlist.has(ref))) {
-    return {
-      ok: false,
-      code: "INVALID",
-      message:
-        "Some of these candidates are no longer on your Shortlist. Refresh and try again.",
-      assessmentId: null,
-    };
+  if (sending) {
+    const pool = await store.listAssignableCandidates(scope.createdByUserId, {
+      projectId,
+    });
+    const onShortlist = new Set(pool.map((c) => c.candidateRef));
+    if (refs.some((ref) => !onShortlist.has(ref))) {
+      return {
+        ok: false,
+        code: "INVALID",
+        message:
+          "Some of these candidates are no longer on your Shortlist. Refresh and try again.",
+        assessmentId: null,
+      };
+    }
   }
 
   const saved = draft.assessmentId
@@ -725,6 +732,20 @@ export async function createPublishAndAssign(
       code: published.code,
       message: published.message,
       assessmentId: id,
+    };
+  }
+
+  // Live with nobody on it — a normal outcome, not an assign failure.
+  if (!sending) {
+    return {
+      ok: true,
+      data: {
+        id,
+        assigned: 0,
+        alreadyAssigned: 0,
+        notificationFailures: 0,
+        assignError: null,
+      },
     };
   }
 
@@ -751,7 +772,7 @@ export async function createPublishAndAssign(
 
 /**
  * Publish an ABTalks template (or a combination) and send it to the ticked
- * Shortlisted candidates. The client sends preset ids + refs only — question
+ * Shortlisted candidates, if any. The client sends preset ids + refs only — question
  * bodies are looked up here so a recruiter cannot smuggle a draft in as a
  * "template".
  */

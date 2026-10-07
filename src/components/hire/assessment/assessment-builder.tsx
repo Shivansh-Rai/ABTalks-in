@@ -260,6 +260,11 @@ export function AssessmentBuilder({
   const picked = candidates.filter((c) => selected.has(c.candidateRef));
   const pickedCount = picked.length;
   const allPicked = candidates.length > 0 && pickedCount === candidates.length;
+  // Plan 184: for a recruiter, nobody ticked is not a block — publishing never
+  // needs a candidate. The primary button says which of the two it will do.
+  const sendsNow = pickedCount > 0;
+  const createLabel = platform ? "Create" : sendsNow ? "Publish and send" : "Publish";
+  const creatingLabel = platform ? "Creating…" : "Publishing…";
   const createBlockedReason = sent
     ? deadlineMissing
       ? "Set a deadline, or tick No deadline."
@@ -272,13 +277,9 @@ export function AssessmentBuilder({
         : deadlineMissing
           ? "Set a deadline, or tick No deadline."
           : null
-    : candidates.length === 0
-      ? "Your Shortlist is empty — shortlist candidates on Hire to send this. You can still save a draft."
-      : pickedCount === 0
-        ? "Select at least one shortlisted candidate to send this to."
-        : pickedCount > MAX_ASSIGN_PER_CALL
-          ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
-          : null;
+    : pickedCount > MAX_ASSIGN_PER_CALL
+      ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
+      : null;
 
   function move(from: number, to: number) {
     setQuestions((q) => {
@@ -402,6 +403,8 @@ export function AssessmentBuilder({
         toast.warning(
           `Published, but not sent yet: ${assignError} Assign candidates from this page.`,
         );
+      } else if (candidateRefs.length === 0) {
+        toast.success("Published. Pick candidates on this page to send it.");
       } else {
         const sent = assigned + alreadyAssigned;
         toast.success(
@@ -413,7 +416,13 @@ export function AssessmentBuilder({
           );
         }
       }
-      router.push(`/hire/assessments/${id}`);
+      // The project rides along so the assign panel there offers the same
+      // Shortlist this builder did — a new assessment is filed under no project.
+      router.push(
+        projectId
+          ? `/hire/assessments/${id}?projectId=${encodeURIComponent(projectId)}`
+          : `/hire/assessments/${id}`,
+      );
     });
   }
 
@@ -827,15 +836,20 @@ export function AssessmentBuilder({
                   </button>
                 )}
               </div>
-              
+
               {candidates.length === 0 ? (
                 <p className="hire-assess__send-empty">
-                  Your Shortlist is empty. Shortlist candidates on Hire first — you
-                  can still save this as a draft.
+                  Your Shortlist is empty. You can still publish this now, then
+                  shortlist candidates on Hire and assign them from the
+                  assessment&apos;s page.
                 </p>
               ) : (
                 <fieldset className="hire-assess-assign__fieldset" aria-busy={pending}>
                   <legend className="sr-only">Shortlisted candidates</legend>
+                  <p className="hire-assess-hint">
+                    Optional — tick who gets it now, or publish first and assign
+                    candidates later from the assessment&apos;s page.
+                  </p>
                   <ul className="hire-assess-assign__list">
                     {candidates.map((c) => (
                       <li key={c.candidateRef}>
@@ -879,11 +893,17 @@ export function AssessmentBuilder({
                     can edit anything until someone starts, then only wording, the
                     deadline and groups.
                   </p>
-                ) : (
+                ) : sendsNow ? (
                   <p>
                     Publish and send to {pickedCount} candidate
                     {pickedCount === 1 ? "" : "s"}? Publishing locks the questions
                     and the pass mark, and each candidate is notified.
+                  </p>
+                ) : (
+                  <p>
+                    Publish without sending it to anyone yet? Publishing locks the
+                    questions and the pass mark. You pick the candidates next, on
+                    the assessment&apos;s page.
                   </p>
                 )}
                 <div className="hire-assess-assign__confirm-actions">
@@ -906,8 +926,8 @@ export function AssessmentBuilder({
                         ? "Saving…"
                         : "Save and send"
                       : pendingAction === "create"
-                        ? "Creating…"
-                        : "Create"}
+                        ? creatingLabel
+                        : createLabel}
                   </button>
                 </div>
               </div>
@@ -921,7 +941,9 @@ export function AssessmentBuilder({
                         : "Candidates see your changes the next time they open it."
                       : platform
                       ? `Sends to up to ${audienceCount.toLocaleString("en-IN")} candidate${audienceCount === 1 ? "" : "s"}.`
-                      : `Sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`)}
+                      : sendsNow
+                        ? `Publishes and sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`
+                        : "Publishes without sending. You pick the candidates next, on the assessment's page.")}
                 </p>
                 {sent ? (
                   <div className="hire-assess__save-actions">
@@ -952,7 +974,7 @@ export function AssessmentBuilder({
                       aria-describedby="assess-create-hint"
                       onClick={askCreate}
                     >
-                      Create
+                      {createLabel}
                     </button>
                   </div>
                 )}

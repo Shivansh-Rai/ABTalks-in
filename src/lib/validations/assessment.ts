@@ -116,11 +116,23 @@ export const assignAssessmentSchema = z.object({
 
 export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
 
+/**
+ * Plan 184 — who a one-step publish also sends to. Empty is allowed: publishing
+ * never needs a candidate, and the assessment is assigned later from its page.
+ * (An assign call on its own still needs at least one — see above.)
+ */
+const sendCandidateRefs = z
+  .array(z.string().trim().min(3).max(200))
+  .max(
+    MAX_ASSIGN_PER_CALL,
+    `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time`,
+  );
+
 /** Plan 131 — the builder's Create: save, publish and send in one step. */
 export const createAndSendSchema = z.object({
   draft: assessmentDraftSchema,
   projectId: shortlistProjectId,
-  candidateRefs: assignAssessmentSchema.shape.candidateRefs,
+  candidateRefs: sendCandidateRefs,
 });
 
 export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
@@ -129,7 +141,7 @@ export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
 export const createAndSendFromPresetsSchema = z.object({
   presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
   projectId: shortlistProjectId,
-  candidateRefs: assignAssessmentSchema.shape.candidateRefs,
+  candidateRefs: sendCandidateRefs,
 });
 
 export type CreateAndSendFromPresetsInput = z.infer<
