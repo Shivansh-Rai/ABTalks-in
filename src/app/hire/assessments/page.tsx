@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChartColumn, PencilLine, Plus } from "lucide-react";
+import { ChartColumn, PencilLine, Plus, UserPlus } from "lucide-react";
 import { requireRecruiter } from "@/lib/program-auth";
 import { requireRecruiterWorkspace } from "@/features/recruiter-workspace/workspace";
 import {
@@ -53,7 +53,18 @@ function formatStamp(d: Date): string {
   });
 }
 
-/** Draft → keep building it. Published / archived → see how candidates did. */
+/**
+ * Plan 184 — live but assigned to nobody. Publishing never needs a candidate,
+ * so this is a normal state, and its next step is to pick who gets it.
+ */
+function isUnsent(row: AssessmentListRow): boolean {
+  return row.status === "PUBLISHED" && row.results?.students === 0;
+}
+
+/**
+ * Draft → keep building it. Published but unsent → pick candidates.
+ * Otherwise → see how candidates did.
+ */
 function PrimaryAction({
   row,
   className,
@@ -70,6 +81,18 @@ function PrimaryAction({
       >
         <PencilLine aria-hidden="true" />
         <span className="hire-assess-action__label">Continue editing</span>
+      </Link>
+    );
+  }
+  if (isUnsent(row)) {
+    return (
+      <Link
+        href={`/hire/assessments/${row.id}#assign`}
+        className={cn("hire-assess-action", className)}
+        title="Assign candidates"
+      >
+        <UserPlus aria-hidden="true" />
+        <span className="hire-assess-action__label">Assign candidates</span>
       </Link>
     );
   }
@@ -100,6 +123,9 @@ function StatusBadge({ status }: { status: AssessmentListRow["status"] }) {
 function Results({ row }: { row: AssessmentListRow }) {
   if (!row.results) {
     return <span className="hire-assess-results__none">Publish to assign</span>;
+  }
+  if (isUnsent(row)) {
+    return <span className="hire-assess-results__none">Not sent yet</span>;
   }
   const { students, passed, failed } = row.results;
   return (

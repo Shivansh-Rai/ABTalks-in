@@ -23,6 +23,11 @@ type AssignPanelProps = {
     alreadyAssigned: boolean;
   }[];
   /**
+   * How many candidates this assessment is assigned to in total — not only
+   * those still on the Shortlist. Zero means it is live but unsent (plan 184).
+   */
+  assignedCount: number;
+  /**
    * Which project `candidates` was scoped to, sent back with Assign so the
    * server resolves the refs against that same Shortlist. Null = off-project,
    * which is the legacy saved list.
@@ -34,6 +39,7 @@ export function AssessmentAssignPanel({
   assessmentId,
   status,
   candidates,
+  assignedCount,
   projectId = null,
 }: AssignPanelProps) {
   if (status === "DRAFT") return <PublishBlock assessmentId={assessmentId} />;
@@ -42,6 +48,7 @@ export function AssessmentAssignPanel({
       <AssignBlock
         assessmentId={assessmentId}
         candidates={candidates}
+        assignedCount={assignedCount}
         projectId={projectId}
       />
     );
@@ -62,7 +69,11 @@ function PublishBlock({ assessmentId }: { assessmentId: string }) {
         toast.error(res.message);
         return;
       }
-      toast.success(res.data.alreadyPublished ? "Already published" : "Published");
+      toast.success(
+        res.data.alreadyPublished
+          ? "Already published"
+          : "Published. Pick candidates below to send it.",
+      );
       setConfirming(false);
       router.refresh();
     });
@@ -82,7 +93,8 @@ function PublishBlock({ assessmentId }: { assessmentId: string }) {
         <div className="hire-assess-assign__confirm" role="group" aria-label="Confirm publish">
           <p>
             Publishing locks the questions and the pass mark. Every candidate you
-            assign sees exactly this version.
+            assign sees exactly this version. You don&apos;t need to pick anyone
+            now — you choose the candidates right after.
           </p>
           <div className="hire-assess-assign__confirm-actions">
             <button
@@ -112,10 +124,12 @@ function PublishBlock({ assessmentId }: { assessmentId: string }) {
 function AssignBlock({
   assessmentId,
   candidates,
+  assignedCount,
   projectId,
 }: {
   assessmentId: string;
   candidates: AssignPanelProps["candidates"];
+  assignedCount: number;
   projectId: string | null;
 }) {
   const router = useRouter();
@@ -169,18 +183,31 @@ function AssignBlock({
     });
   }
 
+  // #assign is where the list page and the row menu send "Assign candidates".
   return (
-    <section className="hire-assess-assign" aria-label="Assign">
+    <section id="assign" className="hire-assess-assign scroll-mt-4" aria-label="Assign">
+      {assignedCount === 0 && (
+        <div className="hire-assess__callout" role="status">
+          <p>
+            <strong>Published — not sent to anyone yet.</strong>{" "}
+            {candidates.length === 0
+              ? "Candidates only see it once you assign it to them."
+              : "Tick the candidates below, then press Assign to send it."}
+          </p>
+        </div>
+      )}
       <h2>Assign to Shortlisted candidates</h2>
 
       {candidates.length === 0 ? (
-        <p className="hire-assess-assign__empty">
-          Your Shortlist is empty. Shortlist candidates on Hire, then come back to
-          assign.{" "}
-          <Link href="/hire" className="hire-assess-linkbtn">
+        <div className="hire-assess-assign__empty flex flex-col items-start gap-3">
+          <p>
+            Your Shortlist is empty, so there is nobody to assign this to yet.
+            Shortlist candidates on Hire, then come back here to assign them.
+          </p>
+          <Link href="/hire" className={cn(buttonVariants({ variant: "outline" }))}>
             Go to Hire
           </Link>
-        </p>
+        </div>
       ) : (
         <fieldset className="hire-assess-assign__fieldset" aria-busy={pending}>
           <legend className="sr-only">Shortlisted candidates</legend>
@@ -231,8 +258,17 @@ function AssignBlock({
               onClick={assign}
             >
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              Assign to {count} candidate{count === 1 ? "" : "s"}
+              {count === 0
+                ? "Assign to candidates"
+                : `Assign to ${count} candidate${count === 1 ? "" : "s"}`}
             </button>
+            {count === 0 && (
+              <span className="hire-assess-hint">
+                {selectable.length === 0
+                  ? "Everyone on this Shortlist already has it."
+                  : "Tick at least one candidate to assign it."}
+              </span>
+            )}
             {overCap && (
               <span className="hire-assess-error">
                 Assign at most {MAX_ASSIGN_PER_CALL} at a time

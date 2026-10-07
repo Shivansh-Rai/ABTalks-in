@@ -137,13 +137,15 @@ export default async function HireAssessmentDetailPage({
         assessmentId={assessment.id}
         status={assessment.status}
         candidates={candidates}
+        assignedCount={summary.assigned}
         projectId={projectId}
       />
 
       {isDraft ? (
         <p className="hire-assess-list__footnote">
-          This is a draft. Publish it to assign candidates — publishing locks the
-          questions and pass mark.
+          This is a draft. Publish it first, then pick the candidates to send it
+          to — you don&apos;t need any to publish. Publishing locks the questions
+          and pass mark.
         </p>
       ) : (
         <section

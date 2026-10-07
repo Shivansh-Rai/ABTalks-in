@@ -10,6 +10,7 @@ import {
   Eye,
   PencilLine,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -104,6 +105,18 @@ export function AssessmentRowMenu({
               <Eye aria-hidden="true" />
               View details
             </DropdownMenuItem>
+            {/* Assigning is open for as long as it is published (plan 184). */}
+            {status === "PUBLISHED" && (
+              <DropdownMenuItem
+                render={
+                  <Link href={`/hire/assessments/${assessmentId}#assign`} />
+                }
+                className="cursor-pointer"
+              >
+                <UserPlus aria-hidden="true" />
+                Assign candidates
+              </DropdownMenuItem>
+            )}
             {!isDraft && (
               <DropdownMenuItem
                 render={
