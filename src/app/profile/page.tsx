@@ -30,6 +30,7 @@ import { ResumeSection } from "@/components/profile/resume-section";
 import { PreferencesSection } from "@/components/profile/preferences-section";
 import { buttonVariants } from "@/components/ui/button";
 import { PERSONA_LABELS } from "@/lib/candidate-vocab";
+import { asCtcCurrency } from "@/lib/validations/candidate-profile";
 import { isEmailLoginEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
 import { isAvatarStorageConfigured } from "@/features/profile/avatar-storage";
 
@@ -413,6 +414,7 @@ export default async function ProfilePage({
       savable: true,
       node: (
         <PreferencesSection
+          isProfessional={detail.primaryPersona === CandidatePersona.PROFESSIONAL}
           initial={{
             openToWork: detail.preference?.openToWork ?? false,
             preferredRoles: detail.preference?.preferredRoles ?? [],
@@ -427,6 +429,20 @@ export default async function ProfilePage({
                 : String(detail.preference.noticePeriodDays),
             availableFromMonth: detail.preference?.availableFromMonth ?? null,
             availableFromYear: detail.preference?.availableFromYear ?? null,
+            currentCtc:
+              detail.preference?.currentCtc == null
+                ? ""
+                : String(detail.preference.currentCtc),
+            currentCtcCurrency: asCtcCurrency(
+              detail.preference?.currentCtcCurrency,
+            ),
+            expectedCtc:
+              detail.preference?.expectedCtc == null
+                ? ""
+                : String(detail.preference.expectedCtc),
+            expectedCtcCurrency: asCtcCurrency(
+              detail.preference?.expectedCtcCurrency,
+            ),
           }}
         />
       ),

@@ -2110,6 +2110,25 @@ body.pw-sheet-open .abt-content-scroll {
   gap: 16px;
 }
 
+/* Amount with a currency picker attached on its left edge (CTC fields). */
+.pw-money {
+  display: flex;
+}
+.pw-root .pw-money select {
+  flex: none;
+  width: 104px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  background-color: #f6f7f7;
+}
+.pw-root .pw-field .pw-money input:not([type="checkbox"]):not([type="file"]):not([type="hidden"]) {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: -1px;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
 /* ---------- static copy ---------- */
 .pw-section-intro {
   font-size: 14px;

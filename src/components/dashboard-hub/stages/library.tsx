@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, BarChart3, Blocks, Bot, ChevronLeft, ChevronRight, Code2, Network, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,8 @@ export type LibraryItem = {
   modules: number | null;
   /** Small callout pinned to the art, e.g. "2 options available". */
   badge?: string;
+  /** When set, clicking the tile opens a chooser of these instead of `href`. */
+  options?: { label: string; href: string }[];
 };
 
 /** Tile artwork: 16:9 covers (1280×720 WebP) that fill the tile. `light`
@@ -127,9 +129,105 @@ function EdgeButton({ side, onClick }: { side: "left" | "right"; onClick: () => 
   );
 }
 
+const TILE_CLASS = "lib-tile relative w-[240px] shrink-0 sm:w-[270px]";
+const CARD_CLASS =
+  "lib-tile__card block rounded-xl bg-white shadow-[0_10px_24px_-16px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#03535F]";
+const CTA_CLASS =
+  "inline-flex h-7 items-center gap-1 rounded-full bg-[#03535F] px-3 text-[11px] font-bold text-white shadow-[inset_0_-3px_8px_rgba(0,0,0,0.22)]";
+
 /* At rest: artwork only. On hover/focus the tile grows (1.3x) and its
    details drop in beneath the image. */
 function Tile({ item }: { item: LibraryItem }) {
+  if (item.options?.length) return <ChooserTile item={item} options={item.options} />;
+  return (
+    <li className={TILE_CLASS}>
+      <Link href={item.href} aria-label={item.title} className={CARD_CLASS}>
+        <TileFace
+          item={item}
+          cta={
+            <span className={cn(CTA_CLASS, "mt-2.5")}>
+              {item.cta} <ArrowRight className="size-3" aria-hidden="true" />
+            </span>
+          }
+        />
+      </Link>
+    </li>
+  );
+}
+
+/* A tile that stands for more than one program: clicking it opens a small
+   box above its button listing them, and each entry opens that program.
+   The card takes focus on click so the tile stays grown while the box is
+   open (the hover rules also match :focus-within). */
+function ChooserTile({ item, options }: { item: LibraryItem; options: { label: string; href: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLLIElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <li ref={root} className={TILE_CLASS}>
+      <div tabIndex={-1} onClick={() => setOpen((o) => !o)} className={cn(CARD_CLASS, "cursor-pointer")}>
+        <TileFace
+          item={item}
+          cta={
+            <span className="relative mt-2.5 inline-block">
+              <button
+                type="button"
+                aria-label={`${item.title}: choose a program`}
+                aria-haspopup="true"
+                aria-expanded={open}
+                aria-controls={open ? menuId : undefined}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen((o) => !o);
+                }}
+                className={cn(CTA_CLASS, "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#03535F] focus-visible:ring-offset-1")}
+              >
+                {item.cta} <ArrowRight className="size-3" aria-hidden="true" />
+              </button>
+              {open ? (
+                <div
+                  id={menuId}
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-full left-0 z-50 mb-2 w-[190px] rounded-lg bg-white p-1 shadow-[0_12px_28px_-10px_rgba(0,0,0,0.35)] ring-1 ring-black/10"
+                >
+                  {options.map((o) => (
+                    <Link
+                      key={o.href}
+                      href={o.href}
+                      className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-[12px] font-semibold text-[#1F1F1F] hover:bg-[#03535F]/10 focus-visible:bg-[#03535F]/10 focus-visible:outline-none"
+                    >
+                      {o.label}
+                      <ArrowRight className="size-3 shrink-0 text-[#03535F]" aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </span>
+          }
+        />
+      </div>
+    </li>
+  );
+}
+
+function TileFace({ item, cta }: { item: LibraryItem; cta: ReactNode }) {
   const art = ART[item.art];
   const Icon = ICON[item.art];
   const meta = [
@@ -138,65 +236,57 @@ function Tile({ item }: { item: LibraryItem }) {
     item.kicker,
   ].filter(Boolean);
   return (
-    <li className="lib-tile relative w-[240px] shrink-0 sm:w-[270px]">
-      <Link
-        href={item.href}
-        aria-label={item.title}
-        className="lib-tile__card block rounded-xl bg-white shadow-[0_10px_24px_-16px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#03535F]"
-      >
-        <div className={cn("lib-tile__img relative aspect-[16/9] overflow-hidden rounded-xl", (art?.light ?? true) ? "bg-white" : "bg-[#0A0F12]")}>
-          {art ? (
-            // eslint-disable-next-line @next/next/no-img-element -- static tile art
-            <img
-              src={art.src}
-              alt=""
-              className="absolute inset-0 size-full object-cover"
-            />
-          ) : (
-            <GlossyArt Icon={Icon} tint={TINT[item.art]} />
+    <>
+      <div className={cn("lib-tile__img relative aspect-[16/9] overflow-hidden rounded-xl", (art?.light ?? true) ? "bg-white" : "bg-[#0A0F12]")}>
+        {art ? (
+          // eslint-disable-next-line @next/next/no-img-element -- static tile art
+          <img
+            src={art.src}
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+          />
+        ) : (
+          <GlossyArt Icon={Icon} tint={TINT[item.art]} />
+        )}
+        {item.badge ? (
+          <span className="absolute right-2.5 top-2.5 z-10 inline-flex items-center rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] font-medium text-black">
+            {item.badge}
+          </span>
+        ) : null}
+        {/* Title on the art, bottom-left, over a soft dark fade. */}
+        <div
+          className={cn(
+            "lib-tile__name pointer-events-none absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8",
+            (art?.light ?? true)
+              ? "bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.95)_75%)]"
+              : "bg-[linear-gradient(180deg,rgba(0,0,0,0)_0%,rgba(0,0,0,0.72)_100%)]",
           )}
-          {item.badge ? (
-            <span className="absolute right-2.5 top-2.5 z-10 inline-flex items-center rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] font-medium text-black">
-              {item.badge}
-            </span>
-          ) : null}
-          {/* Title on the art, bottom-left, over a soft dark fade. */}
-          <div
+        >
+          <p
             className={cn(
-              "lib-tile__name pointer-events-none absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8",
-              (art?.light ?? true)
-                ? "bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.95)_75%)]"
-                : "bg-[linear-gradient(180deg,rgba(0,0,0,0)_0%,rgba(0,0,0,0.72)_100%)]",
+              "truncate font-heading text-[15px] font-bold leading-tight",
+              (art?.light ?? true) ? "text-[#1F1F1F]" : "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]",
             )}
           >
-            <p
-              className={cn(
-                "truncate font-heading text-[15px] font-bold leading-tight",
-                (art?.light ?? true) ? "text-[#1F1F1F]" : "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]",
-              )}
-            >
-              {item.title}
-            </p>
-          </div>
-        </div>
-        <div className="lib-tile__details rounded-b-xl bg-white px-3.5 pb-3.5 pt-3 text-black">
-          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#03535F]">{item.kicker}</p>
-          <p className="mt-0.5 truncate font-heading text-[15px] font-bold leading-tight">{item.title}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10px] text-[#6B7280]">
-            {meta.map((m, i) => (
-              <span key={m} className="flex items-center gap-1.5">
-                {i > 0 ? <span className="size-1 rounded-full bg-[#C4CACA]" aria-hidden="true" /> : null}
-                {m}
-              </span>
-            ))}
+            {item.title}
           </p>
-          <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#4B4B4B]">{item.blurb}</p>
-          <span className="mt-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-[#03535F] px-3 text-[11px] font-bold text-white shadow-[inset_0_-3px_8px_rgba(0,0,0,0.22)]">
-            {item.cta} <ArrowRight className="size-3" aria-hidden="true" />
-          </span>
         </div>
-      </Link>
-    </li>
+      </div>
+      <div className="lib-tile__details rounded-b-xl bg-white px-3.5 pb-3.5 pt-3 text-black">
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#03535F]">{item.kicker}</p>
+        <p className="mt-0.5 truncate font-heading text-[15px] font-bold leading-tight">{item.title}</p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10px] text-[#6B7280]">
+          {meta.map((m, i) => (
+            <span key={m} className="flex items-center gap-1.5">
+              {i > 0 ? <span className="size-1 rounded-full bg-[#C4CACA]" aria-hidden="true" /> : null}
+              {m}
+            </span>
+          ))}
+        </p>
+        <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#4B4B4B]">{item.blurb}</p>
+        {cta}
+      </div>
+    </>
   );
 }
 

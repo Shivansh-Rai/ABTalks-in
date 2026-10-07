@@ -754,6 +754,27 @@ type LinksWriteExtra = {
 
 /* ─── Career preferences ─────────────────────────────────────────────────── */
 
+export const CTC_CURRENCIES = ["INR", "USD"] as const;
+export type CtcCurrency = (typeof CTC_CURRENCIES)[number];
+
+/** Stored currency → form value. Unset (or anything unknown) shows as INR. */
+export function asCtcCurrency(v: string | null | undefined): CtcCurrency {
+  return v === "USD" ? "USD" : "INR";
+}
+
+/** Annual CTC as a whole number; "" clears it. Capped to fit a Postgres INTEGER. */
+const ctcAmount = z
+  .preprocess(
+    emptyToNull,
+    z.coerce
+      .number()
+      .int("Enter a whole number")
+      .min(0)
+      .max(2_000_000_000, "That amount is too large")
+      .nullable(),
+  )
+  .optional();
+
 /**
  * Employment preference only. This section can never change recruiter
  * discoverability — that is `CandidateVisibility.searchableByRecruiters`, which
@@ -778,6 +799,12 @@ export const preferencesSchema = z.object({
   ),
   availableFromMonth: nullableMonth,
   availableFromYear: nullableYear,
+  // Professionals only. Absent (undefined) means the form did not show them,
+  // so the save leaves whatever is stored untouched.
+  currentCtc: ctcAmount,
+  currentCtcCurrency: z.enum(CTC_CURRENCIES).optional(),
+  expectedCtc: ctcAmount,
+  expectedCtcCurrency: z.enum(CTC_CURRENCIES).optional(),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;

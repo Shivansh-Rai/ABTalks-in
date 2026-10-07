@@ -61,7 +61,14 @@ export default async function RegisterPage({ searchParams }: PageProps) {
   // sent them to /admin, and /profile showed "Complete your registration
   // first" with no way to act on it. Deleting and re-creating an admin account
   // landed exactly there.
-  if (registered && (session.user.isAdmin || userExists.role === "ADMIN")) {
+  // An explicit `?domain=` (a challenge card on the dashboard hub) is a request
+  // to open that track, so it falls through to the join flow below instead of
+  // bouncing the admin to /admin.
+  if (
+    registered &&
+    (session.user.isAdmin || userExists.role === "ADMIN") &&
+    !isCoreDomain(requestedDomain)
+  ) {
     redirect("/admin");
   }
 

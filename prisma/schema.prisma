@@ -2795,6 +2795,14 @@ model CandidatePreference {
   expectedSalaryMax  Int?
   salaryCurrency     String?           @db.Char(3)
   currentSalary      Int?
+  /// Candidate-entered annual CTC from the profile wizard (professionals only).
+  /// Kept apart from the salary fields above: those are INR and feed recruiter
+  /// scoring, while these carry their own currency (INR or USD) per field.
+  /// Private, same as the salary fields.
+  currentCtc         Int?
+  currentCtcCurrency String?           @db.Char(3)
+  expectedCtc        Int?
+  expectedCtcCurrency String?          @db.Char(3)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 

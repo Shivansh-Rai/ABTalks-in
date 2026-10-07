@@ -919,6 +919,10 @@ const emptyPref = {
   noticePeriodDays: null,
   availableFromMonth: null,
   availableFromYear: null,
+  currentCtc: null,
+  currentCtcCurrency: null,
+  expectedCtc: null,
+  expectedCtcCurrency: null,
 };
 
 function fullProfile(
