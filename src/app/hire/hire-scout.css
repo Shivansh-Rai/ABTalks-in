@@ -12867,6 +12867,9 @@ a.hire-profile__ext-link:focus-visible {
    `.hire-plain` stays as the inner measure for page bodies that still use it,
    so nothing that already renders inside one has to change. */
 .hire-shell {
+  /* Positioned so the shell is the containing block for everything inside it
+     (see `.hire-shell__content` below); this one also covers the rail. */
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -12877,6 +12880,14 @@ a.hire-profile__ext-link:focus-visible {
 }
 
 .hire-shell__content {
+  /* The scrolling pane must contain its own out-of-flow descendants. Without
+     this, any `position: absolute` node low on a long page (every `.sr-only`
+     label, legend and live region is one) had the DOCUMENT as its containing
+     block: it was neither scrolled nor clipped by this pane, so it stretched
+     the document down to its own offset and the page scrolled thousands of
+     pixels past its content into blank space, taking the pinned shell with
+     it. First seen on /hire/create-test; it applied to every plain page. */
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;
