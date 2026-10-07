@@ -227,7 +227,7 @@ export function PreferencesSection({
           <PwField
             label="Current CTC"
             htmlFor="pref-current-ctc"
-            helper="Per year. Private, never shown to recruiters."
+            helper=""
           >
             <CtcInput
               id="pref-current-ctc"
@@ -240,7 +240,7 @@ export function PreferencesSection({
           <PwField
             label="Expected CTC"
             htmlFor="pref-expected-ctc"
-            helper="Per year. Private, never shown to recruiters."
+            helper=""
           >
             <CtcInput
               id="pref-expected-ctc"
