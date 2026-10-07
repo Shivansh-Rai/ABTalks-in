@@ -6432,6 +6432,35 @@ a.hire-assess-action {
   color: var(--h-gray-500, #78716c);
 }
 
+/* Plan 185 — beside "Start from blank": the JSON import controls. */
+.hire-assess-presets__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+/* "Import from JSON" + "Download JSON format", always side by side. Used in
+   the picker's head and in the builder's header (recruiter and admin). */
+.hire-assess-import {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.hire-assess-import .hire-assess-linkbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hire-assess-import .hire-assess-linkbtn svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
 .hire-assess-presets__back {
   display: block;
   width: min(1600px, calc(100% - 32px));
@@ -6534,6 +6563,41 @@ a.hire-assess-action {
 .hire-assess-preset-card__meta {
   margin: 0;
   font-size: 12px;
+  color: var(--h-gray-500, #78716c);
+}
+
+/* Plan 185 — a recruiter's own template. Same card, but it is not a toggle:
+   no checkbox to make room for, no pointer, and its own row of actions. */
+.hire-assess-preset-card--own {
+  padding-right: 16px;
+  cursor: default;
+}
+
+.hire-assess-preset-card--own:hover {
+  border-color: rgba(28, 25, 23, 0.08);
+}
+
+.hire-assess-preset-card--own h3,
+.hire-assess-preset-card--own .hire-assess-preset-card__tagline {
+  overflow-wrap: anywhere;
+}
+
+.hire-assess-preset-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.hire-assess-templates__empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed rgba(28, 25, 23, 0.16);
+  border-radius: 16px;
+  background: #fff;
+  font-size: 13px;
   color: var(--h-gray-500, #78716c);
 }
 
@@ -6894,6 +6958,8 @@ a.hire-assess-action {
 
 .hire-assess__top-actions {
   display: flex;
+  /* Wraps: the header also holds the JSON import controls (plan 185). */
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
@@ -7275,7 +7341,14 @@ a.hire-assess-action {
 .hire-assess__save-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
+}
+
+/* Plan 185 — "Save as template" / "Update template": text actions, so they
+   stay quieter than Save draft and Publish beside them. */
+.hire-assess__save-actions .hire-assess-linkbtn {
+  padding: 0 6px;
 }
 
 /* Candidate preview modal (portalled outside .hire-app). */

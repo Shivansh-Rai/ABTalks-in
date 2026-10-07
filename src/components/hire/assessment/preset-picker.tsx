@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createAndSendFromPresetsAction } from "@/app/actions/recruiter-assessment-actions";
@@ -22,9 +22,12 @@ export function AssessmentPresetPicker({
   presets,
   candidates,
   projectId = null,
+  headActions = null,
 }: {
   presets: PresetSummary[];
   candidates: SendableCandidate[];
+  /** Plan 185: rendered beside "Start from blank" (the JSON import controls). */
+  headActions?: ReactNode;
   /**
    * Which project `candidates` came from. Carried into Customize and sent with
    * Publish, so the builder and the server see the same Shortlist this picker
@@ -161,9 +164,12 @@ export function AssessmentPresetPicker({
             or customize it first.
           </p>
         </div>
-        <a href="#blank-assessment" className="hire-assess-linkbtn">
-          Start from blank ↓
-        </a>
+        <div className="hire-assess-presets__head-actions">
+          {headActions}
+          <a href="#blank-assessment" className="hire-assess-linkbtn">
+            Start from blank ↓
+          </a>
+        </div>
       </div>
 
       <div className="hire-assess-presets__grid">

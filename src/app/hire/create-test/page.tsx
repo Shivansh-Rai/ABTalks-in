@@ -12,9 +12,15 @@ import {
   type AssessmentRow,
 } from "@/features/recruiter-assessments/service";
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
+import {
+  getTemplate,
+  listTemplates,
+} from "@/features/recruiter-assessments/templates";
+import { prismaTemplateStore } from "@/features/recruiter-assessments/template-prisma-store";
 import { MAX_PARAGRAPH_WORDS } from "@/lib/validations/assessment";
 import { AssessmentBuilder } from "@/components/hire/assessment/assessment-builder";
-import { AssessmentPresetPicker } from "@/components/hire/assessment/preset-picker";
+import { CreateTestLanding } from "@/components/hire/assessment/create-test-landing";
+import { MyAssessmentTemplates } from "@/components/hire/assessment/my-templates";
 import type { AssessmentDraft } from "@/components/hire/assessment/assessment-types";
 
 export const metadata: Metadata = {
@@ -76,18 +82,37 @@ function rowToDraft(row: AssessmentRow): AssessmentDraft {
   };
 }
 
+/**
+ * Plan 185: whose templates this request may read. Resolved from the session,
+ * never from the URL, so `?template=` can only ever open the caller's own.
+ * Null when the caller has no recruiter workspace. Called only on the two
+ * paths that read templates (the landing and `?template=`).
+ */
+async function recruiterTemplateScope() {
+  const workspace = await requireRecruiterWorkspace();
+  return workspace.ok
+    ? {
+        organizationId: workspace.data.organizationId,
+        createdByUserId: workspace.data.userId,
+      }
+    : null;
+}
+
 function BuilderView({
   candidates,
   existingDraft,
   presetLocked,
   showBack,
   projectId,
+  template = null,
 }: {
   candidates: Awaited<ReturnType<typeof listSendableCandidates>>;
   existingDraft: AssessmentDraft | null;
   presetLocked: boolean;
   showBack: boolean;
   projectId: string | null;
+  /** Plan 185: the recruiter's own template this builder was opened from. */
+  template?: { id: string; name: string } | null;
 }) {
   return (
     <>
@@ -108,6 +133,10 @@ function BuilderView({
         existingDraft={existingDraft}
         presetLocked={presetLocked}
         projectId={projectId}
+        // Recruiter surface: the builder may offer "Save as template". It
+        // hides it again while an ABTalks preset's questions are locked.
+        canSaveTemplate
+        template={template}
       />
     </>
   );
@@ -120,12 +149,20 @@ export default async function CreateTestPage({
     id?: string;
     preset?: string;
     presets?: string;
+    template?: string;
     from?: string;
     projectId?: string;
   }>;
 }) {
   const { userId } = await requireRecruiter();
-  const { id, preset, presets, from, projectId: projectIdParam } = await searchParams;
+  const {
+    id,
+    preset,
+    presets,
+    template: templateParam,
+    from,
+    projectId: projectIdParam,
+  } = await searchParams;
 
   // Plan 133 D-4: the Shortlist the recruiter is actually looking at. Coming
   // from a project's pod, that project's shortlisted candidates and nobody
@@ -176,6 +213,39 @@ export default async function CreateTestPage({
     );
   }
 
+  // 1b) Customize one of the recruiter's own templates (`?template=<id>`).
+  // Its questions are editable — it is their content, unlike an ABTalks preset.
+  const templateId = templateParam?.trim();
+  if (templateId) {
+    const templateScope = await recruiterTemplateScope();
+    const found = templateScope
+      ? await getTemplate(prismaTemplateStore(), templateScope, templateId)
+      : null;
+    if (found?.ok) {
+      return (
+        <BuilderView
+          candidates={candidates}
+          existingDraft={{ ...found.data.content, shortlistRefs: refs }}
+          presetLocked={false}
+          showBack
+          projectId={projectId}
+          template={{ id: found.data.id, name: found.data.name }}
+        />
+      );
+    }
+    // Unknown, deleted or someone else's: a blank builder, exactly as an
+    // unknown `?id=` gets. The page never says which of those it was.
+    return (
+      <BuilderView
+        candidates={candidates}
+        existingDraft={null}
+        presetLocked={false}
+        showBack
+        projectId={projectId}
+      />
+    );
+  }
+
   // 2) Customize from one or many templates (`?presets=a,b,c` or `?preset=a`).
   const presetIds = (presets ?? preset ?? "")
     .split(",")
@@ -217,6 +287,19 @@ export default async function CreateTestPage({
     durationMinutes: p.content.durationMinutes,
   }));
 
+  // The recruiter's own templates: summaries only, no question bodies.
+  const templateScope = await recruiterTemplateScope();
+  const ownTemplates = templateScope
+    ? await listTemplates(prismaTemplateStore(), templateScope)
+    : null;
+  const myTemplates = (ownTemplates?.ok ? ownTemplates.data : []).map((t) => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    questionCount: t.questionCount,
+    durationMinutes: t.durationMinutes,
+  }));
+
   return (
     <div className="hire-assess">
       <div className="hire-assess__top">
@@ -229,17 +312,14 @@ export default async function CreateTestPage({
           </p>
         </div>
       </div>
-      <AssessmentPresetPicker
+      <MyAssessmentTemplates templates={myTemplates} projectId={projectId} />
+      {/* The ABTalks template picker and the blank builder under it. One client
+          component so "Import from JSON" in the picker's head can fill the
+          builder below it (plan 185). */}
+      <CreateTestLanding
         presets={presetSummaries}
         candidates={candidates}
         projectId={projectId}
-      />
-      <AssessmentBuilder
-        candidates={candidates}
-        existingDraft={null}
-        presetLocked={false}
-        projectId={projectId}
-        embedded
       />
     </div>
   );

@@ -1257,7 +1257,11 @@ async function run() {
     assert(!list.includes("AssessmentPresetPicker"), "list page has no picker");
     assert(!list.includes("listAssessmentPresets"), "list page does not load presets");
     const page = readSource("src/app/hire/create-test/page.tsx");
-    assert(page.includes("AssessmentPresetPicker"), "create-test landing has the picker");
+    // Plan 185 moved the picker one level down: the landing renders it inside
+    // CreateTestLanding, beside the blank builder its import control fills.
+    const landing = readSource("src/components/hire/assessment/create-test-landing.tsx");
+    assert(page.includes("<CreateTestLanding"), "create-test renders the landing");
+    assert(landing.includes("<AssessmentPresetPicker"), "create-test landing has the picker");
     assert(page.includes("from=scratch") || page.includes('from === "scratch"'), "scratch mode");
     const actions = readSource("src/app/actions/recruiter-assessment-actions.ts");
     assert(!actions.includes("createAssessmentFromPresetsAction"), "draft-only preset action is gone");
