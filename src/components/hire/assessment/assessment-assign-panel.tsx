@@ -189,7 +189,7 @@ function AssignBlock({
       {assignedCount === 0 && (
         <div className="hire-assess__callout" role="status">
           <p>
-            <strong>Published — not sent to anyone yet.</strong>{" "}
+            <strong>Published but not sent to anyone yet.</strong>{" "}
             {candidates.length === 0
               ? "Candidates only see it once you assign it to them."
               : "Tick the candidates below, then press Assign to send it."}
