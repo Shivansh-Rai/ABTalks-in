@@ -7169,6 +7169,63 @@ a.hire-assess-action {
   gap: 10px;
 }
 
+/* Marking the correct answer: instruction line, labelled control, and a
+   highlighted row so the current choice is obvious at a glance. */
+.hire-assess-options__help {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-assess-opt__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px 0 8px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--h-gray-500, #78716c);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.hire-assess-opt__mark:hover {
+  border-color: #15803d;
+}
+
+.hire-assess-opt__mark input {
+  margin: 0;
+  accent-color: #15803d;
+  cursor: pointer;
+}
+
+.hire-assess-options li.is-correct .hire-assess-opt__mark {
+  background: #f0fdf4;
+  border-color: #15803d;
+  color: #15803d;
+}
+
+.hire-assess-options li.is-correct input[type="text"] {
+  border-color: #15803d;
+  background: #f7fef9;
+}
+
+.hire-assess-opt__mark:has(input:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.hire-assess-opt__mark:has(input:focus-visible) {
+  outline: 2px solid rgba(21, 128, 61, 0.45);
+  outline-offset: 2px;
+}
+
 .hire-assess--builder .hire-assess-q__actions {
   justify-content: flex-end;
   gap: 16px;
