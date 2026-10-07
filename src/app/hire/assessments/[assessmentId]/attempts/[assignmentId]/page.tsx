@@ -16,10 +16,12 @@ import {
   formatDuration,
   type IntervalKind,
 } from "@/features/assessment-attempts/activity";
+import { getAttemptAnswers } from "@/features/recruiter-assessments/attempt-answers";
+import { AttemptAnswersReview } from "@/components/hire/assessment/attempt-answers";
 import { formatDateTimeIST } from "@/lib/date-utils";
 
 type Props = { params: Promise<{ assessmentId: string; assignmentId: string }> };
-export const metadata: Metadata = { title: "Candidate activity | ABTalks Hire" };
+export const metadata: Metadata = { title: "Candidate attempt | ABTalks Hire" };
 
 const TILE_KINDS: IntervalKind[] = [
   "FULLSCREEN",
@@ -42,14 +44,15 @@ export default async function AttemptActivityPage({ params }: Props) {
   const workspace = await requireRecruiterWorkspace();
   if (!workspace.ok) notFound();
   const { assessmentId, assignmentId } = await params;
-  const found = await getAttemptActivity(
-    prismaAssessmentStore(),
-    { organizationId: workspace.data.organizationId, createdByUserId: workspace.data.userId },
-    assessmentId,
-    assignmentId,
-    new Date(),
-  );
-  if (!found.ok) notFound(); // foreign, unknown, or the id of another assessment's attempt
+  const scope = {
+    organizationId: workspace.data.organizationId,
+    createdByUserId: workspace.data.userId,
+  };
+  const [found, answers] = await Promise.all([
+    getAttemptActivity(prismaAssessmentStore(), scope, assessmentId, assignmentId, new Date()),
+    getAttemptAnswers(scope, assessmentId, assignmentId),
+  ]);
+  if (!found.ok || !answers) notFound(); // foreign, unknown, or the id of another assessment's attempt
 
   const { row, summary } = found.data;
   const facts: string[] = [];
@@ -70,7 +73,7 @@ export default async function AttemptActivityPage({ params }: Props) {
       </Link>
 
       <header className="hire-assess-detail__head">
-        <p className="hire-assess__kicker">Candidate activity</p>
+        <p className="hire-assess__kicker">Candidate attempt</p>
         <div className="hire-assess-detail__title">
           <h1>{row.label}</h1>
           {isPenalty(row.endReason) ? <span className="hire-assess-penalty">Penalty</span> : null}
@@ -88,10 +91,17 @@ export default async function AttemptActivityPage({ params }: Props) {
         ) : null}
       </header>
 
-      {summary === null ? (
+      {row.status === "ASSIGNED" ? (
+        <p>The candidate hasn&apos;t started this assessment yet, so there are no answers.</p>
+      ) : (
+        <AttemptAnswersReview answers={answers} inProgress={row.status === "STARTED"} />
+      )}
+
+      {row.status === "ASSIGNED" ? null : summary === null ? (
         <p>Activity isn&apos;t recorded for this assessment — it was published before strict mode.</p>
       ) : (
         <>
+          <h2 className="hire-attempt__activity-title">Activity</h2>
           <div className="hire-assess-activity__disclaimer">
             <p>{ACTIVITY_DISCLAIMER}</p>
             {row.assessment.cameraRequired ? <p>{CAMERA_DISCLAIMER}</p> : null}
