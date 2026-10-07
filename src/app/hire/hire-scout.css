@@ -16911,3 +16911,255 @@ a.hire-credits:hover { border-color: var(--h-primary); }
     opacity: 0.45;
   }
 }
+
+/* ── Assessment results + candidate attempt (/hire/assessments/<id>[/attempts/<id>]) ──
+   The shell caps page bodies at 880px and pads 24px a side, which left these
+   data-heavy pages with wide empty margins. They use the width instead. */
+.hire-shell__content > .hire-assess-list.hire-assess-detail,
+.hire-shell__content > .hire-assess-list.hire-assess-activity {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 48px;
+}
+
+.hire-shell__content:has(> .hire-assess-list.hire-assess-detail),
+.hire-shell__content:has(> .hire-assess-list.hire-assess-activity) {
+  padding: 24px 16px 48px;
+}
+
+@media (max-width: 640px) {
+  .hire-shell__content:has(> .hire-assess-list.hire-assess-detail),
+  .hire-shell__content:has(> .hire-assess-list.hire-assess-activity) {
+    padding-inline: 12px;
+  }
+}
+
+/* Answer review: one card per question, options tagged chosen / correct. */
+.hire-attempt {
+  margin-top: 20px;
+  min-width: 0;
+}
+
+.hire-attempt h2,
+.hire-attempt__activity-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hire-attempt__activity-title {
+  margin-top: 28px;
+}
+
+.hire-attempt__summary,
+.hire-attempt__note {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-attempt__summary strong {
+  color: var(--h-ink, #1c1917);
+}
+
+.hire-attempt__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hire-attempt__legend span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.hire-attempt__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hire-attempt-q {
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.hire-attempt-q__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.hire-attempt-q__title {
+  margin: 0;
+  flex: 1 1 280px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.hire-attempt-q__num {
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--h-primary);
+  font-weight: 700;
+}
+
+.hire-attempt-q__meta,
+.hire-attempt-q__help,
+.hire-attempt-q__empty {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--h-gray-500, #78716c);
+}
+
+.hire-attempt-q__empty {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.hire-attempt-q__text {
+  margin: 10px 0 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f6f4f2;
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hire-attempt-q__link {
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+
+.hire-attempt-q__link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #03535f;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.hire-attempt-chip {
+  white-space: nowrap;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(28, 25, 23, 0.14);
+  background: #f6f4f2;
+  font-size: 12px;
+  font-weight: 600;
+  color: #57534e;
+}
+
+.hire-attempt-chip[data-tone="good"] {
+  background: #f0fdf4;
+  border-color: #86d9a3;
+  color: #15803d;
+}
+
+.hire-attempt-chip[data-tone="bad"] {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.hire-attempt-chip[data-tone="warn"] {
+  background: #fff7eb;
+  border-color: #ffe2b8;
+  color: #b54708;
+}
+
+.hire-attempt-opts {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hire-attempt-opt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.hire-attempt-opt__letter {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: #f1eeeb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hire-attempt-opt__body {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.hire-attempt-opt__tag {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hire-attempt-opt[data-state="chosen-correct"],
+.hire-attempt__legend [data-state="chosen-correct"] {
+  background: #f0fdf4;
+  border-color: #15803d;
+  color: #15803d;
+}
+
+.hire-attempt-opt[data-state="chosen-wrong"],
+.hire-attempt__legend [data-state="chosen-wrong"] {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+
+.hire-attempt-opt[data-state="correct"],
+.hire-attempt__legend [data-state="correct"] {
+  background: #fff;
+  border: 1px dashed #15803d;
+  color: #15803d;
+}
+
+.hire-attempt-opt[data-state="chosen-correct"] .hire-attempt-opt__letter {
+  background: #15803d;
+  color: #fff;
+}
+
+.hire-attempt-opt[data-state="chosen-wrong"] .hire-attempt-opt__letter {
+  background: #dc2626;
+  color: #fff;
+}
+
+.hire-attempt-opt[data-state="correct"] .hire-attempt-opt__letter {
+  background: #dcfce7;
+  color: #15803d;
+}
