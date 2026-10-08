@@ -37,8 +37,10 @@ const EMPTY: HackathonDossierSet = {
  * People who actually shipped a hackathon repo. Thin evidence: one shipped
  * project, optional profile skills. No 60-day denominator.
  */
-export async function buildHackathonDossierSet(): Promise<HackathonDossierSet> {
-  const rows = await listHackathonCandidates();
+export async function buildHackathonDossierSet(
+  opts?: { limit?: number; skills?: string[] },
+): Promise<HackathonDossierSet> {
+  const rows = await listHackathonCandidates(opts?.limit, { skills: opts?.skills });
   if (rows.length === 0) return EMPTY;
 
   // This used to be hard-coded null, which meant a hackathon candidate who had

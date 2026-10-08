@@ -255,8 +255,16 @@ async function loadChallenge(
 
 /* ── HACKATHON: one weekend ───────────────────────────────────────────────── */
 
-async function loadHackathon(): Promise<TrackLoad> {
-  const set = await buildHackathonDossierSet();
+async function loadHackathon(opts: TrackLoadOpts): Promise<TrackLoad> {
+  // Skills are threaded here for the same reason PROFILE threads them (plan 161
+  // §2g): this track's cap BINDS — 200 against 3,330 eligible — so without the
+  // brief's skills the cap decides who is considered instead of the brief.
+  //
+  // The other cohort tracks deliberately do NOT filter on skills: their caps
+  // never bind (CLAUDE 320, CHALLENGE_60 65, PROGRAM 74 against a 5,000 cap), so
+  // filtering would buy no reach and would shrink the near-miss gap report that
+  // tells a recruiter who almost matched.
+  const set = await buildHackathonDossierSet({ skills: opts.skills });
   const dossiers = set?.dossiers ?? [];
   const coverage = set?.coverage ?? EMPTY_COVERAGE;
 
@@ -380,7 +388,7 @@ export async function loadTrack(
       case "CHALLENGE_60":
         return await loadChallenge(track.slug, opts);
       case "HACKATHON":
-        return await loadHackathon();
+        return await loadHackathon(opts);
       case "PROFILE":
         return await loadProfile(opts);
       default:

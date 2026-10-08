@@ -91,21 +91,31 @@ export const SEARCH_RESULT_LIMIT = 60;
 /**
  * How many candidates are loaded before ranking.
  *
- * Scoring is a pure function over an in-memory array, so the cost of the pool
- * is the dossier assembly. This was 600, justified as "comfortably above the
- * whole eligible cohort today (320 at a ten-day floor)" — true while 86
- * candidates were searchable, and false the moment plan 161's backfill opens
- * the ~10.8K legacy rows.
+ * Scoring is a pure function over an in-memory array, so the cost of the pool is
+ * the dossier assembly, never the scoring: 2,573 candidates score in **17 ms**
+ * (measured 2026-10-07, alongside 10 ms for 428 and 44 ms for 1,777). The cap
+ * has never been protecting the scorer.
  *
- * Two thousand keeps one Server Action away from a full table scan while
- * leaving real headroom. The cap is no longer the selection for PROFILE either:
- * that track now filters on the brief's skills in SQL, so the ceiling trims the
- * least relevant rather than merely the least recent.
+ * It was 600, then 2,000. Two thousand BOUND: the PROFILE track has 2,573
+ * eligible candidates, so an unfiltered search silently dropped 573 people who
+ * all had claimed skills and were perfectly rankable — excluded before ranking
+ * rather than ranked and not shown, which is a different and worse thing.
+ *
+ * Five thousand clears today's pool with headroom. It costs nothing on a
+ * skill-named search, because those are already far below it — `python` 1,599,
+ * `python+sql` 1,777, `react` 428 — and it only widens the unfiltered case,
+ * which is the one that was losing people.
+ *
+ * What keeps this honest as the pool grows is not the number, it is that the
+ * tracks whose caps can bind select on the brief rather than on recency:
+ * PROFILE since plan 161 §2g, HACKATHON since 2026-10-08. The other three
+ * (CLAUDE 320, CHALLENGE_60 65, PROGRAM 74) are bounded by enrolment and cannot
+ * reach this ceiling at all.
  *
  * Challenge rows are ordered by days submitted before the cap, so there the
  * ceiling can still only ever trim the least-evidenced people.
  */
-export const CHALLENGE_POOL_CAP = 2000;
+export const CHALLENGE_POOL_CAP = 5000;
 
 
 /**

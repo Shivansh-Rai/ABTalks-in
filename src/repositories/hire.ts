@@ -661,13 +661,54 @@ export const HACKATHON_POOL_TAKE = 200;
 
 export async function listHackathonCandidates(
   take = HACKATHON_POOL_TAKE,
+  opts?: { skills?: string[] },
 ): Promise<HackathonCandidateRow[]> {
+// When the brief names skills, load the participants who HOLD them.
+//
+// 3,330 participants are eligible (team submitted, user searchable) and the cap
+// is 200, so this query returned an arbitrary 6% of them — and it had no
+// `orderBy` at all, so *which* 6% was whatever Postgres happened to return,
+// differently from one run to the next.
+//
+// That was not merely incomplete, it lost evidence. HACKATHON has
+// `dedupePriority: 30` against PROFILE's 10, so it WINS the merge: a
+// participant inside the 200 shows as a hackathon card carrying their shipped
+// project, and the identical person outside it shows as a bare profile with the
+// `projects` dimension empty. Only 158 of the 3,330 have claimed skills, so a
+// skill-named brief now loads at most those — comfortably inside the cap — and
+// their project evidence stops being a lottery.
+const wanted = [...new Set((opts?.skills ?? []).map((x) => x.trim()).filter(Boolean))];
+const spellings = [...new Set(wanted.flatMap((w) => skillSpellings(w)))];
 const rows = await prisma.hackathonParticipant.findMany({
   where: {
     team: { submission: { isNot: null } },
-    user: searchableUserWhere(),
+    user: {
+      ...searchableUserWhere(),
+      ...(spellings.length
+        ? {
+            candidateProfile: {
+              is: {
+                skills: {
+                  some: {
+                    claimedByCandidate: true,
+                    skill: {
+                      OR: [
+                        { name: { in: spellings, mode: "insensitive" as const } },
+                        { aliases: { hasSome: spellings } },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          }
+        : {}),
+    },
   },
   select: HACKATHON_EVIDENCE_SELECT,
+  // A `take` with no `orderBy` is not a selection, it is a coin toss — and it
+  // made the same search return different people on different runs.
+  orderBy: { createdAt: "desc" },
   take,
 });
 const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));
