@@ -126,3 +126,39 @@
 /src/components/shared/route-progress.tsx           @byteninjaa0
 /src/components/shared/nav-link.tsx                 @byteninjaa0
 /src/components/shared/page-skeleton.tsx            @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 7b. Candidate search & ranking
+#
+# CODEOWNERS routes all of /src/features/hire/ to the hire owner, but CLAUDE.md
+# assigns "Candidate search" and "Search ranking" to Sohail. Both statements were
+# true at once, so a fix to the ranker needed an approval the two records defined
+# differently — which blocked the 2026-10-07 search-quality pass until it was
+# resolved. These are the files that decide WHO is considered and in WHAT ORDER,
+# as opposed to what the recruiter can then do with them.
+#
+# Later lines win in CODEOWNERS, so these override the /src/features/hire/ line
+# above. Everything else under features/hire stays with the hire owner.
+# ------------------------------------------------------------------------------
+/src/features/hire/score-candidate.ts               @byteninjaa0
+/src/features/hire/search-candidates.ts             @byteninjaa0
+/src/features/hire/track-loaders.ts                 @byteninjaa0
+/src/features/hire/track-registry.ts                @byteninjaa0
+/src/features/hire/pool-brief.ts                    @byteninjaa0
+/src/features/hire/pool-policy.ts                   @byteninjaa0
+/src/features/hire/search-visibility.test.ts        @byteninjaa0
+/src/repositories/talent.ts                         @byteninjaa0
+/src/lib/skill-catalog.ts                           @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 8. Recruiter-search QA
+#
+# The search quality harness: the golden fixture pool, the filter truth tables,
+# the live read-only audits, and the end-to-end relevance harness (query set,
+# labels, scorecard). It asserts search ranking and candidate-search behaviour,
+# so it routes to the search owner even though it exercises features/hire.
+# ------------------------------------------------------------------------------
+/src/features/search-qa/                            @byteninjaa0
+/scripts/search-qa/                                 @byteninjaa0
+/src/repositories/search-audit.ts                   @byteninjaa0
+/docs/qa/search-e2e/                                @byteninjaa0
