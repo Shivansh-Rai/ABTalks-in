@@ -488,7 +488,6 @@ export async function attachRoleTitles(
     const s = sources.get(m.userId);
     const declaredLabel =
       m.dossier?.rawRoleLabel.provenance === "DECLARED" ? m.dossier.rawRoleLabel.value : null;
-    m.locationCity = s?.locationCity ?? null;
     m.roleTitles = collectRoleTitles({
       jobRole: (m.source ?? "PROGRAM") === "PROGRAM" ? m.jobRole : declaredLabel,
       headline: s?.headline,

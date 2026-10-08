@@ -223,16 +223,6 @@ export type ScoreableMember = {
    * `jobRole` alone.
    */
   roleTitles?: string[];
-  /**
-   * The city on the candidate's own profile, attached by `attachRoleTitles`
-   * alongside the role titles (same profile read).
-   *
-   * The location filter consults `availability.preferredCities` first and falls
-   * back to this. Kept OUT of `availability` on purpose: a profile city must not
-   * make `availabilityUnknown` false, because salary and notice period really
-   * are still unknown for these candidates and the card says so.
-   */
-  locationCity?: string | null;
   yearsExperience: number;
   skills: string[];
   missionPoints: number;

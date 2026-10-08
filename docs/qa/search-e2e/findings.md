@@ -195,7 +195,35 @@ silently retiring a safety net. Remove the output-swallowing pipe.
 
 ## P1 — wrong answers, not blocking
 
-### P1-1 · The city filter reads the wrong column
+### P1-1 · The city filter reads the wrong column — **WITHDRAWN, this was not a defect**
+
+> **Retracted 2026-10-08.** The analysis below is wrong and the fix built on it
+> was reverted. `CandidateProfile.locationCity` is the "City" field in Basic
+> Info — where the candidate *is*. `CandidatePreference.preferredLocations` is
+> where they want to *work*, and `willingToRelocate` sits on that same row.
+> Using the former to exclude people from a search in another city reads a
+> current address as a refusal to move, and because the relocation flag lives on
+> the preference row those candidates do not have, there is no signal that says
+> otherwise.
+>
+> The live audit caught it within one run: `CITY_MATCHER_DISAGREES`, 255-301
+> candidates reported missing per city — including **301 for the nonexistent
+> city the filter registry uses as a control**, which is as clear a signal as
+> you get that the filter had started excluding people it knew nothing about.
+> That is the same invariant the work-mode and engagement-type checks keep
+> deliberately: an unstated field must never exclude anybody.
+>
+> So city filtering really does only work for the candidates who have stated a
+> work-location preference (42 of 13,176), and the answer is more stated
+> preferences — or making location a RANKING signal, where a profile-city match
+> ranks higher and a mismatch never excludes. That is a new scoring dimension
+> and a product decision, not a bug fix.
+>
+> Kept rather than deleted because the reasoning error is the useful part: two
+> columns with similar names meant different things, and 333-vs-42 coverage made
+> the wrong one look obviously right.
+
+#### The original (incorrect) finding
 
 `score-candidate.ts:504` gates on `avail.preferredCities`, sourced only from
 `CandidatePreference.preferredLocations` (`repositories/candidate.ts:387`) —

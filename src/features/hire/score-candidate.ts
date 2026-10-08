@@ -518,33 +518,41 @@ export function evaluateHardFilters(
     }
   }
 
-  // LOCATION — deliberately outside the `avail` guard above.
+  // LOCATION — only from a STATED WORK PREFERENCE, never from the profile city.
   //
-  // Everything else in that block needs a `CandidatePreference` row to mean
-  // anything, and 42 of 13,176 searchable candidates have one. A city does not:
-  // 333 candidates have written one on their profile and never filled in a
-  // preference. Leaving this check inside the guard meant a city search could
-  // not reach the people who had actually stated that city — the 277 of them in
-  // a single Python pool were silently exempt from the filter.
+  // It is tempting to fall back to `CandidateProfile.locationCity`, because 333
+  // candidates have filled that in against 42 with a `CandidatePreference`, and
+  // a Bengaluru search reaching only 19 people looks obviously broken. I made
+  // that change on 2026-10-07 and it was wrong.
   //
-  // Stated preferences still win; the profile city is the fallback. Relocation
-  // willingness is only known from a preference row, and its absence reads as
-  // "has not said they would move", which is what a stated city already implies.
-  // `repositories/talent.ts` has a second search that already ORs both columns
-  // in SQL; this is the `/hire` path catching up to it.
-  const wantedCity = effectiveCity(spec);
-  const candidateCities = (avail?.preferredCities ?? []).length > 0
-    ? avail!.preferredCities
-    : member.locationCity
-      ? [member.locationCity]
-      : [];
-  if (wantedCity && !avail?.openToRelocate && candidateCities.length > 0) {
-    const city = cityKey(wantedCity);
-    const hit = candidateCities.some((c) => {
-      const have = cityKey(c);
-      return have === city || have.includes(city) || city.includes(have);
-    });
-    if (!hit) reasons.push("Location mismatch");
+  // `locationCity` is the "City" field in Basic Info: where the candidate IS.
+  // `preferredLocations` is where they want to WORK, and `willingToRelocate`
+  // sits on that same row. Someone in Noida who has stated no preference may
+  // want a Bengaluru job perfectly happily — and because the relocation flag
+  // lives on the preference row they do not have, there is no signal that says
+  // otherwise. Excluding them reads their current address as a refusal to move.
+  //
+  // The audit caught it immediately: `CITY_MATCHER_DISAGREES`, 255-301
+  // candidates "missing" per city, including 301 for the nonexistent city the
+  // filter registry uses as a control. That is the same invariant the work-mode
+  // and engagement-type checks above keep — an unstated field must never
+  // exclude anybody.
+  //
+  // So city filtering genuinely only works for the candidates who have stated a
+  // preference, and the fix for that is more stated preferences, not a proxy.
+  // Making location a RANKING signal (a profile-city match ranks higher, a
+  // mismatch never excludes) would use the field honestly, but that is a new
+  // scoring dimension and a product decision, not a bug fix.
+  if (avail) {
+    const wantedCity = effectiveCity(spec);
+    if (wantedCity && !avail.openToRelocate && avail.preferredCities.length > 0) {
+      const city = cityKey(wantedCity);
+      const hit = avail.preferredCities.some((c) => {
+        const have = cityKey(c);
+        return have === city || have.includes(city) || city.includes(have);
+      });
+      if (!hit) reasons.push("Location mismatch");
+    }
   }
 
   return { ok: reasons.length === 0, reasons, missingMust };

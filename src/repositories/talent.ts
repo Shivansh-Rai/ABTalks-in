@@ -218,17 +218,6 @@ export async function loadRoleTitleSources(userIds: string[]): Promise<
       headline: string | null;
       preferredRoles: string[];
       experienceTitles: string[];
-      /**
-       * The city on the candidate's own profile.
-       *
-       * Carried alongside the role titles because it comes from the same
-       * profile read. The location filter used to consult ONLY
-       * `CandidatePreference.preferredLocations`, which 42 of 13,176 searchable
-       * candidates have filled in, while 333 have stated a city here — so a
-       * recruiter searching a city could not reach the people who had actually
-       * said they were in it.
-       */
-      locationCity: string | null;
     }
   >
 > {
@@ -239,7 +228,6 @@ export async function loadRoleTitleSources(userIds: string[]): Promise<
       headline: string | null;
       preferredRoles: string[];
       experienceTitles: string[];
-      locationCity: string | null;
     }
   >();
   if (ids.length === 0) return out;
@@ -247,13 +235,8 @@ export async function loadRoleTitleSources(userIds: string[]): Promise<
   // as the same three queries one after another — this sits on every search.
   const [profiles, preferences, experience] = await Promise.all([
     prisma.candidateProfile.findMany({
-      // Either field is worth a row; requiring a headline hid every candidate
-      // who had stated a city but never written one.
-      where: {
-        userId: { in: ids },
-        OR: [{ headline: { not: null } }, { locationCity: { not: null } }],
-      },
-      select: { userId: true, headline: true, locationCity: true },
+      where: { userId: { in: ids }, headline: { not: null } },
+      select: { userId: true, headline: true },
     }),
     prisma.candidatePreference.findMany({
       where: { userId: { in: ids }, NOT: { preferredRoles: { isEmpty: true } } },
@@ -268,21 +251,12 @@ export async function loadRoleTitleSources(userIds: string[]): Promise<
   const entry = (userId: string) => {
     let e = out.get(userId);
     if (!e) {
-      e = {
-        headline: null,
-        preferredRoles: [],
-        experienceTitles: [],
-        locationCity: null,
-      };
+      e = { headline: null, preferredRoles: [], experienceTitles: [] };
       out.set(userId, e);
     }
     return e;
   };
-  for (const p of profiles) {
-    const e = entry(p.userId);
-    e.headline = p.headline;
-    e.locationCity = p.locationCity;
-  }
+  for (const p of profiles) entry(p.userId).headline = p.headline;
   for (const p of preferences) entry(p.userId).preferredRoles = p.preferredRoles;
   for (const x of experience) entry(x.userId).experienceTitles.push(x.title);
   return out;
