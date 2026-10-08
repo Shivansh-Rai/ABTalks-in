@@ -80,11 +80,13 @@ suite("codes and account notices are essential; notices are not", () => {
   assert(abtMailerCategory("workshop.confirmation") === "TRANSACTIONAL_NONESSENTIAL", "workshop");
 });
 
-suite("codes, reset links and passwords are sensitive", () => {
-  for (const k of ["recruiter.otp", "auth.signin_code", "auth.password_code", "auth.password_reset", "recruiter.welcome"]) {
+suite("reset links and passwords are sensitive; short-lived codes are not", () => {
+  for (const k of ["auth.password_reset", "recruiter.welcome"]) {
     assert(isSensitiveKind(k), k);
   }
-  assert(!isSensitiveKind("profile.viewed"), "profile view");
+  for (const k of ["recruiter.otp", "auth.signin_code", "auth.password_code", "profile.viewed"]) {
+    assert(!isSensitiveKind(k), k);
+  }
 });
 
 suite("signature is HMAC-SHA256 over `${ts}.${body}`", () => {
