@@ -33,13 +33,31 @@ const nullableUrl = z.preprocess(
  */
 const LETTERS_ONLY = /^[\p{L}][\p{L}\s.'\-&]*$/u;
 
+/**
+ * A person's name is stricter than a place's: letters, a plain space, a single
+ * quote and a full stop, and nothing else — "D'Souza", "A. P. J. Abdul Kalam".
+ * No "&", no hyphen, no other symbol, wherever it sits ("Asha & Ravi",
+ * "Asha - Verma" and "Asha-Verma" are all refused). Places keep LETTERS_ONLY,
+ * because "Jammu & Kashmir" is real.
+ *
+ * \p{M} is not a symbol: Indic scripts write vowel signs as combining marks,
+ * so a name in Devanagari or Tamil needs it to be letters at all. ’ is the
+ * same single quote as ', which phone keyboards substitute on their own.
+ * A literal space, not \s: a tab or a line break is not part of a name.
+ *
+ * Exported so the form can show the same refusal before the round trip.
+ */
+export const PERSON_NAME_PATTERN = /^[\p{L}][\p{L}\p{M} .'’]*$/u;
+export const PERSON_NAME_MESSAGE =
+  "can only contain letters, spaces, single quotes (') and dots (.)";
+
 const personName = (max: number, label: string) =>
   z
     .string()
     .trim()
     .max(max)
-    .refine((v) => v === "" || LETTERS_ONLY.test(v), {
-      message: `${label} cannot contain numbers or symbols`,
+    .refine((v) => v === "" || PERSON_NAME_PATTERN.test(v), {
+      message: `${label} ${PERSON_NAME_MESSAGE}`,
     });
 
 /** Optional place name: blank is fine, but if written it must read like a place. */

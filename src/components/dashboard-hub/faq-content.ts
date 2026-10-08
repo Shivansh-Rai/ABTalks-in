@@ -13,7 +13,7 @@ export const DASHBOARD_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "What are Synergy points?",
-    a: "Synergy points reward community participation — referrals, workshop attendance, and other platform activity. You can redeem them in the Marketplace for rewards and perks.",
+    a: "Synergy points reward community participation through referrals, workshop attendance, and other platform activity. You can redeem them in the Marketplace for rewards and perks.",
   },
   {
     q: "When do I get a certificate?",
