@@ -12,11 +12,7 @@
  * PURE.
  */
 import { canonicalSkillName } from "@/lib/skill-catalog";
-import {
-  gateReasons,
-  hasUsableProfile,
-  type CanonicalCandidate,
-} from "@/features/search-qa/canonical";
+import { discoverabilityReasons, gateReasons, hasUsableProfile, type CanonicalCandidate } from "@/features/search-qa/canonical";
 import {
   isPickerWorkMode,
   normalizeCity,
@@ -184,14 +180,18 @@ export function dataQualityIssues(
   ) => out.push({ rule, severity, field, message });
 
   const searchable = gateReasons(c).length === 0;
+  // These two rules report a BAD ROW, not a search leak: the runtime gate now
+  // excludes recruiters and seed domains, so asking `searchable` here would make
+  // each rule unable to see the thing it exists to report.
+  const markedDiscoverable = discoverabilityReasons(c).length === 0;
   const year = now.getUTCFullYear();
 
   if (!c.emailValid) push("EMAIL_INVALID", "WARNING", "User.email", "email is not a valid address");
-  if (searchable && c.emailDomain && TEST_EMAIL_DOMAINS.has(c.emailDomain)) {
-    push("TEST_ACCOUNT_SEARCHABLE", "CRITICAL", "User.email", `test-domain account (@${c.emailDomain}) is recruiter-searchable`);
+  if (markedDiscoverable && c.emailDomain && TEST_EMAIL_DOMAINS.has(c.emailDomain)) {
+    push("TEST_ACCOUNT_SEARCHABLE", "CRITICAL", "User.email", `test-domain account (@${c.emailDomain}) is marked recruiter-searchable (the pool gate now excludes it, but the row is wrong)`);
   }
-  if (searchable && c.role !== "STUDENT") {
-    push("NON_CANDIDATE_ROLE_SEARCHABLE", "ERROR", "User.role", `${c.role} account is recruiter-searchable`);
+  if (markedDiscoverable && c.role !== "STUDENT") {
+    push("NON_CANDIDATE_ROLE_SEARCHABLE", "ERROR", "User.role", `${c.role} account is marked recruiter-searchable (the pool gate now excludes it, but the row is wrong)`);
   }
 
   const p = c.profile;
