@@ -70,6 +70,16 @@ export function isLangchainEnabled(): boolean {
 }
 
 /**
+ * Coding practice (DSA) at /practice, plan 186.
+ * Unset/false 404s every /practice page, hides the dashboard card, and makes
+ * the Run route and the enrol/Submit actions refuse. It is also the kill
+ * switch: code execution depends on a hosted Judge0 (JUDGE0_URL).
+ */
+export function isCodingPracticeEnabled(): boolean {
+  return process.env.ENABLE_CODING_PRACTICE === "true";
+}
+
+/**
  * Entry assessment quiz is removed from the program cohort product surface.
  * Apply enrolls/waitlists directly. Kept as a always-on flag for call sites.
  */
