@@ -12,7 +12,7 @@ import "server-only";
  * `detectSpokenBrief` and the turn keeps the Scout agent's own spec.
  * The text is never logged; only status, reason and model.
  */
-import { logger } from "@/lib/logger";
+import { errorFields, logger, safeErrorMessage } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
 import {
   briefFlags,
@@ -26,7 +26,44 @@ const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 /** Fast and cheap: this runs while the recruiter types. */
 export const HIRE_BRIEF_DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
-const DEFAULT_TIMEOUT_MS = 4000;
+/**
+ * Per-attempt budget.
+ *
+ * Was 4,000 ms. Measured against `gemini-3.5-flash-lite` with this exact system
+ * prompt, nine production-shaped calls returned in 1331, 1452, 1580, 1597, 1822,
+ * 1869, 2457, 2776 and 3983 ms — the last one landing 17 ms inside the abort. At
+ * that margin a correct parse was being thrown away by the clock, and the
+ * recruiter silently got the keyword fallback instead.
+ *
+ * 8,000 ms per attempt, two attempts. The composer's debounced tick can afford
+ * it (the recruiter is still typing) and so can a Scout turn; both already fall
+ * back rather than block, so the only thing a longer budget costs is the
+ * occasional slower tick, against a much better chance of reading the sentence
+ * the recruiter actually wrote.
+ */
+const DEFAULT_TIMEOUT_MS = 8000;
+
+/**
+ * One retry, because the failures observed in practice are transient.
+ *
+ * Google returned `503 The service is currently unavailable` during a QA run and
+ * there was no retry at all: one blip downgraded that recruiter's query to
+ * keyword matching with no sign anything had happened. 503 / 429 / timeout are
+ * all worth a second attempt; an `invalid` reply (the model answered, but not
+ * with a usable brief) is not — retrying a deterministic temperature-0 prompt
+ * would just buy the same answer twice.
+ */
+const MAX_ATTEMPTS = 2;
+const RETRY_BASE_MS = 400;
+
+/**
+ * One attempt's outcome plus whether trying again could change it.
+ *
+ * Retryability is decided where the status code is still in hand, not inferred
+ * from `HireBriefFailure` afterwards: a 400 and a 503 both surface as `"http"`
+ * to callers, and only one of them is worth a second call.
+ */
+type Attempt = { result: HireBriefResult; retryable: boolean };
 const MAX_OUTPUT_TOKENS = 400;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const CACHE_MAX = 300;
@@ -129,11 +166,38 @@ export type ExtractHireBriefOptions = {
   useCache?: boolean;
 };
 
+/**
+ * `callGeminiOnce`, retried on the transient failures.
+ *
+ * Jittered so a provider wobble does not turn every concurrent recruiter tick
+ * into a synchronised second wave.
+ */
 async function callGemini(
   text: string,
   opts: ExtractHireBriefOptions,
   apiKey: string,
 ): Promise<HireBriefResult> {
+  let last: Attempt = { result: { ok: false, reason: "invalid" }, retryable: false };
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    last = await callGeminiOnce(text, opts, apiKey);
+    if (last.result.ok) return last.result;
+    if (!last.retryable || attempt === MAX_ATTEMPTS) return last.result;
+    const backoff = RETRY_BASE_MS * attempt + Math.floor(Math.random() * RETRY_BASE_MS);
+    logger.warn("[hire-brief] retrying after a transient failure", {
+      attempt,
+      reason: last.result.ok ? null : last.result.reason,
+      backoffMs: backoff,
+    });
+    await new Promise((resolve) => setTimeout(resolve, backoff));
+  }
+  return last.result;
+}
+
+async function callGeminiOnce(
+  text: string,
+  opts: ExtractHireBriefOptions,
+  apiKey: string,
+): Promise<Attempt> {
   const model =
     opts.model || process.env.HIRE_BRIEF_GEMINI_MODEL?.trim() || HIRE_BRIEF_DEFAULT_MODEL;
   const doFetch = opts.fetchImpl ?? fetch;
@@ -174,7 +238,11 @@ async function callGemini(
         model,
         detail: body?.error?.message?.slice(0, 200) ?? null,
       });
-      return { ok: false, reason: res.status === 429 ? "rate_limited" : "http" };
+      // 5xx and 429 are worth another call; a 4xx we caused is not.
+      return {
+        result: { ok: false, reason: res.status === 429 ? "rate_limited" : "http" },
+        retryable: res.status === 429 || res.status >= 500,
+      };
     }
     json = (await res.json()) as GeminiResponse;
   } catch (error) {
@@ -182,9 +250,12 @@ async function callGemini(
     logger.warn("[hire-brief] gemini request threw", {
       model,
       reason: timedOut ? "timeout" : "network",
-      error: timedOut ? null : String(error).slice(0, 200),
+      error: timedOut ? null : safeErrorMessage(error),
     });
-    return { ok: false, reason: timedOut ? "timeout" : "http" };
+    return {
+      result: { ok: false, reason: timedOut ? "timeout" : "http" },
+      retryable: true,
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -193,10 +264,15 @@ async function callGemini(
   const parsed = geminiBriefSchema.safeParse(parseJsonObject(reply));
   if (!parsed.success) {
     logger.warn("[hire-brief] gemini returned an unusable brief", { model });
-    return { ok: false, reason: "invalid" };
+    // The model answered; it just did not answer usefully. At temperature 0 the
+    // second call returns the same thing, so do not pay for it.
+    return { result: { ok: false, reason: "invalid" }, retryable: false };
   }
   const patch = toBriefPatch(parsed.data, text);
-  return { ok: true, patch, flags: briefFlags(patch, text) };
+  return {
+    result: { ok: true, patch, flags: briefFlags(patch, text) },
+    retryable: false,
+  };
 }
 
 /**
@@ -222,7 +298,7 @@ export async function extractHireBrief(
 
   const run = callGemini(text, opts, apiKey)
     .catch((error): HireBriefResult => {
-      logger.error("[hire-brief] extract failed", { error: String(error).slice(0, 200) });
+      logger.error("[hire-brief] extract failed", { ...errorFields(error) });
       return { ok: false, reason: "invalid" };
     })
     .then((result) => {

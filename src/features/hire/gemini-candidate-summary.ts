@@ -13,7 +13,7 @@ import "server-only";
  * and logging rule as `gemini-brief.ts`: no candidate text is logged, only
  * status, reason and model.
  */
-import { logger } from "@/lib/logger";
+import { errorFields, logger, safeErrorMessage } from "@/lib/logger";
 import { HIRE_BRIEF_DEFAULT_MODEL } from "@/features/hire/gemini-brief";
 import {
   aiSummaryOutputSchema,
@@ -179,7 +179,7 @@ async function callGemini(
     logger.warn("[hire-summary] gemini request threw", {
       model,
       reason: timedOut ? "timeout" : "network",
-      error: timedOut ? null : String(error).slice(0, 200),
+      error: timedOut ? null : safeErrorMessage(error),
     });
     return { ok: false, reason: timedOut ? "timeout" : "http" };
   } finally {
@@ -229,7 +229,7 @@ export async function summarizeCandidate(
   })()
     .catch((error): CandidateSummaryResult => {
       logger.error("[hire-summary] summarize failed", {
-        error: String(error).slice(0, 200),
+        ...errorFields(error),
       });
       return { ok: false, reason: "invalid" };
     })

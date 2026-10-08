@@ -25,6 +25,7 @@ import {
   squash,
 } from "@/features/search-qa/normalize";
 import type { Severity } from "@/features/search-qa/types";
+import { TEST_EMAIL_DOMAINS } from "@/repositories/talent";
 
 export type DataQualityRule =
   | "NAME_EMPTY"
@@ -123,13 +124,8 @@ const PLACEHOLDERS = new Set([
   "1234",
 ]);
 
-export const TEST_EMAIL_DOMAINS = new Set([
-  "abtalks.dev",
-  "example.com",
-  "example.org",
-  "test.com",
-  "mailinator.com",
-]);
+/** Re-exported from the repository that enforces it, so the two cannot drift. */
+export { TEST_EMAIL_DOMAINS };
 
 /** Single-letter language names that are real skills. */
 const SHORT_REAL_SKILLS = new Set(["c", "r", "go", "js", "ts", "ai", "ml", "ui", "ux", "qa", "c#", "f#"]);

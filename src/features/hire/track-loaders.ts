@@ -2,7 +2,7 @@ import "server-only";
 
 import { Domain, TalentCandidateSource } from "@prisma/client";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import { hireChallengePool } from "@/lib/feature-flags";
 import { buildDossierSet, computeCoverage } from "@/features/hire/dossier";
 import {
@@ -77,6 +77,18 @@ export type TrackLoad = {
   belowEvidenceFloor: number;
   cohortName: string | null;
   stage: "PUBLISHED" | "OPEN_MIDCOHORT" | null;
+  /**
+   * True when this track threw and was swallowed, so the pool is missing it.
+   *
+   * `loadTrack` catches its own failures and returns an empty load, which keeps
+   * one broken track from taking the whole search down — correct. But the
+   * search then answered `ok` with a silently smaller pool, and a recruiter saw
+   * a plausible short list with no hint anything had failed. Observed live:
+   * PROGRAM and PROFILE both threw and the search still returned results.
+   *
+   * So the degradation stays; only the silence goes.
+   */
+  failed?: boolean;
 };
 
 export type TrackLoadOpts = {
@@ -377,9 +389,9 @@ export async function loadTrack(
   } catch (error) {
     logger.error("[hire] loadTrack failed", {
       slug,
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
-    return emptyLoad(slug);
+    return { ...emptyLoad(slug), failed: true };
   }
 }
 
@@ -401,6 +413,8 @@ export function mergeTrackLoads(loads: TrackLoad[]): {
   belowEvidenceFloor: number;
   cohortName: string | null;
   stage: "PUBLISHED" | "OPEN_MIDCOHORT" | null;
+  /** Slugs that threw. Non-empty means this result is an incomplete pool. */
+  failedTracks: string[];
 } {
   const ordered = [...loads].sort(
     (a, b) =>
@@ -429,6 +443,7 @@ export function mergeTrackLoads(loads: TrackLoad[]): {
     belowEvidenceFloor: loads.reduce((n, l) => n + l.belowEvidenceFloor, 0),
     cohortName: ordered.find((l) => l.cohortName)?.cohortName ?? null,
     stage: ordered.find((l) => l.stage)?.stage ?? null,
+    failedTracks: loads.filter((l) => l.failed).map((l) => l.slug),
   };
 }
 
@@ -457,7 +472,7 @@ export async function attachRoleTitles(
     sources = await loadRoleTitleSources(members.map((m) => m.userId));
   } catch (error) {
     logger.error("[hire] role titles could not be loaded", {
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
     return members;
   }
@@ -465,6 +480,7 @@ export async function attachRoleTitles(
     const s = sources.get(m.userId);
     const declaredLabel =
       m.dossier?.rawRoleLabel.provenance === "DECLARED" ? m.dossier.rawRoleLabel.value : null;
+    m.locationCity = s?.locationCity ?? null;
     m.roleTitles = collectRoleTitles({
       jobRole: (m.source ?? "PROGRAM") === "PROGRAM" ? m.jobRole : declaredLabel,
       headline: s?.headline,

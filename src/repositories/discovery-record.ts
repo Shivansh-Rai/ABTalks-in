@@ -1,7 +1,7 @@
 import "server-only";
 import { Role } from "@prisma/client";
 import { writeClient } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import {
   PROFILE_DEFAULT_CONSENT_SOURCE,
   applyVisibilityChange,
@@ -58,7 +58,7 @@ export async function ensureDiscoveryRecordAfterProfileSave(userId: string): Pro
   } catch (error) {
     logger.error("[discovery] default record not created", {
       userId,
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
   }
 }

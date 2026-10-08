@@ -1,9 +1,9 @@
 import "server-only";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
 import { selectSearchResults } from "@/features/hire/score-candidate";
-import { readPoolExtra } from "@/features/hire/pool-brief";
+import { hasSearchCriteria, readPoolExtra } from "@/features/hire/pool-brief";
 import { estimateCompensation } from "@/features/hire/compensation";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
@@ -33,6 +33,32 @@ export type SearchCandidatesResult =
          *  denominator behind a thin shortlist. */
         belowEvidenceFloor: number;
         coverage: EvidenceCoverage;
+        /**
+         * Tracks that threw and were swallowed, so this pool is incomplete.
+         *
+         * Empty on every healthy search. Non-empty means the caller is holding
+         * a partial answer and should say so rather than present it as the
+         * whole pool — a recruiter cannot judge a shortlist they do not know is
+         * truncated.
+         */
+        failedTracks: string[];
+        /**
+         * What actually decided the order the recruiter is looking at.
+         *
+         * `"score"` is the normal case. `"evidence"` means the score could not
+         * separate these people — every shown candidate scored the same — so the
+         * order is "fullest profile first" rather than a quality ranking, and
+         * the surface should say so instead of implying a judgement the engine
+         * did not make.
+         *
+         * This is reachable, and not rarely. A search naming only must-have
+         * skills pre-filters the pool to people who hold them, which makes
+         * `stackScore` a constant (`1 x 0.75 + 0.5 x 0.25`); for profile-only
+         * candidates every evidence dimension is uncovered and drops out. On
+         * 2026-10-07, four of sixteen real recruiter queries came back with a
+         * single distinct score across the whole top 20.
+         */
+        rankedBy: "score" | "evidence";
       };
     }
   | { ok: false; message: string };
@@ -91,6 +117,24 @@ export async function searchCandidates(
   opts?: { limit?: number },
 ): Promise<SearchCandidatesResult> {
   try {
+    // An EMPTY spec is not a search, it is a page of whoever ranks highest.
+    //
+    // This path was reachable in production: the Gemini brief parse fails (a
+    // 503, or the 4,000 ms budget against a model that answers in 1.3-4.0 s),
+    // the deterministic fallback finds no keyword it recognises, and the spec
+    // reduces to `{}`. The old behaviour returned 20 arbitrary candidates,
+    // indistinguishable to the recruiter from a real answer to what they typed.
+    //
+    // A caller that genuinely wants the unfiltered pool asks for it with a
+    // track, a skill or an explicit `resultLimit` — all of which make the spec
+    // non-empty. So refusing here costs no legitimate caller anything.
+    if (!hasSearchCriteria(spec)) {
+      return {
+        ok: false,
+        message:
+          "That search had no criteria we could read. Tell us a role, a skill or a source and we will search for it.",
+      };
+    }
     const extra = readPoolExtra(spec);
 
     // Which tracks to search, from the registry rather than a fixed set of
@@ -134,6 +178,8 @@ export async function searchCandidates(
           totalEligible: 0,
           belowEvidenceFloor,
           coverage: EMPTY_COVERAGE,
+          failedTracks: merged.failedTracks,
+          rankedBy: "score",
         },
       };
     }
@@ -177,10 +223,16 @@ export async function searchCandidates(
         totalEligible: scoreable.length,
         belowEvidenceFloor,
         coverage,
+        failedTracks: merged.failedTracks,
+        // One distinct score across every card means the score ranked nobody.
+        rankedBy:
+          matches.length > 1 && new Set(matches.map((m) => m.score)).size === 1
+            ? "evidence"
+            : "score",
       },
     };
   } catch (error) {
-    logger.error("[hire] searchCandidates failed", { error: String(error) });
+    logger.error("[hire] searchCandidates failed", { ...errorFields(error) });
     return {
       ok: false,
       message:

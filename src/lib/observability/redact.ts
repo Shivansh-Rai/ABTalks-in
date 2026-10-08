@@ -302,6 +302,40 @@ const MAX_MESSAGE = 500;
  * diagnostic shape (provider name, status code, constraint name) and removes
  * the payload.
  */
+/**
+ * Error fields for a `logger` call: the scrubbed message, plus the error code as
+ * its OWN field so truncation can never eat it.
+ *
+ * Why this exists. Call sites used to log `String(error).slice(0, 240)`. For a
+ * `$queryRaw` failure that is fine — the message is ~155 chars and the DB code
+ * survives. But an error raised from a Prisma CLIENT method prepends the
+ * invocation site and a source excerpt:
+ *
+ *   Invalid `prisma.candidateProfile.findUnique()` invocation in
+ *   /…/program-state.ts:733:12
+ *     731 const cohortId = …
+ *   → 733 const profile = await prisma.candidateProfile.findUnique({
+ *   Raw query failed. Code: `…`. Message: `…`      ← the only useful part
+ *
+ * so the budget is spent on the excerpt and the cause never reaches the log.
+ * Four live `[hire] loadTrack failed` entries were unreadable for exactly this
+ * reason, and the cause had to be re-derived by querying the database again.
+ *
+ * Spread it into the meta object: `logger.error("…", { slug, ...errorFields(e) })`.
+ */
+export function errorFields(error: unknown): {
+  error: string;
+  errorCode?: string;
+} {
+  const message = safeErrorMessage(error);
+  const bag = error as Record<string, unknown> | null | undefined;
+  const code = bag?.code;
+  if (typeof code === "string" || typeof code === "number") {
+    return { error: message, errorCode: String(code) };
+  }
+  return { error: message };
+}
+
 export function safeErrorMessage(error: unknown): string {
   const raw = extractMessage(error);
   const scrubbed = scrubString(raw).trim();
