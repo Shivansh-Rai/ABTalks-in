@@ -88,8 +88,7 @@ export function CompanyStep({
       title="Tell us about your company"
       description={
         <p>
-          Shown on your outreach and job posts. Only the name is required — you
-          can fill in the rest later in Settings.
+          Shown on your outreach and job posts. 
         </p>
       }
       onSubmit={onNext}
