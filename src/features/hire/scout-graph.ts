@@ -17,7 +17,7 @@ import {
 } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import { groqApiKeys } from "@/lib/groq";
 
 /**
@@ -200,7 +200,7 @@ export async function runScoutGraph(opts: {
     logger.error("[scout-graph] run failed", {
       reason,
       hops: hopCount(),
-      error: String(error).slice(0, 200),
+      ...errorFields(error),
     });
     return { ok: false, reason, hops: hopCount() };
   } finally {

@@ -694,7 +694,69 @@ export type AiCohortMembershipRow = ProgramMemberStateSnapshot & {
   };
 };
 
-async function hydrateAiCohortMembership(
+/**
+ * The profile fields an AI-cohort membership row carries.
+ *
+ * Named, because it is now read in two shapes — one row for the single-member
+ * lookups, and one batched `findMany` for the list — and the two must never
+ * drift apart.
+ */
+const MEMBERSHIP_PROFILE_SELECT = {
+  userId: true,
+  fullName: true,
+  headline: true,
+  githubUsername: true,
+  linkedinUrl: true,
+  resumeUrl: true,
+  phone: true,
+  education: {
+    // Never Class X or XII — see `recruiterEducationWhere`.
+    where: recruiterEducationWhere(),
+    orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
+    take: 1,
+    select: {
+      degree: true,
+      institutionName: true,
+      graduationYear: true,
+    },
+  },
+  experience: {
+    select: { totalMonths: true, title: true, companyName: true, startedOn: true },
+    orderBy: { startedOn: "desc" },
+  },
+  skills: {
+    orderBy: { evidenceScore: "desc" },
+    select: { skill: { select: { name: true } } },
+  },
+} satisfies Prisma.CandidateProfileSelect;
+
+type MembershipProfile = Prisma.CandidateProfileGetPayload<{
+  select: typeof MEMBERSHIP_PROFILE_SELECT;
+}>;
+
+/**
+ * Every member's profile in ONE query, keyed by userId.
+ *
+ * This used to be a `findUnique` inside the caller's `for` loop. Each call is
+ * five SQL round trips (the row plus three nested relations), so a 76-member
+ * cohort cost 380 SERIALISED round trips and dominated the latency of every
+ * recruiter search — `loadTrack("PROGRAM")` was measured at ~130 s against the
+ * other four tracks' 5-43 s, and since the tracks run in `Promise.all` it WAS
+ * the search. The batched read returns the same rows in five round trips
+ * total, and the cost stops growing with cohort size.
+ */
+async function loadMembershipProfiles(
+  userIds: string[],
+): Promise<Map<string, MembershipProfile>> {
+  if (userIds.length === 0) return new Map();
+  const rows = await prisma.candidateProfile.findMany({
+    where: { userId: { in: [...new Set(userIds)] } },
+    select: MEMBERSHIP_PROFILE_SELECT,
+  });
+  return new Map(rows.map((row) => [row.userId, row]));
+}
+
+function hydrateAiCohortMembership(
   pe: {
     id: string;
     userId: string;
@@ -726,40 +788,11 @@ async function hydrateAiCohortMembership(
       resultsPublishedAt: Date | null;
     };
   },
-): Promise<AiCohortMembershipRow | null> {
+  profile: MembershipProfile | null | undefined,
+): AiCohortMembershipRow | null {
   const memberId = memberIdFromPe(pe.id);
   const cohortId = programCohortIdFromSlug(pe.cohort.slug);
   if (!memberId || !cohortId) return null;
-  const profile = await prisma.candidateProfile.findUnique({
-    where: { userId: pe.userId },
-    select: {
-      fullName: true,
-      headline: true,
-      githubUsername: true,
-      linkedinUrl: true,
-      resumeUrl: true,
-      phone: true,
-      education: {
-        // Never Class X or XII — see `recruiterEducationWhere`.
-        where: recruiterEducationWhere(),
-        orderBy: { graduationYear: { sort: "desc", nulls: "last" } },
-        take: 1,
-        select: {
-          degree: true,
-          institutionName: true,
-          graduationYear: true,
-        },
-      },
-      experience: {
-        select: { totalMonths: true, title: true, companyName: true, startedOn: true },
-        orderBy: { startedOn: "desc" },
-      },
-      skills: {
-        orderBy: { evidenceScore: "desc" },
-        select: { skill: { select: { name: true } } },
-      },
-    },
-  });
   const months = (profile?.experience ?? []).reduce(
     (sum, e) => sum + (e.totalMonths ?? 0),
     0,
@@ -822,7 +855,8 @@ export async function findAiCohortMembershipByMemberId(
     select: PE_MEMBERSHIP_SELECT,
   });
   if (!pe) return null;
-  return hydrateAiCohortMembership(pe);
+  const profiles = await loadMembershipProfiles([pe.userId]);
+  return hydrateAiCohortMembership(pe, profiles.get(pe.userId));
 }
 
 export async function findAiCohortMembershipByUserCohort(
@@ -839,7 +873,8 @@ export async function findAiCohortMembershipByUserCohort(
     select: PE_MEMBERSHIP_SELECT,
   });
   if (!pe) return null;
-  return hydrateAiCohortMembership(pe);
+  const profiles = await loadMembershipProfiles([pe.userId]);
+  return hydrateAiCohortMembership(pe, profiles.get(pe.userId));
 }
 
 export async function listAiCohortMemberships(input: {
@@ -869,9 +904,10 @@ export async function listAiCohortMemberships(input: {
     select: PE_MEMBERSHIP_SELECT,
     ...(input.take != null ? { take: input.take } : {}),
   });
+  const profiles = await loadMembershipProfiles(pes.map((pe) => pe.userId));
   const out: AiCohortMembershipRow[] = [];
   for (const pe of pes) {
-    const row = await hydrateAiCohortMembership(pe);
+    const row = hydrateAiCohortMembership(pe, profiles.get(pe.userId));
     if (row) out.push(row);
   }
   return out;

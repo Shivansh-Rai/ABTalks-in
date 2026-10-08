@@ -1,9 +1,9 @@
 import "server-only";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
 import { selectSearchResults } from "@/features/hire/score-candidate";
-import { readPoolExtra } from "@/features/hire/pool-brief";
+import { hasSearchCriteria, readPoolExtra } from "@/features/hire/pool-brief";
 import { estimateCompensation } from "@/features/hire/compensation";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
@@ -33,6 +33,32 @@ export type SearchCandidatesResult =
          *  denominator behind a thin shortlist. */
         belowEvidenceFloor: number;
         coverage: EvidenceCoverage;
+        /**
+         * Tracks that threw and were swallowed, so this pool is incomplete.
+         *
+         * Empty on every healthy search. Non-empty means the caller is holding
+         * a partial answer and should say so rather than present it as the
+         * whole pool — a recruiter cannot judge a shortlist they do not know is
+         * truncated.
+         */
+        failedTracks: string[];
+        /**
+         * What actually decided the order the recruiter is looking at.
+         *
+         * `"score"` is the normal case. `"evidence"` means the score could not
+         * separate these people — every shown candidate scored the same — so the
+         * order is "fullest profile first" rather than a quality ranking, and
+         * the surface should say so instead of implying a judgement the engine
+         * did not make.
+         *
+         * This is reachable, and not rarely. A search naming only must-have
+         * skills pre-filters the pool to people who hold them, which makes
+         * `stackScore` a constant (`1 x 0.75 + 0.5 x 0.25`); for profile-only
+         * candidates every evidence dimension is uncovered and drops out. On
+         * 2026-10-07, four of sixteen real recruiter queries came back with a
+         * single distinct score across the whole top 20.
+         */
+        rankedBy: "score" | "evidence";
       };
     }
   | { ok: false; message: string };
@@ -65,21 +91,31 @@ export const SEARCH_RESULT_LIMIT = 60;
 /**
  * How many candidates are loaded before ranking.
  *
- * Scoring is a pure function over an in-memory array, so the cost of the pool
- * is the dossier assembly. This was 600, justified as "comfortably above the
- * whole eligible cohort today (320 at a ten-day floor)" — true while 86
- * candidates were searchable, and false the moment plan 161's backfill opens
- * the ~10.8K legacy rows.
+ * Scoring is a pure function over an in-memory array, so the cost of the pool is
+ * the dossier assembly, never the scoring: 2,573 candidates score in **17 ms**
+ * (measured 2026-10-07, alongside 10 ms for 428 and 44 ms for 1,777). The cap
+ * has never been protecting the scorer.
  *
- * Two thousand keeps one Server Action away from a full table scan while
- * leaving real headroom. The cap is no longer the selection for PROFILE either:
- * that track now filters on the brief's skills in SQL, so the ceiling trims the
- * least relevant rather than merely the least recent.
+ * It was 600, then 2,000. Two thousand BOUND: the PROFILE track has 2,573
+ * eligible candidates, so an unfiltered search silently dropped 573 people who
+ * all had claimed skills and were perfectly rankable — excluded before ranking
+ * rather than ranked and not shown, which is a different and worse thing.
+ *
+ * Five thousand clears today's pool with headroom. It costs nothing on a
+ * skill-named search, because those are already far below it — `python` 1,599,
+ * `python+sql` 1,777, `react` 428 — and it only widens the unfiltered case,
+ * which is the one that was losing people.
+ *
+ * What keeps this honest as the pool grows is not the number, it is that the
+ * tracks whose caps can bind select on the brief rather than on recency:
+ * PROFILE since plan 161 §2g, HACKATHON since 2026-10-08. The other three
+ * (CLAUDE 320, CHALLENGE_60 65, PROGRAM 74) are bounded by enrolment and cannot
+ * reach this ceiling at all.
  *
  * Challenge rows are ordered by days submitted before the cap, so there the
  * ceiling can still only ever trim the least-evidenced people.
  */
-export const CHALLENGE_POOL_CAP = 2000;
+export const CHALLENGE_POOL_CAP = 5000;
 
 
 /**
@@ -91,6 +127,24 @@ export async function searchCandidates(
   opts?: { limit?: number },
 ): Promise<SearchCandidatesResult> {
   try {
+    // An EMPTY spec is not a search, it is a page of whoever ranks highest.
+    //
+    // This path was reachable in production: the Gemini brief parse fails (a
+    // 503, or the 4,000 ms budget against a model that answers in 1.3-4.0 s),
+    // the deterministic fallback finds no keyword it recognises, and the spec
+    // reduces to `{}`. The old behaviour returned 20 arbitrary candidates,
+    // indistinguishable to the recruiter from a real answer to what they typed.
+    //
+    // A caller that genuinely wants the unfiltered pool asks for it with a
+    // track, a skill or an explicit `resultLimit` — all of which make the spec
+    // non-empty. So refusing here costs no legitimate caller anything.
+    if (!hasSearchCriteria(spec)) {
+      return {
+        ok: false,
+        message:
+          "That search had no criteria we could read. Tell us a role, a skill or a source and we will search for it.",
+      };
+    }
     const extra = readPoolExtra(spec);
 
     // Which tracks to search, from the registry rather than a fixed set of
@@ -134,6 +188,8 @@ export async function searchCandidates(
           totalEligible: 0,
           belowEvidenceFloor,
           coverage: EMPTY_COVERAGE,
+          failedTracks: merged.failedTracks,
+          rankedBy: "score",
         },
       };
     }
@@ -177,10 +233,16 @@ export async function searchCandidates(
         totalEligible: scoreable.length,
         belowEvidenceFloor,
         coverage,
+        failedTracks: merged.failedTracks,
+        // One distinct score across every card means the score ranked nobody.
+        rankedBy:
+          matches.length > 1 && new Set(matches.map((m) => m.score)).size === 1
+            ? "evidence"
+            : "score",
       },
     };
   } catch (error) {
-    logger.error("[hire] searchCandidates failed", { error: String(error) });
+    logger.error("[hire] searchCandidates failed", { ...errorFields(error) });
     return {
       ok: false,
       message:

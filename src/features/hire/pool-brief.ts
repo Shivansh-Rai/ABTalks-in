@@ -494,6 +494,28 @@ export function applyPoolBrief(spec: JobSpec, brief: PoolBrief): JobSpec {
   };
 }
 
+/**
+ * Does this spec state anything to search ON?
+ *
+ * The single definition of "enough to search". Scout's `searchable()` delegates
+ * here, and `searchCandidates` refuses anything this rejects — previously an
+ * empty spec reached the ranker and came back as a page of whoever scored
+ * highest, which reads to a recruiter exactly like a real answer to the sentence
+ * they typed.
+ *
+ * A role, a named skill or an explicit pool source. Deliberately NOT the
+ * availability filters: a bare `workMode: REMOTE` with no role and no skill is
+ * not a search, it is one adjective, and on this data it would bind against the
+ * 0.3% of candidates who have a preference row.
+ */
+export function hasSearchCriteria(spec: JobSpec): boolean {
+  return (
+    Boolean(spec.title?.trim()) ||
+    (spec.mustHaveStack?.length ?? 0) > 0 ||
+    readPoolExtra(spec).sources.length > 0
+  );
+}
+
 export function isSearchableBrief(spec: JobSpec): boolean {
   const extra = (spec.extra ?? {}) as Record<string, unknown>;
   const sources = extra.poolSources;

@@ -602,11 +602,6 @@ export async function runRecruiterSearchAudit(opts: AuditOptions): Promise<Audit
         s.count = persisted.matchesForUnsearchable;
         findings.push(finding({ category: "SEARCH_INDEX_STALE", severity: "INFO", searchVerdict: "PASS", check: "index:persisted-unsearchable", sample: s, message: `${persisted.matchesForUnsearchable} saved match row(s) point at candidates no longer searchable — loadRequestMatches re-gates them on read` }));
       }
-      if (persisted.enrollmentDomainMismatch > 0) {
-        const s = new IdSample();
-        s.count = persisted.enrollmentDomainMismatch;
-        findings.push(finding({ category: "DATA_QUALITY_ERROR", severity: "WARNING", searchVerdict: "PASS", check: "index:enrollment-domain", sample: s, message: "Enrollment.domain differs from its Challenge.domain — the challenge loader filters on one and labels by the other" }));
-      }
     }
   }
 

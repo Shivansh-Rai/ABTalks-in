@@ -427,7 +427,6 @@ export async function persistedResultHealth(): Promise<{
   profileSourceMatches: number;
   sessionsWithDuplicateIds: number;
   sessionDuplicateSample: string[];
-  enrollmentDomainMismatch: number;
   /** Saved matches sharing a score within one request — ordered by score alone on read. */
   scoreTieGroups: number;
 }> {
@@ -440,7 +439,7 @@ export async function persistedResultHealth(): Promise<{
       { visibility: { is: { withdrawnAt: { not: null } } } },
     ],
   };
-  const [matches, stale, staleSample, profileSource, dupSessions, domainMismatch, ties] = await Promise.all([
+  const [matches, stale, staleSample, profileSource, dupSessions, ties] = await Promise.all([
     prisma.talentRequestMatch.count(),
     prisma.talentRequestMatch.count({ where: { candidate: notSearchable } }),
     prisma.talentRequestMatch.findMany({
@@ -454,9 +453,6 @@ export async function persistedResultHealth(): Promise<{
       SELECT "id" FROM "TalentSearchSession"
       WHERE cardinality("resultCandidateIds") <> (SELECT COUNT(DISTINCT x) FROM unnest("resultCandidateIds") AS x)`,
     prisma.$queryRaw<{ n: bigint }[]>`
-      SELECT COUNT(*) AS n FROM "Enrollment" e JOIN "Challenge" c ON c."id" = e."challengeId"
-      WHERE e."domain" <> c."domain"`,
-    prisma.$queryRaw<{ n: bigint }[]>`
       SELECT COUNT(*) AS n FROM (
         SELECT "requestId", "score" FROM "TalentRequestMatch"
         GROUP BY "requestId", "score" HAVING COUNT(*) > 1
@@ -469,7 +465,6 @@ export async function persistedResultHealth(): Promise<{
     profileSourceMatches: profileSource,
     sessionsWithDuplicateIds: dupSessions.length,
     sessionDuplicateSample: dupSessions.slice(0, 25).map((r) => r.id),
-    enrollmentDomainMismatch: Number(domainMismatch[0]?.n ?? 0),
     scoreTieGroups: Number(ties[0]?.n ?? 0),
   };
 }

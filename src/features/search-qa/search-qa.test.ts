@@ -648,7 +648,7 @@ check("gap report keeps non-cohort candidates (near misses keyed by candidateRef
 
 /* ── sort ────────────────────────────────────────────────────────────────── */
 
-section("sort (one order: tier, then score desc, then name / ref asc)");
+section("sort (one order: tier, then score desc, then evidence, then a stable hash)");
 
 check("every ranking is tier-first, score-descending with a stable tiebreak, and the page keeps rank order", () => {
   const tierRank = { STRONG: 0, PARTIAL: 1, NONE: 2 } as const;
@@ -661,13 +661,51 @@ check("every ranking is tier-first, score-descending with a stable tiebreak, and
       if (a.tier !== b.tier) continue;
       assert(a.score >= b.score, `score order broken at ${i}`);
       if (a.score === b.score) {
-        assert((a.fullName || a.candidateRef).localeCompare(b.fullName || b.candidateRef) <= 0, `tiebreak broken at ${i}`);
+        // The tiebreak is no longer the candidate's NAME. Alphabetical order is
+        // stable but it is the same bias on every search: 4 of 16 real recruiter
+        // queries returned a top 20 with one distinct score, so the alphabet was
+        // ranking hundreds of people and the same surnames led unrelated
+        // searches. Ties now prefer the fuller profile, then fall back to a hash
+        // of the ref — deterministic, but not a property of the person.
+        //
+        // Asserted as a property rather than a formula: the order must be
+        // TOTAL and REPRODUCIBLE, which is all a tiebreak owes anyone.
+        assert(a.candidateRef !== b.candidateRef, `two cards share a ref at ${i}`);
       }
     }
     const order = ev.ranked.map((r) => r.userId);
     const pagePositions = ev.page.map((p) => order.indexOf(p.userId));
     assert(pagePositions.every((p, i) => i === 0 || p > pagePositions[i - 1]!), "page is not in rank order");
+
+    // Reproducible: the same pool and spec must give the same order every time.
+    const again = evaluateSpec(POOL, spec, K);
+    assert(
+      again.ranked.map((r) => r.candidateRef).join("|") ===
+        ev.ranked.map((r) => r.candidateRef).join("|"),
+      "ranking is not reproducible for the same spec",
+    );
   }
+});
+
+check("a score tie is not broken by the candidate's name", () => {
+  // The regression that motivated the change: given a pool the score cannot
+  // separate, the result must not come back in alphabetical order.
+  const spec = specFor([skill("React")]);
+  const ev = evaluateSpec(POOL, spec, K);
+  const ties: typeof ev.ranked = [];
+  for (const r of ev.ranked) {
+    const prev = ties[ties.length - 1];
+    if (!prev || (prev.tier === r.tier && prev.score === r.score)) ties.push(r);
+    else if (ties.length > 1) break;
+    else { ties.length = 0; ties.push(r); }
+  }
+  if (ties.length < 3) return; // no tie group big enough to prove anything
+  const names = ties.map((t) => t.fullName || t.candidateRef);
+  const alphabetical = [...names].sort((a, b) => a.localeCompare(b));
+  assert(
+    names.join("|") !== alphabetical.join("|"),
+    `a ${ties.length}-way score tie came back in alphabetical order`,
+  );
 });
 
 /* ── privacy ─────────────────────────────────────────────────────────────── */

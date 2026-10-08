@@ -2,7 +2,7 @@ import "server-only";
 
 import { Domain, TalentCandidateSource } from "@prisma/client";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import { hireChallengePool } from "@/lib/feature-flags";
 import { buildDossierSet, computeCoverage } from "@/features/hire/dossier";
 import {
@@ -77,6 +77,18 @@ export type TrackLoad = {
   belowEvidenceFloor: number;
   cohortName: string | null;
   stage: "PUBLISHED" | "OPEN_MIDCOHORT" | null;
+  /**
+   * True when this track threw and was swallowed, so the pool is missing it.
+   *
+   * `loadTrack` catches its own failures and returns an empty load, which keeps
+   * one broken track from taking the whole search down — correct. But the
+   * search then answered `ok` with a silently smaller pool, and a recruiter saw
+   * a plausible short list with no hint anything had failed. Observed live:
+   * PROGRAM and PROFILE both threw and the search still returned results.
+   *
+   * So the degradation stays; only the silence goes.
+   */
+  failed?: boolean;
 };
 
 export type TrackLoadOpts = {
@@ -243,8 +255,16 @@ async function loadChallenge(
 
 /* ── HACKATHON: one weekend ───────────────────────────────────────────────── */
 
-async function loadHackathon(): Promise<TrackLoad> {
-  const set = await buildHackathonDossierSet();
+async function loadHackathon(opts: TrackLoadOpts): Promise<TrackLoad> {
+  // Skills are threaded here for the same reason PROFILE threads them (plan 161
+  // §2g): this track's cap BINDS — 200 against 3,330 eligible — so without the
+  // brief's skills the cap decides who is considered instead of the brief.
+  //
+  // The other cohort tracks deliberately do NOT filter on skills: their caps
+  // never bind (CLAUDE 320, CHALLENGE_60 65, PROGRAM 74 against a 5,000 cap), so
+  // filtering would buy no reach and would shrink the near-miss gap report that
+  // tells a recruiter who almost matched.
+  const set = await buildHackathonDossierSet({ skills: opts.skills });
   const dossiers = set?.dossiers ?? [];
   const coverage = set?.coverage ?? EMPTY_COVERAGE;
 
@@ -368,7 +388,7 @@ export async function loadTrack(
       case "CHALLENGE_60":
         return await loadChallenge(track.slug, opts);
       case "HACKATHON":
-        return await loadHackathon();
+        return await loadHackathon(opts);
       case "PROFILE":
         return await loadProfile(opts);
       default:
@@ -377,9 +397,9 @@ export async function loadTrack(
   } catch (error) {
     logger.error("[hire] loadTrack failed", {
       slug,
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
-    return emptyLoad(slug);
+    return { ...emptyLoad(slug), failed: true };
   }
 }
 
@@ -401,6 +421,8 @@ export function mergeTrackLoads(loads: TrackLoad[]): {
   belowEvidenceFloor: number;
   cohortName: string | null;
   stage: "PUBLISHED" | "OPEN_MIDCOHORT" | null;
+  /** Slugs that threw. Non-empty means this result is an incomplete pool. */
+  failedTracks: string[];
 } {
   const ordered = [...loads].sort(
     (a, b) =>
@@ -429,6 +451,7 @@ export function mergeTrackLoads(loads: TrackLoad[]): {
     belowEvidenceFloor: loads.reduce((n, l) => n + l.belowEvidenceFloor, 0),
     cohortName: ordered.find((l) => l.cohortName)?.cohortName ?? null,
     stage: ordered.find((l) => l.stage)?.stage ?? null,
+    failedTracks: loads.filter((l) => l.failed).map((l) => l.slug),
   };
 }
 
@@ -457,7 +480,7 @@ export async function attachRoleTitles(
     sources = await loadRoleTitleSources(members.map((m) => m.userId));
   } catch (error) {
     logger.error("[hire] role titles could not be loaded", {
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
     return members;
   }

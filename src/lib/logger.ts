@@ -32,11 +32,12 @@ import pino, { type Logger as PinoLogger } from "pino";
 import {
   REDACTED,
   SENSITIVE_KEYS,
+  errorFields,
   safeErrorMessage,
   scrubDeep,
 } from "@/lib/observability/redact";
 
-export { safeErrorMessage };
+export { errorFields, safeErrorMessage };
 
 export type LogMeta = Record<string, unknown>;
 

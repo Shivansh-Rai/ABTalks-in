@@ -22,10 +22,49 @@ import type {
  * different question — whether the candidate is actively looking. Never
  * substitute one for the other.
  */
+/**
+ * Seed and throwaway domains that must never appear in a recruiter's results.
+ *
+ * Canonical here rather than in the QA module that used to own it: this is the
+ * runtime rule, and `features/search-qa/data-quality.ts` imports it so the audit
+ * cannot drift from what search actually does.
+ */
+export const TEST_EMAIL_DOMAINS = new Set([
+  "abtalks.dev",
+  "example.com",
+  "example.org",
+  "test.com",
+  "mailinator.com",
+]);
+
+/**
+ * Who a recruiter may see.
+ *
+ * Two rules were missing here, both found by `npm run audit:recruiter-search`
+ * once it could run again:
+ *
+ *  - **No role rule.** 2 RECRUITER accounts were in the candidate pool. On
+ *    2026-10-07 the searchable pool was 13,174 STUDENT + exactly those 2, and no
+ *    ADMIN, so requiring STUDENT removes them and nobody else. The AI Cohort's
+ *    working professionals are STUDENT too — persona lives on
+ *    `CandidateProfile.primaryPersona`, not on `User.role` — so they are kept.
+ *  - **No test-domain rule.** 3 `@abtalks.dev` seed accounts were searchable,
+ *    which the audit rates CRITICAL. `lib/email.ts` already refuses to mail that
+ *    domain and `features/hire/outreach.ts` already refuses to contact it; the
+ *    pool itself was the gap.
+ *
+ * This DOES narrow the pool, by 5 accounts out of 13,176. That is the intent.
+ */
 export function searchableUserWhere(): Prisma.UserWhereInput {
   return {
     deletedAt: null,
     disabledAt: null,
+    // The candidate pool is candidates. A recruiter or an admin account holding
+    // a profile is not a person to hire — see `recruiter isolation`.
+    role: "STUDENT",
+    NOT: [...TEST_EMAIL_DOMAINS].map((domain) => ({
+      email: { endsWith: `@${domain}`, mode: "insensitive" as const },
+    })),
     visibility: { is: { searchableByRecruiters: true, withdrawnAt: null } },
   };
 }
@@ -173,12 +212,23 @@ export async function loadRecruiterIdentities(
  * card; the scorer reads it and the recruiter sees a score.
  */
 export async function loadRoleTitleSources(userIds: string[]): Promise<
-  Map<string, { headline: string | null; preferredRoles: string[]; experienceTitles: string[] }>
+  Map<
+    string,
+    {
+      headline: string | null;
+      preferredRoles: string[];
+      experienceTitles: string[];
+    }
+  >
 > {
   const ids = [...new Set(userIds.filter(Boolean))];
   const out = new Map<
     string,
-    { headline: string | null; preferredRoles: string[]; experienceTitles: string[] }
+    {
+      headline: string | null;
+      preferredRoles: string[];
+      experienceTitles: string[];
+    }
   >();
   if (ids.length === 0) return out;
   // Three flat reads in parallel rather than one nested one, which Prisma runs

@@ -12,11 +12,7 @@
  * PURE.
  */
 import { canonicalSkillName } from "@/lib/skill-catalog";
-import {
-  gateReasons,
-  hasUsableProfile,
-  type CanonicalCandidate,
-} from "@/features/search-qa/canonical";
+import { discoverabilityReasons, gateReasons, hasUsableProfile, type CanonicalCandidate } from "@/features/search-qa/canonical";
 import {
   isPickerWorkMode,
   normalizeCity,
@@ -25,6 +21,7 @@ import {
   squash,
 } from "@/features/search-qa/normalize";
 import type { Severity } from "@/features/search-qa/types";
+import { TEST_EMAIL_DOMAINS } from "@/repositories/talent";
 
 export type DataQualityRule =
   | "NAME_EMPTY"
@@ -123,13 +120,8 @@ const PLACEHOLDERS = new Set([
   "1234",
 ]);
 
-export const TEST_EMAIL_DOMAINS = new Set([
-  "abtalks.dev",
-  "example.com",
-  "example.org",
-  "test.com",
-  "mailinator.com",
-]);
+/** Re-exported from the repository that enforces it, so the two cannot drift. */
+export { TEST_EMAIL_DOMAINS };
 
 /** Single-letter language names that are real skills. */
 const SHORT_REAL_SKILLS = new Set(["c", "r", "go", "js", "ts", "ai", "ml", "ui", "ux", "qa", "c#", "f#"]);
@@ -188,14 +180,18 @@ export function dataQualityIssues(
   ) => out.push({ rule, severity, field, message });
 
   const searchable = gateReasons(c).length === 0;
+  // These two rules report a BAD ROW, not a search leak: the runtime gate now
+  // excludes recruiters and seed domains, so asking `searchable` here would make
+  // each rule unable to see the thing it exists to report.
+  const markedDiscoverable = discoverabilityReasons(c).length === 0;
   const year = now.getUTCFullYear();
 
   if (!c.emailValid) push("EMAIL_INVALID", "WARNING", "User.email", "email is not a valid address");
-  if (searchable && c.emailDomain && TEST_EMAIL_DOMAINS.has(c.emailDomain)) {
-    push("TEST_ACCOUNT_SEARCHABLE", "CRITICAL", "User.email", `test-domain account (@${c.emailDomain}) is recruiter-searchable`);
+  if (markedDiscoverable && c.emailDomain && TEST_EMAIL_DOMAINS.has(c.emailDomain)) {
+    push("TEST_ACCOUNT_SEARCHABLE", "CRITICAL", "User.email", `test-domain account (@${c.emailDomain}) is marked recruiter-searchable (the pool gate now excludes it, but the row is wrong)`);
   }
-  if (searchable && c.role !== "STUDENT") {
-    push("NON_CANDIDATE_ROLE_SEARCHABLE", "ERROR", "User.role", `${c.role} account is recruiter-searchable`);
+  if (markedDiscoverable && c.role !== "STUDENT") {
+    push("NON_CANDIDATE_ROLE_SEARCHABLE", "ERROR", "User.role", `${c.role} account is marked recruiter-searchable (the pool gate now excludes it, but the row is wrong)`);
   }
 
   const p = c.profile;
