@@ -48,6 +48,15 @@ View details: {{baseUrl}}{{href}}
 You received this because of your notification settings on ABTalks.
 Update preferences: {{baseUrl}}/settings/notifications`;
 
+/**
+ * Email subjects that differ from the in-app title. The bell can be upbeat
+ * ("You're getting noticed"); in an inbox that reads as marketing and Gmail
+ * files it under Promotions, so the email says plainly what happened.
+ */
+const EMAIL_SUBJECTS: Record<string, string> = {
+  "profile.viewed": "A recruiter viewed your ABTalks profile",
+};
+
 const templateCache = new Map<string, { html: string; text: string }>();
 
 function loadTemplate(eventType: string): { html: string; text: string } {
@@ -75,7 +84,7 @@ export function renderTemplate(
 ): RenderedEmail {
   const { html, text } = loadTemplate(eventType);
   return {
-    subject: vars.title,
+    subject: EMAIL_SUBJECTS[eventType] ?? vars.title,
     html: interpolate(html, vars),
     text: interpolate(text, vars),
   };
