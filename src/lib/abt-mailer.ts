@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 /**
  * Plan 185: hand selected transactional mail to ABT-Mailer (our SES sender)
@@ -94,6 +94,30 @@ export function signAbtMailerRequest(
     "X-ABTalks-Timestamp": ts,
     "X-ABTalks-Signature": `v1=${sig}`,
   };
+}
+
+const SIGNATURE_TOLERANCE_S = 300;
+
+/**
+ * Check a request ABT-Mailer sent us (its bounce / complaint webhook): same
+ * scheme as signAbtMailerRequest, 5-minute replay window, constant-time.
+ */
+export function verifyAbtMailerSignature(input: {
+  body: string;
+  timestamp: string | null;
+  signature: string | null;
+  secret: string | undefined;
+  nowMs?: number;
+}): boolean {
+  const { body, timestamp, signature, secret } = input;
+  if (!secret || secret.length < 16 || !timestamp || !signature?.startsWith("v1=")) return false;
+  const ts = Number(timestamp);
+  if (!Number.isInteger(ts)) return false;
+  const now = Math.floor((input.nowMs ?? Date.now()) / 1000);
+  if (Math.abs(now - ts) > SIGNATURE_TOLERANCE_S) return false;
+  const expected = Buffer.from(createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex"), "utf8");
+  const given = Buffer.from(signature.slice(3), "utf8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
 /**
