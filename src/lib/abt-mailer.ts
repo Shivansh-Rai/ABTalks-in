@@ -63,10 +63,14 @@ const ESSENTIAL_KINDS = abtMailerKinds(
     "account.admin_update,account.admin_update.*,account.self_deleted,recruiter.welcome",
 );
 
-/** Mail whose body or subject holds a secret: ABT-Mailer wipes it once sent. */
-const SENSITIVE_KINDS = abtMailerKinds(
-  "recruiter.otp,auth.signin_code,auth.password_code,auth.password_reset,recruiter.welcome",
-);
+/**
+ * Mail whose body or subject holds a lasting secret: ABT-Mailer wipes it once
+ * sent. The 6-digit codes are not on this list — they expire in 10
+ * minutes and work once, and support needs to see them in ABT-Mailer's logs
+ * (as it could in Brevo's). A reset link and the welcome password stay usable
+ * for longer, so those are still wiped.
+ */
+const SENSITIVE_KINDS = abtMailerKinds("auth.password_reset,recruiter.welcome");
 
 export function abtMailerCategory(
   kind: string,
