@@ -2,6 +2,8 @@
 
 Status: PLAN ONLY. No code exists yet. Execute one phase per PR, in order.
 
+Revision 3 (2026-10-08): function-style questions with a hidden per-language harness (matches the reference screenshot); pages sit inside the candidate app shell; Result / Submissions tabs and Custom input; "Practice DSA" dashboard section; exactly 2 sample + 2 hidden tests; no points; reference solutions are written by us, not supplied.
+
 Revision 2 (2026-10-08): Judge0 replaces Piston; explicit enrolment with UTC day unlocks; content is read from JSON in the repo instead of the database; several pieces of the first draft were removed (see section 4.6).
 
 ---
@@ -36,7 +38,7 @@ state(N) =
   OPEN              otherwise (Day 1 is always OPEN or COMPLETE)
 ```
 
-Worked example. Enrol on 8 Oct at 14:00 IST (08:30 UTC). Day 1 is open. Day 2's date is 9 Oct, so it can open from 9 Oct 05:30 IST, and only once Day 1 is complete. A learner who finishes Day 1 on 11 Oct finds Day 2 open immediately (its date has passed), and Day 3 opens the moment Day 2 is complete. **Catching up on missed days is allowed; skipping ahead of the calendar is not.** If the intent is instead "at most one new day per calendar day, counted from when the previous day was completed", say so before Phase 1: it changes one function in `progression.ts`.
+Worked example. Enrol on 8 Oct at 14:00 IST (08:30 UTC). Day 1 is open. Day 2's date is 9 Oct, so it can open from 9 Oct 05:30 IST, and only once Day 1 is complete. A learner who finishes Day 1 on 11 Oct finds Day 2 open immediately (its date has passed), and Day 3 opens the moment Day 2 is complete. **Catching up on missed days is allowed; skipping ahead of the calendar is not.** Confirmed by the product owner on 2026-10-08.
 
 `BYPASS_DAY_LOCKS=true` (existing dev flag, `isDayLockBypassEnabled()`) opens every day for testing.
 
@@ -46,9 +48,33 @@ Worked example. Enrol on 8 Oct at 14:00 IST (08:30 UTC). Day 1 is open. Day 2's 
 - **Submit** executes against all tests, hidden ones included, on the server. Only an **accepted** Submit is saved. A failed Submit shows results and writes nothing.
 - One saved row per learner per question: the first accepted solution. Once a question is solved, the Submit button is replaced by a "Solved" state; Run stays available.
 
-### 3.3 Problem format
+- The **Submissions** tab shows the learner's saved accepted solution for that question (date, language, code). Failed attempts are not listed because they are never stored.
+- **Custom input** (Phase 5): Run once against input the learner types, showing output only. Also never stored.
 
-Every question is a full program: read stdin, write stdout. Starter code ships the input parsing and an empty `solve` function, so the learner writes logic only. No per-language test harness is needed.
+### 3.3 Problem format (revision 3: function style, as in the reference screenshot)
+
+The learner sees and edits only a function, for example `class Solution: def largestTwo(self, arr)`. They never write input parsing.
+
+Behind the scenes each question carries, per language, a hidden **harness**: an optional `prefix` (imports) and a `driver` (reads stdin, calls the learner's function, prints the result in one canonical format). The server builds `prefix + learner code + driver` and sends that to Judge0. The harness is server-only, like hidden tests.
+
+- Stdin convention: one JSON value per argument, one per line (`[12,35,1,10,34,1]`). The driver prints the return value as compact JSON (`[35,34]`), so output comparison is exact and language-independent.
+- Each sample test also carries display text for the statement and results panel (`arr = [12,35,1,10,34,1]` → `[35,34]`).
+- Every question has exactly **2 sample tests and 2 hidden tests**.
+- There is **no points system**. The statement header shows title and difficulty only.
+
+### 3.4 Screen layout (from the reference screenshot)
+
+- The pages render inside the existing candidate app shell (`DashboardShell`: sidebar, search, bell), the same way `/learn` does.
+- Breadcrumb: "← 15-Days Arrays & String Mastery / Day 1".
+- Left pane: title, difficulty chip, statement, Example 1..n blocks with Input, Output and a one-line explanation.
+- Right pane, top: language select, Reset, Run, Submit; then the editor.
+- Right pane, bottom: tabs **Result** and **Submissions**, plus the **Custom input** checkbox.
+- Page toolbar (top right): collapse the statement pane, swap panes, font size down / up.
+- A draggable divider between panes on desktop; tabs on mobile.
+
+### 3.5 Dashboard entry
+
+The dashboard gets a **Practice DSA** section with one card, "Array & Strings 15 Days Challenge", styled like the existing Learn section (`HUB_HEADING_CLASS`, `HUB_CARD_HOVER_CLASS`, `HUB_CARD_CTA_CLASS`). It renders only when `ENABLE_CODING_PRACTICE` is on.
 
 ---
 
@@ -254,26 +280,38 @@ Not touched: `middleware.ts`, `auth.ts`, `auth.config.ts`, `prisma/schema.prisma
          "statementMd": "Given `n` integers, print their sum.\n\n**Input**\n\nLine 1: `n`. Line 2: `n` space separated integers.\n\n**Output**\n\nOne integer, the sum.\n\n**Constraints**\n\n- 1 <= n <= 100000\n- -10^9 <= a[i] <= 10^9",
          "timeLimitSec": 2,
          "starterCode": {
-           "python": "import sys\n\ndef solve(nums):\n    # write your logic here\n    return 0\n\ndef main():\n    data = sys.stdin.read().split()\n    n = int(data[0])\n    nums = [int(x) for x in data[1:1 + n]]\n    print(solve(nums))\n\nmain()\n",
+           "python": "class Solution:\n    def arraySum(self, arr: List[int]) -> int:\n        ",
            "java": "...", "cpp": "...", "javascript": "..."
          },
+         "harness": {
+           "python": {
+             "prefix": "from typing import List\n",
+             "driver": "\nimport sys, json\n_arr = json.loads(sys.stdin.readline())\nprint(json.dumps(Solution().arraySum(_arr), separators=(',', ':')))\n"
+           },
+           "java": { "prefix": "import java.util.*;\n", "driver": "..." },
+           "cpp": { "prefix": "#include <bits/stdc++.h>\nusing namespace std;\n", "driver": "..." },
+           "javascript": { "prefix": "", "driver": "..." }
+         },
          "tests": [
-           { "input": "3\n1 2 3\n", "expectedOutput": "6\n", "hidden": false, "explanation": "1 + 2 + 3 = 6" },
-           { "input": "1\n-5\n", "expectedOutput": "-5\n", "hidden": false },
-           { "input": "4\n1000000000 1000000000 1000000000 1000000000\n", "expectedOutput": "4000000000\n", "hidden": true }
+           { "input": "[1,2,3]\n", "expectedOutput": "6\n", "hidden": false, "display": { "input": "arr = [1,2,3]", "output": "6" }, "explanation": "1 + 2 + 3 = 6" },
+           { "input": "[-5]\n", "expectedOutput": "-5\n", "hidden": false, "display": { "input": "arr = [-5]", "output": "-5" }, "explanation": "A single element is its own sum." },
+           { "input": "[1000000000,1000000000,1000000000,1000000000]\n", "expectedOutput": "4000000000\n", "hidden": true },
+           { "input": "[0,0,0]\n", "expectedOutput": "0\n", "hidden": true }
          ],
          "solution": { "language": "python", "code": "..." }
        }
      ]
    }
    ```
-   Placeholder day 1: slot 1 "Sum of Array" (above), slot 2 "Reverse a String" (one line in, the reversed line out). Write complete starter code for all four languages for both. Java starter code must use `public class Main`.
-7. `src/lib/validations/coding-practice.ts`: `practiceChallengeSchema` and `practiceDaySchema`, both `.strict()`. Rules: exactly two questions with slots 1 and 2; `title` 3..120; `difficulty` in `Easy | Medium | Hard`; `statementMd` 20..20000; `timeLimitSec` 1..5, default 2; `starterCode` has a key for every language in the challenge, each ≤ 10000 chars; `tests` 4..12 with at least 2 visible and at least 2 hidden (placeholders must satisfy this too); each `input` and `expectedOutput` ≤ 100000 chars; `solution` required.
-8. `content.ts` (`import "server-only"`): a static map `slug → { challenge: () => import(".../challenge.json"), days: { 1: () => import(".../day-01.json") } }`, each result parsed with the schema and memoised in a module `Map`. Export:
+   The statement body in `statementMd` describes the task only; the Example blocks are rendered from the two sample tests' `display` and `explanation`.
+   Placeholder day 1: slot 1 "Sum of Array" (above), slot 2 "Reverse a String". Write starter code and a complete harness for all four languages for both. In Java the learner writes `class Solution` and the driver supplies `public class Main` with `main`.
+7. `src/lib/validations/coding-practice.ts`: `practiceChallengeSchema` and `practiceDaySchema`, both `.strict()`. Rules: exactly two questions with slots 1 and 2; `title` 3..120; `difficulty` in `Easy | Medium | Hard`; `statementMd` 20..20000; `timeLimitSec` 1..5, default 2; `starterCode` and `harness` each have a key for every language in the challenge (each string ≤ 10000 chars, `prefix` may be empty, `driver` required); `tests` is exactly 4: 2 visible and 2 hidden; visible tests require `display.input`, `display.output` and `explanation`; each `input` and `expectedOutput` ≤ 100000 chars; `solution` optional (written by us in Phase 4, never supplied by the content owner).
+8. `content.ts` (`import "server-only"`): static JSON imports (same pattern as `src/features/career-guidance/catalog.ts`) registered in one `RAW` map per slug, parsed with the schema on first use and memoised in a module `Map`. All functions are synchronous. (Built this way in Phase 1; the first draft's lazy `import()` loaders were dropped as unnecessary for files this small.) Export:
    - `getPracticeChallenge(slug)` → metadata + `days: number[]` that exist
    - `getPracticeDayIndex(slug)` → `{ day, questions: { slot, title, difficulty, activityId }[] }[]` for the day list
-   - `getPracticeQuestion(slug, day, slot)` → client-safe `{ activityId, day, slot, title, difficulty, tags, statementMd, languages, starterCode, defaultLanguage, examples }` where `examples` are the visible tests. Never includes hidden tests or `solution`.
+   - `getPracticeQuestion(slug, day, slot)` → client-safe `{ activityId, day, slot, title, difficulty, tags, statementMd, languages, starterCode, defaultLanguage, examples }` where `examples` are the visible tests' `display` + `explanation`. Never includes hidden tests, `harness` or `solution`.
    - `getPracticeTests(slug, day, slot)` → `{ timeLimitSec, tests: RunTestCase[] }`, all tests. Server-only callers only.
+   - `buildPracticeSource(slug, day, slot, language, userCode)` → `prefix + userCode + "\n" + driver`, or null. This is the string given to `judge()`; the runner module itself stays unaware of harnesses. For visible cases, `RunTestCase` also carries the `display` text so the results panel shows `arr = [1,2,3]` rather than raw stdin.
 9. `progression.ts`: pure functions, mirroring `src/features/langchain/progression.ts` but reading `PRACTICE_TZ`: `anchorKey(startedAt)`, `unlockKeyForDay(startedAt, day)`, `todayKey(now)`, `isDayComplete(day, solved, dayIndex)`, and `practiceDayState(day, startedAt, solved, dayIndex, now, bypass)` returning `"COMPLETE" | "OPEN" | "LOCKED_PREVIOUS" | "LOCKED_DATE"` exactly as section 3.1. Reuse `addCalendarDaysToKey` from `@/lib/date-utils`.
 10. `coding-practice.test.ts`: Day 1 is open at enrolment; Day 2 is `LOCKED_DATE` before 00:00 UTC of the next date even when Day 1 is complete; Day 2 is `LOCKED_PREVIOUS` after that instant when Day 1 is incomplete; Day 2 is `OPEN` when both hold; one solved question does not complete a day; the catch-up example from 3.1; enrolment at 23:50 UTC puts Day 2's date ten minutes later; bypass opens everything. Plus: every registered content file parses.
 11. `prisma/seed-coding-practice.ts`: copy the structure of `prisma/seed-langchain.ts`, including `assertNotProduction()`. Read the same JSON files and validate them with the same schemas. Upsert `ProgramCategory(slug "dsa", name "DSA", sortOrder 80)`; `LearningProgram(slug, format CHALLENGE, isPublished true, sortOrder 80)`; `ProgramVersion` v1 `PUBLISHED`, `plannedDurationDays 15`, `requiredActivityCount`; one `Module(position 1, startDay 1, endDay 15)`; per question an `Activity` (id from `practiceActivityId`, `type CODING`, `dayNumber`, `position = (day-1)*2 + slot`, `unlockRule SCHEDULED`, `points 0`, `isRequired true`, `title`, `difficulty`, `tags`); `Cohort(slug "arrays-strings-open", ROLLING, ACTIVE, timezone "UTC")`. It writes **no** `ContentActivityConfig`, `CodingActivityConfig` or `TestCase` rows. Activities in the database but absent from the JSON are logged, never deleted.
@@ -331,7 +369,9 @@ Changed files: exactly the table above. Seeding is section 9 and is run by the d
 | `src/components/coding-practice/practice-workspace.tsx` | [new] | **Client.** Binds the Run route into `CodeWorkspace`. |
 | `src/components/coding-practice/practice-start-button.tsx` | [new] | **Client.** Calls the enrol action. |
 | `src/components/coding-practice/practice-day-list.tsx` | [new] | **Server.** 15 day rows with state. |
-| `src/app/practice/layout.tsx` | [new] | **Server.** Flag gate + header shell. |
+| `src/components/dashboard-hub/practice-dsa.tsx` | [new] | **Server.** Dashboard "Practice DSA" section, one card. |
+| `src/app/dashboard/page.tsx` | [edit] | Render `<PracticeDsa />` directly after the Learn section, only when the flag is on. One import, one line. |
+| `src/app/practice/layout.tsx` | [new] | **Server.** Flag gate + `DashboardShell`. |
 | `src/app/practice/page.tsx` | [new] | **Server.** Redirect to the only challenge. |
 | `src/app/practice/[challenge]/page.tsx` | [new] | **Server.** Challenge page. |
 | `src/app/practice/[challenge]/[day]/[slot]/page.tsx` | [new] | **Server.** Question page. |
@@ -347,18 +387,22 @@ Changed files: exactly the table above. Seeding is section 9 and is run by the d
    - `createPracticeEnrollment(userId, programSlug)` → `{ ok: true } | { ok: false, reason: "closed" }`. Cohort by slug (`select: { id, status }`); status not `ACTIVE` or `ENROLLING` → `closed`; else `writeClient().programEnrollment.upsert` on `userId_cohortId` with `create: { status: ACTIVE, startedAt: now, enrolledAt: now }` and `update: {}`, so a second click never resets the clock.
 3. `enrollInPracticeAction(input)`: flag; `auth()`; `practiceEnrollSchema` (`{ challenge: z.enum(PRACTICE_PROGRAM_SLUGS) }`); `getProfileSummary(userId)` null → `{ ok: false, message: "Complete your registration first." }`; `createPracticeEnrollment`; `revalidatePath` the challenge page; standard envelope.
 4. `practiceRunSchema`: `{ challenge: z.enum(PRACTICE_PROGRAM_SLUGS), day: z.number().int().min(1).max(15), slot: z.number().int().min(1).max(2), language: z.enum(CODE_LANGUAGE_IDS), code: z.string().min(1).max(PRACTICE_MAX_CODE_CHARS) }`. The client never sends an activity id.
-5. `route.ts`: `export const runtime = "nodejs"; export const maxDuration = 30;` then in order: flag off → 404; same-origin check copied from `src/app/api/assessments/[assignmentId]/events/route.ts`; `auth()` → 401; body as text, over 100 KB → 413, bad JSON → 400; Zod → 400; `allowHit("run:" + userId, PRACTICE_RUN_COOLDOWN_MS)` false → 429 "Please wait a moment before running again."; `getPracticeTests` null → 404; `judge()` with the **visible tests only**; verdict `unavailable` → 503 "Code execution is unavailable right now. Please try again in a minute."; else 200 `{ ok: true, data }`. `catch` → `logger.error("[practice-run]", { error: String(error) })` and 500. No import from `@/lib/db`, `@/repositories` or `@prisma/client` in this file.
+5. `route.ts`: `export const runtime = "nodejs"; export const maxDuration = 30;` then in order: flag off → 404; same-origin check copied from `src/app/api/assessments/[assignmentId]/events/route.ts`; `auth()` → 401; body as text, over 100 KB → 413, bad JSON → 400; Zod → 400; `allowHit("run:" + userId, PRACTICE_RUN_COOLDOWN_MS)` false → 429 "Please wait a moment before running again."; `buildPracticeSource` / `getPracticeTests` null → 404; `judge()` with the built source and the **visible tests only**; verdict `unavailable` → 503 "Code execution is unavailable right now. Please try again in a minute."; else 200 `{ ok: true, data }`. `catch` → `logger.error("[practice-run]", { error: String(error) })` and 500. No import from `@/lib/db`, `@/repositories` or `@prisma/client` in this file.
 6. `code-editor.tsx`: props `{ value, onChange, language: CodeLanguageId, readOnly?, height? }`; language → extension (`python()`, `java()`, `cpp()`, `javascript()`); light theme; `font-mono`. Default export.
 7. `code-workspace.tsx`: props `{ statement: React.ReactNode; languages; starterCode: Record<string, string>; defaultLanguage; storageKey: string; initialCode?: { language; code } | null; solved?: boolean; onRun: (input: { language; code }) => Promise<{ ok: true; data: TestRunResult } | { ok: false; message: string }>; onSubmit?: same input → Promise of an envelope }`.
    - Editor via `next/dynamic(() => import("./code-editor"), { ssr: false, loading: skeleton })`.
    - Draft per language in `localStorage` (`abt:code:<storageKey>:<language>`), debounced 500 ms, every access in `try/catch`. Initial code = local draft, else `initialCode` for that language, else starter code.
-   - Desktop (`lg` up): statement left, editor and results right. Mobile: tabs "Problem", "Code", "Results"; a finished run switches to "Results".
+   - Layout follows section 3.4. Desktop (`lg` up): statement left; right column has the toolbar (language select, Reset, Run, Submit), the editor, and a bottom panel with a "Result" tab. Mobile: tabs "Problem", "Code", "Result"; a finished run switches to "Result".
+   - While running, the Run button reads "Running..." and the Result tab shows "Running your code...".
+   - The Submissions tab, Custom input, pane divider and page toolbar are added in Phases 3 and 5. Leave no dead controls in this phase.
    - Run is disabled while a request is in flight. "Reset code" restores the starter after a confirm.
    - No Submit button renders when `onSubmit` is absent. Do not build Submit UI in this phase.
 8. `test-results.tsx`: summary ("2 of 3 sample tests passed"), compiler output block on compile error, otherwise one collapsible row per case with Input, Expected, Your output and stderr.
 9. `practice-workspace.tsx`: `onRun` posts JSON to `/api/practice/run` and returns the envelope; network failure → `{ ok: false, message: "Could not reach the server. Check your connection and try again." }`.
 10. Pages (`params` is a Promise in this Next version):
-    - `layout.tsx`: `if (!isCodingPracticeEnabled()) notFound();` then the same header shell as `src/app/program/langchain/layout.tsx` (import its components, do not modify them).
+    - `layout.tsx`: `if (!isCodingPracticeEnabled()) notFound();` then wrap children in `DashboardShell` exactly as `src/app/learn/layout.tsx` does (same props, `collapsible startCollapsed`). Import the shell, do not modify it.
+    - `practice-dsa.tsx`: copy the structure and classes of `src/components/dashboard-hub/learn-courses.tsx`. Heading "Practice DSA"; one card titled "Array & Strings 15 Days Challenge", line "15 days · 2 problems a day · Python, Java, C++, JavaScript", CTA "Start practising" linking to `/practice/arrays-strings`. Title and day count come from `getPracticeChallenge`. No database read.
+    - `src/app/dashboard/page.tsx`: the only edit is the import and `{isCodingPracticeEnabled() ? <PracticeDsa /> : null}` beside the Learn section. If Learn is rendered from a child component instead, place it there and report which file changed.
     - `page.tsx`: redirect to `` `${PRACTICE_BASE}/${PRACTICE_PROGRAM_SLUGS[0]}` ``.
     - `[challenge]/page.tsx`: unknown slug → `notFound()`; no session → redirect to `/login?from=<path>`; load `getPracticeChallenge`, `getPracticeDayIndex` and `getPracticeProgress`. Not enrolled → title, subtitle, the 15 days shown locked, and `PracticeStartButton`. Enrolled → `PracticeDayList` with each day's state from `practiceDayState`; only `OPEN` and `COMPLETE` days link to questions; locked days show the copy from section 3.1.
     - `[challenge]/[day]/[slot]/page.tsx`: validate slug, day, slot → else `notFound()`; session gate; `getPracticeProgress` null → redirect to the challenge page; day state locked → redirect to the challenge page; question null → `notFound()`; render breadcrumb + `PracticeWorkspace` with `statement` = `ReactMarkdown` + `remark-gfm` using the existing `programMdComponents` / `dayMdClassName` (import only).
@@ -430,8 +474,10 @@ Changed files: exactly the table above.
    6. Verdict not `accepted` → `{ ok: true, data: { result, saved: false } }`. **No write.**
    7. Accepted → `recordAcceptedSubmission` with `completesChallenge = solved.length + 1 === total questions`; return `{ ok: true, data: { result, saved: true, dayComplete } }` where `dayComplete` means the other question of the day was already solved.
 3. `submitPracticeSolutionAction`: flag; `auth()`; `practiceSubmitSchema`; `allowHit("submit:" + userId, PRACTICE_SUBMIT_COOLDOWN_MS)`; call `submitPracticeSolution`; `revalidatePath` the challenge page when saved; standard envelope.
-4. UI copy (no em dashes): saved → "Accepted. Your solution is saved."; saved and day complete → "Accepted. Day 3 is complete."; not accepted → the results plus "Nothing was saved."; hidden failure → "Hidden test 4 failed"; solved badge "Solved".
-5. Question page: when the question is solved, `initialCode` = `getSavedSolution`; a local draft still wins over it.
+   Submit also uses `buildPracticeSource`; the saved `payload.code` is the learner's code only, never the harness.
+4. Submissions tab in `code-workspace.tsx`: an optional `submissions?: { language: string; submittedAtLabel: string; code: string }[]` prop (plain data from the server page; for practice it has zero or one entry). Empty state: "No accepted submission yet. Only accepted solutions are saved."
+5. UI copy (no em dashes): saved → "Accepted. Your solution is saved."; saved and day complete → "Accepted. Day 3 is complete."; not accepted → the results plus "Nothing was saved."; hidden failure → "Hidden test 4 failed"; solved badge "Solved".
+6. Question page: when the question is solved, `initialCode` and `submissions` come from `getSavedSolution` (also select `submittedAt`); a local draft still wins over `initialCode`.
 
 **Verification**
 
@@ -462,7 +508,9 @@ Changed files: exactly the table above.
 
 ### Phase 4: The real 30 questions
 
-**Needed per question:** title, difficulty, statement with input format, output format and constraints, at least 2 sample tests (one-line explanation each), at least 2 hidden tests including edge and large cases, one reference solution in any supported language, tags.
+**Supplied by the content owner per question:** title, difficulty, statement, the function name with its parameters and return type, 2 sample tests with a one-line explanation each, 2 hidden tests. No reference solution is supplied.
+
+**Written during this phase:** starter code and the hidden harness for all four languages, and one reference solution per question. The reference solution exists only so the verify script can prove the four expected outputs and the four harnesses are right before learners see the question; a wrong expected output otherwise fails every correct answer.
 
 **Files**
 
@@ -476,8 +524,8 @@ Changed files: exactly the table above.
 
 **Steps**
 
-1. Convert the supplied questions into the Phase 1 JSON format. Write starter code for every language: stdin parsing, a `solve` stub and the print. Never the solution.
-2. `verify-coding-practice-solutions.ts`: for each question call `judge()` with `solution.code` and all tests; print a table; exit non-zero on any verdict other than `accepted`. Run sequentially with a 2 s gap, because the executor is a free shared service.
+1. Convert the supplied questions into the Phase 1 JSON format. Starter code is the empty function signature only. Write the harness (prefix + driver) for every language.
+2. Write a reference solution for each question in Python, then port it to the other three languages inside the verify script's run so every harness is exercised: `verify-coding-practice-solutions.ts` calls `judge()` for each question and each language with `buildPracticeSource(solution)` and all four tests; prints a table; exits non-zero on any verdict other than `accepted`. Run sequentially with a 2 s gap, because the executor is a free shared service. If a supplied expected output disagrees with the reference solution, stop and ask the content owner which is right; do not silently change either.
 3. Fix content until the test and the verify script both pass, then seed (section 9) so the 28 new `Activity` anchors exist.
 
 **Verification**
@@ -496,11 +544,16 @@ Then on a child branch: 15 days and 30 titles on the challenge page; three quest
 
 ### Phase 5: Fine-tuning and design polish
 
-Edits only inside files this plan created, plus one optional hub entry.
+Edits only inside files this plan created.
 
-**Files:** `src/components/code-editor/*.tsx`, `src/components/coding-practice/*.tsx`, `src/app/practice/**` [edit]; optionally `src/features/dashboard/get-hub-data.ts` and `src/components/dashboard-hub/roadmaps.tsx` [edit] for one entry card behind the flag, following the `hasLangchainAccess` / `showLangchain` pattern (confirm hub ownership first).
+**Files:** `src/components/code-editor/*.tsx`, `src/components/coding-practice/*.tsx`, `src/components/dashboard-hub/practice-dsa.tsx`, `src/app/practice/**`, `src/app/api/practice/run/route.ts`, `src/lib/validations/coding-practice.ts` [edit].
 
 **Functional**
+0. Complete the reference layout (section 3.4):
+   - Page toolbar: collapse or show the statement pane, swap panes, font size down / up (12 to 20 px, remembered in `localStorage`).
+   - Draggable divider between panes and between editor and result panel on desktop.
+   - **Custom input**: a checkbox that reveals a textarea. `practiceRunSchema` gains optional `customInput: z.string().max(10_000)`. With it, the route sends one run with that stdin and no expected output and returns `{ stdout, stderr, compileOutput, status }`; the panel shows "Your output" only. Same auth, cooldown and no-storage rules. Placeholder text shows the expected format, for example `[12,35,1,10,34,1]`.
+   - Compile and runtime error line numbers: subtract the harness prefix line count before display so they match the learner's editor.
 1. `Ctrl/Cmd + Enter` runs.
 2. Previous and next question links; "Back to all days".
 3. Each language pack loads on first selection instead of all four up front.
@@ -534,7 +587,8 @@ Edits only inside files this plan created, plus one optional hub entry.
 - The Run path performs zero database reads and writes. `src/app/api/practice/run/route.ts` and `src/features/code-runner/**` import nothing from `@/lib/db`, `@/repositories` or `@prisma/client`.
 - Do not persist Runs, failed Submits, drafts or keystrokes. Drafts are `localStorage` only.
 - One-way imports: `src/features/code-runner/**` and `src/components/code-editor/**` never import from `coding-practice`.
-- Hidden tests and `solution` are read only through `getPracticeTests` in the route, the submit flow and the verify script. `content.ts` keeps `import "server-only"`; no content JSON is imported from a client component.
+- Do not show points anywhere. There is no points system in this feature.
+- Hidden tests, `harness` and `solution` are read only through `getPracticeTests` / `buildPracticeSource` in the route, the submit flow and the verify script. The harness is never sent to the browser and never saved with a submission. `content.ts` keeps `import "server-only"`; no content JSON is imported from a client component.
 - Never log user code, stdin, stdout, stderr or tokens.
 - Do not edit `prisma/schema.prisma` or add a migration. If one seems required, stop and report.
 - Do not edit `middleware.ts`, `src/auth.ts` or `src/auth.config.ts`. Do not add `/practice` to `protectedPaths`.
@@ -562,4 +616,4 @@ Rollback: unset `ENABLE_CODING_PRACTICE`. Seeded catalog rows are inert without 
 
 ## 10. Later extensions (not in this plan)
 
-Submission history and re-submitting improved solutions; `EnrollmentProgress` cache, streaks and hub progress; points or a completion credential; custom stdin input; more languages; saving failed final submissions; a `CODING` question type in recruiter assessments (owned by the assessment modules, reusing `code-runner` + `code-editor`); an admin view of submissions; moving to a paid Judge0 plan if the free instance is outgrown.
+Submission history and re-submitting improved solutions; `EnrollmentProgress` cache, streaks and progress on the dashboard card; points or a completion credential; more languages; saving failed final submissions; a `CODING` question type in recruiter assessments (owned by the assessment modules, reusing `code-runner` + `code-editor`); an admin view of submissions; moving to a paid Judge0 plan if the free instance is outgrown.

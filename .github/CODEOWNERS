@@ -126,3 +126,21 @@
 /src/components/shared/route-progress.tsx           @byteninjaa0
 /src/components/shared/nav-link.tsx                 @byteninjaa0
 /src/components/shared/page-skeleton.tsx            @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 8. Coding Practice + Code Runner (plan 186)
+#
+# /practice, the Judge0 code runner and the reusable code editor. The runner
+# and editor are shared: assessments and other challenges may call them, but
+# changes to how they work route here.
+# ------------------------------------------------------------------------------
+/src/app/practice/                                  @Shivansh-Rai
+/src/app/api/practice/                              @Shivansh-Rai
+/src/app/actions/coding-practice-actions.ts         @Shivansh-Rai
+/src/features/coding-practice/                      @Shivansh-Rai
+/src/features/code-runner/                          @Shivansh-Rai
+/src/components/coding-practice/                    @Shivansh-Rai
+/src/components/code-editor/                        @Shivansh-Rai
+/src/repositories/coding-practice.ts                @Shivansh-Rai
+/src/lib/validations/coding-practice.ts             @Shivansh-Rai
+/prisma/seed-coding-practice.ts                     @Shivansh-Rai
