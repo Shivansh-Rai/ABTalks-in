@@ -137,13 +137,15 @@ export default async function HireAssessmentDetailPage({
         assessmentId={assessment.id}
         status={assessment.status}
         candidates={candidates}
+        assignedCount={summary.assigned}
         projectId={projectId}
       />
 
       {isDraft ? (
         <p className="hire-assess-list__footnote">
-          This is a draft. Publish it to assign candidates — publishing locks the
-          questions and pass mark.
+          This is a draft. Publish it first, then pick the candidates to send it
+          to — you don&apos;t need any to publish. Publishing locks the questions
+          and pass mark.
         </p>
       ) : (
         <section
@@ -169,6 +171,7 @@ export default async function HireAssessmentDetailPage({
                     <th>Score</th>
                     <th>Result</th>
                     {assessment.strictMode ? <th>Activity</th> : null}
+                    <th>Answers</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -208,20 +211,25 @@ export default async function HireAssessmentDetailPage({
                             {a.status === "ASSIGNED" ? (
                               "—"
                             ) : (
-                              <>
-                                {activityCounts[a.id]
-                                  ? `${activityCounts[a.id]} events`
-                                  : "None recorded"}{" "}
-                                <Link
-                                  href={`/hire/assessments/${assessment.id}/attempts/${a.id}`}
-                                  className="hire-assess-linkbtn"
-                                >
-                                  View
-                                </Link>
-                              </>
+                              activityCounts[a.id]
+                                ? `${activityCounts[a.id]} events`
+                                : "None recorded"
                             )}
                           </td>
                         ) : null}
+                        <td>
+                          {a.status === "ASSIGNED" ? (
+                            "—"
+                          ) : (
+                            <Link
+                              href={`/hire/assessments/${assessment.id}/attempts/${a.id}`}
+                              className="hire-assess-linkbtn"
+                              aria-label={`View ${a.label}'s answers`}
+                            >
+                              View
+                            </Link>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}

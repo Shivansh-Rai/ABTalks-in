@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createAndSendFromPresetsAction } from "@/app/actions/recruiter-assessment-actions";
@@ -22,9 +22,12 @@ export function AssessmentPresetPicker({
   presets,
   candidates,
   projectId = null,
+  headActions = null,
 }: {
   presets: PresetSummary[];
   candidates: SendableCandidate[];
+  /** Plan 185: rendered beside "Start from blank" (the JSON import controls). */
+  headActions?: ReactNode;
   /**
    * Which project `candidates` came from. Carried into Customize and sent with
    * Publish, so the builder and the server see the same Shortlist this picker
@@ -76,14 +79,14 @@ export function AssessmentPresetPicker({
   const picked = candidates.filter((c) => pickedRefs.has(c.candidateRef));
   const pickedCount = picked.length;
   const allPicked = candidates.length > 0 && pickedCount === candidates.length;
+  // Plan 184: nobody ticked is not a block — publishing never needs a
+  // candidate. The button says which of the two it will do.
+  const sendsNow = pickedCount > 0;
+  const publishLabel = sendsNow ? "Publish and send" : "Publish";
   const createBlockedReason =
-    candidates.length === 0
-      ? "Your Shortlist is empty — shortlist candidates on Hire to send this. You can still customize."
-      : pickedCount === 0
-        ? "Select at least one shortlisted candidate to send this to."
-        : pickedCount > MAX_ASSIGN_PER_CALL
-          ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
-          : null;
+    pickedCount > MAX_ASSIGN_PER_CALL
+      ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
+      : null;
 
   function customize() {
     if (selectedIds.length === 0) return;
@@ -127,6 +130,8 @@ export function AssessmentPresetPicker({
         toast.warning(
           `Published, but not sent yet: ${assignError} Assign candidates from this page.`,
         );
+      } else if (candidateRefs.length === 0) {
+        toast.success("Published. Pick candidates on this page to send it.");
       } else {
         const sent = assigned + alreadyAssigned;
         toast.success(
@@ -138,7 +143,13 @@ export function AssessmentPresetPicker({
           );
         }
       }
-      router.push(`/hire/assessments/${id}`);
+      // The project rides along so the assign panel there offers the same
+      // Shortlist this picker did — a new assessment is filed under no project.
+      router.push(
+        projectId
+          ? `/hire/assessments/${id}?projectId=${encodeURIComponent(projectId)}`
+          : `/hire/assessments/${id}`,
+      );
     });
   }
 
@@ -149,12 +160,16 @@ export function AssessmentPresetPicker({
           <h2>Start from a template</h2>
           <p>
             Select one or more templates to combine into a single assessment,
-            then publish to shortlisted candidates or customize before sending.
+            then publish it — sending to shortlisted candidates is optional —
+            or customize it first.
           </p>
         </div>
-        <a href="#blank-assessment" className="hire-assess-linkbtn">
-          Start from blank ↓
-        </a>
+        <div className="hire-assess-presets__head-actions">
+          {headActions}
+          <a href="#blank-assessment" className="hire-assess-linkbtn">
+            Start from blank ↓
+          </a>
+        </div>
       </div>
 
       <div className="hire-assess-presets__grid">
@@ -225,8 +240,9 @@ export function AssessmentPresetPicker({
             </div>
             {candidates.length === 0 ? (
               <p className="hire-assess__send-empty">
-                Your Shortlist is empty. Shortlist candidates on Hire first —
-                you can still customize this template.
+                Your Shortlist is empty. You can still publish this now, then
+                shortlist candidates on Hire and assign them from the
+                assessment&apos;s page.
               </p>
             ) : (
               <fieldset
@@ -234,6 +250,10 @@ export function AssessmentPresetPicker({
                 aria-busy={pending}
               >
                 <legend className="sr-only">Shortlisted candidates</legend>
+                <p className="hire-assess-hint">
+                  Optional — tick who gets it now, or publish first and assign
+                  candidates later from the assessment&apos;s page.
+                </p>
                 <ul className="hire-assess-assign__list">
                   {candidates.map((c) => (
                     <li key={c.candidateRef}>
@@ -264,11 +284,19 @@ export function AssessmentPresetPicker({
               role="group"
               aria-label="Confirm publish"
             >
-              <p>
-                Publish and send to {pickedCount} candidate
-                {pickedCount === 1 ? "" : "s"}? Publishing locks the questions
-                and the pass mark, and each candidate is notified.
-              </p>
+              {sendsNow ? (
+                <p>
+                  Publish and send to {pickedCount} candidate
+                  {pickedCount === 1 ? "" : "s"}? Publishing locks the questions
+                  and the pass mark, and each candidate is notified.
+                </p>
+              ) : (
+                <p>
+                  Publish without sending it to anyone yet? Publishing locks the
+                  questions and the pass mark. You pick the candidates next, on
+                  the assessment&apos;s page.
+                </p>
+              )}
               <div className="hire-assess-assign__confirm-actions">
                 <button
                   type="button"
@@ -284,7 +312,7 @@ export function AssessmentPresetPicker({
                   disabled={pending}
                   onClick={publish}
                 >
-                  {pending ? "Sending…" : "Publish and send"}
+                  {pending ? "Publishing…" : publishLabel}
                 </button>
               </div>
             </div>
@@ -305,14 +333,16 @@ export function AssessmentPresetPicker({
                 disabled={pending || Boolean(createBlockedReason)}
                 aria-describedby="preset-create-hint"
               >
-                Publish and send
+                {publishLabel}
               </button>
               <p
                 id="preset-create-hint"
                 className="hire-assess-hint hire-assess__save-hint"
               >
                 {createBlockedReason ??
-                  `Sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`}
+                  (sendsNow
+                    ? `Publishes and sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`
+                    : "Publishes without sending. You pick the candidates next, on the assessment's page.")}
               </p>
             </div>
           )}

@@ -1,10 +1,13 @@
 Hi {{recipientName}},
 
-{{title}}
+A recruiter on ABTalks looked at your profile today.
 
-{{body}}
+Recruiters see your projects, skills and recent work first, so keeping them current makes it easier to get shortlisted. You can review what they see here:
 
-Open your profile: {{baseUrl}}{{href}}
+{{baseUrl}}{{href}}
 
----
-Change or turn off profile-view emails: {{baseUrl}}/settings/notifications
+Thanks,
+Team ABTalks
+
+--
+You get this email because profile-view emails are on in your account settings. To turn them off, go to {{baseUrl}}/settings/notifications.

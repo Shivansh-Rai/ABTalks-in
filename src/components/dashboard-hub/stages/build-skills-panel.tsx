@@ -92,7 +92,8 @@ function cohortItems(p: BuildSkillsPanelProps): LibraryItem[] {
   });
   if (p.showSnowflake) list.push(cohort({ key: "snowflake", title: "Snowflake Data & AI", blurb: "Build a governed Data + AI lakehouse on Snowflake in 15 days.", href: "/program/snowflake", art: "snowflake", days: 15, modules: 6 }));
   // One Databricks tile; when the 31-day Lakehouse program is also open it
-  // carries a "2 options available" badge instead of a second tile.
+  // carries a "2 options available" badge and clicking it lets the learner
+  // pick between the two instead of going straight to the 15-day one.
   if (p.showDatabricksAi) {
     list.push(cohort({
       key: "databricks-ai",
@@ -103,6 +104,12 @@ function cohortItems(p: BuildSkillsPanelProps): LibraryItem[] {
       days: 15,
       modules: 9,
       badge: p.showDatabricks ? "2 options available" : undefined,
+      options: p.showDatabricks
+        ? [
+            { label: "15 Days Databricks", href: "/program/databricks-ai" },
+            { label: "31 Days Databricks", href: "/program/databricks" },
+          ]
+        : undefined,
     }));
   }
   if (isProgramEnabled()) {

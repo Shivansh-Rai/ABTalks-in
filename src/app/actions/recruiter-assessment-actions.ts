@@ -268,6 +268,7 @@ export async function assignRecruiterAssessmentAction(
 /**
  * Plan 131 — the builder's Create: save, publish and send to the picked
  * Shortlisted candidates in one step, through the same notifier as assign.
+ * Plan 184 — nobody picked is fine: it publishes and sends to no one.
  * A failure before publishing returns the saved draft's id (when there is one)
  * so the builder's next click updates it rather than creating a duplicate.
  */
@@ -325,8 +326,8 @@ export async function createAndSendRecruiterAssessmentAction(
 }
 
 /**
- * Template landing's Publish and send: preset ids + Shortlist refs only.
- * Question bodies are resolved on the server. Same notifier and envelope as
+ * Template landing's Publish / Publish and send: preset ids + Shortlist refs
+ * only (none is fine). Question bodies are resolved on the server. Same notifier and envelope as
  * the builder's Create.
  */
 export async function createAndSendFromPresetsAction(

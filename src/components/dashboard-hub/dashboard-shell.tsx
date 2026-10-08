@@ -117,10 +117,17 @@ export function DashboardShell({
             viewport-height and the footer sits below the fold forever — which
             is why it read as pinned in place. `min-h-full` keeps it at the
             bottom when a page is short, and lets it scroll into view when the
-            page is long. */}
+            page is long.
+
+            `relative`: the scroller must contain its own absolutely positioned
+            descendants. Without it every `sr-only` node on a long page (the
+            mock-interview cards' hidden labels, for one) anchored to the
+            document instead, was neither scrolled nor clipped here, and
+            stretched the page: a second, outer scrollbar that ran on past the
+            footer into blank space. */}
         <div
           className={cn(
-            "abt-content-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
+            "abt-content-scroll relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth",
             contentClassName,
           )}
         >

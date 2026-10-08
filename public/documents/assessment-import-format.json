@@ -1,0 +1,100 @@
+// ABTalks assessment import format (formatVersion 1)
+//
+// How to use this file:
+//   1. Edit the values below and save the file.
+//   2. In the assessment builder, choose "Import from JSON" and pick the file.
+//   3. Review what was filled in, then save a draft or publish.
+//
+// Importing only fills the builder. Nothing is saved or sent until you do it.
+//
+// Lines that start with // are comments and are ignored. Optional fields are
+// shown commented out with an example value. Remove the // to use one.
+// A field name that is not in this file is rejected, so a typo is caught
+// instead of being silently dropped.
+//
+// Limits: file up to 1 MB, between 1 and 100 questions.
+// To publish, at least one multiple-choice question must be worth points,
+// because the pass mark is measured on those.
+{
+  "formatVersion": 1,
+
+  // Required. Up to 200 characters.
+  "title": "Backend fundamentals screen",
+
+  // Optional one-liner shown under the title. Up to 300 characters.
+  // "subheading": "A short screen for backend roles",
+
+  // Optional. What the candidate should know before starting. Up to 5000 characters.
+  // "instructions": "Answer every question. You cannot pause once you start.",
+
+  // Optional. Whole minutes from 1 to 480. Leave it out, or use null, for an untimed assessment.
+  // "durationMinutes": 30,
+
+  // Optional. From 0 to 100. Default 60.
+  // "passMarkPercent": 60,
+
+  // Optional. true means the candidate must keep their camera on. Default false.
+  // "cameraRequired": false,
+
+  "questions": [
+    {
+      // Multiple choice with one correct answer.
+      // The type must be MULTIPLE_CHOICE, PARAGRAPH or FILE_UPLOAD.
+      "type": "MULTIPLE_CHOICE",
+
+      // Required. The question the candidate reads. Up to 2000 characters.
+      "title": "Which HTTP method is idempotent?",
+
+      // Optional. A hint shown under the question. Up to 1000 characters.
+      // "helpText": "Pick one.",
+
+      // Optional. false lets the candidate skip the question. Default true.
+      // "isRequired": true,
+
+      // Optional. Whole number from 0 to 100. Default 1.
+      // "points": 1,
+
+      // Optional. true allows more than one correct option. Default false.
+      // "allowMultipleCorrect": false,
+
+      // Between 2 and 12 options. Add isCorrect true to the correct one.
+      "options": [
+        { "body": "POST" },
+        { "body": "PUT", "isCorrect": true },
+        { "body": "PATCH" }
+      ]
+    },
+    {
+      // Multiple choice with several correct answers.
+      "type": "MULTIPLE_CHOICE",
+      "title": "Which of these are relational databases?",
+      "points": 2,
+      "allowMultipleCorrect": true,
+      "options": [
+        { "body": "PostgreSQL", "isCorrect": true },
+        { "body": "MySQL", "isCorrect": true },
+        { "body": "Redis" }
+      ]
+    },
+    {
+      // A written answer. It is not auto-graded.
+      "type": "PARAGRAPH",
+      "title": "Describe how you would design a rate limiter.",
+
+      // Optional. Word limit from 10 to 1000. Default 250.
+      // "maxWords": 250,
+
+      "points": 5
+    },
+    {
+      // A file answer. The candidate uploads to your link and pastes their own link back.
+      "type": "FILE_UPLOAD",
+      "title": "Upload your solution to the take-home task.",
+
+      // Required for this type. The full link where the file should be uploaded.
+      "uploadDestinationUrl": "https://drive.google.com/drive/folders/your-folder-id",
+
+      "points": 0
+    }
+  ]
+}

@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import {
+  useImperativeHandle,
+  useMemo,
+  useState,
+  useTransition,
+  type Ref,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +14,10 @@ import {
   createAndSendRecruiterAssessmentAction,
   saveRecruiterAssessmentAction,
 } from "@/app/actions/recruiter-assessment-actions";
+import {
+  createRecruiterAssessmentTemplateAction,
+  updateRecruiterAssessmentTemplateAction,
+} from "@/app/actions/recruiter-assessment-template-actions";
 import {
   createAndSendPlatformAssessmentAction,
   editSentPlatformAssessmentAction,
@@ -28,15 +38,22 @@ import {
 import {
   MAX_ASSIGN_PER_CALL,
   assessmentDraftSchema,
+  type AssessmentContent,
   type AssessmentDraftInput,
 } from "@/lib/validations/assessment";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AssessmentJsonImport } from "./assessment-json-import";
 import { CandidateAssessmentScreen } from "./candidate-assessment-screen";
 import { FormattedText } from "@/components/assessments/formatted-text";
 import { QuestionEditor } from "./question-editor";
@@ -113,7 +130,38 @@ type Props = {
       startedCount: number;
     };
   };
+  /**
+   * Plan 185: recruiter pages only. Offers "Save as template". Admin pages
+   * never pass it, and the template actions refuse a non-recruiter regardless.
+   */
+  canSaveTemplate?: boolean;
+  /**
+   * Plan 185: the recruiter's own template this builder was opened from
+   * (Customize). Adds "Update template", which saves back to that template.
+   */
+  template?: { id: string; name: string } | null;
+  /** Plan 185: lets the template landing hand an imported file to this builder. */
+  ref?: Ref<AssessmentBuilderHandle>;
 };
+
+/** What the builder lets its parent do to it. */
+export type AssessmentBuilderHandle = {
+  /** Fill the builder from imported content, asking first if it has content. */
+  importContent: (content: AssessmentContent) => void;
+};
+
+/** The reusable part of a validated draft: what a template stores. */
+function toContent(draft: AssessmentDraftInput): AssessmentContent {
+  return {
+    title: draft.title,
+    subheading: draft.subheading ?? null,
+    instructions: draft.instructions ?? null,
+    durationMinutes: draft.durationMinutes,
+    passMarkPercent: draft.passMarkPercent,
+    cameraRequired: draft.cameraRequired,
+    questions: draft.questions,
+  };
+}
 
 /** Plan 166 — the formatting authors can use, shown in the callout. */
 function FormattingHelp() {
@@ -144,6 +192,9 @@ function FormattingHelp() {
   );
 }
 
+/** Mirrors `durationMinutes` max in assessmentDraftSchema. */
+const MAX_DURATION_MINUTES = 480;
+
 const EMPTY_AUDIENCE: PlatformAudienceValue = { all: false, domains: [], workshopEventIds: [] };
 
 export function AssessmentBuilder({
@@ -153,10 +204,20 @@ export function AssessmentBuilder({
   projectId = null,
   embedded = false,
   platform,
+  canSaveTemplate = false,
+  template = null,
+  ref,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [pendingAction, setPendingAction] = useState<"save" | "create" | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    "save" | "create" | "template" | null
+  >(null);
+  // Plan 185: an imported file waiting for "Replace what's here?".
+  const [pendingImport, setPendingImport] = useState<AssessmentContent | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [assessmentId, setAssessmentId] = useState(
@@ -257,6 +318,11 @@ export function AssessmentBuilder({
   const picked = candidates.filter((c) => selected.has(c.candidateRef));
   const pickedCount = picked.length;
   const allPicked = candidates.length > 0 && pickedCount === candidates.length;
+  // Plan 184: for a recruiter, nobody ticked is not a block — publishing never
+  // needs a candidate. The primary button says which of the two it will do.
+  const sendsNow = pickedCount > 0;
+  const createLabel = platform ? "Create" : sendsNow ? "Publish and send" : "Publish";
+  const creatingLabel = platform ? "Creating…" : "Publishing…";
   const createBlockedReason = sent
     ? deadlineMissing
       ? "Set a deadline, or tick No deadline."
@@ -269,13 +335,9 @@ export function AssessmentBuilder({
         : deadlineMissing
           ? "Set a deadline, or tick No deadline."
           : null
-    : candidates.length === 0
-      ? "Your Shortlist is empty — shortlist candidates on Hire to send this. You can still save a draft."
-      : pickedCount === 0
-        ? "Select at least one shortlisted candidate to send this to."
-        : pickedCount > MAX_ASSIGN_PER_CALL
-          ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
-          : null;
+    : pickedCount > MAX_ASSIGN_PER_CALL
+      ? `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time.`
+      : null;
 
   function move(from: number, to: number) {
     setQuestions((q) => {
@@ -355,6 +417,125 @@ export function AssessmentBuilder({
     });
   }
 
+  // ---- Plan 185: import from JSON ------------------------------------------
+  // Never on a locked ABTalks preset (it would swap out the locked questions)
+  // or on a sent platform assessment (its questions may already be answered).
+  const canImport = !presetLocked && !sent;
+  // Embedded, the landing shows the control beside "Start from blank" instead
+  // and reaches this builder through its ref.
+  const showImport = canImport && !embedded;
+
+  /** Nothing typed or set yet: an import can fill the builder without asking. */
+  function isUntouched(): boolean {
+    return (
+      title.trim() === "" &&
+      subheading.trim() === "" &&
+      instructions.trim() === "" &&
+      untimed &&
+      passMarkPercent === 60 &&
+      !cameraRequired &&
+      questions.every(
+        (q) =>
+          q.title.trim() === "" &&
+          (q.type !== "MULTIPLE_CHOICE" ||
+            q.options.every((o) => o.body.trim() === "")),
+      )
+    );
+  }
+
+  /** Replace the builder's content. State only: nothing is saved here. */
+  function applyImport(content: AssessmentContent) {
+    setTitle(content.title);
+    setSubheading(content.subheading ?? "");
+    setInstructions(content.instructions ?? "");
+    setDurationMinutes(content.durationMinutes);
+    setUntimed(content.durationMinutes == null);
+    setPassMarkPercent(content.passMarkPercent);
+    setCameraRequired(content.cameraRequired);
+    // Imported questions are the author's own: editable, never locked.
+    setQuestions(
+      content.questions.map((q) => ({ ...q, key: crypto.randomUUID() })),
+    );
+    setFieldErrors({});
+    setConfirming(false);
+    setPendingImport(null);
+    const n = content.questions.length;
+    toast.success(
+      `Imported ${n} question${n === 1 ? "" : "s"}. Review them, then save.`,
+    );
+  }
+
+  function importContent(content: AssessmentContent) {
+    if (!canImport) return;
+    if (isUntouched()) applyImport(content);
+    else setPendingImport(content);
+  }
+
+  useImperativeHandle(ref, () => ({ importContent }));
+
+  // ---- Plan 185: the recruiter's own templates ------------------------------
+  // Not while customizing an ABTalks preset: a template's questions are
+  // editable, so saving one there would unlock the locked questions.
+  const showTemplateActions = canSaveTemplate && !platform && !presetLocked;
+
+  /** Opens the name dialog once the content is valid: a template always works. */
+  function askSaveTemplate() {
+    if (!validDraft()) return;
+    setTemplateName(title.trim().slice(0, 120));
+    setTemplateDescription("");
+    setTemplateDialogOpen(true);
+  }
+
+  function saveTemplate() {
+    const draft = validDraft();
+    if (!draft) {
+      setTemplateDialogOpen(false);
+      return;
+    }
+    const name = templateName.trim();
+    if (!name) {
+      toast.error("Give the template a name");
+      return;
+    }
+    setPendingAction("template");
+    startTransition(async () => {
+      const res = await createRecruiterAssessmentTemplateAction({
+        name,
+        description: templateDescription.trim() || null,
+        content: toContent(draft),
+      });
+      setPendingAction(null);
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      setTemplateDialogOpen(false);
+      toast.success("Template saved. Find it under My templates.");
+      // The landing lists templates above this builder; the builder keeps its state.
+      router.refresh();
+    });
+  }
+
+  /** Save the builder's content back to the template it was opened from. */
+  function updateTemplate() {
+    if (!template) return;
+    const draft = validDraft();
+    if (!draft) return;
+    setPendingAction("template");
+    startTransition(async () => {
+      const res = await updateRecruiterAssessmentTemplateAction({
+        templateId: template.id,
+        content: toContent(draft),
+      });
+      setPendingAction(null);
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      toast.success("Template updated.");
+    });
+  }
+
   /** First click: check everything, then ask — Create notifies people. */
   function askCreate() {
     if (createBlockedReason) {
@@ -399,6 +580,8 @@ export function AssessmentBuilder({
         toast.warning(
           `Published, but not sent yet: ${assignError} Assign candidates from this page.`,
         );
+      } else if (candidateRefs.length === 0) {
+        toast.success("Published. Pick candidates on this page to send it.");
       } else {
         const sent = assigned + alreadyAssigned;
         toast.success(
@@ -410,7 +593,13 @@ export function AssessmentBuilder({
           );
         }
       }
-      router.push(`/hire/assessments/${id}`);
+      // The project rides along so the assign panel there offers the same
+      // Shortlist this builder did — a new assessment is filed under no project.
+      router.push(
+        projectId
+          ? `/hire/assessments/${id}?projectId=${encodeURIComponent(projectId)}`
+          : `/hire/assessments/${id}`,
+      );
     });
   }
 
@@ -489,9 +678,11 @@ export function AssessmentBuilder({
     ? "Edit sent assessment"
     : presetLocked
     ? "Customize a template"
-    : assessmentId
-      ? "Edit assessment"
-      : "Create an assessment";
+    : template
+      ? "Customize your template"
+      : assessmentId
+        ? "Edit assessment"
+        : "Create an assessment";
 
   return (
     <div
@@ -525,6 +716,9 @@ export function AssessmentBuilder({
           )}
         </div>
         <div className="hire-assess__top-actions">
+          {showImport ? (
+            <AssessmentJsonImport onImport={importContent} disabled={pending} />
+          ) : null}
           {/* Desktop: the preview opens in a modal, never beside the form. */}
           <button
             type="button"
@@ -563,6 +757,13 @@ export function AssessmentBuilder({
           <p>
             Template questions can’t be edited, but you can remove them or add
             your own.
+          </p>
+        ) : null}
+        {template ? (
+          <p>
+            You are working from your template “{template.name}”. Saving a draft
+            or publishing creates a new assessment and leaves the template as it
+            is. Update template saves these changes back to it.
           </p>
         ) : null}
         {sent ? (
@@ -659,16 +860,28 @@ export function AssessmentBuilder({
                   <input
                     id="assess-duration"
                     type="number"
+                    inputMode="numeric"
                     min={1}
-                    max={480}
+                    max={180}
+                    step={1}
                     disabled={untimed || wordingOnly}
                     value={durationMinutes ?? ""}
                     placeholder={untimed ? "Untimed" : undefined}
-                    onChange={(e) =>
+                    onKeyDown={(e) => {
+                      // Whole positive minutes only: no sign, decimal or exponent.
+                      if (["-", "+", ".", ",", "e", "E"].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      // Also covers paste and spinner/wheel input: strip
+                      // anything but digits, reject 0, cap at the schema max.
+                      const digits = e.target.value.replace(/\D/g, "");
+                      const minutes = digits === "" ? 0 : parseInt(digits, 10);
                       setDurationMinutes(
-                        e.target.value === "" ? null : Number(e.target.value),
-                      )
-                    }
+                        minutes < 1 ? null : Math.min(minutes, MAX_DURATION_MINUTES),
+                      );
+                    }}
                   />
                 </div>
               </div>
@@ -812,15 +1025,20 @@ export function AssessmentBuilder({
                   </button>
                 )}
               </div>
-              
+
               {candidates.length === 0 ? (
                 <p className="hire-assess__send-empty">
-                  Your Shortlist is empty. Shortlist candidates on Hire first — you
-                  can still save this as a draft.
+                  Your Shortlist is empty. You can still publish this now, then
+                  shortlist candidates on Hire and assign them from the
+                  assessment&apos;s page.
                 </p>
               ) : (
                 <fieldset className="hire-assess-assign__fieldset" aria-busy={pending}>
                   <legend className="sr-only">Shortlisted candidates</legend>
+                  <p className="hire-assess-hint">
+                    Optional — tick who gets it now, or publish first and assign
+                    candidates later from the assessment&apos;s page.
+                  </p>
                   <ul className="hire-assess-assign__list">
                     {candidates.map((c) => (
                       <li key={c.candidateRef}>
@@ -864,11 +1082,17 @@ export function AssessmentBuilder({
                     can edit anything until someone starts, then only wording, the
                     deadline and groups.
                   </p>
-                ) : (
+                ) : sendsNow ? (
                   <p>
                     Publish and send to {pickedCount} candidate
                     {pickedCount === 1 ? "" : "s"}? Publishing locks the questions
                     and the pass mark, and each candidate is notified.
+                  </p>
+                ) : (
+                  <p>
+                    Publish without sending it to anyone yet? Publishing locks the
+                    questions and the pass mark. You pick the candidates next, on
+                    the assessment&apos;s page.
                   </p>
                 )}
                 <div className="hire-assess-assign__confirm-actions">
@@ -891,8 +1115,8 @@ export function AssessmentBuilder({
                         ? "Saving…"
                         : "Save and send"
                       : pendingAction === "create"
-                        ? "Creating…"
-                        : "Create"}
+                        ? creatingLabel
+                        : createLabel}
                   </button>
                 </div>
               </div>
@@ -906,7 +1130,9 @@ export function AssessmentBuilder({
                         : "Candidates see your changes the next time they open it."
                       : platform
                       ? `Sends to up to ${audienceCount.toLocaleString("en-IN")} candidate${audienceCount === 1 ? "" : "s"}.`
-                      : `Sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`)}
+                      : sendsNow
+                        ? `Publishes and sends to ${pickedCount} selected candidate${pickedCount === 1 ? "" : "s"}.`
+                        : "Publishes without sending. You pick the candidates next, on the assessment's page.")}
                 </p>
                 {sent ? (
                   <div className="hire-assess__save-actions">
@@ -922,6 +1148,28 @@ export function AssessmentBuilder({
                   </div>
                 ) : (
                   <div className="hire-assess__save-actions">
+                    {showTemplateActions && template ? (
+                      <button
+                        type="button"
+                        className="hire-assess-linkbtn"
+                        disabled={pending}
+                        onClick={updateTemplate}
+                      >
+                        {pendingAction === "template" && !templateDialogOpen
+                          ? "Updating…"
+                          : "Update template"}
+                      </button>
+                    ) : null}
+                    {showTemplateActions ? (
+                      <button
+                        type="button"
+                        className="hire-assess-linkbtn"
+                        disabled={pending}
+                        onClick={askSaveTemplate}
+                      >
+                        {template ? "Save as new template" : "Save as template"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="hire-assess__savebtn hire-assess__savebtn--ghost"
@@ -937,7 +1185,7 @@ export function AssessmentBuilder({
                       aria-describedby="assess-create-hint"
                       onClick={askCreate}
                     >
-                      Create
+                      {createLabel}
                     </button>
                   </div>
                 )}
@@ -967,6 +1215,100 @@ export function AssessmentBuilder({
               <CandidateAssessmentScreen draft={previewDraft} readOnly />
             ) : null}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan 185: an import never overwrites typed content without asking. */}
+      <Dialog
+        open={pendingImport !== null}
+        onOpenChange={(open) => !open && setPendingImport(null)}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Replace what is in the builder?</DialogTitle>
+            <DialogDescription>
+              Importing replaces the title, settings and all{" "}
+              {questions.length} question{questions.length === 1 ? "" : "s"}{" "}
+              here with the {pendingImport?.questions.length ?? 0} in the file.
+              Nothing is saved until you save.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "outline" }))}
+              onClick={() => setPendingImport(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "default" }))}
+              onClick={() => pendingImport && applyImport(pendingImport)}
+            >
+              Replace
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan 185: recruiter only. `showTemplateActions` is what opens it. */}
+      <Dialog
+        open={templateDialogOpen}
+        onOpenChange={(open) => !pending && setTemplateDialogOpen(open)}
+      >
+        <DialogContent className="hire-app sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Save as template</DialogTitle>
+            <DialogDescription>
+              Saves the questions and settings in the builder to My templates.
+              Only you can see or use it. Candidates and your Shortlist are not
+              part of a template.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="assess-template-name">Template name</Label>
+              <Input
+                id="assess-template-name"
+                value={templateName}
+                maxLength={120}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g. Backend screen, round 1"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="assess-template-description">
+                Description (optional)
+              </Label>
+              <Textarea
+                id="assess-template-description"
+                rows={2}
+                value={templateDescription}
+                maxLength={300}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                placeholder="What this template is for"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "outline" }))}
+              disabled={pending}
+              onClick={() => setTemplateDialogOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "default" }))}
+              disabled={pending || templateName.trim() === ""}
+              onClick={saveTemplate}
+            >
+              {pendingAction === "template" ? "Saving…" : "Save template"}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

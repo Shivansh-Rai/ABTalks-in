@@ -1,6 +1,7 @@
 /**
  * Plan 121 recruiter assessment builder + plan 128 (T-244) publish / assign /
- * monitor + plan 131 builder "Create" acceptance tests.
+ * monitor + plan 131 builder "Create" + plan 184 publish-without-candidates
+ * acceptance tests.
  *   npm run test:recruiter-assessments
  */
 import { readFileSync } from "node:fs";
@@ -1137,20 +1138,18 @@ async function run() {
     assert(store.assignments.size === 0 && notifier.calls.length === 0, "nothing sent");
   });
 
-  await suite("C6. zero or 26 candidates → INVALID, nothing saved", async () => {
+  // Zero candidates used to be refused here too. Plan 184 made it a publish
+  // with nobody on it — see the P184 suites at the end of this file.
+  await suite("C6. 26 candidates → INVALID, nothing saved", async () => {
     const store = storeWithPool();
     const notifier = fakeNotifier();
-    const none = await createPublishAndAssign(store, notifier, SCOPE_A, {
-      draft: validMcqDraft(),
-      candidateRefs: [],
-    });
     const many = await createPublishAndAssign(store, notifier, SCOPE_A, {
       draft: validMcqDraft(),
       candidateRefs: Array.from({ length: 26 }, (_, i) => `PROGRAM:bulk${i}`),
     });
-    assert(!none.ok && none.code === "INVALID", "zero refused");
     assert(!many.ok && many.code === "INVALID", "26 refused");
     assert(store.rows.size === 0, "no draft saved");
+    assert(notifier.calls.length === 0, "nobody notified");
   });
 
   await suite("C7. a candidate no longer on the Shortlist → INVALID, nothing saved", async () => {
@@ -1236,13 +1235,9 @@ async function run() {
     assert(notifier.calls.length === 0, "nobody notified");
   });
 
-  await suite("T3. zero, 26, or off-Shortlist refs write nothing", async () => {
+  await suite("T3. 26 or off-Shortlist refs write nothing", async () => {
     const store = storeWithPool();
     const notifier = fakeNotifier();
-    const none = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
-      presetIds: ["frontend-fundamentals"],
-      candidateRefs: [],
-    });
     const many = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
       presetIds: ["frontend-fundamentals"],
       candidateRefs: Array.from({ length: 26 }, (_, i) => `PROGRAM:bulk${i}`),
@@ -1251,7 +1246,6 @@ async function run() {
       presetIds: ["frontend-fundamentals"],
       candidateRefs: ["PROGRAM:m1", "PROGRAM:ghost"],
     });
-    assert(!none.ok && none.code === "INVALID", "zero refused");
     assert(!many.ok && many.code === "INVALID", "26 refused");
     assert(!ghost.ok && ghost.code === "INVALID", "off-Shortlist refused");
     assert(store.rows.size === 0, "no draft saved");
@@ -1263,7 +1257,11 @@ async function run() {
     assert(!list.includes("AssessmentPresetPicker"), "list page has no picker");
     assert(!list.includes("listAssessmentPresets"), "list page does not load presets");
     const page = readSource("src/app/hire/create-test/page.tsx");
-    assert(page.includes("AssessmentPresetPicker"), "create-test landing has the picker");
+    // Plan 185 moved the picker one level down: the landing renders it inside
+    // CreateTestLanding, beside the blank builder its import control fills.
+    const landing = readSource("src/components/hire/assessment/create-test-landing.tsx");
+    assert(page.includes("<CreateTestLanding"), "create-test renders the landing");
+    assert(landing.includes("<AssessmentPresetPicker"), "create-test landing has the picker");
     assert(page.includes("from=scratch") || page.includes('from === "scratch"'), "scratch mode");
     const actions = readSource("src/app/actions/recruiter-assessment-actions.ts");
     assert(!actions.includes("createAssessmentFromPresetsAction"), "draft-only preset action is gone");
@@ -1562,6 +1560,128 @@ async function run() {
     assert(/assignRecruiterAssessmentAction\(\{[\s\S]{0,120}projectId/.test(panel), "assign sends it back");
     const picker = readSource("src/components/hire/assessment/preset-picker.tsx");
     assert(picker.includes('params.set("projectId"'), "Customize forwards the project");
+  });
+
+  console.log("\nPlan 184 — publishing never needs a candidate\n");
+
+  await suite("P184-1. Create with nobody picked publishes and sends to no one", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: [],
+    });
+    assert(res.ok, `must succeed${res.ok ? "" : `: ${res.message}`}`);
+    if (!res.ok) return;
+    assert(store.rows.size === 1, "one assessment");
+    assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+    assert(res.data.assigned === 0 && res.data.alreadyAssigned === 0, "nobody assigned");
+    assert(res.data.assignError === null, "not reported as an assign failure");
+    assert(store.assignments.size === 0, "no assignment rows");
+    assert(notifier.calls.length === 0, "nobody notified");
+    assert(store.poolCalls.length === 0, "the Shortlist is not read when nothing is sent");
+  });
+
+  await suite("P184-2. an empty Shortlist does not block publishing", async () => {
+    const store = inMemoryStore();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: [],
+    });
+    assert(res.ok, "published with nobody shortlisted");
+    if (!res.ok) return;
+    assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+    const monitor = await getAssessmentMonitor(store, SCOPE_A, res.data.id);
+    assert(monitor.ok && monitor.data.summary.assigned === 0, "monitor shows it unsent");
+  });
+
+  await suite("P184-3. a template with nobody picked publishes and sends to no one", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssignFromPresets(store, notifier, SCOPE_A, {
+      presetIds: ["frontend-fundamentals"],
+      candidateRefs: [],
+    });
+    assert(res.ok, `must succeed${res.ok ? "" : `: ${res.message}`}`);
+    if (!res.ok) return;
+    assert(store.rows.get(res.data.id)?.status === "PUBLISHED", "published");
+    assert(store.assignments.size === 0 && notifier.calls.length === 0, "nothing sent");
+  });
+
+  await suite("P184-4. published with nobody, then assigned later from its page", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: validMcqDraft(),
+      candidateRefs: [],
+    });
+    assert(res.ok, "published");
+    if (!res.ok) return;
+    const before = await getAssessmentMonitor(store, SCOPE_A, res.data.id);
+    assert(
+      before.ok && before.data.candidates.length === POOL.length,
+      "the whole Shortlist is offered",
+    );
+    assert(
+      before.ok && before.data.candidates.every((c) => !c.alreadyAssigned),
+      "and nobody is flagged as assigned",
+    );
+    const later = await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: res.data.id,
+      candidateRefs: FIRST_THREE,
+    });
+    assert(later.ok && later.data.assigned === 3, "three assigned afterwards");
+    assert(notifier.delivered.size === 3, "each notified once");
+  });
+
+  await suite("P184-5. a publish that fails with nobody picked still returns the draft id", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const res = await createPublishAndAssign(store, notifier, SCOPE_A, {
+      draft: paragraphOnlyDraft(),
+      candidateRefs: [],
+    });
+    assert(!res.ok && res.code === "INVALID", "publish refused");
+    if (res.ok) return;
+    assert(res.assessmentId !== null, "the saved draft's id comes back");
+    assert(store.rows.get(res.assessmentId!)?.status === "DRAFT", "still a draft");
+  });
+
+  await suite("P184-6. an assign call on its own still needs a candidate", async () => {
+    const store = storeWithPool();
+    const notifier = fakeNotifier();
+    const id = await publishedAssessment(store);
+    const res = await assignAssessment(store, notifier, SCOPE_A, {
+      assessmentId: id,
+      candidateRefs: [],
+    });
+    assert(!res.ok && res.code === "INVALID", "empty assign refused");
+  });
+
+  await suite("P184-7. no publish surface blocks on an empty pick, and unsent is surfaced", () => {
+    const builder = readSource("src/components/hire/assessment/assessment-builder.tsx");
+    const picker = readSource("src/components/hire/assessment/preset-picker.tsx");
+    for (const [name, src] of [
+      ["builder", builder],
+      ["picker", picker],
+    ] as const) {
+      assert(
+        !src.includes("Select at least one shortlisted candidate"),
+        `${name} does not require a pick`,
+      );
+      assert(
+        !src.includes("shortlist candidates on Hire to send this"),
+        `${name} does not block on an empty Shortlist`,
+      );
+    }
+    const panel = readSource("src/components/hire/assessment/assessment-assign-panel.tsx");
+    assert(panel.includes('id="assign"'), "the assign block is an anchor");
+    assert(panel.includes("assignedCount === 0"), "the panel says when it is unsent");
+    const list = readSource("src/app/hire/assessments/page.tsx");
+    assert(list.includes("#assign"), "the list links an unsent assessment to assigning");
+    const detail = readSource("src/app/hire/assessments/[assessmentId]/page.tsx");
+    assert(detail.includes("assignedCount={summary.assigned}"), "the detail page passes the count");
   });
 
   console.log(`\n${passed} passed, ${failed} failed\n`);

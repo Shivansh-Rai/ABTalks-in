@@ -124,6 +124,10 @@ export type PreferenceView = {
   noticePeriodDays: number | null;
   availableFromMonth: number | null;
   availableFromYear: number | null;
+  currentCtc: number | null;
+  currentCtcCurrency: string | null;
+  expectedCtc: number | null;
+  expectedCtcCurrency: string | null;
 };
 
 export type CandidateDetail = {
@@ -282,6 +286,10 @@ export async function getCandidateDetail(
           willingToRelocate: true,
           noticePeriodDays: true,
           availableFrom: true,
+          currentCtc: true,
+          currentCtcCurrency: true,
+          expectedCtc: true,
+          expectedCtcCurrency: true,
         },
       },
     },
@@ -369,6 +377,10 @@ export async function getCandidateDetail(
           noticePeriodDays: row.preference.noticePeriodDays,
           availableFromMonth: available.month,
           availableFromYear: available.year,
+          currentCtc: row.preference.currentCtc,
+          currentCtcCurrency: row.preference.currentCtcCurrency,
+          expectedCtc: row.preference.expectedCtc,
+          expectedCtcCurrency: row.preference.expectedCtcCurrency,
         }
       : null,
   };
@@ -854,6 +866,11 @@ export type PreferencesWrite = {
   noticePeriodDays: number | null;
   availableFromMonth: number | null;
   availableFromYear: number | null;
+  /** Professionals only. `undefined` leaves the stored value as it is. */
+  currentCtc?: number | null;
+  currentCtcCurrency?: string;
+  expectedCtc?: number | null;
+  expectedCtcCurrency?: string;
 };
 
 /**
@@ -881,6 +898,11 @@ export async function savePreferences(
     willingToRelocate: input.willingToRelocate,
     noticePeriodDays: input.noticePeriodDays,
     availableFrom,
+    // Prisma skips `undefined`, so a student's save never clears these.
+    currentCtc: input.currentCtc,
+    currentCtcCurrency: input.currentCtcCurrency,
+    expectedCtc: input.expectedCtc,
+    expectedCtcCurrency: input.expectedCtcCurrency,
   };
 
   await runInTransaction(async (tx) => {

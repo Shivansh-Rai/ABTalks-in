@@ -7,6 +7,10 @@ import { CandidateGender, CandidatePersona } from "@prisma/client";
 import { saveBasicInfoAction } from "@/app/actions/candidate-profile-actions";
 import { PhoneVerifyField } from "@/components/shared/phone-verify-field";
 import { PERSONA_LABELS, GENDER_LABELS } from "@/lib/candidate-vocab";
+import {
+  PERSON_NAME_MESSAGE,
+  PERSON_NAME_PATTERN,
+} from "@/lib/validations/candidate-profile";
 import { COUNTRY_NAMES, countryCodeForName, countryNameForCode } from "@/lib/country-catalog";
 import {
   CITY_NAMES,
@@ -57,6 +61,16 @@ const lettersOnly = (label: string) => (value: string) =>
   value.trim() === "" || LETTERS_ONLY.test(value.trim())
     ? true
     : `${label} cannot contain numbers or symbols`;
+
+/**
+ * A name is stricter than a place: no "&", no hyphen, nothing but letters,
+ * spaces, a single quote and a dot. The pattern and wording are the server's
+ * own, imported rather than copied, so the two cannot drift.
+ */
+const personNameOnly = (label: string) => (value: string) =>
+  value.trim() === "" || PERSON_NAME_PATTERN.test(value.trim())
+    ? true
+    : `${label} ${PERSON_NAME_MESSAGE}`;
 
 function splitPhone(e164: string): {
   countryCode: string;
@@ -172,7 +186,7 @@ export function BasicInfoSection({
             className={errors.fullName ? "pw-invalid" : undefined}
             {...register("fullName", {
               required: "Full name is required",
-              validate: lettersOnly("Full name"),
+              validate: personNameOnly("Full name"),
             })}
           />
         </PwField>

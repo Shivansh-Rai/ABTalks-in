@@ -216,27 +216,42 @@ export function QuestionEditor({
               <span>Multiple correct</span>
             </label>
           </div>
-          <ul>
+          <p className="hire-assess-options__help" id={`opt-help-${question.key}`}>
+            {question.allowMultipleCorrect
+              ? "Tick the box next to every correct answer."
+              : "Select the circle next to the one correct answer."}
+          </p>
+          <ul aria-describedby={`opt-help-${question.key}`}>
             {question.options.map((opt, oi) => (
-              <li key={oi}>
-                {question.allowMultipleCorrect ? (
-                  <input
-                    type="checkbox"
-                    checked={opt.isCorrect}
-                    disabled={fixed}
-                    onChange={(e) => markCorrect(oi, e.target.checked)}
-                    aria-label={`Mark option ${oi + 1} correct`}
-                  />
-                ) : (
-                  <input
-                    type="radio"
-                    name={`correct-${question.key}`}
-                    checked={opt.isCorrect}
-                    disabled={fixed}
-                    onChange={() => markCorrect(oi, true)}
-                    aria-label={`Mark option ${oi + 1} correct`}
-                  />
-                )}
+              <li key={oi} className={cn(opt.isCorrect && "is-correct")}>
+                <label
+                  className="hire-assess-opt__mark"
+                  title={
+                    opt.isCorrect
+                      ? "Marked as a correct answer"
+                      : "Mark this option as a correct answer"
+                  }
+                >
+                  {question.allowMultipleCorrect ? (
+                    <input
+                      type="checkbox"
+                      checked={opt.isCorrect}
+                      disabled={fixed}
+                      onChange={(e) => markCorrect(oi, e.target.checked)}
+                      aria-label={`Mark option ${oi + 1} as a correct answer`}
+                    />
+                  ) : (
+                    <input
+                      type="radio"
+                      name={`correct-${question.key}`}
+                      checked={opt.isCorrect}
+                      disabled={fixed}
+                      onChange={() => markCorrect(oi, true)}
+                      aria-label={`Mark option ${oi + 1} as the correct answer`}
+                    />
+                  )}
+                  <span aria-hidden="true">Correct</span>
+                </label>
                 <input
                   type="text"
                   value={opt.body}

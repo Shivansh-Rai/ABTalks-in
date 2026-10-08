@@ -7,6 +7,7 @@ import {
   recordDelivery,
 } from "@/lib/observability/notification-delivery";
 import { getRequestId } from "@/lib/observability/request-id";
+import { routesViaAbtMailer, sendViaAbtMailer } from "@/lib/abt-mailer";
 
 /**
  * Transactional mail, through Brevo.
@@ -105,6 +106,13 @@ export async function sendEmail(opts: {
    * every send is filterable in Brevo's Statistics tab by message type.
    */
   tags?: string[];
+  /**
+   * Plan 185: an id that stays the same when the caller retries this mail
+   * (e.g. the NotificationDelivery id). ABT-Mailer uses it to never send the
+   * same mail twice. Ignored on the Brevo path. Defaults to this call's
+   * `deliveryId`, which only dedupes within one call.
+   */
+  idempotencyKey?: string;
 }): Promise<SendEmailResult> {
   const deliveryId = newDeliveryId();
   const kind = opts.kind ?? "generic";
@@ -130,8 +138,11 @@ export async function sendEmail(opts: {
     "notification attempt",
   );
 
+  // Plan 185: kinds listed in EMAIL_VIA_ABT_KINDS go through ABT-Mailer (SES).
+  const viaAbt = routesViaAbtMailer(kind, Boolean(opts.attachments?.length));
+
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
+  if (!apiKey && !viaAbt) {
     const { reason } = await recordDelivery(deliveryId, ctx, {
       status: "SKIPPED",
       reason: "BREVO_API_KEY missing",
@@ -147,24 +158,50 @@ export async function sendEmail(opts: {
     return { ok: false, skipped: true, deliveryId, reason };
   }
 
+  // Deliverability headers. Transactional by default: no `Precedence: bulk`
+  // and no `List-Unsubscribe` — both are what Gmail uses to file a message
+  // under Promotions, which is where OTPs were going.
+  const bulk = opts.bulk === true;
+  const unsubMailto = `mailto:${REPLY_TO}?subject=Unsubscribe`;
+  const defaultHeaders: Record<string, string> = {
+    "X-Entity-Ref-ID": deliveryId,
+    ...(bulk || opts.listUnsubscribe
+      ? {
+          "List-Unsubscribe": `<${unsubMailto}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        }
+      : {}),
+    ...(bulk ? { Precedence: "bulk" } : {}),
+  };
+  const mergedHeaders = { ...defaultHeaders, ...(opts.headers ?? {}) };
+
+  if (viaAbt) {
+    const outcome = await sendViaAbtMailer({
+      kind,
+      idempotencyKey: opts.idempotencyKey ?? deliveryId,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+      headers: mergedHeaders,
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      replyTo: opts.replyTo ?? REPLY_TO,
+      hasSecrets: (opts.redact ?? []).some((s) => s.length > 0),
+    });
+    const { reason, sentryEventId } = await recordDelivery(deliveryId, ctx, outcome);
+    if (outcome.status === "SENT") return { ok: true, deliveryId };
+    return {
+      ok: false,
+      ...(outcome.status === "SKIPPED" ? { skipped: true } : {}),
+      deliveryId,
+      reason,
+      sentryEventId,
+    };
+  }
+  if (!apiKey) return { ok: false, skipped: true, deliveryId }; // unreachable: checked above
+
   try {
     const brevo = new BrevoClient({ apiKey });
-    // Deliverability headers. Transactional by default: no `Precedence: bulk`
-    // and no `List-Unsubscribe` — both are what Gmail uses to file a message
-    // under Promotions, which is where OTPs were going.
-    const bulk = opts.bulk === true;
-    const unsubMailto = `mailto:${REPLY_TO}?subject=Unsubscribe`;
-    const defaultHeaders: Record<string, string> = {
-      "X-Entity-Ref-ID": deliveryId,
-      ...(bulk || opts.listUnsubscribe
-        ? {
-            "List-Unsubscribe": `<${unsubMailto}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          }
-        : {}),
-      ...(bulk ? { Precedence: "bulk" } : {}),
-    };
-    const mergedHeaders = { ...defaultHeaders, ...(opts.headers ?? {}) };
     const tags = opts.tags ?? [kind];
 
     await brevo.transactionalEmails.sendTransacEmail({

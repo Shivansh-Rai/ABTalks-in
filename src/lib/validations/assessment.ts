@@ -62,28 +62,110 @@ export const assessmentDraftSchema = z
       .max(100),
   })
   .superRefine((draft, ctx) => {
-    draft.questions.forEach((q, qi) => {
-      if (q.type !== "MULTIPLE_CHOICE") return;
-      const correctCount = q.options.filter((o) => o.isCorrect).length;
-      if (correctCount < 1) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Mark at least one option as correct",
-          path: ["questions", qi, "options"],
-        });
-      }
-      if (!q.allowMultipleCorrect && correctCount !== 1) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Pick exactly one correct option",
-          path: ["questions", qi, "options"],
-        });
-      }
-    });
+    for (const issue of correctOptionIssues(draft.questions)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    }
   });
 
 export type AssessmentDraftInput = z.infer<typeof assessmentDraftSchema>;
 export type AssessmentQuestionInput = z.infer<typeof assessmentQuestionSchema>;
+
+/**
+ * Every multiple-choice question needs a correct option: exactly one, unless
+ * the question allows several. One definition, shared by the draft, a saved
+ * template and an imported file (plan 185), so the three cannot disagree.
+ */
+export function correctOptionIssues(
+  questions: AssessmentQuestionInput[],
+): { message: string; path: (string | number)[] }[] {
+  const issues: { message: string; path: (string | number)[] }[] = [];
+  questions.forEach((q, qi) => {
+    if (q.type !== "MULTIPLE_CHOICE") return;
+    const correctCount = q.options.filter((o) => o.isCorrect).length;
+    if (correctCount < 1) {
+      issues.push({
+        message: "Mark at least one option as correct",
+        path: ["questions", qi, "options"],
+      });
+    }
+    if (!q.allowMultipleCorrect && correctCount !== 1) {
+      issues.push({
+        message: "Pick exactly one correct option",
+        path: ["questions", qi, "options"],
+      });
+    }
+  });
+  return issues;
+}
+
+// ---------------------------------------------------------------------------
+// Plan 185 — assessment content on its own: what a recruiter's template stores
+// and what an imported file carries.
+// ---------------------------------------------------------------------------
+
+/**
+ * The reusable part of a draft: everything but its identity (`assessmentId`)
+ * and the shortlist it was drafted for. Every field is the draft's own schema,
+ * so a limit changed there changes here too.
+ *
+ * Strict, unlike the draft: this is stored as JSON and read from files, where
+ * a misspelt key must be refused rather than silently dropped.
+ */
+export const ASSESSMENT_CONTENT_SHAPE = {
+  title: assessmentDraftSchema.shape.title,
+  subheading: assessmentDraftSchema.shape.subheading,
+  instructions: assessmentDraftSchema.shape.instructions,
+  durationMinutes: assessmentDraftSchema.shape.durationMinutes,
+  passMarkPercent: assessmentDraftSchema.shape.passMarkPercent,
+  cameraRequired: assessmentDraftSchema.shape.cameraRequired,
+  questions: assessmentDraftSchema.shape.questions,
+};
+
+export const assessmentContentSchema = z
+  .object(ASSESSMENT_CONTENT_SHAPE)
+  .strict()
+  .superRefine((content, ctx) => {
+    for (const issue of correctOptionIssues(content.questions)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    }
+  });
+
+export type AssessmentContent = z.infer<typeof assessmentContentSchema>;
+
+/** A recruiter may keep at most this many personal templates. */
+export const MAX_TEMPLATES_PER_RECRUITER = 50;
+
+const templateId = z.string().trim().min(1).max(64);
+const templateMeta = {
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give the template a name")
+    .max(120, "Keep the name to 120 characters or fewer"),
+  description: z
+    .string()
+    .trim()
+    .max(300, "Keep the description to 300 characters or fewer")
+    .nullish(),
+};
+
+/**
+ * None of these carries an owner. The recruiter is resolved on the server by
+ * requireRecruiterWorkspace(); a client cannot name whose template it means.
+ */
+export const createTemplateSchema = z.object({
+  ...templateMeta,
+  content: assessmentContentSchema,
+});
+
+export const updateTemplateContentSchema = z.object({
+  templateId,
+  content: assessmentContentSchema,
+});
+
+export const renameTemplateSchema = z.object({ templateId, ...templateMeta });
+
+export const templateIdSchema = z.object({ templateId });
 
 /** One assign call notifies at most this many people (sequential sends). */
 export const MAX_ASSIGN_PER_CALL = 25;
@@ -116,11 +198,23 @@ export const assignAssessmentSchema = z.object({
 
 export type AssignAssessmentInput = z.infer<typeof assignAssessmentSchema>;
 
+/**
+ * Plan 184 — who a one-step publish also sends to. Empty is allowed: publishing
+ * never needs a candidate, and the assessment is assigned later from its page.
+ * (An assign call on its own still needs at least one — see above.)
+ */
+const sendCandidateRefs = z
+  .array(z.string().trim().min(3).max(200))
+  .max(
+    MAX_ASSIGN_PER_CALL,
+    `Send to at most ${MAX_ASSIGN_PER_CALL} candidates at a time`,
+  );
+
 /** Plan 131 — the builder's Create: save, publish and send in one step. */
 export const createAndSendSchema = z.object({
   draft: assessmentDraftSchema,
   projectId: shortlistProjectId,
-  candidateRefs: assignAssessmentSchema.shape.candidateRefs,
+  candidateRefs: sendCandidateRefs,
 });
 
 export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
@@ -129,7 +223,7 @@ export type CreateAndSendInput = z.infer<typeof createAndSendSchema>;
 export const createAndSendFromPresetsSchema = z.object({
   presetIds: z.array(z.string().min(1)).min(1, "Select at least one template"),
   projectId: shortlistProjectId,
-  candidateRefs: assignAssessmentSchema.shape.candidateRefs,
+  candidateRefs: sendCandidateRefs,
 });
 
 export type CreateAndSendFromPresetsInput = z.infer<

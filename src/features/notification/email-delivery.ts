@@ -111,6 +111,9 @@ export async function processEmailDelivery(
     // Account and security notices cannot be turned off and must not.
     listUnsubscribe: !SERVICE_EVENT_TYPES.has(notification.eventType),
     kind: notification.eventType,
+    // Plan 185: same id on every retry of this delivery, so ABT-Mailer never
+    // sends it twice.
+    idempotencyKey: deliveryId,
     // Account service notices get the high-priority headers (only these).
     ...(notification.eventType === "account.admin_update"
       ? { headers: ACCOUNT_NOTICE_HEADERS }

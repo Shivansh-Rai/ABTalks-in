@@ -165,6 +165,8 @@ export async function purgeRecruiterAccount(
     logoUrl = org?.logoUrl ?? null;
 
     await tx.recruiterAssessment.deleteMany({ where: { organizationId } });
+    // Plan 185: their personal assessment templates, which are their own words.
+    await tx.recruiterAssessmentTemplate.deleteMany({ where: { organizationId } });
     await tx.talentList.deleteMany({ where: { organizationId } });
     await tx.candidateNote.deleteMany({ where: { organizationId } });
     await tx.outreachThread.deleteMany({ where: { organizationId } });

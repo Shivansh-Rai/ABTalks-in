@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type UseFormRegister } from "react-hook-form";
 import { OpportunityType } from "@prisma/client";
 import { savePreferencesAction } from "@/app/actions/candidate-profile-actions";
 import { OPPORTUNITY_TYPE_LABELS, WORK_MODES } from "@/lib/candidate-vocab";
 import { CITY_NAMES, canonicalCityName, searchCities } from "@/lib/city-catalog";
+import type { CtcCurrency } from "@/lib/validations/candidate-profile";
 import { useServerFieldErrors } from "./field-issues";
 import { useSectionSave } from "./use-section-save";
 import { useProfileWizard } from "./wizard-context";
@@ -31,6 +32,10 @@ export type PreferencesFormValues = {
   noticePeriodDays: string;
   availableFromMonth: number | null;
   availableFromYear: number | null;
+  currentCtc: string;
+  currentCtcCurrency: CtcCurrency;
+  expectedCtc: string;
+  expectedCtcCurrency: CtcCurrency;
 };
 
 const OPPORTUNITY_OPTIONS = Object.values(OpportunityType).map((t) => ({
@@ -38,10 +43,46 @@ const OPPORTUNITY_OPTIONS = Object.values(OpportunityType).map((t) => ({
   label: OPPORTUNITY_TYPE_LABELS[t] ?? t,
 }));
 
+/** Annual amount with its own INR / USD picker attached. */
+function CtcInput({
+  id,
+  label,
+  amount,
+  currency,
+  register,
+}: {
+  id: string;
+  label: string;
+  amount: "currentCtc" | "expectedCtc";
+  currency: "currentCtcCurrency" | "expectedCtcCurrency";
+  register: UseFormRegister<PreferencesFormValues>;
+}) {
+  return (
+    <div className="pw-money">
+      <PwSelect aria-label={`${label} currency`} {...register(currency)}>
+        <option value="INR">₹ INR</option>
+        <option value="USD">$ USD</option>
+      </PwSelect>
+      <PwInput
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        step={1}
+        placeholder="e.g. 1200000"
+        {...register(amount)}
+      />
+    </div>
+  );
+}
+
 export function PreferencesSection({
   initial,
+  isProfessional,
 }: {
   initial: PreferencesFormValues;
+  /** CTC fields are asked of working professionals only. */
+  isProfessional: boolean;
 }) {
   const { formId, onSaved, setDirty } = useProfileWizard();
   const { save } = useSectionSave(
@@ -61,7 +102,18 @@ export function PreferencesSection({
     <form
       id={formId}
       onSubmit={handleSubmit(async (v) => {
-        if (await save(v, placeIssues)) onSaved();
+        // Fields a student never saw are left out, so the save keeps whatever
+        // is stored instead of clearing it.
+        const payload = isProfessional
+          ? v
+          : {
+              ...v,
+              currentCtc: undefined,
+              currentCtcCurrency: undefined,
+              expectedCtc: undefined,
+              expectedCtcCurrency: undefined,
+            };
+        if (await save(payload, placeIssues)) onSaved();
       })}
     >
       <PwRow cols={1}>
@@ -169,6 +221,37 @@ export function PreferencesSection({
           />
         </PwField>
       </PwRow>
+
+      {isProfessional ? (
+        <PwRow cols={2}>
+          <PwField
+            label="Current CTC"
+            htmlFor="pref-current-ctc"
+            helper=""
+          >
+            <CtcInput
+              id="pref-current-ctc"
+              label="Current CTC"
+              amount="currentCtc"
+              currency="currentCtcCurrency"
+              register={register}
+            />
+          </PwField>
+          <PwField
+            label="Expected CTC"
+            htmlFor="pref-expected-ctc"
+            helper=""
+          >
+            <CtcInput
+              id="pref-expected-ctc"
+              label="Expected CTC"
+              amount="expectedCtc"
+              currency="expectedCtcCurrency"
+              register={register}
+            />
+          </PwField>
+        </PwRow>
+      ) : null}
 
       <PwRow cols={2}>
         <PwField label="Available from">
