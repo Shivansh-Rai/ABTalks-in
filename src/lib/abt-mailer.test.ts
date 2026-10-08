@@ -4,8 +4,11 @@
  */
 import { createHmac } from "node:crypto";
 import {
+  abtMailerCategory,
   abtMailerKinds,
   interpretAbtMailerResponse,
+  isSensitiveKind,
+  kindMatches,
   routesViaAbtMailer,
   signAbtMailerRequest,
 } from "./abt-mailer";
@@ -53,6 +56,35 @@ suite("attachments and missing config stay on Brevo", () => {
   assert(!routesViaAbtMailer("profile.viewed", false, { ...env, ABT_MAILER_URL: undefined }), "no url");
   assert(!routesViaAbtMailer("profile.viewed", false, { ...env, ABT_MAILER_HMAC_SECRET: "" }), "no secret");
   assert(!routesViaAbtMailer("profile.viewed", false, { ...env, EMAIL_VIA_ABT_KINDS: "" }), "empty list");
+});
+
+suite("`*` routes every kind; KEEP_ON_BREVO wins", () => {
+  const all = { ...env, EMAIL_VIA_ABT_KINDS: "*", EMAIL_KEEP_ON_BREVO_KINDS: "recruiter.otp" };
+  assert(routesViaAbtMailer("workshop.confirmation", false, all), "any kind");
+  assert(routesViaAbtMailer("some.future.kind", false, all), "new kinds too");
+  assert(!routesViaAbtMailer("recruiter.otp", false, all), "kept on Brevo");
+});
+
+suite("`prefix.*` matches that prefix only", () => {
+  const p = abtMailerKinds("account.admin_update.*");
+  assert(kindMatches(p, "account.admin_update.account_disabled"), "child kind");
+  assert(!kindMatches(p, "account.admin_updates"), "lookalike");
+  assert(!kindMatches(p, "profile.viewed"), "other kind");
+});
+
+suite("codes and account notices are essential; notices are not", () => {
+  assert(abtMailerCategory("recruiter.otp") === "TRANSACTIONAL_ESSENTIAL", "otp");
+  assert(abtMailerCategory("auth.password_reset") === "TRANSACTIONAL_ESSENTIAL", "reset");
+  assert(abtMailerCategory("account.admin_update.account_disabled") === "TRANSACTIONAL_ESSENTIAL", "account notice");
+  assert(abtMailerCategory("profile.viewed") === "TRANSACTIONAL_NONESSENTIAL", "profile view");
+  assert(abtMailerCategory("workshop.confirmation") === "TRANSACTIONAL_NONESSENTIAL", "workshop");
+});
+
+suite("codes, reset links and passwords are sensitive", () => {
+  for (const k of ["recruiter.otp", "auth.signin_code", "auth.password_code", "auth.password_reset", "recruiter.welcome"]) {
+    assert(isSensitiveKind(k), k);
+  }
+  assert(!isSensitiveKind("profile.viewed"), "profile view");
 });
 
 suite("signature is HMAC-SHA256 over `${ts}.${body}`", () => {
