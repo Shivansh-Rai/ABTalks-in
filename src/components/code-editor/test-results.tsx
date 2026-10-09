@@ -15,8 +15,15 @@ const CASE_LABEL: Record<CaseResult["status"], string> = {
   not_run: "Not run",
 };
 
-function headline(result: TestRunResult): string {
+type Scope = "sample" | "all";
+
+function headline(result: TestRunResult, scope: Scope): string {
   if (result.verdict === "compile_error") return "Compilation error";
+  if (scope === "all") {
+    return result.verdict === "accepted"
+      ? "Accepted"
+      : `${result.passedCount} of ${result.total} tests passed`;
+  }
   if (result.verdict === "accepted") return "All sample tests passed";
   return `${result.passedCount} of ${result.total} sample tests passed`;
 }
@@ -33,7 +40,14 @@ function Block({ label, text }: { label: string; text: string }) {
 }
 
 /** Renders the outcome of one run. Pure display; no data access. */
-export function TestResults({ result }: { result: TestRunResult }) {
+export function TestResults({
+  result,
+  scope = "sample",
+}: {
+  result: TestRunResult;
+  /** "sample" for a Run, "all" for a Submit that included hidden tests. */
+  scope?: Scope;
+}) {
   const ok = result.verdict === "accepted";
   return (
     <div className="space-y-3">
@@ -48,7 +62,7 @@ export function TestResults({ result }: { result: TestRunResult }) {
         ) : (
           <XCircle className="size-4" aria-hidden="true" />
         )}
-        {headline(result)}
+        {headline(result, scope)}
       </p>
 
       {result.verdict === "compile_error" ? (
@@ -63,7 +77,7 @@ export function TestResults({ result }: { result: TestRunResult }) {
               <details open={c.status !== "passed"}>
                 <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm">
                   <span className="font-medium text-black">
-                    Test {c.index + 1}
+                    {c.hidden ? "Hidden test" : "Test"} {c.index + 1}
                   </span>
                   <span
                     className={cn(

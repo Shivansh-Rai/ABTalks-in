@@ -1,10 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { submitPracticeSolutionAction } from "@/app/actions/coding-practice-actions";
 import {
   CodeWorkspace,
   type RunOutcome,
+  type SubmitOutcome,
+  type WorkspaceSubmission,
 } from "@/components/code-editor/code-workspace";
 import type { CodeLanguageId } from "@/features/code-runner/languages";
+
+type CodeInput = { language: CodeLanguageId; code: string };
 
 type PracticeWorkspaceProps = {
   challenge: string;
@@ -14,9 +20,12 @@ type PracticeWorkspaceProps = {
   languages: { id: CodeLanguageId; label: string }[];
   starterCode: Partial<Record<CodeLanguageId, string>>;
   defaultLanguage: CodeLanguageId;
+  solved: boolean;
+  initialCode: CodeInput | null;
+  submissions: WorkspaceSubmission[];
 };
 
-/** Binds the practice Run route into the reusable workspace. */
+/** Binds the practice Run route and Submit action into the reusable workspace. */
 export function PracticeWorkspace({
   challenge,
   day,
@@ -25,11 +34,13 @@ export function PracticeWorkspace({
   languages,
   starterCode,
   defaultLanguage,
+  solved,
+  initialCode,
+  submissions,
 }: PracticeWorkspaceProps) {
-  async function onRun(input: {
-    language: CodeLanguageId;
-    code: string;
-  }): Promise<RunOutcome> {
+  const router = useRouter();
+
+  async function onRun(input: CodeInput): Promise<RunOutcome> {
     try {
       const response = await fetch("/api/practice/run", {
         method: "POST",
@@ -45,6 +56,58 @@ export function PracticeWorkspace({
     }
   }
 
+  async function onSubmit(input: CodeInput): Promise<SubmitOutcome> {
+    let outcome: Awaited<ReturnType<typeof submitPracticeSolutionAction>>;
+    try {
+      outcome = await submitPracticeSolutionAction({
+        challenge,
+        day,
+        slot,
+        ...input,
+      });
+    } catch {
+      return {
+        ok: false,
+        message: "Could not reach the server. Check your connection and try again.",
+      };
+    }
+    if (!outcome.ok) return outcome;
+
+    const data = outcome.data;
+    if (data.kind === "already_solved") {
+      return {
+        ok: true,
+        data: {
+          result: null,
+          note: "You have already solved this question. Your first accepted solution is saved.",
+          solved: true,
+        },
+      };
+    }
+    if (data.kind === "not_accepted") {
+      return {
+        ok: true,
+        data: {
+          result: data.result,
+          note: "Not accepted yet. Nothing was saved.",
+          solved: false,
+        },
+      };
+    }
+    // Pull the saved solution and the new solved state from the server.
+    router.refresh();
+    return {
+      ok: true,
+      data: {
+        result: data.result,
+        note: data.dayComplete
+          ? `Accepted. Your solution is saved. Day ${day} is complete.`
+          : "Accepted. Your solution is saved.",
+        solved: true,
+      },
+    };
+  }
+
   return (
     <CodeWorkspace
       statement={statement}
@@ -52,7 +115,11 @@ export function PracticeWorkspace({
       starterCode={starterCode}
       defaultLanguage={defaultLanguage}
       storageKey={`practice:${challenge}:${day}:${slot}`}
+      initialCode={initialCode}
+      solved={solved}
+      submissions={submissions}
       onRun={onRun}
+      onSubmit={onSubmit}
     />
   );
 }

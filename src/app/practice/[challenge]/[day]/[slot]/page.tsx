@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { formatInTimeZone } from "date-fns-tz";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { auth } from "@/auth";
@@ -19,9 +20,15 @@ import {
 import { practiceDayState } from "@/features/coding-practice/progression";
 import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
-import { getPracticeProgress } from "@/repositories/coding-practice";
+import {
+  getPracticeProgress,
+  getSavedSolution,
+} from "@/repositories/coding-practice";
 
 export const metadata: Metadata = { title: "DSA Practice | ABTalks" };
+
+// Submit is a Server Action called from this page: it waits on Judge0.
+export const maxDuration = 30;
 
 type Props = {
   params: Promise<{ challenge: string; day: string; slot: string }>;
@@ -111,6 +118,11 @@ export default async function PracticeQuestionPage({ params }: Props) {
   });
   if (state !== "OPEN" && state !== "COMPLETE") redirect(challengePath);
 
+  const solved = progress.solvedActivityIds.includes(question.activityId);
+  const saved = solved
+    ? await getSavedSolution(progress.enrollmentId, question.activityId)
+    : null;
+
   return (
     <main className="flex w-full flex-col gap-3 px-4 py-4 sm:px-6 lg:h-[calc(100svh-56px)]">
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
@@ -140,6 +152,21 @@ export default async function PracticeQuestionPage({ params }: Props) {
         }))}
         starterCode={question.starterCode}
         defaultLanguage={question.defaultLanguage}
+        solved={solved}
+        initialCode={saved ? { language: saved.language, code: saved.code } : null}
+        submissions={
+          saved
+            ? [
+                {
+                  languageLabel: CODE_LANGUAGES[saved.language].label,
+                  submittedAtLabel: saved.submittedAt
+                    ? `${formatInTimeZone(saved.submittedAt, "Asia/Kolkata", "d MMM yyyy, h:mm a")} IST`
+                    : "",
+                  code: saved.code,
+                },
+              ]
+            : []
+        }
       />
     </main>
   );
