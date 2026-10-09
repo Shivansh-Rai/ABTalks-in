@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   CheckCircle2,
   Columns2,
+  LayoutTemplate,
   Loader2,
   PanelLeftClose,
   PanelLeftOpen,
@@ -293,7 +294,6 @@ export function CodeWorkspace({
   }
 
   function resetCode() {
-    if (!window.confirm("Reset your code to the starting template?")) return;
     const starter = starterCode[language] ?? "";
     setEdits((current) => ({ ...current, [language]: starter }));
     writeDraft(storageKey, language, starter);
@@ -452,6 +452,13 @@ export function CodeWorkspace({
             onClick={() => savePrefs({ fontSize: prefs.fontSize + 1 })}
           >
             <AArrowUp className="size-4" aria-hidden="true" />
+          </ToolButton>
+          <span className="mx-1 h-5 w-px bg-[#E0E0E0]" aria-hidden="true" />
+          <ToolButton
+            label="Reset the layout"
+            onClick={() => savePrefs(DEFAULT_PREFS)}
+          >
+            <LayoutTemplate className="size-4" aria-hidden="true" />
           </ToolButton>
         </div>
       </div>
