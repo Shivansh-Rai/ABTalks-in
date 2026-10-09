@@ -508,7 +508,24 @@ Changed files: exactly the table above.
 
 ### Phase 4: The real 30 questions
 
-**Supplied by the content owner per question:** title, difficulty, statement, the function name with its parameters and return type, 2 sample tests with a one-line explanation each, 2 hidden tests. No reference solution is supplied.
+**Supplied by the content owner per question:** the owner has now updated the question in the plan which will be there in 15 Days and 2 questions each day
+| Day | Focus | Question 1 — Basic/Medium | Question 2 — Challenging |
+|---|---|---|---|
+| **1** | Array fundamentals | Find largest & second largest element | **Kadane's Algorithm** — Maximum Subarray |
+| **2** | Traversal & frequency | Remove duplicates from sorted array | Majority Element |
+| **3** | Two Pointers | Move Zeroes | **Container With Most Water** |
+| **4** | Two Pointers | Two Sum (sorted array) | **3Sum** |
+| **5** | Prefix Sum | Range Sum / Prefix Sum queries | **Subarray Sum Equals K** |
+| **6** | Hashing | Contains Duplicate | **Longest Consecutive Sequence** |
+| **7** | Sliding Window | Maximum sum subarray of size K | **Longest Subarray with Sum K / target condition** |
+| **8** | Arrays — intermediate | Best Time to Buy & Sell Stock | **Product of Array Except Self** |
+| **9** | Sorting + intervals | Merge Sorted Arrays | **Merge Intervals** |
+| **10** | Matrix | Transpose Matrix | **Set Matrix Zeroes** |
+| **11** | String fundamentals | Valid Palindrome | **Longest Palindromic Substring** |
+| **12** | String hashing/frequency | Valid Anagram | **Group Anagrams** |
+| **13** | String sliding window | Longest Substring Without Repeating Characters | **Minimum Window Substring** |
+| **14** | String manipulation | Reverse Words in a String | **String Compression / Run-Length Encoding** |
+| **15** | Mixed mastery | Rotate Array | **Trapping Rain Water** |
 
 **Written during this phase:** starter code and the hidden harness for all four languages, and one reference solution per question. The reference solution exists only so the verify script can prove the four expected outputs and the four harnesses are right before learners see the question; a wrong expected output otherwise fails every correct answer.
 
